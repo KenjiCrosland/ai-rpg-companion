@@ -259,10 +259,11 @@ describe('each rule catches its violation class', () => {
     const recharge = findings.find((f) => f.rule === 'trait-recharge');
     expect(recharge.severity).toBe('correctable');
     expect(recharge.expected).toBe('Engulfing Dissolution (1/Day)');
-    const coined = findings.find((f) => f.rule === 'entry-name-coinage');
-    expect(coined.severity).toBe('reject');
-    expect(coined.message).toContain('Thul-eg');
-    // Official hyphenated names (full English fragments) stay legal.
+    // The coined-name detector is retired (owner call 2026-08-05): no
+    // dictionary can separate "Tar-Slick" from "Thul-eg", and reverting
+    // good names to donor placeholders was the worse failure. Coinage is
+    // prompt-discipline + audit-judgment now; NO name ever trips it.
+    expect(findings.find((f) => f.rule === 'entry-name-coinage')).toBeUndefined();
     const official = {
       ...cleanLurker,
       sections: {

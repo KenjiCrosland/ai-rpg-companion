@@ -74,7 +74,15 @@ function bankDraw(field, own, rng) {
  * once (live: energy-type-spread and damage-type-caps both firing).
  */
 const DAMAGE_SLOTS = FLAVOR_SLOTS.filter((s) => s.endsWith('damage_type'));
-const ASKABLE = FLAVOR_SLOTS.filter((s) => s !== 'creature' && !DAMAGE_SLOTS.includes(s));
+// weakness_type is ENGINE-filled (the energy's foil, further down) — it
+// rides FLAVOR_SLOTS so slotsIn can see it, but asking the MODEL for it
+// left the fill loop with no answer and no FALLBACK entry, so `value`
+// arrived at the punctuation strip undefined and threw. Rare, because
+// only the Freeze row carries the slot — which is why it surfaced as an
+// intermittent full-suite failure rather than a reproducible one.
+const ENGINE_FILLED = ['weakness_type'];
+const ASKABLE = FLAVOR_SLOTS.filter((s) => s !== 'creature'
+  && !DAMAGE_SLOTS.includes(s) && !ENGINE_FILLED.includes(s));
 
 const PHYSICAL = ['Bludgeoning', 'Piercing', 'Slashing'];
 
@@ -88,7 +96,7 @@ const SLOT_BRIEF = {
   home_plane: 'a CANONICAL plane with its article ("the Nine Hells", "the Feywild", "the Abyss") — never invented geography; a made-up realm reads tacked on',
   anchor: 'a thing the creature itself establishes — "the site of its oldest unpaid bargain", "a coin from its hoard", "the deepest root of its grove"',
   undoing: 'what makes the death permanent, as a verb phrase — "fulfills or formally forgives that bargain", "melts the coin in dragonfire"',
-  legacy: 'one sentence of inheritance — "its unpaid debts pass to the creature that struck the killing blow"',
+  legacy: 'the unfinished business ITSELF as a short noun phrase, nothing more — "its unpaid debt to the drowned", "the vigil it never finished", "its hunt for the thief who wronged it". Do NOT write who inherits it, what it costs, or how it ends: the engine writes all three around your phrase',
   appendage: 'the grasping limb, singular ("tentacle", "barbed chain")',
   appendage_plural: 'the same limb, plural ("tentacles", "barbed chains")',
   signature_spell: 'ONE damaging or controlling spell as a plain name, no markup ("Ice Knife", "Fear") — the engine formats it and adds it to the spell list automatically',
@@ -143,6 +151,48 @@ export function flavorRequests(skeleton) {
  * invented CONCEPTS (tallying, unremembering) write promises no printed
  * mechanic can keep. "Draw on it" is the tested wording.
  */
+/**
+ * The block's HOUSE: one material, and the vocabulary it earns (owner
+ * call, 2026-08-05 — "brine and sleet are in the same neighborhood but
+ * different houses"). The facet was too coarse a unit: `elemental` alone
+ * offers magma, stone, storm, ice and sand, so a single well-chosen theme
+ * still handed the model four materials and asked it to pick freely. The
+ * three moments that each chose independently — concept prose, fill time,
+ * naming — now share one declaration.
+ *
+ * Scored from the concept, not rolled: the prose usually names the
+ * material already ("a living column of deep-ocean brine"), and an engine
+ * that ignored it would just move the mismatch. A tie or a silent concept
+ * falls back to a seeded pick from the themes' candidates.
+ *
+ * TWO houses survive when the concept scores both strongly — a drowned
+ * forge or a frozen abyss is a deliberate collision, which is a different
+ * thing from three houses arriving by accident.
+ */
+export function pickHouse(concept, themes, seed = 1) {
+  const houses = textureBanks.houses ?? {};
+  const candidates = [...new Set((themes ?? [])
+    .flatMap((t) => textureBanks.facets?.[t]?.houses ?? []))].filter((h) => houses[h]);
+  if (!candidates.length) return [];
+  const text = String(concept ?? '').toLowerCase();
+  const scored = candidates.map((h) => [h, (houses[h].tokens ?? [])
+    .reduce((n, tok) => n + (text.includes(tok) ? 1 : 0), 0)]);
+  const best = Math.max(...scored.map(([, n]) => n));
+  if (best > 0) {
+    const winners = scored.filter(([, n]) => n === best).map(([h]) => h);
+    // A collision needs BOTH houses named twice over: one incidental
+    // token ("granite dust" brushing the sand house) is not a
+    // declaration, and treating it as one re-admits the mishmash through
+    // the escape hatch.
+    const second = best >= 2
+      ? scored.filter(([h, n]) => n >= 2 && !winners.includes(h)).map(([h]) => h)
+      : [];
+    return [...winners.slice(0, 1), ...second.slice(0, 1)];
+  }
+  const rng = makeRng(seed);
+  return [candidates[Math.floor(rng() * candidates.length)]];
+}
+
 function texturePalette(skeleton, themes) {
   const facetNames = [...new Set(themes ?? [])].filter((t) => BANK_FACETS[t]);
   if (!facetNames.length) return '';
@@ -150,19 +200,45 @@ function texturePalette(skeleton, themes) {
   const substances = [...new Set(banks.flatMap((b) => b.substances ?? []))];
   const limbs = [...new Set(banks.flatMap((b) => (b.appendages ?? []).map((a) => a.one)))];
   const verbs = [...new Set(banks.flatMap((b) => b.deliveries ?? []))];
+  const restraints = [...new Set(banks.flatMap((b) => b.restraints ?? []))];
   const adjs = [...new Set(banks.flatMap((b) => b.name_adjectives ?? []))];
   const nouns = [...new Set(banks.flatMap((b) => b.name_nouns ?? []))];
   const dmg = [...new Set(banks.flatMap((b) => Object.entries(b.damage_affinity ?? {})
     .filter(([k, v]) => !k.startsWith('_') && v > 0)
     .sort((a, b) => b[1] - a[1]).map(([k]) => k)))];
-  return `\nTEXTURE PALETTE — this register's full vocabulary. Draw on it for every fill and name: choose from it, combine from it, or write words that belong beside it.
+  const houseNames = skeleton.houses ?? [];
+  const houseBanks = houseNames.map((h) => textureBanks.houses?.[h]).filter(Boolean);
+  const houseLine = houseBanks.length
+    ? `\nTHIS CREATURE'S MATERIAL: ${houseNames.join(' and ')}. Every substance, every material noun, and every name in the block — the creature's own included — must BE this material or something it does. Its words:
+- made of: ${houseBanks.flatMap((b) => b.substances ?? []).join(', ')}
+- name words: ${houseBanks.flatMap((b) => b.adjectives ?? []).join(', ')} / ${houseBanks.flatMap((b) => b.nouns ?? []).join(', ')}
+Never reach for a neighbouring material: an ice creature does not also spray brine, and a brine creature does not also shed sleet — both are cold, and they belong to different things.`
+    : '';
+  return `${houseLine}\nTEXTURE PALETTE — this register's full vocabulary. Draw on it for every fill and name: choose from it, combine from it, or write words that belong beside it.${houseLine ? ' It never introduces a SECOND material — where it offers one the material above forbids, take the material above.' : ''}
 - substances: ${substances.join(', ')}
+- restraining substances (for anything that binds, snares, or entombs — "until the <substance> is destroyed"): ${restraints.join(', ')}
 - limbs: ${limbs.join(', ')}
 - delivery verbs: ${verbs.join(', ')}
 - name words: ${adjs.join(', ')} / ${nouns.join(', ')}${dmg.length ? `\n- energy damage this register favors: ${dmg.join(', ')}` : ''}`;
 }
 
-export function buildFlavorPrompt(skeleton, { concept, description = '', themes = null } = {}) {
+// One line per combat role, fed to the flavor call so names and prose lean
+// into the trade the numbers already made (the numeric differentials live in
+// applyArchetypeNumbers). Same weight class as the mute-caster line: a
+// nudge, not a mechanic. Balanced/unknown roles say nothing.
+const ROLE_BRIEF = {
+  brute: 'a BRUTE — it wades in and hits very hard; name and describe it as overwhelming force, not finesse',
+  defender: 'a DEFENDER — it holds ground and protects; its names and prose should feel like a wall, a warden, a punisher of those who push past it',
+  skirmisher: 'a SKIRMISHER — it darts in and out; its names and prose should feel quick, slippery, hit-and-run',
+  artillery: 'ARTILLERY — it kills from far away and avoids melee; its names and prose should feel like range, aim, and distance',
+  glass_cannon: 'a GLASS CANNON — it hits harder than anything at its CR and dies fast; its names and prose should feel reckless, all-in, nothing held back for defense',
+  controller: 'a CONTROLLER — it wins by imposing conditions, not raw damage; its names and prose should feel like domination, binding, and denial',
+  lurker: 'a LURKER — it ambushes with one devastating strike, then hides; its names and prose should feel patient, unseen, sudden',
+  support: 'SUPPORT — it exists to make its allies stronger; its names and prose should feel like blessing, mending, and command',
+  swarm: 'a SWARM — it is many acting as one; its names and prose should feel like mass, tide, and numberless motion. Name the block the printed way: "Swarm of <plural constituents>" (like Swarm of Ravens)',
+};
+
+export function buildFlavorPrompt(skeleton, { concept, description = '', themes = null, takenNames = [] } = {}) {
 
   const reqs = flavorRequests(skeleton);
   const needsSpells = reqs.some((r) => r.slots.includes('spells') || r.slots.includes('spells_daily'));
@@ -207,9 +283,9 @@ export function buildFlavorPrompt(skeleton, { concept, description = '', themes 
 
   return `You are writing the flavor for a D&D 2024 monster. Every number is already fixed and is NOT your concern.
 
-CONCEPT: ${concept}${description ? `\nDETAILS: ${description}` : ''}${themes && themes.length ? `\nTHEME THREADS — the block's ENTIRE palette. Every name, every {substance}, every {delivery} and {appendage} draws from these and nothing else: ${themes.join(', ')}` : ''}${texturePalette(skeleton, themes)}
+CONCEPT: ${concept}${description ? `\nDETAILS: ${description}` : ''}${takenNames.length ? `\nNAMES ALREADY TAKEN in this user's collection — NEVER reuse or closely echo any of them: ${takenNames.slice(0, 40).join(', ')}` : ''}${themes && themes.length ? `\nTHEME THREADS — the block's ENTIRE palette. Every name, every {substance}, every {delivery} and {appendage} draws from these and nothing else: ${themes.join(', ')}` : ''}${texturePalette(skeleton, themes)}
 
-The creature is CR ${skeleton.cr}, ${skeleton.size}, AC ${skeleton.ac}, HP ${skeleton.hp}.
+The creature is CR ${skeleton.cr}, ${skeleton.size}, AC ${skeleton.ac}, HP ${skeleton.hp}.${ROLE_BRIEF[skeleton.archetype] ? `\nIts combat role is ${ROLE_BRIEF[skeleton.archetype]}. Spend the block's text on that role: when an entry offers a menu, choose the option that serves this loop, and fill spell lists with spells this role would lean on — a reader infers the role from where the words go.` : ''}
 
 Its abilities are written out below with blanks in {braces}. Fill ONLY the blanks and give each entry a name that fits THIS creature. Do not rewrite any other word, and do not invent, remove or renumber abilities.
 
@@ -218,7 +294,7 @@ ${lines}${spellPolicyLine}
 Blanks mean:
 ${ASKABLE.map((s) => `  {${s}} — ${SLOT_BRIEF[s]}`).join('\n')}
 
-Intelligence must support the mind you give it: an alignment other than Unaligned, any language, or judgment/arcane themes all need Intelligence 6+; at Intelligence 4 or below the creature is Unaligned instinct. Every name in the block shares ONE identity: choose at most two thematic threads from the concept and use them consistently — a block that is simultaneously swamp, frost, bone and planar-rift reads as a random-adjective table. Truesight belongs to high-planar minds; a lurking beast takes Tremorsense or Blindsight. Never borrow another type's vocabulary for names: no "wraith" on a living creature, no "Abyssal" on a Celestial, no "infernal" on a fey — the audience reads those as template seams. A name must FIT its mechanics: a shriek or roar is Thunder damage against a Constitution save; a beam or bolt is Dexterity; don't name a Dexterity-save Force bolt "Piercing Shriek". Names should say what the creature IS, not what the ability does: prefer a name drawn from the creature's nature over a description of its mechanics.
+Intelligence must support the mind you give it: an alignment other than Unaligned, any language, or judgment/arcane themes all need Intelligence 6+; at Intelligence 4 or below the creature is Unaligned instinct. Every name in the block shares ONE identity: choose at most two thematic threads from the concept and use them consistently — a block that is simultaneously swamp, frost, bone and planar-rift reads as a random-adjective table. Truesight belongs to high-planar minds; a lurking beast takes Tremorsense or Blindsight. Never borrow another type's vocabulary for names: no "wraith" on a living creature, no "Abyssal" on a Celestial, no "infernal" on a fey — the audience reads those as template seams. A name must FIT its mechanics: a shriek or roar is Thunder damage against a Constitution save; a beam or bolt is Dexterity; don't name a Dexterity-save Force bolt "Piercing Shriek". An attack with a thrown RANGE must name what is thrown — every printed giant hurls "Rock"; a "Fist" with a 120-foot range throws nothing (name the stone, the spear, the shard of its own body). Names should say what the creature IS, not what the ability does: prefer a name drawn from the creature's nature over a description of its mechanics. Entry names are PLAIN ENGLISH — real words only; invented syllables ("Thul-eg Strike") belong to the creature's proper name, never to entries.
 
 The creature's TYPE is already decided by the engine — do not choose one. Senses must support the body: a burrower or anything immune to the Blinded condition needs Tremorsense or Blindsight, not just eyes. Languages at Intelligence 4 or below follow the Zombie pattern ("Understands X but can't speak") or none. Vulnerabilities above CR 10 are almost never printed — only take one as a deliberate, concept-central choice.
 
@@ -278,18 +354,21 @@ const FALLBACK = {
   // {substance}" — "its a churning rush" shipped live (the Dreamweb).
   substance: 'churning vapor',
   delivery: 'unleashes',
-  terrain: 'difficult ground',
+  terrain: 'ice',
   spells: '*Detect Magic*',
   spells_daily: '',
   kindred_type: 'creature of its own kind',
   home_plane: 'its home realm',
   appendage: 'grasping limb',
   appendage_plural: 'grasping limbs',
-  signature_spell: '*Chromatic Orb*',
-  signature_spell_2: '*Wall of Fire*',
+  // Last-resort constants sit INSIDE print's pools so the echo vet never
+  // has to re-touch them (the old '*Chromatic Orb*' was in no pool and
+  // fingerprinted the set).
+  signature_spell: '*Scorching Ray*',
+  signature_spell_2: '*Ice Knife*',
   anchor: 'the place of its making',
   undoing: 'destroys that place',
-  legacy: 'its power scatters, leaving an omen where it fell',
+  legacy: 'its unfinished purpose',
 };
 
 /**
@@ -349,10 +428,24 @@ const SPELL_LEVELS = {
  * Dream). Live: at-will Geas plus a legendary casting it three times a
  * round, all physically impossible under its own casting time.
  */
+// Spells that CANNOT be cast as an action. Audited against the whole
+// KNOWN_SPELLS universe (2026-08-05) rather than grown one live failure
+// at a time — Move Earth's 10-minute cast shipped at-will AND as a
+// legendary echo because it simply wasn't on the old list, which is the
+// failure mode of every hand-maintained ban list. A spell-hygiene test
+// pins the audit: any castable-slot spell not listed here is asserted
+// action-castable.
 const SLOW_CAST = ['Geas', 'Dream', 'Scrying', 'Commune', 'Legend Lore', 'Animate Dead',
   'Create Undead', 'Raise Dead', 'Symbol', 'Hallow', 'Forbiddance', 'Magic Circle',
   'Identify', 'Astral Projection', 'Contact Other Plane', 'Divination', 'Awaken', 'Simulacrum',
-  'Glyph of Warding', 'Find Familiar', 'Modify Memory'];
+  'Glyph of Warding', 'Find Familiar', 'Modify Memory',
+  // the 2026-08-05 audit's additions: minutes-or-longer casts
+  'Move Earth', 'Antipathy/Sympathy', 'Create Homunculus', 'Drawmij\'s Instant Summons',
+  'Programmed Illusion', 'Guards and Wards', 'Imprisonment', 'Sequester', 'Clone',
+  'Magic Mouth', 'Nondetection', 'Water Breathing', 'Water Walk', 'Arcane Lock',
+  'Continual Flame', 'Gentle Repose', 'Silence', 'Comprehend Languages', 'Detect Poison and Disease',
+  'Purify Food and Drink', 'Alarm', 'Tiny Hut', 'Private Sanctum', 'Mordenkainen\'s Faithful Hound',
+  'True Seeing', 'Contagion', 'Planar Binding', 'Teleportation Circle', 'Demiplane'];
 
 /**
  * Concentration spells never cast from a LEGENDARY action (owner overrule,
@@ -362,6 +455,51 @@ const SLOW_CAST = ['Geas', 'Dream', 'Scrying', 'Commune', 'Legend Lore', 'Animat
  * creature's own turn. Daily and at-will lists remain legal homes for
  * these (the Night Hag precedent).
  */
+// Spells that deny or seize actions — the class print always locks when
+// echoed from a legendary action (measured 2026-08-04: 100% of printed
+// control echoes carry the lock; the unlocked echoes are all damage).
+export const CONTROL_SPELLS = ['Command', 'Charm Person', 'Suggestion', 'Mass Suggestion',
+  'Dominate Person', 'Dominate Monster', 'Fear', 'Hold Person', 'Hold Monster', 'Sleep',
+  'Slow', 'Banishment', 'Confusion', 'Hypnotic Pattern', 'Crown of Madness',
+  'Tasha\'s Hideous Laughter', 'Bestow Curse', 'Blindness/Deafness', 'Charm Monster'];
+
+// Damage spells that scale with slot level, base level attached. Print
+// ALWAYS annotates these in echoes and casts — "(level N version)" — and
+// the level ramps with CR (Mind Spike L3 adult -> L5 ancient, Guiding
+// Bolt L2 -> L4, Fireball L5 on the Pit Fiend). A bare echo of one is a
+// level-ONE casting by rule: a CR 20 legendary throwing a 3d8 orb (live:
+// Grasping Snare). Control spells stay bare legally (the Vampire's
+// base-level Command).
+export const SCALING_DAMAGE_SPELLS = {
+  'Chromatic Orb': 1, 'Guiding Bolt': 1, 'Magic Missile': 1, 'Thunderwave': 1,
+  'Burning Hands': 1, 'Ice Knife': 1, 'Witch Bolt': 1,
+  'Scorching Ray': 2, 'Mind Spike': 2, 'Shatter': 2, 'Acid Arrow': 2, 'Moonbeam': 2,
+  'Fireball': 3, 'Lightning Bolt': 3, 'Call Lightning': 3,
+  'Vitriolic Sphere': 4, 'Ice Storm': 4, 'Blight': 4,
+};
+
+// Offense spells and the damage type each deals — the at-will density cap
+// reads these (print: 39/59 at-will lists carry ZERO offense spells, 19
+// one, only the Lich two, none three).
+export const OFFENSE_SPELL_TYPES = {
+  'Scorching Ray': 'Fire', 'Guiding Bolt': 'Radiant', 'Mind Spike': 'Psychic',
+  'Shatter': 'Thunder', 'Acid Arrow': 'Acid', 'Ice Knife': 'Cold',
+  'Fireball': 'Fire', 'Lightning Bolt': 'Lightning', 'Magic Missile': 'Force',
+  'Chromatic Orb': null, 'Burning Hands': 'Fire', 'Fire Bolt': 'Fire',
+  'Ray of Frost': 'Cold', 'Sacred Flame': 'Radiant', 'Poison Spray': 'Poison',
+  'Eldritch Blast': 'Force', 'Witch Bolt': 'Lightning', 'Moonbeam': 'Radiant',
+  'Cone of Cold': 'Cold', 'Ice Storm': 'Cold', 'Blight': 'Necrotic',
+  'Call Lightning': 'Lightning', 'Vitriolic Sphere': 'Acid', 'Thunderwave': 'Thunder',
+};
+
+// Spells a creature can meaningfully cast ON ITSELF — the fill class for
+// "casts {signature_spell} on itself" rows (the Blue's Cloaked Flight
+// casts Invisibility). An attack spell in that slot self-immolates: a
+// fire-VULNERABLE tar creature cast Scorching Ray on itself as movement
+// tech (live: Slickstep, the Tar-Shroud Watcher).
+export const SELF_CAST_SPELLS = ['Invisibility', 'Blur', 'Mirror Image', 'Shield of Faith',
+  'Mage Armor', 'Sanctuary', 'Protection from Evil and Good', 'Gaseous Form', 'Misty Step'];
+
 export const CONCENTRATION_SPELLS = ['Fear', 'Hold Person', 'Hold Monster', 'Dominate Person',
   'Dominate Monster', 'Dominate Beast', 'Hypnotic Pattern', 'Slow', 'Haste', 'Invisibility',
   'Greater Invisibility', 'Fly', 'Levitate', 'Blur', 'Banishment', 'Confusion',
@@ -378,10 +516,9 @@ export const CONCENTRATION_SPELLS = ['Fear', 'Hold Person', 'Hold Monster', 'Dom
  * Spells where "(level N version)" actually changes anything. Dream has no
  * upcast — "(level 9 version)" on it is noise the spike nudge invited.
  */
-const SCALING_SPELLS = ['Guiding Bolt', 'Scorching Ray', 'Fireball', 'Lightning Bolt',
-  'Cone of Cold', 'Hold Person', 'Hold Monster', 'Ice Storm', 'Blight', 'Phantasmal Killer',
-  'Shatter', 'Magic Missile', 'Cure Wounds', 'Sleep', 'Thunderwave', 'Ice Knife', 'Command',
-  'Mind Spike', 'Wall of Ice', 'Chain Lightning', 'Flame Strike', 'Spirit Guardians'];
+const SCALING_SPELLS = [...new Set([...Object.keys(SCALING_DAMAGE_SPELLS),
+  'Cone of Cold', 'Hold Person', 'Hold Monster', 'Phantasmal Killer', 'Cure Wounds',
+  'Sleep', 'Command', 'Wall of Ice', 'Chain Lightning', 'Flame Strike', 'Spirit Guardians'])];
 // Corpus policy: at-will OFFENSE caps at level 2 in print; self-utility is
 // exempt (metallic dragons carry Shapechange at will). Unknown names pass.
 // (import, not require — this module runs in the browser; a stray require()
@@ -595,6 +732,12 @@ export function applyFlavor(skeleton, llmJson) {
         appendagePair = appendagePair ?? bankDraw('appendages', own, entryRng);
         return appendagePair ? (slot === 'appendage' ? appendagePair.one : appendagePair.many) : null;
       }
+      // A snare row's substance is a RESTRAINT (owner call: unique to the
+      // creature's register, never generically "webs") — draw from the
+      // facet's restraints bank first.
+      if (slot === 'substance' && /until the \{substance\} is destroyed|caused by \{substance\}/.test(entry.text)) {
+        return bankDraw('restraints', own, entryRng) ?? bankDraw('substances', own, entryRng);
+      }
       if (slot === 'substance') return bankDraw('substances', own, entryRng);
       if (slot === 'delivery') return bankDraw('deliveries', own, entryRng);
       return null; // terrain has no bank; the static fallback covers it
@@ -635,6 +778,60 @@ export function applyFlavor(skeleton, llmJson) {
       if (value && TEXTURE_SLOTS.includes(slot) && offDomainToken(value, own)) {
         value = null;
       }
+      // OFF-HOUSE vet (owner call, 2026-08-05): a fill may be perfectly
+      // on-facet and still name a neighbouring material — brine and sleet
+      // are both cold, both legal, and wrong together. A material fill
+      // that names a house the block didn't declare redraws from the
+      // house it did (live: the Scree spoke brine, sleet, and scree).
+      if (value && ['substance', 'terrain'].includes(slot) && (skeleton.houses ?? []).length) {
+        const mine = new Set((skeleton.houses ?? []).flatMap((h) => textureBanks.houses?.[h]?.tokens ?? []));
+        const foreign = Object.entries(textureBanks.houses ?? {})
+          .filter(([h]) => !(skeleton.houses ?? []).includes(h))
+          .some(([, b]) => (b.tokens ?? []).some((tok) => new RegExp(`\\b${tok}`, 'i').test(value)
+            && !mine.has(tok)));
+        if (foreign) {
+          // TERRAIN is ground, not stuff: redrawing it from the house's
+          // materials shipped "Difficult Terrain composed of
+          // carapace-plate" (live, the Graspwarden) — a substance the
+          // block never produces and nobody can walk on.
+          if (slot === 'terrain') {
+            value = surface();
+          } else {
+            const pool = (skeleton.houses ?? []).flatMap((h) => textureBanks.houses?.[h]?.substances ?? []);
+            value = pool.length ? pool[Math.floor(entryRng() * pool.length)] : null;
+          }
+        }
+      }
+      // Fiend cosmology is a closed book the audience knows cold: 15 of 15
+      // printed fiends pair Lawful with the Nine Hells and Chaotic with
+      // the Abyss (measured 2026-08-04). A Lawful block reforming in the
+      // Abyss (live: the Snaring Coil) is a one-line contradiction.
+      if (value && slot === 'home_plane') {
+        const align = String(j.alignment ?? '');
+        if (/lawful/i.test(align) && /abyss/i.test(value)) value = 'the Nine Hells';
+        else if (/chaotic/i.test(align) && /hells|hell\b/i.test(value)) value = 'the Abyss';
+      }
+      // {terrain} fills are ONE surface: the model handed back "loose
+      // scree, rockfall dust" and the comma splice shipped verbatim into
+      // two sentences (live: Subterranean Slide).
+      if (value && slot === 'terrain' && value.includes(',')) {
+        value = value.split(',')[0].trim();
+      }
+      // {terrain} must be a SURFACE the creature could walk or climb:
+      // media fills produce dead text — "Difficult Terrain composed of
+      // air" grants mastery over a thing that can't be terrain (live:
+      // Windborne Passage). Water stays legal (print walks on it); dead
+      // fills fall through to the static fallback like any other.
+      // {terrain} must name GROUND — a positive test, not a ban list.
+      // The media ban caught air and mist; it could never catch
+      // "carapace-plate", which is the block's own on-house material and
+      // still not something anyone walks on (live: Cliff-Stride granting
+      // passage over carapace, the Graspwarden). A fill that names no
+      // walkable surface falls through to the seeded surface list.
+      if (value && slot === 'terrain'
+        && !/\b(stone|rock|scree|gravel|slate|shale|sand|dune|silt|mud|soil|earth|clay|ice|snow|frost|ash|dust|rubble|moss|root|bramble|water|brine|tar|pitch|slick|crust|ground|floor|glass|bone|salt|grit|loam|peat|slag|cinder|char)\b/i.test(value)) {
+        value = null;
+      }
       // Theme-aware spell draw (owner-approved 2026-08-03): on-palette,
       // pre-filtered against everything the downstream vets would reject,
       // so a pick always survives. Used for dead signature fills AND for
@@ -649,9 +846,27 @@ export function applyFlavor(skeleton, llmJson) {
             && !(legendary && CONCENTRATION_SPELLS.includes(sp)));
         return pool.length ? `*${pool[Math.floor(entryRng() * pool.length)]}*` : null;
       };
+      // Dead-fill fallbacks, also used by the echo-spell vet below. The
+      // terrain surface is SEEDED (the static 'difficult ground' was
+      // CIRCULAR inside "Difficult Terrain composed of {terrain}"); the
+      // offense pool is SEEDED print (the static '*Chromatic Orb*'
+      // fingerprinted three unrelated blocks).
+      const surface = () => {
+        const pool = ['ice', 'rubble', 'bare stone', 'shifting sand', 'deep mud'];
+        return pool[Math.floor(entryRng() * pool.length)];
+      };
+      const printedOffense = () => {
+        const base2 = ['Scorching Ray', 'Guiding Bolt', 'Mind Spike', 'Shatter', 'Ice Knife', 'Acid Arrow']
+          .filter((sp) => !(entry.section === 'Legendary Actions' && CONCENTRATION_SPELLS.includes(sp)));
+        // palette-first: a cold block's fallback should not be Scorching Ray
+        const onPal = base2.filter((sp) => [physical, energy, energy2].includes(OFFENSE_SPELL_TYPES[sp]));
+        const pool = onPal.length ? onPal : base2;
+        return `*${pool[Math.floor(entryRng() * pool.length)]}*`;
+      };
       if (!value) {
         value = (TEXTURE_SLOTS.includes(slot) ? bankFallback(slot) : null)
-          ?? (slot.startsWith('signature_spell') ? themedSpell() : null)
+          ?? (slot.startsWith('signature_spell') ? (themedSpell() ?? printedOffense()) : null)
+          ?? (slot === 'terrain' ? surface() : null)
           ?? FALLBACK[slot];
       }
       // Fills never carry their own terminal punctuation: the template
@@ -659,9 +874,42 @@ export function applyFlavor(skeleton, llmJson) {
       // consumed.") spliced before the template's period shipped a live
       // double period (the Foundry Stag's Furnace Heart).
       value = value.replace(/\.+$/, '');
+      // Echo spells come from the creature's palette or print's pools —
+      // the model's repertoire staples fingerprinted the set (Chromatic
+      // Orb on three unrelated blocks, its OWN pick each time: the spell
+      // is in no pool, facet, or prompt example). Themes license
+      // crossovers exactly like texture fills; off-everything picks
+      // redraw on-palette, then from printed offense.
+      if (slot.startsWith('signature_spell') && value) {
+        const bareName = value.replace(/\*/g, '').replace(/\s*\(.*\)$/, '').trim();
+        const facets = library._meta.spell_facets ?? {};
+        const pools = SPELL_POLICY.printed_pools ?? {};
+        const inPools = Object.values(pools).some((b) => [...(b.at_will ?? []), ...(b.daily ?? [])].includes(bareName));
+        const onPalette = facets[bareName]?.some((f) => own.has(f));
+        if (!inPools && !onPalette) {
+          value = themedSpell(new Set([bareName])) ?? printedOffense();
+        }
+      }
+      // Self-cast slots take SELF_CAST_SPELLS only — print's Invisibility
+      // is the fallback (the row is the Blue's Cloaked Flight).
+      if (slot.startsWith('signature_spell') && / on itself/.test(entry.text)) {
+        const bare2 = value.replace(/\*/g, '').replace(/\s*\(.*\)$/, '').trim();
+        if (!SELF_CAST_SPELLS.includes(bare2)) value = '*Invisibility*';
+      }
       // an echo casts at combat speed: a 1-minute spell in it is impossible
       if (slot.startsWith('signature_spell') && SLOW_CAST.includes(value.replace(/\*/g, '').replace(/\s*\(.*\)$/, '').trim())) {
         value = FALLBACK[slot];
+      }
+      // ...and a minutes-long cast is just as impossible in a LIST slot:
+      // atWillBanned only DEMOTED such spells to the 1/Day line, where
+      // they are equally uncastable in a fight (live: Move Earth at will
+      // AND echoed, the Riveted Bellows).
+      if (['spells', 'spells_daily'].includes(slot)) {
+        const parts4 = [...value.matchAll(/\*([A-Z][\w' /]+?)\*( \(level \d+ version\))?/g)];
+        const fast = parts4.filter((mm) => !SLOW_CAST.includes(mm[1]));
+        if (parts4.length && fast.length !== parts4.length) {
+          value = fast.map((mm) => `*${mm[1]}*${mm[2] ?? ''}`).join(', ') || FALLBACK[slot];
+        }
       }
       // No concentration spell casts from a LEGENDARY action (owner
       // overrule, see CONCENTRATION_SPELLS). List-shaped fills keep their
@@ -673,6 +921,103 @@ export function applyFlavor(skeleton, llmJson) {
           const kept = names.filter((mm) => !CONCENTRATION_SPELLS.includes(mm[1]))
             .map((mm) => `*${mm[1]}*${mm[2] ?? ''}`);
           if (kept.length !== names.length) value = kept.join(', ') || FALLBACK[slot];
+        }
+      }
+      // Control-spell density cap (measured 2026-08-04): no printed at-will
+      // list carries more than ONE control spell, and no printed 1/Day list
+      // carries two. The model stacked Command + Charm Person + Suggestion
+      // at-will beside Dominate Monster + Mass Suggestion 1/Day (live: the
+      // Skar — four DC-21 action denials a round as the floor). Extras
+      // redraw on-palette as non-control; a dead redraw just drops.
+      if (['spells', 'spells_daily'].includes(slot)) {
+        const names = [...value.matchAll(/\*([A-Z][\w' /]+?)\*( \(level \d+ version\))?/g)];
+        let controlSeen = 0;
+        const kept = [];
+        for (const mm of names) {
+          if (CONTROL_SPELLS.includes(mm[1])) {
+            controlSeen += 1;
+            if (controlSeen > 1) {
+              const alt = themedSpell(new Set([...names.map((x) => x[1]), ...CONTROL_SPELLS, ...usedEchoSpells]));
+              if (alt) kept.push(alt);
+              continue;
+            }
+          }
+          kept.push(`*${mm[1]}*${mm[2] ?? ''}`);
+        }
+        if (names.length && kept.join(', ') !== value) value = kept.join(', ') || FALLBACK[slot];
+      }
+      // A block never casts spells of a damage type it is VULNERABLE to
+      // (0/329 printed; live: the fire-vulnerable tar creature slinging
+      // Scorching Ray). Applies to every spell slot; offenders drop from
+      // lists and redraw in echoes.
+      if (SPELL_SLOTS(slot)) {
+        const vuln = String(j.vulnerabilities ?? '').toLowerCase();
+        if (vuln.trim()) {
+          const parts2 = [...value.matchAll(/\*([A-Z][\w' ]+?)\*( \(level \d+ version\))?/g)];
+          const ok = parts2.filter((mm) => {
+            const ty = OFFENSE_SPELL_TYPES[mm[1]];
+            return !ty || !vuln.includes(ty.toLowerCase());
+          });
+          if (ok.length !== parts2.length) {
+            if (slot.startsWith('signature_spell')) {
+              value = themedSpell(new Set(parts2.map((mm) => mm[1]))) ?? printedOffense();
+            } else {
+              value = ok.map((mm) => `*${mm[1]}*${mm[2] ?? ''}`).join(', ') || FALLBACK[slot];
+            }
+          }
+        }
+      }
+      // SPELL IDENTITY VET (owner call, 2026-08-05 — the watch item
+      // matured): an offense spell's damage type must come from the
+      // block's declared palette (physical/energy/energy2), with the
+      // FACETS licensing crossovers exactly as they do for texture fills.
+      // A tar undead casting Acid Arrow + Scorching Ray + Cloudkill from
+      // three unrelated registers shipped an uncorrectable
+      // energy-type-spread reject (live: the Tar-Shroud Watcher). Typed
+      // offense that is neither palette nor facet-licensed drops from
+      // lists and redraws in echoes.
+      if (SPELL_SLOTS(slot) && typeof j.energy_damage === 'string' && j.energy_damage.trim()) {
+        // guard: the vet judges against the model's DECLARED palette, not
+        // the engine defaults — an undeclared energy (never-fail path,
+        // sparse fixtures) vets nothing
+        const facets2 = library._meta.spell_facets ?? {};
+        const onIdentity = (name2) => {
+          const ty = OFFENSE_SPELL_TYPES[name2];
+          if (ty === undefined || ty === null) return true; // non-offense or any-type
+          if ([physical, energy, energy2].includes(ty)) return true;
+          return (facets2[name2] ?? []).some((f) => own.has(f));
+        };
+        const parts3 = [...value.matchAll(/\*([A-Z][\w' ]+?)\*( \(level \d+ version\))?/g)];
+        const kept3 = parts3.filter((mm) => onIdentity(mm[1]));
+        if (parts3.length && kept3.length !== parts3.length) {
+          if (slot.startsWith('signature_spell')) {
+            value = themedSpell(new Set(parts3.map((mm) => mm[1]))) ?? printedOffense();
+          } else {
+            value = kept3.map((mm) => `*${mm[1]}*${mm[2] ?? ''}`).join(', ') || FALLBACK[slot];
+          }
+        }
+      }
+      // OFFENSE density cap (measured 2026-08-05): no printed at-will list
+      // carries three offense spells — 39/59 carry zero, 19 one, only the
+      // Lich two (live: Burning Hands + Magic Missile + Scorching Ray,
+      // two-thirds redundant fallbacks). Trim to the Lich ceiling. Drop
+      // order is the only theme-awareness here: off-palette damage types
+      // go first, echoed spells stay (menu and echo should agree) — the
+      // full spell-affinity vet stays parked pending more instances
+      // (owner call).
+      if (slot === 'spells') {
+        const parts = [...value.matchAll(/\*([A-Z][\w' ]+?)\*( \(level \d+ version\))?/g)];
+        const offense = parts.filter((mm) => mm[1] in OFFENSE_SPELL_TYPES);
+        if (offense.length > 2) {
+          const score = (mm) => {
+            const ty = OFFENSE_SPELL_TYPES[mm[1]];
+            return (usedEchoSpells.has(mm[1]) ? 4 : 0)
+              + (ty === null || [physical, energy, energy2].includes(ty) ? 2 : 0);
+          };
+          const keep = new Set([...offense].sort((a2, b2) => score(b2) - score(a2)).slice(0, 2).map((mm) => mm[1]));
+          const kept = parts.filter((mm) => !(mm[1] in OFFENSE_SPELL_TYPES) || keep.has(mm[1]))
+            .map((mm) => `*${mm[1]}*${mm[2] ?? ''}`);
+          if (kept.length) value = kept.join(', ');
         }
       }
       // (Off-list vetting for spell slots now happens in normalizeSpellFill
@@ -687,22 +1032,125 @@ export function applyFlavor(skeleton, llmJson) {
         }
         for (const mm of value.matchAll(/\*([A-Z][\w' ]+?)\*/g)) usedEchoSpells.add(mm[1]);
       }
+      // Upcast stamp for scaling damage spells: print's pattern is +1
+      // level in the adult band (CR 13-17) and +2 at 18+, never omitted at
+      // a CAST SITE. Print leaves the LIST lines bare (21/21 measured) —
+      // stamping them too is a deliberate improvement on print (owner
+      // call, 2026-08-04): a bare list entry cast directly from the
+      // Spellcasting action is a level-ONE casting by rule, which is
+      // print's own unclosed gap. The model's annotation, when present,
+      // is kept.
+      if (SPELL_SLOTS(slot)) {
+        value = value.replace(/\*([A-Z][\w' ]+?)\*(?! \(level)/g, (m0, sp) => {
+          const base = SCALING_DAMAGE_SPELLS[sp];
+          const crN = Number(String(skeleton.cr).includes('/') ? 0 : skeleton.cr);
+          if (!base || crN < 13) return m0;
+          return `*${sp}* (level ${base + (crN >= 18 ? 2 : 1)} version)`;
+        });
+      }
       // "each creature that isn't a Humanoid" spares the party — a kindred
       // exclusion only works when the kindred isn't what adventurers are.
       if (slot === 'kindred_type' && /humanoid/i.test(value)) value = FALLBACK.kindred_type;
       text = text.split(`{${slot}}`).join(value);
     }
-    // A weapon attack's MAIN damage is physical; everything else is energy.
-    const mainIsPhysical = entry.slot_type === 'plain_attack' || entry.slot_type === 'rider_attack';
-    text = text.split('{damage_type}').join(mainIsPhysical ? physical : energy);
+    // Print's ignite rider says "it starts burning" — the library's
+    // de-flavor pass turned that into "it starts suffering the effect",
+    // a dangling reference to an effect no clause names (5 rows; live:
+    // Hurl Cinder on the Emberwraith). Fire gets print's verb back; any
+    // other energy drops the sentence, which was flavor-only anyway
+    // (2024 has no Burning condition) and object-only besides.
+    if (text.includes('starts suffering the effect')) {
+      text = energy === 'Fire'
+        ? text.replace(/starts suffering the effect/g, 'starts burning')
+        : text.replace(/\s*(?:If the target is (?:a creature or )?a flammable object[^.]*|Creatures and flammable objects in the Emanation)[^.]*starts suffering the effect\./g, '');
+    }
+    // A weakness trigger keys on the energy's FOIL, never on the block's
+    // own element: 0 of 329 printed blocks pair an absorption trait and a
+    // weakness trait on one type (the Flesh Golem absorbs Lightning and
+    // fears Fire). Live: Frozen Vigor healed from Cold while Thawing
+    // Malaise was slowed by Cold, on a Cold-IMMUNE block — three ways
+    // dead at once.
+    if (text.includes('{weakness_type}')) {
+      const FOIL = {
+        Cold: 'Fire', Fire: 'Cold', Necrotic: 'Radiant', Radiant: 'Necrotic',
+        Poison: 'Radiant', Acid: 'Cold', Lightning: 'Thunder', Thunder: 'Lightning',
+        Psychic: 'Force', Force: 'Psychic',
+      };
+      const immune = String(j.immunities ?? '');
+      const owned = [physical, energy, energy2].filter(Boolean);
+      const pick = [FOIL[energy] ?? 'Fire', 'Fire', 'Radiant', 'Thunder', 'Force']
+        .find((t) => !owned.includes(t) && !immune.includes(t)) ?? (FOIL[energy] ?? 'Fire');
+      text = text.split('{weakness_type}').join(pick);
+    }
+    // The PHYSICAL type follows the limb, not the block (measured
+    // 2026-08-05): print derives it per attack — Bite Piercing 72/74,
+    // Slam Bludgeoning 13/13, Rend Slashing 57/60, Fist Bludgeoning 5/5 —
+    // and 47 printed blocks carry two or more physical types at once. The
+    // block-wide stamp exists to stop ENERGY sprawl (fire+cold+poison on
+    // one body) and that reasoning never transferred to physical types:
+    // it shipped a "Magma Fist" dealing Slashing (live, the Furnaceflow).
+    // Reader-facing name first, the row's printed name second, the
+    // block's declaration last.
+    const ANATOMY = [
+      [/\b(?:fist|slam|hammer|mace|club|maul|pseudopod|crush|smash|stomp|tail slap|boulder)\b/i, 'Bludgeoning'],
+      [/\b(?:claw|talon|rend|shear|blade|sword|scythe|slash|razor|sickle|wing)\b/i, 'Slashing'],
+      [/\b(?:bite|fang|tusk|sting|gore|spear|spike|lance|javelin|quill|beak|horn|harpoon|barb|jaw|jaws|maw|mandible|teeth|tooth)\b/i, 'Piercing'],
+    ];
+    // The limb the grapple OCCUPIES follows the same word: print's rows
+    // hardcode their donor's anatomy ("from one of two hands", the
+    // Vampire's Grave Strike) and a rename leaves a jaw grappling with
+    // hands (live: Clamp Jaw, the Riveted Bellows).
+    const LIMB_NOUN = [
+      [/\bjaws?\b|\bmaw\b|\bmandible/i, 'jaws'], [/\bclaws?\b/i, 'claws'],
+      [/\btalons?\b/i, 'talons'], [/\btentacles?\b/i, 'tentacles'],
+      [/\bpincers?\b/i, 'pincers'], [/\bfists?\b|\bhands?\b/i, 'hands'],
+      [/\bcoils?\b/i, 'coils'], [/\bfangs?\b/i, 'fangs'],
+    ];
+    const limbType = (...names) => {
+      for (const n of names) {
+        const hit = ANATOMY.find(([re]) => re.test(String(n ?? '')));
+        if (hit) return hit[1];
+      }
+      return null;
+    };
+    // A weapon attack's MAIN damage is physical; everything else is energy
+    // — EXCEPT bodily squeezes: a save-based constrict/crush that imposes
+    // the grapple is the body itself pressing, and print types it
+    // Bludgeoning 7 of 9 (the exceptions are energy-BODIED elementals).
+    // The energy stamp shipped a rib cage dealing Psychic (live: Cage of
+    // Ribs, the Keening Scuttler).
+    const mainIsPhysical = entry.slot_type === 'plain_attack' || entry.slot_type === 'rider_attack'
+      || (/Saving Throw/.test(text) && /Grappled condition \(escape/.test(text));
+    const attackPhysical = mainIsPhysical
+      ? (limbType(given.name, entry.name) ?? physical) : physical;
+    {
+      const limb = LIMB_NOUN.find(([re]) => re.test(String(given.name ?? entry.name ?? '')));
+      if (limb) text = text.replace(/(from one of (?:two|four|six|ten) )([a-z' -]+)/i, `$1${limb[1]}`);
+    }
+    text = text.split('{damage_type}').join(mainIsPhysical ? attackPhysical : energy);
     for (const s of ['rider_damage_type', 'rider2_damage_type', 'alt_damage_type', 'alt2_damage_type']) {
       // On a NON-attack entry the main is already the energy, so a rider
       // slot takes the second energy when the concept granted one — print's
       // dual-pool rows (Fire plus Force) instead of "Fire plus Fire".
       const riderEnergy = s.startsWith('rider') && !mainIsPhysical ? (energy2 ?? energy) : energy;
-      text = text.split(`{${s}}`).join(s.startsWith('alt') && mainIsPhysical ? physical : riderEnergy);
+      text = text.split(`{${s}}`).join(s.startsWith('alt') && mainIsPhysical ? attackPhysical : riderEnergy);
     }
     text = text.split('{creature}').join(inline);
+    // A legendary spell echo casting a CONTROL spell always carries the
+    // per-turn lock in print: every printed control echo is locked
+    // (Frightful/Commanding Presence, Mind Jolt, Beguile, Dread Command,
+    // Frightening Gaze — 100%), while the unlocked echoes are all damage
+    // spells (Blazing Light, Guiding Light, Mind Invasion). An unlocked
+    // row filled with Command shipped up to three DC-21 action-denials a
+    // round on top of the at-will list (live: the Skar's Gilded Misstep).
+    if (entry.section === 'Legendary Actions'
+      && /uses Spellcasting to cast \*/.test(text)
+      && !/can't take this action again/.test(text)) {
+      const echoed = [...text.matchAll(/\*([A-Z][\w' ]+?)\*/g)].map((mm) => mm[1]);
+      if (echoed.some((sp) => CONTROL_SPELLS.includes(sp))) {
+        text = `${text.trim().replace(/\.?$/, '.')} The ${inline} can't take this action again until the start of its next turn.`;
+      }
+    }
     let name = (entry.name_locked ? entry.name : (given.name || entry.name)).trim();
     // The gate is part of the NAME in print ("Fire Breath (Recharge 5-6)").
     // It was being dropped here, which shipped every recharge ability as
@@ -769,6 +1217,15 @@ export function applyFlavor(skeleton, llmJson) {
   }
 
   // ---- post-flavor sanity, all deterministic ------------------------------
+
+  // 0a0. The archetype's speed differential, stamped over whatever the
+  //      model wrote: a skirmisher moves, a brute lumbers, and until now
+  //      no archetype touched Speed at all (owner catch 2026-08-05).
+  //      Every mode on the line shifts together, floored at 10 feet.
+  if (skeleton.speed_mod && typeof j.speed === 'string') {
+    j.speed = j.speed.replace(/(\d+)(\s*ft\.)/g,
+      (m0, n, tail) => `${Math.max(10, Number(n) + skeleton.speed_mod)}${tail}`);
+  }
 
   // 0a. Movement-mode references must exist on the speed line. Flyby on a
   //     walk/climb creature "never triggers" (live: Algae-Slick Spring,
@@ -849,13 +1306,25 @@ export function applyFlavor(skeleton, llmJson) {
   //    two entries literally sharing one name). Later entries revert to their
   //    placeholder, which pick-time guards already made unique.
   {
+    // The colliding entry's OWN placeholder first — unique by pick-time
+    // guards and semantically native to its row. Grabbing the first unused
+    // placeholder from ANYWHERE handed a move-and-claw legendary the spell
+    // echo's "Mind Invasion" (live: the Keening Scuttler — the model named
+    // two entries "Skittering Pounce" and the fallback crossed the wires).
+    const ownPlaceholder = (e, sec, idx) => {
+      if (sec === 'Traits') return skeleton.traits[idx]?.name;
+      for (const [k, r] of renderedOf) if (r === e) return k.name;
+      return null;
+    };
     const taken = new Set();
     for (const [sec, list] of Object.entries(sections)) {
       list.forEach((e, i) => {
         if (taken.has(e.name)) {
-          const fallback = sec === 'Traits'
-            ? skeleton.traits.find((t) => !taken.has(t.name))?.name
-            : skeleton.entries.find((k) => !taken.has(k.name))?.name;
+          const own = ownPlaceholder(e, sec, i);
+          const fallback = own && !taken.has(own) ? own
+            : (sec === 'Traits'
+              ? skeleton.traits.find((t) => !taken.has(t.name))?.name
+              : skeleton.entries.find((k) => !taken.has(k.name))?.name);
           e.name = fallback ?? `${e.name} II`;
         }
         taken.add(e.name);
@@ -877,14 +1346,17 @@ export function applyFlavor(skeleton, llmJson) {
         // Only list-routed casts need the list: "uses Spellcasting to cast
         // *X*". An entry casting its own spell inline (a reaction Shield)
         // is self-contained and must NOT be appended to the action list.
-        for (const m of e.text.matchAll(/uses (?:its )?[\w ]*Spellcasting to cast \*([A-Z][\w' ]+?)\*/g)) {
-          referenced.add(m[1]);
+        for (const m of e.text.matchAll(/uses (?:its )?[\w ]*Spellcasting to cast \*([A-Z][\w' ]+?)\*( \(level \d+ version\))?/g)) {
+          referenced.add(`*${m[1]}*${m[2] ?? ''}`);
         }
       }
       for (const spell of referenced) {
-        if (!casterEntry.text.includes(`*${spell}*`)) {
+        const bare = spell.replace(/\*/g, '').replace(/\s*\(level.*$/, '');
+        if (!casterEntry.text.includes(`*${bare}*`)) {
+          // The list copy carries the SAME annotation as the cast site
+          // (owner improvement on print — see the upcast stamp).
           casterEntry.text = casterEntry.text.replace(/(\*\*At Will:\*\*)([^\n]*)/,
-            (m0, head, rest) => `${head}${rest.trim() ? `${rest},` : ' '} *${spell}*`);
+            (m0, head, rest) => `${head}${rest.trim() ? `${rest},` : ' '} ${spell}`);
         }
       }
     }
@@ -967,17 +1439,23 @@ export function applyFlavor(skeleton, llmJson) {
           const listed = [...atWillLine[1].matchAll(/\*([A-Z][\w' ]+?)\*/g)].map((m) => m[1]);
           const demoted = listed.filter((sp) => atWillBanned(sp));
           for (const sp of demoted) {
+            // The annotation moves WITH the spell: stripping bare *Name*
+            // orphaned its "(level N version)" onto the previous spell —
+            // "Scorching Ray (level 4 version) (level 6 version)" — while
+            // the demoted spell re-listed bare (live: the Tar-Shroud
+            // Watcher's spliced At-Will line).
+            const ann = (e.text.match(new RegExp(`\\*${sp}\\*( \\(level \\d+ version\\))`)) ?? [])[1] ?? '';
             e.text = e.text
-              .replace(new RegExp(`\\*${sp}\\*,\\s*`, 'g'), '')
-              .replace(new RegExp(`,\\s*\\*${sp}\\*`, 'g'), '')
-              .replace(new RegExp(`(- \\*\\*At Will:\\*\\*[^\\n]*)`, ''), '$1');
+              .replace(new RegExp(`\\*${sp}\\*( \\(level \\d+ version\\))?,\\s*`, 'g'), '')
+              .replace(new RegExp(`,\\s*\\*${sp}\\*( \\(level \\d+ version\\))?`, 'g'), '')
+              .replace(new RegExp(`\\*${sp}\\*( \\(level \\d+ version\\))?`, 'g'), '');
             if (/1\/Day(?: Each)?:\*\*/.test(e.text)) {
               if (!e.text.includes(`*${sp}*`)) {
                 e.text = e.text.replace(/(- \*\*1\/Day(?: Each)?:\*\*)([^\n]*)/,
-                  (m0, head, rest) => `${head}${rest.trim() ? `${rest},` : ''} *${sp}*`);
+                  (m0, head, rest) => `${head}${rest.trim() ? `${rest},` : ''} *${sp}*${ann}`);
               }
             } else {
-              e.text += `\n- **1/Day:** *${sp}*`;
+              e.text += `\n- **1/Day:** *${sp}*${ann}`;
             }
           }
         }
@@ -986,6 +1464,116 @@ export function applyFlavor(skeleton, llmJson) {
       e.text = e.text.replace(/1\/Day Each:(\*\*[^\n,]*)$/gm, '1/Day:$1')
         .replace(/- \*\*1\/Day Each:\*\* ([^,\n]+)$/gm, '- **1/Day:** $1');
       e.text = e.text.replace(/\n{3,}/g, '\n\n').trim();
+    }
+  }
+
+  // A restraint object's counterplay follows its MATERIAL (owner call —
+  // the substance could be anything): print's web line (Vulnerable Fire,
+  // Immune Bludgeoning) is right for fibrous bindings and inverted for
+  // stone — a shale tomb the martial's hammer can't crack while the
+  // firebolt shatters it reads backwards at any table (live: Entomb in
+  // Shale). Mineral-class substances swap to Vulnerable Bludgeoning,
+  // Immune Fire; everything else keeps the printed web physics.
+  {
+    // Hardened houses CRACK, woven and organic ones BURN (owner call,
+    // 2026-08-05). The old word list was the growing-regex shape and
+    // missed "cooling magma crust" (live, the Furnaceflow) exactly as it
+    // would miss the next material; the house already knows what it's
+    // made of.
+    const HARD_HOUSES = ['stone', 'magma', 'iron', 'glass', 'bone', 'ice', 'sand', 'chitin'];
+    const hardTokens = HARD_HOUSES.flatMap((h) => textureBanks.houses?.[h]?.tokens ?? []);
+    const MINERAL = new RegExp(`\\b(?:${hardTokens.join('|')}|crust|shale|slate|marble|obsidian|coral|amber|gold|steel|metal)\\b`, 'i');
+    for (const list of Object.values(sections)) {
+      for (const e of list) {
+        const m = e.text.match(/until (?:the|its) ([\w' -]+?) is destroyed \(AC/);
+        if (m && MINERAL.test(m[1])) {
+          // both printed variants (Giant Spider lists Bludgeoning in the
+          // immunities, the Ettercap doesn't)
+          e.text = e.text
+            .replace('Vulnerability to Fire damage', 'Vulnerability to Bludgeoning damage')
+            .replace('Immunity to Bludgeoning, Poison, and Psychic damage', 'Immunity to Fire, Poison, and Psychic damage')
+            .replace('Immunity to Poison and Psychic damage', 'Immunity to Fire, Poison, and Psychic damage');
+        }
+      }
+    }
+  }
+
+  // An ABSORBED type is never also an Immunity: print's four absorbers
+  // (Iron/Clay/Flesh Golem, Shambling Mound) are none of them immune to
+  // what they absorb — and immunity makes the absorption dead text,
+  // since the creature can never take the damage that heals it (live:
+  // Cold immunity beside Frozen Vigor).
+  {
+    const absorbed = new Set();
+    for (const list of Object.values(sections)) {
+      for (const e of list) {
+        const m = e.text.match(/subjected to (\w+) damage, it (?:takes no damage and instead )?regains/);
+        if (m) absorbed.add(m[1]);
+      }
+    }
+    if (absorbed.size && typeof j.immunities === 'string') {
+      j.immunities = j.immunities.split(/([;,])/).reduce((acc, part, i2, arr) => {
+        if (/^[;,]$/.test(part)) return acc;
+        const kept = part.split(',').map((x) => x.trim()).filter((x) => x && !absorbed.has(x));
+        return acc.concat(kept.length ? [kept.join(', ')] : []);
+      }, []).join('; ');
+    }
+  }
+
+  // Type-named entries harmonize with the damage they actually deal: a
+  // placeholder like "Lightning Breath" keeps its source's type word while
+  // {damage_type} is the flavor call's to choose, so an unrenamed entry
+  // ships a name/type contradiction (live: a placeholder-derived Furnace
+  // Lightning dealing Thunder). Engine-side swap, before the Multiattack
+  // rebuild so references follow; the entry-name-type-mismatch lint stays
+  // as the tripwire. 0/329 printed entries mismatch.
+  {
+    const TYPE_WORDS = ['Acid', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Poison', 'Psychic', 'Radiant', 'Thunder'];
+    const ALL_TYPES = TYPE_WORDS.concat(['Bludgeoning', 'Piercing', 'Slashing']);
+    // Type SYNONYMS: a name promises its element in register words far
+    // more often than in the bare type word — "Barrow Chill Burst" dealt
+    // Fire (live, the Emberwraith) and the bare-word check saw nothing.
+    // Only the unambiguous ones; anything that reads two ways stays out.
+    // ONLY words that name an element's physical form. Register
+    // vocabulary is deliberately excluded — "Hallowed", "Sepulchral",
+    // "Maddening" describe a creature's nature, not its damage type, and
+    // treating them as claims renamed a perfectly good "Hallowed
+    // Radiance" to "Poison Radiance" (caught in the sweep).
+    const SYNONYMS = {
+      Cold: ['chill', 'frost', 'rime', 'glacial', 'hoarfrost', 'freezing', 'icy'],
+      Fire: ['ember', 'cinder', 'searing', 'scorching', 'pyre', 'blazing', 'flame', 'furnace'],
+      Acid: ['caustic', 'vitriolic'],
+      Poison: ['venomous', 'toxic'],
+    };
+    const nameClaims = (name, ty) => new RegExp(`\\b${ty}\\b`, 'i').test(name)
+      || (SYNONYMS[ty] ?? []).some((w) => new RegExp(`\\b${w}`, 'i').test(name));
+    for (const list of Object.values(sections)) {
+      for (const e of list) {
+        if (e.name_locked) continue;
+        const dealt = [...(e.text ?? '').matchAll(/(\w+) damage/g)].map((m) => m[1])
+          .filter((t) => ALL_TYPES.includes(t));
+        if (!dealt.length) continue;
+        // a name claiming the type it deals is coherent — never rewrite it
+        if (TYPE_WORDS.some((ty) => dealt.includes(ty) && nameClaims(e.name, ty))) continue;
+        for (const ty of TYPE_WORDS) {
+          if (nameClaims(e.name, ty) && !dealt.includes(ty)) {
+            const oldName = e.name;
+            const bareHit = new RegExp(`\\b${ty}\\b`, 'i');
+            e.name = bareHit.test(e.name)
+              ? e.name.replace(bareHit, dealt[0])
+              : e.name.replace(new RegExp(`\\b(?:${(SYNONYMS[ty] ?? []).join('|')})\\w*`, 'i'), dealt[0]);
+            // References follow ("makes one Radiant Sword attack" must
+            // track a Radiant Sword -> Fire Sword rename) — this pass runs
+            // after every other reference repoint, so it propagates its own.
+            for (const l2 of Object.values(sections)) {
+              for (const e2 of l2) {
+                e2.text = e2.text.split(oldName).join(e.name);
+              }
+            }
+            break;
+          }
+        }
+      }
     }
   }
 
@@ -1003,10 +1591,58 @@ export function applyFlavor(skeleton, llmJson) {
       .filter(Boolean);
     const rendered = multi && renderedOf.get(multi);
     if (rendered && finalAtks.length) {
+      // A grapple that commits "from both <appendages>" reads absurd as
+      // the TRIPLED primary — three swings from hands the first swing
+      // filled (live: three Grasp attacks "from both talons"). Print's
+      // Roc layout: the volume attack leads, the committer is the
+      // replacement option. Reorder when a non-committing attack exists.
+      if (finalAtks.length > 1 && /from both /.test(finalAtks[0].text)) {
+        const clean = finalAtks.findIndex((a) => !/from both /.test(a.text));
+        if (clean > 0) finalAtks.unshift(finalAtks.splice(clean, 1)[0]);
+      }
       const n = skeleton.multiattack;
       const stripGate = (nm) => nm.replace(/\s*\(.*\)$/, '');
-      rendered.text = `The ${inline} makes ${['', 'one', 'two', 'three', 'four', 'five', 'six'][n] ?? n} ${stripGate(finalAtks[0].name)} attacks.`
-        + finalAtks.slice(1).map((a) => ` It can replace one attack with a use of ${stripGate(a.name)}.`).join('');
+      const word = ['', 'one', 'two', 'three', 'four', 'five', 'six'][n] ?? n;
+      // Two attacks on ONE damage budget use print's dominant choice idiom
+      // ("makes three attacks, using X or Y in any combination" — 59
+      // printed blocks): a ranged-only primary with a melee-capable
+      // replace-one option half-fails in melee (live: one clean lance
+      // plus two disadvantaged throws on the closed-upon Dreadwalker).
+      const budgets = skeleton.entries
+        .filter((e) => e.slot_type === 'plain_attack' || e.slot_type === 'rider_attack')
+        .map((e) => e.damage ?? 0);
+      const equalBudgets = finalAtks.length === 2 && budgets.length === 2 && budgets[0] === budgets[1];
+      rendered.text = equalBudgets
+        ? `The ${inline} makes ${word} attacks, using ${stripGate(finalAtks[0].name)} or ${stripGate(finalAtks[1].name)} in any combination.`
+        : `The ${inline} makes ${word} ${stripGate(finalAtks[0].name)} attacks.`
+          + finalAtks.slice(1).map((a) => ` It can replace one attack with a use of ${stripGate(a.name)}.`).join('');
+    }
+  }
+
+  // A MOBILITY legendary points at an attack the chassis can actually
+  // deliver after moving: the template hardcodes "makes one Rend attack"
+  // and the reference repointer aims it at the FIRST attack row, blind to
+  // the body — on a Fly 90 / ranged-parity skirmisher that demanded the
+  // melee dive its whole kit exists to avoid (live: Skimming Reattack on
+  // the Scree). Prefers a ranged-capable attack when the block flies or
+  // fights at range; otherwise nothing changes.
+  {
+    const wantsRange = (skeleton.movement ?? []).includes('fly')
+      || ['ranged', 'mixed'].includes(skeleton.attack_mode ?? '');
+    if (wantsRange) {
+      const rendered = skeleton.entries
+        .filter((e) => e.slot_type === 'plain_attack' || e.slot_type === 'rider_attack')
+        .map((e) => renderedOf.get(e)).filter(Boolean);
+      const ranged = rendered.find((r) => /Ranged Attack Roll|or range \d/.test(r.text));
+      if (ranged && rendered.length > 1) {
+        const stripGate = (nm) => nm.replace(/\s*\(.*\)$/, '');
+        for (const e of sections['Legendary Actions'] ?? []) {
+          if (!/(?:moves up to|teleports? up to)[^.]*makes one /.test(e.text)) continue;
+          e.text = e.text.replace(/(makes one )([A-Z][\w' -]+?)( attack)/,
+            (m0, head, named, tail) => (rendered.some((r) => stripGate(r.name) === named)
+              ? `${head}${stripGate(ranged.name)}${tail}` : m0));
+        }
+      }
     }
   }
 
@@ -1063,6 +1699,10 @@ export function chassisFromSkeleton(skeleton) {
     pb: skeleton.pb,
     attack_bonus: skeleton.attack_bonus,
     save_dc: skeleton.save_dc,
+    // Archetype-gated lint rules read this (bps-resistance exempts swarms);
+    // omitting it made the corrector strip the swarm package the engine had
+    // just stamped.
+    archetype: skeleton.archetype ?? null,
   };
 }
 

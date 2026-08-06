@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "status": "DRAFT — all 25 facets authored. Unwired: nothing imports this file yet. Owner red-pen pass expected before Phase 3 wiring (banked fallbacks -> fill vet -> prompt menus).",
-    "register": "Authored to the printed voice (conventions read, 2026-08-03): substances are effect-adjective + state-of-matter noun, one to three words, article-free, never clauses ('sleep gas', 'scalding steam', 'repulsion energy' — never 'moss-sheathed root and stone'). Crafted attack names are two words, [element/material/condition] + [weapon] ('Flame Whip', 'Frost Axe', 'Grave Strike'). Delivery verbs are the small printed set, agreeing with the substance's state of matter. Damage affinities are MEASURED counts from the 329-block corpus and stay weights, never filters.",
+    "status": "DRAFT \u2014 all 25 facets authored. Unwired: nothing imports this file yet. Owner red-pen pass expected before Phase 3 wiring (banked fallbacks -> fill vet -> prompt menus).",
+    "register": "Authored to the printed voice (conventions read, 2026-08-03): substances are effect-adjective + state-of-matter noun, one to three words, article-free, never clauses ('sleep gas', 'scalding steam', 'repulsion energy' \u2014 never 'moss-sheathed root and stone'). Crafted attack names are two words, [element/material/condition] + [weapon] ('Flame Whip', 'Frost Axe', 'Grave Strike'). Delivery verbs are the small printed set, agreeing with the substance's state of matter. Damage affinities are MEASURED counts from the 329-block corpus and stay weights, never filters.",
     "fields": {
       "substances": "fills for {substance}: what a breath, burst, aura, or dissolution is made of",
       "appendages": "fills for {appendage}/{appendage_plural}: one/many pairs, concrete limbs or implements",
@@ -9,664 +9,3334 @@
       "name_adjectives": "leading words for ability and creature names in this register",
       "name_nouns": "concrete head nouns (agents, forms, implements) for names in this register",
       "damage_affinity": "measured printed counts of energy damage for the facet's home type; thin samples marked",
-      "vet_tokens": "SMALL, high-confidence domain-claiming tokens for the Phase 3 fill vet — a fill containing one is claiming this facet. Must stay unique across facets; ambiguous words (molten, ash, mist) deliberately excluded."
-    }
+      "vet_tokens": "SMALL, high-confidence domain-claiming tokens for the Phase 3 fill vet \u2014 a fill containing one is claiming this facet. Must stay unique across facets; ambiguous words (molten, ash, mist) deliberately excluded."
+    },
+    "houses_note": "A HOUSE is one material and the vocabulary it earns \u2014 finer than a facet, which spans several (elemental holds magma, stone, storm, ice and sand at once). The engine declares ONE house per block, scored from the concept prose, and every material fill and name draws from it: brine and sleet are both Cold-legal and both wrong together (owner call 2026-08-05). Token lists cover the words CONCEPTS use, not just the house's own name: 'salt-toughened plant fiber' matched nothing and fell through to a blind seeded pick that chose chitin for a plant creature (live: the Graspwarden, 2026-08-05)."
   },
   "facets": {
     "forged": {
       "substances": [
-        "grinding sparks", "arc discharge", "molten solder", "quenching steam", "furnace smoke",
-        "iron filings", "coolant vapor", "gear shrapnel", "boiler steam", "crackling flux",
-        "leaden shot", "rivet hail", "foundry slag", "hammered cinders", "oil haze",
-        "copper dust", "magnetic pulse", "anvil sparks", "white-hot filaments", "mainspring shards",
-        "brazen echoes", "smelter glare"
+        "grinding sparks",
+        "arc discharge",
+        "molten solder",
+        "quenching steam",
+        "furnace smoke",
+        "iron filings",
+        "coolant vapor",
+        "gear shrapnel",
+        "boiler steam",
+        "crackling flux",
+        "leaden shot",
+        "rivet hail",
+        "foundry slag",
+        "hammered cinders",
+        "oil haze",
+        "copper dust",
+        "magnetic pulse",
+        "anvil sparks",
+        "white-hot filaments",
+        "mainspring shards",
+        "brazen echoes",
+        "smelter glare"
       ],
       "appendages": [
-        { "one": "piston arm", "many": "piston arms" },
-        { "one": "bladed arm", "many": "bladed arms" },
-        { "one": "hammer limb", "many": "hammer limbs" },
-        { "one": "chain flail", "many": "chain flails" },
-        { "one": "drill spike", "many": "drill spikes" },
-        { "one": "shear claw", "many": "shear claws" },
-        { "one": "clamp jaw", "many": "clamp jaws" },
-        { "one": "riveted fist", "many": "riveted fists" },
-        { "one": "saw wheel", "many": "saw wheels" },
-        { "one": "counterweight tail", "many": "counterweight tails" },
-        { "one": "grinding maw", "many": "grinding maws" },
-        { "one": "cable lash", "many": "cable lashes" }
+        {
+          "one": "piston arm",
+          "many": "piston arms"
+        },
+        {
+          "one": "bladed arm",
+          "many": "bladed arms"
+        },
+        {
+          "one": "hammer limb",
+          "many": "hammer limbs"
+        },
+        {
+          "one": "chain flail",
+          "many": "chain flails"
+        },
+        {
+          "one": "drill spike",
+          "many": "drill spikes"
+        },
+        {
+          "one": "shear claw",
+          "many": "shear claws"
+        },
+        {
+          "one": "clamp jaw",
+          "many": "clamp jaws"
+        },
+        {
+          "one": "riveted fist",
+          "many": "riveted fists"
+        },
+        {
+          "one": "saw wheel",
+          "many": "saw wheels"
+        },
+        {
+          "one": "counterweight tail",
+          "many": "counterweight tails"
+        },
+        {
+          "one": "grinding maw",
+          "many": "grinding maws"
+        },
+        {
+          "one": "cable lash",
+          "many": "cable lashes"
+        }
       ],
-      "deliveries": ["vents", "discharges", "emits", "sprays", "exhausts", "releases"],
+      "deliveries": [
+        "vents",
+        "discharges",
+        "emits",
+        "sprays",
+        "exhausts",
+        "releases"
+      ],
       "name_adjectives": [
-        "Molten", "Riveted", "Grinding", "Furnace", "Leaden", "Brazen", "Clockwork",
-        "Tempered", "Quenched", "Soldered", "Anvil", "Foundry", "Boiler", "Geared", "Iron"
+        "Molten",
+        "Riveted",
+        "Grinding",
+        "Furnace",
+        "Leaden",
+        "Brazen",
+        "Clockwork",
+        "Tempered",
+        "Quenched",
+        "Soldered",
+        "Anvil",
+        "Foundry",
+        "Boiler",
+        "Geared",
+        "Iron"
       ],
       "name_nouns": [
-        "Engine", "Sentinel", "Colossus", "Warden", "Juggernaut", "Automaton",
-        "Frame", "Turbine", "Effigy", "Harrow", "Press", "Idol"
+        "Engine",
+        "Sentinel",
+        "Colossus",
+        "Warden",
+        "Juggernaut",
+        "Automaton",
+        "Frame",
+        "Turbine",
+        "Effigy",
+        "Harrow",
+        "Press",
+        "Idol"
       ],
-      "damage_affinity": { "Fire": 5, "Acid": 4, "Lightning": 3, "Force": 3, "Poison": 1 },
-      "vet_tokens": ["gear", "rivet", "piston", "solder", "clockwork", "forge", "anvil", "boiler"]
+      "damage_affinity": {
+        "Fire": 5,
+        "Acid": 4,
+        "Lightning": 3,
+        "Force": 3,
+        "Poison": 1
+      },
+      "vet_tokens": [
+        "gear",
+        "rivet",
+        "piston",
+        "solder",
+        "clockwork",
+        "forge",
+        "anvil",
+        "boiler"
+      ],
+      "restraints": [
+        "cooling slag",
+        "riveted chain-net",
+        "quenching iron bands",
+        "solder-hot wire"
+      ],
+      "houses": [
+        "iron",
+        "magma",
+        "glass"
+      ]
     },
     "grave": {
       "substances": [
-        "grave dust", "tomb mold", "embalming fumes", "pall smoke", "bone chips",
-        "barrow chill", "black ichor", "carrion reek", "marrow frost", "sepulchral haze",
-        "funerary ash", "coffin splinters", "corpse-candle light", "mourning bells", "shroud tatters",
-        "wailing wind", "grave loam", "tallow smoke", "ossuary dust", "winding-sheet linen"
+        "grave dust",
+        "tomb mold",
+        "embalming fumes",
+        "pall smoke",
+        "bone chips",
+        "barrow chill",
+        "black ichor",
+        "carrion reek",
+        "marrow frost",
+        "sepulchral haze",
+        "funerary ash",
+        "coffin splinters",
+        "corpse-candle light",
+        "mourning bells",
+        "shroud tatters",
+        "wailing wind",
+        "grave loam",
+        "tallow smoke",
+        "ossuary dust",
+        "winding-sheet linen"
       ],
       "appendages": [
-        { "one": "withered hand", "many": "withered hands" },
-        { "one": "barrow blade", "many": "barrow blades" },
-        { "one": "shroud coil", "many": "shroud coils" },
-        { "one": "rib spur", "many": "rib spurs" },
-        { "one": "grasping finger", "many": "grasping fingers" },
-        { "one": "sexton's spade", "many": "sexton's spades" },
-        { "one": "coffin nail", "many": "coffin nails" },
-        { "one": "jawbone", "many": "jawbones" },
-        { "one": "chain of mourning", "many": "chains of mourning" },
-        { "one": "grave-cold claw", "many": "grave-cold claws" }
+        {
+          "one": "withered hand",
+          "many": "withered hands"
+        },
+        {
+          "one": "barrow blade",
+          "many": "barrow blades"
+        },
+        {
+          "one": "shroud coil",
+          "many": "shroud coils"
+        },
+        {
+          "one": "rib spur",
+          "many": "rib spurs"
+        },
+        {
+          "one": "grasping finger",
+          "many": "grasping fingers"
+        },
+        {
+          "one": "sexton's spade",
+          "many": "sexton's spades"
+        },
+        {
+          "one": "coffin nail",
+          "many": "coffin nails"
+        },
+        {
+          "one": "jawbone",
+          "many": "jawbones"
+        },
+        {
+          "one": "chain of mourning",
+          "many": "chains of mourning"
+        },
+        {
+          "one": "grave-cold claw",
+          "many": "grave-cold claws"
+        }
       ],
-      "deliveries": ["exhales", "sheds", "releases", "seeps", "breathes", "emits"],
+      "deliveries": [
+        "exhales",
+        "sheds",
+        "releases",
+        "seeps",
+        "breathes",
+        "emits"
+      ],
       "name_adjectives": [
-        "Grave", "Barrow", "Sepulchral", "Withering", "Mourning", "Tomb", "Pall",
-        "Carrion", "Wailing", "Rotting", "Embalmed", "Deathless", "Marrow", "Funerary", "Hollow"
+        "Grave",
+        "Barrow",
+        "Sepulchral",
+        "Withering",
+        "Mourning",
+        "Tomb",
+        "Pall",
+        "Carrion",
+        "Wailing",
+        "Rotting",
+        "Embalmed",
+        "Deathless",
+        "Marrow",
+        "Funerary",
+        "Hollow"
       ],
       "name_nouns": [
-        "Warden", "Herald", "Bell", "Choir", "Mask", "Shroud", "Sexton",
-        "Mourner", "Pallbearer", "Procession", "Crown", "Reliquary"
+        "Warden",
+        "Herald",
+        "Bell",
+        "Choir",
+        "Mask",
+        "Shroud",
+        "Sexton",
+        "Mourner",
+        "Pallbearer",
+        "Procession",
+        "Crown",
+        "Reliquary"
       ],
-      "damage_affinity": { "Necrotic": 21, "Force": 5, "Psychic": 2, "Acid": 2, "Radiant": 2, "Cold": 1, "Lightning": 1 },
-      "vet_tokens": ["grave", "tomb", "barrow", "carrion", "coffin", "sepulch", "embalm", "ossuary", "shroud"]
+      "damage_affinity": {
+        "Necrotic": 21,
+        "Force": 5,
+        "Psychic": 2,
+        "Acid": 2,
+        "Radiant": 2,
+        "Cold": 1,
+        "Lightning": 1
+      },
+      "vet_tokens": [
+        "grave",
+        "tomb",
+        "barrow",
+        "carrion",
+        "coffin",
+        "sepulch",
+        "embalm",
+        "ossuary",
+        "shroud"
+      ],
+      "restraints": [
+        "grave-wax shroud",
+        "coffin-silk wrappings",
+        "clutching burial soil",
+        "bone-lattice cage"
+      ],
+      "houses": [
+        "grave",
+        "bone",
+        "rot",
+        "ash"
+      ]
     },
     "verdant": {
       "substances": [
-        "spore cloud", "strangling vines", "pollen haze", "thorn hail", "blighted sap",
-        "heartwood splinters", "bramble tangle", "seed shot", "nettle dust", "amber resin",
-        "leaf-litter musk", "mulch reek", "green rot", "root fibers", "creeper mesh",
-        "sap froth", "bark scale", "canker bloom", "girdling roots", "wet loam"
+        "spore cloud",
+        "strangling vines",
+        "pollen haze",
+        "thorn hail",
+        "blighted sap",
+        "heartwood splinters",
+        "bramble tangle",
+        "seed shot",
+        "nettle dust",
+        "amber resin",
+        "leaf-litter musk",
+        "mulch reek",
+        "green rot",
+        "root fibers",
+        "creeper mesh",
+        "sap froth",
+        "bark scale",
+        "canker bloom",
+        "girdling roots",
+        "wet loam"
       ],
       "appendages": [
-        { "one": "vine", "many": "vines" },
-        { "one": "taproot", "many": "taproots" },
-        { "one": "thorned tendril", "many": "thorned tendrils" },
-        { "one": "bough", "many": "boughs" },
-        { "one": "bramble whip", "many": "bramble whips" },
-        { "one": "creeper", "many": "creepers" },
-        { "one": "frond", "many": "fronds" },
-        { "one": "root club", "many": "root clubs" },
-        { "one": "splintered branch", "many": "splintered branches" },
-        { "one": "seed pod", "many": "seed pods" }
+        {
+          "one": "vine",
+          "many": "vines"
+        },
+        {
+          "one": "taproot",
+          "many": "taproots"
+        },
+        {
+          "one": "thorned tendril",
+          "many": "thorned tendrils"
+        },
+        {
+          "one": "bough",
+          "many": "boughs"
+        },
+        {
+          "one": "bramble whip",
+          "many": "bramble whips"
+        },
+        {
+          "one": "creeper",
+          "many": "creepers"
+        },
+        {
+          "one": "frond",
+          "many": "fronds"
+        },
+        {
+          "one": "root club",
+          "many": "root clubs"
+        },
+        {
+          "one": "splintered branch",
+          "many": "splintered branches"
+        },
+        {
+          "one": "seed pod",
+          "many": "seed pods"
+        }
       ],
-      "deliveries": ["sprays", "releases", "sheds", "exudes", "scatters", "expels"],
+      "deliveries": [
+        "sprays",
+        "releases",
+        "sheds",
+        "exudes",
+        "scatters",
+        "expels"
+      ],
       "name_adjectives": [
-        "Thorned", "Blighted", "Mossbound", "Rootbound", "Bramble", "Heartwood",
-        "Sporing", "Nettle", "Girdled", "Cankered", "Sapwood", "Overgrown", "Mulched", "Seeding"
+        "Thorned",
+        "Blighted",
+        "Mossbound",
+        "Rootbound",
+        "Bramble",
+        "Heartwood",
+        "Sporing",
+        "Nettle",
+        "Girdled",
+        "Cankered",
+        "Sapwood",
+        "Overgrown",
+        "Mulched",
+        "Seeding"
       ],
       "name_nouns": [
-        "Shambler", "Tangle", "Warden", "Bloom", "Thicket", "Snag",
-        "Grove", "Wicker Shape", "Trellis", "Copse", "Harvest", "Stump"
+        "Shambler",
+        "Tangle",
+        "Warden",
+        "Bloom",
+        "Thicket",
+        "Snag",
+        "Grove",
+        "Wicker Shape",
+        "Trellis",
+        "Copse",
+        "Harvest",
+        "Stump"
       ],
-      "damage_affinity": { "Poison": 3, "Lightning": 2, "Necrotic": 2, "Acid": 2, "_note": "printed Plant sample is thin (n=6, Lightning skewed by the Shambling Mound); weights are judgment seeded by the measurement" },
-      "vet_tokens": ["spore", "vine", "root", "bramble", "sap", "thorn", "pollen", "mulch", "frond"]
+      "damage_affinity": {
+        "Poison": 3,
+        "Lightning": 2,
+        "Necrotic": 2,
+        "Acid": 2,
+        "_note": "printed Plant sample is thin (n=6, Lightning skewed by the Shambling Mound); weights are judgment seeded by the measurement"
+      },
+      "vet_tokens": [
+        "spore",
+        "vine",
+        "root",
+        "bramble",
+        "sap",
+        "thorn",
+        "pollen",
+        "mulch",
+        "frond"
+      ],
+      "restraints": [
+        "strangler vines",
+        "sap-gummed creepers",
+        "thorn lattice",
+        "rootbind"
+      ],
+      "houses": [
+        "thorn",
+        "fungus",
+        "sand"
+      ]
     },
     "fey": {
       "substances": [
-        "glamour haze", "moon frost", "thistledown", "dusk shadow", "silvered mist",
-        "revel music", "midsummer heat", "hedge briars", "dream dust", "court perfume",
-        "gloaming light", "dew glitter", "fiddle drone", "hollow-hill echoes", "birch smoke",
-        "wild honey scent", "cobweb silk", "toadstool rings"
+        "glamour haze",
+        "moon frost",
+        "thistledown",
+        "dusk shadow",
+        "silvered mist",
+        "revel music",
+        "midsummer heat",
+        "hedge briars",
+        "dream dust",
+        "court perfume",
+        "gloaming light",
+        "dew glitter",
+        "fiddle drone",
+        "hollow-hill echoes",
+        "birch smoke",
+        "wild honey scent",
+        "cobweb silk",
+        "toadstool rings"
       ],
       "appendages": [
-        { "one": "briar whip", "many": "briar whips" },
-        { "one": "silver blade", "many": "silver blades" },
-        { "one": "hooked finger", "many": "hooked fingers" },
-        { "one": "antler crown", "many": "antler crowns" },
-        { "one": "hawthorn staff", "many": "hawthorn staves" },
-        { "one": "cold-iron chain", "many": "cold-iron chains" },
-        { "one": "willow switch", "many": "willow switches" },
-        { "one": "crooked claw", "many": "crooked claws" }
+        {
+          "one": "briar whip",
+          "many": "briar whips"
+        },
+        {
+          "one": "silver blade",
+          "many": "silver blades"
+        },
+        {
+          "one": "hooked finger",
+          "many": "hooked fingers"
+        },
+        {
+          "one": "antler crown",
+          "many": "antler crowns"
+        },
+        {
+          "one": "hawthorn staff",
+          "many": "hawthorn staves"
+        },
+        {
+          "one": "cold-iron chain",
+          "many": "cold-iron chains"
+        },
+        {
+          "one": "willow switch",
+          "many": "willow switches"
+        },
+        {
+          "one": "crooked claw",
+          "many": "crooked claws"
+        }
       ],
-      "deliveries": ["sheds", "releases", "emits", "breathes", "scatters"],
+      "deliveries": [
+        "sheds",
+        "releases",
+        "emits",
+        "breathes",
+        "scatters"
+      ],
       "name_adjectives": [
-        "Gloaming", "Moonlit", "Thistled", "Silvered", "Midsummer", "Twilight",
-        "Reveling", "Briar", "Dusk", "Hedge", "Glamoured", "Hollowhill", "Unseelie", "Dew-cold"
+        "Gloaming",
+        "Moonlit",
+        "Thistled",
+        "Silvered",
+        "Midsummer",
+        "Twilight",
+        "Reveling",
+        "Briar",
+        "Dusk",
+        "Hedge",
+        "Glamoured",
+        "Hollowhill",
+        "Unseelie",
+        "Dew-cold"
       ],
       "name_nouns": [
-        "Hag", "Hound", "Piper", "Reveler", "Courtier", "Huntsman",
-        "Knight", "Stag", "Crone", "Fiddler", "Herald", "Gatekeeper"
+        "Hag",
+        "Hound",
+        "Piper",
+        "Reveler",
+        "Courtier",
+        "Huntsman",
+        "Knight",
+        "Stag",
+        "Crone",
+        "Fiddler",
+        "Herald",
+        "Gatekeeper"
       ],
-      "damage_affinity": { "Poison": 4, "Psychic": 2, "_note": "printed Fey sample is thin (n=15 blocks); Cold and Radiant read as legal court flavors by judgment" },
-      "vet_tokens": ["glamour", "thistle", "revel", "seelie", "hedge-court", "gloaming", "hollow-hill"]
+      "damage_affinity": {
+        "Poison": 4,
+        "Psychic": 2,
+        "_note": "printed Fey sample is thin (n=15 blocks); Cold and Radiant read as legal court flavors by judgment"
+      },
+      "vet_tokens": [
+        "glamour",
+        "thistle",
+        "revel",
+        "seelie",
+        "hedge-court",
+        "gloaming",
+        "hollow-hill"
+      ],
+      "restraints": [
+        "braided moonlight",
+        "dream-gossamer",
+        "oath-thread",
+        "thistledown snare"
+      ],
+      "houses": [
+        "dream",
+        "shadow",
+        "light"
+      ]
     },
     "draconic": {
       "substances": [
-        "sulfur smoke", "cinder wind", "hoard dust", "scale shards", "kiln heat",
-        "storm charge", "glacial breath", "caustic fumes", "wingstorm gust", "furnace glare",
-        "molten spittle", "rimefrost", "ozone reek", "ember spray"
+        "sulfur smoke",
+        "cinder wind",
+        "hoard dust",
+        "scale shards",
+        "kiln heat",
+        "storm charge",
+        "glacial breath",
+        "caustic fumes",
+        "wingstorm gust",
+        "furnace glare",
+        "molten spittle",
+        "rimefrost",
+        "ozone reek",
+        "ember spray"
       ],
       "appendages": [
-        { "one": "talon", "many": "talons" },
-        { "one": "fang", "many": "fangs" },
-        { "one": "tail", "many": "tails" },
-        { "one": "wing", "many": "wings" },
-        { "one": "horn", "many": "horns" },
-        { "one": "crushing jaw", "many": "crushing jaws" }
+        {
+          "one": "talon",
+          "many": "talons"
+        },
+        {
+          "one": "fang",
+          "many": "fangs"
+        },
+        {
+          "one": "tail",
+          "many": "tails"
+        },
+        {
+          "one": "wing",
+          "many": "wings"
+        },
+        {
+          "one": "horn",
+          "many": "horns"
+        },
+        {
+          "one": "crushing jaw",
+          "many": "crushing jaws"
+        }
       ],
-      "deliveries": ["exhales", "breathes", "spews", "discharges"],
+      "deliveries": [
+        "exhales",
+        "breathes",
+        "spews",
+        "discharges"
+      ],
       "name_adjectives": [
-        "Cinder", "Hoard", "Scaled", "Sulfurous", "Ember", "Frostscale",
-        "Stormwing", "Wyrm", "Molten-veined", "Ancient", "Kiln", "Rime"
+        "Cinder",
+        "Hoard",
+        "Scaled",
+        "Sulfurous",
+        "Ember",
+        "Frostscale",
+        "Stormwing",
+        "Wyrm",
+        "Molten-veined",
+        "Ancient",
+        "Kiln",
+        "Rime"
       ],
       "name_nouns": [
-        "Wyrm", "Drake", "Serpent", "Tyrant", "Sovereign", "Devourer",
-        "Roost", "Maw", "Pyre", "Hoardkeeper"
+        "Wyrm",
+        "Drake",
+        "Serpent",
+        "Tyrant",
+        "Sovereign",
+        "Devourer",
+        "Roost",
+        "Maw",
+        "Pyre",
+        "Hoardkeeper"
       ],
-      "damage_affinity": { "Fire": 26, "Cold": 18, "Acid": 14, "Poison": 14, "Lightning": 14, "Thunder": 2, "Psychic": 2, "Force": 2 },
-      "vet_tokens": ["wyrm", "hoard", "drake", "wingstorm"]
+      "damage_affinity": {
+        "Fire": 26,
+        "Cold": 18,
+        "Acid": 14,
+        "Poison": 14,
+        "Lightning": 14,
+        "Thunder": 2,
+        "Psychic": 2,
+        "Force": 2
+      },
+      "vet_tokens": [
+        "wyrm",
+        "hoard",
+        "drake",
+        "wingstorm"
+      ],
+      "restraints": [
+        "amber-hard spittle",
+        "half-molten hoard-gold",
+        "scale-shed netting",
+        "smoke-thick ash"
+      ],
+      "houses": [
+        "flame",
+        "ash",
+        "ice",
+        "storm"
+      ]
     },
     "elemental": {
       "substances": [
-        "living flame", "river silt", "gale front", "magma gouts", "static charge",
-        "hailstone shot", "cinder swarm", "geyser steam", "quake dust", "brine spray",
-        "mudflow", "updraft howl", "grinding scree", "sleet veil", "thunderhead murk",
-        "tidal churn", "ash plume", "bedrock shards"
+        "living flame",
+        "river silt",
+        "gale front",
+        "magma gouts",
+        "static charge",
+        "hailstone shot",
+        "cinder swarm",
+        "geyser steam",
+        "quake dust",
+        "brine spray",
+        "mudflow",
+        "updraft howl",
+        "grinding scree",
+        "sleet veil",
+        "thunderhead murk",
+        "tidal churn",
+        "ash plume",
+        "bedrock shards"
       ],
       "appendages": [
-        { "one": "stone fist", "many": "stone fists" },
-        { "one": "water whip", "many": "water whips" },
-        { "one": "flame tendril", "many": "flame tendrils" },
-        { "one": "wind scythe", "many": "wind scythes" },
-        { "one": "cyclone arm", "many": "cyclone arms" },
-        { "one": "magma fist", "many": "magma fists" },
-        { "one": "wave", "many": "waves" },
-        { "one": "boulder shoulder", "many": "boulder shoulders" }
+        {
+          "one": "stone fist",
+          "many": "stone fists"
+        },
+        {
+          "one": "water whip",
+          "many": "water whips"
+        },
+        {
+          "one": "flame tendril",
+          "many": "flame tendrils"
+        },
+        {
+          "one": "wind scythe",
+          "many": "wind scythes"
+        },
+        {
+          "one": "cyclone arm",
+          "many": "cyclone arms"
+        },
+        {
+          "one": "magma fist",
+          "many": "magma fists"
+        },
+        {
+          "one": "wave",
+          "many": "waves"
+        },
+        {
+          "one": "boulder shoulder",
+          "many": "boulder shoulders"
+        }
       ],
-      "deliveries": ["exhales", "sheds", "sprays", "discharges", "releases", "hurls"],
+      "deliveries": [
+        "exhales",
+        "sheds",
+        "sprays",
+        "discharges",
+        "releases",
+        "hurls"
+      ],
       "name_adjectives": [
-        "Galeborn", "Silt", "Magma", "Tidal", "Quaking", "Thunderhead",
-        "Rime", "Ashen", "Geyser", "Bedrock", "Squall", "Undertow"
+        "Galeborn",
+        "Silt",
+        "Magma",
+        "Tidal",
+        "Quaking",
+        "Thunderhead",
+        "Rime",
+        "Ashen",
+        "Geyser",
+        "Bedrock",
+        "Squall",
+        "Undertow"
       ],
       "name_nouns": [
-        "Tempest", "Bonfire", "Undertow", "Landslide", "Monsoon", "Pillar",
-        "Vortex", "Cascade", "Tremor", "Squall", "Furnace", "Floe"
+        "Tempest",
+        "Bonfire",
+        "Undertow",
+        "Landslide",
+        "Monsoon",
+        "Pillar",
+        "Vortex",
+        "Cascade",
+        "Tremor",
+        "Squall",
+        "Furnace",
+        "Floe"
       ],
-      "damage_affinity": { "Fire": 19, "Thunder": 6, "Cold": 6, "Lightning": 1, "Force": 1 },
-      "vet_tokens": ["magma", "gale", "silt", "geyser", "cyclone", "monsoon", "undertow"]
+      "damage_affinity": {
+        "Fire": 19,
+        "Thunder": 6,
+        "Cold": 6,
+        "Lightning": 1,
+        "Force": 1
+      },
+      "vet_tokens": [
+        "magma",
+        "gale",
+        "silt",
+        "geyser",
+        "cyclone",
+        "monsoon",
+        "undertow"
+      ],
+      "restraints": [
+        "hardened shale",
+        "freezing brine",
+        "cooling magma crust",
+        "compacted storm-sand"
+      ],
+      "houses": [
+        "magma",
+        "stone",
+        "storm",
+        "ice",
+        "sand"
+      ]
     },
     "fiendish": {
       "substances": [
-        "brimstone smoke", "boiling pitch", "sulfur reek", "ember storm", "tarry ichor",
-        "branding heat", "coal glow", "chain rattle", "seared blood", "pitch smoke",
-        "horn shards", "blasphemous murmurs", "cinder rain", "scorched-iron tang", "gnashing sparks",
-        "flayed-hide stench", "molten shackles"
+        "brimstone smoke",
+        "boiling pitch",
+        "sulfur reek",
+        "ember storm",
+        "tarry ichor",
+        "branding heat",
+        "coal glow",
+        "chain rattle",
+        "seared blood",
+        "pitch smoke",
+        "horn shards",
+        "blasphemous murmurs",
+        "cinder rain",
+        "scorched-iron tang",
+        "gnashing sparks",
+        "flayed-hide stench",
+        "molten shackles"
       ],
       "appendages": [
-        { "one": "barbed whip", "many": "barbed whips" },
-        { "one": "iron chain", "many": "iron chains" },
-        { "one": "scourge", "many": "scourges" },
-        { "one": "cloven hoof", "many": "cloven hooves" },
-        { "one": "curved horn", "many": "curved horns" },
-        { "one": "pitch-slick claw", "many": "pitch-slick claws" },
-        { "one": "brand iron", "many": "brand irons" },
-        { "one": "hooked tail", "many": "hooked tails" }
+        {
+          "one": "barbed whip",
+          "many": "barbed whips"
+        },
+        {
+          "one": "iron chain",
+          "many": "iron chains"
+        },
+        {
+          "one": "scourge",
+          "many": "scourges"
+        },
+        {
+          "one": "cloven hoof",
+          "many": "cloven hooves"
+        },
+        {
+          "one": "curved horn",
+          "many": "curved horns"
+        },
+        {
+          "one": "pitch-slick claw",
+          "many": "pitch-slick claws"
+        },
+        {
+          "one": "brand iron",
+          "many": "brand irons"
+        },
+        {
+          "one": "hooked tail",
+          "many": "hooked tails"
+        }
       ],
-      "deliveries": ["exhales", "spews", "vents", "emits", "releases"],
+      "deliveries": [
+        "exhales",
+        "spews",
+        "vents",
+        "emits",
+        "releases"
+      ],
       "name_adjectives": [
-        "Brimstone", "Pitch", "Scourging", "Branded", "Infernal", "Abyssal",
-        "Chained", "Horned", "Seared", "Blasphemous", "Tarry", "Cloven", "Flaying", "Gnashing"
+        "Brimstone",
+        "Pitch",
+        "Scourging",
+        "Branded",
+        "Infernal",
+        "Abyssal",
+        "Chained",
+        "Horned",
+        "Seared",
+        "Blasphemous",
+        "Tarry",
+        "Cloven",
+        "Flaying",
+        "Gnashing"
       ],
       "name_nouns": [
-        "Scourge", "Tormentor", "Butcher", "Overseer", "Gaoler", "Legion",
-        "Brand", "Chain", "Executioner", "Tyrant", "Herald", "Flenser"
+        "Scourge",
+        "Tormentor",
+        "Butcher",
+        "Overseer",
+        "Gaoler",
+        "Legion",
+        "Brand",
+        "Chain",
+        "Executioner",
+        "Tyrant",
+        "Herald",
+        "Flenser"
       ],
-      "damage_affinity": { "Fire": 12, "Psychic": 10, "Poison": 8, "Necrotic": 7, "Force": 6, "Cold": 2, "Lightning": 1, "Thunder": 1 },
-      "vet_tokens": ["brimstone", "hellfire", "scourge", "infernal", "abyssal"]
+      "damage_affinity": {
+        "Fire": 12,
+        "Psychic": 10,
+        "Poison": 8,
+        "Necrotic": 7,
+        "Force": 6,
+        "Cold": 2,
+        "Lightning": 1,
+        "Thunder": 1
+      },
+      "vet_tokens": [
+        "brimstone",
+        "hellfire",
+        "scourge",
+        "infernal",
+        "abyssal"
+      ],
+      "restraints": [
+        "barbed soul-chains",
+        "brimstone tar",
+        "blistering pitch",
+        "contract-script bindings"
+      ],
+      "houses": [
+        "flame",
+        "blood",
+        "ash"
+      ]
     },
     "celestial": {
       "substances": [
-        "dawn radiance", "censer smoke", "halo glare", "trumpet peals", "anointing oil",
-        "feathered light", "aurora sheen", "sanctified flame", "choir harmonics", "gold-leaf motes",
-        "alabaster dust", "morning haze", "judgment glare", "olivewood smoke", "silver clarions"
+        "dawn radiance",
+        "censer smoke",
+        "halo glare",
+        "trumpet peals",
+        "anointing oil",
+        "feathered light",
+        "aurora sheen",
+        "sanctified flame",
+        "choir harmonics",
+        "gold-leaf motes",
+        "alabaster dust",
+        "morning haze",
+        "judgment glare",
+        "olivewood smoke",
+        "silver clarions"
       ],
       "appendages": [
-        { "one": "radiant sword", "many": "radiant swords" },
-        { "one": "flaming blade", "many": "flaming blades" },
-        { "one": "feathered wing", "many": "feathered wings" },
-        { "one": "holy mace", "many": "holy maces" },
-        { "one": "silvered spear", "many": "silvered spears" },
-        { "one": "censer chain", "many": "censer chains" },
-        { "one": "sun disc", "many": "sun discs" }
+        {
+          "one": "radiant sword",
+          "many": "radiant swords"
+        },
+        {
+          "one": "flaming blade",
+          "many": "flaming blades"
+        },
+        {
+          "one": "feathered wing",
+          "many": "feathered wings"
+        },
+        {
+          "one": "holy mace",
+          "many": "holy maces"
+        },
+        {
+          "one": "silvered spear",
+          "many": "silvered spears"
+        },
+        {
+          "one": "censer chain",
+          "many": "censer chains"
+        },
+        {
+          "one": "sun disc",
+          "many": "sun discs"
+        }
       ],
-      "deliveries": ["sheds", "emits", "radiates", "releases", "breathes"],
+      "deliveries": [
+        "sheds",
+        "emits",
+        "radiates",
+        "releases",
+        "breathes"
+      ],
       "name_adjectives": [
-        "Dawnlit", "Haloed", "Anointed", "Sanctified", "Feathered", "Trumpeting",
-        "Aurora", "Alabaster", "Gilded", "Zenith", "Judging", "Seraphic", "Hallowed", "Radiant"
+        "Dawnlit",
+        "Haloed",
+        "Anointed",
+        "Sanctified",
+        "Feathered",
+        "Trumpeting",
+        "Aurora",
+        "Alabaster",
+        "Gilded",
+        "Zenith",
+        "Judging",
+        "Seraphic",
+        "Hallowed",
+        "Radiant"
       ],
       "name_nouns": [
-        "Herald", "Trumpet", "Censer", "Aegis", "Lamp", "Pilgrim",
-        "Judge", "Standard", "Vigil", "Dawn", "Clarion", "Warden"
+        "Herald",
+        "Trumpet",
+        "Censer",
+        "Aegis",
+        "Lamp",
+        "Pilgrim",
+        "Judge",
+        "Standard",
+        "Vigil",
+        "Dawn",
+        "Clarion",
+        "Warden"
       ],
-      "damage_affinity": { "Radiant": 11, "Poison": 2, "Psychic": 1, "Thunder": 1 },
-      "vet_tokens": ["halo", "seraph", "hallow", "anoint", "censer", "sanctif"]
+      "damage_affinity": {
+        "Radiant": 11,
+        "Poison": 2,
+        "Psychic": 1,
+        "Thunder": 1
+      },
+      "vet_tokens": [
+        "halo",
+        "seraph",
+        "hallow",
+        "anoint",
+        "censer",
+        "sanctif"
+      ],
+      "restraints": [
+        "radiant censer-chains",
+        "hymnal light-lattice",
+        "gilded judgment-bands",
+        "consecrated wax"
+      ],
+      "houses": [
+        "light",
+        "glass",
+        "void"
+      ]
     },
     "mind": {
       "substances": [
-        "psychic static", "skull-hum", "glassy ichor", "warped light", "thought-thread filaments",
-        "synaptic sparks", "whispering static", "membrane slime", "void chill", "lens-eye gleam",
-        "curdled dreams", "probing pressure", "inside-out echoes", "cold intelligence"
+        "psychic static",
+        "skull-hum",
+        "glassy ichor",
+        "warped light",
+        "thought-thread filaments",
+        "synaptic sparks",
+        "whispering static",
+        "membrane slime",
+        "void chill",
+        "lens-eye gleam",
+        "curdled dreams",
+        "probing pressure",
+        "inside-out echoes",
+        "cold intelligence"
       ],
       "appendages": [
-        { "one": "tentacle", "many": "tentacles" },
-        { "one": "feeler", "many": "feelers" },
-        { "one": "barbed lash", "many": "barbed lashes" },
-        { "one": "psychic tendril", "many": "psychic tendrils" },
-        { "one": "sucker arm", "many": "sucker arms" },
-        { "one": "beak", "many": "beaks" },
-        { "one": "probing stalk", "many": "probing stalks" }
+        {
+          "one": "tentacle",
+          "many": "tentacles"
+        },
+        {
+          "one": "feeler",
+          "many": "feelers"
+        },
+        {
+          "one": "barbed lash",
+          "many": "barbed lashes"
+        },
+        {
+          "one": "psychic tendril",
+          "many": "psychic tendrils"
+        },
+        {
+          "one": "sucker arm",
+          "many": "sucker arms"
+        },
+        {
+          "one": "beak",
+          "many": "beaks"
+        },
+        {
+          "one": "probing stalk",
+          "many": "probing stalks"
+        }
       ],
-      "deliveries": ["emits", "releases", "discharges", "exudes"],
+      "deliveries": [
+        "emits",
+        "releases",
+        "discharges",
+        "exudes"
+      ],
       "name_adjectives": [
-        "Warping", "Tentacular", "Glass-eyed", "Synaptic", "Voidtouched", "Membranous",
-        "Whispering", "Alien", "Curdled", "Probing", "Many-lensed", "Skulless"
+        "Warping",
+        "Tentacular",
+        "Glass-eyed",
+        "Synaptic",
+        "Voidtouched",
+        "Membranous",
+        "Whispering",
+        "Alien",
+        "Curdled",
+        "Probing",
+        "Many-lensed",
+        "Skulless"
       ],
       "name_nouns": [
-        "Watcher", "Devourer", "Lurker", "Membrane", "Polyp", "Stalk",
-        "Overmind", "Larva", "Lens", "Choir", "Puppeteer", "Dreamer"
+        "Watcher",
+        "Devourer",
+        "Lurker",
+        "Membrane",
+        "Polyp",
+        "Stalk",
+        "Overmind",
+        "Larva",
+        "Lens",
+        "Choir",
+        "Puppeteer",
+        "Dreamer"
       ],
-      "damage_affinity": { "Psychic": 3, "Acid": 1, "Radiant": 1, "_note": "printed Aberration sample is thin (n=9); Psychic dominance is the clear signal" },
-      "vet_tokens": ["psionic", "synaptic", "tentacular", "voidtouched", "overmind"]
+      "damage_affinity": {
+        "Psychic": 3,
+        "Acid": 1,
+        "Radiant": 1,
+        "_note": "printed Aberration sample is thin (n=9); Psychic dominance is the clear signal"
+      },
+      "vet_tokens": [
+        "psionic",
+        "synaptic",
+        "tentacular",
+        "voidtouched",
+        "overmind"
+      ],
+      "restraints": [
+        "crystallized thought",
+        "psychic cording",
+        "memory-snare filaments",
+        "will-clamp lattice"
+      ],
+      "houses": [
+        "dream",
+        "void",
+        "glass"
+      ]
     },
     "venomous": {
       "substances": [
-        "venom spray", "toxin mist", "numbing spittle", "milky venom", "paralytic ichor",
-        "envenomed barbs", "blister fluid", "viper musk", "toxic froth", "stinging haze",
-        "glistening toxin", "dripping slaver", "wasp-paper dust", "molted skin flakes"
+        "venom spray",
+        "toxin mist",
+        "numbing spittle",
+        "milky venom",
+        "paralytic ichor",
+        "envenomed barbs",
+        "blister fluid",
+        "viper musk",
+        "toxic froth",
+        "stinging haze",
+        "glistening toxin",
+        "dripping slaver",
+        "wasp-paper dust",
+        "molted skin flakes"
       ],
       "appendages": [
-        { "one": "fang", "many": "fangs" },
-        { "one": "stinger", "many": "stingers" },
-        { "one": "venom barb", "many": "venom barbs" },
-        { "one": "hollow fang", "many": "hollow fangs" },
-        { "one": "spine", "many": "spines" },
-        { "one": "dripping mandible", "many": "dripping mandibles" },
-        { "one": "tail stinger", "many": "tail stingers" }
+        {
+          "one": "fang",
+          "many": "fangs"
+        },
+        {
+          "one": "stinger",
+          "many": "stingers"
+        },
+        {
+          "one": "venom barb",
+          "many": "venom barbs"
+        },
+        {
+          "one": "hollow fang",
+          "many": "hollow fangs"
+        },
+        {
+          "one": "spine",
+          "many": "spines"
+        },
+        {
+          "one": "dripping mandible",
+          "many": "dripping mandibles"
+        },
+        {
+          "one": "tail stinger",
+          "many": "tail stingers"
+        }
       ],
-      "deliveries": ["spits", "sprays", "releases", "exudes", "injects"],
+      "deliveries": [
+        "spits",
+        "sprays",
+        "releases",
+        "exudes",
+        "injects"
+      ],
       "name_adjectives": [
-        "Venom-slick", "Envenomed", "Paralytic", "Blistering", "Toxic", "Numbing",
-        "Viperous", "Stinging", "Glistening", "Hollow-fanged", "Molted", "Swollen"
+        "Venom-slick",
+        "Envenomed",
+        "Paralytic",
+        "Blistering",
+        "Toxic",
+        "Numbing",
+        "Viperous",
+        "Stinging",
+        "Glistening",
+        "Hollow-fanged",
+        "Molted",
+        "Swollen"
       ],
       "name_nouns": [
-        "Viper", "Stinger", "Scorpion", "Widow", "Asp", "Wasp",
-        "Serpent", "Sting", "Fang", "Adder", "Hive", "Brood"
+        "Viper",
+        "Stinger",
+        "Scorpion",
+        "Widow",
+        "Asp",
+        "Wasp",
+        "Serpent",
+        "Sting",
+        "Fang",
+        "Adder",
+        "Hive",
+        "Brood"
       ],
-      "damage_affinity": { "Poison": 4, "Acid": 1, "_note": "manner facet, no home type; Poison dominance is judgment seeded by the Beast measurement" },
-      "vet_tokens": ["venom", "toxin", "envenom", "paralytic", "stinger"]
+      "damage_affinity": {
+        "Poison": 4,
+        "Acid": 1,
+        "_note": "manner facet, no home type; Poison dominance is judgment seeded by the Beast measurement"
+      },
+      "vet_tokens": [
+        "venom",
+        "toxin",
+        "envenom",
+        "paralytic",
+        "stinger"
+      ],
+      "restraints": [
+        "paralytic mucus",
+        "venom-gel",
+        "numbing spittle-mass",
+        "toxin crust"
+      ],
+      "houses": [
+        "venom",
+        "rot",
+        "chitin"
+      ]
     },
     "terror": {
       "substances": [
-        "fear musk", "nightmare smoke", "night chill", "bristling shadow", "shivering murk",
-        "keening dark", "cold-sweat reek", "prey-scent panic", "rushing heartbeat", "frozen breath",
-        "circling silence", "white-eye glare"
+        "fear musk",
+        "nightmare smoke",
+        "night chill",
+        "bristling shadow",
+        "shivering murk",
+        "keening dark",
+        "cold-sweat reek",
+        "prey-scent panic",
+        "rushing heartbeat",
+        "frozen breath",
+        "circling silence",
+        "white-eye glare"
       ],
       "appendages": [
-        { "one": "bristling claw", "many": "bristling claws" },
-        { "one": "rictus jaw", "many": "rictus jaws" },
-        { "one": "staring eye", "many": "staring eyes" },
-        { "one": "stalking shadow", "many": "stalking shadows" }
+        {
+          "one": "bristling claw",
+          "many": "bristling claws"
+        },
+        {
+          "one": "rictus jaw",
+          "many": "rictus jaws"
+        },
+        {
+          "one": "staring eye",
+          "many": "staring eyes"
+        },
+        {
+          "one": "stalking shadow",
+          "many": "stalking shadows"
+        }
       ],
-      "deliveries": ["exhales", "sheds", "emits", "releases"],
+      "deliveries": [
+        "exhales",
+        "sheds",
+        "emits",
+        "releases"
+      ],
       "name_adjectives": [
-        "Nightmare", "Bristling", "Shivering", "Keening", "Rictus", "Stalking",
-        "Circling", "Dread", "Panic", "Hollow-eyed", "Breathless", "Sleepless"
+        "Nightmare",
+        "Bristling",
+        "Shivering",
+        "Keening",
+        "Rictus",
+        "Stalking",
+        "Circling",
+        "Dread",
+        "Panic",
+        "Hollow-eyed",
+        "Breathless",
+        "Sleepless"
       ],
       "name_nouns": [
-        "Stalker", "Shadow", "Haunt", "Scarecrow", "Silence", "Predator",
-        "Watcher", "Omen", "Hush", "Prowler"
+        "Stalker",
+        "Shadow",
+        "Haunt",
+        "Scarecrow",
+        "Silence",
+        "Predator",
+        "Watcher",
+        "Omen",
+        "Hush",
+        "Prowler"
       ],
-      "damage_affinity": { "Psychic": 3, "_note": "manner facet; Psychic by judgment" },
-      "vet_tokens": ["nightmare", "rictus"]
+      "damage_affinity": {
+        "Psychic": 3,
+        "_note": "manner facet; Psychic by judgment"
+      },
+      "vet_tokens": [
+        "nightmare",
+        "rictus"
+      ],
+      "restraints": [
+        "clotted shadow",
+        "dread-stiffened air",
+        "terror-frost",
+        "pallid caul"
+      ],
+      "houses": [
+        "shadow",
+        "bone",
+        "void"
+      ]
     },
     "beguiling": {
       "substances": [
-        "honeyed perfume", "rose attar", "sweet smoke", "mirror sheen", "dazzling motes",
-        "velvet shadow", "wine-warm haze", "lulling chimes", "candlelit warmth", "silvered laughter",
-        "masquerade glitter", "soft applause"
+        "honeyed perfume",
+        "rose attar",
+        "sweet smoke",
+        "mirror sheen",
+        "dazzling motes",
+        "velvet shadow",
+        "wine-warm haze",
+        "lulling chimes",
+        "candlelit warmth",
+        "silvered laughter",
+        "masquerade glitter",
+        "soft applause"
       ],
       "appendages": [
-        { "one": "silken lash", "many": "silken lashes" },
-        { "one": "perfumed veil", "many": "perfumed veils" },
-        { "one": "ringed hand", "many": "ringed hands" },
-        { "one": "mirrored talon", "many": "mirrored talons" }
+        {
+          "one": "silken lash",
+          "many": "silken lashes"
+        },
+        {
+          "one": "perfumed veil",
+          "many": "perfumed veils"
+        },
+        {
+          "one": "ringed hand",
+          "many": "ringed hands"
+        },
+        {
+          "one": "mirrored talon",
+          "many": "mirrored talons"
+        }
       ],
-      "deliveries": ["sheds", "emits", "releases", "breathes"],
+      "deliveries": [
+        "sheds",
+        "emits",
+        "releases",
+        "breathes"
+      ],
       "name_adjectives": [
-        "Honeyed", "Silken", "Mirrored", "Velvet", "Dazzling", "Lulling",
-        "Perfumed", "Rose", "Candlelit", "Gilded", "Masked", "Winsome"
+        "Honeyed",
+        "Silken",
+        "Mirrored",
+        "Velvet",
+        "Dazzling",
+        "Lulling",
+        "Perfumed",
+        "Rose",
+        "Candlelit",
+        "Gilded",
+        "Masked",
+        "Winsome"
       ],
       "name_nouns": [
-        "Courtesan", "Siren", "Mirror", "Veil", "Suitor", "Masque",
-        "Chandelier", "Ballroom", "Promise", "Host"
+        "Courtesan",
+        "Siren",
+        "Mirror",
+        "Veil",
+        "Suitor",
+        "Masque",
+        "Chandelier",
+        "Ballroom",
+        "Promise",
+        "Host"
       ],
-      "damage_affinity": { "Psychic": 3, "_note": "manner facet; Psychic by judgment" },
-      "vet_tokens": ["honeyed", "attar", "masque"]
+      "damage_affinity": {
+        "Psychic": 3,
+        "_note": "manner facet; Psychic by judgment"
+      },
+      "vet_tokens": [
+        "honeyed",
+        "attar",
+        "masque"
+      ],
+      "restraints": [
+        "silken glamour-ribbons",
+        "honeyed resin",
+        "perfumed snare-veils",
+        "charm-thread"
+      ],
+      "houses": [
+        "dream",
+        "light",
+        "glass"
+      ]
     },
     "grasping": {
       "substances": [
-        "sinew creak", "knotted cordage", "dragging weight", "tightening pressure", "rope-burn heat",
-        "clutching dark", "anchor rust", "winch groan"
+        "sinew creak",
+        "knotted cordage",
+        "dragging weight",
+        "tightening pressure",
+        "rope-burn heat",
+        "clutching dark",
+        "anchor rust",
+        "winch groan"
       ],
       "appendages": [
-        { "one": "constricting coil", "many": "constricting coils" },
-        { "one": "dragging hook", "many": "dragging hooks" },
-        { "one": "snare loop", "many": "snare loops" },
-        { "one": "clutching hand", "many": "clutching hands" },
-        { "one": "grasping arm", "many": "grasping arms" },
-        { "one": "strangling cord", "many": "strangling cords" },
-        { "one": "hooked tendril", "many": "hooked tendrils" }
+        {
+          "one": "constricting coil",
+          "many": "constricting coils"
+        },
+        {
+          "one": "dragging hook",
+          "many": "dragging hooks"
+        },
+        {
+          "one": "snare loop",
+          "many": "snare loops"
+        },
+        {
+          "one": "clutching hand",
+          "many": "clutching hands"
+        },
+        {
+          "one": "grasping arm",
+          "many": "grasping arms"
+        },
+        {
+          "one": "strangling cord",
+          "many": "strangling cords"
+        },
+        {
+          "one": "hooked tendril",
+          "many": "hooked tendrils"
+        }
       ],
-      "deliveries": ["extends", "releases", "flings", "hurls"],
+      "deliveries": [
+        "extends",
+        "releases",
+        "flings",
+        "hurls"
+      ],
       "name_adjectives": [
-        "Grasping", "Coiling", "Snaring", "Clutching", "Prehensile", "Strangling",
-        "Dragging", "Knotted", "Tightening", "Hooked"
+        "Grasping",
+        "Coiling",
+        "Snaring",
+        "Clutching",
+        "Prehensile",
+        "Strangling",
+        "Dragging",
+        "Knotted",
+        "Tightening",
+        "Hooked"
       ],
       "name_nouns": [
-        "Snare", "Coil", "Noose", "Trawl", "Hook", "Winch",
-        "Net", "Grapnel", "Tangle", "Keeper"
+        "Snare",
+        "Coil",
+        "Noose",
+        "Trawl",
+        "Hook",
+        "Winch",
+        "Net",
+        "Grapnel",
+        "Tangle",
+        "Keeper"
       ],
-      "damage_affinity": { "_note": "physical facet; no energy affinity" },
-      "vet_tokens": ["prehensile", "noose", "trawl", "grapnel"]
+      "damage_affinity": {
+        "_note": "physical facet; no energy affinity"
+      },
+      "vet_tokens": [
+        "prehensile",
+        "noose",
+        "trawl",
+        "grapnel"
+      ],
+      "restraints": [
+        "barbed tendril mesh",
+        "gripping cordage",
+        "hooked lattice",
+        "constricting knot-mass"
+      ],
+      "houses": [
+        "thorn",
+        "tar",
+        "chitin"
+      ]
     },
     "devouring": {
       "substances": [
-        "gullet steam", "bile spray", "acid slaver", "bone meal", "churning maw-heat",
-        "hunger reek", "tooth shards", "swallowed light", "chewed gristle", "stomach thunder"
+        "gullet steam",
+        "bile spray",
+        "acid slaver",
+        "bone meal",
+        "churning maw-heat",
+        "hunger reek",
+        "tooth shards",
+        "swallowed light",
+        "chewed gristle",
+        "stomach thunder"
       ],
       "appendages": [
-        { "one": "distended jaw", "many": "distended jaws" },
-        { "one": "rasping tongue", "many": "rasping tongues" },
-        { "one": "tooth-row", "many": "tooth-rows" },
-        { "one": "swallowing maw", "many": "swallowing maws" },
-        { "one": "grinding molar", "many": "grinding molars" }
+        {
+          "one": "distended jaw",
+          "many": "distended jaws"
+        },
+        {
+          "one": "rasping tongue",
+          "many": "rasping tongues"
+        },
+        {
+          "one": "tooth-row",
+          "many": "tooth-rows"
+        },
+        {
+          "one": "swallowing maw",
+          "many": "swallowing maws"
+        },
+        {
+          "one": "grinding molar",
+          "many": "grinding molars"
+        }
       ],
-      "deliveries": ["vomits", "spews", "releases", "expels"],
+      "deliveries": [
+        "vomits",
+        "spews",
+        "releases",
+        "expels"
+      ],
       "name_adjectives": [
-        "Distended", "Rasping", "Gorging", "Gnawing", "All-swallowing", "Ravening",
-        "Bottomless", "Toothed", "Churning", "Hungering"
+        "Distended",
+        "Rasping",
+        "Gorging",
+        "Gnawing",
+        "All-swallowing",
+        "Ravening",
+        "Bottomless",
+        "Toothed",
+        "Churning",
+        "Hungering"
       ],
       "name_nouns": [
-        "Maw", "Gullet", "Glutton", "Lamprey", "Gorger", "Gizzard",
-        "Appetite", "Feast", "Swallower"
+        "Maw",
+        "Gullet",
+        "Glutton",
+        "Lamprey",
+        "Gorger",
+        "Gizzard",
+        "Appetite",
+        "Feast",
+        "Swallower"
       ],
-      "damage_affinity": { "Acid": 3, "_note": "manner facet; Acid by judgment" },
-      "vet_tokens": ["gullet", "lamprey", "gizzard", "gorging"]
+      "damage_affinity": {
+        "Acid": 3,
+        "_note": "manner facet; Acid by judgment"
+      },
+      "vet_tokens": [
+        "gullet",
+        "lamprey",
+        "gizzard",
+        "gorging"
+      ],
+      "restraints": [
+        "cloying digestive resin",
+        "gut-rope tangle",
+        "hunger-gum",
+        "acid-sticky cud"
+      ],
+      "houses": [
+        "rot",
+        "blood",
+        "hide"
+      ]
     },
     "aquatic": {
       "substances": [
-        "kelp tangle", "brine reek", "ink cloud", "coral rasp", "drowning cold",
-        "salt crust", "barnacle scrape", "deep-water gloom", "whale-fall reek", "shell shards",
-        "fish-oil sheen", "riptide pull", "bladderwrack", "pearl light"
+        "kelp tangle",
+        "brine reek",
+        "ink cloud",
+        "coral rasp",
+        "drowning cold",
+        "salt crust",
+        "barnacle scrape",
+        "deep-water gloom",
+        "whale-fall reek",
+        "shell shards",
+        "fish-oil sheen",
+        "riptide pull",
+        "bladderwrack",
+        "pearl light"
       ],
       "appendages": [
-        { "one": "fin blade", "many": "fin blades" },
-        { "one": "pincer", "many": "pincers" },
-        { "one": "tail fluke", "many": "tail flukes" },
-        { "one": "harpoon barb", "many": "harpoon barbs" },
-        { "one": "crushing tentacle", "many": "crushing tentacles" },
-        { "one": "shell claw", "many": "shell claws" }
+        {
+          "one": "fin blade",
+          "many": "fin blades"
+        },
+        {
+          "one": "pincer",
+          "many": "pincers"
+        },
+        {
+          "one": "tail fluke",
+          "many": "tail flukes"
+        },
+        {
+          "one": "harpoon barb",
+          "many": "harpoon barbs"
+        },
+        {
+          "one": "crushing tentacle",
+          "many": "crushing tentacles"
+        },
+        {
+          "one": "shell claw",
+          "many": "shell claws"
+        }
       ],
-      "deliveries": ["sprays", "expels", "releases", "discharges"],
+      "deliveries": [
+        "sprays",
+        "expels",
+        "releases",
+        "discharges"
+      ],
       "name_adjectives": [
-        "Brine", "Tidewrack", "Coral", "Barnacled", "Drowned", "Kelpbound",
-        "Riptide", "Deepwater", "Pearl-eyed", "Salt", "Shoaling", "Abyssward"
+        "Brine",
+        "Tidewrack",
+        "Coral",
+        "Barnacled",
+        "Drowned",
+        "Kelpbound",
+        "Riptide",
+        "Deepwater",
+        "Pearl-eyed",
+        "Salt",
+        "Shoaling",
+        "Abyssward"
       ],
       "name_nouns": [
-        "Leviathan", "Angler", "Shoal", "Reef", "Trench", "Fluke",
-        "Harpooner", "Wreck", "Buoy", "Tide"
+        "Leviathan",
+        "Angler",
+        "Shoal",
+        "Reef",
+        "Trench",
+        "Fluke",
+        "Harpooner",
+        "Wreck",
+        "Buoy",
+        "Tide"
       ],
-      "damage_affinity": { "Cold": 2, "Acid": 2, "_note": "manner facet; judgment" },
-      "vet_tokens": ["tidewrack", "barnacle", "kelp", "reef", "leviathan"]
+      "damage_affinity": {
+        "Cold": 2,
+        "Acid": 2,
+        "_note": "manner facet; judgment"
+      },
+      "vet_tokens": [
+        "tidewrack",
+        "barnacle",
+        "kelp",
+        "reef",
+        "leviathan"
+      ],
+      "restraints": [
+        "brine-hardened kelp",
+        "coral crust",
+        "riptide netting",
+        "barnacle clamp"
+      ],
+      "houses": [
+        "brine",
+        "abyss",
+        "ice"
+      ]
     },
     "subterranean": {
       "substances": [
-        "cave damp", "rockfall dust", "chasm draft", "glowworm light", "dripstone splinters",
-        "tunnel echo", "deep-vein glitter", "firedamp", "choking grit", "pallid mold",
-        "coal-seam dark", "stone sweat"
+        "cave damp",
+        "rockfall dust",
+        "chasm draft",
+        "glowworm light",
+        "dripstone splinters",
+        "tunnel echo",
+        "deep-vein glitter",
+        "firedamp",
+        "choking grit",
+        "pallid mold",
+        "coal-seam dark",
+        "stone sweat"
       ],
       "appendages": [
-        { "one": "burrowing claw", "many": "burrowing claws" },
-        { "one": "rock-splitter jaw", "many": "rock-splitter jaws" },
-        { "one": "pick talon", "many": "pick talons" },
-        { "one": "tunneling forelimb", "many": "tunneling forelimbs" },
-        { "one": "feeler", "many": "feelers" }
+        {
+          "one": "burrowing claw",
+          "many": "burrowing claws"
+        },
+        {
+          "one": "rock-splitter jaw",
+          "many": "rock-splitter jaws"
+        },
+        {
+          "one": "pick talon",
+          "many": "pick talons"
+        },
+        {
+          "one": "tunneling forelimb",
+          "many": "tunneling forelimbs"
+        },
+        {
+          "one": "feeler",
+          "many": "feelers"
+        }
       ],
-      "deliveries": ["exhales", "releases", "vents", "expels"],
+      "deliveries": [
+        "exhales",
+        "releases",
+        "vents",
+        "expels"
+      ],
       "name_adjectives": [
-        "Chasm", "Dripstone", "Firedamp", "Deep-vein", "Pallid", "Echoing",
-        "Burrowing", "Rockfall", "Sunless", "Gritted", "Buried", "Cavernous"
+        "Chasm",
+        "Dripstone",
+        "Firedamp",
+        "Deep-vein",
+        "Pallid",
+        "Echoing",
+        "Burrowing",
+        "Rockfall",
+        "Sunless",
+        "Gritted",
+        "Buried",
+        "Cavernous"
       ],
       "name_nouns": [
-        "Delver", "Chasm", "Tunneler", "Sinkhole", "Vein", "Grotto",
-        "Stalagmite", "Cave-in", "Seam", "Undermine"
+        "Delver",
+        "Chasm",
+        "Tunneler",
+        "Sinkhole",
+        "Vein",
+        "Grotto",
+        "Stalagmite",
+        "Cave-in",
+        "Seam",
+        "Undermine"
       ],
-      "damage_affinity": { "Acid": 2, "Thunder": 2, "_note": "manner facet; judgment" },
-      "vet_tokens": ["firedamp", "dripstone", "chasm", "sinkhole"]
+      "damage_affinity": {
+        "Acid": 2,
+        "Thunder": 2,
+        "_note": "manner facet; judgment"
+      },
+      "vet_tokens": [
+        "firedamp",
+        "dripstone",
+        "chasm",
+        "sinkhole"
+      ],
+      "restraints": [
+        "grinding scree",
+        "stalactite cage",
+        "cave-glue",
+        "compacted gravel"
+      ],
+      "houses": [
+        "stone",
+        "sand",
+        "fungus"
+      ]
     },
     "aerial": {
       "substances": [
-        "tailwind rush", "thin-air chill", "cloud wrack", "feather down", "jetstream howl",
-        "thermal shimmer", "hail spatter", "wingbeat gusts", "high-altitude glare", "storm-front pressure",
+        "tailwind rush",
+        "thin-air chill",
+        "cloud wrack",
+        "feather down",
+        "jetstream howl",
+        "thermal shimmer",
+        "hail spatter",
+        "wingbeat gusts",
+        "high-altitude glare",
+        "storm-front pressure",
         "whistling descent"
       ],
       "appendages": [
-        { "one": "diving talon", "many": "diving talons" },
-        { "one": "buffeting wing", "many": "buffeting wings" },
-        { "one": "beak", "many": "beaks" },
-        { "one": "tail rudder", "many": "tail rudders" },
-        { "one": "wing blade", "many": "wing blades" }
+        {
+          "one": "diving talon",
+          "many": "diving talons"
+        },
+        {
+          "one": "buffeting wing",
+          "many": "buffeting wings"
+        },
+        {
+          "one": "beak",
+          "many": "beaks"
+        },
+        {
+          "one": "tail rudder",
+          "many": "tail rudders"
+        },
+        {
+          "one": "wing blade",
+          "many": "wing blades"
+        }
       ],
-      "deliveries": ["sheds", "hurls", "releases", "discharges"],
+      "deliveries": [
+        "sheds",
+        "hurls",
+        "releases",
+        "discharges"
+      ],
       "name_adjectives": [
-        "Tailwind", "Thermal", "Jetstream", "Cloudwrack", "Wheeling", "Diving",
-        "Featherdown", "Updraft", "Skyborne", "Whistling", "High-flying", "Storm-riding"
+        "Tailwind",
+        "Thermal",
+        "Jetstream",
+        "Cloudwrack",
+        "Wheeling",
+        "Diving",
+        "Featherdown",
+        "Updraft",
+        "Skyborne",
+        "Whistling",
+        "High-flying",
+        "Storm-riding"
       ],
       "name_nouns": [
-        "Kite", "Condor", "Stormcrow", "Glider", "Aerie", "Gyre",
-        "Descent", "Wingspan", "Vane", "Roost"
+        "Kite",
+        "Condor",
+        "Stormcrow",
+        "Glider",
+        "Aerie",
+        "Gyre",
+        "Descent",
+        "Wingspan",
+        "Vane",
+        "Roost"
       ],
-      "damage_affinity": { "Lightning": 2, "Thunder": 2, "_note": "manner facet; judgment" },
-      "vet_tokens": ["jetstream", "cloudwrack", "aerie", "skyborne"]
+      "damage_affinity": {
+        "Lightning": 2,
+        "Thunder": 2,
+        "_note": "manner facet; judgment"
+      },
+      "vet_tokens": [
+        "jetstream",
+        "cloudwrack",
+        "aerie",
+        "skyborne"
+      ],
+      "restraints": [
+        "storm-spun cloudstuff",
+        "hail crust",
+        "pressure-locked air",
+        "feather-lime"
+      ],
+      "houses": [
+        "storm",
+        "ice",
+        "void"
+      ]
     },
     "uncanny": {
       "substances": [
-        "waxwork sheen", "porcelain dust", "stuttering light", "wrong-angled shadow", "backwards echo",
-        "cold candlelight", "marionette clatter", "painted smiles", "ticking silence", "glass-eyed calm",
+        "waxwork sheen",
+        "porcelain dust",
+        "stuttering light",
+        "wrong-angled shadow",
+        "backwards echo",
+        "cold candlelight",
+        "marionette clatter",
+        "painted smiles",
+        "ticking silence",
+        "glass-eyed calm",
         "seam-split skin"
       ],
       "appendages": [
-        { "one": "marionette string", "many": "marionette strings" },
-        { "one": "too-long finger", "many": "too-long fingers" },
-        { "one": "porcelain hand", "many": "porcelain hands" },
-        { "one": "backwards joint", "many": "backwards joints" },
-        { "one": "unhinging jaw", "many": "unhinging jaws" }
+        {
+          "one": "marionette string",
+          "many": "marionette strings"
+        },
+        {
+          "one": "too-long finger",
+          "many": "too-long fingers"
+        },
+        {
+          "one": "porcelain hand",
+          "many": "porcelain hands"
+        },
+        {
+          "one": "backwards joint",
+          "many": "backwards joints"
+        },
+        {
+          "one": "unhinging jaw",
+          "many": "unhinging jaws"
+        }
       ],
-      "deliveries": ["emits", "sheds", "releases", "exudes"],
+      "deliveries": [
+        "emits",
+        "sheds",
+        "releases",
+        "exudes"
+      ],
       "name_adjectives": [
-        "Waxen", "Porcelain", "Stuttering", "Backwards", "Unblinking", "Wrong-angled",
-        "Smiling", "Hinged", "Stilted", "Seamed", "Painted", "Ticking"
+        "Waxen",
+        "Porcelain",
+        "Stuttering",
+        "Backwards",
+        "Unblinking",
+        "Wrong-angled",
+        "Smiling",
+        "Hinged",
+        "Stilted",
+        "Seamed",
+        "Painted",
+        "Ticking"
       ],
       "name_nouns": [
-        "Marionette", "Mannequin", "Doll", "Effigy", "Vessel", "Puppet",
-        "Understudy", "Portrait", "Reflection", "Curio"
+        "Marionette",
+        "Mannequin",
+        "Doll",
+        "Effigy",
+        "Vessel",
+        "Puppet",
+        "Understudy",
+        "Portrait",
+        "Reflection",
+        "Curio"
       ],
-      "damage_affinity": { "Psychic": 2, "Necrotic": 1, "_note": "manner facet; judgment" },
-      "vet_tokens": ["marionette", "porcelain", "waxwork", "mannequin"]
+      "damage_affinity": {
+        "Psychic": 2,
+        "Necrotic": 1,
+        "_note": "manner facet; judgment"
+      },
+      "vet_tokens": [
+        "marionette",
+        "porcelain",
+        "waxwork",
+        "mannequin"
+      ],
+      "restraints": [
+        "folded space-lattice",
+        "seam-thread",
+        "backwards shadow",
+        "glass-still air"
+      ],
+      "houses": [
+        "void",
+        "glass",
+        "dream"
+      ]
     },
     "arcane": {
       "substances": [
-        "spell residue", "chalk sigils", "glyph light", "leyline hum", "warded shimmer",
-        "sigil smoke", "prismatic motes", "vellum dust", "binding circles", "silver inlay",
-        "unraveling script", "charged quiet"
+        "spell residue",
+        "chalk sigils",
+        "glyph light",
+        "leyline hum",
+        "warded shimmer",
+        "sigil smoke",
+        "prismatic motes",
+        "vellum dust",
+        "binding circles",
+        "silver inlay",
+        "unraveling script",
+        "charged quiet"
       ],
       "appendages": [
-        { "one": "runed fist", "many": "runed fists" },
-        { "one": "sigil-carved claw", "many": "sigil-carved claws" },
-        { "one": "warding hand", "many": "warding hands" },
-        { "one": "glyph lash", "many": "glyph lashes" }
+        {
+          "one": "runed fist",
+          "many": "runed fists"
+        },
+        {
+          "one": "sigil-carved claw",
+          "many": "sigil-carved claws"
+        },
+        {
+          "one": "warding hand",
+          "many": "warding hands"
+        },
+        {
+          "one": "glyph lash",
+          "many": "glyph lashes"
+        }
       ],
-      "deliveries": ["discharges", "emits", "releases", "sheds"],
+      "deliveries": [
+        "discharges",
+        "emits",
+        "releases",
+        "sheds"
+      ],
       "name_adjectives": [
-        "Runed", "Sigiled", "Glyphic", "Leyline", "Warded", "Prismatic",
-        "Vellum", "Chalked", "Binding", "Hexed", "Inscribed", "Unraveling"
+        "Runed",
+        "Sigiled",
+        "Glyphic",
+        "Leyline",
+        "Warded",
+        "Prismatic",
+        "Vellum",
+        "Chalked",
+        "Binding",
+        "Hexed",
+        "Inscribed",
+        "Unraveling"
       ],
       "name_nouns": [
-        "Glyph", "Sigil", "Cipher", "Scribe", "Ward", "Circle",
-        "Codex", "Hex", "Quill", "Athenaeum"
+        "Glyph",
+        "Sigil",
+        "Cipher",
+        "Scribe",
+        "Ward",
+        "Circle",
+        "Codex",
+        "Hex",
+        "Quill",
+        "Athenaeum"
       ],
-      "damage_affinity": { "Force": 3, "_note": "manner facet; Force by judgment" },
-      "vet_tokens": ["leyline", "sigil", "glyph", "cipher"]
+      "damage_affinity": {
+        "Force": 3,
+        "_note": "manner facet; Force by judgment"
+      },
+      "vet_tokens": [
+        "leyline",
+        "sigil",
+        "glyph",
+        "cipher"
+      ],
+      "restraints": [
+        "rune-chain lattice",
+        "sigil bindings",
+        "spell-thread",
+        "ward-lattice"
+      ],
+      "houses": [
+        "glass",
+        "void",
+        "light"
+      ]
     },
     "voice": {
       "substances": [
-        "keening wail", "deafening chorus", "subsonic drone", "shattering note", "lullaby hum",
-        "droning chant", "rolling echo", "whispered syllables", "cracked hymn", "war-drum pulse"
+        "keening wail",
+        "deafening chorus",
+        "subsonic drone",
+        "shattering note",
+        "lullaby hum",
+        "droning chant",
+        "rolling echo",
+        "whispered syllables",
+        "cracked hymn",
+        "war-drum pulse"
       ],
       "appendages": [
-        { "one": "resonant throat-sac", "many": "resonant throat-sacs" },
-        { "one": "bellowing maw", "many": "bellowing maws" },
-        { "one": "chorus mouth", "many": "chorus mouths" }
+        {
+          "one": "resonant throat-sac",
+          "many": "resonant throat-sacs"
+        },
+        {
+          "one": "bellowing maw",
+          "many": "bellowing maws"
+        },
+        {
+          "one": "chorus mouth",
+          "many": "chorus mouths"
+        }
       ],
-      "deliveries": ["releases", "emits", "utters", "bellows"],
+      "deliveries": [
+        "releases",
+        "emits",
+        "utters",
+        "bellows"
+      ],
       "name_adjectives": [
-        "Keening", "Deafening", "Subsonic", "Droning", "Bellowing", "Shattering",
-        "Whispering", "Resonant", "Lullaby", "Cracked", "Tolling", "Chanting"
+        "Keening",
+        "Deafening",
+        "Subsonic",
+        "Droning",
+        "Bellowing",
+        "Shattering",
+        "Whispering",
+        "Resonant",
+        "Lullaby",
+        "Cracked",
+        "Tolling",
+        "Chanting"
       ],
       "name_nouns": [
-        "Chorus", "Bell", "Cantor", "Echo", "Drone", "Horn",
-        "Knell", "Hymn", "Refrain", "Toll"
+        "Chorus",
+        "Bell",
+        "Cantor",
+        "Echo",
+        "Drone",
+        "Horn",
+        "Knell",
+        "Hymn",
+        "Refrain",
+        "Toll"
       ],
-      "damage_affinity": { "Thunder": 3, "Psychic": 2, "_note": "manner facet; judgment" },
-      "vet_tokens": ["subsonic", "cantor", "knell"]
+      "damage_affinity": {
+        "Thunder": 3,
+        "Psychic": 2,
+        "_note": "manner facet; judgment"
+      },
+      "vet_tokens": [
+        "subsonic",
+        "cantor",
+        "knell"
+      ],
+      "restraints": [
+        "echo-lattice",
+        "choir-frozen air",
+        "resonant bindings",
+        "humming chord-net"
+      ],
+      "houses": [
+        "storm",
+        "dream",
+        "void"
+      ]
     },
     "gaze": {
       "substances": [
-        "lantern eyes", "lidless glow", "searing glance", "hundred-eye glitter", "mirror-bright pupils",
-        "heat-shimmer stare", "weeping light", "pinpoint pupils", "meeting of eyes"
+        "lantern eyes",
+        "lidless glow",
+        "searing glance",
+        "hundred-eye glitter",
+        "mirror-bright pupils",
+        "heat-shimmer stare",
+        "weeping light",
+        "pinpoint pupils",
+        "meeting of eyes"
       ],
       "appendages": [
-        { "one": "eyestalk", "many": "eyestalks" },
-        { "one": "lens cluster", "many": "lens clusters" },
-        { "one": "third eye", "many": "third eyes" }
+        {
+          "one": "eyestalk",
+          "many": "eyestalks"
+        },
+        {
+          "one": "lens cluster",
+          "many": "lens clusters"
+        },
+        {
+          "one": "third eye",
+          "many": "third eyes"
+        }
       ],
-      "deliveries": ["emits", "sheds", "fixes", "casts"],
+      "deliveries": [
+        "emits",
+        "sheds",
+        "fixes",
+        "casts"
+      ],
       "name_adjectives": [
-        "Lidless", "Unlidded", "Hundred-eyed", "Lantern-eyed", "Searing", "Glaring",
-        "Stony-eyed", "Weeping", "Pinpoint", "Meeting"
+        "Lidless",
+        "Unlidded",
+        "Hundred-eyed",
+        "Lantern-eyed",
+        "Searing",
+        "Glaring",
+        "Stony-eyed",
+        "Weeping",
+        "Pinpoint",
+        "Meeting"
       ],
       "name_nouns": [
-        "Oculus", "Eyestalk", "Watcher", "Lantern", "Iris", "Warden",
-        "Stare", "Vigil", "Beacon"
+        "Oculus",
+        "Eyestalk",
+        "Watcher",
+        "Lantern",
+        "Iris",
+        "Warden",
+        "Stare",
+        "Vigil",
+        "Beacon"
       ],
-      "damage_affinity": { "Radiant": 2, "Psychic": 2, "Necrotic": 1, "_note": "manner facet; judgment" },
-      "vet_tokens": ["eyestalk", "oculus", "lidless"]
+      "damage_affinity": {
+        "Radiant": 2,
+        "Psychic": 2,
+        "Necrotic": 1,
+        "_note": "manner facet; judgment"
+      },
+      "vet_tokens": [
+        "eyestalk",
+        "oculus",
+        "lidless"
+      ],
+      "restraints": [
+        "stone-creep crust",
+        "mirror-sheen glaze",
+        "transfixing rime",
+        "glare-lock lattice"
+      ],
+      "houses": [
+        "light",
+        "glass",
+        "shadow"
+      ]
     },
     "breath": {
       "substances": [
-        "scalding steam", "sleep gas", "frost plume", "ash gout", "miasmal fog",
-        "choking vapor", "acrid gusts", "rust-red mist", "billowing smoke", "numbing haze"
+        "scalding steam",
+        "sleep gas",
+        "frost plume",
+        "ash gout",
+        "miasmal fog",
+        "choking vapor",
+        "acrid gusts",
+        "rust-red mist",
+        "billowing smoke",
+        "numbing haze"
       ],
       "appendages": [
-        { "one": "bellows lung", "many": "bellows lungs" },
-        { "one": "flared maw", "many": "flared maws" },
-        { "one": "gill slit", "many": "gill slits" }
+        {
+          "one": "bellows lung",
+          "many": "bellows lungs"
+        },
+        {
+          "one": "flared maw",
+          "many": "flared maws"
+        },
+        {
+          "one": "gill slit",
+          "many": "gill slits"
+        }
       ],
-      "deliveries": ["exhales", "breathes", "spews", "expels"],
+      "deliveries": [
+        "exhales",
+        "breathes",
+        "spews",
+        "expels"
+      ],
       "name_adjectives": [
-        "Miasmal", "Scalding", "Acrid", "Billowing", "Gusting", "Bellows",
-        "Choking", "Plumed", "Numbing", "Rust-red"
+        "Miasmal",
+        "Scalding",
+        "Acrid",
+        "Billowing",
+        "Gusting",
+        "Bellows",
+        "Choking",
+        "Plumed",
+        "Numbing",
+        "Rust-red"
       ],
       "name_nouns": [
-        "Bellows", "Plume", "Gust", "Miasma", "Gout", "Vapor",
-        "Fume", "Exhalation"
+        "Bellows",
+        "Plume",
+        "Gust",
+        "Miasma",
+        "Gout",
+        "Vapor",
+        "Fume",
+        "Exhalation"
       ],
-      "damage_affinity": { "_note": "delivery-mode facet; the element rides the block's damage palette, not the facet" },
-      "vet_tokens": ["miasmal"]
+      "damage_affinity": {
+        "_note": "delivery-mode facet; the element rides the block's damage palette, not the facet"
+      },
+      "vet_tokens": [
+        "miasmal"
+      ],
+      "restraints": [
+        "half-frozen exhalation",
+        "tar-thick breath",
+        "clinging smog",
+        "crystallizing vapor"
+      ],
+      "houses": [
+        "ash",
+        "ice",
+        "venom"
+      ]
     },
     "bestial": {
       "substances": [
-        "matted fur musk", "hot spoor reek", "panting steam", "blood-slick slaver", "shed quills",
-        "dander cloud", "territorial musk", "gnawed bone litter", "wet pelt reek", "hackle bristle"
+        "matted fur musk",
+        "hot spoor reek",
+        "panting steam",
+        "blood-slick slaver",
+        "shed quills",
+        "dander cloud",
+        "territorial musk",
+        "gnawed bone litter",
+        "wet pelt reek",
+        "hackle bristle"
       ],
       "appendages": [
-        { "one": "claw", "many": "claws" },
-        { "one": "fang", "many": "fangs" },
-        { "one": "horn", "many": "horns" },
-        { "one": "hoof", "many": "hooves" },
-        { "one": "tusk", "many": "tusks" },
-        { "one": "dewclaw", "many": "dewclaws" },
-        { "one": "quill", "many": "quills" },
-        { "one": "lashing tail", "many": "lashing tails" }
+        {
+          "one": "claw",
+          "many": "claws"
+        },
+        {
+          "one": "fang",
+          "many": "fangs"
+        },
+        {
+          "one": "horn",
+          "many": "horns"
+        },
+        {
+          "one": "hoof",
+          "many": "hooves"
+        },
+        {
+          "one": "tusk",
+          "many": "tusks"
+        },
+        {
+          "one": "dewclaw",
+          "many": "dewclaws"
+        },
+        {
+          "one": "quill",
+          "many": "quills"
+        },
+        {
+          "one": "lashing tail",
+          "many": "lashing tails"
+        }
       ],
-      "deliveries": ["sheds", "sprays", "exhales", "scatters"],
+      "deliveries": [
+        "sheds",
+        "sprays",
+        "exhales",
+        "scatters"
+      ],
       "name_adjectives": [
-        "Matted", "Tusked", "Quilled", "Hackled", "Panting", "Slavering",
-        "Territorial", "Shaggy", "Rangy", "Shedding", "Foraging", "Prowling"
+        "Matted",
+        "Tusked",
+        "Quilled",
+        "Hackled",
+        "Panting",
+        "Slavering",
+        "Territorial",
+        "Shaggy",
+        "Rangy",
+        "Shedding",
+        "Foraging",
+        "Prowling"
       ],
       "name_nouns": [
-        "Boar", "Stag", "Hound", "Sow", "Bull", "Ram",
-        "Cur", "Moth", "Worm", "Crawler", "Shrike", "Badger"
+        "Boar",
+        "Stag",
+        "Hound",
+        "Sow",
+        "Bull",
+        "Ram",
+        "Cur",
+        "Moth",
+        "Worm",
+        "Crawler",
+        "Shrike",
+        "Badger"
       ],
-      "damage_affinity": { "Poison": 12, "Fire": 2, "Acid": 2, "Psychic": 1 },
-      "vet_tokens": ["spoor", "dewclaw"]
+      "damage_affinity": {
+        "Poison": 12,
+        "Fire": 2,
+        "Acid": 2,
+        "Psychic": 1
+      },
+      "vet_tokens": [
+        "spoor",
+        "dewclaw"
+      ],
+      "restraints": [
+        "sinew cords",
+        "gnawed-bone cage",
+        "matted pelt-snare",
+        "hide-strap tangle"
+      ],
+      "houses": [
+        "hide",
+        "bone",
+        "blood"
+      ]
     },
     "armed": {
       "substances": [
-        "whetstone grit", "oiled steel", "banner snap", "drum cadence", "shield clatter",
-        "quiver rattle", "war paint", "torch smoke", "camp-fire ash", "polished brass"
+        "whetstone grit",
+        "oiled steel",
+        "banner snap",
+        "drum cadence",
+        "shield clatter",
+        "quiver rattle",
+        "war paint",
+        "torch smoke",
+        "camp-fire ash",
+        "polished brass"
       ],
       "appendages": [
-        { "one": "notched axe", "many": "notched axes" },
-        { "one": "war pick", "many": "war picks" },
-        { "one": "tower shield", "many": "tower shields" },
-        { "one": "halberd", "many": "halberds" },
-        { "one": "flanged mace", "many": "flanged maces" },
-        { "one": "recurve bow", "many": "recurve bows" },
-        { "one": "boot blade", "many": "boot blades" }
+        {
+          "one": "notched axe",
+          "many": "notched axes"
+        },
+        {
+          "one": "war pick",
+          "many": "war picks"
+        },
+        {
+          "one": "tower shield",
+          "many": "tower shields"
+        },
+        {
+          "one": "halberd",
+          "many": "halberds"
+        },
+        {
+          "one": "flanged mace",
+          "many": "flanged maces"
+        },
+        {
+          "one": "recurve bow",
+          "many": "recurve bows"
+        },
+        {
+          "one": "boot blade",
+          "many": "boot blades"
+        }
       ],
-      "deliveries": ["hurls", "flings", "releases", "discharges"],
+      "deliveries": [
+        "hurls",
+        "flings",
+        "releases",
+        "discharges"
+      ],
       "name_adjectives": [
-        "Notched", "Oiled", "Whetted", "Flanged", "Shielded", "Veteran",
-        "War-scarred", "Regimented", "Bannered", "Drilled", "Marching", "Wall-breaking"
+        "Notched",
+        "Oiled",
+        "Whetted",
+        "Flanged",
+        "Shielded",
+        "Veteran",
+        "War-scarred",
+        "Regimented",
+        "Bannered",
+        "Drilled",
+        "Marching",
+        "Wall-breaking"
       ],
       "name_nouns": [
-        "Vanguard", "Champion", "Banner", "Phalanx", "Sergeant", "Duelist",
-        "Shieldbearer", "Picket", "Siege", "Muster"
+        "Vanguard",
+        "Champion",
+        "Banner",
+        "Phalanx",
+        "Sergeant",
+        "Duelist",
+        "Shieldbearer",
+        "Picket",
+        "Siege",
+        "Muster"
       ],
-      "damage_affinity": { "_note": "physical facet; no energy affinity" },
-      "vet_tokens": ["whetstone", "flanged", "phalanx"]
+      "damage_affinity": {
+        "_note": "physical facet; no energy affinity"
+      },
+      "vet_tokens": [
+        "whetstone",
+        "flanged",
+        "phalanx"
+      ],
+      "restraints": [
+        "weighted net",
+        "barbed chain",
+        "snare-wire",
+        "caltrop lattice"
+      ],
+      "houses": [
+        "iron",
+        "stone",
+        "glass"
+      ]
     },
     "amorphous": {
       "substances": [
-        "protoplasm", "quivering jelly", "translucent ooze", "acrid slime", "rippling membrane",
-        "formless bulk", "suspended debris", "milky cytoplasm", "dissolving film", "slow ripples"
+        "protoplasm",
+        "quivering jelly",
+        "translucent ooze",
+        "acrid slime",
+        "rippling membrane",
+        "formless bulk",
+        "suspended debris",
+        "milky cytoplasm",
+        "dissolving film",
+        "slow ripples"
       ],
       "appendages": [
-        { "one": "pseudopod", "many": "pseudopods" },
-        { "one": "slime tendril", "many": "slime tendrils" },
-        { "one": "enveloping fold", "many": "enveloping folds" },
-        { "one": "jelly lobe", "many": "jelly lobes" }
+        {
+          "one": "pseudopod",
+          "many": "pseudopods"
+        },
+        {
+          "one": "slime tendril",
+          "many": "slime tendrils"
+        },
+        {
+          "one": "enveloping fold",
+          "many": "enveloping folds"
+        },
+        {
+          "one": "jelly lobe",
+          "many": "jelly lobes"
+        }
       ],
-      "deliveries": ["exudes", "releases", "expels", "seeps"],
+      "deliveries": [
+        "exudes",
+        "releases",
+        "expels",
+        "seeps"
+      ],
       "name_adjectives": [
-        "Protoplasmic", "Quivering", "Translucent", "Rippling", "Formless", "Milky",
-        "Dissolving", "Gelatinous", "Creeping", "Seeping", "Clinging", "Slow"
+        "Protoplasmic",
+        "Quivering",
+        "Translucent",
+        "Rippling",
+        "Formless",
+        "Milky",
+        "Dissolving",
+        "Gelatinous",
+        "Creeping",
+        "Seeping",
+        "Clinging",
+        "Slow"
       ],
       "name_nouns": [
-        "Pudding", "Jelly", "Cube", "Mass", "Slick", "Film",
-        "Tide", "Bloom", "Curtain"
+        "Pudding",
+        "Jelly",
+        "Cube",
+        "Mass",
+        "Slick",
+        "Film",
+        "Tide",
+        "Bloom",
+        "Curtain"
       ],
-      "damage_affinity": { "Acid": 8 },
-      "vet_tokens": ["protoplasm", "pseudopod", "cytoplasm"]
+      "damage_affinity": {
+        "Acid": 8
+      },
+      "vet_tokens": [
+        "protoplasm",
+        "pseudopod",
+        "cytoplasm"
+      ],
+      "restraints": [
+        "engulfing gel",
+        "cytoplasmic sheath",
+        "mucus sheet",
+        "pseudopod lattice"
+      ],
+      "houses": [
+        "tar",
+        "blood",
+        "fungus"
+      ]
+    }
+  },
+  "houses": {
+    "brine": {
+      "tokens": [
+        "barnacle",
+        "brine",
+        "coastal",
+        "kelp",
+        "ocean",
+        "saline",
+        "salt",
+        "salt-crust",
+        "sea",
+        "seawater",
+        "shore",
+        "surf",
+        "tide-wrack",
+        "wave"
+      ],
+      "substances": [
+        "stinging brine",
+        "salt-thick spray",
+        "black seawater",
+        "curdled foam"
+      ],
+      "adjectives": [
+        "Brine",
+        "Salt-Crusted",
+        "Tidewrack",
+        "Barnacled"
+      ],
+      "nouns": [
+        "Surge",
+        "Undertow",
+        "Spray",
+        "Wrack"
+      ]
+    },
+    "abyss": {
+      "tokens": [
+        "abyssal",
+        "benthic",
+        "deep-ocean",
+        "fathom",
+        "hadal",
+        "lightless",
+        "pressure",
+        "pressure-dark",
+        "trench"
+      ],
+      "substances": [
+        "crushing dark water",
+        "trench-cold pressure",
+        "lightless murk"
+      ],
+      "adjectives": [
+        "Hadal",
+        "Trenchborn",
+        "Fathomless",
+        "Sunless"
+      ],
+      "nouns": [
+        "Descent",
+        "Crush",
+        "Deep",
+        "Silence"
+      ]
+    },
+    "ice": {
+      "tokens": [
+        "freezing",
+        "frost",
+        "glacial",
+        "glacier",
+        "hoarfrost",
+        "ice",
+        "icicle",
+        "permafrost",
+        "rime",
+        "sleet",
+        "snow",
+        "winter"
+      ],
+      "substances": [
+        "splintering rime",
+        "black glacier-ice",
+        "driving sleet",
+        "hoarfrost"
+      ],
+      "adjectives": [
+        "Rime",
+        "Glacier",
+        "Hoarfrost",
+        "Sleet"
+      ],
+      "nouns": [
+        "Frostbite",
+        "Floe",
+        "Shiver",
+        "Killing Cold"
+      ]
+    },
+    "storm": {
+      "tokens": [
+        "cloud",
+        "downpour",
+        "gale",
+        "lightning-lash",
+        "rain",
+        "sky",
+        "squall",
+        "storm",
+        "tempest",
+        "thunderhead",
+        "weather",
+        "wind"
+      ],
+      "substances": [
+        "screaming wind",
+        "thunderhead vapor",
+        "stinging squall"
+      ],
+      "adjectives": [
+        "Galeborn",
+        "Thunderhead",
+        "Squall",
+        "Wheeling"
+      ],
+      "nouns": [
+        "Tempest",
+        "Downdraft",
+        "Gyre",
+        "Rolling Thunder"
+      ]
+    },
+    "magma": {
+      "tokens": [
+        "caldera",
+        "forge-heart",
+        "furnace",
+        "lava",
+        "magma",
+        "molten",
+        "slag",
+        "smelt",
+        "volcanic"
+      ],
+      "substances": [
+        "running magma",
+        "molten slag",
+        "furnace-bright ore"
+      ],
+      "adjectives": [
+        "Molten",
+        "Slagborn",
+        "Furnace",
+        "Smelted"
+      ],
+      "nouns": [
+        "Crucible",
+        "Flow",
+        "Vent",
+        "Pour"
+      ]
+    },
+    "flame": {
+      "tokens": [
+        "flame",
+        "fire",
+        "blaze",
+        "pyre",
+        "scorch",
+        "searing",
+        "burning"
+      ],
+      "substances": [
+        "clinging flame",
+        "pyre-heat",
+        "searing wash"
+      ],
+      "adjectives": [
+        "Blazing",
+        "Pyre",
+        "Scorching",
+        "Kindled"
+      ],
+      "nouns": [
+        "Conflagration",
+        "Blaze",
+        "Pyre",
+        "Wildfire"
+      ]
+    },
+    "ash": {
+      "tokens": [
+        "ash",
+        "calcined",
+        "char",
+        "cinder",
+        "clinker",
+        "crematory",
+        "ember",
+        "pyre-dust",
+        "soot"
+      ],
+      "substances": [
+        "bone-white ash",
+        "glowing cinders",
+        "oily soot",
+        "char-flakes"
+      ],
+      "adjectives": [
+        "Ashen",
+        "Cinder",
+        "Sooted",
+        "Charred"
+      ],
+      "nouns": [
+        "Ashfall",
+        "Ember",
+        "Cinder-Drift",
+        "Remnant"
+      ]
+    },
+    "stone": {
+      "tokens": [
+        "basalt",
+        "bedrock",
+        "boulder",
+        "cliff",
+        "crag",
+        "granite",
+        "gravel",
+        "mountain",
+        "rock",
+        "scree",
+        "slate",
+        "stone"
+      ],
+      "substances": [
+        "grinding scree",
+        "shattered slate",
+        "granite dust"
+      ],
+      "adjectives": [
+        "Stonebound",
+        "Scree",
+        "Slate",
+        "Granite"
+      ],
+      "nouns": [
+        "Rockfall",
+        "Landslide",
+        "Cairn",
+        "Grind"
+      ]
+    },
+    "sand": {
+      "tokens": [
+        "ashen-grit",
+        "desert",
+        "dune",
+        "dune-sea",
+        "dust",
+        "grit",
+        "loess",
+        "sand",
+        "silt"
+      ],
+      "substances": [
+        "scouring sand",
+        "fine grit",
+        "choking dust",
+        "settling silt"
+      ],
+      "adjectives": [
+        "Duneborn",
+        "Grit",
+        "Silt",
+        "Scouring"
+      ],
+      "nouns": [
+        "Sandstorm",
+        "Drift",
+        "Scour",
+        "Dune"
+      ]
+    },
+    "bone": {
+      "tokens": [
+        "antler",
+        "bone",
+        "calcified",
+        "marrow",
+        "ossified",
+        "ossuary",
+        "rib",
+        "skeletal",
+        "skull",
+        "vertebra"
+      ],
+      "substances": [
+        "splintered bone",
+        "cold marrow",
+        "calcined dust"
+      ],
+      "adjectives": [
+        "Bonewrought",
+        "Marrow",
+        "Ossuary",
+        "Splintered"
+      ],
+      "nouns": [
+        "Ossuary",
+        "Charnel",
+        "Rattle",
+        "Reliquary"
+      ]
+    },
+    "rot": {
+      "tokens": [
+        "carrion",
+        "decay",
+        "fetid",
+        "gangrene",
+        "gangrenous",
+        "maggot",
+        "necrotic-slough",
+        "putrescent",
+        "putrid",
+        "rot"
+      ],
+      "substances": [
+        "sloughing rot",
+        "carrion-slick",
+        "fetid ichor"
+      ],
+      "adjectives": [
+        "Rotting",
+        "Carrion",
+        "Fetid",
+        "Sloughing"
+      ],
+      "nouns": [
+        "Blight",
+        "Corruption",
+        "Carrion",
+        "Ruin"
+      ]
+    },
+    "grave": {
+      "tokens": [
+        "barrow",
+        "buried",
+        "crypt",
+        "drowned",
+        "funerary",
+        "grave",
+        "mourning",
+        "sepulchre",
+        "shroud",
+        "sunken",
+        "tomb",
+        "wax"
+      ],
+      "substances": [
+        "grave-wax",
+        "tomb dust",
+        "shroud-linen",
+        "barrow soil"
+      ],
+      "adjectives": [
+        "Sepulchral",
+        "Barrow",
+        "Shrouded",
+        "Tomb"
+      ],
+      "nouns": [
+        "Vigil",
+        "Cerement",
+        "Barrow",
+        "Requiem"
+      ]
+    },
+    "iron": {
+      "tokens": [
+        "brass",
+        "bronze",
+        "clockwork",
+        "forge",
+        "gear",
+        "iron",
+        "machine",
+        "piston",
+        "rivet",
+        "rivet-work",
+        "solder",
+        "steel",
+        "wrought"
+      ],
+      "substances": [
+        "red rust",
+        "white-hot solder",
+        "wrought iron"
+      ],
+      "adjectives": [
+        "Ironbound",
+        "Riveted",
+        "Wrought",
+        "Brazen"
+      ],
+      "nouns": [
+        "Anvil",
+        "Rivet",
+        "Bellows",
+        "Engine"
+      ]
+    },
+    "glass": {
+      "tokens": [
+        "crystal",
+        "glass",
+        "mirror",
+        "mirror-bright",
+        "obsidian",
+        "porcelain",
+        "porcelain-smooth",
+        "prism",
+        "shard",
+        "vitreous",
+        "vitrified"
+      ],
+      "substances": [
+        "vitreous shards",
+        "powdered glass",
+        "mirror-bright crystal"
+      ],
+      "adjectives": [
+        "Vitreous",
+        "Mirrored",
+        "Prism",
+        "Shardclad"
+      ],
+      "nouns": [
+        "Facet",
+        "Shard",
+        "Refraction",
+        "Silvering"
+      ]
+    },
+    "thorn": {
+      "tokens": [
+        "bark",
+        "bramble",
+        "briar",
+        "creeper",
+        "fiber",
+        "fibre",
+        "frond",
+        "husk-fiber",
+        "plant",
+        "reed",
+        "root",
+        "sap",
+        "thorn",
+        "vine",
+        "weave",
+        "woven"
+      ],
+      "substances": [
+        "strangling bramble",
+        "black sap",
+        "splintered bark"
+      ],
+      "adjectives": [
+        "Briar",
+        "Thornclad",
+        "Rootbound",
+        "Creeping"
+      ],
+      "nouns": [
+        "Bramble",
+        "Snare",
+        "Thicket",
+        "Grove"
+      ]
+    },
+    "fungus": {
+      "tokens": [
+        "bloom",
+        "cap",
+        "fungal",
+        "hyphae",
+        "mold",
+        "mould",
+        "mushroom",
+        "mycelium",
+        "rot-bloom",
+        "spore",
+        "toadstool"
+      ],
+      "substances": [
+        "drifting spores",
+        "mycelial fur",
+        "wet mould"
+      ],
+      "adjectives": [
+        "Spore",
+        "Mycelial",
+        "Blooming",
+        "Mouldering"
+      ],
+      "nouns": [
+        "Bloom",
+        "Flush",
+        "Mycelium",
+        "Spore-Fall"
+      ]
+    },
+    "shadow": {
+      "tokens": [
+        "dark",
+        "dusk",
+        "gloaming",
+        "gloom",
+        "night",
+        "penumbra",
+        "shade",
+        "shadow",
+        "umbral",
+        "unlit"
+      ],
+      "substances": [
+        "clotted shadow",
+        "umbral smoke",
+        "starless gloom"
+      ],
+      "adjectives": [
+        "Umbral",
+        "Gloaming",
+        "Penumbral",
+        "Dusk"
+      ],
+      "nouns": [
+        "Eclipse",
+        "Gloom",
+        "Nightfall",
+        "Umbra"
+      ]
+    },
+    "void": {
+      "tokens": [
+        "absence",
+        "between",
+        "cosmic",
+        "empty",
+        "hollow",
+        "null",
+        "planar",
+        "rift",
+        "seam",
+        "star",
+        "void"
+      ],
+      "substances": [
+        "the space between stars",
+        "absence itself",
+        "hollow cold"
+      ],
+      "adjectives": [
+        "Hollow",
+        "Starless",
+        "Unmade",
+        "Yawning"
+      ],
+      "nouns": [
+        "Absence",
+        "Hollow",
+        "Aperture",
+        "Nothing"
+      ]
+    },
+    "blood": {
+      "tokens": [
+        "arterial",
+        "blood",
+        "clot",
+        "crimson",
+        "gore",
+        "heartsblood",
+        "ichor",
+        "vein",
+        "vein-work"
+      ],
+      "substances": [
+        "clotting ichor",
+        "arterial spray",
+        "black blood"
+      ],
+      "adjectives": [
+        "Ichorous",
+        "Arterial",
+        "Clotted",
+        "Bloodwrought"
+      ],
+      "nouns": [
+        "Hemorrhage",
+        "Vein",
+        "Letting",
+        "Clot"
+      ]
+    },
+    "tar": {
+      "tokens": [
+        "asphalt",
+        "bitumen",
+        "bitumen-slick",
+        "oil",
+        "pitch",
+        "slick",
+        "sludge",
+        "tar",
+        "tarpit"
+      ],
+      "substances": [
+        "clinging tar",
+        "hot pitch",
+        "black slick"
+      ],
+      "adjectives": [
+        "Tarbound",
+        "Pitch",
+        "Bitumen",
+        "Slick"
+      ],
+      "nouns": [
+        "Mire",
+        "Seep",
+        "Pitchfall",
+        "Sump"
+      ]
+    },
+    "venom": {
+      "tokens": [
+        "bile",
+        "envenom",
+        "envenomed",
+        "poison",
+        "poisoned",
+        "sting",
+        "stinger",
+        "toxin",
+        "venom"
+      ],
+      "substances": [
+        "clear venom",
+        "burning bile",
+        "paralytic toxin"
+      ],
+      "adjectives": [
+        "Envenomed",
+        "Bilious",
+        "Toxic",
+        "Stinging"
+      ],
+      "nouns": [
+        "Sting",
+        "Draught",
+        "Toxin",
+        "Bloom"
+      ]
+    },
+    "dream": {
+      "tokens": [
+        "dream",
+        "lull",
+        "memory",
+        "nightmare",
+        "remembrance",
+        "reverie",
+        "sleep",
+        "sleeper",
+        "thought",
+        "vision"
+      ],
+      "substances": [
+        "borrowed memory",
+        "sleep-thick air",
+        "unspooled dream"
+      ],
+      "adjectives": [
+        "Dreamt",
+        "Unremembered",
+        "Reverie",
+        "Sleeping"
+      ],
+      "nouns": [
+        "Reverie",
+        "Hush",
+        "Waking",
+        "Nightmare"
+      ]
+    },
+    "light": {
+      "tokens": [
+        "censer",
+        "dawnlit",
+        "gilded",
+        "halo",
+        "holy",
+        "light",
+        "luminous",
+        "radiance",
+        "radiant",
+        "sacred",
+        "shrine",
+        "sunlit"
+      ],
+      "substances": [
+        "unbearable light",
+        "gilded haze",
+        "censer-smoke"
+      ],
+      "adjectives": [
+        "Gilded",
+        "Haloed",
+        "Luminous",
+        "Sunbright"
+      ],
+      "nouns": [
+        "Halo",
+        "Censer",
+        "Aureole",
+        "Dawn"
+      ]
+    },
+    "hide": {
+      "tokens": [
+        "antler",
+        "claw",
+        "fur",
+        "hair",
+        "hide",
+        "hoof",
+        "horn",
+        "leather",
+        "mane",
+        "muscle",
+        "pelt",
+        "sinew",
+        "tendon"
+      ],
+      "substances": [
+        "matted pelt",
+        "raw sinew",
+        "shed hide"
+      ],
+      "adjectives": [
+        "Pelted",
+        "Sinewed",
+        "Antlered",
+        "Rawhide"
+      ],
+      "nouns": [
+        "Hunt",
+        "Rut",
+        "Pack",
+        "Quarry"
+      ]
+    },
+    "chitin": {
+      "tokens": [
+        "arachnid",
+        "beetle",
+        "carapace",
+        "chitin",
+        "claw-plate",
+        "crab",
+        "exoskeleton",
+        "husk",
+        "insect",
+        "mandible",
+        "segmented",
+        "shell",
+        "spider"
+      ],
+      "substances": [
+        "flaking chitin",
+        "carapace-plate",
+        "emptied husk"
+      ],
+      "adjectives": [
+        "Chitinous",
+        "Carapaced",
+        "Husked",
+        "Segmented"
+      ],
+      "nouns": [
+        "Swarm",
+        "Moult",
+        "Carapace",
+        "Hive"
+      ]
     }
   }
 }

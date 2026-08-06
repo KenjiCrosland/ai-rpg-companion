@@ -146,6 +146,9 @@ describe('applying flavor', () => {
     const c = chassisFromSkeleton(SKEL);
     expect(c).toEqual({
       ac: SKEL.ac, hp: SKEL.hp, pb: SKEL.pb, attack_bonus: SKEL.attack_bonus, save_dc: SKEL.save_dc,
+      // archetype rides along for archetype-gated lint rules (bps-resistance
+      // exempts swarms).
+      archetype: SKEL.archetype ?? null,
     });
   });
 });

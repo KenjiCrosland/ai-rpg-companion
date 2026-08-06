@@ -26,7 +26,12 @@ describe('no flavor in the mechanics', () => {
     // Italic spans are RULES references (spell names: *Faerie Fire*, *Wall
     // of Fire*), not flavor — stripping "Fire" out of a spell name minted
     // "Wall of moss-sheathed root and stone" on a live block.
-    const deSpell = (t) => t.replace(/\*[^*\n]+\*/g, '');
+    const deSpell = (t) => t.replace(/\*[^*\n]+\*/g, '')
+      // Defense clauses are RULES values, not flavor: the web's
+      // "Vulnerability to Fire damage" is printed counterplay (a
+      // {substance} slot there shipped "Vulnerability to alabaster dust
+      // damage" — the circular-fill class, live on the Uulghoth).
+      .replace(/(?:Vulnerability|Immunity|Resistance) to [\w, ]+ damage/g, '');
     const offenders = ROWS.filter((r) => texts(r).some((t) => ELEM.test(deSpell(t))))
       .map((r) => `${label(r)}: ${deSpell(texts(r).find((t) => ELEM.test(deSpell(t)))).match(ELEM)[0]}`);
     expect(offenders).toEqual([]);

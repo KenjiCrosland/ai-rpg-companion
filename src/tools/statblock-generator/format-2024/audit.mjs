@@ -89,7 +89,12 @@ Audit against these principles:
 4. FORMAT INTEGRITY. Entry text contains only statblock language. Flag any
    design/meta vocabulary ("save-based action", "2024", "condition names",
    "as written", schema or instruction fragments), orphaned sentences detached
-   from their entry, stray characters, or UI text. ${is2014
+   from their entry, stray characters, or UI text. ALSO flag garbled or
+   ungrammatical text: doubled words ("the swarm swarm"), broken or
+   half-deleted sentences, subject-verb disagreements, a lowercase word
+   starting a sentence, or a capitalized word mid-sentence that is not a
+   defined game term (conditions, damage types, action names are correctly
+   capitalized — never flag those). ${is2014
     ? 'Also flag 2024-format markers ("Attack Roll:", "*Failure:*", "*Success:*") — this block uses the classic 2014 phrasing throughout, and that phrasing is CORRECT here; never flag "must succeed on a DC X ... saving throw" forms.'
     : 'Also flag 2014-format save phrasing ("must succeed on a DC X ... saving throw or").'}
 
@@ -151,12 +156,36 @@ what a creature IS, not what it does. A or B keeps the current
 name — C or lower means it will be replaced. Grade the name, not your
 ability to invent a different one.
 
+For principle 4 findings ONLY (garbled text, wrong words, grammar,
+doubled words, circular phrases), you may ALSO provide a "rewrite": the
+minimal replacement for the quoted span that repairs the text. Rules for
+rewrites: change as few words as possible; NEVER change any number, DC,
+damage type, condition name, or game term; never add or remove mechanics.
+A rewrite fixes prose, not rules. Findings from other principles never
+carry a rewrite.
+
+An entry's NAME can also be the defect. Flag it under principle 3 and
+provide a "rename" when the name and the mechanics disagree:
+- the name promises a mechanic the text never delivers ("Choir Silence"
+  that deafens nobody, a "Reassemble" with no disassembly)
+- the name describes the wrong sense or medium for its effect (a "Glare"
+  that deafens, a "Breath" that is a thrown rock)
+- the name is invented syllables rather than words ("Thul-eg Strike") —
+  coined words belong to the creature's own name, never to entries
+The rename must be plain English in this creature's register, must
+describe what the entry ACTUALLY does, must not duplicate another entry's
+name, and must never include a use-limit parenthetical — the engine
+appends "(Recharge 5-6)" and "(1/Day)" itself. Never rename Multiattack,
+Spellcasting, or Legendary Resistance.
+
 OUTPUT: JSON only, no markdown fences. Report at most 6 findings.
 { "name_grade": "A-F",
   "type_correction": null,
   "findings": [ { "principle": <1-5>, "section": "<section name>",
   "entry": "<entry name>", "span": "<exact quoted text, verbatim>",
   "issue": "<one sentence>", "suggestion": "<one sentence, direction not prose>",
+  "rewrite": "<optional, principle 4 only: the repaired span>",
+  "rename": "<optional, name-defect findings only: the replacement entry name>",
   "confidence": "high|medium|low" } ] }
 An empty findings array is a correct and common output. Do not manufacture
 findings to appear thorough. Every span must be verbatim text from the block —
@@ -164,16 +193,22 @@ if you cannot quote it, the finding does not exist.`;
 }
 
 export function validateAuditResponse(raw) {
+  // Validate only what verification LOAD-BEARS on: a findings array whose
+  // entries can be located (entry) and span-checked (span) and merged
+  // (issue). Everything else — principle as a string, Confidence
+  // capitalized, confidence missing — is coerced or gated per-finding in
+  // verifyAuditFindings. The strict version rejected the WHOLE response
+  // for one sloppy field, and the client's retry loop then fed the same
+  // well-formed JSON back with "fix the formatting" — a doom loop that
+  // burned all three attempts (measured live: 1 in 5 thinking-disabled
+  // DeepSeek responses omits one finding's confidence).
   try {
     const parsed = JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, ''));
     if (!Array.isArray(parsed?.findings)) return false;
-    if (parsed.name_grade !== undefined && !/^[A-F][+-]?$/i.test(String(parsed.name_grade).trim())) return false;
     return parsed.findings.every((f) =>
-      Number.isInteger(f?.principle) && f.principle >= 1 && f.principle <= 5
-      && typeof f?.entry === 'string' && f.entry.trim()
+      typeof f?.entry === 'string' && f.entry.trim()
       && typeof f?.span === 'string' && f.span.trim()
-      && typeof f?.issue === 'string' && f.issue.trim()
-      && ['high', 'medium', 'low'].includes(f?.confidence));
+      && typeof f?.issue === 'string' && f.issue.trim());
   } catch {
     return false;
   }
@@ -228,8 +263,13 @@ export function verifyAuditFindings(monster, raw) {
     .replace(/[\u201c\u201d]/g, '"').replace(/[\u2013\u2014]/g, '-').trim().toLowerCase();
   const out = [];
   for (const f of parsed?.findings ?? []) {
-    const minConfidence = f.principle === 5 ? ['high'] : ['high', 'medium'];
-    if (!minConfidence.includes(f.confidence)) {
+    // Coercion belt: principle may arrive as a string, confidence in any
+    // case or absent. Absent confidence lands at 'low', which the gate
+    // drops — one sloppy finding costs itself, never its siblings.
+    const principle = Number(f.principle);
+    const confidence = String(f.confidence ?? 'low').trim().toLowerCase();
+    const minConfidence = principle === 5 ? ['high'] : ['high', 'medium'];
+    if (!minConfidence.includes(confidence)) {
       logger.log('audit finding below confidence gate:', f.entry, f.issue);
       continue;
     }
@@ -286,11 +326,52 @@ export function verifyAuditFindings(monster, raw) {
       logger.log('audit span not verbatim, dropped:', f.entry, f.span);
       continue;
     }
+    // Rewrite actuator (owner call, 2026-08-04: with templates owning the
+    // mechanics, the audit's best work is copy-editing fill seams). A
+    // rewrite is carried only when it is text-safe: principle 4, span
+    // present RAW in the entry (no normalization games on a replacement),
+    // and the same multiset of numbers on both sides — prose may change,
+    // values may not.
+    let rewrite = null;
+    if (typeof f.rewrite === 'string' && f.rewrite.trim()
+      && Number(f.principle) === 4
+      && entry.text.includes(f.span)
+      && f.rewrite.length <= f.span.length * 3 + 40) {
+      const nums = (str) => [...String(str).matchAll(/\d+/g)].map((m) => m[0]).sort().join(',');
+      // a rewrite identical to its span is a no-op the judge sometimes
+      // emits on a false finding — logged as a "rewrite" that changed
+      // nothing (live: Flowing Ash on the Emberwraith)
+      if (nums(f.span) === nums(f.rewrite) && f.rewrite.trim() !== f.span.trim()) rewrite = f.rewrite.trim();
+    }
+    // Rename actuator (owner call, 2026-08-05): the judgment layer is the
+    // only thing that can tell "Choir Silence that deafens nobody" from a
+    // fine name, or a coinage from a compound — the deterministic
+    // detector was retired for exactly that reason. Carried only when
+    // safe: a plain name, no use-limit parenthetical (the engine appends
+    // those), no collision with another entry, and never on the three
+    // rules-vocabulary names the table reads at a glance.
+    const NEVER_RENAME = new Set(['Multiattack', 'Spellcasting', 'Legendary Resistance']);
+    let rename = null;
+    if (typeof f.rename === 'string' && f.rename.trim()) {
+      const proposed = f.rename.trim();
+      const bare = entry.name.replace(/\s*\(.*\)$/, '').trim();
+      const taken = new Set(Object.values(monster.sections ?? {}).flat()
+        .map((e) => String(e?.name ?? '').replace(/\s*\(.*\)$/, '').trim().toLowerCase()));
+      if (!NEVER_RENAME.has(bare) && !entry.name_locked
+        && proposed.length >= 3 && proposed.length <= 40
+        && !/[()]/.test(proposed)
+        && proposed.toLowerCase() !== bare.toLowerCase()
+        && !taken.has(proposed.toLowerCase())) {
+        rename = proposed;
+      }
+    }
     out.push({
       rule: 'mechanical-audit',
       severity: 'audit',
       message: `${f.issue}${f.suggestion ? ` — ${f.suggestion}` : ''} (about: "${f.span}")`,
       loc: { section, entry: entry.name },
+      ...(rewrite ? { span: f.span, rewrite } : {}),
+      ...(rename ? { rename } : {}),
     });
     if (out.length >= MAX_MERGED_FINDINGS) break;
   }

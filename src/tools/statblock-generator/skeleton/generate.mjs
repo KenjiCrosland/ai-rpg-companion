@@ -15,7 +15,7 @@
 import { buildSkeleton, crNumber } from './build-skeleton.mjs';
 import {
   buildFlavorPrompt, validateFlavorResponse, applyFlavor,
-  chassisFromSkeleton, planFromSkeleton, swapEntries,
+  chassisFromSkeleton, planFromSkeleton, swapEntries, pickHouse,
 } from './flavor-prompt.mjs';
 import {
   auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection,
@@ -47,6 +47,7 @@ export async function generateFromSkeleton(options, callLLM) {
     lore = null, identity = null, seed = null, onProgress = null, degraded = false,
     caster = false, strikeStat = null, themes = null, mind = null,
     conceptSize = null, movement = null, attackMode = null, signatureMechanic = null,
+    takenNames = [], typeSource = 'auto',
   } = options;
 
   const progress = (phase, data) => {
@@ -98,8 +99,11 @@ export async function generateFromSkeleton(options, callLLM) {
     ? movement.map((m) => String(m).toLowerCase()).filter((m) => ['swim', 'burrow', 'fly', 'climb'].includes(m))
     : null;
   const blockAttackMode = ['melee', 'ranged', 'mixed'].includes(attackMode) ? attackMode : null;
-  const SIGNATURES_OK = ['thrown-weapon', 'breath', 'engulf', 'grapple', 'gaze', 'aura', 'teleport', 'summon', 'web'];
-  const blockSignature = SIGNATURES_OK.includes(signatureMechanic) ? signatureMechanic : null;
+  // 'snare' is the concept-facing name (owner call: the restraining
+  // substance could be anything); 'web' stays the internal family key.
+  const SIGNATURES_OK = ['thrown-weapon', 'breath', 'engulf', 'grapple', 'gaze', 'aura', 'teleport', 'summon', 'web', 'snare'];
+  const blockSignature = SIGNATURES_OK.includes(signatureMechanic)
+    ? (signatureMechanic === 'snare' ? 'web' : signatureMechanic) : null;
 
   const skeleton = buildSkeleton({
     cr: crNum, seed: useSeed, alternatives: ALTERNATIVES, archetype: archetypeName,
@@ -159,8 +163,15 @@ export async function generateFromSkeleton(options, callLLM) {
   // has needed the synthesis text, and it lived only in the network tab.
   if (concept) trace('concept:', String(concept).slice(0, 600));
   if (lore) trace('lore:', lore);
+  // One MATERIAL for the block, scored from the concept prose (owner call,
+  // 2026-08-05). Attached to the skeleton so the palette, the fills and
+  // the naming all read the same declaration.
+  skeleton.houses = pickHouse([concept, identity, lore].filter(Boolean).join(' '), blockThemes, useSeed);
+  if (skeleton.houses.length) trace('material house:', skeleton.houses.join(' + '));
+
   const prompt = buildFlavorPrompt(skeleton, {
     concept,
+    takenNames,
     themes: blockThemes,
     // The resolve call already produced an identity and a lore line. Feeding
     // them here grounds {substance} and the naming far better than the raw
@@ -181,6 +192,9 @@ export async function generateFromSkeleton(options, callLLM) {
   }
   if (flavor) {
     trace('flavor came back:', `"${flavor.name}" — ${flavor.type ?? '?'}, ${flavor.physical_damage ?? '?'}/${flavor.energy_damage ?? '?'} damage`);
+    if (takenNames.some((n) => String(n).toLowerCase() === String(flavor.name ?? '').toLowerCase())) {
+      logger.warn('[skeleton] name collides with the saved roster:', flavor.name);
+    }
     const picks = (flavor.entries ?? []).filter((e) => e && e.choose);
     if (picks.length) trace('model chose:', picks.map((e) => `${e.id} -> ${e.choose}`).join(', '));
     const named = (flavor.entries ?? []).filter((e) => e && e.name);
@@ -255,6 +269,36 @@ export async function generateFromSkeleton(options, callLLM) {
     }
   }
 
+  // Swarm identity is carried by the NAME in print — 7 of 7 are "Swarm of
+  // X", the type line stays plain (Beast, Undead). The prompt asks for the
+  // printed form; when the model (or the never-fail path) doesn't comply,
+  // the deterministic suffix form keeps the identity without a plural
+  // guess, and applyRenameMapping repoints every self-reference. Without
+  // this the swarm-content-untyped reject fires on the engine's own kit.
+  if (archetypeName === 'swarm' && !/swarm/i.test(`${monster.name ?? ''} ${monster.type ?? ''}`)) {
+    const swarmName = `${monster.name} Swarm`;
+    trace('swarm name guaranteed:', `"${monster.name}" -> "${swarmName}"`);
+    monster = applyRenameMapping(monster, { [monster.name]: swarmName });
+  }
+
+  // The swarm defense package, 7 of 7 printed swarms: resistance to
+  // Bludgeoning/Piercing/Slashing (weapons hit SOME of the mass) and the
+  // eight can't-happen-to-a-crowd condition immunities. Stamped like the
+  // type floors — a floor merged with the model's picks, never a ceiling.
+  if (archetypeName === 'swarm') {
+    const res = new Set(['Bludgeoning', 'Piercing', 'Slashing']);
+    for (const tok of String(monster.resistances ?? '').split(/[;,]/).map((x) => x.trim()).filter(Boolean)) res.add(tok);
+    monster.resistances = [...res].sort().join(', ');
+    const DMG = ['Acid', 'Bludgeoning', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Piercing', 'Poison', 'Psychic', 'Radiant', 'Slashing', 'Thunder'];
+    const damage = new Set(); const conds = new Set(['Charmed', 'Frightened', 'Grappled', 'Paralyzed', 'Petrified', 'Prone', 'Restrained', 'Stunned']);
+    for (const tok of String(monster.immunities ?? '').split(/[;,]/).map((x) => x.trim()).filter(Boolean)) {
+      if (DMG.includes(tok)) damage.add(tok); else conds.add(tok);
+    }
+    const d = [...damage].sort(); const c = [...conds].sort();
+    monster.immunities = d.join(', ') + (c.length ? `${d.length ? '; ' : ''}${c.join(', ')}` : '');
+    trace('swarm defense package stamped:', `resist ${monster.resistances} | immune ${monster.immunities}`);
+  }
+
   // Deterministic corrections only. Anything still rejecting is a defect in
   // the engine, not something to hand back to the model.
   monster = applyCorrections(
@@ -269,7 +313,7 @@ export async function generateFromSkeleton(options, callLLM) {
   // literally named "Grave Vow" — shipped live on an audit-flake day, when
   // the audit that would have swapped it never ran).
   {
-    const NAME_REVERT_RULES = ['entry-name-coinage', 'entry-name-self', 'entry-named-after-monster'];
+    const NAME_REVERT_RULES = ['entry-name-self', 'entry-named-after-monster', 'entry-name-mode-mismatch'];
     const coinage = lintStatblock(monster, { chassis, plan, edition: '2024', defenseCaps })
       .findings.filter((f) => NAME_REVERT_RULES.includes(f.rule) && f.loc?.entry);
     for (const f of coinage) {
@@ -314,15 +358,47 @@ export async function generateFromSkeleton(options, callLLM) {
       // A type correction is a field change, so it applies directly. Guarded
       // the same way the chassis path guards it: never over a user-picked
       // type, never on a swarm form.
+      // The guard used to read !resolvedType — written to protect a
+      // USER-picked type, but resolvedType is the CONCEPT CALL's type,
+      // which is set on essentially every generation now. So the audit's
+      // type correction quietly became dead code the moment the concept
+      // call got reliable at typing (live: a Lawful Good "Humanoid" with
+      // chitinous rends and eight spider limbs, unflagged). A user's
+      // choice is still sacred; a model's guess is correctable.
       const retype = auditTypeCorrection(raw, monster.type);
-      if (retype && !resolvedType && !/swarm/i.test(monster.type ?? '')) {
+      if (retype && typeSource !== 'user' && !/swarm/i.test(monster.type ?? '')) {
         trace('audit retype:', `${monster.type} -> ${retype}`);
         monster.type = retype;
       }
 
+      // Rewrites first: span-anchored prose repairs, applied in place
+      // (verifyAuditFindings only carries a rewrite when the span is
+      // present raw and the numbers match — the audit as copy-editor,
+      // owner call 2026-08-04). A rewritten finding never also swaps.
+      const rewrites = findings.filter((f) => f.rewrite && f.span);
+      for (const f of rewrites) {
+        const entry = (monster.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+        if (entry && entry.text.includes(f.span)) {
+          entry.text = entry.text.split(f.span).join(f.rewrite);
+          trace('audit rewrite:', `${f.loc.entry}: "${f.span.slice(0, 60)}" -> "${f.rewrite.slice(0, 60)}"`);
+        }
+      }
+
+      // Renames next: a name-payload defect is fixed by renaming, not by
+      // swapping the mechanic the concept chose (owner call 2026-08-05 —
+      // the actuator the retired coinage detector left missing).
+      // applyRenameMapping repoints every reference.
+      for (const f of findings.filter((x) => x.rename)) {
+        const bare = f.loc.entry.replace(/\s*\(.*\)$/, '');
+        const gate = (f.loc.entry.match(/\s*\(.*\)$/) ?? [''])[0];
+        trace('audit rename:', `"${f.loc.entry}" -> "${f.rename}${gate}"`);
+        monster = applyRenameMapping(monster, { [f.loc.entry]: `${f.rename}${gate}` });
+        if (bare !== f.loc.entry) monster = applyRenameMapping(monster, { [bare]: f.rename });
+      }
+
       // Everything else names an entry. Swap those entries for another
       // pre-scaled option and rebuild; the numbers cannot move.
-      const flagged = findings.map((f) => f?.loc?.entry).filter(Boolean);
+      const flagged = findings.filter((f) => !f.rewrite && !f.rename).map((f) => f?.loc?.entry).filter(Boolean);
       const choices = flagged.length ? swapEntries(skeleton, flagged) : new Map();
       if (choices.size) {
         trace('audit swaps:', [...choices.entries()].map(([id, k]) => `${id} -> ${k}`).join(', '));

@@ -243,6 +243,35 @@ describe('verifyAuditFindings guardrails', () => {
     });
   });
 
+  test('one sloppy finding costs itself, never its siblings (live: the retry doom loop)', () => {
+    // Measured live: 1 in 5 thinking-disabled DeepSeek responses omits one
+    // finding's confidence. The strict validator rejected the WHOLE
+    // response, and the client's "fix the formatting" retry fed the same
+    // well-formed JSON back — three failures, audit skipped. Now: the
+    // response validates, the sloppy finding gates out at 'low', and the
+    // good sibling merges.
+    const raw = JSON.stringify({ findings: [
+      finding({ confidence: undefined }),
+      finding({ entry: 'Shadow Claw', section: 'Actions', span: 'reach 5 ft' }),
+    ] });
+    expect(validateAuditResponse(raw)).toBe(true);
+    const out = verifyAuditFindings(monster, raw);
+    expect(out).toHaveLength(1);
+    expect(out[0].loc.entry).toBe('Shadow Claw');
+  });
+
+  test('capitalized confidence and string principle coerce instead of killing the response', () => {
+    const raw = JSON.stringify({ findings: [
+      finding({ confidence: 'High', principle: '2' }),
+      // principle 5 gates at high only — a Medium principle-5 drops
+      finding({ entry: 'Shadow Claw', section: 'Actions', span: 'reach 5 ft', principle: '5', confidence: 'Medium' }),
+    ] });
+    expect(validateAuditResponse(raw)).toBe(true);
+    const out = verifyAuditFindings(monster, raw);
+    expect(out).toHaveLength(1);
+    expect(out[0].loc.entry).toBe('Umbral Veil');
+  });
+
   test('a span differing only in case/smart-quotes still verifies (live drop: "when" vs "When")', () => {
     const [f] = run(finding({ span: 'while in dim light or darkness, the stalker has the invisible condition.' }));
     expect(f).toBeTruthy();

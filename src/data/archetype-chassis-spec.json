@@ -188,7 +188,8 @@
         "Ogre Zombie",
         "Earth Elemental",
         "Giant Hyena"
-      ]
+      ],
+      "speed_mod": -5
     },
     "defender": {
       "hp_mult": 1.1,
@@ -203,7 +204,8 @@
         "Animated Armor",
         "Roper",
         "Couatl"
-      ]
+      ],
+      "speed_mod": -5
     },
     "skirmisher": {
       "hp_mult": 0.95,
@@ -216,7 +218,9 @@
       ],
       "srd_exemplars": [
         "Goblin-type pattern (SRD 5.2 uses generic equivalents)"
-      ]
+      ],
+      "speed_mod": 10,
+      "speed_note": "speed_mod added 2026-08-05 (owner: \"I picked a skirmisher though? is that not coming through?\"): skirmisher carried hp_mult 0.95 and NOTHING else \u2014 baseline with a rounding error \u2014 so even a correct kit never said skirmisher in the stat line. Speed is the role's actual identity and no archetype touched it."
     },
     "artillery": {
       "hp_mult": 0.75,
@@ -230,7 +234,8 @@
       ],
       "forbidden": [
         "melee damage exceeding ranged damage"
-      ]
+      ],
+      "speed_mod": -5
     },
     "glass_cannon": {
       "hp_mult": 0.65,
@@ -275,7 +280,8 @@
         "Ghost",
         "Will-o'-Wisp",
         "Chain Devil"
-      ]
+      ],
+      "speed_mod": 10
     },
     "support": {
       "hp_mult": 0.85,
@@ -289,7 +295,7 @@
       "solo_warning": "flag in UI: supports underperform their CR when encountered alone"
     },
     "swarm": {
-      "hp_mult": 1.25,
+      "hp_mult": 0.85,
       "ac_mod": -1,
       "damage_mult": 1.0,
       "required_slots": [
@@ -297,7 +303,8 @@
         "resistance package: Bludgeoning/Piercing/Slashing",
         "condition immunities: Charmed, Frightened, Grappled, Paralyzed, Petrified, Prone, Restrained, Stunned",
         "half-damage attack mode at or below half HP"
-      ]
+      ],
+      "hp_mult_note": "measured 2026-08-04: 7/7 printed swarms run 0.79-1.12x band HP (median 0.80) \u2014 the B/P/S resistance package IS the durability; raw HP sits below band, and 1.25x double-dipped (live: 418 HP behind full physical resistance at CR 20)"
     }
   },
   "lint_rules": {

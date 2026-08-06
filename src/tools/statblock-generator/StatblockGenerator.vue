@@ -1157,6 +1157,12 @@ async function generateStatblockEngine(edition) {
         movement: conceptMovement,
         attackMode: conceptAttackMode,
         signatureMechanic: conceptSignature,
+        // The saved roster's names, so the flavor call never re-mints one
+        // (live: two different Celestials both named "Uulghoth" — a
+        // duplicate-key error in public, and name__folder identity makes
+        // same-folder collisions a data hazard).
+        takenNames: Object.values(monsters.value ?? {})
+          .filter(Array.isArray).flat().map((m) => m?.name).filter(Boolean),
         // Concept-path naming refinement: refine the name via the naming
         // micro-call unless the model kept the user's typed name verbatim
         // (a kept name was judged a proper name — honor it).

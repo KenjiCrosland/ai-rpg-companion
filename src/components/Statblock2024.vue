@@ -258,7 +258,7 @@ const detailLines = computed(() =>
   // (assembly leaves the field unset; live: a block shipped with no
   // Languages line at all). 2014's em-dash is toLegacyModel's business.
   DETAIL_FIELDS.filter(([field]) => props.monster[field] || field === 'languages')
-    .map(([field, label]) => [label, props.monster[field] ?? 'None'])
+    .map(([field, label]) => [label, props.monster[field] || 'None'])
 );
 
 const crText = computed(() => {

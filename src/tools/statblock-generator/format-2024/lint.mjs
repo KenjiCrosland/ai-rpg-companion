@@ -1224,6 +1224,47 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
         `${where}: entry names never end in "Attack" — references double up ("makes two ${entry.name} attacks"). Renamed to "${entry.name.replace(/ Attacks?$/i, '')}"`,
         entry.name.replace(/ Attacks?$/i, ''), loc);
     }
+    // An entry name that promises a MOVEMENT MODE the creature lacks reads
+    // as capability the sheet doesn't back ("Burrow-Burst" on a block with
+    // no Burrow speed — live: the Chasmvein). 0 of 329 printed entries
+    // name a mode their block lacks. The text delivering the mode ("the
+    // creature burrows...") clears it — the name then describes the entry.
+    {
+      // fly is deliberately absent: "Flying X" names an object's property
+      // (print's animated Flying Sword flies itself), and Flyby-on-walker
+      // is the movement gate's job at pick time.
+      const MODES = [['burrow', /\bburrow(?:s|ing)?\b/i], ['swim', /\bswim(?:s|ming)?\b/i], ['climb', /\bclimb(?:s|ing)?\b/i]];
+      const speed = String(monster.speed ?? '').toLowerCase();
+      for (const [mode, re] of MODES) {
+        if (re.test(entry.name) && !speed.includes(mode) && !re.test(entry.text)) {
+          push('entry-name-mode-mismatch', 'reject', `${where}: the name promises ${mode} but the block has no ${mode} speed and the text never ${mode}s — rename the entry or add the speed`, undefined, loc);
+        }
+      }
+    }
+    // An entry name that declares a damage type the entry doesn't deal
+    // reads as crossed wires (live: "Furnace Lightning" dealing Thunder on
+    // a Lightning-immune block). 0 of 329 printed blocks do this — every
+    // type-named official entry deals its named type. Correctable: the
+    // named type swaps to the type actually dealt, with reference
+    // propagation. Entries that deal no typed damage are skipped (a
+    // "Lightning Ward" that only grants immunity is fine).
+    {
+      const TYPE_WORDS = ['Acid', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Poison', 'Psychic', 'Radiant', 'Thunder'];
+      const ALL_TYPES = TYPE_WORDS.concat(['Bludgeoning', 'Piercing', 'Slashing']);
+      const dealt = [...entry.text.matchAll(/(\w+) damage/g)].map((m) => m[1])
+        .filter((t) => ALL_TYPES.includes(t));
+      if (dealt.length) {
+        for (const ty of TYPE_WORDS) {
+          if (new RegExp(`\\b${ty}\\b`, 'i').test(entry.name) && !dealt.includes(ty)) {
+            const fixed = entry.name.replace(new RegExp(`\\b${ty}\\b`, 'i'), dealt[0]);
+            push('entry-name-type-mismatch', 'correctable',
+              `${where}: the name says ${ty} but the entry deals ${dealt.join('/')} — a type-named ability must deal its named type (0/329 officials mismatch). Renamed to "${fixed}"`,
+              fixed, loc);
+            break;
+          }
+        }
+      }
+    }
     // "can squeeze through a space ... without squeezing" (live garble) —
     // the official Amorphous verb is "move through". Deterministic.
     if (/can squeeze through [^.]*? without squeezing/i.test(entry.text)) {
@@ -1308,16 +1349,14 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
         || /^The [\w' -]+(?:'s [\w' -]+)? is [^.]*grants? (?:it|the [\w' -]+) (?:resistance|immunity)[^.]*\.$/i.test(entry.text.trim()))) {
       push('defense-restated', 'reject', `${where}: this trait only restates the Resistances/Immunities lines — the lines already carry it; replace it with a real mechanic or drop it`, undefined, loc);
     }
-    // Coined entry names ("Thul-eg"): official hyphenated names join FULL
-    // English words (Shape-Shift, Mind-Rending Roar — every corpus fragment
-    // is ≥4 letters); a sub-4-letter fragment marks a coinage. Ability names
-    // must describe the ability; coinages belong to creature names only.
-    {
-      const base = entry.name.split(' (')[0];
-      if (base.includes('-') && base.split('-').some((frag) => frag.length < 4)) {
-        push('entry-name-coinage', 'reject', `${where}: entry name "${base}" reads as a coined word — ability names describe what the ability does in plain English (coined words belong to the creature's name only). Rename it`, undefined, loc);
-      }
-    }
+    // The coined-name detector is RETIRED (owner call, 2026-08-05): its
+    // hyphen-fragment heuristic could not tell "Tar-Slick Claw" from
+    // "Thul-eg" without a dictionary — an allowlist would never be long
+    // enough — and its failure mode, reverting good names to donor
+    // placeholders ("Slaying Bow" re-exposed on a tar zombie), was
+    // strictly worse than an occasional odd coinage, which the audit's
+    // judgment layer can flag. Naming discipline lives in the flavor
+    // prompt now.
     if (section === 'Traits' && SELF_MITIGATION_RE.test(entry.text)) {
       push('trait-mitigation', 'reject', `Blanket damage mitigation as a passive trait in ${where} — the chassis already prices defenses; single-attack mitigation must be a Reaction (once per round)`, undefined, loc);
     }
@@ -1421,6 +1460,18 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
   }
 
   // --- Budget rules (need archetype-adjusted chassis) ---------------------
+  // One Recharge entry per block: 0 of 329 printed blocks carry two.
+  // Pick-time caps enforce this; the lint is the tripwire for bypass paths
+  // (live: the web signature seated beside a breath — two Recharge 5-6
+  // actions idling on the same dice).
+  {
+    const gated = entriesOf(monster).filter(({ entry }) => /\(Recharge [^)]+\)/i.test(entry.name));
+    if (gated.length >= 2) {
+      push('dual-recharge', 'reject', `Two Recharge-gated entries (${gated.map((g) => g.entry.name).join(', ')}) — print never fields two; one should be 1/Day, ungated, or replaced`, undefined,
+        { section: 'Actions', entry: gated[1].entry.name });
+    }
+  }
+
   if (chassis) {
     if (monster.hp != null) {
       const ratio = monster.hp / chassis.hp;

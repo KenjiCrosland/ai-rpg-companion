@@ -438,8 +438,20 @@ describe('Glacier Keeper regressions (live block 6, CR 20)', () => {
     expect([...new Set(excluded.map((r) => `${r.source}/${r.ability ?? r.trait}`))].sort()).toEqual([
       // identity-bound (the original batch) + fingerprint exclusions
       // (2026-08-03: structurally one-of-a-kind subsystems no rename hides)
-      'Gelatinous Cube/Engulf', 'Ghost/Possession', 'Night Hag/Nightmare Haunting',
-      'Sphinx of Valor/Roar', 'Vampire Spawn/Vampire Weakness', 'Vampire/Misty Escape',
+      'Gelatinous Cube/Engulf', 'Ghost/Possession',
+      // the lich's phylactery is unmistakable under any rename (owner
+      // call: a "Spirit Jar Revival" on a dream-dragon and a "Barrow
+      // Anchor" on a warden both read as the lich in a hat)
+      'Lich/Spirit Jar',
+      'Night Hag/Nightmare Haunting',
+      // the Tarrasque's mirror shell stays excluded (owner call
+      // 2026-08-05); the Solar's bow was UN-excluded same day — "it can
+      // be reflavored to be anything; the important thing is the
+      // mechanism gets interpolated in" — and generified instead
+      // (Death Sentence, {execute_threshold} scaling by band)
+      'Sphinx of Valor/Roar',
+      'Tarrasque/Reflective Carapace',
+      'Vampire Spawn/Vampire Weakness', 'Vampire/Misty Escape',
       'Vampire/Shape-Shift', 'Vampire/Vampire Weakness',
     ]);
     for (const r of excluded) expect(r.excluded.length).toBeGreaterThan(20);
@@ -652,8 +664,9 @@ describe('the after-death slot (owner design)', () => {
       expect(deaths.length).toBeLessThanOrEqual(1);
     }
     expect(low).toBe(0);
-    expect(high).toBeGreaterThan(15);
-    expect(high).toBeLessThan(45);
+    // CR 20+ is CERTAIN now (owner call 2026-08-05) — the ramp test's
+    // upper band is exactly 50/50 unless a typed no-lore family nulls it.
+    expect(high).toBe(50);
   });
 
   test('the family derives from type: fey anchor to bargains, dragons to hoards', () => {
@@ -990,9 +1003,17 @@ describe('the Rift-Shell Crag: Multiattack never references a missing attack', (
       for (const mm of multi.text.matchAll(/a use of ([A-Z][\w' -]+?)\./g)) {
         expect(`seed ${seed} references ${mm[1]}: ${names.has(mm[1])}`).toBe(`seed ${seed} references ${mm[1]}: true`);
       }
-      // and the primary reference resolves too
-      const primary = multi.text.match(/makes \w+ (.+?) attacks\./)[1];
-      expect(names.has(primary)).toBe(true);
+      // and the primary reference resolves too — either print idiom
+      // ("makes three X attacks." or "makes three attacks, using X or Y
+      // in any combination.")
+      const m1 = multi.text.match(/makes \w+ (.+?) attacks\./);
+      const m2 = multi.text.match(/makes \w+ attacks, using (.+?) or (.+?) in any combination/);
+      if (m2) {
+        expect(names.has(m2[1])).toBe(true);
+        expect(names.has(m2[2])).toBe(true);
+      } else {
+        expect(names.has(m1[1])).toBe(true);
+      }
     }
     expect(checked).toBeGreaterThan(0);
   });
@@ -1343,15 +1364,20 @@ describe('the Foundry Stag: fallback spells are citizens of their own universe',
   });
   const textOf = (m) => Object.values(m.sections).flat().map((e) => e.text).join('\n');
 
-  test('a static-fallback echo spell survives onto the spell list (cast implies listed)', () => {
-    // themeless: no themed pool, falls to *Chromatic Orb* — which must now
-    // ride the reconciliation onto the At Will line and STAY there
+  test('a fallback echo spell survives onto the spell list (cast implies listed)', () => {
+    // themeless: no themed pool, so the dead fill draws a SEEDED printed
+    // offense spell (never the old static Chromatic Orb — that constant
+    // fingerprinted three unrelated blocks) — and whatever it cast must
+    // ride the reconciliation onto the At Will line and STAY there.
     const m = applyFlavor(
       mini('Legendary Actions', 'The {creature} uses Spellcasting to cast {signature_spell}. The {creature} can\'t take this action again until the start of its next turn.'),
       flavor(),
     );
+    const echo = Object.values(m.sections).flat().find((e) => /uses Spellcasting to cast/.test(e.text));
+    const cast = echo.text.match(/cast \*([A-Z][\w' ]+?)\*/)[1];
+    expect(cast).not.toBe('Chromatic Orb');
     const caster = Object.values(m.sections).flat().find((e) => /At Will:/.test(e.text));
-    expect(caster.text).toContain('Chromatic Orb');
+    expect(caster.text).toContain(cast);
   });
 
   test('a themed block\'s dead signature fill draws an on-palette spell instead', () => {
@@ -1809,7 +1835,10 @@ describe('the assembly-metadata bus', () => {
       engulf: (sk) => [...sk.entries].some((e) => /swallow/i.test(e.text)),
       breath: (sk) => sk.entries.some((e) => e.slot_type === 'area' && e.gate && /Cone|Line/.test(e.text)),
       'thrown-weapon': (sk) => sk.entries.some((e) => /Ranged Attack Roll/.test(e.text)),
-      aura: (sk) => [...sk.entries, ...sk.traits].some((e) => /Emanation originating from the/.test(e.text) && /takes|while it doesn't have/.test(e.text)),
+      // ANY ungated recurring emanation honors the promise — a Charmed
+      // presence is an aura in table terms, and so is the Fear Aura genus
+      // ("emanates an aura...", the phrasing the predicate long missed).
+      aura: (sk) => [...sk.entries, ...sk.traits].some((e) => /Emanation originating from the|emanates an aura/.test(e.text) && !e.gate),
     };
     for (const [sig, check] of Object.entries(CHECKS)) {
       for (let seed = 1; seed <= 8; seed += 1) {
@@ -1865,5 +1894,1890 @@ describe('the Dredging Charnel: one speed-debuff zap, bonus-action swallows', ()
     }
     expect(total).toBeGreaterThan(8);
     expect(bonus / total).toBeGreaterThan(0.6);
+  });
+});
+
+/**
+ * Live blocks 21-22 (the Grave Warden and the Chasm Grief): a CR 20
+ * "defender" and a CR 20 "glass cannon" shipped as twins — AC 20, HP ~338,
+ * +14 — because the skeleton path replaced the chassis but dropped
+ * applyArchetype's numeric differentials, and the roles Kenji named had
+ * 4-row tag pools. Three fixes: applyArchetypeNumbers over the CR medians,
+ * a defender/support tag pass (73 + 10 rows), and guarantee seats.
+ */
+describe('archetype differentials: the numbers trade and the kit shows it', () => {
+  const base = crTable.by_cr['20'];
+
+  test('defender tanks, glass cannon trades life for damage — same CR, same seed', () => {
+    const def = buildSkeleton({ cr: 20, seed: 7, archetype: 'defender' });
+    const gc = buildSkeleton({ cr: 20, seed: 7, archetype: 'glass_cannon' });
+    expect(def.ac).toBe(base.ac + 2);
+    expect(gc.ac).toBe(base.ac - 2);
+    expect(def.hp).toBe(Math.round(base.hp * 1.1));
+    expect(gc.hp).toBe(Math.round(base.hp * 0.65));
+    expect(gc.attack_bonus).toBe(base.attack_bonus + 1);
+    expect(def.attack_bonus).toBe(base.attack_bonus);
+  });
+
+  test('no archetype (and unknown archetypes) ship the table medians untouched', () => {
+    for (const archetype of [null, 'balanced', 'auto']) {
+      const sk = buildSkeleton({ cr: 20, seed: 7, archetype });
+      expect(sk.ac).toBe(base.ac);
+      expect(sk.hp).toBe(base.hp);
+      expect(sk.attack_bonus).toBe(base.attack_bonus);
+    }
+  });
+
+  test('the non-caster DC identity survives a dc_mod role: DC = 8 + PB + CON mod', () => {
+    // Controller carries dc_mod +1. On non-caster blocks the DC is re-keyed
+    // to CON; the mod must fold INTO con_mod so stampStats' CON pin and
+    // hpFormulaFor's flat bonus still reconcile with every DC on the sheet.
+    for (let seed = 1; seed <= 10; seed += 1) {
+      const sk = buildSkeleton({ cr: 13, seed, archetype: 'controller' });
+      const hasSpell = sk.entries.some((e) => /Spellcasting|spellcasting ability/.test(e.text));
+      if (!hasSpell) {
+        expect(sk.save_dc).toBe(8 + sk.pb + sk.con_mod);
+      }
+      expect(sk.cast_mod).toBe(sk.save_dc - 8 - sk.pb);
+    }
+  });
+
+  test('every defender carries a hold, pull, or movement punisher', () => {
+    const HOLDS = /Grappled condition|Restrained condition|pulls? (?:the target|one creature|each creature)[^.]*toward|used only for Opportunity Attacks|Speed is (?:0|halved) until the end of/;
+    for (const cr of [5, 12, 20]) {
+      for (let seed = 1; seed <= 8; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, archetype: 'defender' });
+        const has = sk.entries.some((e) => HOLDS.test(e.text) || e.section === 'Reactions');
+        expect(`CR ${cr} seed ${seed}: ${has}`).toBe(`CR ${cr} seed ${seed}: true`);
+      }
+    }
+  });
+
+  test('every support spends an action on its allies', () => {
+    const GIVES = /casts \*(?:Bless|Healing Word|Cure Wounds|Lesser Restoration|Sanctuary)|Temporary Hit Points|teleports itself or one creature within 10 feet of itself that is willing|willing creatures within/;
+    for (const cr of [5, 12, 20]) {
+      for (let seed = 1; seed <= 8; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, archetype: 'support' });
+        const has = sk.entries.some((e) => GIVES.test(e.text));
+        expect(`CR ${cr} seed ${seed}: ${has}`).toBe(`CR ${cr} seed ${seed}: true`);
+      }
+    }
+  });
+
+  test('the flavor prompt tells the model its combat role', () => {
+    const sk = buildSkeleton({ cr: 20, seed: 7, archetype: 'defender' });
+    const prompt = buildFlavorPrompt(sk, { concept: 'a warden of the sunken gate' });
+    expect(prompt).toMatch(/combat role is a DEFENDER/);
+    const bal = buildSkeleton({ cr: 20, seed: 7, archetype: null });
+    expect(buildFlavorPrompt(bal, { concept: 'x' })).not.toMatch(/combat role/);
+  });
+});
+
+/**
+ * Swarms need to be swarm-shaped (owner call, 2026-08-04) — the dragon-kit
+ * principle applied to print's other unanimous family. All 7 printed swarms
+ * share: the Swarm trait, exactly ONE attack action in the Bloodied form
+ * ("or X damage if the swarm is Bloodied", X ~ half), no Multiattack line,
+ * B/P/S resistance, and the same eight condition immunities. The Bloodied
+ * alt also exposed a sizing bug: the generic 1.4x replacement-attack upsize
+ * would have shipped swarms that hit HARDER once Bloodied.
+ */
+describe('the swarm package: swarm archetype assembles swarm-shaped', () => {
+  test('every swarm gets the core: Swarm trait, one Bloodied attack, no Multiattack', () => {
+    for (const cr of [1, 5, 12, 20]) {
+      for (let seed = 1; seed <= 8; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, archetype: 'swarm' });
+        expect(sk.package?.name).toBe('Swarm package');
+        expect(sk.traits.some((t) => t.name === 'Swarm' && t.name_locked)).toBe(true);
+        const attacks = sk.entries.filter((e) => /Attack Roll/.test(e.text) && !/uses Spellcasting|casts/.test(e.text));
+        expect(attacks.length).toBe(1);
+        expect(attacks[0].text).toMatch(/if the swarm is Bloodied/);
+        expect(sk.multiattack).toBe(1);
+        expect(sk.entries.some((e) => e.name === 'Multiattack')).toBe(false);
+      }
+    }
+  });
+
+  test('the Bloodied form deals LESS, roughly half (print: Crawling Claws 20 -> 11)', () => {
+    for (let seed = 1; seed <= 10; seed += 1) {
+      const sk = buildSkeleton({ cr: 11, seed, archetype: 'swarm' });
+      const atk = sk.entries.find((e) => /if the swarm is Bloodied/.test(e.text));
+      const nums = [...atk.text.matchAll(/(\d+) \(\d+d\d+(?: \+ \d+)?\)/g)].map((m) => Number(m[1]));
+      const [main, alt] = nums;
+      expect(alt).toBeLessThan(main);
+      expect(alt).toBeGreaterThanOrEqual(Math.floor(main * 0.35));
+      expect(alt).toBeLessThanOrEqual(Math.ceil(main * 0.65));
+    }
+  });
+
+  test('the round budget folds into the single attack: swarm DPR matches the band', () => {
+    const base = crTable.by_cr['11'];
+    const sk = buildSkeleton({ cr: 11, seed: 3, archetype: 'swarm' });
+    const atk = sk.entries.find((e) => /if the swarm is Bloodied/.test(e.text));
+    const main = Number(atk.text.match(/(\d+) \(/)[1]);
+    // hp_mult 0.85 (measured: 7/7 printed swarms sit at 0.79-1.12x band,
+    // median 0.80 — the B/P/S package is the durability, not extra HP);
+    // damage_mult is 1.0, so one attack carries ~ per_attack x band
+    // multiattack.
+    const ma = 3; // band 8-14 median
+    expect(main).toBeGreaterThanOrEqual(Math.round(base.per_attack_damage * ma * 0.55));
+    expect(sk.hp).toBe(Math.round(base.hp * 0.85));
+  });
+});
+
+describe('the swarm defense package stamps through assembly', () => {
+  test('B/P/S resistance and the eight condition immunities, 7/7 in print', async () => {
+    const m = await generateFromSkeleton(
+      { concept: 'a swarm of grave-beetles', cr: 5, seed: 2, archetypeName: 'swarm' },
+      // Dead flavor call: the never-fail block must STILL be swarm-shaped.
+      async (p) => (/Every number is already fixed/.test(p) ? null : JSON.stringify({ problems: [] })),
+    );
+    for (const r of ['Bludgeoning', 'Piercing', 'Slashing']) {
+      expect(m.resistances).toContain(r);
+    }
+    for (const c of ['Charmed', 'Frightened', 'Grappled', 'Paralyzed', 'Petrified', 'Prone', 'Restrained', 'Stunned']) {
+      expect(m.immunities).toContain(c);
+    }
+    // Swarm identity lives in the NAME in print (7/7 "Swarm of X") — the
+    // deterministic guarantee suffixes when the model didn't comply, and
+    // the swarm-content-untyped reject must never fire on the engine's own
+    // kit (it did: the corrector also stripped the B/P/S package because
+    // chassisFromSkeleton didn't carry the archetype).
+    expect(m.name).toMatch(/swarm/i);
+    expect(m.generation.rejects).toEqual([]);
+  });
+});
+
+/**
+ * Live block 23 (the Shre Swarm) — the worst block since the Groan, and
+ * nearly all of it engine-rooted. Eight fixes; the sweeps below pin each.
+ */
+describe('the Shre Swarm: suffix renames never double-replace', () => {
+  test('"Shre" -> "Shre Swarm" leaves "the shre swarm", never "the swarm swarm"', () => {
+    const { applyRenameMapping } = require('../../format-2024/generate.mjs');
+    const monster = {
+      name: 'Shre',
+      sections: {
+        Traits: [{ name: 'Legendary Resistance (3/Day)', text: 'If the shre fails a saving throw, it can choose to succeed instead. Creatures are immune to this shre\'s aura for 24 hours.' }],
+      },
+    };
+    const out = applyRenameMapping(monster, { Shre: 'Shre Swarm' });
+    expect(out.name).toBe('Shre Swarm');
+    expect(out.sections.Traits[0].text).not.toMatch(/swarm swarm/i);
+    expect(out.sections.Traits[0].text).toMatch(/the shre swarm fails/i);
+  });
+});
+
+describe('the Shre Swarm: per-attack budgets survive the swarm fold', () => {
+  test('recurring auras and legendary uses price off ONE true attack, not the folded round', () => {
+    const per = crTable.by_cr['20'].per_attack_damage; // 30
+    for (let seed = 1; seed <= 15; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, archetype: 'swarm' });
+      for (const t of sk.traits) {
+        const m = t.text.match(/takes (\d+) \(\d+d\d+\) \{?\w+\}? damage/);
+        if (m && /At the end of each of/.test(t.text)) {
+          // 0.5x one attack (the Balor runs 13 at CR 19) — the fold shipped 45
+          expect(Number(m[1])).toBeLessThanOrEqual(Math.round(per * 0.6));
+        }
+      }
+      for (const e of sk.entries.filter((x) => x.slot_type === 'legendary')) {
+        const m = e.text.match(/(\d+) \(\d+d\d+\)/);
+        // 0.55x one attack (print runs 7-17) — the fold shipped 49s
+        if (m) expect(Number(m[1])).toBeLessThanOrEqual(Math.round(per * 0.6));
+      }
+      // the single attack still carries the whole round
+      const atk = sk.entries.find((e) => /if the swarm is Bloodied/.test(e.text));
+      // anchor on the dice so "+14 (with Advantage" can't match
+      const main = Number(atk.text.match(/(\d+) \(\d+d/)[1]);
+      expect(main).toBeGreaterThanOrEqual(Math.round(per * 3 * 0.55));
+    }
+  });
+
+  test('a mixed attack-mode concept never seats a second attack beside the kit', () => {
+    for (let seed = 1; seed <= 10; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, archetype: 'swarm', attackMode: 'mixed' });
+      const attacks = sk.entries.filter((e) => /Attack Roll/.test(e.text) && !/uses Spellcasting|casts/.test(e.text));
+      expect(attacks.length).toBe(1);
+      expect(attacks[0].text).toMatch(/if the swarm is Bloodied/);
+    }
+  });
+});
+
+describe('the Shre Swarm: one ungated recurring emanation per block, any section', () => {
+  test('no seed at any CR ships two, traits included', () => {
+    const EM = (text, gate) => /Emanation originating from the/.test(text) && !gate;
+    for (const cr of [11, 17, 20]) {
+      for (let seed = 1; seed <= 15; seed += 1) {
+        for (const archetype of [null, 'swarm', 'controller']) {
+          const sk = buildSkeleton({ cr, seed, archetype, signatureMechanic: seed % 2 ? 'aura' : null });
+          const hits = [...sk.traits, ...sk.entries]
+            .filter((r) => EM(r.text, r.gate) && !r.on_death);
+          expect(`CR ${cr} seed ${seed} ${archetype}: ${hits.length <= 1}`)
+            .toBe(`CR ${cr} seed ${seed} ${archetype}: true`);
+        }
+      }
+    }
+  });
+});
+
+describe('the Shre Swarm: type-named entries deal their named type', () => {
+  test('lint catches a model-authored mismatch and the correction renames with propagation', () => {
+    const { lintStatblock } = require('../../format-2024/lint.mjs');
+    const monster = {
+      name: 'Test', size: 'Large', type: 'Monstrosity', ac: 20, hp: 300,
+      sections: {
+        Actions: [
+          { name: 'Furnace Lightning', text: '*Dexterity Saving Throw*: DC 22, each creature in a 90-foot-long, 5-foot-wide Line. *Failure:* 91 (14d12) Thunder damage. *Success:* Half damage.' },
+        ],
+      },
+    };
+    const findings = lintStatblock(monster, { edition: '2024' }).findings;
+    const hit = findings.find((f) => f.rule === 'entry-name-type-mismatch');
+    expect(hit).toBeDefined();
+    expect(hit.expected).toBe('Furnace Thunder');
+  });
+
+  test('the engine harmonizes unrenamed placeholders before lint ever sees them', () => {
+    // A placeholder keeps its source's type word while the flavor call owns
+    // {damage_type}; find a seed carrying a type-named row and check the
+    // assembled name follows the chosen energy.
+    const TYPE_RE = /\b(Acid|Cold|Fire|Force|Lightning|Necrotic|Poison|Psychic|Radiant|Thunder)\b/;
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed, alternatives: 1 });
+      if (!sk.entries.some((e) => TYPE_RE.test(e.name) && /\{damage_type\}/.test(e.text))) continue;
+      const m = applyFlavor(sk, respond(sk)); // energy: Poison
+      for (const [sec, list] of Object.entries(m.sections)) {
+        for (const e of list) {
+          const t = e.name.match(TYPE_RE)?.[1];
+          if (t && / damage/.test(e.text) && new RegExp('(Bludgeoning|Poison) damage').test(e.text)) {
+            expect(`${sec}/${e.name} deals its named type: ${e.text.includes(`${t} damage`)}`)
+              .toBe(`${sec}/${e.name} deals its named type: true`);
+          }
+        }
+      }
+      return;
+    }
+  });
+});
+
+describe('the Shre Swarm: wings outclass legs, air is not terrain', () => {
+  test('a flier never receives a jump row (0/329 printed fliers jump)', () => {
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const sk = buildSkeleton({ cr: 15, seed, movement: ['fly'] });
+      for (const e of [...sk.entries, ...sk.traits]) {
+        expect(`seed ${seed} ${e.name}: ${/jumps? up to/.test(e.text)}`)
+          .toBe(`seed ${seed} ${e.name}: false`);
+      }
+    }
+  });
+
+  test('a terrain fill of "air" falls back instead of shipping dead text', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 13, seed });
+      const row = sk.traits.find((t) => /\{terrain\}/.test(t.text));
+      if (!row) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((s) => [s, s === 'terrain' ? 'air' : 'spores'])),
+        })),
+      });
+      const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+      expect(all).not.toMatch(/composed of air|climb air/);
+      return;
+    }
+  });
+});
+
+/**
+ * Live block 24 (the Skar) — the audit's charter correctly excludes theme
+ * and balance, so the critic's catches got deterministic fixes instead:
+ * the returning-weapon noun is now a fill (print: spear/sword always match
+ * the attack), control spell echoes always lock (100% of printed control
+ * echoes; the unlocked ones are all damage spells), and save-less
+ * recurring auras cap at 10 feet (print runs 5-10, never 30).
+ */
+describe('the Skar: returning weapons, control locks, aura envelope', () => {
+  const findSeed = (pred, opts = {}) => {
+    for (let seed = 1; seed <= 80; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed, ...opts });
+      const hit = [...sk.entries, ...sk.traits].find(pred);
+      if (hit) return { sk, hit };
+    }
+    return null;
+  };
+
+  test('the returning clause is GONE (owner call): a produced projectile is just a ranged attack', () => {
+    // Four blocks running shipped "magically returns to the <X>'s hand" —
+    // the set's most recognizable fingerprint. Monsters never track ammo in
+    // print; the melee-or-ranged parity and the rider ARE the attack.
+    for (let seed = 1; seed <= 30; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed, attackMode: 'mixed' });
+      for (const e of sk.entries) {
+        expect(`seed ${seed} ${e.name}: ${/magically returns|\{weapon\}/.test(e.text)}`)
+          .toBe(`seed ${seed} ${e.name}: false`);
+      }
+    }
+  });
+
+  test('Deadly Leap pushes 5 feet on success, as printed — never the band-scaled yeet', () => {
+    const lib = require('@/data/ability-library.json');
+    const leaps = [];
+    const visit = (o) => {
+      if (o && typeof o === 'object') {
+        if (o.ability === 'Deadly Leap') leaps.push(o);
+        Object.values(o).forEach(visit);
+      }
+    };
+    visit(lib);
+    expect(leaps.length).toBeGreaterThan(0);
+    for (const r of leaps) {
+      expect(r.template_2024).toMatch(/pushed 5 feet straight away/);
+      expect(r.template_2024).not.toMatch(/\{push_distance\}/);
+    }
+  });
+
+  test('a legendary echo of a CONTROL spell gains the per-turn lock; damage echoes stay free', () => {
+    const found = findSeed((e) => e.section === 'Legendary Actions'
+      && /uses Spellcasting to cast \{signature_spell\}/.test(e.text)
+      && !/can't take this action again/.test(e.text));
+    expect(found).not.toBeNull();
+    const fillWith = (spell) => {
+      const reqs = flavorRequests(found.sk);
+      return applyFlavor(found.sk, {
+        ...respond(found.sk),
+        energy_damage: 'Fire', // Scorching Ray stays on-palette for the vet
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((s) => [s, s.startsWith('signature_spell') ? spell : 'spores'])),
+        })),
+      });
+    };
+    const controlled = fillWith('Command');
+    const cText = (controlled.sections['Legendary Actions'] ?? [])
+      .find((e) => /\*Command\*/.test(e.text));
+    expect(cText.text).toMatch(/can't take this action again until the start of its next turn/);
+    // a pools damage spell (the echo vet redraws off-pool picks like Orb)
+    const damaging = fillWith('Scorching Ray');
+    const dText = (damaging.sections['Legendary Actions'] ?? [])
+      .find((e) => /\*Scorching Ray\*/.test(e.text));
+    expect(dText.text).not.toMatch(/can't take this action again/);
+  });
+
+  test('a save-less recurring damage aura never exceeds 10 feet at any CR', () => {
+    for (const cr of [11, 17, 20]) {
+      for (let seed = 1; seed <= 20; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, signatureMechanic: 'aura' });
+        for (const t of [...sk.traits, ...sk.entries]) {
+          if (/At the end of each of .* turns/.test(t.text) && /takes \d+/.test(t.text)
+            && !/Saving Throw/.test(t.text)) {
+            const ft = Number((t.text.match(/(\d+)-foot Emanation/) ?? [])[1] ?? 0);
+            expect(`CR ${cr} seed ${seed} ${t.name}: ${ft} ft`).toBe(`CR ${cr} seed ${seed} ${t.name}: ${Math.min(ft, 10)} ft`);
+          }
+        }
+      }
+    }
+  });
+});
+
+/**
+ * The Skar, round 2 (critic re-read as skirmisher): the numbers landed the
+ * role and the TEXT MASS contradicted it — the untagged caster packages
+ * dodged archetype damping (empty tags = weight 1 everywhere), the spell
+ * lists stacked control 3x beyond print, and the sheet had the escape half
+ * of the hit-and-run loop with no strike half.
+ */
+describe('the Skar: text mass follows the role', () => {
+  test('no spell tier ever carries two control spells (print max: one at-will, zero 1/Day pairs)', () => {
+    const { CONTROL_SPELLS } = require('../flavor-prompt.mjs');
+    for (let seed = 1; seed <= 30; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed, caster: true });
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl,
+            sl === 'spells' ? ['Command', 'Charm Person', 'Suggestion']
+              : sl === 'spells_daily' ? ['Dominate Monster', 'Mass Suggestion']
+                : 'spores'])),
+        })),
+      });
+      for (const list of Object.values(m.sections)) {
+        for (const e of list) {
+          for (const tier of [...e.text.matchAll(/\*\*(?:At Will|1\/Day(?: Each)?):\*\*([^\n]*)/g)]) {
+            const spells = [...tier[1].matchAll(/\*([^*]+?)\*/g)].map((x) => x[1]);
+            const ctrl = spells.filter((sp) => CONTROL_SPELLS.includes(sp));
+            expect(`seed ${seed} ${e.name}: ${ctrl.length} control`).toBe(`seed ${seed} ${e.name}: ${Math.min(ctrl.length, 1)} control`);
+          }
+        }
+      }
+    }
+  });
+
+  test('every skirmisher carries the strike half of the loop, every lurker the unseen half', () => {
+    const SKIRM = /Hide action|Melee or Ranged Attack Roll|moves up to (?:half )?its Speed[^.]*(?:without provoking|makes one)/;
+    const LURK = /Hide action|Invisible condition|can't be seen/;
+    for (const [archetype, RE] of [['skirmisher', SKIRM], ['lurker', LURK]]) {
+      for (let seed = 1; seed <= 10; seed += 1) {
+        const sk = buildSkeleton({ cr: 15, seed, archetype });
+        const has = sk.entries.some((e) => RE.test(e.text));
+        expect(`${archetype} seed ${seed}: ${has}`).toBe(`${archetype} seed ${seed}: true`);
+      }
+    }
+  });
+
+  test('caster packages no longer dodge archetype damping', () => {
+    const lib = require('@/data/ability-library.json');
+    const untagged = lib.packages.list.filter((pk) => !(pk.archetypes ?? []).length);
+    expect(untagged.map((pk) => pk.source)).toEqual([]);
+  });
+});
+
+describe('the Chasmvein: names back their modes, Amphibious earns its water', () => {
+  test('a mode-promising name on a modeless block is caught and reverted', () => {
+    const { lintStatblock } = require('../../format-2024/lint.mjs');
+    const monster = {
+      name: 'Test', size: 'Large', type: 'Aberration', speed: '40 ft., Climb 40 ft.',
+      sections: {
+        'Legendary Actions': [
+          { name: 'Burrow-Burst', text: 'The test moves up to half its Speed, and it makes one Splinter attack.' },
+        ],
+      },
+    };
+    const findings = lintStatblock(monster, { edition: '2024' }).findings;
+    expect(findings.some((f) => f.rule === 'entry-name-mode-mismatch')).toBe(true);
+    // text that DELIVERS the mode clears the name
+    monster.sections['Legendary Actions'][0].text = 'The test burrows up to 30 feet, then attacks.';
+    expect(lintStatblock(monster, { edition: '2024' }).findings
+      .some((f) => f.rule === 'entry-name-mode-mismatch')).toBe(false);
+  });
+
+  test('air-and-water breathing gates on swim movement (0/329 printed carriers lack it)', () => {
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const sk = buildSkeleton({ cr: 15, seed, movement: ['climb'] });
+      for (const t of sk.traits) {
+        expect(`seed ${seed} ${t.name}: ${/breathe air and water|breathe only underwater/.test(t.text)}`)
+          .toBe(`seed ${seed} ${t.name}: false`);
+      }
+    }
+  });
+});
+
+/**
+ * Live block 26 (the Snaring Coil): trap machinery wired to nothing. The
+ * engulf signature's menu let the model swap the Swallow payoff for its
+ * own prerequisite; two grapple imposers then sat beside three plain
+ * lashes. And two more band-scaled positional values surfaced: a 120-foot
+ * save-grapple (print: 5-10 ft, the appendage IS the tether) and a Lawful
+ * fiend reforming in the Abyss (print: 15/15 pair Lawful/Hells,
+ * Chaotic/Abyss).
+ */
+describe('the Snaring Coil: snares always feed something', () => {
+  test('a signature-satisfying entry only offers in-family options', () => {
+    for (let seed = 1; seed <= 15; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed, alternatives: 3, signatureMechanic: 'engulf' });
+      for (const e of sk.entries) {
+        if (!/swallow/i.test(e.text)) continue;
+        for (const o of e.options ?? []) {
+          expect(`seed ${seed} option ${o.key ?? o.ability}: ${/swallow/i.test(o.template_2024 ?? o.text ?? '')}`)
+            .toBe(`seed ${seed} option ${o.key ?? o.ability}: true`);
+        }
+      }
+    }
+  });
+
+  test('two grapple imposers always ship with a grapple spend', () => {
+    for (const cr of [8, 15, 20]) {
+      for (let seed = 1; seed <= 15; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, signatureMechanic: seed % 2 ? 'grapple' : 'engulf' });
+        const imposers = sk.entries.filter((e) => /Grappled condition \(escape/.test(e.text)).length;
+        if (imposers < 2) continue;
+        const spend = sk.entries.some((e) => /Grappled by the|creature Grappled by|Advantage if the target is Grappled|swallow/i.test(e.text));
+        expect(`CR ${cr} seed ${seed}: ${spend}`).toBe(`CR ${cr} seed ${seed}: true`);
+      }
+    }
+  });
+
+  test('save-grapples reach 10 feet at most — the appendage is the tether', () => {
+    for (const cr of [11, 17, 20]) {
+      for (let seed = 1; seed <= 15; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, signatureMechanic: 'grapple' });
+        for (const e of sk.entries) {
+          if (!/Saving Throw/.test(e.text) || !/Grappled condition \(escape/.test(e.text)) continue;
+          const m = e.text.match(/within (\d+) feet/);
+          if (m) {
+            expect(`CR ${cr} seed ${seed} ${e.name}: ${m[1]} ft`).toBe(`CR ${cr} seed ${seed} ${e.name}: ${Math.min(Number(m[1]), 10)} ft`);
+          }
+        }
+      }
+    }
+  });
+
+  test('a Lawful fiend never reforms in the Abyss (15/15 printed cosmology)', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed });
+      const row = [...sk.traits, ...sk.entries].find((t) => /\{home_plane\}/.test(t.text));
+      if (!row) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        alignment: 'Lawful Evil',
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl, sl === 'home_plane' ? 'the Abyss' : 'spores'])),
+        })),
+      });
+      const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+      expect(all).not.toMatch(/Abyss/);
+      expect(all).toMatch(/Nine Hells/);
+      return;
+    }
+  });
+});
+
+describe('scaling spells never echo bare (print annotates every scaler)', () => {
+  test('a Chromatic Orb echo at CR 20 casts the level 3 version; control spells stay bare', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, caster: true });
+      const echo = sk.entries.find((e) => e.section === 'Legendary Actions'
+        && /uses Spellcasting to cast \{signature_spell\}/.test(e.text));
+      if (!echo) continue;
+      const reqs = flavorRequests(sk);
+      const fillWith = (spell) => applyFlavor(sk, {
+        ...respond(sk),
+        energy_damage: 'Fire', // on-palette for the identity vet
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl, sl.startsWith('signature_spell') ? spell : 'spores'])),
+        })),
+      });
+      // Scorching Ray sits in print's 17+ pools, so the vet keeps it;
+      // base level 2 -> level 4 at CR 18+.
+      const ray = fillWith('Scorching Ray');
+      const rText = Object.values(ray.sections).flat().map((e) => e.text).join('\n');
+      expect(rText).toMatch(/\*Scorching Ray\* \(level 4 version\)/);
+      const cmd = fillWith('Command');
+      const cText = Object.values(cmd.sections).flat().map((e) => e.text).join('\n');
+      expect(cText).toMatch(/\*Command\*(?! \(level)/);
+      return;
+    }
+  });
+});
+
+/**
+ * Live block 27 (the Glegor, "upper-middle"): the terrain fallback was
+ * CIRCULAR inside its own template ("Difficult Terrain composed of
+ * difficult ground"), and the Multiattack tripled a grapple that commits
+ * "from both talons" — three swings from hands the first swing filled.
+ * Print's Roc layout: volume attack leads, the committer is the
+ * replacement. (Swoop's Recharge 5-6 and the both-talons phrase itself
+ * are print-verbatim — the critic's flags on those were overruled.)
+ */
+describe('the Glegor: terrain is never circular, committers never lead the routine', () => {
+  test('a dead terrain fill draws a real surface, never "difficult ground"', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 13, seed });
+      if (!sk.traits.some((t) => /\{terrain\}/.test(t.text))) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl, sl === 'terrain' ? 'shadow' : 'spores'])),
+        })),
+      });
+      const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+      expect(all).not.toMatch(/composed of difficult ground|composed of shadow/);
+      expect(all).toMatch(/composed of (ice|rubble|bare stone|shifting sand|deep mud)/);
+      return;
+    }
+  });
+
+  test('a "from both" grapple never leads a multi-attack routine when a clean attack exists', () => {
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, attackMode: 'mixed', signatureMechanic: 'grapple' });
+      const m = applyFlavor(sk, respond(sk));
+      const ma = Object.values(m.sections).flat().find((e) => e.name === 'Multiattack');
+      if (!ma) continue;
+      const primary = (ma.text.match(/makes \w+ ([A-Z][\w' -]+?) attacks/) ?? [])[1];
+      if (!primary) continue;
+      const pEntry = Object.values(m.sections).flat().find((e) => e.name === primary);
+      if (pEntry && /from both /.test(pEntry.text)) {
+        const others = Object.values(m.sections).flat()
+          .some((e) => e !== pEntry && /Attack Roll/.test(e.text) && !/from both /.test(e.text)
+            && /replace one attack with a use of/.test(ma.text));
+        expect(`seed ${seed}: committer leads only when no clean attack exists: ${!others}`)
+          .toBe(`seed ${seed}: committer leads only when no clean attack exists: true`);
+      }
+    }
+  });
+});
+
+/**
+ * Live block 28 (the Keening Scuttler) — the semantic-layer batch, all
+ * owner calls: lists annotate their scalers (improvement on print, whose
+ * 21/21 list lines are bare and therefore cast at level ONE by rule);
+ * stealth chassis carry NO auras (exclusion, damp retired — it lost to
+ * proximity at CR 20); bodily squeezes deal physical (print: 7/9
+ * Bludgeoning); a duplicate name falls back to its OWN placeholder (the
+ * pounce that got named "Mind Invasion"); echo spells come from the
+ * palette or print's pools (the model's own Chromatic Orb habit); the
+ * skirmisher seat only counts turn-economy rows.
+ */
+describe('the Keening Scuttler: the semantic layer tightens', () => {
+  test('the spell list carries the same annotation as the cast site (owner improvement on print)', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, caster: true });
+      if (!sk.entries.some((e) => e.section === 'Legendary Actions'
+        && /uses Spellcasting to cast \{signature_spell\}/.test(e.text))) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        energy_damage: 'Fire', // on-palette for the identity vet
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl, sl.startsWith('signature_spell') ? 'Scorching Ray' : 'spores'])),
+        })),
+      });
+      const caster = Object.values(m.sections).flat().find((e) => /At Will:/.test(e.text));
+      if (caster && /Scorching Ray/.test(caster.text)) {
+        expect(caster.text).toMatch(/\*Scorching Ray\* \(level 4 version\)/);
+      }
+      return;
+    }
+  });
+
+  test('stealth chassis never wear an aura (owner exclusion; signature promise still overrides)', () => {
+    for (const archetype of ['skirmisher', 'lurker']) {
+      for (let seed = 1; seed <= 20; seed += 1) {
+        const sk = buildSkeleton({ cr: 20, seed, archetype });
+        for (const r of [...sk.traits, ...sk.entries]) {
+          // BOTH printed phrasings — the sweep's own regex shared the
+          // predicate's blind spot and waved the Fear Aura genus through
+          // (live relapse: the Scrik)
+          const em = /Emanation originating from the|emanates an aura/.test(r.text) && !r.gate && !r.on_death;
+          expect(`${archetype} seed ${seed} ${r.name}: ${em}`).toBe(`${archetype} seed ${seed} ${r.name}: false`);
+        }
+      }
+    }
+    // the concept's explicit aura promise outranks the exclusion
+    const sig = buildSkeleton({ cr: 20, seed: 3, archetype: 'skirmisher', signatureMechanic: 'aura' });
+    expect([...sig.traits, ...sig.entries].some((r) => /Emanation originating from the/.test(r.text) && !r.gate)).toBe(true);
+  });
+
+  test('a save-based squeeze deals the block\'s PHYSICAL type, never the energy stamp', () => {
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const sk = buildSkeleton({ cr: 15, seed, signatureMechanic: 'grapple' });
+      const squeeze = sk.entries.find((e) => /Saving Throw/.test(e.text) && /Grappled condition \(escape/.test(e.text) && /\{damage_type\}/.test(e.text));
+      if (!squeeze) continue;
+      const m = applyFlavor(sk, respond(sk)); // physical Bludgeoning, energy Poison
+      const rendered = Object.values(m.sections).flat().find((e) => /Grappled condition \(escape/.test(e.text) && /Saving Throw/.test(e.text));
+      if (rendered && /\d+ \(\d+d\d+\) \w+ damage/.test(rendered.text)) {
+        expect(rendered.text).toMatch(/Bludgeoning damage/);
+        expect(rendered.text).not.toMatch(/\d\) Poison damage/);
+      }
+      return;
+    }
+  });
+
+  test('a duplicated model name falls back to the entry\'s OWN placeholder', () => {
+    // Two legendary entries collide on a name: the FIRST keeps it, the
+    // SECOND reverts to its own placeholder — never a third entry's (the
+    // Keening Scuttler's pounce was named with the spell echo's "Mind
+    // Invasion").
+    for (let seed = 1; seed <= 30; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, caster: true });
+      const legs = sk.entries.filter((e) => e.slot_type === 'legendary');
+      if (legs.length < 2) continue;
+      const [eA, eB] = legs;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        entries: reqs.map((r) => ({
+          id: r.id,
+          name: r.id === eA.id || r.id === eB.id ? 'Colliding Name' : r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl, 'spores'])),
+        })),
+      });
+      const names = (m.sections['Legendary Actions'] ?? []).map((e) => e.name.replace(/\s*\(.*\)$/, ''));
+      expect(names.filter((n) => n === 'Colliding Name')).toHaveLength(1);
+      // eB's OWN placeholder — possibly with its damage-type word swapped
+      // by the name-type harmonizer ("Radiant Teleport" -> "Poison
+      // Teleport" on a Poison block), which is correct behavior.
+      const TYPE_RE = /\b(Acid|Cold|Fire|Force|Lightning|Necrotic|Poison|Psychic|Radiant|Thunder)\b/g;
+      const canonName = (n) => n.replace(TYPE_RE, 'TYPE');
+      const eBBase = eB.name.replace(/\s*\(.*\)$/, '');
+      expect(names.map(canonName)).toContain(canonName(eBBase));
+      expect(new Set(names).size).toBe(names.length);
+      return;
+    }
+  });
+
+  test('an off-palette, off-pool echo spell redraws (the model\'s Orb habit)', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, caster: true, themes: ['terror'] });
+      if (!sk.entries.some((e) => /uses Spellcasting to cast \{signature_spell\}/.test(e.text))) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl, sl.startsWith('signature_spell') ? 'Chromatic Orb' : 'spores'])),
+        })),
+      });
+      const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+      expect(all).not.toMatch(/Chromatic Orb/);
+      return;
+    }
+  });
+});
+
+/**
+ * Live block 29 (the Uulghoth): the circular fill in a DATA slot
+ * ("Vulnerability to alabaster dust damage" — the web template carried
+ * {substance} where print says Fire), a reach-10 whip pulling 25 (print
+ * reach 30), TWO Recharge actions via the signature seat bypassing the
+ * gated cap, and the set's second creature named Uulghoth. Plus the
+ * audit's new job: span-anchored prose rewrites (owner call — templates
+ * own mechanics, the audit copy-edits fill seams).
+ */
+describe('the Uulghoth: webs burn, whips reach, one Recharge, unique names', () => {
+  test('web restraints are Vulnerable to Fire, never to their own substance', () => {
+    for (let seed = 1; seed <= 30; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed, signatureMechanic: 'web' });
+      const web = sk.entries.find((e) => /is destroyed \(AC/.test(e.text));
+      if (!web) continue;
+      expect(web.text).toMatch(/Vulnerability to Fire damage/);
+      expect(web.text).not.toMatch(/Vulnerability to \{substance\}/);
+      return;
+    }
+  });
+
+  test('the whip reaches 30 — farther than its own 25-foot pull', () => {
+    const lib = require('@/data/ability-library.json');
+    const whips = [];
+    const visit = (o) => {
+      if (o && typeof o === 'object') {
+        if (o.ability === 'Flame Whip' && /pulls the target up to 25/.test(o.template_2024 ?? '')) whips.push(o);
+        Object.values(o).forEach(visit);
+      }
+    };
+    visit(lib);
+    expect(whips.length).toBeGreaterThan(0);
+    for (const w of whips) expect(w.template_2024).toMatch(/reach 30 ft/);
+  });
+
+  test('no signature seat ever assembles a second Recharge (0/329 in print)', () => {
+    for (const sig of ['web', 'breath', 'engulf', 'grapple']) {
+      for (let seed = 1; seed <= 12; seed += 1) {
+        const sk = buildSkeleton({ cr: 20, seed, signatureMechanic: sig });
+        const gated = sk.entries.filter((e) => /Recharge/i.test(e.gate ?? ''));
+        expect(`${sig} seed ${seed}: ${gated.length}`).toBe(`${sig} seed ${seed}: ${Math.min(gated.length, 1)}`);
+      }
+    }
+  });
+
+  test('the dual-recharge lint tripwire fires on a bypassed block', () => {
+    const { lintStatblock } = require('../../format-2024/lint.mjs');
+    const monster = {
+      name: 'T', size: 'Huge', type: 'Celestial',
+      sections: {
+        Actions: [
+          { name: 'Choir Silence (Recharge 5-6)', text: '*Constitution Saving Throw*: DC 22, each creature in a 60-foot Cone. *Failure:* 91 (14d12) Radiant damage. *Success:* Half damage.' },
+          { name: 'Silt Grasp (Recharge 5-6)', text: '*Dexterity Saving Throw*: DC 22, one creature within 120 feet. *Failure:* The target has the Restrained condition.' },
+        ],
+      },
+    };
+    expect(lintStatblock(monster, { edition: '2024' }).findings.some((f) => f.rule === 'dual-recharge')).toBe(true);
+  });
+
+  test('an audit rewrite survives verification only when text-safe, and applies in place', () => {
+    const { verifyAuditFindings } = require('../../format-2024/audit.mjs');
+    const monster = {
+      sections: {
+        Traits: [{ name: 'Briny Current', text: 'Additionally, Difficult Terrain composed of difficult ground doesn\'t cost it extra movement.' }],
+      },
+    };
+    const raw = JSON.stringify({ findings: [
+      { principle: 4, section: 'Traits', entry: 'Briny Current',
+        span: 'composed of difficult ground', issue: 'Circular phrase.', confidence: 'high',
+        rewrite: 'composed of loose scree' },
+      // number tampering is rejected: rewrite drops the 22
+      { principle: 4, section: 'Traits', entry: 'Briny Current',
+        span: 'Difficult Terrain', issue: 'x', confidence: 'high', rewrite: 'DC 22 Terrain' },
+    ] });
+    const out = verifyAuditFindings(monster, raw);
+    expect(out[0].rewrite).toBe('composed of loose scree');
+    expect(out[1].rewrite).toBeUndefined();
+  });
+
+  test('the flavor prompt lists the roster\'s taken names', () => {
+    const sk = buildSkeleton({ cr: 20, seed: 7 });
+    const prompt = buildFlavorPrompt(sk, { concept: 'x', takenNames: ['Uulghoth', 'Grave Warden'] });
+    expect(prompt).toMatch(/NAMES ALREADY TAKEN[^\n]*Uulghoth, Grave Warden/);
+  });
+});
+
+/**
+ * Live block 30 (the Grinding Dreadwalker) + owner calls: the snare
+ * mechanic is fully generified — "the restraining substance could be
+ * anything, unique to type, put it in textures." Restraints live in the
+ * texture banks per facet; the trait's surviving "webs" literal (the
+ * reproducible half-swap, shipped twice) is slotted; a restraint object's
+ * counterplay follows its MATERIAL; and budget-equal attack pairs use
+ * print's dominant or-form Multiattack (59 printed blocks).
+ */
+describe('the Dreadwalker: snares are substance-true, attacks reach parity', () => {
+  test('no snare row ever says "webs" — the restraint is a {substance} everywhere', () => {
+    const lib = require('@/data/ability-library.json');
+    const found = [];
+    const visit = (o) => {
+      if (o && typeof o === 'object') {
+        const t = o.template_2024;
+        if (typeof t === 'string' && /caused by webs|the same web\b/.test(t)) found.push(o.ability ?? o.trait);
+        Object.values(o).forEach(visit);
+      }
+    };
+    visit(lib);
+    expect(found).toEqual([]);
+  });
+
+  test('every facet has authored restraints, and a dead snare fill draws from them', () => {
+    const banks = require('@/data/texture-banks.json').facets;
+    for (const [facet, b] of Object.entries(banks)) {
+      expect(`${facet}: ${(b.restraints ?? []).length >= 3}`).toBe(`${facet}: true`);
+    }
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed, signatureMechanic: 'web', themes: ['subterranean'] });
+      const snare = sk.entries.find((e) => /until the \{substance\} is destroyed/.test(e.text));
+      if (!snare) continue;
+      const m = applyFlavor(sk, { ...respond(sk), entries: [] }); // never-fail: bank fallback
+      const rendered = Object.values(m.sections).flat().find((e) => /is destroyed \(AC/.test(e.text));
+      const sub = rendered.text.match(/until the ([\w' -]+?) is destroyed/)[1];
+      expect(banks.subterranean.restraints).toContain(sub);
+      return;
+    }
+  });
+
+  test('a mineral restraint cracks under hammers, not firebolts', () => {
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed, signatureMechanic: 'web' });
+      if (!sk.entries.some((e) => /until the \{substance\} is destroyed/.test(e.text))) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl, sl === 'substance' ? 'hardened shale' : 'spores'])),
+        })),
+      });
+      const rendered = Object.values(m.sections).flat().find((e) => /is destroyed \(AC/.test(e.text));
+      expect(rendered.text).toMatch(/Vulnerability to Bludgeoning damage; Immunity to Fire/);
+      return;
+    }
+  });
+
+  test('two attacks on one budget render print\'s or-form Multiattack', () => {
+    let seen = false;
+    for (let seed = 1; seed <= 40 && !seen; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, attackMode: 'mixed' });
+      const atks = sk.entries.filter((e) => e.slot_type === 'plain_attack' || e.slot_type === 'rider_attack');
+      if (atks.length !== 2 || atks[0].damage !== atks[1].damage) continue;
+      const m = applyFlavor(sk, respond(sk));
+      const multi = Object.values(m.sections).flat().find((e) => e.name === 'Multiattack');
+      expect(multi.text).toMatch(/attacks, using .+ or .+ in any combination/);
+      seen = true;
+    }
+    expect(seen).toBe(true);
+  });
+
+  test("the synthesis vocabulary says 'snare'; both keys reach the web family", async () => {
+    const { buildSeedSynthesisPrompt, buildArchetypeResolvePrompt } = require('../../format-2024/generate.mjs');
+    const p = buildArchetypeResolvePrompt('a tar-spitting horror', '', { cr: 20 });
+    expect(p).toMatch(/snare \(it binds prey in a restraining substance/);
+    expect(p).not.toMatch(/summon, web\b/);
+    for (const key of ['web', 'snare']) {
+      const m = await generateFromSkeleton(
+        { concept: 'a tar horror', cr: 17, seed: 5, signatureMechanic: key },
+        async (pr) => (/Every number is already fixed/.test(pr) ? null : JSON.stringify({ problems: [] })),
+      );
+      const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+      expect(all).toMatch(/Restrained condition until the [\w' -]+ is destroyed/);
+    }
+  });
+});
+
+/**
+ * Live block 31 (the Scrik): the Fear Aura genus ("emanates an aura...")
+ * was invisible to the emanation predicate its whole life; the gatedVictim
+ * rule traded the block's only nova for a single-target snare; a
+ * mode-dominated twin attack shipped (0/329 in print); and two unlocked
+ * move-and-attack legendaries split one function (0/329 carry two).
+ */
+describe('the Scrik: novas survive snares, no dominated twins, one pounce', () => {
+  test('the snare signature never leaves the block spikeless — it demotes to 1/Day beside the nova', () => {
+    let checked = 0;
+    for (let seed = 1; seed <= 25; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, signatureMechanic: 'web' });
+      const snare = sk.entries.find((e) => /until the \{substance\} is destroyed/.test(e.text));
+      if (!snare) continue;
+      const gatedArea = sk.entries.find((e) => e.slot_type === 'area' && /Recharge/i.test(e.gate ?? ''));
+      if (gatedArea) {
+        checked += 1;
+        expect(`seed ${seed} snare gate: ${snare.gate}`).toBe('seed ' + seed + ' snare gate: 1/Day');
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  test('no block carries a mode-dominated twin attack', () => {
+    for (const cr of [11, 17, 20]) {
+      for (let seed = 1; seed <= 15; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, attackMode: 'mixed' });
+        const atks = sk.entries.filter((e) => e.slot_type === 'plain_attack' || e.slot_type === 'rider_attack');
+        const modeOf = (t) => (/Melee or Ranged Attack Roll/.test(t) ? 'both'
+          : /Ranged Attack Roll/.test(t) ? 'ranged' : 'melee');
+        const shape = (e) => `${/rider/.test(e.slot_type)}|${/plus \d+ \(\d+d\d+\)/.test(e.text)}|${/Saving Throw/.test(e.text)}|${(e.text.match(/reach (\d+)/) ?? [])[1]}`;
+        for (const b of atks) {
+          const dominated = atks.some((a) => a !== b && modeOf(a.text) === 'both'
+            && modeOf(b.text) !== 'both' && shape(a) === shape(b));
+          expect(`CR ${cr} seed ${seed} ${b.name}: ${dominated}`).toBe(`CR ${cr} seed ${seed} ${b.name}: false`);
+        }
+      }
+    }
+  });
+
+  test('one move-and-attack legendary per block (0/329 printed carry two)', () => {
+    const FAM = /(?:moves up to|teleports? up to)[^.]*makes one [A-Z][\w' -]* attack/;
+    for (const cr of [17, 20]) {
+      for (let seed = 1; seed <= 15; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, alternatives: 3 });
+        const hits = sk.entries.filter((e) => e.slot_type === 'legendary' && FAM.test(e.text));
+        expect(`CR ${cr} seed ${seed}: ${hits.length}`).toBe(`CR ${cr} seed ${seed}: ${Math.min(hits.length, 1)}`);
+      }
+    }
+  });
+});
+
+/**
+ * Live block 33 (the Ryll, dragon kit): the dual-recharge tripwire's
+ * first live catch — and the bypass was OUR belt, not the kit. Print
+ * ships 20/20 two-breath dragons with only the damage breath gated; the
+ * ladder-form utility breath (First Failure -> Second Failure) is
+ * self-gated by its escalation buffer, and the hardAreaUngated belt was
+ * stamping a second Recharge onto it.
+ */
+describe('the Ryll: ladder breaths go free, the jar stays in the lich', () => {
+  test('a dragon kit never assembles two Recharge-labeled breaths', () => {
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, family: 'dragon' });
+      const gated = sk.entries.filter((e) => /Recharge/i.test(e.gate ?? ''));
+      expect(`seed ${seed}: ${gated.length}`).toBe(`seed ${seed}: ${Math.min(gated.length, 1)}`);
+      const ladder = sk.entries.find((e) => /First Failure/i.test(e.text));
+      if (ladder) {
+        expect(`seed ${seed} ${ladder.name} gate: ${ladder.gate ?? 'none'}`)
+          .toBe(`seed ${seed} ${ladder.name} gate: none`);
+      }
+    }
+  });
+
+  test('the Spirit Jar never leaves the lich', () => {
+    for (const cr of [13, 20]) {
+      for (let seed = 1; seed <= 20; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, alternatives: 3 });
+        for (const r of [...sk.traits, ...sk.entries]) {
+          expect(`CR ${cr} seed ${seed} ${r.name}: ${/spirit jar/i.test(r.text)}`)
+            .toBe(`CR ${cr} seed ${seed} ${r.name}: false`);
+        }
+      }
+    }
+  });
+});
+
+describe('the Ryll, round 2: seats never mint dominated twins (kit rows included)', () => {
+  test('no block carries a dominated attack pair, dragon kits and guarantees included', () => {
+    const modeOf = (t) => (/Melee or Ranged Attack Roll/.test(t) ? 'both'
+      : /Ranged Attack Roll/.test(t) ? 'ranged' : 'melee');
+    const shape = (e) => `${/plus \d+ \(\d+d\d+\)/.test(e.text)}|${/Saving Throw/.test(e.text)}|${(e.text.match(/reach (\d+)/) ?? [])[1]}`;
+    for (const opts of [
+      { cr: 20, family: 'dragon', attackMode: 'mixed' },
+      { cr: 20, attackMode: 'mixed', signatureMechanic: 'thrown-weapon' },
+      { cr: 17, family: 'dragon', attackMode: 'mixed' },
+    ]) {
+      for (let seed = 1; seed <= 15; seed += 1) {
+        const sk = buildSkeleton({ ...opts, seed });
+        const atks = sk.entries.filter((e) => e.slot_type === 'plain_attack' || e.slot_type === 'rider_attack');
+        for (const b of atks) {
+          const dominated = atks.some((a) => a !== b && modeOf(a.text) === 'both'
+            && modeOf(b.text) !== 'both' && shape(a) === shape(b));
+          expect(`${JSON.stringify(opts)} seed ${seed} ${b.name}: ${dominated}`)
+            .toBe(`${JSON.stringify(opts)} seed ${seed} ${b.name}: false`);
+        }
+      }
+    }
+  });
+});
+
+/**
+ * Live block 34 (the Qarun): three offense spells at-will — print's
+ * ceiling is TWO, held by exactly one block (the Lich; 39/59 lists carry
+ * zero). The trim keeps the echoed spell and drops off-palette damage
+ * types first (Magic Missile's Force was the all-Fire sheet's only
+ * off-theme line — spell-affinity instance #2, cap handles it without
+ * unparking the full vet).
+ */
+describe('the Qarun: the at-will menu holds two offense spells at most', () => {
+  test('a triple-offense fill trims to the Lich ceiling, off-palette first, echo kept', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, caster: true });
+      const list = sk.entries.find((e) => /casts one of the following/.test(e.text) && /\{spells\}/.test(e.text));
+      const echo = sk.entries.find((e) => /uses Spellcasting to cast \{signature_spell\}/.test(e.text));
+      if (!list || !echo) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        physical_damage: 'Slashing', energy_damage: 'Fire',
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl,
+            sl === 'spells' ? ['Burning Hands', 'Magic Missile', 'Scorching Ray']
+              : sl.startsWith('signature_spell') ? 'Scorching Ray' : 'spores'])),
+        })),
+      });
+      const caster = Object.values(m.sections).flat().find((e) => /At Will:/.test(e.text));
+      const atWill = caster.text.match(/- \*\*At Will:\*\*([^\n]*)/)[1];
+      const offense = ['Burning Hands', 'Magic Missile', 'Scorching Ray'].filter((sp) => atWill.includes(sp));
+      expect(offense.length).toBeLessThanOrEqual(2);
+      expect(atWill).toContain('Scorching Ray');
+      expect(atWill).not.toContain('Magic Missile');
+      return;
+    }
+  });
+});
+
+/**
+ * Live block 34 follow-ups (owner calls 1 and 3): the succession on-death
+ * gains curse teeth (the lore-only form was a hook the DM had to invent
+ * rules for), the residue on-death trades "cleared or cleansed" for a
+ * flat 10 days plus a fixed 5 (2d4) tick, and the ally-ferry teleport
+ * also carries Grappled cargo (teleport-and-carry wires the bonus action
+ * into grapple kits).
+ */
+describe('the Qarun, round 2: on-death teeth and the carry-ferry', () => {
+  test('every bespoke on-death family carries adjudicable mechanics', () => {
+    const lib = require('@/data/ability-library.json');
+    for (const t of lib.on_death.templates) {
+      // slot-form damage counts as mechanics too (authored templates carry
+      // {damage} ({dice}) rather than literals)
+      const mech = /Remove Curse|Disadvantage|makes the death permanent|prevents the return|takes (?:\d+ \(|\{damage\})/.test(t.template_2024);
+      expect(`${t.death_family}: ${mech}`).toBe(`${t.death_family}: true`);
+    }
+    // every family now has more than one template — a single template per
+    // family made two blocks in three ship the same on-death verbatim
+    const byFamily = {};
+    for (const t of lib.on_death.templates) byFamily[t.death_family] = (byFamily[t.death_family] ?? 0) + 1;
+    expect(byFamily.residue).toBeGreaterThan(1);
+    expect(byFamily.succession).toBeGreaterThan(1);
+    expect(lib.on_death.templates.every((t) => !/cleared or cleansed/.test(t.template_2024))).toBe(true);
+  });
+
+  test('the ferry teleport carries grappled prey', () => {
+    const lib = require('@/data/ability-library.json');
+    const rows = [];
+    const visit = (o) => {
+      if (o && typeof o === 'object') {
+        if (typeof o.template_2024 === 'string' && /teleports itself or one creature/.test(o.template_2024)) rows.push(o);
+        Object.values(o).forEach(visit);
+      }
+    };
+    visit(lib);
+    expect(rows.length).toBeGreaterThan(0);
+    for (const r of rows) {
+      expect(r.template_2024).toMatch(/willing or Grappled by it/);
+      expect(r.modified_from_print).toBeTruthy();
+    }
+    // and the support seat still recognizes the re-keyed row
+    for (let seed = 1; seed <= 8; seed += 1) {
+      const sk = buildSkeleton({ cr: 12, seed, archetype: 'support' });
+      const GIVES = /casts \*(?:Bless|Healing Word|Cure Wounds|Lesser Restoration|Sanctuary)|Temporary Hit Points|teleports itself or one creature within 10 feet of itself that is willing|willing creatures within/;
+      expect(sk.entries.some((e) => GIVES.test(e.text))).toBe(true);
+    }
+  });
+});
+
+/**
+ * Live block 35 (the Tar-Shroud Watcher, "worst assembly since the
+ * archetype era" — and mostly ours): the coinage lint reverted five GOOD
+ * tar-register names to donor placeholders; two more printed faces
+ * (Solar's bow, Tarrasque's shell) joined the exclusion roster; the
+ * Lamia's 1-hour curse got the first live cr_ceiling; self-cast slots
+ * got a spell class (a fire-vulnerable creature cast Scorching Ray on
+ * itself); vulnerability-casting is banned (0/329); and the at-will
+ * demotion orphaned level annotations onto neighboring spells.
+ */
+describe('the Tar-Shroud Watcher: names survive, faces stay home, annotations travel', () => {
+  test('the coined-name detector is retired: no hyphenated name is ever flagged or reverted', () => {
+    // Owner call 2026-08-05: without a dictionary the heuristic couldn't
+    // tell "Tar-Slick Claw" from "Thul-eg", and reverting good names to
+    // donor placeholders was strictly worse than shipping an odd coinage
+    // (the audit's judgment layer covers those). Naming discipline is
+    // prompt-side now.
+    const { lintStatblock } = require('../../format-2024/lint.mjs');
+    const mk = (name) => ({
+      name: 'T', size: 'Large', type: 'Undead',
+      sections: { Actions: [{ name, text: '*Melee Attack Roll:* +14, reach 5 ft. 30 (5d8 + 8) Slashing damage.' }] },
+    });
+    for (const name of ['Tar-Slick Claw', 'Pit-Tar Fang', 'Thul-eg Strike', 'Vor-ka Slam']) {
+      expect(`${name}: ${lintStatblock(mk(name), { edition: '2024' }).findings.some((f) => f.rule === 'entry-name-coinage')}`)
+        .toBe(`${name}: false`);
+    }
+    const { buildFlavorPrompt: bfp } = require('../flavor-prompt.mjs');
+    const sk = buildSkeleton({ cr: 10, seed: 1 });
+    expect(bfp(sk, { concept: 'x' })).toMatch(/invented syllables .* belong to the creature's proper name, never to entries/);
+  });
+
+  test('the curse row respects its ceiling; the bow and the shell never leave home', () => {
+    for (const cr of [15, 20]) {
+      for (let seed = 1; seed <= 20; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, alternatives: 3 });
+        for (const r of [...sk.entries, ...sk.traits]) {
+          expect(`CR ${cr} seed ${seed} ${r.name}: ${/cursed for 1 hour|reflects the spell/.test(r.text)}`)
+            .toBe(`CR ${cr} seed ${seed} ${r.name}: false`);
+          for (const o of r.options ?? []) {
+            expect(/reflects the spell/.test(o.template_2024 ?? '')).toBe(false);
+          }
+        }
+      }
+    }
+  });
+
+  test('self-cast slots refuse attack spells; vulnerability types never get cast', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, caster: true });
+      const selfCast = sk.entries.find((e) => / on itself/.test(e.text) && /\{signature_spell\}/.test(e.text));
+      if (!selfCast) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        vulnerabilities: 'Fire',
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl,
+            sl.startsWith('signature_spell') ? 'Scorching Ray'
+              : sl === 'spells' ? ['Scorching Ray', 'Detect Magic'] : 'spores'])),
+        })),
+      });
+      const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+      // precise probe: the Bite ladder's "ending the effect on itself"
+      // false-matched a bare / on itself/ gate
+      if (!/cast \*[^*]+\* on itself/.test(all)) continue;
+      expect(all).toMatch(/\*Invisibility\* on itself/);
+      expect(all).not.toMatch(/Scorching Ray/);
+      return;
+    }
+  });
+
+  test('a demoted annotated spell takes its annotation with it', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, caster: true });
+      if (!sk.entries.some((e) => /casts one of the following/.test(e.text) && /\{spells\}/.test(e.text))) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl,
+            sl === 'spells' ? ['Scorching Ray', 'Blight'] : 'spores'])),
+        })),
+      });
+      const caster = Object.values(m.sections).flat().find((e) => /At Will:/.test(e.text));
+      expect(caster.text).not.toMatch(/\(level \d+ version\) \(level \d+ version\)/);
+      if (/Blight/.test(caster.text)) {
+        const daily = caster.text.match(/1\/Day[^\n]*/)?.[0] ?? '';
+        expect(daily).toMatch(/\*Blight\* \(level 6 version\)/);
+      }
+      return;
+    }
+  });
+});
+
+describe('Death Sentence: the execute mechanism interpolates like any other number', () => {
+  test('the threshold AND the lethality scale by band — low CR drops to 0 (Sea Hag), high CR kills (Solar)', () => {
+    const lib = require('@/data/ability-library.json');
+    expect(lib._meta.scale_slots.execute_threshold.by_band).toEqual({ '0-7': 30, '8-14': 60, '15-20': 90, '21-30': 100 });
+    let lowFound = 0; let highFound = 0;
+    for (const cr of [5, 12, 20, 24]) {
+      const band = cr <= 7 ? '0-7' : cr <= 14 ? '8-14' : cr <= 20 ? '15-20' : '21-30';
+      for (let seed = 1; seed <= 40; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, alternatives: 3 });
+        for (const r of sk.entries) {
+          const texts = [r.text, ...(r.options ?? []).map((o) => o.template_2024 ?? '')];
+          for (const t of texts) {
+            const m = t.match(/has (\d+) Hit Points or fewer, (it dies|it drops to 0 Hit Points)/);
+            if (m) {
+              expect(`CR ${cr}: ${m[1]}`).toBe(`CR ${cr}: ${lib._meta.scale_slots.execute_threshold.by_band[band]}`);
+              expect(`CR ${cr}: ${m[2]}`).toBe(`CR ${cr}: ${lib._meta.scale_slots.execute_effect.by_band[band]}`);
+              if (cr <= 14) lowFound += 1; else highFound += 1;
+              // no outright death below the solo-boss bands, ever
+              if (cr <= 14) expect(m[2]).toBe('it drops to 0 Hit Points');
+            }
+          }
+        }
+      }
+    }
+    expect(highFound).toBeGreaterThan(0);
+  });
+
+  test('fillTemplate interpolates both axes directly, every band (no seed luck required)', () => {
+    const { fillTemplate, numbersFor, applyArchetypeNumbers } = require('../build-skeleton.mjs');
+    const lib = require('@/data/ability-library.json');
+    let row = null;
+    const visit = (o) => {
+      if (o && typeof o === 'object') {
+        if (o.ability === 'Death Sentence' && o.template_2024) row = row ?? o;
+        Object.values(o).forEach(visit);
+      }
+    };
+    visit(lib);
+    expect(row).toBeTruthy();
+    const expectAt = (cr, threshold, verb) => {
+      const { text } = fillTemplate(row, { cr: String(cr), size: 'Large', nums: numbersFor(String(cr)) });
+      expect(text).toContain(`has ${threshold} Hit Points or fewer, ${verb}`);
+    };
+    expectAt(3, 30, 'it drops to 0 Hit Points');
+    expectAt(10, 60, 'it drops to 0 Hit Points');
+    expectAt(17, 90, 'it dies');
+    expectAt(24, 100, 'it dies');
+  });
+});
+
+/**
+ * The parked-owner-call sweep (2026-08-05, "let's go all of them"): the
+ * Lich teleport house lock, always-on on-death at CR 20+, the entry-count
+ * valve, the spell-identity vet, and the audit's rename actuator — the
+ * piece the retired coinage detector left missing.
+ */
+describe('the parked shelf, cleared', () => {
+  test('the Deathly Teleport carries its house lock', () => {
+    const lib = require('@/data/ability-library.json');
+    const rows = [];
+    const visit = (o) => {
+      if (o && typeof o === 'object') {
+        if (o.ability === 'Deathly Teleport') rows.push(o);
+        Object.values(o).forEach(visit);
+      }
+    };
+    visit(lib);
+    expect(rows.length).toBeGreaterThan(0);
+    for (const r of rows) {
+      expect(r.template_2024).toMatch(/can't take this action again until the start of its next turn/);
+      expect(r.modified_from_print).toMatch(/house lock/);
+    }
+  });
+
+  test('every CR 20+ block dies interestingly; lower CRs still roll', () => {
+    for (let seed = 1; seed <= 25; seed += 1) {
+      const boss = buildSkeleton({ cr: 20, seed, typeHint: 'Undead' });
+      expect(`seed ${seed}: ${boss.roles.on_death}`).toBe(`seed ${seed}: true`);
+    }
+    let lowHits = 0;
+    for (let seed = 1; seed <= 25; seed += 1) {
+      if (buildSkeleton({ cr: 8, seed, typeHint: 'Undead' }).roles.on_death) lowHits += 1;
+    }
+    expect(lowHits).toBeLessThan(25); // still a ramp below the boss tier
+  });
+
+  test('the entry-count valve holds blocks inside print\'s envelope (max 12)', () => {
+    for (const cr of [11, 17, 20, 24]) {
+      for (let seed = 1; seed <= 30; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, alternatives: 3 });
+        const total = sk.entries.length + sk.traits.length;
+        expect(`CR ${cr} seed ${seed}: ${total <= 14}`).toBe(`CR ${cr} seed ${seed}: true`);
+      }
+    }
+  });
+
+  test('offense spells cohere with the declared palette; facets license crossovers', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, caster: true, themes: ['grave'] });
+      if (!sk.entries.some((e) => /casts one of the following/.test(e.text) && /\{spells\}/.test(e.text))) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        energy_damage: 'Necrotic',
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          // Scorching Ray (Fire) is neither palette nor grave-facet: it goes
+          ...Object.fromEntries(r.slots.map((sl) => [sl,
+            sl === 'spells' ? ['Scorching Ray', 'Detect Magic'] : 'spores'])),
+        })),
+      });
+      const caster = Object.values(m.sections).flat().find((e) => /At Will:/.test(e.text));
+      expect(caster.text).not.toMatch(/Scorching Ray/);
+      expect(caster.text).toMatch(/Detect Magic/);
+      return;
+    }
+  });
+
+  test('the audit renames a name-payload defect, references following', () => {
+    const { verifyAuditFindings } = require('../../format-2024/audit.mjs');
+    const monster = {
+      sections: {
+        Actions: [
+          { name: 'Choir Silence (Recharge 5-6)', text: '*Constitution Saving Throw*: DC 22, each creature in a 60-foot Cone. *Failure:* 91 (14d12) Radiant damage.' },
+          { name: 'Multiattack', text: 'The x makes three Claw attacks.' },
+        ],
+      },
+    };
+    const mk = (over) => JSON.stringify({ findings: [{
+      principle: 3, section: 'Actions', entry: 'Choir Silence',
+      span: '91 (14d12) Radiant damage', issue: 'The name promises silence; the entry is a radiant cone.',
+      confidence: 'high', ...over,
+    }] });
+    const [ok] = verifyAuditFindings(monster, mk({ rename: 'Hymn of Cinders' }));
+    expect(ok.rename).toBe('Hymn of Cinders');
+    // guards: parentheticals, collisions, and rules vocabulary are refused
+    expect(verifyAuditFindings(monster, mk({ rename: 'Hymn (Recharge 5-6)' }))[0].rename).toBeUndefined();
+    expect(verifyAuditFindings(monster, mk({ rename: 'Multiattack' }))[0].rename).toBeUndefined();
+    expect(verifyAuditFindings(monster, mk({ entry: 'Multiattack', span: 'three Claw attacks', rename: 'Flurry' }))[0].rename).toBeUndefined();
+  });
+
+  test('the audit prompt asks for renames on name-payload defects', () => {
+    const { buildAuditPrompt } = require('../../format-2024/audit.mjs');
+    const p = buildAuditPrompt({
+      name: 'X', size: 'Large', type: 'Undead', ac: 20, hp: 300, cr: 20, cr_str: '20', pb: 6,
+      speed: '30 ft.', stats: { STR: 20, DEX: 14, CON: 20, INT: 10, WIS: 12, CHA: 10 },
+      sections: { Actions: [{ name: 'A', text: 'b' }] },
+    }, '2024');
+    expect(p).toMatch(/An entry's NAME can also be the defect/);
+    expect(p).toMatch(/"rename":/);
+    expect(p).toMatch(/Never rename Multiattack,\s+Spellcasting, or Legendary Resistance/);
+  });
+});
+
+/**
+ * Live block 36 (the Hoarfrost Scavenger): the critic's headline —
+ * "bimodal damage, HP a quarter under band" — is the LURKER SPEC
+ * executing (hp 0.75, damage 0.6, nova 2.0, halved defense budget), the
+ * mirror of the complaint five blocks ago that archetypes didn't show.
+ * The real bug was the cold-trait pileup: absorption keyed to Cold,
+ * weakness keyed to a LITERAL Cold, on a Cold-immune block — three
+ * mutually cancelling clauses.
+ */
+describe('the Hoarfrost Scavenger: elements never fight themselves', () => {
+  test('the lurker profile is intact — the bargain is the archetype, not a defect', () => {
+    const base = crTable.by_cr['20'];
+    const sk = buildSkeleton({ cr: 20, seed: 11, archetype: 'lurker' });
+    expect(sk.hp).toBe(Math.round(base.hp * 0.75));
+    expect(sk.attack_bonus).toBe(base.attack_bonus + 1);
+    const gated = sk.entries.find((e) => e.slot_type === 'area' && /Recharge/i.test(e.gate ?? ''));
+    if (gated) {
+      // nova_mult 2.0 buys the double-size ambush spike the 0.6 sustained pays for
+      expect(gated.damage).toBeGreaterThan(base.per_attack_damage * 3);
+    }
+  });
+
+  test('a weakness trigger never keys on the block\'s own element', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed });
+      if (!sk.traits.some((t) => /\{weakness_type\}/.test(t.text))) continue;
+      const m = applyFlavor(sk, { ...respond(sk), energy_damage: 'Cold', immunities: 'Cold, Poison' });
+      const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+      const trigger = all.match(/takes (\w+) damage, its Speed decreases/);
+      expect(trigger).toBeTruthy();
+      expect(['Cold', 'Bludgeoning']).not.toContain(trigger[1]); // not the palette
+      expect(trigger[1]).toBe('Fire'); // Cold's foil
+      return;
+    }
+  });
+
+  test('an absorbed type is dropped from the immunity line (absorption supersedes)', () => {
+    for (let seed = 1; seed <= 80; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed });
+      if (!sk.traits.some((t) => /regains a number of Hit Points equal to/.test(t.text))) continue;
+      const m = applyFlavor(sk, { ...respond(sk), energy_damage: 'Cold', immunities: 'Cold, Poison' });
+      const absorbs = Object.values(m.sections).flat().some((e) => /subjected to Cold damage, it (?:takes no damage and instead )?regains/.test(e.text));
+      if (!absorbs) continue;
+      expect(m.immunities ?? '').not.toMatch(/Cold/);
+      expect(m.immunities ?? '').toMatch(/Poison/);
+      return;
+    }
+  });
+});
+
+/**
+ * Live block 37 (the Emberwraith): the on-death teeth added the day
+ * before duplicated everything the model wrote into {legacy}; the
+ * library's de-flavor pass had turned print's "it starts burning" into
+ * a dangling "it starts suffering the effect" on five rows; and the
+ * name/type harmonizer couldn't see "Barrow Chill Burst" dealing Fire
+ * because it only knew bare type words. The audit also logged a no-op
+ * rewrite (span identical to replacement) on a false finding.
+ */
+describe('the Emberwraith: teeth say it once, embers burn, chills are cold', () => {
+  test('the succession on-death states its transfer and exit exactly once', () => {
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, typeHint: 'Undead' });
+      const od = sk.traits.find((t) => t.on_death && /\{legacy\}/.test(t.text));
+      if (!od) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl, sl === 'legacy' ? 'its unpaid debt to the drowned' : 'spores'])),
+        })),
+      });
+      const trait = Object.values(m.sections).flat().find((e) => /struck the killing blow/.test(e.text));
+      expect((trait.text.match(/struck the killing blow/g) ?? []).length).toBe(1);
+      expect((trait.text.match(/Remove Curse/g) ?? []).length).toBe(1);
+      expect(trait.text).toContain('its unpaid debt to the drowned passes to');
+      return;
+    }
+  });
+
+  test('the ignite rider burns on Fire and vanishes on anything else', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed, attackMode: 'ranged' });
+      if (!sk.entries.some((e) => /starts suffering the effect/.test(e.text))) continue;
+      const fire = applyFlavor(sk, { ...respond(sk), energy_damage: 'Fire' });
+      const fText = Object.values(fire.sections).flat().map((e) => e.text).join('\n');
+      expect(fText).toContain('it starts burning');
+      expect(fText).not.toContain('suffering the effect');
+      const cold = applyFlavor(sk, { ...respond(sk), energy_damage: 'Cold' });
+      const cText = Object.values(cold.sections).flat().map((e) => e.text).join('\n');
+      expect(cText).not.toContain('suffering the effect');
+      expect(cText).not.toContain('starts burning');
+      return;
+    }
+  });
+
+  test('element-form words in names are claims; register words are not', () => {
+    // name ONE entry (naming all of them trips the collision handler)
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, alternatives: 1 });
+      const reqs = flavorRequests(sk);
+      const target = reqs.find((r) => {
+        const e = sk.entries.find((x) => x.id === r.id);
+        return e && /\{damage\} \(\{dice\}\) \{damage_type\}/.test(e.text) && e.slot_type !== 'plain_attack';
+      });
+      if (!target) continue;
+      const nameOne = (name) => applyFlavor(sk, {
+        ...respond(sk), // physical Bludgeoning, energy Poison
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.id === target.id ? name : r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((s2) => [s2, 'spores'])),
+        })),
+      });
+      const find = (m) => Object.values(m.sections).flat().find((e) => /Poison damage/.test(e.text)
+        && !/^(Multiattack|Legendary Resistance)/.test(e.name));
+      // a Cold claim on a Poison payload is harmonized away
+      expect(find(nameOne('Barrow Chill Burst')).name).not.toMatch(/Chill/);
+      // register vocabulary is left alone
+      expect(find(nameOne('Hallowed Radiance')).name).toBe('Hallowed Radiance');
+      return;
+    }
+  });
+
+  test('a no-op rewrite is never carried', () => {
+    const { verifyAuditFindings } = require('../../format-2024/audit.mjs');
+    const monster = { sections: { 'Bonus Actions': [{ name: 'Flowing Ash', text: 'The x takes the Dash or Disengage action.' }] } };
+    const raw = JSON.stringify({ findings: [{
+      principle: 4, section: 'Bonus Actions', entry: 'Flowing Ash',
+      span: 'The x takes the Dash or Disengage action.',
+      rewrite: 'The x takes the Dash or Disengage action.',
+      issue: 'The entry name starts with a lowercase letter.', confidence: 'high',
+    }] });
+    expect(verifyAuditFindings(monster, raw)[0].rewrite).toBeUndefined();
+  });
+});
+
+/**
+ * Live block 38 (the Scree): a Fly 90 ranged-parity skirmisher whose
+ * mobility legendary demanded a melee dive — the Pounce template
+ * hardcodes "makes one Rend attack" and the reference repointer aimed it
+ * at the FIRST attack row, blind to the chassis. Also the theme-honesty
+ * gap: prose said deep-ocean brine, themes came back elemental+aerial
+ * (aerial has zero Cold affinity), so the palette handed out gale and
+ * magma vocabulary for a Cold-brine creature.
+ */
+describe('the Scree: mobility aims where the body can reach', () => {
+  test('a flier\'s move-and-attack legendary points at a ranged attack when one exists', () => {
+    let checked = 0;
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, movement: ['fly'], attackMode: 'mixed' });
+      const mobility = sk.entries.find((e) => e.slot_type === 'legendary'
+        && /(?:moves up to|teleports? up to)[^.]*makes one /.test(e.text));
+      const attacks = sk.entries.filter((e) => e.slot_type === 'plain_attack' || e.slot_type === 'rider_attack');
+      if (!mobility || attacks.length < 2) continue;
+      if (!attacks.some((a) => /Ranged Attack Roll|or range \d/.test(a.text))) continue;
+      const m = applyFlavor(sk, respond(sk));
+      const leg = (m.sections['Legendary Actions'] ?? []).find((e) => /makes one /.test(e.text));
+      const named = leg.text.match(/makes one ([A-Z][\w' -]+?) attack/)[1];
+      const target = Object.values(m.sections).flat().find((e) => e.name.replace(/\s*\(.*\)$/, '') === named);
+      expect(`seed ${seed} ${named}: ${/Ranged Attack Roll|or range \d/.test(target.text)}`)
+        .toBe(`seed ${seed} ${named}: true`);
+      checked += 1;
+      if (checked >= 3) return;
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  test('a walker\'s mobility legendary is untouched', () => {
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, movement: [], attackMode: 'melee' });
+      const mobility = sk.entries.find((e) => e.slot_type === 'legendary' && /makes one /.test(e.text));
+      if (!mobility) continue;
+      const m = applyFlavor(sk, respond(sk));
+      const leg = (m.sections['Legendary Actions'] ?? []).find((e) => /makes one /.test(e.text));
+      const named = leg.text.match(/makes one ([A-Z][\w' -]+?) attack/)[1];
+      const target = Object.values(m.sections).flat().find((e) => e.name.replace(/\s*\(.*\)$/, '') === named);
+      expect(target).toBeTruthy(); // reference still resolves
+      return;
+    }
+  });
+
+  test('the concept prompts demand theme honesty', () => {
+    const { buildArchetypeResolvePrompt, buildSeedSynthesisPrompt } = require('../../format-2024/generate.mjs');
+    for (const p of [buildArchetypeResolvePrompt('a brine thing', '', { cr: 20 }),
+      buildSeedSynthesisPrompt({ intelligence: 'cunning', physical: 'sleek', silhouette: 'eel', origin: 'the trench' }, { cr: 20 })]) {
+      expect(p).toMatch(/THEME HONESTY/);
+      expect(p).toMatch(/deep-ocean brine is aquatic/);
+    }
+  });
+});
+
+/**
+ * The HOUSE layer (owner call, 2026-08-05: "brine and sleet may all be in
+ * the same neighborhood but they belong to different houses… I'm getting
+ * the mishmash vibe"). A house is one material and the vocabulary it
+ * earns — finer than a facet, which spans several. One declaration binds
+ * the three moments that used to choose independently: concept prose,
+ * fill time, and naming.
+ */
+describe('material houses: one material, many manifestations', () => {
+  const { pickHouse } = require('../flavor-prompt.mjs');
+  const banks = require('@/data/texture-banks.json');
+
+  test('every facet maps to houses that exist, and every house is furnished', () => {
+    for (const [f, v] of Object.entries(banks.facets)) {
+      expect(`${f}: ${(v.houses ?? []).length >= 2}`).toBe(`${f}: true`);
+      for (const h of v.houses) expect(banks.houses[h]).toBeTruthy();
+    }
+    for (const [h, b] of Object.entries(banks.houses)) {
+      for (const key of ['tokens', 'substances', 'adjectives', 'nouns']) {
+        expect(`${h}.${key}: ${(b[key] ?? []).length >= 3}`).toBe(`${h}.${key}: true`);
+      }
+    }
+  });
+
+  test('the concept picks the house — prose about brine never yields magma', () => {
+    const brine = pickHouse('a living column of deep-ocean brine, salt-thick and lightless', ['elemental', 'aquatic'], 7);
+    expect(brine[0]).toBe('brine');
+    const ashen = pickHouse('a shambling heap of bone-white ash and glowing cinders', ['elemental', 'grave'], 7);
+    expect(ashen[0]).toBe('ash');
+    // silent concept still yields exactly one house, deterministically
+    const quiet = pickHouse('a creature', ['elemental'], 3);
+    expect(quiet).toHaveLength(1);
+    expect(pickHouse('a creature', ['elemental'], 3)).toEqual(quiet);
+  });
+
+  test('a deliberate collision keeps both houses; an accident keeps one', () => {
+    const drownedForge = pickHouse('a drowned forge of brine-flooded iron, its rivets weeping salt into the forge-slag', ['forged', 'aquatic'], 1);
+    expect(drownedForge.length).toBe(2);
+    expect(drownedForge).toContain('brine');
+    const single = pickHouse('a thing of grinding scree and granite dust', ['elemental', 'subterranean'], 1);
+    expect(single).toEqual(['stone']);
+  });
+
+  test('the palette declares the material and forbids a second', () => {
+    const sk = buildSkeleton({ cr: 20, seed: 4, themes: ['aquatic'] });
+    sk.houses = ['brine'];
+    const p = buildFlavorPrompt(sk, { concept: 'a brine horror', themes: ['aquatic'] });
+    expect(p).toMatch(/THIS CREATURE'S MATERIAL: brine/);
+    expect(p).toMatch(/an ice creature does not also spray brine/);
+    expect(p).toMatch(/Draw on it for every fill and name/); // owner's bank-anchored wording survives
+  });
+
+  test('an off-house substance fill redraws from the declared house', () => {
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed, themes: ['aquatic'] });
+      sk.houses = ['brine'];
+      const row = [...sk.entries, ...sk.traits].find((e) => /\{substance\}/.test(e.text));
+      if (!row) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          // "driving sleet" is on-facet (ice serves aquatic) and off-house
+          ...Object.fromEntries(r.slots.map((sl) => [sl, sl === 'substance' ? 'driving sleet' : 'spores'])),
+        })),
+      });
+      const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+      expect(all).not.toMatch(/sleet/i);
+      expect(all).toMatch(/brine|salt|foam|seawater/i);
+      return;
+    }
+  });
+});
+
+/**
+ * Live block 39 (the Furnaceflow) — the house layer's first live outing
+ * came back clean ("one vocabulary, no intruders"), leaving four
+ * coherence findings that measurement settled: physical damage follows
+ * the LIMB (print varies it per attack, 47 blocks carry two+), mobility
+ * legendaries are ONE family (0/329 pair a pounce with a teleport),
+ * restraint physics follow the material's house, and a jump is dead text
+ * beside a teleport.
+ */
+describe('the Furnaceflow: fists bludgeon, one mobility slot, crusts crack', () => {
+  test('the physical type follows the limb, not the block declaration', () => {
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, attackMode: 'melee' });
+      const atk = sk.entries.find((e) => (e.slot_type === 'plain_attack' || e.slot_type === 'rider_attack')
+        && /\{damage_type\}/.test(e.text));
+      if (!atk) continue;
+      const reqs = flavorRequests(sk);
+      const named = (name) => applyFlavor(sk, {
+        ...respond(sk), // declares physical: Bludgeoning
+        physical_damage: 'Slashing',
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.id === atk.id ? name : r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl, 'spores'])),
+        })),
+      });
+      const textOfNamed = (m, name) => Object.values(m.sections).flat()
+        .find((e) => e.name.replace(/\s*\(.*\)$/, '') === name)?.text ?? '';
+      // a fist bludgeons even when the block declared Slashing
+      expect(textOfNamed(named('Magma Fist'), 'Magma Fist')).toMatch(/Bludgeoning damage/);
+      // a fang pierces
+      expect(textOfNamed(named('Basalt Fang'), 'Basalt Fang')).toMatch(/Piercing damage/);
+      // no anatomy word: the block's declaration stands
+      expect(textOfNamed(named('Scouring Wrath'), 'Scouring Wrath')).toMatch(/Slashing damage/);
+      return;
+    }
+  });
+
+  test('one mobility legendary per block, whatever the verb', () => {
+    const MOBILITY = /(?:moves up to|teleports? up to|flies up to)/;
+    for (const cr of [17, 20, 24]) {
+      for (let seed = 1; seed <= 20; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, alternatives: 3 });
+        const hits = sk.entries.filter((e) => e.slot_type === 'legendary' && MOBILITY.test(e.text));
+        expect(`CR ${cr} seed ${seed}: ${hits.length}`).toBe(`CR ${cr} seed ${seed}: ${Math.min(hits.length, 1)}`);
+      }
+    }
+  });
+
+  test('a jump never ships beside a teleport', () => {
+    for (const cr of [11, 17, 20]) {
+      for (let seed = 1; seed <= 25; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, signatureMechanic: 'teleport' });
+        const rows = [...sk.entries, ...sk.traits];
+        if (!rows.some((e) => /teleports? up to/.test(e.text))) continue;
+        for (const e of rows) {
+          expect(`CR ${cr} seed ${seed} ${e.name}: ${/jumps? up to/.test(e.text)}`)
+            .toBe(`CR ${cr} seed ${seed} ${e.name}: false`);
+        }
+      }
+    }
+  });
+
+  test('a hardened restraint cracks, whatever the house calls it', () => {
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed, signatureMechanic: 'web', themes: ['elemental', 'verdant'] });
+      if (!sk.entries.some((e) => /until the \{substance\} is destroyed/.test(e.text))) continue;
+      // both fills must be on-house, or the off-house vet redraws them
+      // before the physics rule ever sees them
+      sk.houses = ['magma', 'thorn'];
+      const reqs = flavorRequests(sk);
+      const withSub = (sub) => applyFlavor(sk, {
+        ...respond(sk),
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl, sl === 'substance' ? sub : 'spores'])),
+        })),
+      });
+      const objText = (m) => Object.values(m.sections).flat().find((e) => /is destroyed \(AC/.test(e.text)).text;
+      // "cooling magma crust" is hardened — the old word list missed it
+      expect(objText(withSub('cooling magma crust'))).toMatch(/Vulnerability to Bludgeoning/);
+      // woven/organic still burns, as print's web does
+      expect(objText(withSub('strangling bramble'))).toMatch(/Vulnerability to Fire/);
+      return;
+    }
+  });
+});
+
+/**
+ * Live block 40 (the Riveted Bellows) — owner: "I picked a skirmisher
+ * though? is that not coming through?" It fired and was answered by
+ * Trampling Charge, a brute's run-them-over bonus action that happens to
+ * match "moves without provoking". Plus: skirmisher had hp_mult 0.95 and
+ * NOTHING else, so the numbers never said skirmisher either.
+ */
+describe('the Riveted Bellows: the role reaches the stat line', () => {
+  test('a charge never satisfies the skirmisher seat; a withdrawal does', () => {
+    const WITHDRAW = /Hide action|Disengage|doesn't provoke an Opportunity Attack|teleports? up to|Melee or Ranged Attack Roll|moves up to (?:half )?its Speed[^.]*(?:without provoking|makes one)/;
+    for (const mode of ['melee', 'mixed']) {
+      for (let seed = 1; seed <= 15; seed += 1) {
+        const sk = buildSkeleton({ cr: 20, seed, archetype: 'skirmisher', attackMode: mode });
+        const rows = [...sk.entries, ...sk.traits];
+        const exits = rows.filter((e) => WITHDRAW.test(e.text) && !/through the spaces of/.test(e.text));
+        expect(`${mode} seed ${seed}: ${exits.length > 0}`).toBe(`${mode} seed ${seed}: true`);
+      }
+    }
+  });
+
+  test('the archetype reaches the speed line', () => {
+    const sk = buildSkeleton({ cr: 20, seed: 4, archetype: 'skirmisher' });
+    expect(sk.speed_mod).toBe(10);
+    const m = applyFlavor(sk, { ...respond(sk), speed: '30 ft., Climb 30 ft.' });
+    expect(m.speed).toBe('40 ft., Climb 40 ft.');
+    const brute = buildSkeleton({ cr: 20, seed: 4, archetype: 'brute' });
+    expect(applyFlavor(brute, { ...respond(brute), speed: '30 ft.' }).speed).toBe('25 ft.');
+    const plain = buildSkeleton({ cr: 20, seed: 4, archetype: 'controller' });
+    expect(applyFlavor(plain, { ...respond(plain), speed: '30 ft.' }).speed).toBe('30 ft.');
+  });
+
+  test('a jaw pierces and grapples with jaws, not hands', () => {
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed, signatureMechanic: 'grapple' });
+      const grab = sk.entries.find((e) => /from one of (?:two|four|six|ten) /.test(e.text) && /\{damage_type\}/.test(e.text));
+      if (!grab) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk), physical_damage: 'Slashing',
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.id === grab.id ? 'Clamp Jaw' : r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl, 'spores'])),
+        })),
+      });
+      const jaw = Object.values(m.sections).flat().find((e) => e.name === 'Clamp Jaw');
+      expect(jaw.text).toMatch(/Piercing damage/);
+      expect(jaw.text).toMatch(/from one of (?:two|four|six|ten) jaws/);
+      return;
+    }
+  });
+
+  test('a minutes-long spell never reaches a list or an echo', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, caster: true });
+      if (!sk.entries.some((e) => /\{spells\}/.test(e.text))) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl,
+            sl === 'spells' ? ['Move Earth', 'Detect Magic']
+              : sl === 'spells_daily' ? ['Move Earth']
+                : sl.startsWith('signature_spell') ? 'Move Earth' : 'spores'])),
+        })),
+      });
+      const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+      expect(all).not.toMatch(/Move Earth/);
+      return;
+    }
+  });
+
+  test('the inheritance curse is damped away from machines', () => {
+    const lib = require('@/data/ability-library.json');
+    for (const t of lib.on_death.templates) {
+      if (t.death_family === 'succession') {
+        expect(t.facets.length).toBeGreaterThan(0);
+        expect(t.facets).not.toContain('forged');
+      }
+    }
+    // and the residue family keeps a construct-native option
+    expect(lib.on_death.templates.some((t) => t.death_family === 'residue' && (t.facets ?? []).includes('forged'))).toBe(true);
+  });
+});
+
+/**
+ * Live block 41 (the Graspwarden) — owner: "feels like a regression on
+ * the type and alignment mismatch." It was one, and older than the
+ * symptom: the audit's type correction was guarded on !resolvedType,
+ * which is the CONCEPT CALL's type — set on every generation — so the
+ * correction quietly became dead code as the concept call matured.
+ */
+describe('the Graspwarden: guesses stay correctable, menus have choices', () => {
+  test('the audit retypes a concept-guessed type but never a user-picked one', async () => {
+    const audited = (typeSource) => generateFromSkeleton(
+      { concept: 'a chitinous thing', cr: 20, seed: 3, resolvedType: 'Humanoid', typeSource },
+      async (p) => (/Every number is already fixed/.test(p)
+        ? null
+        : JSON.stringify({ type_correction: 'Monstrosity', findings: [] })),
+    );
+    expect((await audited('auto')).type).toBe('Monstrosity');
+    expect((await audited('user')).type).toBe('Humanoid');
+  });
+
+  test('a legendary menu always offers a choice at CR 15+ (0/22 printed have one)', () => {
+    for (const cr of [15, 17, 20, 24]) {
+      for (let seed = 1; seed <= 25; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, alternatives: 3 });
+        const legs = sk.entries.filter((e) => e.slot_type === 'legendary');
+        if (!legs.length) continue;
+        expect(`CR ${cr} seed ${seed}: ${legs.length}`).not.toBe(`CR ${cr} seed ${seed}: 1`);
+      }
+    }
+  });
+
+  test('the concept prompt says a shape word is not a type', () => {
+    const { buildArchetypeResolvePrompt } = require('../../format-2024/generate.mjs');
+    const p = buildArchetypeResolvePrompt('a remade sailor', '', { cr: 20 });
+    expect(p).toMatch(/a SHAPE word is not a type/);
+    expect(p).toMatch(/is a Monstrosity however upright it stands/);
+  });
+
+  test('house tokens catch the words concepts actually use', () => {
+    const { pickHouse } = require('../flavor-prompt.mjs');
+    // "plant fiber" used to match nothing and fall through to a blind pick
+    expect(pickHouse('a body woven from salt-toughened plant fiber', ['grasping'], 3)).toEqual(['thorn']);
+    expect(pickHouse('a clockwork thing of gears and rivets', ['forged'], 3)[0]).toBe('iron');
+    expect(pickHouse('a crab-limbed horror of spider joints', ['grasping'], 3)[0]).toBe('chitin');
+  });
+
+  test('terrain never renders as a material the block cannot walk on', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed, themes: ['grasping'] });
+      if (!sk.traits.some((t) => /\{terrain\}/.test(t.text))) continue;
+      sk.houses = ['chitin'];
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl, sl === 'terrain' ? 'carapace-plate' : 'spores'])),
+        })),
+      });
+      const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+      expect(all).not.toMatch(/composed of carapace/);
+      expect(all).toMatch(/composed of (ice|rubble|bare stone|shifting sand|deep mud)/);
+      return;
+    }
+  });
+});
+
+describe('engine-filled slots are never asked of the model', () => {
+  test('weakness_type fills without a model answer and never leaves a slot undefined', () => {
+    const { flavorRequests: fr } = require('../flavor-prompt.mjs');
+    for (let seed = 1; seed <= 80; seed += 1) {
+      const sk = buildSkeleton({ cr: 15, seed });
+      const row = [...sk.traits, ...sk.entries].find((e) => /\{weakness_type\}/.test(e.text));
+      if (!row) continue;
+      // the model is never asked for it...
+      for (const r of fr(sk)) expect(r.slots).not.toContain('weakness_type');
+      // ...and a fully silent model still renders the row
+      const m = applyFlavor(sk, { ...respond(sk), energy_damage: 'Cold', entries: [] });
+      const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+      expect(all).not.toMatch(/\{weakness_type\}/);
+      expect(all).toMatch(/takes \w+ damage, its Speed decreases/);
+      return;
+    }
   });
 });

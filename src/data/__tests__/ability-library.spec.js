@@ -168,7 +168,9 @@ describe('damage slots', () => {
     const offenders = [];
     for (const a of abilities) {
       if (!a.damage_instances || a.self_damage) continue;
-      const src = printed[`${a.source}|${a.ability}`];
+      // generified rows (Binding Snare, nee Web) keep their print identity
+      // in print_name
+      const src = printed[`${a.source}|${a.print_name ?? a.ability}`];
       if (!src) { offenders.push(`${a.source}/${a.ability}: source entry missing`); continue; }
       const want = [...src.matchAll(DMG)].map((m) => m.slice(1, 4).join(' '));
       const n = a.numbers;
@@ -251,7 +253,9 @@ describe('scale slots: reach, target size, area', () => {
   test('no unslotted scale literal survives, in any shape', () => {
     const offenders = [];
     for (const a of abilities) {
-      if (/reach \d+ ft/.test(a.template_2024)) offenders.push(`${a.source}/${a.ability}: reach`);
+      // fixed_range rows keep printed reach deliberately (the Balor's
+      // whip reaches 30 so its 25-foot pull isn't dead range)
+      if (!a.fixed_range && /reach \d+ ft/.test(a.template_2024)) offenders.push(`${a.source}/${a.ability}: reach`);
       if (/(Tiny|Small|Medium|Large|Huge|Gargantuan) (or smaller|creature)/.test(a.template_2024)) {
         offenders.push(`${a.source}/${a.ability}: size gate`);
       }
@@ -268,7 +272,9 @@ describe('scale slots: reach, target size, area', () => {
     for (const a of abilities) {
       const n = a.numbers || {};
       if (!SCALE_KEYS.some((k) => k in n)) continue;
-      const src = printed[`${a.source}|${a.ability}`];
+      // generified rows (Binding Snare, nee Web) keep their print identity
+      // in print_name
+      const src = printed[`${a.source}|${a.print_name ?? a.ability}`];
       let out = a.template_2024;
       for (const k of SCALE_KEYS) if (k in n) out = out.split(`{${k}}`).join(n[k]);
       const got = (out.match(SCALE) || []).join(' | ');

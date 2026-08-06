@@ -144,6 +144,24 @@
           "15-20": 60,
           "21-30": 60
         }
+      },
+      "execute_threshold": {
+        "derivation": "print anchor: Solar 100 @ CR 21 = ~3.3x band per-attack; lower bands proportional (owner call 2026-08-05: the mechanism is generifiable \u2014 a long-range single-target execute-below-threshold \u2014 once the threshold interpolates like every other number)",
+        "by_band": {
+          "0-7": 30,
+          "8-14": 60,
+          "15-20": 90,
+          "21-30": 100
+        }
+      },
+      "execute_effect": {
+        "derivation": "print's lethality ladder (measured 2026-08-05): the Sea Hag (CR 2) threshold-effect DROPS TO 0 (dying, ally-savable) and is Recharge-gated; outright 'it dies' on a threshold exists exactly once, at CR 21 (Solar). Low bands get the hag's verb, high bands the solar's \u2014 the mechanism interpolates, including its lethality (owner call: no instakill at low levels)",
+        "by_band": {
+          "0-7": "it drops to 0 Hit Points",
+          "8-14": "it drops to 0 Hit Points",
+          "15-20": "it dies",
+          "21-30": "it dies"
+        }
       }
     },
     "slot_type": "Assigned with the SAME classifier that produced composition.by_band, so the picker filters on exactly what was counted. A mismatch here would silently make the sampled counts unfillable.",
@@ -1832,7 +1850,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Weakening Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 13,
           "damage": 2,
@@ -2339,7 +2357,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Weakening Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 17,
           "damage": 3,
@@ -2511,6 +2529,9 @@
         "damage_class": "legendary",
         "facets": [
           "draconic"
+        ],
+        "archetypes": [
+          "defender"
         ]
       },
       {
@@ -2731,7 +2752,8 @@
         "damage_class": "legendary",
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "16",
@@ -2820,7 +2842,8 @@
         "damage_class": "legendary",
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "16",
@@ -2920,7 +2943,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Weakening Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 21,
           "damage": 3,
@@ -3132,6 +3155,9 @@
         "damage_class": "legendary",
         "facets": [
           "draconic"
+        ],
+        "archetypes": [
+          "defender"
         ]
       },
       {
@@ -3224,7 +3250,8 @@
         "damage_class": "legendary",
         "facets": [
           "grave"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "21",
@@ -3342,7 +3369,8 @@
         "damage_class": "legendary",
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "23",
@@ -3431,7 +3459,8 @@
         "damage_class": "legendary",
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "24",
@@ -3471,7 +3500,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Weakening Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 24,
           "damage": 5,
@@ -3590,7 +3619,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -3625,7 +3655,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -3661,7 +3692,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -3695,7 +3727,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -3731,7 +3764,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -3774,7 +3808,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -3817,7 +3852,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -3853,7 +3889,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -3888,7 +3925,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -3931,7 +3969,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -3965,7 +4004,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -4000,7 +4040,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -4035,7 +4076,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -4072,7 +4114,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -4102,7 +4145,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "facets": [
           "grasping",
@@ -4136,7 +4180,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -4172,7 +4217,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -4208,7 +4254,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -4243,7 +4290,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -4278,7 +4326,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -4314,7 +4363,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -4357,7 +4407,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -4393,7 +4444,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -4435,7 +4487,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -4471,7 +4524,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -4505,7 +4559,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -4539,7 +4594,8 @@
         ],
         "archetypes": [
           "brute",
-          "skirmisher"
+          "skirmisher",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -4572,7 +4628,8 @@
         "damage_class": "save_nuke",
         "facets": [
           "fey"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "2",
@@ -4626,7 +4683,8 @@
         "damage_class": "save_nuke",
         "facets": [
           "grave"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "3",
@@ -4651,7 +4709,8 @@
         "damage_class": "save_nuke",
         "facets": [
           "grave"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "4",
@@ -4681,7 +4740,9 @@
           "fiendish",
           "venomous"
         ],
-        "condition_default": "Charmed and Poisoned"
+        "condition_default": "Charmed and Poisoned",
+        "cr_ceiling": 12,
+        "ceiling_note": "the 1-hour curse has no repeat save \u2014 its counterplay (Remove Curse, or wait it out) stops working above mid tier"
       },
       {
         "cr": "4",
@@ -4744,7 +4805,8 @@
         "signature": true,
         "archetypes": [
           "controller",
-          "support"
+          "support",
+          "defender"
         ],
         "requires": [
           "grapple"
@@ -4842,7 +4904,8 @@
         "facets": [
           "bestial",
           "fiendish"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "13",
@@ -4865,6 +4928,9 @@
         "damage_class": "legendary",
         "facets": [
           "draconic"
+        ],
+        "archetypes": [
+          "defender"
         ]
       },
       {
@@ -4896,7 +4962,8 @@
         "signature": true,
         "archetypes": [
           "controller",
-          "support"
+          "support",
+          "defender"
         ],
         "requires": [
           "grapple"
@@ -4929,7 +4996,8 @@
         "damage_class": "legendary",
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "14",
@@ -4953,7 +5021,8 @@
         "damage_class": "legendary",
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "20",
@@ -4976,6 +5045,9 @@
         "damage_class": "legendary",
         "facets": [
           "draconic"
+        ],
+        "archetypes": [
+          "defender"
         ]
       },
       {
@@ -4999,7 +5071,8 @@
         "damage_class": "legendary",
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "21",
@@ -5023,14 +5096,15 @@
         "damage_class": "legendary",
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "21",
         "source": "Solar",
         "source_type": "Celestial",
         "section": "Actions",
-        "ability": "Slaying Bow",
+        "ability": "Death Sentence",
         "gate": null,
         "numbers": {
           "dc": 21,
@@ -5041,7 +5115,7 @@
           "rider_damage_type": "Radiant",
           "damage_type": "Piercing"
         },
-        "template_2024": "*Dexterity Saving Throw*: DC {dc}, one creature the {creature} can see within 600 feet. *Failure:* If the creature has 100 Hit Points or fewer, it dies. It otherwise takes {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage.",
+        "template_2024": "*Dexterity Saving Throw*: DC {dc}, one creature the {creature} can see within 600 feet. *Failure:* If the creature has {execute_threshold} Hit Points or fewer, {execute_effect}. It otherwise takes {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage.",
         "damage_instances": {
           "additive": 1,
           "alternative": 0
@@ -5057,7 +5131,9 @@
         "facets": [
           "armed",
           "celestial"
-        ]
+        ],
+        "archetypes": [],
+        "print_name": "Slaying Bow"
       },
       {
         "cr": "23",
@@ -5078,7 +5154,8 @@
         "pool": "ability",
         "sources_sharing": 1,
         "signature": true,
-        "damage_class": "save_nuke"
+        "damage_class": "save_nuke",
+        "archetypes": []
       }
     ],
     "SAVE+CHARMED": [
@@ -5607,7 +5684,8 @@
         "facets": [
           "armed",
           "fey"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "1/8",
@@ -5632,7 +5710,8 @@
         "damage_class": "attack",
         "facets": [
           "armed"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "1/8",
@@ -5657,7 +5736,8 @@
         "facets": [
           "armed",
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "1/8",
@@ -5676,7 +5756,7 @@
           "reach": 5,
           "damage_type": "Piercing"
         },
-        "template_2024": "*Melee or Ranged Attack Roll:* {attack}, reach {reach} ft. or range 20/60 ft. {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage. If the target is a creature, its Speed decreases by 10 feet until the end of its next turn. *Hit or Miss:* The spear magically returns to the {creature}'s hand immediately after a ranged attack.",
+        "template_2024": "*Melee or Ranged Attack Roll:* {attack}, reach {reach} ft. or range 20/60 ft. {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage. If the target is a creature, its Speed decreases by 10 feet until the end of its next turn.",
         "damage_instances": {
           "additive": 1,
           "alternative": 0
@@ -5690,7 +5770,11 @@
         "facets": [
           "armed",
           "elemental"
-        ]
+        ],
+        "archetypes": [
+          "skirmisher"
+        ],
+        "modified_from_print": "returning clause removed (owner call 2026-08-04): monsters never track ammo \u2014 a produced projectile is just a ranged attack; the clause had become the set fingerprint"
       },
       {
         "cr": "1/8",
@@ -5774,7 +5858,8 @@
         "damage_class": "attack",
         "facets": [
           "armed"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "1/8",
@@ -7768,7 +7853,8 @@
           "armed",
           "fey",
           "grasping"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "1",
@@ -8066,7 +8152,8 @@
         "damage_class": "attack",
         "facets": [
           "armed"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "1",
@@ -8196,7 +8283,8 @@
         "damage_class": "attack",
         "facets": [
           "armed"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "1",
@@ -8417,7 +8505,8 @@
         "sources_sharing": 1,
         "signature": true,
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -8537,7 +8626,8 @@
         "damage_class": "attack",
         "facets": [
           "armed"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "2",
@@ -9011,7 +9101,10 @@
         "pool": "ability",
         "sources_sharing": 1,
         "signature": true,
-        "damage_class": "attack"
+        "damage_class": "attack",
+        "archetypes": [
+          "defender"
+        ]
       },
       {
         "cr": "2",
@@ -9162,7 +9255,8 @@
         "damage_class": "attack",
         "facets": [
           "armed"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "2",
@@ -9420,7 +9514,8 @@
         "damage_class": "attack",
         "facets": [
           "armed"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "2",
@@ -9811,7 +9906,8 @@
         "damage_class": "attack",
         "facets": [
           "fey"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "3",
@@ -10663,7 +10759,8 @@
         "damage_class": "attack",
         "facets": [
           "armed"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "4",
@@ -10919,7 +11016,8 @@
         "slot_type": "plain_attack",
         "pool": "ability",
         "sources_sharing": 4,
-        "damage_class": "attack"
+        "damage_class": "attack",
+        "archetypes": []
       },
       {
         "cr": "4",
@@ -11277,7 +11375,8 @@
         "damage_class": "attack",
         "facets": [
           "armed"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "5",
@@ -11385,7 +11484,7 @@
           "reach": 5,
           "damage_type": "Piercing"
         },
-        "template_2024": "*Melee or Ranged Attack Roll:* {attack}, reach {reach} ft. or range 20/60 ft. {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage. *Hit or Miss:* The spear magically returns to the {creature}'s hand immediately after a ranged attack.",
+        "template_2024": "*Melee or Ranged Attack Roll:* {attack}, reach {reach} ft. or range 20/60 ft. {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage.",
         "damage_instances": {
           "additive": 1,
           "alternative": 0
@@ -11399,7 +11498,11 @@
         "facets": [
           "armed",
           "elemental"
-        ]
+        ],
+        "archetypes": [
+          "skirmisher"
+        ],
+        "modified_from_print": "returning clause removed (owner call 2026-08-04): monsters never track ammo \u2014 a produced projectile is just a ranged attack; the clause had become the set fingerprint"
       },
       {
         "cr": "5",
@@ -11431,7 +11534,8 @@
         "sources_sharing": 1,
         "signature": true,
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -11571,7 +11675,8 @@
         "pool": "ability",
         "sources_sharing": 1,
         "signature": true,
-        "damage_class": "attack"
+        "damage_class": "attack",
+        "archetypes": []
       },
       {
         "cr": "5",
@@ -12010,7 +12115,8 @@
         "damage_class": "attack",
         "facets": [
           "armed"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "6",
@@ -13729,7 +13835,7 @@
           "reach": 5,
           "damage_type": "Piercing"
         },
-        "template_2024": "*Melee or Ranged Attack Roll:* {attack}, reach {reach} ft. or range 30/120 ft. {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage. Until the end of its next turn, the target can't take a Bonus Action or Reaction, its Speed decreases by 10 feet, and it can move or take one action on its turn, not both. *Hit or Miss:* The spear magically returns to the {creature}'s hand immediately after a ranged attack.",
+        "template_2024": "*Melee or Ranged Attack Roll:* {attack}, reach {reach} ft. or range 30/120 ft. {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage. Until the end of its next turn, the target can't take a Bonus Action or Reaction, its Speed decreases by 10 feet, and it can move or take one action on its turn, not both.",
         "damage_instances": {
           "additive": 1,
           "alternative": 0
@@ -13743,7 +13849,11 @@
         "facets": [
           "armed",
           "fiendish"
-        ]
+        ],
+        "archetypes": [
+          "skirmisher"
+        ],
+        "modified_from_print": "returning clause removed (owner call 2026-08-04): monsters never track ammo \u2014 a produced projectile is just a ranged attack; the clause had become the set fingerprint"
       },
       {
         "cr": "14",
@@ -14569,7 +14679,7 @@
           "reach": 10,
           "damage_type": "Slashing"
         },
-        "template_2024": "*Melee or Ranged Attack Roll:* {attack}, reach {reach} ft. or range 120 ft. {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage. *Hit or Miss:* The sword magically returns to the {creature}'s hand or hovers within 5 feet of the {creature} immediately after a ranged attack.",
+        "template_2024": "*Melee or Ranged Attack Roll:* {attack}, reach {reach} ft. or range 120 ft. {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage.",
         "template_2014": "The {creature} releases its greatsword to hover magically in an unoccupied space within 5 feet of it. If the {creature} can see the sword, the {creature} can mentally command it as a bonus action to fly up to 50 feet and either make one attack against a target or return to the {creature}'s hands. If the hovering sword is targeted by any effect, the {creature} is considered to be holding it. The hovering sword falls if the {creature} dies.",
         "damage_instances": {
           "additive": 1,
@@ -14581,13 +14691,15 @@
         "sources_sharing": 1,
         "signature": true,
         "archetypes": [
-          "artillery"
+          "artillery",
+          "skirmisher"
         ],
         "damage_class": "attack",
         "facets": [
           "armed",
           "celestial"
-        ]
+        ],
+        "modified_from_print": "returning clause removed (owner call 2026-08-04): monsters never track ammo \u2014 a produced projectile is just a ranged attack; the clause had become the set fingerprint"
       },
       {
         "cr": "22",
@@ -14836,7 +14948,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Sleep Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 11,
           "area": 15,
@@ -14863,7 +14975,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Sleep Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 14,
           "area": 30,
@@ -14924,7 +15036,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Sleep Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 18,
           "area": 60,
@@ -14951,7 +15063,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Sleep Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 21,
           "area": 90,
@@ -14980,7 +15092,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Repulsion Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 12,
           "area": 30,
@@ -15045,7 +15157,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Repulsion Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 15,
           "area": 30,
@@ -15073,7 +15185,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Repulsion Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 19,
           "area": 30,
@@ -15101,7 +15213,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Repulsion Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 23,
           "area": 30,
@@ -15202,7 +15314,8 @@
         "signature": true,
         "facets": [
           "fey"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "1/2",
@@ -15220,7 +15333,8 @@
         "slot_type": "save_damage",
         "pool": "ability",
         "sources_sharing": 1,
-        "signature": true
+        "signature": true,
+        "archetypes": []
       },
       {
         "cr": "1",
@@ -15228,7 +15342,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Slowing Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 11,
           "area": 15,
@@ -15277,7 +15391,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Slowing Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 14,
           "area": 30,
@@ -15325,7 +15439,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Slowing Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 18,
           "area": 60,
@@ -15373,7 +15487,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Slowing Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 22,
           "area": 90,
@@ -15509,7 +15623,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Paralyzing Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 13,
           "area": 15,
@@ -15537,7 +15651,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Paralyzing Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 17,
           "area": 30,
@@ -15565,7 +15679,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Paralyzing Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 20,
           "area": 60,
@@ -15633,7 +15747,7 @@
         "source_type": "Dragon",
         "section": "Actions",
         "ability": "Paralyzing Breath",
-        "gate": "Recharge 5-6",
+        "gate": null,
         "numbers": {
           "dc": 24,
           "area": 90,
@@ -15681,9 +15795,7 @@
         "archetypes": [
           "brute",
           "controller",
-          "glass_cannon",
-          "lurker",
-          "skirmisher"
+          "glass_cannon"
         ],
         "damage_class": "attack",
         "imposes": [
@@ -15775,8 +15887,8 @@
           "target_size_offset": 0,
           "damage_type": "Bludgeoning"
         },
-        "template_2024": "The {creature} spends 5 feet of movement to jump to a space within 15 feet that contains one or more {target_size} or smaller creatures. *Dexterity Saving Throw*: DC {dc}, each creature in the {creature}'s destination space. *Failure:* {damage} ({dice}) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage, and the target is pushed {push_distance} feet straight away from the {creature}.",
-        "template_2014": "If the {creature} jumps at least 15 feet as part of its movement, it can then use this action to land on its feet in a space that contains one or more other creatures. Each of those creatures must succeed on a DC 16 Strength or Dexterity saving throw (target's choice) or be knocked prone and take {damage} ({dice}) {damage_type} damage plus {damage} ({dice}) {damage_type} damage. On a successful save, the creature takes only half the damage, isn't knocked prone, and is pushed {push_distance} feet out of the {creature}'s space into an unoccupied space of the creature's choice. If no unoccupied space is within range, the creature instead falls prone in the {creature}'s space.",
+        "template_2024": "The {creature} spends 5 feet of movement to jump to a space within 15 feet that contains one or more {target_size} or smaller creatures. *Dexterity Saving Throw*: DC {dc}, each creature in the {creature}'s destination space. *Failure:* {damage} ({dice}) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage, and the target is pushed 5 feet straight away from the {creature}.",
+        "template_2014": "If the {creature} jumps at least 15 feet as part of its movement, it can then use this action to land on its feet in a space that contains one or more other creatures. Each of those creatures must succeed on a DC 16 Strength or Dexterity saving throw (target's choice) or be knocked prone and take {damage} ({dice}) {damage_type} damage plus {damage} ({dice}) {damage_type} damage. On a successful save, the creature takes only half the damage, isn't knocked prone, and is pushed 5 feet out of the {creature}'s space into an unoccupied space of the creature's choice. If no unoccupied space is within range, the creature instead falls prone in the {creature}'s space.",
         "source_size": "Large",
         "slot_type": "save_effect",
         "pool": "ability",
@@ -15790,7 +15902,9 @@
         "damage_class": "attack",
         "imposes": [
           "prone"
-        ]
+        ],
+        "fixed_range": true,
+        "scale_note": "success push is a POSITIONAL nudge out of the landing space \u2014 5 feet at every CR in print (Bulette); band-scaling it to 45 made succeeding strictly worse than failing (live: Glacierfall, 2026-08-04)"
       },
       {
         "cr": "5",
@@ -15914,7 +16028,8 @@
         "archetypes": [
           "brute",
           "controller",
-          "skirmisher"
+          "skirmisher",
+          "defender"
         ],
         "damage_class": "attack",
         "imposes": [
@@ -15980,7 +16095,8 @@
         "signature": true,
         "facets": [
           "elemental"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "2",
@@ -16003,7 +16119,8 @@
         "sources_sharing": 1,
         "signature": true,
         "archetypes": [
-          "artillery"
+          "artillery",
+          "defender"
         ],
         "damage_class": "recurring",
         "facets": [
@@ -16031,7 +16148,8 @@
           "celestial",
           "grave"
         ],
-        "excluded": "the stake/sunlight/coffin liturgy is uniquely vampire; reskinning it produces nonsense"
+        "excluded": "the stake/sunlight/coffin liturgy is uniquely vampire; reskinning it produces nonsense",
+        "archetypes": []
       },
       {
         "cr": "8",
@@ -16049,7 +16167,8 @@
         "signature": true,
         "facets": [
           "armed"
-        ]
+        ],
+        "archetypes": []
       }
     ],
     "ATTACK+POISONED": [
@@ -18202,7 +18321,7 @@
           "target_size_offset": 0,
           "damage_type": "Force"
         },
-        "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage. If the target is a {target_size} or smaller creature, the {creature} pulls the target up to 25 feet straight toward itself, and the target has the Prone condition.",
+        "template_2024": "*Melee Attack Roll:* {attack}, reach 30 ft. {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage. If the target is a {target_size} or smaller creature, the {creature} pulls the target up to 25 feet straight toward itself, and the target has the Prone condition.",
         "damage_instances": {
           "additive": 1,
           "alternative": 0
@@ -18213,7 +18332,8 @@
         "sources_sharing": 1,
         "signature": true,
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -18222,7 +18342,9 @@
         ],
         "imposes": [
           "prone"
-        ]
+        ],
+        "fixed_range": true,
+        "scale_note": "reach 30 is print (Balor): the whip reaches far and REELS \u2014 reach must exceed the 25-foot pull or most of the pull is dead range (live: a reach-10 whip pulling 25, 2026-08-04)"
       },
       {
         "cr": "30",
@@ -18290,7 +18412,8 @@
         "signature": true,
         "archetypes": [
           "controller",
-          "skirmisher"
+          "skirmisher",
+          "defender"
         ],
         "damage_class": "attack",
         "imposes": [
@@ -18324,7 +18447,8 @@
         "archetypes": [
           "artillery",
           "controller",
-          "lurker"
+          "lurker",
+          "defender"
         ],
         "facets": [
           "gaze",
@@ -18353,7 +18477,8 @@
         "archetypes": [
           "artillery",
           "controller",
-          "lurker"
+          "lurker",
+          "defender"
         ],
         "facets": [
           "breath",
@@ -18382,7 +18507,8 @@
         "archetypes": [
           "artillery",
           "controller",
-          "lurker"
+          "lurker",
+          "defender"
         ],
         "facets": [
           "gaze",
@@ -18413,7 +18539,8 @@
         "signature": true,
         "archetypes": [
           "artillery",
-          "controller"
+          "controller",
+          "defender"
         ],
         "damage_class": "area",
         "facets": [
@@ -18440,7 +18567,7 @@
           "target_size_offset": -1,
           "damage_type": "Bludgeoning"
         },
-        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature the {creature} can see within {sight_range} feet. *Failure:* {damage} ({dice}) {damage_type} damage, and the target has the Grappled condition (escape DC {escape_dc}).",
+        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature the {creature} can see within 5 feet. *Failure:* {damage} ({dice}) {damage_type} damage, and the target has the Grappled condition (escape DC {escape_dc}).",
         "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 5 ft., one creature. *Hit:* {damage} ({dice}) {damage_type} damage, and the target is grappled (escape DC {escape_dc}). Until this grapple ends, the creature is restrained, and the {creature} can't constrict another target.",
         "source_size": "Large",
         "slot_type": "save_effect",
@@ -18451,13 +18578,16 @@
         ],
         "archetypes": [
           "brute",
-          "controller"
+          "controller",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
           "bestial",
           "grasping"
-        ]
+        ],
+        "fixed_range": true,
+        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) \u2014 band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
       },
       {
         "cr": "2",
@@ -18475,7 +18605,7 @@
           "target_size_offset": -1,
           "damage_type": "Bludgeoning"
         },
-        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature the {creature} can see within {sight_range} feet. *Failure:* {damage} ({dice}) {damage_type} damage, and the target has the Grappled condition (escape DC {escape_dc}).",
+        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature the {creature} can see within 10 feet. *Failure:* {damage} ({dice}) {damage_type} damage, and the target has the Grappled condition (escape DC {escape_dc}).",
         "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 5 ft., one creature. *Hit:* {damage} ({dice}) {damage_type} damage, and the target is grappled (escape DC {escape_dc}). Until this grapple ends, the creature is restrained, and the {creature} can't constrict another target.",
         "source_size": "Huge",
         "slot_type": "save_effect",
@@ -18486,13 +18616,16 @@
         ],
         "archetypes": [
           "brute",
-          "controller"
+          "controller",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
           "bestial",
           "grasping"
-        ]
+        ],
+        "fixed_range": true,
+        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) \u2014 band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
       },
       {
         "cr": "3",
@@ -18507,7 +18640,7 @@
           "target_size": "Medium",
           "target_size_offset": 0
         },
-        "template_2024": "*Dexterity Saving Throw*: DC {dc}, one {target_size} or smaller creature the {creature} can see within {sight_range} feet. *Failure:* The target has the Grappled condition (escape DC {escape_dc}).",
+        "template_2024": "*Dexterity Saving Throw*: DC {dc}, one {target_size} or smaller creature the {creature} can see within 10 feet. *Failure:* The target has the Grappled condition (escape DC {escape_dc}).",
         "source_size": "Medium",
         "slot_type": "save_effect",
         "pool": "ability",
@@ -18518,12 +18651,15 @@
         ],
         "archetypes": [
           "brute",
-          "controller"
+          "controller",
+          "defender"
         ],
         "facets": [
           "fey",
           "grasping"
-        ]
+        ],
+        "fixed_range": true,
+        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) \u2014 band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
       },
       {
         "cr": "4",
@@ -18541,7 +18677,7 @@
           "target_size_offset": 0,
           "damage_type": "Bludgeoning"
         },
-        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature the {creature} can see within {sight_range} feet. *Failure:* {damage} ({dice}) {damage_type} damage. The target has the Grappled condition (escape DC {escape_dc}), and it has the Restrained condition until the grapple ends.",
+        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature the {creature} can see within 5 feet. *Failure:* {damage} ({dice}) {damage_type} damage. The target has the Grappled condition (escape DC {escape_dc}), and it has the Restrained condition until the grapple ends.",
         "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 10 ft., one Medium or smaller creature. *Hit:* {damage} ({dice}) {damage_type} damage, and the target is grappled (escape DC {escape_dc}). Until this grapple ends, the target is restrained, and the {creature} can't constrict another target.",
         "source_size": "Medium",
         "slot_type": "save_effect",
@@ -18552,13 +18688,16 @@
         ],
         "archetypes": [
           "brute",
-          "controller"
+          "controller",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
           "celestial",
           "grasping"
-        ]
+        ],
+        "fixed_range": true,
+        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) \u2014 band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
       },
       {
         "cr": "5",
@@ -18579,7 +18718,7 @@
           "target_size_offset": 0,
           "damage_type": "Bludgeoning"
         },
-        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature the {creature} can see within {sight_range} feet. *Failure:* {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage. The target has the Grappled condition (escape DC {escape_dc}), and it has the Restrained condition until the grapple ends.",
+        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature the {creature} can see within 10 feet. *Failure:* {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage. The target has the Grappled condition (escape DC {escape_dc}), and it has the Restrained condition until the grapple ends.",
         "damage_instances": {
           "additive": 1,
           "alternative": 0
@@ -18594,13 +18733,16 @@
         ],
         "archetypes": [
           "brute",
-          "controller"
+          "controller",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
           "elemental",
           "grasping"
-        ]
+        ],
+        "fixed_range": true,
+        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) \u2014 band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
       },
       {
         "cr": "5",
@@ -18630,7 +18772,8 @@
         ],
         "archetypes": [
           "brute",
-          "controller"
+          "controller",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -18679,7 +18822,8 @@
           "brute",
           "controller",
           "glass_cannon",
-          "lurker"
+          "lurker",
+          "defender"
         ],
         "damage_class": "attack",
         "requires": [
@@ -18724,7 +18868,8 @@
         ],
         "archetypes": [
           "brute",
-          "controller"
+          "controller",
+          "defender"
         ],
         "damage_class": "attack",
         "requires": [
@@ -18751,7 +18896,7 @@
           "target_size_offset": -1,
           "damage_type": "Bludgeoning"
         },
-        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature the {creature} can see within {sight_range} feet. *Failure:* {damage} ({dice}) {damage_type} damage. The target has the Grappled condition (escape DC {escape_dc}), and it has the Restrained condition until the grapple ends.",
+        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature the {creature} can see within 5 feet. *Failure:* {damage} ({dice}) {damage_type} damage. The target has the Grappled condition (escape DC {escape_dc}), and it has the Restrained condition until the grapple ends.",
         "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 5 ft., one Large or smaller creature. *Hit:* {damage} ({dice}) {damage_type} damage plus {damage} ({dice}) {damage_type} damage. The target is grappled (escape DC {escape_dc}) if the {creature} isn't already constricting a creature, and the target is restrained until this grapple ends.",
         "source_size": "Huge",
         "slot_type": "save_effect",
@@ -18762,12 +18907,15 @@
         ],
         "archetypes": [
           "brute",
-          "controller"
+          "controller",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
           "grasping"
-        ]
+        ],
+        "fixed_range": true,
+        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) \u2014 band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
       },
       {
         "cr": "16",
@@ -18785,7 +18933,7 @@
           "target_size_offset": -1,
           "damage_type": "Bludgeoning"
         },
-        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature the {creature} can see within {sight_range} feet. *Failure:* {damage} ({dice}) {damage_type} damage. The target has the Grappled condition (escape DC {escape_dc}), and it has the Restrained condition until the grapple ends.",
+        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature the {creature} can see within 5 feet. *Failure:* {damage} ({dice}) {damage_type} damage. The target has the Grappled condition (escape DC {escape_dc}), and it has the Restrained condition until the grapple ends.",
         "source_size": "Large",
         "slot_type": "save_effect",
         "pool": "ability",
@@ -18795,13 +18943,16 @@
         ],
         "archetypes": [
           "brute",
-          "controller"
+          "controller",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
           "fiendish",
           "grasping"
-        ]
+        ],
+        "fixed_range": true,
+        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) \u2014 band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
       }
     ],
     "SAVE+RESTRAINED": [
@@ -18810,12 +18961,12 @@
         "source": "Giant Spider",
         "source_type": "Beast",
         "section": "Actions",
-        "ability": "Web",
+        "ability": "Binding Snare",
         "gate": "Recharge 5-6",
         "numbers": {
           "dc": 13
         },
-        "template_2024": "*Dexterity Saving Throw*: DC {dc}, one creature the {creature} can see within {sight_range} feet. *Failure:* The target has the Restrained condition until the {substance} is destroyed (AC 10; HP 5; Vulnerability to {substance} damage; Immunity to Poison and Psychic damage).",
+        "template_2024": "*Dexterity Saving Throw*: DC {dc}, one creature the {creature} can see within {sight_range} feet. *Failure:* The target has the Restrained condition until the {substance} is destroyed (AC 10; HP 5; Vulnerability to Fire damage; Immunity to Poison and Psychic damage).",
         "template_2014": "*Ranged Weapon Attack:* {attack} to hit, range 30/60 ft., one creature. *Hit:* The target is restrained by webbing. As an action, the restrained target can make a DC 12 Strength check, bursting the webbing on a success. The webbing can also be attacked and destroyed (AC 10; hp 5; vulnerability to {substance} damage; immunity to bludgeoning, poison, and psychic damage).",
         "source_size": "Large",
         "slot_type": "save_effect",
@@ -18824,27 +18975,29 @@
         "signature": true,
         "archetypes": [
           "controller",
-          "lurker"
+          "lurker",
+          "defender"
         ],
         "facets": [
           "bestial",
           "grasping",
           "mind"
-        ]
+        ],
+        "print_name": "Web"
       },
       {
         "cr": "2",
         "source": "Ettercap",
         "source_type": "Monstrosity",
         "section": "Actions",
-        "ability": "Web Strand",
+        "ability": "Snaring Strand",
         "gate": "Recharge 5-6",
         "numbers": {
           "dc": 12,
           "target_size": "Large",
           "target_size_offset": 1
         },
-        "template_2024": "*Dexterity Saving Throw*: DC {dc}, one {target_size} or smaller creature the {creature} can see within {sight_range} feet. *Failure:* The target has the Restrained condition until the {substance} is destroyed (AC 10; HP 5; Vulnerability to {substance} damage; Immunity to Bludgeoning, Poison, and Psychic damage).",
+        "template_2024": "*Dexterity Saving Throw*: DC {dc}, one {target_size} or smaller creature the {creature} can see within {sight_range} feet. *Failure:* The target has the Restrained condition until the {substance} is destroyed (AC 10; HP 5; Vulnerability to Fire damage; Immunity to Bludgeoning, Poison, and Psychic damage).",
         "source_size": "Medium",
         "slot_type": "save_effect",
         "pool": "ability",
@@ -18852,12 +19005,14 @@
         "signature": true,
         "archetypes": [
           "controller",
-          "lurker"
+          "lurker",
+          "defender"
         ],
         "facets": [
           "grasping",
           "mind"
-        ]
+        ],
+        "print_name": "Web Strand"
       },
       {
         "cr": "8",
@@ -18881,7 +19036,8 @@
         "sources_sharing": 1,
         "signature": true,
         "archetypes": [
-          "controller"
+          "controller",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -18927,7 +19083,8 @@
         "archetypes": [
           "brute",
           "controller",
-          "skirmisher"
+          "skirmisher",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -18958,7 +19115,8 @@
         "sources_sharing": 1,
         "signature": true,
         "archetypes": [
-          "controller"
+          "controller",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -18996,7 +19154,8 @@
         "archetypes": [
           "brute",
           "controller",
-          "skirmisher"
+          "skirmisher",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -19039,7 +19198,8 @@
           "swallow"
         ],
         "archetypes": [
-          "controller"
+          "controller",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -19078,7 +19238,8 @@
         "archetypes": [
           "brute",
           "controller",
-          "skirmisher"
+          "skirmisher",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -19423,7 +19584,8 @@
         "signature": true,
         "archetypes": [
           "brute",
-          "controller"
+          "controller",
+          "defender"
         ],
         "damage_class": "attack",
         "facets": [
@@ -19752,7 +19914,8 @@
         "facets": [
           "armed",
           "venomous"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "21",
@@ -19929,7 +20092,8 @@
           "grapple"
         ],
         "archetypes": [
-          "brute"
+          "brute",
+          "defender"
         ],
         "facets": [
           "grasping"
@@ -20169,7 +20333,8 @@
           "armed",
           "beguiling",
           "fey"
-        ]
+        ],
+        "archetypes": []
       }
     ],
     "TRAIT+PARALYZED": [
@@ -20219,7 +20384,8 @@
           "celestial",
           "grave"
         ],
-        "excluded": "the stake/sunlight/coffin liturgy is uniquely vampire; reskinning it produces nonsense"
+        "excluded": "the stake/sunlight/coffin liturgy is uniquely vampire; reskinning it produces nonsense",
+        "archetypes": []
       }
     ],
     "AREA+STUNNED": [
@@ -20310,7 +20476,8 @@
           "beguiling",
           "grasping",
           "mind"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "14",
@@ -20331,7 +20498,8 @@
         "sources_sharing": 2,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "14",
@@ -20357,6 +20525,9 @@
         "facets": [
           "bestial",
           "draconic"
+        ],
+        "archetypes": [
+          "skirmisher"
         ]
       },
       {
@@ -20405,7 +20576,8 @@
         "signature": true,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "13",
@@ -20427,7 +20599,8 @@
         "signature": true,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "13",
@@ -20476,7 +20649,8 @@
         "sources_sharing": 3,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "15",
@@ -20527,7 +20701,8 @@
         "facets": [
           "draconic",
           "mind"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "14",
@@ -20576,7 +20751,8 @@
         "sources_sharing": 3,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "17",
@@ -20627,7 +20803,8 @@
         "facets": [
           "draconic",
           "mind"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "15",
@@ -20676,7 +20853,8 @@
         "sources_sharing": 2,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "17",
@@ -20698,7 +20876,8 @@
         "signature": true,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "17",
@@ -20747,7 +20926,8 @@
         "sources_sharing": 2,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "16",
@@ -20826,7 +21006,8 @@
           "draconic"
         ],
         "condition_default": "Frightened",
-        "modified_from_print": "Owner overrule 2026-08-03: print has this legendary action cast *Fear* (a concentration spell) \u2014 the corpus's single instance, judged errata-shaped rather than policy. Rewritten as a native fear emanation assembled from printed clause parts (the Fear Aura condition clause and the standard legendary lock)."
+        "modified_from_print": "Owner overrule 2026-08-03: print has this legendary action cast *Fear* (a concentration spell) \u2014 the corpus's single instance, judged errata-shaped rather than policy. Rewritten as a native fear emanation assembled from printed clause parts (the Fear Aura condition clause and the standard legendary lock).",
+        "archetypes": []
       },
       {
         "cr": "21",
@@ -20847,7 +21028,8 @@
         "sources_sharing": 2,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "21",
@@ -20923,7 +21105,8 @@
         "signature": true,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "20",
@@ -20945,7 +21128,8 @@
         "signature": true,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "20",
@@ -20994,7 +21178,8 @@
         "sources_sharing": 3,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "22",
@@ -21045,7 +21230,8 @@
         "facets": [
           "draconic",
           "mind"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "21",
@@ -21095,7 +21281,8 @@
         "signature": true,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "24",
@@ -21146,7 +21333,8 @@
         "facets": [
           "draconic",
           "mind"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "22",
@@ -21195,7 +21383,8 @@
         "sources_sharing": 2,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "24",
@@ -21217,7 +21406,8 @@
         "signature": true,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "24",
@@ -21266,7 +21456,8 @@
         "sources_sharing": 2,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "23",
@@ -21345,7 +21536,8 @@
           "draconic"
         ],
         "condition_default": "Frightened",
-        "modified_from_print": "Owner overrule 2026-08-03: print has this legendary action cast *Fear* (a concentration spell) \u2014 the corpus's single instance, judged errata-shaped rather than policy. Rewritten as a native fear emanation assembled from printed clause parts (the Fear Aura condition clause and the standard legendary lock)."
+        "modified_from_print": "Owner overrule 2026-08-03: print has this legendary action cast *Fear* (a concentration spell) \u2014 the corpus's single instance, judged errata-shaped rather than policy. Rewritten as a native fear emanation assembled from printed clause parts (the Fear Aura condition clause and the standard legendary lock).",
+        "archetypes": []
       },
       {
         "cr": "23",
@@ -21364,7 +21556,8 @@
           "ability:Lightning Strike"
         ],
         "sources_sharing": 1,
-        "signature": true
+        "signature": true,
+        "archetypes": []
       },
       {
         "cr": "21",
@@ -21379,7 +21572,7 @@
           "dice": "2d10",
           "damage_type": "Necrotic"
         },
-        "template_2024": "The {creature} teleports up to {teleport_distance} feet to an unoccupied space it can see, and each creature within {reach} feet of the space it left takes {damage} ({dice}) {damage_type} damage.",
+        "template_2024": "The {creature} teleports up to {teleport_distance} feet to an unoccupied space it can see, and each creature within {reach} feet of the space it left takes {damage} ({dice}) {damage_type} damage. The {creature} can't take this action again until the start of its next turn.",
         "slot_type": "legendary",
         "extracted": "second pass (utility entries the first pass skipped)",
         "pool": "ability",
@@ -21392,7 +21585,8 @@
         "facets": [
           "grave",
           "uncanny"
-        ]
+        ],
+        "modified_from_print": "house lock (owner call 2026-08-05, parked since the Groan era): print has NO lock on the Lich's teleport \u2014 legal spam \u2014 but the repeated splash-teleport round read as a generator tell; the lock is a knowing house divergence"
       },
       {
         "cr": "21",
@@ -21416,7 +21610,8 @@
           "arcane",
           "gaze",
           "grave"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "15",
@@ -21438,7 +21633,8 @@
         "signature": true,
         "facets": [
           "grave"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "15",
@@ -21462,7 +21658,8 @@
           "arcane",
           "grave",
           "voice"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "11",
@@ -21609,6 +21806,9 @@
         "damage_class": "legendary",
         "facets": [
           "celestial"
+        ],
+        "archetypes": [
+          "support"
         ]
       },
       {
@@ -21659,7 +21859,8 @@
         "facets": [
           "arcane",
           "grave"
-        ]
+        ],
+        "archetypes": []
       }
     ],
     "UTILITY": [
@@ -21685,7 +21886,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "16",
@@ -21707,7 +21909,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "13",
@@ -21729,7 +21932,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "15",
@@ -21753,7 +21957,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "14",
@@ -21775,7 +21980,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "17",
@@ -21798,7 +22004,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "15",
@@ -21821,7 +22028,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "17",
@@ -21845,7 +22053,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "16",
@@ -21869,7 +22078,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "21",
@@ -21892,7 +22102,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "23",
@@ -21914,7 +22125,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "20",
@@ -21936,7 +22148,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "22",
@@ -21960,7 +22173,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "21",
@@ -21982,7 +22196,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "24",
@@ -22006,7 +22221,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "22",
@@ -22028,7 +22244,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "24",
@@ -22051,7 +22268,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "23",
@@ -22074,7 +22292,8 @@
           "arcane",
           "draconic"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "12",
@@ -22096,7 +22315,8 @@
           "arcane",
           "armed"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "12",
@@ -22119,7 +22339,8 @@
         "facets": [
           "arcane",
           "armed"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "12",
@@ -22177,19 +22398,21 @@
         "ability": "Teleport",
         "gate": null,
         "numbers": {},
-        "template_2024": "The {creature} teleports itself or a willing ally within 10 feet of itself up to {teleport_distance} feet to an unoccupied space the {creature} can see.",
+        "template_2024": "The {creature} teleports itself or one creature within 10 feet of itself that is willing or Grappled by it up to {teleport_distance} feet to an unoccupied space the {creature} can see.",
         "slot_type": "utility",
         "extracted": "second pass (utility entries the first pass skipped)",
         "pool": "ability",
         "sources_sharing": 1,
         "signature": true,
         "archetypes": [
-          "skirmisher"
+          "skirmisher",
+          "support"
         ],
         "facets": [
           "fiendish",
           "uncanny"
-        ]
+        ],
+        "modified_from_print": "ferry extends to Grappled cargo (owner call 2026-08-05): print's Balor ferries \"a willing demon\"; the generified ally-ferry now also carries grappled prey \u2014 teleport-and-carry wires the bonus action into grapple kits (the offering-collection read)"
       },
       {
         "cr": "1/4",
@@ -22272,7 +22495,8 @@
         "facets": [
           "arcane",
           "mind"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "9",
@@ -22295,7 +22519,8 @@
           "arcane",
           "armed"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "9",
@@ -22318,7 +22543,8 @@
         "facets": [
           "arcane",
           "armed"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "4",
@@ -22341,7 +22567,8 @@
           "arcane",
           "celestial"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "4",
@@ -22364,6 +22591,9 @@
         "facets": [
           "arcane",
           "celestial"
+        ],
+        "archetypes": [
+          "support"
         ]
       },
       {
@@ -22388,7 +22618,8 @@
           "arcane",
           "armed"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "2",
@@ -22411,7 +22642,8 @@
         "facets": [
           "arcane",
           "armed"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "10",
@@ -22433,7 +22665,8 @@
           "arcane",
           "celestial"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "10",
@@ -22451,7 +22684,8 @@
         "sources_sharing": 1,
         "signature": true,
         "archetypes": [
-          "skirmisher"
+          "skirmisher",
+          "support"
         ],
         "requires": [
           "ability:Spellcasting"
@@ -22482,7 +22716,8 @@
           "arcane",
           "elemental"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "3",
@@ -22503,7 +22738,8 @@
         "signature": true,
         "facets": [
           "arcane"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "3",
@@ -22522,7 +22758,8 @@
         "signature": true,
         "facets": [
           "uncanny"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "6",
@@ -22543,7 +22780,8 @@
         "signature": true,
         "facets": [
           "arcane"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "2",
@@ -22566,7 +22804,8 @@
           "arcane",
           "armed"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "1",
@@ -22588,7 +22827,8 @@
           "arcane",
           "fey"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "1",
@@ -22633,7 +22873,8 @@
         "facets": [
           "arcane",
           "elemental"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "11",
@@ -22655,7 +22896,8 @@
           "arcane",
           "elemental"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "2",
@@ -22674,6 +22916,9 @@
         "signature": true,
         "facets": [
           "grasping"
+        ],
+        "archetypes": [
+          "defender"
         ]
       },
       {
@@ -22694,6 +22939,9 @@
         "damage_class": "attack",
         "facets": [
           "armed"
+        ],
+        "archetypes": [
+          "support"
         ]
       },
       {
@@ -22740,7 +22988,8 @@
           "arcane",
           "fiendish"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "1/2",
@@ -22859,7 +23108,8 @@
           "arcane",
           "fey"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "10",
@@ -22882,7 +23132,8 @@
           "arcane",
           "celestial"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "5",
@@ -22907,7 +23158,8 @@
         "signature": true,
         "facets": [
           "draconic"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "5",
@@ -22972,7 +23224,8 @@
         "facets": [
           "arcane",
           "fiendish"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "1/2",
@@ -22992,7 +23245,8 @@
         "facets": [
           "arcane",
           "elemental"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "1",
@@ -23035,7 +23289,8 @@
           "arcane",
           "fiendish",
           "uncanny"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "4",
@@ -23057,7 +23312,8 @@
           "arcane",
           "fiendish"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "4",
@@ -23079,7 +23335,8 @@
           "arcane",
           "fiendish"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "4",
@@ -23122,7 +23379,8 @@
           "arcane",
           "grave"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "21",
@@ -23170,7 +23428,8 @@
           "arcane",
           "armed"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "6",
@@ -23193,7 +23452,8 @@
         "facets": [
           "arcane",
           "armed"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "6",
@@ -23284,7 +23544,8 @@
         "signature": true,
         "facets": [
           "uncanny"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "15",
@@ -23308,7 +23569,8 @@
           "arcane",
           "grave"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "13",
@@ -23354,7 +23616,8 @@
           "arcane",
           "fiendish"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "5",
@@ -23403,7 +23666,8 @@
         "facets": [
           "fiendish",
           "uncanny"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "3",
@@ -23422,7 +23686,8 @@
         "signature": true,
         "archetypes": [
           "lurker",
-          "skirmisher"
+          "skirmisher",
+          "support"
         ],
         "facets": [
           "fiendish",
@@ -23447,7 +23712,8 @@
         "facets": [
           "fiendish",
           "uncanny"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "7",
@@ -23469,7 +23735,8 @@
           "arcane",
           "fiendish"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "7",
@@ -23493,7 +23760,8 @@
           "arcane",
           "fiendish",
           "uncanny"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "3",
@@ -23538,7 +23806,8 @@
         "facets": [
           "arcane",
           "fiendish"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "16",
@@ -23561,7 +23830,8 @@
           "arcane",
           "celestial"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "16",
@@ -23579,7 +23849,8 @@
         "sources_sharing": 1,
         "signature": true,
         "archetypes": [
-          "skirmisher"
+          "skirmisher",
+          "support"
         ],
         "requires": [
           "ability:Spellcasting"
@@ -23609,7 +23880,8 @@
           "arcane",
           "armed"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "1/4",
@@ -23632,6 +23904,9 @@
         "facets": [
           "arcane",
           "armed"
+        ],
+        "archetypes": [
+          "support"
         ]
       },
       {
@@ -23653,7 +23928,8 @@
           "arcane",
           "armed"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "2",
@@ -23676,6 +23952,9 @@
         "facets": [
           "arcane",
           "armed"
+        ],
+        "archetypes": [
+          "support"
         ]
       },
       {
@@ -23719,7 +23998,8 @@
           "arcane",
           "fiendish",
           "uncanny"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "13",
@@ -23741,7 +24021,8 @@
           "arcane",
           "fiendish"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "11",
@@ -23790,6 +24071,9 @@
         "facets": [
           "grasping",
           "mind"
+        ],
+        "archetypes": [
+          "defender"
         ]
       },
       {
@@ -23808,7 +24092,8 @@
         "scale_note": "the size of the OBJECT destroyed, not an area of effect.",
         "pool": "ability",
         "sources_sharing": 1,
-        "signature": true
+        "signature": true,
+        "archetypes": []
       },
       {
         "cr": "1/2",
@@ -23853,7 +24138,8 @@
         "facets": [
           "arcane",
           "fey"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "1/2",
@@ -23871,7 +24157,8 @@
         "sources_sharing": 1,
         "signature": true,
         "archetypes": [
-          "lurker"
+          "lurker",
+          "skirmisher"
         ],
         "facets": [
           "grave"
@@ -23897,7 +24184,8 @@
           "arcane",
           "celestial"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "21",
@@ -23945,7 +24233,8 @@
           "arcane",
           "celestial"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "17",
@@ -23968,7 +24257,8 @@
           "arcane",
           "celestial"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "8",
@@ -23991,7 +24281,8 @@
           "arcane",
           "fiendish"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "1/4",
@@ -24011,7 +24302,8 @@
           "arcane",
           "fey",
           "uncanny"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "1",
@@ -24055,7 +24347,8 @@
         "facets": [
           "arcane",
           "forged"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "13",
@@ -24078,7 +24371,8 @@
           "arcane",
           "armed"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "4",
@@ -24100,7 +24394,8 @@
         "facets": [
           "arcane",
           "fiendish"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "4",
@@ -24143,7 +24438,8 @@
         "signature": true,
         "facets": [
           "verdant"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "5",
@@ -24188,7 +24484,8 @@
           "arcane",
           "celestial"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       },
       {
         "cr": "5",
@@ -24211,6 +24508,9 @@
         "facets": [
           "arcane",
           "celestial"
+        ],
+        "archetypes": [
+          "support"
         ]
       },
       {
@@ -24287,7 +24587,8 @@
           "arcane",
           "beguiling",
           "grave"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "5",
@@ -24327,7 +24628,8 @@
         "signature": true,
         "facets": [
           "uncanny"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "4",
@@ -24346,7 +24648,8 @@
         "signature": true,
         "facets": [
           "uncanny"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "2",
@@ -24365,7 +24668,8 @@
         "signature": true,
         "facets": [
           "uncanny"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "4",
@@ -24404,7 +24708,8 @@
         "signature": true,
         "facets": [
           "uncanny"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "3",
@@ -24423,7 +24728,8 @@
         "signature": true,
         "facets": [
           "uncanny"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "2",
@@ -24468,7 +24774,8 @@
         "signature": true,
         "facets": [
           "grave"
-        ]
+        ],
+        "archetypes": []
       },
       {
         "cr": "5",
@@ -24512,7 +24819,8 @@
           "arcane",
           "celestial"
         ],
-        "name_locked": true
+        "name_locked": true,
+        "archetypes": []
       }
     ],
     "AREA": [
@@ -24559,7 +24867,8 @@
           "facets": [
             "aquatic",
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "0",
@@ -24572,7 +24881,8 @@
           "facets": [
             "aquatic",
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/8",
@@ -24585,7 +24895,8 @@
           "facets": [
             "aquatic",
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/8",
@@ -24598,7 +24909,8 @@
           "facets": [
             "aquatic",
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/4",
@@ -24611,7 +24923,8 @@
           "facets": [
             "aquatic",
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -24624,7 +24937,8 @@
           "facets": [
             "aquatic",
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1",
@@ -24637,7 +24951,8 @@
           "facets": [
             "aquatic",
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -24650,7 +24965,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -24663,7 +24979,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -24676,7 +24993,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -24688,7 +25006,8 @@
           "template_2024": "The {creature} can breathe air and water.",
           "facets": [
             "aquatic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -24701,7 +25020,8 @@
           "facets": [
             "aquatic",
             "fey"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "3",
@@ -24714,7 +25034,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "3",
@@ -24727,7 +25048,8 @@
           "facets": [
             "aquatic",
             "fey"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "4",
@@ -24740,7 +25062,8 @@
           "facets": [
             "aquatic",
             "mind"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "4",
@@ -24753,7 +25076,8 @@
           "facets": [
             "aquatic",
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "7",
@@ -24766,7 +25090,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "8",
@@ -24779,7 +25104,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "8",
@@ -24792,7 +25118,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "10",
@@ -24805,7 +25132,8 @@
           "facets": [
             "aquatic",
             "mind"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "10",
@@ -24818,7 +25146,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "13",
@@ -24831,7 +25160,8 @@
           "facets": [
             "aquatic",
             "armed"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "14",
@@ -24844,7 +25174,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "15",
@@ -24857,7 +25188,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "15",
@@ -24870,7 +25202,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "17",
@@ -24883,7 +25216,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "17",
@@ -24896,7 +25230,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "21",
@@ -24909,7 +25244,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "22",
@@ -24922,7 +25258,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "22",
@@ -24935,7 +25272,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "23",
@@ -24947,7 +25285,8 @@
           "template_2024": "The {creature} can breathe air and water.",
           "facets": [
             "aquatic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "24",
@@ -24960,7 +25299,8 @@
           "facets": [
             "aquatic",
             "draconic"
-          ]
+          ],
+          "archetypes": []
         }
       ],
       "FLAVOR-PERMISSION": [
@@ -24974,7 +25314,8 @@
           "template_2024": "The {creature} has proficiency in one skill of the DM's choice and has Advantage whenever it makes an ability check using that skill.",
           "facets": [
             "armed"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "0",
@@ -24986,7 +25327,8 @@
           "template_2024": "If the {creature} dies in {home_plane}, it revives with all its Hit Points in 1d10 days unless it is killed by a creature under the effects of a *Bless* spell or its remains are sprinkled with Holy Water.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "0",
@@ -25013,6 +25355,9 @@
           "template_2024": "The {creature} doesn't provoke an Opportunity Attack when it moves out of an enemy's reach.",
           "facets": [
             "bestial"
+          ],
+          "archetypes": [
+            "skirmisher"
           ]
         },
         {
@@ -25025,7 +25370,8 @@
           "template_2024": "The {creature}'s Long Jump is up to 10 feet and its High Jump is up to 5 feet with or without a running start.",
           "facets": [
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "0",
@@ -25071,7 +25417,8 @@
           "facets": [
             "aquatic",
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "0",
@@ -25083,6 +25430,9 @@
           "template_2024": "The {creature} doesn't provoke an Opportunity Attack when it moves out of an enemy's reach.",
           "facets": [
             "bestial"
+          ],
+          "archetypes": [
+            "skirmisher"
           ]
         },
         {
@@ -25097,7 +25447,8 @@
           "template_2024": "The {creature} can mimic simple sounds it has heard, such as a whisper or chitter. A hearer can discern the sounds are imitations with a successful DC {dc} Wisdom (Insight) check.",
           "facets": [
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "0",
@@ -25110,7 +25461,8 @@
           "facets": [
             "aquatic",
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/8",
@@ -25122,7 +25474,8 @@
           "template_2024": "While in sunlight, the {creature} has Disadvantage on ability checks and attack rolls.",
           "facets": [
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/8",
@@ -25149,7 +25502,8 @@
           "template_2024": "The {creature} counts as one size larger for the purpose of determining its carrying capacity.",
           "facets": [
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/4",
@@ -25161,7 +25515,8 @@
           "template_2024": "Attack rolls against the {creature} are made with Disadvantage unless the {creature} has the Incapacitated condition.",
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/4",
@@ -25175,7 +25530,8 @@
           "template_2024": "If damage reduces the {creature} to 0 Hit Points, it makes a Constitution saving throw (DC {dc} plus the damage taken) unless the damage is Radiant or from a Critical Hit. On a successful save, the {creature} drops to 1 Hit Point instead.",
           "facets": [
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/4",
@@ -25187,7 +25543,8 @@
           "template_2024": "The {creature}'s Long Jump is up to 20 feet and its High Jump is up to 10 feet with or without a running start.",
           "facets": [
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/4",
@@ -25232,7 +25589,8 @@
           "facets": [
             "bestial",
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/4",
@@ -25245,7 +25603,8 @@
           "facets": [
             "bestial",
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/4",
@@ -25258,7 +25617,8 @@
           "facets": [
             "bestial",
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -25270,7 +25630,8 @@
           "template_2024": "The {creature} can move through a space as narrow as 1 inch without expending extra movement to do so.",
           "facets": [
             "amorphous"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -25282,7 +25643,8 @@
           "template_2024": "Nonmagical ammunition is destroyed immediately after hitting the {creature} and dealing any damage. Any nonmagical weapon takes a cumulative -1 penalty to attack rolls immediately after dealing damage to the {creature} and coming into contact with it. The weapon is destroyed if the penalty reaches -5. The penalty can be removed by casting the *Mending* spell on the weapon. The {creature} can eat through 2-inch-thick, nonmagical metal or wood in 1 round.",
           "facets": [
             "amorphous"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -25291,7 +25653,8 @@
           "trait": "Iron Scent",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "The {creature} can pinpoint the location of ferrous metal within 30 feet of itself."
+          "template_2024": "The {creature} can pinpoint the location of ferrous metal within 30 feet of itself.",
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -25303,7 +25666,8 @@
           "template_2024": "The {creature} can move through a space as narrow as 1 inch without expending extra movement to do so.",
           "facets": [
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -25315,7 +25679,8 @@
           "template_2024": "While in sunlight, the {creature} has Disadvantage on D20 Test.",
           "facets": [
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -25328,7 +25693,8 @@
           "facets": [
             "bestial",
             "breath"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -25341,7 +25707,8 @@
           "facets": [
             "aquatic",
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -25370,7 +25737,8 @@
           "facets": [
             "aquatic",
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -25383,7 +25751,8 @@
           "facets": [
             "bestial",
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1",
@@ -25395,7 +25764,8 @@
           "template_2024": "The {creature} needn't spend extra movement to move a creature it is grappling.",
           "facets": [
             "fey"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1",
@@ -25407,7 +25777,8 @@
           "template_2024": "The {creature} can communicate with Beasts and Plants as if they shared a language.",
           "facets": [
             "fey"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1",
@@ -25434,7 +25805,8 @@
           "template_2024": "While in sunlight, the {creature} has Disadvantage on ability checks and attack rolls.",
           "facets": [
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1",
@@ -25447,7 +25819,8 @@
           "facets": [
             "aquatic",
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1",
@@ -25459,7 +25832,8 @@
           "template_2024": "The {creature}'s Long Jump is up to 20 feet and its High Jump is up to 10 feet with or without a running start.",
           "facets": [
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1",
@@ -25471,7 +25845,8 @@
           "template_2024": "With a 10-foot running start, the {creature} can Long Jump up to 25 feet.",
           "facets": [
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1",
@@ -25484,7 +25859,8 @@
           "facets": [
             "bestial",
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1",
@@ -25497,7 +25873,8 @@
           "facets": [
             "aquatic",
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -25544,7 +25921,8 @@
           "template_2024": "Even when the {creature} is in plain sight, a creature must succeed on a DC {dc} Wisdom (Perception) check to notice the {creature} if the creature hasn't witnessed the {creature} move or otherwise act.",
           "facets": [
             "amorphous"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -25558,7 +25936,8 @@
           "template_2024": "The ground in a {area}-foot Emanation originating from the {creature} is Difficult Terrain.",
           "facets": [
             "mind"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -25574,7 +25953,8 @@
             "grapple"
           ],
           "archetypes": [
-            "brute"
+            "brute",
+            "defender"
           ],
           "facets": [
             "grasping"
@@ -25590,7 +25970,8 @@
           "template_2024": "The {creature} can move through a space as narrow as 1 inch without expending extra movement to do so.",
           "facets": [
             "amorphous"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -25604,7 +25985,8 @@
           "template_2024": "If damage reduces the {creature} to 0 Hit Points, it makes a Constitution saving throw (DC {dc} plus the damage taken) unless the damage is Radiant or from a Critical Hit. On a successful save, the {creature} drops to 1 Hit Point instead.",
           "facets": [
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -25616,7 +25998,8 @@
           "template_2024": "The {creature} can't wear or carry anything.",
           "facets": [
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -25645,7 +26028,8 @@
           "template_2024": "The {creature} has Advantage on melee attack rolls while it is Bloodied.",
           "facets": [
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -25658,7 +26042,8 @@
           "facets": [
             "aquatic",
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -25671,7 +26056,8 @@
           "facets": [
             "bestial",
             "breath"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -25683,7 +26069,8 @@
           "template_2024": "With a 10-foot running start, the {creature} can Long Jump up to 25 feet.",
           "facets": [
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -25696,7 +26083,8 @@
           "facets": [
             "bestial",
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "3",
@@ -25708,7 +26096,8 @@
           "template_2024": "The {creature} needn't spend extra movement to move a creature it is grappling.",
           "facets": [
             "fey"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "3",
@@ -25722,7 +26111,8 @@
           "template_2024": "The {creature} can mimic animal sounds and humanoid voices. A creature that hears the sounds can tell they are imitations only with a successful DC {dc} Wisdom (Insight) check.",
           "facets": [
             "fey"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "3",
@@ -25734,7 +26124,8 @@
           "template_2024": "The {creature} can grant Resistance to {substance} damage to a rider while it is on the {creature}.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "3",
@@ -25763,7 +26154,8 @@
           "template_2024": "While in sunlight, the {creature} has Disadvantage on ability checks and attack rolls.",
           "facets": [
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "3",
@@ -25775,7 +26167,8 @@
           "template_2024": "The swarm can occupy another creature's space and vice versa, and the swarm can move through any opening large enough for a Tiny creature. The swarm can't regain Hit Points or gain Temporary Hit Points.",
           "facets": [
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "3",
@@ -25788,7 +26181,8 @@
           "facets": [
             "bestial",
             "breath"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "4",
@@ -25800,7 +26194,8 @@
           "template_2024": "The {creature} can move through a space as narrow as 1 inch without expending extra movement to do so.",
           "facets": [
             "amorphous"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "4",
@@ -25813,7 +26208,8 @@
           "facets": [
             "bestial",
             "breath"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -25828,7 +26224,8 @@
           ],
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -25844,7 +26241,8 @@
           "damage_class": "attack",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -25858,7 +26256,8 @@
             "fiendish"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -25870,7 +26269,8 @@
           "template_2024": "The {creature} can burrow through nonmagical, unworked earth and stone. While doing so, the {creature} doesn't disturb the material it moves through.",
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -25882,7 +26282,8 @@
           "template_2024": "The {creature} deals double damage to objects and structures.",
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -25911,7 +26312,8 @@
           "template_2024": "If the {creature} takes {substance} damage, it has Disadvantage on attack rolls and ability checks until the end of its next turn.",
           "facets": [
             "forged"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -25923,7 +26325,8 @@
           "template_2024": "Whenever the {creature} is subjected to {damage_type} damage, it regains a number of Hit Points equal to the {damage_type} damage dealt.",
           "facets": [
             "forged"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -25935,7 +26338,8 @@
           "template_2024": "The {creature} is related to a type of creature associated with one of the following damage types (DM's choice): {substance}, Cold, {substance}, {substance}, or Poison. This choice affects other aspects of the stat block.",
           "facets": [
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -25950,7 +26354,8 @@
           ],
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -25962,7 +26367,8 @@
           "template_2024": "Whenever the {creature} is subjected to {damage_type} damage, it regains a number of Hit Points equal to the {damage_type} damage dealt.",
           "facets": [
             "verdant"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -25992,7 +26398,8 @@
             "celestial",
             "grave"
           ],
-          "excluded": "the stake/sunlight/coffin liturgy is uniquely vampire; reskinning it produces nonsense"
+          "excluded": "the stake/sunlight/coffin liturgy is uniquely vampire; reskinning it produces nonsense",
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -26007,7 +26414,8 @@
           ],
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -26019,7 +26427,8 @@
           "template_2024": "While in sunlight, the {creature} has Disadvantage on ability checks and attack rolls.",
           "facets": [
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -26031,7 +26440,8 @@
           "template_2024": "The {creature} can burrow through nonmagical, unworked earth and stone. While doing so, the {creature} doesn't disturb the material it moves through.",
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -26043,7 +26453,8 @@
           "template_2024": "The {creature} can pinpoint the location of precious metals and stones within 60 feet of itself.",
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -26056,7 +26467,8 @@
           "facets": [
             "bestial",
             "breath"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -26069,7 +26481,8 @@
           "facets": [
             "aquatic",
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "6",
@@ -26078,7 +26491,8 @@
           "trait": "Sunlight Sensitivity",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "While in sunlight, the {creature} has Disadvantage on ability checks and attack rolls."
+          "template_2024": "While in sunlight, the {creature} has Disadvantage on ability checks and attack rolls.",
+          "archetypes": []
         },
         {
           "cr": "6",
@@ -26093,7 +26507,8 @@
           ],
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "6",
@@ -26107,7 +26522,8 @@
             "fiendish"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "7",
@@ -26120,7 +26536,8 @@
           "facets": [
             "arcane",
             "forged"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "8",
@@ -26132,7 +26549,8 @@
           "template_2024": "If the {creature} is subjected to an effect that allows it to make a Dexterity saving throw to take only half damage, the {creature} instead takes no damage if it succeeds on the save and only half damage if it fails. It can't use this trait if it has the Incapacitated condition.",
           "facets": [
             "armed"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "8",
@@ -26146,7 +26564,8 @@
             "fiendish"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "8",
@@ -26158,7 +26577,8 @@
           "template_2024": "While in Bright Light, the {creature} has Disadvantage on attack rolls.",
           "facets": [
             "mind"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "8",
@@ -26172,7 +26592,8 @@
             "fiendish"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "8",
@@ -26184,7 +26605,8 @@
           "template_2024": "The {creature} can hold its breath for 1 hour.",
           "facets": [
             "breath"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "8",
@@ -26193,7 +26615,10 @@
           "trait": "Reactive Heads",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "For each head the {creature} has beyond one, it gets an extra Reaction that can be used only for Opportunity Attacks."
+          "template_2024": "For each head the {creature} has beyond one, it gets an extra Reaction that can be used only for Opportunity Attacks.",
+          "archetypes": [
+            "defender"
+          ]
         },
         {
           "cr": "8",
@@ -26207,7 +26632,8 @@
             "fiendish"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "9",
@@ -26221,7 +26647,8 @@
             "fiendish"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "9",
@@ -26233,7 +26660,8 @@
           "template_2024": "Whenever the {creature} is subjected to {damage_type} damage, it takes no damage and instead regains a number of Hit Points equal to the {damage_type} damage dealt.",
           "facets": [
             "forged"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "9",
@@ -26247,7 +26675,8 @@
             "fiendish"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "9",
@@ -26259,7 +26688,8 @@
           "template_2024": "The {creature} deals double damage to objects and structures.",
           "facets": [
             "verdant"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "10",
@@ -26273,7 +26703,8 @@
             "mind"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "10",
@@ -26287,7 +26718,8 @@
             "celestial"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "10",
@@ -26301,7 +26733,8 @@
             "celestial"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "11",
@@ -26315,7 +26748,8 @@
             "elemental"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "11",
@@ -26327,7 +26761,8 @@
           "template_2024": "The {creature} has a 30 percent chance of knowing the *Wish* spell. If the {creature} knows it, the {creature} can cast it only on behalf of a non-genie creature who communicates a wish in a way the {creature} can understand. If the {creature} casts the spell for the creature, the {creature} suffers none of the spell's stress. Once the {creature} has cast it three times, the {creature} can't do so again for 365 days.",
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "11",
@@ -26341,7 +26776,8 @@
             "elemental"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "11",
@@ -26353,7 +26789,8 @@
           "template_2024": "The {creature} has a 30 percent chance of knowing the *Wish* spell. If the {creature} knows it, the {creature} can cast it only on behalf of a non-genie creature who communicates a wish in a way the {creature} can understand. If the {creature} casts the spell for the creature, the {creature} suffers none of the spell's stress. Once the {creature} has cast it three times, the {creature} can't do so again for 365 days.",
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "11",
@@ -26367,7 +26804,8 @@
             "fiendish"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "11",
@@ -26379,7 +26817,8 @@
           "template_2024": "No magic can observe the {creature} remotely or detect its thoughts without its permission. Wisdom (Insight) checks made to ascertain its intentions or sincerity are made with Disadvantage.",
           "facets": [
             "celestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "12",
@@ -26393,7 +26832,8 @@
             "fiendish"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "12",
@@ -26409,7 +26849,8 @@
           "facets": [
             "fiendish",
             "mind"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "13",
@@ -26423,7 +26864,8 @@
             "fiendish"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "13",
@@ -26435,7 +26877,8 @@
           "template_2024": "The {creature} automatically succeeds on saving throws against spells and other magical effects, and the attack rolls of spells automatically miss it. Without the {creature}'s permission, no spell can observe the {creature} remotely or detect its thoughts, creature type, or alignment.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "13",
@@ -26449,7 +26892,8 @@
             "fiendish"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "13",
@@ -26464,7 +26908,8 @@
             "celestial",
             "grave"
           ],
-          "excluded": "the stake/sunlight/coffin liturgy is uniquely vampire; reskinning it produces nonsense"
+          "excluded": "the stake/sunlight/coffin liturgy is uniquely vampire; reskinning it produces nonsense",
+          "archetypes": []
         },
         {
           "cr": "14",
@@ -26478,7 +26923,8 @@
             "fiendish"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "15",
@@ -26492,7 +26938,8 @@
             "grave"
           ],
           "pool": "on_death",
-          "death_family": "continuity-anchor"
+          "death_family": "continuity-anchor",
+          "archetypes": []
         },
         {
           "cr": "16",
@@ -26504,7 +26951,8 @@
           "template_2024": "Whenever the {creature} is subjected to {damage_type} damage, it regains a number of Hit Points equal to the {damage_type} damage dealt.",
           "facets": [
             "forged"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "16",
@@ -26518,7 +26966,8 @@
             "fiendish"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "16",
@@ -26530,7 +26979,8 @@
           "template_2024": "The {creature} can take one Reaction on every turn of combat.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "16",
@@ -26542,7 +26992,8 @@
           "template_2024": "The {creature} knows if it hears a lie.",
           "facets": [
             "celestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "16",
@@ -26556,7 +27007,8 @@
             "celestial"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "17",
@@ -26568,7 +27020,8 @@
           "template_2024": "No magic can observe the {creature} remotely or detect its thoughts without its permission. Wisdom (Insight) checks made to ascertain its intentions or sincerity are made with Disadvantage.",
           "facets": [
             "celestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "20",
@@ -26582,7 +27035,8 @@
             "fiendish"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "21",
@@ -26594,7 +27048,8 @@
           "template_2024": "The {creature} knows if it hears a lie.",
           "facets": [
             "celestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "21",
@@ -26608,7 +27063,8 @@
             "celestial"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         },
         {
           "cr": "23",
@@ -26617,7 +27073,8 @@
           "trait": "Siege Monster",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "The {creature} deals double damage to objects and structures."
+          "template_2024": "The {creature} deals double damage to objects and structures.",
+          "archetypes": []
         },
         {
           "cr": "30",
@@ -26626,7 +27083,9 @@
           "trait": "Reflective Carapace",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "If the {creature} is targeted by a *Magic Missile* spell or a spell that requires a ranged attack roll, roll 1d6. On a 1-5, the {creature} is unaffected. On a 6, the {creature} is unaffected and reflects the spell, turning the caster into the target."
+          "template_2024": "If the {creature} is targeted by a *Magic Missile* spell or a spell that requires a ranged attack roll, roll 1d6. On a 1-5, the {creature} is unaffected. On a 6, the {creature} is unaffected and reflects the spell, turning the caster into the target.",
+          "archetypes": [],
+          "excluded": "fingerprint (owner call 2026-08-05): the 1d6 spell-reflection is the Tarrasque's face \u2014 recognizable under any rename, and its 5-in-6 ranged-spell immunity reads as artifact tech on anything else (live: 'Slippery Body' on the Tar-Shroud Watcher)"
         },
         {
           "cr": "30",
@@ -26635,7 +27094,8 @@
           "trait": "Siege Monster",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "The {creature} deals double damage to objects and structures."
+          "template_2024": "The {creature} deals double damage to objects and structures.",
+          "archetypes": []
         }
       ],
       "RETALIATION-DAMAGE": [
@@ -26653,7 +27113,8 @@
           "damage_class": "attack",
           "facets": [
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -26670,6 +27131,9 @@
           "damage_class": "recurring",
           "facets": [
             "elemental"
+          ],
+          "archetypes": [
+            "defender"
           ]
         },
         {
@@ -26691,7 +27155,8 @@
           "facets": [
             "amorphous",
             "devouring"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -26707,7 +27172,8 @@
           "damage_class": "attack",
           "facets": [
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "4",
@@ -26723,7 +27189,8 @@
           "damage_class": "attack",
           "facets": [
             "amorphous"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "4",
@@ -26739,7 +27206,8 @@
           "damage_class": "attack",
           "facets": [
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -26756,6 +27224,9 @@
           "damage_class": "recurring",
           "facets": [
             "elemental"
+          ],
+          "archetypes": [
+            "defender"
           ]
         },
         {
@@ -26775,7 +27246,8 @@
           ],
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -26792,7 +27264,8 @@
           "facets": [
             "aquatic",
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -26809,6 +27282,9 @@
           "damage_class": "recurring",
           "facets": [
             "elemental"
+          ],
+          "archetypes": [
+            "defender"
           ]
         },
         {
@@ -26825,7 +27301,8 @@
           "damage_class": "attack",
           "facets": [
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "10",
@@ -26845,7 +27322,8 @@
             "aquatic",
             "grave",
             "mind"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "11",
@@ -26859,7 +27337,10 @@
           },
           "scales_with_cr": true,
           "template_2024": "At the end of each of the {creature}'s turns, each creature in a {area}-foot Emanation originating from the {creature} takes {damage} ({dice}) {damage_type} damage.",
-          "damage_class": "recurring"
+          "damage_class": "recurring",
+          "archetypes": [
+            "defender"
+          ]
         },
         {
           "cr": "19",
@@ -26876,6 +27357,9 @@
           "damage_class": "recurring",
           "facets": [
             "fiendish"
+          ],
+          "archetypes": [
+            "defender"
           ]
         }
       ],
@@ -26891,7 +27375,8 @@
           "facets": [
             "forged",
             "mind"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -26904,7 +27389,8 @@
           "facets": [
             "fiendish",
             "mind"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -26916,7 +27402,8 @@
           "template_2024": "The {creature} uncannily has the same senses as a whole {creature}. If the {creature} isn't destroyed within 24 hours, roll 1d12. On a 12, the {creature} turns into a {creature}. Otherwise, the {creature} withers away.",
           "facets": [
             "armed"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "3",
@@ -26944,7 +27431,8 @@
           "facets": [
             "armed",
             "mind"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "4",
@@ -26956,7 +27444,8 @@
           "template_2024": "The {creature} senses magic within 120 feet of itself. This trait otherwise works like the *Detect Magic* spell but isn't itself magical.",
           "facets": [
             "mind"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "4",
@@ -26969,7 +27458,8 @@
           "facets": [
             "celestial",
             "mind"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "4",
@@ -26999,7 +27489,8 @@
           "template_2024": "Whenever the {creature} starts its turn Bloodied, roll 1d6. On a 6, the {creature} goes berserk. On each of its turns while berserk, the {creature} attacks the nearest creature it can see. If no creature is near enough to move to and attack, the {creature} attacks an object. Once the {creature} goes berserk, it remains so until it is destroyed or it is no longer Bloodied. The {creature}'s creator, if within 60 feet of the berserk {creature}, can try to calm it by taking an action to make a DC {dc} Charisma (Persuasion) check; the {creature} must be able to hear its creator. If this check succeeds, the {creature} ceases being berserk until the start of its next turn, at which point it resumes rolling for the Berserk trait again if it is still Bloodied.",
           "facets": [
             "forged"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "7",
@@ -27012,7 +27503,8 @@
           "facets": [
             "forged",
             "mind"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "9",
@@ -27024,7 +27516,8 @@
           "template_2024": "Whenever the {creature} starts its turn Bloodied, roll 1d6. On a 6, the {creature} goes berserk. On each of its turns while berserk, the {creature} attacks the nearest creature it can see. If no creature is near enough to move to and attack, the {creature} attacks an object. Once the {creature} goes berserk, it continues to be berserk until it is destroyed or it is no longer Bloodied.",
           "facets": [
             "forged"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "10",
@@ -27036,7 +27529,8 @@
           "template_2024": "If a creature the {creature} can see communicates telepathically with the {creature}, the {creature} learns the creature's greatest desires.",
           "facets": [
             "mind"
-          ]
+          ],
+          "archetypes": []
         }
       ],
       "MOVEMENT-PERMISSION": [
@@ -27050,7 +27544,8 @@
           "template_2024": "The {creature} can climb difficult surfaces, including along ceilings, without needing to make an ability check.",
           "facets": [
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "0",
@@ -27062,19 +27557,22 @@
           "template_2024": "The {creature} can climb difficult surfaces, including along ceilings, without needing to make an ability check.",
           "facets": [
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "0",
           "source": "Spider",
           "source_type": "Beast",
-          "trait": "Web Walker",
+          "trait": "Snare Walker",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "The {creature} ignores movement restrictions caused by webs, and the {creature} knows the location of any other creature in contact with the same {substance}.",
+          "template_2024": "The {creature} ignores movement restrictions caused by {substance}, and the {creature} knows the location of any other creature in contact with the same {substance}.",
           "facets": [
             "bestial"
-          ]
+          ],
+          "archetypes": [],
+          "print_name": "Web Walker"
         },
         {
           "cr": "1/4",
@@ -27086,7 +27584,8 @@
           "template_2024": "The {creature} can climb difficult surfaces, including along ceilings, without needing to make an ability check.",
           "facets": [
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/4",
@@ -27098,7 +27597,8 @@
           "template_2024": "The {creature} can climb difficult surfaces, including along ceilings, without needing to make an ability check.",
           "facets": [
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -27125,19 +27625,22 @@
           "template_2024": "The {creature} can climb difficult surfaces, including along ceilings, without needing to make an ability check.",
           "facets": [
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1",
           "source": "Giant Spider",
           "source_type": "Beast",
-          "trait": "Web Walker",
+          "trait": "Snare Walker",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "The {creature} ignores movement restrictions caused by webs, and the {creature} knows the location of any other creature in contact with the same {substance}.",
+          "template_2024": "The {creature} ignores movement restrictions caused by {substance}, and the {creature} knows the location of any other creature in contact with the same {substance}.",
           "facets": [
             "bestial"
-          ]
+          ],
+          "archetypes": [],
+          "print_name": "Web Walker"
         },
         {
           "cr": "2",
@@ -27161,16 +27664,19 @@
           "trait": "Spider Climb",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "The {creature} can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+          "template_2024": "The {creature} can climb difficult surfaces, including along ceilings, without needing to make an ability check.",
+          "archetypes": []
         },
         {
           "cr": "2",
           "source": "Ettercap",
           "source_type": "Monstrosity",
-          "trait": "Web Walker",
+          "trait": "Snare Walker",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "The {creature} ignores movement restrictions caused by webs, and the {creature} knows the location of any other creature in contact with the same {substance}."
+          "template_2024": "The {creature} ignores movement restrictions caused by {substance}, and the {creature} knows the location of any other creature in contact with the same {substance}.",
+          "archetypes": [],
+          "print_name": "Web Walker"
         },
         {
           "cr": "2",
@@ -27182,7 +27688,8 @@
           "template_2024": "The {creature} can climb difficult surfaces, including along ceilings, without needing to make an ability check.",
           "facets": [
             "amorphous"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "2",
@@ -27194,7 +27701,8 @@
           "template_2024": "The {creature} can move across and climb {terrain} without needing to make an ability check. Additionally, Difficult Terrain composed of {terrain} doesn't cost it extra movement.",
           "facets": [
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "3",
@@ -27203,16 +27711,19 @@
           "trait": "Spider Climb",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "The {creature} can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+          "template_2024": "The {creature} can climb difficult surfaces, including along ceilings, without needing to make an ability check.",
+          "archetypes": []
         },
         {
           "cr": "3",
           "source": "Phase Spider",
           "source_type": "Monstrosity",
-          "trait": "Web Walker",
+          "trait": "Snare Walker",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "The {creature} ignores movement restrictions caused by webs, and the {creature} knows the location of any other creature in contact with the same {substance}."
+          "template_2024": "The {creature} ignores movement restrictions caused by {substance}, and the {creature} knows the location of any other creature in contact with the same {substance}.",
+          "archetypes": [],
+          "print_name": "Web Walker"
         },
         {
           "cr": "4",
@@ -27224,7 +27735,8 @@
           "template_2024": "The {creature} can climb difficult surfaces, including along ceilings, without needing to make an ability check.",
           "facets": [
             "amorphous"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -27236,7 +27748,8 @@
           "template_2024": "The {creature} can climb difficult surfaces, including along ceilings, without needing to make an ability check.",
           "facets": [
             "mind"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -27248,7 +27761,8 @@
           "template_2024": "The {creature} can climb difficult surfaces, including along ceilings, without needing to make an ability check.",
           "facets": [
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -27257,10 +27771,11 @@
           "trait": "Freeze",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "If the {creature} takes Cold damage, its Speed decreases by 20 feet until the end of its next turn.",
+          "template_2024": "If the {creature} takes {weakness_type} damage, its Speed decreases by 20 feet until the end of its next turn.",
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "6",
@@ -27269,16 +27784,19 @@
           "trait": "Spider Climb",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "The {creature} can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+          "template_2024": "The {creature} can climb difficult surfaces, including along ceilings, without needing to make an ability check.",
+          "archetypes": []
         },
         {
           "cr": "6",
           "source": "Drider",
           "source_type": "Monstrosity",
-          "trait": "Web Walker",
+          "trait": "Snare Walker",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "The {creature} ignores movement restrictions caused by webs, and the {creature} knows the location of any other creature in contact with the same {substance}."
+          "template_2024": "The {creature} ignores movement restrictions caused by {substance}, and the {creature} knows the location of any other creature in contact with the same {substance}.",
+          "archetypes": [],
+          "print_name": "Web Walker"
         },
         {
           "cr": "6",
@@ -27290,7 +27808,8 @@
           "template_2024": "The {creature} can move across and climb {terrain} without needing to make an ability check. Additionally, Difficult Terrain composed of {terrain} doesn't cost it extra movement.",
           "facets": [
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "13",
@@ -27302,7 +27821,8 @@
           "template_2024": "The {creature} can move across and climb {terrain} without needing to make an ability check. Additionally, Difficult Terrain composed of {terrain} doesn't cost it extra movement.",
           "facets": [
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "13",
@@ -27314,7 +27834,8 @@
           "template_2024": "The {creature} can climb difficult surfaces, including along ceilings, without needing to make an ability check.",
           "facets": [
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "15",
@@ -27341,7 +27862,8 @@
           "template_2024": "The {creature} can move across and climb {terrain} without needing to make an ability check. Additionally, Difficult Terrain composed of {terrain} doesn't cost it extra movement.",
           "facets": [
             "draconic"
-          ]
+          ],
+          "archetypes": []
         }
       ],
       "DEFENSIVE-POSTURE": [
@@ -27355,7 +27877,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "draconic"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -27367,7 +27890,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fey"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1",
@@ -27379,7 +27903,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fey"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1",
@@ -27391,7 +27916,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1",
@@ -27403,7 +27929,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1",
@@ -27415,7 +27942,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "celestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "3",
@@ -27427,7 +27955,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -27439,7 +27968,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -27451,7 +27981,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "forged"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -27463,7 +27994,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -27475,7 +28007,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "celestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "6",
@@ -27487,7 +28020,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "8",
@@ -27499,7 +28033,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "8",
@@ -27511,7 +28046,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "9",
@@ -27523,7 +28059,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "9",
@@ -27535,7 +28072,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "forged"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "9",
@@ -27547,7 +28085,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "10",
@@ -27559,7 +28098,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "celestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "10",
@@ -27571,7 +28111,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "forged"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "11",
@@ -27583,7 +28124,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "11",
@@ -27595,7 +28137,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "11",
@@ -27607,7 +28150,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "12",
@@ -27619,7 +28163,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "armed"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "12",
@@ -27631,7 +28176,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "13",
@@ -27643,7 +28189,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "14",
@@ -27655,7 +28202,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "15",
@@ -27667,7 +28215,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "grave"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "16",
@@ -27679,7 +28228,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "forged"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "16",
@@ -27691,7 +28241,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "16",
@@ -27703,7 +28254,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "celestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "19",
@@ -27715,7 +28267,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "20",
@@ -27727,7 +28280,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "21",
@@ -27739,7 +28293,8 @@
           "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
           "facets": [
             "celestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "30",
@@ -27748,7 +28303,8 @@
           "trait": "Magic Resistance",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects."
+          "template_2024": "The {creature} has Advantage on saving throws against spells and other magical effects.",
+          "archetypes": []
         }
       ],
       "DEATH-TRIGGER": [
@@ -27768,7 +28324,8 @@
           "damage_class": "attack",
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -27786,7 +28343,8 @@
           "damage_class": "attack",
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -27804,7 +28362,8 @@
           "damage_class": "attack",
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -27822,7 +28381,8 @@
           "damage_class": "attack",
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/2",
@@ -27840,7 +28400,8 @@
           "damage_class": "attack",
           "facets": [
             "elemental"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "13",
@@ -27879,7 +28440,8 @@
             "fiendish"
           ],
           "pool": "on_death",
-          "death_family": "continuity-place"
+          "death_family": "continuity-place",
+          "archetypes": []
         }
       ],
       "ALLY-CONDITIONAL": [
@@ -28005,7 +28567,8 @@
           "template_2024": "While Bloodied, the {creature} has Advantage on attack rolls.",
           "facets": [
             "bestial"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "1/4",
@@ -28142,7 +28705,8 @@
           "template_2024": "While Bloodied, the {creature} has Advantage on attack rolls and saving throws.",
           "facets": [
             "armed"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "3",
@@ -28232,7 +28796,8 @@
           "template_2024": "When the {creature} finishes a Long Rest, it can shape-shift into a Succubus, using that stat block instead of this one. Any equipment it's wearing or carrying isn't transformed.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "4",
@@ -28244,7 +28809,8 @@
           "template_2024": "When the {creature} finishes a Long Rest, it can shape-shift into an Incubus, using that stat block instead of this one.",
           "facets": [
             "fiendish"
-          ]
+          ],
+          "archetypes": []
         },
         {
           "cr": "5",
@@ -28257,7 +28823,8 @@
           "facets": [
             "forged"
           ],
-          "name_locked": true
+          "name_locked": true,
+          "archetypes": []
         },
         {
           "cr": "9",
@@ -28270,7 +28837,8 @@
           "facets": [
             "forged"
           ],
-          "name_locked": true
+          "name_locked": true,
+          "archetypes": []
         },
         {
           "cr": "10",
@@ -28283,7 +28851,8 @@
           "facets": [
             "forged"
           ],
-          "name_locked": true
+          "name_locked": true,
+          "archetypes": []
         },
         {
           "cr": "16",
@@ -28296,7 +28865,8 @@
           "facets": [
             "forged"
           ],
-          "name_locked": true
+          "name_locked": true,
+          "archetypes": []
         },
         {
           "cr": "21",
@@ -28310,7 +28880,9 @@
             "grave"
           ],
           "pool": "on_death",
-          "death_family": "continuity-trophy"
+          "death_family": "continuity-trophy",
+          "archetypes": [],
+          "excluded": "fingerprint (owner call 2026-08-04): the lich's phylactery is unmistakable under any rename \u2014 a dream-dragon 'Spirit Jar Revival' and a warden's 'Barrow Anchor' both read as the lich in a hat; non-lich revival belongs to the on_death pool's anchor/undoing templates, which define their object"
         }
       ],
       "AURA-SAVE": [
@@ -28506,6 +29078,9 @@
           "template_2024": "The {creature} has the Invisible condition.",
           "facets": [
             "elemental"
+          ],
+          "archetypes": [
+            "lurker"
           ]
         }
       ],
@@ -28521,7 +29096,8 @@
           "numbers": {},
           "template_2024": "If the {creature} fails a saving throw, it can choose to succeed instead.",
           "package": "legendary",
-          "_note": "Universal: 30 of 30 creatures with Legendary Actions carry it. The first extraction missed it because its printed name is \"Legendary Resistance (3/Day, or 4/Day in Lair)\". Injected by the builder whenever a block has legendary actions; excluded from random picks."
+          "_note": "Universal: 30 of 30 creatures with Legendary Actions carry it. The first extraction missed it because its printed name is \"Legendary Resistance (3/Day, or 4/Day in Lair)\". Injected by the builder whenever a block has legendary actions; excluded from random picks.",
+          "archetypes": []
         }
       ]
     }
@@ -28609,7 +29185,10 @@
           }
         ],
         "crosses_sections": true,
-        "archetypes": [],
+        "archetypes": [
+          "artillery",
+          "controller"
+        ],
         "facets": [
           "arcane",
           "draconic"
@@ -28633,7 +29212,9 @@
           }
         ],
         "crosses_sections": true,
-        "archetypes": [],
+        "archetypes": [
+          "controller"
+        ],
         "facets": [
           "arcane",
           "draconic"
@@ -28657,7 +29238,10 @@
           }
         ],
         "crosses_sections": true,
-        "archetypes": [],
+        "archetypes": [
+          "artillery",
+          "controller"
+        ],
         "facets": [
           "arcane",
           "draconic",
@@ -28682,7 +29266,10 @@
           }
         ],
         "crosses_sections": true,
-        "archetypes": [],
+        "archetypes": [
+          "artillery",
+          "support"
+        ],
         "facets": [
           "arcane",
           "draconic"
@@ -28706,7 +29293,10 @@
           }
         ],
         "crosses_sections": true,
-        "archetypes": [],
+        "archetypes": [
+          "artillery",
+          "controller"
+        ],
         "facets": [
           "arcane",
           "draconic",
@@ -28765,7 +29355,10 @@
           }
         ],
         "crosses_sections": true,
-        "archetypes": [],
+        "archetypes": [
+          "artillery",
+          "controller"
+        ],
         "facets": [
           "arcane",
           "draconic"
@@ -28789,7 +29382,10 @@
           }
         ],
         "crosses_sections": true,
-        "archetypes": [],
+        "archetypes": [
+          "artillery",
+          "support"
+        ],
         "facets": [
           "arcane",
           "draconic"
@@ -28819,7 +29415,10 @@
           }
         ],
         "crosses_sections": true,
-        "archetypes": [],
+        "archetypes": [
+          "artillery",
+          "controller"
+        ],
         "facets": [
           "arcane",
           "draconic"
@@ -28843,7 +29442,10 @@
           }
         ],
         "crosses_sections": true,
-        "archetypes": [],
+        "archetypes": [
+          "artillery",
+          "controller"
+        ],
         "facets": [
           "arcane",
           "draconic"
@@ -28867,7 +29469,9 @@
           }
         ],
         "crosses_sections": true,
-        "archetypes": [],
+        "archetypes": [
+          "controller"
+        ],
         "facets": [
           "arcane",
           "draconic"
@@ -28891,7 +29495,10 @@
           }
         ],
         "crosses_sections": true,
-        "archetypes": [],
+        "archetypes": [
+          "artillery",
+          "controller"
+        ],
         "facets": [
           "arcane",
           "draconic",
@@ -28916,7 +29523,10 @@
           }
         ],
         "crosses_sections": true,
-        "archetypes": [],
+        "archetypes": [
+          "artillery",
+          "support"
+        ],
         "facets": [
           "arcane",
           "draconic"
@@ -28940,7 +29550,10 @@
           }
         ],
         "crosses_sections": true,
-        "archetypes": [],
+        "archetypes": [
+          "artillery",
+          "controller"
+        ],
         "facets": [
           "arcane",
           "draconic",
@@ -28999,7 +29612,10 @@
           }
         ],
         "crosses_sections": true,
-        "archetypes": [],
+        "archetypes": [
+          "artillery",
+          "controller"
+        ],
         "facets": [
           "arcane",
           "draconic"
@@ -29023,7 +29639,10 @@
           }
         ],
         "crosses_sections": true,
-        "archetypes": [],
+        "archetypes": [
+          "artillery",
+          "support"
+        ],
         "facets": [
           "arcane",
           "draconic"
@@ -29053,7 +29672,10 @@
           }
         ],
         "crosses_sections": true,
-        "archetypes": [],
+        "archetypes": [
+          "artillery",
+          "controller"
+        ],
         "facets": [
           "arcane",
           "draconic"
@@ -29670,18 +30292,75 @@
       {
         "death_family": "succession",
         "trait": "Dying Legacy",
-        "template_2024": "When the {creature} dies, {legacy}.",
-        "facets": []
+        "template_2024": "When the {creature} dies, {legacy} passes to the creature that struck the killing blow: while cursed, that creature has Disadvantage on Initiative rolls as the dead's purpose hounds its dreams. Fulfilling the charge or a *Remove Curse* spell ends the curse.",
+        "facets": [
+          "grave",
+          "fey",
+          "fiendish",
+          "uncanny",
+          "terror",
+          "celestial"
+        ],
+        "design_note": "teeth added 2026-08-05 (owner call): the lore-only form read as a hook with no rules \u2014 the table looked at the DM, who had nothing (live: Master's Vow, the Qarun). Curse-with-Remove-Curse is the printed Mummy idiom; Initiative disadvantage is minor, always adjudicable, and thematically the haunting. | 2026-08-05: restructured so {legacy} is the CHARGE ONLY \u2014 the teeth clause added the same day duplicated the transfer and the exit when the model wrote a full sentence (live: Unfinished Vigil said everything twice on the Emberwraith) | facets added 2026-08-05: an EMPTY facets array reads as neutral in themeWeight, so the inheritance-curse was equally likely on a Lawful Neutral machine as on a haunted thing (live: Unfinished Vigil on the Riveted Bellows, two blocks after the Emberwraith). A damp, not a bar \u2014 the residue family carries a forged variant that fits constructs natively."
       },
       {
         "death_family": "residue",
         "trait": "Lingering Ground",
-        "template_2024": "When the {creature} dies, the ground in a 20-foot Emanation from its body becomes Difficult Terrain composed of {terrain}, and remains so until cleared or cleansed.",
+        "template_2024": "When the {creature} dies, the ground in a 20-foot Emanation from its body becomes Difficult Terrain composed of {terrain} for 10 days. A creature that ends its turn in that ground takes 5 (2d4) {damage_type} damage.",
         "facets": [
           "grave",
           "verdant",
           "elemental"
-        ]
+        ],
+        "design_note": "firmed 2026-08-05 (owner calls, both long-parked): \"until cleared or cleansed\" was unadjudicable \u2014 now a flat 10 days; and the residue carries a minor property (the \"slag lump does something\" note) \u2014 a fixed 5 (2d4) tick, deliberately NOT CR-scaled: it is the residue's hazard, not the monster's."
+      },
+      {
+        "death_family": "residue",
+        "trait": "Settling Remains",
+        "template_2024": "When the {creature} dies, its body collapses into {substance}, and each creature within 10 feet of it takes {damage} ({dice}) {damage_type} damage. The {substance} remains where it fell.",
+        "facets": [
+          "forged",
+          "grave",
+          "elemental",
+          "amorphous"
+        ],
+        "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost \u2014 same trait, swapped nouns)"
+      },
+      {
+        "death_family": "residue",
+        "trait": "Cold Wake",
+        "template_2024": "When the {creature} dies, the air in a 20-foot Emanation from its body turns still and wrong for 1 hour. A creature that ends its turn there has Disadvantage on the next attack roll it makes before the end of its next turn.",
+        "facets": [
+          "uncanny",
+          "grave",
+          "terror",
+          "aerial"
+        ],
+        "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost \u2014 same trait, swapped nouns)"
+      },
+      {
+        "death_family": "succession",
+        "trait": "Passed Vigil",
+        "template_2024": "When the {creature} dies, {legacy} passes to the nearest creature that watched it fall: while cursed, that creature dreams the dead thing's last hour every night and gains no benefit from a Long Rest more than 1 mile from where it died. Fulfilling the charge or a *Remove Curse* spell ends the curse.",
+        "facets": [
+          "grave",
+          "uncanny",
+          "celestial",
+          "fiendish"
+        ],
+        "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost \u2014 same trait, swapped nouns)"
+      },
+      {
+        "death_family": "continuity-anchor",
+        "trait": "Seeded Return",
+        "template_2024": "If the {creature} dies, it leaves {substance} where it fell, and a new body grows from it with all its Hit Points in 2d6 days. Destroying the {substance} \u2014 it has AC 12 and 20 Hit Points \u2014 makes the death permanent.",
+        "facets": [
+          "verdant",
+          "amorphous",
+          "devouring",
+          "venomous"
+        ],
+        "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost \u2014 same trait, swapped nouns)"
       }
     ]
   }

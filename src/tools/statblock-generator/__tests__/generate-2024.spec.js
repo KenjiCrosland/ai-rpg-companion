@@ -742,25 +742,22 @@ describe('generateMonster2024 orchestration', () => {
     expect(monster.sections.Actions[1].text).not.toContain('14 (2d8 + 5)');
   });
 
-  test('a coined entry name is fixed by a RENAMING fix call; references follow', async () => {
-    // "Thul-eg" class: the entry's NAME is the defect, so the fix call may
-    // rename (the one exception to keep-the-name), and text references
-    // update through the same rename machinery seed-leakage uses.
+  test('a coined entry name ships as-is (detector retired) — no fix call is spent on it', async () => {
+    // Owner call 2026-08-05: the hyphen-fragment heuristic couldn't tell
+    // "Tar-Slick Claw" from "Thul-eg" without a dictionary, and reverting
+    // good names to donor placeholders was the worse failure mode. Naming
+    // discipline is prompt-side; residual coinages are the audit's beat.
     const coined = JSON.parse(JSON.stringify(llmFixture));
     coined.sections.Traits.push({ name: 'Thul-eg', text: 'The stalker can move through a space as narrow as 1 inch wide without squeezing.' });
     coined.sections.Traits[0].text += ' While Thul-eg is active, it makes no sound.';
     const callLLM = jest.fn()
       .mockResolvedValueOnce(JSON.stringify(coined))
-      .mockResolvedValueOnce(JSON.stringify({ findings: [] })) // audit (gate opened)
-      .mockResolvedValueOnce(JSON.stringify([
-        { name: 'Amorphous', text: 'The stalker can move through a space as narrow as 1 inch wide without squeezing.' },
-      ]));
+      .mockResolvedValueOnce(JSON.stringify({ findings: [] })); // audit (gate opened)
     const monster = await generateMonster2024(options, callLLM);
-    expect(callLLM).toHaveBeenCalledTimes(3);
+    expect(callLLM).toHaveBeenCalledTimes(2); // no renaming fix call
     const names = monster.sections.Traits.map((e) => e.name);
-    expect(names).toContain('Amorphous');
-    expect(names).not.toContain('Thul-eg');
-    expect(monster.sections.Traits[0].text).toContain('While Amorphous is active');
+    expect(names).toContain('Thul-eg');
+    expect(monster.sections.Traits[0].text).toContain('While Thul-eg is active');
   });
 
   test('deterministically fixable rejects (caps, to-hit, second person) cost zero extra calls', async () => {

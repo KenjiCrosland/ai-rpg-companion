@@ -149,7 +149,9 @@ describe('applyArchetype', () => {
     ['controller', 10, { hp: 162, ac: 17, attack_bonus: 9, save_dc: 17 }],
     ['lurker', 4, { hp: 59, ac: 14, attack_bonus: 7, save_dc: 13 }],
     ['support', 3, { hp: 52, ac: 14, attack_bonus: 6, save_dc: 14 }],
-    ['swarm', 2, { hp: 55, ac: 13, attack_bonus: 5, save_dc: 12 }],
+    // hp_mult 0.85, measured 2026-08-04: 7/7 printed swarms sit at
+    // 0.79-1.12x band HP (median 0.80) — B/P/S is the durability.
+    ['swarm', 2, { hp: 37, ac: 13, attack_bonus: 5, save_dc: 12 }],
   ])('%s at CR %p produces the expected adjusted numbers', (name, cr, expected) => {
     const out = applyArchetype(chassisFor(cr), name);
     expect(out.hp).toBe(expected.hp);

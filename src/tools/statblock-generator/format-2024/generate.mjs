@@ -229,15 +229,15 @@ Archetypes:
 - support: buffs, heals, or enables allies
 - swarm: mass of small creatures acting as one
 
-The identity is 2-3 sentences a designer would build from: how it opens a fight, what it does every round after that, and its temperament under pressure (does it flee bloodied, fight to the death, toy with prey?). Concrete and specific to THIS creature — never generic filler.
+The identity is 2-3 sentences a designer would build from: how it opens a fight, what it does every round after that, and its temperament under pressure (does it flee bloodied, fight to the death, toy with prey?). Concrete and specific to THIS creature — never generic filler. The identity IS the archetype embodied: describe that role's combat loop in this creature's flesh, because every downstream choice spends words where the identity points.
 
 Also decide the creature TYPE from the concept's SUBSTANCE — what it physically IS: animated objects/machines are Construct; remains or spirits of the dead are Undead; natural animals are Beast; masses of vermin are a swarm (name the base type); giants are massive humanoid-shaped folk; fungus/vegetation are Plant. Never type by vibe.
 
-TYPE HONESTY: creature_type must be the type your identity actually EXPRESSES — its body, abilities, and origin, not its label. If the concept's substance isn't genuinely that type, either rewrite the identity to BE it or declare the type you actually wrote. A type the content never expresses (an "Elemental" whose body and habits could belong to any animal) is a failure.
+TYPE HONESTY: a SHAPE word is not a type — a humanoid-shaped thing that was remade, fused, grown, or woven from something else is a Monstrosity however upright it stands, and "it has arms and legs" never makes a Humanoid. creature_type must be the type your identity actually EXPRESSES — its body, abilities, and origin, not its label. If the concept's substance isn't genuinely that type, either rewrite the identity to BE it or declare the type you actually wrote. A type the content never expresses (an "Elemental" whose body and habits could belong to any animal) is a failure.
 
 Also write ONE sentence of world-lore ("lore"): where this creature comes from and what it wants — the story a GM would read aloud. Grounded in the concept's substance, never generic doom-prose.
 
-Also pick the creature's THEME THREADS ("themes"): ONE primary word the concept is most about, plus at most ONE supporting word that complements it — from this list only: bestial, armed, amorphous, grave, fiendish, celestial, fey, draconic, elemental, verdant, forged, mind, venomous, terror, beguiling, grasping, devouring, aquatic, subterranean, aerial, uncanny, arcane, voice, gaze, breath. The pair must COHERE — grave+aquatic is a drowned dead thing; subterranean+celestial is nonsense. And themes must AGREE with creature_type: celestial means a Celestial, grave means Undead, fiendish a Fiend, draconic a Dragon, verdant a Plant, forged a Construct — never declare a domain theme the type contradicts.
+Also pick the creature's THEME THREADS ("themes"): ONE primary word the concept is most about, plus at most ONE supporting word that complements it — from this list only: bestial, armed, amorphous, grave, fiendish, celestial, fey, draconic, elemental, verdant, forged, mind, venomous, terror, beguiling, grasping, devouring, aquatic, subterranean, aerial, uncanny, arcane, voice, gaze, breath. The pair must COHERE — grave+aquatic is a drowned dead thing; subterranean+celestial is nonsense. And themes must AGREE with creature_type: celestial means a Celestial, grave means Undead, fiendish a Fiend, draconic a Dragon, verdant a Plant, forged a Construct — never declare a domain theme the type contradicts. THEME HONESTY: the themes must be the ones your own prose EXPRESSES — its substance, its element, its habitat — not adjacent or generic ones. A creature you described as deep-ocean brine is aquatic, not "elemental"; a thing of packed grave-soil is grave, not "subterranean". Every name and every material in the finished block will be drawn from these two words, so a theme your prose doesn't actually contain leaves the creature speaking a vocabulary it doesn't own.
 
 
 Also decide the creature's MIND ("mind"): "sapient" (it reasons and comprehends speech — most named monsters), "bestial" (animal cunning, no speech), or "mindless" (vermin, oozes, automatons with no comprehension). Print discipline: only sapient creatures cast spells, sense lies, or issue commands — the corpus has zero mindless casters and zero mindless lie-sensers. A golem that understands its maker's commands counts as sapient.
@@ -247,7 +247,7 @@ Also give the engine its ASSEMBLY METADATA — structural signals the builder ho
 - "size": the body the concept describes (Tiny|Small|Medium|Large|Huge|Gargantuan).
 - "movement": the modes the body actually has, from ["swim","burrow","fly","climb"] (walking is implied; an empty array means walk only). The builder GATES abilities on these — a creature without fly never receives a flying ability.
 - "attack_mode": "melee"|"ranged"|"mixed" — how it delivers its attacks. If its identity is striking from afar, say "ranged"; the builder guarantees at least one ranged attack ships.
-- "signature_mechanic": the ONE mechanic the creature IS, from: thrown-weapon, breath, engulf, grapple, gaze, aura, teleport, summon, web — the engine guarantees it a seat. Omit if no single mechanic dominates the concept.
+- "signature_mechanic": the ONE mechanic the creature IS, from: thrown-weapon, breath, engulf, grapple, gaze, aura, teleport, summon, snare (it binds prey in a restraining substance — webs, tar, hardened stone, grave-wax) — the engine guarantees it a seat. Omit if no single mechanic dominates the concept.
 
 Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "identity": "<2-3 sentences>", "lore": "<one sentence>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>"}`;
 }
@@ -292,7 +292,7 @@ TYPE HONESTY: creature_type must be the type your synthesis actually EXPRESSES �
 
 Also write ONE sentence of world-lore ("lore"): where this creature comes from and what it wants — drawn from the rolled ORIGIN, the story a GM would read aloud. Grounded in the fused substance, never generic doom-prose.
 
-Also pick the creature's THEME THREADS ("themes"): ONE primary word the concept is most about, plus at most ONE supporting word that complements it — from this list only: bestial, armed, amorphous, grave, fiendish, celestial, fey, draconic, elemental, verdant, forged, mind, venomous, terror, beguiling, grasping, devouring, aquatic, subterranean, aerial, uncanny, arcane, voice, gaze, breath. The pair must COHERE — grave+aquatic is a drowned dead thing; subterranean+celestial is nonsense. And themes must AGREE with creature_type: celestial means a Celestial, grave means Undead, fiendish a Fiend, draconic a Dragon, verdant a Plant, forged a Construct — never declare a domain theme the type contradicts.
+Also pick the creature's THEME THREADS ("themes"): ONE primary word the concept is most about, plus at most ONE supporting word that complements it — from this list only: bestial, armed, amorphous, grave, fiendish, celestial, fey, draconic, elemental, verdant, forged, mind, venomous, terror, beguiling, grasping, devouring, aquatic, subterranean, aerial, uncanny, arcane, voice, gaze, breath. The pair must COHERE — grave+aquatic is a drowned dead thing; subterranean+celestial is nonsense. And themes must AGREE with creature_type: celestial means a Celestial, grave means Undead, fiendish a Fiend, draconic a Dragon, verdant a Plant, forged a Construct — never declare a domain theme the type contradicts. THEME HONESTY: the themes must be the ones your own prose EXPRESSES — its substance, its element, its habitat — not adjacent or generic ones. A creature you described as deep-ocean brine is aquatic, not "elemental"; a thing of packed grave-soil is grave, not "subterranean". Every name and every material in the finished block will be drawn from these two words, so a theme your prose doesn't actually contain leaves the creature speaking a vocabulary it doesn't own.
 
 
 Also decide the creature's MIND ("mind"): "sapient" (it reasons and comprehends speech — most named monsters), "bestial" (animal cunning, no speech), or "mindless" (vermin, oozes, automatons with no comprehension). Print discipline: only sapient creatures cast spells, sense lies, or issue commands — the corpus has zero mindless casters and zero mindless lie-sensers. A golem that understands its maker's commands counts as sapient.
@@ -302,7 +302,7 @@ Also give the engine its ASSEMBLY METADATA — structural signals the builder ho
 - "size": the body the concept describes (Tiny|Small|Medium|Large|Huge|Gargantuan).
 - "movement": the modes the body actually has, from ["swim","burrow","fly","climb"] (walking is implied; an empty array means walk only). The builder GATES abilities on these — a creature without fly never receives a flying ability.
 - "attack_mode": "melee"|"ranged"|"mixed" — how it delivers its attacks. If its identity is striking from afar, say "ranged"; the builder guarantees at least one ranged attack ships.
-- "signature_mechanic": the ONE mechanic the creature IS, from: thrown-weapon, breath, engulf, grapple, gaze, aura, teleport, summon, web — the engine guarantees it a seat. Omit if no single mechanic dominates the concept.
+- "signature_mechanic": the ONE mechanic the creature IS, from: thrown-weapon, breath, engulf, grapple, gaze, aura, teleport, summon, snare (it binds prey in a restraining substance — webs, tar, hardened stone, grave-wax) — the engine guarantees it a seat. Omit if no single mechanic dominates the concept.
 
 Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "synthesis": "<your 2-3 sentences>", "lore": "<one sentence>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>"}`;
 }
@@ -791,7 +791,10 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   // the em-dash via toLegacyModel in 2014).
   // "does not/cannot speak" normalizes to the corpus form (31/31 official
   // mute-languages lines write "can't speak"; recurring live drift).
-  if (llmJson.languages && !/^none$/i.test(llmJson.languages.trim())) {
+  // em-dash and bare-dash fills are the same drift as "none" (print's
+  // empty form is "None", 129/129 languageless blocks — a model "—"
+  // survived onto live cards while true-empty rendered "None").
+  if (llmJson.languages && !/^(?:none|—|-)$/i.test(llmJson.languages.trim())) {
     monster.languages = llmJson.languages
       .replace(/^([A-Z][\w, ]+?)\s*\(can't speak\)$/i, "understands $1 but can't speak")
       .replace(/\b(?:does not|doesn't|cannot) speak\b/gi, "can't speak")
@@ -1600,6 +1603,15 @@ export function applyCorrections(monster, findings, { chassis }) {
   // ("makes two Chain Blade Attack attacks" → "makes two Chain Blade
   // attacks" everywhere).
   for (const f of correctable.filter((x) => x.rule === 'entry-name-attack-suffix' && x.loc && x.expected)) {
+    if ((out.sections?.[f.loc.section] ?? []).some((e) => e.name === f.loc.entry)) {
+      out = applyRenameMapping(out, { [f.loc.entry]: f.expected });
+    }
+  }
+
+  // Type-named entries that deal a different type: rename to the dealt
+  // type WITH reference propagation ("Furnace Lightning" dealing Thunder
+  // → "Furnace Thunder" everywhere).
+  for (const f of correctable.filter((x) => x.rule === 'entry-name-type-mismatch' && x.loc && x.expected)) {
     if ((out.sections?.[f.loc.section] ?? []).some((e) => e.name === f.loc.entry)) {
       out = applyRenameMapping(out, { [f.loc.entry]: f.expected });
     }
@@ -2580,6 +2592,14 @@ export function applyRenameMapping(monster, mapping) {
       const n = newWords[newWords.length - 1];
       if (o.length >= 4 && o.toLowerCase() !== n.toLowerCase()) wordPairs = [[o, n]];
     }
+    // A suffix rename ("Shre" -> "Shre Swarm") keeps the old name inside
+    // the new one: the full-name replace already converts every reference
+    // correctly ("the shre" -> "the shre swarm"), and a word-pair pass
+    // would then re-replace the old head INSIDE the just-written new name
+    // (live: "the swarm swarm" a dozen times across the Shre Swarm, with
+    // one "shre swarm" survivor where the article was "this" — the word
+    // pair only matched "the").
+    if (new RegExp(`\\b${escapeRe(oldName)}\\b`, 'i').test(newName)) wordPairs = [];
     // Never word-pair-map common OBJECT nouns — "the barrier"/"the shield"
     // in ability text usually names something the ability CREATES, not the
     // creature (live corruption: a "…Barrier"→"Shardwisp" rename turned an
@@ -2618,7 +2638,7 @@ export function applyRenameMapping(monster, mapping) {
 // ---------------------------------------------------------------------------
 
 export async function generateMonster2024(options, callLLM) {
-  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, themes = null, mind = null, conceptSize = null, movement = null, attackMode = null, signatureMechanic = null, onProgress = null } = options;
+  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, themes = null, mind = null, conceptSize = null, movement = null, attackMode = null, signatureMechanic = null, onProgress = null, takenNames = [] } = options;
 
   // The skeleton path is how 2024 monsters are built now; set
   // localStorage['statblock-skeleton'] = '0' to fall back to the chassis.
@@ -2636,7 +2656,7 @@ export async function generateMonster2024(options, callLLM) {
     const { generateFromSkeleton } = await import('../skeleton/generate.mjs');
     return generateFromSkeleton({
       concept, description, cr, archetypeName, resolvedType, lore, themes, mind, degraded, onProgress, caster,
-      conceptSize, movement, attackMode, signatureMechanic,
+      conceptSize, movement, attackMode, signatureMechanic, takenNames, typeSource,
     }, callLLM);
   }
 

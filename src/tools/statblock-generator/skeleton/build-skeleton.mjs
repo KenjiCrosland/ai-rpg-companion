@@ -30,6 +30,7 @@
  */
 import library from '@/data/ability-library.json';
 import crTable from '@/data/cr-table.json';
+import archetypeSpec from '@/data/archetype-chassis-spec.json';
 import { hpFormulaFor, attackDamageDiceFor, saveDamageDiceFor, riderDamageDiceFor } from '../format-2024/dice.mjs';
 
 const SIZES = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'];
@@ -49,7 +50,7 @@ const SIZES = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'];
  * LINE mechanic with three names. Shape survives as mechanics — a brass
  * dragon's fire is a line, a red dragon's is a cone, and those stay distinct.
  */
-export const FLAVOR_SLOTS = ['creature', 'substance', 'delivery', 'terrain', 'spells', 'spells_daily', 'kindred_type', 'home_plane', 'appendage', 'appendage_plural', 'signature_spell', 'signature_spell_2', 'anchor', 'undoing', 'legacy',
+export const FLAVOR_SLOTS = ['creature', 'substance', 'delivery', 'terrain', 'weakness_type', 'spells', 'spells_daily', 'kindred_type', 'home_plane', 'appendage', 'appendage_plural', 'signature_spell', 'signature_spell_2', 'anchor', 'undoing', 'legacy',
   'damage_type', 'rider_damage_type', 'rider2_damage_type', 'alt_damage_type', 'alt2_damage_type'];
 // 19 library rows sit in a creature's Traits section (Death Burst, Fire Aura).
 // The composition profiler counted those as TRAITS, so the ability pool must
@@ -134,6 +135,49 @@ function pickWeighted(weights, rng) {
   return Number(entries[entries.length - 1][0]);
 }
 
+/**
+ * The archetype's numeric differentials, applied over the CR medians. The
+ * cr-table row is the BALANCED creature at this CR; the archetype is a
+ * deliberate trade away from it (defender: tougher but hits softer; glass
+ * cannon: the reverse). These are the applyArchetype deltas the skeleton
+ * path dropped when it replaced the chassis — two CR 20s at different
+ * archetypes shipped identical AC/HP/attack (live: the Grave Warden and
+ * the Chasm Grief, twins at AC 20 / HP ~338 / +14). Owner-authored spec,
+ * not corpus-measured: print doesn't label archetypes, and the trades are
+ * DMG-style design intent. Ceilings match capToAbilityCeiling — an attack
+ * bonus needs a +10 mod behind it at most.
+ */
+export function applyArchetypeNumbers(nums, archetype) {
+  const p = archetypeSpec.archetypes?.[archetype];
+  if (!p) return nums;
+  nums.hp = Math.max(1, Math.round(nums.hp * (p.hp_mult ?? 1)));
+  nums.ac += p.ac_mod ?? 0;
+  nums.attack_bonus = Math.min(nums.attack_bonus + (p.attack_mod ?? 0), nums.pb + 10);
+  nums.save_dc = Math.min(nums.save_dc + (p.dc_mod ?? 0), nums.pb + 18);
+  // Kept separately so the non-caster CON-keyed DC recompute can preserve it.
+  nums.dc_mod = p.dc_mod ?? 0;
+  nums.per_attack_damage = Math.max(1, Math.round(nums.per_attack_damage * (p.damage_mult ?? 1)));
+  if (nums.dpr_target != null) nums.dpr_target = Math.round(nums.dpr_target * (p.damage_mult ?? 1));
+  // The lurker's bargain: weak sustained damage (damage_mult 0.6) bought a
+  // double-size once-per-fight nova. Applies to the GATED area budget only.
+  if (p.nova_mult != null) nums.nova_mult = p.nova_mult;
+  // Speed is the mobile roles' actual identity and nothing carried it —
+  // a skirmisher's numbers were baseline plus a rounding error.
+  if (p.speed_mod) nums.speed_mod = p.speed_mod;
+  // Swarms attack ONCE: 7 of 7 printed swarms have a single attack and no
+  // Multiattack line — the mass is the multiattack. Only the ATTACK class
+  // absorbs the round's budget (damageBudgetFor reads attack_fold);
+  // per_attack_damage stays TRUE because every per-attack-keyed ratio
+  // reads it — folding it tripled recurring auras (45 vs the Balor's 13),
+  // legendary uses (49 vs print's 7-17), and heals (live: the Shre Swarm).
+  if (archetype === 'swarm') {
+    nums.attacks_per_round = nums.multiattack;
+    nums.attack_fold = true;
+    nums.multiattack = 1;
+  }
+  return nums;
+}
+
 /** The frozen numbers for a CR, plus the multiattack count for its band. */
 export function numbersFor(cr) {
   const row = crTable.by_cr[crKey(cr)];
@@ -176,6 +220,12 @@ export function pickSlotCounts(cr, rng) {
       counts.legendary = pickWeighted(nonzero, rng);
     }
   }
+  // A legendary MENU needs choices: measured at CR 15+, print offers three
+  // options on 18 blocks and two on 4 — never one (0/22). A single-entry
+  // menu leaves two of three uses unspendable and the between-turns
+  // economy with no decisions (live: the Graspwarden's lone Hooked Leap;
+  // the Alabaster's all-locked pair was this same class one door over).
+  if (crNumber(cr) >= 15 && counts.legendary === 1) counts.legendary = 2;
   // Floor: every creature gets at least one ATTACK entry, not merely some way
   // to deal damage. 85% of the corpus has one, and sampling the slots
   // independently otherwise produces things like a CR 3 with two breath
@@ -325,7 +375,7 @@ const needsMind = (a) => /spellcasting ability|knows if it hears a lie|intention
  */
 const MODE_REFS = {
   fly: /\bflies\b|Fly Speed/,
-  swim: /Swim Speed|while (?:it is )?underwater/,
+  swim: /Swim Speed|while (?:it is )?underwater|breathe (?:air and water|only underwater)/,
   burrow: /\bburrows\b|Burrow Speed/,
   climb: /Climb Speed/,
 };
@@ -340,6 +390,85 @@ const SIGNATURE_FAMILIES = {
   summon: (a) => /animates|conjures/.test(a.template_2024),
   web: (a) => /Restrained condition until the \{substance\} is destroyed/.test(a.template_2024),
 };
+// One ungated recurring emanation per block — the family cap's aura entry,
+// the trait pool's cap, and the aura-signature guarantee all consult this
+// one predicate. Gated actions (the Vrock's Spores + Stunning Screech, the
+// only printed pair) and on-death bursts (the Balor's Death Throes beside
+// its Fire Aura) are exempt, keeping the rule at 0/329 printed flags.
+// Two printed phrasings: "Emanation originating from the {creature}"
+// (damage auras, presences) AND "emanates an aura in a N-foot Emanation"
+// (the Pit Fiend's Fear Aura genus). The predicate missed the second for
+// its whole life — the fear aura was invisible to the family cap AND the
+// stealth exclusion (live: the relapse on the Scrik after two clean
+// blocks; the Shre's dual aura before that).
+export const RECURRING_EMANATION = (a) => /Emanation originating from the \{creature\}|emanates an aura/.test(a.template_2024 ?? '')
+  && !a.gate && a.pool !== 'on_death';
+
+const FAMILIES = [
+  (a) => /teleports? (?:up to|itself)/.test(a.template_2024 ?? ''),
+  // one RECURRING EMANATION per block, ANY flavor (damage aura,
+  // condition aura, presence): 0 of 329 printed blocks carry two
+  // ungated ones — the only printed pair is the Vrock's, and BOTH are
+  // gated actions (Recharge 6 / 1/Day), which stay legal. The old
+  // regex keyed on " takes"/"while it doesn't have" and missed the
+  // presence shape (live: the Shre Swarm ran a Frightened aura, a
+  // damage aura, and a Charmed emanation legendary at once).
+  RECURRING_EMANATION,
+  // one TIERED SPELL LIST per block: 0 of 329 printed blocks carry
+  // two (the Night Hag's second entry is an echo, not a list). Two
+  // lists shipped live (Spellcasting + Hellfire Spellcasting — the
+  // Groan) because the name dedupe saw two different names.
+  (a) => /\*\*(?:At Will|\d+\/Day(?: Each)?):\*\*/.test(a.template_2024 ?? ''),
+  // one MOBILITY legendary per block, whatever the verb: 0 of 329 printed
+  // blocks pair a move-and-attack legendary with a teleport legendary
+  // (measured 2026-08-05), and 0 carry two move-and-attacks. A pounce, a
+  // teleport-strike and a blink-splash are one function in three costumes
+  // (live: Pounce beside Cinder Step on a creature that also burrows,
+  // climbs and jumps).
+  (a) => (a.slot_type === 'legendary' || a.section === 'Legendary Actions')
+    && /(?:moves up to|teleports? up to|flies up to)/.test(a.template_2024 ?? ''),
+  // one SPEED-DEBUFF zap per block: 0 of 329 printed blocks carry two
+  // (live: Brine-Spray Rupture beside Rotting Tide Exhalation — same
+  // damage, same function, one strictly dominated). Scoped to the
+  // until-end-of-turn form so the Slowing Breath's repeat-save form
+  // stays free.
+  (a) => /Speed is (?:0|halved) until the end of (?:the target's|its) next turn/.test(a.template_2024 ?? ''),
+];
+// A row can sit in SEVERAL families (the Solar's Radiant Teleport is both a
+// teleport and an emanation) — findIndex's first-match let it slip past the
+// emanation guard as "a teleport" while Frightful Presence stood beside it
+// (live-sweep, CR 20 seed 8). Every comparison uses the full set.
+const familiesOf = (row) => {
+  const out = [];
+  FAMILIES.forEach((f, i) => { if (f(row)) out.push(i); });
+  return out;
+};
+
+// Rows a movement mode makes REDUNDANT — the inverse of the missing-mode
+// gate below: 0 printed fliers carry a jump entry; wings outclass legs
+// (live: a bonus-action 30-foot jump on a Fly 60 (hover) swarm).
+// One Recharge per block (0/329 printed carry two) — consulted by the pick
+// loop, the menu safety rule, AND swapIn's victim search: the signature
+// seat once added a Recharge Web beside a Recharge breath (live: the
+// Uulghoth, Choir Silence + Silt Grasp idling on the same dice).
+const gatedLike = (a) => /Recharge/i.test(a.gate ?? '')
+  || (!a.gate && a.slot_type === 'area'
+    && /Paralyzed|Stunned|Petrified|Unconscious|\{condition_hard\}/.test(a.template_2024));
+
+// Attack SHAPE: the fields that determine an attack's rendered numbers and
+// menu role. Two attacks sharing a shape render identical lines off one
+// budget; if their modes then nest, one is strictly dominated dead text
+// (live twice: Scale Shredder beside Brine Spur, the kit's Rend beside a
+// seated Scale Shard).
+const attackShapeKey = (a) => [
+  /\{rider_damage\}/.test(a.template_2024 ?? ''), /\{alt_damage\}/.test(a.template_2024 ?? ''),
+  /Saving Throw/.test(a.template_2024 ?? ''), ((a.template_2024 ?? '').match(/reach ([^ ]+) ft/) ?? [])[1],
+].join('|');
+const isAttackRow = (a) => a.slot_type === 'plain_attack' || a.slot_type === 'rider_attack';
+
+const JUMP_ROW = (a) => /jumps? up to/.test(a.template_2024 ?? '');
+const redundantWithMode = (a, movement) => Boolean(movement?.includes('fly')) && JUMP_ROW(a);
+
 const referencesMissingMode = (a, movement) => {
   if (!movement) return false; // no metadata: legacy behavior, nothing gated
   return Object.entries(MODE_REFS).some(([mode, re]) => !movement.includes(mode)
@@ -391,14 +520,18 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
       // counts as gated-like if it carries a Recharge gate OR is an ungated
       // hard-condition area, because the belt-and-braces injection below
       // will gate that one at assembly.
-      const gatedLike = (a) => /Recharge/i.test(a.gate ?? '')
-        || (!a.gate && a.slot_type === 'area'
-          && /Paralyzed|Stunned|Petrified|Unconscious|\{condition_hard\}/.test(a.template_2024));
       const haveGated = chosen.some(gatedLike);
       const pool = ABILITIES.filter((a) => a.slot_type === slot
         && !(gatedLike(a) && haveGated)
         && (mind === 'sapient' || !needsMind(a))
         && !referencesMissingMode(a, meta.movement)
+        && !redundantWithMode(a, meta.movement)
+        // a 30-foot jump is dead text beside a 60-foot teleport, the same
+        // way it is beside wings (live: Slagbound Leap on a block with
+        // Cinder Step, burrow, and climb)
+        && !(JUMP_ROW(a) && chosen.some((c) => /teleports? up to/.test(c.template_2024 ?? '')))
+        // stealth chassis: see the trait pool's aura exclusion
+        && !(RECURRING_EMANATION(a) && (archetype === 'skirmisher' || archetype === 'lurker'))
         // A ceiling-tagged row's counterplay stops working above its tier
         // (the Ghost's Possession is body-HP-gated); the one deliberate
         // exception to whole-library-eligible, documented on the row.
@@ -439,30 +572,10 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
       // teleport — three teleport rows sit in a small legendary/bonus pool,
       // all facet-boosted on grave/celestial themes, so they recurred far
       // above their printed rate.
-      const FAMILIES = [
-        /teleports? (?:up to|itself)/,
-        // one AURA per block: a damage aura and a control aura passed the
-        // shape guard together (the Udraghoth ran both at once) because
-        // only one carried damage
-        /Emanation originating from the \{creature\}(?: takes| while it doesn't have)/,
-        // one TIERED SPELL LIST per block: 0 of 329 printed blocks carry
-        // two (the Night Hag's second entry is an echo, not a list). Two
-        // lists shipped live (Spellcasting + Hellfire Spellcasting — the
-        // Groan) because the name dedupe saw two different names.
-        /\*\*(?:At Will|\d+\/Day(?: Each)?):\*\*/,
-        // one SPEED-DEBUFF zap per block: 0 of 329 printed blocks carry two
-        // (live: Brine-Spray Rupture beside Rotting Tide Exhalation — same
-        // damage, same function, one strictly dominated). Scoped to the
-        // until-end-of-turn form so the Slowing Breath's repeat-save shape
-        // stays free.
-        /Speed is (?:0|halved) until the end of (?:the target's|its) next turn/,
-      ];
-      const familyOf = (t) => FAMILIES.findIndex((re) => re.test(t));
       // Same predicate lint's legendary-no-damage applies post-fill, phrased
       // for templates (placeholders, not literal dice).
       const paysLike = (a) => /\{damage\}|\b(?:makes|uses)\b/.test(a.template_2024);
-      if (familyOf(pick.template_2024) !== -1
-          && chosen.some((c) => familyOf(c.template_2024) === familyOf(pick.template_2024))) {
+      if (familiesOf(pick).some((f) => chosen.some((c) => familiesOf(c).includes(f)))) {
         continue;
       }
       // Structural dedupe ACROSS slot types: attack slots may repeat their
@@ -470,7 +583,12 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
       // save/utility/legendary entry that is just another single-target
       // damage nuke duplicates the attack the block already has.
       const shape = shapeKeyOf(pick.template_2024);
-      if (shape && shape.endsWith('|damage')
+      // An EXECUTE row is not "just another damage nuke" — the death
+      // clause is the mechanic and the shape key can't see it (the
+      // generified Death Sentence was picked and then forfeited here on
+      // nearly every draw).
+      const isExecute = /, \{execute_effect\}|, it dies/.test(pick.template_2024);
+      if (shape && shape.endsWith('|damage') && !isExecute
           && slot !== 'plain_attack' && slot !== 'rider_attack'
           // Legendary actions ECHO turn actions in print (Kraken: Lightning
           // Strike beside legendary Lightning Storm), and this guard was
@@ -502,8 +620,15 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
           // earlier-menu/later-pick ordering (live-sweep: a Scorching Sands
           // option beside a chosen Freezing Burst, two speed debuffs one
           // swap away).
-          && (familyOf(a.template_2024) === -1
-            || familyOf(pick.template_2024) === familyOf(a.template_2024))
+          && familiesOf(a).every((f) => familiesOf(pick).includes(f))
+          // The SIGNATURE's menu stays in-family: the concept promised the
+          // mechanic, and a menu that offers the prerequisite beside the
+          // payoff lets the flavor call swap the payoff away (live: the
+          // engulf signature's Swallow seat offered Quick Grapple and the
+          // model took it — two grapple imposers, no spend, promise lost).
+          && (!meta.signatureMechanic || !SIGNATURE_FAMILIES[meta.signatureMechanic]
+            || !SIGNATURE_FAMILIES[meta.signatureMechanic](pick)
+            || SIGNATURE_FAMILIES[meta.signatureMechanic](a))
           // Combination safety for the legendary damage invariant: a paying
           // legendary (damage dice or makes/uses delegation) only offers
           // paying alternatives, so any set of menu choices keeps at least
@@ -550,6 +675,11 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
         && !LOCK.test(a.template_2024)
         && !usedTemplates.has(a.template_2024) && !usedNames.has(a.ability)
         && (a.requires ?? []).every((r) => met.has(r))
+        // The family caps apply to this swap too — it once pulled an
+        // unlocked Radiant Teleport in beside Frightful Presence, a second
+        // emanation AND a second teleport in one move (live-sweep, CR 20
+        // seed 8 swarm).
+        && !familiesOf(a).some((f) => chosen.some((c) => c !== replaceable && familiesOf(c).includes(f)))
         && (a.cr_ceiling == null || crNumber(cr) <= a.cr_ceiling));
       if (alt.length) {
         const weights = {};
@@ -567,35 +697,73 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
   const swapIn = (predicate, slotTypes, prefer = null) => {
     if (chosen.some((c) => predicate(c))) return;
     const met = satisfiedBy(chosen, traits);
-    const pool = ABILITIES.filter((a) => predicate(a)
+    let pool = ABILITIES.filter((a) => predicate(a)
       && slotTypes.includes(a.slot_type)
       && !usedTemplates.has(a.template_2024) && !usedNames.has(a.ability)
       && (a.requires ?? []).every((r) => met.has(r))
       && !referencesMissingMode(a, meta.movement)
+      && !redundantWithMode(a, meta.movement)
       && (mind === 'sapient' || !needsMind(a))
       && (a.cr_ceiling == null || crNumber(cr) <= a.cr_ceiling));
     if (!pool.length) return;
+    // Shape-aware seating (owner call, 2026-08-05): a seated ATTACK must
+    // not shape-match an attack the block already has — kit and guarantee
+    // rows are exempt from the dominated-twin dedupe, so the seat is where
+    // the twin gets minted (live: the attack-mode guarantee put Scale
+    // Shard beside the Silver kit's Rend). Soft: if every candidate
+    // collides, the promise outranks the diversity.
+    {
+      const chosenShapes = new Set(chosen.filter(isAttackRow).map(attackShapeKey));
+      const diverse = pool.filter((a) => !isAttackRow(a) || !chosenShapes.has(attackShapeKey(a)));
+      if (diverse.length) pool = diverse;
+    }
     const weights = {};
     pool.forEach((a, idx) => { weights[idx] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes) * (prefer && prefer(a) ? 8 : 1); });
     const pick = pool[pickWeighted(weights, rng)];
     // Replace the LAST same-slot pick; append if none. Never a spine row,
-    // never an earlier guarantee, and never a row whose imposes satisfy the
-    // incoming pick's requires — the engulf chain seated its grappler and
-    // the swallow's victim-search then replaced that very grappler.
+    // never an earlier guarantee, and never a row the pick's own requires
+    // depend on — checked with full satisfiedBy semantics, not just
+    // imposes: the engulf chain's swallow once evicted its just-seated
+    // grappler (imposes), and the defender seat's Protective Magic evicted
+    // the Spellcasting entry it casts through (satisfiedBy), destroying its
+    // own prerequisite so the dependency fixpoint dropped BOTH.
     const spineSet = new Set(spineRows);
-    const victimIdx = chosen.map((c, i) => (c.slot_type === pick.slot_type
-      && !spineSet.has(c) && !guaranteed.has(c)
-      && !(pick.requires ?? []).some((r) => (c.imposes ?? []).includes(r))
-      ? i : -1))
+    // A Recharge-gated pick must evict the block's EXISTING gated row —
+    // seating beside it assembles the two-Recharge block print never
+    // fields (0/329; live: the web signature beside a breath). EXCEPT
+    // when that row is the block's only gated AREA and the pick isn't an
+    // area: evicting it trades the 91-damage nova for the incoming
+    // single-target effect (live: the Scrik shipped with no spike
+    // anywhere). The pick demotes to 1/Day instead — the same demotion
+    // the assembly belts use — and both the one-Recharge law and the
+    // nova survive.
+    let demoteTo1Day = false;
+    let gatedVictim = gatedLike(pick)
+      ? chosen.map((c, i) => (gatedLike(c) && !spineSet.has(c) && !guaranteed.has(c) ? i : -1))
+        .filter((i) => i !== -1).pop()
+      : undefined;
+    if (gatedVictim != null && chosen[gatedVictim].slot_type === 'area' && pick.slot_type !== 'area') {
+      demoteTo1Day = true;
+      gatedVictim = undefined;
+    }
+    const victimIdx = gatedVictim ?? chosen.map((c, i) => {
+      if (c.slot_type !== pick.slot_type || spineSet.has(c) || guaranteed.has(c)) return -1;
+      const without = satisfiedBy(chosen.filter((x) => x !== c), traits);
+      return (pick.requires ?? []).every((r) => without.has(r)) ? i : -1;
+    })
       .filter((i) => i !== -1).pop();
     usedTemplates.add(pick.template_2024);
     usedNames.add(pick.ability);
-    const entry = { ...pick, options: [pick] };
+    const entry = { ...pick, options: [pick], ...(demoteTo1Day ? { gate: '1/Day' } : {}) };
     guaranteed.add(entry);
     if (victimIdx != null) chosen[victimIdx] = entry;
     else chosen.push(entry);
   };
-  if (meta.attackMode === 'ranged' || meta.attackMode === 'mixed') {
+  // The swarm kit owns the attack section (7/7 printed swarms: one melee
+  // attack) — the attack-mode guarantee seating a ranged row beside it
+  // shipped a returning SWORD on a swarm of Tiny crystal shards (live:
+  // Wing Blade Return, "returns to the swarm's hand").
+  if ((meta.attackMode === 'ranged' || meta.attackMode === 'mixed') && archetype !== 'swarm') {
     swapIn((a) => /Ranged Attack Roll/.test(a.template_2024 ?? '')
       && (a.slot_type === 'plain_attack' || a.slot_type === 'rider_attack'),
     ['plain_attack', 'rider_attack']);
@@ -614,6 +782,115 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
     // swallow stays reachable — every row remains print-verbatim).
     swapIn(SIGNATURE_FAMILIES[meta.signatureMechanic], SLOT_TYPES.concat('legendary'),
       meta.signatureMechanic === 'engulf' ? (a) => a.section === 'Bonus Actions' : null);
+  }
+  // ARCHETYPE SEATS (owner call, 2026-08-04): the role's signature slot,
+  // guaranteed the way the metadata promises are — weight first, verify,
+  // swap. The numbers already carry the archetype's trade
+  // (applyArchetypeNumbers); this makes the KIT show it (live: a "defender"
+  // whose picks were Fire Aura, Spellcasting, and a breath — nothing held
+  // ground). Defender seats one hold/pull/punish-movement row (the old
+  // spec's required slot, reborn as a guarantee); support seats one row
+  // that spends the creature's action making someone else stronger. Entry
+  // side only, no legendary: the locked speed-debuff zaps would re-create
+  // the all-locked set the unlocked-invariant just repaired, so those
+  // shapes satisfy the predicate but are never swapped in. No other
+  // archetype gets a seat: brute/artillery/controller/lurker are the
+  // weight system's best-covered roles (67-386 tagged rows each), and a
+  // glass cannon IS its numbers — its one-row bargain-trait pool would
+  // stamp Blood Frenzy on every block, the 60%-frequency generator tell.
+  const ARCHETYPE_SEATS = {
+    defender: (a) => /Grappled condition|Restrained condition|pulls? (?:the target|one creature|each creature)[^.]*toward|used only for Opportunity Attacks|Speed is (?:0|halved) until the end of/.test(a.template_2024 ?? '')
+      || a.section === 'Reactions',
+    support: (a) => /casts \*(?:Bless|Healing Word|Cure Wounds|Lesser Restoration|Sanctuary)|gains \d+ \([^)]*\) Temporary Hit Points|teleports itself or one creature within 10 feet of itself that is willing|and up to three willing creatures/.test(a.template_2024 ?? ''),
+    // Skirmisher seats the STRIKE half of the hit-and-run loop (live: the
+    // Skar had the escape teleport and nothing that pays the return trip);
+    // lurker seats the unseen half. Both pools are print-verbatim
+    // move-and-strike, re-hide, and vanish rows.
+    // slot_type gate: a legendary move-attack satisfied the seat while the
+    // TURN economy stayed empty (live: the Keening Scuttler's loop had an
+    // exit and no entrance, again) — the strike half must be action-tier.
+    // A CHARGE is not a withdrawal: Trampling Charge matched the old
+    // "moves without provoking" clause and satisfied the seat, so a
+    // skirmisher shipped a brute's run-them-over bonus action and never
+    // reached for Cunning Action (live: Quenching Rush on the Riveted
+    // Bellows). Rows that move THROUGH creatures are excluded by shape.
+    skirmisher: (a) => a.slot_type !== 'legendary'
+      && !/through the spaces of/.test(a.template_2024 ?? '')
+      && /Hide action|Disengage|Melee or Ranged Attack Roll|moves up to (?:half )?its Speed[^.]*(?:without provoking|makes one)/.test(a.template_2024 ?? ''),
+    lurker: (a) => a.slot_type !== 'legendary'
+      && /Hide action|Invisible condition|can't be seen/.test(a.template_2024 ?? ''),
+  };
+  if (ARCHETYPE_SEATS[archetype]) {
+    swapIn(ARCHETYPE_SEATS[archetype], SLOT_TYPES,
+      (a) => (a.archetypes ?? []).includes(archetype));
+  }
+  // A melee-only skirmisher has the strike half and no way to leave: the
+  // concept's attack_mode is honored (it said "lunges"), but the loop
+  // needs BOTH halves and a hit-and-run with no run is a brute (live: the
+  // Riveted Bellows, three reach-5 attacks and no disengage). The exit
+  // seat is additional, never a replacement for the strike.
+  if (archetype === 'skirmisher' && meta.attackMode === 'melee') {
+    const EXIT = /Hide action|Disengage|doesn't provoke an Opportunity Attack|teleports? up to/;
+    if (!chosen.some((c) => EXIT.test(c.template_2024 ?? ''))
+      && !traits.some((t) => EXIT.test(t.template_2024 ?? ''))) {
+      swapIn((a) => EXIT.test(a.template_2024 ?? '') && !/through the spaces of/.test(a.template_2024 ?? ''),
+        ['utility', 'save_effect']);
+    }
+  }
+  // No attack is strictly DOMINATED (owner call; 0/329 printed blocks
+  // carry a twin): two attacks on one budget render identical numbers, so
+  // if one is melee-or-ranged and the other single-mode with the same
+  // damage shape and reach, the second exists to never be picked (live:
+  // Scale Shredder beside Brine Spur). The dominated pick redraws into a
+  // different damage shape.
+  {
+    const modeOf = (t) => (/Melee or Ranged Attack Roll/.test(t) ? 'both'
+      : /Ranged Attack Roll/.test(t) ? 'ranged' : /Melee Attack Roll/.test(t) ? 'melee' : null);
+    const shapeKey = attackShapeKey;
+    const attacks = () => chosen.filter(isAttackRow);
+    for (const b of attacks()) {
+      if (guaranteed.has(b) || spineRows.includes(b)) continue;
+      const dominator = attacks().find((a) => a !== b && modeOf(a.template_2024) === 'both'
+        && modeOf(b.template_2024) !== 'both' && shapeKey(a) === shapeKey(b));
+      if (!dominator) continue;
+      const idx = chosen.indexOf(b);
+      const pool = ABILITIES.filter((a) => (a.slot_type === 'plain_attack' || a.slot_type === 'rider_attack')
+        && !usedTemplates.has(a.template_2024) && !usedNames.has(a.ability)
+        && a.section === b.section
+        && shapeKey(a) !== shapeKey(dominator)
+        && !referencesMissingMode(a, meta.movement)
+        && !redundantWithMode(a, meta.movement)
+        && (a.cr_ceiling == null || crNumber(cr) <= a.cr_ceiling));
+      if (!pool.length) { chosen.splice(idx, 1); continue; }
+      const w = {};
+      pool.forEach((a, i2) => { w[i2] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes) * attackModeWeight(a, meta.attackMode); });
+      const redraw = pool[pickWeighted(w, rng)];
+      usedTemplates.add(redraw.template_2024);
+      usedNames.add(redraw.ability);
+      chosen[idx] = { ...redraw, options: [redraw] };
+    }
+  }
+  // A jump is dead text beside a teleport, and the pick-time guard can't
+  // see a teleport the signature guarantee seats AFTER it (live-sweep:
+  // CR 11 seed 23 kept both). Settle it on the finished set.
+  if (chosen.some((c) => /teleports? up to/.test(c.template_2024 ?? ''))) {
+    for (let i = chosen.length - 1; i >= 0; i -= 1) {
+      if (JUMP_ROW(chosen[i]) && !guaranteed.has(chosen[i]) && !spineRows.includes(chosen[i])) {
+        chosen.splice(i, 1);
+      }
+    }
+  }
+  // Setup always gets a SPEND: a block with two ways to grapple and no row
+  // that uses the grapple is trap machinery wired to nothing (live: the
+  // Snaring Coil lashed three times plain while five restraint layers sat
+  // idle). Print never strands it — the only printed 2+-imposer block, the
+  // Mimic, carries its Bite. One imposer needs no guarantee (Restrained's
+  // inherent Advantage is a spend); two is a commitment.
+  {
+    const imposers = chosen.filter((c) => (c.imposes ?? []).includes('grapple')).length;
+    if (imposers >= 2) {
+      swapIn((a) => (a.requires ?? []).includes('grapple'), SLOT_TYPES);
+    }
   }
   return chosen;
 }
@@ -639,6 +916,18 @@ export function pickTraits(cr, n, rng, chosenAbilities = [], archetype = null, t
       && (mind === 'sapient' || !needsMind(t))
       && !referencesMissingMode(t, meta.movement)
       && (t.requires ?? []).every((r) => met.has(r))
+      // The emanation family cap never reached the TRAIT pool — the entry
+      // loop's family guard can't see it (live: a Frightened aura and a
+      // damage aura shipped side by side as traits on the Shre Swarm, the
+      // Udraghoth's bug reborn one pool over).
+      && !(RECURRING_EMANATION(t) && [...chosenAbilities, ...out].some(RECURRING_EMANATION))
+      // NO auras on stealth chassis (owner call, 2026-08-04 — a documented
+      // exclusion, like the cognition gate): five straight skirmisher
+      // blocks wore announce-yourself auras; the x0.3 damp lost to
+      // proximity weighting at CR 20 (the Pit Fiend's aura is native
+      // there). The aura-signature guarantee still overrides — an explicit
+      // concept promise outranks the exclusion, caster-checkbox style.
+      && !(RECURRING_EMANATION(t) && (archetype === 'skirmisher' || archetype === 'lurker'))
       && ![...chosenAbilities, ...out].some((c) => contains(t.template_2024, c.template_2024)));
     if (!pool.length) break;
     const weights = {};
@@ -684,7 +973,9 @@ function inferDamageClass(ability) {
  *   recurring  0.5x one attack — printed auras run half an attack (Balor 13 @ CR 19)
  */
 function damageBudgetFor(ability, nums) {
-  const round = nums.per_attack_damage * nums.multiattack;
+  // attacks_per_round survives shape folds (the swarm's Multiattack-less
+  // single attack) so area/nova budgets keep pricing a REAL round.
+  const round = nums.per_attack_damage * (nums.attacks_per_round ?? nums.multiattack);
   const r = library._meta.damage_ratios;
   switch (ability.damage_class ?? inferDamageClass(ability)) {
     case 'recurring': return Math.max(1, Math.round(nums.per_attack_damage * 0.5));
@@ -697,7 +988,7 @@ function damageBudgetFor(ability, nums) {
       const gated = /Saving Throw/.test(ability.template_2024 ?? '');
       return Math.max(1, Math.round(nums.per_attack_damage * (gated ? 0.55 : 0.4)));
     }
-    case 'area': return Math.round(round * (ability.gate ? r.gated_area_multiplier : r.ungated_area_multiplier));
+    case 'area': return Math.round(round * (ability.gate ? r.gated_area_multiplier * (nums.nova_mult ?? 1) : r.ungated_area_multiplier));
     case 'save_nuke': return Math.round(round * r.ungated_area_multiplier);
     default: {
       // A SAVE-LESS hard-condition rider pays for itself in damage: print's
@@ -710,7 +1001,8 @@ function damageBudgetFor(ability, nums) {
         && !/Saving Throw/.test(ability.template_2024 ?? '')
         && /Paralyzed|Stunned|Petrified|Unconscious|\{condition_hard\}/.test(ability.template_2024 ?? '');
       if (savelessHard) return Math.max(1, Math.round(nums.per_attack_damage * 0.5));
-      return nums.per_attack_damage;
+      // A folded shape's single attack IS the routine — it carries the round.
+      return nums.attack_fold ? round : nums.per_attack_damage;
     }
   }
 }
@@ -850,9 +1142,16 @@ export function fillTemplate(ability, { cr, size, nums, rng = null, themes = nul
     alt2_damage: Math.round(main.avg * 1.4),
     alt2_dice: main.dice,
     // An alternative REPLACES the main damage under a condition, so it is
-    // sized off the main value rather than added to the budget.
-    alt_damage: Math.round(main.avg * 1.4),
-    alt_dice: main.dice,
+    // sized off the main value rather than added to the budget. The swarm's
+    // Bloodied form runs the OTHER way — 7 of 7 printed swarms roughly halve
+    // (Crawling Claws 20 -> 11, Bats 5 -> 2); the 1.4x upsize would have
+    // shipped swarms that hit HARDER once Bloodied.
+    ...(/if the swarm is Bloodied/.test(ability.template_2024)
+      ? (() => {
+        const half = attackDamageDiceFor(Math.max(1, Math.round(mainAvg * 0.5)), attackMod);
+        return { alt_damage: half.avg, alt_dice: half.dice };
+      })()
+      : { alt_damage: Math.round(main.avg * 1.4), alt_dice: main.dice }),
     reach: library._meta.scale_slots.reach.by_size[size] ?? 5,
     target_size: shift(n.target_size_offset),
     capacity_size: shift(n.capacity_size_offset),
@@ -861,8 +1160,17 @@ export function fillTemplate(ability, { cr, size, nums, rng = null, themes = nul
     // were slotted in a separate pass that never recorded area_shape, so every
     // trait emanation fell through to the CONE table — a Balor's 10-foot Fire
     // Aura rendered as a 60-foot aura dealing full damage with no save.
+    // Save-less recurring damage auras cap at 10 feet: print runs 5-10
+    // (Azer 5, Balor 5, Fire Elemental 10, Remorhaz 5, Salamander 5 — all
+    // CRs, no trend). The pooled emanation band table includes presences
+    // (60-240 ft) and shipped a 30-foot no-save party-wide tax at CR 20
+    // (live: Masquerade Glitter; the Shre Swarm's Scree before it).
     area: /\{area\}-foot Emanation/.test(ability.template_2024)
-      ? area.emanation_by_band[sb] : area.cone_by_band[sb],
+      ? (/At the end of each of the \{creature\}'s turns/.test(ability.template_2024)
+          && !/Saving Throw/.test(ability.template_2024)
+        ? Math.min(area.emanation_by_band[sb], 10)
+        : area.emanation_by_band[sb])
+      : area.cone_by_band[sb],
     line_length: area.line_length_by_band[sb],
     line_width: area.line_width_by_band[sb],
     radius: area.radius_by_band[sb],
@@ -871,6 +1179,13 @@ export function fillTemplate(ability, { cr, size, nums, rng = null, themes = nul
     // from. The Bronze Dragon's Repulsion Breath pushes 30/40/60/60 feet by
     // age, and leaving that literal split one mechanic into four.
     push_distance: library._meta.scale_slots.push_distance.by_band[sb],
+    // the execute threshold tracks tier (print anchor: Solar 100 @ CR 21)
+    // so a low-CR draw threatens the wounded, never the whole party — and
+    // the LETHALITY tracks tier too: the Sea Hag's CR-2 version drops to
+    // 0 (dying, savable); only the high bands kill outright (print's own
+    // ladder; owner call: no instakill at low levels)
+    execute_threshold: library._meta.scale_slots.execute_threshold.by_band[sb],
+    execute_effect: library._meta.scale_slots.execute_effect.by_band[sb],
     sight_range: library._meta.scale_slots.sight_range.by_band[sb],
     teleport_distance: library._meta.scale_slots.teleport_distance.by_band[sb],
   };
@@ -998,6 +1313,37 @@ export function pickDragonKit(cr, rng) {
 }
 
 /**
+ * The swarm package (owner call, 2026-08-04): swarms need to be swarm-shaped,
+ * the dragon-kit principle applied to print's other unanimous family. All 7
+ * printed swarms share the same core — the Swarm trait, one Bloodied-form
+ * attack, Bludgeoning/Piercing/Slashing resistance, and the same eight
+ * condition immunities (the defenses stamp in skeleton/generate.mjs). Unlike
+ * the dragon kit this is a CORE, not the whole layout: sampled slots still
+ * ride along (print's precedent — the Swarm of Ravens carries Cacophony
+ * beside its Beaks). Constituent-specific accessories (Water Breathing,
+ * Spider Climb) are deliberately NOT inherited — the trait pool supplies
+ * those when the concept earns them.
+ */
+export function pickSwarmKit(cr, rng) {
+  const attacks = Object.values(library.categories).flat()
+    .filter((r) => /if the swarm is Bloodied/.test(r.template_2024 ?? '') && !r.excluded);
+  const swarmTrait = Object.values(library.traits.by_category).flat()
+    .find((t) => t.trait === 'Swarm');
+  if (!attacks.length || !swarmTrait) return null;
+  const weights = {};
+  attacks.forEach((a, i) => { weights[i] = proximityWeight(a.cr, cr); });
+  const attack = attacks[pickWeighted(weights, rng)];
+  return {
+    name: 'Swarm package',
+    source: attack.source,
+    rows: [attack],
+    // "Swarm" is rules vocabulary the table recognizes at a glance, like
+    // Legendary Resistance — the name survives the flavor pass.
+    traitRows: [{ ...swarmTrait, name_locked: true }],
+  };
+}
+
+/**
  * The after-death slot (owner design): optional, CR-ramped, two sentences.
  * The family derives from the creature type; themes pick among candidates.
  * The old Restoration rows flooded the general trait pool (20 near-identical
@@ -1008,7 +1354,11 @@ export function pickOnDeath(cr, rng, { typeHint = null, themes = null } = {}) {
   const od = library.on_death;
   if (!od) return null;
   const n = crNumber(cr);
-  const chance = od.chance_by_band[n < 5 ? '0-4' : n <= 10 ? '5-10' : n <= 16 ? '11-16' : '17+'] ?? 0;
+  // CR 20+ bosses ALWAYS die interestingly (owner call, 2026-08-05 —
+  // parked since the on-death system landed; three consecutive CR 20
+  // blocks rolled empty slots and drew reviewer comment, and every
+  // family now carries adjudicable teeth worth rolling).
+  const chance = n >= 20 ? 1 : (od.chance_by_band[n < 5 ? '0-4' : n <= 10 ? '5-10' : n <= 16 ? '11-16' : '17+'] ?? 0);
   if (rng() >= chance) return null;
   const family = typeHint ? od.type_default[typeHint] : null;
   if (typeHint && family === null && od.type_default[typeHint] === null) return null; // typed "no lore" families
@@ -1071,10 +1421,29 @@ export function buildSkeleton({
   const usedConditions = new Set();
   // eslint-disable-next-line no-param-reassign
   size = size ?? pickSize(cr, rng);
-  const nums = numbersFor(cr);
+  const nums = applyArchetypeNumbers(numbersFor(cr), archetype);
   const castStatWord = pickCastStat(rng);
   nums.cast_stat_word = castStatWord;
   const counts = pickSlotCounts(cr, rng);
+  // ENTRY-COUNT VALVE (owner call, 2026-08-05): print's total entry count
+  // maxes at 12 (Tarrasque) with a median of 8 at CR 10+; independent
+  // sampling occasionally stacks every slot hot and guarantees pile on
+  // top (live: 16 entries on the Tar-Shroud Watcher). Shed the sampled
+  // slots least central to a block's identity until the projected total
+  // (slots + Multiattack + Legendary Resistance) fits the printed
+  // envelope; floors and guarantees still add after, so this is a soft
+  // ceiling, not a cap.
+  {
+    const SHED_ORDER = ['save_effect', 'save_damage', 'utility', 'trait', 'area', 'legendary'];
+    const FLOORS = { trait: 2, area: 1, legendary: 2 };
+    const projected = () => [...SLOT_TYPES, 'trait', 'legendary'].reduce((t, k) => t + (counts[k] ?? 0), 0) + 2;
+    let guard = 12;
+    while (projected() > 12 && guard-- > 0) {
+      const shed = SHED_ORDER.find((k) => (counts[k] ?? 0) > (FLOORS[k] ?? 0));
+      if (!shed) break;
+      counts[shed] -= 1;
+    }
+  }
   // Abilities first, then traits WITH the abilities visible: a trait like
   // Misty Escape says "uses Shape-Shift", and picking traits first left that
   // reference dangling because the ability list did not exist yet. Any
@@ -1093,6 +1462,17 @@ export function buildSkeleton({
   // fits the sampled counts, else nothing and the block is all singles.
   let spine = null;
   if (family === 'dragon') spine = pickDragonKit(cr, rng);
+  if (!spine && archetype === 'swarm') {
+    spine = pickSwarmKit(cr, rng);
+    // The kit's Bloodied-form attack IS the attack section: 7 of 7 printed
+    // swarms have exactly one attack action (the mass is the multiattack —
+    // the round's whole budget is already folded into it). Non-attack slots
+    // stay sampled: the Swarm of Ravens carries Cacophony beside its Beaks.
+    if (spine) {
+      counts.plain_attack = 0;
+      counts.rider_attack = 0;
+    }
+  }
   if (!spine) spine = pickPackage(cr, counts, rng, archetype, themes, effMind);
   const spineTraits = spine?.traitRows ?? [];
   if (family === 'dragon' && spine) {
@@ -1115,7 +1495,10 @@ export function buildSkeleton({
   // the concept named it and neither side carries one, seat an aura trait.
   if (signatureMechanic === 'aura') {
     const AURA = /Emanation originating from the \{creature\}(?: takes| while it doesn't have)/;
-    const has = [...abilities, ...traits].some((r) => AURA.test(r.template_2024 ?? ''));
+    // Satisfied by ANY ungated recurring emanation (same predicate as the
+    // family cap) — checking only the aura shapes would seat a second
+    // emanation beside a presence-style one.
+    const has = [...abilities, ...traits].some(RECURRING_EMANATION);
     if (!has) {
       const metA = satisfiedBy(abilities, traits);
       const pool = TRAITS.filter((t) => AURA.test(t.template_2024 ?? '')
@@ -1166,18 +1549,36 @@ export function buildSkeleton({
   // reconciles with either CON or the striker.
   const hasSpell = kept.some((a) => /\{spells\}|spellcasting ability/.test(a.template_2024));
   if (!hasSpell) {
-    nums.save_dc = 8 + nums.pb + (nums.con_mod ?? 0);
+    // The archetype's dc_mod folds into CON here so every downstream
+    // identity still holds: DC = 8 + PB + CON mod, stampStats pins CON to
+    // that mod, and hpFormulaFor sizes the flat bonus off the same value.
+    nums.con_mod = (nums.con_mod ?? 0) + (nums.dc_mod ?? 0);
+    nums.save_dc = 8 + nums.pb + nums.con_mod;
   }
 
+  // The belts below ADD gates at assembly, invisible to the pick-time
+  // Recharge cap — a belt-gated control BA beside a row-gated breath
+  // assembled the two-Recharge block print never fields (live-sweep:
+  // Quick Grapple (Recharge 4-6) beside Acid Breath (Recharge 5-6)). One
+  // Recharge per block: once taken, belts fall back to 1/Day (printed
+  // shape — the Vrock's Stunning Screech).
+  let rechargeTaken = kept.some((k) => /Recharge/i.test(k.gate ?? ''));
   const entries = kept.map((a, i) => {
     const { text, damage } = fillTemplate(a, { cr, size, nums, rng, themes, usedConditions, recordConditions: true });
     // A repeatable 60-foot paralysis cone is the class of thing no printed
     // block ships: hard-condition areas are ALWAYS gated. Belt-and-braces
     // over the data fix, because one ungated row slipping through is a
     // balance hole, not a wart (live: Rooting Spore Cloud, every turn).
+    // Ladder-form rows (First Failure -> Second Failure) are SELF-gated:
+    // the escalation buffer is the counterplay, and print ships them
+    // ungated — 20/20 two-breath dragons label only the damage breath
+    // "(Recharge 5-6)" while Sleep/Paralyzing/Weakening Breath go free.
+    // The belt stamping them minted the two-Recharge dragon the tripwire
+    // caught (live: the Ryll's Delirium Breath).
     const hardAreaUngated = !a.gate
       && (a.slot_type === 'area' || /each creature in/.test(text))
-      && /Paralyzed|Stunned|Petrified|Unconscious/.test(text);
+      && /Paralyzed|Stunned|Petrified|Unconscious/.test(text)
+      && !/(?:First|Second) Failure/i.test(text);
     // An at-will no-damage save-condition BONUS ACTION is printed at low CR
     // (the Pirate Captain's Captain's Charm, CR 6) but never at high CR,
     // where a free charm every round stacks into a sealed defense beside
@@ -1186,7 +1587,11 @@ export function buildSkeleton({
     const ungatedControlBA = !a.gate && a.section === 'Bonus Actions'
       && /Saving Throw/.test(text) && SHAPE_CONDS.test(text)
       && !/\d+ \(\d+d\d+\)/.test(text) && crNumber(cr) >= 11;
-    const gate = a.gate ?? (hardAreaUngated ? 'Recharge 5-6' : ungatedControlBA ? 'Recharge 4-6' : null);
+    let gate = a.gate ?? null;
+    if (!gate && (hardAreaUngated || ungatedControlBA)) {
+      gate = rechargeTaken ? '1/Day' : (hardAreaUngated ? 'Recharge 5-6' : 'Recharge 4-6');
+      rechargeTaken = true;
+    }
     return {
       // Stable handle so the flavor call can address an entry without
       // repeating its text back, which is where drift gets in.
@@ -1315,6 +1720,7 @@ export function buildSkeleton({
     save_dc: nums.save_dc,
     multiattack: nums.multiattack,
     con_mod: nums.con_mod,
+    speed_mod: nums.speed_mod ?? 0,
     strike_stat: strike,
     cast_stat: castStatWord,
     // The spellcasting stat's required modifier: pinning a mental stat to
@@ -1340,6 +1746,9 @@ export function buildSkeleton({
     },
     themes: themes ?? [],
     movement: movement ?? null,
+    // the chassis's range posture, so downstream passes can aim
+    // mobility references at an attack the body can deliver
+    attack_mode: attackMode ?? null,
     traits: traits.map((t, i) => ({
       // gate and section ride along so the flavor step can re-append the
       // use limit after a rename: the model renamed Legendary Resistance to
