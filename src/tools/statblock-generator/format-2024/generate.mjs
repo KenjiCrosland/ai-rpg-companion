@@ -213,7 +213,7 @@ export function pickRandomArchetype() {
 
 export function buildArchetypeResolvePrompt(concept, description = '', { cr = null, archetype = null } = {}) {
   return `${archetype
-    ? `The combat role of this D&D monster is FIXED by the user: ${archetype}. Echo it in "archetype" unchanged, and sketch a combat identity built around that role.`
+    ? `The combat role of this D&D monster is FIXED by the user: ${archetype}. Echo it in "archetype" unchanged, and sketch a combat identity built around that role. EVERY field below must SERVE that role, not merely coexist with it — the role is the one instruction you were given and the rest is your inference. A skirmisher does not engulf, grapple, or plant an aura; artillery does not brawl at reach 5; a brute does not snipe. If the concept pulls against the role, bend the CONCEPT.`
     : 'Classify this D&D monster concept into exactly one combat-role archetype, then sketch its combat identity.'}
 
 Concept: ${concept}
@@ -233,7 +233,7 @@ The identity is 2-3 sentences a designer would build from: how it opens a fight,
 
 Also decide the creature TYPE from the concept's SUBSTANCE — what it physically IS: animated objects/machines are Construct; remains or spirits of the dead are Undead; natural animals are Beast; masses of vermin are a swarm (name the base type); giants are massive humanoid-shaped folk; fungus/vegetation are Plant. Never type by vibe.
 
-TYPE HONESTY: a SHAPE word is not a type — a humanoid-shaped thing that was remade, fused, grown, or woven from something else is a Monstrosity however upright it stands, and "it has arms and legs" never makes a Humanoid. creature_type must be the type your identity actually EXPRESSES — its body, abilities, and origin, not its label. If the concept's substance isn't genuinely that type, either rewrite the identity to BE it or declare the type you actually wrote. A type the content never expresses (an "Elemental" whose body and habits could belong to any animal) is a failure.
+TYPE HONESTY: "Humanoid" is the NPC-template type — print has 26 of them, 25 of them plain Neutral, and exactly one above CR 10. Above that tier a thing that hunts, burrows, or has no speech is a Monstrosity, Aberration, Fiend, or Elemental, never a Humanoid. And a SHAPE word is not a type — a humanoid-shaped thing that was remade, fused, grown, or woven from something else is a Monstrosity however upright it stands, and "it has arms and legs" never makes a Humanoid. creature_type must be the type your identity actually EXPRESSES — its body, abilities, and origin, not its label. If the concept's substance isn't genuinely that type, either rewrite the identity to BE it or declare the type you actually wrote. A type the content never expresses (an "Elemental" whose body and habits could belong to any animal) is a failure.
 
 Also write ONE sentence of world-lore ("lore"): where this creature comes from and what it wants — the story a GM would read aloud. Grounded in the concept's substance, never generic doom-prose.
 
@@ -2638,7 +2638,7 @@ export function applyRenameMapping(monster, mapping) {
 // ---------------------------------------------------------------------------
 
 export async function generateMonster2024(options, callLLM) {
-  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, themes = null, mind = null, conceptSize = null, movement = null, attackMode = null, signatureMechanic = null, onProgress = null, takenNames = [] } = options;
+  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, themes = null, mind = null, conceptSize = null, movement = null, attackMode = null, signatureMechanic = null, onProgress = null, takenNames = [], namePass = null } = options;
 
   // The skeleton path is how 2024 monsters are built now; set
   // localStorage['statblock-skeleton'] = '0' to fall back to the chassis.
@@ -2657,6 +2657,7 @@ export async function generateMonster2024(options, callLLM) {
     return generateFromSkeleton({
       concept, description, cr, archetypeName, resolvedType, lore, themes, mind, degraded, onProgress, caster,
       conceptSize, movement, attackMode, signatureMechanic, takenNames, typeSource,
+      archetypeSource, namePass,
     }, callLLM);
   }
 

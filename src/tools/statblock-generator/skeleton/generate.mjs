@@ -15,7 +15,7 @@
 import { buildSkeleton, crNumber } from './build-skeleton.mjs';
 import {
   buildFlavorPrompt, validateFlavorResponse, applyFlavor,
-  chassisFromSkeleton, planFromSkeleton, swapEntries, pickHouse,
+  chassisFromSkeleton, planFromSkeleton, swapEntries, pickHouse, resolveIdentity,
 } from './flavor-prompt.mjs';
 import {
   auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection,
@@ -47,7 +47,7 @@ export async function generateFromSkeleton(options, callLLM) {
     lore = null, identity = null, seed = null, onProgress = null, degraded = false,
     caster = false, strikeStat = null, themes = null, mind = null,
     conceptSize = null, movement = null, attackMode = null, signatureMechanic = null,
-    takenNames = [], typeSource = 'auto',
+    takenNames = [], typeSource = 'auto', archetypeSource = 'auto', namePass = null,
   } = options;
 
   const progress = (phase, data) => {
@@ -101,9 +101,36 @@ export async function generateFromSkeleton(options, callLLM) {
   const blockAttackMode = ['melee', 'ranged', 'mixed'].includes(attackMode) ? attackMode : null;
   // 'snare' is the concept-facing name (owner call: the restraining
   // substance could be anything); 'web' stays the internal family key.
+  // THE ARCHETYPE IS THE SPINE (owner call, 2026-08-06). The concept call
+  // resolves exactly one role — echoing the user's pick or classifying the
+  // concept — and once resolved everything serves it. A signature that
+  // contradicts it yields, whichever way the role arrived: when the same
+  // response returns `skirmisher` AND `engulf`, that is not two readings
+  // to respect, it is the model contradicting itself inside one JSON
+  // object. (First shipped as a user-pick-only veto; widened same day —
+  // the source distinction protected an inconsistency instead of a
+  // choice.)
+  //
+  // The signature outranks everything else in assembly — a guaranteed
+  // seat, its prerequisite's seat, and x6 pick weight — so an engulf on a
+  // skirmisher buries the role under a grapple-swallow chain while the
+  // role's own machinery (speed, exit seat, ranged parity) whispers
+  // underneath (live: the Arterial Drifter). Degrades to null, the path
+  // bad metadata already takes, so the block builds from the archetype.
+  const SIGNATURE_CONFLICTS = {
+    skirmisher: ['engulf', 'grapple', 'aura'],
+    lurker: ['engulf', 'grapple', 'aura'],
+    artillery: ['engulf', 'grapple'],
+    support: ['engulf', 'grapple'],
+  };
   const SIGNATURES_OK = ['thrown-weapon', 'breath', 'engulf', 'grapple', 'gaze', 'aura', 'teleport', 'summon', 'web', 'snare'];
-  const blockSignature = SIGNATURES_OK.includes(signatureMechanic)
+  let blockSignature = SIGNATURES_OK.includes(signatureMechanic)
     ? (signatureMechanic === 'snare' ? 'web' : signatureMechanic) : null;
+  if (blockSignature && (SIGNATURE_CONFLICTS[archetypeName] ?? []).includes(signatureMechanic)) {
+    trace('signature vetoed:', `${signatureMechanic} contradicts the ${archetypeName} role`
+      + `${archetypeSource === 'user' ? ' (picked)' : ' (resolved)'}`);
+    blockSignature = null;
+  }
 
   const skeleton = buildSkeleton({
     cr: crNum, seed: useSeed, alternatives: ALTERNATIVES, archetype: archetypeName,
@@ -166,8 +193,22 @@ export async function generateFromSkeleton(options, callLLM) {
   // One MATERIAL for the block, scored from the concept prose (owner call,
   // 2026-08-05). Attached to the skeleton so the palette, the fills and
   // the naming all read the same declaration.
-  skeleton.houses = pickHouse([concept, identity, lore].filter(Boolean).join(' '), blockThemes, useSeed);
+  skeleton.identity = resolveIdentity(skeleton, {
+    concept: [concept, identity, lore].filter(Boolean).join(' '),
+    themes: blockThemes,
+    type: finalType,
+    seed: useSeed,
+  });
+  skeleton.houses = skeleton.identity.houses;
   if (skeleton.houses.length) trace('material house:', skeleton.houses.join(' + '));
+  {
+    const mf = skeleton.identity.manifest;
+    trace('capability manifest:', [
+      mf.movement.length ? mf.movement.join('/') : 'walk only',
+      mf.grapples && 'grapples', mf.restrains && 'restrains', mf.swallows && 'swallows',
+      mf.casts && 'casts', ...mf.produces,
+    ].filter(Boolean).join(', '));
+  }
 
   const prompt = buildFlavorPrompt(skeleton, {
     concept,
@@ -244,6 +285,31 @@ export async function generateFromSkeleton(options, callLLM) {
     }
   }
 
+  // ALIGNMENT follows the TYPE (measured 2026-08-06): Beast 89/89 and
+  // Ooze 4/4 are Unaligned; Construct is 8 Unaligned + 2 Neutral with no
+  // moral axis at all; Monstrosity is Good exactly 1 time in 37; Fiend
+  // and Undead are Good zero times. Ours shipped Lawful Good on an
+  // Int-6 mute abyssal predator, twice in three blocks (the Graspwarden
+  // and the Hadal Warden). A floor on the MORAL axis only — the
+  // lawful/chaotic axis and the model's own pick survive wherever print
+  // allows one.
+  {
+    const ALIGNMENT_BY_TYPE = {
+      Beast: 'Unaligned', Ooze: 'Unaligned', Construct: 'Unaligned',
+      Plant: 'Unaligned', Monstrosity: 'Unaligned',
+    };
+    const forced = ALIGNMENT_BY_TYPE[monster.type];
+    const NO_GOOD = ['Fiend', 'Undead'];
+    if (forced && !/unaligned|neutral/i.test(String(monster.alignment ?? ''))) {
+      trace('alignment floored for type:', `${monster.type}: ${monster.alignment} -> ${forced}`);
+      monster.alignment = forced;
+    } else if (NO_GOOD.includes(monster.type) && /Good/i.test(String(monster.alignment ?? ''))) {
+      const swapped = String(monster.alignment).replace(/Good/i, 'Evil');
+      trace('alignment floored for type:', `${monster.type}: ${monster.alignment} -> ${swapped}`);
+      monster.alignment = swapped;
+    }
+  }
+
   // Type-derived immunity floor (live: a Construct shipped without Poisoned
   // or Charmed). Measured across the 329-block corpus at >=80% per type:
   // Construct 8-9/10, Undead 17/19, Ooze 4/4. Elemental and Fiend sit near
@@ -297,6 +363,20 @@ export async function generateFromSkeleton(options, callLLM) {
     const d = [...damage].sort(); const c = [...conds].sort();
     monster.immunities = d.join(', ') + (c.length ? `${d.length ? '; ' : ''}${c.join(', ')}` : '');
     trace('swarm defense package stamped:', `resist ${monster.resistances} | immune ${monster.immunities}`);
+  }
+
+  // A NAME THE USER TYPED IS THE CREATURE'S NAME. The chassis path has
+  // honored this since the beginning; the skeleton path — the default
+  // path — never received namePass at all, so a typed name was silently
+  // replaced by whatever the flavor call invented (live: "Chimeric
+  // Sentinel" shipped as "Scouring Silt"). Stamped through
+  // applyRenameMapping so every self-reference follows.
+  {
+    const typed = String(namePass?.userTypedName ?? '').trim();
+    if (typed && monster.name && monster.name.toLowerCase() !== typed.toLowerCase()) {
+      trace('user name honored:', `"${monster.name}" -> "${typed}"`);
+      monster = applyRenameMapping(monster, { [monster.name]: typed });
+    }
   }
 
   // Deterministic corrections only. Anything still rejecting is a defect in

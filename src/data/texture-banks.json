@@ -11,7 +11,15 @@
       "damage_affinity": "measured printed counts of energy damage for the facet's home type; thin samples marked",
       "vet_tokens": "SMALL, high-confidence domain-claiming tokens for the Phase 3 fill vet \u2014 a fill containing one is claiming this facet. Must stay unique across facets; ambiguous words (molten, ash, mist) deliberately excluded."
     },
-    "houses_note": "A HOUSE is one material and the vocabulary it earns \u2014 finer than a facet, which spans several (elemental holds magma, stone, storm, ice and sand at once). The engine declares ONE house per block, scored from the concept prose, and every material fill and name draws from it: brine and sleet are both Cold-legal and both wrong together (owner call 2026-08-05). Token lists cover the words CONCEPTS use, not just the house's own name: 'salt-toughened plant fiber' matched nothing and fell through to a blind seeded pick that chose chitin for a plant creature (live: the Graspwarden, 2026-08-05)."
+    "houses_note": "A HOUSE is one material and the vocabulary it earns \u2014 finer than a facet, which spans several (elemental holds magma, stone, storm, ice and sand at once). The engine declares ONE house per block, scored from the concept prose, and every material fill and name draws from it: brine and sleet are both Cold-legal and both wrong together (owner call 2026-08-05). Token lists cover the words CONCEPTS use, not just the house's own name: 'salt-toughened plant fiber' matched nothing and fell through to a blind seeded pick that chose chitin for a plant creature (live: the Graspwarden, 2026-08-05). Each house also carries difficult_terrain: the {terrain} slot renders inside \"Difficult Terrain composed of X\", so X must IMPEDE \u2014 bare stone is a surface, not difficult terrain. Each house also names habitat_terrain \u2014 the natural ground its creature LIVES on, for the Ice-Walk genus. Print keys that trait to habitat (\"ice or snow\"), never to the creature's substance, and never names a material when it CREATES difficult terrain at all.",
+    "natural_terrain": [
+      "ice or snow",
+      "sand and loose scree",
+      "mud and shallow water",
+      "rubble and broken stone",
+      "ash and cinders",
+      "thick undergrowth"
+    ]
   },
   "facets": {
     "forged": {
@@ -2570,7 +2578,8 @@
         "Undertow",
         "Spray",
         "Wrack"
-      ]
+      ],
+      "habitat_terrain": "mud and shallow water"
     },
     "abyss": {
       "tokens": [
@@ -2600,7 +2609,8 @@
         "Crush",
         "Deep",
         "Silence"
-      ]
+      ],
+      "habitat_terrain": "mud and shallow water"
     },
     "ice": {
       "tokens": [
@@ -2634,7 +2644,8 @@
         "Floe",
         "Shiver",
         "Killing Cold"
-      ]
+      ],
+      "habitat_terrain": "ice or snow"
     },
     "storm": {
       "tokens": [
@@ -2667,7 +2678,8 @@
         "Downdraft",
         "Gyre",
         "Rolling Thunder"
-      ]
+      ],
+      "habitat_terrain": "rubble and broken stone"
     },
     "magma": {
       "tokens": [
@@ -2697,7 +2709,8 @@
         "Flow",
         "Vent",
         "Pour"
-      ]
+      ],
+      "habitat_terrain": "ash and cinders"
     },
     "flame": {
       "tokens": [
@@ -2725,7 +2738,8 @@
         "Blaze",
         "Pyre",
         "Wildfire"
-      ]
+      ],
+      "habitat_terrain": "ash and cinders"
     },
     "ash": {
       "tokens": [
@@ -2756,7 +2770,8 @@
         "Ember",
         "Cinder-Drift",
         "Remnant"
-      ]
+      ],
+      "habitat_terrain": "ash and cinders"
     },
     "stone": {
       "tokens": [
@@ -2789,7 +2804,8 @@
         "Landslide",
         "Cairn",
         "Grind"
-      ]
+      ],
+      "habitat_terrain": "rubble and broken stone"
     },
     "sand": {
       "tokens": [
@@ -2820,7 +2836,8 @@
         "Drift",
         "Scour",
         "Dune"
-      ]
+      ],
+      "habitat_terrain": "sand and loose scree"
     },
     "bone": {
       "tokens": [
@@ -2851,7 +2868,8 @@
         "Charnel",
         "Rattle",
         "Reliquary"
-      ]
+      ],
+      "habitat_terrain": "rubble and broken stone"
     },
     "rot": {
       "tokens": [
@@ -2882,7 +2900,8 @@
         "Corruption",
         "Carrion",
         "Ruin"
-      ]
+      ],
+      "habitat_terrain": "mud and shallow water"
     },
     "grave": {
       "tokens": [
@@ -2916,7 +2935,8 @@
         "Cerement",
         "Barrow",
         "Requiem"
-      ]
+      ],
+      "habitat_terrain": "mud and shallow water"
     },
     "iron": {
       "tokens": [
@@ -2950,7 +2970,8 @@
         "Rivet",
         "Bellows",
         "Engine"
-      ]
+      ],
+      "habitat_terrain": "rubble and broken stone"
     },
     "glass": {
       "tokens": [
@@ -2982,7 +3003,8 @@
         "Shard",
         "Refraction",
         "Silvering"
-      ]
+      ],
+      "habitat_terrain": "rubble and broken stone"
     },
     "thorn": {
       "tokens": [
@@ -3019,7 +3041,8 @@
         "Snare",
         "Thicket",
         "Grove"
-      ]
+      ],
+      "habitat_terrain": "thick undergrowth"
     },
     "fungus": {
       "tokens": [
@@ -3051,7 +3074,8 @@
         "Flush",
         "Mycelium",
         "Spore-Fall"
-      ]
+      ],
+      "habitat_terrain": "thick undergrowth"
     },
     "shadow": {
       "tokens": [
@@ -3082,7 +3106,8 @@
         "Gloom",
         "Nightfall",
         "Umbra"
-      ]
+      ],
+      "habitat_terrain": "rubble and broken stone"
     },
     "void": {
       "tokens": [
@@ -3114,7 +3139,8 @@
         "Hollow",
         "Aperture",
         "Nothing"
-      ]
+      ],
+      "habitat_terrain": "rubble and broken stone"
     },
     "blood": {
       "tokens": [
@@ -3144,7 +3170,8 @@
         "Vein",
         "Letting",
         "Clot"
-      ]
+      ],
+      "habitat_terrain": "mud and shallow water"
     },
     "tar": {
       "tokens": [
@@ -3174,7 +3201,8 @@
         "Seep",
         "Pitchfall",
         "Sump"
-      ]
+      ],
+      "habitat_terrain": "mud and shallow water"
     },
     "venom": {
       "tokens": [
@@ -3204,7 +3232,8 @@
         "Draught",
         "Toxin",
         "Bloom"
-      ]
+      ],
+      "habitat_terrain": "thick undergrowth"
     },
     "dream": {
       "tokens": [
@@ -3235,7 +3264,8 @@
         "Hush",
         "Waking",
         "Nightmare"
-      ]
+      ],
+      "habitat_terrain": "thick undergrowth"
     },
     "light": {
       "tokens": [
@@ -3268,7 +3298,8 @@
         "Censer",
         "Aureole",
         "Dawn"
-      ]
+      ],
+      "habitat_terrain": "sand and loose scree"
     },
     "hide": {
       "tokens": [
@@ -3302,7 +3333,8 @@
         "Rut",
         "Pack",
         "Quarry"
-      ]
+      ],
+      "habitat_terrain": "thick undergrowth"
     },
     "chitin": {
       "tokens": [
@@ -3336,7 +3368,8 @@
         "Moult",
         "Carapace",
         "Hive"
-      ]
+      ],
+      "habitat_terrain": "sand and loose scree"
     }
   }
 }

@@ -193,6 +193,62 @@ export function pickHouse(concept, themes, seed = 1) {
   return [candidates[Math.floor(rng() * candidates.length)]];
 }
 
+/**
+ * THE COHERENCE PASS (owner design, 2026-08-06). One place where the
+ * block's identity is resolved — after row selection, before naming — so
+ * that everything downstream is CONSTRAINED rather than corrected.
+ *
+ * It owns three of the four coherence decisions (the fourth, the role
+ * gate, is upstream at selection where it belongs):
+ *
+ *   houses     the register lock — one material, every name-fill draws
+ *              from it
+ *   manifest   the capability manifest — what this block can actually DO,
+ *              computed from the rows it ended up with. Previously
+ *              re-derived ad hoc at every site that cared, which is why
+ *              "flies" survived three phrasings, a carry clause outlived
+ *              its grapple, and terrain mastery pointed at nothing.
+ *   contract   the type contract — damage vocabulary and alignment range
+ *              a creature of this type may have. Enforced only in
+ *              ASSEMBLY before now, i.e. after the model had already
+ *              written; resolving it here makes it an instruction.
+ *
+ * Floors downstream stay as backstops — the model still drifts.
+ */
+export function resolveIdentity(skeleton, { concept = '', themes = null, type = null, seed = 1 } = {}) {
+  const rows = [...(skeleton.entries ?? []), ...(skeleton.traits ?? [])];
+  const text = rows.map((r) => r.text ?? r.template_2024 ?? '').join(' ');
+  const manifest = {
+    movement: skeleton.movement ?? [],
+    grapples: /Grappled condition \(escape|has the Grappled condition/.test(text),
+    restrains: /Restrained condition/.test(text),
+    swallows: /swallow/i.test(text),
+    casts: /\{spells\}|spellcasting ability/.test(text),
+    // substrates the block actually PRODUCES, for rows that reference one
+    produces: [
+      /is destroyed \(AC/.test(text) && 'restraint',
+      /becomes Difficult Terrain/.test(text) && 'terrain',
+    ].filter(Boolean),
+  };
+  // measured 2026-08-06: Ooze deals Acid 4/4 and no physical at all;
+  // Beast/Ooze/Construct/Plant/Monstrosity are Unaligned by default;
+  // Fiend and Undead are never Good.
+  const CONTRACT = {
+    Ooze: { physical: null, alignment: 'Unaligned', anatomy: false },
+    Beast: { alignment: 'Unaligned' },
+    Construct: { alignment: 'Unaligned' },
+    Plant: { alignment: 'Unaligned' },
+    Monstrosity: { alignment: 'Unaligned' },
+    Fiend: { noGood: true },
+    Undead: { noGood: true },
+  };
+  return {
+    houses: pickHouse(concept, themes, seed),
+    manifest,
+    contract: { type, ...(CONTRACT[type] ?? {}) },
+  };
+}
+
 function texturePalette(skeleton, themes) {
   const facetNames = [...new Set(themes ?? [])].filter((t) => BANK_FACETS[t]);
   if (!facetNames.length) return '';
@@ -206,6 +262,20 @@ function texturePalette(skeleton, themes) {
   const dmg = [...new Set(banks.flatMap((b) => Object.entries(b.damage_affinity ?? {})
     .filter(([k, v]) => !k.startsWith('_') && v > 0)
     .sort((a, b) => b[1] - a[1]).map(([k]) => k)))];
+  const id = skeleton.identity ?? {};
+  const contract = id.contract ?? {};
+  const manifest = id.manifest ?? {};
+  const contractLines = [
+    contract.physical === null && `Its ${contract.type} body has no edge, point, or mass: EVERY damage it deals is its energy type. Never Slashing, Piercing, or Bludgeoning.`,
+    contract.anatomy === false && 'It has no limbs, jaws, or teeth to name — its attacks are extrusions, surges, and engulfings.',
+    contract.alignment && `Its alignment is ${contract.alignment}: creatures of this type have no moral axis.`,
+    contract.noGood && 'Its alignment is never Good.',
+    !(manifest.movement ?? []).includes('fly') && 'It CANNOT fly: never write "flies", "flying", or a Fly Speed.',
+    manifest.grapples === false && 'It grapples nothing: never reference a creature it has Grappled.',
+  ].filter(Boolean);
+  const contractBlock = contractLines.length
+    ? `\nWHAT THIS CREATURE IS — these are facts about its body, not suggestions:\n${contractLines.map((l) => `- ${l}`).join('\n')}\n`
+    : '';
   const houseNames = skeleton.houses ?? [];
   const houseBanks = houseNames.map((h) => textureBanks.houses?.[h]).filter(Boolean);
   const houseLine = houseBanks.length
@@ -214,7 +284,7 @@ function texturePalette(skeleton, themes) {
 - name words: ${houseBanks.flatMap((b) => b.adjectives ?? []).join(', ')} / ${houseBanks.flatMap((b) => b.nouns ?? []).join(', ')}
 Never reach for a neighbouring material: an ice creature does not also spray brine, and a brine creature does not also shed sleet — both are cold, and they belong to different things.`
     : '';
-  return `${houseLine}\nTEXTURE PALETTE — this register's full vocabulary. Draw on it for every fill and name: choose from it, combine from it, or write words that belong beside it.${houseLine ? ' It never introduces a SECOND material — where it offers one the material above forbids, take the material above.' : ''}
+  return `${contractBlock}${houseLine}\nTEXTURE PALETTE — this register's full vocabulary. Draw on it for every fill and name: choose from it, combine from it, or write words that belong beside it.${houseLine ? ' It never introduces a SECOND material — where it offers one the material above forbids, take the material above.' : ''}
 - substances: ${substances.join(', ')}
 - restraining substances (for anything that binds, snares, or entombs — "until the <substance> is destroyed"): ${restraints.join(', ')}
 - limbs: ${limbs.join(', ')}
@@ -499,6 +569,16 @@ export const OFFENSE_SPELL_TYPES = {
 // tech (live: Slickstep, the Tar-Shroud Watcher).
 export const SELF_CAST_SPELLS = ['Invisibility', 'Blur', 'Mirror Image', 'Shield of Faith',
   'Mage Armor', 'Sanctuary', 'Protection from Evil and Good', 'Gaseous Form', 'Misty Step'];
+// ...and the subset a LEGENDARY may cast, because the concentration
+// overrule (owner call: print's one example reads as errata) strips the
+// rest. Two of our own rules were undoing each other — the self-cast vet
+// set Invisibility, the concentration vet stripped it as concentration,
+// and the redraw landed on an attack spell, so a creature cast Acid Arrow
+// at itself as movement tech (live: the tar block, then Scouring Silt).
+// The irony was exact: print's Cloaked Flight casts Invisibility, which
+// is the very example the overrule targets.
+export const SELF_CAST_NO_CONCENTRATION = ['Mirror Image', 'Mage Armor', 'Sanctuary',
+  'Protection from Evil and Good', 'Misty Step'];
 
 export const CONCENTRATION_SPELLS = ['Fear', 'Hold Person', 'Hold Monster', 'Dominate Person',
   'Dominate Monster', 'Dominate Beast', 'Hypnotic Pattern', 'Slow', 'Haste', 'Invisibility',
@@ -790,12 +870,15 @@ export function applyFlavor(skeleton, llmJson) {
           .some(([, b]) => (b.tokens ?? []).some((tok) => new RegExp(`\\b${tok}`, 'i').test(value)
             && !mine.has(tok)));
         if (foreign) {
-          // TERRAIN is ground, not stuff: redrawing it from the house's
-          // materials shipped "Difficult Terrain composed of
-          // carapace-plate" (live, the Graspwarden) — a substance the
-          // block never produces and nobody can walk on.
+          // TERRAIN is ground, not stuff, so it never redraws from the
+          // house's MATERIALS — nulling it here hands it to the habitat
+          // fallback below. (It used to call surface() directly, which is
+          // declared further down: a temporal-dead-zone crash that killed
+          // whole generations live — "Cannot access 'surface' before
+          // initialization" — and that no test reached, because every
+          // fixture happened to fail an earlier terrain vet first.)
           if (slot === 'terrain') {
-            value = surface();
+            value = null;
           } else {
             const pool = (skeleton.houses ?? []).flatMap((h) => textureBanks.houses?.[h]?.substances ?? []);
             value = pool.length ? pool[Math.floor(entryRng() * pool.length)] : null;
@@ -832,6 +915,18 @@ export function applyFlavor(skeleton, llmJson) {
         && !/\b(stone|rock|scree|gravel|slate|shale|sand|dune|silt|mud|soil|earth|clay|ice|snow|frost|ash|dust|rubble|moss|root|bramble|water|brine|tar|pitch|slick|crust|ground|floor|glass|bone|salt|grit|loam|peat|slag|cinder|char)\b/i.test(value)) {
         value = null;
       }
+      // ...and the terrain a creature IGNORES is environmental: it must be
+      // ground a DM's map plausibly contains, so the model's fill is kept
+      // only when it names one of the natural terrains. Everything else
+      // redraws to the creature's habitat. (An exotic composition —
+      // carapace-plate, grave-wax, burning ground — describes the
+      // creature, not the world it walks through, and the trait then
+      // never triggers.)
+      if (value && slot === 'terrain') {
+        const natural = (textureBanks._meta?.natural_terrain ?? []).join(' ').toLowerCase();
+        const words = value.toLowerCase().split(/[\s-]+/).filter((w) => w.length > 2);
+        if (!words.some((w) => natural.includes(w))) value = null;
+      }
       // Theme-aware spell draw (owner-approved 2026-08-03): on-palette,
       // pre-filtered against everything the downstream vets would reject,
       // so a pick always survives. Used for dead signature fills AND for
@@ -852,7 +947,14 @@ export function applyFlavor(skeleton, llmJson) {
       // offense pool is SEEDED print (the static '*Chromatic Orb*'
       // fingerprinted three unrelated blocks).
       const surface = () => {
-        const pool = ['ice', 'rubble', 'bare stone', 'shifting sand', 'deep mud'];
+        // HABITAT, not material (measured 2026-08-06): print's only
+        // pass-through trait is Ice Walk, keyed to "ice or snow" — the
+        // ground a snow creature lives on. Keying it to what the creature
+        // is MADE of produced a fire thing striding over deep mud and a
+        // spider-limbed thing over carapace-plate. Six real terrains; the
+        // house names which one its creature would inhabit.
+        const own2 = (skeleton.houses ?? []).map((h) => textureBanks.houses?.[h]?.habitat_terrain).filter(Boolean);
+        const pool = own2.length ? own2 : (textureBanks._meta?.natural_terrain ?? ['rubble and broken stone']);
         return pool[Math.floor(entryRng() * pool.length)];
       };
       const printedOffense = () => {
@@ -889,12 +991,6 @@ export function applyFlavor(skeleton, llmJson) {
         if (!inPools && !onPalette) {
           value = themedSpell(new Set([bareName])) ?? printedOffense();
         }
-      }
-      // Self-cast slots take SELF_CAST_SPELLS only — print's Invisibility
-      // is the fallback (the row is the Blue's Cloaked Flight).
-      if (slot.startsWith('signature_spell') && / on itself/.test(entry.text)) {
-        const bare2 = value.replace(/\*/g, '').replace(/\s*\(.*\)$/, '').trim();
-        if (!SELF_CAST_SPELLS.includes(bare2)) value = '*Invisibility*';
       }
       // an echo casts at combat speed: a 1-minute spell in it is impossible
       if (slot.startsWith('signature_spell') && SLOW_CAST.includes(value.replace(/\*/g, '').replace(/\s*\(.*\)$/, '').trim())) {
@@ -983,9 +1079,25 @@ export function applyFlavor(skeleton, llmJson) {
         const facets2 = library._meta.spell_facets ?? {};
         const onIdentity = (name2) => {
           const ty = OFFENSE_SPELL_TYPES[name2];
-          if (ty === undefined || ty === null) return true; // non-offense or any-type
-          if ([physical, energy, energy2].includes(ty)) return true;
-          return (facets2[name2] ?? []).some((f) => own.has(f));
+          if (ty === null) return true; // any-type (Chromatic Orb)
+          if (ty !== undefined && [physical, energy, energy2].includes(ty)) return true;
+          // Utility spells were exempt entirely because the vet read
+          // DAMAGE types — which is how Web reached a construct with no
+          // trapper mechanics, three blocks running. A spell with a facet
+          // must share one with the block... unless print itself hands it
+          // to monsters of this tier, which is the same escape the echo
+          // vet uses: over-vetting stripped Fear and Command, and a rule
+          // that empties spell lists is worse than the drift it fixes.
+          const fs = facets2[name2];
+          if (!fs || !fs.length) return ty === undefined;
+          // The pools escape is UTILITY-ONLY: applying it to offense
+          // spells re-admitted Scorching Ray to a Necrotic block, undoing
+          // the palette rule it exists beside. Damage must match the
+          // palette; utility only has to be something print gives
+          // monsters.
+          const printed = ty === undefined && Object.values(SPELL_POLICY.printed_pools ?? {})
+            .some((b) => [...(b.at_will ?? []), ...(b.daily ?? [])].includes(name2));
+          return printed || fs.some((f) => own.has(f));
         };
         const parts3 = [...value.matchAll(/\*([A-Z][\w' ]+?)\*( \(level \d+ version\))?/g)];
         const kept3 = parts3.filter((mm) => onIdentity(mm[1]));
@@ -1022,13 +1134,29 @@ export function applyFlavor(skeleton, llmJson) {
       }
       // (Off-list vetting for spell slots now happens in normalizeSpellFill
       // above — unknown names never survive normalization.)
+      // Self-cast slots take a self-buff, and this runs LAST among the
+      // spell vets because it is the most SPECIFIC: the identity vet
+      // (extended to utility spells) was overriding it and putting an
+      // attack spell back, which is the same collision the concentration
+      // rule caused. A specific rule must have the last word over the
+      // general ones, or they take turns undoing each other.
+      if (slot.startsWith('signature_spell') && / on itself/.test(entry.text)) {
+        const allowed = entry.section === 'Legendary Actions'
+          ? SELF_CAST_NO_CONCENTRATION : SELF_CAST_SPELLS;
+        const bare2 = value.replace(/\*/g, '').replace(/\s*\(.*\)$/, '').trim();
+        if (!allowed.includes(bare2)) value = `*${allowed[0]}*`;
+      }
       // Echo-spell dedupe: an ECHO entry (anything that isn't the tiered
       // list) filling a spell another echo already cast redraws on-palette.
       if (SPELL_SLOTS(slot) && !/casts one of the following/.test(entry.text)) {
         const names = [...value.matchAll(/\*([A-Z][\w' ]+?)\*/g)].map((mm) => mm[1]);
         if (names.some((nm) => usedEchoSpells.has(nm))) {
-          const alt = themedSpell(new Set([...usedEchoSpells, ...names]));
-          if (alt) value = alt;
+          // A vet that gives up silently stops enforcing exactly when it
+          // is needed: the themed draw returns null on a narrow palette,
+          // and `if (alt)` then left the duplicate standing — two
+          // legendaries casting one spell (live: Scouring Silt). Fall
+          // through to print's offense pool the way other fills do.
+          value = themedSpell(new Set([...usedEchoSpells, ...names])) ?? printedOffense();
         }
         for (const mm of value.matchAll(/\*([A-Z][\w' ]+?)\*/g)) usedEchoSpells.add(mm[1]);
       }
@@ -1121,13 +1249,21 @@ export function applyFlavor(skeleton, llmJson) {
     // Ribs, the Keening Scuttler).
     const mainIsPhysical = entry.slot_type === 'plain_attack' || entry.slot_type === 'rider_attack'
       || (/Saving Throw/.test(text) && /Grappled condition \(escape/.test(text));
-    const attackPhysical = mainIsPhysical
-      ? (limbType(given.name, entry.name) ?? physical) : physical;
+    // TYPE PHYSIOLOGY, narrow and measured (2026-08-06): all 4 printed
+    // oozes deal Acid and NOTHING else — not Bludgeoning either — because
+    // an amorphous mass has no edge, point, or mass to swing. Ours slashed
+    // three ways and bit once (live: the Arterial Drifter). Ooze only:
+    // Construct is Bludgeoning-dominant but not unanimous (8/2/1) and
+    // Elemental is genuinely mixed (8/8/3), and encoding those would be
+    // the n=2 over-fitting we overrule critics for.
+    const amorphous = j.type === 'Ooze';
+    const attackPhysical = amorphous ? (energy === 'Poison' ? 'Acid' : energy)
+      : (mainIsPhysical ? (limbType(given.name, entry.name) ?? physical) : physical);
     {
       const limb = LIMB_NOUN.find(([re]) => re.test(String(given.name ?? entry.name ?? '')));
       if (limb) text = text.replace(/(from one of (?:two|four|six|ten) )([a-z' -]+)/i, `$1${limb[1]}`);
     }
-    text = text.split('{damage_type}').join(mainIsPhysical ? attackPhysical : energy);
+    text = text.split('{damage_type}').join((mainIsPhysical || amorphous) ? attackPhysical : energy);
     for (const s of ['rider_damage_type', 'rider2_damage_type', 'alt_damage_type', 'alt2_damage_type']) {
       // On a NON-attack entry the main is already the energy, so a rider
       // slot takes the second energy when the concept granted one — print's
@@ -1241,7 +1377,12 @@ export function applyFlavor(skeleton, llmJson) {
           e.text = e.text
             .split(`its ${mode} Speed`).join('its Speed')
             .replace(mode === 'Fly' ? /\bflies out of\b/g : /$^/, 'moves out of')
-            .replace(mode === 'Fly' ? /\bfly up to\b/g : /$^/, 'move up to');
+            .replace(mode === 'Fly' ? /\bfly up to\b/g : /$^/, 'move up to')
+            // the third phrasing, and the one the Roc's Swoop uses: the
+            // NOUN was downgraded ("its Fly Speed" -> "its Speed") while
+            // the verb survived, leaving "flies up to half its Speed" on a
+            // block with no flight (live: Cinder Clutch, the Balefire)
+            .replace(mode === 'Fly' ? /\bflies up to\b/g : /$^/, 'moves up to');
         }
       }
     }
@@ -1493,6 +1634,27 @@ export function applyFlavor(skeleton, llmJson) {
             .replace('Vulnerability to Fire damage', 'Vulnerability to Bludgeoning damage')
             .replace('Immunity to Bludgeoning, Poison, and Psychic damage', 'Immunity to Fire, Poison, and Psychic damage')
             .replace('Immunity to Poison and Psychic damage', 'Immunity to Fire, Poison, and Psychic damage');
+        }
+      }
+    }
+  }
+
+  // A capability clause never outlives the capability: the ferry's carry
+  // half references a Grappled creature, and a block with no grapple ships
+  // half a sentence about a thing it cannot do. `grapple-dependency-orphan`
+  // ALREADY fires on this — it just had no corrector, so the reject shipped
+  // (live: Sink Through Murk on the Hadal Warden). Deterministic, and the
+  // self-teleport survives intact.
+  {
+    const grapples = Object.values(sections).flat()
+      .some((e) => /Grappled condition \(escape|has the Grappled condition/.test(e.text));
+    if (!grapples) {
+      for (const list of Object.values(sections)) {
+        for (const e of list) {
+          e.text = e.text.replace(
+            /, or teleports that far together with one creature within 10 feet of itself that is willing or Grappled by it \([^)]*\)/,
+            '',
+          );
         }
       }
     }

@@ -22398,7 +22398,7 @@
         "ability": "Teleport",
         "gate": null,
         "numbers": {},
-        "template_2024": "The {creature} teleports itself or one creature within 10 feet of itself that is willing or Grappled by it up to {teleport_distance} feet to an unoccupied space the {creature} can see.",
+        "template_2024": "The {creature} teleports up to {teleport_distance} feet, or teleports that far together with one creature within 10 feet of itself that is willing or Grappled by it (the {creature} can't carry a creature this way again until the start of its next turn) to an unoccupied space the {creature} can see.",
         "slot_type": "utility",
         "extracted": "second pass (utility entries the first pass skipped)",
         "pool": "ability",
@@ -30306,7 +30306,7 @@
       {
         "death_family": "residue",
         "trait": "Lingering Ground",
-        "template_2024": "When the {creature} dies, the ground in a 20-foot Emanation from its body becomes Difficult Terrain composed of {terrain} for 10 days. A creature that ends its turn in that ground takes 5 (2d4) {damage_type} damage.",
+        "template_2024": "When the {creature} dies, the ground in a 20-foot Emanation from its body becomes Difficult Terrain for 10 days. A creature that ends its turn in that ground takes 5 (2d4) {damage_type} damage.",
         "facets": [
           "grave",
           "verdant",

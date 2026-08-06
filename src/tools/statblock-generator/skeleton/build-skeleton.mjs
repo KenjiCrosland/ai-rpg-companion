@@ -466,6 +466,20 @@ const attackShapeKey = (a) => [
 ].join('|');
 const isAttackRow = (a) => a.slot_type === 'plain_attack' || a.slot_type === 'rider_attack';
 
+// Rows that FIGHT a role's core loop, excluded from its pool rather than
+// merely damped (owner call, 2026-08-06 — role legibility). Narrow by
+// design: a hit-and-run creature that grapples has stopped running. This
+// is the documented-exception shelf the cognition gate and the
+// stealth-aura bar already sit on; everything else stays on weights,
+// because guide-not-constrain is still the rule. Signature promises are
+// unaffected — a conflicting one is vetoed upstream, a permitted one is
+// honored at its seat.
+const ROLE_EXCLUSIONS = {
+  skirmisher: (a) => /Grappled condition \(escape|swallow/i.test(a.template_2024 ?? ''),
+  lurker: (a) => /Grappled condition \(escape|swallow/i.test(a.template_2024 ?? ''),
+  artillery: (a) => /Grappled condition \(escape|swallow/i.test(a.template_2024 ?? ''),
+};
+
 const JUMP_ROW = (a) => /jumps? up to/.test(a.template_2024 ?? '');
 const redundantWithMode = (a, movement) => Boolean(movement?.includes('fly')) && JUMP_ROW(a);
 
@@ -530,6 +544,8 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
         // way it is beside wings (live: Slagbound Leap on a block with
         // Cinder Step, burrow, and climb)
         && !(JUMP_ROW(a) && chosen.some((c) => /teleports? up to/.test(c.template_2024 ?? '')))
+        // rows that fight the role's loop are out of its pool entirely
+        && !(ROLE_EXCLUSIONS[archetype]?.(a))
         // stealth chassis: see the trait pool's aura exclusion
         && !(RECURRING_EMANATION(a) && (archetype === 'skirmisher' || archetype === 'lurker'))
         // A ceiling-tagged row's counterplay stops working above its tier
@@ -551,7 +567,6 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
       if (!pool.length) continue; // leave the slot empty rather than repeat
       const weights = {};
       pool.forEach((a, idx) => { weights[idx] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes) * attackModeWeight(a, meta.attackMode) * (meta.signatureMechanic && SIGNATURE_FAMILIES[meta.signatureMechanic]?.(a) ? 6 : 1); });
-      const pick = pool[pickWeighted(weights, rng)];
       // Two different mechanics can still share most of their sentences
       // (Weight of Years and Blinding Gaze differ in one clause). The lint
       // reads that as one ability written twice, and a reader would agree.
@@ -559,45 +574,63 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
         t.replace(/\b(makes? (?:one|two|three) )[A-Z][a-z]+(?: [A-Z][a-z]+)? attack/g, '$1X attack')
           .split(/(?<=\.)\s+/).map((x) => x.trim()).filter((x) => x.length > 30),
       );
-      const picked = sentences(pick.template_2024);
-      const overlaps = chosen.some((c) => {
-        const other = sentences(c.template_2024);
-        let shared = 0;
-        for (const sIn of picked) if (other.has(sIn)) shared += 1;
-        return shared >= 2;
-      });
-      if (overlaps) continue;
-      // Mechanic families that read as "the same trick again" whatever
-      // their wording: one per block. Four of six live blocks carried a
-      // teleport — three teleport rows sit in a small legendary/bonus pool,
-      // all facet-boosted on grave/celestial themes, so they recurred far
-      // above their printed rate.
       // Same predicate lint's legendary-no-damage applies post-fill, phrased
       // for templates (placeholders, not literal dice).
       const paysLike = (a) => /\{damage\}|\b(?:makes|uses)\b/.test(a.template_2024);
-      if (familiesOf(pick).some((f) => chosen.some((c) => familiesOf(c).includes(f)))) {
-        continue;
-      }
-      // Structural dedupe ACROSS slot types: attack slots may repeat their
-      // shape (counts govern them, and melee+thrown pairs are printed), but a
-      // save/utility/legendary entry that is just another single-target
-      // damage nuke duplicates the attack the block already has.
-      const shape = shapeKeyOf(pick.template_2024);
-      // An EXECUTE row is not "just another damage nuke" — the death
-      // clause is the mechanic and the shape key can't see it (the
-      // generified Death Sentence was picked and then forfeited here on
-      // nearly every draw).
-      const isExecute = /, \{execute_effect\}|, it dies/.test(pick.template_2024);
-      if (shape && shape.endsWith('|damage') && !isExecute
+      // The post-draw guards, as PREDICATES. They used to be `continue`
+      // statements — which skipped the whole slot iteration, not just the
+      // candidate, so every rejection silently cost the block an entry.
+      // Invisible while the guards were few; the broadened mobility family
+      // (2026-08-05) made legendary menus collapse to one option on ~15% of
+      // skirmisher draws with counts.legendary = 3 (live: the Starless
+      // Warden). Rejections now REDRAW.
+      const rejects = (cand) => {
+        const picked = sentences(cand.template_2024);
+        const overlaps = chosen.some((c) => {
+          const other = sentences(c.template_2024);
+          let shared = 0;
+          for (const sIn of picked) if (other.has(sIn)) shared += 1;
+          return shared >= 2;
+        });
+        if (overlaps) return true;
+        // BONUS ACTIONS cap at two: 257 printed blocks carry none, 68 one,
+        // 4 two, and ZERO three (measured 2026-08-06). Ours shipped three,
+        // which is how an abductor ended up holding a carry, a
+        // teleport-carry and a re-hide at once (live: the Balefire).
+        if (cand.section === 'Bonus Actions'
+          && chosen.filter((c) => c.section === 'Bonus Actions').length >= 2) return true;
+        // Mechanic families that read as "the same trick again" whatever
+        // their wording: one per block.
+        if (familiesOf(cand).some((f) => chosen.some((c) => familiesOf(c).includes(f)))) return true;
+        // Structural dedupe ACROSS slot types: attack slots may repeat their
+        // shape (counts govern them, and melee+thrown pairs are printed), but
+        // a save/utility/legendary entry that is just another single-target
+        // damage nuke duplicates the attack the block already has. An EXECUTE
+        // row is exempt — the death clause is the mechanic and the shape key
+        // can't see it.
+        const shape2 = shapeKeyOf(cand.template_2024);
+        const isExecute = /, \{execute_effect\}|, it dies/.test(cand.template_2024);
+        return Boolean(shape2 && shape2.endsWith('|damage') && !isExecute
           && slot !== 'plain_attack' && slot !== 'rider_attack'
           // Legendary actions ECHO turn actions in print (Kraken: Lightning
-          // Strike beside legendary Lightning Storm), and this guard was
-          // emptying the section — a 3-use block shipped one option that
-          // locks itself per turn, stranding two uses (live: the Alabaster).
+          // Strike beside legendary Lightning Storm).
           && slot !== 'legendary'
-          && chosen.some((c) => shapeKeyOf(c.template_2024) === shape)) {
-        continue;
+          && chosen.some((c) => shapeKeyOf(c.template_2024) === shape2));
+      };
+      let pick = null;
+      {
+        const spent = new Set();
+        for (let attempt = 0; attempt < 8 && !pick; attempt += 1) {
+          const avail = pool.filter((a) => !spent.has(a));
+          if (!avail.length) break;
+          const w = {};
+          avail.forEach((a, idx) => { w[idx] = weights[pool.indexOf(a)]; });
+          const cand = avail[pickWeighted(w, rng)];
+          if (rejects(cand)) { spent.add(cand); continue; }
+          pick = cand;
+        }
       }
+      if (!pick) continue; // genuinely nothing legal left for this slot
       usedTemplates.add(pick.template_2024);
       usedNames.add(pick.ability);
 
@@ -703,6 +736,14 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
       && (a.requires ?? []).every((r) => met.has(r))
       && !referencesMissingMode(a, meta.movement)
       && !redundantWithMode(a, meta.movement)
+      // seats run downstream of the pick loop, so the bonus-action cap has
+      // to be repeated here or a guarantee walks straight past it
+      && !(a.section === 'Bonus Actions'
+        && chosen.filter((c) => c.section === 'Bonus Actions').length >= 2)
+      // ...same for the role exclusions, EXCEPT when a seat is fulfilling a
+      // signature the role permitted: an explicit concept promise that
+      // survived the veto outranks the general exclusion.
+      && !(ROLE_EXCLUSIONS[archetype]?.(a) && !meta.signatureMechanic)
       && (mind === 'sapient' || !needsMind(a))
       && (a.cr_ceiling == null || crNumber(cr) <= a.cr_ceiling));
     if (!pool.length) return;
@@ -716,6 +757,13 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
       const chosenShapes = new Set(chosen.filter(isAttackRow).map(attackShapeKey));
       const diverse = pool.filter((a) => !isAttackRow(a) || !chosenShapes.has(attackShapeKey(a)));
       if (diverse.length) pool = diverse;
+      // ...and prefer a candidate that collides with NO family already on
+      // the block: a pick can belong to SEVERAL (the Solar's Radiant
+      // Teleport is a teleport AND an emanation AND a mobility legendary),
+      // so evicting one collision can leave another standing (live-sweep:
+      // it displaced a Frightful Presence and left a Pounce beside it).
+      const clean = pool.filter((a) => !familiesOf(a).some((f) => chosen.some((c) => familiesOf(c).includes(f))));
+      if (clean.length) pool = clean;
     }
     const weights = {};
     pool.forEach((a, idx) => { weights[idx] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes) * (prefer && prefer(a) ? 8 : 1); });
@@ -738,11 +786,34 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
     // the assembly belts use — and both the one-Recharge law and the
     // nova survive.
     let demoteTo1Day = false;
-    let gatedVictim = gatedLike(pick)
+    // A seated row that shares a FAMILY with one already chosen must
+    // replace it, not join it: the guarantee bypasses the pick loop's
+    // family cap entirely, which is how a teleport signature seated a
+    // second mobility legendary beside a pounce (live-sweep, CR 15 seed
+    // 10). Same bypass class as the Recharge cap below.
+    const famConflicts = (() => {
+      const fams = familiesOf(pick);
+      if (!fams.length) return [];
+      return chosen.map((c, i) => (familiesOf(c).some((f) => fams.includes(f))
+        && !spineSet.has(c) && !guaranteed.has(c) ? i : -1))
+        .filter((i) => i !== -1);
+    })();
+    // ALL of them, not the last one — a multi-family pick conflicts with
+    // every row it shares a family with, and leaving any behind breaks the
+    // law the cap exists to keep. Rare after the soft filter above.
+    // Splicing the earlier conflicts shifts every later index down, so the
+    // surviving victim's position must be re-based or the swap lands on
+    // the wrong row.
+    const doomed = famConflicts.slice(0, -1);
+    const famVictim = famConflicts.length
+      ? famConflicts[famConflicts.length - 1] - doomed.length : undefined;
+    for (const idx of [...doomed].sort((a, b) => b - a)) chosen.splice(idx, 1);
+    let gatedVictim = famVictim ?? (gatedLike(pick)
       ? chosen.map((c, i) => (gatedLike(c) && !spineSet.has(c) && !guaranteed.has(c) ? i : -1))
         .filter((i) => i !== -1).pop()
-      : undefined;
-    if (gatedVictim != null && chosen[gatedVictim].slot_type === 'area' && pick.slot_type !== 'area') {
+      : undefined);
+    if (famVictim == null && gatedVictim != null
+      && chosen[gatedVictim].slot_type === 'area' && pick.slot_type !== 'area') {
       demoteTo1Day = true;
       gatedVictim = undefined;
     }
@@ -801,7 +872,7 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
   const ARCHETYPE_SEATS = {
     defender: (a) => /Grappled condition|Restrained condition|pulls? (?:the target|one creature|each creature)[^.]*toward|used only for Opportunity Attacks|Speed is (?:0|halved) until the end of/.test(a.template_2024 ?? '')
       || a.section === 'Reactions',
-    support: (a) => /casts \*(?:Bless|Healing Word|Cure Wounds|Lesser Restoration|Sanctuary)|gains \d+ \([^)]*\) Temporary Hit Points|teleports itself or one creature within 10 feet of itself that is willing|and up to three willing creatures/.test(a.template_2024 ?? ''),
+    support: (a) => /casts \*(?:Bless|Healing Word|Cure Wounds|Lesser Restoration|Sanctuary)|gains \d+ \([^)]*\) Temporary Hit Points|together with one creature within 10 feet of itself that is willing|and up to three willing creatures/.test(a.template_2024 ?? ''),
     // Skirmisher seats the STRIKE half of the hit-and-run loop (live: the
     // Skar had the escape teleport and nothing that pays the return trip);
     // lurker seats the unseen half. Both pools are print-verbatim
@@ -870,6 +941,21 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
       chosen[idx] = { ...redraw, options: [redraw] };
     }
   }
+  // The legendary MENU floor, re-checked AFTER every guarantee: seats and
+  // family evictions run downstream of pickSlotCounts, so a block that
+  // sampled three options could still ship one (a multi-family seat
+  // displacing two rows). Print offers 2-3 at CR 15+ and never 1.
+  if (crNumber(cr) >= 15) {
+    const legCount = () => chosen.filter((c) => c.slot_type === 'legendary').length;
+    for (let tries = 0; tries < 3 && legCount() === 1; tries += 1) {
+      const before = legCount();
+      swapIn((a) => a.slot_type === 'legendary'
+        && !familiesOf(a).some((f) => chosen.some((c) => familiesOf(c).includes(f))),
+      ['legendary']);
+      if (legCount() === before) break; // nothing legal left; take the one
+    }
+  }
+
   // A jump is dead text beside a teleport, and the pick-time guard can't
   // see a teleport the signature guarantee seats AFTER it (live-sweep:
   // CR 11 seed 23 kept both). Settle it on the finished set.

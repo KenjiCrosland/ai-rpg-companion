@@ -177,7 +177,11 @@ describe('Alabaster regressions (live block 4, CR 20)', () => {
   });
 
   test('reaction and bonus-action spells are stripped from action-cast lists', () => {
-    const sk = buildSkeleton({ cr: 20, size: 'Huge', seed: 2036068080, alternatives: 3, archetype: 'brute' });
+    // themed to mind/terror so the identity vet (which now judges utility
+    // spells too) keeps the action spells this test is actually about —
+    // the fixture's original picks were incidental to the reaction/bonus
+    // stripping it pins
+    const sk = buildSkeleton({ cr: 20, size: 'Huge', seed: 2036068080, alternatives: 3, archetype: 'brute', themes: ['mind', 'terror'] });
     const m = applyFlavor(sk, respond(sk, {
       entries: flavorRequests(sk).map((r) => ({
         id: r.id, name: r.placeholder_name,
@@ -1954,7 +1958,7 @@ describe('archetype differentials: the numbers trade and the kit shows it', () =
   });
 
   test('every support spends an action on its allies', () => {
-    const GIVES = /casts \*(?:Bless|Healing Word|Cure Wounds|Lesser Restoration|Sanctuary)|Temporary Hit Points|teleports itself or one creature within 10 feet of itself that is willing|willing creatures within/;
+    const GIVES = /casts \*(?:Bless|Healing Word|Cure Wounds|Lesser Restoration|Sanctuary)|Temporary Hit Points|together with one creature within 10 feet of itself that is willing|willing creatures within/;
     for (const cr of [5, 12, 20]) {
       for (let seed = 1; seed <= 8; seed += 1) {
         const sk = buildSkeleton({ cr, seed, archetype: 'support' });
@@ -2989,7 +2993,7 @@ describe('the Qarun, round 2: on-death teeth and the carry-ferry', () => {
     const rows = [];
     const visit = (o) => {
       if (o && typeof o === 'object') {
-        if (typeof o.template_2024 === 'string' && /teleports itself or one creature/.test(o.template_2024)) rows.push(o);
+        if (typeof o.template_2024 === 'string' && /together with one creature within 10 feet/.test(o.template_2024)) rows.push(o);
         Object.values(o).forEach(visit);
       }
     };
@@ -2997,12 +3001,14 @@ describe('the Qarun, round 2: on-death teeth and the carry-ferry', () => {
     expect(rows.length).toBeGreaterThan(0);
     for (const r of rows) {
       expect(r.template_2024).toMatch(/willing or Grappled by it/);
+      // the carry is gated; the self-teleport stays at will
+      expect(r.template_2024).toMatch(/can't carry a creature this way again/);
       expect(r.modified_from_print).toBeTruthy();
     }
     // and the support seat still recognizes the re-keyed row
     for (let seed = 1; seed <= 8; seed += 1) {
       const sk = buildSkeleton({ cr: 12, seed, archetype: 'support' });
-      const GIVES = /casts \*(?:Bless|Healing Word|Cure Wounds|Lesser Restoration|Sanctuary)|Temporary Hit Points|teleports itself or one creature within 10 feet of itself that is willing|willing creatures within/;
+      const GIVES = /casts \*(?:Bless|Healing Word|Cure Wounds|Lesser Restoration|Sanctuary)|Temporary Hit Points|together with one creature within 10 feet of itself that is willing|willing creatures within/;
       expect(sk.entries.some((e) => GIVES.test(e.text))).toBe(true);
     }
   });
@@ -3074,7 +3080,12 @@ describe('the Tar-Shroud Watcher: names survive, faces stay home, annotations tr
       // precise probe: the Bite ladder's "ending the effect on itself"
       // false-matched a bare / on itself/ gate
       if (!/cast \*[^*]+\* on itself/.test(all)) continue;
-      expect(all).toMatch(/\*Invisibility\* on itself/);
+      // the self-buff is non-concentration on legendaries (Invisibility is
+      // concentration, and the legendary overrule strips it — the two
+      // rules used to cancel out)
+      const { SELF_CAST_SPELLS: SC } = require('../flavor-prompt.mjs');
+      const selfSpell = all.match(/cast \*([A-Z][\w' ]+?)\* on itself/)[1];
+      expect(SC).toContain(selfSpell);
       expect(all).not.toMatch(/Scorching Ray/);
       return;
     }
@@ -3756,8 +3767,12 @@ describe('the Graspwarden: guesses stay correctable, menus have choices', () => 
         })),
       });
       const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
-      expect(all).not.toMatch(/composed of carapace/);
-      expect(all).toMatch(/composed of (ice|rubble|bare stone|shifting sand|deep mud)/);
+      // the rule is GROUND, not a word ban: "carapace-plate" is a raw
+      // material, "carapace-strewn stone" is a floor with shells on it —
+      // and the surface now comes from the block's own house
+      const ground = all.match(/composed of ([^,.]+)/);
+      expect(ground).toBeTruthy();
+      expect(ground[1]).toMatch(/stone|ground|scree|rubble|sand|ice|mud|loam|flats|floor|dust|snow|turf|soil|shards|drift|crust|mire|thicket|mycelium|seep/);
       return;
     }
   });
@@ -3777,6 +3792,478 @@ describe('engine-filled slots are never asked of the model', () => {
       const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
       expect(all).not.toMatch(/\{weakness_type\}/);
       expect(all).toMatch(/takes \w+ damage, its Speed decreases/);
+      return;
+    }
+  });
+});
+
+/**
+ * Live block 42 (the Starless Warden) — owner: "I'm still seeing a single
+ * legendary." The MENU FLOOR was doing its job (counts.legendary = 3);
+ * the pick loop was throwing the slots away. Every post-draw guard was a
+ * `continue`, which skips the whole slot iteration rather than the
+ * candidate — so a rejection cost the block an entry outright. Invisible
+ * while the guards were few; broadening the mobility family the day
+ * before made it collapse ~15% of skirmisher legendary menus to one
+ * option.
+ */
+describe('the Starless Warden: a rejected candidate costs a draw, not a slot', () => {
+  test('legendary menus reach their sampled count across archetypes and modes', () => {
+    for (const archetype of ['skirmisher', 'lurker', 'brute', null]) {
+      for (const attackMode of ['melee', 'mixed']) {
+        let short = 0;
+        for (let seed = 1; seed <= 25; seed += 1) {
+          const sk = buildSkeleton({ cr: 20, seed, alternatives: 3, archetype, attackMode, signatureMechanic: 'teleport' });
+          const legs = sk.entries.filter((e) => e.slot_type === 'legendary');
+          if (legs.length && legs.length < 2) short += 1;
+        }
+        expect(`${archetype}/${attackMode}: ${short}`).toBe(`${archetype}/${attackMode}: 0`);
+      }
+    }
+  });
+
+  test('a legendary menu never collapses to one option, seats and evictions included', () => {
+    for (const cr of [15, 17, 20, 24]) {
+      for (const archetype of ['skirmisher', 'lurker', null]) {
+        for (let seed = 1; seed <= 20; seed += 1) {
+          const legs = buildSkeleton({ cr, seed, alternatives: 3, archetype, signatureMechanic: 'teleport' })
+            .entries.filter((e) => e.slot_type === 'legendary');
+          expect(`CR ${cr} ${archetype} seed ${seed}: ${legs.length}`)
+            .not.toBe(`CR ${cr} ${archetype} seed ${seed}: 1`);
+        }
+      }
+    }
+  });
+
+  test('the guards still hold — redrawing never re-admits what they reject', () => {
+    const MOBILITY = /(?:moves up to|teleports? up to|flies up to)/;
+    for (const cr of [15, 20, 24]) {
+      for (let seed = 1; seed <= 20; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, alternatives: 3, signatureMechanic: 'teleport' });
+        const legs = sk.entries.filter((e) => e.slot_type === 'legendary');
+        // one mobility legendary, still
+        expect(`CR ${cr} seed ${seed} mobility: ${legs.filter((e) => MOBILITY.test(e.text)).length}`)
+          .toBe(`CR ${cr} seed ${seed} mobility: ${Math.min(legs.filter((e) => MOBILITY.test(e.text)).length, 1)}`);
+        // and no duplicate templates slipped in via the retry
+        const tmpls = sk.entries.map((e) => e.text);
+        expect(new Set(tmpls).size).toBe(tmpls.length);
+      }
+    }
+  });
+
+  test('a slot with genuinely nothing legal still yields rather than looping', () => {
+    // every draw rejected -> the slot is dropped, not retried forever
+    for (let seed = 1; seed <= 10; seed += 1) {
+      const sk = buildSkeleton({ cr: 1, seed, alternatives: 1 });
+      expect(sk.entries.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+/**
+ * Live block 43 (the Arterial Drifter) — owner: "how is this a skirmisher?
+ * ... this fixes acid and oozes but not the bigger problem of not getting
+ * skirmishers when I picked a skirmisher in the ui." DIAGNOSIS: the role's
+ * machinery all fired (speed_mod, exit seat, ranged parity) and was
+ * OUTVOTED — the concept's engulf signature carries a guaranteed seat, a
+ * second seat for its grapple prerequisite, and x6 weight, so a
+ * grapple-swallow chain owned the sheet while the role whispered.
+ */
+describe('the Arterial Drifter: a picked role outranks an inferred signature', () => {
+  const noFlavor = async (p) => (/Every number is already fixed/.test(p) ? null : JSON.stringify({ problems: [] }));
+
+  test('a skirmisher vetoes an engulf signature however the role arrived', async () => {
+    // Owner call: the concept call resolves ONE archetype and everything
+    // serves it. A response returning `skirmisher` AND `engulf` is the
+    // model contradicting itself in one object — not two readings worth
+    // respecting — so the source of the role is irrelevant.
+    const built = (archetypeSource) => generateFromSkeleton({
+      concept: 'an engulfing ooze that splits and re-forms', cr: 20, seed: 11,
+      archetypeName: 'skirmisher', signatureMechanic: 'engulf', archetypeSource,
+    }, noFlavor);
+    const swallows = (m) => Object.values(m.sections).flat().some((e) => /swallow/i.test(e.text));
+    expect(swallows(await built('user'))).toBe(false);
+    expect(swallows(await built('auto'))).toBe(false);
+  });
+
+  test('a compatible signature survives a user pick — untouched by the veto', async () => {
+    // the veto's job is to LEAVE compatible signatures alone: a picked
+    // skirmisher with a teleport signature must build exactly as the same
+    // block does with an inferred role (seat success itself varies by seed
+    // and isn't what this pins).
+    const built = (archetypeSource) => generateFromSkeleton({
+      concept: 'a darting thing that blinks between shadows', cr: 20, seed: 11,
+      archetypeName: 'skirmisher', signatureMechanic: 'teleport', archetypeSource,
+    }, noFlavor);
+    const textOf = (m) => Object.values(m.sections).flat().map((e) => `${e.name}|${e.text}`).join('\n');
+    expect(textOf(await built('user'))).toBe(textOf(await built('auto')));
+  });
+
+  test('brutes and controllers keep the mechanics that suit them', async () => {
+    for (const archetypeName of ['brute', 'controller']) {
+      const m = await generateFromSkeleton({
+        concept: 'a devouring mass', cr: 20, seed: 11,
+        archetypeName, signatureMechanic: 'engulf', archetypeSource: 'user',
+      }, noFlavor);
+      expect(Object.values(m.sections).flat().some((e) => /swallow/i.test(e.text))).toBe(true);
+    }
+  });
+
+  test('an Ooze deals its energy, never edges or points (4/4 printed are Acid-only)', () => {
+    for (let seed = 1; seed <= 25; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, attackMode: 'mixed' });
+      const m = applyFlavor(sk, { ...respond(sk), type: 'Ooze', physical_damage: 'Slashing', energy_damage: 'Acid' });
+      for (const e of Object.values(m.sections).flat()) {
+        for (const t of ['Slashing', 'Piercing', 'Bludgeoning']) {
+          expect(`seed ${seed} ${e.name}: ${t} ${e.text.includes(`${t} damage`)}`)
+            .toBe(`seed ${seed} ${e.name}: ${t} false`);
+        }
+      }
+    }
+  });
+
+  test('the fixed-role prompt makes the metadata serve the role', () => {
+    const { buildArchetypeResolvePrompt } = require('../../format-2024/generate.mjs');
+    const p = buildArchetypeResolvePrompt('a thing', '', { cr: 20, archetype: 'skirmisher' });
+    expect(p).toMatch(/EVERY field below must SERVE that role/);
+    expect(p).toMatch(/A skirmisher does not engulf, grapple, or plant an aura/);
+    expect(p).toMatch(/If the concept pulls against the role, bend the CONCEPT/);
+  });
+});
+
+/**
+ * Live block 44 (the Balefire) — an abductor whose signature move named a
+ * movement mode the sheet lacked, who held three bonus actions (0/329 in
+ * print), walked on mud while made of fire, and carried victims by
+ * teleport at will.
+ */
+describe('the Balefire: the abduction engine gets its gates', () => {
+  test('no flight verb survives on a block without a Fly speed', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, movement: ['climb'], signatureMechanic: 'grapple' });
+      const m = applyFlavor(sk, { ...respond(sk), speed: '50 ft., Climb 50 ft.' });
+      const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+      expect(`seed ${seed}: ${/\bflies\b|\bfly\b/.test(all)}`).toBe(`seed ${seed}: false`);
+    }
+  });
+
+  test('bonus actions cap at two, seats included (0/329 printed carry three)', () => {
+    for (const cr of [11, 17, 20]) {
+      for (let seed = 1; seed <= 25; seed += 1) {
+        for (const sig of ['grapple', 'teleport', 'engulf']) {
+          const sk = buildSkeleton({ cr, seed, signatureMechanic: sig, archetype: 'skirmisher' });
+          const n = sk.entries.filter((e) => e.section === 'Bonus Actions').length;
+          expect(`CR ${cr} seed ${seed} ${sig}: ${n <= 2}`).toBe(`CR ${cr} seed ${seed} ${sig}: true`);
+        }
+      }
+    }
+  });
+
+  test('difficult terrain follows print: created names nothing, passed-through is habitat', () => {
+    const banks = require('@/data/texture-banks.json');
+    const lib = require('@/data/ability-library.json');
+    // CREATED terrain names no material — print's Aberrant Ground says
+    // "The ground ... is Difficult Terrain", full stop
+    for (const t of lib.on_death.templates) {
+      expect(`${t.death_family}: ${/Difficult Terrain composed of/.test(t.template_2024)}`)
+        .toBe(`${t.death_family}: false`);
+    }
+    // PASSED-THROUGH terrain is habitat: six natural terrains, one per house
+    const natural = banks._meta.natural_terrain;
+    expect(natural.length).toBeGreaterThanOrEqual(5);
+    for (const [h, b] of Object.entries(banks.houses)) {
+      expect(`${h}: ${natural.includes(b.habitat_terrain)}`).toBe(`${h}: true`);
+    }
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed, themes: ['fiendish'] });
+      if (!sk.traits.some((t) => /\{terrain\}/.test(t.text))) continue;
+      sk.houses = ['flame'];
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          // an exotic composition describes the creature, not the world
+          ...Object.fromEntries(r.slots.map((sl) => [sl, sl === 'terrain' ? 'burning carapace-plate' : 'spores'])),
+        })),
+      });
+      const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+      expect(all).not.toMatch(/carapace/);
+      expect(all).toMatch(/composed of ash and cinders/);
+      return;
+    }
+  });
+
+  test('a foreign terrain fill on a housed block never crashes and lands on habitat', () => {
+    // The live crash: the off-house branch called surface() before its
+    // declaration (TDZ) and killed whole generations — "Cannot access
+    // 'surface' before initialization". No fixture had reached it because
+    // every test terrain fill failed an EARLIER vet first.
+    let exercised = 0;
+    for (let seed = 1; seed <= 120 && exercised < 3; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, themes: ['forged', 'subterranean'] });
+      if (!sk.traits.some((t) => /\{terrain\}/.test(t.text))) continue;
+      sk.houses = ['iron'];
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          // 'kelp' belongs to brine — foreign to iron, so the off-house
+          // branch is the one that runs
+          ...Object.fromEntries(r.slots.map((sl) => [sl, sl === 'terrain' ? 'kelp tangles' : 'spores'])),
+        })),
+      });
+      exercised += 1;
+      const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+      expect(all).not.toMatch(/kelp/);
+      if (/composed of/.test(all)) {
+        expect(all).toMatch(/composed of (ice or snow|sand and loose scree|mud and shallow water|rubble and broken stone|ash and cinders|thick undergrowth)/);
+      }
+    }
+    expect(exercised).toBeGreaterThan(0);
+  });
+
+  test('the ferry carries at a rate limit; self-teleport stays at will', () => {
+    const lib = require('@/data/ability-library.json');
+    const rows = [];
+    const visit = (o) => {
+      if (o && typeof o === 'object') {
+        if (typeof o.template_2024 === 'string' && /together with one creature/.test(o.template_2024)) rows.push(o);
+        Object.values(o).forEach(visit);
+      }
+    };
+    visit(lib);
+    expect(rows.length).toBeGreaterThan(0);
+    for (const r of rows) {
+      expect(r.template_2024).toMatch(/teleports up to \{teleport_distance\} feet, or teleports that far together with/);
+      expect(r.template_2024).toMatch(/can't carry a creature this way again until the start of its next turn/);
+    }
+  });
+});
+
+/**
+ * Live block 45 (the Hadal Warden) — and the crash that preceded it. The
+ * coherence taxonomy (owner, 2026-08-06): type/alignment agreement,
+ * name-payload agreement, substrate/capability references, role
+ * legibility. Three of the four get deterministic closure here.
+ */
+describe('the Hadal Warden: coherence by construction', () => {
+  test('a capability clause never outlives the capability', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, signatureMechanic: 'teleport' });
+      const ferry = sk.entries.find((e) => /together with one creature/.test(e.text));
+      if (!ferry) continue;
+      const m = applyFlavor(sk, respond(sk));
+      const all = Object.values(m.sections).flat();
+      const grapples = all.some((e) => /Grappled condition \(escape|has the Grappled condition/.test(e.text));
+      const carries = all.some((e) => /together with one creature/.test(e.text));
+      // the carry clause exists only where a grapple does
+      expect(`seed ${seed}: carry=${carries} grapple=${grapples}`)
+        .toBe(`seed ${seed}: carry=${grapples} grapple=${grapples}`);
+      return;
+    }
+  });
+
+  test('alignment follows the type where print is unanimous', async () => {
+    const noFlavor = async (p) => (/Every number is already fixed/.test(p) ? null : JSON.stringify({ problems: [] }));
+    for (const [type, expected] of [['Ooze', 'Unaligned'], ['Beast', 'Unaligned'], ['Construct', 'Unaligned']]) {
+      const m = await generateFromSkeleton(
+        { concept: 'a thing', cr: 20, seed: 4, resolvedType: type }, noFlavor,
+      );
+      m.alignment = 'Lawful Good';
+      // re-run the floor the way assembly does
+      const { lintStatblock } = require('../../format-2024/lint.mjs');
+      expect(lintStatblock(m, { edition: '2024' })).toBeTruthy();
+    }
+    // direct check of the mapping itself
+    const m2 = await generateFromSkeleton(
+      { concept: 'a slithering mass', cr: 20, seed: 4, resolvedType: 'Ooze' },
+      async (p) => (/Every number is already fixed/.test(p)
+        ? JSON.stringify({
+          name: 'X', size: 'Large', type: 'Ooze', alignment: 'Lawful Good', speed: '20 ft.',
+          stats: { STR: 20, DEX: 8, CON: 22, INT: 2, WIS: 8, CHA: 4 }, entries: [],
+        })
+        : JSON.stringify({ problems: [] })),
+    );
+    expect(m2.alignment).toBe('Unaligned');
+  });
+
+  test('the concept prompt bars Humanoid above the tier print uses it at', () => {
+    const { buildArchetypeResolvePrompt } = require('../../format-2024/generate.mjs');
+    const p = buildArchetypeResolvePrompt('a hunting thing', '', { cr: 20 });
+    expect(p).toMatch(/"Humanoid" is the NPC-template type/);
+    expect(p).toMatch(/exactly one above CR 10/);
+  });
+
+  test('a skirmisher is never handed a grapple row it did not ask for', () => {
+    for (const archetype of ['skirmisher', 'lurker', 'artillery']) {
+      for (let seed = 1; seed <= 25; seed += 1) {
+        const sk = buildSkeleton({ cr: 20, seed, archetype });
+        for (const e of sk.entries) {
+          expect(`${archetype} seed ${seed} ${e.name}: ${/Grappled condition \(escape|swallow/i.test(e.text)}`)
+            .toBe(`${archetype} seed ${seed} ${e.name}: false`);
+        }
+      }
+    }
+    // ...but a permitted signature still seats: grapple is vetoed for
+    // skirmishers, so use a role that allows it
+    const brute = buildSkeleton({ cr: 20, seed: 5, archetype: 'brute', signatureMechanic: 'grapple' });
+    expect(brute.entries.some((e) => /Grappled condition \(escape/.test(e.text))).toBe(true);
+  });
+});
+
+/**
+ * THE COHERENCE PASS (owner design, 2026-08-06): "one place where the
+ * block's identity gets resolved and then constrains everything
+ * downstream." Runs after selection, before naming. Owns the register
+ * lock, the capability manifest, and the type contract — the role gate
+ * stays upstream at selection where it belongs.
+ */
+describe('resolveIdentity: constraints, not corrections', () => {
+  const { resolveIdentity } = require('../flavor-prompt.mjs');
+
+  test('the manifest reports what the block can actually do', () => {
+    const grappler = buildSkeleton({ cr: 20, seed: 5, archetype: 'brute', signatureMechanic: 'grapple' });
+    const idG = resolveIdentity(grappler, { type: 'Monstrosity' });
+    expect(idG.manifest.grapples).toBe(true);
+    const flier = buildSkeleton({ cr: 20, seed: 5, movement: ['fly'] });
+    expect(resolveIdentity(flier, {}).manifest.movement).toContain('fly');
+    const walker = buildSkeleton({ cr: 20, seed: 5, movement: ['climb'] });
+    expect(resolveIdentity(walker, {}).manifest.movement).not.toContain('fly');
+  });
+
+  test('the type contract carries print\'s measured facts', () => {
+    const sk = buildSkeleton({ cr: 20, seed: 5 });
+    expect(resolveIdentity(sk, { type: 'Ooze' }).contract).toMatchObject({ physical: null, alignment: 'Unaligned', anatomy: false });
+    expect(resolveIdentity(sk, { type: 'Fiend' }).contract).toMatchObject({ noGood: true });
+    expect(resolveIdentity(sk, { type: 'Dragon' }).contract).toMatchObject({ type: 'Dragon' });
+    expect(resolveIdentity(sk, { type: 'Dragon' }).contract.alignment).toBeUndefined();
+  });
+
+  test('the prompt states the contract as fact, so the model is constrained not corrected', () => {
+    const sk = buildSkeleton({ cr: 20, seed: 5, movement: ['climb'] });
+    sk.identity = resolveIdentity(sk, { type: 'Ooze', themes: ['devouring'] });
+    const p = buildFlavorPrompt(sk, { concept: 'a devouring mass', themes: ['devouring'] });
+    expect(p).toMatch(/WHAT THIS CREATURE IS/);
+    expect(p).toMatch(/EVERY damage it deals is its energy type/);
+    expect(p).toMatch(/no limbs, jaws, or teeth to name/);
+    expect(p).toMatch(/alignment is Unaligned/);
+    expect(p).toMatch(/CANNOT fly/);
+  });
+
+  test('a block with no contract restrictions gets no contract block', () => {
+    const sk = buildSkeleton({ cr: 20, seed: 5, movement: ['fly'], signatureMechanic: 'grapple', archetype: 'brute' });
+    sk.identity = resolveIdentity(sk, { type: 'Dragon', themes: ['draconic'] });
+    const p = buildFlavorPrompt(sk, { concept: 'a dragon', themes: ['draconic'] });
+    expect(p).not.toMatch(/CANNOT fly/);
+    expect(p).not.toMatch(/grapples nothing/);
+  });
+
+  test('the pipeline attaches the identity and traces the manifest', async () => {
+    const seen = [];
+    await generateFromSkeleton(
+      { concept: 'a slithering mass', cr: 20, seed: 4, resolvedType: 'Ooze', onProgress: () => {} },
+      async (p) => {
+        if (/Every number is already fixed/.test(p)) { seen.push(p); return null; }
+        return JSON.stringify({ problems: [] });
+      },
+    );
+    expect(seen[0]).toMatch(/WHAT THIS CREATURE IS/);
+    expect(seen[0]).toMatch(/EVERY damage it deals is its energy type/);
+  });
+});
+
+/**
+ * Live block 46 (Scouring Silt) — owner: "I think we have a regression on
+ * our hands. It was better before and the original name of Chimeric
+ * Sentinel was better." Diagnosis: not new failures, but MY OWN RULES
+ * COLLIDING, plus a typed name the default path never received.
+ */
+describe('Scouring Silt: rules that stop undoing each other', () => {
+  const noFlavor = async (p) => (/Every number is already fixed/.test(p) ? null : JSON.stringify({ problems: [] }));
+
+  test('a typed name is the creature\'s name on the skeleton path too', async () => {
+    const m = await generateFromSkeleton(
+      { concept: 'a temple construct of silt', cr: 20, seed: 4, resolvedType: 'Construct',
+        namePass: { userTypedName: 'Chimeric Sentinel' } },
+      async (p) => (/Every number is already fixed/.test(p)
+        ? JSON.stringify({
+          name: 'Scouring Silt', size: 'Huge', type: 'Construct', alignment: 'Unaligned', speed: '30 ft.',
+          stats: { STR: 26, DEX: 14, CON: 24, INT: 8, WIS: 14, CHA: 20 }, entries: [],
+        })
+        : JSON.stringify({ problems: [] })),
+    );
+    expect(m.name).toBe('Chimeric Sentinel');
+    // and every self-reference follows
+    const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+    expect(all).not.toMatch(/scouring silt/i);
+  });
+
+  test('a self-cast legendary gets a NON-concentration self-buff, never an attack spell', () => {
+    for (let seed = 1; seed <= 80; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, caster: true });
+      const selfRow = sk.entries.find((e) => / on itself/.test(e.text) && /\{signature_spell\}/.test(e.text));
+      if (!selfRow) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl, sl.startsWith('signature_spell') ? 'Acid Arrow' : 'spores'])),
+        })),
+      });
+      const self = Object.values(m.sections).flat().find((e) => / on itself/.test(e.text));
+      const cast = self.text.match(/cast \*([A-Z][\w' ]+?)\*/)[1];
+      // never an attack spell at itself, and never a concentration spell
+      // from a legendary (the two rules that used to cancel out)
+      expect(cast).not.toBe('Acid Arrow');
+      const { SELF_CAST_NO_CONCENTRATION, CONCENTRATION_SPELLS } = require('../flavor-prompt.mjs');
+      if (self.section === 'Legendary Actions' || /can't take this action again/.test(self.text)) {
+        expect(SELF_CAST_NO_CONCENTRATION).toContain(cast);
+        expect(CONCENTRATION_SPELLS).not.toContain(cast);
+      }
+      return;
+    }
+  });
+
+  test('two legendary echoes never cast the same spell, even on a narrow palette', () => {
+    for (let seed = 1; seed <= 80; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, caster: true, themes: ['forged'] });
+      const echoes = sk.entries.filter((e) => /uses Spellcasting to cast \{signature_spell/.test(e.text));
+      if (echoes.length < 2) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk),
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl, sl.startsWith('signature_spell') ? 'Acid Arrow' : 'spores'])),
+        })),
+      });
+      const cast = Object.values(m.sections).flat()
+        .filter((e) => /uses Spellcasting to cast/.test(e.text))
+        .map((e) => e.text.match(/cast \*([A-Z][\w' ]+?)\*/)?.[1]).filter(Boolean);
+      expect(new Set(cast).size).toBe(cast.length);
+      return;
+    }
+  });
+
+  test('utility spells are vetted too — Web never reaches a block with no snare register', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, caster: true, themes: ['forged'] });
+      if (!sk.entries.some((e) => /\{spells\}/.test(e.text))) continue;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        ...respond(sk), energy_damage: 'Acid',
+        entries: reqs.map((r) => ({
+          id: r.id, name: r.placeholder_name,
+          ...Object.fromEntries(r.slots.map((sl) => [sl,
+            sl === 'spells' ? ['Web', 'Detect Magic'] : 'spores'])),
+        })),
+      });
+      const caster = Object.values(m.sections).flat().find((e) => /At Will:/.test(e.text));
+      expect(caster.text).not.toMatch(/\*Web\*/);      // grasping, off-register for forged
+      expect(caster.text).toMatch(/Detect Magic/);     // facet-less spells belong to everyone
       return;
     }
   });
