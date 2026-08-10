@@ -14,7 +14,7 @@
  * back deterministically, self-references included.
  */
 import {
-  generateMonster2024, buildArchetypeResolvePrompt, validateArchetypeResponse,
+  generateMonster2024, buildArchetypeResolvePrompt, validateArchetypeResponse, rollEnergy, rollDamageMix,
   parseGenerationResponse, pickRandomArchetype, applyRenameMapping, crNumberFor,
 } from '@/tools/statblock-generator/format-2024/generate.mjs';
 import { ref } from 'vue';
@@ -107,6 +107,7 @@ export async function generateEmbeddedStatblock({
   let identity = null;
   let lore = null;
   let themes = null;
+  let house = null;
   let mind = null;
   let conceptSize = null;
   let movement = null;
@@ -122,8 +123,10 @@ export async function generateEmbeddedStatblock({
     archetypeName = givenArchetype;
     archetypeSource = 'user';
   }
+  const rolledEnergy = rollEnergy();
+  const rolledMix = rollDamageMix();
   try {
-    const raw = await generateGptResponse(buildArchetypeResolvePrompt(concept, '', { cr, archetype: givenArchetype }), validateArchetypeResponse, 2);
+    const raw = await generateGptResponse(buildArchetypeResolvePrompt(concept, '', { cr, archetype: givenArchetype, energy: rolledEnergy, damageMix: rolledMix }), validateArchetypeResponse, 2);
     const parsed = parseGenerationResponse(raw);
     archetypeName = givenArchetype ?? parsed?.archetype ?? null;
     if (typeof parsed?.identity === 'string' && parsed.identity.trim().length > 20) {
@@ -139,6 +142,9 @@ export async function generateEmbeddedStatblock({
       const FACETS = ['bestial','armed','amorphous','grave','fiendish','celestial','fey','draconic','elemental','verdant','forged','mind','venomous','terror','beguiling','grasping','devouring','aquatic','subterranean','aerial','uncanny','arcane','voice','gaze','breath'];
       const t = parsed.themes.filter((x) => FACETS.includes(String(x).toLowerCase())).slice(0, 2);
       if (t.length) themes = t;
+    }
+    if (typeof parsed?.material === 'string' && parsed.material.trim()) {
+      house = parsed.material.trim().toLowerCase();
     }
     if (['sapient', 'bestial', 'mindless'].includes(parsed?.mind)) mind = parsed.mind;
     if (typeof parsed?.size === 'string') conceptSize = parsed.size;
@@ -172,6 +178,9 @@ export async function generateEmbeddedStatblock({
         typeSource,
         lore,
         themes,
+        house,
+        energy: rolledEnergy,
+        damageMix: rolledMix,
         mind,
         conceptSize,
         movement,

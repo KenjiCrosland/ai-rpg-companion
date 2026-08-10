@@ -17,6 +17,7 @@ import spec from '@/data/archetype-chassis-spec.json';
 import srdMonsters from '@/data/srd52-monsters.json';
 import challengeRatings from '@/data/challengeRatings.json';
 import crTable from '@/data/cr-table.json';
+import textureBanks from '@/data/texture-banks.json';
 import { chassisFor, applyArchetype } from '../chassis/chassis.mjs';
 import { HIT_DIE_BY_SIZE, hpFormulaFor, attackDamageDiceFor, saveDamageDiceFor } from './dice.mjs';
 import { slotPlanFor } from '../chassis/slot-plan.mjs';
@@ -203,6 +204,86 @@ export function defenseBudgetFor(cr, archetypeName) {
   return { points: base };
 }
 
+const CANONICAL_TYPES = ['Aberration', 'Beast', 'Celestial', 'Construct', 'Dragon', 'Elemental', 'Fey', 'Fiend', 'Giant', 'Humanoid', 'Monstrosity', 'Ooze', 'Plant', 'Undead'];
+
+/**
+ * THE ENERGY IS ROLLED BEFORE THE CONCEPT (owner call, 2026-08-07): "the
+ * randomness of the energies can come before the concept call so that it's
+ * a more coherent concept."
+ *
+ * It used to be the FLAVOR call's free choice, made after the creature
+ * already existed and guided only by a palette line — so the lore and the
+ * damage type had no reason to agree. A colony of stone-plated spiderlings
+ * raining heat-baked chitin shards came back dealing PSYCHIC, the rarest
+ * energy in print (2 of the 91 CR 5+ blocks that have one).
+ *
+ * Rolling it FIRST inverts that: the concept call is told the energy and
+ * writes a body that makes it inevitable. Weights are the measured printed
+ * distribution at CR 5+ — Fire is common and Psychic is rare because that
+ * is what the corpus does.
+ */
+const ENERGY_WEIGHTS = {
+  Fire: 24, Acid: 11, Poison: 11, Lightning: 10, Cold: 9,
+  Necrotic: 8, Force: 7, Thunder: 5, Radiant: 4, Psychic: 2,
+};
+
+export function rollEnergy(rand = Math.random) {
+  const entries = Object.entries(ENERGY_WEIGHTS);
+  const total = entries.reduce((n, [, w]) => n + w, 0);
+  let roll = rand() * total;
+  for (const [type, w] of entries) {
+    roll -= w;
+    if (roll < 0) return type;
+  }
+  return 'Fire';
+}
+
+function energyBrief(energy) {
+  if (!energy) return '';
+  return `
+3. ENERGY. This creature's energy damage is ${energy}, and that is not negotiable — it was rolled before you wrote a word. Build a body and a habit that make ${energy} INEVITABLE: where in its anatomy does ${energy} come from, and why does touching it hurt that way? Never name a different energy anywhere in the concept. If ${energy} seems wrong for the creature you had in mind, change the CREATURE, not the energy.
+`;
+}
+
+/**
+ * THE DAMAGE MIX, ROLLED WITH THE ENERGY (owner call, 2026-08-07). We used
+ * to force every block to carry one physical type AND one energy type.
+ * Print at CR 5+ is 73% both, 19% physical-only, 7% energy-only — and the
+ * pure-energy cases are not arbitrary, they track the BODY: all four Oozes
+ * are Acid, incorporeal Undead are Necrotic, pure casters are Force, vermin
+ * and swarms are Poison, elementals are their element. Every one of them
+ * has no edge or mass to deal physical damage with, or carries no weapon.
+ *
+ * Rolled before the concept call like the energy, so the body is written to
+ * the mix rather than the mix being imposed on a body that contradicts it.
+ */
+const DAMAGE_MIX_WEIGHTS = { both: 73, physical: 19, energy: 7 };
+
+export function rollDamageMix(rand = Math.random) {
+  const entries = Object.entries(DAMAGE_MIX_WEIGHTS);
+  const total = entries.reduce((n, [, w]) => n + w, 0);
+  let roll = rand() * total;
+  for (const [mix, w] of entries) {
+    roll -= w;
+    if (roll < 0) return mix;
+  }
+  return 'both';
+}
+
+function damageMixBrief(mix, energy) {
+  if (mix === 'physical') {
+    return `
+4. NO ENERGY. This creature deals PHYSICAL damage only — no ${energy ?? 'energy'}, no elemental damage of any kind, anywhere in the block. It hurts with mass, edge, and point: teeth, horns, weight, weapons. Nearly a fifth of printed monsters are built this way (the bulette, the gorgon, the roc, the stone giant, the tyrannosaur), and they are not lesser for it. Do not reach for an energy to make it feel dangerous.
+`;
+  }
+  if (mix === 'energy') {
+    return `
+4. NO PHYSICAL DAMAGE. Every point of damage this creature deals is ${energy ?? 'its energy'} — never Bludgeoning, Piercing, or Slashing. That means its BODY must have no edge, point, or mass to strike with: it is incorporeal, or an animate element, or a formless mass, or a caster who never lifts a weapon. Print builds these as wraiths, elementals, oozes, swarms and archmages. Write that body, or the block will contradict itself.
+`;
+  }
+  return '';
+}
+
 export function pickRandomArchetype() {
   return ARCHETYPE_NAMES[Math.floor(Math.random() * ARCHETYPE_NAMES.length)];
 }
@@ -211,13 +292,48 @@ export function pickRandomArchetype() {
 // Archetype auto-resolve micro-call
 // ---------------------------------------------------------------------------
 
-export function buildArchetypeResolvePrompt(concept, description = '', { cr = null, archetype = null } = {}) {
+/**
+ * THE FUNNEL, STATED TO THE MODEL (owner call, 2026-08-07: "the concept call
+ * should receive combat archetype, a single house, type, and depth — the
+ * results should be less of a mashup").
+ *
+ * The funnel used to run entirely AFTER this call: the model wrote free-form
+ * prose and returned a type, and the engine then corrected the metadata to
+ * fit. That is a constraint on the bookkeeping layer, not the generative one,
+ * and it produced exactly the failure it was meant to prevent — a drowned-
+ * swamp spirit typed Humanoid, whose themes then evaporated, whose declared
+ * materials (molten, slag) were discarded, and whose house fell to a seeded
+ * pick among three that scored zero.
+ *
+ * So the call now RECEIVES the funnel and writes inside it:
+ *   archetype -> which TYPES are legal
+ *   type      -> which MATERIALS are legal, plus its essence (the depth)
+ *   material  -> ONE, declared by name, never two
+ */
+function funnelBrief(archetype) {
+  const forbidden = { artillery: ['Ooze', 'Aberration', 'Beast'],
+    skirmisher: ['Ooze', 'Plant', 'Aberration'], support: ['Ooze', 'Plant', 'Beast'] };
+  const banned = forbidden[archetype] ?? [];
+  const legal = CANONICAL_TYPES.filter((t) => !banned.includes(t));
+  const table = legal.map((t) => `- ${t}: ${TYPE_ESSENCES[t]}\n  its materials: ${(textureBanks.type_houses?.[t] ?? []).join(', ')}`).join('\n');
+  return `
+THE FUNNEL — work down it in order, and do not skip a step.
+
+1. TYPE. ${banned.length ? `A ${archetype} can never be ${banned.join(', ')} — those bodies cannot do what the role requires. ` : ''}Choose ONE creature_type from the list below and build the creature FROM its essence. The essence is what the creature fundamentally IS; the concept is raw material the essence shapes, never a finished creature the type is painted onto.
+
+2. MATERIAL. Choose exactly ONE material ("material") from the line under the type you chose — the substance this creature's BODY is made of. Not two. A creature made of two materials reads as two creatures sharing a statblock, and every ability name in the block will be drawn from the one you name here. Write the concept so that material is visible in what it is and what it does. If the material you want is not on your chosen type's line, you have chosen the wrong type — go back to step 1.
+
+${table}
+`;
+}
+
+export function buildArchetypeResolvePrompt(concept, description = '', { cr = null, archetype = null, energy = null, damageMix = null } = {}) {
   return `${archetype
     ? `The combat role of this D&D monster is FIXED by the user: ${archetype}. Echo it in "archetype" unchanged, and sketch a combat identity built around that role. EVERY field below must SERVE that role, not merely coexist with it — the role is the one instruction you were given and the rest is your inference. A skirmisher does not engulf, grapple, or plant an aura; artillery does not brawl at reach 5; a brute does not snipe. If the concept pulls against the role, bend the CONCEPT.`
     : 'Classify this D&D monster concept into exactly one combat-role archetype, then sketch its combat identity.'}
 
 Concept: ${concept}
-${description ? `Details: ${description}\n` : ''}${cr != null ? `Challenge Rating: ${crKeyFor(cr)} — scale the creature's ambition to this tier (a CR 2 creature is a local menace; a CR 20+ creature is a mythic force). The identity must read like a creature OF this tier.\n` : ''}
+${description ? `Details: ${description}\n` : ''}${cr != null ? `Challenge Rating: ${crKeyFor(cr)} — scale the creature's ambition to this tier (a CR 2 creature is a local menace; a CR 20+ creature is a mythic force). The identity must read like a creature OF this tier.\n` : ''}${funnelBrief(archetype)}${energyBrief(energy)}${damageMixBrief(damageMix, energy)}
 Archetypes:
 - brute: hits hard up close, soaks damage, easy to hit
 - defender: protects allies, high AC, punishes movement
@@ -249,7 +365,7 @@ Also give the engine its ASSEMBLY METADATA — structural signals the builder ho
 - "attack_mode": "melee"|"ranged"|"mixed" — how it delivers its attacks. If its identity is striking from afar, say "ranged"; the builder guarantees at least one ranged attack ships.
 - "signature_mechanic": the ONE mechanic the creature IS, from: thrown-weapon, breath, engulf, grapple, gaze, aura, teleport, summon, snare (it binds prey in a restraining substance — webs, tar, hardened stone, grave-wax) — the engine guarantees it a seat. Omit if no single mechanic dominates the concept.
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "identity": "<2-3 sentences>", "lore": "<one sentence>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>"}`;
+Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "identity": "<2-3 sentences>", "lore": "<one sentence>", "material": "<exactly ONE material from your chosen type's line>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>"}`;
 }
 
 export function validateArchetypeResponse(jsonString) {
@@ -264,6 +380,16 @@ export function validateArchetypeResponse(jsonString) {
  * list — the model designs from a single idea rather than giving each rolled
  * trait its own disconnected ability.
  */
+/**
+ * The seed path's funnel brief. Its type is usually already rolled, so step
+ * 1 collapses to "here are your materials"; when it is not, the full table
+ * applies exactly as on the concept path.
+ */
+function seedFunnelBrief(type, archetype) {
+  if (!type || !textureBanks.type_houses?.[type]) return funnelBrief(archetype);
+  return `MATERIAL. Choose exactly ONE material ("material") from this line — the substance this creature's BODY is made of, given it is a ${type}: ${textureBanks.type_houses[type].join(', ')}. Not two. A creature made of two materials reads as two creatures sharing a statblock, and every ability name in the block will be drawn from the one you name here. Write the synthesis so that material is visible in what it is and what it does.`;
+}
+
 export function buildSeedSynthesisPrompt(seed, { cr = null, archetype = null } = {}) {
   return `${archetype
     ? `Fuse these randomly rolled traits into ONE coherent monster concept. Its combat role is FIXED by the user: ${archetype} — echo it in "archetype" unchanged and shape the concept around that role.`
@@ -292,6 +418,8 @@ TYPE HONESTY: creature_type must be the type your synthesis actually EXPRESSES �
 
 Also write ONE sentence of world-lore ("lore"): where this creature comes from and what it wants — drawn from the rolled ORIGIN, the story a GM would read aloud. Grounded in the fused substance, never generic doom-prose.
 
+${seedFunnelBrief(seed.creature_type, archetype)}
+
 Also pick the creature's THEME THREADS ("themes"): ONE primary word the concept is most about, plus at most ONE supporting word that complements it — from this list only: bestial, armed, amorphous, grave, fiendish, celestial, fey, draconic, elemental, verdant, forged, mind, venomous, terror, beguiling, grasping, devouring, aquatic, subterranean, aerial, uncanny, arcane, voice, gaze, breath. The pair must COHERE — grave+aquatic is a drowned dead thing; subterranean+celestial is nonsense. And themes must AGREE with creature_type: celestial means a Celestial, grave means Undead, fiendish a Fiend, draconic a Dragon, verdant a Plant, forged a Construct — never declare a domain theme the type contradicts. THEME HONESTY: the themes must be the ones your own prose EXPRESSES — its substance, its element, its habitat — not adjacent or generic ones. A creature you described as deep-ocean brine is aquatic, not "elemental"; a thing of packed grave-soil is grave, not "subterranean". Every name and every material in the finished block will be drawn from these two words, so a theme your prose doesn't actually contain leaves the creature speaking a vocabulary it doesn't own.
 
 
@@ -304,7 +432,7 @@ Also give the engine its ASSEMBLY METADATA — structural signals the builder ho
 - "attack_mode": "melee"|"ranged"|"mixed" — how it delivers its attacks. If its identity is striking from afar, say "ranged"; the builder guarantees at least one ranged attack ships.
 - "signature_mechanic": the ONE mechanic the creature IS, from: thrown-weapon, breath, engulf, grapple, gaze, aura, teleport, summon, snare (it binds prey in a restraining substance — webs, tar, hardened stone, grave-wax) — the engine guarantees it a seat. Omit if no single mechanic dominates the concept.
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "synthesis": "<your 2-3 sentences>", "lore": "<one sentence>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>"}`;
+Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "synthesis": "<your 2-3 sentences>", "lore": "<one sentence>", "material": "<exactly ONE material from your chosen type's line>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>"}`;
 }
 
 export function validateSeedSynthesisResponse(jsonString) {
@@ -695,7 +823,26 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   }
 
   const pb = chassis.pb;
-  const saveProfs = (llmJson.save_proficiencies ?? []).filter((s) => STAT_ORDER.includes(s));
+  // Save proficiencies follow print's shape (measured 2026-08-06 across
+  // the 27 CR 15+ blocks that have any): the COUNT is bimodal — 21 blocks
+  // take exactly two and 6 take exactly four, never one, three, or five —
+  // and WISDOM is universal (27/27), with DEX 21/27, CON 8/27, and
+  // INT/STR/CHA rare (3-4 each). We shipped three, including the rare one
+  // and skipping the common one (live: the Hollowscrabbler, Int+Dex+Wis).
+  // The model's picks are kept where they fit; the shape is enforced.
+  const SAVE_ORDER = ['WIS', 'DEX', 'CON', 'INT', 'STR', 'CHA'];
+  let saveProfs = (llmJson.save_proficiencies ?? []).filter((s) => STAT_ORDER.includes(s));
+  // ...and the shape is TIER-DEPENDENT: strict 2-or-4 is a CR 15+ pattern
+  // (21 blocks take two, 6 take four, none take one/three/five). CR 0-4
+  // favours a SINGLE save (22 blocks) and CR 5-14 is mixed, so below the
+  // boss tier the model's own picks stand.
+  if (Number(cr) >= 15) {
+    // Wisdom always; then the model's own picks in print's frequency
+    // order; then fill from that order until the count is legal.
+    const wanted = saveProfs.length >= 3 ? 4 : 2;
+    const ranked = [...new Set(['WIS', ...SAVE_ORDER.filter((x) => saveProfs.includes(x)), ...SAVE_ORDER])];
+    saveProfs = ranked.slice(0, wanted);
+  }
   const saves = {};
   for (const s of STAT_ORDER) {
     saves[s] = modOf(stats[s]) + (saveProfs.includes(s) ? pb : 0);
@@ -743,7 +890,6 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   // own type survives only when no resolved type exists, when it emitted a
   // swarm form (the stamp never breaks "Swarm of Tiny X"), or when the
   // resolved value isn't canonical.
-  const CANONICAL_TYPES = ['Aberration', 'Beast', 'Celestial', 'Construct', 'Dragon', 'Elemental', 'Fey', 'Fiend', 'Giant', 'Humanoid', 'Monstrosity', 'Ooze', 'Plant', 'Undead'];
   let creatureType = llmJson.type || 'Monstrosity';
   const stampType = resolvedType && CANONICAL_TYPES.find((t) => t.toLowerCase() === String(resolvedType).trim().toLowerCase());
   if (stampType && !/^swarm/i.test(creatureType)) creatureType = stampType;
@@ -820,9 +966,33 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   // Gliding Shade shipped "Immunities ; Charmed, Frightened").
   const tidyDefense = (v) => stripDamageWord(v)
     .replace(/^\s*;\s*/, '').replace(/;\s*$/, '').replace(/;\s*;/g, ';').trim();
-  if (llmJson.resistances) monster.resistances = tidyDefense(llmJson.resistances);
-  if (llmJson.immunities) monster.immunities = tidyDefense(llmJson.immunities);
-  if (llmJson.vulnerabilities) monster.vulnerabilities = tidyDefense(llmJson.vulnerabilities);
+  // A defense may cite WHERE it comes from, but only if the source exists.
+  // Print does this twice and both resolve — the Archmage's "Charmed (with
+  // Mind Blank)" names a spell it casts, the Vampire Familiar's names its
+  // master. The Grindor shipped "Psychic (from Stone Mind)" with no Stone
+  // Mind anywhere in the block: the same dangling-reference class as
+  // undefined-attack-ref, in a line no rule was checking. The defense
+  // itself is fine, so only the citation is dropped.
+  const resolvable = (() => {
+    const names = [
+      ...Object.values(monster.sections ?? {}).flat().map((e) => e.name ?? ''),
+      ...(monster.traits ?? []).map((t) => t.name ?? ''),
+      monster.name ?? '',
+    ].map((n) => n.replace(/\s*\([^)]*\)\s*$/, '').trim().toLowerCase()).filter(Boolean);
+    const spellText = Object.values(monster.sections ?? {}).flat()
+      .filter((e) => /Spellcasting/i.test(e.name ?? '')).map((e) => e.text ?? '').join(' ').toLowerCase();
+    return (note) => {
+      const inner = note.toLowerCase();
+      return names.some((n) => inner.includes(n)) || (spellText && /\*([^*]+)\*/.test(note)
+        && [...note.matchAll(/\*([^*]+)\*/g)].some((m) => spellText.includes(m[1].toLowerCase())));
+    };
+  })();
+  const dropDanglingCitations = (v) => String(v).replace(/\s*\(([^)]*)\)/g,
+    (whole, inner) => (resolvable(inner) ? whole : ''));
+  const cleanDefense = (v) => tidyDefense(dropDanglingCitations(v));
+  if (llmJson.resistances) monster.resistances = cleanDefense(llmJson.resistances);
+  if (llmJson.immunities) monster.immunities = cleanDefense(llmJson.immunities);
+  if (llmJson.vulnerabilities) monster.vulnerabilities = cleanDefense(llmJson.vulnerabilities);
   return monster;
 }
 
@@ -2369,12 +2539,12 @@ ${lore ? `ITS LORE (the PRIMARY source for the name — name the creature this s
 
 THE NAME ${nameSpec}
 The name must FIT the creature's TYPE — never borrow another type's signature words (a Fiend is never a "golem", a Celestial is never a "wraith", a Construct is never a "zombie"; those words belong to Constructs, Undead, and Undead respectively).
-The "<modifier> <verb>-er" formula (Shambler, Webspinner, Stalker, Witherer, Gleamer) is overused and weak — at most ONE candidate may use it; the rest should be fused compounds (Bilewurm, Owlbear), coined sounds (Shissar, Chuul), or concrete-noun heads (Shambling Mound, Mirror Prison).
+The "<modifier> <verb>-er" formula (Shambler, Webspinner, Stalker, Witherer, Gleamer) is overused and weak — at most ONE candidate may use it; the rest should be fused compounds (Owlbear, Bugbear), coined sounds (Chuul, Ankheg), or concrete-noun heads (Shambling Mound, Mirror Prison).
 ${bans.length ? `BANNED THIS TIME (overused in past names — never use these stems or sounds anywhere in the name): ${bans.join(', ')}.\n` : ''}${monster.archetype && PHONETICS_BY_ARCHETYPE[monster.archetype] ? `Its sound should be ${PHONETICS_BY_ARCHETYPE[monster.archetype]}.\n` : ''}Rules: name concrete things the creature actually does or is made of. Never hyphens. A coined name is built from sound, never by gluing two English words into one. Abstract menace words (terror, doom, dread, horror, death, fear) never as the head noun — as a leading adjective before a concrete doer they are fine. Never cutesy, comedic, or diminutive words (slinky, bouncy, squishy) — satisfy the sound profile with words that keep their menace. The head noun should be a creature, agent, or evocative form, not a plain object (Boulder, Rock, Slab) — an object head is allowed only if the creature genuinely IS an animated object. Never a name already used by a well-known D&D creature, class, or subclass.
 
-Also AUDIT the ability names listed above: any that are coined or invented words, or unexplained proper nouns ("Ulgroth", "Vothar's Ire", "Kragor"), must be renamed to plain English that says what the ability does ("Helping Snarl", "Tar Tendril"). List them in "ability_renames" — an empty object if all are already plain English. Never rename Multiattack or Spellcasting.
+Also AUDIT the ability names listed above: any that are coined or invented words, or that name a person or place the block never explains, must be renamed to plain English that says what the ability does ("Helping Snarl", "Tar Tendril"). List them in "ability_renames" — an empty object if all are already plain English. Never rename Multiattack or Spellcasting.
 
-Your candidates will be judged by a separate model on ORIGINALITY and EVOCATIVENESS — a name that could belong to any monster, or that echoes names you have produced before (guttural Uu-/Ul- coinages, <noun><verb> gluings like "Obsidiancrawl"), scores poorly. Aim for names a reader would remember after closing the book.
+Your candidates will be judged by a separate model on ORIGINALITY and EVOCATIVENESS — a name that could belong to any monster, or that reaches for the same guttural invented syllables and glued noun-verb compounds every generation reaches for, scores poorly. Aim for names a reader would remember after closing the book.
 
 Return ONLY JSON, no markdown: {"grade": "A-F for the current name", "candidates": ["seven different names, best first — range from safe to bold"], "ability_renames": {"Coined Name": "Plain English Name"}}`;
 }
@@ -2638,7 +2808,7 @@ export function applyRenameMapping(monster, mapping) {
 // ---------------------------------------------------------------------------
 
 export async function generateMonster2024(options, callLLM) {
-  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, themes = null, mind = null, conceptSize = null, movement = null, attackMode = null, signatureMechanic = null, onProgress = null, takenNames = [], namePass = null } = options;
+  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, themes = null, mind = null, conceptSize = null, movement = null, attackMode = null, signatureMechanic = null, onProgress = null, takenNames = [], namePass = null, house = null, recent = null, energy = null, damageMix = null } = options;
 
   // The skeleton path is how 2024 monsters are built now; set
   // localStorage['statblock-skeleton'] = '0' to fall back to the chassis.
@@ -2657,7 +2827,7 @@ export async function generateMonster2024(options, callLLM) {
     return generateFromSkeleton({
       concept, description, cr, archetypeName, resolvedType, lore, themes, mind, degraded, onProgress, caster,
       conceptSize, movement, attackMode, signatureMechanic, takenNames, typeSource,
-      archetypeSource, namePass,
+      archetypeSource, namePass, house, recent, energy, damageMix,
     }, callLLM);
   }
 

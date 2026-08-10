@@ -31,6 +31,8 @@
 import library from '@/data/ability-library.json';
 import crTable from '@/data/cr-table.json';
 import archetypeSpec from '@/data/archetype-chassis-spec.json';
+import textureBanks from '@/data/texture-banks.json';
+import { recencyWeight, rowKeyOf } from './frequency-ledger.mjs';
 import { hpFormulaFor, attackDamageDiceFor, saveDamageDiceFor, riderDamageDiceFor } from '../format-2024/dice.mjs';
 
 const SIZES = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'];
@@ -455,6 +457,14 @@ const gatedLike = (a) => /Recharge/i.test(a.gate ?? '')
   || (!a.gate && a.slot_type === 'area'
     && /Paralyzed|Stunned|Petrified|Unconscious|\{condition_hard\}/.test(a.template_2024));
 
+// A pure-mobility row is an ESCAPE HATCH, and print never rations one:
+// Nimble Escape and Cunning Action are at-will. So when the one-Recharge
+// rule forces a gated row to yield, a mobility row ungates rather than
+// demoting to 1/Day — a once-per-day Disengage is a dead line on a
+// skirmisher, not a reduced one (live: the Hollowscrabbler's Hasten).
+const PURE_MOBILITY = (a) => /takes the (?:Dash|Disengage)/.test(a.template_2024 ?? '')
+  && !/\{damage\}/.test(a.template_2024 ?? '');
+
 // Attack SHAPE: the fields that determine an attack's rendered numbers and
 // menu role. Two attacks sharing a shape render identical lines off one
 // budget; if their modes then nest, one is strictly dominated dead text
@@ -479,6 +489,33 @@ const ROLE_EXCLUSIONS = {
   lurker: (a) => /Grappled condition \(escape|swallow/i.test(a.template_2024 ?? ''),
   artillery: (a) => /Grappled condition \(escape|swallow/i.test(a.template_2024 ?? ''),
 };
+
+/**
+ * Energy coupling: a row whose mechanic IS an energy type only belongs on a
+ * block whose register actually speaks that energy. The threshold is
+ * DOMINANCE, not presence — `forged` lists Poison at 1 against Fire 5, so a
+ * bare `> 0` let the coupled Poison package onto a foundry creature. A
+ * facet qualifies when the needed energy is at least a third of its top
+ * affinity.
+ */
+const energyFits = (a, themes) => {
+  const need = a.requires_energy;
+  if (!need) return true;
+  if (!themes || !themes.length) return false;
+  return themes.some((t) => {
+    const aff = Object.fromEntries(Object.entries(textureBanks.facets?.[t]?.damage_affinity ?? {})
+      .filter(([k, v]) => !k.startsWith('_') && typeof v === 'number'));
+    const top = Math.max(0, ...Object.values(aff));
+    return top > 0 && (aff[need] ?? 0) >= top / 3;
+  });
+};
+
+// A row that carries an energy rider, or is energy-coupled, cannot sit on a
+// PHYSICAL-ONLY block — its rider slot would have no energy to render.
+// Printed physical-only creatures (bulette, gorgon, stone giant,
+// tyrannosaur) carry plain attacks for exactly this reason.
+const CARRIES_ENERGY = (a) => Boolean(a.requires_energy)
+  || /\{(?:rider|rider2|alt|alt2)_damage_type\}/.test(a.template_2024 ?? '');
 
 const JUMP_ROW = (a) => /jumps? up to/.test(a.template_2024 ?? '');
 const redundantWithMode = (a, movement) => Boolean(movement?.includes('fly')) && JUMP_ROW(a);
@@ -546,6 +583,8 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
         && !(JUMP_ROW(a) && chosen.some((c) => /teleports? up to/.test(c.template_2024 ?? '')))
         // rows that fight the role's loop are out of its pool entirely
         && !(ROLE_EXCLUSIONS[archetype]?.(a))
+        && energyFits(a, themes)
+        && !(meta.damageMix === 'physical' && CARRIES_ENERGY(a))
         // stealth chassis: see the trait pool's aura exclusion
         && !(RECURRING_EMANATION(a) && (archetype === 'skirmisher' || archetype === 'lurker'))
         // A ceiling-tagged row's counterplay stops working above its tier
@@ -566,7 +605,7 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
         && (a.requires ?? []).every((r) => met.has(r)));
       if (!pool.length) continue; // leave the slot empty rather than repeat
       const weights = {};
-      pool.forEach((a, idx) => { weights[idx] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes) * attackModeWeight(a, meta.attackMode) * (meta.signatureMechanic && SIGNATURE_FAMILIES[meta.signatureMechanic]?.(a) ? 6 : 1); });
+      pool.forEach((a, idx) => { weights[idx] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes) * recencyWeight(a, meta.recent) * attackModeWeight(a, meta.attackMode) * (meta.signatureMechanic && SIGNATURE_FAMILIES[meta.signatureMechanic]?.(a) ? 6 : 1); });
       // Two different mechanics can still share most of their sentences
       // (Weight of Years and Blinding Gaze differ in one clause). The lint
       // reads that as one ability written twice, and a reader would agree.
@@ -670,7 +709,7 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
           && !options.some((o) => o.ability === a.ability));
         if (!rest.length) break;
         const w = {};
-        rest.forEach((a, idx) => { w[idx] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes); });
+        rest.forEach((a, idx) => { w[idx] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes) * recencyWeight(a, meta.recent); });
         const alt = rest[pickWeighted(w, rng)];
         const altS = sentences(alt.template_2024);
         let clash = 0;
@@ -716,7 +755,7 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
         && (a.cr_ceiling == null || crNumber(cr) <= a.cr_ceiling));
       if (alt.length) {
         const weights = {};
-        alt.forEach((a, idx) => { weights[idx] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes); });
+        alt.forEach((a, idx) => { weights[idx] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes) * recencyWeight(a, meta.recent); });
         const swap = alt[pickWeighted(weights, rng)];
         usedTemplates.add(swap.template_2024);
         usedNames.add(swap.ability);
@@ -744,6 +783,8 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
       // signature the role permitted: an explicit concept promise that
       // survived the veto outranks the general exclusion.
       && !(ROLE_EXCLUSIONS[archetype]?.(a) && !meta.signatureMechanic)
+      && energyFits(a, themes)
+      && !(meta.damageMix === 'physical' && CARRIES_ENERGY(a))
       && (mind === 'sapient' || !needsMind(a))
       && (a.cr_ceiling == null || crNumber(cr) <= a.cr_ceiling));
     if (!pool.length) return;
@@ -766,7 +807,7 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
       if (clean.length) pool = clean;
     }
     const weights = {};
-    pool.forEach((a, idx) => { weights[idx] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes) * (prefer && prefer(a) ? 8 : 1); });
+    pool.forEach((a, idx) => { weights[idx] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes) * recencyWeight(a, meta.recent) * (prefer && prefer(a) ? 8 : 1); });
     const pick = pool[pickWeighted(weights, rng)];
     // Replace the LAST same-slot pick; append if none. Never a spine row,
     // never an earlier guarantee, and never a row the pick's own requires
@@ -825,7 +866,8 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
       .filter((i) => i !== -1).pop();
     usedTemplates.add(pick.template_2024);
     usedNames.add(pick.ability);
-    const entry = { ...pick, options: [pick], ...(demoteTo1Day ? { gate: '1/Day' } : {}) };
+    const entry = { ...pick, options: [pick],
+      ...(demoteTo1Day ? { gate: PURE_MOBILITY(pick) ? null : '1/Day' } : {}) };
     guaranteed.add(entry);
     if (victimIdx != null) chosen[victimIdx] = entry;
     else chosen.push(entry);
@@ -834,6 +876,33 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
   // attack) — the attack-mode guarantee seating a ranged row beside it
   // shipped a returning SWORD on a swarm of Tiny crystal shards (live:
   // Wing Blade Return, "returns to the swarm's hand").
+  // NOTHING ABOVE CR 4 FIGHTS ONLY AT RANGE (owner call, 2026-08-07, the
+  // Uulgroth: Dreamshard was Ranged-only at 60 ft., so a party that closed
+  // to 5 feet switched the block's entire offense off). Measured, and it is
+  // the strongest rule in the corpus: EVERY printed monster from CR 5 up
+  // has a melee-capable attack — 113 of 113 — and the only two exceptions
+  // anywhere are a sessile Shrieker Fungus and a Seahorse.
+  //
+  // Sited HERE, before the seats, deliberately. Moving it after them (the
+  // "rules belong after all contributors" shape of the invariant pass) lets
+  // it evict SEATED rows and breaks the archetype and signature guarantees
+  // outright. The cost of staying here is a residue of ~1 block in 2,592
+  // where a later seat evicts the melee row — well inside print's own
+  // tolerance, which carries 2 exceptions in 329.
+  //
+  // A dual-mode row is preferred first so a one-slot block satisfies the
+  // melee floor and the range band with the same entry, instead of having
+  // the two guarantees evict each other; the ranged predicate below
+  // no-ops on "Melee or Ranged Attack Roll".
+  const isAttackRow = (a) => a.slot_type === 'plain_attack' || a.slot_type === 'rider_attack';
+  const meleeCapable = (a) => /Melee (?:or Ranged )?Attack Roll/.test(a.template_2024 ?? '');
+  if (cr >= 5 && archetype !== 'swarm') {
+    if (meta.attackMode === 'ranged' || meta.attackMode === 'mixed') {
+      swapIn((a) => /Melee or Ranged Attack Roll/.test(a.template_2024 ?? '') && isAttackRow(a),
+        ['plain_attack', 'rider_attack']);
+    }
+    swapIn((a) => meleeCapable(a) && isAttackRow(a), ['plain_attack', 'rider_attack']);
+  }
   if ((meta.attackMode === 'ranged' || meta.attackMode === 'mixed') && archetype !== 'swarm') {
     swapIn((a) => /Ranged Attack Roll/.test(a.template_2024 ?? '')
       && (a.slot_type === 'plain_attack' || a.slot_type === 'rider_attack'),
@@ -934,7 +1003,7 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
         && (a.cr_ceiling == null || crNumber(cr) <= a.cr_ceiling));
       if (!pool.length) { chosen.splice(idx, 1); continue; }
       const w = {};
-      pool.forEach((a, i2) => { w[i2] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes) * attackModeWeight(a, meta.attackMode); });
+      pool.forEach((a, i2) => { w[i2] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes) * recencyWeight(a, meta.recent) * attackModeWeight(a, meta.attackMode); });
       const redraw = pool[pickWeighted(w, rng)];
       usedTemplates.add(redraw.template_2024);
       usedNames.add(redraw.ability);
@@ -978,6 +1047,68 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
       swapIn((a) => (a.requires ?? []).includes('grapple'), SLOT_TYPES);
     }
   }
+  // ── THE INVARIANT PASS ──────────────────────────────────────────────
+  // Runs AFTER every path that can contribute a row: the spine, the pick
+  // loop, the seats/guarantees, and the backfills. Owner call, 2026-08-06.
+  //
+  // Every "regression" this sprint had one shape — a constraint
+  // implemented at one entry path, walked past by another. Seats bypassed
+  // the pick loop's Recharge cap, then its bonus-action cap; the Roc spine
+  // walked its grapple past ROLE_EXCLUSIONS onto a skirmisher. Rules
+  // belong AFTER all contributors, not at each one.
+  //
+  // A dragon KIT is exempt: it is the block, not a suggestion.
+  {
+    const spineOnly = new Set(spineRows.filter((r) => /^(Adult|Ancient|Young) .*Dragon$/.test(r.source ?? '')));
+    const dropWhere = (pred) => {
+      for (let i = chosen.length - 1; i >= 0; i -= 1) {
+        if (pred(chosen[i]) && !spineOnly.has(chosen[i])) chosen.splice(i, 1);
+      }
+    };
+    // 1. the role's exclusions hold against every entry path
+    if (ROLE_EXCLUSIONS[archetype] && !meta.signatureMechanic) {
+      dropWhere((c) => ROLE_EXCLUSIONS[archetype](c));
+    }
+    // 2. energy-coupled rows only on blocks that speak the energy —
+    //    and no energy-bearing row at all on a physical-only block
+    dropWhere((c) => !energyFits(c, themes));
+    if (meta.damageMix === 'physical') dropWhere((c) => CARRIES_ENERGY(c));
+    // 3. ONE Recharge per block (0/329 printed carry two). The extras are
+    //    demoted rather than dropped, so the slot survives — but a
+    //    PURE-MOBILITY row ungates entirely instead of being rationed to
+    //    1/Day. A once-per-day Disengage is not a skirmisher's exit, it is
+    //    a dead line; print gates escape hatches not at all (Nimble Escape
+    //    is at-will). The nova it collided with is the row that should keep
+    //    the Recharge, so mobility rows sort to the back of the queue.
+    {
+      const gated = chosen.filter(gatedLike)
+        .sort((a, b) => Number(PURE_MOBILITY(a)) - Number(PURE_MOBILITY(b)));
+      for (const extra of gated.slice(1)) {
+        const i = chosen.indexOf(extra);
+        if (i === -1) continue;
+        chosen[i] = PURE_MOBILITY(extra)
+          ? { ...extra, gate: null }
+          : { ...extra, gate: '1/Day' };
+      }
+    }
+    // 4. one row per family
+    {
+      const seen = new Set();
+      for (let i = 0; i < chosen.length; i += 1) {
+        const fams = familiesOf(chosen[i]);
+        if (fams.some((f) => seen.has(f))) { chosen.splice(i, 1); i -= 1; continue; }
+        fams.forEach((f) => seen.add(f));
+      }
+    }
+    // 5. at most two Bonus Actions
+    {
+      const bonus = chosen.filter((c) => c.section === 'Bonus Actions');
+      for (const extra of bonus.slice(2)) {
+        const i = chosen.indexOf(extra);
+        if (i !== -1) chosen.splice(i, 1);
+      }
+    }
+  }
   return chosen;
 }
 
@@ -1017,7 +1148,7 @@ export function pickTraits(cr, n, rng, chosenAbilities = [], archetype = null, t
       && ![...chosenAbilities, ...out].some((c) => contains(t.template_2024, c.template_2024)));
     if (!pool.length) break;
     const weights = {};
-    pool.forEach((t, idx) => { weights[idx] = proximityWeight(t.cr, cr) * archetypeWeight(t, archetype) * themeWeight(t, themes); });
+    pool.forEach((t, idx) => { weights[idx] = proximityWeight(t.cr, cr) * archetypeWeight(t, archetype) * themeWeight(t, themes) * recencyWeight(t, meta.recent); });
     const pick = pool[pickWeighted(weights, rng)];
     used.add(pick.template_2024);
     out.push(pick);
@@ -1328,7 +1459,7 @@ for (const r of [...Object.values(library.categories).flat(), ...Object.values(l
  * Returns { rows, traitRows } or null when nothing fits the sampled counts —
  * in which case the block is all singles, as before.
  */
-export function pickPackage(cr, counts, rng, archetype = null, themes = null, mind = 'sapient') {
+export function pickPackage(cr, counts, rng, archetype = null, themes = null, mind = 'sapient', recent = null) {
   // Packages bypass the pool filters (they enter as a spine), so the
   // cognition gate must apply to the package as a whole: a mindless block
   // must not receive a Spellcasting member through the side door.
@@ -1342,7 +1473,7 @@ export function pickPackage(cr, counts, rng, archetype = null, themes = null, mi
   list.forEach((pk, i) => {
     const arch = !archetype || !pk.archetypes.length ? 1
       : pk.archetypes.includes(archetype) ? ARCHETYPE_MATCH : ARCHETYPE_MISS;
-    weights[i] = proximityWeight(pk.cr, cr) * arch * themeWeight(pk, themes);
+    weights[i] = proximityWeight(pk.cr, cr) * arch * themeWeight(pk, themes) * recencyWeight(pk, recent);
   });
   // A few weighted draws; first package whose ability members FIT the
   // sampled counts wins. "Slip one or two in if we can't add a full
@@ -1436,7 +1567,7 @@ export function pickSwarmKit(cr, rng) {
  * rows = 20x draw weight, picked on three of eight live blocks); frequency
  * now sits under this ramp instead of pool arithmetic.
  */
-export function pickOnDeath(cr, rng, { typeHint = null, themes = null } = {}) {
+export function pickOnDeath(cr, rng, { typeHint = null, themes = null, recent = null } = {}) {
   const od = library.on_death;
   if (!od) return null;
   const n = crNumber(cr);
@@ -1474,7 +1605,7 @@ export function pickOnDeath(cr, rng, { typeHint = null, themes = null } = {}) {
   const famSize = {};
   for (const t of candidates) famSize[t.death_family] = (famSize[t.death_family] ?? 0) + 1;
   candidates.forEach((t, i) => {
-    weights[i] = (themeWeight(t, themes) * (t.death_family === family ? 6 : 1)) / famSize[t.death_family];
+    weights[i] = (themeWeight(t, themes) * recencyWeight(t, recent) * (t.death_family === family ? 6 : 1)) / famSize[t.death_family];
   });
   const pick = candidates[pickWeighted(weights, rng)];
   return { ...pick, trait: pick.trait ?? 'Deathless Return', section: 'Traits', cr: crKey(cr), source: pick.source ?? 'on-death slot', on_death: true };
@@ -1496,9 +1627,10 @@ export function pickSize(cr, rng) {
 export function buildSkeleton({
   cr, size = null, seed = 1, alternatives = 1, archetype = null, caster = false,
   strikeStat = null, family = null, themes = null, typeHint = null, mind = 'sapient',
-  attackMode = null, movement = null, signatureMechanic = null,
+  attackMode = null, movement = null, signatureMechanic = null, recent = null,
+  damageMix = null,
 }) {
-  const meta = { attackMode, movement, signatureMechanic };
+  const meta = { attackMode, movement, signatureMechanic, recent, damageMix };
   const rng = makeRng(seed);
   // One condition ledger per block: entries and traits RECORD their
   // engine-filled conditions, menu options only consult, so no two entries
@@ -1559,7 +1691,7 @@ export function buildSkeleton({
       counts.rider_attack = 0;
     }
   }
-  if (!spine) spine = pickPackage(cr, counts, rng, archetype, themes, effMind);
+  if (!spine) spine = pickPackage(cr, counts, rng, archetype, themes, effMind, recent);
   const spineTraits = spine?.traitRows ?? [];
   if (family === 'dragon' && spine) {
     // A dragon kit IS the layout: counts follow it instead of the dice.
@@ -1592,12 +1724,12 @@ export function buildSkeleton({
         && ((t.requires ?? []).every((r) => metA.has(r))));
       if (pool.length) {
         const w = {};
-        pool.forEach((t, idx) => { w[idx] = proximityWeight(t.cr, cr) * archetypeWeight(t, archetype) * themeWeight(t, themes); });
+        pool.forEach((t, idx) => { w[idx] = proximityWeight(t.cr, cr) * archetypeWeight(t, archetype) * themeWeight(t, themes) * recencyWeight(t, meta.recent); });
         traits = [...traits, pool[pickWeighted(w, rng)]];
       }
     }
   }
-  const onDeath = pickOnDeath(cr, rng, { typeHint: family === 'dragon' ? 'Dragon' : typeHint, themes });
+  const onDeath = pickOnDeath(cr, rng, { typeHint: family === 'dragon' ? 'Dragon' : typeHint, themes, recent });
   if (onDeath) traits = [...traits, onDeath];
   // Spine traits ride along (the Mimic's Adhesive arrives WITH its Bite),
   // deduped against the sampled ones.
@@ -1689,6 +1821,7 @@ export function buildSkeleton({
       text,
       damage,
       derived_from: `${a.source} (CR ${a.cr})`,
+      row_key: rowKeyOf(a),
       // Print never renames these (Spellcasting, Immutable Form) — and spell
       // echoes route through the literal name "Spellcasting", so a rename
       // strands every "uses Spellcasting to cast X" reference (live: the
@@ -1855,6 +1988,7 @@ export function buildSkeleton({
       // {dc} here left "{radius}-foot radius" rendering literally.
       text: fillTemplate({ ...t, slot_type: t.slot_type ?? 'utility' }, { cr, size, nums, rng, themes, usedConditions, recordConditions: true }).text,
       derived_from: `${t.source} (CR ${t.cr})`,
+      row_key: rowKeyOf(t),
     })),
     entries,
     // dpr_target is the AGGREGATE round — attacks plus one area plus two

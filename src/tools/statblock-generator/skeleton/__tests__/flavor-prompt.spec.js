@@ -53,7 +53,7 @@ describe('the prompt', () => {
 
   test('offers the placeholder name rather than demanding it', () => {
     const p = buildFlavorPrompt(SKEL, { concept: 'x' });
-    expect(p).toMatch(/give each entry a name that fits THIS creature/i);
+    expect(p).toMatch(/give EVERY entry a name that fits THIS creature/i);
   });
 });
 
@@ -170,8 +170,15 @@ describe('concept-driven ability choice', () => {
     const multi = flavorRequests(OPT).filter((r) => r.options.length > 1);
     expect(multi.length).toBeGreaterThan(0);
     const p = buildFlavorPrompt(OPT, { concept: 'a swamp ambusher' });
-    expect(p).toContain('CHOOSE ONE that suits the concept');
-    expect(p).toMatch(/\* = default/);
+    expect(p).toContain('CHOOSE ONE by NUMBER');
+    expect(p).toMatch(/1 \(default\):/);
+    // and the menu must NOT name the SRD creature each option came from —
+    // that anchored the model to a donor before it read the mechanics
+    for (const r of multi) {
+      for (const o of r.options) {
+        expect(`${o.key} leaked: ${p.includes(`${o.key}:`)}`).toBe(`${o.key} leaked: false`);
+      }
+    }
   });
 
   test('every option is already scaled to this CR, so any choice is valid', () => {

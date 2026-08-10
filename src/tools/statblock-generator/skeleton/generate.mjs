@@ -48,6 +48,7 @@ export async function generateFromSkeleton(options, callLLM) {
     caster = false, strikeStat = null, themes = null, mind = null,
     conceptSize = null, movement = null, attackMode = null, signatureMechanic = null,
     takenNames = [], typeSource = 'auto', archetypeSource = 'auto', namePass = null,
+    house = null, recent = null, energy = null, damageMix = null,
   } = options;
 
   const progress = (phase, data) => {
@@ -64,24 +65,68 @@ export async function generateFromSkeleton(options, callLLM) {
   const TYPE_THREAD = { Undead: 'grave', Fiend: 'fiendish', Celestial: 'celestial', Fey: 'fey',
     Dragon: 'draconic', Elemental: 'elemental', Plant: 'verdant', Construct: 'forged',
     Aberration: 'mind', Ooze: 'amorphous', Beast: 'bestial', Giant: 'armed' };
+  // Humanoid and Monstrosity are the two types with NO domain facet of
+  // their own — deliberately, they are the "no domain" types. That left
+  // them with no fallback thread at all, so they need their own map for
+  // the empty case (measured: `armed` tags 125 rows, `bestial` 331).
+  const FALLBACK_THREAD = { ...TYPE_THREAD, Humanoid: 'armed', Monstrosity: 'bestial' };
   // Domain themes are type claims (owner call: "tag should limit the
   // creature type"). A domain tag that contradicts the resolved type is
   // dropped — a Celestial cannot carry "grave", and a Beast cannot carry
   // "celestial". Manner tags (grasping, venomous, aerial…) pass freely.
+  //
+  // But a type with NO domain facet can't be contradicted by one, and
+  // dropping on that basis was catastrophic: every domain theme failed the
+  // `=== resolvedType` test for a Humanoid, so a Humanoid concept lost
+  // forged, armed, grave, bestial — everything — and then found no
+  // fallback either. themes went null, `themeWeight` returned 1 for all
+  // 1089 rows, and the pool (231 of 327 plain attacks at CR <= 5) handed a
+  // CR 20 block a CR 5 Gladiator's Spear (live: the Ember Wraith, seed
+  // 28598917, reproduced exactly).
   const DOMAIN_OF = Object.fromEntries(Object.entries(TYPE_THREAD).map(([ty, th]) => [th, ty]));
+  const typeClaimsADomain = Boolean(TYPE_THREAD[resolvedType]);
   const agreed = (themes ?? []).filter((th) => !DOMAIN_OF[th]
-    || !resolvedType || DOMAIN_OF[th] === resolvedType);
+    || !resolvedType || !typeClaimsADomain || DOMAIN_OF[th] === resolvedType);
   const blockThemes = agreed.length ? agreed.slice(0, 2)
-    : (TYPE_THREAD[resolvedType] ? [TYPE_THREAD[resolvedType]] : null);
+    : (FALLBACK_THREAD[resolvedType] ? [FALLBACK_THREAD[resolvedType]] : null);
 
   // The TYPE decision is total and happens HERE, before the build (owner
   // call): concept-call type, else the first domain theme's type, else
   // Monstrosity. The flavor call no longer decides type at all — a live
   // block was labeled Dragon after a kit-less build because the synthesis
   // stayed silent and the flavor model had the last word.
-  const finalType = resolvedType
+  let finalType = resolvedType
     ?? (blockThemes ?? []).map((th) => DOMAIN_OF[th]).find(Boolean)
     ?? 'Monstrosity';
+
+  // STAGE 1 OF THE FUNNEL (owner call, 2026-08-07): the combat archetype
+  // limits the type, which limits the material house. Exclusions rather
+  // than whitelists, each measured against print so no printed block is
+  // contradicted:
+  //   artillery   Ooze 0%, Aberration 0%, Beast 1% ranged attacks
+  //   skirmisher  Ooze / Plant / Aberration all median walk speed 20
+  //   support     Ooze / Plant / Beast have zero printed casters
+  // brute, defender, glass_cannon, controller and lurker have no printed
+  // basis to restrict, so they restrict nothing.
+  let blockArchetype = archetypeName;
+  const ARCHETYPE_FORBIDS = {
+    artillery: ['Ooze', 'Aberration', 'Beast'],
+    skirmisher: ['Ooze', 'Plant', 'Aberration'],
+    support: ['Ooze', 'Plant', 'Beast'],
+  };
+  if ((ARCHETYPE_FORBIDS[blockArchetype] ?? []).includes(finalType)) {
+    // Whichever the USER chose is the fixed point; the other yields. When
+    // both are the user's, both stand — an explicit pair outranks our
+    // table. Monstrosity is the landing type because it is legal for
+    // every restricted role, and is already the default fallback above.
+    if (archetypeSource === 'user' && typeSource !== 'user') {
+      trace('funnel:', `${blockArchetype} forbids ${finalType} -> Monstrosity`);
+      finalType = 'Monstrosity';
+    } else if (archetypeSource !== 'user') {
+      trace('funnel:', `${finalType} cannot be ${blockArchetype} -> balanced`);
+      blockArchetype = null;
+    }
+  }
 
   // The MIND profile gates cognition abilities (owner call, 2026-08-03, the
   // Rift-Shell Crag: a Cha 26 lie-sensing Fear-caster with Int 2 and no
@@ -98,7 +143,29 @@ export async function generateFromSkeleton(options, callLLM) {
   const blockMovement = Array.isArray(movement)
     ? movement.map((m) => String(m).toLowerCase()).filter((m) => ['swim', 'burrow', 'fly', 'climb'].includes(m))
     : null;
-  const blockAttackMode = ['melee', 'ranged', 'mixed'].includes(attackMode) ? attackMode : null;
+  let blockAttackMode = ['melee', 'ranged', 'mixed'].includes(attackMode) ? attackMode : null;
+  // THE ROLE GOVERNS RANGE TOO (owner call, 2026-08-06). We already made
+  // the signature yield to the archetype; attack_mode never did, so a
+  // picked skirmisher whose concept said "melee" got the withdrawal seat
+  // and nothing to threaten the gap it made — kite-and-shoot with no
+  // shoot (live: the Ironbound, and the Brine Hound owning the other half
+  // of one correct skirmisher). Upgrade, never downgrade: melee-only is
+  // still legal for every role that wants it.
+  if (blockAttackMode === 'melee' && ['skirmisher', 'artillery'].includes(blockArchetype)) {
+    trace('attack mode upgraded:', `melee -> mixed (the ${blockArchetype} role needs a range band)`);
+    blockAttackMode = 'mixed';
+  }
+  // ...AND THE MIRROR (owner call, 2026-08-07, the Uulgroth: ranged-only at
+  // 60 feet, so a party that closed to 5 feet turned its whole offense off).
+  // This is the strongest print rule we have measured: EVERY printed
+  // monster from CR 5 up has a melee-capable attack — 113 of 113, zero
+  // exceptions — and the only two in the entire corpus are a sessile
+  // Shrieker Fungus and a Seahorse. A ranged identity is still honored;
+  // `mixed` keeps the range band and adds the reach the corpus insists on.
+  if (blockAttackMode === 'ranged' && crNum >= 5) {
+    trace('attack mode upgraded:', 'ranged -> mixed (no printed CR 5+ block lacks a melee option)');
+    blockAttackMode = 'mixed';
+  }
   // 'snare' is the concept-facing name (owner call: the restraining
   // substance could be anything); 'web' stays the internal family key.
   // THE ARCHETYPE IS THE SPINE (owner call, 2026-08-06). The concept call
@@ -126,14 +193,27 @@ export async function generateFromSkeleton(options, callLLM) {
   const SIGNATURES_OK = ['thrown-weapon', 'breath', 'engulf', 'grapple', 'gaze', 'aura', 'teleport', 'summon', 'web', 'snare'];
   let blockSignature = SIGNATURES_OK.includes(signatureMechanic)
     ? (signatureMechanic === 'snare' ? 'web' : signatureMechanic) : null;
-  if (blockSignature && (SIGNATURE_CONFLICTS[archetypeName] ?? []).includes(signatureMechanic)) {
-    trace('signature vetoed:', `${signatureMechanic} contradicts the ${archetypeName} role`
-      + `${archetypeSource === 'user' ? ' (picked)' : ' (resolved)'}`);
-    blockSignature = null;
+  // A VETO IS A TRANSLATION, NOT A DELETION (owner call, 2026-08-07). The
+  // veto used to null the signature and stop, so the concept's ONE
+  // structured mechanical promise was simply dropped and the slot shipped
+  // empty (live: the Ember Wraith asked for an aura, the skirmisher role
+  // forbade it, and the block lost the seat without gaining anything —
+  // `aura—` in the roles trace). The substitute preserves the INTENT while
+  // satisfying the role: an aura and a gaze are both presence-at-range, an
+  // engulf and a breath are both area, and a web binds prey without the
+  // grapple a hit-and-run role can't afford.
+  const SIGNATURE_SUBSTITUTE = { aura: 'gaze', engulf: 'breath', grapple: 'web' };
+  if (blockSignature && (SIGNATURE_CONFLICTS[blockArchetype] ?? []).includes(signatureMechanic)) {
+    const alt = SIGNATURE_SUBSTITUTE[signatureMechanic];
+    const altOk = alt && !(SIGNATURE_CONFLICTS[blockArchetype] ?? []).includes(alt);
+    trace('signature vetoed:', `${signatureMechanic} contradicts the ${blockArchetype} role`
+      + `${archetypeSource === 'user' ? ' (picked)' : ' (resolved)'}`
+      + `${altOk ? ` -> ${alt}` : ' (no substitute)'}`);
+    blockSignature = altOk ? alt : null;
   }
 
   const skeleton = buildSkeleton({
-    cr: crNum, seed: useSeed, alternatives: ALTERNATIVES, archetype: archetypeName,
+    cr: crNum, seed: useSeed, alternatives: ALTERNATIVES, archetype: blockArchetype,
     caster, strikeStat, themes: blockThemes, mind: blockMind,
     size: blockSize, attackMode: blockAttackMode, movement: blockMovement,
     signatureMechanic: blockSignature,
@@ -142,13 +222,15 @@ export async function generateFromSkeleton(options, callLLM) {
     // the resolved TYPE or a draconic THEME — a live block was typed Dragon
     // by the flavor call after a kit-less build, because the synthesis
     // never said Dragon and nothing else could.
+    recent,
+    damageMix,
     family: /dragon/i.test(finalType) ? 'dragon' : null,
     typeHint: finalType,
   });
   trace('type:', `${finalType}${resolvedType ? ' (concept call)' : ' (derived)'}`
     + `${skeleton.package?.name?.endsWith('Dragon kit') ? ' -> dragon kit' : ''}`);
 
-  trace(`CR ${skeleton.cr} ${skeleton.size} — seed ${useSeed}${archetypeName ? `, archetype ${archetypeName}` : ''}`);
+  trace(`CR ${skeleton.cr} ${skeleton.size} — seed ${useSeed}${blockArchetype ? `, archetype ${blockArchetype}` : ''}`);
   trace('numbers:', `AC ${skeleton.ac}  HP ${skeleton.hp} (${skeleton.hp_formula})  atk +${skeleton.attack_bonus}  DC ${skeleton.save_dc}  PB +${skeleton.pb}  multiattack ${skeleton.multiattack}`);
   trace('slot counts:', skeleton.counts);
   if (skeleton.package) trace('spine:', skeleton.package.name);
@@ -193,10 +275,14 @@ export async function generateFromSkeleton(options, callLLM) {
   // One MATERIAL for the block, scored from the concept prose (owner call,
   // 2026-08-05). Attached to the skeleton so the palette, the fills and
   // the naming all read the same declaration.
+  skeleton.energy = energy;
+  skeleton.damage_mix = damageMix;
   skeleton.identity = resolveIdentity(skeleton, {
     concept: [concept, identity, lore].filter(Boolean).join(' '),
     themes: blockThemes,
     type: finalType,
+    house,
+    damageMix,
     seed: useSeed,
   });
   skeleton.houses = skeleton.identity.houses;
@@ -265,9 +351,9 @@ export async function generateFromSkeleton(options, callLLM) {
   const plan = planFromSkeleton(skeleton);
   // The weighted defense budget was chassis-path only, leaving the model's
   // resistance/immunity list unbudgeted here (owner catch, live block 4).
-  const defenseCaps = defenseBudgetFor(crNum, archetypeName);
+  const defenseCaps = defenseBudgetFor(crNum, blockArchetype);
   let monster = assembleMonster(model, {
-    cr: crNum, chassis, plan, archetypeName, resolvedType,
+    cr: crNum, chassis, plan, archetypeName: blockArchetype, resolvedType: finalType,
   });
 
   // 2014 phrasing on a 2024 sheet: zero printed 2024 defense lines carry
@@ -341,7 +427,7 @@ export async function generateFromSkeleton(options, callLLM) {
   // the deterministic suffix form keeps the identity without a plural
   // guess, and applyRenameMapping repoints every self-reference. Without
   // this the swarm-content-untyped reject fires on the engine's own kit.
-  if (archetypeName === 'swarm' && !/swarm/i.test(`${monster.name ?? ''} ${monster.type ?? ''}`)) {
+  if (blockArchetype === 'swarm' && !/swarm/i.test(`${monster.name ?? ''} ${monster.type ?? ''}`)) {
     const swarmName = `${monster.name} Swarm`;
     trace('swarm name guaranteed:', `"${monster.name}" -> "${swarmName}"`);
     monster = applyRenameMapping(monster, { [monster.name]: swarmName });
@@ -351,7 +437,7 @@ export async function generateFromSkeleton(options, callLLM) {
   // Bludgeoning/Piercing/Slashing (weapons hit SOME of the mass) and the
   // eight can't-happen-to-a-crowd condition immunities. Stamped like the
   // type floors — a floor merged with the model's picks, never a ceiling.
-  if (archetypeName === 'swarm') {
+  if (blockArchetype === 'swarm') {
     const res = new Set(['Bludgeoning', 'Piercing', 'Slashing']);
     for (const tok of String(monster.resistances ?? '').split(/[;,]/).map((x) => x.trim()).filter(Boolean)) res.add(tok);
     monster.resistances = [...res].sort().join(', ');
@@ -488,7 +574,7 @@ export async function generateFromSkeleton(options, callLLM) {
             ? { ...e, choose: choices.get(e.id) } : e)),
         });
         const rebuilt = assembleMonster(reflavored, {
-          cr: crNum, chassis, plan, archetypeName, resolvedType,
+          cr: crNum, chassis, plan, archetypeName: blockArchetype, resolvedType: finalType,
         });
         const corrected = applyCorrections(
           rebuilt,
@@ -528,12 +614,17 @@ export async function generateFromSkeleton(options, callLLM) {
   monster.generation = {
     path: 'skeleton',
     seed: useSeed,
-    archetype: archetypeName,
+    archetype: blockArchetype,
     size: skeleton.size,
     // Provenance for every entry, so a strange block can be traced to the
     // creature its mechanics came from.
     package: skeleton.package?.name ?? null,
     derived_from: skeleton.entries.map((e) => `${e.name} <- ${e.derived_from}`),
+    // Row identities for the cross-block frequency ledger. The demiplane
+    // banish shipped four times under four different names, so the caller
+    // records what the rows WERE, not what they were called.
+    row_keys: [...skeleton.entries, ...(skeleton.traits ?? [])]
+      .map((e) => e.row_key).filter(Boolean),
     rejects: rejects.map((r) => r.rule),
     audit: auditNotes,
   };

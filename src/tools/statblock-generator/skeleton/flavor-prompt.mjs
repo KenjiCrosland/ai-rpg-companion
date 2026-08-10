@@ -169,26 +169,100 @@ export function flavorRequests(skeleton) {
  * forge or a frozen abyss is a deliberate collision, which is a different
  * thing from three houses arriving by accident.
  */
-export function pickHouse(concept, themes, seed = 1) {
-  const houses = textureBanks.houses ?? {};
-  const candidates = [...new Set((themes ?? [])
-    .flatMap((t) => textureBanks.facets?.[t]?.houses ?? []))].filter((h) => houses[h]);
-  if (!candidates.length) return [];
-  const text = String(concept ?? '').toLowerCase();
-  const scored = candidates.map((h) => [h, (houses[h].tokens ?? [])
-    .reduce((n, tok) => n + (text.includes(tok) ? 1 : 0), 0)]);
-  const best = Math.max(...scored.map(([, n]) => n));
-  if (best > 0) {
-    const winners = scored.filter(([, n]) => n === best).map(([h]) => h);
-    // A collision needs BOTH houses named twice over: one incidental
-    // token ("granite dust" brushing the sand house) is not a
-    // declaration, and treating it as one re-admits the mishmash through
-    // the escape hatch.
-    const second = best >= 2
-      ? scored.filter(([h, n]) => n >= 2 && !winners.includes(h)).map(([h]) => h)
-      : [];
-    return [...winners.slice(0, 1), ...second.slice(0, 1)];
+// Whole-word match for a bank token, plural allowed. Tokens carry hyphens
+// ("deep-ocean", "rivet-work"); \b sits correctly at both ends of those
+// because the hyphen is already a non-word character. The trailing (e?s)?
+// is load-bearing — a bare \b drops "cinders", "sands" and "rivets", which
+// is most of how these words actually appear in prose — and it stays tight
+// enough to reject the substring hits: "target"/"start" no longer score
+// `tar`, "start" no longer scores void's `star`, "smash"/"ashen" no longer
+// score `ash`, "restrained" no longer scores storm's `rain`.
+const wordReCache = new Map();
+function wordRe(token) {
+  if (!wordReCache.has(token)) {
+    wordReCache.set(token, new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:e?s)?\\b`, 'i'));
   }
+  return wordReCache.get(token);
+}
+
+export function pickHouse(concept, themes, seed = 1, type = null, declared = null) {
+  const houses = textureBanks.houses ?? {};
+  // A DECLARED material wins outright (owner call, 2026-08-07). The concept
+  // call now names exactly one material from its type's line, so there is
+  // nothing left to infer — scoring prose was only ever a way of guessing
+  // at this. It still has to be a real house and legal for the type; a
+  // model naming something off its own line falls through to the scoring
+  // path below rather than failing the generation.
+  {
+    const want = String(declared ?? '').trim().toLowerCase();
+    const legal = textureBanks.type_houses?.[type];
+    if (houses[want] && (!legal || legal.includes(want))) return [want];
+  }
+  // STAGE 2 OF THE FUNNEL (owner call, 2026-08-07): archetype limits type,
+  // type limits material house. The type is a HARD boundary — themes and
+  // prose select WITHIN it, they no longer reach past it. This is what
+  // stops a metal-bodied "Aberration" from resolving to void: void is not
+  // an aberration material, and now it cannot be reached from one.
+  const allowed = textureBanks.type_houses?.[type];
+  const universe = (allowed ?? Object.keys(houses)).filter((h) => houses[h]);
+  const candidates = [...new Set((themes ?? [])
+    .flatMap((t) => textureBanks.facets?.[t]?.houses ?? []))]
+    .filter((h) => houses[h] && universe.includes(h));
+  const text = String(concept ?? '').toLowerCase();
+  // WHOLE WORDS ONLY (owner call, 2026-08-07). `includes` matched tokens
+  // INSIDE other words, and the collisions were not rare ones: `tar` fires
+  // inside "target" and "start", void's `star` inside "start", `ash` inside
+  // "smash"/"flash"/"ashen", storm's `rain` inside "restrained". Any prose
+  // containing "starts" handed tar AND void a free point each — and two
+  // free points is exactly the named-twice bar the second house needed.
+  // A measurable share of "grave, void"-style mashups were manufactured
+  // here rather than described by the concept.
+  const scoreOf = (h) => (houses[h].tokens ?? [])
+    .reduce((n, tok) => n + (wordRe(tok).test(text) ? 1 : 0), 0);
+  const byTheme = candidates.map((h) => [h, scoreOf(h)]);
+  const themeBest = Math.max(0, ...byTheme.map(([, n]) => n));
+
+  // THE PROSE OUTRANKS THE THEMES (owner call, 2026-08-07). `themes` is one
+  // unvalidated field from the concept call, and it conflates two kinds of
+  // facet: MATERIALS (forged, grave, aquatic) and MANNERS (mind, terror,
+  // beguiling — the banks annotate `venomous` as "manner facet, no home
+  // type"). A manner-only theme set leaves the material layer with nothing
+  // to stand on, so it invents one: "aberration of living, scorched metal
+  // … burning sands" came back themed `mind`, whose houses are dream/void/
+  // glass. All three scored zero, the seeded fallback landed on void, and
+  // the block shipped as Starless Yaw — Psychic, hollow, unmade. The words
+  // bronze, furnace, molten, dune and sand were right there and were never
+  // on the ballot.
+  //
+  // So score every house, not just the themes' candidates, and let the
+  // concept override when it has DECLARED a material — the same
+  // named-twice standard the collision hatch uses, since one incidental
+  // token is not a declaration. Themes still win ties, still govern the
+  // register banks, and still supply the fallback when the prose is silent.
+  const byAll = universe.map((h) => [h, scoreOf(h)]);
+  const allBest = Math.max(0, ...byAll.map(([, n]) => n));
+  const proseOverrules = candidates.length ? allBest >= 2 && allBest > themeBest : allBest > 0;
+  if (!candidates.length && !proseOverrules) {
+    // The type still owes the block a material even when themes and prose
+    // both come back empty — a palette-less block is the failure the
+    // seeded fallback exists to prevent.
+    if (!universe.length) return [];
+    const rng0 = makeRng(seed);
+    return [universe[Math.floor(rng0() * universe.length)]];
+  }
+
+  const scored = proseOverrules ? byAll : byTheme;
+  const best = proseOverrules ? allBest : themeBest;
+  // ONE HOUSE, ALWAYS (owner call, 2026-08-07: "we don't want 'grave,
+  // void', we just want grave"). The collision hatch let a second house in
+  // when both scored twice, on the theory that a drowned forge is a
+  // deliberate fusion. In practice the second house bought nothing
+  // mechanical — houses have no reach into row selection at all — and cost
+  // coherence at the only layer they do reach: every ability NAME drew from
+  // a pooled two-material vocabulary, so blocks read as two creatures
+  // sharing a statblock. Depth now comes from pursuing one material,
+  // not from reaching sideways for a second.
+  if (best > 0) return [scored.filter(([, n]) => n === best).map(([h]) => h)[0]];
   const rng = makeRng(seed);
   return [candidates[Math.floor(rng() * candidates.length)]];
 }
@@ -215,7 +289,7 @@ export function pickHouse(concept, themes, seed = 1) {
  *
  * Floors downstream stay as backstops — the model still drifts.
  */
-export function resolveIdentity(skeleton, { concept = '', themes = null, type = null, seed = 1 } = {}) {
+export function resolveIdentity(skeleton, { concept = '', themes = null, type = null, seed = 1, house = null, damageMix = null } = {}) {
   const rows = [...(skeleton.entries ?? []), ...(skeleton.traits ?? [])];
   const text = rows.map((r) => r.text ?? r.template_2024 ?? '').join(' ');
   const manifest = {
@@ -243,9 +317,9 @@ export function resolveIdentity(skeleton, { concept = '', themes = null, type = 
     Undead: { noGood: true },
   };
   return {
-    houses: pickHouse(concept, themes, seed),
+    houses: pickHouse(concept, themes, seed, type, house),
     manifest,
-    contract: { type, ...(CONTRACT[type] ?? {}) },
+    contract: { type, ...(CONTRACT[type] ?? {}), ...(damageMix === 'energy' ? { physical: null } : {}) },
   };
 }
 
@@ -259,9 +333,24 @@ function texturePalette(skeleton, themes) {
   const restraints = [...new Set(banks.flatMap((b) => b.restraints ?? []))];
   const adjs = [...new Set(banks.flatMap((b) => b.name_adjectives ?? []))];
   const nouns = [...new Set(banks.flatMap((b) => b.name_nouns ?? []))];
-  const dmg = [...new Set(banks.flatMap((b) => Object.entries(b.damage_affinity ?? {})
-    .filter(([k, v]) => !k.startsWith('_') && v > 0)
-    .sort((a, b) => b[1] - a[1]).map(([k]) => k)))];
+  // DOMINANCE, NOT PRESENCE (owner call, 2026-08-07, the Grindor: a colony
+  // of stone-plated spiderlings raining heat-baked chitin shards came back
+  // dealing PSYCHIC). This list is the only energy guidance the flavor call
+  // gets, and it used to name every affinity above zero as equally favored.
+  // `bestial` measures Poison 12, Fire 2, Acid 2, Psychic 1 — so a single
+  // tail observation out of seventeen was offered beside Poison as though
+  // the register spoke it.
+  //
+  // Same threshold the ROW selector already uses (energyFits): an energy
+  // qualifies when it reaches a third of its facet's top affinity. Applied
+  // per facet before the union, so a thin facet still contributes its own
+  // best rather than being drowned by a fat one.
+  const dmg = [...new Set(banks.flatMap((b) => {
+    const aff = Object.entries(b.damage_affinity ?? {})
+      .filter(([k, v]) => !k.startsWith('_') && typeof v === 'number' && v > 0);
+    const top = Math.max(0, ...aff.map(([, v]) => v));
+    return aff.filter(([, v]) => v >= top / 3).sort((x, y) => y[1] - x[1]).map(([k]) => k);
+  }))];
   const id = skeleton.identity ?? {};
   const contract = id.contract ?? {};
   const manifest = id.manifest ?? {};
@@ -343,10 +432,16 @@ export function buildFlavorPrompt(skeleton, { concept, description = '', themes 
     // so the choice cannot produce an invalid block — only a better-fitting
     // one. This is what makes the concept actually reach ability selection.
     if (r.options.length > 1) {
+      // THE MENU NO LONGER NAMES ITS DONOR (owner call, 2026-08-07). The
+      // options used to be listed by the printed ability's own name — "Ice
+      // Walk", "Pounce", "Multiple Heads" — so the model was anchored to a
+      // specific SRD creature before it read a word of the mechanics, and
+      // the name then leaked into the block whenever it echoed the label.
+      // Options are numbered; the choice comes back as the number.
       const menu = r.options
-        .map((o, i) => `    ${i === 0 ? '*' : ' '}${o.key}: ${o.text}`)
+        .map((o, i) => `    ${i + 1}${i === 0 ? ' (default)' : ''}: ${o.text}`)
         .join('\n');
-      return `- ${r.id} (${r.section}) — CHOOSE ONE that suits the concept (* = default):\n${menu}\n  provide: choose, ${asks}${flag ? `\n${flag}` : ''}`;
+      return `- ${r.id} (${r.section}) — CHOOSE ONE by NUMBER, whichever suits the concept:\n${menu}\n  provide: choose, ${asks}${flag ? `\n${flag}` : ''}`;
     }
     return `- ${r.id} (${r.section}): ${r.text}\n  provide: ${asks}${flag ? `\n${flag}` : ''}`;
   }).join('\n');
@@ -357,14 +452,14 @@ CONCEPT: ${concept}${description ? `\nDETAILS: ${description}` : ''}${takenNames
 
 The creature is CR ${skeleton.cr}, ${skeleton.size}, AC ${skeleton.ac}, HP ${skeleton.hp}.${ROLE_BRIEF[skeleton.archetype] ? `\nIts combat role is ${ROLE_BRIEF[skeleton.archetype]}. Spend the block's text on that role: when an entry offers a menu, choose the option that serves this loop, and fill spell lists with spells this role would lean on — a reader infers the role from where the words go.` : ''}
 
-Its abilities are written out below with blanks in {braces}. Fill ONLY the blanks and give each entry a name that fits THIS creature. Do not rewrite any other word, and do not invent, remove or renumber abilities.
+Its abilities are written out below with blanks in {braces}. Fill ONLY the blanks and give EVERY entry a name that fits THIS creature — a name is required for every id listed, not just the ones that interest you. Do not rewrite any other word, and do not invent, remove or renumber abilities.
 
 ${lines}${spellPolicyLine}
 
 Blanks mean:
 ${ASKABLE.map((s) => `  {${s}} — ${SLOT_BRIEF[s]}`).join('\n')}
 
-Intelligence must support the mind you give it: an alignment other than Unaligned, any language, or judgment/arcane themes all need Intelligence 6+; at Intelligence 4 or below the creature is Unaligned instinct. Every name in the block shares ONE identity: choose at most two thematic threads from the concept and use them consistently — a block that is simultaneously swamp, frost, bone and planar-rift reads as a random-adjective table. Truesight belongs to high-planar minds; a lurking beast takes Tremorsense or Blindsight. Never borrow another type's vocabulary for names: no "wraith" on a living creature, no "Abyssal" on a Celestial, no "infernal" on a fey — the audience reads those as template seams. A name must FIT its mechanics: a shriek or roar is Thunder damage against a Constitution save; a beam or bolt is Dexterity; don't name a Dexterity-save Force bolt "Piercing Shriek". An attack with a thrown RANGE must name what is thrown — every printed giant hurls "Rock"; a "Fist" with a 120-foot range throws nothing (name the stone, the spear, the shard of its own body). Names should say what the creature IS, not what the ability does: prefer a name drawn from the creature's nature over a description of its mechanics. Entry names are PLAIN ENGLISH — real words only; invented syllables ("Thul-eg Strike") belong to the creature's proper name, never to entries.
+Intelligence must support the mind you give it: an alignment other than Unaligned, any language, or judgment/arcane themes all need Intelligence 6+; at Intelligence 4 or below the creature is Unaligned instinct. Every name in the block shares ONE identity: choose at most two thematic threads from the concept and use them consistently — a block that is simultaneously swamp, frost, bone and planar-rift reads as a random-adjective table. Truesight belongs to high-planar minds; a lurking beast takes Tremorsense or Blindsight. Never borrow another type's vocabulary for names: no "wraith" on a living creature, no "Abyssal" on a Celestial, no "infernal" on a fey — the audience reads those as template seams. A name must FIT its mechanics: a shriek or roar is Thunder damage against a Constitution save; a beam or bolt is Dexterity; don't name a Dexterity-save Force bolt "Piercing Shriek". A row whose text names a SUBSTANCE or TERRAIN must be named for THAT one and no other — a trait granting passage through thick undergrowth is not a "Mist-Walker", because the block has no mist in it and the reader now looks for some. An attack with a thrown RANGE must name what is thrown — every printed giant hurls "Rock"; a "Fist" with a 120-foot range throws nothing (name the stone, the spear, the shard of its own body). Names should say what the creature IS, not what the ability does: prefer a name drawn from the creature's nature over a description of its mechanics. Entry names are PLAIN ENGLISH — real words only; invented syllables ("Thul-eg Strike") belong to the creature's proper name, never to entries.
 
 The creature's TYPE is already decided by the engine — do not choose one. Senses must support the body: a burrower or anything immune to the Blinded condition needs Tremorsense or Blindsight, not just eyes. Languages at Intelligence 4 or below follow the Zombie pattern ("Understands X but can't speak") or none. Vulnerabilities above CR 10 are almost never printed — only take one as a deliberate, concept-central choice.
 
@@ -392,7 +487,7 @@ Return ONLY JSON:
   "languages": "or omit",
   "resistances": "or omit", "immunities": "or omit", "vulnerabilities": "or omit",
   "entries": [
-    { "id": "e1", "choose": "the key of the option you picked, when offered", "name": "an entry name"${ASKABLE.map((s) => `, "${s}": "only if e1 asks for it"`).join('')} }
+    { "id": "e1", "choose": "the NUMBER of the option you picked, when offered", "name": "an entry name"${ASKABLE.map((s) => `, "${s}": "only if e1 asks for it"`).join('')} }
   ]
 }`;
 }
@@ -652,8 +747,14 @@ export function resolveChoices(skeleton, byId) {
     .replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
   const chosen = skeleton.entries.map((e) => {
     if (!e.options || e.options.length < 2) return e;
-    const want = normKey(byId.get(e.id)?.choose);
-    const hit = want && e.options.find((o) => normKey(o.key) === want);
+    const raw = byId.get(e.id)?.choose;
+    const want = normKey(raw);
+    // The menu is numbered now, so a bare index is the expected answer; the
+    // key is still accepted for responses written against the old prompt.
+    const idx = Number(String(raw ?? '').trim().match(/^\d+$/)?.[0]);
+    const hit = (Number.isInteger(idx) && idx >= 1 && idx <= e.options.length)
+      ? e.options[idx - 1]
+      : (want && e.options.find((o) => normKey(o.key) === want));
     return hit ? { ...e, ...hit, id: e.id, section: e.section } : e;
   });
   // Dependency repair BEFORE the clash pass. A swap can remove the block's
@@ -755,6 +856,77 @@ export function swapEntries(skeleton, entryNames) {
   return choices;
 }
 
+/**
+ * Strip a parenthetical citation from a defense line when nothing in the
+ * block answers to it. Names are matched bare, so "(from Stone Mind)"
+ * survives only if a Stone Mind entry or trait actually shipped.
+ */
+function dropDanglingCitations(value, sections) {
+  if (typeof value !== 'string' || !value.includes('(')) return value;
+  const names = Object.values(sections ?? {}).flat()
+    .map((e) => String(e.name ?? '').replace(/\s*\([^)]*\)\s*$/, '').trim().toLowerCase())
+    .filter(Boolean);
+  const spellText = Object.values(sections ?? {}).flat()
+    .filter((e) => /Spellcasting/i.test(e.name ?? '')).map((e) => e.text ?? '').join(' ').toLowerCase();
+  return value.replace(/\s*\(([^)]*)\)/g, (whole, inner) => {
+    const note = inner.toLowerCase();
+    const namedEntry = names.some((n) => n && note.includes(n));
+    const namedSpell = [...inner.matchAll(/\*([^*]+)\*/g)].some((m) => spellText.includes(m[1].toLowerCase()));
+    return namedEntry || namedSpell ? whole : '';
+  }).replace(/\s{2,}/g, ' ').trim();
+}
+
+/**
+ * A NON-DONOR FALLBACK NAME (owner call, 2026-08-07).
+ *
+ * `given.name || entry.name` meant that whenever the flavor call omitted a
+ * name for an entry, the SOURCE CREATURE'S name shipped — which is where
+ * "Ice Walk" on an iron construct, "Multiple Heads" on a headless one, and
+ * "Pounce" in 85% of blocks all came from. The mechanics were already
+ * donor-free (11 of 788 rows name a donor body part); the NAME was the leak.
+ *
+ * The fallback is built from the block's own material register plus a plain
+ * mechanical head noun, so an unnamed entry reads as this creature's rather
+ * than as a transplant. Deterministic per entry id, so a block is stable.
+ * name_locked entries (Multiattack, Spellcasting, Legendary Resistance) are
+ * rules vocabulary and keep their printed names.
+ */
+const MECHANIC_NOUN = {
+  plain_attack: ['Strike', 'Blow', 'Lash'],
+  rider_attack: ['Rake', 'Gouge', 'Cleave'],
+  area: ['Burst', 'Wave', 'Surge'],
+  save_effect: ['Grasp', 'Snare', 'Hold'],
+  save_damage: ['Torrent', 'Scour', 'Sear'],
+  utility: ['Step', 'Shift', 'Guard'],
+  legendary: ['Riposte', 'Answer', 'Reprisal'],
+};
+
+function fallbackEntryName(entry, skeleton) {
+  const houses = skeleton.houses ?? [];
+  const adjs = houses.flatMap((h) => textureBanks.houses?.[h]?.adjectives ?? []);
+  const nouns = MECHANIC_NOUN[entry.slot_type] ?? ['Aspect', 'Trait', 'Habit'];
+  // stable per entry, so the same block always renders the same name
+  const seed = String(entry.id ?? entry.name ?? '')
+    .split('').reduce((n, c) => ((n * 31) + c.charCodeAt(0)) >>> 0, 7);
+  const adj = adjs.length ? adjs[seed % adjs.length] : null;
+  const noun = nouns[(seed >> 3) % nouns.length];
+  return adj ? `${adj} ${noun}` : noun;
+}
+
+/**
+ * The single place an entry's final name is decided. fill() and the
+ * reference-propagation pass below must agree, or a fallback name renames
+ * the attack while "makes three <old name> attacks" still points at the
+ * name it used to have (live symptom: undefined-attack-ref).
+ */
+function resolveEntryName(entry, given, skeleton) {
+  const printed = String(entry?.name ?? '').trim();
+  const isRulesName = /^(?:Multiattack|Spellcasting|Legendary Resistance)\b/i.test(printed);
+  if (entry?.name_locked || isRulesName) return printed;
+  const modelName = typeof given?.name === 'string' ? given.name.trim() : '';
+  return (modelName || fallbackEntryName(entry, skeleton) || printed).trim();
+}
+
 export function applyFlavor(skeleton, llmJson) {
   // Defensive against a PARTIAL object, not merely a malformed one. The
   // validator rejects a nameless response, but callers can bypass validation
@@ -776,13 +948,23 @@ export function applyFlavor(skeleton, llmJson) {
   // energy type, which is how official blocks read ("Slashing damage plus
   // Fire damage").
   const physical = PHYSICAL.includes(j.physical_damage) ? j.physical_damage : 'Bludgeoning';
-  const energy = typeof j.energy_damage === 'string' && j.energy_damage.trim()
-    ? j.energy_damage.trim() : 'Force';
+  const ENERGY_TYPES = ['Acid', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Poison', 'Psychic', 'Radiant', 'Thunder'];
+  // The energy was ROLLED before the concept call and the concept was
+  // written to it, so the flavor call does not get to revise it — its own
+  // answer is only a fallback for generations that predate the roll.
+  const rolledEnergy = (skeleton.energy && ENERGY_TYPES.includes(skeleton.energy))
+    ? skeleton.energy
+    : (typeof j.energy_damage === 'string' && j.energy_damage.trim()
+      ? j.energy_damage.trim() : 'Force');
+  // A PHYSICAL-ONLY block has no energy to render. Selection already keeps
+  // energy-bearing rows out of it; this is the backstop, so a row that
+  // slipped through prints a physical type rather than the energy the
+  // creature was told it does not have.
+  const energy = skeleton.damage_mix === 'physical' ? physical : rolledEnergy;
   // Optional SECOND energy for dual-natured effects (owner call, 2026-08-04):
   // a dual-pool print row (the Balor's Fire + Force Death Throes) fills its
   // rider with the second energy when the concept granted one; otherwise the
   // same-type pools merge downstream.
-  const ENERGY_TYPES = ['Acid', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Poison', 'Psychic', 'Radiant', 'Thunder'];
   const energy2 = typeof j.energy_damage_2 === 'string'
     && ENERGY_TYPES.includes(j.energy_damage_2.trim())
     && j.energy_damage_2.trim() !== energy
@@ -923,9 +1105,13 @@ export function applyFlavor(skeleton, llmJson) {
       // creature, not the world it walks through, and the trait then
       // never triggers.)
       if (value && slot === 'terrain') {
-        const natural = (textureBanks._meta?.natural_terrain ?? []).join(' ').toLowerCase();
-        const words = value.toLowerCase().split(/[\s-]+/).filter((w) => w.length > 2);
-        if (!words.some((w) => natural.includes(w))) value = null;
+        // EXACT phrase, not stray words: matching word-by-word against the
+        // joined list let "still water" through on the strength of "water"
+        // inside "mud and shallow water" — and "deep mud" the same way,
+        // which is the fill this vet was built to stop (live: Ice Walk on
+        // the Brine Hound, shipping the same broken trait twice).
+        const natural = (textureBanks._meta?.natural_terrain ?? []).map((t) => t.toLowerCase());
+        if (!natural.includes(value.toLowerCase().trim())) value = null;
       }
       // Theme-aware spell draw (owner-approved 2026-08-03): on-palette,
       // pre-filtered against everything the downstream vets would reject,
@@ -1178,7 +1364,16 @@ export function applyFlavor(skeleton, llmJson) {
       }
       // "each creature that isn't a Humanoid" spares the party — a kindred
       // exclusion only works when the kindred isn't what adventurers are.
-      if (slot === 'kindred_type' && /humanoid/i.test(value)) value = FALLBACK.kindred_type;
+      // {kindred_type} is the creature's OWN type — an aura that spares
+      // "Celestial creatures" on a Construct spares nobody and reads as a
+      // leftover (live: Undertow Surge, the Brine Hound). Only the
+      // Humanoid case was checked before, because that one spares the
+      // party.
+      if (slot === 'kindred_type') {
+        const own2 = String(j.type ?? '').trim();
+        if (/humanoid/i.test(value)) value = FALLBACK.kindred_type;
+        else if (own2 && value.trim().toLowerCase() !== own2.toLowerCase()) value = own2;
+      }
       text = text.split(`{${slot}}`).join(value);
     }
     // Print's ignite rider says "it starts burning" — the library's
@@ -1256,7 +1451,10 @@ export function applyFlavor(skeleton, llmJson) {
     // Construct is Bludgeoning-dominant but not unanimous (8/2/1) and
     // Elemental is genuinely mixed (8/8/3), and encoding those would be
     // the n=2 over-fitting we overrule critics for.
-    const amorphous = j.type === 'Ooze';
+    // Energy-only blocks generalise the Ooze rule: a body with no edge,
+    // point or mass deals its energy and nothing else. Print builds these
+    // as wraiths, elementals, oozes, swarms and archmages (7% at CR 5+).
+    const amorphous = j.type === 'Ooze' || skeleton.damage_mix === 'energy';
     const attackPhysical = amorphous ? (energy === 'Poison' ? 'Acid' : energy)
       : (mainIsPhysical ? (limbType(given.name, entry.name) ?? physical) : physical);
     {
@@ -1287,7 +1485,7 @@ export function applyFlavor(skeleton, llmJson) {
         text = `${text.trim().replace(/\.?$/, '.')} The ${inline} can't take this action again until the start of its next turn.`;
       }
     }
-    let name = (entry.name_locked ? entry.name : (given.name || entry.name)).trim();
+    let name = resolveEntryName(entry, given, skeleton);
     // The gate is part of the NAME in print ("Fire Breath (Recharge 5-6)").
     // It was being dropped here, which shipped every recharge ability as
     // at-will (live: a 60-foot paralysis cone usable every turn). Legendary
@@ -1341,7 +1539,7 @@ export function applyFlavor(skeleton, llmJson) {
   // renames must follow too.
   for (const atk of attacks) {
     const oldName = atk.name;
-    const newName = (byId.get(atk.id)?.name || oldName).trim();
+    const newName = resolveEntryName(atk, byId.get(atk.id), skeleton);
     if (newName === oldName) continue;
     // Word-boundaried: a bare split/join on "Bite" would also rewrite the
     // inside of "Ruin-Fed Bite" and corrupt the longer name.
@@ -1403,6 +1601,54 @@ export function applyFlavor(skeleton, llmJson) {
             e.text = e.text.replace(/can see within (\d+) feet/g,
               (m0, n) => (Number(n) > radius ? `can see within ${radius} feet` : m0));
           }
+        }
+      }
+    }
+  }
+
+  // 0a3. Tremorsense is never a creature's ONLY special sense in print: all
+  //      6 printed blocks that have it pair it with a sight sense (Ankheg,
+  //      Bulette, Earth Elemental, Remorhaz, Xorn take darkvision 60; the
+  //      Purple Worm takes blindsight 30). By RAW a tremorsense-only block
+  //      still sees normally, so this is a print-SHAPE floor, not a
+  //      correctness fix — but a block that reaches for a ground sense and
+  //      lists nothing else reads as blind, and its "one creature it can
+  //      see within 120 feet" rows read as broken even though they aren't
+  //      (live: the Starless Yaw).
+  {
+    const senses = String(j.senses_special ?? '');
+    if (/tremorsense/i.test(senses) && !/darkvision|blindsight|truesight/i.test(senses)) {
+      j.senses_special = `darkvision 60 ft., ${senses.trim()}`;
+    }
+  }
+
+  // 0a4. OBJECTS ARE IMMUNE TO POISON AND PSYCHIC, so an object clause on
+  //      either is dead text at the table. Measured: 6 printed entries
+  //      carry "each object that isn't being worn or carried", and every
+  //      one deals Fire (Barbed Devil, Horned Devil, Magmin) or Thunder
+  //      (Tarrasque) — or corrodes metal with no damage type at all (Rust
+  //      Monster). Zero use a type objects shrug off.
+  //
+  //      This ships whenever the ENERGY SUBSTITUTION rewrites a row whose
+  //      printed damage type was object-affecting: the Tarrasque's
+  //      Thunderous Bellow prints as Thunder, arrives in a Psychic block
+  //      as Psychic, and drags the clause along dead (live: the krak's
+  //      Crockery Cascade, then the Uulgroth's Lulling Chime — the second
+  //      shipment of the same defect, because nothing was ever guarding
+  //      this).
+  {
+    const OBJECT_CLAUSE = /\s*and each object that isn't being worn or carried/gi;
+    for (const list of Object.values(sections)) {
+      for (const e of list) {
+        if (!OBJECT_CLAUSE.test(e.text)) continue;
+        OBJECT_CLAUSE.lastIndex = 0;
+        const types = [...new Set([...e.text.matchAll(
+          /\b(Acid|Cold|Fire|Force|Lightning|Necrotic|Poison|Psychic|Radiant|Thunder)\b/g,
+        )].map((mm) => mm[1]))];
+        // Only strip when EVERY energy in the row is one objects ignore —
+        // a row that also deals Fire still legitimately breaks things.
+        if (types.length && types.every((t) => t === 'Poison' || t === 'Psychic')) {
+          e.text = e.text.replace(OBJECT_CLAUSE, '');
         }
       }
     }
@@ -1553,12 +1799,18 @@ export function applyFlavor(skeleton, llmJson) {
       // Same-type damage pools merge (the belt under the dual-energy
       // contract): "16 (3d10) Fire plus 11 (2d10) Fire" is one printed pool
       // — 27 (5d10) Fire (live: the Brimstone Warden's death blast).
+      // The flat bonus is load-bearing: an ATTACK's main pool is written
+      // "17 (2d8 + 8)", which the dice-only pattern could not match, so a
+      // same-type pair on an attack row would have survived the merge that
+      // catches it everywhere else.
       e.text = e.text.replace(
-        /\d+ \((\d+)d(\d+)\) (\w+) damage plus \d+ \((\d+)d(\d+)\) \3 damage/g,
-        (m0, n1, d1, type, n2, d2) => {
+        /\d+ \((\d+)d(\d+)(?: \+ (\d+))?\) (\w+) damage plus \d+ \((\d+)d(\d+)(?: \+ (\d+))?\) \4 damage/g,
+        (m0, n1, d1, b1, type, n2, d2, b2) => {
           if (d1 !== d2) return m0;
           const n = Number(n1) + Number(n2);
-          return `${Math.floor((n * (Number(d1) + 1)) / 2)} (${n}d${d1}) ${type} damage`;
+          const bonus = Number(b1 ?? 0) + Number(b2 ?? 0);
+          const avg = Math.floor((n * (Number(d1) + 1)) / 2) + bonus;
+          return `${avg} (${n}d${d1}${bonus ? ` + ${bonus}` : ''}) ${type} damage`;
         },
       );
       // Article agreement after number substitution: the printed brass line
@@ -1624,16 +1876,30 @@ export function applyFlavor(skeleton, llmJson) {
     const HARD_HOUSES = ['stone', 'magma', 'iron', 'glass', 'bone', 'ice', 'sand', 'chitin'];
     const hardTokens = HARD_HOUSES.flatMap((h) => textureBanks.houses?.[h]?.tokens ?? []);
     const MINERAL = new RegExp(`\\b(?:${hardTokens.join('|')}|crust|shale|slate|marble|obsidian|coral|amber|gold|steel|metal)\\b`, 'i');
+    // (The printed variants, verified: the ETTERCAP's web is "Immunity to
+    // Bludgeoning, Poison, and Psychic"; the GIANT SPIDER's is "Immunity to
+    // Poison and Psychic". An older comment here had those two backwards.)
+    // BLUDGEONING IMMUNITY IS FOR FIBROUS THINGS ONLY (owner call,
+    // 2026-08-07, the Uulgroth's Honeyed Resin). Print gives BOTH web
+    // variants — the Ettercap's web is Immune to Bludgeoning, the Giant
+    // Spider's is not — so dropping that immunity is a printed shape, not
+    // an invention. A web you cannot punch apart is believable; hardened
+    // resin, wax or sap is exactly the thing a mace shatters, and it still
+    // burns. Fibrous keeps the Ettercap variant, everything non-mineral
+    // takes the Giant Spider variant: burns AND cracks.
+    const FIBROUS = /\b(?:web|webbing|silk|strand|gossamer|thread|mesh|netting|filament|cobweb)\b/i;
     for (const list of Object.values(sections)) {
       for (const e of list) {
         const m = e.text.match(/until (?:the|its) ([\w' -]+?) is destroyed \(AC/);
-        if (m && MINERAL.test(m[1])) {
-          // both printed variants (Giant Spider lists Bludgeoning in the
-          // immunities, the Ettercap doesn't)
+        if (!m) continue;
+        if (MINERAL.test(m[1])) {
           e.text = e.text
             .replace('Vulnerability to Fire damage', 'Vulnerability to Bludgeoning damage')
             .replace('Immunity to Bludgeoning, Poison, and Psychic damage', 'Immunity to Fire, Poison, and Psychic damage')
             .replace('Immunity to Poison and Psychic damage', 'Immunity to Fire, Poison, and Psychic damage');
+        } else if (!FIBROUS.test(m[1])) {
+          e.text = e.text
+            .replace('Immunity to Bludgeoning, Poison, and Psychic damage', 'Immunity to Poison and Psychic damage');
         }
       }
     }
@@ -1846,9 +2112,17 @@ export function applyFlavor(skeleton, llmJson) {
     save_proficiencies: Array.isArray(j.save_proficiencies) ? j.save_proficiencies : [],
     skill_proficiencies: Array.isArray(j.skill_proficiencies) ? j.skill_proficiencies : [],
     languages: j.languages,
-    resistances: j.resistances,
-    immunities: j.immunities,
-    vulnerabilities: j.vulnerabilities,
+    // A defense may cite where it comes from, but only if the source
+    // exists. Print does this twice and both resolve (the Archmage's
+    // "Charmed (with Mind Blank)" names a spell it casts). The Grindor
+    // shipped "Psychic (from Stone Mind)" with no such trait — the
+    // undefined-attack-ref class, in a line nothing was checking. The
+    // defense is fine; only the dangling citation is dropped. Applied at
+    // BOTH seams: assembly cleans the chassis path, this cleans the
+    // skeleton path's own model.
+    resistances: dropDanglingCitations(j.resistances, sections),
+    immunities: dropDanglingCitations(j.immunities, sections),
+    vulnerabilities: dropDanglingCitations(j.vulnerabilities, sections),
     sections,
   };
 }

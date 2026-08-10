@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "status": "DRAFT \u2014 all 25 facets authored. Unwired: nothing imports this file yet. Owner red-pen pass expected before Phase 3 wiring (banked fallbacks -> fill vet -> prompt menus).",
-    "register": "Authored to the printed voice (conventions read, 2026-08-03): substances are effect-adjective + state-of-matter noun, one to three words, article-free, never clauses ('sleep gas', 'scalding steam', 'repulsion energy' \u2014 never 'moss-sheathed root and stone'). Crafted attack names are two words, [element/material/condition] + [weapon] ('Flame Whip', 'Frost Axe', 'Grave Strike'). Delivery verbs are the small printed set, agreeing with the substance's state of matter. Damage affinities are MEASURED counts from the 329-block corpus and stay weights, never filters.",
+    "status": "DRAFT — all 25 facets authored. Unwired: nothing imports this file yet. Owner red-pen pass expected before Phase 3 wiring (banked fallbacks -> fill vet -> prompt menus).",
+    "register": "Authored to the printed voice (conventions read, 2026-08-03): substances are effect-adjective + state-of-matter noun, one to three words, article-free, never clauses ('sleep gas', 'scalding steam', 'repulsion energy' — never 'moss-sheathed root and stone'). Crafted attack names are two words, [element/material/condition] + [weapon] ('Flame Whip', 'Frost Axe', 'Grave Strike'). Delivery verbs are the small printed set, agreeing with the substance's state of matter. Damage affinities are MEASURED counts from the 329-block corpus and stay weights, never filters.",
     "fields": {
       "substances": "fills for {substance}: what a breath, burst, aura, or dissolution is made of",
       "appendages": "fills for {appendage}/{appendage_plural}: one/many pairs, concrete limbs or implements",
@@ -9,9 +9,9 @@
       "name_adjectives": "leading words for ability and creature names in this register",
       "name_nouns": "concrete head nouns (agents, forms, implements) for names in this register",
       "damage_affinity": "measured printed counts of energy damage for the facet's home type; thin samples marked",
-      "vet_tokens": "SMALL, high-confidence domain-claiming tokens for the Phase 3 fill vet \u2014 a fill containing one is claiming this facet. Must stay unique across facets; ambiguous words (molten, ash, mist) deliberately excluded."
+      "vet_tokens": "SMALL, high-confidence domain-claiming tokens for the Phase 3 fill vet — a fill containing one is claiming this facet. Must stay unique across facets; ambiguous words (molten, ash, mist) deliberately excluded."
     },
-    "houses_note": "A HOUSE is one material and the vocabulary it earns \u2014 finer than a facet, which spans several (elemental holds magma, stone, storm, ice and sand at once). The engine declares ONE house per block, scored from the concept prose, and every material fill and name draws from it: brine and sleet are both Cold-legal and both wrong together (owner call 2026-08-05). Token lists cover the words CONCEPTS use, not just the house's own name: 'salt-toughened plant fiber' matched nothing and fell through to a blind seeded pick that chose chitin for a plant creature (live: the Graspwarden, 2026-08-05). Each house also carries difficult_terrain: the {terrain} slot renders inside \"Difficult Terrain composed of X\", so X must IMPEDE \u2014 bare stone is a surface, not difficult terrain. Each house also names habitat_terrain \u2014 the natural ground its creature LIVES on, for the Ice-Walk genus. Print keys that trait to habitat (\"ice or snow\"), never to the creature's substance, and never names a material when it CREATES difficult terrain at all.",
+    "houses_note": "A HOUSE is one material and the vocabulary it earns — finer than a facet, which spans several (elemental holds magma, stone, storm, ice and sand at once). The engine declares ONE house per block, scored from the concept prose, and every material fill and name draws from it: brine and sleet are both Cold-legal and both wrong together (owner call 2026-08-05). Token lists cover the words CONCEPTS use, not just the house's own name: 'salt-toughened plant fiber' matched nothing and fell through to a blind seeded pick that chose chitin for a plant creature (live: the Graspwarden, 2026-08-05). Each house also carries difficult_terrain: the {terrain} slot renders inside \"Difficult Terrain composed of X\", so X must IMPEDE — bare stone is a surface, not difficult terrain. Each house also names habitat_terrain — the natural ground its creature LIVES on, for the Ice-Walk genus. Print keys that trait to habitat (\"ice or snow\"), never to the creature's substance, and never names a material when it CREATES difficult terrain at all.",
     "natural_terrain": [
       "ice or snow",
       "sand and loose scree",
@@ -2940,14 +2940,21 @@
     },
     "iron": {
       "tokens": [
+        "alloy",
+        "anvil",
         "brass",
         "bronze",
         "clockwork",
+        "cog",
+        "copper",
         "forge",
         "gear",
+        "hammered",
         "iron",
         "machine",
+        "metal",
         "piston",
+        "plating",
         "rivet",
         "rivet-work",
         "solder",
@@ -3371,5 +3378,128 @@
       ],
       "habitat_terrain": "sand and loose scree"
     }
+  },
+  "type_houses": {
+    "_note": "STAGE 2 OF THE FUNNEL (owner call, 2026-08-07): archetype limits type, type limits material house. Authored from the printed member list of each type, not from statblock text — text scoring is unusable here because between/fire/poison/metal are mechanical vocabulary and every type scores every house. The Aberration row is the Starless Yaw fix: all nine printed aberrations are organic or stony, so void/dream/glass are not aberration materials. abyss and void have no printed body to measure — abyss is placed on Fiend (the plane), Aberration and Elemental; void on Aberration and Celestial as the cosmic register. Judgment, not measurement.",
+    "Aberration": [
+      "chitin",
+      "rot",
+      "shadow",
+      "brine",
+      "stone",
+      "hide",
+      "abyss",
+      "void"
+    ],
+    "Beast": [
+      "hide",
+      "bone",
+      "blood",
+      "chitin",
+      "thorn"
+    ],
+    "Celestial": [
+      "light",
+      "glass",
+      "storm",
+      "hide",
+      "void"
+    ],
+    "Construct": [
+      "iron",
+      "stone",
+      "glass",
+      "bone",
+      "hide"
+    ],
+    "Dragon": [
+      "flame",
+      "ice",
+      "storm",
+      "ash",
+      "venom",
+      "brine"
+    ],
+    "Elemental": [
+      "storm",
+      "stone",
+      "magma",
+      "flame",
+      "ice",
+      "brine",
+      "sand",
+      "ash",
+      "abyss"
+    ],
+    "Fey": [
+      "thorn",
+      "dream",
+      "hide",
+      "light",
+      "shadow",
+      "brine"
+    ],
+    "Fiend": [
+      "flame",
+      "ash",
+      "blood",
+      "shadow",
+      "bone",
+      "chitin",
+      "iron",
+      "ice",
+      "abyss"
+    ],
+    "Giant": [
+      "stone",
+      "hide",
+      "storm",
+      "ice",
+      "magma"
+    ],
+    "Humanoid": [
+      "iron",
+      "hide",
+      "bone",
+      "blood",
+      "ash",
+      "shadow",
+      "flame",
+      "magma",
+      "grave",
+      "venom",
+      "brine"
+    ],
+    "Monstrosity": [
+      "hide",
+      "chitin",
+      "bone",
+      "stone",
+      "venom",
+      "thorn",
+      "brine",
+      "ice",
+      "blood",
+      "shadow"
+    ],
+    "Ooze": [
+      "tar",
+      "rot",
+      "blood",
+      "fungus"
+    ],
+    "Plant": [
+      "thorn",
+      "fungus",
+      "rot"
+    ],
+    "Undead": [
+      "grave",
+      "bone",
+      "rot",
+      "shadow",
+      "blood",
+      "ash"
+    ]
   }
 }

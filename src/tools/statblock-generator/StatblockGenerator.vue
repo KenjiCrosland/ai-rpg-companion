@@ -308,9 +308,10 @@ import Statblock2024 from '@/components/Statblock2024.vue';
 import {
   generateMonster2024, buildArchetypeResolvePrompt, validateArchetypeResponse,
   buildSeedSynthesisPrompt, validateSeedSynthesisResponse,
-  parseGenerationResponse, pickRandomArchetype, crNumberFor, crKeyFor,
+  parseGenerationResponse, pickRandomArchetype, rollEnergy, rollDamageMix, crNumberFor, crKeyFor,
   convertEdition, toLegacyModel, fromLegacyModel,
 } from './format-2024/generate.mjs';
+import { readRecent, recordShipped } from './skeleton/frequency-ledger.mjs';
 import { buildRandomConceptSeed, buildSynthesizedConcept, rollRandomCR } from './format-2024/concept-seeds.mjs';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import SidebarFooter from '@/components/SidebarFooter.vue';
@@ -1030,6 +1031,8 @@ async function generateStatblockEngine(edition) {
   let conceptIdentity = null;
   let conceptLore = null;
   let conceptThemes = null;
+  // The ONE material the concept call declared from its type's line.
+  let conceptHouse = null;
   let conceptMind = null;
   let conceptSize = null;
   let conceptMovement = null;
@@ -1044,12 +1047,15 @@ async function generateStatblockEngine(edition) {
   // got no identity, no lore, and no type honesty. The picked role is
   // passed as GIVEN — the call echoes it and designs around it.
   const givenArchetype = archetypeName === 'auto' ? null : archetypeName;
+  // Rolled BEFORE the concept call so the lore is written to it.
+  const rolledEnergy = rollEnergy();
+  const rolledMix = rollDamageMix();
   {
     archetypeSource = givenArchetype ? 'user' : 'auto';
     try {
       if (userConcept) {
         const raw = await generateGptResponse(
-          buildArchetypeResolvePrompt(userConcept, monsterDescription.value, { cr, archetype: givenArchetype }),
+          buildArchetypeResolvePrompt(userConcept, monsterDescription.value, { cr, archetype: givenArchetype, energy: rolledEnergy, damageMix: rolledMix }),
           validateArchetypeResponse,
           2,
         );
@@ -1070,6 +1076,9 @@ async function generateStatblockEngine(edition) {
           const FACETS = ['bestial','armed','amorphous','grave','fiendish','celestial','fey','draconic','elemental','verdant','forged','mind','venomous','terror','beguiling','grasping','devouring','aquatic','subterranean','aerial','uncanny','arcane','voice','gaze','breath'];
           const t = parsed.themes.filter((x) => FACETS.includes(String(x).toLowerCase())).slice(0, 2);
           if (t.length) conceptThemes = t;
+        }
+        if (typeof parsed?.material === 'string' && parsed.material.trim()) {
+          conceptHouse = parsed.material.trim().toLowerCase();
         }
         if (['sapient', 'bestial', 'mindless'].includes(parsed?.mind)) conceptMind = parsed.mind;
         if (typeof parsed?.size === 'string') conceptSize = parsed.size;
@@ -1113,6 +1122,9 @@ async function generateStatblockEngine(edition) {
           const t = parsed.themes.filter((x) => FACETS.includes(String(x).toLowerCase())).slice(0, 2);
           if (t.length) conceptThemes = t;
         }
+        if (typeof parsed?.material === 'string' && parsed.material.trim()) {
+          conceptHouse = parsed.material.trim().toLowerCase();
+        }
         if (['sapient', 'bestial', 'mindless'].includes(parsed?.mind)) conceptMind = parsed.mind;
         if (typeof parsed?.size === 'string') conceptSize = parsed.size;
         if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
@@ -1152,6 +1164,10 @@ async function generateStatblockEngine(edition) {
         resolvedType,
         lore: conceptLore,
         themes: conceptThemes,
+        house: conceptHouse,
+        recent: readRecent(),
+        energy: rolledEnergy,
+        damageMix: rolledMix,
         mind: conceptMind,
         conceptSize,
         movement: conceptMovement,
@@ -1174,6 +1190,11 @@ async function generateStatblockEngine(edition) {
       },
       (prompt, validate) => generateGptResponse(prompt, validate, 3),
     );
+    // Cross-block frequency ledger: record what SOURCE ROWS this block
+    // shipped, so the next generations damp them. Keyed on the row, not the
+    // shipped name — the demiplane banish appeared four times under four
+    // names, which is exactly why the repeat was invisible per-block.
+    recordShipped(finalMonster?.generation?.row_keys ?? []);
   } catch (e) {
     errorMessage.value = e.message;
     // Failure taxonomy: keep the last 20 failures (rule names + settings) in

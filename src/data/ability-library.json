@@ -4,9 +4,9 @@
     "contract": "Every entry names its source creature. template_2014 present when that creature exists in both SRDs.",
     "paired_entries": 305,
     "damage_slots": {
-      "main": "{damage} ({dice}) {damage_type} \u2014 the attack's primary damage.",
-      "rider": "{rider_damage} ... \u2014 ADDITIVE second instance (\"plus 4 (1d8) Acid damage\"). Sums with the main damage.",
-      "alternative": "{alt_damage} ... \u2014 an ALTERNATIVE that REPLACES the main damage under a condition (\"or 12 (2d8+3) Piercing damage if the target is Grappled\", or a swarm's reduced damage while Bloodied). Never sum it with the main damage.",
+      "main": "{damage} ({dice}) {damage_type} — the attack's primary damage.",
+      "rider": "{rider_damage} ... — ADDITIVE second instance (\"plus 4 (1d8) Acid damage\"). Sums with the main damage.",
+      "alternative": "{alt_damage} ... — an ALTERNATIVE that REPLACES the main damage under a condition (\"or 12 (2d8+3) Piercing damage if the target is Grappled\", or a swarm's reduced damage while Bloodied). Never sum it with the main damage.",
       "budget_split": "Across the 136 purely additive multi-damage attacks in the SRD the main instance carries a median 61% of the attack total (quartiles 50/61/71). Split a per-attack budget roughly 60/40 main to rider.",
       "why": "Every one of these 157 rows previously reused the SAME {damage} slot for both instances, so substituting one value rendered the rider at full main-damage value. The Ancient Red Dragon's Rend would have read 38 instead of 29, about 31% hot. Verified by round-tripping all 162 slotted rows against the printed SRD text.",
       "self_damage": "Rows tagged self_damage (the two Vampire Weakness entries) keep literal numbers: they are damage the creature takes from sunlight or running water, not output, so an attack budget does not apply.",
@@ -146,7 +146,7 @@
         }
       },
       "execute_threshold": {
-        "derivation": "print anchor: Solar 100 @ CR 21 = ~3.3x band per-attack; lower bands proportional (owner call 2026-08-05: the mechanism is generifiable \u2014 a long-range single-target execute-below-threshold \u2014 once the threshold interpolates like every other number)",
+        "derivation": "print anchor: Solar 100 @ CR 21 = ~3.3x band per-attack; lower bands proportional (owner call 2026-08-05: the mechanism is generifiable — a long-range single-target execute-below-threshold — once the threshold interpolates like every other number)",
         "by_band": {
           "0-7": 30,
           "8-14": 60,
@@ -155,7 +155,7 @@
         }
       },
       "execute_effect": {
-        "derivation": "print's lethality ladder (measured 2026-08-05): the Sea Hag (CR 2) threshold-effect DROPS TO 0 (dying, ally-savable) and is Recharge-gated; outright 'it dies' on a threshold exists exactly once, at CR 21 (Solar). Low bands get the hag's verb, high bands the solar's \u2014 the mechanism interpolates, including its lethality (owner call: no instakill at low levels)",
+        "derivation": "print's lethality ladder (measured 2026-08-05): the Sea Hag (CR 2) threshold-effect DROPS TO 0 (dying, ally-savable) and is Recharge-gated; outright 'it dies' on a threshold exists exactly once, at CR 21 (Solar). Low bands get the hag's verb, high bands the solar's — the mechanism interpolates, including its lethality (owner call: no instakill at low levels)",
         "by_band": {
           "0-7": "it drops to 0 Hit Points",
           "8-14": "it drops to 0 Hit Points",
@@ -166,18 +166,18 @@
     },
     "slot_type": "Assigned with the SAME classifier that produced composition.by_band, so the picker filters on exactly what was counted. A mismatch here would silently make the sampled counts unfillable.",
     "damage_ratios": {
-      "area_vs_round": "An area effect deals about ONE FULL ROUND of attacks, not half: median 1.01x across the 64 SRD creatures having both (Ancient Red 91 vs 87, Adult Red 59 vs 54, Wyrmling 24 vs 24). Split by gating, a gated area is 1.03x and an ungated one 0.30x \u2014 the recharge gate is what pays for full-round damage in an area. Halving area damage unconditionally, as the old chassis did, left them ~50% weak.",
+      "area_vs_round": "An area effect deals about ONE FULL ROUND of attacks, not half: median 1.01x across the 64 SRD creatures having both (Ancient Red 91 vs 87, Adult Red 59 vs 54, Wyrmling 24 vs 24). Split by gating, a gated area is 1.03x and an ungated one 0.30x — the recharge gate is what pays for full-round damage in an area. Halving area damage unconditionally, as the old chassis did, left them ~50% weak.",
       "gated_area_multiplier": 1,
       "ungated_area_multiplier": 0.3,
       "main_damage_share": 0.61
     },
-    "flavor_slots": "{substance} and {delivery} are FLAVOR, filled by the model, never by the engine \u2014 exactly like {creature} and the ability name. A template that says \"exhales lightning\" forces every creature built from it to have lungs and a lightning theme; the mechanics (save, DC, area, damage, counterplay) are the reusable part, and the element is not. {damage_type} was already a slot, so this closes the same hole in the surrounding prose.",
+    "flavor_slots": "{substance} and {delivery} are FLAVOR, filled by the model, never by the engine — exactly like {creature} and the ability name. A template that says \"exhales lightning\" forces every creature built from it to have lungs and a lightning theme; the mechanics (save, DC, area, damage, counterplay) are the reusable part, and the element is not. {damage_type} was already a slot, so this closes the same hole in the surrounding prose.",
     "flavor_slots_extra": "{kindred_type} is the generated creature's OWN type. The mechanic \"my aura does not harm my own kind\" is generic; the Lich naming Undead is flavor. A fiendish creature built from that template spares fiends instead. Note the OTHER type references are NOT flavor: a Wight raising a slain Humanoid as a zombie, or lycanthropy infecting a Humanoid, is about the victim being a person and is correct for any creature carrying the ability.",
-    "signature": "An ability printed on exactly ONE creature. It is not excluded \u2014 a lich's Disrupt Life on some other monster is a good outcome \u2014 but it needs a harder reskin than a Bite does, because a reader who knows the SRD will recognise it. Rarity is already handled without a rule: the pool keeps duplicate rows, so weighted picking is proportional to how many creatures share a mechanic. A one-off draws around 1% per slot while the common breath template draws 18%. `sources_sharing` carries that count on every row.",
-    "archetypes": "Overlapping affinity tags derived from an ability MECHANICS, not from its source creature: a Constrictor's Constrict is both brute and controller, a Giant Spider's Web is controller and lurker. Derived from the required_slots each archetype declares in archetype-chassis-spec.json \u2014 brute wants heavy melee, artillery a 60ft+ ranged attack or a zone, controller a save that imposes a condition, lurker concealment or a gated nova, skirmisher a movement trick, support something that targets allies, defender a reaction. Used as a WEIGHT and never a filter (x3 on a match, x0.5 on a miss, x1 for untagged): asking for a lurker makes lurker mechanics likelier without ever excluding a breath weapon. The archetype itself comes from the existing resolve micro-call, so a user concept reaches ability selection with no extra LLM round. The old archetype system CONSTRAINED the slot plan, which is part of why every monster of a role felt alike.",
-    "damage_class": "How an entry's damage is BUDGETED, stamped offline: attack (one attack's worth), area (a round's worth when gated, 0.3x ungated), save_nuke (0.3x a round), legendary (0.55x one attack \u2014 printed legendary uses run 7-17), recurring (0.5x one attack \u2014 printed auras run half an attack, Balor 13 at CR 19). slot_type is a SAMPLING category and was doing double duty as the damage category, which is how a legendary entry with area text bypassed area budgeting and shipped a 31-damage breath.",
-    "facets": "Theme facets on two axes \u2014 BODY (bestial, armed, amorphous) and DOMAIN (grave, fiendish, celestial, fey, draconic, elemental, verdant, forged, mind, venomous, terror, beguiling, grasping, devouring, aquatic, subterranean, aerial, uncanny, arcane, voice, gaze, breath) \u2014 derived deterministically from what flavor-stripping could not remove: source type, condition economy, delivery mechanics, name keywords. The resolve call picks 2-3 for the concept; the picker weights abilities, traits, packages and menus by overlap. Guide, never constraint: untagged rows stay neutral, mismatches are damped, nothing is excluded. This is the anti-theme-soup layer (owner call, 2026-08-02): the Skreek was simultaneously swamp, frost, rift and bone because selection had no theme signal at all.",
-    "generification_stop_words": "Sweeps that replace source-name words with {creature} MUST skip rules vocabulary: Invisible (the Invisible Stalker is named after its condition and lost \"has the Invisible condition\" to the sweep TWICE \u2014 the flavor-free guard test now catches it). Conditions, senses, and sizes are never name-leak candidates.",
+    "signature": "An ability printed on exactly ONE creature. It is not excluded — a lich's Disrupt Life on some other monster is a good outcome — but it needs a harder reskin than a Bite does, because a reader who knows the SRD will recognise it. Rarity is already handled without a rule: the pool keeps duplicate rows, so weighted picking is proportional to how many creatures share a mechanic. A one-off draws around 1% per slot while the common breath template draws 18%. `sources_sharing` carries that count on every row.",
+    "archetypes": "Overlapping affinity tags derived from an ability MECHANICS, not from its source creature: a Constrictor's Constrict is both brute and controller, a Giant Spider's Web is controller and lurker. Derived from the required_slots each archetype declares in archetype-chassis-spec.json — brute wants heavy melee, artillery a 60ft+ ranged attack or a zone, controller a save that imposes a condition, lurker concealment or a gated nova, skirmisher a movement trick, support something that targets allies, defender a reaction. Used as a WEIGHT and never a filter (x3 on a match, x0.5 on a miss, x1 for untagged): asking for a lurker makes lurker mechanics likelier without ever excluding a breath weapon. The archetype itself comes from the existing resolve micro-call, so a user concept reaches ability selection with no extra LLM round. The old archetype system CONSTRAINED the slot plan, which is part of why every monster of a role felt alike.",
+    "damage_class": "How an entry's damage is BUDGETED, stamped offline: attack (one attack's worth), area (a round's worth when gated, 0.3x ungated), save_nuke (0.3x a round), legendary (0.55x one attack — printed legendary uses run 7-17), recurring (0.5x one attack — printed auras run half an attack, Balor 13 at CR 19). slot_type is a SAMPLING category and was doing double duty as the damage category, which is how a legendary entry with area text bypassed area budgeting and shipped a 31-damage breath.",
+    "facets": "Theme facets on two axes — BODY (bestial, armed, amorphous) and DOMAIN (grave, fiendish, celestial, fey, draconic, elemental, verdant, forged, mind, venomous, terror, beguiling, grasping, devouring, aquatic, subterranean, aerial, uncanny, arcane, voice, gaze, breath) — derived deterministically from what flavor-stripping could not remove: source type, condition economy, delivery mechanics, name keywords. The resolve call picks 2-3 for the concept; the picker weights abilities, traits, packages and menus by overlap. Guide, never constraint: untagged rows stay neutral, mismatches are damped, nothing is excluded. This is the anti-theme-soup layer (owner call, 2026-08-02): the Skreek was simultaneously swamp, frost, rift and bone because selection had no theme signal at all.",
+    "generification_stop_words": "Sweeps that replace source-name words with {creature} MUST skip rules vocabulary: Invisible (the Invisible Stalker is named after its condition and lost \"has the Invisible condition\" to the sweep TWICE — the flavor-free guard test now catches it). Conditions, senses, and sizes are never name-leak candidates.",
     "spell_policy": {
       "_note": "Measured off every printed spellcasting monster. The split that matters is FUNCTION, not raw level: at-will OFFENSIVE spells cap at level 2 in print (Scorching Ray, Mind Spike, Invisibility), while self-utility runs to level 9 at will (metallic dragons carry Shapechange). Level 3+ offense belongs in the 1/Day list. A naive \"level 4+ never at will\" rule would flag half the printed dragons; a missing rule shipped at-will Hold Monster on a live block.",
       "at_will_offensive_max_level": 2,
@@ -550,7 +550,7 @@
       ]
     },
     "condition_slots": {
-      "_doc": "Owner-directed generification (2026-08-03): condition riders become engine-filled slots so a concept can color its control by severity tier. Measured from the 243 printed condition clauses in this library: save stat correlates hard with condition (Frightened is Wis 12/13, Poisoned Con 13/13, the whole hard tier Con), severity lives in the row's gate and duration clause (so the TIER is named in the slot, fixed per row), and printed pairs are curated, never composed. The ENGINE fills these at build time, seeded, weighted toward the row's printed original (condition_default x4) and the block's theme affinities (x3) \u2014 guide, never constrain. The flavor model is never asked: conditions are mechanics. Structural conditions stay literal: Grappled/Restrained (escape-DC machinery), Prone (charge/knockdown), Petrified (two-failure ladder), Unconscious (wake clause), Incapacitated singles (nova-classed, mixed saves).",
+      "_doc": "Owner-directed generification (2026-08-03): condition riders become engine-filled slots so a concept can color its control by severity tier. Measured from the 243 printed condition clauses in this library: save stat correlates hard with condition (Frightened is Wis 12/13, Poisoned Con 13/13, the whole hard tier Con), severity lives in the row's gate and duration clause (so the TIER is named in the slot, fixed per row), and printed pairs are curated, never composed. The ENGINE fills these at build time, seeded, weighted toward the row's printed original (condition_default x4) and the block's theme affinities (x3) — guide, never constrain. The flavor model is never asked: conditions are mechanics. Structural conditions stay literal: Grappled/Restrained (escape-DC machinery), Prone (charge/knockdown), Petrified (two-failure ladder), Unconscious (wake clause), Incapacitated singles (nova-classed, mixed saves).",
       "tiers": {
         "soft": {
           "Poisoned": [
@@ -1251,7 +1251,7 @@
       }
     },
     "size": {
-      "_note": "Creature size by CR band, observed. The engine picks size BEFORE the flavor call because reach and the hit-die face both follow it \u2014 a Gargantuan creature has 15 ft. reach and d20 hit dice. The model is told the size rather than asked for one.",
+      "_note": "Creature size by CR band, observed. The engine picks size BEFORE the flavor call because reach and the hit-die face both follow it — a Gargantuan creature has 15 ft. reach and d20 hit dice. The model is told the size rather than asked for one.",
       "by_band": {
         "8-14": {
           "Small": 3,
@@ -4742,7 +4742,7 @@
         ],
         "condition_default": "Charmed and Poisoned",
         "cr_ceiling": 12,
-        "ceiling_note": "the 1-hour curse has no repeat save \u2014 its counterplay (Remove Curse, or wait it out) stops working above mid tier"
+        "ceiling_note": "the 1-hour curse has no repeat save — its counterplay (Remove Curse, or wait it out) stops working above mid tier"
       },
       {
         "cr": "4",
@@ -5315,7 +5315,7 @@
           "damage_type": "Piercing"
         },
         "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage.",
-        "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 5 ft., one target. *Hit:* 1 (1d4 \u2212 1) piercing damage.",
+        "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 5 ft., one target. *Hit:* 1 (1d4 − 1) piercing damage.",
         "source_size": "Small",
         "slot_type": "plain_attack",
         "pool": "ability",
@@ -5460,7 +5460,7 @@
           "damage_type": "Piercing"
         },
         "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage.",
-        "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 5 ft., one target. *Hit:* 1 (1d4 \u2212 1) piercing damage.",
+        "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 5 ft., one target. *Hit:* 1 (1d4 − 1) piercing damage.",
         "source_size": "Small",
         "slot_type": "plain_attack",
         "pool": "ability",
@@ -5774,7 +5774,7 @@
         "archetypes": [
           "skirmisher"
         ],
-        "modified_from_print": "returning clause removed (owner call 2026-08-04): monsters never track ammo \u2014 a produced projectile is just a ranged attack; the clause had become the set fingerprint"
+        "modified_from_print": "returning clause removed (owner call 2026-08-04): monsters never track ammo — a produced projectile is just a ranged attack; the clause had become the set fingerprint"
       },
       {
         "cr": "1/8",
@@ -7103,7 +7103,7 @@
           "damage_type": "Acid"
         },
         "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage. Nonmagical armor worn by the target takes a -1 penalty to the AC it offers. The armor is destroyed if the penalty reduces its AC to 10. The penalty can be removed by casting the *Mending* spell on the armor.",
-        "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 5 ft., one target. *Hit:* {damage} ({dice}) {damage_type} damage plus {damage} ({dice}) {damage_type} damage, and if the target is wearing nonmagical metal armor, its armor is partly corroded and takes a permanent and cumulative \u22121 penalty to the AC it offers. The armor is destroyed if the penalty reduces its AC to 10.",
+        "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 5 ft., one target. *Hit:* {damage} ({dice}) {damage_type} damage plus {damage} ({dice}) {damage_type} damage, and if the target is wearing nonmagical metal armor, its armor is partly corroded and takes a permanent and cumulative −1 penalty to the AC it offers. The armor is destroyed if the penalty reduces its AC to 10.",
         "source_size": "Medium",
         "slot_type": "plain_attack",
         "pool": "ability",
@@ -9126,7 +9126,7 @@
           "reach": 5,
           "damage_type": "Piercing"
         },
-        "template_2024": "*Melee Attack Roll:* {attack} (with Advantage if the target is Grappled by the {creature}), reach {reach} ft. {damage} ({dice}) {damage_type} damage\u2014or {alt_damage} ({alt_dice}) {alt_damage_type} damage if the target is Grappled by the {creature}\u2014plus {rider_damage} ({rider_dice}) {rider_damage_type} damage.",
+        "template_2024": "*Melee Attack Roll:* {attack} (with Advantage if the target is Grappled by the {creature}), reach {reach} ft. {damage} ({dice}) {damage_type} damage—or {alt_damage} ({alt_dice}) {alt_damage_type} damage if the target is Grappled by the {creature}—plus {rider_damage} ({rider_dice}) {rider_damage_type} damage.",
         "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 5 ft., one target. *Hit:* {damage} ({dice}) {damage_type} damage plus {damage} ({dice}) {damage_type} damage.",
         "damage_instances": {
           "additive": 1,
@@ -9766,7 +9766,7 @@
           "reach": 5,
           "damage_type": "Piercing"
         },
-        "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage\u2014or {alt_damage} ({alt_dice}) {alt_damage_type} damage if the swarm is Bloodied\u2014plus {rider_damage} ({rider_dice}) {rider_damage_type} damage.",
+        "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage—or {alt_damage} ({alt_dice}) {alt_damage_type} damage if the swarm is Bloodied—plus {rider_damage} ({rider_dice}) {rider_damage_type} damage.",
         "damage_instances": {
           "additive": 1,
           "alternative": 1
@@ -11502,7 +11502,7 @@
         "archetypes": [
           "skirmisher"
         ],
-        "modified_from_print": "returning clause removed (owner call 2026-08-04): monsters never track ammo \u2014 a produced projectile is just a ranged attack; the clause had become the set fingerprint"
+        "modified_from_print": "returning clause removed (owner call 2026-08-04): monsters never track ammo — a produced projectile is just a ranged attack; the clause had become the set fingerprint"
       },
       {
         "cr": "5",
@@ -13853,7 +13853,7 @@
         "archetypes": [
           "skirmisher"
         ],
-        "modified_from_print": "returning clause removed (owner call 2026-08-04): monsters never track ammo \u2014 a produced projectile is just a ranged attack; the clause had become the set fingerprint"
+        "modified_from_print": "returning clause removed (owner call 2026-08-04): monsters never track ammo — a produced projectile is just a ranged attack; the clause had become the set fingerprint"
       },
       {
         "cr": "14",
@@ -14699,7 +14699,7 @@
           "armed",
           "celestial"
         ],
-        "modified_from_print": "returning clause removed (owner call 2026-08-04): monsters never track ammo \u2014 a produced projectile is just a ranged attack; the clause had become the set fingerprint"
+        "modified_from_print": "returning clause removed (owner call 2026-08-04): monsters never track ammo — a produced projectile is just a ranged attack; the clause had become the set fingerprint"
       },
       {
         "cr": "22",
@@ -15327,8 +15327,8 @@
         "numbers": {
           "dc": 11
         },
-        "template_2024": "The {creature} targets one nonmagical metal object\u2014armor or a weapon\u2014worn or carried by a creature within {reach} feet of itself. *Dexterity Saving Throw*: DC {dc}, the creature with the object. *Failure:* The object takes a -1 penalty to the AC it offers (armor) or to its attack rolls (weapon). Armor is destroyed if the penalty reduces its AC to 10, and a weapon is destroyed if its penalty reaches -5. The penalty can be removed by casting the *Mending* spell on the armor or weapon.",
-        "template_2014": "The {creature} corrodes a nonmagical ferrous metal object it can see within {sight_range} feet of it. If the object isn't being worn or carried, the touch destroys a 1-foot cube of it. If the object is being worn or carried by a creature, the creature can make a DC {dc} Dexterity saving throw to avoid the {creature}'s touch. If the object touched is either metal armor or a metal shield being worn or carried, it takes a permanent and cumulative \u22121 penalty to the AC it offers. Armor reduced to an AC of 10 or a shield that drops to a +0 bonus is destroyed. If the object touched is a held metal weapon, it rusts as described in the the {creature}'s corroding trait.",
+        "template_2024": "The {creature} targets one nonmagical metal object—armor or a weapon—worn or carried by a creature within {reach} feet of itself. *Dexterity Saving Throw*: DC {dc}, the creature with the object. *Failure:* The object takes a -1 penalty to the AC it offers (armor) or to its attack rolls (weapon). Armor is destroyed if the penalty reduces its AC to 10, and a weapon is destroyed if its penalty reaches -5. The penalty can be removed by casting the *Mending* spell on the armor or weapon.",
+        "template_2014": "The {creature} corrodes a nonmagical ferrous metal object it can see within {sight_range} feet of it. If the object isn't being worn or carried, the touch destroys a 1-foot cube of it. If the object is being worn or carried by a creature, the creature can make a DC {dc} Dexterity saving throw to avoid the {creature}'s touch. If the object touched is either metal armor or a metal shield being worn or carried, it takes a permanent and cumulative −1 penalty to the AC it offers. Armor reduced to an AC of 10 or a shield that drops to a +0 bonus is destroyed. If the object touched is a held metal weapon, it rusts as described in the the {creature}'s corroding trait.",
         "source_size": "Medium",
         "slot_type": "save_damage",
         "pool": "ability",
@@ -15561,7 +15561,7 @@
         "facets": [
           "grave"
         ],
-        "excluded": "body theft by an incorporeal entity \u2014 no palette makes another creature able to do this (owner call, live block 6: an ice elemental possessing people via the Undead targeting rules)"
+        "excluded": "body theft by an incorporeal entity — no palette makes another creature able to do this (owner call, live block 6: an ice elemental possessing people via the Undead targeting rules)"
       },
       {
         "cr": "17",
@@ -15736,7 +15736,7 @@
           "terror",
           "voice"
         ],
-        "excluded": "Fingerprint exclusion (owner call 2026-08-03, the Possession precedent): the escalating three-roar sequence with a Long Rest reset is a one-of-a-kind subsystem \u2014 no rename disguises the structure, and it reads as a sphinx reskin on sight.",
+        "excluded": "Fingerprint exclusion (owner call 2026-08-03, the Possession precedent): the escalating three-roar sequence with a Long Rest reset is a one-of-a-kind subsystem — no rename disguises the structure, and it reads as a sphinx reskin on sight.",
         "imposes": [
           "prone"
         ]
@@ -15904,7 +15904,7 @@
           "prone"
         ],
         "fixed_range": true,
-        "scale_note": "success push is a POSITIONAL nudge out of the landing space \u2014 5 feet at every CR in print (Bulette); band-scaling it to 45 made succeeding strictly worse than failing (live: Glacierfall, 2026-08-04)"
+        "scale_note": "success push is a POSITIONAL nudge out of the landing space — 5 feet at every CR in print (Bulette); band-scaling it to 45 made succeeding strictly worse than failing (live: Glacierfall, 2026-08-04)"
       },
       {
         "cr": "5",
@@ -16672,7 +16672,9 @@
           "fiendish",
           "grave",
           "venomous"
-        ]
+        ],
+        "requires_energy": "Poison",
+        "energy_note": "the condition and the damage are one coupled package in print (Pit Fiend); splitting them yields \"the Poisoned condition... takes Lightning damage\". Restricted instead, so a Lightning creature stops carrying exactly one Poison entry (live: Rivet Maw, the Ironbound)"
       }
     ],
     "ATTACK-NODMG": [
@@ -16692,7 +16694,7 @@
           "reach": 5
         },
         "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage.",
-        "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 5 ft., one target. *Hit:* 1 (1d4 \u2212 1) slashing damage.",
+        "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 5 ft., one target. *Hit:* 1 (1d4 − 1) slashing damage.",
         "source_size": "Small",
         "slot_type": "plain_attack",
         "pool": "ability",
@@ -16865,7 +16867,7 @@
           "reach": 5
         },
         "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage.",
-        "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 5 ft., one target. *Hit:* 2 (1d6 \u2212 1) slashing damage.",
+        "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 5 ft., one target. *Hit:* 2 (1d6 − 1) slashing damage.",
         "source_size": "Small",
         "slot_type": "plain_attack",
         "pool": "ability",
@@ -18344,7 +18346,7 @@
           "prone"
         ],
         "fixed_range": true,
-        "scale_note": "reach 30 is print (Balor): the whip reaches far and REELS \u2014 reach must exceed the 25-foot pull or most of the pull is dead range (live: a reach-10 whip pulling 25, 2026-08-04)"
+        "scale_note": "reach 30 is print (Balor): the whip reaches far and REELS — reach must exceed the 25-foot pull or most of the pull is dead range (live: a reach-10 whip pulling 25, 2026-08-04)"
       },
       {
         "cr": "30",
@@ -18424,7 +18426,7 @@
           "devouring",
           "grasping"
         ],
-        "excluded": "Fingerprint exclusion (owner call 2026-08-03): the move-through-spaces engulf subsystem cross-references the Ooze Cube trait and IS the cube \u2014 structurally unmistakable, and dangling without its sibling trait."
+        "excluded": "Fingerprint exclusion (owner call 2026-08-03): the move-through-spaces engulf subsystem cross-references the Ooze Cube trait and IS the cube — structurally unmistakable, and dangling without its sibling trait."
       },
       {
         "cr": "3",
@@ -18587,7 +18589,7 @@
           "grasping"
         ],
         "fixed_range": true,
-        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) \u2014 band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
+        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) — band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
       },
       {
         "cr": "2",
@@ -18625,7 +18627,7 @@
           "grasping"
         ],
         "fixed_range": true,
-        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) \u2014 band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
+        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) — band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
       },
       {
         "cr": "3",
@@ -18659,7 +18661,7 @@
           "grasping"
         ],
         "fixed_range": true,
-        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) \u2014 band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
+        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) — band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
       },
       {
         "cr": "4",
@@ -18697,7 +18699,7 @@
           "grasping"
         ],
         "fixed_range": true,
-        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) \u2014 band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
+        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) — band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
       },
       {
         "cr": "5",
@@ -18742,7 +18744,7 @@
           "grasping"
         ],
         "fixed_range": true,
-        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) \u2014 band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
+        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) — band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
       },
       {
         "cr": "5",
@@ -18915,7 +18917,7 @@
           "grasping"
         ],
         "fixed_range": true,
-        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) \u2014 band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
+        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) — band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
       },
       {
         "cr": "16",
@@ -18952,7 +18954,7 @@
           "grasping"
         ],
         "fixed_range": true,
-        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) \u2014 band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
+        "scale_note": "save-grapple targeting is POSITIONAL: the appendage is the tether, and print never exceeds 10 feet (5 ft x5, 10 ft x3 measured 2026-08-04) — band-scaling shipped a 120-foot grapple with no tether text (live: Burrowing Coil)"
       }
     ],
     "SAVE+RESTRAINED": [
@@ -19684,7 +19686,8 @@
         "facets": [
           "fiendish",
           "venomous"
-        ]
+        ],
+        "requires_energy": "Poison"
       },
       {
         "cr": "8",
@@ -21006,7 +21009,7 @@
           "draconic"
         ],
         "condition_default": "Frightened",
-        "modified_from_print": "Owner overrule 2026-08-03: print has this legendary action cast *Fear* (a concentration spell) \u2014 the corpus's single instance, judged errata-shaped rather than policy. Rewritten as a native fear emanation assembled from printed clause parts (the Fear Aura condition clause and the standard legendary lock).",
+        "modified_from_print": "Owner overrule 2026-08-03: print has this legendary action cast *Fear* (a concentration spell) — the corpus's single instance, judged errata-shaped rather than policy. Rewritten as a native fear emanation assembled from printed clause parts (the Fear Aura condition clause and the standard legendary lock).",
         "archetypes": []
       },
       {
@@ -21536,7 +21539,7 @@
           "draconic"
         ],
         "condition_default": "Frightened",
-        "modified_from_print": "Owner overrule 2026-08-03: print has this legendary action cast *Fear* (a concentration spell) \u2014 the corpus's single instance, judged errata-shaped rather than policy. Rewritten as a native fear emanation assembled from printed clause parts (the Fear Aura condition clause and the standard legendary lock).",
+        "modified_from_print": "Owner overrule 2026-08-03: print has this legendary action cast *Fear* (a concentration spell) — the corpus's single instance, judged errata-shaped rather than policy. Rewritten as a native fear emanation assembled from printed clause parts (the Fear Aura condition clause and the standard legendary lock).",
         "archetypes": []
       },
       {
@@ -21586,7 +21589,7 @@
           "grave",
           "uncanny"
         ],
-        "modified_from_print": "house lock (owner call 2026-08-05, parked since the Groan era): print has NO lock on the Lich's teleport \u2014 legal spam \u2014 but the repeated splash-teleport round read as a generator tell; the lock is a knowing house divergence"
+        "modified_from_print": "house lock (owner call 2026-08-05, parked since the Groan era): print has NO lock on the Lich's teleport — legal spam — but the repeated splash-teleport round read as a generator tell; the lock is a knowing house divergence"
       },
       {
         "cr": "21",
@@ -22412,7 +22415,7 @@
           "fiendish",
           "uncanny"
         ],
-        "modified_from_print": "ferry extends to Grappled cargo (owner call 2026-08-05): print's Balor ferries \"a willing demon\"; the generified ally-ferry now also carries grappled prey \u2014 teleport-and-carry wires the bonus action into grapple kits (the offering-collection read)"
+        "modified_from_print": "ferry extends to Grappled cargo (owner call 2026-08-05): print's Balor ferries \"a willing demon\"; the generified ally-ferry now also carries grappled prey — teleport-and-carry wires the bonus action into grapple kits (the offering-collection read)"
       },
       {
         "cr": "1/4",
@@ -23646,7 +23649,7 @@
           "grave",
           "uncanny"
         ],
-        "excluded": "Fingerprint exclusion (owner call 2026-08-03): Ethereal-plane dream-murder of sleeping victims is hag identity end to end \u2014 un-reskinnable."
+        "excluded": "Fingerprint exclusion (owner call 2026-08-03): Ethereal-plane dream-murder of sleeping victims is hag identity end to end — un-reskinnable."
       },
       {
         "cr": "5",
@@ -24561,7 +24564,7 @@
           "grave",
           "uncanny"
         ],
-        "excluded": "Fingerprint exclusion (owner call 2026-08-03): bat/mist forms gated on sunlight and running water are the vampire liturgy \u2014 same identity cluster as the excluded stake-and-coffin rows."
+        "excluded": "Fingerprint exclusion (owner call 2026-08-03): bat/mist forms gated on sunlight and running water are the vampire liturgy — same identity cluster as the excluded stake-and-coffin rows."
       },
       {
         "cr": "13",
@@ -26121,7 +26124,7 @@
           "trait": "Confer Fire Resistance",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "The {creature} can grant Resistance to {substance} damage to a rider while it is on the {creature}.",
+          "template_2024": "The {creature} can grant Resistance to {damage_type} damage to a rider while it is on the {creature}.",
           "facets": [
             "fiendish"
           ],
@@ -26309,7 +26312,7 @@
           "trait": "Aversion to Fire",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "If the {creature} takes {substance} damage, it has Disadvantage on attack rolls and ability checks until the end of its next turn.",
+          "template_2024": "If the {creature} takes {weakness_type} damage, it has Disadvantage on attack rolls and ability checks until the end of its next turn.",
           "facets": [
             "forged"
           ],
@@ -27085,7 +27088,7 @@
           "scales_with_cr": false,
           "template_2024": "If the {creature} is targeted by a *Magic Missile* spell or a spell that requires a ranged attack roll, roll 1d6. On a 1-5, the {creature} is unaffected. On a 6, the {creature} is unaffected and reflects the spell, turning the caster into the target.",
           "archetypes": [],
-          "excluded": "fingerprint (owner call 2026-08-05): the 1d6 spell-reflection is the Tarrasque's face \u2014 recognizable under any rename, and its 5-in-6 ranged-spell immunity reads as artifact tech on anything else (live: 'Slippery Body' on the Tar-Shroud Watcher)"
+          "excluded": "fingerprint (owner call 2026-08-05): the 1d6 spell-reflection is the Tarrasque's face — recognizable under any rename, and its 5-in-6 ranged-spell immunity reads as artifact tech on anything else (live: 'Slippery Body' on the Tar-Shroud Watcher)"
         },
         {
           "cr": "30",
@@ -27265,6 +27268,7 @@
             "aquatic",
             "elemental"
           ],
+          "excluded": "owner call: a substance-keyed Achilles heel only reads on the exact creature it was printed for. The damage type has to be the COUNTER-element (print fixes it at Cold, what water does to fire), so interpolating the block's own energy inverts it — live, an ice-named Fiend took Poison damage from water. Gated on aquatic/elemental with nothing about heat, and scaling as an attack, it also grew from print's 1d6 to 9d6 per 5 feet at CR 20.",
           "archetypes": []
         },
         {
@@ -27775,6 +27779,7 @@
           "facets": [
             "elemental"
           ],
+          "excluded": "owner call: same shape as Water Susceptibility — a self-imposed weakness whose trigger must be the counter-element to mean anything. Freezing slows WATER; interpolated onto any other elemental it names a damage type with no relationship to the body.",
           "archetypes": []
         },
         {
@@ -28882,7 +28887,7 @@
           "pool": "on_death",
           "death_family": "continuity-trophy",
           "archetypes": [],
-          "excluded": "fingerprint (owner call 2026-08-04): the lich's phylactery is unmistakable under any rename \u2014 a dream-dragon 'Spirit Jar Revival' and a warden's 'Barrow Anchor' both read as the lich in a hat; non-lich revival belongs to the on_death pool's anchor/undoing templates, which define their object"
+          "excluded": "fingerprint (owner call 2026-08-04): the lich's phylactery is unmistakable under any rename — a dream-dragon 'Spirit Jar Revival' and a warden's 'Barrow Anchor' both read as the lich in a hat; non-lich revival belongs to the on_death pool's anchor/undoing templates, which define their object"
         }
       ],
       "AURA-SAVE": [
@@ -29064,7 +29069,8 @@
           "template_2024": "The {creature} has five heads. Whenever the {creature} takes 25 damage or more on a single turn, one of its heads dies. The {creature} dies if all its heads are dead. At the end of each of its turns when it has at least one living head, the {creature} grows two heads for each of its heads that died since its last turn, unless it has taken {substance} damage since its last turn. The {creature} regains {heal} Hit Points when it grows new heads.",
           "archetypes": [
             "support"
-          ]
+          ],
+          "excluded": "owner call 2026-08-07: \"Hydra's ability is unskinnable. Let's lose it.\" The five-head damage-threshold regrowth engine is an icon-owning donor in the phylactery tier — everyone knows the hydra — and it transplanted whole onto a headless iron construct. It also carried the {substance}-as-damage-type bug, which made the block literally unkillable: the only thing that stopped regrowth was \"iron damage\", which is not a damage type."
         }
       ],
       "CONCEALMENT": [
@@ -30249,7 +30255,7 @@
     ]
   },
   "on_death": {
-    "_note": "The after-death slot (owner design, 2026-08-02). Four families: continuity (reforms \u2014 in a place, at an anchor, from a trophy), succession (something inherits), residue (the death leaves a persistent thing), conditional (permanence has a condition players can pursue). Selection derives from what the block already knows: creature type gives the default family, themes pick specifics. Optional, ramped toward the top of the CR range \u2014 on-death lore on a CR 3 is noise; on a CR 20 it is the difference between a boss and a set piece. Two sentences maximum (the ghost-possession lesson). PORTABILITY RULE: effects point at canonical planes or at the creature's own material (\"its hoard\", \"its oldest bargain\") \u2014 never invented geography (\"the Cinder Waste\" reads tacked on).",
+    "_note": "The after-death slot (owner design, 2026-08-02). Four families: continuity (reforms — in a place, at an anchor, from a trophy), succession (something inherits), residue (the death leaves a persistent thing), conditional (permanence has a condition players can pursue). Selection derives from what the block already knows: creature type gives the default family, themes pick specifics. Optional, ramped toward the top of the CR range — on-death lore on a CR 3 is noise; on a CR 20 it is the difference between a boss and a set piece. Two sentences maximum (the ghost-possession lesson). PORTABILITY RULE: effects point at canonical planes or at the creature's own material (\"its hoard\", \"its oldest bargain\") — never invented geography (\"the Cinder Waste\" reads tacked on).",
     "chance_by_band": {
       "0-4": 0,
       "5-10": 0.15,
@@ -30263,7 +30269,7 @@
       "Fey": "continuity-anchor",
       "Dragon": "continuity-trophy",
       "Undead": "residue",
-      "Construct": "succession",
+      "Construct": "residue",
       "Aberration": "continuity-anchor",
       "Giant": "succession",
       "Monstrosity": null,
@@ -30278,6 +30284,9 @@
         "trait": "Deathless Bond",
         "template_2024": "If the {creature} dies, its body dissolves, and it reforms with all its Hit Points in 1d10 days at {anchor}. A creature that {undoing} prevents the return, and the death becomes permanent.",
         "facets": [
+          "arcane",
+          "gaze",
+          "mind",
           "uncanny"
         ]
       },
@@ -30286,82 +30295,104 @@
         "trait": "Vengeful Relic",
         "template_2024": "If the {creature} dies, it reforms with all its Hit Points in 1d10 days within 5 feet of {anchor}, wherever that object lies. Destroying that object before then makes the death permanent.",
         "facets": [
+          "armed",
+          "draconic",
+          "forged",
           "uncanny"
         ]
       },
       {
         "death_family": "succession",
         "trait": "Dying Legacy",
-        "template_2024": "When the {creature} dies, {legacy} passes to the creature that struck the killing blow: while cursed, that creature has Disadvantage on Initiative rolls as the dead's purpose hounds its dreams. Fulfilling the charge or a *Remove Curse* spell ends the curse.",
+        "template_2024": "When the {creature} dies, {legacy} passes to the creature that struck the killing blow: while cursed, that creature has Disadvantage on Initiative rolls as the dead's purpose hounds its dreams. The curse ends when that unfinished purpose is served, or when a *Remove Curse* spell lifts it.",
         "facets": [
-          "grave",
+          "armed",
+          "celestial",
           "fey",
           "fiendish",
-          "uncanny",
+          "grave",
           "terror",
-          "celestial"
+          "uncanny",
+          "voice"
         ],
-        "design_note": "teeth added 2026-08-05 (owner call): the lore-only form read as a hook with no rules \u2014 the table looked at the DM, who had nothing (live: Master's Vow, the Qarun). Curse-with-Remove-Curse is the printed Mummy idiom; Initiative disadvantage is minor, always adjudicable, and thematically the haunting. | 2026-08-05: restructured so {legacy} is the CHARGE ONLY \u2014 the teeth clause added the same day duplicated the transfer and the exit when the model wrote a full sentence (live: Unfinished Vigil said everything twice on the Emberwraith) | facets added 2026-08-05: an EMPTY facets array reads as neutral in themeWeight, so the inheritance-curse was equally likely on a Lawful Neutral machine as on a haunted thing (live: Unfinished Vigil on the Riveted Bellows, two blocks after the Emberwraith). A damp, not a bar \u2014 the residue family carries a forged variant that fits constructs natively."
+        "design_note": "teeth added 2026-08-05 (owner call): the lore-only form read as a hook with no rules — the table looked at the DM, who had nothing (live: Master's Vow, the Qarun). Curse-with-Remove-Curse is the printed Mummy idiom; Initiative disadvantage is minor, always adjudicable, and thematically the haunting. | 2026-08-05: restructured so {legacy} is the CHARGE ONLY — the teeth clause added the same day duplicated the transfer and the exit when the model wrote a full sentence (live: Unfinished Vigil said everything twice on the Emberwraith) | facets added 2026-08-05: an EMPTY facets array reads as neutral in themeWeight, so the inheritance-curse was equally likely on a Lawful Neutral machine as on a haunted thing (live: Unfinished Vigil on the Riveted Bellows, two blocks after the Emberwraith). A damp, not a bar — the residue family carries a forged variant that fits constructs natively. | 2026-08-06: \"the charge\" had no antecedent — {legacy} renders a noun phrase (\"the feast it never finished\"), so the closing clause referenced something the trait never established. Caught by BOTH the audit and the critic on the third block carrying it."
       },
       {
         "death_family": "residue",
         "trait": "Lingering Ground",
         "template_2024": "When the {creature} dies, the ground in a 20-foot Emanation from its body becomes Difficult Terrain for 10 days. A creature that ends its turn in that ground takes 5 (2d4) {damage_type} damage.",
         "facets": [
+          "aquatic",
+          "elemental",
           "grave",
-          "verdant",
-          "elemental"
+          "subterranean",
+          "venomous",
+          "verdant"
         ],
-        "design_note": "firmed 2026-08-05 (owner calls, both long-parked): \"until cleared or cleansed\" was unadjudicable \u2014 now a flat 10 days; and the residue carries a minor property (the \"slag lump does something\" note) \u2014 a fixed 5 (2d4) tick, deliberately NOT CR-scaled: it is the residue's hazard, not the monster's."
+        "design_note": "firmed 2026-08-05 (owner calls, both long-parked): \"until cleared or cleansed\" was unadjudicable — now a flat 10 days; and the residue carries a minor property (the \"slag lump does something\" note) — a fixed 5 (2d4) tick, deliberately NOT CR-scaled: it is the residue's hazard, not the monster's."
       },
       {
         "death_family": "residue",
         "trait": "Settling Remains",
         "template_2024": "When the {creature} dies, its body collapses into {substance}, and each creature within 10 feet of it takes {damage} ({dice}) {damage_type} damage. The {substance} remains where it fell.",
         "facets": [
+          "amorphous",
+          "armed",
+          "draconic",
+          "elemental",
           "forged",
           "grave",
-          "elemental",
-          "amorphous"
+          "subterranean"
         ],
-        "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost \u2014 same trait, swapped nouns)"
+        "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost — same trait, swapped nouns)"
       },
       {
         "death_family": "residue",
         "trait": "Cold Wake",
         "template_2024": "When the {creature} dies, the air in a 20-foot Emanation from its body turns still and wrong for 1 hour. A creature that ends its turn there has Disadvantage on the next attack roll it makes before the end of its next turn.",
         "facets": [
-          "uncanny",
+          "aerial",
+          "aquatic",
+          "arcane",
+          "beguiling",
+          "breath",
           "grave",
+          "mind",
           "terror",
-          "aerial"
+          "uncanny",
+          "voice"
         ],
-        "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost \u2014 same trait, swapped nouns)"
+        "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost — same trait, swapped nouns)"
       },
       {
         "death_family": "succession",
         "trait": "Passed Vigil",
-        "template_2024": "When the {creature} dies, {legacy} passes to the nearest creature that watched it fall: while cursed, that creature dreams the dead thing's last hour every night and gains no benefit from a Long Rest more than 1 mile from where it died. Fulfilling the charge or a *Remove Curse* spell ends the curse.",
+        "template_2024": "When the {creature} dies, {legacy} passes to the nearest creature that watched it fall: while cursed, that creature dreams the dead thing's last hour every night and gains no benefit from a Long Rest more than 1 mile from where it died. The curse ends when that unfinished purpose is served, or when a *Remove Curse* spell lifts it.",
         "facets": [
-          "grave",
-          "uncanny",
+          "bestial",
           "celestial",
-          "fiendish"
+          "fiendish",
+          "grave",
+          "uncanny"
         ],
-        "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost \u2014 same trait, swapped nouns)"
+        "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost — same trait, swapped nouns) | 2026-08-06: \"the charge\" had no antecedent — {legacy} renders a noun phrase (\"the feast it never finished\"), so the closing clause referenced something the trait never established. Caught by BOTH the audit and the critic on the third block carrying it."
       },
       {
         "death_family": "continuity-anchor",
         "trait": "Seeded Return",
-        "template_2024": "If the {creature} dies, it leaves {substance} where it fell, and a new body grows from it with all its Hit Points in 2d6 days. Destroying the {substance} \u2014 it has AC 12 and 20 Hit Points \u2014 makes the death permanent.",
+        "template_2024": "If the {creature} dies, it leaves {substance} where it fell, and a new body grows from it with all its Hit Points in 2d6 days. Destroying the {substance} — it has AC 12 and 20 Hit Points — makes the death permanent.",
         "facets": [
-          "verdant",
           "amorphous",
+          "bestial",
           "devouring",
-          "venomous"
+          "grasping",
+          "venomous",
+          "verdant"
         ],
-        "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost \u2014 same trait, swapped nouns)"
+        "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost — same trait, swapped nouns)"
       }
-    ]
+    ],
+    "_facet_note": "every facet reaches at least one death family (2026-08-06): an aquatic construct matched NO family, so family weighting was uniform and the inheritance-curse won three blocks running",
+    "_type_note": "Construct moved succession -> residue 2026-08-06: a haunting is what a ghost leaves behind, not a golem; succession was the type default at x6 and shipped verbatim on four blocks."
   }
 }
