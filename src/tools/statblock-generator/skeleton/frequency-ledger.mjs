@@ -27,8 +27,22 @@ export const WINDOW = 12;
 /** Generations this recent count double — a repeat you just saw stings most. */
 const HOT = 3;
 
-/** A row's identity: the printed creature and ability it came from. */
-export const rowKeyOf = (row) => `${row?.source ?? '?'}/${row?.ability ?? row?.trait ?? '?'}`;
+/**
+ * A row's identity is the MECHANIC, not the donor.
+ *
+ * This keyed on `source/ability` at first, which made the ledger blind to
+ * exactly the rows that saturate: Magic Resistance exists as 34 rows from 34
+ * creatures, Pack Tactics as 18, Pounce as 18, Amphibious as 31 — so every
+ * shipment looked like a different row and nothing was ever damped. 803 of
+ * 1073 rows share a name with at least one other. Measured against live
+ * output that was Magic Resistance in 65% of blocks and Pounce in 85%,
+ * while the ledger reported no repeats at all.
+ *
+ * The same name across sources is the same mechanic scaled to a different
+ * CR, so the name IS the identity. The donor is deliberately not part of it.
+ */
+export const rowKeyOf = (row) => String(row?.ability ?? row?.trait ?? '?')
+  .replace(/\s*\([^)]*\)\s*$/, '').trim().toLowerCase();
 
 function readRaw() {
   try {

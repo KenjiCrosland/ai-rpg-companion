@@ -257,8 +257,11 @@ describe('condition slots (engine-filled, owner call 2026-08-03)', () => {
   test('a slot never lands where the condition is structural', () => {
     for (const r of slotted) {
       const t = r.template_2024;
-      // one slot per template — two would fill identically and read twice
-      expect((t.match(/\{condition_/g) ?? []).length).toBe(1);
+      // ONE DISTINCT condition per template. Two different slots would
+      // impose two conditions off one save; two occurrences of the SAME
+      // slot is a back-reference ("While {condition_soft}, it takes...")
+      // and fills identically by design, which is what it needs to do.
+      expect(new Set(t.match(/\{condition_\w+\}/g) ?? []).size).toBe(1);
       // riders only: a save or attack context, never weakness/escape machinery
       expect(t).toMatch(/Saving Throw|Attack Roll/);
       expect(t).not.toMatch(/escape DC|instead of the|Unconscious|Petrified/);

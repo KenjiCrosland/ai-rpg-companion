@@ -41,6 +41,49 @@ const trace = (label, detail) => logger.log(`[skeleton] ${label}`, detail ?? '')
  *   seed (optional; omit for a random creature), onProgress
  * @param {(prompt: string, validate: Function) => Promise<string>} callLLM
  */
+/**
+ * THE PROSE OUTRANKS THE ROLL — energy edition (owner call, 2026-08-11:
+ * "how do we fix the fact that we didn't get thunder damage?").
+ *
+ * The mix and energy are rolled BEFORE the concept call and the model is
+ * told to write to them. Usually it does. Sometimes it disobeys: told
+ * physical-only, it wrote a warden "warped by the screaming of the
+ * sea-gods" that goes "shrieking as it goes" — a sonic creature top to
+ * bottom — and the engine then faithfully rendered every payload Piercing
+ * (live: the Brinewrack, which even RESISTED the Thunder its own names
+ * promised).
+ *
+ * Same resolution as pickHouse's prose-overrules-themes: a DECLARATION in
+ * the prose beats the roll, at the same named-twice standard — one word is
+ * an accident, two is what the creature is. The roll still seeds the
+ * concept; the concept's actual output is the authority.
+ */
+const ENERGY_VOCAB = {
+  Thunder: ['shriek', 'screech', 'scream', 'wail', 'keen', 'bellow', 'roar', 'sonic', 'thunder', 'boom', 'toll', 'resonan', 'deafen'],
+  Fire: ['flame', 'fire', 'burn', 'scorch', 'ember', 'cinder', 'molten', 'furnace', 'blaze'],
+  Cold: ['frost', 'freez', 'ice-', 'glacial', 'rime', 'sleet', 'frigid'],
+  Lightning: ['lightning', 'voltaic', 'galvanic', 'spark', 'arc-light'],
+  Poison: ['venom', 'toxi', 'poison'],
+  Acid: ['acid', 'caustic', 'corrosi', 'dissolv'],
+  Necrotic: ['necrotic', 'wither', 'entropy', 'decay', 'shadow', 'gloom', 'lightless', 'sunless', 'umbral', 'darkness'],
+  Radiant: ['radiant', 'sanctified', 'holy light', 'halo', 'dawn-light'],
+  Psychic: ['psychic', 'mind-flay', 'thought-'],
+};
+function declaredEnergyMentions(text, type) {
+  const t = String(text ?? '').toLowerCase();
+  return (ENERGY_VOCAB[type] ?? [type.toLowerCase()])
+    .some((w) => t.includes(w));
+}
+function declaredEnergy(text) {
+  const t = String(text ?? '').toLowerCase();
+  let best = null;
+  for (const [type, words] of Object.entries(ENERGY_VOCAB)) {
+    const hits = words.reduce((n, w) => n + (t.match(new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) ?? []).length, 0);
+    if (hits >= 2 && (!best || hits > best.hits)) best = { type, hits };
+  }
+  return best;
+}
+
 export async function generateFromSkeleton(options, callLLM) {
   const {
     concept, description = '', cr, archetypeName = null, resolvedType = null,
@@ -212,6 +255,42 @@ export async function generateFromSkeleton(options, callLLM) {
     blockSignature = altOk ? alt : null;
   }
 
+  let blockMix = damageMix;
+  let blockEnergy = energy;
+  // THE TYPE-ENERGY CONTRACT (owner question, 2026-08-11: "does an abyssal
+  // creature ever do radiant?"). Print's answer is flat: 0 of 29 Fiends
+  // deal Radiant, 0 of 13 Celestials deal Necrotic — the two taxonomy
+  // taboos, each the other's mirror. Everything else is attested somewhere
+  // (even Undead deal Radiant twice), so the contract bans exactly these
+  // and remaps to the type's own register. The energy is rolled before the
+  // type exists, so this is where the two can first be reconciled.
+  {
+    const TYPE_FORBIDS = { Fiend: { Radiant: 'Necrotic' }, Celestial: { Necrotic: 'Radiant' } };
+    const swap = TYPE_FORBIDS[finalType]?.[blockEnergy];
+    if (swap) {
+      trace('damage reconciled:', `${blockEnergy} -> ${swap} (no printed ${finalType} deals ${blockEnergy}: 0 in the corpus)`);
+      blockEnergy = swap;
+    }
+  }
+  {
+    const prose = [concept, identity, lore].filter(Boolean).join(' ');
+    const declared = declaredEnergy(prose);
+    if (declared) {
+      if (blockMix === 'physical') {
+        // told physical, wrote an energy creature — the prose wins
+        trace('damage reconciled:', `physical -> both (prose declares ${declared.type} x${declared.hits})`);
+        blockMix = 'both';
+        blockEnergy = declared.type;
+      } else if (blockEnergy && declared.type !== blockEnergy
+        && !declaredEnergyMentions(prose, blockEnergy)) {
+        // rolled one energy, wrote another, and the rolled one appears
+        // NOWHERE — follow what was actually written
+        trace('damage reconciled:', `energy ${blockEnergy} -> ${declared.type} (prose declares it x${declared.hits}, ${blockEnergy} unmentioned)`);
+        blockEnergy = declared.type;
+      }
+    }
+  }
+
   const skeleton = buildSkeleton({
     cr: crNum, seed: useSeed, alternatives: ALTERNATIVES, archetype: blockArchetype,
     caster, strikeStat, themes: blockThemes, mind: blockMind,
@@ -223,7 +302,7 @@ export async function generateFromSkeleton(options, callLLM) {
     // by the flavor call after a kit-less build, because the synthesis
     // never said Dragon and nothing else could.
     recent,
-    damageMix,
+    damageMix: blockMix,
     family: /dragon/i.test(finalType) ? 'dragon' : null,
     typeHint: finalType,
   });
@@ -260,6 +339,9 @@ export async function generateFromSkeleton(options, callLLM) {
   progress('status', { stage: 'writing' });
   if (blockThemes) trace('themes:', blockThemes.join(', '));
   trace('mind:', blockMind, mind ? '(concept call)' : '(default)');
+  // The damage axis was threaded but never traced, so a block whose energy
+  // never reached its payload could only be diagnosed by inference.
+  trace('damage:', `${blockMix ?? 'both (unrolled)'}${blockEnergy ? `, energy ${blockEnergy}` : ''}`);
   if (blockSize || blockMovement || blockAttackMode || blockSignature) {
     trace('assembly metadata:', [
       blockSize && `size ${blockSize}`,
@@ -275,14 +357,14 @@ export async function generateFromSkeleton(options, callLLM) {
   // One MATERIAL for the block, scored from the concept prose (owner call,
   // 2026-08-05). Attached to the skeleton so the palette, the fills and
   // the naming all read the same declaration.
-  skeleton.energy = energy;
-  skeleton.damage_mix = damageMix;
+  skeleton.energy = blockEnergy;
+  skeleton.damage_mix = blockMix;
   skeleton.identity = resolveIdentity(skeleton, {
     concept: [concept, identity, lore].filter(Boolean).join(' '),
     themes: blockThemes,
     type: finalType,
     house,
-    damageMix,
+    damageMix: blockMix,
     seed: useSeed,
   });
   skeleton.houses = skeleton.identity.houses;
@@ -318,7 +400,13 @@ export async function generateFromSkeleton(options, callLLM) {
     logger.warn('[skeleton] flavor call failed, shipping unflavored:', e?.message ?? e);
   }
   if (flavor) {
-    trace('flavor came back:', `"${flavor.name}" — ${flavor.type ?? '?'}, ${flavor.physical_damage ?? '?'}/${flavor.energy_damage ?? '?'} damage`);
+    // The trace shows the EFFECTIVE palette, not the model's raw answer. On
+    // a physical-mix block the model's energy pick is discarded by design,
+    // and printing it made every correct physical block read exactly like
+    // the stamping bug in the logs ("flavor came back: Bludgeoning/Radiant,
+    // ships all-Bludgeoning" — a false reopening, investigated twice).
+    trace('flavor came back:', `"${flavor.name}" — ${flavor.type ?? '?'}, ${flavor.physical_damage ?? '?'}/${
+      blockMix === 'physical' ? 'no energy (physical mix)' : (blockEnergy ?? flavor.energy_damage ?? '?')} damage`);
     if (takenNames.some((n) => String(n).toLowerCase() === String(flavor.name ?? '').toLowerCase())) {
       logger.warn('[skeleton] name collides with the saved roster:', flavor.name);
     }

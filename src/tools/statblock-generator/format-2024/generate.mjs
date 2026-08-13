@@ -239,6 +239,12 @@ export function rollEnergy(rand = Math.random) {
 }
 
 function energyBrief(energy) {
+  // NOT emitted when the damage mix rolled PHYSICAL — the two briefs
+  // contradicted each other outright ("make Radiant INEVITABLE" directly
+  // above "no Radiant anywhere"), and the model resolved it the only way it
+  // could: it wrote a radiance creature whose every payload the engine then
+  // stamped Bludgeoning (live: the Vanteg — sanctified light, dawn
+  // radiance, Lightcast, Haloed, Radiant resistance, zero Radiant damage).
   if (!energy) return '';
   return `
 3. ENERGY. This creature's energy damage is ${energy}, and that is not negotiable — it was rolled before you wrote a word. Build a body and a habit that make ${energy} INEVITABLE: where in its anatomy does ${energy} come from, and why does touching it hurt that way? Never name a different energy anywhere in the concept. If ${energy} seems wrong for the creature you had in mind, change the CREATURE, not the energy.
@@ -333,7 +339,7 @@ export function buildArchetypeResolvePrompt(concept, description = '', { cr = nu
     : 'Classify this D&D monster concept into exactly one combat-role archetype, then sketch its combat identity.'}
 
 Concept: ${concept}
-${description ? `Details: ${description}\n` : ''}${cr != null ? `Challenge Rating: ${crKeyFor(cr)} — scale the creature's ambition to this tier (a CR 2 creature is a local menace; a CR 20+ creature is a mythic force). The identity must read like a creature OF this tier.\n` : ''}${funnelBrief(archetype)}${energyBrief(energy)}${damageMixBrief(damageMix, energy)}
+${description ? `Details: ${description}\n` : ''}${cr != null ? `Challenge Rating: ${crKeyFor(cr)} — scale the creature's ambition to this tier (a CR 2 creature is a local menace; a CR 20+ creature is a mythic force). The identity must read like a creature OF this tier.\n` : ''}${funnelBrief(archetype)}${damageMix === 'physical' ? '' : energyBrief(energy)}${damageMixBrief(damageMix, energy)}
 Archetypes:
 - brute: hits hard up close, soaks damage, easy to hit
 - defender: protects allies, high AC, punishes movement
@@ -390,7 +396,7 @@ function seedFunnelBrief(type, archetype) {
   return `MATERIAL. Choose exactly ONE material ("material") from this line — the substance this creature's BODY is made of, given it is a ${type}: ${textureBanks.type_houses[type].join(', ')}. Not two. A creature made of two materials reads as two creatures sharing a statblock, and every ability name in the block will be drawn from the one you name here. Write the synthesis so that material is visible in what it is and what it does.`;
 }
 
-export function buildSeedSynthesisPrompt(seed, { cr = null, archetype = null } = {}) {
+export function buildSeedSynthesisPrompt(seed, { cr = null, archetype = null, energy = null, damageMix = null } = {}) {
   return `${archetype
     ? `Fuse these randomly rolled traits into ONE coherent monster concept. Its combat role is FIXED by the user: ${archetype} — echo it in "archetype" unchanged and shape the concept around that role.`
     : 'Fuse these randomly rolled traits into ONE coherent monster concept, then classify its combat role.'}
@@ -418,7 +424,7 @@ TYPE HONESTY: creature_type must be the type your synthesis actually EXPRESSES �
 
 Also write ONE sentence of world-lore ("lore"): where this creature comes from and what it wants — drawn from the rolled ORIGIN, the story a GM would read aloud. Grounded in the fused substance, never generic doom-prose.
 
-${seedFunnelBrief(seed.creature_type, archetype)}
+${seedFunnelBrief(seed.creature_type, archetype)}${damageMix === 'physical' ? '' : energyBrief(energy)}${damageMixBrief(damageMix, energy)}
 
 Also pick the creature's THEME THREADS ("themes"): ONE primary word the concept is most about, plus at most ONE supporting word that complements it — from this list only: bestial, armed, amorphous, grave, fiendish, celestial, fey, draconic, elemental, verdant, forged, mind, venomous, terror, beguiling, grasping, devouring, aquatic, subterranean, aerial, uncanny, arcane, voice, gaze, breath. The pair must COHERE — grave+aquatic is a drowned dead thing; subterranean+celestial is nonsense. And themes must AGREE with creature_type: celestial means a Celestial, grave means Undead, fiendish a Fiend, draconic a Dragon, verdant a Plant, forged a Construct — never declare a domain theme the type contradicts. THEME HONESTY: the themes must be the ones your own prose EXPRESSES — its substance, its element, its habitat — not adjacent or generic ones. A creature you described as deep-ocean brine is aquatic, not "elemental"; a thing of packed grave-soil is grave, not "subterranean". Every name and every material in the finished block will be drawn from these two words, so a theme your prose doesn't actually contain leaves the creature speaking a vocabulary it doesn't own.
 

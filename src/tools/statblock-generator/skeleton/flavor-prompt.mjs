@@ -15,7 +15,8 @@
  */
 import library from '@/data/ability-library.json';
 import textureBanks from '@/data/texture-banks.json';
-import { FLAVOR_SLOTS, makeRng } from './build-skeleton.mjs';
+import { FLAVOR_SLOTS, makeRng, crNumber } from './build-skeleton.mjs';
+import { CONDITIONS } from '../format-2024/lint.mjs';
 
 /**
  * The texture-bank layer (Phase 3, owner-approved 2026-08-03). Three duties,
@@ -52,9 +53,20 @@ const VET_TOKEN_OWNER = (() => {
 function ownFacets(type, themes) {
   return new Set([TYPE_BANK_FACET[type], ...(themes ?? [])].filter(Boolean));
 }
-/** The first off-domain token a fill carries, or null if it's clean. */
-function offDomainToken(value, own) {
+/**
+ * The first off-domain token a fill carries, or null if it's clean.
+ *
+ * The block's HOUSE vocabulary is always admissible (owner-visible bug,
+ * 2026-08-11): 16 of 25 houses carry a word some facet's vet claims —
+ * "magma" is elemental's vet token, "brine" is aquatic's via barnacle,
+ * "grave" is grave's own. So a block whose funnel-chosen house was magma
+ * but whose themes lacked `elemental` had every house-true fill VETOED as
+ * a foreign-facet claim, and the generic fallback shipped instead. The
+ * funnel picks the house; the vet must not forbid speaking it.
+ */
+function offDomainToken(value, own, houseTokens = null) {
   for (const [tok, owner] of VET_TOKEN_OWNER) {
+    if (houseTokens && houseTokens.has(tok)) continue;
     if (!own.has(owner) && new RegExp(`\\b${tok}`, 'i').test(value)) return tok;
   }
   return null;
@@ -330,7 +342,9 @@ function texturePalette(skeleton, themes) {
   const substances = [...new Set(banks.flatMap((b) => b.substances ?? []))];
   const limbs = [...new Set(banks.flatMap((b) => (b.appendages ?? []).map((a) => a.one)))];
   const verbs = [...new Set(banks.flatMap((b) => b.deliveries ?? []))];
-  const restraints = [...new Set(banks.flatMap((b) => b.restraints ?? []))];
+  const houseRestraints = (skeleton.houses ?? [])
+    .map((h) => textureBanks.houses?.[h]?.restraint).filter(Boolean);
+  const restraints = [...new Set([...houseRestraints, ...banks.flatMap((b) => b.restraints ?? [])])];
   const adjs = [...new Set(banks.flatMap((b) => b.name_adjectives ?? []))];
   const nouns = [...new Set(banks.flatMap((b) => b.name_nouns ?? []))];
   // DOMINANCE, NOT PRESENCE (owner call, 2026-08-07, the Grindor: a colony
@@ -356,6 +370,11 @@ function texturePalette(skeleton, themes) {
   const manifest = id.manifest ?? {};
   const contractLines = [
     contract.physical === null && `Its ${contract.type} body has no edge, point, or mass: EVERY damage it deals is its energy type. Never Slashing, Piercing, or Bludgeoning.`,
+    // The flavor call was never told the mix, so on a physical-only block
+    // it picked Thunder and named a shriek, a song and a spray — and the
+    // engine then rendered every one of them as Piercing (live: the
+    // Brinewrack, which even RESISTS the Thunder its own names promise).
+    skeleton.damage_mix === 'physical' && 'Every damage this creature deals is PHYSICAL (its weapon type) — any energy you pick will NOT be used. Never name an entry for a sound, light, or energy (no shrieks, songs, rays, or blasts): name what its body does — rake, lunge, slam, barrage.',
     contract.anatomy === false && 'It has no limbs, jaws, or teeth to name — its attacks are extrusions, surges, and engulfings.',
     contract.alignment && `Its alignment is ${contract.alignment}: creatures of this type have no moral axis.`,
     contract.noGood && 'Its alignment is never Good.',
@@ -378,7 +397,7 @@ Never reach for a neighbouring material: an ice creature does not also spray bri
 - restraining substances (for anything that binds, snares, or entombs — "until the <substance> is destroyed"): ${restraints.join(', ')}
 - limbs: ${limbs.join(', ')}
 - delivery verbs: ${verbs.join(', ')}
-- name words: ${adjs.join(', ')} / ${nouns.join(', ')}${dmg.length ? `\n- energy damage this register favors: ${dmg.join(', ')}` : ''}`;
+- name words: ${adjs.join(', ')} / ${nouns.join(', ')}${dmg.length && skeleton.damage_mix !== 'physical' ? `\n- energy damage this register favors: ${dmg.join(', ')}` : ''}`;
 }
 
 // One line per combat role, fed to the flavor call so names and prose lean
@@ -443,6 +462,15 @@ export function buildFlavorPrompt(skeleton, { concept, description = '', themes 
         .join('\n');
       return `- ${r.id} (${r.section}) — CHOOSE ONE by NUMBER, whichever suits the concept:\n${menu}\n  provide: choose, ${asks}${flag ? `\n${flag}` : ''}`;
     }
+    // TRAITS may be re-written, actions may not. 2024 action grammar is
+    // nearly fixed (the attack and save lines are rules format), so there is
+    // nothing to write; a trait is free prose and is where a donor's
+    // fiction shows.
+    if (r.section === 'Traits') {
+      return `- ${r.id} (Traits): ${r.text}\n  provide: ${asks}, and OPTIONALLY "text" — the same mechanic re-written in THIS creature's voice.`
+        + '\n  If you write it: change no number, add or remove no condition, no damage type, and no rules keyword'
+        + ' (Advantage, Resistance, Difficult Terrain, Saving Throw...). Say the same thing as this creature would say it, or omit "text" and the line above ships unchanged.';
+    }
     return `- ${r.id} (${r.section}): ${r.text}\n  provide: ${asks}${flag ? `\n${flag}` : ''}`;
   }).join('\n');
 
@@ -450,7 +478,9 @@ export function buildFlavorPrompt(skeleton, { concept, description = '', themes 
 
 CONCEPT: ${concept}${description ? `\nDETAILS: ${description}` : ''}${takenNames.length ? `\nNAMES ALREADY TAKEN in this user's collection — NEVER reuse or closely echo any of them: ${takenNames.slice(0, 40).join(', ')}` : ''}${themes && themes.length ? `\nTHEME THREADS — the block's ENTIRE palette. Every name, every {substance}, every {delivery} and {appendage} draws from these and nothing else: ${themes.join(', ')}` : ''}${texturePalette(skeleton, themes)}
 
-The creature is CR ${skeleton.cr}, ${skeleton.size}, AC ${skeleton.ac}, HP ${skeleton.hp}.${ROLE_BRIEF[skeleton.archetype] ? `\nIts combat role is ${ROLE_BRIEF[skeleton.archetype]}. Spend the block's text on that role: when an entry offers a menu, choose the option that serves this loop, and fill spell lists with spells this role would lean on — a reader infers the role from where the words go.` : ''}
+The creature is CR ${skeleton.cr}, ${skeleton.size}, AC ${skeleton.ac}, HP ${skeleton.hp}.${skeleton.mind === 'bestial' ? `
+Its MIND is BESTIAL: animal cunning, no speech, no concepts. Every fill must fit that head — its anchors are dens, carcasses, and territories, never bargains, vows, debts, oaths, or agreements; it remembers places and scents, not purposes. Entry names likewise: an animal has no "Bargain", "Vigil", or "Covenant".` : skeleton.mind === 'mindless' ? `
+Its MIND is MINDLESS: no comprehension at all. Fills and names must be pure process — growths, discharges, reflexes. Nothing it does is chosen, remembered, or owed.` : ''}${ROLE_BRIEF[skeleton.archetype] ? `\nIts combat role is ${ROLE_BRIEF[skeleton.archetype]}. Spend the block's text on that role: when an entry offers a menu, choose the option that serves this loop, and fill spell lists with spells this role would lean on — a reader infers the role from where the words go.` : ''}
 
 Its abilities are written out below with blanks in {braces}. Fill ONLY the blanks and give EVERY entry a name that fits THIS creature — a name is required for every id listed, not just the ones that interest you. Do not rewrite any other word, and do not invent, remove or renumber abilities.
 
@@ -467,7 +497,7 @@ Resistances and immunities are a budget, not a list: below CR 5 usually none or 
 
 Pick save proficiencies to match the tier: below CR 5 usually none, CR 5-10 up to two, CR 11+ two to four. Pick zero to three skills (Perception and Stealth are by far the most common in print).
 
-Pick ONE physical damage type and ONE energy damage type for the whole creature. Its parts were assembled from several monsters, so choosing per ability produces something that deals fire, cold, poison and necrotic at once. You may ALSO pick an optional second energy type ("energy_damage_2") for dual-natured effects — a demon that burns AND blasts (Fire + Force) — only when the concept genuinely has two energies; omit it otherwise.
+${skeleton.damage_mix === 'physical' ? 'Pick ONE physical damage type for the whole creature — it deals no energy damage, and no energy field is wanted.' : 'Pick ONE physical damage type and ONE energy damage type for the whole creature.'} Its parts were assembled from several monsters, so choosing per ability produces something that deals fire, cold, poison and necrotic at once. You may ALSO pick an optional second energy type ("energy_damage_2") for dual-natured effects — a demon that burns AND blasts (Fire + Force) — only when the concept genuinely has two energies; omit it otherwise.
 If the creature cannot speak, give it telepathy in senses_special or pick only spells it could deliver without a voice.
 
 Return ONLY JSON:
@@ -487,7 +517,7 @@ Return ONLY JSON:
   "languages": "or omit",
   "resistances": "or omit", "immunities": "or omit", "vulnerabilities": "or omit",
   "entries": [
-    { "id": "e1", "choose": "the NUMBER of the option you picked, when offered", "name": "an entry name"${ASKABLE.map((s) => `, "${s}": "only if e1 asks for it"`).join('')} }
+    { "id": "e1", "choose": "the NUMBER of the option you picked, when offered", "name": "an entry name", "text": "traits only, optional — your own wording of the same mechanic"${ASKABLE.map((s) => `, "${s}": "only if e1 asks for it"`).join('')} }
   ]
 }`;
 }
@@ -927,6 +957,64 @@ function resolveEntryName(entry, given, skeleton) {
   return (modelName || fallbackEntryName(entry, skeleton) || printed).trim();
 }
 
+/**
+ * THE TRAIT SPEC CONTRACT (owner call, 2026-08-07).
+ *
+ * Traits are 97% free prose (median 90 characters of real sentence, against
+ * 59 for actions, whose 2024 grammar is nearly fixed), so they are where a
+ * donor's fiction is most visible and where writing natively buys most.
+ * The model may therefore RE-WRITE a trait in the creature's own voice —
+ * but only if the rewrite says the same mechanical thing.
+ *
+ * This is the door the architecture closed ("never let a model edit
+ * mechanics"), so the contract is mechanical, never editorial: every number,
+ * every condition, every damage type and every rules keyword must survive
+ * unchanged, and nothing new may appear. A rewrite that fails ANY clause is
+ * discarded and the templated text ships — per entry, so one bad answer
+ * costs one trait's prose and nothing else.
+ */
+const RULES_KEYWORDS = [
+  'Saving Throw', 'Attack Roll', 'Advantage', 'Disadvantage', 'Resistance',
+  'Immunity', 'Vulnerability', 'Difficult Terrain', 'Concentration',
+  'Hit Points', 'Recharge', 'opportunity attack',
+];
+
+export function preservesTraitMechanics(original, rewrite) {
+  if (typeof rewrite !== 'string') return false;
+  const clean = rewrite.trim();
+  if (clean.length < 15 || clean.length > original.length * 2.5 + 40) return false;
+
+  const nums = (t) => (t.match(/\d+(?:d\d+)?/g) ?? []).sort();
+  const a = nums(original); const b = nums(clean);
+  if (a.join(',') !== b.join(',')) return false;               // no number may change
+
+  const setOf = (t, list) => new Set(list.filter((w) => new RegExp(`\\b${w}\\b`, 'i').test(t)));
+  const eq = (x, y) => x.size === y.size && [...x].every((v) => y.has(v));
+  if (!eq(setOf(original, CONDITIONS), setOf(clean, CONDITIONS))) return false;
+  const DAMAGE = ['Acid', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Poison',
+    'Psychic', 'Radiant', 'Thunder', 'Bludgeoning', 'Piercing', 'Slashing'];
+  if (!eq(setOf(original, DAMAGE), setOf(clean, DAMAGE))) return false;
+  if (!eq(setOf(original, RULES_KEYWORDS), setOf(clean, RULES_KEYWORDS))) return false;
+
+  // A trait carrying NO numbers, conditions, damage types or keywords has
+  // nothing for the clauses above to check, so the contract was vacuous for
+  // it: "The creature can breathe air and water" accepted "It does whatever
+  // it likes, whenever it likes." For those traits the MEANING is the words,
+  // so a rewrite must keep most of the original's concrete vocabulary.
+  // Prefix-matched, so inflection ("climb"/"climbs") is not a difference.
+  const STOP = new Set(['that', 'this', 'with', 'from', 'into', 'they', 'them', 'their', 'have',
+    'while', 'when', 'each', 'other', 'than', 'then', 'must', 'been', 'does', 'doesn', 'until',
+    'creature', 'target', 'itself', 'which', 'there', 'those', 'these', 'also', 'more', 'most']);
+  const content = (t) => new Set((String(t).toLowerCase().replace(/\{[^}]*\}/g, ' ')
+    .match(/[a-z]{4,}/g) ?? []).filter((w) => !STOP.has(w)).map((w) => w.slice(0, 5)));
+  const want = content(original);
+  if (want.size) {
+    const kept = [...want].filter((w) => content(clean).has(w)).length;
+    if (kept / want.size < 0.4) return false;
+  }
+  return true;
+}
+
 export function applyFlavor(skeleton, llmJson) {
   // Defensive against a PARTIAL object, not merely a malformed one. The
   // validator rejects a nameless response, but callers can bypass validation
@@ -998,7 +1086,9 @@ export function applyFlavor(skeleton, llmJson) {
       // creature's register, never generically "webs") — draw from the
       // facet's restraints bank first.
       if (slot === 'substance' && /until the \{substance\} is destroyed|caused by \{substance\}/.test(entry.text)) {
-        return bankDraw('restraints', own, entryRng) ?? bankDraw('substances', own, entryRng);
+        const houseRestraint = (skeleton.houses ?? [])
+          .map((h) => textureBanks.houses?.[h]?.restraint).find(Boolean);
+        return houseRestraint ?? bankDraw('restraints', own, entryRng) ?? bankDraw('substances', own, entryRng);
       }
       if (slot === 'substance') return bankDraw('substances', own, entryRng);
       if (slot === 'delivery') return bankDraw('deliveries', own, entryRng);
@@ -1037,7 +1127,9 @@ export function applyFlavor(skeleton, llmJson) {
       // The fill vet: a texture fill claiming a facet this block doesn't own
       // ("spore-laced" on a forged block whose themes never said verdant) is
       // replaced from the block's own banks, exactly like a missing fill.
-      if (value && TEXTURE_SLOTS.includes(slot) && offDomainToken(value, own)) {
+      const houseTokens = new Set((skeleton.houses ?? [])
+        .flatMap((h) => [h, ...(textureBanks.houses?.[h]?.tokens ?? [])]));
+      if (value && TEXTURE_SLOTS.includes(slot) && offDomainToken(value, own, houseTokens)) {
         value = null;
       }
       // OFF-HOUSE vet (owner call, 2026-08-05): a fill may be perfectly
@@ -1047,6 +1139,19 @@ export function applyFlavor(skeleton, llmJson) {
       // house it did (live: the Scree spoke brine, sleet, and scree).
       if (value && ['substance', 'terrain'].includes(slot) && (skeleton.houses ?? []).length) {
         const mine = new Set((skeleton.houses ?? []).flatMap((h) => textureBanks.houses?.[h]?.tokens ?? []));
+        // A RESTRAINT is the house made manifest (owner call, 2026-08-07:
+        // "the mesh is obviously a web... it could be fast-hardening magma
+        // or molten crystal — use textures"). The foreign-token vet let a
+        // house-less generic through: "barbed tendril mesh" on a brine
+        // block names no material at all, so the web survived its reskin.
+        // A restraint fill that speaks NO house word takes the house's own
+        // restraint form instead.
+        const isRestraint = /until the \{substance\} is destroyed|caused by \{substance\}/.test(entry.text);
+        if (isRestraint && ![...mine].some((tok) => new RegExp(`\\b${tok}`, 'i').test(value))) {
+          const houseRestraint = (skeleton.houses ?? [])
+            .map((h) => textureBanks.houses?.[h]?.restraint).find(Boolean);
+          if (houseRestraint) value = houseRestraint;
+        }
         const foreign = Object.entries(textureBanks.houses ?? {})
           .filter(([h]) => !(skeleton.houses ?? []).includes(h))
           .some(([, b]) => (b.tokens ?? []).some((tok) => new RegExp(`\\b${tok}`, 'i').test(value)
@@ -1493,6 +1598,15 @@ export function applyFlavor(skeleton, llmJson) {
     if (entry.gate && entry.section !== 'Legendary Actions' && !/\(/.test(name)) {
       name = `${name} (${entry.gate})`;
     }
+    // A trait may arrive re-written in the creature's own voice. It ships
+    // only if it says the same mechanical thing; otherwise the templated
+    // text stands and nothing is lost.
+    if (entry.section === 'Traits' || skeleton.traits?.includes(entry)) {
+      const rewrite = typeof given.text === 'string' ? given.text.trim() : '';
+      if (rewrite && preservesTraitMechanics(text, rewrite)) {
+        text = rewrite.split('{creature}').join(inline);
+      }
+    }
     return { name, text };
   };
 
@@ -1649,6 +1763,35 @@ export function applyFlavor(skeleton, llmJson) {
         // a row that also deals Fire still legitimately breaks things.
         if (types.length && types.every((t) => t === 'Poison' || t === 'Psychic')) {
           e.text = e.text.replace(OBJECT_CLAUSE, '');
+        }
+      }
+    }
+  }
+
+  // 0a5. SWALLOW CAPACITY IS A FUNCTION OF SIZE, and the number was
+  //      hard-coded in the donor's prose while the size gate beside it was
+  //      slotted. Print, in full:
+  //        Behir       CR 11  Huge        one
+  //        Remorhaz    CR 11  Huge        two
+  //        Purple Worm CR 15  Gargantuan  three
+  //        Kraken      CR 23  Gargantuan  four
+  //        Tarrasque   CR 30  Gargantuan  six
+  //      There is no printed LARGE swallower at all, and the smallest
+  //      swallower print has takes one — so a Large creature carrying the
+  //      Tarrasque's six is off the curve entirely, and at six the
+  //      regurgitation threshold is trivially met by the creatures inside
+  //      (live: the Vanteg, Large, capacity six).
+  {
+    const CAP = { Gargantuan: null, Huge: 'up to two creatures' };
+    const want = Object.prototype.hasOwnProperty.call(CAP, skeleton.size)
+      ? CAP[skeleton.size] : 'only one creature';
+    if (want) {
+      for (const list of Object.values(sections)) {
+        for (const e of list) {
+          e.text = e.text.replace(
+            /can have (?:only one creature|up to \w+ creatures) swallowed at a time/g,
+            `can have ${want} swallowed at a time`,
+          );
         }
       }
     }
@@ -1860,6 +2003,26 @@ export function applyFlavor(skeleton, llmJson) {
     }
   }
 
+  // A restraint object's DURABILITY follows the block's tier (owner call,
+  // 2026-08-07: "have a higher AC and HP"). Print anchors the low end —
+  // the Giant Spider's and Ettercap's webs are AC 10; HP 5 at CR 1-2, and
+  // the Roper's tendril is AC 20, HP 10 at CR 5 — but the template's
+  // numbers were hard-coded, so a CR 20 block shipped a restraint any
+  // cantrip deletes (live: the Brinewrack's DC-22 snare dying to 5 HP).
+  // Bands, print at the bottom, owner call above:
+  {
+    const cr = crNumber(skeleton.cr);
+    const tier = cr >= 17 ? [20, 30] : cr >= 11 ? [15, 20] : cr >= 5 ? [15, 10] : null;
+    if (tier) {
+      for (const list of Object.values(sections)) {
+        for (const e of list) {
+          e.text = e.text.replace(/is destroyed \(AC \d+; HP \d+;/g,
+            `is destroyed (AC ${tier[0]}; HP ${tier[1]};`);
+        }
+      }
+    }
+  }
+
   // A restraint object's counterplay follows its MATERIAL (owner call —
   // the substance could be anything): print's web line (Vulnerable Fire,
   // Immune Bludgeoning) is right for fibrous bindings and inverted for
@@ -1892,12 +2055,26 @@ export function applyFlavor(skeleton, llmJson) {
       for (const e of list) {
         const m = e.text.match(/until (?:the|its) ([\w' -]+?) is destroyed \(AC/);
         if (!m) continue;
+        const houseWords = (skeleton.houses ?? [])
+          .flatMap((h) => [h, ...(textureBanks.houses?.[h]?.tokens ?? [])]);
+        const speaksHouse = houseWords.length
+          && new RegExp(`\\b(?:${houseWords.join('|')})`, 'i').test(m[1]);
         if (MINERAL.test(m[1])) {
           e.text = e.text
             .replace('Vulnerability to Fire damage', 'Vulnerability to Bludgeoning damage')
             .replace('Immunity to Bludgeoning, Poison, and Psychic damage', 'Immunity to Fire, Poison, and Psychic damage')
             .replace('Immunity to Poison and Psychic damage', 'Immunity to Fire, Poison, and Psychic damage');
+        } else if (!FIBROUS.test(m[1]) && !speaksHouse) {
+          // Neither mineral, nor fibrous, nor the block's own material: a
+          // guessed vulnerability is arbitrary at the table (owner call,
+          // 2026-08-11), and print has the shape ready — the Roper's
+          // tendril carries NO vulnerability, just the immunities.
+          e.text = e.text
+            .replace('Vulnerability to Fire damage; ', '')
+            .replace('Immunity to Bludgeoning, Poison, and Psychic damage', 'Immunity to Poison and Psychic damage');
         } else if (!FIBROUS.test(m[1])) {
+          // The house speaks but is soft (brine, tar, venom): it burns and
+          // cracks — the Giant Spider variant, Fire vulnerability kept.
           e.text = e.text
             .replace('Immunity to Bludgeoning, Poison, and Psychic damage', 'Immunity to Poison and Psychic damage');
         }

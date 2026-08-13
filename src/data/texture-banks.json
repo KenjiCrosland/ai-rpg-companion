@@ -2579,7 +2579,8 @@
         "Spray",
         "Wrack"
       ],
-      "habitat_terrain": "mud and shallow water"
+      "habitat_terrain": "mud and shallow water",
+      "restraint": "salt-crusted brine lattice"
     },
     "abyss": {
       "tokens": [
@@ -2610,7 +2611,8 @@
         "Deep",
         "Silence"
       ],
-      "habitat_terrain": "mud and shallow water"
+      "habitat_terrain": "mud and shallow water",
+      "restraint": "crushing black-water column"
     },
     "ice": {
       "tokens": [
@@ -2645,7 +2647,8 @@
         "Shiver",
         "Killing Cold"
       ],
-      "habitat_terrain": "ice or snow"
+      "habitat_terrain": "ice or snow",
+      "restraint": "fast-forming ice sheath"
     },
     "storm": {
       "tokens": [
@@ -2679,7 +2682,8 @@
         "Gyre",
         "Rolling Thunder"
       ],
-      "habitat_terrain": "rubble and broken stone"
+      "habitat_terrain": "rubble and broken stone",
+      "restraint": "band of caged lightning"
     },
     "magma": {
       "tokens": [
@@ -2710,7 +2714,8 @@
         "Vent",
         "Pour"
       ],
-      "habitat_terrain": "ash and cinders"
+      "habitat_terrain": "ash and cinders",
+      "restraint": "fast-hardening magma"
     },
     "flame": {
       "tokens": [
@@ -2739,7 +2744,8 @@
         "Pyre",
         "Wildfire"
       ],
-      "habitat_terrain": "ash and cinders"
+      "habitat_terrain": "ash and cinders",
+      "restraint": "collar of white flame"
     },
     "ash": {
       "tokens": [
@@ -2771,7 +2777,8 @@
         "Cinder-Drift",
         "Remnant"
       ],
-      "habitat_terrain": "ash and cinders"
+      "habitat_terrain": "ash and cinders",
+      "restraint": "choking ash shroud"
     },
     "stone": {
       "tokens": [
@@ -2805,7 +2812,8 @@
         "Cairn",
         "Grind"
       ],
-      "habitat_terrain": "rubble and broken stone"
+      "habitat_terrain": "rubble and broken stone",
+      "restraint": "clamping stone shards"
     },
     "sand": {
       "tokens": [
@@ -2837,7 +2845,8 @@
         "Scour",
         "Dune"
       ],
-      "habitat_terrain": "sand and loose scree"
+      "habitat_terrain": "sand and loose scree",
+      "restraint": "dragging sand vortex"
     },
     "bone": {
       "tokens": [
@@ -2869,7 +2878,8 @@
         "Rattle",
         "Reliquary"
       ],
-      "habitat_terrain": "rubble and broken stone"
+      "habitat_terrain": "rubble and broken stone",
+      "restraint": "bone-lattice cage"
     },
     "rot": {
       "tokens": [
@@ -2901,7 +2911,8 @@
         "Carrion",
         "Ruin"
       ],
-      "habitat_terrain": "mud and shallow water"
+      "habitat_terrain": "mud and shallow water",
+      "restraint": "clinging carrion mire"
     },
     "grave": {
       "tokens": [
@@ -2936,7 +2947,8 @@
         "Barrow",
         "Requiem"
       ],
-      "habitat_terrain": "mud and shallow water"
+      "habitat_terrain": "mud and shallow water",
+      "restraint": "grave-wax shroud"
     },
     "iron": {
       "tokens": [
@@ -2978,7 +2990,8 @@
         "Bellows",
         "Engine"
       ],
-      "habitat_terrain": "rubble and broken stone"
+      "habitat_terrain": "rubble and broken stone",
+      "restraint": "riveted chain-net"
     },
     "glass": {
       "tokens": [
@@ -3011,7 +3024,8 @@
         "Refraction",
         "Silvering"
       ],
-      "habitat_terrain": "rubble and broken stone"
+      "habitat_terrain": "rubble and broken stone",
+      "restraint": "molten crystal sheath"
     },
     "thorn": {
       "tokens": [
@@ -3049,7 +3063,8 @@
         "Thicket",
         "Grove"
       ],
-      "habitat_terrain": "thick undergrowth"
+      "habitat_terrain": "thick undergrowth",
+      "restraint": "thorn-lash snare"
     },
     "fungus": {
       "tokens": [
@@ -3082,7 +3097,8 @@
         "Mycelium",
         "Spore-Fall"
       ],
-      "habitat_terrain": "thick undergrowth"
+      "habitat_terrain": "thick undergrowth",
+      "restraint": "gripping mycelium mat"
     },
     "shadow": {
       "tokens": [
@@ -3114,7 +3130,8 @@
         "Nightfall",
         "Umbra"
       ],
-      "habitat_terrain": "rubble and broken stone"
+      "habitat_terrain": "rubble and broken stone",
+      "restraint": "coiled shadow tether"
     },
     "void": {
       "tokens": [
@@ -3147,7 +3164,8 @@
         "Aperture",
         "Nothing"
       ],
-      "habitat_terrain": "rubble and broken stone"
+      "habitat_terrain": "rubble and broken stone",
+      "restraint": "seam of folded nothing"
     },
     "blood": {
       "tokens": [
@@ -3178,7 +3196,8 @@
         "Letting",
         "Clot"
       ],
-      "habitat_terrain": "mud and shallow water"
+      "habitat_terrain": "mud and shallow water",
+      "restraint": "clotting blood web"
     },
     "tar": {
       "tokens": [
@@ -3209,7 +3228,8 @@
         "Pitchfall",
         "Sump"
       ],
-      "habitat_terrain": "mud and shallow water"
+      "habitat_terrain": "mud and shallow water",
+      "restraint": "smothering tar sheet"
     },
     "venom": {
       "tokens": [
@@ -3240,7 +3260,8 @@
         "Toxin",
         "Bloom"
       ],
-      "habitat_terrain": "thick undergrowth"
+      "habitat_terrain": "thick undergrowth",
+      "restraint": "hardening venom shell"
     },
     "dream": {
       "tokens": [
@@ -3272,7 +3293,8 @@
         "Waking",
         "Nightmare"
       ],
-      "habitat_terrain": "thick undergrowth"
+      "habitat_terrain": "thick undergrowth",
+      "restraint": "dream-gossamer snare"
     },
     "light": {
       "tokens": [
@@ -3306,7 +3328,8 @@
         "Aureole",
         "Dawn"
       ],
-      "habitat_terrain": "sand and loose scree"
+      "habitat_terrain": "sand and loose scree",
+      "restraint": "lattice of hard light"
     },
     "hide": {
       "tokens": [
@@ -3341,7 +3364,8 @@
         "Pack",
         "Quarry"
       ],
-      "habitat_terrain": "thick undergrowth"
+      "habitat_terrain": "thick undergrowth",
+      "restraint": "sinew-cord noose"
     },
     "chitin": {
       "tokens": [
@@ -3376,7 +3400,8 @@
         "Carapace",
         "Hive"
       ],
-      "habitat_terrain": "sand and loose scree"
+      "habitat_terrain": "sand and loose scree",
+      "restraint": "barbed chitin clamp"
     }
   },
   "type_houses": {

@@ -170,6 +170,12 @@ provide a "rename" when the name and the mechanics disagree:
   that deafens nobody, a "Reassemble" with no disassembly)
 - the name describes the wrong sense or medium for its effect (a "Glare"
   that deafens, a "Breath" that is a thrown rock)
+- the name's ADJECTIVE promises an energy the entry never deals (a
+  "Burning Claw" dealing only Slashing burns nothing — it is a "Claw"; a
+  "Freezing Coil" with no Cold anywhere is a "Coil"). Print never does
+  this: every energy-adjective name in the corpus deals the implied type,
+  imposes its condition, or casts a spell that carries it — spell echoes
+  are the one exemption
 - the name is invented syllables rather than words ("Thul-eg Strike") —
   coined words belong to the creature's own name, never to entries
 The rename must be plain English in this creature's register, must

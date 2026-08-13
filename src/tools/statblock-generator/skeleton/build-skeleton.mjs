@@ -357,7 +357,20 @@ function satisfiedBy(chosen, traits = []) {
  * (live: Inscrutable on an Int 3 stone guardian). Computed from the template
  * rather than tagged, so new rows can't dodge it.
  */
-const needsMind = (a) => /spellcasting ability|knows if it hears a lie|intentions or sincerity/.test(a.template_2024 ?? '');
+// Charm joined the gate 2026-08-12 (owner question: "charming someone
+// requires at least INT 10?"). Print's actual line is not an INT floor —
+// the Harpy charms at INT 7 — it is SPEECH: all five printed
+// Charmed-imposers (Harpy 7, Pirate 8, Pirate Captain 10, Sprite 14,
+// Aboleth 18) comprehend language. That boundary is exactly what
+// `sapient` already means here, so charm needs no fourth mind tier — it
+// needs to be in this gate. The {condition_soft} menu is also charm-
+// capable, so engine-filled rows consult the same rule at fill time.
+// The charm patterns cover IMPOSING the condition and EXPLOITING it
+// ("Charmed or Grappled by the {creature}" — the Aboleth's phrasing, which
+// "Charmed condition" alone missed), but deliberately not RESISTING it: a
+// beast with Advantage against being Charmed is fine, it is the charmer
+// that needs the mind.
+const needsMind = (a) => /spellcasting ability|knows if it hears a lie|intentions or sincerity|has the Charmed condition|Charmed (?:condition until|or Grappled)|Charmed by the \{creature\}/.test(a.template_2024 ?? '');
 
 /**
  * The concept's ASSEMBLY METADATA (owner call, 2026-08-04): structured
@@ -517,6 +530,19 @@ const energyFits = (a, themes) => {
 const CARRIES_ENERGY = (a) => Boolean(a.requires_energy)
   || /\{(?:rider|rider2|alt|alt2)_damage_type\}/.test(a.template_2024 ?? '');
 
+// A CR 20 creature's signature attack does not come from a CR 1/8 Guard.
+// The attack pool is 70% CR<=5, so CR-proximity weighting — a weight, not a
+// bound — left a persistent ~8% tail of sub-tier sources (live: "Spear <-
+// Guard (CR 1/8)" on two separate CR 20 blocks). A floor at a quarter of the
+// block's CR still leaves 159 of 422 attack rows at CR 20, so the pool stays
+// wide; it removes only the bottom print would never use at this tier.
+const attackSourceTooWeak = (a, cr) => {
+  if (a.slot_type !== 'plain_attack' && a.slot_type !== 'rider_attack') return false;
+  const blockCr = crNumber(cr);
+  if (blockCr < 5) return false;
+  return crNumber(a.cr) < blockCr / 4;
+};
+
 const JUMP_ROW = (a) => /jumps? up to/.test(a.template_2024 ?? '');
 const redundantWithMode = (a, movement) => Boolean(movement?.includes('fly')) && JUMP_ROW(a);
 
@@ -585,6 +611,7 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
         && !(ROLE_EXCLUSIONS[archetype]?.(a))
         && energyFits(a, themes)
         && !(meta.damageMix === 'physical' && CARRIES_ENERGY(a))
+        && !attackSourceTooWeak(a, cr)
         // stealth chassis: see the trait pool's aura exclusion
         && !(RECURRING_EMANATION(a) && (archetype === 'skirmisher' || archetype === 'lurker'))
         // A ceiling-tagged row's counterplay stops working above its tier
@@ -782,9 +809,16 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
       // ...same for the role exclusions, EXCEPT when a seat is fulfilling a
       // signature the role permitted: an explicit concept promise that
       // survived the veto outranks the general exclusion.
-      && !(ROLE_EXCLUSIONS[archetype]?.(a) && !meta.signatureMechanic)
+      && !(ROLE_EXCLUSIONS[archetype]?.(a)
+        && !(meta.signatureMechanic && SIGNATURE_FAMILIES[meta.signatureMechanic]?.(a)))
       && energyFits(a, themes)
       && !(meta.damageMix === 'physical' && CARRIES_ENERGY(a))
+      // NOTE: the CR floor is deliberately NOT applied here. swapIn exists
+      // to satisfy promises the block must keep — the melee floor, the
+      // range band, the signature seat — and only 21 dual-mode attack rows
+      // exist, most of them low-CR. Filtering them out left CR 15
+      // skirmishers with no melee-or-ranged option at all. A sub-tier row
+      // whose numbers the engine restamps beats an unkept guarantee.
       && (mind === 'sapient' || !needsMind(a))
       && (a.cr_ceiling == null || crNumber(cr) <= a.cr_ceiling));
     if (!pool.length) return;
@@ -954,9 +988,14 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
     // skirmisher shipped a brute's run-them-over bonus action and never
     // reached for Cunning Action (live: Quenching Rush on the Riveted
     // Bellows). Rows that move THROUGH creatures are excluded by shape.
+    // Hide and Disengage are the EXIT, not the strike, and the seat exists
+    // precisely because a block had "the escape teleport and nothing that
+    // pays the return trip". Accepting them let a Dash/Disengage row satisfy
+    // the strike half and ship a skirmisher with no way back in — passing
+    // only while the pick loop happened to draw a striker anyway.
     skirmisher: (a) => a.slot_type !== 'legendary'
       && !/through the spaces of/.test(a.template_2024 ?? '')
-      && /Hide action|Disengage|Melee or Ranged Attack Roll|moves up to (?:half )?its Speed[^.]*(?:without provoking|makes one)/.test(a.template_2024 ?? ''),
+      && /Melee or Ranged Attack Roll|moves up to (?:half )?its Speed[^.]*(?:without provoking|makes one)/.test(a.template_2024 ?? ''),
     lurker: (a) => a.slot_type !== 'legendary'
       && /Hide action|Invisible condition|can't be seen/.test(a.template_2024 ?? ''),
   };
@@ -1065,10 +1104,21 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
         if (pred(chosen[i]) && !spineOnly.has(chosen[i])) chosen.splice(i, 1);
       }
     };
-    // 1. the role's exclusions hold against every entry path
-    if (ROLE_EXCLUSIONS[archetype] && !meta.signatureMechanic) {
-      dropWhere((c) => ROLE_EXCLUSIONS[archetype](c));
+    // 1. the role's exclusions hold against every entry path.
+    //    The signature exemption is scoped to the signature's OWN family.
+    //    It used to be `!meta.signatureMechanic`, so ANY signature switched
+    //    off ALL of a role's exclusions — a skirmisher whose signature was
+    //    TELEPORT had its grapple/swallow ban disabled wholesale and shipped
+    //    the Tarrasque's Bite and Swallow (live: the Vanteg). A promise
+    //    outranks the exclusion it is about, and nothing else.
+    if (ROLE_EXCLUSIONS[archetype]) {
+      const sigFamily = meta.signatureMechanic ? SIGNATURE_FAMILIES[meta.signatureMechanic] : null;
+      dropWhere((c) => ROLE_EXCLUSIONS[archetype](c) && !(sigFamily && sigFamily(c)));
     }
+    // 1b. the cognition gate holds against every entry path too — the
+    //     Aboleth SPINE walked Consume Memories and Psychic Drain (both
+    //     Charmed-dependent) straight past needsMind onto a bestial block.
+    if (mind !== 'sapient') dropWhere((c) => needsMind(c));
     // 2. energy-coupled rows only on blocks that speak the energy —
     //    and no energy-bearing row at all on a physical-only block
     dropWhere((c) => !energyFits(c, themes));
@@ -1108,6 +1158,29 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
         if (i !== -1) chosen.splice(i, 1);
       }
     }
+    // 6. the melee floor RE-CHECKS after the drops. The floor's swapIn runs
+    //    before the seats and before this pass, so a drop here could remove
+    //    the very row that satisfied it — the Roc spine's talons satisfied
+    //    the floor, then invariant 1 correctly dropped them (grapple on a
+    //    skirmisher) and the block shipped ranged-only (live: the
+    //    Brinewrack, one attack, 60 ft., nothing in melee). Re-seating
+    //    through swapIn keeps every filter: nothing this pass dropped can
+    //    come back.
+    if (crNumber(cr) >= 5 && archetype !== 'swarm'
+      && !chosen.some((c) => isAttackRow(c) && meleeCapable(c))) {
+      swapIn((a) => meleeCapable(a) && isAttackRow(a), ['plain_attack', 'rider_attack']);
+    }
+    // 7. THE NOVA KEEPS ITS RECHARGE at the boss tier. Print is unanimous:
+    //    all 18 CR 15+ area-damage actions are Recharge-gated — zero 1/Day,
+    //    zero ungated. A 1/Day nova here front-loads one big turn and then
+    //    flatlines (live: the Brinewrack's 91-damage Shell-Song, spent by
+    //    round two). Promoted only when NO Recharge row exists, so the
+    //    one-Recharge invariant above is never violated.
+    if (crNumber(cr) >= 15 && !chosen.some((c) => /Recharge/i.test(c.gate ?? ''))) {
+      const nova = chosen.find((c) => c.slot_type === 'area'
+        && /\{damage\}|\d+d\d+/.test(c.template_2024 ?? '') && /1\/Day/i.test(c.gate ?? ''));
+      if (nova) chosen[chosen.indexOf(nova)] = { ...nova, gate: 'Recharge 5-6' };
+    }
   }
   return chosen;
 }
@@ -1138,6 +1211,13 @@ export function pickTraits(cr, n, rng, chosenAbilities = [], archetype = null, t
       // damage aura shipped side by side as traits on the Shre Swarm, the
       // Udraghoth's bug reborn one pool over).
       && !(RECURRING_EMANATION(t) && [...chosenAbilities, ...out].some(RECURRING_EMANATION))
+      // ...and neither did the ROLE exclusions. The invariant pass walks
+      // entries, so a role-forbidden mechanic arriving as a TRAIT was never
+      // checked by anything: the Mimic's Adhesive put a grapple on a
+      // skirmisher one pool over from the ban (live, seed 33). Same
+      // signature-family exemption as the entry side.
+      && !(ROLE_EXCLUSIONS[archetype]?.(t)
+        && !(meta.signatureMechanic && SIGNATURE_FAMILIES[meta.signatureMechanic]?.(t)))
       // NO auras on stealth chassis (owner call, 2026-08-04 — a documented
       // exclusion, like the cognition gate): five straight skirmisher
       // blocks wore announce-yourself auras; the x0.3 damp lost to
@@ -1240,7 +1320,7 @@ function damageBudgetFor(ability, nums) {
  * (x3) — guide, never constrain. Without an rng the printed original ships,
  * which keeps no-seed fills and never-fail fallbacks print-identical.
  */
-function pickCondition(ability, slot, rng, themes, usedConditions = null, recordConditions = false) {
+function pickCondition(ability, slot, rng, themes, usedConditions = null, recordConditions = false, mind = 'sapient') {
   const meta = library._meta.condition_slots;
   const dflt = ability.condition_default
     ?? (slot === 'condition_pair' ? meta.pairs[0].pair
@@ -1258,6 +1338,15 @@ function pickCondition(ability, slot, rng, themes, usedConditions = null, record
     options = Object.entries(tier)
       .filter(([, saves]) => !save || saves.includes(save))
       .map(([c]) => c);
+  }
+  // No Charmed on a mind that cannot comprehend speech: all five printed
+  // Charmed-imposers speak (the floor is speech, not INT — the Harpy
+  // charms at INT 7). Applied to the MENU, so an engine fill can never
+  // land Charmed on a bestial block even when the printed default is
+  // Charmed — that default falls to Frightened instead.
+  if (mind !== 'sapient') {
+    options = options.filter((c) => !c.split(' and ').includes('Charmed'));
+    if (dflt.split(' and ').includes('Charmed')) return options[rng ? Math.floor(rng() * options.length) : 0] ?? 'Frightened';
   }
   if (!options.includes(dflt)) options.push(dflt); // print is always legal
   // RECURRING AURAS use print's aura menu only (measured 2026-08-04: every
@@ -1290,7 +1379,7 @@ function pickCondition(ability, slot, rng, themes, usedConditions = null, record
   return options[pickWeighted(weights, rng)];
 }
 
-export function fillTemplate(ability, { cr, size, nums, rng = null, themes = null, usedConditions = null, recordConditions = false }) {
+export function fillTemplate(ability, { cr, size, nums, rng = null, themes = null, usedConditions = null, recordConditions = false, mind = 'sapient' }) {
   const sb = scaleBand(cr);
   const area = library._meta.scale_slots.area;
   const attackMod = nums.attack_bonus - nums.pb;
@@ -1411,7 +1500,7 @@ export function fillTemplate(ability, { cr, size, nums, rng = null, themes = nul
   for (const [k, v] of Object.entries(values)) text = text.split(`{${k}}`).join(String(v));
   for (const slot of ['condition_soft', 'condition_hard', 'condition_pair']) {
     if (!text.includes(`{${slot}}`)) continue;
-    const picked = pickCondition(ability, slot, rng, themes, usedConditions, recordConditions);
+    const picked = pickCondition(ability, slot, rng, themes, usedConditions, recordConditions, mind);
     if (recordConditions && usedConditions) {
       for (const w of picked.split(' and ')) usedConditions.add(w);
     }
@@ -1567,7 +1656,7 @@ export function pickSwarmKit(cr, rng) {
  * rows = 20x draw weight, picked on three of eight live blocks); frequency
  * now sits under this ramp instead of pool arithmetic.
  */
-export function pickOnDeath(cr, rng, { typeHint = null, themes = null, recent = null } = {}) {
+export function pickOnDeath(cr, rng, { typeHint = null, themes = null, recent = null, mind = 'sapient' } = {}) {
   const od = library.on_death;
   if (!od) return null;
   const n = crNumber(cr);
@@ -1591,6 +1680,12 @@ export function pickOnDeath(cr, rng, { typeHint = null, themes = null, recent = 
   // that made Restorations ubiquitous before the slot existed).
   const seen = new Set();
   const candidates = [...od.templates, ...poolRows].filter((t) => {
+    // An "unfinished purpose" that hounds a killer's dreams requires a
+    // PURPOSEFUL mind (owner call, 2026-08-12: "a creature with 6 Int
+    // doesn't do bargains"). Bestial and mindless creatures die into
+    // residue, anchors, and regrowth — never into a vow.
+    if (t.excluded) return false;
+    if (t.needs_mind && mind !== 'sapient') return false;
     const k = t.template_2024;
     if (seen.has(k)) return false;
     seen.add(k);
@@ -1729,7 +1824,7 @@ export function buildSkeleton({
       }
     }
   }
-  const onDeath = pickOnDeath(cr, rng, { typeHint: family === 'dragon' ? 'Dragon' : typeHint, themes, recent });
+  const onDeath = pickOnDeath(cr, rng, { typeHint: family === 'dragon' ? 'Dragon' : typeHint, themes, recent, mind: effMind });
   if (onDeath) traits = [...traits, onDeath];
   // Spine traits ride along (the Mimic's Adhesive arrives WITH its Bite),
   // deduped against the sampled ones.
@@ -1782,7 +1877,7 @@ export function buildSkeleton({
   // shape — the Vrock's Stunning Screech).
   let rechargeTaken = kept.some((k) => /Recharge/i.test(k.gate ?? ''));
   const entries = kept.map((a, i) => {
-    const { text, damage } = fillTemplate(a, { cr, size, nums, rng, themes, usedConditions, recordConditions: true });
+    const { text, damage } = fillTemplate(a, { cr, size, nums, rng, themes, usedConditions, recordConditions: true, mind: effMind });
     // A repeatable 60-foot paralysis cone is the class of thing no printed
     // block ships: hard-condition areas are ALWAYS gated. Belt-and-braces
     // over the data fix, because one ungated row slipping through is a
@@ -1844,7 +1939,7 @@ export function buildSkeleton({
       // concept picks one; whichever it picks is mechanically valid, so the
       // choice cannot break the block.
       options: (a.options ?? [a]).map((o) => {
-        const filled = fillTemplate(o, { cr, size, nums, rng, themes, usedConditions });
+        const filled = fillTemplate(o, { cr, size, nums, rng, themes, usedConditions, mind: effMind });
         return {
           key: o.ability,
           name: o.ability,
@@ -1968,6 +2063,7 @@ export function buildSkeleton({
     // the chassis's range posture, so downstream passes can aim
     // mobility references at an attack the body can deliver
     attack_mode: attackMode ?? null,
+    mind: effMind,
     traits: traits.map((t, i) => ({
       // gate and section ride along so the flavor step can re-append the
       // use limit after a rename: the model renamed Legendary Resistance to
@@ -1986,7 +2082,7 @@ export function buildSkeleton({
       name: t.trait ?? t.ability,
       // Traits go through the SAME substitution as abilities. Handling only
       // {dc} here left "{radius}-foot radius" rendering literally.
-      text: fillTemplate({ ...t, slot_type: t.slot_type ?? 'utility' }, { cr, size, nums, rng, themes, usedConditions, recordConditions: true }).text,
+      text: fillTemplate({ ...t, slot_type: t.slot_type ?? 'utility' }, { cr, size, nums, rng, themes, usedConditions, recordConditions: true, mind: effMind }).text,
       derived_from: `${t.source} (CR ${t.cr})`,
       row_key: rowKeyOf(t),
     })),

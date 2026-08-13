@@ -16251,7 +16251,7 @@
           "reach": 5,
           "damage_type": "Piercing"
         },
-        "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage. If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *First Failure* The target has the Poisoned condition. While Poisoned, the target's Hit Point maximum doesn't return to normal when finishing a Long Rest, and it repeats the save every 24 hours that elapse, ending the effect on itself on a success. Subsequent Failures: The Poisoned target's Hit Point maximum decreases by 5 (1d10).",
+        "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage. If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *First Failure* The target has the {condition_soft} condition. While {condition_soft}, the target's Hit Point maximum doesn't return to normal when finishing a Long Rest, and it repeats the save every 24 hours that elapse, ending the effect on itself on a success. Subsequent Failures: The {condition_soft} target's Hit Point maximum decreases by 5 (1d10).",
         "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 5 ft., one target. *Hit:* {damage} ({dice}) {damage_type} damage. If the target is a creature, it must succeed on a DC {dc} Constitution saving throw against disease or become poisoned until the disease is cured. Every 24 hours that elapse, the creature must repeat the saving throw, reducing its hit point maximum by 5 (1d10) on a failure. This reduction lasts until the disease is cured. The creature dies if the disease reduces its hit point maximum to 0.",
         "source_size": "Medium",
         "slot_type": "rider_attack",
@@ -16267,7 +16267,8 @@
           "bestial",
           "grave",
           "venomous"
-        ]
+        ],
+        "condition_default": "Poisoned"
       },
       {
         "cr": "1",
@@ -16612,7 +16613,7 @@
           "reach": 10,
           "damage_type": "Piercing"
         },
-        "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage, and the target has the Poisoned condition until the start of the {creature}'s next turn. While Poisoned, the target can't regain Hit Points.",
+        "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage, and the target has the {condition_soft} condition until the start of the {creature}'s next turn. While {condition_soft}, the target can't regain Hit Points.",
         "damage_instances": {
           "additive": 1,
           "alternative": 0
@@ -16631,7 +16632,8 @@
           "fiendish",
           "grave",
           "venomous"
-        ]
+        ],
+        "condition_default": "Poisoned"
       },
       {
         "cr": "20",
@@ -16651,7 +16653,7 @@
           "reach": 10,
           "damage_type": "Piercing"
         },
-        "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage. If the target is a creature, it must make the following saving throw. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned, the target can't regain Hit Points and takes {rider_damage} ({rider_dice}) Poison damage at the start of each of its turns, and it repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically.",
+        "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage. If the target is a creature, it must make the following saving throw. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the {condition_soft} condition. While {condition_soft}, the target can't regain Hit Points and takes {rider_damage} ({rider_dice}) Poison damage at the start of each of its turns, and it repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically.",
         "template_2014": "*Melee Weapon Attack:* {attack} to hit, reach 5 ft., one target. *Hit:* {damage} ({dice}) {damage_type} damage. The target must succeed on a DC {dc} Constitution saving throw or become poisoned. While poisoned in this way, the target can't regain hit points, and it takes {damage} ({dice}) {damage_type} damage at the start of each of its turns. The poisoned target can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success.",
         "damage_instances": {
           "additive": 1,
@@ -16674,7 +16676,8 @@
           "venomous"
         ],
         "requires_energy": "Poison",
-        "energy_note": "the condition and the damage are one coupled package in print (Pit Fiend); splitting them yields \"the Poisoned condition... takes Lightning damage\". Restricted instead, so a Lightning creature stops carrying exactly one Poison entry (live: Rivet Maw, the Ironbound)"
+        "energy_note": "the condition and the damage are one coupled package in print (Pit Fiend); splitting them yields \"the Poisoned condition... takes Lightning damage\". Restricted instead, so a Lightning creature stops carrying exactly one Poison entry (live: Rivet Maw, the Ironbound)",
+        "condition_default": "Poisoned"
       }
     ],
     "ATTACK-NODMG": [
@@ -19609,7 +19612,7 @@
           "area": 10,
           "area_shape": "Emanation"
         },
-        "template_2024": "*Constitution Saving Throw*: DC {dc}, each creature in a {area}-foot Emanation originating from the {creature}. *Failure:* The target has the Poisoned condition until the end of its next turn. While Poisoned, the creature can take either an action or a Bonus Action on its turn, not both, and it can't take Reactions.",
+        "template_2024": "*Constitution Saving Throw*: DC {dc}, each creature in a {area}-foot Emanation originating from the {creature}. *Failure:* The target has the {condition_soft} condition until the end of its next turn. While {condition_soft}, the creature can take either an action or a Bonus Action on its turn, not both, and it can't take Reactions.",
         "template_2014": "A {area}-foot radius of {substance} extends out from the {creature}. the {substance} spreads around corners, and its area is lightly obscured. It lasts for 1 minute or until a strong wind disperses it. Any creature that starts its turn in that area must succeed on a DC {dc} Constitution saving throw or be poisoned until the start of its next turn. While poisoned in this way, the target can take either an action or a bonus action on its turn, not both, and can't take reactions.",
         "source_size": "Small",
         "slot_type": "area",
@@ -19624,7 +19627,8 @@
         "facets": [
           "fiendish",
           "venomous"
-        ]
+        ],
+        "condition_default": "Poisoned"
       },
       {
         "cr": "2",
@@ -19669,7 +19673,7 @@
           "area_shape": "Emanation",
           "damage_type": "Poison"
         },
-        "template_2024": "*Constitution Saving Throw*: DC {dc}, each creature in a {area}-foot Emanation originating from the {creature}. *Failure:* The target has the Poisoned condition and repeats the save at the end of each of its turns, ending the effect on itself on a success. While Poisoned, the target takes {damage} ({dice}) {damage_type} damage at the start of each of its turns. Emptying a flask of Holy Water on the target ends the effect early.",
+        "template_2024": "*Constitution Saving Throw*: DC {dc}, each creature in a {area}-foot Emanation originating from the {creature}. *Failure:* The target has the {condition_soft} condition and repeats the save at the end of each of its turns, ending the effect on itself on a success. While {condition_soft}, the target takes {damage} ({dice}) {damage_type} damage at the start of each of its turns. Emptying a flask of Holy Water on the target ends the effect early.",
         "template_2014": "A 15-foot-radius cloud of {substance} extends out from the {creature}. the {substance} spread around corners. Each creature in that area must succeed on a DC {dc} Constitution saving throw or become poisoned. While poisoned in this way, a target takes {damage} ({dice}) {damage_type} damage at the start of each of its turns. A target can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success. Emptying a vial of holy water on the target also ends the effect on it.",
         "source_size": "Large",
         "slot_type": "area",
@@ -19687,7 +19691,8 @@
           "fiendish",
           "venomous"
         ],
-        "requires_energy": "Poison"
+        "requires_energy": "Poison",
+        "condition_default": "Poisoned"
       },
       {
         "cr": "8",
@@ -20440,7 +20445,7 @@
         "numbers": {
           "dc": 10
         },
-        "template_2024": "*Wisdom Saving Throw*: DC {dc}, one creature in the swarm's space. *Failure:* The target has the Deafened condition until the start of the swarm's next turn. While Deafened, the target also has Disadvantage on ability checks and attack rolls.",
+        "template_2024": "*Wisdom Saving Throw*: DC {dc}, one creature in the swarm's space. *Failure:* The target has the {condition_soft} condition until the start of the swarm's next turn. While {condition_soft}, the target also has Disadvantage on ability checks and attack rolls.",
         "source_size": "Medium",
         "slot_type": "save_effect",
         "pool": "ability",
@@ -20452,7 +20457,8 @@
         ],
         "facets": [
           "bestial"
-        ]
+        ],
+        "condition_default": "Deafened"
       }
     ],
     "LEGENDARY": [
@@ -26636,7 +26642,8 @@
           ],
           "pool": "on_death",
           "death_family": "continuity-place",
-          "archetypes": []
+          "archetypes": [],
+          "excluded": "owner call 2026-08-13: the phylactery shape is retired — 'showing up too much and is too signature.' Revive-unless-a-counter-is-destroyed/fulfilled is the lich's own fingerprint however it is dressed, and it shipped on five of six consecutive review blocks as Reform, Unfinished Bargain, Unremembered Vigil, Renewing Radiance and Starless Return. The planar continuity-place shape stays: it carries no counter object and print puts it on every fiend, celestial and genie."
         },
         {
           "cr": "9",
@@ -26737,7 +26744,8 @@
           ],
           "pool": "on_death",
           "death_family": "continuity-place",
-          "archetypes": []
+          "archetypes": [],
+          "excluded": "owner call 2026-08-13: the phylactery shape is retired — 'showing up too much and is too signature.' Revive-unless-a-counter-is-destroyed/fulfilled is the lich's own fingerprint however it is dressed, and it shipped on five of six consecutive review blocks as Reform, Unfinished Bargain, Unremembered Vigil, Renewing Radiance and Starless Return. The planar continuity-place shape stays: it carries no counter object and print puts it on every fiend, celestial and genie."
         },
         {
           "cr": "11",
@@ -26942,7 +26950,8 @@
           ],
           "pool": "on_death",
           "death_family": "continuity-anchor",
-          "archetypes": []
+          "archetypes": [],
+          "excluded": "owner call 2026-08-13: the phylactery shape is retired — 'showing up too much and is too signature.' Revive-unless-a-counter-is-destroyed/fulfilled is the lich's own fingerprint however it is dressed, and it shipped on five of six consecutive review blocks as Reform, Unfinished Bargain, Unremembered Vigil, Renewing Radiance and Starless Return. The planar continuity-place shape stays: it carries no counter object and print puts it on every fiend, celestial and genie."
         },
         {
           "cr": "16",
@@ -30266,11 +30275,11 @@
       "Fiend": "continuity-place",
       "Celestial": "continuity-place",
       "Elemental": "continuity-place",
-      "Fey": "continuity-anchor",
-      "Dragon": "continuity-trophy",
+      "Fey": "succession",
+      "Dragon": "residue",
       "Undead": "residue",
       "Construct": "residue",
-      "Aberration": "continuity-anchor",
+      "Aberration": "residue",
       "Giant": "succession",
       "Monstrosity": null,
       "Beast": null,
@@ -30288,7 +30297,8 @@
           "gaze",
           "mind",
           "uncanny"
-        ]
+        ],
+        "excluded": "owner call 2026-08-13: the phylactery shape is retired — 'showing up too much and is too signature.' Revive-unless-a-counter-is-destroyed/fulfilled is the lich's own fingerprint however it is dressed, and it shipped on five of six consecutive review blocks as Reform, Unfinished Bargain, Unremembered Vigil, Renewing Radiance and Starless Return. The planar continuity-place shape stays: it carries no counter object and print puts it on every fiend, celestial and genie."
       },
       {
         "death_family": "continuity-trophy",
@@ -30299,7 +30309,8 @@
           "draconic",
           "forged",
           "uncanny"
-        ]
+        ],
+        "excluded": "owner call 2026-08-13: the phylactery shape is retired — 'showing up too much and is too signature.' Revive-unless-a-counter-is-destroyed/fulfilled is the lich's own fingerprint however it is dressed, and it shipped on five of six consecutive review blocks as Reform, Unfinished Bargain, Unremembered Vigil, Renewing Radiance and Starless Return. The planar continuity-place shape stays: it carries no counter object and print puts it on every fiend, celestial and genie."
       },
       {
         "death_family": "succession",
@@ -30315,7 +30326,8 @@
           "uncanny",
           "voice"
         ],
-        "design_note": "teeth added 2026-08-05 (owner call): the lore-only form read as a hook with no rules — the table looked at the DM, who had nothing (live: Master's Vow, the Qarun). Curse-with-Remove-Curse is the printed Mummy idiom; Initiative disadvantage is minor, always adjudicable, and thematically the haunting. | 2026-08-05: restructured so {legacy} is the CHARGE ONLY — the teeth clause added the same day duplicated the transfer and the exit when the model wrote a full sentence (live: Unfinished Vigil said everything twice on the Emberwraith) | facets added 2026-08-05: an EMPTY facets array reads as neutral in themeWeight, so the inheritance-curse was equally likely on a Lawful Neutral machine as on a haunted thing (live: Unfinished Vigil on the Riveted Bellows, two blocks after the Emberwraith). A damp, not a bar — the residue family carries a forged variant that fits constructs natively. | 2026-08-06: \"the charge\" had no antecedent — {legacy} renders a noun phrase (\"the feast it never finished\"), so the closing clause referenced something the trait never established. Caught by BOTH the audit and the critic on the third block carrying it."
+        "design_note": "teeth added 2026-08-05 (owner call): the lore-only form read as a hook with no rules — the table looked at the DM, who had nothing (live: Master's Vow, the Qarun). Curse-with-Remove-Curse is the printed Mummy idiom; Initiative disadvantage is minor, always adjudicable, and thematically the haunting. | 2026-08-05: restructured so {legacy} is the CHARGE ONLY — the teeth clause added the same day duplicated the transfer and the exit when the model wrote a full sentence (live: Unfinished Vigil said everything twice on the Emberwraith) | facets added 2026-08-05: an EMPTY facets array reads as neutral in themeWeight, so the inheritance-curse was equally likely on a Lawful Neutral machine as on a haunted thing (live: Unfinished Vigil on the Riveted Bellows, two blocks after the Emberwraith). A damp, not a bar — the residue family carries a forged variant that fits constructs natively. | 2026-08-06: \"the charge\" had no antecedent — {legacy} renders a noun phrase (\"the feast it never finished\"), so the closing clause referenced something the trait never established. Caught by BOTH the audit and the critic on the third block carrying it.",
+        "needs_mind": true
       },
       {
         "death_family": "residue",
@@ -30375,7 +30387,8 @@
           "grave",
           "uncanny"
         ],
-        "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost — same trait, swapped nouns) | 2026-08-06: \"the charge\" had no antecedent — {legacy} renders a noun phrase (\"the feast it never finished\"), so the closing clause referenced something the trait never established. Caught by BOTH the audit and the critic on the third block carrying it."
+        "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost — same trait, swapped nouns) | 2026-08-06: \"the charge\" had no antecedent — {legacy} renders a noun phrase (\"the feast it never finished\"), so the closing clause referenced something the trait never established. Caught by BOTH the audit and the critic on the third block carrying it.",
+        "needs_mind": true
       },
       {
         "death_family": "continuity-anchor",
@@ -30389,7 +30402,8 @@
           "venomous",
           "verdant"
         ],
-        "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost — same trait, swapped nouns)"
+        "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost — same trait, swapped nouns)",
+        "excluded": "owner call 2026-08-13: the phylactery shape is retired — 'showing up too much and is too signature.' Revive-unless-a-counter-is-destroyed/fulfilled is the lich's own fingerprint however it is dressed, and it shipped on five of six consecutive review blocks as Reform, Unfinished Bargain, Unremembered Vigil, Renewing Radiance and Starless Return. The planar continuity-place shape stays: it carries no counter object and print puts it on every fiend, celestial and genie."
       }
     ],
     "_facet_note": "every facet reaches at least one death family (2026-08-06): an aquatic construct matched NO family, so family weighting was uniform and the inheritance-curse won three blocks running",

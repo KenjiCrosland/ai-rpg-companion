@@ -1102,7 +1102,7 @@ async function generateStatblockEngine(edition) {
         // creature identity AND picks the role — generation designs from
         // the fused sentence, not the axis list.
         const raw = await generateGptResponse(
-          buildSeedSynthesisPrompt(randomSeed, { cr, archetype: givenArchetype }),
+          buildSeedSynthesisPrompt(randomSeed, { cr, archetype: givenArchetype, energy: rolledEnergy, damageMix: rolledMix }),
           validateSeedSynthesisResponse,
           2,
         );
