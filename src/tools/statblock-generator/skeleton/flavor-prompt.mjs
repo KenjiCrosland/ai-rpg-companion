@@ -133,6 +133,7 @@ export function flavorRequests(skeleton) {
     .map((e) => ({
       id: e.id,
       section: e.section,
+      slot_type: e.slot_type,
       placeholder_name: e.name,
       // Union across the MENU, not just the default: an option carrying a
       // slot the default lacks was never asked for, so choosing it spliced
@@ -439,8 +440,16 @@ export function buildFlavorPrompt(skeleton, { concept, description = '', themes 
     ? `\nSPELLS at this tier, from print: at-will lists are cantrips and level 1-2 offense (printed examples: ${themedPool(SPELL_POLICY.printed_pools[spellBand].at_will).slice(0, 8).join(', ')}); level 3+ offense goes in the 1/Day list (printed examples: ${themedPool(SPELL_POLICY.printed_pools[spellBand].daily).slice(0, 6).join(', ') || 'Fireball, Cone of Cold'}).${themedSuggestions.length ? ` ON-PALETTE picks for this creature's themes: ${themedSuggestions.join(', ')}.` : ''} 2024 core spells only.`
     : '';
   const lines = reqs.map((r) => {
+    // WHICH physical type an attack deals is FORM, not balance — B/P/S are
+    // budget-identical in print (owner call, 2026-08-14: a block-wide stamp
+    // shipped "Smoldering Splinters" dealing Bludgeoning, and then named a
+    // second attack "Bludgeoning Bolt" AFTER the wrong type — a name
+    // generated from the bug). The engine keeps the numbers; the model
+    // names the form per attack.
+    const isAttack = r.slot_type === 'plain_attack' || r.slot_type === 'rider_attack';
     const asks = [
       'name',
+      ...(isAttack ? ['physical (Bludgeoning|Piercing|Slashing — what this attack\'s FORM deals: splinters pierce, fists bludgeon, talons slash)'] : []),
       ...r.slots,
     ].join(', ');
     const flag = r.signature
@@ -931,13 +940,13 @@ const MECHANIC_NOUN = {
   legendary: ['Riposte', 'Answer', 'Reprisal'],
 };
 
-function fallbackEntryName(entry, skeleton) {
+function fallbackEntryName(entry, skeleton, salt = 0) {
   const houses = skeleton.houses ?? [];
   const adjs = houses.flatMap((h) => textureBanks.houses?.[h]?.adjectives ?? []);
   const nouns = MECHANIC_NOUN[entry.slot_type] ?? ['Aspect', 'Trait', 'Habit'];
   // stable per entry, so the same block always renders the same name
   const seed = String(entry.id ?? entry.name ?? '')
-    .split('').reduce((n, c) => ((n * 31) + c.charCodeAt(0)) >>> 0, 7);
+    .split('').reduce((n, c) => ((n * 31) + c.charCodeAt(0)) >>> 0, 7) + salt * 101;
   const adj = adjs.length ? adjs[seed % adjs.length] : null;
   const noun = nouns[(seed >> 3) % nouns.length];
   return adj ? `${adj} ${noun}` : noun;
@@ -1560,8 +1569,10 @@ export function applyFlavor(skeleton, llmJson) {
     // point or mass deals its energy and nothing else. Print builds these
     // as wraiths, elementals, oozes, swarms and archmages (7% at CR 5+).
     const amorphous = j.type === 'Ooze' || skeleton.damage_mix === 'energy';
+    const perEntryPhysical = ['Bludgeoning', 'Piercing', 'Slashing'].includes(given.physical)
+      ? given.physical : null;
     const attackPhysical = amorphous ? (energy === 'Poison' ? 'Acid' : energy)
-      : (mainIsPhysical ? (limbType(given.name, entry.name) ?? physical) : physical);
+      : (mainIsPhysical ? (perEntryPhysical ?? limbType(given.name, entry.name) ?? physical) : physical);
     {
       const limb = LIMB_NOUN.find(([re]) => re.test(String(given.name ?? entry.name ?? '')));
       if (limb) text = text.replace(/(from one of (?:two|four|six|ten) )([a-z' -]+)/i, `$1${limb[1]}`);
@@ -1841,21 +1852,25 @@ export function applyFlavor(skeleton, llmJson) {
     // placeholder from ANYWHERE handed a move-and-claw legendary the spell
     // echo's "Mind Invasion" (live: the Keening Scuttler — the model named
     // two entries "Skittering Pounce" and the fallback crossed the wires).
-    const ownPlaceholder = (e, sec, idx) => {
-      if (sec === 'Traits') return skeleton.traits[idx]?.name;
-      for (const [k, r] of renderedOf) if (r === e) return k.name;
-      return null;
-    };
     const taken = new Set();
     for (const [sec, list] of Object.entries(sections)) {
       list.forEach((e, i) => {
         if (taken.has(e.name)) {
-          const own = ownPlaceholder(e, sec, i);
-          const fallback = own && !taken.has(own) ? own
-            : (sec === 'Traits'
-              ? skeleton.traits.find((t) => !taken.has(t.name))?.name
-              : skeleton.entries.find((k) => !taken.has(k.name))?.name);
-          e.name = fallback ?? `${e.name} II`;
+          // The old resolution reinstated the entry's PLACEHOLDER — the
+          // donor creature's printed name — which is exactly what the
+          // register fallback exists to prevent: two hash-colliding
+          // fallbacks shipped "Pounce" back onto ~20% of silent-flavor
+          // blocks (live hunt, 12 of 60 seeds). Collisions now re-salt the
+          // register name instead; the donor never returns.
+          const origin = (sec === 'Traits' ? null
+            : [...renderedOf].find(([, r]) => r === e)?.[0])
+            ?? { id: `${sec}#${i}`, slot_type: 'utility' };
+          let fresh = null;
+          for (let salt = 1; salt <= 8 && !fresh; salt += 1) {
+            const cand = fallbackEntryName(origin, skeleton, salt);
+            if (cand && !taken.has(cand)) fresh = cand;
+          }
+          e.name = fresh ?? `${e.name} II`;
         }
         taken.add(e.name);
       });

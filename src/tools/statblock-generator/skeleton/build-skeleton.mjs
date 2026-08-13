@@ -185,7 +185,7 @@ export function numbersFor(cr) {
   const row = crTable.by_cr[crKey(cr)];
   if (!row) throw new Error(`no cr-table row for CR ${cr}`);
   const ma = library.composition.multiattack.by_band[bandFor(cr)];
-  return { ...row, multiattack: ma ? ma.median : 1 };
+  return { cr, ...row, multiattack: ma ? ma.median : 1 };
 }
 
 /**
@@ -1285,7 +1285,19 @@ function damageBudgetFor(ability, nums) {
       const gated = /Saving Throw/.test(ability.template_2024 ?? '');
       return Math.max(1, Math.round(nums.per_attack_damage * (gated ? 0.55 : 0.4)));
     }
-    case 'area': return Math.round(round * (ability.gate ? r.gated_area_multiplier * (nums.nova_mult ?? 1) : r.ungated_area_multiplier));
+    case 'area': {
+      const raw = Math.round(round * (ability.gate ? r.gated_area_multiplier * (nums.nova_mult ?? 1) : r.ungated_area_multiplier));
+      // The multiplier is calibrated where print's nova/round ratio is ~1.0
+      // (91 vs a 90 round at CR 20) and it held at spec all sprint up there
+      // — but print's LOW bands cap harder in absolute terms than a ratio
+      // reaches: the strongest sub-5 recharge novas are the wyrmlings at
+      // 21-22 (5d8/6d6), CR 1 tops at 18, CR 4 at 24. A ratio-priced 28
+      // shipped at CR 2 — above every printed peer and most of a level-3
+      // PC's HP. Ceiling from the printed curve, low bands only.
+      const crn = crNumber(nums.cr ?? 99);
+      const CEIL = crn <= 1 ? 18 : crn <= 3 ? 22 : crn <= 4 ? 24 : null;
+      return CEIL ? Math.min(raw, CEIL) : raw;
+    }
     case 'save_nuke': return Math.round(round * r.ungated_area_multiplier);
     default: {
       // A SAVE-LESS hard-condition rider pays for itself in damage: print's

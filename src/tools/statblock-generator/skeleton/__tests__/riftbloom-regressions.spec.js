@@ -2618,11 +2618,12 @@ describe('the Keening Scuttler: the semantic layer tightens', () => {
     }
   });
 
-  test('a duplicated model name falls back to the entry\'s OWN placeholder', () => {
-    // Two legendary entries collide on a name: the FIRST keeps it, the
-    // SECOND reverts to its own placeholder — never a third entry's (the
-    // Keening Scuttler's pounce was named with the spell echo's "Mind
-    // Invasion").
+  test('a duplicated model name takes a fresh register name — never a donor placeholder', () => {
+    // SUPERSEDED twice over: the original bug was a colliding entry taking
+    // a THIRD entry's placeholder ("Mind Invasion" on a pounce); the first
+    // fix reverted to the entry's OWN placeholder — which resurrected the
+    // DONOR's printed name onto ~20% of silent-flavor blocks (Pounce, 12 of
+    // 60 seeds). Collisions now re-salt the register fallback instead.
     for (let seed = 1; seed <= 30; seed += 1) {
       const sk = buildSkeleton({ cr: 20, seed, caster: true });
       const legs = sk.entries.filter((e) => e.slot_type === 'legendary');
@@ -2639,13 +2640,9 @@ describe('the Keening Scuttler: the semantic layer tightens', () => {
       });
       const names = (m.sections['Legendary Actions'] ?? []).map((e) => e.name.replace(/\s*\(.*\)$/, ''));
       expect(names.filter((n) => n === 'Colliding Name')).toHaveLength(1);
-      // eB's OWN placeholder — possibly with its damage-type word swapped
-      // by the name-type harmonizer ("Radiant Teleport" -> "Poison
-      // Teleport" on a Poison block), which is correct behavior.
-      const TYPE_RE = /\b(Acid|Cold|Fire|Force|Lightning|Necrotic|Poison|Psychic|Radiant|Thunder)\b/g;
-      const canonName = (n) => n.replace(TYPE_RE, 'TYPE');
+      // the loser takes a register name: unique, and NOT its donor's
       const eBBase = eB.name.replace(/\s*\(.*\)$/, '');
-      expect(names.map(canonName)).toContain(canonName(eBBase));
+      expect(names).not.toContain(eBBase);
       expect(new Set(names).size).toBe(names.length);
       return;
     }
@@ -5978,5 +5975,126 @@ describe('reopened 7/8: proven at the ORCHESTRATOR boundary, the layer the app c
       .map((e) => e.name.replace(/\s*\([^)]*\)\s*$/, '').trim())
       .filter((n) => !RULES.test(n) && donorNames.has(n));
     expect(leaked.join(', ') || 'none').toBe('none');
+  });
+});
+
+describe('the deterministic batch (owner findings 1/2a/3/5, 2026-08-13)', () => {
+  const { lintStatblock } = require('@/tools/statblock-generator/format-2024/lint.mjs');
+  const { pickName, namesCollide } = require('@/tools/statblock-generator/format-2024/generate.mjs');
+  const shell = (over) => ({
+    name: 'Test', type: 'Monstrosity', size: 'Large', speed: '40 ft.',
+    sections: { Actions: [{ name: 'Claw', text: '*Melee Attack Roll:* +6, reach 5 ft. 12 (2d8 + 3) Slashing damage.' }] },
+    ...over,
+  });
+  const rules = (m) => lintStatblock(m, { edition: '2024' }).findings.map((f) => f.rule);
+
+  test('1: the low-band nova ceiling holds at the printed curve', () => {
+    for (const [cr, ceil] of [[1, 18], [2, 22], [3, 22], [4, 24]]) {
+      for (let seed = 1; seed <= 30; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, themes: ['draconic'] });
+        for (const e of sk.entries) {
+          if (e.slot_type !== 'area' || !e.gate || !e.damage) continue;
+          expect(`CR ${cr}/${seed}: ${e.damage} <= ${ceil}`).toBe(`CR ${cr}/${seed}: ${e.damage <= ceil} <= ${ceil}`.replace('true', String(e.damage)));
+        }
+      }
+    }
+    // and the top band is untouched — 91 at CR 20 was always at spec
+    const sk20 = buildSkeleton({ cr: 20, seed: 5, themes: ['draconic'] });
+    const nova = sk20.entries.find((e) => e.slot_type === 'area' && e.gate);
+    if (nova) expect(nova.damage).toBeGreaterThan(60);
+  });
+
+  test('2a: full physical immunity is stripped — 0/329 printed blocks have it', () => {
+    const m = shell({ immunities: 'Bludgeoning, Piercing, Slashing, Poison' });
+    expect(rules(m)).toContain('bps-immunity');
+    const fix = lintStatblock(m, { edition: '2024' }).findings.find((f) => f.rule === 'bps-immunity');
+    expect(fix.expected ?? '').toMatch(/Poison/);
+  });
+
+  test('5a: a type on two defense lines keeps only the stronger', () => {
+    // resistance-vs-immunity was ALREADY covered by the pre-existing
+    // defense-overlap rule (the batch block slipped some other way — worth
+    // its trace); the new rule adds the vulnerability axis it lacked
+    expect(rules(shell({ resistances: 'Poison, Cold', immunities: 'Poison' }))).toContain('defense-overlap');
+    expect(rules(shell({ vulnerabilities: 'Fire', resistances: 'Fire, Cold' }))).toContain('defense-line-overlap');
+    expect(rules(shell({ vulnerabilities: 'Fire', immunities: 'Poison' }))).not.toContain('defense-line-overlap');
+  });
+
+  test('5b: a casts comma-splice corrects to "or"; printed or-lists stand', () => {
+    const spliced = shell({
+      sections: { Actions: [{ name: 'Casting', text: 'The test casts *Fog Cloud*, *Stinking Cloud*.' }] },
+    });
+    const f = lintStatblock(spliced, { edition: '2024' }).findings.find((x) => x.rule === 'cast-comma-splice');
+    expect(f).toBeTruthy();
+    expect(f.expected ?? '').toMatch(/\*Fog Cloud\* or \*Stinking Cloud\*/);
+    const oxford = shell({
+      sections: { Actions: [{ name: 'Divine Aid', text: 'The test casts *Bless*, *Dispel Magic*, or *Lesser Restoration*.' }] },
+    });
+    expect(rules(oxford)).not.toContain('cast-comma-splice');
+  });
+
+  test('3: near-identical roster names are collisions and the next candidate wins', () => {
+    expect(namesCollide('Gloomfang', 'gloom-fang')).toBe(true);
+    expect(namesCollide('Gloomfang', 'Gloomfang Warden')).toBe(true);
+    expect(namesCollide('Gloom', 'Gloomfang')).toBe(false);
+    expect(namesCollide('Brinewrack', 'Bonewrack')).toBe(false);
+    const picked = pickName(['Gloomfang Warden', 'Saltmaw'], { takenNames: ['Gloomfang'] });
+    expect(picked).toBe('Saltmaw');
+  });
+});
+
+describe('the Pounce resurrection: collisions never restore a donor name', () => {
+  const noFlavor = async (p) => (/Every number is already fixed/.test(p) ? null : JSON.stringify({ problems: [] }));
+  const lib = require('@/data/ability-library.json');
+  const donorNames = new Set([...Object.values(lib.categories).flat()]
+    .filter((r) => !r.excluded).map((r) => r.ability).filter(Boolean));
+  const RULES = /^(?:Multiattack|Spellcasting|Legendary Resistance|Immutable Form)/i;
+  jest.setTimeout(240000);
+
+  test('the 12 seeds that leaked are clean, plus the rest of the hunt range', async () => {
+    for (const seed of [5, 6, 11, 13, 20, 24, 29, 44, 51, 53, 57, 59, 2, 17, 33]) {
+      const m = await generateFromSkeleton({
+        concept: 'a warden of the deep road', cr: 20, seed,
+        archetypeName: 'skirmisher', archetypeSource: 'user', resolvedType: 'Monstrosity', themes: ['forged'],
+      }, noFlavor);
+      const leaked = Object.values(m.sections).flat()
+        .map((e) => e.name.replace(/\s*\([^)]*\)\s*$/, '').trim())
+        .filter((n) => !RULES.test(n) && donorNames.has(n));
+      expect(`seed ${seed}: ${leaked.join(', ') || 'clean'}`).toBe(`seed ${seed}: clean`);
+    }
+  });
+});
+
+describe('the Charnel Reliquary: an attack\'s physical FORM is the model\'s call', () => {
+  const render = (given) => {
+    const sk = buildSkeleton({ cr: 2, seed: 3, size: 'Medium' });
+    const atk = sk.entries.find((e) => e.slot_type === 'plain_attack' || e.slot_type === 'rider_attack');
+    if (!atk) return null;
+    const m = applyFlavor(sk, respond(sk, {
+      entries: [{ id: atk.id, name: 'Smoldering Splinters', ...given }],
+    }));
+    return Object.values(m.sections).flat().find((e) => e.name.startsWith('Smoldering Splinters'))?.text;
+  };
+
+  test('splinters can pierce even when the block-wide stamp says Bludgeoning', () => {
+    const text = render({ physical: 'Piercing' });
+    if (text) expect(text).toMatch(/Piercing damage/);
+  });
+
+  test('an off-set answer falls back to the block stamp — never an energy or junk', () => {
+    for (const bad of ['Fire', 'Sharp', 42, null]) {
+      const text = render({ physical: bad });
+      if (text) expect(`${bad}: ${/Bludgeoning damage/.test(text)}`).toBe(`${bad}: true`);
+    }
+  });
+
+  test('the prompt asks attacks — and only attacks — for their form', () => {
+    const sk = buildSkeleton({ cr: 20, seed: 5, themes: ['forged'] });
+    const p = buildFlavorPrompt(sk, { concept: 'a warden', themes: ['forged'] });
+    expect(p).toMatch(/physical \(Bludgeoning\|Piercing\|Slashing/);
+    expect(p).toMatch(/splinters pierce, fists bludgeon, talons slash/);
+    for (const l of p.split('\n').filter((x) => /provide: name/.test(x) && !/physical \(/.test(x))) {
+      expect(`${l.slice(0, 30)}: attackish`).not.toMatch(/plain_attack|rider_attack/);
+    }
   });
 });

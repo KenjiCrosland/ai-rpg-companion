@@ -2663,7 +2663,24 @@ export function demoteFormulaHeads(candidates) {
  */
 const FLAT_ATTACK_HEADS = new Set(['talon', 'claw', 'fang', 'bite', 'sting', 'strike', 'slash', 'shriek', 'swoop', 'pounce', 'rake', 'gore', 'lash']);
 
-export function pickName(candidates, { seedTokens = [], register = '', bans = [], type = '' } = {}) {
+/**
+ * Roster collision at the NEAR-match standard (owner batch finding,
+ * 2026-08-13: a generated name collided with two prior names as
+ * near-identical strings — the exact-match check let them through).
+ * Normalized (case, spacing, punctuation) equality, or one name containing
+ * the other whole ("Gloomfang" vs "Gloomfang Warden" is a collision;
+ * "Gloom" vs "Gloomfang" is not, the contained side must be a real name).
+ */
+export function namesCollide(a, b) {
+  const norm = (x) => String(x ?? '').toLowerCase().replace(/[^a-z]/g, '');
+  const [na, nb] = [norm(a), norm(b)];
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  const [short, long] = na.length <= nb.length ? [na, nb] : [nb, na];
+  return short.length >= 6 && long.includes(short);
+}
+
+export function pickName(candidates, { seedTokens = [], register = '', bans = [], type = '', takenNames = [] } = {}) {
   const isCoinage = /coinage/.test(register);
   for (const raw of candidates) {
     // Leading articles are stripped, not rejected — "the Silent Clinger"
@@ -2680,6 +2697,9 @@ export function pickName(candidates, { seedTokens = [], register = '', bans = []
     if (SRD_NAMES.has(lower.replace(/^the /, ''))) continue;
     if (seedTokens.some((t) => lower.includes(t))) continue;
     if (bans.some((b) => lower.includes(b))) continue;
+    // the user's saved roster: a near-identical name is a collision, and
+    // the next candidate is free
+    if (takenNames.some((t) => namesCollide(name, t))) continue;
     // Containment, not equality — "Swarm of Tiny Undead" may use undead
     // words even though the type string isn't exactly "Undead". Trailing
     // boundary only: fused compounds ("Chainwraith") must match, while
@@ -2814,7 +2834,7 @@ export function applyRenameMapping(monster, mapping) {
 // ---------------------------------------------------------------------------
 
 export async function generateMonster2024(options, callLLM) {
-  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, themes = null, mind = null, conceptSize = null, movement = null, attackMode = null, signatureMechanic = null, onProgress = null, takenNames = [], namePass = null, house = null, recent = null, energy = null, damageMix = null } = options;
+  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, themes = null, mind = null, conceptSize = null, movement = null, attackMode = null, signatureMechanic = null, onProgress = null, takenNames = [], namePass = null, house = null, recent = null, energy = null, damageMix = null, seed = null } = options;
 
   // The skeleton path is how 2024 monsters are built now; set
   // localStorage['statblock-skeleton'] = '0' to fall back to the chassis.
@@ -2833,7 +2853,7 @@ export async function generateMonster2024(options, callLLM) {
     return generateFromSkeleton({
       concept, description, cr, archetypeName, resolvedType, lore, themes, mind, degraded, onProgress, caster,
       conceptSize, movement, attackMode, signatureMechanic, takenNames, typeSource,
-      archetypeSource, namePass, house, recent, energy, damageMix,
+      archetypeSource, namePass, house, recent, energy, damageMix, seed,
     }, callLLM);
   }
 
@@ -3002,7 +3022,7 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
   // skipped (owner design, 2026-08-02: the namer grading its own
   // predecessor had a conflict of interest; and a saved call besides).
   const auditKeepsName = auditGrade != null && nameGradeKeeps(auditGrade)
-    && pickName([outcome.monster.name], { seedTokens, bans: nameBans, type: outcome.monster.type ?? '' }) === outcome.monster.name;
+    && pickName([outcome.monster.name], { seedTokens, bans: nameBans, type: outcome.monster.type ?? '', takenNames }) === outcome.monster.name;
   if (auditKeepsName) {
     logger.log('naming call skipped — audit graded', auditGrade);
   } else if (seedTraits) {
@@ -3015,7 +3035,7 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
       const ranked = parsed ? demoteFormulaHeads(parsed.candidates) : [];
       const pool = parsed ? (nameGradeKeeps(effectiveGrade) ? [outcome.monster.name, ...ranked] : ranked) : [];
       const chosen = parsed
-        ? pickName(pool, { seedTokens, register: seedTraits.naming ?? '', bans: nameBans, type: outcome.monster.type ?? '' })
+        ? pickName(pool, { seedTokens, register: seedTraits.naming ?? '', bans: nameBans, type: outcome.monster.type ?? '', takenNames })
         : null;
       if (chosen && chosen !== outcome.monster.name) {
         outcome.monster = applyRenameMapping(outcome.monster, { [outcome.monster.name]: chosen });
@@ -3043,7 +3063,7 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
         const parsed = raw ? tryParse(raw) : null;
         if (parsed?.grade) logger.log('naming grade:', parsed.grade, 'for', outcome.monster.name);
         const chosen = parsed
-          ? pickName(nameGradeKeeps(auditGrade ?? parsed.grade) ? [outcome.monster.name, ...demoteFormulaHeads(parsed.candidates)] : demoteFormulaHeads(parsed.candidates), { bans: nameBans, type: outcome.monster.type ?? '' })
+          ? pickName(nameGradeKeeps(auditGrade ?? parsed.grade) ? [outcome.monster.name, ...demoteFormulaHeads(parsed.candidates)] : demoteFormulaHeads(parsed.candidates), { bans: nameBans, type: outcome.monster.type ?? '', takenNames })
           : null;
         if (chosen && chosen !== outcome.monster.name) {
           outcome.monster = applyRenameMapping(outcome.monster, { [outcome.monster.name]: chosen });

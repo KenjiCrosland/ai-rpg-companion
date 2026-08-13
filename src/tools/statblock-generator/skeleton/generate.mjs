@@ -20,7 +20,7 @@ import {
 import {
   auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection,
 } from '../format-2024/audit.mjs';
-import { assembleMonster, defenseBudgetFor, applyRenameMapping } from '../format-2024/generate.mjs';
+import { assembleMonster, defenseBudgetFor, applyRenameMapping, namesCollide } from '../format-2024/generate.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
 import { applyCorrections } from '../format-2024/generate.mjs';
 import challengeRatings from '@/data/challengeRatings.json';
@@ -407,7 +407,7 @@ export async function generateFromSkeleton(options, callLLM) {
     // ships all-Bludgeoning" — a false reopening, investigated twice).
     trace('flavor came back:', `"${flavor.name}" — ${flavor.type ?? '?'}, ${flavor.physical_damage ?? '?'}/${
       blockMix === 'physical' ? 'no energy (physical mix)' : (blockEnergy ?? flavor.energy_damage ?? '?')} damage`);
-    if (takenNames.some((n) => String(n).toLowerCase() === String(flavor.name ?? '').toLowerCase())) {
+    if (takenNames.some((n) => namesCollide(n, flavor.name))) {
       logger.warn('[skeleton] name collides with the saved roster:', flavor.name);
     }
     const picks = (flavor.entries ?? []).filter((e) => e && e.choose);

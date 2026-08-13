@@ -385,6 +385,33 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       push('defense-overlap', 'correctable', `Damage resistances repeat immune types (${dropped.join(', ')}) — immunity supersedes resistance`, kept.join(', '), { field: 'resistances' });
     }
   }
+    // Full physical IMMUNITY has no printed home at all: 0 of 329 blocks
+    // are immune to Bludgeoning, Piercing, AND Slashing — even swarms and
+    // ghosts only resist. An unkillable-by-martials block shipped it live
+    // at CR 8. Demoted to the resistance package, which at least has the
+    // swarm/incorporeal precedent (and then answers to bps-resistance).
+    if (is2024 && hasAll(monster.immunities, ['bludgeoning', 'piercing', 'slashing'])) {
+      const kept = splitTokens(monster.immunities)
+        .filter((tok) => !/(bludgeoning|piercing|slashing)/i.test(tok));
+      push('bps-immunity', 'correctable',
+        'Immunity to all three physical types — 0/329 printed blocks have it; the physical types are stripped from Immunities',
+        kept.join(', '), { field: 'immunities' });
+    }
+    // A type both granted and suffered is a contradiction print never
+    // states (resistance-vs-immunity overlap is defense-overlap's, above;
+    // this covers the VULNERABILITY axis it does not).
+    {
+      const weak = splitTokens(monster.vulnerabilities).map((t) => t.toLowerCase());
+      const granted = new Set([...splitTokens(monster.resistances), ...splitTokens(monster.immunities)]
+        .map((t) => t.toLowerCase()));
+      const clash = weak.filter((t) => granted.has(t));
+      if (clash.length) {
+        push('defense-line-overlap', 'correctable',
+          `Vulnerable to ${clash.join(', ')} while also resisting or immune to it — the vulnerability is dropped`,
+          splitTokens(monster.vulnerabilities).filter((t) => !clash.includes(t.toLowerCase())).join(', '),
+          { field: 'vulnerabilities' });
+      }
+    }
 
   // Multiattack leads the Actions section in every official block (0/329
   // exceptions); a buried Multiattack (live: listed after the recharge
@@ -1263,6 +1290,21 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
             break;
           }
         }
+      }
+    }
+    // "casts *Fog Cloud*, *Stinking Cloud*" reads as casting BOTH at once —
+    // a comma splice where print writes "or" (every printed in-entry cast
+    // names one spell or an or-list). Deterministic repair: the comma
+    // between two spell names inside one casts clause becomes " or".
+    {
+      // ...but "casts *A*, *B*, or *C*" is print's own Oxford or-list (the
+      // Priest's Divine Aid) — the splice is only a splice when the list
+      // never reaches an "or".
+      const spliced = entry.text.match(/casts (\*[^*]+\*), (\*[^*]+\*)(?!\s*(?:,|or\b))/);
+      if (spliced) {
+        push('cast-comma-splice', 'correctable',
+          `${where}: "casts ${spliced[1]}, ${spliced[2]}" — a comma splice that reads as casting both simultaneously; print writes "or"`,
+          entry.text.replace(/casts (\*[^*]+\*), (\*[^*]+\*)/, 'casts $1 or $2'), loc);
       }
     }
     // "can squeeze through a space ... without squeezing" (live garble) —
