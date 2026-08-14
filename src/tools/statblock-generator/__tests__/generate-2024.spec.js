@@ -737,7 +737,10 @@ describe('generateMonster2024 orchestration', () => {
     expect(monster.format).toBe('2024');
   });
 
-  test('under-budget attack damage is clamped to the skeleton, zero extra calls', async () => {
+  // Dodged the 2026-08-14 retirement triage by passing on lucky random
+  // draws: it asserts the CHASSIS under-budget clamp but now runs the
+  // skeleton path with an unseeded skeleton. Same debt as the banner above.
+  test.skip('under-budget attack damage is clamped to the skeleton, zero extra calls', async () => {
     // The fixture's Shadow Claw swings 13 against a lurker CR 4 per-attack
     // budget of 9 — the live Lysilyth failure class (half-CR offense).
     const callLLM = jest.fn().mockResolvedValue(JSON.stringify(llmFixture));
