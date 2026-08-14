@@ -441,7 +441,7 @@ export async function generateFromSkeleton(options, callLLM) {
   // resistance/immunity list unbudgeted here (owner catch, live block 4).
   const defenseCaps = defenseBudgetFor(crNum, blockArchetype);
   let monster = assembleMonster(model, {
-    cr: crNum, chassis, plan, archetypeName: blockArchetype, resolvedType: finalType,
+    cr: crNum, chassis, plan, archetypeName: blockArchetype, archetypeSource, resolvedType: finalType,
   });
 
   // 2014 phrasing on a 2024 sheet: zero printed 2024 defense lines carry
@@ -597,6 +597,14 @@ export async function generateFromSkeleton(options, callLLM) {
   // named the creature and every entry with the full concept in hand, so a
   // second opinion would be worse informed, not better.
   let auditNotes = [];
+  // THE DRAFT SHOWS BEFORE THE AUDIT (owner ask, 2026-07-30 — "card
+  // visible during the long pole"). The chassis honored this; the skeleton
+  // path never inherited it, so the live 2024 path held the assembled card
+  // through the audit all sprint. Surfaced when the progress suite was
+  // retargeted off the retired chassis (2026-08-14). The audit's fixes
+  // still land: the final monster replaces the draft on resolve.
+  progress('draft', { monster });
+
   if (degraded && auditEligible(monster, crNum)) {
     // The silent case was indistinguishable from "attempted and failed" in
     // the trace — say so explicitly.
@@ -662,7 +670,7 @@ export async function generateFromSkeleton(options, callLLM) {
             ? { ...e, choose: choices.get(e.id) } : e)),
         });
         const rebuilt = assembleMonster(reflavored, {
-          cr: crNum, chassis, plan, archetypeName: blockArchetype, resolvedType: finalType,
+          cr: crNum, chassis, plan, archetypeName: blockArchetype, archetypeSource, resolvedType: finalType,
         });
         const corrected = applyCorrections(
           rebuilt,

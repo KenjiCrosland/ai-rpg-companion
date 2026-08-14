@@ -1656,9 +1656,12 @@ export function applyFlavor(skeleton, llmJson) {
 
   // Entry names may have changed, so references written against the old name
   // must follow. Multiattack is the common case ("makes three Rend attacks").
-  const attacks = (skeleton.entries ?? []).filter(
-    (e) => e.slot_type === 'plain_attack' || e.slot_type === 'rider_attack',
-  );
+  // EVERY entry, not just attacks (owner-visible live find, 2026-08-14:
+  // the Cloaker's Moan renamed to "Gilded Haze" while its own immunity
+  // clause still granted immunity to "this gilded censer's Moan" — a
+  // reference to an entry that no longer existed. Attack references were
+  // propagated; ability self-references were not).
+  const attacks = (skeleton.entries ?? []).filter((e) => e.id);
   // EVERY attack, not just the first: the Multiattack line now enumerates
   // secondaries ("It can replace one attack with a use of X"), so their
   // renames must follow too.

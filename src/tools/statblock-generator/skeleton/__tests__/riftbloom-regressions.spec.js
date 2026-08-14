@@ -6098,3 +6098,21 @@ describe('the Charnel Reliquary: an attack\'s physical FORM is the model\'s call
     }
   });
 });
+
+describe('the Gilded Censer: a rename follows EVERY reference, not just attacks', () => {
+  test('an ability self-reference follows its own rename', () => {
+    const sk = buildSkeleton({ cr: 5, seed: 2, size: 'Medium' });
+    sk.entries = [{
+      id: 'e1', section: 'Bonus Actions', slot_type: 'save_effect', name: 'Moan', gate: null,
+      derived_from: 'test',
+      text: "*Wisdom Saving Throw*: DC 15, each creature in a 5-foot Emanation originating from the {creature}. *Failure:* The target has the Frightened condition. *Success:* The target is immune to this {creature}'s Moan for the next 24 hours.",
+    }];
+    sk.entries[0].template_2024 = sk.entries[0].text;
+    sk.traits = [];
+    const m = applyFlavor(sk, respond(sk, { entries: [{ id: 'e1', name: 'Gilded Haze' }] }));
+    const e = Object.values(m.sections).flat()[0];
+    expect(e.name).toMatch(/Gilded Haze/);
+    expect(e.text).not.toMatch(/\bMoan\b/);
+    expect(e.text).toMatch(/immune to this .*'s Gilded Haze/);
+  });
+});

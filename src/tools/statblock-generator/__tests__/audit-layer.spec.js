@@ -24,10 +24,7 @@ import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFind
 
 // These exercise the CHASSIS path, which 2024 no longer uses by default
 // (owner call, 2026-08-02) but which is still reachable: 2014 generation,
-// seeded random-trait generation, and localStorage['statblock-skeleton']='0'.
 // Opt in explicitly so the suite keeps testing what it was written for.
-beforeEach(() => localStorage.setItem('statblock-skeleton', '0'));
-afterEach(() => localStorage.removeItem('statblock-skeleton'));
 
 const { auditEligible: realAuditEligible } = jest.requireActual('../format-2024/audit.mjs');
 
@@ -92,7 +89,16 @@ describe('auditEligible gate (opened 2026-08-03)', () => {
 describe('audit call in the repair ladder', () => {
   beforeEach(() => auditEligible.mockImplementation(realAuditEligible));
 
-  test('a verified finding merges into a fix round and the entry is rewritten', async () => {
+// ── RETIRED WITH THE 2024 CHASSIS (owner call, 2026-08-14) ──────────────
+// The tests skipped below exercise the chassis fix ladder / rename fix
+// calls / grade gate THROUGH the 2024 orchestration, which no longer
+// exists: 2024 is the skeleton path unconditionally. The machinery itself
+// survives as the 2014 engine. plans/chassis-2014-coverage.md owns the
+// debt: retarget these to 2014 fixtures or delete them at the next piece
+// of 2014-engine work.
+
+
+  test.skip('a verified finding merges into a fix round and the entry is rewritten', async () => {
     auditEligible.mockReturnValue(true);
     const callLLM = routedLLM({ audit: AUDIT_FINDING });
     const monster = await generateMonster2024(OPTS, callLLM);
@@ -100,7 +106,7 @@ describe('audit call in the repair ladder', () => {
     expect(monster.sections.Traits[0].text).toContain('ends immediately after the stalker makes an attack roll');
   });
 
-  test('an empty findings array costs no fix call', async () => {
+  test.skip('an empty findings array costs no fix call', async () => {
     auditEligible.mockReturnValue(true);
     const callLLM = routedLLM({ audit: { findings: [] } });
     const monster = await generateMonster2024(OPTS, callLLM);
@@ -115,7 +121,7 @@ describe('audit call in the repair ladder', () => {
     expect(auditCalls(callLLM)).toHaveLength(1);
   });
 
-  test('an audit call failure never fails the generation (never-fail)', async () => {
+  test.skip('an audit call failure never fails the generation (never-fail)', async () => {
     auditEligible.mockReturnValue(true);
     const callLLM = routedLLM({ audit: 'reject' });
     const monster = await generateMonster2024(OPTS, callLLM);
@@ -129,7 +135,7 @@ describe('audit call in the repair ladder', () => {
     expect(buildAuditPrompt).toHaveBeenCalledWith(expect.anything(), '2014');
   });
 
-  test('structural rejects skip the audit (no wasted call on a doomed block)', async () => {
+  test.skip('structural rejects skip the audit (no wasted call on a doomed block)', async () => {
     auditEligible.mockImplementation(realAuditEligible);
     // CR 22 demands legendary actions the fixture lacks — a structural
     // reject that survives the regen retry. The audit must not spend a
@@ -139,7 +145,7 @@ describe('audit call in the repair ladder', () => {
     expect(auditCalls(callLLM)).toHaveLength(0);
   });
 
-  test('an audit A name grade SKIPS the naming call (filter-passing provisional)', async () => {
+  test.skip('an audit A name grade SKIPS the naming call (filter-passing provisional)', async () => {
     auditEligible.mockReturnValue(true);
     const callLLM = jest.fn((prompt, validate) => {
       if (validate === validateGenerationResponse) {
@@ -157,7 +163,7 @@ describe('audit call in the repair ladder', () => {
     expect(callLLM.mock.calls.filter(([p]) => String(p).startsWith('Name this finished'))).toHaveLength(0);
   });
 
-  test('an audit C grade forces the rename through the naming call', async () => {
+  test.skip('an audit C grade forces the rename through the naming call', async () => {
     auditEligible.mockReturnValue(true);
     const callLLM = jest.fn((prompt, validate) => {
       if (validate === validateGenerationResponse) {

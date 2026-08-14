@@ -1,76 +1,48 @@
 /**
- * Staged-loading progress events (owner ask, 2026-07-30): chassis numbers
+ * Staged-loading progress events (owner ask, 2026-07-30): engine numbers
  * emit before any LLM call, the draft emits before the audit (the long
- * pole), stage statuses mark each call boundary, and a throwing onProgress
- * can never break generation.
+ * pole), and a throwing onProgress can never break generation.
+ *
+ * Retargeted to the SKELETON path when the 2024 chassis retired
+ * (2026-08-14) — and the retargeting immediately caught the skeleton
+ * emitting its draft AFTER the audit, a live UX regression the
+ * chassis-bound suite could not see.
  */
-jest.mock('../format-2024/audit.mjs', () => {
-  const actual = jest.requireActual('../format-2024/audit.mjs');
-  return { ...actual, auditEligible: jest.fn(actual.auditEligible) };
-});
-
 import { mount } from '@vue/test-utils';
-import { generateMonster2024, validateGenerationResponse, validateNamingResponse } from '../format-2024/generate.mjs';
-import { auditEligible, validateAuditResponse } from '../format-2024/audit.mjs';
+import { generateMonster2024, validateNamingResponse } from '../format-2024/generate.mjs';
+import { validateAuditResponse } from '../format-2024/audit.mjs';
 import Statblock2024Skeleton from '@/components/skeletons/Statblock2024Skeleton.vue';
 
-
-// These exercise the CHASSIS path, which 2024 no longer uses by default
-// (owner call, 2026-08-02) but which is still reachable: 2014 generation,
-// seeded random-trait generation, and localStorage['statblock-skeleton']='0'.
-// Opt in explicitly so the suite keeps testing what it was written for.
-beforeEach(() => localStorage.setItem('statblock-skeleton', '0'));
-afterEach(() => localStorage.removeItem('statblock-skeleton'));
-
-const llmFixture = {
-  name: 'Gloom Stalker',
-  size: 'Medium', type: 'Monstrosity', alignment: 'Neutral Evil',
-  speed: '40 ft.',
-  stats: { STR: 12, DEX: 16, CON: 12, INT: 6, WIS: 14, CHA: 8 },
-  save_proficiencies: ['DEX'],
-  skill_proficiencies: ['Stealth', 'Perception'],
-  senses_special: 'darkvision 60 ft.',
-  languages: 'Common',
-  sections: {
-    Traits: [
-      { name: 'Umbral Veil', slot: 'stealth/phasing/invisibility trait', text: 'While in Dim Light or Darkness, the stalker has the Invisible condition.' },
-    ],
-    Actions: [
-      { name: 'Multiattack', text: 'The stalker makes two Shadow Claw attacks.' },
-      { name: 'Shadow Claw', text: '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.' },
-      { name: 'Ambush Pounce', slot: 'ambush or once-per-fight nova mechanic', text: '*Dexterity Saving Throw*: DC 13, one creature within 60 feet. *Failure:* 21 (6d6) Psychic damage. *Success:* Half damage.' },
-    ],
-  },
-};
-
 const routedLLM = () => jest.fn((prompt, validate) => {
-  if (validate === validateGenerationResponse) return Promise.resolve(JSON.stringify(llmFixture));
+  if (/Every number is already fixed/.test(prompt)) return Promise.resolve(null); // flavor: never-fail path
   if (validate === validateAuditResponse) return Promise.resolve(JSON.stringify({ findings: [] }));
-  if (validate === validateNamingResponse) return Promise.resolve(JSON.stringify({ candidates: ['Bad-One'] }));
-  return Promise.reject(new Error('Unexpected LLM call'));
+  if (validate === validateNamingResponse) return Promise.resolve(JSON.stringify({ candidates: ['Stoneling', 'Gravemaw', 'Cairn Warden'] }));
+  return Promise.resolve(JSON.stringify({ problems: [] }));
 });
 
-const OPTS = { concept: 'a gloom stalker', cr: 4, archetypeName: 'lurker', archetypeSource: 'user' };
+const OPTS = { concept: 'a gloom stalker', cr: 12, seed: 7, archetypeName: 'lurker', archetypeSource: 'user' };
 
 describe('generateMonster2024 progress events', () => {
-  beforeEach(() => auditEligible.mockImplementation(jest.requireActual('../format-2024/audit.mjs').auditEligible));
 
   test('chassis emits first with real engine numbers, then writing, then the draft', async () => {
     const events = [];
     await generateMonster2024({ ...OPTS, onProgress: (p) => events.push(p) }, routedLLM());
     expect(events[0].phase).toBe('chassis');
     expect(events[0].chassis.ac).toEqual(expect.any(Number));
-    expect(events[0].chassis.pb).toBe(2); // CR 4
-    expect(events[0].chassis.cr_str).toBe('4');
-    expect(events[0].chassis.xp).toBe(1100);
+    expect(events[0].chassis.pb).toBe(4); // CR 12
+    expect(events[0].chassis.cr_str).toBe('12');
+    expect(events[0].chassis.xp).toBe(8400);
     expect(events[1]).toEqual({ phase: 'status', stage: 'writing' });
     const draftIdx = events.findIndex((p) => p.phase === 'draft');
     expect(draftIdx).toBeGreaterThan(1);
-    expect(events[draftIdx].monster.sections.Actions).toHaveLength(3);
+    // never-fail flavor: the draft is the placeholder-rendered block, and
+    // it is a REAL block — sections present, entries named
+    expect(Object.values(events[draftIdx].monster.sections).flat().length).toBeGreaterThan(2);
   });
 
   test('the draft emits BEFORE the audit status (card visible during the long pole)', async () => {
-    auditEligible.mockReturnValue(true);
+    // caught live on retargeting: the skeleton path emitted its draft
+    // AFTER the audit — the card was held through the long pole
     const events = [];
     await generateMonster2024({ ...OPTS, onProgress: (p) => events.push(p) }, routedLLM());
     const draftIdx = events.findIndex((p) => p.phase === 'draft');
@@ -84,12 +56,14 @@ describe('generateMonster2024 progress events', () => {
       { ...OPTS, onProgress: () => { throw new Error('display exploded'); } },
       routedLLM(),
     );
-    expect(monster.name).toBe('Gloom Stalker');
+    expect(typeof monster.name).toBe('string');
+    expect(monster.name.length).toBeGreaterThan(0);
   });
 
   test('no onProgress: silent, unchanged contract', async () => {
     const monster = await generateMonster2024(OPTS, routedLLM());
-    expect(monster.name).toBe('Gloom Stalker');
+    expect(typeof monster.name).toBe('string');
+    expect(Object.values(monster.sections).flat().length).toBeGreaterThan(2);
   });
 });
 

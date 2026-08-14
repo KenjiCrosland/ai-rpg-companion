@@ -16,10 +16,7 @@ import { lintStatblock, avgDice } from '../format-2024/lint.mjs';
 
 // These exercise the CHASSIS path, which 2024 no longer uses by default
 // (owner call, 2026-08-02) but which is still reachable: 2014 generation,
-// seeded random-trait generation, and localStorage['statblock-skeleton']='0'.
 // Opt in explicitly so the suite keeps testing what it was written for.
-beforeEach(() => localStorage.setItem('statblock-skeleton', '0'));
-afterEach(() => localStorage.removeItem('statblock-skeleton'));
 
 // Well-formed LLM response for a lurker at CR 4 (chassis: hp 59, ac 14,
 // attack +7, DC 13, pb 2 — verified in chassis.spec.js).
@@ -361,7 +358,16 @@ describe('seed leakage', () => {
     expect(lintStatblock(leaky, {}).findings.filter((f) => f.rule === 'seed-leakage')).toHaveLength(0);
   });
 
-  test('leaky names get a targeted rename fix call, not a full regeneration', async () => {
+// ── RETIRED WITH THE 2024 CHASSIS (owner call, 2026-08-14) ──────────────
+// The tests skipped below exercise the chassis fix ladder / rename fix
+// calls / grade gate THROUGH the 2024 orchestration, which no longer
+// exists: 2024 is the skeleton path unconditionally. The machinery itself
+// survives as the 2014 engine. plans/chassis-2014-coverage.md owns the
+// debt: retarget these to 2014 fixtures or delete them at the next piece
+// of 2014-engine work.
+
+
+  test.skip('leaky names get a targeted rename fix call, not a full regeneration', async () => {
     const leaky = JSON.parse(JSON.stringify(llmFixture));
     leaky.name = 'Shadow Drifter'; // leaks 'drift'
     leaky.sections.Actions[0].text = 'The stalker makes two Drift Claw attacks.';
@@ -389,7 +395,7 @@ describe('seed leakage', () => {
     expect(monster.concept_seed).toEqual({ silhouette: 'floating drifting form' });
   });
 
-  test('renames follow short-form self-references ("the burrower")', async () => {
+  test.skip('renames follow short-form self-references ("the burrower")', async () => {
     const leaky = JSON.parse(JSON.stringify(llmFixture));
     leaky.name = 'Drifter of the Deep'; // leaks 'drift'
     leaky.sections.Traits[0].text = 'While in dim light or darkness, the drifter is invisible. The drifter hungers.';
@@ -411,7 +417,7 @@ describe('seed leakage', () => {
     expect(monster.sections.Traits[0].text).not.toContain('drifter');
   });
 
-  test('a fix call that still leaks gets one more, then errors', async () => {
+  test.skip('a fix call that still leaks gets one more, then errors', async () => {
     const leaky = JSON.parse(JSON.stringify(llmFixture));
     leaky.name = 'Shadow Drifter';
     const callLLM = jest.fn()
@@ -503,7 +509,7 @@ describe('defense caps', () => {
     expect(findings[0].expected).toBe('Cold'); // fire trimmed, cold free via material
   });
 
-  test('pipeline trims stacked defenses within the weighted budget', async () => {
+  test.skip('pipeline trims stacked defenses within the weighted budget', async () => {
     const greedy = JSON.parse(JSON.stringify(llmFixture));
     greedy.resistances = 'Fire, Cold, Psychic';
     greedy.immunities = 'Poison; Poisoned';
@@ -567,7 +573,7 @@ describe('naming pass', () => {
     expect(validateNamingResponse(JSON.stringify({ candidates: ['A', ''] }))).toBe(false);
   });
 
-  test('a provisional name that passes the filters is KEPT over candidates (batch 17, owner call: 3/4 live renames were worse)', async () => {
+  test.skip('a provisional name that passes the filters is KEPT over candidates (batch 17, owner call: 3/4 live renames were worse)', async () => {
     const naming = { naming: 'a folk name' };
     // NOT "Gloom Stalker" — that's a real ranger subclass and the SRD
     // filter rightly rejects it (which itself validated the filter).
@@ -584,7 +590,7 @@ describe('naming pass', () => {
     expect(monster.name).toBe('Palegrasp'); // provisional survives on merit
   });
 
-  test('a C grade renames even a filter-passing provisional (grade gate)', async () => {
+  test.skip('a C grade renames even a filter-passing provisional (grade gate)', async () => {
     const naming = { naming: 'a folk name' };
     const clean = { ...JSON.parse(JSON.stringify(llmFixture)), name: 'Palegrasp' };
     const callLLM = jest.fn()
@@ -598,7 +604,7 @@ describe('naming pass', () => {
     expect(monster.name).toBe('Quietmaw');
   });
 
-  test('a filter-failing provisional name still renames with self-references', async () => {
+  test.skip('a filter-failing provisional name still renames with self-references', async () => {
     const naming = { naming: 'a folk name' };
     const leaky = JSON.parse(JSON.stringify(llmFixture));
     leaky.name = 'Gloom-Stalker'; // hyphens always fail pickName
@@ -742,7 +748,7 @@ describe('generateMonster2024 orchestration', () => {
     expect(monster.sections.Actions[1].text).not.toContain('14 (2d8 + 5)');
   });
 
-  test('a coined entry name ships as-is (detector retired) — no fix call is spent on it', async () => {
+  test.skip('a coined entry name ships as-is (detector retired) — no fix call is spent on it', async () => {
     // Owner call 2026-08-05: the hyphen-fragment heuristic couldn't tell
     // "Tar-Slick Claw" from "Thul-eg" without a dictionary, and reverting
     // good names to donor placeholders was the worse failure mode. Naming
@@ -760,7 +766,7 @@ describe('generateMonster2024 orchestration', () => {
     expect(monster.sections.Traits[0].text).toContain('While Thul-eg is active');
   });
 
-  test('deterministically fixable rejects (caps, to-hit, second person) cost zero extra calls', async () => {
+  test.skip('deterministically fixable rejects (caps, to-hit, second person) cost zero extra calls', async () => {
     const messy = JSON.parse(JSON.stringify(llmFixture));
     messy.sections.Actions[1].text =
       "*Melee Attack Roll:* +7 to hit, reach 5 ft. 14 (2d8 + 5) Slashing damage, and the target is knocked prone and can't regain hit points. It then moves toward a creature of your choice without provoking opportunity attacks.";
@@ -784,7 +790,7 @@ describe('generateMonster2024 orchestration', () => {
     expect(monster.sections.Actions[1].text).toContain('+7');
   });
 
-  test('reject violations trigger exactly one regeneration', async () => {
+  test.skip('reject violations trigger exactly one regeneration', async () => {
     const broken = JSON.parse(JSON.stringify(llmFixture));
     delete broken.sections.Actions[2].slot; // missing required nova slot → reject
     const callLLM = jest.fn()
@@ -796,7 +802,7 @@ describe('generateMonster2024 orchestration', () => {
     expect(monster.name).toBe('Gloom Stalker');
   });
 
-  test('stubborn STYLE rejects ship with a warning; mechanical rejects still fail', async () => {
+  test.skip('stubborn STYLE rejects ship with a warning; mechanical rejects still fail', async () => {
     // 2014 attack phrasing in a 2024 block, and the fix calls keep
     // returning it unchanged (stubborn model). Style-only → ship anyway.
     const warty = JSON.parse(JSON.stringify(llmFixture));
@@ -809,7 +815,7 @@ describe('generateMonster2024 orchestration', () => {
     expect(monster.sections.Actions[1].text).toContain('Weapon Attack'); // wart kept
   });
 
-  test('stubborn MECHANICAL warts ship with lint_warnings (strict and degraded alike)', async () => {
+  test.skip('stubborn MECHANICAL warts ship with lint_warnings (strict and degraded alike)', async () => {
     // Blanket damage mitigation is a mechanical reject; the fix calls keep
     // returning it. Generation ships it anyway, stamped, after three rounds.
     const mitigated = JSON.parse(JSON.stringify(llmFixture));
@@ -827,7 +833,7 @@ describe('generateMonster2024 orchestration', () => {
     expect(degraded.lint_warnings).toContain('trait-mitigation');
   });
 
-  test('even a failed structural retry SHIPS, with the warts stamped on the block', async () => {
+  test.skip('even a failed structural retry SHIPS, with the warts stamped on the block', async () => {
     // Generation never fails once a block exists (owner call): the missing
     // slot survives the regen, so the block ships carrying lint_warnings
     // and the generator surfaces them.
@@ -839,7 +845,7 @@ describe('generateMonster2024 orchestration', () => {
     expect(monster.lint_warnings).toContain('slot-missing');
   });
 
-  test('throws on an empty response', async () => {
+  test.skip('throws on an empty response', async () => {
     const callLLM = jest.fn().mockResolvedValue(null);
     await expect(generateMonster2024(options, callLLM)).rejects.toThrow(/Empty or malformed/);
   });

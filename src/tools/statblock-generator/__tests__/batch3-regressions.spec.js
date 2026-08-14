@@ -11,10 +11,7 @@ import { applyCorrections, assembleMonster, buildContext } from '../format-2024/
 
 // These exercise the CHASSIS path, which 2024 no longer uses by default
 // (owner call, 2026-08-02) but which is still reachable: 2014 generation,
-// seeded random-trait generation, and localStorage['statblock-skeleton']='0'.
 // Opt in explicitly so the suite keeps testing what it was written for.
-beforeEach(() => localStorage.setItem('statblock-skeleton', '0'));
-afterEach(() => localStorage.removeItem('statblock-skeleton'));
 
 const chassis = { archetype: 'lurker', save_dc: 23 };
 const rule = (m, name, opts = {}) =>
@@ -835,7 +832,16 @@ describe('anti-clustering name bans (Chit- swarms ×6)', () => {
     expect(pickName(['Bone Wraith Choir'], { type: 'Swarm of Tiny Undead' })).toBe('Bone Wraith Choir'); // containment
   });
 
-  test('end-to-end: an active ban steers the final name past the attractor', async () => {
+// ── RETIRED WITH THE 2024 CHASSIS (owner call, 2026-08-14) ──────────────
+// The tests skipped below exercise the chassis fix ladder / rename fix
+// calls / grade gate THROUGH the 2024 orchestration, which no longer
+// exists: 2024 is the skeleton path unconditionally. The machinery itself
+// survives as the 2014 engine. plans/chassis-2014-coverage.md owns the
+// debt: retarget these to 2014 fixtures or delete them at the next piece
+// of 2014-engine work.
+
+
+  test.skip('end-to-end: an active ban steers the final name past the attractor', async () => {
     jest.spyOn(Math, 'random').mockReturnValue(0); // every stem banned
     const fixture = JSON.stringify({
       name: 'Grimtix', // contains the banned 'grim' stem — provisional filtered, steering still exercised
@@ -1099,7 +1105,7 @@ describe('batch 7: ability-rename audit in the naming pass (Morvoth class)', () 
   });
   const callLLM = async (prompt) => (prompt.startsWith('Name this finished') ? naming : fixture);
 
-  test('renames coined ability names, propagates references, protects Multiattack', async () => {
+  test.skip('renames coined ability names, propagates references, protects Multiattack', async () => {
     const m = await generateMonster2024(
       { concept: 'a helpful horror', cr: 4, archetypeName: 'lurker', edition: '2024', namePass: { userTypedName: null } },
       callLLM,
@@ -1212,7 +1218,7 @@ describe('concept-path naming pass (Swoop/Shriek Talon class)', () => {
   const namingAware = (statblockJson) => jest.fn(async (prompt) =>
     prompt.startsWith('Name this finished') ? '{"candidates": ["Gravewing"]}' : statblockJson);
 
-  test('refines when the model renamed a generic input', async () => {
+  test.skip('refines when the model renamed a generic input', async () => {
     const callLLM = namingAware(fixtureWithName('Swoop Talon'));
     const m = await generateMonster2024(
       { concept: 'vicious bird', cr: 4, archetypeName: 'lurker', edition: '2024', namePass: { userTypedName: 'vicious bird' } },
@@ -1232,7 +1238,7 @@ describe('concept-path naming pass (Swoop/Shriek Talon class)', () => {
     expect(callLLM.mock.calls.some(([p]) => p.startsWith('Name this finished'))).toBe(false);
   });
 
-  test('runs when no name was typed (description-only concept)', async () => {
+  test.skip('runs when no name was typed (description-only concept)', async () => {
     // "Palegrasp", not "Gloom Stalker" — the latter is a real ranger
     // subclass and the SRD filter rejects it.
     const callLLM = namingAware(fixtureWithName('Palegrasp'));
@@ -1313,7 +1319,7 @@ describe('undefined-attack-ref: uses-references must resolve (Malmgrave Wing Bur
 });
 
 describe('final normalization pass (Death Knell rename collision)', () => {
-  test('a correctable leftover from a same-entry rename collision cannot ship', async () => {
+  test.skip('a correctable leftover from a same-entry rename collision cannot ship', async () => {
     const { generateMonster2024 } = require('../format-2024/generate.mjs');
     // ALL-CAPS + Recharge-in-Traits: entry-name-caps renames first, then
     // trait-recharge's lookup misses on the stale name — one pass leaves the

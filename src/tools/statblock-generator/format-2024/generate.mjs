@@ -29,23 +29,19 @@ import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFind
 // this module. Re-exported here: existing importers and tests are unaffected.
 export { hpFormulaFor, attackDamageDiceFor, saveDamageDiceFor } from './dice.mjs';
 
-/**
- * The skeleton path is the DEFAULT for 2024 (owner call, 2026-08-02).
+/*
+ * THE 2024 CHASSIS PATH IS RETIRED (owner call, 2026-08-14). The skeleton
+ * path had been the 2024 default since 2026-08-02; the chassis fallback
+ * behind localStorage['statblock-skeleton'] spent the sprint accumulating
+ * drift — no funnel, no damage mix, no ledger, no trait renderer, no
+ * reconciliation — and twice a fix landed on one path and not the other.
+ * Half-maintained was the worst state, so the escape hatch is gone: 2024 is
+ * the skeleton, unconditionally.
  *
- * Set localStorage['statblock-skeleton'] = '0' to fall back to the chassis.
- * Read at call time, not import time, so flipping it takes effect on the next
- * generation with no reload — the same convention as the legacy-2014 flag.
- *
- * A blocked storage (incognito, embedded frame) keeps the default rather than
- * throwing: the fallback should never be reached by accident.
+ * The chassis FLOW below survives as exactly one thing: the 2014 engine.
+ * The shared machinery (assembleMonster, lint, applyCorrections, the audit)
+ * serves both paths and is unaffected.
  */
-function usesSkeletonPath() {
-  try {
-    return typeof localStorage === 'undefined' || localStorage.getItem('statblock-skeleton') !== '0';
-  } catch {
-    return true;
-  }
-}
 
 export const ARCHETYPE_NAMES = Object.keys(spec.archetypes).filter((n) => !n.startsWith('_'));
 
@@ -2845,7 +2841,7 @@ export async function generateMonster2024(options, callLLM) {
   // use it: the seed's synthesized concept arrives in `concept` like any other,
   // and excluding them meant the most common way to try the generator silently
   // kept using the old path.
-  const useSkeleton = edition === '2024' && usesSkeletonPath();
+  const useSkeleton = edition === '2024';
   logger.log(`[statblock] path: ${useSkeleton ? 'SKELETON' : 'chassis'} (edition ${edition}`
     + `${seedTraits ? ', seeded' : ''})`);
   if (useSkeleton) {
