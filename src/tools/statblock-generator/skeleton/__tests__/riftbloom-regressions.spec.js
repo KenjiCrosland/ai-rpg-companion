@@ -6116,3 +6116,43 @@ describe('the Gilded Censer: a rename follows EVERY reference, not just attacks'
     expect(e.text).toMatch(/immune to this .*'s Gilded Haze/);
   });
 });
+
+describe('the Ashgrave Warden: the harmonizer strips, never mints a type-word name', () => {
+  // "Cinder Shard" dealing Bludgeoning shipped as "Bludgeoning Shard" — the
+  // synonym branch substituted dealt[0] where the claim stood, re-minting
+  // the exact class the owner flagged on the Charnel Reliquary. Print: 0 of
+  // 329 entries carry Bludgeoning/Piercing/Slashing in a NAME.
+  const { runCorrections } = require('../corrections.mjs');
+  const harmonize = (name, text) => {
+    const sections = { Actions: [{ name, text }] };
+    runCorrections({
+      skeleton: { entries: [], traits: [], size: 'Large', cr: 8, houses: [] },
+      j: { type: 'Undead' }, sections, byId: new Map(),
+      energy: 'Force', physical: 'Bludgeoning', inline: 'the warden',
+      renderedOf: new Map(), fallbackEntryName: () => null,
+      NON_ACTION_SPELLS: [], SCALING_SPELLS: [], KNOWN_SPELLS: new Set(), atWillBanned: () => false,
+    });
+    return sections.Actions[0].name;
+  };
+
+  test('a synonym claim on the wrong payload is STRIPPED', () => {
+    expect(harmonize('Cinder Shard', '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Bludgeoning damage.'))
+      .toBe('Shard');
+  });
+
+  test('bare energy word for bare energy word still substitutes — the printed shape', () => {
+    expect(harmonize('Fire Bolt', '*Ranged Attack Roll:* +7, range 60 ft. 14 (4d6) Force damage.'))
+      .toBe('Force Bolt');
+  });
+
+  test('a physical type word NEVER enters a name', () => {
+    const out = harmonize('Fire Fist', '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Bludgeoning damage.');
+    expect(out).toBe('Fist');
+    expect(out).not.toMatch(/Bludgeoning|Piercing|Slashing/);
+  });
+
+  test('a claim that IS the whole name survives for the audit to judge', () => {
+    expect(harmonize('Cinder', '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Bludgeoning damage.'))
+      .toBe('Cinder');
+  });
+});
