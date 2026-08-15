@@ -41,3 +41,4 @@ Production changes across the whole expansion: `data-testid` additions, the `con
 - [2014-engine coverage debt](chassis-2014-coverage.md) — trigger: any work on the 2014 chassis engine; 23 skipped orchestration tests need retargeting or deletion.
 - [Vocabulary authority](vocabulary-authority.md) — trigger: the facet/house split or texture-bank authoring; object-noun drift and dual-authority collisions.
 - [Name/mechanics nits](name-mechanics-nits.md) — trigger: next audit-prompt revision.
+- [Action spec renderer + concept names](action-spec-renderer.md) — trigger: concept-slot build or renderer phase 2.

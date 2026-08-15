@@ -195,6 +195,27 @@ const typeMandate = (type) => (type
   ? `Its creature type MUST be ${type}: ${TYPE_ESSENCES[type] ?? 'build the concept from what that type IS'}. Build the creature FROM this essence — the other traits are raw material the essence shapes, never a finished creature the type is painted onto. `
   : '');
 
+/**
+ * THE BODY PLAN IS ROLLED, NOT LEFT TO THE MODEL (owner observation,
+ * 2026-08-15: "deepseek seems to want to cluster around 'colony of little
+ * creatures acting as one... not a swarm but a collective'"). Two of the
+ * last four seeded syntheses were fused collectives, plus a run of
+ * animated objects — model attractors on an axis nothing rolled. Print's
+ * distribution across 329 blocks: 315 singular (96%), 7 swarms, 3 animated
+ * objects, 4 amorphous. Same cure as energy and damage mix: roll the axis
+ * first and state it as fact.
+ */
+const BODY_PLANS = [
+  [94, 'a SINGLE creature — one body, one will. Not a swarm, colony, hive, collective, or fused mass of smaller creatures, and not an animated object or possessed thing'],
+  [3, 'a fused collective — many small bodies acting as one creature'],
+  [3, 'an animated object or construct-thing — a made shape given motion'],
+];
+function rollBodyPlan() {
+  let roll = Math.random() * BODY_PLANS.reduce((n, [w]) => n + w, 0);
+  for (const [w, plan] of BODY_PLANS) { roll -= w; if (roll < 0) return plan; }
+  return BODY_PLANS[0][1];
+}
+
 export function buildRandomConceptSeed() {
   const traits = {
     intelligence: pick(SEED_DIMENSIONS.intelligence),
@@ -204,9 +225,11 @@ export function buildRandomConceptSeed() {
     disposition: pick(SEED_DIMENSIONS.disposition),
     naming: pick(SEED_DIMENSIONS.naming),
     creature_type: rollCreatureType(),
+    body_plan: rollBodyPlan(),
   };
   const concept =
     `a ${traits.intelligence}, ${traits.physical} ${traits.silhouette} from ${traits.origin} — ${traits.disposition}. ` +
+    `Its body plan is ${traits.body_plan} — this is rolled and not negotiable. ` +
     typeMandate(traits.creature_type) +
     'Its alignment and combat role must FOLLOW the disposition (guardians and wardens are not evil; tricksters are not brutes). ' +
     'Blend every trait into ONE coherent creature with a single unifying identity — contradictions between traits are creative fuel, not errors. ' +

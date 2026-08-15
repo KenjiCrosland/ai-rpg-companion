@@ -6156,3 +6156,35 @@ describe('the Ashgrave Warden: the harmonizer strips, never mints a type-word na
       .toBe('Cinder');
   });
 });
+
+describe('the Quiet Moult: the body plan is rolled, not left to the model', () => {
+  const { buildRandomConceptSeed } = require('@/tools/statblock-generator/format-2024/concept-seeds.mjs');
+  const { buildSeedSynthesisPrompt } = require('@/tools/statblock-generator/format-2024/generate.mjs');
+
+  test('every seed carries a body plan, and singular dominates at print weight', () => {
+    let singular = 0;
+    const N = 400;
+    for (let i = 0; i < N; i += 1) {
+      const seed = buildRandomConceptSeed();
+      expect(typeof seed.body_plan).toBe('string');
+      if (/SINGLE creature/.test(seed.body_plan)) singular += 1;
+    }
+    // 94% weight; wide tolerance so the test never flakes
+    expect(singular / N).toBeGreaterThan(0.85);
+    expect(singular / N).toBeLessThan(1);
+  });
+
+  test('the singular plan bans the collective attractor by name', () => {
+    const seed = { origin: 'a sunken ruin', creature_type: 'Monstrosity',
+      body_plan: 'a SINGLE creature — one body, one will. Not a swarm, colony, hive, collective, or fused mass of smaller creatures, and not an animated object or possessed thing' };
+    const p = buildSeedSynthesisPrompt(seed, { cr: 8 });
+    expect(p).toMatch(/Its BODY PLAN is a SINGLE creature/);
+    expect(p).toMatch(/Not a swarm, colony, hive, collective, or fused mass/);
+    expect(p).toMatch(/never drift to a different plan/);
+  });
+
+  test('a seed without a plan (older callers) adds no clause', () => {
+    const p = buildSeedSynthesisPrompt({ origin: 'a cave', creature_type: 'Beast' }, { cr: 4 });
+    expect(p).not.toMatch(/BODY PLAN/);
+  });
+});

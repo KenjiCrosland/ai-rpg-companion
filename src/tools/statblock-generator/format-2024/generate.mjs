@@ -397,7 +397,7 @@ export function buildSeedSynthesisPrompt(seed, { cr = null, archetype = null, en
     ? `Fuse these randomly rolled traits into ONE coherent monster concept. Its combat role is FIXED by the user: ${archetype} — echo it in "archetype" unchanged and shape the concept around that role.`
     : 'Fuse these randomly rolled traits into ONE coherent monster concept, then classify its combat role.'}
 
-Rolled traits: ${seed.intelligence}; ${seed.physical}; a ${seed.silhouette}; from ${seed.origin}${seed.disposition ? `; ${seed.disposition}` : ''}.
+Rolled traits: ${seed.intelligence}; ${seed.physical}; a ${seed.silhouette}; from ${seed.origin}${seed.disposition ? `; ${seed.disposition}` : ''}.${seed.body_plan ? `\nIts BODY PLAN is ${seed.body_plan}. The plan is rolled: write the creature AS it, and never drift to a different plan however tempting the image.` : ''}
 ${cr != null ? `Challenge Rating: ${crKeyFor(cr)} — scale the creature's ambition to this tier (a CR 2 creature is a local menace; a CR 20+ creature is a mythic force).` : ''}
 ${seed.creature_type ? `Creature type: ${seed.creature_type} — ${TYPE_ESSENCES[seed.creature_type] ?? 'build from what that type IS'}. Fuse the rolled traits INTO this essence (the traits are raw material; the essence is what the creature fundamentally is) — never design the traits first and paint the type on after.` : ''}
 
