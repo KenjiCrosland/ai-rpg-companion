@@ -12,8 +12,9 @@
  * to swap the offending entry for another option or drop it, never to let a
  * model edit mechanics.
  */
-import { buildSkeleton, crNumber } from './build-skeleton.mjs';
+import { buildSkeleton, crNumber, ROLE_EXCLUSIONS } from './build-skeleton.mjs';
 import { reconcileConcept } from './reconcile.mjs';
+import { buildWriterPrompt, validateWriterResponse, verifyWrittenEntry } from './writer.mjs';
 import {
   buildFlavorPrompt, validateFlavorResponse, applyFlavor,
   chassisFromSkeleton, planFromSkeleton, swapEntries, pickHouse, resolveIdentity,
@@ -21,7 +22,7 @@ import {
 import {
   auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection,
 } from '../format-2024/audit.mjs';
-import { assembleMonster, defenseBudgetFor, applyRenameMapping, namesCollide } from '../format-2024/generate.mjs';
+import { assembleMonster, defenseBudgetFor, applyRenameMapping, namesCollide, pickName } from '../format-2024/generate.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
 import { applyCorrections } from '../format-2024/generate.mjs';
 import challengeRatings from '@/data/challengeRatings.json';
@@ -44,7 +45,7 @@ export async function generateFromSkeleton(options, callLLM) {
     caster = false, strikeStat = null, themes = null, mind = null,
     conceptSize = null, movement = null, attackMode = null, signatureMechanic = null,
     takenNames = [], typeSource = 'auto', archetypeSource = 'auto', namePass = null,
-    house = null, recent = null, energy = null, damageMix = null,
+    house = null, recent = null, energy = null, damageMix = null, proposedName = null,
   } = options;
 
   const progress = (phase, data) => {
@@ -165,6 +166,7 @@ export async function generateFromSkeleton(options, callLLM) {
     // them here grounds {substance} and the naming far better than the raw
     // concept alone, and costs nothing: the call has already happened.
     description: [description, identity, lore].filter(Boolean).join('\n'),
+    proposedName,
   });
 
   trace('flavor prompt:', `${prompt.length} chars`);
@@ -203,8 +205,15 @@ export async function generateFromSkeleton(options, callLLM) {
   // + naming rules), and `name: concept` shipped that entire paragraph as a
   // Title-Cased monster title and every {creature} reference (live, the
   // prompt-leak block).
+  // Never-fail names: a validated synthesis proposal beats the constant —
+  // "Galvanic Array" over "Unnamed Creature" — but only through the same
+  // deterministic filters every candidate faces (owner call, 2026-08-15:
+  // a candidate, never an override).
+  const fallbackName = (proposedName
+    && pickName([proposedName], { takenNames, type: finalType ?? '' }))
+    || 'Unnamed Creature';
   const model = applyFlavor(skeleton, flavor ?? {
-    name: 'Unnamed Creature',
+    name: fallbackName,
     size: skeleton.size,
     type: finalType,
     alignment: 'Neutral',
@@ -376,6 +385,48 @@ export async function generateFromSkeleton(options, callLLM) {
   // named the creature and every entry with the full concept in hand, so a
   // second opinion would be worse informed, not better.
   let auditNotes = [];
+  // ---- the writer call (owner-approved, 2026-08-15) --------------------
+  // One small, focused call that sees the FINISHED block and may write the
+  // concept's one unclaimed ability to exact engine numbers. Gated to CR 5+
+  // (smaller blocks have no room for a slot to earn its keep), verified
+  // mechanically, dropped silently on any failure — never-fail holds.
+  if (!degraded && crNum >= 5) {
+    try {
+      progress('status', { stage: 'writing' });
+      const raw = await callLLM(buildWriterPrompt(monster, skeleton, { concept }), validateWriterResponse);
+      const parsed = (() => { try { return JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; } })();
+      if (parsed && parsed.use === true && validateWriterResponse(raw)) {
+        const entry = {
+          name: parsed.name.trim(),
+          shape: parsed.shape,
+          text: String(parsed.text).split('the creature').join(`the ${String(monster.name).toLowerCase()}`),
+        };
+        const reason = verifyWrittenEntry(entry, monster, skeleton, {
+          roleExclusion: ROLE_EXCLUSIONS[blockArchetype] ?? null,
+        });
+        if (reason) {
+          trace('writer: slot dropped —', reason);
+        } else {
+          (monster.sections[parsed.section] = monster.sections[parsed.section] ?? []).push({ name: entry.name, text: entry.text });
+          // the output boundary covers the written entry too: any fresh
+          // lint finding that names it evicts it
+          const after = lintStatblock(monster, { edition: '2024' }).findings
+            .filter((f) => (f.loc?.entry ?? '').startsWith(entry.name) || (f.message ?? '').includes(entry.name));
+          if (after.length) {
+            monster.sections[parsed.section] = monster.sections[parsed.section].filter((e) => e.name !== entry.name);
+            trace('writer: slot dropped —', `lint: ${after.map((f) => f.rule).join(', ')}`);
+          } else {
+            trace('writer: concept slot', `"${entry.name}" (shape ${parsed.shape}, ${parsed.section})`);
+          }
+        }
+      } else if (parsed && parsed.use === false) {
+        trace('writer:', 'nothing unclaimed — slot declined');
+      }
+    } catch (e) {
+      trace('writer: skipped —', e?.message ?? e);
+    }
+  }
+
   // THE DRAFT SHOWS BEFORE THE AUDIT (owner ask, 2026-07-30 — "card
   // visible during the long pole"). The chassis honored this; the skeleton
   // path never inherited it, so the live 2024 path held the assembled card

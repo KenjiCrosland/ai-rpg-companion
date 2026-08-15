@@ -108,6 +108,7 @@ export async function generateEmbeddedStatblock({
   let lore = null;
   let themes = null;
   let house = null;
+  let proposedName = null;
   let mind = null;
   let conceptSize = null;
   let movement = null;
@@ -142,6 +143,9 @@ export async function generateEmbeddedStatblock({
       const FACETS = ['bestial','armed','amorphous','grave','fiendish','celestial','fey','draconic','elemental','verdant','forged','mind','venomous','terror','beguiling','grasping','devouring','aquatic','subterranean','aerial','uncanny','arcane','voice','gaze','breath'];
       const t = parsed.themes.filter((x) => FACETS.includes(String(x).toLowerCase())).slice(0, 2);
       if (t.length) themes = t;
+    }
+    if (typeof parsed?.name === 'string' && parsed.name.trim() && parsed.name.trim().split(/\s+/).length <= 4) {
+      proposedName = parsed.name.trim();
     }
     if (typeof parsed?.material === 'string' && parsed.material.trim()) {
       house = parsed.material.trim().toLowerCase();
@@ -179,6 +183,7 @@ export async function generateEmbeddedStatblock({
         lore,
         themes,
         house,
+        proposedName,
         energy: rolledEnergy,
         damageMix: rolledMix,
         mind,

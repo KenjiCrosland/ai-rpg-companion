@@ -434,7 +434,7 @@ Also give the engine its ASSEMBLY METADATA — structural signals the builder ho
 - "attack_mode": "melee"|"ranged"|"mixed" — how it delivers its attacks. If its identity is striking from afar, say "ranged"; the builder guarantees at least one ranged attack ships.
 - "signature_mechanic": the ONE mechanic the creature IS, from: thrown-weapon, breath, engulf, grapple, gaze, aura, teleport, summon, snare (it binds prey in a restraining substance — webs, tar, hardened stone, grave-wax) — the engine guarantees it a seat. Omit if no single mechanic dominates the concept.
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "synthesis": "<your 2-3 sentences>", "lore": "<one sentence>", "material": "<exactly ONE material from your chosen type's line>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>"}`;
+Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "synthesis": "<your 2-3 sentences>", "name": "<a proper name for this creature in Monster Manual register, 1-3 words, never a description>", "lore": "<one sentence>", "material": "<exactly ONE material from your chosen type's line>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>"}`;
 }
 
 export function validateSeedSynthesisResponse(jsonString) {
@@ -2830,7 +2830,7 @@ export function applyRenameMapping(monster, mapping) {
 // ---------------------------------------------------------------------------
 
 export async function generateMonster2024(options, callLLM) {
-  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, themes = null, mind = null, conceptSize = null, movement = null, attackMode = null, signatureMechanic = null, onProgress = null, takenNames = [], namePass = null, house = null, recent = null, energy = null, damageMix = null, seed = null } = options;
+  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, themes = null, mind = null, conceptSize = null, movement = null, attackMode = null, signatureMechanic = null, onProgress = null, takenNames = [], namePass = null, house = null, recent = null, energy = null, damageMix = null, seed = null, proposedName = null } = options;
 
   // The skeleton path is how 2024 monsters are built now; set
   // localStorage['statblock-skeleton'] = '0' to fall back to the chassis.
@@ -2849,7 +2849,7 @@ export async function generateMonster2024(options, callLLM) {
     return generateFromSkeleton({
       concept, description, cr, archetypeName, resolvedType, lore, themes, mind, degraded, onProgress, caster,
       conceptSize, movement, attackMode, signatureMechanic, takenNames, typeSource,
-      archetypeSource, namePass, house, recent, energy, damageMix, seed,
+      archetypeSource, namePass, house, recent, energy, damageMix, seed, proposedName,
     }, callLLM);
   }
 

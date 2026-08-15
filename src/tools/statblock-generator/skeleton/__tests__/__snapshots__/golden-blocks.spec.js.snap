@@ -222,7 +222,7 @@ exports[`golden blocks (byte-exact through the refactor) G3: CR 12 web signature
       },
       {
         "name": "Creeping Sear",
-        "text": "*Dexterity Saving Throw*: DC 18, one creature the unnamed creature can see within 90 feet. *Failure:* 16 (3d10) Poison damage, and the target receives an infernal wound if it doesn't have one. While wounded, the target loses 10 (3d6) Hit Points at the start of each of its turns. The wound closes after 1 minute, after a spell restores Hit Points to the target, or after the target or a creature within 5 feet of it takes an action to stanch the wound, doing so by succeeding on a DC 18 Wisdom (Medicine) check.",
+        "text": "*Dexterity Saving Throw*: DC 18, one creature the unnamed creature can see within 90 feet. *Failure:* 16 (3d10) Poison damage, and the target receives a grievous wound if it doesn't have one. While wounded, the target loses 10 (3d6) Hit Points at the start of each of its turns. The wound closes after 1 minute, after a spell restores Hit Points to the target, or after the target or a creature within 5 feet of it takes an action to stanch the wound, doing so by succeeding on a DC 18 Wisdom (Medicine) check.",
       },
       {
         "name": "Thornclad Step",

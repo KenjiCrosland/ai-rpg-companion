@@ -122,7 +122,9 @@ describe('the judgment layer', () => {
       return /Every number is already fixed/.test(p) ? goodModel(skeletonFor(9)) : JSON.stringify({ problems: [] });
     });
     expect(prompts.some((p) => /name candidates|Return ONLY JSON.*"names"/i.test(p))).toBe(false);
-    expect(prompts.length).toBe(2); // flavor + audit, nothing else
+    // flavor + writer (CR 5+, the expressiveness package) + audit
+    expect(prompts.length).toBe(3);
+    expect(prompts.some((p) => /finishing a D&D 2024 monster/.test(p))).toBe(true);
   });
 
   test('an audit finding swaps the entry instead of rewriting its text', async () => {

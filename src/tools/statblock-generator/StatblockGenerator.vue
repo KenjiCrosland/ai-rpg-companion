@@ -1033,6 +1033,8 @@ async function generateStatblockEngine(edition) {
   let conceptThemes = null;
   // The ONE material the concept call declared from its type's line.
   let conceptHouse = null;
+  // The synthesis's own proper name — a naming CANDIDATE, never an override.
+  let conceptProposedName = null;
   let conceptMind = null;
   let conceptSize = null;
   let conceptMovement = null;
@@ -1076,6 +1078,9 @@ async function generateStatblockEngine(edition) {
           const FACETS = ['bestial','armed','amorphous','grave','fiendish','celestial','fey','draconic','elemental','verdant','forged','mind','venomous','terror','beguiling','grasping','devouring','aquatic','subterranean','aerial','uncanny','arcane','voice','gaze','breath'];
           const t = parsed.themes.filter((x) => FACETS.includes(String(x).toLowerCase())).slice(0, 2);
           if (t.length) conceptThemes = t;
+        }
+        if (typeof parsed?.name === 'string' && parsed.name.trim() && parsed.name.trim().split(/\s+/).length <= 4) {
+          conceptProposedName = parsed.name.trim();
         }
         if (typeof parsed?.material === 'string' && parsed.material.trim()) {
           conceptHouse = parsed.material.trim().toLowerCase();
@@ -1122,6 +1127,9 @@ async function generateStatblockEngine(edition) {
           const t = parsed.themes.filter((x) => FACETS.includes(String(x).toLowerCase())).slice(0, 2);
           if (t.length) conceptThemes = t;
         }
+        if (typeof parsed?.name === 'string' && parsed.name.trim() && parsed.name.trim().split(/\s+/).length <= 4) {
+          conceptProposedName = parsed.name.trim();
+        }
         if (typeof parsed?.material === 'string' && parsed.material.trim()) {
           conceptHouse = parsed.material.trim().toLowerCase();
         }
@@ -1165,6 +1173,7 @@ async function generateStatblockEngine(edition) {
         lore: conceptLore,
         themes: conceptThemes,
         house: conceptHouse,
+        proposedName: conceptProposedName,
         recent: readRecent(),
         energy: rolledEnergy,
         damageMix: rolledMix,

@@ -6188,3 +6188,33 @@ describe('the Quiet Moult: the body plan is rolled, not left to the model', () =
     expect(p).not.toMatch(/BODY PLAN/);
   });
 });
+
+describe('the Galvanic Array: the synthesis name is a candidate, never an override', () => {
+  const noFlavor = async (p) => (/Every number is already fixed/.test(p) ? null : JSON.stringify({ problems: [] }));
+
+  test('the flavor prompt weighs a proposal; none, no clause', () => {
+    const sk = buildSkeleton({ cr: 8, seed: 3, themes: ['grasping'] });
+    const p = buildFlavorPrompt(sk, { concept: 'a crab colony', proposedName: 'Galvanic Array' });
+    expect(p).toMatch(/proposed the proper name "Galvanic Array"/);
+    expect(p).toMatch(/keep it if it beats what you would coin/);
+    expect(buildFlavorPrompt(sk, { concept: 'a crab colony' })).not.toMatch(/proposed the proper name/);
+  });
+
+  test('never-fail: a good proposal beats "Unnamed Creature"', async () => {
+    const m = await generateFromSkeleton({
+      concept: 'a crab colony', cr: 8, seed: 3, themes: ['grasping'],
+      resolvedType: 'Monstrosity', proposedName: 'Galvanic Array',
+    }, noFlavor);
+    expect(m.name).toBe('Galvanic Array');
+  });
+
+  test('never-fail: a proposal that fails the filters falls back to the constant', async () => {
+    for (const bad of ['Owlbear', 'Gloom-Fang', 'The Thing That Lurks Beneath The Waves']) {
+      const m = await generateFromSkeleton({
+        concept: 'a crab colony', cr: 8, seed: 3, themes: ['grasping'],
+        resolvedType: 'Monstrosity', proposedName: bad,
+      }, noFlavor);
+      expect(`${bad}: ${m.name}`).toBe(`${bad}: Unnamed Creature`);
+    }
+  });
+});

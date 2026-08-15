@@ -497,7 +497,7 @@ const isAttackRow = (a) => a.slot_type === 'plain_attack' || a.slot_type === 'ri
 // because guide-not-constrain is still the rule. Signature promises are
 // unaffected — a conflicting one is vetoed upstream, a permitted one is
 // honored at its seat.
-const ROLE_EXCLUSIONS = {
+export const ROLE_EXCLUSIONS = {
   skirmisher: (a) => /Grappled condition \(escape|swallow/i.test(a.template_2024 ?? ''),
   lurker: (a) => /Grappled condition \(escape|swallow/i.test(a.template_2024 ?? ''),
   artillery: (a) => /Grappled condition \(escape|swallow/i.test(a.template_2024 ?? ''),
@@ -2044,6 +2044,7 @@ export function buildSkeleton({
     pb: nums.pb,
     attack_bonus: nums.attack_bonus,
     save_dc: nums.save_dc,
+    per_attack_damage: nums.per_attack_damage,
     multiattack: nums.multiattack,
     con_mod: nums.con_mod,
     speed_mod: nums.speed_mod ?? 0,

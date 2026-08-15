@@ -2303,7 +2303,7 @@
           "area_shape": "Emanation",
           "damage_type": "Acid"
         },
-        "template_2024": "While underwater, the {creature} is surrounded by mucus. *Constitution Saving Throw*: DC {dc}, each creature in a {area}-foot Emanation originating from the {creature} at the end of the {creature}'s turn. *Failure:* The target is cursed. Until the curse ends, the target's skin becomes slimy, the target can breathe air and water, and it can't regain Hit Points unless it is underwater. While the cursed creature is outside a body of water, the creature takes {damage} ({dice}) {damage_type} damage at the end of every 10 minutes unless moisture is applied to its skin before those minutes have passed.",
+        "template_2024": "While underwater, the {creature} is surrounded by {substance}. *Constitution Saving Throw*: DC {dc}, each creature in a {area}-foot Emanation originating from the {creature} at the end of the {creature}'s turn. *Failure:* The target is cursed. Until the curse ends, the target's skin becomes slimy, the target can breathe air and water, and it can't regain Hit Points unless it is underwater. While the cursed creature is outside a body of water, the creature takes {damage} ({dice}) {damage_type} damage at the end of every 10 minutes unless moisture is applied to its skin before those minutes have passed.",
         "source_size": "Large",
         "slot_type": "area",
         "pool": "trait",
@@ -4894,7 +4894,7 @@
           "dice": "1d8 + 6",
           "damage_type": "Necrotic"
         },
-        "template_2024": "*Dexterity Saving Throw*: DC {dc}, one creature the {creature} can see within {sight_range} feet. *Failure:* {damage} ({dice}) {damage_type} damage, and the target receives an infernal wound if it doesn't have one. While wounded, the target loses 10 (3d6) Hit Points at the start of each of its turns. The wound closes after 1 minute, after a spell restores Hit Points to the target, or after the target or a creature within {reach} feet of it takes an action to stanch the wound, doing so by succeeding on a DC {dc} Wisdom (Medicine) check.",
+        "template_2024": "*Dexterity Saving Throw*: DC {dc}, one creature the {creature} can see within {sight_range} feet. *Failure:* {damage} ({dice}) {damage_type} damage, and the target receives a grievous wound if it doesn't have one. While wounded, the target loses 10 (3d6) Hit Points at the start of each of its turns. The wound closes after 1 minute, after a spell restores Hit Points to the target, or after the target or a creature within {reach} feet of it takes an action to stanch the wound, doing so by succeeding on a DC {dc} Wisdom (Medicine) check.",
         "source_size": "Large",
         "slot_type": "save_damage",
         "pool": "ability",
@@ -9834,7 +9834,7 @@
           "reach": 10,
           "damage_type": "Slashing"
         },
-        "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage. If the target is a creature and doesn't already have an infernal wound, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target receives an infernal wound. While wounded, the target loses 5 (1d10) Hit Points at the start of each of its turns. The wound closes after 1 minute, after a spell restores Hit Points to the target, or after the target or a creature within {reach} feet of it takes an action to stanch the wound, doing so by succeeding on a DC {dc} Wisdom (Medicine) check.",
+        "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage. If the target is a creature and doesn't already have a grievous wound, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target receives a grievous wound. While wounded, the target loses 5 (1d10) Hit Points at the start of each of its turns. The wound closes after 1 minute, after a spell restores Hit Points to the target, or after the target or a creature within {reach} feet of it takes an action to stanch the wound, doing so by succeeding on a DC {dc} Wisdom (Medicine) check.",
         "source_size": "Medium",
         "slot_type": "plain_attack",
         "pool": "ability",
@@ -26526,7 +26526,7 @@
           "trait": "Demonic Restoration",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "If the {creature} dies outside {home_plane}, its body dissolves into ichor, and it gains a new body instantly, reviving with all its Hit Points somewhere in {home_plane}.",
+          "template_2024": "If the {creature} dies outside {home_plane}, its body dissolves into {substance}, and it gains a new body instantly, reviving with all its Hit Points somewhere in {home_plane}.",
           "facets": [
             "fiendish"
           ],
@@ -26596,7 +26596,7 @@
           "trait": "Demonic Restoration",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "If the {creature} dies outside {home_plane}, its body dissolves into ichor, and it gains a new body instantly, reviving with all its Hit Points somewhere in {home_plane}.",
+          "template_2024": "If the {creature} dies outside {home_plane}, its body dissolves into {substance}, and it gains a new body instantly, reviving with all its Hit Points somewhere in {home_plane}.",
           "facets": [
             "fiendish"
           ],
@@ -26680,7 +26680,7 @@
           "trait": "Demonic Restoration",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "If the {creature} dies outside {home_plane}, its body dissolves into ichor, and it gains a new body instantly, reviving with all its Hit Points somewhere in {home_plane}.",
+          "template_2024": "If the {creature} dies outside {home_plane}, its body dissolves into {substance}, and it gains a new body instantly, reviving with all its Hit Points somewhere in {home_plane}.",
           "facets": [
             "fiendish"
           ],
@@ -26870,7 +26870,7 @@
           "trait": "Demonic Restoration",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "If the {creature} dies outside {home_plane}, its body dissolves into ichor, and it gains a new body instantly, reviving with all its Hit Points somewhere in {home_plane}.",
+          "template_2024": "If the {creature} dies outside {home_plane}, its body dissolves into {substance}, and it gains a new body instantly, reviving with all its Hit Points somewhere in {home_plane}.",
           "facets": [
             "fiendish"
           ],
@@ -26898,7 +26898,7 @@
           "trait": "Fiendish Restoration",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "If the {creature} dies outside {home_plane}, its body turns to ichor, and it gains a new body instantly, reviving with all its Hit Points somewhere in {home_plane}.",
+          "template_2024": "If the {creature} dies outside {home_plane}, its body turns to {substance}, and it gains a new body instantly, reviving with all its Hit Points somewhere in {home_plane}.",
           "facets": [
             "fiendish"
           ],
@@ -26973,7 +26973,7 @@
           "trait": "Demonic Restoration",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "If the {creature} dies outside {home_plane}, its body dissolves into ichor, and it gains a new body instantly, reviving with all its Hit Points somewhere in {home_plane}.",
+          "template_2024": "If the {creature} dies outside {home_plane}, its body dissolves into {substance}, and it gains a new body instantly, reviving with all its Hit Points somewhere in {home_plane}.",
           "facets": [
             "fiendish"
           ],
@@ -27329,7 +27329,7 @@
             "area": 5
           },
           "scales_with_cr": true,
-          "template_2024": "While underwater, the {creature} is surrounded by mucus. *Constitution Saving Throw*: DC {dc}, each creature in a {area}-foot Emanation originating from the {creature} at the end of the {creature}'s turn. *Failure:* The target is cursed. Until the curse ends, the target's skin becomes slimy, the target can breathe air and water, and it can't regain Hit Points unless it is underwater. While the cursed creature is outside a body of water, the creature takes {damage} ({dice}) {damage_type} damage at the end of every 10 minutes unless moisture is applied to its skin before those minutes have passed.",
+          "template_2024": "While underwater, the {creature} is surrounded by {substance}. *Constitution Saving Throw*: DC {dc}, each creature in a {area}-foot Emanation originating from the {creature} at the end of the {creature}'s turn. *Failure:* The target is cursed. Until the curse ends, the target's skin becomes slimy, the target can breathe air and water, and it can't regain Hit Points unless it is underwater. While the cursed creature is outside a body of water, the creature takes {damage} ({dice}) {damage_type} damage at the end of every 10 minutes unless moisture is applied to its skin before those minutes have passed.",
           "damage_class": "attack",
           "facets": [
             "aquatic",

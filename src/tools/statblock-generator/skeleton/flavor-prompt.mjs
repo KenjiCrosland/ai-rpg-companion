@@ -418,7 +418,7 @@ const ROLE_BRIEF = {
   swarm: 'a SWARM — it is many acting as one; its names and prose should feel like mass, tide, and numberless motion. Name the block the printed way: "Swarm of <plural constituents>" (like Swarm of Ravens)',
 };
 
-export function buildFlavorPrompt(skeleton, { concept, description = '', themes = null, takenNames = [] } = {}) {
+export function buildFlavorPrompt(skeleton, { concept, description = '', themes = null, takenNames = [], proposedName = null } = {}) {
 
   const reqs = flavorRequests(skeleton);
   const needsSpells = reqs.some((r) => r.slots.includes('spells') || r.slots.includes('spells_daily'));
@@ -486,7 +486,7 @@ export function buildFlavorPrompt(skeleton, { concept, description = '', themes 
 
   return `You are writing the flavor for a D&D 2024 monster. Every number is already fixed and is NOT your concern.
 
-CONCEPT: ${concept}${description ? `\nDETAILS: ${description}` : ''}${takenNames.length ? `\nNAMES ALREADY TAKEN in this user's collection — NEVER reuse or closely echo any of them: ${takenNames.slice(0, 40).join(', ')}` : ''}${themes && themes.length ? `\nTHEME THREADS — the block's ENTIRE palette. Every name, every {substance}, every {delivery} and {appendage} draws from these and nothing else: ${themes.join(', ')}` : ''}${texturePalette(skeleton, themes)}
+CONCEPT: ${concept}${description ? `\nDETAILS: ${description}` : ''}${proposedName ? `\nThe concept synthesis proposed the proper name "${proposedName}". Weigh it as a strong candidate: keep it if it beats what you would coin, improve on it freely if not.` : ''}${takenNames.length ? `\nNAMES ALREADY TAKEN in this user's collection — NEVER reuse or closely echo any of them: ${takenNames.slice(0, 40).join(', ')}` : ''}${themes && themes.length ? `\nTHEME THREADS — the block's ENTIRE palette. Every name, every {substance}, every {delivery} and {appendage} draws from these and nothing else: ${themes.join(', ')}` : ''}${texturePalette(skeleton, themes)}
 
 The creature is CR ${skeleton.cr}, ${skeleton.size}, AC ${skeleton.ac}, HP ${skeleton.hp}.${skeleton.mind === 'bestial' ? `
 Its MIND is BESTIAL: animal cunning, no speech, no concepts. Every fill must fit that head — its anchors are dens, carcasses, and territories, never bargains, vows, debts, oaths, or agreements; it remembers places and scents, not purposes. Entry names likewise: an animal has no "Bargain", "Vigil", or "Covenant".` : skeleton.mind === 'mindless' ? `
