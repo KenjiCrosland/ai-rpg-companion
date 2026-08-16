@@ -308,7 +308,7 @@ import Statblock2024 from '@/components/Statblock2024.vue';
 import {
   generateMonster2024, buildArchetypeResolvePrompt, validateArchetypeResponse,
   buildSeedSynthesisPrompt, validateSeedSynthesisResponse,
-  parseGenerationResponse, pickRandomArchetype, rollEnergy, rollDamageMix, crNumberFor, crKeyFor,
+  parseGenerationResponse, pickRandomArchetype, rollEnergy, rollDamageMix, rollNamingConvention, crNumberFor, crKeyFor,
   convertEdition, toLegacyModel, fromLegacyModel,
 } from './format-2024/generate.mjs';
 import { readRecent, recordShipped } from './skeleton/frequency-ledger.mjs';
@@ -1052,6 +1052,7 @@ async function generateStatblockEngine(edition) {
   // Rolled BEFORE the concept call so the lore is written to it.
   const rolledEnergy = rollEnergy();
   const rolledMix = rollDamageMix();
+  const rolledNaming = rollNamingConvention();
   {
     archetypeSource = givenArchetype ? 'user' : 'auto';
     try {
@@ -1107,7 +1108,7 @@ async function generateStatblockEngine(edition) {
         // creature identity AND picks the role — generation designs from
         // the fused sentence, not the axis list.
         const raw = await generateGptResponse(
-          buildSeedSynthesisPrompt(randomSeed, { cr, archetype: givenArchetype, energy: rolledEnergy, damageMix: rolledMix }),
+          buildSeedSynthesisPrompt(randomSeed, { cr, archetype: givenArchetype, energy: rolledEnergy, damageMix: rolledMix, naming: rolledNaming }),
           validateSeedSynthesisResponse,
           2,
         );
@@ -1177,6 +1178,7 @@ async function generateStatblockEngine(edition) {
         recent: readRecent(),
         energy: rolledEnergy,
         damageMix: rolledMix,
+        naming: rolledNaming,
         mind: conceptMind,
         conceptSize,
         movement: conceptMovement,

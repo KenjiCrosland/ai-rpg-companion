@@ -10,16 +10,34 @@
  * concept text, so the seed shapes the statline as well as the name.
  */
 
+/**
+ * THE MIND IS PRINT-WEIGHTED (owner question, 2026-08-16: "why do we
+ * cluster towards mindless creatures? aren't they the exception?"). They
+ * are: measured on the non-Beast corpus (the class we generate), print is
+ * 84% sapient / 6% bestial / 10% mindless — but this axis was a UNIFORM
+ * draw over seven options, two of them mindless-class and two bestial, so
+ * blank-form generations rolled a non-sapient mind ~57% of the time, five
+ * times print's rate. Same cure as energy, damage mix, and body plan:
+ * weight the roll to print and state the result as fact. The weights
+ * below land ~8/11/81 — print's shape with the spice tiers kept reachable.
+ */
+const INTELLIGENCE_TIERS = [
+  [8, 'mindless (INT 1-2)'],
+  [5, 'instinct-driven (INT 2-4)'],
+  [6, 'cunning but bestial (INT 5-7)'],
+  [15, 'crudely sapient (INT 6-8)'],
+  [30, 'fully sapient (INT 10-14)'],
+  [22, 'scheming (INT 14-16)'],
+  [14, 'possessed of alien genius (INT 17-20)'],
+];
+function rollIntelligence() {
+  let roll = Math.random() * INTELLIGENCE_TIERS.reduce((n, [w]) => n + w, 0);
+  for (const [w, tier] of INTELLIGENCE_TIERS) { roll -= w; if (roll < 0) return tier; }
+  return INTELLIGENCE_TIERS[4][1];
+}
+
 export const SEED_DIMENSIONS = {
-  intelligence: [
-    'mindless (INT 1-2)',
-    'instinct-driven (INT 2-4)',
-    'cunning but bestial (INT 5-7)',
-    'crudely sapient (INT 6-8)',
-    'fully sapient (INT 10-14)',
-    'scheming (INT 14-16)',
-    'possessed of alien genius (INT 17-20)',
-  ],
+  intelligence: INTELLIGENCE_TIERS.map(([, tier]) => tier),
   physical: [
     'metallic', 'furred', 'scaled', 'chitinous', 'stone-skinned',
     'crystalline', 'fungal', 'woven from plant fiber', 'gelatinous',
@@ -218,7 +236,7 @@ function rollBodyPlan() {
 
 export function buildRandomConceptSeed() {
   const traits = {
-    intelligence: pick(SEED_DIMENSIONS.intelligence),
+    intelligence: rollIntelligence(),
     physical: pick(SEED_DIMENSIONS.physical),
     silhouette: pick(SEED_DIMENSIONS.silhouette),
     origin: pick(SEED_DIMENSIONS.origin),

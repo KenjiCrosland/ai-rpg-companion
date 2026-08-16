@@ -172,6 +172,31 @@ export function reconcileConcept({
     }
   }
 
+  // A DRAGON HAS A MIND (2026-08-16, the Ssvorrach: a "mindless"
+  // dream-construct typed Dragon). Measured: 45 of 45 printed Dragons are
+  // at least bestial — the floor is the Wyvern's animal cunning at INT 5,
+  // and even the White Dragon Wyrmling SPEAKS at INT 5. Zero mindless
+  // dragons. The type keeps its mind floor rather than retyping (unlike
+  // the Humanoid rule below): a dragon-shaped hunter with animal cunning
+  // is exactly what print's Wyvern is.
+  if (/dragon/i.test(finalType) && blockMind === 'mindless') {
+    trace('mind reconciled:', 'mindless -> bestial (no printed Dragon is mindless — the Wyvern floor)');
+    blockMind = 'bestial';
+  }
+
+  // A HUMANOID IS A PERSON (owner call, 2026-08-15, the Pelted Lull: a
+  // quadrupedal INT-2 astral sentinel typed Humanoid). Measured: 26 of 26
+  // printed Humanoids are sapient and every one speaks a language — zero
+  // exceptions. A non-sapient Humanoid is print-illegal, and Monstrosity
+  // is print's bucket for beast-shaped wrongness (already the fallback
+  // landing type above). Runs after the mind block so a prose INT claim
+  // can rescue the type by proving sapience first. The user's explicit
+  // type stands — user input is the fixed point, as in the funnel.
+  if (finalType === 'Humanoid' && blockMind !== 'sapient' && typeSource !== 'user') {
+    trace('type reconciled:', `Humanoid -> Monstrosity (${blockMind} — all 26 printed Humanoids are sapient speakers)`);
+    finalType = 'Monstrosity';
+  }
+
   // Assembly metadata, validated: bad values degrade to "no signal" and the
   // legacy sampling behavior — never to a failed generation.
   const SIZES_OK = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'];

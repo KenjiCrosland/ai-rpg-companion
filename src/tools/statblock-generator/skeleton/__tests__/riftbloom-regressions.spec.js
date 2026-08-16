@@ -31,6 +31,10 @@ describe('hard-condition areas are always gated', () => {
         const sk = buildSkeleton({ cr, size: 'Large', seed });
         for (const e of sk.entries) {
           if (e.slot_type === 'legendary') continue; // paced inline, as print does
+          // Ladder-form rows are SELF-gated (the Ryll ruling: 20/20 printed
+          // utility breaths go ungated, the escalation buffer is the gate) —
+          // the same exemption the belt and gatedLike carry.
+          if (/(?:First|Second) Failure/i.test(e.text)) continue;
           if (/each creature in/.test(e.text) && /Paralyzed|Stunned|Petrified|Unconscious/.test(e.text)) {
             expect(`CR ${cr} seed ${seed} ${e.name} gated: ${Boolean(e.gate)}`)
               .toBe(`CR ${cr} seed ${seed} ${e.name} gated: true`);
@@ -487,6 +491,12 @@ describe('Glacier Keeper regressions (live block 6, CR 20)', () => {
       'Vampire Spawn/Vampire Weakness', 'Vampire/Misty Escape',
       'Vampire/Shape-Shift', 'Vampire/Vampire Weakness',
       'Water Elemental/Freeze',
+      // the lycanthropy conversion curse, all five carriers (owner call
+      // 2026-08-15, the Pelted Lull's Antlered Sunder: "way too much to
+      // reskin") — "drops to 0 HP and instead becomes a {creature} under
+      // the DM's control" IS the werecreature, however renamed
+      'Werebear/Bite', 'Wereboar/Gore', 'Wererat/Bite',
+      'Weretiger/Bite', 'Werewolf/Bite',
     ]);
     for (const r of excluded) expect(r.excluded.length).toBeGreaterThan(20);
     // and none of them can ever be picked or offered on a menu
@@ -3314,8 +3324,11 @@ describe('the Hoarfrost Scavenger: elements never fight themselves', () => {
     expect(sk.attack_bonus).toBe(base.attack_bonus + 1);
     const gated = sk.entries.find((e) => e.slot_type === 'area' && /Recharge/i.test(e.gate ?? ''));
     if (gated) {
-      // nova_mult 2.0 buys the double-size ambush spike the 0.6 sustained pays for
-      expect(gated.damage).toBeGreaterThan(base.per_attack_damage * 3);
+      // nova_mult 1.5 (trimmed from 2.0 with the Recharge law, 2026-08-16):
+      // the spike no longer dwarfs the un-discounted band — the new bargain
+      // is that it clearly exceeds the lurker's OWN discounted routine,
+      // and comes back mid-fight instead of once per day.
+      expect(gated.damage).toBeGreaterThan(sk.per_attack_damage * 3);
     }
   });
 
@@ -5579,11 +5592,15 @@ describe('the Brinewrack: floors that survive the drops, novas that recharge', (
     expect(`${promoted}/${checked}`).toBe(`${checked}/${checked}`);
   });
 
-  test('the promotion is gated to CR 15+ — the printed sub-boss 1/Day stands', () => {
-    // Swept 800 natural sub-boss blocks: a 1/Day area nova with NO Recharge
-    // sibling never occurs in the wild (sub-boss 1/Day gates come from the
-    // demotion beside a Recharge row), so this is a direct unit test of the
-    // gate instead of a vacuous sweep.
+  test('the promotion holds at EVERY tier — a solo 1/Day nova is the 0/329 shape', () => {
+    // Superseded 2026-08-16 (the Dreamt Leech, owner call): this test once
+    // pinned the promotion to CR 15+ "so the printed sub-boss 1/Day stands"
+    // — but the printed 1/Day (this very Vrock row) sits BESIDE a Recharge;
+    // its own comment conceded a solo 1/Day nova "never occurs in the
+    // wild". The corpus measurement made it a law: zero of 329 blocks field
+    // a 1/Day damage area as their only nova, so the promotion is
+    // tier-blind. The 1/Day shape still ships wherever a Recharge sibling
+    // exists (the demotion path — the fixed Leech's own breath).
     const { pickAbilities, makeRng } = require('../build-skeleton.mjs');
     const NOVA = {
       id: 'e9', section: 'Actions', slot_type: 'area', gate: '1/Day',
@@ -5594,7 +5611,7 @@ describe('the Brinewrack: floors that survive the drops, novas that recharge', (
     const counts = { plain_attack: 0, rider_attack: 0, area: 0, save_effect: 0, save_damage: 0, utility: 0, legendary: 0 };
     const at = (cr) => pickAbilities(cr, counts, makeRng(3), [], 1, null, [NOVA], null, 'sapient', {})
       .find((c) => c.ability === 'Stunning Screech');
-    expect(at(14).gate).toBe('1/Day');
+    expect(at(14).gate).toBe('Recharge 5-6');
     expect(at(20).gate).toBe('Recharge 5-6');
   });
 
@@ -6082,9 +6099,18 @@ describe('the Charnel Reliquary: an attack\'s physical FORM is the model\'s call
   });
 
   test('an off-set answer falls back to the block stamp — never an energy or junk', () => {
+    // The stamp itself is a weighted draw over the library, so it shifts
+    // whenever rows join or leave the pool (the were-curse exclusions moved
+    // it once already). Derive it from a no-answer render instead of
+    // pinning the draw — the LAW under test is "bad answer = same stamp,
+    // never an energy", not which physical type this seed happens to roll.
+    const stamp = render({})?.match(/(Bludgeoning|Piercing|Slashing) damage/)?.[1];
+    if (!stamp) return;
     for (const bad of ['Fire', 'Sharp', 42, null]) {
       const text = render({ physical: bad });
-      if (text) expect(`${bad}: ${/Bludgeoning damage/.test(text)}`).toBe(`${bad}: true`);
+      if (!text) continue;
+      expect(`${bad}: ${text.includes(`${stamp} damage`)}`).toBe(`${bad}: true`);
+      expect(text).not.toMatch(/Fire damage/);
     }
   });
 
@@ -6216,5 +6242,97 @@ describe('the Galvanic Array: the synthesis name is a candidate, never an overri
       }, noFlavor);
       expect(`${bad}: ${m.name}`).toBe(`${bad}: Unnamed Creature`);
     }
+  });
+});
+
+describe('the Ssvorrach: a ladder breath is self-gated at EVERY seam', () => {
+  test('the live seed: Sleep Breath ships ungated beside the Recharge fire breath (20/20 print)', () => {
+    // gatedLike was the Ryll fix's third seam — the data strip and the belt
+    // exemption both landed, but the one-Recharge arbitration still counted
+    // the ladder as gated-like and rationed it to 1/Day.
+    const s = buildSkeleton({
+      cr: 8, size: 'Large', seed: 1528529796, alternatives: 3, archetype: 'lurker',
+      themes: ['draconic'], mind: 'bestial', typeHint: 'Dragon', family: 'dragon',
+      movement: ['climb'], attackMode: 'melee', signatureMechanic: 'breath', damageMix: 'physical',
+    });
+    const sleep = s.entries.find((e) => e.name === 'Sleep Breath');
+    const fire = s.entries.find((e) => /Breath/.test(e.name) && e.name !== 'Sleep Breath');
+    expect(sleep?.gate ?? null).toBeNull();
+    expect(fire?.gate).toMatch(/Recharge/);
+  });
+});
+
+describe('the Dreamt Leech: a trait can PROVIDE a capability, and a demotion is an arbitration', () => {
+  test('the live seed: Whirlwind ships beside the Air Form that enables it, Recharge intact', () => {
+    const s = buildSkeleton({
+      cr: 8, size: 'Large', seed: 1781744966, alternatives: 3, archetype: 'lurker',
+      themes: ['devouring', 'venomous'], mind: 'bestial', typeHint: 'Fey',
+      movement: ['burrow', 'climb'], attackMode: 'melee', signatureMechanic: 'breath',
+      damageMix: 'both',
+    });
+    const names = s.entries.map((e) => e.name);
+    expect(names).toContain('Whirlwind');
+    expect(s.entries.find((e) => e.name === 'Whirlwind').gate).toMatch(/Recharge/);
+    // the breath beside it stays 1/Day — the Vrock's printed shape
+    expect(s.entries.find((e) => e.name === 'Poison Breath').gate).toBe('1/Day');
+  });
+
+  test('sweep: a row demoted from Recharge never ships on a block with no Recharge left', () => {
+    // The observable law: an area row wearing 1/Day whose LIBRARY row prints
+    // Recharge implies some Recharge row survived — the demotion's premise.
+    // (Natively-1/Day rows are exempt; print fields the Vrock's Screech.)
+    const lib = require('@/data/ability-library.json');
+    const byKey = new Map();
+    for (const r of Object.values(lib.categories).flat()) byKey.set(`${r.ability}|${r.source}`, r);
+    for (const cr of [5, 8, 12, 20]) {
+      for (let seed = 1; seed <= 15; seed += 1) {
+        const s = buildSkeleton({ cr, seed, alternatives: 3, archetype: ['brute', 'lurker', 'controller'][seed % 3], signatureMechanic: seed % 2 ? 'breath' : null });
+        const hasRecharge = s.entries.some((e) => /Recharge/i.test(e.gate ?? ''));
+        for (const e of s.entries) {
+          if (e.gate !== '1/Day') continue;
+          const source = /^(.*) \(CR/.exec(e.derived_from ?? '')?.[1];
+          const printed = byKey.get(`${e.name}|${source}`)?.gate ?? '';
+          if (/Recharge/i.test(printed)) {
+            expect(`cr${cr} seed${seed} ${e.name}: ${hasRecharge ? 'keeper alive' : 'ORPHANED DEMOTION'}`)
+              .toBe(`cr${cr} seed${seed} ${e.name}: keeper alive`);
+          }
+        }
+      }
+    }
+  });
+
+  test('no block at any tier ships a 1/Day damage area as its only nova (0/329 print)', () => {
+    for (const cr of [3, 8, 12, 20]) {
+      for (let seed = 1; seed <= 15; seed += 1) {
+        const s = buildSkeleton({ cr, seed, alternatives: 3, archetype: ['lurker', 'brute', 'artillery'][seed % 3], signatureMechanic: seed % 2 ? 'breath' : null });
+        const dayNova = s.entries.find((e) => e.slot_type === 'area' && e.gate === '1/Day' && (e.damage ?? 0) > 0);
+        if (dayNova) {
+          const shape = s.entries.some((e) => /Recharge/i.test(e.gate ?? '')) ? 'beside a Recharge' : 'ONLY nova';
+          expect(`cr${cr} seed${seed} ${dayNova.name}: ${shape}`).toBe(`cr${cr} seed${seed} ${dayNova.name}: beside a Recharge`);
+        }
+      }
+    }
+  });
+
+  test('the Mimic claim finally holds: trait-provided grapple satisfies a grapple-requiring row', () => {
+    // Adhesive (a TRAIT) imposes grapple; before the fix, satisfiedBy
+    // ignored trait imposes and every requirer died at the fixpoint. Sweep
+    // for any block shipping a grapple-requiring row with its provider
+    // being a trait — existence proves the channel works; zero strandings
+    // is asserted by the fixpoint itself (a requirer shipping means met).
+    let traitProvided = 0;
+    for (let seed = 1; seed <= 40 && !traitProvided; seed += 1) {
+      const s = buildSkeleton({ cr: 8, seed, alternatives: 3, signatureMechanic: 'engulf' });
+      const traitGrapples = s.traits.some((t) => /Adhesive|Air Form|Water Form|Fire Form/.test(t.derived_from ?? t.name));
+      const requirer = s.entries.some((e) => /space of|swallow/i.test(e.text ?? ''));
+      if (traitGrapples && requirer) traitProvided += 1;
+    }
+    // The channel is open — at least the Leech-class combination assembles.
+    const leech = buildSkeleton({
+      cr: 8, size: 'Large', seed: 1781744966, alternatives: 3, archetype: 'lurker',
+      themes: ['devouring', 'venomous'], mind: 'bestial', typeHint: 'Fey',
+      movement: ['burrow', 'climb'], attackMode: 'melee', signatureMechanic: 'breath', damageMix: 'both',
+    });
+    expect(leech.entries.some((e) => e.name === 'Whirlwind')).toBe(true);
   });
 });

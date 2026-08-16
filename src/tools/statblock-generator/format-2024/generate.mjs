@@ -24,6 +24,11 @@ import { slotPlanFor } from '../chassis/slot-plan.mjs';
 import { lintStatblock, avgDice, CONDITIONS, DEFENSE_WEIGHTS, SELF_REF_STOP } from './lint.mjs';
 import { logger } from '@/util/logger.mjs';
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditNameGrade, auditTypeCorrection } from './audit.mjs';
+import { buildNamingBrief, rollNamingConvention } from '../skeleton/name-registers.mjs';
+
+// Rolled beside energy/damageMix in the Vue/embedded callers; re-exported so
+// they keep a single import site for the pre-concept rolls.
+export { rollNamingConvention };
 
 // Dice solvers live in dice.mjs so skeleton/ can use them without importing
 // this module. Re-exported here: existing importers and tests are unaffected.
@@ -392,7 +397,7 @@ function seedFunnelBrief(type, archetype) {
   return `MATERIAL. Choose exactly ONE material ("material") from this line — the substance this creature's BODY is made of, given it is a ${type}: ${textureBanks.type_houses[type].join(', ')}. Not two. A creature made of two materials reads as two creatures sharing a statblock, and every ability name in the block will be drawn from the one you name here. Write the synthesis so that material is visible in what it is and what it does.`;
 }
 
-export function buildSeedSynthesisPrompt(seed, { cr = null, archetype = null, energy = null, damageMix = null } = {}) {
+export function buildSeedSynthesisPrompt(seed, { cr = null, archetype = null, energy = null, damageMix = null, naming = null } = {}) {
   return `${archetype
     ? `Fuse these randomly rolled traits into ONE coherent monster concept. Its combat role is FIXED by the user: ${archetype} — echo it in "archetype" unchanged and shape the concept around that role.`
     : 'Fuse these randomly rolled traits into ONE coherent monster concept, then classify its combat role.'}
@@ -420,7 +425,7 @@ TYPE HONESTY: creature_type must be the type your synthesis actually EXPRESSES �
 
 Also write ONE sentence of world-lore ("lore"): where this creature comes from and what it wants — drawn from the rolled ORIGIN, the story a GM would read aloud. Grounded in the fused substance, never generic doom-prose.
 
-${seedFunnelBrief(seed.creature_type, archetype)}${damageMix === 'physical' ? '' : energyBrief(energy)}${damageMixBrief(damageMix, energy)}
+${seedFunnelBrief(seed.creature_type, archetype)}${damageMix === 'physical' ? '' : energyBrief(energy)}${damageMixBrief(damageMix, energy)}${buildNamingBrief(naming, { type: seed.creature_type })}
 
 Also pick the creature's THEME THREADS ("themes"): ONE primary word the concept is most about, plus at most ONE supporting word that complements it — from this list only: bestial, armed, amorphous, grave, fiendish, celestial, fey, draconic, elemental, verdant, forged, mind, venomous, terror, beguiling, grasping, devouring, aquatic, subterranean, aerial, uncanny, arcane, voice, gaze, breath. The pair must COHERE — grave+aquatic is a drowned dead thing; subterranean+celestial is nonsense. And themes must AGREE with creature_type: celestial means a Celestial, grave means Undead, fiendish a Fiend, draconic a Dragon, verdant a Plant, forged a Construct — never declare a domain theme the type contradicts. THEME HONESTY: the themes must be the ones your own prose EXPRESSES — its substance, its element, its habitat — not adjacent or generic ones. A creature you described as deep-ocean brine is aquatic, not "elemental"; a thing of packed grave-soil is grave, not "subterranean". Every name and every material in the finished block will be drawn from these two words, so a theme your prose doesn't actually contain leaves the creature speaking a vocabulary it doesn't own.
 
@@ -434,7 +439,7 @@ Also give the engine its ASSEMBLY METADATA — structural signals the builder ho
 - "attack_mode": "melee"|"ranged"|"mixed" — how it delivers its attacks. If its identity is striking from afar, say "ranged"; the builder guarantees at least one ranged attack ships.
 - "signature_mechanic": the ONE mechanic the creature IS, from: thrown-weapon, breath, engulf, grapple, gaze, aura, teleport, summon, snare (it binds prey in a restraining substance — webs, tar, hardened stone, grave-wax) — the engine guarantees it a seat. Omit if no single mechanic dominates the concept.
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "synthesis": "<your 2-3 sentences>", "name": "<a proper name for this creature in Monster Manual register, 1-3 words, never a description>", "lore": "<one sentence>", "material": "<exactly ONE material from your chosen type's line>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>"}`;
+Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "synthesis": "<your 2-3 sentences>", "name": "<${naming ? 'the creature\'s proper name, written to THE NAME convention above' : 'a proper name for this creature in Monster Manual register, 1-3 words, never a description'}>", "lore": "<one sentence>", "material": "<exactly ONE material from your chosen type's line>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>"}`;
 }
 
 export function validateSeedSynthesisResponse(jsonString) {
@@ -2830,7 +2835,7 @@ export function applyRenameMapping(monster, mapping) {
 // ---------------------------------------------------------------------------
 
 export async function generateMonster2024(options, callLLM) {
-  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, themes = null, mind = null, conceptSize = null, movement = null, attackMode = null, signatureMechanic = null, onProgress = null, takenNames = [], namePass = null, house = null, recent = null, energy = null, damageMix = null, seed = null, proposedName = null } = options;
+  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, themes = null, mind = null, conceptSize = null, movement = null, attackMode = null, signatureMechanic = null, onProgress = null, takenNames = [], namePass = null, house = null, recent = null, energy = null, damageMix = null, seed = null, proposedName = null, naming = null } = options;
 
   // The skeleton path is how 2024 monsters are built now; set
   // localStorage['statblock-skeleton'] = '0' to fall back to the chassis.
@@ -2849,7 +2854,7 @@ export async function generateMonster2024(options, callLLM) {
     return generateFromSkeleton({
       concept, description, cr, archetypeName, resolvedType, lore, themes, mind, degraded, onProgress, caster,
       conceptSize, movement, attackMode, signatureMechanic, takenNames, typeSource,
-      archetypeSource, namePass, house, recent, energy, damageMix, seed, proposedName,
+      archetypeSource, namePass, house, recent, energy, damageMix, seed, proposedName, naming,
     }, callLLM);
   }
 

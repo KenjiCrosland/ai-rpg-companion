@@ -313,6 +313,21 @@ describe('concept seeds', () => {
     for (let i = 0; i < 40; i++) seen.add(buildRandomConceptSeed().concept);
     expect(seen.size).toBeGreaterThan(30);
   });
+
+  test('the mind axis is print-weighted: sapient is the rule, mindless the exception', () => {
+    // Non-Beast print: 84% sapient / 6% bestial / 10% mindless. The axis
+    // was a uniform seven-way draw (~57% non-sapient — five times print's
+    // rate, the mindless-cluster the owner flagged on the Ssvorrach).
+    let sapient = 0; let mindless = 0;
+    const N = 4000;
+    for (let i = 0; i < N; i++) {
+      const tier = buildRandomConceptSeed().intelligence;
+      if (/sapient|scheming|genius/.test(tier)) sapient += 1;
+      if (/^mindless/.test(tier)) mindless += 1;
+    }
+    expect(sapient / N).toBeGreaterThan(0.72);
+    expect(mindless / N).toBeLessThan(0.14);
+  });
 });
 
 describe('seed leakage', () => {

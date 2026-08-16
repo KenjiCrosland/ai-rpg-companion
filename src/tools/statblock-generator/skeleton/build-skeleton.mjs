@@ -330,7 +330,18 @@ function satisfiedBy(chosen, traits = []) {
     for (const tag of a.imposes ?? []) met.add(tag);
     met.add(`ability:${a.ability}`);
   }
-  for (const t of traits) met.add(`trait:${t.trait ?? t.ability}`);
+  for (const t of traits) {
+    met.add(`trait:${t.trait ?? t.ability}`);
+    // A trait can PROVIDE a capability, not just exist. Five traits carry
+    // `imposes` (the Mimic's Adhesive grapples; the four elemental
+    // form-traits grant space_sharing), and ignoring them meant every row
+    // requiring what a trait provides failed the dependency fixpoint and
+    // silently died — Whirlwind, Whelm and Vortex could NEVER ship beside
+    // the form-trait that exists to enable them (the Dreamt Leech: Air
+    // Form shipped as Memory Passage, Whirlwind vanished, and the block's
+    // Recharge died with it).
+    for (const tag of t.imposes ?? []) met.add(tag);
+  }
   return met;
 }
 
@@ -394,7 +405,7 @@ const MODE_REFS = {
   burrow: /\bburrows\b|Burrow Speed/,
   climb: /Climb Speed/,
 };
-const SIGNATURE_FAMILIES = {
+export const SIGNATURE_FAMILIES = {
   'thrown-weapon': (a) => /Ranged Attack Roll/.test(a.template_2024) && (a.slot_type === 'plain_attack' || a.slot_type === 'rider_attack'),
   breath: (a) => a.slot_type === 'area' && Boolean(a.gate) && /Cone|Line/.test(a.template_2024),
   engulf: (a) => /swallow/i.test(a.template_2024),
@@ -468,7 +479,15 @@ const familiesOf = (row) => {
 // Uulghoth, Choir Silence + Silt Grasp idling on the same dice).
 const gatedLike = (a) => /Recharge/i.test(a.gate ?? '')
   || (!a.gate && a.slot_type === 'area'
-    && /Paralyzed|Stunned|Petrified|Unconscious|\{condition_hard\}/.test(a.template_2024));
+    && /Paralyzed|Stunned|Petrified|Unconscious|\{condition_hard\}/.test(a.template_2024)
+    // Ladder-form rows are SELF-gated by their escalation buffer, the same
+    // exemption the hardAreaUngated belt carries (the Ryll fix). This
+    // predicate was the fix's THIRD seam and never got it: the one-Recharge
+    // arbitration counted a Sleep Breath as gated-like and rationed it to
+    // 1/Day beside the fire breath (live: the Ssvorrach's Dream-Salt
+    // Exhalation) — print ships the ladder ungated BESIDE the Recharge on
+    // all 20 two-breath dragons.
+    && !/(?:First|Second) Failure/i.test(a.template_2024 ?? ''));
 
 // A pure-mobility row is an ESCAPE HATCH, and print never rations one:
 // Nimble Escape and Cunning Action are at-will. So when the one-Recharge
@@ -1138,7 +1157,11 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
         if (i === -1) continue;
         chosen[i] = PURE_MOBILITY(extra)
           ? { ...extra, gate: null }
-          : { ...extra, gate: '1/Day' };
+          // The original gate is stashed so step 9 can restore it if the
+          // row that KEPT the Recharge is dropped by a later pass — a
+          // demotion is an arbitration between two live rows, not a fact
+          // about this one.
+          : { ...extra, gate: '1/Day', gate_demoted_from: extra.gate };
       }
     }
     // 4. one row per family
@@ -1158,7 +1181,26 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
         if (i !== -1) chosen.splice(i, 1);
       }
     }
-    // 6. the melee floor RE-CHECKS after the drops. The floor's swapIn runs
+    // 6. the SIGNATURE promise RE-CHECKS after the drops — the melee
+    //    floor's disease, one guarantee over: the seat runs before this
+    //    pass, so any drop here can evict the one row the metadata
+    //    promised, and nothing verified the promise at the end (live: the
+    //    Pelted Lull — "signature teleport", a concept that opens by
+    //    blinking beside its prey, zero teleport rows shipped). swapIn
+    //    re-verifies first, keeps every filter, and seats a single-option
+    //    guaranteed menu, so nothing this pass dropped can come back and
+    //    the flavor call can't choose the promise away. Sited BEFORE the
+    //    melee re-check deliberately: the re-seated signature is in
+    //    `guaranteed` so the melee swap can't evict it, and the melee
+    //    floor re-verifies last — the pair can't cycle.
+    if (meta.signatureMechanic && SIGNATURE_FAMILIES[meta.signatureMechanic]) {
+      if (meta.signatureMechanic === 'engulf') {
+        swapIn((a) => (a.imposes ?? []).includes('grapple'), ['plain_attack', 'rider_attack', 'save_effect']);
+      }
+      swapIn(SIGNATURE_FAMILIES[meta.signatureMechanic], SLOT_TYPES.concat('legendary'),
+        meta.signatureMechanic === 'engulf' ? (a) => a.section === 'Bonus Actions' : null);
+    }
+    // 7. the melee floor RE-CHECKS after the drops. The floor's swapIn runs
     //    before the seats and before this pass, so a drop here could remove
     //    the very row that satisfied it — the Roc spine's talons satisfied
     //    the floor, then invariant 1 correctly dropped them (grapple on a
@@ -1170,13 +1212,36 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
       && !chosen.some((c) => isAttackRow(c) && meleeCapable(c))) {
       swapIn((a) => meleeCapable(a) && isAttackRow(a), ['plain_attack', 'rider_attack']);
     }
-    // 7. THE NOVA KEEPS ITS RECHARGE at the boss tier. Print is unanimous:
-    //    all 18 CR 15+ area-damage actions are Recharge-gated — zero 1/Day,
-    //    zero ungated. A 1/Day nova here front-loads one big turn and then
-    //    flatlines (live: the Brinewrack's 91-damage Shell-Song, spent by
-    //    round two). Promoted only when NO Recharge row exists, so the
-    //    one-Recharge invariant above is never violated.
-    if (crNumber(cr) >= 15 && !chosen.some((c) => /Recharge/i.test(c.gate ?? ''))) {
+    // 8. the DEMOTION'S PREMISE re-checks (the Dreamt Leech, 2026-08-16):
+    //    step 3 demotes extra gated rows to 1/Day on the premise that the
+    //    Recharge-keeper survives — but any later pass can drop the keeper
+    //    (live: the Air Elemental spine's Whirlwind held the Recharge and
+    //    died at the dependency fixpoint, so the breath shipped 1/Day with
+    //    no Recharge anywhere — print's CR 8 breaths are all Recharge 5-6).
+    //    When no Recharge remains, the first demoted survivor gets its
+    //    printed gate back; the one-Recharge law holds trivially either way.
+    //    Runs BEFORE the generic promotion below so an exact printed gate
+    //    (Recharge 4-6) beats the generic 5-6 stamp.
+    if (!chosen.some((c) => /Recharge/i.test(c.gate ?? ''))) {
+      const demoted = chosen.find((c) => c.gate_demoted_from);
+      if (demoted) {
+        chosen[chosen.indexOf(demoted)] = { ...demoted, gate: demoted.gate_demoted_from, gate_demoted_from: undefined };
+      }
+    }
+    // 9. NO 1/DAY-ONLY NOVAS, any tier (owner call, 2026-08-16). Measured
+    //    twice, both unanimous: all 18 CR 15+ area-damage actions are
+    //    Recharge-gated, and across the WHOLE corpus zero blocks field a
+    //    1/Day damage area as their only nova — the single printed 1/Day
+    //    damage area (the Vrock's Stunning Screech) sits beside a Recharge.
+    //    A 1/Day-only nova front-loads one big turn and then flatlines
+    //    (live: the Brinewrack's 91-damage Shell-Song at CR 20; the Dreamt
+    //    Leech's 60-damage breath at CR 8 — the "damage light" read).
+    //    Promoted only when NO Recharge row exists, so the one-Recharge
+    //    invariant above is never violated. This pairs with lurker
+    //    nova_mult 2.0 -> 1.5 in the spec: a Recharge nova returns
+    //    mid-fight, so it no longer needs to carry the whole discount in
+    //    one swing.
+    if (!chosen.some((c) => /Recharge/i.test(c.gate ?? ''))) {
       const nova = chosen.find((c) => c.slot_type === 'area'
         && /\{damage\}|\d+d\d+/.test(c.template_2024 ?? '') && /1\/Day/i.test(c.gate ?? ''));
       if (nova) chosen[chosen.indexOf(nova)] = { ...nova, gate: 'Recharge 5-6' };
@@ -1864,6 +1929,24 @@ export function buildSkeleton({
     const next = kept.filter((a) => (a.requires ?? []).every((r) => met.has(r)));
     if (next.length === kept.length) break;
     kept = next;
+  }
+  // The demotion's premise re-checks HERE too, not just inside the invariant
+  // pass: this fixpoint runs downstream of it and is the pass that killed
+  // the live keeper (the Dreamt Leech's Whirlwind). A 1/Day-demoted row on
+  // a block whose Recharge died gets its printed gate back.
+  if (!kept.some((c) => /Recharge/i.test(c.gate ?? ''))) {
+    const demoted = kept.find((c) => c.gate_demoted_from);
+    if (demoted) {
+      kept = kept.map((c) => (c === demoted
+        ? { ...c, gate: c.gate_demoted_from, gate_demoted_from: undefined } : c));
+    }
+  }
+  // ...and the no-1/Day-only-nova law (invariant step 9) holds here too,
+  // for the natively-1/Day area whose Recharge keeper died at the fixpoint.
+  if (!kept.some((c) => /Recharge/i.test(c.gate ?? ''))) {
+    const nova = kept.find((c) => c.slot_type === 'area'
+      && /\{damage\}|\d+d\d+/.test(c.template_2024 ?? '') && /1\/Day/i.test(c.gate ?? ''));
+    if (nova) kept = kept.map((c) => (c === nova ? { ...c, gate: 'Recharge 5-6' } : c));
   }
 
   // DC coherence (4 live blocks in a row flagged it): only CASTERS had a

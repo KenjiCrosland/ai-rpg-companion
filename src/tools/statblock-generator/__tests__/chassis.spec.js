@@ -198,7 +198,10 @@ describe('applyArchetype', () => {
   });
 
   test('lurker carries nova_mult; support carries solo_warning', () => {
-    expect(applyArchetype(chassisFor(5), 'lurker').nova_mult).toBe(2.0);
+    // 1.5 since 2026-08-16 (was 2.0): paired with the no-1/Day-only-nova
+    // law — a Recharge nova returns mid-fight, so the ambush spike no
+    // longer carries the whole sustained discount in one swing.
+    expect(applyArchetype(chassisFor(5), 'lurker').nova_mult).toBe(1.5);
     expect(applyArchetype(chassisFor(5), 'support').solo_warning).toBe(
       spec.archetypes.support.solo_warning
     );

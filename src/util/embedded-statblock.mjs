@@ -14,7 +14,7 @@
  * back deterministically, self-references included.
  */
 import {
-  generateMonster2024, buildArchetypeResolvePrompt, validateArchetypeResponse, rollEnergy, rollDamageMix,
+  generateMonster2024, buildArchetypeResolvePrompt, validateArchetypeResponse, rollEnergy, rollDamageMix, rollNamingConvention,
   parseGenerationResponse, pickRandomArchetype, applyRenameMapping, crNumberFor,
 } from '@/tools/statblock-generator/format-2024/generate.mjs';
 import { ref } from 'vue';
@@ -126,6 +126,7 @@ export async function generateEmbeddedStatblock({
   }
   const rolledEnergy = rollEnergy();
   const rolledMix = rollDamageMix();
+  const rolledNaming = rollNamingConvention();
   try {
     const raw = await generateGptResponse(buildArchetypeResolvePrompt(concept, '', { cr, archetype: givenArchetype, energy: rolledEnergy, damageMix: rolledMix }), validateArchetypeResponse, 2);
     const parsed = parseGenerationResponse(raw);
@@ -186,6 +187,7 @@ export async function generateEmbeddedStatblock({
         proposedName,
         energy: rolledEnergy,
         damageMix: rolledMix,
+        naming: rolledNaming,
         mind,
         conceptSize,
         movement,

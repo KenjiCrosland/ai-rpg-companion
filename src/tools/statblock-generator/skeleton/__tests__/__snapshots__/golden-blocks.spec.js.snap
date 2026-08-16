@@ -214,7 +214,7 @@ exports[`golden blocks (byte-exact through the refactor) G3: CR 12 web signature
       },
       {
         "name": "Thornclad Lash",
-        "text": "*Melee Attack Roll:* +10, reach 5 ft. 10 (1d8 + 6) Bludgeoning damage plus 7 (2d6) Poison damage.",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 10 (1d8 + 6) Slashing damage plus 7 (2d6) Poison damage.",
       },
       {
         "name": "Rootbound Surge (Recharge 5-6)",

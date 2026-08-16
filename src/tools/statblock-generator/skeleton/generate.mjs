@@ -46,6 +46,7 @@ export async function generateFromSkeleton(options, callLLM) {
     conceptSize = null, movement = null, attackMode = null, signatureMechanic = null,
     takenNames = [], typeSource = 'auto', archetypeSource = 'auto', namePass = null,
     house = null, recent = null, energy = null, damageMix = null, proposedName = null,
+    naming = null,
   } = options;
 
   const progress = (phase, data) => {
@@ -149,6 +150,7 @@ export async function generateFromSkeleton(options, callLLM) {
   });
   skeleton.houses = skeleton.identity.houses;
   if (skeleton.houses.length) trace('material house:', skeleton.houses.join(' + '));
+  if (naming) trace('naming convention:', naming);
   {
     const mf = skeleton.identity.manifest;
     trace('capability manifest:', [
@@ -167,6 +169,10 @@ export async function generateFromSkeleton(options, callLLM) {
     // concept alone, and costs nothing: the call has already happened.
     description: [description, identity, lore].filter(Boolean).join('\n'),
     proposedName,
+    // The synthesis prompt received the same rolled convention, so the
+    // candidate name and the flavor call's own coining agree on SHAPE;
+    // rotation is seeded by the block for bug-report reproducibility.
+    naming: naming ? { convention: naming, type: finalType } : null,
   });
 
   trace('flavor prompt:', `${prompt.length} chars`);

@@ -271,7 +271,7 @@
       "damage_mult": 0.6,
       "attack_mod": 1,
       "dc_mod": 0,
-      "nova_mult": 2.0,
+      "nova_mult": 1.5,
       "required_slots": [
         "stealth/phasing/invisibility trait",
         "ambush or once-per-fight nova mechanic"

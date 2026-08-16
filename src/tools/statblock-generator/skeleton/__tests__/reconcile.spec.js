@@ -88,3 +88,49 @@ describe('the gathered layers still hold at the unit level', () => {
     expect(r.blockSignature).toBe('web');
   });
 });
+
+describe('a Dragon has a mind (the Ssvorrach): 45/45 printed Dragons are at least bestial', () => {
+  const dragon = (mind) => {
+    const r = reconcileConcept({ crNum: 8, resolvedType: 'Dragon', typeSource: 'auto', mind });
+    return { type: r.finalType, mind: r.blockMind, traced: r.traces.some(([l]) => l === 'mind reconciled:') };
+  };
+
+  test('a mindless Dragon lifts to bestial — the Wyvern floor — and keeps its type', () => {
+    expect(dragon('mindless')).toEqual({ type: 'Dragon', mind: 'bestial', traced: true });
+  });
+
+  test('bestial and sapient Dragons stand untouched', () => {
+    expect(dragon('bestial')).toEqual({ type: 'Dragon', mind: 'bestial', traced: false });
+    expect(dragon('sapient')).toEqual({ type: 'Dragon', mind: 'sapient', traced: false });
+  });
+});
+
+describe('a Humanoid is a person (the Pelted Lull): 26/26 printed Humanoids are sapient speakers', () => {
+  const human = (over) => {
+    const r = reconcileConcept({ crNum: 8, resolvedType: 'Humanoid', typeSource: 'auto', ...over });
+    return { type: r.finalType, mind: r.blockMind, traced: r.traces.some(([l]) => l === 'type reconciled:') };
+  };
+
+  test('the Pelted Lull: a mindless Humanoid ships Monstrosity, traced', () => {
+    expect(human({ mind: 'mindless' }))
+      .toEqual({ type: 'Monstrosity', mind: 'mindless', traced: true });
+  });
+
+  test('a bestial Humanoid retypes too — the rule is sapience, not just mindlessness', () => {
+    expect(human({ mind: 'bestial' })).toEqual({ type: 'Monstrosity', mind: 'bestial', traced: true });
+  });
+
+  test('a sapient Humanoid stands untouched', () => {
+    expect(human({ mind: 'sapient' })).toEqual({ type: 'Humanoid', mind: 'sapient', traced: false });
+  });
+
+  test('the user\'s explicit Humanoid is the fixed point, mindless or not', () => {
+    expect(human({ mind: 'mindless', typeSource: 'user' }))
+      .toEqual({ type: 'Humanoid', mind: 'mindless', traced: false });
+  });
+
+  test('a prose INT claim rescues the type by proving sapience first', () => {
+    expect(human({ mind: 'mindless', concept: 'a cunning border-warden, fully sapient (INT 12).' }))
+      .toEqual({ type: 'Humanoid', mind: 'sapient', traced: false });
+  });
+});
