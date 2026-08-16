@@ -6177,9 +6177,67 @@ describe('the Ashgrave Warden: the harmonizer strips, never mints a type-word na
     expect(out).not.toMatch(/Bludgeoning|Piercing|Slashing/);
   });
 
+  test('the strip consumes an adjacent hyphen — no "-Breath" orphans (the Ashfall)', () => {
+    expect(harmonize('Cinder-Breath', '*Dexterity Saving Throw*: DC 15, each creature in a 60-foot-long, 5-foot-wide Line. *Failure:* 45 (13d6) Necrotic damage.'))
+      .toBe('Breath');
+  });
+
   test('a claim that IS the whole name survives for the audit to judge', () => {
     expect(harmonize('Cinder', '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Bludgeoning damage.'))
       .toBe('Cinder');
+  });
+});
+
+describe('the Ashfall / the Clacking Tide (smoke, 2026-08-16)', () => {
+  const { pickOnDeath, makeRng: rngOf } = require('../build-skeleton.mjs');
+  const REVIVAL = /gains a new body in 5d10 days|reforms with all its Hit Points|new body grows from it with all its Hit Points/i;
+
+  test('no legendary machinery below CR 10 — 29/30 printed legendaries are CR 10+', () => {
+    for (const cr of [6, 8, 9]) {
+      for (let seed = 1; seed <= 12; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, alternatives: 3, size: 'Large' });
+        expect(sk.entries.some((e) => e.slot_type === 'legendary')).toBe(false);
+        expect(sk.traits.some((t) => /Legendary Resistance/.test(t.name ?? ''))).toBe(false);
+      }
+    }
+  });
+
+  test('unconditional revival floors at CR 10 — the Aboleth is print\'s basement', () => {
+    let below = 0; let above = 0;
+    for (let seed = 1; seed <= 400; seed += 1) {
+      const at8 = pickOnDeath(8, rngOf(seed), {});
+      if (at8 && REVIVAL.test(at8.template_2024 ?? '')) below += 1;
+      const at12 = pickOnDeath(12, rngOf(seed), {});
+      if (at12 && REVIVAL.test(at12.template_2024 ?? '')) above += 1;
+    }
+    expect(below).toBe(0);
+    expect(above).toBeGreaterThan(0); // the shape still ships where print ships it
+  });
+
+  test('the doubled-article belt sweeps "The the" wherever a pass composed it', () => {
+    const { runCorrections } = require('../corrections.mjs');
+    const sections = { 'Bonus Actions': [{ name: 'Sink and Stalk', text: 'The the ashfall takes the Dash, Disengage, or Hide action.' }] };
+    const fired = runCorrections({
+      skeleton: { entries: [], traits: [], size: 'Medium', cr: 8, houses: [] },
+      j: { type: 'Dragon' }, sections, byId: new Map(),
+      energy: 'Necrotic', physical: 'Slashing', inline: 'the ashfall',
+      renderedOf: new Map(), fallbackEntryName: () => null,
+      NON_ACTION_SPELLS: [], SCALING_SPELLS: [], KNOWN_SPELLS: new Set(), atWillBanned: () => false,
+    });
+    expect(sections['Bonus Actions'][0].text).toBe('The ashfall takes the Dash, Disengage, or Hide action.');
+    expect(fired).toContain('doubled-article');
+  });
+
+  test('a folk name sheds its article at ingestion — references never double it', async () => {
+    const mock = async (prompt) => (/Every number is already fixed/.test(prompt)
+      ? JSON.stringify({ name: 'the Clacking Tide', entries: [] })
+      : null);
+    const m = await generateFromSkeleton({
+      concept: 'a scuttling tide of claws', cr: 3, seed: 4, resolvedType: 'Fiend',
+    }, mock);
+    expect(m.name).toBe('Clacking Tide');
+    const all = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+    expect(all).not.toMatch(/\bthe the\b/i);
   });
 });
 

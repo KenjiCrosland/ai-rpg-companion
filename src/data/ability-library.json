@@ -18814,7 +18814,7 @@
           "capacity_size_minor_offset": -1,
           "damage_type": "Bludgeoning"
         },
-        "template_2024": "*Strength Saving Throw*: DC {dc}, each creature in the {creature}'s space. *Failure:* {damage} ({dice}) {damage_type} damage. If the target is a {target_size} or smaller creature, it has the Grappled condition (escape DC {escape_dc}). Until the grapple ends, the target has the Restrained condition, is suffocating unless it can breathe {creature}, and takes {rider_damage} ({rider_dice}) {rider_damage_type} damage at the start of each of the {creature}'s turns. The {creature} can grapple one {capacity_size} creature or up to two {capacity_size_minor} or smaller creatures at a time with Whelm. As an action, a creature within {reach} feet of the {creature} can pull a creature out of it by succeeding on a DC {dc} Strength (Athletics) check. *Success:* Half damage only.",
+        "template_2024": "*Strength Saving Throw*: DC {dc}, each creature in the {creature}'s space. *Failure:* {damage} ({dice}) {damage_type} damage. If the target is a {target_size} or smaller creature, it has the Grappled condition (escape DC {escape_dc}). Until the grapple ends, the target has the Restrained condition, is suffocating unless it can breathe {substance}, and takes {rider_damage} ({rider_dice}) {rider_damage_type} damage at the start of each of the {creature}'s turns. The {creature} can grapple one {capacity_size} creature or up to two {capacity_size_minor} or smaller creatures at a time with Whelm. As an action, a creature within {reach} feet of the {creature} can pull a creature out of it by succeeding on a DC {dc} Strength (Athletics) check. *Success:* Half damage only.",
         "template_2014": "Each creature in the {creature}'s space must make a DC {dc} Strength saving throw. On a failure, a target takes {damage} ({dice}) {damage_type} damage. If it is Large or smaller, it is also grappled (escape DC {escape_dc}). Until this grapple ends, the target is restrained and unable to breathe unless it can breathe {creature}. If the saving throw is successful, the target is pushed out of the {creature}'s space. the {creature} can grapple one Large creature or up to two Medium or smaller creatures at one time. At the start of each of the {creature}'s turns, each target grappled by it takes {damage} ({dice}) {damage_type} damage. A creature within 5 feet of the {creature} can pull a creature or object out of it by taking an action to make a DC 14 Strength and succeeding.",
         "damage_instances": {
           "additive": 1,
@@ -26719,7 +26719,8 @@
           ],
           "pool": "on_death",
           "death_family": "continuity-place",
-          "archetypes": []
+          "archetypes": [],
+          "cr_floor": 10
         },
         {
           "cr": "10",
@@ -30303,7 +30304,8 @@
           "mind",
           "uncanny"
         ],
-        "excluded": "owner call 2026-08-13: the phylactery shape is retired — 'showing up too much and is too signature.' Revive-unless-a-counter-is-destroyed/fulfilled is the lich's own fingerprint however it is dressed, and it shipped on five of six consecutive review blocks as Reform, Unfinished Bargain, Unremembered Vigil, Renewing Radiance and Starless Return. The planar continuity-place shape stays: it carries no counter object and print puts it on every fiend, celestial and genie."
+        "excluded": "owner call 2026-08-13: the phylactery shape is retired — 'showing up too much and is too signature.' Revive-unless-a-counter-is-destroyed/fulfilled is the lich's own fingerprint however it is dressed, and it shipped on five of six consecutive review blocks as Reform, Unfinished Bargain, Unremembered Vigil, Renewing Radiance and Starless Return. The planar continuity-place shape stays: it carries no counter object and print puts it on every fiend, celestial and genie.",
+        "cr_floor": 10
       },
       {
         "death_family": "continuity-trophy",
@@ -30315,7 +30317,8 @@
           "forged",
           "uncanny"
         ],
-        "excluded": "owner call 2026-08-13: the phylactery shape is retired — 'showing up too much and is too signature.' Revive-unless-a-counter-is-destroyed/fulfilled is the lich's own fingerprint however it is dressed, and it shipped on five of six consecutive review blocks as Reform, Unfinished Bargain, Unremembered Vigil, Renewing Radiance and Starless Return. The planar continuity-place shape stays: it carries no counter object and print puts it on every fiend, celestial and genie."
+        "excluded": "owner call 2026-08-13: the phylactery shape is retired — 'showing up too much and is too signature.' Revive-unless-a-counter-is-destroyed/fulfilled is the lich's own fingerprint however it is dressed, and it shipped on five of six consecutive review blocks as Reform, Unfinished Bargain, Unremembered Vigil, Renewing Radiance and Starless Return. The planar continuity-place shape stays: it carries no counter object and print puts it on every fiend, celestial and genie.",
+        "cr_floor": 10
       },
       {
         "death_family": "succession",
@@ -30408,7 +30411,8 @@
           "verdant"
         ],
         "design_note": "authored 2026-08-05: each death family had exactly ONE template, so two blocks in three shared an on-death verbatim (live: Brine-Entombing Crash vs Carrion Frost — same trait, swapped nouns)",
-        "excluded": "owner call 2026-08-13: the phylactery shape is retired — 'showing up too much and is too signature.' Revive-unless-a-counter-is-destroyed/fulfilled is the lich's own fingerprint however it is dressed, and it shipped on five of six consecutive review blocks as Reform, Unfinished Bargain, Unremembered Vigil, Renewing Radiance and Starless Return. The planar continuity-place shape stays: it carries no counter object and print puts it on every fiend, celestial and genie."
+        "excluded": "owner call 2026-08-13: the phylactery shape is retired — 'showing up too much and is too signature.' Revive-unless-a-counter-is-destroyed/fulfilled is the lich's own fingerprint however it is dressed, and it shipped on five of six consecutive review blocks as Reform, Unfinished Bargain, Unremembered Vigil, Renewing Radiance and Starless Return. The planar continuity-place shape stays: it carries no counter object and print puts it on every fiend, celestial and genie.",
+        "cr_floor": 10
       }
     ],
     "_facet_note": "every facet reaches at least one death family (2026-08-06): an aquatic construct matched NO family, so family weighting was uniform and the inheritance-curse won three blocks running",

@@ -200,6 +200,18 @@ export function pickSlotCounts(cr, rng) {
   for (const s of [...SLOT_TYPES, 'trait', 'legendary']) {
     counts[s] = pickWeighted(slots[s].weights, rng);
   }
+  // NO LEGENDARY MACHINERY BELOW CR 10 (owner call, 2026-08-16, the
+  // Clacking Tide: LR 3/Day plus three legendary actions a round on a
+  // CR 8, stacked onto a full band routine the budget never discounted —
+  // "seems overpowered" was arithmetic, ~+60% DPR over band). Measured:
+  // 29 of 30 printed legendary blocks are CR 10+; CR 6-9 has zero. The
+  // lone exception is the CR 5 Unicorn, a guardian whose legendary
+  // actions heal and reposition rather than add damage — a shape we
+  // decline to reproduce, same shelf as the melee floor's Shrieker.
+  // The band-sampled weights can't see this edge: band 8-14 pools
+  // CR 10-14's legendary rate onto CR 8-9. LR follows automatically
+  // (the trait is added only when legendary slots exist).
+  if (crNumber(cr) < 10) counts.legendary = 0;
   // Legendary actions ramp with CR (owner call, 2026-08-02). Print offers no
   // gradient to follow — CR 15 is 3/4 legendary, CR 16 is 2/5, CR 20 is 2/3,
   // because the pattern is by FAMILY (dragons yes; the 2024 MM strips them
@@ -1763,6 +1775,14 @@ export function pickOnDeath(cr, rng, { typeHint = null, themes = null, recent = 
     // residue, anchors, and regrowth — never into a vow.
     if (t.excluded) return false;
     if (t.needs_mind && mind !== 'sapient') return false;
+    // UNCONDITIONAL revival floors at CR 10 (owner call, 2026-08-16, the
+    // Ashfall: a full-HP 5d10-day resurrection on a CR 8 scavenger drake).
+    // Print's split is exact: CONDITIONAL planar restoration ("dies
+    // outside the Abyss -> revives in the Abyss") ships at every tier —
+    // Lemure CR 0, Vrock 6, Hezrou 8 — because the counterplay is where
+    // you kill it; revival with no locational condition starts at the
+    // Aboleth's CR 10 and nothing below. cr_floor rides the data rows.
+    if (t.cr_floor != null && n < t.cr_floor) return false;
     const k = t.template_2024;
     if (seen.has(k)) return false;
     seen.add(k);

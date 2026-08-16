@@ -19,15 +19,17 @@ describe('the corrections registry contract', () => {
     //   - name-domain-vet before name-collisions (a reverted name can collide)
     //   - restraint-durability before restraint-physics (both edit the
     //     object parenthetical; physics matches on the scaled text)
-    //   - name-type-harmonizer last (it reads final dealt damage; the
-    //     Multiattack rebuild that follows in applyFlavor reads ITS names)
+    //   - name-type-harmonizer after every other NAME pass (it reads final
+    //     dealt damage; the Multiattack rebuild in applyFlavor reads ITS names)
+    //   - doubled-article dead last: a pure text sweep over whatever the
+    //     other passes composed (the folk-article class, 2026-08-16)
     expect(CORRECTIONS.map((p) => p.name)).toEqual([
       'speed-differential', 'movement-mode-refs', 'sight-range-fit',
       'tremorsense-pairing', 'dead-object-clause', 'swallow-capacity',
       'dead-dont-breathe', 'name-domain-vet',
       'name-collisions', 'spell-reference-guarantee', 'spell-text-hygiene',
       'restraint-durability', 'restraint-physics', 'capability-clause',
-      'absorbed-not-immune', 'name-type-harmonizer',
+      'absorbed-not-immune', 'name-type-harmonizer', 'doubled-article',
     ]);
   });
 

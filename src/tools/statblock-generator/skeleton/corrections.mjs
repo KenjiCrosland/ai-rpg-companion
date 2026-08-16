@@ -600,7 +600,12 @@ export const CORRECTIONS = [
                 if (bareHit.test(e.name) && energyDealt) {
                   e.name = e.name.replace(bareHit, energyDealt);
                 } else {
-                  const stripped = e.name.replace(claimRe, '').replace(/\s{2,}/g, ' ').trim();
+                  // The strip must consume an adjacent hyphen too:
+                  // "Cinder-Breath" minus "Cinder" left "-Breath" on a
+                  // live card (the Ashfall) — a leading orphan the audit
+                  // could flag but not fix.
+                  const stripped = e.name.replace(claimRe, '').replace(/\s{2,}/g, ' ')
+                    .replace(/^[-\s]+|[-\s]+$/g, '').replace(/-{2,}/g, '-').trim();
                   // an emptied name stays put — the audit's adjective
                   // clause owns the judgment call from here
                   e.name = stripped || oldName;
@@ -618,6 +623,23 @@ export const CORRECTIONS = [
               }
             }
           }
+        }
+      }
+    },
+  },
+  {
+    name: 'doubled-article',
+    apply({ sections }) {
+      // 16. "The the clacking tide makes..." — a proper name that arrived
+      //     wearing its own article, spliced into templates that supply
+      //     theirs (live: both folk-register blocks of 2026-08-16, every
+      //     reference line). The name is stripped at ingestion now; this
+      //     is the belt for any path that still mints the doubling —
+      //     sited LAST so it sweeps whatever the other passes composed.
+      for (const list of Object.values(sections)) {
+        for (const e of list) {
+          e.text = e.text.replace(/\b(the)\s+the\b/gi, '$1');
+          if (e.name) e.name = e.name.replace(/\b(the)\s+the\b/gi, '$1');
         }
       }
     },

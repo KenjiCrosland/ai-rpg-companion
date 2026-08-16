@@ -117,7 +117,12 @@ export const KENNING_NOUNS = [
 
 /** The folk-name voice: hearth-words, trade-words, kinship gone wrong. */
 export const FOLK_NAMES = [
-  'the Rattle-Wife', 'Old Grindmarrow', 'the Fen Butcher',
+  // Fused compounds, never hyphenated: the hyphenated example this list
+  // launched with ("the Rattle-Wife") coincided with two live blocks whose
+  // ENTRY names went hyphen-heavy (Ash-Claw, Grave-Choke, Cinder-Breath) —
+  // examples teach more than instructions, and the proper-name rules
+  // already say compounds fuse.
+  'the Rattlewife', 'Old Grindmarrow', 'the Fen Butcher',
   'the Ditch Piper', 'Granny Hollowbone', 'the Tollman',
   'the Weeping Ferryman', 'Old Sallow', 'the Bone Shepherd',
   'the Knacker', 'Wet Annie', 'the Midden King', 'Mother Casket',

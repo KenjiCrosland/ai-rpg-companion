@@ -183,6 +183,15 @@ export async function generateFromSkeleton(options, callLLM) {
     // the engine's type is authoritative; the vetting and kindred logic
     // inside applyFlavor read it from the response object
     if (flavor) flavor.type = finalType;
+    // A folk-register proper name arrives wearing its article ("the
+    // Clacking Tide") — but every template supplies its own ("The
+    // {creature} makes..."), so keeping it minted "The the clacking tide"
+    // in every reference (live: both folk blocks, 2026-08-16). The article
+    // is the folk convention's VOICE, not part of the name; the card and
+    // the prose both want it bare.
+    if (flavor && typeof flavor.name === 'string') {
+      flavor.name = flavor.name.replace(/^the\s+/i, '').trim() || flavor.name;
+    }
   } catch (e) {
     logger.warn('[skeleton] flavor call failed, shipping unflavored:', e?.message ?? e);
   }
