@@ -46,7 +46,7 @@ If the concept promises one distinctive thing this block does not deliver — a 
 Pick exactly one SHAPE and reproduce its numbers EXACTLY:
 (a) save: "*[Strength|Dexterity|Constitution|Wisdom] Saving Throw*: DC ${env.save.dc}, one creature the creature can see within 60 feet. *Failure:* ${env.save.damage} (${env.save.dice}) <one damage type the block already deals> damage." — you may add ONE rider from: the target's Speed is halved until the end of its next turn / the target can't take Reactions until the start of the creature's next turn.
 (b) condition: no damage. "*[same saves] Saving Throw*: DC ${env.save.dc}, one creature within 60 feet. *Failure:* The target has the <one of: ${env.conditionMenu.join(', ')}> condition until the end of the creature's next turn."
-(c) utility: no damage, no saving throw, no conditions — movement, stance, senses, or trickery only, at most 45 words.
+(c) utility: no damage, no saving throw, no conditions — movement, stance, senses, or trickery only, at most 45 words, and it must GRANT a concrete rule (a named action, a numbered distance or duration, Advantage or Disadvantage) — description alone is not an ability.
 
 Rules: never a Recharge or /Day gate; never a condition the block already imposes; write "the creature" for the monster's name (it is substituted); the NAME is plain English in the creature's own register.
 
@@ -96,6 +96,8 @@ export function verifyWrittenEntry(entry, monster, skeleton, { roleExclusion = n
     if (/\d+\s*\(\d+d\d+|Saving Throw|DC \d+/.test(text)) return 'shape c is pure utility';
     if (conds.length) return 'shape c carries no conditions';
     if (text.split(/\s+/).length > 55) return 'shape c over length';
+    // description alone is not an ability (the Corpse-Candle class)
+    if (!/\d|Advantage|Disadvantage|Dash|Disengage|Hide|Dodge|Search/.test(text)) return 'shape c grants no rule';
   }
   if (roleExclusion && roleExclusion(({ template_2024: text }))) return 'fights the combat role';
   // structural dedupe: a rewrite of an existing entry is a duplicate, not a gift
@@ -152,11 +154,22 @@ export function specOf(text) {
   for (const m of text.matchAll(/\b(AC \d+|HP \d+|\d+ feet|\d+ ft\.|\d+d\d+ days?|escape DC \d+|\d+ Hit Points(?: or fewer)?)\b/g)) {
     facts.push(m[1]);
   }
+  for (const kw of RULES_KEYWORDS) {
+    const m = text.match(new RegExp(`[^.]*\\b${kw}\\b[^.]*`));
+    if (m) facts.push(`(keep this rule) ${m[0].trim().slice(0, 180)}`);
+  }
   return [...new Set(facts)];
 }
 
 const numsOf = (t) => (String(t).match(/\d+d\d+(?:\s*[+-]\s*\d+)?|\d+/g) ?? [])
   .map((x) => x.replace(/\s+/g, '')).sort();
+// Rules KEYWORDS are mechanics too (the Rotting Bull's Corpse-Candle Glow:
+// an illumination row's Advantage clause replaced by "no prey escapes" —
+// asserted consequence, no rule — passed every numeric check). The authored
+// text must carry the same rules vocabulary the engine row carried.
+const RULES_KEYWORDS = ['Advantage', 'Disadvantage', 'Opportunity Attack', 'Reaction',
+  'Half damage', 'Emanation', 'Cone', 'Line', 'Sphere', 'Dash', 'Disengage', 'Hide',
+  'Dodge', 'Search', 'automatically succeeds', 'escape DC', 'Speed'];
 const setOf = (t, list, re) => list.filter((x) => new RegExp(re(x)).test(t)).sort().join('|');
 
 /** null when the authored text lives inside the engine row's envelope. */
@@ -178,6 +191,8 @@ export function verifyAuthoredRow(original, authored) {
   if (stats(original) !== stats(a)) return 'save stats differ';
   if ((a.match(/Attack Roll/g) ?? []).length !== (original.match(/Attack Roll/g) ?? []).length) return 'attack rolls differ';
   if (/Recharge|\/Day/i.test(a) && !/Recharge|\/Day/i.test(original)) return 'gate invented';
+  const kwRe = (k) => `\\b${k}\\b`;
+  if (setOf(original, RULES_KEYWORDS, kwRe) !== setOf(a, RULES_KEYWORDS, kwRe)) return 'rules terms differ';
   return null;
 }
 
@@ -209,7 +224,7 @@ ${digest}
 
 SAVE-ROW FORM: a row whose facts include a Saving Throw keeps the printed frame — "*<Stat> Saving Throw*: DC <n>, <target>. *Failure:* <your prose>." The frame is rules text; your voice lives inside the Failure clause, never in the frame.
 
-REWRITE THE ROWS BELOW in this creature's own voice — what each ability IS in its body and story. You receive each row's mechanical facts, never its old sentence: build fresh prose around those exact facts. Keep the printed statblock register (terse, rules-forward, third person); write "the creature" wherever the monster's name belongs. Every number and fact listed is mandatory and unalterable; add NO new damage, conditions, saves, or numbers of any kind.
+REWRITE THE ROWS BELOW as RULES TEXT, not prose. A statblock entry is a rule a DM executes: state the mechanics in print's canonical sentence shapes, in the creature's vocabulary, with AT MOST one short flavor clause per row. NEVER assert an effect you do not grant — "marks its prey", "no one escapes", "relentless pursuit" are banned unless the sentence states the actual rule (the condition, the Advantage, the numbered distance). If a fact below names a rules term (Advantage, a condition, an action), your text keeps that exact term doing that exact job. Write "the creature" wherever the monster's name belongs. Every number and fact listed is mandatory and unalterable; add NO new damage, conditions, saves, or numbers of any kind.
 
 ${specs}
 

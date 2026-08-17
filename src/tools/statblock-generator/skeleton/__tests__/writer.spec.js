@@ -140,3 +140,29 @@ describe('authored-case normalization (the Pelted Hound: 3 of 4 rows died of cap
     expect(verifyAuthoredRow(original, authored)).toBeNull();
   });
 });
+
+describe('the Rotting Bull: rules keywords are mechanics, prose is not an ability', () => {
+  const { verifyAuthoredRow, specOf, verifyWrittenEntry } = require('../writer.mjs');
+  const LAMP = 'The creature sheds Bright Light in a 10-foot radius, and the next attack roll against an illuminated creature has Advantage.';
+
+  test('dropping an Advantage clause for asserted prose is rejected', () => {
+    expect(verifyAuthoredRow(LAMP, 'The creature sheds Bright Light in a 10-foot radius; no prey caught in the glow escapes its relentless pursuit.'))
+      .toBe('rules terms differ');
+  });
+
+  test('a rewrite that keeps the rules term passes', () => {
+    expect(verifyAuthoredRow(LAMP, 'Grave-light gutters from the creature in a 10-foot radius of Bright Light, and the next attack roll against an illuminated creature has Advantage.'))
+      .toBeNull();
+  });
+
+  test('specOf surfaces keyword clauses as required facts', () => {
+    expect(specOf(LAMP).join(' | ')).toMatch(/keep this rule.*Advantage/);
+  });
+
+  test('a shape-c slot that only describes is rejected', () => {
+    const monster = { name: 'X', sections: { Actions: [] } };
+    const sk = { per_attack_damage: 10, save_dc: 15 };
+    expect(verifyWrittenEntry({ name: 'Gloom', shape: 'c', text: 'A sickly glow flickers about it, marking foes for pursuit and promising that none escape.' }, monster, sk, {}))
+      .toBe('shape c grants no rule');
+  });
+});
