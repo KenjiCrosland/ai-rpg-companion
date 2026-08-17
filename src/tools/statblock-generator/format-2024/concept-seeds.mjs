@@ -240,6 +240,32 @@ function rollBodyPlan() {
   return BODY_PLANS[0][1];
 }
 
+// ORIGIN x TYPE COMPATIBILITY (owner call, 2026-08-17, the Vhorlek: type
+// Beast rolled beside origin "the Astral Sea"). This map was removed for
+// half a turn in favor of letting the synthesis re-pick the pair from
+// full menus — and restored the same day (owner: "maybe we do the filter
+// matrix instead, to prevent llm concept clustering while keeping the
+// consistency"): a free re-pick hands the distribution back to the
+// model's attractors, the exact failure the rolls exist to prevent.
+// Exclusions per type, taste-and-lore judgments, owner-tunable line by
+// line. The hygiene test pins every entry to a real origin string.
+export const TYPE_ORIGIN_EXCLUDES = {
+  Beast: ['the Abyss', 'the Feywild', 'the Shadowfell', 'the Astral Sea', 'an elemental rift', 'the dreams of sleepers'],
+  Celestial: ['the Abyss', 'the Feywild', 'the Shadowfell', 'a scorching desert', 'the deep ocean', 'a storm-wracked coast', 'the Underdark', 'the arctic tundra', 'a volcanic waste', 'an elemental rift', 'a drowned swamp'],
+  Construct: ['the Abyss', 'the Feywild', 'the Shadowfell', 'the dreams of sleepers'],
+  Dragon: ['the Abyss'],
+  Elemental: ['the Abyss', 'the Feywild', 'the Shadowfell', 'a city of graves', 'the Astral Sea', 'the dreams of sleepers', 'a cursed battlefield'],
+  Fey: ['the Abyss', 'the Astral Sea', 'an elemental rift', 'a volcanic waste'],
+  Fiend: ['the Feywild'],
+  Giant: ['the Abyss', 'the Astral Sea', 'an elemental rift', 'the dreams of sleepers'],
+  Humanoid: ['the Abyss', 'an elemental rift', 'the dreams of sleepers'],
+  Monstrosity: ['the Abyss'],
+  Ooze: ['the Abyss', 'the Feywild', 'the Astral Sea', 'the dreams of sleepers'],
+  Plant: ['the Abyss', 'the Astral Sea', 'an elemental rift', 'a volcanic waste', 'the dreams of sleepers'],
+  Undead: ['the Abyss', 'the Feywild', 'an elemental rift', 'the Astral Sea'],
+  Aberration: ['the Abyss', 'the Feywild'],
+};
+
 export function buildRandomConceptSeed() {
   const traits = {
     intelligence: rollIntelligence(),
@@ -251,6 +277,13 @@ export function buildRandomConceptSeed() {
     creature_type: rollCreatureType(),
     body_plan: rollBodyPlan(),
   };
+  {
+    const banned = TYPE_ORIGIN_EXCLUDES[traits.creature_type] ?? [];
+    if (banned.includes(traits.origin)) {
+      const allowed = SEED_DIMENSIONS.origin.filter((o) => !banned.includes(o));
+      if (allowed.length) traits.origin = pick(allowed);
+    }
+  }
   const concept =
     `a ${traits.intelligence}, ${traits.physical} ${traits.silhouette} from ${traits.origin} — ${traits.disposition}. ` +
     `Its body plan is ${traits.body_plan} — this is rolled and not negotiable. ` +

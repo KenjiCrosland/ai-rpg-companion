@@ -26,7 +26,7 @@ describe('the corrections registry contract', () => {
     expect(CORRECTIONS.map((p) => p.name)).toEqual([
       'speed-differential', 'movement-mode-refs', 'sight-range-fit',
       'tremorsense-pairing', 'dead-object-clause', 'swallow-capacity',
-      'dead-dont-breathe', 'name-domain-vet',
+      'dead-dont-breathe', 'suffocation-medium', 'name-domain-vet',
       'name-collisions', 'spell-reference-guarantee', 'spell-text-hygiene',
       'restraint-durability', 'restraint-physics', 'capability-clause',
       'absorbed-not-immune', 'name-type-harmonizer', 'doubled-article',

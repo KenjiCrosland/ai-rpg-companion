@@ -918,3 +918,23 @@ describe('rollRandomCR (weighted random-path CR)', () => {
     expect(rolls.filter((c) => c >= 21).length / rolls.length).toBeLessThan(0.12);
   });
 });
+
+describe('the Vhorlek: origin x type compatibility, the full map', () => {
+  const { buildRandomConceptSeed, SEED_DIMENSIONS, TYPE_ORIGIN_EXCLUDES } = require('../format-2024/concept-seeds.mjs');
+
+  test('map hygiene: every excluded origin exists, so renames cannot silently disarm it', () => {
+    for (const [type, banned] of Object.entries(TYPE_ORIGIN_EXCLUDES)) {
+      for (const o of banned) expect(`${type}: ${o}`).toBe(`${type}: ${SEED_DIMENSIONS.origin.includes(o) ? o : 'UNKNOWN ORIGIN'}`);
+      expect(banned.length).toBeLessThan(SEED_DIMENSIONS.origin.length);
+    }
+  });
+
+  test('800 draws, zero banned pairs', () => {
+    for (let i = 0; i < 800; i += 1) {
+      const s2 = buildRandomConceptSeed();
+      const banned = TYPE_ORIGIN_EXCLUDES[s2.creature_type] ?? [];
+      expect(`${s2.creature_type} from ${s2.origin}: ${banned.includes(s2.origin) ? 'BANNED PAIR' : 'ok'}`)
+        .toBe(`${s2.creature_type} from ${s2.origin}: ok`);
+    }
+  });
+});

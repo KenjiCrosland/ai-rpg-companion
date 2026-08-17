@@ -189,6 +189,25 @@ export const CORRECTIONS = [
     },
   },
   {
+    name: 'suffocation-medium',
+    apply({ j, sections }) {
+      // WATER IS THE ONLY BREATHABLE MEDIUM (owner call, 2026-08-17, the
+      // Vhorlek: the swallow's suffocation exception filled with "dead,
+      // silent gravity" — lore prose in a medium slot, unadjudicable). The
+      // clause is now print-verbatim ("unless it can breathe water", the
+      // Water Elemental's own wording) in the data, and this pass strips
+      // the exception on any block WITHOUT a Swim speed: a land engulfer
+      // simply suffocates you. Water-breathers keep their freebie only
+      // where the engulfer is itself aquatic.
+      if (/swim/i.test(String(j.speed ?? ''))) return;
+      for (const list of Object.values(sections)) {
+        for (const e of list) {
+          e.text = e.text.split(' unless it can breathe water').join('');
+        }
+      }
+    },
+  },
+  {
     name: 'name-domain-vet',
     apply({ skeleton, j, sections, byId }) {
       // 0c. Name vocabulary vetting: a name token carrying another domain's

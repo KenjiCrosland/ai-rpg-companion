@@ -6449,3 +6449,27 @@ describe('the Old Dreamknot: the energy filters the material menu, and a control
     }
   });
 });
+
+describe('the Vhorlek: water is the only breathable medium', () => {
+  const { runCorrections } = require('../corrections.mjs');
+  const swallow = (speed) => {
+    const sections = { Actions: [{ name: 'Tar Swallow', text: 'Until the grapple ends, the target has the Restrained condition, is suffocating unless it can breathe water, and takes 4 (1d8) Necrotic damage.' }] };
+    runCorrections({
+      skeleton: { entries: [], traits: [], size: 'Large', cr: 8, houses: [] },
+      j: { type: 'Beast', speed }, sections, byId: new Map(),
+      energy: 'Necrotic', physical: 'Bludgeoning', inline: 'the vhorlek',
+      renderedOf: new Map(), fallbackEntryName: () => null,
+      NON_ACTION_SPELLS: [], SCALING_SPELLS: [], KNOWN_SPELLS: new Set(), atWillBanned: () => false,
+    });
+    return sections.Actions[0].text;
+  };
+
+  test('a land engulfer simply suffocates you', () => {
+    expect(swallow('30 ft., Burrow 40 ft.')).toMatch(/is suffocating, and takes/);
+    expect(swallow('30 ft., Burrow 40 ft.')).not.toMatch(/breathe water/);
+  });
+
+  test('an aquatic engulfer keeps the printed water exception', () => {
+    expect(swallow('30 ft., Swim 40 ft.')).toMatch(/suffocating unless it can breathe water/);
+  });
+});
