@@ -26632,7 +26632,8 @@
           "template_2024": "For each head the {creature} has beyond one, it gets an extra Reaction that can be used only for Opportunity Attacks.",
           "archetypes": [
             "defender"
-          ]
+          ],
+          "excluded": "Orphaned by the Multiple Heads exclusion (owner call 2026-08-16, the Pelted Hound): the head-count referent this trait scales from was the Hydra organ the owner already removed, so on any other creature it grants Reactions per heads the sheet never establishes — dead text of the dangling-reference class."
         },
         {
           "cr": "8",

@@ -314,6 +314,16 @@ describe('concept seeds', () => {
     expect(seen.size).toBeGreaterThan(30);
   });
 
+  test('the disposition axis stays in its lane: no body plans, no mind words', () => {
+    // 'a colony of many small bodies' lived here and re-fed the collective
+    // attractor rollBodyPlan exists to kill (live: the Bramble Noose seed
+    // said 'a SINGLE creature' and 'a colony' at once); 'mindless' fought
+    // the print-weighted intelligence roll the same way.
+    for (const d of SEED_DIMENSIONS.disposition) {
+      expect(d).not.toMatch(/colony|swarm|collective|hive|fused|mindless|sapient/i);
+    }
+  });
+
   test('the mind axis is print-weighted: sapient is the rule, mindless the exception', () => {
     // Non-Beast print: 84% sapient / 6% bestial / 10% mindless. The axis
     // was a uniform seven-way draw (~57% non-sapient — five times print's

@@ -308,6 +308,17 @@ export function reconcileConcept({
       }
     }
   }
+  // AN OOZE DEALS ACID, full stop (owner catch 2026-08-17, the Skorvith: a
+  // Fire-dealing Ooze that also DECLARED Fire vulnerability — dealing your
+  // own weakness, 0/329). The settled Arterial Drifter rule stamped an
+  // Ooze's PHYSICAL pools to its energy, assuming the energy was Acid; a
+  // pre-concept roll of Fire slid straight through. Print is unanimous —
+  // all 4 printed Oozes deal Acid and nothing else — so this contract is
+  // absolute and sits LAST, outranking even the prose's own declaration.
+  if (finalType === 'Ooze' && blockEnergy && blockEnergy !== 'Acid') {
+    trace('damage reconciled:', `${blockEnergy} -> Acid (an Ooze deals Acid: 4/4 printed, no exceptions)`);
+    blockEnergy = 'Acid';
+  }
   return {
     finalType, blockArchetype, blockThemes, blockMind, blockSize,
     blockMovement, blockAttackMode, blockSignature, blockMix, blockEnergy,

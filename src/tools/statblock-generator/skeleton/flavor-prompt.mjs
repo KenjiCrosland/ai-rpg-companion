@@ -477,6 +477,11 @@ export function buildFlavorPrompt(skeleton, { concept, description = '', themes 
     // nearly fixed (the attack and save lines are rules format), so there is
     // nothing to write; a trait is free prose and is where a donor's
     // fiction shows.
+    // (The call-A diet removed this invitation for half a day, 2026-08-17,
+    // and was REVERTED same day: the writer's authored-rate was still ~0,
+    // so rows lost BOTH voice passes and shipped raw template text — the
+    // Skorvith's Seeping Coil. Re-dieting requires the writer live-proven
+    // at authoring first: the gate that got skipped.)
     if (r.section === 'Traits') {
       return `- ${r.id} (Traits): ${r.text}\n  provide: ${asks}, and OPTIONALLY "text" — the same mechanic re-written in THIS creature's voice.`
         + '\n  If you write it: change no number, add or remove no condition, no damage type, and no rules keyword'

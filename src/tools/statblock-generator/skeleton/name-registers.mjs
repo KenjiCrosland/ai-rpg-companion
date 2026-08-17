@@ -55,6 +55,15 @@ import { primordialCharacterEpithets } from '@/shared/registers/primordial.mjs';
  * attempt; coinage a strong minority; folk as spice.
  */
 export const NAMING_WEIGHTS = { kenning: 55, coinage: 30, folk: 15 };
+// Folk was retired for half a day (2026-08-16) on a misattribution — the
+// disliked names ("Pelted Hound") were KENNING rolls; folk minted "the
+// Clacking Tide", arguably the sprint's best name — and restored the same
+// day (owner: "oh maybe folk is good and not kenning"). The live scorecard
+// keeps all three: every register has a win at n=6, and the real residue
+// is cross-block adjective ECHO in the kenning path ("Pelted" twice,
+// because it leads hide's four-adjective list), which is ledger-class
+// work, not a register's fault. The article-doubling folk once minted is
+// fixed deterministically (ingestion strip + doubled-article pass).
 
 export function rollNamingConvention(rand = Math.random) {
   const entries = Object.entries(NAMING_WEIGHTS);
@@ -166,7 +175,7 @@ export function buildNamingBrief(convention, { type = null, seed = null } = {}) 
   if (convention === 'kenning') {
     const nouns = sample(KENNING_NOUNS, 8, rand).join(', ');
     return `
-THE NAME — the convention is rolled, like the energy, and is not negotiable: this creature's proper name is a KENNING — one or two plain English words, an adjective, material, or habit joined to a CONCRETE creature-noun (the Owlbear / Displacer Beast / Shambling Mound shape). Creature-nouns in this register (calibration — coin beyond them freely): ${nouns}. The noun must be a BODY the reader pictures alive: an animal, a figure, a physique. Never an object, container, structure, or state of mind — if the noun could sit on a shelf or name a mood, it cannot anchor a monster. If the name you wanted fights the convention, change the name, not the convention.
+THE NAME — the convention is rolled, like the energy, and is not negotiable: this creature's proper name is a KENNING — one or two plain English words, a MODIFIER joined to a CONCRETE creature-noun. The modifier is TESTIMONY, not lore: what a survivor who watched the creature for six seconds would report — its gait (Shambling Mound), a power seen happening (Displacer Beast, Blink Dog), its substance (Gelatinous Cube), its doubled body (Owlbear). Never its origin, maker, or mood: "Dreamt", "Cursed", "Forgotten" are backstory no witness can see — and an adjective every such creature earns ("Pelted" on a furred beast) picks out nothing. Creature-nouns in this register (calibration — coin beyond them freely): ${nouns}. The noun must be a BODY the reader pictures alive: an animal, a figure, a physique. Never an object, container, structure, or state of mind — if the noun could sit on a shelf or name a mood, it cannot anchor a monster. If the name you wanted fights the convention, change the name, not the convention.
 `;
   }
   if (convention === 'coinage') {

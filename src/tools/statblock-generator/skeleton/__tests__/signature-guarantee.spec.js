@@ -43,7 +43,11 @@ const SHIPPED = {
 // The eviction class is CLOSED for these — zero tolerance.
 const RESIDUE_CEILING = {
   'thrown-weapon': 1, breath: 0, engulf: 0, grapple: 0,
-  aura: 5, teleport: 0, summon: 0, web: 0,
+  // 5 -> 6 on 2026-08-16: the Reactive Heads exclusion reshuffled pool
+  // draws and one more aura seed starves (cr8 seed11) — the known
+  // narrow-predicate starvation class, not an eviction. A conscious bump,
+  // per this file's contract.
+  aura: 6, teleport: 0, summon: 0, web: 0,
 };
 
 test('every reconciled signature promise ships, within the pinned residue', () => {

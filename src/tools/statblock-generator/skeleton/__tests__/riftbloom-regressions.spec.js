@@ -474,6 +474,10 @@ describe('Glacier Keeper regressions (live block 6, CR 20)', () => {
       // counter-is-destroyed is the lich's fingerprint however dressed
       'Guardian Naga/Celestial Restoration',
       'Hydra/Multiple Heads',
+      // its sibling followed 2026-08-16 (the Pelted Hound): Reactive Heads
+      // scales from a head count only Multiple Heads established — on any
+      // other creature it grants Reactions per heads the sheet never states
+      'Hydra/Reactive Heads',
       // the lich's phylactery is unmistakable under any rename (owner
       // call: a "Spirit Jar Revival" on a dream-dragon and a "Barrow
       // Anchor" on a warden both read as the lich in a hat)
@@ -5406,6 +5410,10 @@ describe('the trait spec renderer: written natively, verified mechanically', () 
   });
 
   test('the prompt invites a re-write for TRAITS and never for actions', () => {
+    // The call-A diet removed this invitation for half a day (2026-08-17)
+    // and was reverted: with the writer's authored-rate still ~0, traits
+    // lost both voice passes and shipped raw template text (the Skorvith).
+    // Re-dieting requires the writer live-proven at authoring first.
     const sk = buildSkeleton({ cr: 20, seed: 4, themes: ['forged'] });
     const p = bfp(sk, { concept: 'an iron warden', themes: ['forged'] });
     const traitLines = p.split('\n').filter((l) => /^- \w+ \(Traits\)/.test(l));
@@ -6392,5 +6400,18 @@ describe('the Dreamt Leech: a trait can PROVIDE a capability, and a demotion is 
       movement: ['burrow', 'climb'], attackMode: 'melee', signatureMechanic: 'breath', damageMix: 'both',
     });
     expect(leech.entries.some((e) => e.name === 'Whirlwind')).toBe(true);
+  });
+});
+
+describe('the Skorvith: the lurker discount always gets its outlet', () => {
+  test('no lurker at any tier ships without a gated damage area', () => {
+    for (const cr of [5, 8, 12, 20]) {
+      for (let seed = 1; seed <= 15; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, alternatives: 3, archetype: 'lurker' });
+        const spike = sk.entries.some((e) => (e.gate ?? '') !== '' && (e.damage ?? 0) > 0);
+        expect(`cr${cr} seed${seed}: ${spike ? 'spike present' : 'NO SPIKE'}`)
+          .toBe(`cr${cr} seed${seed}: spike present`);
+      }
+    }
   });
 });

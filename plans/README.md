@@ -42,3 +42,5 @@ Production changes across the whole expansion: `data-testid` additions, the `con
 - [Vocabulary authority](vocabulary-authority.md) — trigger: the facet/house split or texture-bank authoring; object-noun drift and dual-authority collisions.
 - [Name/mechanics nits](name-mechanics-nits.md) — trigger: next audit-prompt revision.
 - [Action spec renderer + concept names](action-spec-renderer.md) — trigger: concept-slot build or renderer phase 2.
+- [Disposition axis → rolled archetype](disposition-axis-to-rolled-archetype.md) — trigger: next blank-form lurker-cluster complaint or seed-axis work. Owner-agreed design: blank forms roll the archetype into the fixed-role path; disposition becomes concept-derived. Pure removal is forbidden (6/8 lurker measurement).
+- [Entry-name conventions from the corpus](entry-name-conventions.md) — trigger: next statblock naming work or the next hyphen-chain sheet; parked behind the writer-call promotion. Measured: 3 of 402 printed entry names hyphenate (0.7%), 97% are 1-2 plain words. Carries three ledger observations to verify (same-type rider merge, bladderwrack vs the habitat vet, sapient understand-only languages).

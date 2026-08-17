@@ -1258,6 +1258,20 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
         && /\{damage\}|\d+d\d+/.test(c.template_2024 ?? '') && /1\/Day/i.test(c.gate ?? ''));
       if (nova) chosen[chosen.indexOf(nova)] = { ...nova, gate: 'Recharge 5-6' };
     }
+    // 10. the legendary MENU floor re-checks HERE too — its earlier
+    //     re-check runs before this pass, and the family cap (step 4) can
+    //     drop a legendary after it (surfaced by the Skorvith area floor
+    //     shifting draws: CR 17 lurker seed 6 shipped exactly one).
+    if (crNumber(cr) >= 15) {
+      const legCount = () => chosen.filter((c) => c.slot_type === 'legendary').length;
+      for (let tries = 0; tries < 3 && legCount() === 1; tries += 1) {
+        const before = legCount();
+        swapIn((a) => a.slot_type === 'legendary'
+          && !familiesOf(a).some((f) => chosen.some((c) => familiesOf(c).includes(f))),
+        ['legendary']);
+        if (legCount() === before) break; // nothing legal left; take the one
+      }
+    }
   }
   return chosen;
 }
@@ -1835,6 +1849,14 @@ export function buildSkeleton({
   const castStatWord = pickCastStat(rng);
   nums.cast_stat_word = castStatWord;
   const counts = pickSlotCounts(cr, rng);
+  // THE DISCOUNT NEEDS ITS OUTLET (owner catch 2026-08-17, the Skorvith:
+  // a CR 8 lurker rolled area=0, its signature resolved to a zero-damage
+  // snare, and the block shipped 27 total DPR against a ~50 band — the
+  // 0.6x sustained discount applied with NO spike to pay it back). The
+  // legendary tier has this exact floor already; any archetype whose
+  // nova_mult > 1 assumes a gated damage area exists, so one is
+  // guaranteed the same way.
+  if ((nums.nova_mult ?? 1) > 1 && !counts.area) counts.area = 1;
   // ENTRY-COUNT VALVE (owner call, 2026-08-05): print's total entry count
   // maxes at 12 (Tarrasque) with a median of 8 at CR 10+; independent
   // sampling occasionally stacks every slot hot and guarantees pile on

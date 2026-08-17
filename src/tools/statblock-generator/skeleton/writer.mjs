@@ -109,3 +109,145 @@ export function verifyWrittenEntry(entry, monster, skeleton, { roleExclusion = n
   }
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// COMPONENT 4 — the writer as AUTHOR (owner go, 2026-08-16). The engine
+// states each row's numbers and closure paths; the model writes what the
+// ability IS, in the creature's voice — the donor sentence is never shown.
+// Verification is number-MULTISET equality plus condition/type/save-stat set
+// equality (the audit-rewrite actuator's proven trick): every number the
+// engine priced must appear, nothing new may. Any failure keeps the
+// engine-filled text for that row — never-fail holds PER ROW.
+// ---------------------------------------------------------------------------
+
+const RULES_ROW = /^(Multiattack|Spellcasting|Legendary Resistance|Legendary Action Uses)/i;
+
+/** Author-eligible rows: the wordy non-attack rows where donor voice lives. */
+export function pickVoiceRows(monster, cap = 4) {
+  const rows = [];
+  for (const [section, list] of Object.entries(monster.sections ?? {})) {
+    for (const e of list) {
+      if (RULES_ROW.test(e.name ?? '') || /Attack Roll:/.test(e.text ?? '')) continue;
+      if ((e.text ?? '').length < 90) continue; // one-liners carry no voice
+      rows.push({ section, name: e.name, text: e.text });
+    }
+  }
+  return rows.sort((x, y) => y.text.length - x.text.length).slice(0, cap);
+}
+
+/** The row's mechanical facts — what the authored text MUST reproduce. */
+export function specOf(text) {
+  const facts = [];
+  const save = text.match(/(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) Saving Throw[^,.]*?DC (\d+)/);
+  if (save) facts.push(`${save[1]} Saving Throw, DC ${save[2]}`);
+  const tgt = text.match(/(each creature in [^.,;]+|one creature[^.,;]*?within \d+ feet[^.,;]*)/);
+  if (tgt) facts.push(tgt[1].trim());
+  for (const m of text.matchAll(/(\d+) \((\d+d\d+(?:\s*[+-]\s*\d+)?)\) (\w+) damage/g)) {
+    facts.push(`${m[1]} (${m[2]}) ${m[3]} damage`);
+  }
+  for (const c of CONDITIONS) {
+    const m = text.match(new RegExp(`\\b${c} condition( until [^.]+)?`));
+    if (m) facts.push(`${c} condition${m[1] ?? ''}`);
+  }
+  for (const m of text.matchAll(/\b(AC \d+|HP \d+|\d+ feet|\d+ ft\.|\d+d\d+ days?|escape DC \d+|\d+ Hit Points(?: or fewer)?)\b/g)) {
+    facts.push(m[1]);
+  }
+  return [...new Set(facts)];
+}
+
+const numsOf = (t) => (String(t).match(/\d+d\d+(?:\s*[+-]\s*\d+)?|\d+/g) ?? [])
+  .map((x) => x.replace(/\s+/g, '')).sort();
+const setOf = (t, list, re) => list.filter((x) => new RegExp(re(x)).test(t)).sort().join('|');
+
+/** null when the authored text lives inside the engine row's envelope. */
+export function verifyAuthoredRow(original, authored) {
+  if (typeof authored !== 'string' || authored.trim().length < 20) return 'no text';
+  const a = authored.trim();
+  // floored at print's own p95 (measured 2026-08-17: 643 printed non-attack
+  // rows — median 138, p90 349, p95 439, max 967). The first floor (300)
+  // was a guess that executed print-normal lengths: three of the author
+  // path's first six losses were "over length" on prose shorter than
+  // print's 95th percentile.
+  if (a.length > Math.max(original.length * 1.7 + 100, 440)) return 'over length';
+  if (JSON.stringify(numsOf(original)) !== JSON.stringify(numsOf(a))) return 'numbers differ';
+  const condRe = (c) => `\\b${c} condition\\b`;
+  if (setOf(original, CONDITIONS, condRe) !== setOf(a, CONDITIONS, condRe)) return 'conditions differ';
+  const typeRe = (d) => `\\b${d} damage\\b`;
+  if (setOf(original, ENERGY_AND_PHYSICAL, typeRe) !== setOf(a, ENERGY_AND_PHYSICAL, typeRe)) return 'damage types differ';
+  const stats = (t) => (String(t).match(/(?:Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)(?= Saving Throw)/g) ?? []).sort().join('|');
+  if (stats(original) !== stats(a)) return 'save stats differ';
+  if ((a.match(/Attack Roll/g) ?? []).length !== (original.match(/Attack Roll/g) ?? []).length) return 'attack rolls differ';
+  if (/Recharge|\/Day/i.test(a) && !/Recharge|\/Day/i.test(original)) return 'gate invented';
+  return null;
+}
+
+export function buildAuthorPrompt(monster, skeleton, { concept = '', rows = [] } = {}) {
+  const env = writerEnvelopes(skeleton);
+  const digest = Object.entries(monster.sections ?? {})
+    .flatMap(([sec, list]) => list.map((e) => `- [${sec}] ${e.name}`)).join('\n');
+  const specs = rows.map((r) => {
+    const facts = specOf(r.text);
+    // Verification is a number MULTISET check against the engine row, so
+    // any numeric token the fact regexes didn't classify still has to
+    // reach the author — an honest writer can't reproduce a number it was
+    // never shown (durations, push distances, counts).
+    const covered = numsOf(facts.join(' '));
+    const leftovers = [];
+    const pool = [...covered];
+    for (const nTok of numsOf(r.text)) {
+      const i = pool.indexOf(nTok);
+      if (i === -1) leftovers.push(nTok); else pool.splice(i, 1);
+    }
+    return `### "${r.name}" [${r.section}]\nRequired materials — every fact below must appear in your text, numbers EXACTLY as written, nothing added:\n${facts.map((f) => `- ${f}`).join('\n')}${leftovers.length ? `\n- your text must also contain, verbatim: ${[...new Set(leftovers)].join(', ')}` : ''}`;
+  }).join('\n\n');
+  return `You are finishing a D&D 2024 monster. Its mechanics are FIXED; you are its writer, not its designer.
+
+CONCEPT: ${concept}
+
+THE BLOCK (names only):
+${digest}
+
+SAVE-ROW FORM: a row whose facts include a Saving Throw keeps the printed frame — "*<Stat> Saving Throw*: DC <n>, <target>. *Failure:* <your prose>." The frame is rules text; your voice lives inside the Failure clause, never in the frame.
+
+REWRITE THE ROWS BELOW in this creature's own voice — what each ability IS in its body and story. You receive each row's mechanical facts, never its old sentence: build fresh prose around those exact facts. Keep the printed statblock register (terse, rules-forward, third person); write "the creature" wherever the monster's name belongs. Every number and fact listed is mandatory and unalterable; add NO new damage, conditions, saves, or numbers of any kind.
+
+${specs}
+
+ALSO: if the concept promises one distinctive thing this block does not deliver, write it as ONE extra ability using exactly this shape: "*[Strength|Dexterity|Constitution|Wisdom] Saving Throw*: DC ${env.save.dc}, one creature within 60 feet. *Failure:* The target has the <one of: ${env.conditionMenu.join(', ')}> condition until the end of its next turn." Omit it if the block already says everything — {"use": false} is a good answer.
+
+Return ONLY JSON:
+{"rows": [{"name": "<the row's exact name, unchanged>", "text": "<your prose>"}], "slot": {"use": true|false, "section": "Actions"|"Bonus Actions"|"Traits", "shape": "b", "name": "<name>", "text": "<text>"}}`;
+}
+
+export function validateAuthorResponse(jsonString) {
+  try {
+    const p = JSON.parse(String(jsonString).replace(/^```json\s*|```\s*$/g, '').trim());
+    if (!p || !Array.isArray(p.rows)) return false;
+    for (const r of p.rows) {
+      if (!r || typeof r.name !== 'string' || typeof r.text !== 'string') return false;
+    }
+    return p.slot == null || p.slot.use === false
+      || (p.slot.use === true && ['Actions', 'Bonus Actions', 'Traits'].includes(p.slot.section)
+        && typeof p.slot.name === 'string' && typeof p.slot.text === 'string');
+  } catch { return false; }
+}
+
+/**
+ * Deterministic case repair for authored prose (the Pelted Hound smoke:
+ * 3 of 4 authored rows died of capitalization — lowercase "fire damage"
+ * failed type equality, lowercase "reaction" tripped the caps lint). A
+ * fixed term list title-cased in place cannot alter mechanics; it runs
+ * BEFORE verification so honest prose isn't executed for its case.
+ */
+const CASED_TERMS = [...ENERGY_AND_PHYSICAL.map((t) => `${t} damage`), ...CONDITIONS.map((c) => `${c} condition`),
+  'Opportunity Attack', 'Opportunity Attacks', 'Reaction', 'Reactions', 'Bonus Action',
+  'Hit Points', 'Hit Point maximum', 'Saving Throw', 'Advantage', 'Disadvantage',
+  'Long Rest', 'Short Rest', 'Difficult Terrain', 'Speed',
+  'Hide action', 'Dash action', 'Disengage action', 'Dodge action', 'Search action'];
+export function normalizeAuthoredCase(text) {
+  let out = String(text);
+  for (const term of CASED_TERMS) {
+    out = out.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), term);
+  }
+  return out;
+}

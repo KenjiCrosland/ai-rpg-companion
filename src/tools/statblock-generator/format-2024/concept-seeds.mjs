@@ -68,9 +68,15 @@ export const SEED_DIMENSIONS = {
     'a protective herd-beast that shields its own kind',
     'a curious trickster, more mischief than malice',
     'a benevolent warden sworn to protect travelers who show respect',
-    'a mindless scavenger drawn to carrion and ruin',
+    'a scavenger drawn to carrion and ruin',
     'a proud sentinel bound to an ancient oath it no longer remembers',
-    'a colony of many small bodies acting as one will',
+    // 'a colony of...' removed 2026-08-17: a colony is a BODY PLAN, and
+    // rollBodyPlan already offers collectives at print's 3% — this option
+    // re-fed the attractor 1-in-12 and CONTRADICTED the 94% singular roll
+    // inside one seed (live: the Bramble Noose, 'a SINGLE creature' and
+    // 'a colony' in the same concept). Mind words left the axis the same
+    // day for the same reason.
+    'a hoarder that drags its kills back to a lair of trophies',
   ],
   // Linguistic registers for the NAME (owner direction, 2026-07-19; trimmed
   // to the folk family same day — coinage and Latinate registers produced

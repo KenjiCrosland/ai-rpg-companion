@@ -89,6 +89,25 @@ describe('the gathered layers still hold at the unit level', () => {
   });
 });
 
+describe('an Ooze deals Acid (the Skorvith): 4/4 printed, no exceptions', () => {
+  test('a rolled Fire on an Ooze reconciles to Acid, traced', () => {
+    const r = reconcileConcept({ crNum: 8, resolvedType: 'Ooze', typeSource: 'auto', damageMix: 'both', energy: 'Fire' });
+    expect(r.blockEnergy).toBe('Acid');
+    expect(r.traces.some(([l, d]) => l === 'damage reconciled:' && /Acid/.test(d))).toBe(true);
+  });
+
+  test('the contract outranks even a prose declaration — print has no fire oozes', () => {
+    const r = reconcileConcept({ crNum: 8, resolvedType: 'Ooze', typeSource: 'auto', damageMix: 'both', energy: 'Cold',
+      concept: 'a burning mass, searing flame in its folds, fire dripping from it' });
+    expect(r.blockEnergy).toBe('Acid');
+  });
+
+  test('an Acid Ooze passes untouched', () => {
+    const r = reconcileConcept({ crNum: 8, resolvedType: 'Ooze', typeSource: 'auto', damageMix: 'both', energy: 'Acid' });
+    expect(r.blockEnergy).toBe('Acid');
+  });
+});
+
 describe('a Dragon has a mind (the Ssvorrach): 45/45 printed Dragons are at least bestial', () => {
   const dragon = (mind) => {
     const r = reconcileConcept({ crNum: 8, resolvedType: 'Dragon', typeSource: 'auto', mind });

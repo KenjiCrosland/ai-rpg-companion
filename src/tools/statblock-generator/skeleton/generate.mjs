@@ -14,7 +14,7 @@
  */
 import { buildSkeleton, crNumber, ROLE_EXCLUSIONS } from './build-skeleton.mjs';
 import { reconcileConcept } from './reconcile.mjs';
-import { buildWriterPrompt, validateWriterResponse, verifyWrittenEntry } from './writer.mjs';
+import { verifyWrittenEntry, pickVoiceRows, buildAuthorPrompt, validateAuthorResponse, verifyAuthoredRow, normalizeAuthoredCase } from './writer.mjs';
 import {
   buildFlavorPrompt, validateFlavorResponse, applyFlavor,
   chassisFromSkeleton, planFromSkeleton, swapEntries, pickHouse, resolveIdentity,
@@ -408,34 +408,71 @@ export async function generateFromSkeleton(options, callLLM) {
   if (!degraded && crNum >= 5) {
     try {
       progress('status', { stage: 'writing' });
-      const raw = await callLLM(buildWriterPrompt(monster, skeleton, { concept }), validateWriterResponse);
+      // COMPONENT 4 (owner go, 2026-08-16): the writer is the AUTHOR. The
+      // voice rows go in as mechanical specs — donor sentence never shown —
+      // and come back as the creature's own prose; verification is
+      // number-multiset + condition/type/save-stat equality, and any
+      // failure keeps the engine text for that row. The concept slot rides
+      // the same call, verified as before. Same call count as component 3.
+      const voiceRows = pickVoiceRows(monster);
+      const inline = `the ${String(monster.name).toLowerCase()}`;
+      const raw = await callLLM(buildAuthorPrompt(monster, skeleton, { concept, rows: voiceRows }), validateAuthorResponse);
       const parsed = (() => { try { return JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; } })();
-      if (parsed && parsed.use === true && validateWriterResponse(raw)) {
-        const entry = {
-          name: parsed.name.trim(),
-          shape: parsed.shape,
-          text: String(parsed.text).split('the creature').join(`the ${String(monster.name).toLowerCase()}`),
-        };
-        const reason = verifyWrittenEntry(entry, monster, skeleton, {
-          roleExclusion: ROLE_EXCLUSIONS[blockArchetype] ?? null,
-        });
-        if (reason) {
-          trace('writer: slot dropped —', reason);
-        } else {
-          (monster.sections[parsed.section] = monster.sections[parsed.section] ?? []).push({ name: entry.name, text: entry.text });
-          // the output boundary covers the written entry too: any fresh
-          // lint finding that names it evicts it
-          const after = lintStatblock(monster, { edition: '2024' }).findings
-            .filter((f) => (f.loc?.entry ?? '').startsWith(entry.name) || (f.message ?? '').includes(entry.name));
-          if (after.length) {
-            monster.sections[parsed.section] = monster.sections[parsed.section].filter((e) => e.name !== entry.name);
-            trace('writer: slot dropped —', `lint: ${after.map((f) => f.rule).join(', ')}`);
-          } else {
-            trace('writer: concept slot', `"${entry.name}" (shape ${parsed.shape}, ${parsed.section})`);
+      if (parsed && validateAuthorResponse(raw)) {
+        let authored = 0;
+        const applied = [];
+        for (const r of parsed.rows ?? []) {
+          const row = voiceRows.find((v) => v.name === r.name);
+          if (!row) continue;
+          const fresh = normalizeAuthoredCase(String(r.text)).split('the creature').join(inline).split('The creature').join(`The ${String(monster.name).toLowerCase()}`);
+          const reason = verifyAuthoredRow(row.text, fresh);
+          if (reason) { trace('writer: row kept engine text —', `"${r.name}" (${reason}): ${fresh.slice(0, 140)}`); continue; }
+          const target = (monster.sections[row.section] ?? []).find((e) => e.name === row.name);
+          if (!target) continue;
+          applied.push({ target, before: target.text });
+          target.text = fresh;
+          authored += 1;
+        }
+        // the output boundary covers authored prose too: a fresh lint
+        // finding naming an authored row REVERTS that row, never the block
+        if (applied.length) {
+          const after = lintStatblock(monster, { edition: '2024' }).findings;
+          for (const { target, before } of applied) {
+            const hit = after.filter((f) => (f.loc?.entry ?? '').startsWith(target.name) || (f.message ?? '').includes(target.name));
+            if (hit.length) {
+              target.text = before;
+              authored -= 1;
+              trace('writer: row reverted by lint —', `"${target.name}" (${hit.map((f) => f.rule).join(', ')})`);
+            }
           }
         }
-      } else if (parsed && parsed.use === false) {
-        trace('writer:', 'nothing unclaimed — slot declined');
+        if (voiceRows.length) trace('writer:', `authored ${authored} of ${voiceRows.length} rows`);
+        const slot = parsed.slot;
+        if (slot && slot.use === true) {
+          const entry = {
+            name: String(slot.name).trim(),
+            shape: slot.shape ?? 'b',
+            text: normalizeAuthoredCase(String(slot.text)).split('the creature').join(inline),
+          };
+          const reason = verifyWrittenEntry(entry, monster, skeleton, {
+            roleExclusion: ROLE_EXCLUSIONS[blockArchetype] ?? null,
+          });
+          if (reason) {
+            trace('writer: slot dropped —', reason);
+          } else {
+            (monster.sections[slot.section] = monster.sections[slot.section] ?? []).push({ name: entry.name, text: entry.text });
+            const after = lintStatblock(monster, { edition: '2024' }).findings
+              .filter((f) => (f.loc?.entry ?? '').startsWith(entry.name) || (f.message ?? '').includes(entry.name));
+            if (after.length) {
+              monster.sections[slot.section] = monster.sections[slot.section].filter((e) => e.name !== entry.name);
+              trace('writer: slot dropped —', `lint: ${after.map((f) => f.rule).join(', ')}`);
+            } else {
+              trace('writer: concept slot', `"${entry.name}" (shape ${entry.shape}, ${slot.section})`);
+            }
+          }
+        } else if (slot && slot.use === false) {
+          trace('writer:', 'nothing unclaimed — slot declined');
+        }
       }
     } catch (e) {
       trace('writer: skipped —', e?.message ?? e);
