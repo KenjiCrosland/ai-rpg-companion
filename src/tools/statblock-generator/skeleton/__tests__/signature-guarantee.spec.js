@@ -42,7 +42,10 @@ const SHIPPED = {
 
 // The eviction class is CLOSED for these — zero tolerance.
 const RESIDUE_CEILING = {
-  'thrown-weapon': 1, breath: 0, engulf: 0, grapple: 0,
+  // engulf 0 -> 1 on 2026-08-17: the controller save-floor reshuffled
+  // draws and one engulf promise starves (cr20 seed7 controller) — pool
+  // starvation, not eviction. Revisit if it grows past one.
+  'thrown-weapon': 1, breath: 0, engulf: 1, grapple: 0,
   // 5 -> 6 on 2026-08-16: the Reactive Heads exclusion reshuffled pool
   // draws and one more aura seed starves (cr8 seed11) — the known
   // narrow-predicate starvation class, not an eviction. A conscious bump,

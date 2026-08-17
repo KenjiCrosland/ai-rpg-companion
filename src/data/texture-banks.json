@@ -2580,7 +2580,12 @@
         "Wrack"
       ],
       "habitat_terrain": "mud and shallow water",
-      "restraint": "salt-crusted brine lattice"
+      "restraint": "salt-crusted brine lattice",
+      "energies": [
+        "Cold",
+        "Acid",
+        "Poison"
+      ]
     },
     "abyss": {
       "tokens": [
@@ -2612,7 +2617,13 @@
         "Silence"
       ],
       "habitat_terrain": "mud and shallow water",
-      "restraint": "crushing black-water column"
+      "restraint": "crushing black-water column",
+      "energies": [
+        "Cold",
+        "Acid",
+        "Poison",
+        "Necrotic"
+      ]
     },
     "ice": {
       "tokens": [
@@ -2648,7 +2659,10 @@
         "Killing Cold"
       ],
       "habitat_terrain": "ice or snow",
-      "restraint": "fast-forming ice sheath"
+      "restraint": "fast-forming ice sheath",
+      "energies": [
+        "Cold"
+      ]
     },
     "storm": {
       "tokens": [
@@ -2683,7 +2697,11 @@
         "Rolling Thunder"
       ],
       "habitat_terrain": "rubble and broken stone",
-      "restraint": "band of caged lightning"
+      "restraint": "band of caged lightning",
+      "energies": [
+        "Lightning",
+        "Thunder"
+      ]
     },
     "magma": {
       "tokens": [
@@ -2715,7 +2733,10 @@
         "Pour"
       ],
       "habitat_terrain": "ash and cinders",
-      "restraint": "fast-hardening magma"
+      "restraint": "fast-hardening magma",
+      "energies": [
+        "Fire"
+      ]
     },
     "flame": {
       "tokens": [
@@ -2745,7 +2766,10 @@
         "Wildfire"
       ],
       "habitat_terrain": "ash and cinders",
-      "restraint": "collar of white flame"
+      "restraint": "collar of white flame",
+      "energies": [
+        "Fire"
+      ]
     },
     "ash": {
       "tokens": [
@@ -2778,7 +2802,11 @@
         "Remnant"
       ],
       "habitat_terrain": "ash and cinders",
-      "restraint": "choking ash shroud"
+      "restraint": "choking ash shroud",
+      "energies": [
+        "Fire",
+        "Necrotic"
+      ]
     },
     "stone": {
       "tokens": [
@@ -2879,7 +2907,10 @@
         "Reliquary"
       ],
       "habitat_terrain": "rubble and broken stone",
-      "restraint": "bone-lattice cage"
+      "restraint": "bone-lattice cage",
+      "energies": [
+        "Necrotic"
+      ]
     },
     "rot": {
       "tokens": [
@@ -2912,7 +2943,12 @@
         "Ruin"
       ],
       "habitat_terrain": "mud and shallow water",
-      "restraint": "clinging carrion mire"
+      "restraint": "clinging carrion mire",
+      "energies": [
+        "Necrotic",
+        "Poison",
+        "Acid"
+      ]
     },
     "grave": {
       "tokens": [
@@ -2948,7 +2984,11 @@
         "Requiem"
       ],
       "habitat_terrain": "mud and shallow water",
-      "restraint": "grave-wax shroud"
+      "restraint": "grave-wax shroud",
+      "energies": [
+        "Necrotic",
+        "Cold"
+      ]
     },
     "iron": {
       "tokens": [
@@ -3064,7 +3104,11 @@
         "Grove"
       ],
       "habitat_terrain": "thick undergrowth",
-      "restraint": "thorn-lash snare"
+      "restraint": "thorn-lash snare",
+      "energies": [
+        "Poison",
+        "Acid"
+      ]
     },
     "fungus": {
       "tokens": [
@@ -3098,7 +3142,12 @@
         "Spore-Fall"
       ],
       "habitat_terrain": "thick undergrowth",
-      "restraint": "gripping mycelium mat"
+      "restraint": "gripping mycelium mat",
+      "energies": [
+        "Poison",
+        "Acid",
+        "Necrotic"
+      ]
     },
     "shadow": {
       "tokens": [
@@ -3131,7 +3180,12 @@
         "Umbra"
       ],
       "habitat_terrain": "rubble and broken stone",
-      "restraint": "coiled shadow tether"
+      "restraint": "coiled shadow tether",
+      "energies": [
+        "Necrotic",
+        "Psychic",
+        "Cold"
+      ]
     },
     "void": {
       "tokens": [
@@ -3165,7 +3219,13 @@
         "Nothing"
       ],
       "habitat_terrain": "rubble and broken stone",
-      "restraint": "seam of folded nothing"
+      "restraint": "seam of folded nothing",
+      "energies": [
+        "Force",
+        "Necrotic",
+        "Cold",
+        "Psychic"
+      ]
     },
     "blood": {
       "tokens": [
@@ -3197,7 +3257,11 @@
         "Clot"
       ],
       "habitat_terrain": "mud and shallow water",
-      "restraint": "clotting blood web"
+      "restraint": "clotting blood web",
+      "energies": [
+        "Necrotic",
+        "Acid"
+      ]
     },
     "tar": {
       "tokens": [
@@ -3229,7 +3293,12 @@
         "Sump"
       ],
       "habitat_terrain": "mud and shallow water",
-      "restraint": "smothering tar sheet"
+      "restraint": "smothering tar sheet",
+      "energies": [
+        "Fire",
+        "Acid",
+        "Necrotic"
+      ]
     },
     "venom": {
       "tokens": [
@@ -3261,7 +3330,11 @@
         "Bloom"
       ],
       "habitat_terrain": "thick undergrowth",
-      "restraint": "hardening venom shell"
+      "restraint": "hardening venom shell",
+      "energies": [
+        "Poison",
+        "Acid"
+      ]
     },
     "dream": {
       "tokens": [
@@ -3294,7 +3367,11 @@
         "Nightmare"
       ],
       "habitat_terrain": "thick undergrowth",
-      "restraint": "dream-gossamer snare"
+      "restraint": "dream-gossamer snare",
+      "energies": [
+        "Psychic",
+        "Force"
+      ]
     },
     "light": {
       "tokens": [
@@ -3329,7 +3406,11 @@
         "Dawn"
       ],
       "habitat_terrain": "sand and loose scree",
-      "restraint": "lattice of hard light"
+      "restraint": "lattice of hard light",
+      "energies": [
+        "Radiant",
+        "Fire"
+      ]
     },
     "hide": {
       "tokens": [

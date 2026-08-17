@@ -1857,6 +1857,12 @@ export function buildSkeleton({
   // nova_mult > 1 assumes a gated damage area exists, so one is
   // guaranteed the same way.
   if ((nums.nova_mult ?? 1) > 1 && !counts.area) counts.area = 1;
+  // ...and a CONTROLLER'S outlet is its save rows (owner agreement,
+  // 2026-08-17, the Old Dreamknot: a DC 16 controller shipped with ZERO
+  // save rows — dc_mod pays for a consumer that sampling never rolled).
+  if (archetype === 'controller' && !counts.save_effect && !counts.save_damage) {
+    counts.save_effect = 1;
+  }
   // ENTRY-COUNT VALVE (owner call, 2026-08-05): print's total entry count
   // maxes at 12 (Tarrasque) with a median of 8 at CR 10+; independent
   // sampling occasionally stacks every slot hot and guarantees pile on

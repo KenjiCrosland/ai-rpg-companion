@@ -6415,3 +6415,37 @@ describe('the Skorvith: the lurker discount always gets its outlet', () => {
     }
   });
 });
+
+describe('the Old Dreamknot: the energy filters the material menu, and a controller controls', () => {
+  const { buildSeedSynthesisPrompt } = require('@/tools/statblock-generator/format-2024/generate.mjs');
+  const seed = { intelligence: 'cunning', physical: 'scaled', silhouette: 'serpent', origin: 'ruins', creature_type: 'Dragon' };
+
+  test('a Cold roll offers Dragon only the houses that speak Cold', () => {
+    const p = buildSeedSynthesisPrompt(seed, { cr: 8, energy: 'Cold', damageMix: 'both' });
+    const line = p.match(/given it is a Dragon: ([^.]+)\./)[1];
+    expect(line).toMatch(/ice/);
+    expect(line).not.toMatch(/flame|storm/);
+  });
+
+  test('a physical mix keeps the full menu', () => {
+    const p = buildSeedSynthesisPrompt(seed, { cr: 8, energy: 'Cold', damageMix: 'physical' });
+    expect(p.match(/given it is a Dragon: ([^.]+)\./)[1]).toMatch(/flame/);
+  });
+
+  test('a menu that would empty shows the full line — never-fail', () => {
+    const p = buildSeedSynthesisPrompt(seed, { cr: 8, energy: 'Radiant', damageMix: 'both' });
+    // no Dragon house speaks Radiant; the unfiltered line ships
+    expect(p.match(/given it is a Dragon: ([^.]+)\./)[1]).toMatch(/flame/);
+  });
+
+  test('no controller at any tier ships without a save row', () => {
+    for (const cr of [5, 8, 12, 20]) {
+      for (let seed2 = 1; seed2 <= 12; seed2 += 1) {
+        const sk = buildSkeleton({ cr, seed: seed2, alternatives: 3, archetype: 'controller' });
+        const control = sk.entries.some((e) => /Saving Throw/.test(e.text ?? ''));
+        expect(`cr${cr} seed${seed2}: ${control ? 'controls' : 'NO SAVE ROW'}`)
+          .toBe(`cr${cr} seed${seed2}: controls`);
+      }
+    }
+  });
+});
