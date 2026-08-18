@@ -1160,7 +1160,23 @@ async function generateStatblockEngine(edition) {
 
   let finalMonster;
   try {
-    finalMonster = await generateMonster2024(
+    // THE RESKIN PILOT (owner spec v0, 2026-08-17): skirmisher-selected
+    // generations route to the parallel reskin path when the dev flag is
+    // set. Slot path untouched for every other role and for everyone
+    // without the flag. Enable: localStorage['statblock-reskin-pilot']='1'.
+    if (archetypeName === 'skirmisher' && edition === '2024'
+      && localStorage.getItem('statblock-reskin-pilot') === '1') {
+      const { generateReskin } = await import('./reskin/generate.mjs');
+      finalMonster = await generateReskin(
+        {
+          concept, cr, onProgress: onGenerationProgress,
+          takenNames: Object.values(monsters.value ?? {})
+            .filter(Array.isArray).flat().map((m) => m?.name).filter(Boolean),
+        },
+        (prompt, validate) => generateGptResponse(prompt, validate, 3),
+      );
+    } else {
+      finalMonster = await generateMonster2024(
       {
         concept,
         description: monsterDescription.value,
@@ -1200,7 +1216,8 @@ async function generateStatblockEngine(edition) {
         onProgress: onGenerationProgress,
       },
       (prompt, validate) => generateGptResponse(prompt, validate, 3),
-    );
+      );
+    }
     // Cross-block frequency ledger: record what SOURCE ROWS this block
     // shipped, so the next generations damp them. Keyed on the row, not the
     // shipped name — the demiplane banish appeared four times under four
