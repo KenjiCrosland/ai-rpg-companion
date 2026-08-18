@@ -58,6 +58,9 @@ Return ONLY JSON:
  "renames": { ${renameSkeleton} },   <- ALL of these keys, every one, none omitted
  "damage_types": { ${damageSkeleton} },   <- REQUIRED for every attack and the area action. PHYSICAL vs ENERGY follows the BODY (print: melee attacks deal the limb's physical type — a bite Piercing, a slam Bludgeoning, a claw Slashing — with energy reserved for the ranged attack and the area action; ONLY a creature whose body IS energy — incorporeal, elemental, formless — deals energy with its melee). A fully physical creature may answer physical for everything; never give every row the same energy.
  "melee_rider": "<the ENERGY type the melee attack deals as a rider — or \"none\" if this creature's damage is purely physical (a fifth of printed monsters are)>",
+ "speed_shape": "<\"climber\" keeps the Climb speed; \"runner\" trades it for +10 ft. walk (a charger, a rider, a sprinter has no business on walls)>",
+ "trait_wildcard": { "name": "<a passive trait the concept demands — its body's rule, not an attack: 4 words max>", "text": "<ONE passive rule, 2 sentences max, 2024 voice: an immunity, a sense, a movement rule, a condition interaction. No damage, no saves, no auras. Omit the object entirely if the chassis already says it.>" },
+ "lore": "<ONE sentence of world-lore: where it comes from and what it wants>",
  "conditions": { "condition_minor": "<one of: ${CONDITION_MENUS.condition_minor.join(', ')}>" },
  "wildcard": "<The monster is always 'the creature'; its victim is always 'the target' and NEVER 'the creature'. REPLACES the 'Signature Slot' entry: the concept's single most distinctive behavior as rules text. 3 sentences max, 2024 house voice, no atmospheric prose. Must use a save DC of ${scaled.dc} if it has a save, standard conditions only, damage at most ${Math.round(scaled.per_hit * 1.2)} average. Never assert an effect without granting its rule.>"
 }`;
@@ -69,6 +72,27 @@ Return ONLY JSON:
  * -> the loud throw fired where a retry should have). The throw in
  * generateReskin remains as the final backstop only.
  */
+// name-claim bank for the Burning-Claw class (owner: "either have fire
+// damage or just call it Claw") — validated, so the RETRY reconciles it:
+// the model either supplies the energy or drops the claim word.
+const NAME_CLAIMS = [
+  [/burn|flame|fire|cinder|scorch|sear|ember|molten/i, 'Fire'],
+  [/frost|ice|chill|rime|gelid|freez/i, 'Cold'],
+  [/storm|lightning|volt|spark|shock|thunder/i, null], // Lightning OR Thunder
+  [/venom|toxic|poison/i, 'Poison'],
+  [/acid|caustic|corrosi/i, 'Acid'],
+  [/radiant|hallow/i, 'Radiant'],
+  [/necrotic|grave-?rot/i, 'Necrotic'],
+];
+function nameClaimSatisfied(rename, dealt) {
+  for (const [re, type] of NAME_CLAIMS) {
+    if (!re.test(rename)) continue;
+    if (type === null) return dealt.includes('Lightning') || dealt.includes('Thunder');
+    return dealt.includes(type);
+  }
+  return true;
+}
+
 export function makeReskinValidator(scaled) {
   const keys = renameKeysOf(scaled);
   return (jsonString) => {
@@ -81,6 +105,11 @@ export function makeReskinValidator(scaled) {
       const v = String(p.renames?.[k] ?? '').trim();
       return v.length > 1 && v.split(/\s+/).length <= 4;
     }) && typedNames.every((k) => TYPES.includes(p.damage_types?.[String(p.renames?.[k] ?? '').trim()]))
+      && typedNames.every((k) => {
+        const rn = String(p.renames?.[k] ?? '').trim();
+        const dealt = [p.damage_types?.[rn], /Melee/.test(k) || k === 'Melee Attack' ? p.melee_rider : null].filter(Boolean);
+        return nameClaimSatisfied(rn, dealt);
+      })
       && (!Object.values(scaled.sections).flat().some((e) => (e.text ?? '').includes('{damage_type_2}'))
         || TYPES.includes(p.melee_rider) || String(p.melee_rider ?? '').trim().toLowerCase() === 'none')
       && Object.entries(CONDITION_MENUS).every(([slot, menu]) => {
@@ -98,7 +127,7 @@ export function validateReskinResponse(jsonString) {
 }
 
 export async function generateReskin(options, callLLM) {
-  const { concept = '', cr, onProgress = null } = options;
+  const { concept = '', cr, onProgress = null, fixedName = null } = options;
   const progress = (phase, data) => { try { onProgress?.({ phase, ...data }); } catch { /* display-only */ } };
   const donor = pickDonor(cr);
   const scaled = scaleDonor(donor, cr);
@@ -144,8 +173,10 @@ export async function generateReskin(options, callLLM) {
   }
   // the folk-article class, ported from the skeleton path: templates
   // supply their own articles, so a "The Cindermoss" mints "the the"
+  // a user-typed name ships VERBATIM — the slot path's oldest law
+  if (fixedName) p.name = fixedName;
   p.name = String(p.name).replace(/^the\s+/i, '').trim() || p.name;
-  p.name = p.name.split(/\s+/).map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+  if (!fixedName) p.name = p.name.split(/\s+/).map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
 
   // apply renames; ANY unrenamed entry is a loud failure (owner spec)
   const sections = {};
@@ -237,10 +268,15 @@ export async function generateReskin(options, callLLM) {
     }
   }
 
+  if (String(p.speed_shape ?? '').trim() === 'runner' && /Climb/.test(scaled.speed)) {
+    const walk = Number((/^(\d+)/.exec(scaled.speed) ?? [0, 30])[1]);
+    scaled.speed = scaled.speed.replace(/^(\d+) ft\.,? ?(Climb \d+ ft\.)?/, `${walk + 10} ft.`).replace(/,\s*$/, '');
+  }
   const card = cardBudget(cr, { legendary: !!scaled.legendary });
   const mods = Object.fromEntries(Object.entries(scaled.stats).map(([k, v]) => [k, Math.floor((v - 10) / 2)]));
   const monster = {
     name: p.name, format: '2024', cr, cr_str: String(cr),
+    xp: challengeRatings[String(cr)]?.XP ?? 0,
     challenge_rating: `${cr} (XP ${(challengeRatings[String(cr)]?.XP ?? 0).toLocaleString()}; PB +${scaled.pb})`,
     type: p.type ?? 'Monstrosity', size: p.size ?? 'Medium', alignment: p.alignment ?? 'Unaligned',
     ac: card.ac, hp: card.hp,
@@ -252,9 +288,28 @@ export async function generateReskin(options, callLLM) {
     skills: scaled.skills, senses_special: p.senses ?? 'darkvision 60 ft.', languages: p.languages ?? 'None',
     initiative_bonus: mods.DEX, initiative_score: 10 + mods.DEX,
     sections,
+    lore: typeof p.lore === 'string' && p.lore.trim().length > 15 ? p.lore.trim() : undefined,
     generation: { path: 'reskin', donor: donor.id, archetype: 'skirmisher' },
     archetype: 'skirmisher', archetype_source: 'user',
   };
+  {
+    const tw = p.trait_wildcard;
+    const twName = String(tw?.name ?? '').trim();
+    const twText = String(tw?.text ?? '').trim();
+    if (twName && twText) {
+      const names = Object.values(sections).flat().map((e) => e.name.toLowerCase());
+      const okay = twName.split(/\s+/).length <= 4
+        && twText.split(/(?<=\.)\s+/).length <= 2
+        && !/\d+ \(\d+d\d+|Saving Throw|Attack Roll|Recharge|\/Day|starts its turn/i.test(twText)
+        && !/\byours?\b|\byou\b/i.test(twText)
+        && /Immunity|Resistance|Advantage|Disadvantage|Speed|darkvision|blindsight|tremorsense|truesight|condition|can't be|cannot be/i.test(twText)
+        && !names.includes(twName.toLowerCase());
+      if (okay) {
+        (sections.Traits = sections.Traits ?? []).unshift({ name: twName, text: twText.split('the creature').join(inline).replace(/^The creature/, `The ${p.name.toLowerCase()}`) });
+        trace('trait wildcard:', `"${twName}"`);
+      } else trace('trait wildcard rejected');
+    }
+  }
   for (const [sec, es] of Object.entries(sections)) {
     for (let i = es.length - 1; i >= 0; i -= 1) {
       const e = es[i];

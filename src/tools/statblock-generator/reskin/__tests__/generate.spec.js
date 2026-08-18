@@ -251,3 +251,62 @@ describe('the energy rider (owner TODO, landed): priced either way, chosen by co
     expect(Object.values(m.sections).flat().find((e) => e.name === 'Thorn Rake').text).toMatch(/Cold damage/);
   });
 });
+
+describe('batch four quick wins', () => {
+  test('xp reaches the field the renderer reads', async () => {
+    const m = await generateReskin({ concept: 'x', cr: 8 }, async () => answer());
+    expect(m.xp).toBe(3900);
+  });
+
+  test('a user-typed name ships verbatim — never renamed, never title-cased away', async () => {
+    const m = await generateReskin({ concept: 'x', cr: 8, fixedName: 'grishnak of the Deep Roads' }, async () => answer());
+    expect(m.name).toBe('grishnak of the Deep Roads');
+  });
+
+  test('the ranged twin pays the melee premium', async () => {
+    const { pickDonor: pd6, scaleDonor: sd6 } = require('../scale.mjs');
+    const sc = sd6(pd6(8), 8);
+    const avgOf = (t) => [...t.matchAll(/(\d+) \(\d+d\d+(?:\s*\+\s*\d+)?\)/g)].reduce((n, m2) => n + Number(m2[1]), 0);
+    const rows = Object.values(sc.sections).flat();
+    const melee = avgOf(rows.find((e) => e.name === 'Melee Attack').text);
+    const ranged = avgOf(rows.find((e) => e.name === 'Ranged Attack').text);
+    expect(ranged).toBeLessThan(melee);
+  });
+
+  test('a Burning Claw with no fire fails validation; with the rider it passes', () => {
+    const { makeReskinValidator: mv } = require('../generate.mjs');
+    const { pickDonor: pd7, scaleDonor: sd7 } = require('../scale.mjs');
+    const v = mv(sd7(pd7(8), 8));
+    const claim = JSON.parse(answer());
+    claim.renames['Melee Attack'] = 'Burning Claw';
+    claim.damage_types['Burning Claw'] = 'Slashing';
+    claim.melee_rider = 'none';
+    expect(v(JSON.stringify(claim))).toBe(false);
+    claim.melee_rider = 'Fire';
+    expect(v(JSON.stringify(claim))).toBe(true);
+  });
+
+  test('lore rides along for the GM path', async () => {
+    const m = await generateReskin({ concept: 'x', cr: 8 }, async () => answer({ lore: 'Born of the fen, it hunts oathbreakers along the old toll roads.' }));
+    expect(m.lore).toMatch(/oathbreakers/);
+  });
+});
+
+describe('the Headless Horseman gaps: negotiated movement, a second signature', () => {
+  test('"runner" trades the climb for +10 walk', async () => {
+    const m = await generateReskin({ concept: 'a spectral rider', cr: 8 }, async () => answer({ speed_shape: 'runner' }));
+    expect(m.speed).not.toMatch(/Climb/);
+    expect(m.speed).toMatch(/^50 ft\./);
+  });
+
+  test('a passive trait wildcard ships; a save-carrying one is rejected', async () => {
+    const m = await generateReskin({ concept: 'a headless rider', cr: 8 }, async () => answer({
+      trait_wildcard: { name: 'Headless', text: 'The creature can\'t be Blinded or Deafened, and it has Immunity to the Frightened condition.' },
+    }));
+    expect(m.sections.Traits.some((e) => e.name === 'Headless')).toBe(true);
+    const m2 = await generateReskin({ concept: 'x', cr: 8 }, async () => answer({
+      trait_wildcard: { name: 'Doom Field', text: 'Each creature within 30 feet must make a DC 20 Saving Throw or die.' },
+    }));
+    expect((m2.sections.Traits ?? []).some((e) => e.name === 'Doom Field')).toBe(false);
+  });
+});

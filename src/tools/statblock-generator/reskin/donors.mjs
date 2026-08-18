@@ -150,4 +150,37 @@ export const DONORS = [
       ],
     },
   },
+  {
+    id: 'skirmisher-22',
+    cr: 22,
+    legendary: true,
+    archetypes: ['skirmisher', 'artillery'],
+    ac: 21, hp: 415, hp_formula: '43d10 + 179', atk: 15, dc: 22, pb: 7,
+    speed: '60 ft., Climb 60 ft.',
+    stats: { STR: 22, DEX: 28, CON: 24, INT: 16, WIS: 20, CHA: 18 },
+    saves: ['DEX', 'WIS'], skills: 'Perception +12, Stealth +16',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (4/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Mobility Trait', text: 'The creature ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage.' },
+        { name: 'Reactive Reposition', text: 'When a creature the creature can see ends its turn within 5 feet of it, the creature can move up to 20 feet without provoking Opportunity Attacks.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +15, reach 10 ft. 39 (6d10 + 6) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +15, range 90/240 ft. 37 (9d6 + 6) {damage_type} damage.' },
+        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 22, each creature in a 90-foot-long, 10-foot-wide Line (Recharge 5-6). *Failure:* 77 (14d10) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*Dexterity Saving Throw*: DC 22, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Escape Action', text: 'The creature takes the Dash, Disengage, or Hide action.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack.' },
+        { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Escape', text: 'The creature takes the Disengage or Hide action.' },
+      ],
+    },
+  },
 ];

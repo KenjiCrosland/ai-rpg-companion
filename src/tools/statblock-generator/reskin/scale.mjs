@@ -62,7 +62,12 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary } = {}) {
   for (const { e } of rows) {
     if (!ATTACK_RE.test(e.text)) continue;
     const mod = /Ranged/.test(e.text) || /Melee/.test(e.text) ? Math.max(dexMod, strMod) : dexMod;
-    const { avg, dice } = attackDamageDiceFor(perHit, Math.min(mod, perHit - 1));
+    // the dominated-twin price (batch four): a budget-identical ranged
+    // option is strictly safer than the melee it mirrors, so the ranged
+    // row pays ~15% (print's own premium: Frost Giant axe 28 vs bow 24)
+    const rowBudget = /Ranged Attack Roll/.test(e.text) && !/Melee/.test(e.text)
+      ? Math.max(3, Math.round(perHit * 0.85)) : perHit;
+    const { avg, dice } = attackDamageDiceFor(rowBudget, Math.min(mod, rowBudget - 1));
     e.text = e.text
       .replace(/\+\d+, (reach|range)/, `+${card.atk}, $1`)
       .replace(/\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) ([\w{}]+) damage/, `${avg} (${dice}) $1 damage`);

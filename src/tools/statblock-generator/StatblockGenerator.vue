@@ -1170,6 +1170,7 @@ async function generateStatblockEngine(edition) {
       finalMonster = await generateReskin(
         {
           concept, cr, onProgress: onGenerationProgress,
+          fixedName: monsterName.value.trim() || null,
           takenNames: Object.values(monsters.value ?? {})
             .filter(Array.isArray).flat().map((m) => m?.name).filter(Boolean),
         },
