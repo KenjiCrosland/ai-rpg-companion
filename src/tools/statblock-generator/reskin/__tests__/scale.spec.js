@@ -20,3 +20,22 @@ describe('stage 3: scaling to the card', () => {
     }
   });
 });
+
+describe('the flight tax (corpus sweep 2026-08-19: flyers 0.98 vs grounded 1.08)', () => {
+  const { pickDonor: pdw, scaleDonor: sdw } = require('../scale.mjs');
+  const { cardBudget: cbw } = require('../card-budgets.mjs');
+
+  test('winged donors ship ~90% of card HP; grounded lines ship full card', () => {
+    for (const cr of [3, 8, 13, 18]) {
+      const winged = sdw(pdw(cr, 'winged'), cr);
+      const plain = sdw(pdw(cr), cr);
+      const card = cbw(cr, { legendary: !!pdw(cr, 'winged').legendary });
+      expect(winged.hp).toBe(Math.round(card.hp * 0.9));
+      expect(plain.hp).toBe(cbw(cr, { legendary: !!pdw(cr).legendary }).hp);
+    }
+  });
+
+  test('a winged donor keeps its Fly speed through scaling — the wildcard fly-guard opens', () => {
+    expect(sdw(pdw(8, 'winged'), 8).speed).toMatch(/Fly \d+ ft\./);
+  });
+});

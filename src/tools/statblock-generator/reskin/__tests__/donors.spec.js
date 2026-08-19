@@ -24,7 +24,7 @@ describe('authored donors obey the card', () => {
 
       test('AC, HP, attack, DC sit on the card line (±1 where the card rounds)', () => {
         expect(Math.abs(d.ac - card.ac)).toBeLessThanOrEqual(1);
-        expect(Math.abs(d.hp - card.hp)).toBeLessThanOrEqual(15);
+        expect(Math.abs(d.hp - card.hp * (d.hp_scale ?? 1))).toBeLessThanOrEqual(15); // hp_scale = the measured flight tax (flyers 0.98 vs grounded 1.08)
         expect(d.atk).toBe(card.atk);
         expect(Math.abs(d.dc - card.dc)).toBeLessThanOrEqual(1);
       });
@@ -73,7 +73,10 @@ describe('the mounted template line: full compositions, shape-frames as authorin
     expect(pdm(8, 'hurler').id).toBe('skirmisher-8-hurler');
     expect(pdm(8, 'skulker').id).toBe('skirmisher-8-skulker');
     expect(pdm(3, 'hurler').id).toBe('skirmisher-8-hurler'); // below the line's floor -> its lowest seat
-    expect(pdm(8, 'winged').id).toBe('skirmisher-8'); // no winged line -> plain fallback
+    expect(pdm(8, 'winged').id).toBe('skirmisher-8-winged'); // the winged line landed 2026-08-19
+    expect(pdm(20, 'winged').id).toBe('skirmisher-18-winged'); // legendary seat scales up
+    expect(pdm(20, 'hurler').id).toBe('skirmisher-18-hurler'); // hurler legendary seat closes the 18+ gap
+    expect(pdm(8, 'burrower').id).toBe('skirmisher-8'); // a style with no line still falls to plain
     expect(pdm(8).id).toBe('skirmisher-8');
   });
   test('every mounted template carries the charger identity: trample nova, charge rider, runner speed', () => {

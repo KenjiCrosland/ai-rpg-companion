@@ -32,7 +32,7 @@ export function auditEligible() {
   return true;
 }
 
-export function buildAuditPrompt(monster, edition = '2024') {
+export function buildAuditPrompt(monster, edition = '2024', { reskin = false } = {}) {
   const is2014 = edition === '2014';
   return `You are auditing a D&D ${is2014 ? '5th edition (2014 rules)' : '2024-format'} monster statblock for MECHANICAL defects.
 Deterministic checks (math, DCs, damage bands, known formatting rules) have
@@ -195,7 +195,15 @@ OUTPUT: JSON only, no markdown fences. Report at most 6 findings.
   "confidence": "high|medium|low" } ] }
 An empty findings array is a correct and common output. Do not manufacture
 findings to appear thorough. Every span must be verbatim text from the block —
-if you cannot quote it, the finding does not exist.`;
+if you cannot quote it, the finding does not exist.${reskin ? `
+
+RESKIN MODE. This block's numbers, DCs, and damage budgets are engine-authored and correct by construction — never flag them. The model-written parts are the entry NAMES, the TRAIT texts, and ONE signature action; your entire value is there:
+1. Garbled rules language ("attacks hit the target's AC with advantage" is not adjudicable — supply the rewrite).
+2. Semantic contradictions (an Invisible creature targeted by "one creature that can see it"; a sword trait granting immunity to being Blinded).
+3. Name-content mismatches (a "Gaze" that throws things; an "of the Fallen" attack dealing plain Piercing — propose a rename).
+4. Misspelled entry names ("Withdrawl").
+5. Doubled or contradictory limiters ("only once per turn" plus "while active, can't use it again").
+A typical reskin block carries 1-3 such findings; an empty array on a block with model-written traits usually means a MISSED finding, not a clean block — look again before returning empty. The don't-manufacture rule still stands, and every span must be copied character-for-character, capitalization included.` : ''}`;
 }
 
 export function validateAuditResponse(raw) {

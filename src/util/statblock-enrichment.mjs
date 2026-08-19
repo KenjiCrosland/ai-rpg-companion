@@ -269,25 +269,28 @@ export function validateEnrichmentOutput(jsonString) {
 
     if (!isValid) return false;
 
-    // Validate preferred_tones values
-    const validTones = [
-      'interrupted_activity', 'quiet_tension', 'triggered_mistake',
-      'already_in_motion', 'something_wrong', 'standoff', 'false_hospitality',
-      'desperate_plea', 'hidden_predator', 'wrong_enemy', 'ticking_clock', 'aftermath'
-    ];
-
+    // Tolerance belt (2026-08-19, live: 'animated_amusement' x3 killed the
+    // whole enrichment): an invented tone costs ITSELF, never its siblings —
+    // filter to the menu and require that enough real ones survive. The
+    // strict version rejected the whole response for one bad element and
+    // the blind retry repeated it (the doom-loop class).
+    const valid = obj.preferred_tones.filter((t) => VALID_TONES.includes(t));
     for (const tone of obj.preferred_tones) {
-      if (!validTones.includes(tone)) {
-        logger.warn(`Invalid tone: ${tone}`);
-        return false;
-      }
+      if (!VALID_TONES.includes(tone)) logger.warn(`Invalid tone dropped: ${tone}`);
     }
+    if (valid.length < 2) return false;
 
     return true;
   } catch {
     return false;
   }
 }
+
+const VALID_TONES = [
+  'interrupted_activity', 'quiet_tension', 'triggered_mistake',
+  'already_in_motion', 'something_wrong', 'standoff', 'false_hospitality',
+  'desperate_plea', 'hidden_predator', 'wrong_enemy', 'ticking_clock', 'aftermath'
+];
 
 /**
  * Generate creature intelligence data for a custom statblock.
@@ -306,6 +309,8 @@ export async function enrichCustomStatblock(statblock) {
   );
 
   const enrichment = JSON.parse(response);
+  enrichment.preferred_tones = (enrichment.preferred_tones ?? [])
+    .filter((t) => VALID_TONES.includes(t)).slice(0, 4);
 
   return enrichment;
 }

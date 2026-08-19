@@ -5164,9 +5164,12 @@ describe('the Grindor: the energy is rolled before the concept, not chosen after
     expect(p).toMatch(/change the CREATURE, not the energy/);
   });
 
-  test('no energy given, no energy clause — older callers still work', () => {
+  test('no energy given -> the INFERENCE brief, not silence (all-inference, owner 2026-08-18)', () => {
+    // the pre-inference contract was "no energy, no clause"; typed
+    // concepts now infer their own energy instead
     const p = buildArchetypeResolvePrompt('a thing', '', { cr: 10, archetype: 'brute' });
-    expect(p).not.toMatch(/ENERGY\./);
+    expect(p).toMatch(/INFERRED from the concept/);
+    expect(p).not.toMatch(/not negotiable/);
   });
 
   test('the flavor call cannot revise the rolled energy', () => {

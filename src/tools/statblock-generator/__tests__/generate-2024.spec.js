@@ -961,7 +961,7 @@ describe('energy: typed concepts infer, randoms roll (owner call 2026-08-18)', (
 
   test('the resolve call extracts ranked signature elements (schema field, typed path only)', () => {
     const p = buildArchetypeResolvePrompt('headless horseman', '', { cr: 10 });
-    expect(p).toMatch(/"signature_elements": \["<1-3 short phrases/);
+    expect(p).toMatch(/"signature_elements": \[\{"element": "<short phrase>", "kind": "<behavior\|body\|object\|aura>"\}\]/);
     expect(p).toMatch(/DEFINING elements, ranked/);
   });
 

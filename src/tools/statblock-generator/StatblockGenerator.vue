@@ -1005,6 +1005,13 @@ async function generateStatblock() {
 // assemble → lint with correct/reject loop, via format-2024/generate.mjs.
 // The LLM never decides numbers; see docs/2024-architecture.md. 2014 edition
 // ships in the legacy model shape so the existing display/export chain works.
+// CONCEPT PINNING (owner yes, 2026-08-19): the identity layer is the
+// creature's contract — regenerating an unchanged concept reuses the
+// resolve output (type, energy, mind, elements, style) instead of
+// re-rolling it. Regen variance concentrates in the reskin layer, and
+// each regen saves the resolve call. Session-scoped.
+const conceptResolutionCache = new Map();
+
 async function generateStatblockEngine(edition) {
   loadingPart1.value = true;
   // Statblock.vue renders one skeleton block per loading flag — the old
@@ -1061,6 +1068,12 @@ async function generateStatblockEngine(edition) {
     archetypeSource = givenArchetype ? 'user' : 'auto';
     try {
       if (userConcept) {
+        const pinKey = JSON.stringify([userConcept, monsterDescription.value, cr, givenArchetype]);
+        const pinned = conceptResolutionCache.get(pinKey);
+        if (pinned) {
+          ({ archetypeName, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements } = pinned);
+          logger.log('[concept] pinned — reusing the resolution for an unchanged concept');
+        } else {
         const raw = await generateGptResponse(
           buildArchetypeResolvePrompt(userConcept, monsterDescription.value, { cr, archetype: givenArchetype }),
           validateArchetypeResponse,
@@ -1095,7 +1108,7 @@ async function generateStatblockEngine(edition) {
         if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
         if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
         if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
-        if (['mounted', 'skulker', 'hurler'].includes(parsed?.style)) conceptStyle = parsed.style;
+        if (['mounted', 'skulker', 'hurler', 'winged'].includes(parsed?.style)) conceptStyle = parsed.style;
         if (typeof parsed?.energy === 'string') {
           const hit = ENERGY_TYPES.find((t) => t.toLowerCase() === parsed.energy.trim().toLowerCase());
           if (hit) conceptEnergy = hit;
@@ -1106,14 +1119,16 @@ async function generateStatblockEngine(edition) {
         if (conceptMix === 'physical' && conceptEnergy) conceptMix = 'both';
         if (conceptMix === 'energy' && !conceptEnergy) conceptMix = null;
         if (Array.isArray(parsed?.signature_elements)) {
+          const KINDS = ['behavior', 'body', 'object', 'aura'];
           const els = parsed.signature_elements
-            .filter((x) => typeof x === 'string' && x.trim()).map((x) => x.trim().slice(0, 80)).slice(0, 3);
+            .map((x) => (typeof x === 'string' ? { element: x, kind: null } : { element: String(x?.element ?? ''), kind: KINDS.includes(x?.kind) ? x.kind : null }))
+            .filter((x) => x.element.trim()).map((x) => ({ element: x.element.trim().slice(0, 80), kind: x.kind })).slice(0, 3);
           if (els.length) conceptElements = els;
         }
         // prose-first, again: a "bestial" mind whose own identity taunts,
         // performs, or duels is sapient (the Matador read bull, 2026-08-19)
         if (conceptMind === 'bestial'
-          && /taunt|mock|jeer|perform|danc|duel|toy(?:s|ing)? with/i.test(`${conceptIdentity ?? ''} ${(conceptElements ?? []).join(' ')}`)) {
+          && /taunt|mock|jeer|perform|danc|duel|toy(?:s|ing)? with/i.test(`${conceptIdentity ?? ''} ${(conceptElements ?? []).map((e) => e.element).join(' ')}`)) {
           conceptMind = 'sapient';
           logger.log('[concept] mind promoted to sapient — the identity asserts performance/taunting');
         }
@@ -1128,9 +1143,11 @@ async function generateStatblockEngine(edition) {
           + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
           + ` energy=${conceptEnergy ?? '—'} mix=${conceptMix ?? '—'}`
           + `${conceptIdentity ? ' identity=✓' : ''}${conceptLore ? ' lore=✓' : ''}`);
-        if (conceptElements) logger.log('[concept] signature elements:', conceptElements.join(' | '));
+        if (conceptElements) logger.log('[concept] signature elements:', conceptElements.map((e) => `${e.element}${e.kind ? ` [${e.kind}]` : ''}`).join(' | '));
         if (conceptIdentity) logger.log('[concept] identity:', conceptIdentity);
         if (conceptLore) logger.log('[concept] lore:', conceptLore);
+        conceptResolutionCache.set(pinKey, { archetypeName, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements });
+        }
       } else {
         // Blank form: the same micro-call fuses the rolled axes into one
         // creature identity AND picks the role — generation designs from
@@ -1167,7 +1184,7 @@ async function generateStatblockEngine(edition) {
         if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
         if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
         if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
-        if (['mounted', 'skulker', 'hurler'].includes(parsed?.style)) conceptStyle = parsed.style;
+        if (['mounted', 'skulker', 'hurler', 'winged'].includes(parsed?.style)) conceptStyle = parsed.style;
       }
     } catch (e) {
       logger.warn('Archetype resolve failed:', e);
@@ -1203,6 +1220,8 @@ async function generateStatblockEngine(edition) {
           style: conceptStyle,
           signatureElements: conceptElements ?? [],
           mind: conceptMind,
+          movement: conceptMovement ?? [],
+          energy: userConcept ? conceptEnergy : rolledEnergy,
           takenNames: Object.values(monsters.value ?? {})
             .filter(Array.isArray).flat().map((m) => m?.name).filter(Boolean),
         },

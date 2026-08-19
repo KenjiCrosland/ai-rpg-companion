@@ -18,7 +18,7 @@ export function pickDonor(cr, style = null) {
 
 const ATTACK_RE = /(\+\d+)(, reach [^.]+|, range [^.]+)? ?\.? (\d+) \((\d+d\d+(?:\s*\+\s*\d+)?)\) ([\w{}]+) damage/;
 
-export function scaleDonor(donor, cr, { legendary = donor.legendary } = {}) {
+export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [] } = {}) {
   const card = cardBudget(cr, { legendary: !!legendary });
   const scaled = JSON.parse(JSON.stringify(donor));
   // CON carries more of the HP load as CR climbs (batch review: 38 dice
@@ -27,6 +27,33 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary } = {}) {
   scaled.cr = cr;
   scaled.ac = card.ac; scaled.hp = card.hp; scaled.atk = card.atk; scaled.dc = card.dc;
   scaled.pb = cr >= 17 ? 6 : cr >= 13 ? 5 : cr >= 9 ? 4 : cr >= 5 ? 3 : 2;
+  // The concept call's movement grant: a flying concept on a grounded
+  // chassis gains Fly (hover) — print's ghost idiom (Wraith, Fly 60
+  // hover on an ordinary frame). Winged-style donors carry Fly natively.
+  if (movement.includes('fly') && !/Fly/.test(scaled.speed)) {
+    const walk = Number((/^(\d+)/.exec(scaled.speed) ?? [0, 30])[1]);
+    scaled.speed = `${scaled.speed.replace(/,\s*$/, '')}, Fly ${walk} ft. (hover)`;
+  }
+  // THE FLIGHT TAX — one rule, keyed on the SHEET, not the source (owner
+  // call 2026-08-19: "a flight tax generally makes sense"). Any chassis
+  // whose final speed carries Fly pays the measured 10% (flyers 0.98 of
+  // card HP vs grounded 1.08, corpus sweep). Winged donors, movement
+  // grants, and any future wings all price identically.
+  if (/Fly/.test(scaled.speed)) scaled.hp = Math.round(scaled.hp * 0.9);
+  // STAT COHERENCE (raise-only, the skeleton path's idiom): a reader
+  // recomputes attack = striker mod + PB, so the striker stat rises to
+  // pay the card's attack bonus. The DC stays at card — print lets DCs
+  // float +-1 off-stat, and attack+DC cannot both cohere to one stat.
+  {
+    const targetMod = scaled.atk - scaled.pb;
+    const striker = scaled.stats.DEX >= scaled.stats.STR ? 'DEX' : 'STR';
+    if (Math.floor((scaled.stats[striker] - 10) / 2) < targetMod) scaled.stats[striker] = 10 + targetMod * 2;
+    // skills re-derive from the FINAL stats so Stealth/Perception match
+    // what a reader computes (donor skill strings are seat-authored)
+    const mod = (k) => Math.floor((scaled.stats[k] - 10) / 2);
+    const SKILL_STAT = { Perception: 'WIS', Stealth: 'DEX', Acrobatics: 'DEX', Athletics: 'STR', Intimidation: 'CHA' };
+    scaled.skills = String(scaled.skills ?? '').split(',').map((t) => t.trim().replace(/^([A-Za-z]+)\s*\+\d+$/, (m0, name) => (SKILL_STAT[name] ? `${name} +${mod(SKILL_STAT[name]) + scaled.pb}` : m0))).join(', ');
+  }
 
   // Damage split: the donor's SHAPE decides the ratio (how much of the
   // budget its nova carries); the card decides the total. Solve per-hit
@@ -108,7 +135,7 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary } = {}) {
     }
   }
   const conMod = Math.floor((scaled.stats.CON - 10) / 2);
-  scaled.hp_formula = hpFormulaFor(card.hp, scaled.size ?? 'Medium', conMod);
+  scaled.hp_formula = hpFormulaFor(scaled.hp, scaled.size ?? 'Medium', conMod);
   scaled.per_hit = perHit;
   return scaled;
 }
