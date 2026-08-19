@@ -7,9 +7,13 @@ import { cardBudget, withinBudget } from './card-budgets.mjs';
 import { attackDamageDiceFor, saveDamageDiceFor, hpFormulaFor } from '../format-2024/dice.mjs';
 import { DONORS } from './donors.mjs';
 
-export function pickDonor(cr) {
-  const atOrBelow = DONORS.filter((d) => d.cr <= cr).sort((a, b) => b.cr - a.cr);
-  return atOrBelow[0] ?? DONORS[0];
+export function pickDonor(cr, style = null) {
+  // style-matched template first (the full-template lines: mounted,
+  // skulker, hurler); plain seat when the style has no line here
+  const pool = DONORS.filter((d) => (style ? d.style === style : !d.style));
+  const fallback = DONORS.filter((d) => !d.style);
+  const from = (list) => list.filter((d) => d.cr <= cr).sort((a, b) => b.cr - a.cr)[0] ?? list[0];
+  return (pool.length ? from(pool) : from(fallback)) ?? from(fallback);
 }
 
 const ATTACK_RE = /(\+\d+)(, reach [^.]+|, range [^.]+)? ?\.? (\d+) \((\d+d\d+(?:\s*\+\s*\d+)?)\) ([\w{}]+) damage/;

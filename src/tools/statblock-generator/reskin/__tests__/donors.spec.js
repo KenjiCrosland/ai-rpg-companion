@@ -8,6 +8,14 @@ import { cardBudget, withinBudget } from '../card-budgets.mjs';
 
 const avgOf = (text) => [...text.matchAll(/(\d+) \(\d+d\d+(?:\s*\+\s*\d+)?\)/g)].reduce((n, m) => n + Number(m[1]), 0);
 
+describe('every template declares its provenance: cited XOR invented', () => {
+  test('the catalog discipline applies to whole templates too', () => {
+    for (const d of DONORS) {
+      expect(`${d.id}: ${Boolean(d.cite) !== Boolean(d.invented) ? 'ok' : 'BAD PROVENANCE'}`).toBe(`${d.id}: ok`);
+    }
+  });
+});
+
 describe('authored donors obey the card', () => {
   for (const d of DONORS) {
     describe(d.id, () => {
@@ -54,4 +62,29 @@ describe('authored donors obey the card', () => {
       }
     });
   }
+});
+
+describe('the mounted template line: full compositions, shape-frames as authoring vocabulary', () => {
+  const { pickDonor: pdm } = require('../scale.mjs');
+  test('style-matched selection with plain fallback', () => {
+    expect(pdm(8, 'mounted').id).toBe('skirmisher-8-mounted');
+    expect(pdm(10, 'mounted').id).toBe('skirmisher-8-mounted');
+    expect(pdm(22, 'mounted').id).toBe('skirmisher-18-mounted');
+    expect(pdm(8, 'hurler').id).toBe('skirmisher-8-hurler');
+    expect(pdm(8, 'skulker').id).toBe('skirmisher-8-skulker');
+    expect(pdm(3, 'hurler').id).toBe('skirmisher-8-hurler'); // below the line's floor -> its lowest seat
+    expect(pdm(8, 'winged').id).toBe('skirmisher-8'); // no winged line -> plain fallback
+    expect(pdm(8).id).toBe('skirmisher-8');
+  });
+  test('every mounted template carries the charger identity: trample nova, charge rider, runner speed', () => {
+    const { DONORS: D } = require('../donors.mjs');
+    const mounted = D.filter((d) => d.style === 'mounted');
+    expect(mounted.length).toBe(4);
+    for (const d of mounted) {
+      const rows = Object.values(d.sections).flat();
+      expect(rows.some((e) => /move through the spaces/.test(e.text))).toBe(true);
+      expect(rows.find((e) => e.name === 'Melee Attack').text).toMatch(/straight line toward/);
+      expect(d.speed).not.toMatch(/Climb/);
+    }
+  });
 });

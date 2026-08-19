@@ -938,3 +938,50 @@ describe('the Vhorlek: origin x type compatibility, the full map', () => {
     }
   });
 });
+
+describe('energy: typed concepts infer, randoms roll (owner call 2026-08-18)', () => {
+  const { buildArchetypeResolvePrompt } = require('../format-2024/generate.mjs');
+
+  test('a typed concept is asked to INFER energy — no non-negotiable roll', () => {
+    const p = buildArchetypeResolvePrompt('headless horseman', '', { cr: 10, damageMix: 'both' });
+    expect(p).toMatch(/INFERRED from the concept/);
+    expect(p).toMatch(/"energy": "<Fire\|Cold/);
+    expect(p).not.toMatch(/not negotiable/);
+  });
+
+  test('with NOTHING handed in, both energy and mix are inferred (all-inference, owner 2026-08-18)', () => {
+    const p = buildArchetypeResolvePrompt('headless horseman', '', { cr: 10 });
+    expect(p).toMatch(/INFERRED from the concept/);
+    expect(p).toMatch(/INFERRED from the body/);
+    expect(p).toMatch(/"energy": "<Fire\|Cold/);
+    expect(p).toMatch(/"damage_mix": "<both\|physical\|energy/);
+    expect(p).not.toMatch(/not negotiable/);
+    expect(p).not.toMatch(/PHYSICAL damage only/);
+  });
+
+  test('the resolve call extracts ranked signature elements (schema field, typed path only)', () => {
+    const p = buildArchetypeResolvePrompt('headless horseman', '', { cr: 10 });
+    expect(p).toMatch(/"signature_elements": \["<1-3 short phrases/);
+    expect(p).toMatch(/DEFINING elements, ranked/);
+  });
+
+  test('a handed-in mix suppresses mix inference (seed-path contract)', () => {
+    const p = buildArchetypeResolvePrompt('x', '', { cr: 10, energy: 'Cold', damageMix: 'both' });
+    expect(p).not.toMatch(/"damage_mix": "<both/);
+    expect(p).not.toMatch(/INFERRED from the body/);
+  });
+
+  test('a handed-in energy still gets the non-negotiable brief (seed-path contract)', () => {
+    const p = buildArchetypeResolvePrompt('x', '', { cr: 10, energy: 'Cold', damageMix: 'both' });
+    expect(p).toMatch(/energy damage is Cold, and that is not negotiable/);
+    expect(p).not.toMatch(/INFERRED from the concept/);
+    expect(p).not.toMatch(/"energy": "<Fire\|Cold/);
+  });
+
+  test('a physical mix asks for no energy at all', () => {
+    const p = buildArchetypeResolvePrompt('x', '', { cr: 10, damageMix: 'physical' });
+    expect(p).not.toMatch(/INFERRED from the concept/);
+    expect(p).not.toMatch(/"energy": "<Fire\|Cold/);
+    expect(p).toMatch(/PHYSICAL damage only/);
+  });
+});

@@ -228,6 +228,8 @@ const ENERGY_WEIGHTS = {
   Necrotic: 8, Force: 7, Thunder: 5, Radiant: 4, Psychic: 2,
 };
 
+export const ENERGY_TYPES = Object.keys(ENERGY_WEIGHTS);
+
 export function rollEnergy(rand = Math.random) {
   const entries = Object.entries(ENERGY_WEIGHTS);
   const total = entries.reduce((n, [, w]) => n + w, 0);
@@ -249,6 +251,26 @@ function energyBrief(energy) {
   if (!energy) return '';
   return `
 3. ENERGY. This creature's energy damage is ${energy}, and that is not negotiable — it was rolled before you wrote a word. Build a body and a habit that make ${energy} INEVITABLE: where in its anatomy does ${energy} come from, and why does touching it hurt that way? Never name a different energy anywhere in the concept. If ${energy} seems wrong for the creature you had in mind, change the CREATURE, not the energy.
+`;
+}
+
+// TYPED CONCEPTS INFER, RANDOMS ROLL (owner call, 2026-08-18: "why roll
+// energy when we can infer from the name?"). The rolled-first design cured
+// blank-form incoherence, but on a typed concept it inverted authority —
+// a 12% Acid roll outranked the Headless Horseman's own folklore, and the
+// "change the CREATURE, not the energy" clause ordered the model to invent
+// corrosive resin to justify it. So the resolve call now DECLARES the
+// energy the concept itself implies; the roll survives only on the seed
+// path, where there is no concept to consult.
+function energyInferenceBrief() {
+  return `
+3. ENERGY. Declare the creature's energy damage type ("energy") — INFERRED from the concept, never invented. A known figure keeps its traditional element (a frost giant is Cold, a phoenix is Fire, a wraith is Necrotic); a concept that names or implies an element gets that element; a concept with no elemental voice gets the one energy its body most naturally speaks, or "none" if it hurts with mass and edge alone. One energy family, never two.
+`;
+}
+
+function mixInferenceBrief() {
+  return `
+4. DAMAGE MIX. Declare how this creature's damage splits ("damage_mix") — INFERRED from the body the concept describes. "both" (physical attacks carrying its energy) is how nearly three-quarters of printed monsters work and is the default for anything with teeth, claws, or a weapon AND an element. "physical" is for creatures with no elemental voice at all — they hurt with mass, edge, and point (the bulette, the roc); if you declare it, energy is "none". "energy" is ONLY for bodies with no edge or mass to strike with — incorporeal spirits, animate elements, formless oozes; a creature holding a weapon is never "energy".
 `;
 }
 
@@ -357,7 +379,7 @@ export function buildArchetypeResolvePrompt(concept, description = '', { cr = nu
     : 'Classify this D&D monster concept into exactly one combat-role archetype, then sketch its combat identity.'}
 
 Concept: ${concept}
-${description ? `Details: ${description}\n` : ''}${cr != null ? `Challenge Rating: ${crKeyFor(cr)} — scale the creature's ambition to this tier (a CR 2 creature is a local menace; a CR 20+ creature is a mythic force). The identity must read like a creature OF this tier.\n` : ''}${funnelBrief(archetype, damageMix === 'physical' ? null : energy)}${damageMix === 'physical' ? '' : energyBrief(energy)}${damageMixBrief(damageMix, energy)}
+${description ? `Details: ${description}\n` : ''}${cr != null ? `Challenge Rating: ${crKeyFor(cr)} — scale the creature's ambition to this tier (a CR 2 creature is a local menace; a CR 20+ creature is a mythic force). The identity must read like a creature OF this tier.\n` : ''}${funnelBrief(archetype, damageMix === 'physical' ? null : energy)}${damageMix === 'physical' ? '' : energy ? energyBrief(energy) : energyInferenceBrief()}${damageMix ? damageMixBrief(damageMix, energy) : mixInferenceBrief()}
 Archetypes:
 - brute: hits hard up close, soaks damage, easy to hit
 - defender: protects allies, high AC, punishes movement
@@ -369,7 +391,7 @@ Archetypes:
 - support: buffs, heals, or enables allies
 - swarm: mass of small creatures acting as one
 
-The identity is 2-3 sentences a designer would build from: how it opens a fight, what it does every round after that, and its temperament under pressure (does it flee bloodied, fight to the death, toy with prey?). Concrete and specific to THIS creature — never generic filler. The identity IS the archetype embodied: describe that role's combat loop in this creature's flesh, because every downstream choice spends words where the identity points.
+The identity is 2-3 sentences a designer would build from: how it opens a fight, what it does every round after that, and its temperament under pressure (does it flee bloodied, fight to the death, toy with prey?). Concrete and specific to THIS creature — never generic filler. The creature's anatomy and attacks belong to what IT IS — never to what it hunts, fights, or is depicted alongside (a matador-themed monster fights like the matador, not like the bull). The identity IS the archetype embodied: describe that role's combat loop in this creature's flesh, because every downstream choice spends words where the identity points.
 
 Also decide the creature TYPE from the concept's SUBSTANCE — what it physically IS: animated objects/machines are Construct; remains or spirits of the dead are Undead; natural animals are Beast; masses of vermin are a swarm (name the base type); giants are massive humanoid-shaped folk; fungus/vegetation are Plant. Never type by vibe.
 
@@ -380,7 +402,7 @@ Also write ONE sentence of world-lore ("lore"): where this creature comes from a
 Also pick the creature's THEME THREADS ("themes"): ONE primary word the concept is most about, plus at most ONE supporting word that complements it — from this list only: bestial, armed, amorphous, grave, fiendish, celestial, fey, draconic, elemental, verdant, forged, mind, venomous, terror, beguiling, grasping, devouring, aquatic, subterranean, aerial, uncanny, arcane, voice, gaze, breath. The pair must COHERE — grave+aquatic is a drowned dead thing; subterranean+celestial is nonsense. And themes must AGREE with creature_type: celestial means a Celestial, grave means Undead, fiendish a Fiend, draconic a Dragon, verdant a Plant, forged a Construct — never declare a domain theme the type contradicts. THEME HONESTY: the themes must be the ones your own prose EXPRESSES — its substance, its element, its habitat — not adjacent or generic ones. A creature you described as deep-ocean brine is aquatic, not "elemental"; a thing of packed grave-soil is grave, not "subterranean". Every name and every material in the finished block will be drawn from these two words, so a theme your prose doesn't actually contain leaves the creature speaking a vocabulary it doesn't own.
 
 
-Also decide the creature's MIND ("mind"): "sapient" (it reasons and comprehends speech — most named monsters), "bestial" (animal cunning, no speech), or "mindless" (vermin, oozes, automatons with no comprehension). Print discipline: only sapient creatures cast spells, sense lies, or issue commands — the corpus has zero mindless casters and zero mindless lie-sensers. A golem that understands its maker's commands counts as sapient.
+Also decide the creature's MIND ("mind"): "sapient" (it reasons and comprehends speech — most named monsters), "bestial" (animal cunning, no speech), or "mindless" (vermin, oozes, automatons with no comprehension). Print discipline: only sapient creatures cast spells, sense lies, or issue commands — the corpus has zero mindless casters and zero mindless lie-sensers. A golem that understands its maker's commands counts as sapient. MIND HONESTY: if your own identity or signature elements have the creature taunting, mocking, performing, dueling, or toying with prey through intent and timing, mind is "sapient" — bestial creatures do not taunt.
 
 
 Also give the engine its ASSEMBLY METADATA — structural signals the builder honors directly, unlike the prose:
@@ -388,8 +410,10 @@ Also give the engine its ASSEMBLY METADATA — structural signals the builder ho
 - "movement": the modes the body actually has, from ["swim","burrow","fly","climb"] (walking is implied; an empty array means walk only). The builder GATES abilities on these — a creature without fly never receives a flying ability.
 - "attack_mode": "melee"|"ranged"|"mixed" — how it delivers its attacks. If its identity is striking from afar, say "ranged"; the builder guarantees at least one ranged attack ships.
 - "signature_mechanic": the ONE mechanic the creature IS, from: thrown-weapon, breath, engulf, grapple, gaze, aura, teleport, summon, snare (it binds prey in a restraining substance — webs, tar, hardened stone, grave-wax) — the engine guarantees it a seat. Omit if no single mechanic dominates the concept.
+- "style": the creature's COMBAT STYLE if one clearly fits, from: "mounted" (a charger or rider — speed, momentum, ride-down attacks), "skulker" (an ambusher — stealth, gazes, vanishing), "hurler" (a thrower — projectiles, bursts, reeling lines). Omit if none fits; most creatures have no style.
+- "signature_elements": the concept's 1-3 DEFINING elements, ranked most-defining first — short concrete phrases naming what makes THIS concept itself, the things a fan would riot to find missing (for a phoenix: "death and rebirth in fire"; "the burning plumage"). EXTRACT from the concept and its tradition, never invent; a generic concept gets one element or an empty list. These persist across regenerations — they are the creature's contract.
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "identity": "<2-3 sentences>", "lore": "<one sentence>", "material": "<exactly ONE material from your chosen type's line>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>"}`;
+Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "identity": "<2-3 sentences>", "lore": "<one sentence>", "material": "<exactly ONE material from your chosen type's line>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>", "signature_elements": ["<1-3 short phrases, most defining first>"], ${damageMix !== 'physical' && !energy ? '"energy": "<Fire|Cold|Lightning|Acid|Poison|Necrotic|Radiant|Thunder|Force|Psychic|none — the energy the concept itself implies>", ' : ''}${!damageMix ? '"damage_mix": "<both|physical|energy — how the body the concept describes actually hurts>", ' : ''}"style": "<mounted|skulker|hurler — only if one clearly fits; otherwise omit>"}`;
 }
 
 export function validateArchetypeResponse(jsonString) {
@@ -455,8 +479,9 @@ Also give the engine its ASSEMBLY METADATA — structural signals the builder ho
 - "movement": the modes the body actually has, from ["swim","burrow","fly","climb"] (walking is implied; an empty array means walk only). The builder GATES abilities on these — a creature without fly never receives a flying ability.
 - "attack_mode": "melee"|"ranged"|"mixed" — how it delivers its attacks. If its identity is striking from afar, say "ranged"; the builder guarantees at least one ranged attack ships.
 - "signature_mechanic": the ONE mechanic the creature IS, from: thrown-weapon, breath, engulf, grapple, gaze, aura, teleport, summon, snare (it binds prey in a restraining substance — webs, tar, hardened stone, grave-wax) — the engine guarantees it a seat. Omit if no single mechanic dominates the concept.
+- "style": the creature's COMBAT STYLE if one clearly fits, from: "mounted" (a charger or rider — speed, momentum, ride-down attacks), "skulker" (an ambusher — stealth, gazes, vanishing), "hurler" (a thrower — projectiles, bursts, reeling lines). Omit if none fits; most creatures have no style.
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "synthesis": "<your 2-3 sentences>", "name": "<${naming ? 'the creature\'s proper name, written to THE NAME convention above' : 'a proper name for this creature in Monster Manual register, 1-3 words, never a description'}>", "lore": "<one sentence>", "material": "<exactly ONE material from your chosen type's line>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>"}`;
+Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "synthesis": "<your 2-3 sentences>", "name": "<${naming ? 'the creature\'s proper name, written to THE NAME convention above' : 'a proper name for this creature in Monster Manual register, 1-3 words, never a description'}>", "lore": "<one sentence>", "material": "<exactly ONE material from your chosen type's line>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>", "style": "<mounted|skulker|hurler — only if one clearly fits; otherwise omit>"}`;
 }
 
 export function validateSeedSynthesisResponse(jsonString) {

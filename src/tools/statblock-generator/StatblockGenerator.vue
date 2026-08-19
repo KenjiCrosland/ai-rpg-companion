@@ -308,7 +308,7 @@ import Statblock2024 from '@/components/Statblock2024.vue';
 import {
   generateMonster2024, buildArchetypeResolvePrompt, validateArchetypeResponse,
   buildSeedSynthesisPrompt, validateSeedSynthesisResponse,
-  parseGenerationResponse, pickRandomArchetype, rollEnergy, rollDamageMix, rollNamingConvention, crNumberFor, crKeyFor,
+  parseGenerationResponse, pickRandomArchetype, rollEnergy, rollDamageMix, rollNamingConvention, crNumberFor, crKeyFor, ENERGY_TYPES,
   convertEdition, toLegacyModel, fromLegacyModel,
 } from './format-2024/generate.mjs';
 import { readRecent, recordShipped } from './skeleton/frequency-ledger.mjs';
@@ -1040,6 +1040,10 @@ async function generateStatblockEngine(edition) {
   let conceptMovement = null;
   let conceptAttackMode = null;
   let conceptSignature = null;
+  let conceptStyle = null;
+  let conceptEnergy = null;
+  let conceptMix = null;
+  let conceptElements = null;
   // Type-by-substance (owner call): the micro-calls decide creature type
   // from the concept's substance; the engine stamps it. Random path falls
   // back to the rolled type when the call fails or skips.
@@ -1058,7 +1062,7 @@ async function generateStatblockEngine(edition) {
     try {
       if (userConcept) {
         const raw = await generateGptResponse(
-          buildArchetypeResolvePrompt(userConcept, monsterDescription.value, { cr, archetype: givenArchetype, energy: rolledEnergy, damageMix: rolledMix }),
+          buildArchetypeResolvePrompt(userConcept, monsterDescription.value, { cr, archetype: givenArchetype }),
           validateArchetypeResponse,
           2,
         );
@@ -1091,6 +1095,28 @@ async function generateStatblockEngine(edition) {
         if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
         if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
         if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
+        if (['mounted', 'skulker', 'hurler'].includes(parsed?.style)) conceptStyle = parsed.style;
+        if (typeof parsed?.energy === 'string') {
+          const hit = ENERGY_TYPES.find((t) => t.toLowerCase() === parsed.energy.trim().toLowerCase());
+          if (hit) conceptEnergy = hit;
+        }
+        if (['both', 'physical', 'energy'].includes(parsed?.damage_mix)) conceptMix = parsed.damage_mix;
+        // contradiction belt: a declared element outranks a 'physical' mix
+        // (the icon-first principle) — the model meant 'both'
+        if (conceptMix === 'physical' && conceptEnergy) conceptMix = 'both';
+        if (conceptMix === 'energy' && !conceptEnergy) conceptMix = null;
+        if (Array.isArray(parsed?.signature_elements)) {
+          const els = parsed.signature_elements
+            .filter((x) => typeof x === 'string' && x.trim()).map((x) => x.trim().slice(0, 80)).slice(0, 3);
+          if (els.length) conceptElements = els;
+        }
+        // prose-first, again: a "bestial" mind whose own identity taunts,
+        // performs, or duels is sapient (the Matador read bull, 2026-08-19)
+        if (conceptMind === 'bestial'
+          && /taunt|mock|jeer|perform|danc|duel|toy(?:s|ing)? with/i.test(`${conceptIdentity ?? ''} ${(conceptElements ?? []).join(' ')}`)) {
+          conceptMind = 'sapient';
+          logger.log('[concept] mind promoted to sapient — the identity asserts performance/taunting');
+        }
         {
           logger.log('[concept] synthesis:', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
             + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
@@ -1100,7 +1126,9 @@ async function generateStatblockEngine(edition) {
         }
         logger.log('[concept] resolve:', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
           + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
+          + ` energy=${conceptEnergy ?? '—'} mix=${conceptMix ?? '—'}`
           + `${conceptIdentity ? ' identity=✓' : ''}${conceptLore ? ' lore=✓' : ''}`);
+        if (conceptElements) logger.log('[concept] signature elements:', conceptElements.join(' | '));
         if (conceptIdentity) logger.log('[concept] identity:', conceptIdentity);
         if (conceptLore) logger.log('[concept] lore:', conceptLore);
       } else {
@@ -1139,6 +1167,7 @@ async function generateStatblockEngine(edition) {
         if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
         if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
         if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
+        if (['mounted', 'skulker', 'hurler'].includes(parsed?.style)) conceptStyle = parsed.style;
       }
     } catch (e) {
       logger.warn('Archetype resolve failed:', e);
@@ -1171,6 +1200,9 @@ async function generateStatblockEngine(edition) {
         {
           concept, cr, onProgress: onGenerationProgress,
           fixedName: monsterName.value.trim() || null,
+          style: conceptStyle,
+          signatureElements: conceptElements ?? [],
+          mind: conceptMind,
           takenNames: Object.values(monsters.value ?? {})
             .filter(Array.isArray).flat().map((m) => m?.name).filter(Boolean),
         },
@@ -1193,8 +1225,8 @@ async function generateStatblockEngine(edition) {
         house: conceptHouse,
         proposedName: conceptProposedName,
         recent: readRecent(),
-        energy: rolledEnergy,
-        damageMix: rolledMix,
+        energy: userConcept ? conceptEnergy : rolledEnergy,
+        damageMix: userConcept ? conceptMix : rolledMix,
         naming: rolledNaming,
         mind: conceptMind,
         conceptSize,
