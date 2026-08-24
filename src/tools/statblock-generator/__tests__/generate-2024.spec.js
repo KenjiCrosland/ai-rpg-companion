@@ -985,3 +985,26 @@ describe('energy: typed concepts infer, randoms roll (owner call 2026-08-18)', (
     expect(p).toMatch(/PHYSICAL damage only/);
   });
 });
+
+describe('the name ruling (owner, 2026-08-20): the concept call judges name vs description', () => {
+  const { buildArchetypeResolvePrompt: bar } = require('../format-2024/generate.mjs');
+
+  test('the resolve call is asked to extract a provided name, exactly, or omit it', () => {
+    const p = bar('A knight in corroded plate who rides down travelers on the old iron road.', '', { cr: 12 });
+    expect(p).toMatch(/"provided_name":/);
+    expect(p).toMatch(/copy it EXACTLY as written and nothing else/);
+    expect(p).toMatch(/If the input only\s+describes, OMIT the field entirely/);
+    expect(p).toMatch(/A description is never a name/);
+  });
+
+  test('the instruction teaches all three input shapes, name-plus-description included', () => {
+    const p = bar('x', '', { cr: 5 });
+    expect(p).toMatch(/Headless Horseman/);
+    expect(p).toMatch(/Rust Baron - a knight in corroded plate/);
+  });
+
+  test('the seed (blank-form) prompt never asks for a provided name — there is no input to name from', () => {
+    const { buildSeedSynthesisPrompt: bs } = require('../format-2024/generate.mjs');
+    expect(bs({ creature_type: 'Undead' }, { cr: 5 })).not.toMatch(/"provided_name":/);
+  });
+});

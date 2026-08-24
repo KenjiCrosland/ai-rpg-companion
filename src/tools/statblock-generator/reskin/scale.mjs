@@ -26,7 +26,9 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   scaled.stats.CON = Math.max(scaled.stats.CON, 12 + Math.floor(cr / 2));
   scaled.cr = cr;
   scaled.ac = card.ac; scaled.hp = card.hp; scaled.atk = card.atk; scaled.dc = card.dc;
-  scaled.pb = cr >= 17 ? 6 : cr >= 13 ? 5 : cr >= 9 ? 4 : cr >= 5 ? 3 : 2;
+  // full print ladder: the old ceiling of 6 shipped wrong PB/saves/skills
+  // on every CR 21+ block (Stormfall +6 at CR 22, lint-caught 2026-08-20)
+  scaled.pb = cr >= 29 ? 9 : cr >= 25 ? 8 : cr >= 21 ? 7 : cr >= 17 ? 6 : cr >= 13 ? 5 : cr >= 9 ? 4 : cr >= 5 ? 3 : 2;
   // The concept call's movement grant: a flying concept on a grounded
   // chassis gains Fly (hover) — print's ghost idiom (Wraith, Fly 60
   // hover on an ordinary frame). Winged-style donors carry Fly natively.

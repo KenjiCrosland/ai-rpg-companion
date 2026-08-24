@@ -273,7 +273,7 @@ export function verifyAuditFindings(monster, raw) {
   }
   // Case-insensitive and punctuation-tolerant: a correct live finding was
   // dropped because the judge lowercased the first word of its span.
-  const norm = (s) => s.replace(/\s+/g, ' ').replace(/[\u2018\u2019]/g, "'")
+  const norm = (s) => s.replace(/\*/g, '').replace(/\s+/g, ' ').replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201c\u201d]/g, '"').replace(/[\u2013\u2014]/g, '-').trim().toLowerCase();
   const out = [];
   for (const f of parsed?.findings ?? []) {
@@ -302,9 +302,13 @@ export function verifyAuditFindings(monster, raw) {
     // suffix the engine appends ("Glacier's Possession (Recharge 6)") —
     // the judge cites the bare name (live: two correct Possession findings
     // dropped as "unknown entry").
-    const norm = (n) => String(n).replace(/[\u2018\u2019]/g, "'").replace(/\s*\(.*?\)\s*$/, '').trim().toLowerCase();
+    // normName (renamed 2026-08-19): this shadowed the span-tolerance
+    // norm above, silently stripping the span check of its whitespace/
+    // quote/asterisk tolerance — the source of the "span not verbatim"
+    // drop ledger (Widow x2, Pilgrim x1)
+    const normName = (n) => String(n).replace(/[\u2018\u2019]/g, "'").replace(/\s*\(.*?\)\s*$/, '').trim().toLowerCase();
     for (const [name, entries] of ordered) {
-      const hit = (entries ?? []).find((e) => e.name === f.entry || norm(e.name) === norm(f.entry));
+      const hit = (entries ?? []).find((e) => e.name === f.entry || normName(e.name) === normName(f.entry));
       if (hit) { section = name; entry = hit; break; }
     }
     if (!entry) {

@@ -1051,6 +1051,12 @@ async function generateStatblockEngine(edition) {
   let conceptEnergy = null;
   let conceptMix = null;
   let conceptElements = null;
+  // THE NAME RULING (owner, 2026-08-20): whether the input NAMED the
+  // creature is the concept call's judgment, not a word-count heuristic.
+  // A name may only ever come from the name/concept field - lore is never
+  // a name (live: a description typed into the concept field shipped as
+  // the monster's name and propagated into every row's self-reference).
+  let conceptProvidedName = null;
   // Type-by-substance (owner call): the micro-calls decide creature type
   // from the concept's substance; the engine stamps it. Random path falls
   // back to the rolled type when the call fails or skips.
@@ -1071,7 +1077,7 @@ async function generateStatblockEngine(edition) {
         const pinKey = JSON.stringify([userConcept, monsterDescription.value, cr, givenArchetype]);
         const pinned = conceptResolutionCache.get(pinKey);
         if (pinned) {
-          ({ archetypeName, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements } = pinned);
+          ({ archetypeName, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName } = pinned);
           logger.log('[concept] pinned — reusing the resolution for an unchanged concept');
         } else {
         const raw = await generateGptResponse(
@@ -1113,6 +1119,12 @@ async function generateStatblockEngine(edition) {
           const hit = ENERGY_TYPES.find((t) => t.toLowerCase() === parsed.energy.trim().toLowerCase());
           if (hit) conceptEnergy = hit;
         }
+        if (typeof parsed?.provided_name === 'string') {
+          const pn = parsed.provided_name.trim();
+          // provenance, not shape: the name must actually come from the
+          // name/concept field, so the call can extract but never invent
+          if (pn && monsterName.value.toLowerCase().includes(pn.toLowerCase())) conceptProvidedName = pn;
+        }
         if (['both', 'physical', 'energy'].includes(parsed?.damage_mix)) conceptMix = parsed.damage_mix;
         // contradiction belt: a declared element outranks a 'physical' mix
         // (the icon-first principle) — the model meant 'both'
@@ -1143,10 +1155,11 @@ async function generateStatblockEngine(edition) {
           + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
           + ` energy=${conceptEnergy ?? '—'} mix=${conceptMix ?? '—'}`
           + `${conceptIdentity ? ' identity=✓' : ''}${conceptLore ? ' lore=✓' : ''}`);
+        logger.log('[concept] name:', conceptProvidedName ? `provided "${conceptProvidedName}"` : 'not provided — the input describes, the generator names it');
         if (conceptElements) logger.log('[concept] signature elements:', conceptElements.map((e) => `${e.element}${e.kind ? ` [${e.kind}]` : ''}`).join(' | '));
         if (conceptIdentity) logger.log('[concept] identity:', conceptIdentity);
         if (conceptLore) logger.log('[concept] lore:', conceptLore);
-        conceptResolutionCache.set(pinKey, { archetypeName, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements });
+        conceptResolutionCache.set(pinKey, { archetypeName, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName });
         }
       } else {
         // Blank form: the same micro-call fuses the rolled axes into one
@@ -1216,7 +1229,7 @@ async function generateStatblockEngine(edition) {
       finalMonster = await generateReskin(
         {
           concept, cr, onProgress: onGenerationProgress,
-          fixedName: monsterName.value.trim() || null,
+          fixedName: conceptProvidedName,
           style: conceptStyle,
           signatureElements: conceptElements ?? [],
           mind: conceptMind,
@@ -1261,7 +1274,7 @@ async function generateStatblockEngine(edition) {
         // Concept-path naming refinement: refine the name via the naming
         // micro-call unless the model kept the user's typed name verbatim
         // (a kept name was judged a proper name — honor it).
-        namePass: randomSeed ? null : { userTypedName: monsterName.value.trim() || null },
+        namePass: randomSeed ? null : { userTypedName: conceptProvidedName },
         // Fallback-model mode: ship degraded output instead of failing
         // generations the weaker model can't polish (owner call).
         degraded: isDegradedMode(),

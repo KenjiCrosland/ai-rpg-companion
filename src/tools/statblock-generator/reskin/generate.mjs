@@ -10,11 +10,14 @@ import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
 import { logger } from '@/util/logger.mjs';
 import challengeRatings from '@/data/challengeRatings.json';
+
+// the table keys fractional CRs as '1/2', not '0.5' (Thornback shipped XP 0)
+const crKey = (cr) => (cr === 0.125 ? '1/8' : cr === 0.25 ? '1/4' : cr === 0.5 ? '1/2' : String(cr));
 import { hpFormulaFor as hpFormulaForSize } from '../format-2024/dice.mjs';
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings } from '../format-2024/audit.mjs';
 
 const trace = (l, d) => logger.log(`[reskin] ${l}`, d ?? '');
-const GAME_TERM = /Attack Roll|Saving Throw|DC \d+|\b(Frightened|Poisoned|Blinded|Deafened|Prone|Restrained|Grappled|Charmed|Stunned|Incapacitated) condition\b|Advantage|Disadvantage|Dash|Disengage|Hide action|Speed/;
+const GAME_TERM = /Attack Roll|Saving Throw|DC \d+|\b(Frightened|Poisoned|Blinded|Deafened|Prone|Restrained|Grappled|Charmed|Stunned|Incapacitated) condition\b|Advantage|Disadvantage|Dash|Disengage|Hide action|Speed|[Tt]eleports?|Opportunity Attacks?|Difficult Terrain|unoccupied space|without provoking|Hit Points|\d+ feet/;
 // Condition menus by severity (owner call, 2026-08-18: "interpolate minor
 // and major conditions — give the llm the options").
 export const CONDITION_MENUS = {
@@ -108,11 +111,20 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
   // false-positived on legal double monster-references ("until the start
   // of the creature's next turn, and the creature has Advantage") and
   // killed correct drafts through repair (the Matador, 2026-08-19).
-  const victimPredicate = /[Tt]he creature (?:must (?:make|succeed)|takes \d|has the [A-Z][a-z]+ condition|repeats the save)/.test(w);
-  const doubledInVictimContext = w.split(/(?<=\.)\s+/).some((sent) =>
-    (sent.match(/the creature/gi) ?? []).length >= 2
-    && !/the target/i.test(sent)
-    && /must (?:make|succeed)|Saving Throw|Frightened|Charmed|Paralyzed|Stunned|Restrained|Poisoned|Blinded|Prone|Incapacitated/i.test(sent));
+  // (?<!of |from |to )(?<!near ) — a locative ("within 30 feet of the
+  // creature must make...") names the victim's POSITION, not the monster
+  // as victim (the Pilgrim: 3 repair drafts killed, 2026-08-19)
+  const victimPredicate = /(?<!\bof )(?<!\bfrom )(?<!\bto )(?<!\bnear )[Tt]he creature (?:must (?:make|succeed)|takes \d|has the [A-Z][a-z]+ condition|repeats the save)/.test(w);
+  // count only NON-ACTOR references: "the creature hits/can see" is the
+  // monster acting (legal, Stormfall's taunt died 3x on it); a doubled
+  // "the creature" in victim position is the muddle
+  const doubledInVictimContext = w.split(/(?<=\.)\s+/).some((sent) => {
+    const total = (sent.match(/the creature/gi) ?? []).length;
+    const actor = (sent.match(/the creature (?:hits|makes|uses|moves|can see|targets)/gi) ?? []).length;
+    return total - actor >= 2
+      && !/\b(?:the|a) target\b/i.test(sent)
+      && /must (?:make|succeed)|Saving Throw|Frightened|Charmed|Paralyzed|Stunned|Restrained|Poisoned|Blinded|Prone|Incapacitated/i.test(sent);
+  });
   const selfRef = victimPredicate || doubledInVictimContext;
   // role collapse: "the target" may not appear before anything establishes one
   const firstTarget = w.search(/\bthe target\b/);
@@ -161,8 +173,14 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
   let moveTo;
   const declared = String(economy ?? '').trim().toLowerCase();
   let riderOn = null;
+  const targetingSave = /(?:one|each) (?:creature|target)[^.]{0,80}(?:must succeed|must make|saving throw)/i.test(w);
   if (declared.startsWith('rider_on:')) {
     riderOn = String(economy).slice('rider_on:'.length).trim();
+  } else if (declared === 'trait' && targetingSave) {
+    // declaration coherence: a save frame aimed at a target is an action
+    // no matter what the model declared (Sister Vesper's Gaze of the
+    // Living shipped as a costless trait, 2026-08-20) — fall through to
+    // the prose-based placement instead
   } else if (Object.prototype.hasOwnProperty.call(ECONOMY_TO_SECTION, declared)) {
     // THE ECONOMY DECLARATION (owner go, 2026-08-19, third filing error in
     // three blocks): the model declares the cost, the assembler files by
@@ -198,7 +216,7 @@ function vetTraitWildcard(tw, sections, { name, inline }) {
     : /\d+ \(\d+d\d+|\*[A-Z][a-z]+ Saving Throw\*|Saving Throw:|Attack Roll:|\(Recharge|\/Day/.test(twText) ? ['active mechanics in a passive trait (a damage roll, a save FRAME, or a use limit — mentioning saves or attack rolls passively is fine)', 'mechanical']
     : /starts its turn/i.test(twText) ? ['recurring aura', 'mechanical']
     : /\byours?\b|\byou\b/i.test(twText) ? ['second person', 'mechanical']
-    : !/Immunity|Resistance|Advantage|Disadvantage|Speed|darkvision|blindsight|tremorsense|truesight|condition|can't be|cannot be|cover/i.test(twText) ? ['no game term — flavor without a rule', 'mechanical']
+    : !/Immunity|Resistance|Advantage|Disadvantage|Speed|darkvision|blindsight|tremorsense|truesight|condition|can't be|cannot be|cover|teleport|Opportunity Attack|provok|Difficult Terrain|unoccupied space|move through|Hit Points|bright light|dim light|damage|Incapacitated/i.test(twText) ? ['no game term — flavor without a rule', 'mechanical']
     : names.includes(twName.toLowerCase()) ? ['name collides with an existing entry', 'mechanical'] : null;
   const text = capTerms(twText.split('the creature').join(inline).replace(/^The creature/, `The ${name.toLowerCase()}`));
   if (why) return { okay: false, name: twName, draft: twText, why: why[0], tier: why[1], text };
@@ -247,51 +265,76 @@ function nameClaimSatisfied(rename, dealt) {
   return !claimed;
 }
 
-export function makeReskinValidator(scaled, { energy = null } = {}) {
+// canonical-case belt: the model answering 'cold' for 'Cold' failed the
+// claim check, the weld, the rider fill, AND the repair detection at once
+// (Lamplighter, 3 calls + degrade, 2026-08-20). Normalize, never reject.
+const canonType = (t) => DAMAGE_TYPES.find((d) => d.toLowerCase() === String(t ?? '').trim().toLowerCase()) ?? t;
+function normalizeTypeFields(p) {
+  if (!p || typeof p !== 'object') return p;
+  if (p.damage_types && typeof p.damage_types === 'object') {
+    for (const k of Object.keys(p.damage_types)) p.damage_types[k] = canonType(p.damage_types[k]);
+  }
+  if (p.melee_rider != null && String(p.melee_rider).trim().toLowerCase() !== 'none') p.melee_rider = canonType(p.melee_rider);
+  if (p.vulnerability != null) p.vulnerability = canonType(p.vulnerability);
+  return p;
+}
+
+/**
+ * Collect EVERY defect in a reskin response (not first-failure): the
+ * repair-as-retry flow (owner go, 2026-08-23) fixes them all in one
+ * informed round instead of burning blind retries one field at a time.
+ */
+export function reskinDefects(scaled, p, { energy = null } = {}) {
+  if (!p || typeof p.name !== 'string' || !p.renames || typeof p.wildcard !== 'string') {
+    return ['unparseable, or name/renames/wildcard missing'];
+  }
+  const defects = [];
   const keys = renameKeysOf(scaled);
   const PHYSICAL = ['Bludgeoning', 'Piercing', 'Slashing'];
+  const typedNames = Object.values(scaled.sections).flat()
+    .filter((e) => e.text.includes('{damage_type}')).map((e) => e.name);
+  const TYPES = ['Acid', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Poison', 'Psychic', 'Radiant', 'Thunder', 'Bludgeoning', 'Piercing', 'Slashing'];
+  for (const k of keys) {
+    const v = String(p.renames?.[k] ?? '').trim();
+    if (!v) defects.push(`rename for "${k}" missing`);
+    else if (v.toLowerCase() === k.toLowerCase()) defects.push(`rename for "${k}" unchanged`);
+    else if (v.split(/\s+/).length > 4) defects.push(`rename for "${k}" over 4 words: "${v}"`);
+    else if (RESERVED_NAMES.test(v)) defects.push(`rename for "${k}" uses reserved vocabulary: "${v}"`);
+  }
+  for (const k of typedNames) {
+    const rn = String(p.renames?.[k] ?? '').trim();
+    const t = p.damage_types?.[rn];
+    if (!TYPES.includes(t)) { defects.push(`no damage type for "${rn || k}"`); continue; }
+    if (energy && !PHYSICAL.includes(t) && t !== energy) defects.push(`"${rn}" deals ${t} but this creature's energy is ${energy} — use ${energy} or a physical type`);
+    const dealt = [t, /Melee/.test(k) || k === 'Melee Attack' ? p.melee_rider : null].filter(Boolean);
+    if (!nameClaimSatisfied(rn, dealt)) defects.push(`name "${rn}" claims an element its damage (${dealt.join('/')}) does not pay`);
+  }
+  if (Object.values(scaled.sections).flat().some((e) => (e.text ?? '').includes('{damage_type_2}'))
+    && !TYPES.includes(p.melee_rider) && String(p.melee_rider ?? '').trim().toLowerCase() !== 'none') {
+    defects.push('the melee rider is missing (an energy type or "none")');
+  } else if (energy && TYPES.includes(p.melee_rider) && !PHYSICAL.includes(p.melee_rider) && p.melee_rider !== energy) {
+    defects.push(`the melee rider deals ${p.melee_rider} but this creature's energy is ${energy} — use ${energy}, a physical type, or "none"`);
+  }
+  for (const [slot, menu] of Object.entries(CONDITION_MENUS)) {
+    const used = Object.values(scaled.sections).flat().some((e) => (e.text ?? '').includes(`{${slot}}`));
+    if (used && !menu.includes(String(p.conditions?.[slot] ?? '').trim())) defects.push(`condition for {${slot}} not from its menu`);
+  }
+  if (Object.values(scaled.sections).flat().some((e) => (e.text ?? '').includes('{projectile}'))) {
+    const proj = String(p.projectile ?? '').trim();
+    if (!proj || proj.split(/\s+/).length > 4) defects.push('projectile missing (the thrown thing with its article, 4 words max)');
+  }
+  return defects;
+}
+
+export function makeReskinValidator(scaled, { energy = null } = {}) {
   return (jsonString) => {
-    // every rejection is TRACED — the wisp-queen death (2026-08-18) was
-    // three silent validation failures rendered as a generic toast
-    const fail = (why) => { trace('validation failed —', why); return false; };
-    if (!validateReskinResponse(jsonString)) return fail('unparseable, or name/renames/wildcard missing');
-    const p = JSON.parse(String(jsonString).replace(/^```json\s*|```\s*$/g, '').trim());
-    const typedNames = Object.values(scaled.sections).flat()
-      .filter((e) => e.text.includes('{damage_type}')).map((e) => e.name);
-    const TYPES = ['Acid', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Poison', 'Psychic', 'Radiant', 'Thunder', 'Bludgeoning', 'Piercing', 'Slashing'];
-    for (const k of keys) {
-      const v = String(p.renames?.[k] ?? '').trim();
-      if (!v) return fail(`rename for "${k}" missing`);
-      if (v.toLowerCase() === k.toLowerCase()) return fail(`rename for "${k}" unchanged`);
-      if (v.split(/\s+/).length > 4) return fail(`rename for "${k}" over 4 words: "${v}"`);
-      if (RESERVED_NAMES.test(v)) return fail(`rename for "${k}" uses reserved vocabulary: "${v}"`);
-    }
-    for (const k of typedNames) {
-      const rn = String(p.renames?.[k] ?? '').trim();
-      const t = p.damage_types?.[rn];
-      if (!TYPES.includes(t)) return fail(`no damage type for "${rn || k}"`);
-      // THE ENERGY WELD (owner go, 2026-08-19): the concept call declared
-      // this creature's energy; the reskin may not contradict it (the
-      // Gutter King dealt Acid on a Poison creature three generations
-      // running — model association, cured by a stated rule)
-      if (energy && !PHYSICAL.includes(t) && t !== energy) return fail(`"${rn}" deals ${t} but this creature's energy is ${energy} — use ${energy} or a physical type`);
-      const dealt = [t, /Melee/.test(k) || k === 'Melee Attack' ? p.melee_rider : null].filter(Boolean);
-      if (!nameClaimSatisfied(rn, dealt)) return fail(`name "${rn}" claims an element its damage (${dealt.join('/')}) does not pay`);
-    }
-    if (energy && TYPES.includes(p.melee_rider) && !PHYSICAL.includes(p.melee_rider) && p.melee_rider !== energy) {
-      return fail(`the melee rider deals ${p.melee_rider} but this creature's energy is ${energy} — use ${energy}, a physical type, or "none"`);
-    }
-    if (Object.values(scaled.sections).flat().some((e) => (e.text ?? '').includes('{damage_type_2}'))
-      && !TYPES.includes(p.melee_rider) && String(p.melee_rider ?? '').trim().toLowerCase() !== 'none') return fail('melee_rider missing (energy type or "none")');
-    for (const [slot, menu] of Object.entries(CONDITION_MENUS)) {
-      const used = Object.values(scaled.sections).flat().some((e) => (e.text ?? '').includes(`{${slot}}`));
-      if (used && !menu.includes(String(p.conditions?.[slot] ?? '').trim())) return fail(`condition for {${slot}} not from its menu`);
-    }
-    if (Object.values(scaled.sections).flat().some((e) => (e.text ?? '').includes('{projectile}'))) {
-      const proj = String(p.projectile ?? '').trim();
-      if (!proj || proj.split(/\s+/).length > 4) return fail('projectile missing (the thrown thing with its article, 4 words max)');
-    }
-    return true;
+    let p;
+    try {
+      p = normalizeTypeFields(JSON.parse(String(jsonString).replace(/^```json\s*|```\s*$/g, '').trim()));
+    } catch { trace('validation failed —', 'unparseable'); return false; }
+    const defects = reskinDefects(scaled, p, { energy });
+    for (const d of defects) trace('validation failed —', d);
+    return defects.length === 0;
   };
 }
 
@@ -312,34 +355,43 @@ export async function generateReskin(options, callLLM) {
     const seats = assignSeats(options.signatureElements ?? []);
     if (seats) trace('seats:', seats.packaged ? `package <- "${seats.action}"` : `action <- "${seats.action}" | trait <- "${seats.trait}"`);
   }
-  progress('chassis', { chassis: { ac: scaled.ac, hp: scaled.hp, cr_str: String(cr), pb: scaled.pb, xp: challengeRatings[String(cr)]?.XP ?? 0 } });
+  progress('chassis', { chassis: { ac: scaled.ac, hp: scaled.hp, cr_str: String(cr), pb: scaled.pb, xp: challengeRatings[crKey(cr)]?.XP ?? 0 } });
 
-  // Strict validation gets the client's 3 retries; when a concept keeps
-  // failing the same check (the Matador: no gaze to rename "Dread Gaze"
-  // into), the FOURTH chance is acceptance plus the repair call — the
-  // never-fail contract (owner, 2026-08-19).
+  // REPAIR-AS-RETRY (owner go, 2026-08-23). The strict validator used to
+  // burn the client's 3 retries on IDENTICAL blind resends — systematic
+  // single-field misses never fix themselves (measured on the acceptance
+  // batch: byte-identical failures x3, then a degrade + repair = 5 calls
+  // where 2 would do). Now: ONE structurally-validated call (blind retries
+  // reserved for unparseable garbage, the thing they can actually fix),
+  // then up to two repair rounds that carry the full defect list. Common
+  // case 1 call; worst case 3; the loud throw remains the last resort.
   const reskinPrompt = buildReskinPrompt(scaled, { concept, takenNames: options.takenNames ?? [], signatureElements: options.signatureElements ?? [], energy: options.energy ?? null });
-  let raw;
-  try {
-    raw = await callLLM(reskinPrompt, makeReskinValidator(scaled, { energy: options.energy ?? null }));
-  } catch {
-    trace('validation exhausted — accepting a parse-only response for repair');
-    raw = await callLLM(reskinPrompt, (j) => { try { return !!JSON.parse(String(j).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return false; } });
-  }
-  let p = (() => { try { return JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; } })();
+  const raw = await callLLM(reskinPrompt, validateReskinResponse);
+  let p = (() => { try { return normalizeTypeFields(JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim())); } catch { return null; } })();
   if (!p) throw new Error('reskin call failed — the pilot fails loudly, never silently');
-  // THE REPAIR CALL (owner ask, 2026-08-18: "can we do a fix call so it
-  // doesn't fail?"): a near-complete response gets ONE small call for
-  // exactly its missing pieces — merged and re-checked. The loud throw
-  // survives as the true last resort.
-  {
-    const missingRenames = renameKeysOf(scaled).filter((k) => {
-      const v = String(p.renames?.[k] ?? '').trim();
-      return !v || v.toLowerCase() === k.toLowerCase() || v.split(/\s+/).length > 4 || RESERVED_NAMES.test(v);
-    });
+  for (let round = 1; round <= 2; round += 1) {
+    const defects = reskinDefects(scaled, p, { energy: options.energy ?? null });
+    if (!defects.length) break;
+    trace(`repair round ${round}:`, `${defects.length} defect(s) — ${defects.join(' | ')}`);
     const typedRows = Object.values(scaled.sections).flat().filter((e) => e.text.includes('{damage_type}'));
     const declaredEnergy = options.energy ?? null;
     const weldOk = (t) => !declaredEnergy || ['Bludgeoning', 'Piercing', 'Slashing'].includes(t) || t === declaredEnergy;
+    // a rename that CLAIMS an element the row's damage does not pay is a
+    // rename problem — re-ask for the name, not the type
+    const claimBad = typedRows.map((e) => e.name).filter((k) => {
+      const rn = String(p.renames?.[k] ?? '').trim();
+      const t = p.damage_types?.[rn];
+      if (!rn || !DAMAGE_TYPES.includes(t)) return false;
+      const dealt = [t, /Melee/.test(k) || k === 'Melee Attack' ? p.melee_rider : null].filter(Boolean);
+      return !nameClaimSatisfied(rn, dealt);
+    });
+    const missingRenames = [...new Set([
+      ...renameKeysOf(scaled).filter((k) => {
+        const v = String(p.renames?.[k] ?? '').trim();
+        return !v || v.toLowerCase() === k.toLowerCase() || v.split(/\s+/).length > 4 || RESERVED_NAMES.test(v);
+      }),
+      ...claimBad,
+    ])];
     const missingTypes = typedRows.map((e) => e.name)
       .filter((k) => {
         const t = p.damage_types?.[String(p.renames?.[k] ?? '').trim()];
@@ -353,22 +405,29 @@ export async function generateReskin(options, callLLM) {
     const projMissing = projSlotUsed && (!String(p.projectile ?? '').trim() || String(p.projectile).trim().split(/\s+/).length > 4);
     const riderSlotUsed = Object.values(scaled.sections).flat().some((e) => (e.text ?? '').includes('{damage_type_2}'));
     const riderMissing = riderSlotUsed && !DAMAGE_TYPES.includes(p.melee_rider) && String(p.melee_rider ?? '').trim().toLowerCase() !== 'none';
-    if (missingRenames.length || missingTypes.length || missingConds.length || riderMissing || projMissing) {
-      trace('repair call:', `renames ${missingRenames.length}, types ${missingTypes.length}, conditions ${missingConds.length}`);
-      const fixPrompt = `You are completing a partial answer for a D&D monster reskin. CONCEPT: ${concept}\nReturn ONLY JSON with EXACTLY these missing pieces:\n{${missingRenames.length ? ` "renames": { ${missingRenames.map((k) => `"${k}": "<new name for this mechanic in the concept's register: plain English, 4 words MAX, different from the original>"`).join(', ')} },` : ''}${missingTypes.length ? ` "damage_types": { ${missingTypes.map((k) => `"${k}": "<damage type${declaredEnergy ? ` — ${declaredEnergy} or a physical type; this creature\'s energy is ${declaredEnergy}` : ''}>"`).join(', ')} },` : ''}${riderMissing ? ` "melee_rider": "<energy type or none>",` : ''}${projMissing ? ` "projectile": "<the thrown thing with its article, 1-3 words>",` : ''}${missingConds.length ? ` "conditions": { ${missingConds.map((sl) => `"${sl}": "<one of: ${CONDITION_MENUS[sl].join(', ')}>"`).join(', ')} }` : ''} }`;
-      const fixRaw = await callLLM(fixPrompt, (j) => { try { return !!JSON.parse(String(j).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return false; } });
-      const fix = (() => { try { return JSON.parse(String(fixRaw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; } })();
-      if (fix) {
-        p = { ...p,
-          renames: { ...p.renames, ...(fix.renames ?? {}) },
-          // repair types may key on the DONOR name (we asked with it) or the new name
-          damage_types: { ...p.damage_types, ...Object.fromEntries(Object.entries(fix.damage_types ?? {}).map(([k, v]) => [String(p.renames?.[k] ?? k).trim(), v])) },
-          conditions: { ...p.conditions, ...(fix.conditions ?? {}) },
-          melee_rider: p.melee_rider ?? fix.melee_rider,
-          projectile: p.projectile ?? fix.projectile,
-        };
-      }
-    }
+    const riderWeldBad = riderSlotUsed && !riderMissing && declaredEnergy && DAMAGE_TYPES.includes(p.melee_rider)
+      && !['Bludgeoning', 'Piercing', 'Slashing'].includes(p.melee_rider) && p.melee_rider !== declaredEnergy;
+    const askRider = riderMissing || riderWeldBad;
+    if (!(missingRenames.length || missingTypes.length || missingConds.length || askRider || projMissing)) break;
+    const fixPrompt = `You are completing a partial answer for a D&D monster reskin. CONCEPT: ${concept}
+Problems found with the previous answer:
+${defects.map((d) => `- ${d}`).join('\n')}
+Return ONLY JSON with EXACTLY these corrected pieces:
+{${missingRenames.length ? ` "renames": { ${missingRenames.map((k) => `"${k}": "<new name for this mechanic in the concept's register: plain English, 4 words MAX, different from the original, never claiming an element the row's damage does not pay>"`).join(', ')} },` : ''}${missingTypes.length ? ` "damage_types": { ${missingTypes.map((k) => `"${k}": "<damage type${declaredEnergy ? ` — ${declaredEnergy} or a physical type; this creature's energy is ${declaredEnergy}` : ''}>"`).join(', ')} },` : ''}${askRider ? ` "melee_rider": "<${declaredEnergy ? `${declaredEnergy}, a physical type, or none` : 'energy type or none'}>",` : ''}${projMissing ? ` "projectile": "<the thrown thing with its article, 1-3 words>",` : ''}${missingConds.length ? ` "conditions": { ${missingConds.map((sl) => `"${sl}": "<one of: ${CONDITION_MENUS[sl].join(', ')}>"`).join(', ')} }` : ''} }`;
+    const fixRaw = await callLLM(fixPrompt, (j) => { try { return !!JSON.parse(String(j).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return false; } });
+    const fix = (() => { try { return JSON.parse(String(fixRaw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; } })();
+    if (!fix) break;
+    p = { ...p,
+      renames: { ...p.renames, ...(fix.renames ?? {}) },
+      // repair types may key on the DONOR name (we asked with it) or the new name
+      damage_types: { ...p.damage_types, ...Object.fromEntries(Object.entries(fix.damage_types ?? {}).map(([k, v]) => [String(fix.renames?.[k] ?? p.renames?.[k] ?? k).trim(), v])) },
+      conditions: { ...p.conditions, ...(fix.conditions ?? {}) },
+      // a BAD rider must be replaced, not kept — the old ?? merge preserved
+      // weld violations forever
+      melee_rider: askRider ? (fix.melee_rider ?? p.melee_rider) : (p.melee_rider ?? fix.melee_rider),
+      projectile: projMissing ? (fix.projectile ?? p.projectile) : (p.projectile ?? fix.projectile),
+    };
+    normalizeTypeFields(p);
   }
   // the folk-article class, ported from the skeleton path: templates
   // supply their own articles, so a "The Cindermoss" mints "the the"
@@ -435,7 +494,13 @@ export async function generateReskin(options, callLLM) {
         if (DAMAGE_TYPES.includes(rider) && !['Bludgeoning', 'Piercing', 'Slashing'].includes(rider) && rider !== wanted) {
           e.text = e.text.split('{damage_type_2}').join(rider);
         } else if (e.text_noRider) {
-          e.text = e.text_noRider; // purely physical or same-type: one clause
+          // restore + RE-TRANSFORM: the pristine capture predates the rename
+          // pass and the name substitution, so a bare restore shipped "If
+          // the creature moved" on every rider-less melee (verified against
+          // the acceptance sheets five-for-five, 2026-08-23)
+          e.text = e.text_noRider;
+          for (const [old, fresh] of renamed) e.text = e.text.replace(new RegExp(`${old}(?! Roll)`, 'g'), fresh);
+          e.text = e.text.split('The creature').join(`The ${p.name.toLowerCase()}`).split('the creature').join(inline);
         }
       }
       delete e.text_noRider;
@@ -461,9 +526,10 @@ export async function generateReskin(options, callLLM) {
   const mods = Object.fromEntries(Object.entries(scaled.stats).map(([k, v]) => [k, Math.floor((v - 10) / 2)]));
   const monster = {
     name: p.name, format: '2024', cr, cr_str: String(cr),
-    xp: challengeRatings[String(cr)]?.XP ?? 0,
-    challenge_rating: `${cr} (XP ${(challengeRatings[String(cr)]?.XP ?? 0).toLocaleString()}; PB +${scaled.pb})`,
-    type: p.type ?? 'Monstrosity', size: p.size ?? 'Medium', alignment: p.alignment ?? 'Unaligned',
+    xp: challengeRatings[crKey(cr)]?.XP ?? 0,
+    challenge_rating: `${cr} (XP ${(challengeRatings[crKey(cr)]?.XP ?? 0).toLocaleString()}; PB +${scaled.pb})`,
+    type: p.type ?? 'Monstrosity', size: p.size ?? 'Medium',
+    alignment: String(p.alignment ?? 'Unaligned').replace(/\b[a-z]/g, (c) => c.toUpperCase()),
     ac: card.ac, hp: scaled.hp, // scaled.hp carries the style's hp_scale (flight tax)
     // the die follows the size the RESKIN chose (live: a Gargantuan on d8)
     hp_formula: hpFormulaForSize(scaled.hp, p.size ?? 'Medium', Math.floor((scaled.stats.CON - 10) / 2)),
@@ -500,6 +566,15 @@ export async function generateReskin(options, callLLM) {
       // slot entry, whose seat the rider consumed
       const bare = (n) => n.replace(/ \(.*\)$/, '').trim().toLowerCase();
       const host = Object.values(sections).flat().find((e2) => bare(e2.name) === bare(v.riderOn));
+      if (host && /If the .{0,60}(?:moved|flew) at least/.test(host.text)) {
+        // one rider per attack (critic's cap, 2026-08-20): the charge/dive
+        // rider is already aboard — a second fused mechanic made 4-6
+        // sentence attacks with two Prone clauses (Corroded Lance)
+        trace('rider host already carries a rider —', `"${host.name}"; filing as a trait instead`);
+        pendingWildcard.moveTo = 'Traits';
+        pendingWildcard.text = /^When /i.test(v.text) && !/once (?:per|a|each) (?:turn|round)/i.test(v.text) ? `${v.text} It can do this only once per turn.` : v.text;
+        return;
+      }
       if (host && host !== pendingWildcard) {
         host.text = `${host.text} ${v.text}`;
         for (const es of Object.values(sections)) {
