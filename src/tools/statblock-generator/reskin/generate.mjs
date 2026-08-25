@@ -15,9 +15,10 @@ import challengeRatings from '@/data/challengeRatings.json';
 const crKey = (cr) => (cr === 0.125 ? '1/8' : cr === 0.25 ? '1/4' : cr === 0.5 ? '1/2' : String(cr));
 import { hpFormulaFor as hpFormulaForSize } from '../format-2024/dice.mjs';
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings } from '../format-2024/audit.mjs';
+import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
 
 const trace = (l, d) => logger.log(`[reskin] ${l}`, d ?? '');
-const GAME_TERM = /Attack Roll|Saving Throw|DC \d+|\b(Frightened|Poisoned|Blinded|Deafened|Prone|Restrained|Grappled|Charmed|Stunned|Incapacitated) condition\b|Advantage|Disadvantage|Dash|Disengage|Hide action|Speed|[Tt]eleports?|Opportunity Attacks?|Difficult Terrain|unoccupied space|without provoking|Hit Points|\d+ feet/;
+const GAME_TERM = /Attack Roll|Saving Throw|DC \d+|\b(Frightened|Poisoned|Blinded|Deafened|Prone|Restrained|Grappled|Charmed|Stunned|Incapacitated) condition\b|Advantage|Disadvantage|Dash|Disengage|Hide action|Speed|teleports?|Opportunity Attacks?|Difficult Terrain|unoccupied space|without provoking|Hit Points|\d+ feet/i;
 // Condition menus by severity (owner call, 2026-08-18: "interpolate minor
 // and major conditions — give the llm the options").
 export const CONDITION_MENUS = {
@@ -40,16 +41,29 @@ export function renameKeysOf(scaled) {
 // one (body/object/aura). Same element on both seats = package mode
 // (the lantern-head shape). Untagged elements fall back to element[0]
 // for both seats — the pre-tag behavior, unchanged.
-export function assignSeats(signatureElements = []) {
-  const els = signatureElements.map((e) => (typeof e === 'string' ? { element: e, kind: null } : e)).filter((e) => e?.element);
+export function assignSeats(signatureElements = [], { style = null } = {}) {
+  let els = signatureElements.map((e) => (typeof e === 'string' ? { element: e, kind: null } : e)).filter((e) => e?.element);
+  // on a mounted chassis the mount element already did its work — it
+  // routed the concept to this style. Seating it forces the model to
+  // write mount-relationship rules, which print never does (the fused-
+  // language parrot + separate-actor wolf, 2026-08-24). Skip it unless
+  // it is all we have.
+  let demoted = [];
+  if (style === 'mounted') {
+    const nonMount = els.filter((e) => !/\bmount\w*|\bsteed\w*|\brides?\b|\briding\b|\bridden\b/i.test(e.element));
+    if (nonMount.length) {
+      demoted = els.filter((e) => !nonMount.includes(e)).map((e) => e.element);
+      els = nonMount;
+    }
+  }
   if (!els.length) return null;
   const action = els.find((e) => e.kind === 'behavior') ?? els[0];
   const trait = els.find((e) => ['body', 'object', 'aura'].includes(e.kind)) ?? els[0];
-  return { action: action.element, trait: trait.element, packaged: action.element === trait.element, rest: els.map((e) => e.element).filter((x) => x !== action.element && x !== trait.element) };
+  return { action: action.element, trait: trait.element, packaged: action.element === trait.element, rest: [...els.map((e) => e.element).filter((x) => x !== action.element && x !== trait.element), ...demoted] };
 }
 
-export function buildReskinPrompt(scaled, { concept = '', takenNames = [], signatureElements = [], energy = null } = {}) {
-  const seats = assignSeats(signatureElements);
+export function buildReskinPrompt(scaled, { concept = '', takenNames = [], signatureElements = [], energy = null, mix = null } = {}) {
+  const seats = assignSeats(signatureElements, { style: scaled.style ?? null });
   const needsProjectile = Object.values(scaled.sections).flat().some((e) => e.text.includes('{projectile}'));
   const rows = Object.entries(scaled.sections).flatMap(([sec, es]) => es
     .filter((e) => !e.rules)
@@ -62,7 +76,7 @@ export function buildReskinPrompt(scaled, { concept = '', takenNames = [], signa
   return `You are reskinning a mechanical monster chassis to a concept. The mechanics are FIXED; you provide identity.
 
 CONCEPT: ${concept}
-${seats ? `\nSIGNATURE TARGET: ${seats.packaged ? `the concept's defining element is "${seats.action}". The trait_wildcard is the passive rule that makes it true on the sheet; the wildcard is its ACTIVE use` : `the wildcard builds the MECHANICS of "${seats.action}" — the concept's defining behavior; the trait_wildcard is the passive rule that makes "${seats.trait}" true on the sheet`} — build the element's MECHANICS; the element phrase names what to build, not necessarily what to call it. The wildcard may reference the trait_wildcard by its exact name${seats.packaged ? ` — and since both build the same element they SHOULD reference each other, the action stating what the trait's rule costs or grants while the action is in effect` : ''}. Reference nothing else that is not on the sheet.${seats.rest.length ? ` Remaining elements — spend them in renames and lore where they fit naturally: ${seats.rest.join('; ')}.` : ''}\n` : ''}${takenNames.length ? `\nNAMES ALREADY TAKEN — never reuse or closely echo any: ${takenNames.slice(0, 40).join(', ')}\n` : ''}
+${scaled.style === 'mounted' ? 'MOUNT HANDLING: print never writes rules about a mount — the Centaur Trooper is just its Speed and its charge. Express the mount through names, lore, and attack flavor (a bite, hooves, a saddle-borne strike); never write rules ABOUT the mount (no separate actions or turns, no targeting it, no mounting or dismounting, no describing how rider and mount are joined, and never a rule keyed on being mounted). The chassis speed and charge mechanics already are the mount.\n' : ''}${seats ? `\nSIGNATURE TARGET: ${seats.packaged ? `the concept's defining element is "${seats.action}". The trait_wildcard is the passive rule that makes it true on the sheet; the wildcard is its ACTIVE use` : `the wildcard builds the MECHANICS of "${seats.action}" — the concept's defining behavior; the trait_wildcard is the passive rule that makes "${seats.trait}" true on the sheet`} — build the element's MECHANICS; the element phrase names what to build, not necessarily what to call it. The wildcard may reference the trait_wildcard by its exact name${seats.packaged ? ` — and since both build the same element they SHOULD reference each other, the action stating what the trait's rule costs or grants while the action is in effect` : ''}. Reference nothing else that is not on the sheet.${seats.rest.length ? ` Remaining elements — spend them in renames and lore where they fit naturally: ${seats.rest.join('; ')}.` : ''}\n` : ''}${takenNames.length ? `\nNAMES ALREADY TAKEN — never reuse or closely echo any: ${takenNames.slice(0, 40).join(', ')}\n` : ''}
 THE CHASSIS (CR ${scaled.cr}, AC ${scaled.ac}, HP ${scaled.hp}):
 ${rows.join('\n')}
 
@@ -75,7 +89,7 @@ Return ONLY JSON:
  "senses": "<a senses line, e.g. 'darkvision 60 ft.'>",
  "languages": "<a languages line or 'None'>",
  "renames": { ${renameSkeleton} },   <- ALL of these keys, every one, none omitted. A name that claims an element must be PAID by that row's damage: "Burning X" needs Fire on the row (or the melee rider), "Rimefrost X" needs Cold. If the damage does not pay the word, drop the word, or qualify it with the true element the way print does (the Priest\'s "Radiant Flame" deals Radiant); folklore light-compounds (witchfire, foxfire, balefire) are always legal.
- "damage_types": { ${damageSkeleton} },   <- REQUIRED for every attack and the area action. PHYSICAL vs ENERGY follows the BODY (print: melee attacks deal the limb's physical type — a bite Piercing, a slam Bludgeoning, a claw Slashing — with energy reserved for the ranged attack and the area action; ONLY a creature whose body IS energy — incorporeal, elemental, formless — deals energy with its melee). A fully physical creature may answer physical for everything; never give every row the same energy — but also keep to ONE energy family across the block (print rarely fields two).${energy ? ` THIS creature's energy is ${energy} — every non-physical damage type you assign must be ${energy}.` : ''}
+ "damage_types": { ${damageSkeleton} },   <- REQUIRED for every attack and the area action. PHYSICAL vs ENERGY follows the BODY (print: melee attacks deal the limb's physical type — a bite Piercing, a slam Bludgeoning, a claw Slashing — with energy reserved for the ranged attack and the area action; ONLY a creature whose body IS energy — incorporeal, elemental, formless — deals energy with its melee). A fully physical creature may answer physical for everything; never give every row the same energy — but also keep to ONE energy family across the block (print rarely fields two).${energy ? ` THIS creature's energy is ${energy} — every non-physical damage type you assign must be ${energy}.` : ''}${mix === 'physical' ? ' THIS creature deals PHYSICAL damage only — Bludgeoning, Piercing, or Slashing everywhere; no energy types anywhere on the block.' : ''}
 ${needsProjectile ? ` "projectile": "<the thing it throws, 1-3 words WITH its article (a knucklebone / its barbed anchor) — it appears mid-sentence in attack text>",\n` : ''} "slot_save": "<the Saving Throw stat the Signature Slot should use if your wildcard is not used — the stat the concept threatens: Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma>",
  "melee_rider": "<the ENERGY type the melee attack deals as a rider — or \"none\" if this creature's damage is purely physical (a fifth of printed monsters are)>",
  "speed_shape": "<\"climber\" keeps the Climb speed; \"runner\" trades it for +10 ft. walk (a charger, a rider, a sprinter has no business on walls)>",
@@ -84,7 +98,7 @@ ${needsProjectile ? ` "projectile": "<the thing it throws, 1-3 words WITH its ar
  "vulnerability": "<a damage type this creature is VULNERABLE to — ONLY if the concept genuinely implies one (print is sparing: skeletons take extra Bludgeoning, mummies burn, a thing of ash fears Cold — the wound that made it). Most creatures have none: omit this field entirely.>",
  "conditions": { "condition_minor": "<one of: ${CONDITION_MENUS.condition_minor.join(', ')}>" },
  "wildcard_economy": "<what the wildcard costs: action | bonus_action | reaction | trait | rider_on:<the exact new name you gave the attack it rides> — declare it; the assembler files the entry by THIS field, not by guessing from your prose. A rider is a clause appended to that attack (write it as \"When the creature hits with this attack, ...\").>",
- "wildcard": "<The monster is always 'the creature'; its victim is always 'the target' and NEVER 'the creature'. REPLACES the 'Signature Slot' entry: the concept's single most distinctive behavior as rules text. 4 sentences max, 2024 house voice, no atmospheric prose. Must use a save DC of ${scaled.dc} if it has a save, standard conditions only, damage at most ${Math.round(scaled.per_hit * 1.2)} average. Never assert an effect without granting its rule. An ability that throws or detaches part of the creature's body must state what the creature loses while it is detached and when it returns. Acting or attacking from a distant point is RANGED attacks only. Never name or grant a NEW trait inside an ability — state temporary capabilities inline with a duration (\"until the start of its next turn, it can...\").>"
+ "wildcard": "<The monster is always 'the creature'; its victim is always 'the target' and NEVER 'the creature'. REPLACES the 'Signature Slot' entry: the concept's single most distinctive behavior as rules text. 4 sentences max, 2024 house voice, no atmospheric prose. Must use a save DC of ${scaled.dc} if it has a save, standard conditions only, damage at most ${Math.round(scaled.per_hit * 1.2)} average. Never assert an effect without granting its rule. An ability that throws or detaches part of the creature's body must state what the creature loses while it is detached and when it returns. Acting or attacking from a distant point is RANGED attacks only. Use limits print as (X/Day) after the entry name — never as prose, never a proficiency-bonus count, never tied to a long rest. Never name or grant a NEW trait inside an ability — state temporary capabilities inline with a duration (\"until the start of its next turn, it can...\").>"
 }`;
 }
 
@@ -93,7 +107,7 @@ ${needsProjectile ? ` "projectile": "<the thing it throws, 1-3 words WITH its ar
 // trace showed the guards correctly rejecting the fear aura for a fixable
 // pronoun error, then shipping boilerplate because rejection had no
 // second chance.
-const CAP_TERMS = /\b(advantage|disadvantage|blinded|charmed|deafened|frightened|grappled|incapacitated|invisible|paralyzed|petrified|poisoned|prone|restrained|stunned|unconscious|exhaustion)\b/g;
+const CAP_TERMS = /(?<!-)\b(advantage|disadvantage|blinded|charmed|deafened|frightened|grappled|incapacitated|invisible|paralyzed|petrified|poisoned|prone|restrained|stunned|unconscious|exhaustion)\b/g;
 const capTerms = (t) => t.replace(CAP_TERMS, (w) => w[0].toUpperCase() + w.slice(1));
 
 const ECONOMY_TO_SECTION = { action: undefined, bonus_action: 'Bonus Actions', reaction: 'Reactions', trait: 'Traits' };
@@ -101,7 +115,13 @@ const ECONOMY_TO_SECTION = { action: undefined, bonus_action: 'Bonus Actions', r
 function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null, economy = null }) {
   // a leading self-label ("Corrosive Snare:") is the rename half-landing
   // inside the body — strip it (never the save frame)
-  const w = String(raw).trim().replace(/^(?!\*)([A-Z][\w' -]{2,28}):\s*/, (m, g) => (/Saving Throw|Attack Roll/.test(g) ? m : ''));
+  let liftedGate = null;
+  const w = String(raw).trim()
+    .replace(/^(?!\*)([A-Z][\w' -]{2,28})(?: \((\d+\/Day|Recharge [\d–-]+)\))?[.:]\s+/, (m, g, gate) => {
+      if (/Saving Throw|Attack Roll/.test(g)) return m;
+      if (gate) liftedGate = gate; // "Tactical Call (2/Day)." — the gate belongs in the entry NAME
+      return '';
+    });
   const dcs = w.match(/DC (\d+)/g) ?? [];
   const dmg = w.match(/(\d+) \(\d+d\d+(?:\s*\+\s*\d+)?\)/);
   const blockCaps = Object.values(scaled.sections).flat().map((x) => x.text).join(' ') + scaled.speed;
@@ -144,6 +164,15 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
   // remote-origin actions are ranged only — a scimitar cannot swing from a
   // disembodied point 30 feet away
   const remoteMelee = /from that point/i.test(w) && /attack/i.test(w) && !/[Rr]anged attack/.test(w);
+  // a second action economy embedded mid-entry (the Outrider's javelin
+  // throw with a conditional bonus-action wolf-command welded inside):
+  // one entry, one economy
+  // print's success clauses grant half damage or nothing — never a fresh
+  // penalty (Mire Snare punished on a success, 2026-08-25)
+  const successPenalty = /(?:\*Success:?\*|On a success(?:ful save)?,?)[^.*]{0,80}(?:Disadvantage|takes \d|has the [A-Z][a-z]+ condition|Speed is (?:halved|reduced)|can't|cannot)/i.test(w);
+  const embeddedEconomy = /bonus action/i.test(w)
+    && String(economy ?? '').trim().toLowerCase() !== 'bonus_action'
+    && !/^[Aa]s an? [Bb]onus [Aa]ction/.test(w);
   // THE TIER POLICY (owner go, 2026-08-19: "guards doing more harm than
   // good"): 'judgment' guards — the brittle-pattern checks with
   // demonstrated false positives (role collapse killed 3 straight
@@ -160,6 +189,8 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
     : dangling ? ['references a trait that did not ship', 'mechanical']
     : unreturned ? ['no return clause', 'judgment']
     : remoteMelee ? ['remote attacks must be ranged', 'judgment']
+    : embeddedEconomy ? ['a second action economy embedded mid-entry — one entry, one economy', 'judgment']
+    : successPenalty ? ['a success clause may grant half damage or nothing — never a penalty', 'judgment']
     : /starts its turn/i.test(w) ? ['recurring aura', 'mechanical']
     : /\byours?\b|\byou\b/i.test(w) ? ['second person', 'mechanical']
     : w.split(/(?<=\.)\s+/).length > 4 ? ['over 4 sentences', 'judgment']
@@ -202,8 +233,12 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
     // belt-and-suspenders tell (the Courier's two dialects) — strip it
     text = text.replace(/\s*(?:It|The creature) can (?:do|use) this(?: action)? only once (?:per|a|each) (?:turn|round)\.?/g, '').trim();
   }
-  if (why) return { okay: false, why: why[0], tier: why[1], draft: w, text, moveTo, riderOn };
-  return { okay: true, text, moveTo, riderOn };
+  // a damage-dealing wildcard never files as a Bonus Action — summedDPR
+  // prices multiattack, legendary strikes, and gated novas; a damaging BA
+  // is invisible sustained DPR (Vexing Shriek, ~15 over band at CR 11)
+  if (moveTo === 'Bonus Actions' && /\d+ \(\d+d\d+/.test(text)) moveTo = undefined;
+  if (why) return { okay: false, why: why[0], tier: why[1], draft: w, text, moveTo, riderOn, liftedGate };
+  return { okay: true, text, moveTo, riderOn, liftedGate };
 }
 
 function vetTraitWildcard(tw, sections, { name, inline }) {
@@ -217,7 +252,7 @@ function vetTraitWildcard(tw, sections, { name, inline }) {
     : /starts its turn/i.test(twText) ? ['recurring aura', 'mechanical']
     : /\byours?\b|\byou\b/i.test(twText) ? ['second person', 'mechanical']
     : !/Immunity|Resistance|Advantage|Disadvantage|Speed|darkvision|blindsight|tremorsense|truesight|condition|can't be|cannot be|cover|teleport|Opportunity Attack|provok|Difficult Terrain|unoccupied space|move through|Hit Points|bright light|dim light|damage|Incapacitated/i.test(twText) ? ['no game term — flavor without a rule', 'mechanical']
-    : names.includes(twName.toLowerCase()) ? ['name collides with an existing entry', 'mechanical'] : null;
+    : names.some((n) => n === twName.toLowerCase() || (n.length >= 6 && twName.toLowerCase().length >= 6 && (n.startsWith(twName.toLowerCase()) || twName.toLowerCase().startsWith(n)))) ? ['name collides with an existing entry (exact or near-namesake)', 'mechanical'] : null;
   const text = capTerms(twText.split('the creature').join(inline).replace(/^The creature/, `The ${name.toLowerCase()}`));
   if (why) return { okay: false, name: twName, draft: twText, why: why[0], tier: why[1], text };
   return { okay: true, name: twName, text };
@@ -236,7 +271,7 @@ function vetTraitWildcard(tw, sections, { name, inline }) {
 // 3x on "Cursed Dice Blast" claiming Cold, 2026-08-19)
 const NAME_CLAIMS = [
   [/\b(?:burn\w*|flam\w*|fire\w*|cinder\w*|scorch\w*|sear\w*|ember\w*|molten)\b/i, 'Fire'],
-  [/\b(?:frost\w*|ice|icy|chill\w*|rime\w*|gelid|freez\w*)\b/i, 'Cold'],
+  [/\b(?:frost\w*|ice|icy|chill\w*|rime\w*|gelid|freez\w*|froz\w*)\b/i, 'Cold'],
   [/\b(?:storm\w*|lightning|volt\w*|shock\w*|thunder\w*)\b/i, null], // Lightning OR Thunder ('spark' dropped: metaphorical range too wide — Stolen Spark, 2026-08-19)
   [/\b(?:venom\w*|toxic|poison\w*)\b/i, 'Poison'],
   [/\b(?:acid\w*|caustic|corrosi\w*)\b/i, 'Acid'],
@@ -284,7 +319,7 @@ function normalizeTypeFields(p) {
  * repair-as-retry flow (owner go, 2026-08-23) fixes them all in one
  * informed round instead of burning blind retries one field at a time.
  */
-export function reskinDefects(scaled, p, { energy = null } = {}) {
+export function reskinDefects(scaled, p, { energy = null, mix = null } = {}) {
   if (!p || typeof p.name !== 'string' || !p.renames || typeof p.wildcard !== 'string') {
     return ['unparseable, or name/renames/wildcard missing'];
   }
@@ -306,6 +341,7 @@ export function reskinDefects(scaled, p, { energy = null } = {}) {
     const t = p.damage_types?.[rn];
     if (!TYPES.includes(t)) { defects.push(`no damage type for "${rn || k}"`); continue; }
     if (energy && !PHYSICAL.includes(t) && t !== energy) defects.push(`"${rn}" deals ${t} but this creature's energy is ${energy} — use ${energy} or a physical type`);
+    if (mix === 'physical' && !PHYSICAL.includes(t)) defects.push(`"${rn}" deals ${t} but this creature is declared fully physical — use Bludgeoning, Piercing, or Slashing`);
     const dealt = [t, /Melee/.test(k) || k === 'Melee Attack' ? p.melee_rider : null].filter(Boolean);
     if (!nameClaimSatisfied(rn, dealt)) defects.push(`name "${rn}" claims an element its damage (${dealt.join('/')}) does not pay`);
   }
@@ -314,6 +350,8 @@ export function reskinDefects(scaled, p, { energy = null } = {}) {
     defects.push('the melee rider is missing (an energy type or "none")');
   } else if (energy && TYPES.includes(p.melee_rider) && !PHYSICAL.includes(p.melee_rider) && p.melee_rider !== energy) {
     defects.push(`the melee rider deals ${p.melee_rider} but this creature's energy is ${energy} — use ${energy}, a physical type, or "none"`);
+  } else if (mix === 'physical' && TYPES.includes(p.melee_rider) && !PHYSICAL.includes(p.melee_rider)) {
+    defects.push(`the melee rider deals ${p.melee_rider} but this creature is declared fully physical — use a physical type or "none"`);
   }
   for (const [slot, menu] of Object.entries(CONDITION_MENUS)) {
     const used = Object.values(scaled.sections).flat().some((e) => (e.text ?? '').includes(`{${slot}}`));
@@ -326,13 +364,13 @@ export function reskinDefects(scaled, p, { energy = null } = {}) {
   return defects;
 }
 
-export function makeReskinValidator(scaled, { energy = null } = {}) {
+export function makeReskinValidator(scaled, { energy = null, mix = null } = {}) {
   return (jsonString) => {
     let p;
     try {
       p = normalizeTypeFields(JSON.parse(String(jsonString).replace(/^```json\s*|```\s*$/g, '').trim()));
     } catch { trace('validation failed —', 'unparseable'); return false; }
-    const defects = reskinDefects(scaled, p, { energy });
+    const defects = reskinDefects(scaled, p, { energy, mix });
     for (const d of defects) trace('validation failed —', d);
     return defects.length === 0;
   };
@@ -349,10 +387,11 @@ export async function generateReskin(options, callLLM) {
   const { concept = '', cr, onProgress = null, fixedName = null } = options;
   const progress = (phase, data) => { try { onProgress?.({ phase, ...data }); } catch { /* display-only */ } };
   const donor = pickDonor(cr, options.style ?? null);
-  const scaled = scaleDonor(donor, cr, { movement: options.movement ?? [] });
+  const scaled = scaleDonor(donor, cr, { movement: options.movement ?? [], mechanics: options.mechanics ?? null });
   trace('donor:', `${donor.id} -> CR ${cr}${donor.invented ? ' (invented — no printed peer)' : ''}`);
+  for (const g of scaled.gated_out ?? []) trace('row gated out:', `${g} — the concept did not claim this mechanic`);
   {
-    const seats = assignSeats(options.signatureElements ?? []);
+    const seats = assignSeats(options.signatureElements ?? [], { style: scaled.style ?? null });
     if (seats) trace('seats:', seats.packaged ? `package <- "${seats.action}"` : `action <- "${seats.action}" | trait <- "${seats.trait}"`);
   }
   progress('chassis', { chassis: { ac: scaled.ac, hp: scaled.hp, cr_str: String(cr), pb: scaled.pb, xp: challengeRatings[crKey(cr)]?.XP ?? 0 } });
@@ -365,17 +404,18 @@ export async function generateReskin(options, callLLM) {
   // reserved for unparseable garbage, the thing they can actually fix),
   // then up to two repair rounds that carry the full defect list. Common
   // case 1 call; worst case 3; the loud throw remains the last resort.
-  const reskinPrompt = buildReskinPrompt(scaled, { concept, takenNames: options.takenNames ?? [], signatureElements: options.signatureElements ?? [], energy: options.energy ?? null });
+  const reskinPrompt = buildReskinPrompt(scaled, { concept, takenNames: options.takenNames ?? [], signatureElements: options.signatureElements ?? [], energy: options.energy ?? null, mix: options.mix ?? null });
   const raw = await callLLM(reskinPrompt, validateReskinResponse);
   let p = (() => { try { return normalizeTypeFields(JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim())); } catch { return null; } })();
   if (!p) throw new Error('reskin call failed — the pilot fails loudly, never silently');
   for (let round = 1; round <= 2; round += 1) {
-    const defects = reskinDefects(scaled, p, { energy: options.energy ?? null });
+    const defects = reskinDefects(scaled, p, { energy: options.energy ?? null, mix: options.mix ?? null });
     if (!defects.length) break;
     trace(`repair round ${round}:`, `${defects.length} defect(s) — ${defects.join(' | ')}`);
     const typedRows = Object.values(scaled.sections).flat().filter((e) => e.text.includes('{damage_type}'));
     const declaredEnergy = options.energy ?? null;
-    const weldOk = (t) => !declaredEnergy || ['Bludgeoning', 'Piercing', 'Slashing'].includes(t) || t === declaredEnergy;
+    const declaredMix = options.mix ?? null;
+    const weldOk = (t) => (declaredMix === 'physical' ? ['Bludgeoning', 'Piercing', 'Slashing'].includes(t) : (!declaredEnergy || ['Bludgeoning', 'Piercing', 'Slashing'].includes(t) || t === declaredEnergy));
     // a rename that CLAIMS an element the row's damage does not pay is a
     // rename problem — re-ask for the name, not the type
     const claimBad = typedRows.map((e) => e.name).filter((k) => {
@@ -417,6 +457,17 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     const fixRaw = await callLLM(fixPrompt, (j) => { try { return !!JSON.parse(String(j).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return false; } });
     const fix = (() => { try { return JSON.parse(String(fixRaw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; } })();
     if (!fix) break;
+    // a repair that RENAMES a row must carry the change into the model's
+    // wildcard/trait drafts, which were written against the old name
+    // (live: Scornblade's trait cited "Searing Blade" post-repair)
+    for (const [k, fresh] of Object.entries(fix.renames ?? {})) {
+      const prev = String(p.renames?.[k] ?? '').trim();
+      if (prev && fresh && prev !== fresh) {
+        if (typeof p.wildcard === 'string') p.wildcard = p.wildcard.split(prev).join(fresh);
+        if (p.trait_wildcard?.text) p.trait_wildcard.text = String(p.trait_wildcard.text).split(prev).join(fresh);
+        if (p.trait_wildcard?.name) p.trait_wildcard.name = String(p.trait_wildcard.name).split(prev).join(fresh);
+      }
+    }
     p = { ...p,
       renames: { ...p.renames, ...(fix.renames ?? {}) },
       // repair types may key on the DONOR name (we asked with it) or the new name
@@ -555,7 +606,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   };
   let traitShipped = null; let traitRejected = null;
   const shipTrait = (v, label, flag) => {
-    (sections.Traits = sections.Traits ?? []).unshift({ name: v.name, text: v.text });
+    (sections.Traits = sections.Traits ?? []).unshift({ name: v.name, text: v.text, model: true });
     traitShipped = v.name;
     trace(label, `"${v.name}"${flag ? ` — shipped over a judgment flag (${flag})` : ''}`);
   };
@@ -570,9 +621,17 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // one rider per attack (critic's cap, 2026-08-20): the charge/dive
         // rider is already aboard — a second fused mechanic made 4-6
         // sentence attacks with two Prone clauses (Corroded Lance)
-        trace('rider host already carries a rider —', `"${host.name}"; filing as a trait instead`);
-        pendingWildcard.moveTo = 'Traits';
-        pendingWildcard.text = /^When /i.test(v.text) && !/once (?:per|a|each) (?:turn|round)/i.test(v.text) ? `${v.text} It can do this only once per turn.` : v.text;
+        // action-shaped content (a targeting save or damage) stays an
+        // ACTION — the cap's first fallback filed an 18-damage save
+        // effect into Traits (Shriek of the Crags, 2026-08-24)
+        const actionShaped = /\d+ \(\d+d\d+/.test(v.text) || /(?:one|each) (?:creature|target)[^.]{0,80}(?:must succeed|must make|saving throw)/i.test(v.text);
+        trace('rider host already carries a rider —', `"${host.name}"; filing as ${actionShaped ? 'an action' : 'a trait'} instead`);
+        if (!actionShaped) {
+          pendingWildcard.moveTo = 'Traits';
+          pendingWildcard.text = /^When /i.test(v.text) && !/once (?:per|a|each) (?:turn|round)/i.test(v.text) ? `${v.text} It can do this only once per turn.` : v.text;
+        } else {
+          pendingWildcard.text = v.text;
+        }
         return;
       }
       if (host && host !== pendingWildcard) {
@@ -590,7 +649,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       return;
     }
     pendingWildcard.text = v.text;
+    pendingWildcard.model = true;
     if (v.moveTo) pendingWildcard.moveTo = v.moveTo;
+    if (v.liftedGate && !/\(/.test(pendingWildcard.name)) pendingWildcard.name += ` (${v.liftedGate})`;
     trace(label, `${v.text.slice(0, 100)}${flag ? ` — shipped over a judgment flag (${flag})` : ''}`);
   };
   {
@@ -715,7 +776,25 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
     // ground truth after fills.
     const allText = Object.values(monster.sections ?? {}).flat().map((e) => e.text).join(' ');
     for (const t of ['Fire', 'Cold', 'Lightning']) {
-      if (new RegExp(`${t} damage`).test(allText) && !(monster.immunities ?? '').includes(t)) resist.add(t);
+      // dice context required: "immunity to Fire damage" in a trait is a
+      // DEFENSIVE mention, not dealt damage (the Kelpie derived Fire
+      // resistance from its own immunity clause, 2026-08-24)
+      if (new RegExp(`\\(\\d+d\\d+(?:\\s*\\+\\s*\\d+)?\\) ${t} damage`).test(allText) && !(monster.immunities ?? '').includes(t)) resist.add(t);
+    }
+    // a model-written trait granting a damage defense merges into the
+    // header (immunity supersedes resistance) — the Pale Marshal/Kelpie
+    // class: "Resistances Cold" beside "has immunity to Cold damage"
+    for (const e of (monster.sections?.Traits ?? [])) {
+      const im = /has (?:immunity|Immunity) to (\w+) damage/.exec(e.text ?? '');
+      if (im && DAMAGE_TYPES.includes(im[1])) {
+        resist.delete(im[1]);
+        if (!(monster.immunities ?? '').includes(im[1])) {
+          monster.immunities = monster.immunities ? `${im[1]}, ${monster.immunities}` : im[1];
+          trace('trait-granted immunity merged into header:', im[1]);
+        }
+      }
+      const rs = /has (?:resistance|Resistance) to (\w+) damage/.exec(e.text ?? '');
+      if (rs && DAMAGE_TYPES.includes(rs[1]) && !(monster.immunities ?? '').includes(rs[1])) resist.add(rs[1]);
     }
     if (resist.size) {
       monster.resistances = [...resist].sort().join(', ');
@@ -725,12 +804,24 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
     // guarded: a real type, not one it deals, not one it shrugs. Print
     // ships 15 vulnerabilities in 329 blocks — sparing is correct.
     const vul = String(p.vulnerability ?? '').trim();
-    if (DAMAGE_TYPES.includes(vul) && !new RegExp(`${vul} damage`).test(allText)
+    // PROVENANCE, not judgment (owner + critic, 2026-08-24): the batch
+    // shipped vulnerabilities on 11/18 blocks vs print's 4.6%, one
+    // physics-inverted (water-fey Vulnerable Fire). A vulnerability ships
+    // only if its element family appears in the concept's own text — the
+    // NAME_CLAIMS bank pointed at the concept instead of a name.
+    // 'lightning-fast' is a speed idiom, not an element (Shrike shipped a
+    // Thunder vulnerability off the metaphor, 2026-08-24)
+    const warrantText = `${concept} ${p.lore ?? ''}`.replace(/lightning-(?:fast|quick|swift)|quick as lightning/gi, '');
+    const famRow = NAME_CLAIMS.find(([, t]) => t === vul) ?? (['Lightning', 'Thunder'].includes(vul) ? NAME_CLAIMS.find(([, t]) => t === null) : null);
+    const warranted = famRow ? famRow[0].test(warrantText) : new RegExp(`\\b${vul}\\b`, 'i').test(warrantText);
+    if (DAMAGE_TYPES.includes(vul) && warranted && !new RegExp(`${vul} damage`).test(allText)
       && !(monster.immunities ?? '').includes(vul) && !(monster.resistances ?? '').includes(vul)) {
       monster.vulnerabilities = vul;
       trace('vulnerability shipped:', vul);
     } else if (vul && vul.toLowerCase() !== 'none') {
-      trace('vulnerability rejected —', `"${vul}" is dealt, defended, or not a damage type`);
+      trace('vulnerability rejected —', DAMAGE_TYPES.includes(vul) && !warranted
+        ? `"${vul}" has no warrant in the concept's own text (print's default is none)`
+        : `"${vul}" is dealt, defended, or not a damage type`);
     }
   }
   const lint = lintStatblock(monster, { edition: '2024' });
@@ -747,6 +838,41 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
     }
   }
   lint.findings = lint.findings.filter((x) => x.rule !== 'action-passive-rider');
+  { // CROSS-REFERENCE LINT (owner ok, case-insensitive per owner ruling,
+    // 2026-08-25): the round's defect family was parts that don't read
+    // each other. Closed vocabularies on both sides — advisory findings.
+    const allTexts = Object.values(sections).flat().map((e) => e.text).join(' ');
+    const CONDS = ['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Paralyzed', 'Petrified', 'Poisoned', 'Restrained', 'Stunned', 'Unconscious'];
+    for (const c of CONDS) {
+      const applyRe = new RegExp(`ha(?:s|ve) the ${c} condition|becomes? ${c}\\b|is ${c} (?:until|for)|be ${c}\\b`, 'i');
+      // scrub defensive and application phrasings; a surviving mention is
+      // a DEPENDENT reference ("against a Poisoned target") with no source
+      const scrubbed = allTexts
+        .replace(new RegExp(`(?:immun\\w* to|resistan\\w* to|can't be|cannot be|isn't|is not|ends? the|ignores? the(?: effects of)?)[^.]{0,40}${c}`, 'gi'), '')
+        .replace(new RegExp(applyRe.source, 'gi'), '');
+      if (new RegExp(`\\b${c}\\b`, 'i').test(scrubbed) && !applyRe.test(allTexts)) {
+        lint.findings.push({ rule: 'orphan-condition-ref', severity: 'audit', message: `"${c}" is referenced as a state but nothing on the sheet applies it` });
+      }
+    }
+    const STATES = [
+      [/while (?:it is )?underground|while burrow/i, /Burrow/i, 'underground'],
+      [/while (?:it is )?underwater|while submerged|while swimming/i, /Swim/i, 'underwater'],
+      [/while (?:it is )?airborne/i, /Fly/i, 'airborne'],
+    ];
+    for (const [ref, cap, label] of STATES) {
+      if (ref.test(allTexts) && !cap.test(monster.speed ?? '')) {
+        lint.findings.push({ rule: 'orphan-state-ref', severity: 'audit', message: `an ability keys on being ${label} but the speed line grants no matching movement` });
+      }
+    }
+    for (const es of Object.values(sections)) {
+      for (const e of es) {
+        const bareName = e.name.replace(/ \(.*\)$/, '');
+        if (KNOWN_SPELLS.has(bareName) && !/casts?\b|spell/i.test(e.text)) {
+          lint.findings.push({ rule: 'spell-name-collision', severity: 'audit', message: `"${bareName}" is an SRD spell name on a non-spell entry — rename it` });
+        }
+      }
+    }
+  }
   trace('lint:', lint.findings.length ? lint.findings.map((f) => `${f.rule}: ${f.message}`).join(' | ') : '0 findings');
   monster.lint_findings = lint.findings.map((f) => `${f.rule}: ${f.message}`);
   // THE AUDIT PORT (owner go, 2026-08-18): the judgment layer, reused from
@@ -762,9 +888,29 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
       trace('audit:', findings.length ? findings.map((f) => `${f.loc?.entry ?? '-'}: ${f.message}`) : 'nothing flagged');
       for (const f of findings.filter((x) => x.rewrite && x.span)) {
         const entry = (monster.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+        // CHASSIS REWRITE-IMMUNITY (2026-08-25): the judge rewrote the
+        // renamed Mobility Trait out of existence (Wolf-Born Skirmish).
+        // Rewrites may only touch MODEL-written text; engine-authored rows
+        // are priced composition the audit has no license to edit.
+        if (entry && !entry.model) {
+          trace('audit rewrite blocked —', `"${f.loc.entry}" is engine-authored chassis text`);
+          continue;
+        }
         if (entry && entry.text.includes(f.span)) {
-          entry.text = entry.text.split(f.span).join(f.rewrite);
-          trace('audit rewrite:', `${f.loc.entry}: "${f.span.slice(0, 60)}" -> "${f.rewrite.slice(0, 60)}"`);
+          // sentence-align the splice (owner ok, 2026-08-25): a rewrite
+          // opening with a sentence subject replacing a mid-sentence span
+          // strands the original subject ("The creature The bog lurker
+          // has...") — extend the span back to its sentence start first
+          let span = f.span;
+          const idx = entry.text.indexOf(span);
+          if (/^(?:The|A|An|It|Its) /.test(f.rewrite) && idx > 0) {
+            const before = entry.text.slice(0, idx);
+            const boundary = Math.max(before.lastIndexOf('. '), before.lastIndexOf('! '), before.lastIndexOf('* '));
+            const start = boundary === -1 ? 0 : boundary + 2;
+            if (start < idx) span = entry.text.slice(start, idx) + span;
+          }
+          entry.text = entry.text.split(span).join(f.rewrite).replace(/\.{2,}/g, '.');
+          trace('audit rewrite:', `${f.loc.entry}: "${span.slice(0, 60)}" -> "${f.rewrite.slice(0, 60)}"`);
         }
       }
       for (const f of findings.filter((x) => x.rename)) {

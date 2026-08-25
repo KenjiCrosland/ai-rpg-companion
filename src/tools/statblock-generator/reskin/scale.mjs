@@ -18,9 +18,24 @@ export function pickDonor(cr, style = null) {
 
 const ATTACK_RE = /(\+\d+)(, reach [^.]+|, range [^.]+)? ?\.? (\d+) \((\d+d\d+(?:\s*\+\s*\d+)?)\) ([\w{}]+) damage/;
 
-export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [] } = {}) {
+export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null } = {}) {
   const card = cardBudget(cr, { legendary: !!legendary });
   const scaled = JSON.parse(JSON.stringify(donor));
+  // CONCEPT GATING (owner "let's do it", 2026-08-24): rows tagged gated_on
+  // ship only when the concept call listed that mechanic. mechanics=null
+  // (blank path, direct callers) = ungated; an ARRAY gates — including []
+  // (default closed: print's default is no gaze and no teleport). Both
+  // gated rows sit outside summedDPR, so omission is budget-neutral.
+  scaled.gated_out = [];
+  if (Array.isArray(mechanics)) {
+    for (const [sec, es] of Object.entries(scaled.sections)) {
+      scaled.sections[sec] = es.filter((e) => {
+        if (!e.gated_on || mechanics.includes(e.gated_on)) return true;
+        scaled.gated_out.push(`${e.name} (${e.gated_on})`);
+        return false;
+      });
+    }
+  }
   // CON carries more of the HP load as CR climbs (batch review: 38 dice
   // on CON 14 at CR 20 — peers run CON 20-26 on 24-31 dice)
   scaled.stats.CON = Math.max(scaled.stats.CON, 12 + Math.floor(cr / 2));
@@ -32,9 +47,18 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   // The concept call's movement grant: a flying concept on a grounded
   // chassis gains Fly (hover) — print's ghost idiom (Wraith, Fly 60
   // hover on an ordinary frame). Winged-style donors carry Fly natively.
+  const walkFt = Number((/^(\d+)/.exec(scaled.speed) ?? [0, 30])[1]);
   if (movement.includes('fly') && !/Fly/.test(scaled.speed)) {
-    const walk = Number((/^(\d+)/.exec(scaled.speed) ?? [0, 30])[1]);
-    scaled.speed = `${scaled.speed.replace(/,\s*$/, '')}, Fly ${walk} ft. (hover)`;
+    scaled.speed = `${scaled.speed.replace(/,\s*$/, '')}, Fly ${walkFt} ft. (hover)`;
+  }
+  // burrow/swim were interviewed but never consumed (the Burrower shipped
+  // "while underground" gates with no Burrow speed, 2026-08-25). No tax —
+  // print prices wings, not fins or claws.
+  if (movement.includes('burrow') && !/Burrow/i.test(scaled.speed)) {
+    scaled.speed = `${scaled.speed.replace(/,\s*$/, '')}, Burrow 30 ft.`;
+  }
+  if (movement.includes('swim') && !/Swim/i.test(scaled.speed)) {
+    scaled.speed = `${scaled.speed.replace(/,\s*$/, '')}, Swim ${walkFt} ft.`;
   }
   // THE FLIGHT TAX — one rule, keyed on the SHEET, not the source (owner
   // call 2026-08-19: "a flight tax generally makes sense"). Any chassis

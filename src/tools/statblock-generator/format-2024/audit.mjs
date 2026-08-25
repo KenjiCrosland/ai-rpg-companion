@@ -203,6 +203,7 @@ RESKIN MODE. This block's numbers, DCs, and damage budgets are engine-authored a
 3. Name-content mismatches (a "Gaze" that throws things; an "of the Fallen" attack dealing plain Piercing — propose a rename).
 4. Misspelled entry names ("Withdrawl").
 5. Doubled or contradictory limiters ("only once per turn" plus "while active, can't use it again").
+6. REDUNDANT RULES — list each benefit the block grants; if a model-written trait duplicates one the chassis already grants (two entries both giving Disadvantage on Opportunity Attacks), or a clause is made dead by another entry (a trait converting damage a row already deals), flag it and supply a rewrite trimming the duplicate clause.
 A typical reskin block carries 1-3 such findings; an empty array on a block with model-written traits usually means a MISSED finding, not a clean block — look again before returning empty. The don't-manufacture rule still stands, and every span must be copied character-for-character, capitalization included.` : ''}`;
 }
 

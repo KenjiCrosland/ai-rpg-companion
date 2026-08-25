@@ -755,7 +755,7 @@ const atWillBanned = (sp) => NO_AT_WILL_SPELLS.includes(sp) || SLOW_CAST.include
  * (Xanathar's picks on a 2024-core block) sailed past every rule (live: the
  * Groan). Off-list names are dropped from list lines, never rewritten.
  */
-const KNOWN_SPELLS = new Set([
+export const KNOWN_SPELLS = new Set([
   ...Object.keys(SPELL_LEVELS), ...NO_AT_WILL_SPELLS, ...SLOW_CAST, ...SCALING_SPELLS,
   ...NON_ACTION_SPELLS, ...(SPELL_POLICY.self_utility_exempt ?? []),
   ...Object.values(SPELL_POLICY.printed_pools ?? {})

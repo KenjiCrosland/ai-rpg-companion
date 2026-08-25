@@ -414,8 +414,10 @@ describe('the four smalls + the audit port', () => {
       return answer();
     });
     expect(audited).toBe(true);
+    // chassis rewrite-immunity (2026-08-25): Multiattack is engine-authored,
+    // so the judge's rewrite is now BLOCKED — the text stands unchanged
     expect(Object.values(m.sections).flat().find((e) => e.name === 'Multiattack').text)
-      .toMatch(/Cast Thorn or Thorn Rake/);
+      .toMatch(/Thorn Rake or Cast Thorn/);
   });
 
   test('an audit rename repoints the entry and scrubs the old name', async () => {
@@ -523,8 +525,11 @@ describe('v6 batch: detachment accounting, remote-ranged, sapient languages', ()
       return answer({ wildcard: 'As a Bonus Action, the creature throws its severed head to a point within 30 feet. Each creature within 10 feet must succeed on a DC 15 Dexterity Saving Throw or take 10 (3d8) Fire damage.' });
     });
     expect(repairPrompt).toMatch(/no return clause/);
-    const e = (m.sections['Bonus Actions'] ?? []).find((x) => x.name === 'Waylay');
+    // the damaging-BA override files it as an ACTION now — a 3d8 bonus
+    // action is unpriced sustained DPR (Vexing Shriek ruling, 2026-08-24)
+    const e = Object.values(m.sections).flat().find((x) => x.name === 'Waylay');
     expect(e.text).toMatch(/returns to the gloam courser's hand/);
+    expect((m.sections['Bonus Actions'] ?? []).some((x) => x.name === 'Waylay')).toBe(false);
   });
 
   test('melee-from-afar is flagged and fails open after repair (judgment tier)', async () => {
@@ -822,10 +827,15 @@ describe('defense derivation (2026-08-19): type floor, self-affinity trio, guard
     expect(psychic.resistances).toBeUndefined();
   });
 
-  test('a concept-warranted vulnerability ships; a dealt-type one is rejected', async () => {
-    const ash = await gen({ vulnerability: 'Cold', damage_types: { 'Thorn Rake': 'Fire', 'Cast Thorn': 'Fire', 'Bramble Sweep': 'Fire' } });
-    expect(ash.vulnerabilities).toBe('Cold');
-    const bad = await gen({ vulnerability: 'Slashing' }); // deals Slashing itself
+  test('a concept-warranted vulnerability ships; unwarranted and dealt-type ones are rejected', async () => {
+    const ash = await gen(
+      { vulnerability: 'Cold', damage_types: { 'Thorn Rake': 'Fire', 'Cast Thorn': 'Fire', 'Bramble Sweep': 'Fire' } },
+      { concept: 'an ash revenant that froze to death on the mountain' },
+    );
+    expect(ash.vulnerabilities).toBe('Cold'); // "froze" warrants the Cold family
+    const lottery = await gen({ vulnerability: 'Thunder' }); // concept 'x' — no thunder words anywhere
+    expect(lottery.vulnerabilities).toBeUndefined();
+    const bad = await gen({ vulnerability: 'Slashing' }, { concept: 'a slashing blade fiend' }); // warranted but dealt
     expect(bad.vulnerabilities).toBeUndefined();
   });
 });
@@ -1387,5 +1397,285 @@ describe('acceptance-batch fixes (2026-08-23): the verified five', () => {
       return answer({ alignment: 'chaotic neutral' });
     });
     expect(m.alignment).toBe('Chaotic Neutral');
+  });
+});
+
+describe('the blessed batch (2026-08-24): rename propagation, embedded economy, redundancy brief', () => {
+  test('a repair rename follows into the trait draft — no dangling "Searing Blade"', async () => {
+    const m = await generateReskin({ concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      if (prompt.startsWith('You are completing a partial answer')) {
+        return JSON.stringify({ renames: { 'Ranged Attack': 'Judgment Stroke' }, damage_types: { 'Ranged Attack': 'Radiant' } });
+      }
+      const bad = JSON.parse(answer());
+      bad.renames['Ranged Attack'] = 'Searing Bolt'; // claims Fire, deals Necrotic -> repair renames it
+      bad.damage_types = { 'Thorn Rake': 'Slashing', 'Searing Bolt': 'Necrotic', 'Bramble Sweep': 'Slashing' };
+      bad.trait_wildcard = { name: 'Blessed Arm', text: 'The creature\'s Searing Bolt attacks ignore Resistance to Necrotic damage.' };
+      return JSON.stringify(bad);
+    });
+    const t = (m.sections.Traits ?? []).find((e) => e.name === 'Blessed Arm');
+    expect(t.text).toMatch(/Judgment Stroke attacks/);
+    expect(t.text).not.toMatch(/Searing Bolt/);
+  });
+
+  test('an embedded bonus action inside an action wildcard is flagged (judgment), repaired or shipped flagged', async () => {
+    const m = await generateReskin({ concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) return JSON.stringify({});
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({ wildcard: '*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Frightened condition. The creature can then use its bonus action to move up to half its Speed.' });
+    });
+    // judgment tier: ships (flagged) rather than chassis
+    expect(Object.values(m.sections).flat().find((e) => e.name === 'Waylay').text).toMatch(/Frightened condition/);
+  });
+
+  test('a damaging wildcard declared bonus_action files as an action', async () => {
+    const m = await generateReskin({ concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({
+        wildcard_economy: 'bonus_action',
+        wildcard: '*Dexterity Saving Throw*: DC 15, one creature within 30 feet. *Failure:* 10 (3d6) Force damage, and the target has the Prone condition.',
+      });
+    });
+    expect((m.sections['Bonus Actions'] ?? []).some((e) => e.name === 'Waylay')).toBe(false);
+    expect((m.sections.Actions ?? []).some((e) => e.name === 'Waylay')).toBe(true);
+  });
+
+  test('prompt carries the X/Day register rule and the fused-mount line on mounted chassis only', () => {
+    const plain = buildReskinPrompt(scaleDonor(pickDonor(8), 8), { concept: 'c' });
+    expect(plain).toMatch(/Use limits print as \(X\/Day\)/);
+    expect(plain).not.toMatch(/MOUNT HANDLING/);
+    const { pickDonor: pdm2, scaleDonor: sdm2 } = require('../scale.mjs');
+    const mounted = buildReskinPrompt(sdm2(pdm2(8, 'mounted'), 8), { concept: 'c' });
+    expect(mounted).toMatch(/MOUNT HANDLING: print never writes rules about a mount/);
+    expect(mounted).not.toMatch(/FUSED/);
+  });
+
+  test('the reskin audit brief carries the redundancy class', async () => {
+    const { buildAuditPrompt: bap2 } = require('../../format-2024/audit.mjs');
+    const m = await generateReskin({ concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer();
+    });
+    expect(bap2(m, '2024', { reskin: true })).toMatch(/REDUNDANT RULES/);
+  });
+});
+
+describe('mount handling (owner ruling 2026-08-24: no dragoon, no fused language)', () => {
+  const { assignSeats: asg } = require('../generate.mjs');
+
+  test('on a mounted chassis, mount elements are skipped by the seats', () => {
+    const seats = asg([
+      { element: 'dire wolf mount', kind: 'object' },
+      { element: 'javelin volleys and stab-and-run tactics', kind: 'behavior' },
+      { element: 'tribal war-paint', kind: 'body' },
+    ], { style: 'mounted' });
+    expect(seats.action).toBe('javelin volleys and stab-and-run tactics');
+    expect(seats.trait).toBe('tribal war-paint');
+    expect(seats.rest).toContain('dire wolf mount');
+  });
+
+  test('a mount-only element list still seats (never empty), and other styles are untouched', () => {
+    const only = asg([{ element: 'the tireless iron steed', kind: 'object' }], { style: 'mounted' });
+    expect(only.action).toBe('the tireless iron steed'); // all we have — keep it
+    const skulker = asg([{ element: 'rides the night wind', kind: 'behavior' }], { style: 'skulker' });
+    expect(skulker.action).toBe('rides the night wind'); // no filtering off-style
+  });
+});
+
+describe('concept gating (owner "let\'s do it", 2026-08-24): stock organs ship only when claimed', () => {
+  const { pickDonor: pdg, scaleDonor: sdg } = require('../scale.mjs');
+
+  test('no mechanics claimed -> gaze and teleport rows omit; both claimed -> both stay; null -> ungated', () => {
+    const closed = sdg(pdg(13, 'skulker'), 13, { mechanics: [] });
+    const names = Object.values(closed.sections).flat().map((e) => e.name);
+    expect(names).not.toContain('Ranged Save Effect');
+    expect(names).not.toContain('Teleport');
+    expect(closed.gated_out).toEqual(['Ranged Save Effect (gaze)', 'Teleport (teleport)']);
+
+    const open = sdg(pdg(13, 'skulker'), 13, { mechanics: ['gaze', 'teleport'] });
+    const openNames = Object.values(open.sections).flat().map((e) => e.name);
+    expect(openNames).toContain('Ranged Save Effect');
+    expect(openNames).toContain('Teleport');
+
+    const blank = sdg(pdg(13, 'skulker'), 13, { mechanics: null });
+    expect(Object.values(blank.sections).flat().some((e) => e.name === 'Teleport')).toBe(true);
+  });
+
+  test('partial claim: gaze stays, teleport goes', () => {
+    const g = sdg(pdg(8, 'skulker'), 8, { mechanics: ['gaze'] });
+    const names = Object.values(g.sections).flat().map((e) => e.name);
+    expect(names).toContain('Ranged Save Effect');
+    expect(names).not.toContain('Teleport');
+  });
+
+  test('a gated block generates end-to-end — renames and validation adapt to the missing rows', async () => {
+    const m = await generateReskin({ concept: 'a bog ambusher', cr: 8, style: 'skulker', mechanics: [] }, async (prompt) => {
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      // full skulker answer minus the gated rows' renames — they no longer exist to rename
+      return JSON.stringify({
+        name: 'Bog Lurker', type: 'Monstrosity', size: 'Medium', alignment: 'Unaligned',
+        senses: 'darkvision 60 ft.', languages: 'None',
+        renames: { 'Mobility Trait': 'Murk Slide', 'Melee Attack': 'Webbed Claw', 'Ranged Attack': 'Mud Spit', 'Signature Slot': 'Fen Grip', 'Escape Action': 'Slip Under' },
+        damage_types: { 'Webbed Claw': 'Slashing', 'Mud Spit': 'Bludgeoning' },
+        conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Strength',
+        wildcard: '*Strength Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Prone condition.',
+      });
+    });
+    const names = Object.values(m.sections).flat().map((e) => e.name);
+    expect(names).not.toContain('Ranged Save Effect');
+    expect(names.join('|')).not.toMatch(/Teleport/);
+    expect(names).toContain('Webbed Claw');
+  });
+
+  test('untagged rows and other styles are never touched by gating', () => {
+    const mounted = sdg(pdg(8, 'mounted'), 8, { mechanics: [] });
+    expect(Object.values(mounted.sections).flat().some((e) => /Trampling/.test(e.name))).toBe(true);
+    expect(mounted.gated_out).toEqual([]);
+  });
+
+  test('the interview asks the gating question', () => {
+    const { buildArchetypeResolvePrompt: barG } = require('../../format-2024/generate.mjs');
+    const pr = barG('bog lurker', '', { cr: 6 });
+    expect(pr).toMatch(/"mechanics": \["<zero or more of/);
+    expect(pr).toMatch(/gates for pre-built abilities/);
+  });
+});
+
+describe('pre-freeze batch (2026-08-25): splice alignment, cross-ref lint, movement, success grammar', () => {
+  const { pickDonor: pdF, scaleDonor: sdF } = require('../scale.mjs');
+
+  test('an audit rewrite opening with a sentence subject splices at the sentence boundary', async () => {
+    const m = await generateReskin({ concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are auditing')) {
+        return JSON.stringify({ findings: [{
+          entry: 'Venom Synergy', section: 'Traits', principle: 4, confidence: 'high',
+          span: 'has Advantage on attack rolls against a Poisoned target',
+          rewrite: 'The gloam courser has Advantage on attack rolls against any Poisoned creature',
+          issue: 'subject clarity',
+        }] });
+      }
+      return answer({
+        conditions: { condition_minor: 'Poisoned' },
+        trait_wildcard: { name: 'Venom Synergy', text: 'A creature that touches it takes 2 Poison damage. The creature has Advantage on attack rolls against a Poisoned target.' },
+      });
+    });
+    const t = (m.sections.Traits ?? []).find((e) => e.name === 'Venom Synergy').text;
+    expect(t).toMatch(/The gloam courser has Advantage on attack rolls against any Poisoned creature/);
+    expect(t).not.toMatch(/gloam courser The gloam courser/); // the Bog Lurker seam, prevented
+    expect(t).not.toMatch(/\.\./);
+  });
+
+  test('a dependent condition reference with no applier is flagged; an applied one is not', async () => {
+    const orphan = await generateReskin({ concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({
+        conditions: { condition_minor: 'Prone' },
+        trait_wildcard: { name: 'Venom Synergy', text: 'The creature has Advantage on attack rolls against a Paralyzed target.' },
+      });
+    });
+    expect(orphan.lint_findings.join(' ')).toMatch(/"Paralyzed" is referenced as a state/);
+    const applied = await generateReskin({ concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({
+        conditions: { condition_minor: 'Poisoned' }, // the sweep row now APPLIES Poisoned
+        trait_wildcard: { name: 'Venom Synergy', text: 'The creature has Advantage on attack rolls against a Poisoned target.' },
+      });
+    });
+    expect(applied.lint_findings.join(' ')).not.toMatch(/orphan|referenced as a state/);
+  });
+
+  test('a movement-state gate without the movement is flagged', async () => {
+    const m = await generateReskin({ concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({ trait_wildcard: { name: 'Earth Pulse', text: 'The creature has Advantage on Stealth checks while it is underground.' } });
+    });
+    expect(m.lint_findings.join(' ')).toMatch(/keys on being underground/);
+  });
+
+  test('burrow and swim answers reach the speed line, untaxed', () => {
+    const b = sdF(pdF(8), 8, { movement: ['burrow', 'swim'] });
+    expect(b.speed).toMatch(/Burrow 30 ft\./);
+    expect(b.speed).toMatch(/Swim \d+ ft\./);
+    const { cardBudget: cbF } = require('../card-budgets.mjs');
+    expect(b.hp).toBe(cbF(8, {}).hp); // no flight tax for fins or claws
+  });
+
+  test('a success clause that punishes is flagged judgment-tier and repairable', async () => {
+    let repairPrompt = null;
+    await generateReskin({ concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({ wildcard: '*Dexterity Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Prone condition. *Success:* The target has Disadvantage on its next attack roll.' });
+    });
+    expect(repairPrompt).toMatch(/never a penalty/);
+  });
+
+  test('an SRD spell name on a non-spell entry is flagged', async () => {
+    const m = await generateReskin({ concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      const p = JSON.parse(answer());
+      p.renames['Signature Slot'] = 'Misty Step';
+      return JSON.stringify(p);
+    });
+    expect(m.lint_findings.join(' ')).toMatch(/"Misty Step" is an SRD spell name/);
+  });
+
+  test('"mounted skirmishing" and "its mount\'s pace" now demote', () => {
+    const { assignSeats: asgF } = require('../generate.mjs');
+    const seats = asgF([
+      { element: 'mounted skirmishing', kind: 'behavior' },
+      { element: 'javelin volleys', kind: 'object' },
+      { element: 'iron discipline', kind: 'aura' },
+    ], { style: 'mounted' });
+    expect(seats.action).not.toBe('mounted skirmishing');
+    expect(seats.rest).toContain('mounted skirmishing');
+  });
+});
+
+describe('twenty-smoke prerequisites (2026-08-25): the four must-fixes', () => {
+  test('audit rewrites are blocked on chassis rows, allowed on model-written entries', async () => {
+    const m = await generateReskin({ concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are auditing')) {
+        return JSON.stringify({ findings: [
+          { entry: 'Hedge Runner', section: 'Traits', principle: 4, confidence: 'high', span: 'ignores Difficult Terrain', rewrite: 'The gloam courser has Advantage on saving throws', issue: 'dup' },
+        ] });
+      }
+      return answer({ renames: { ...JSON.parse(answer()).renames, 'Mobility Trait': 'Hedge Runner' } });
+    });
+    const t = (m.sections.Traits ?? []).find((e) => e.name === 'Hedge Runner').text;
+    expect(t).toMatch(/ignores Difficult Terrain/); // engine text untouched
+  });
+
+  test('capTerms leaves hyphenated compounds alone', async () => {
+    const m = await generateReskin({ concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({ trait_wildcard: { name: 'Tunnel Digger', text: 'The creature digs a collapse-prone tunnel behind it, and creatures inside have Disadvantage on Strength checks.' } });
+    });
+    const t = (m.sections.Traits ?? []).find((e) => e.name === 'Tunnel Digger').text;
+    expect(t).toMatch(/collapse-prone/);
+    expect(t).not.toMatch(/collapse-Prone/);
+  });
+
+  test('a declared-physical creature dealing Fire is a defect with the reason stated', () => {
+    const { makeReskinValidator: mkP, reskinDefects: rdP } = require('../generate.mjs');
+    const { pickDonor: pdP, scaleDonor: sdP } = require('../scale.mjs');
+    const scaled = sdP(pdP(8), 8);
+    const bad = JSON.parse(answer());
+    bad.damage_types['Cast Thorn'] = 'Fire';
+    const defects = rdP(scaled, bad, { mix: 'physical' });
+    expect(defects.join(' ')).toMatch(/declared fully physical/);
+    expect(mkP(scaled, { mix: 'physical' })(JSON.stringify(bad))).toBe(false);
+  });
+
+  test('a near-namesake trait name collides (Wolf-Born Skirmisher vs Wolf-Born Skirmish)', async () => {
+    const m = await generateReskin({ concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) return JSON.stringify({});
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      const p = JSON.parse(answer());
+      p.renames['Mobility Trait'] = 'Wolf-Born Skirmish';
+      p.trait_wildcard = { name: 'Wolf-Born Skirmisher', text: 'The creature has Advantage on Perception checks and ignores Difficult Terrain.' };
+      return JSON.stringify(p);
+    });
+    expect((m.sections.Traits ?? []).some((e) => e.name === 'Wolf-Born Skirmisher')).toBe(false);
   });
 });
