@@ -1242,6 +1242,7 @@ async function generateStatblockEngine(edition) {
           movement: conceptMovement ?? [],
           energy: userConcept ? conceptEnergy : rolledEnergy,
           mix: userConcept ? conceptMix : rolledMix,
+          caster: caster.value,
           mechanics: userConcept ? (conceptMechanics ?? []) : null,
           takenNames: Object.values(monsters.value ?? {})
             .filter(Array.isArray).flat().map((m) => m?.name).filter(Boolean),

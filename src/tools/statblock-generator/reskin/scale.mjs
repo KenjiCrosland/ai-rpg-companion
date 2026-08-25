@@ -36,6 +36,39 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
       });
     }
   }
+  // ESCAPE-ROW STANDARDIZATION (owner + print, 2026-08-26): seven bespoke
+  // names shipped on one verbatim sentence — the one repetition the
+  // owner's eye caught across the probe set. Print's cure is
+  // standardization, not variety: shared mechanics share names (corpus:
+  // Cunning Action x2, Nimble Escape x6, Deathless Agility x2). Skulkers
+  // keep Hide under print's own name; every other style drops Hide (a
+  // mount, a Large ogre, a mid-air flyer have no business hiding —
+  // owner: "mounts shouldn't hide") under the owner's "[Adjective]
+  // Agility" house family. rules:true takes the row out of the rename
+  // pool; the audit's NEVER_RENAME covers the names.
+  const AGILITY_NAME = { mounted: 'Mounted Agility', winged: 'Aerial Agility', hurler: 'Fleet Agility' };
+  for (const es of Object.values(scaled.sections)) {
+    for (const e of es) {
+      if (/takes the Dash, Disengage, or Hide action/.test(e.text)) {
+        if (scaled.style === 'skulker') e.name = 'Cunning Action';
+        else {
+          e.name = AGILITY_NAME[scaled.style] ?? 'Fleet Agility';
+          e.text = e.text.replace('the Dash, Disengage, or Hide action', 'the Dash or Disengage action');
+        }
+        e.rules = true;
+      } else if (/takes the Disengage or Hide action/.test(e.text)) {
+        // the legendary escape: 0/329 print legendaries grant
+        // Disengage/Hide — the row is our invention, so its NAME
+        // standardizes like the bonus-action suite (5 bespoke names
+        // shipped on one verbatim sentence). Print has no name to
+        // borrow and "Nimble Escape" means the goblin BONUS action;
+        // 'Withdraw' is the function name. Skulkers keep Hide.
+        e.name = 'Withdraw';
+        if (scaled.style !== 'skulker') e.text = e.text.replace('the Disengage or Hide action', 'the Dash or Disengage action');
+        e.rules = true;
+      }
+    }
+  }
   // CON carries more of the HP load as CR climbs (batch review: 38 dice
   // on CON 14 at CR 20 — peers run CON 20-26 on 24-31 dice)
   scaled.stats.CON = Math.max(scaled.stats.CON, 12 + Math.floor(cr / 2));

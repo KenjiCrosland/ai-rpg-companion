@@ -156,8 +156,8 @@ export const DONORS = [
       ],
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
-        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack.' },
-        { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack attack. The creature can\'t take this action again until the start of its next turn.' },
         { name: 'Legendary Escape', text: 'The creature takes the Disengage or Hide action.' },
       ],
     },
@@ -190,8 +190,8 @@ export const DONORS = [
       ],
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
-        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack.' },
-        { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack attack. The creature can\'t take this action again until the start of its next turn.' },
         { name: 'Legendary Escape', text: 'The creature takes the Disengage or Hide action.' },
       ],
     },
@@ -304,8 +304,8 @@ export const DONORS = [
       ],
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
-        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack.' },
-        { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack attack. The creature can\'t take this action again until the start of its next turn.' },
         { name: 'Legendary Escape', text: 'The creature takes the Disengage or Hide action.' },
       ],
     },
@@ -421,8 +421,8 @@ export const DONORS = [
       ],
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
-        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack.' },
-        { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack attack. The creature can\'t take this action again until the start of its next turn.' },
         { name: 'Legendary Escape', text: 'The creature takes the Disengage or Hide action.' },
       ],
     },
@@ -445,7 +445,7 @@ export const DONORS = [
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 14 (2d8 + 5) {damage_type} damage.' },
-        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +8, range 30/90 ft. 12 (2d6 + 5) {damage_type} damage, and {projectile} returns to the creature\'s grasp.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +8, range 30/90 ft. 12 (2d6 + 5) {damage_type} damage. *Hit or Miss:* Immediately after the attack, {projectile} returns to the creature\'s grasp.' },
         { name: 'Hurled Burst', text: 'The creature hurls {projectile} at a point it can see within 90 feet. *Dexterity Saving Throw*: DC 15, each creature in a 5-foot-radius Sphere centered on that point. *Failure:* 45 (10d8) {damage_type} damage. If the target is Large or smaller, it has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one Medium or smaller creature within 30 feet. *Failure:* 7 (2d6) {damage_type} damage, and the target is pulled up to 20 feet straight toward the creature.' },
       ],
@@ -471,7 +471,7 @@ export const DONORS = [
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 10 ft. 20 (4d6 + 6) {damage_type} damage.' },
-        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +10, range 60/180 ft. 17 (2d10 + 6) {damage_type} damage, and {projectile} returns to the creature\'s grasp.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +10, range 60/180 ft. 17 (2d10 + 6) {damage_type} damage. *Hit or Miss:* Immediately after the attack, {projectile} returns to the creature\'s grasp.' },
         { name: 'Hurled Burst', text: 'The creature hurls {projectile} at a point it can see within 300 feet. *Dexterity Saving Throw*: DC 17, each creature in a 10-foot-radius Sphere centered on that point. *Failure:* 63 (14d8) {damage_type} damage. *Success:* Half damage.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one Large or smaller creature within 60 feet. *Failure:* 10 (3d6) {damage_type} damage, and the target is pulled up to 25 feet straight toward the creature.' },
       ],
@@ -583,8 +583,8 @@ export const DONORS = [
       ],
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
-        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack.' },
-        { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack attack. The creature can\'t take this action again until the start of its next turn.' },
         { name: 'Legendary Escape', text: 'The creature takes the Disengage or Hide action.' },
       ],
     },
@@ -607,7 +607,7 @@ export const DONORS = [
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +13, reach 10 ft. 30 (5d8 + 8) {damage_type} damage.' },
-        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +13, range 60/180 ft. 29 (6d6 + 8) {damage_type} damage, and {projectile} returns to the creature\'s grasp.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +13, range 60/180 ft. 29 (6d6 + 8) {damage_type} damage. *Hit or Miss:* Immediately after the attack, {projectile} returns to the creature\'s grasp.' },
         { name: 'Hurled Burst', text: 'The creature hurls {projectile} at a point it can see within 300 feet. *Dexterity Saving Throw*: DC 20, each creature in a 15-foot-radius Sphere centered on that point. *Failure:* 72 (16d8) {damage_type} damage. *Success:* Half damage.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 20, one Large or smaller creature within 90 feet. *Failure:* 13 (3d8) {damage_type} damage, and the target is pulled up to 30 feet straight toward the creature.' },
       ],
@@ -616,8 +616,8 @@ export const DONORS = [
       ],
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
-        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack.' },
-        { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack attack. The creature can\'t take this action again until the start of its next turn.' },
         { name: 'Legendary Escape', text: 'The creature takes the Disengage or Hide action.' },
       ],
     },

@@ -369,7 +369,10 @@ export function verifyAuditFindings(monster, raw) {
     // safe: a plain name, no use-limit parenthetical (the engine appends
     // those), no collision with another entry, and never on the three
     // rules-vocabulary names the table reads at a glance.
-    const NEVER_RENAME = new Set(['Multiattack', 'Spellcasting', 'Legendary Resistance']);
+    const NEVER_RENAME = new Set(['Multiattack', 'Spellcasting', 'Legendary Resistance',
+      // standardized escape rows (owner + print, 2026-08-26) — shared
+      // names are the point; a bespoke rename recreates the tell
+      'Cunning Action', 'Nimble Escape', 'Mounted Agility', 'Aerial Agility', 'Fleet Agility', 'Withdraw']);
     let rename = null;
     if (typeof f.rename === 'string' && f.rename.trim()) {
       const proposed = f.rename.trim();
