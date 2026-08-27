@@ -2010,6 +2010,53 @@ describe('probe-smoke pattern fixes (2026-08-26)', () => {
     expect(bestial).toMatch(/name its attack rows by anatomy alone/);
   });
 
+  test('twin renames may not collide — "Scythe or Scythe" is a defect the repair re-asks', async () => {
+    const { reskinDefects: rd } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(8), 8);
+    const dup = JSON.parse(answer());
+    dup.renames['Melee Attack'] = 'Scythe';
+    dup.renames['Ranged Attack'] = 'Scythe';
+    dup.damage_types.Scythe = 'Slashing';
+    expect(rd(scaled, dup, {}).join(' ')).toMatch(/are both "Scythe" — every row needs its own name/);
+    // full flow: the informed repair round fixes the collision
+    let repairPrompt = null;
+    const m = await generateReskin({ concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      if (prompt.startsWith('You are completing a partial answer')) {
+        repairPrompt = prompt;
+        return JSON.stringify({
+          renames: { 'Melee Attack': 'Scythe', 'Ranged Attack': 'Hurled Scythe' },
+          damage_types: { Scythe: 'Slashing', 'Hurled Scythe': 'Piercing' },
+        });
+      }
+      return JSON.stringify(dup);
+    });
+    expect(repairPrompt).toMatch(/are both "Scythe"/);
+    const names = Object.values(m.sections).flat().map((e) => e.name);
+    expect(names).toContain('Scythe');
+    expect(names).toContain('Hurled Scythe');
+  });
+
+  test('a rename that copies a prompt exemplar is a defect — Dreadful Glare is the mummy\'s', () => {
+    const { reskinDefects: rd } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(8), 8);
+    const echo = JSON.parse(answer());
+    echo.renames['Signature Slot'] = 'Dreadful Glare';
+    expect(rd(scaled, echo, {}).join(' ')).toMatch(/copies the prompt's own example "Dreadful Glare"/);
+    // generic standards stay legal — a scimitar-wielder answers Scimitar
+    const generic = JSON.parse(answer());
+    generic.renames['Melee Attack'] = 'Scimitar';
+    generic.damage_types.Scimitar = 'Slashing';
+    expect(rd(scaled, generic, {}).join(' ')).not.toMatch(/Scimitar/);
+  });
+
+  test('each rename key carries its own register hint at the fill site', () => {
+    const p = buildReskinPrompt(scaleDonor(pickDonor(20), 20), { concept: 'c' });
+    expect(p).toMatch(/"Melee Attack": "<the weapon or body part ALONE, one word/);
+    expect(p).toMatch(/"Signature Slot": "<THE flavored name — two words/);
+    expect(p).toMatch(/"Legendary Move and Attack": "<verb-forward, two words \(Pounce/);
+  });
+
   test('escape rows standardize: Cunning Action for skulkers, [Adjective] Agility elsewhere, never renamed', () => {
     const { pickDonor: pd, scaleDonor: sd, } = require('../scale.mjs');
     const { renameKeysOf: rk } = require('../generate.mjs');
@@ -2028,6 +2075,39 @@ describe('probe-smoke pattern fixes (2026-08-26)', () => {
       if (style !== 'skulker') expect(row.text).not.toMatch(/Hide/);
       expect(rk(s)).not.toContain('Escape Action');
     }
+  });
+
+  test('Cunning Action is Humanoid-coded — creature skulkers get Nimble Escape (print\'s own split)', async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const { pickDonor: pd, scaleDonor: sd } = require('../scale.mjs');
+    const mkAnswer = (type) => {
+      const scaled = sd(pd(8, 'skulker'), 8, { mechanics: [] });
+      const renames = {};
+      rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+      const typed = Object.values(scaled.sections).flat()
+        .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name]);
+      return JSON.stringify({
+        name: 'Gloam Cat', type, size: 'Medium', alignment: 'Neutral',
+        senses: 'darkvision 60 ft.', languages: 'None',
+        renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Slashing'])),
+        conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Dexterity',
+        wildcard: "*Dexterity Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Prone condition until the start of the creature's next turn.",
+      });
+    };
+    const run = (type) => generateReskin({ concept: 'x', cr: 8, style: 'skulker', mechanics: [] }, async (prompt) => {
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+      return mkAnswer(type);
+    });
+    const beast = await run('Monstrosity');
+    const bRow = (beast.sections['Bonus Actions'] ?? []).find((e) => /Escape|Cunning/.test(e.name));
+    expect(bRow.name).toBe('Nimble Escape');
+    expect(bRow.text).toMatch(/the Disengage or Hide action/);
+    expect(bRow.text).not.toMatch(/Dash/);
+    const human = await run('Humanoid');
+    const hRow = (human.sections['Bonus Actions'] ?? []).find((e) => /Escape|Cunning/.test(e.name));
+    expect(hRow.name).toBe('Cunning Action');
+    expect(hRow.text).toMatch(/Dash, Disengage, or Hide/);
   });
 
   test('a mounted legendary escape drops Hide too — mounts do not hide', () => {

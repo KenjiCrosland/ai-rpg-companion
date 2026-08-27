@@ -450,7 +450,7 @@ Rolled traits: ${seed.intelligence}; ${seed.physical}; a ${seed.silhouette}; fro
 ${cr != null ? `Challenge Rating: ${crKeyFor(cr)} — scale the creature's ambition to this tier (a CR 2 creature is a local menace; a CR 20+ creature is a mythic force).` : ''}
 ${seed.creature_type ? `Creature type: ${seed.creature_type} — ${TYPE_ESSENCES[seed.creature_type] ?? 'build from what that type IS'}. Fuse the rolled traits INTO this essence (the traits are raw material; the essence is what the creature fundamentally is) — never design the traits first and paint the type on after.` : ''}
 
-Write 2-3 vivid sentences describing a single unified creature: the first describes what it IS (the traits must merge into one identity — one body, one behavior — not remain separate features; contradictions between traits are creative fuel), the rest describe how it FIGHTS — how it opens, what it does every round after that, and its temperament under pressure (does it flee bloodied, fight to the death, toy with prey?). The combat role must FOLLOW the rolled disposition — a guardian is a defender, a trickster is not a brute, a pack-hunter skirmishes.
+Write 2-3 vivid sentences describing a single unified creature ("synthesis" holds ONLY these creature sentences — never repeat, summarize, or restate any instruction, brief, or naming rule from this prompt): the first describes what it IS (the traits must merge into one identity — one body, one behavior — not remain separate features; contradictions between traits are creative fuel), the rest describe how it FIGHTS — how it opens, what it does every round after that, and its temperament under pressure (does it flee bloodied, fight to the death, toy with prey?). The combat role must FOLLOW the rolled disposition — a guardian is a defender, a trickster is not a brute, a pack-hunter skirmishes.
 
 Archetypes:
 - brute: hits hard up close, soaks damage, easy to hit
@@ -483,14 +483,22 @@ Also give the engine its ASSEMBLY METADATA — structural signals the builder ho
 - "attack_mode": "melee"|"ranged"|"mixed" — how it delivers its attacks. If its identity is striking from afar, say "ranged"; the builder guarantees at least one ranged attack ships.
 - "signature_mechanic": the ONE mechanic the creature IS, from: thrown-weapon, breath, engulf, grapple, gaze, aura, teleport, summon, snare (it binds prey in a restraining substance — webs, tar, hardened stone, grave-wax) — the engine guarantees it a seat. Omit if no single mechanic dominates the concept.
 - "style": the creature's COMBAT STYLE if one clearly fits, from: "mounted" (a charger or rider — speed, momentum, ride-down attacks), "skulker" (an ambusher — stealth, gazes, vanishing), "hurler" (a thrower — projectiles, bursts, reeling lines), "winged" (a flyer — dives, swooping strikes, attacks on the wing). Omit if none fits; most creatures have no style.
+- "signature_elements": the concept's 2-3 defining elements, each {"element": "<short phrase from your own synthesis>", "kind": "<behavior|body|object|aura>"} — the engine seats the top behavior in the signature action and the top body/object/aura in the signature trait, so these phrases decide what the creature's custom abilities BUILD.
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "synthesis": "<your 2-3 sentences>", "name": "<${naming ? 'the creature\'s proper name, written to THE NAME convention above' : 'a proper name for this creature in Monster Manual register, 1-3 words, never a description'}>", "lore": "<one sentence>", "material": "<exactly ONE material from your chosen type's line>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>", "style": "<mounted|skulker|hurler|winged — only if one clearly fits; otherwise omit>"}`;
+Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "synthesis": "<your 2-3 sentences>", "name": "<${naming ? 'the creature\'s proper name, written to THE NAME convention above' : 'a proper name for this creature in Monster Manual register, 1-3 words, never a description'}>", "lore": "<one sentence>", "material": "<exactly ONE material from your chosen type's line>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>", "style": "<mounted|skulker|hurler|winged — only if one clearly fits; otherwise omit>", "signature_elements": [{"element": "<short phrase>", "kind": "<behavior|body|object|aura>"}]}`;
 }
 
 export function validateSeedSynthesisResponse(jsonString) {
   const parsed = tryParse(jsonString);
+  // upper bound (instruction echo #6, 2026-08-26): a "synthesis" that ran
+  // ~2000 chars had swallowed the prompt's own type-essence and naming
+  // briefs verbatim — and the field becomes the CONCEPT every downstream
+  // call reads, so the leak contaminates the whole generation. 2-3 asked
+  // sentences never approach this ceiling.
   return parsed != null && ARCHETYPE_NAMES.includes(parsed.archetype)
-    && typeof parsed.synthesis === 'string' && parsed.synthesis.trim().length > 10;
+    && typeof parsed.synthesis === 'string' && parsed.synthesis.trim().length > 10
+    && parsed.synthesis.trim().length <= 900
+    && parsed.synthesis.split(/(?<=[.!?])\s+/).length <= 5;
 }
 
 // ---------------------------------------------------------------------------

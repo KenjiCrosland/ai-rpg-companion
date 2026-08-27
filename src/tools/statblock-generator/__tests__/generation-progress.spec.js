@@ -98,6 +98,19 @@ describe('concept-call lore threading (owner design, 2026-08-04)', () => {
     expect(typeof buildSeedSynthesisPrompt({ intelligence: 'mindless (INT 1-2)', physical: 'tar-slick', silhouette: 'burrower', origin: 'a drowned swamp', creature_type: 'Ooze' }, { cr: 12 })).toBe('string');
     expect(typeof buildArchetypeResolvePrompt('a bog stalker')).toBe('string'); // legacy call shape
   });
+
+  test('a synthesis that swallowed the prompt briefs is rejected — the field becomes the concept', () => {
+    const ok = { archetype: 'skirmisher', synthesis: 'A stone warden of the sunless roads. It circles prey and drains warmth with each blow. Bloodied, it melts into the dark and returns from a new angle.' };
+    expect(vSS(JSON.stringify(ok))).toBe(true);
+    const echoed = { archetype: 'skirmisher', synthesis: `${ok.synthesis} Its creature type MUST be Construct: a MADE thing. ${'Name it as two words: a vivid predatory participle. '.repeat(25)}` };
+    expect(vSS(JSON.stringify(echoed))).toBe(false);
+  });
+
+  test('the seed synthesis asks for signature elements — blank rolls feed the seat machinery too', () => {
+    const p = buildSeedSynthesisPrompt({ intelligence: 'cunning', physical: 'sleek', silhouette: 'stalker', origin: 'a moor', creature_type: 'Monstrosity' }, { cr: 8 });
+    expect(p).toMatch(/"signature_elements"/);
+    expect(p).toMatch(/behavior\|body\|object\|aura/);
+  });
 });
 
 describe('lore-driven naming (owner law: names are what creatures ARE)', () => {

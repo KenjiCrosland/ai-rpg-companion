@@ -1204,6 +1204,23 @@ async function generateStatblockEngine(edition) {
         if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
         if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
         if (['mounted', 'skulker', 'hurler', 'winged'].includes(parsed?.style)) conceptStyle = parsed.style;
+        // blank-path parity (owner spotted the gap, 2026-08-26): the seed
+        // synthesis now returns signature_elements too — without them the
+        // reskin's seat machinery ran blind on every blank roll
+        if (Array.isArray(parsed?.signature_elements)) {
+          const KINDS = ['behavior', 'body', 'object', 'aura'];
+          const els = parsed.signature_elements
+            .map((x) => (typeof x === 'string' ? { element: x, kind: null } : { element: String(x?.element ?? ''), kind: KINDS.includes(x?.kind) ? x.kind : null }))
+            .filter((x) => x.element.trim()).map((x) => ({ element: x.element.trim().slice(0, 80), kind: x.kind })).slice(0, 3);
+          if (els.length) conceptElements = els;
+        }
+        logger.log('[concept] synthesis (blank roll):', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
+          + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
+          + ` style=${conceptStyle ?? '—'}${conceptLore ? ' lore=✓' : ''}`);
+        if (synthesizedConcept) logger.log('[concept] synthesis text:', synthesizedConcept);
+        if (conceptElements) logger.log('[concept] signature elements:', conceptElements.map((e) => `${e.element}${e.kind ? ` [${e.kind}]` : ''}`).join(' | '));
+        if (conceptProposedName) logger.log('[concept] name proposal:', conceptProposedName);
+        if (conceptLore) logger.log('[concept] lore:', conceptLore);
       }
     } catch (e) {
       logger.warn('Archetype resolve failed:', e);
@@ -1225,12 +1242,14 @@ async function generateStatblockEngine(edition) {
 
   let finalMonster;
   try {
-    // THE RESKIN PILOT (owner spec v0, 2026-08-17): skirmisher-selected
-    // generations route to the parallel reskin path when the dev flag is
-    // set. Slot path untouched for every other role and for everyone
-    // without the flag. Enable: localStorage['statblock-reskin-pilot']='1'.
+    // THE RESKIN PATH — DEFAULT-ON for skirmisher (owner, 2026-08-26:
+    // "this is so much better than the other way"; pilot spec v0
+    // 2026-08-17, hardened through ~40 live-reviewed blocks). Every
+    // 2024 skirmisher generation routes here; the slot path remains for
+    // all other roles. The old pilot flag is now a KILL SWITCH:
+    // localStorage['statblock-reskin-pilot']='0' restores the slot path.
     if (archetypeName === 'skirmisher' && edition === '2024'
-      && localStorage.getItem('statblock-reskin-pilot') === '1') {
+      && localStorage.getItem('statblock-reskin-pilot') !== '0') {
       const { generateReskin } = await import('./reskin/generate.mjs');
       finalMonster = await generateReskin(
         {

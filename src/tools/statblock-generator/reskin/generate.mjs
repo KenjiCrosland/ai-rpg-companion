@@ -75,8 +75,21 @@ export function buildReskinPrompt(scaled, { concept = '', takenNames = [], signa
   const typedRows = Object.values(scaled.sections).flat()
     .filter((e) => e.text.includes('{damage_type}'));
   const damageSkeleton = typedRows.map((e) => `"<the new name you gave ${JSON.stringify(e.name)}>": "<damage type>"`).join(', ');
+  // per-key register hints (owner, 2026-08-26: the register PARAGRAPH
+  // didn't reliably reach the twins — "Spinning Blade Flourish" on a
+  // mechanics-free melee row; the hint at the fill site is the
+  // highest-compliance prompt surface). Corpus: 330/422 attack rows are
+  // ONE bare word.
+  const RENAME_HINTS = [
+    [/^(?:Melee|Ranged) Attack$/, 'the weapon or body part ALONE, one word like print (Scimitar, Claw, Talons); two words only if the row does more than plain damage (Flame Whip)'],
+    [/^Sweeping Area Attack$/, 'a flavored name, two words (Blade Scatter, Fire Breath)'],
+    [/^Signature Slot$/, 'THE flavored name — two words, three at the absolute ceiling (Dreadful Glare)'],
+    [/^Ranged Save Effect$/, 'two words, the Dreadful Glare class'],
+    [/^Legendary/, 'verb-forward, two words (Pounce, Deathless Strike)'],
+  ];
+  const hintFor = (n) => RENAME_HINTS.find(([re]) => re.test(n))?.[1] ?? 'plain, 1-2 words like print';
   const renameSkeleton = renameKeysOf(scaled)
-    .map((n) => `"${n}": "<new name, 1-2 words like print, 4 max>"`).join(', ');
+    .map((n) => `"${n}": "<${hintFor(n)}>"`).join(', ');
   return `You are reskinning a mechanical monster chassis to a concept. The mechanics are FIXED; you provide identity.
 
 CONCEPT: ${concept}
@@ -92,7 +105,7 @@ Return ONLY JSON:
  "alignment": "<a 2024 alignment — follow the concept's own moral read: tragic, driven, or feral is not Evil>",
  "senses": "<a senses line, e.g. 'darkvision 60 ft.'>",
  "languages": "<a languages line or 'None'>",
- "renames": { ${renameSkeleton} },   <- ALL of these keys, every one, none omitted. A name that claims an element must be PAID by that row's damage: "Burning X" needs Fire on the row (or the melee rider), "Rimefrost X" needs Cold. If the damage does not pay the word, drop the word, or qualify it with the true element the way print does (the Priest\'s "Radiant Flame" deals Radiant); folklore light-compounds (witchfire, foxfire, balefire) are always legal. NAME REGISTER — print's name BUDGET (measured from the corpus): standard rows stay terse — an attack row is ONE weapon-noun or anatomy word (Bite, Talons, Greataxe; two for a magical one: Flame Whip, Arcane Burst), and utility rows take plain function names. ONLY the Signature Slot and the nova row earn a flavored name, and even there print compresses: two words, three at the absolute ceiling (Dreadful Glare, Curtain Call — never "Blade Scatter Finale"), a hyphenated compound counting as its parts. Legendary actions take the two-word flavored register, verb-forward (Pounce, Mind Jolt, Cold Gale) — never three words. One flourish on a sheet of terse names reads as a designer's touch; wall-to-wall kennings read as a generator.${mind === 'bestial' ? ' THIS creature is bestial: name its attack rows by anatomy alone (Bite, Talons, Slam, Gore) — its flavor lives in the trait and the lore, never in an attack name.' : ''} Never invent a compound word — print writes "Frost Axe", never "Frostaxe".
+ "renames": { ${renameSkeleton} },   <- ALL of these keys, every one, none omitted. A name that claims an element must be PAID by that row's damage: "Burning X" needs Fire on the row (or the melee rider), "Rimefrost X" needs Cold. If the damage does not pay the word, drop the word, or qualify it with the true element the way print does (the Priest\'s "Radiant Flame" deals Radiant); folklore light-compounds (witchfire, foxfire, balefire) are always legal. NAME REGISTER — print's name BUDGET (measured from the corpus): standard rows stay terse — a plain-damage attack row is ONE weapon-noun or anatomy word (Bite, Talons, Greataxe); two words only when the row does more than plain damage (Flame Whip, Arcane Burst); utility rows take plain function names. ONLY the Signature Slot and the nova row earn a flavored name, and even there print compresses: two words, three at the absolute ceiling (Dreadful Glare, Curtain Call — never "Blade Scatter Finale"), a hyphenated compound counting as its parts. Legendary actions take the two-word flavored register, verb-forward (Pounce, Mind Jolt, Cold Gale) — never three words. One flourish on a sheet of terse names reads as a designer's touch; wall-to-wall kennings read as a generator.${mind === 'bestial' ? ' THIS creature is bestial: name its attack rows by anatomy alone (Bite, Talons, Slam, Gore) — its flavor lives in the trait and the lore, never in an attack name.' : ''} Never invent a compound word — print writes "Frost Axe", never "Frostaxe".
  "damage_types": { ${damageSkeleton} },   <- REQUIRED for every attack and the area action. PHYSICAL vs ENERGY follows the BODY (print: melee attacks deal the limb's physical type — a bite Piercing, a slam Bludgeoning, a claw Slashing — with energy reserved for the ranged attack and the area action; ONLY a creature whose body IS energy — incorporeal, elemental, formless — deals energy with its melee). A fully physical creature may answer physical for everything; never give every row the same energy — but also keep to ONE energy family across the block (print rarely fields two).${energy ? ` THIS creature's energy is ${energy} — every non-physical damage type you assign must be ${energy}.` : ''}${mix === 'physical' ? ' THIS creature deals PHYSICAL damage only — Bludgeoning, Piercing, or Slashing everywhere; no energy types anywhere on the block.' : ''}
 ${needsSpells ? ` "spells": { "at_will": ["<exactly 2 spells this concept would cast, from ONLY this list: ${SPELL_MENU.join(', ')}>"], "daily": ["<exactly 2 MORE from the same list, no repeats — pick by THEME: the spells must feel like this creature\'s magic>"] },\n` : ''}${needsProjectile ? ` "projectile": "<the thing it throws, 1-3 words WITH its article (a knucklebone / its barbed anchor) — it appears mid-sentence in attack text>",\n` : ''} "slot_save": "<the Saving Throw stat the Signature Slot should use if your wildcard is not used — the stat the concept threatens: Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma>",
  "melee_rider": "<the ENERGY type the melee attack deals as a rider — or \"none\" if this creature's damage is purely physical (a fifth of printed monsters are)>",
@@ -313,6 +326,7 @@ function vetTraitWildcard(tw, sections, { name, inline }) {
   // judgment sentence cap — same first-match shadowing class as the
   // action vet's Pale Surveyor bug, fixed here before it fired live
   const why = twName.split(/\s+/).length > 4 ? ['name over 4 words', 'mechanical']
+    : HINT_ECHO.test(twName) ? ['name copies the prompt\'s own register example — the example shows the shape, never the name', 'mechanical']
     : /\d+ \(\d+d\d+|\*[A-Z][a-z]+ Saving Throw\*|Saving Throw:|Attack Roll:|\(Recharge|\/Day|\btimes equal to\b|regains? (?:all )?(?:expended )?uses/i.test(twText) ? ['active mechanics in a passive trait (a damage roll, a save FRAME, or a use limit — mentioning saves or attack rolls passively is fine)', 'mechanical']
     : reachContradiction ? [`claims reach ${reachClaim[1]} feet but no attack row prints that reach — reach belongs on the rows; align with them`, 'mechanical']
     : /starts its turn/i.test(twText) ? ['recurring aura', 'mechanical']
@@ -351,6 +365,12 @@ const NAME_CLAIMS = [
 ];
 // icon-owned vocabulary may not enter a rename (the Vorpal Saber class)
 const RESERVED_NAMES = /vorpal|phylactery|holy avenger|sphere of annihilation|tarrasque|beholder|mind flayer/i;
+// the prompt's own register exemplars may not BE the answer (instruction
+// echo #4: a mantis shipped a trait named "Dreadful Glare" copied from
+// the rename hint, 2026-08-26). Generic standards (Scimitar, Claw, Fire
+// Breath, Pounce) stay legal — print reuses those; the SIGNATURE-class
+// exemplars are one print monster's property or our own hint coinage.
+const HINT_ECHO = /^(?:Dreadful Glare|Deathless Strike|Flame Whip|Arcane Burst|Blade Scatter)$/i;
 // Two print-grounded escapes (wisp-queen deadlock, 2026-08-18; corpus
 // measured 34/35 fire-named rows paying Fire):
 // 1. Lexicalized spectral-light compounds don't claim fire — witchfire/
@@ -406,6 +426,19 @@ export function reskinDefects(scaled, p, { energy = null, mix = null } = {}) {
     else if (v.toLowerCase() === k.toLowerCase()) defects.push(`rename for "${k}" unchanged`);
     else if (v.split(/\s+/).length > 4) defects.push(`rename for "${k}" over 4 words: "${v}"`);
     else if (RESERVED_NAMES.test(v)) defects.push(`rename for "${k}" uses reserved vocabulary: "${v}"`);
+    else if (HINT_ECHO.test(v)) defects.push(`rename for "${k}" copies the prompt's own example "${v}" — the example shows the register, never the name`);
+  }
+  // rename UNIQUENESS (the mantis's "Scythe or Scythe", 2026-08-26): the
+  // one-word register made value collisions reachable — two rows sharing
+  // a name garbles Multiattack and every cross-reference
+  {
+    const seen = new Map();
+    for (const k of keys) {
+      const v = String(p.renames?.[k] ?? '').trim().toLowerCase();
+      if (!v) continue;
+      if (seen.has(v)) defects.push(`renames for "${seen.get(v)}" and "${k}" are both "${String(p.renames[k]).trim()}" — every row needs its own name (give the thrown twin its own word: Scythe / Hurled Scythe)`);
+      else seen.set(v, k);
+    }
   }
   for (const k of typedNames) {
     const rn = String(p.renames?.[k] ?? '').trim();
@@ -521,12 +554,23 @@ export async function generateReskin(options, callLLM) {
       const dealt = [t, /Melee/.test(k) || k === 'Melee Attack' ? p.melee_rider : null].filter(Boolean);
       return !nameClaimSatisfied(rn, dealt);
     });
+    const dupeKeys = (() => {
+      const seen = new Map(); const out = [];
+      for (const k of renameKeysOf(scaled)) {
+        const v = String(p.renames?.[k] ?? '').trim().toLowerCase();
+        if (!v) continue;
+        if (seen.has(v)) out.push(seen.get(v), k);
+        else seen.set(v, k);
+      }
+      return out;
+    })();
     const missingRenames = [...new Set([
       ...renameKeysOf(scaled).filter((k) => {
         const v = String(p.renames?.[k] ?? '').trim();
-        return !v || v.toLowerCase() === k.toLowerCase() || v.split(/\s+/).length > 4 || RESERVED_NAMES.test(v);
+        return !v || v.toLowerCase() === k.toLowerCase() || v.split(/\s+/).length > 4 || RESERVED_NAMES.test(v) || HINT_ECHO.test(v);
       }),
       ...claimBad,
+      ...dupeKeys,
     ])];
     const missingTypes = typedRows.map((e) => e.name)
       .filter((k) => {
@@ -715,6 +759,21 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     generation: { path: 'reskin', donor: donor.id, archetype: 'skirmisher', ...(donor.invented ? { invented: true } : donor.cite ? { cite: donor.cite } : {}) },
     archetype: 'skirmisher', archetype_source: 'user',
   };
+  // Cunning Action is HUMANOID-coded (owner, 2026-08-26: "too assassin
+  // coded" — and print agrees exactly: Cunning Action appears only on
+  // the Assassin and the Spy, while every nimble CREATURE — goblins,
+  // Panther, Tiger — gets Nimble Escape). The skulker stamp lands
+  // before the reskin call decides the type, so the split applies here.
+  if (!/Humanoid/i.test(monster.type)) {
+    for (const es of Object.values(sections)) {
+      for (const e of es) {
+        if (e.name === 'Cunning Action') {
+          e.name = 'Nimble Escape';
+          e.text = e.text.replace('the Dash, Disengage, or Hide action', 'the Disengage or Hide action');
+        }
+      }
+    }
+  }
   let traitShipped = null; let traitRejected = null;
   // pattern fixes (2026-08-25): model-written text gets the rename map
   // (the Pale Surveyor's trait cited "Ranged Save Effect" — donor
@@ -744,7 +803,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     .replace(/\b(?<=(?:its|the) )speed\b/g, 'Speed')
     .replace(/\bopportunity attack(s?)\b/g, 'Opportunity Attack$1')
     .replace(/\bdifficult terrain\b/g, 'Difficult Terrain')
-    .replace(/\bhit points\b/g, 'Hit Points');
+    .replace(/\bhit point(s?)\b/g, 'Hit Point$1');
   const polishModelText = (t) => capRegister(applyRenamesToText(normalizeMeters(t)));
   const shipTrait = (v, label, flag) => {
     (sections.Traits = sections.Traits ?? []).unshift({ name: v.name, text: polishModelText(v.text), model: true });
