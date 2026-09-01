@@ -111,6 +111,15 @@ describe('concept-call lore threading (owner design, 2026-08-04)', () => {
     expect(p).toMatch(/"signature_elements"/);
     expect(p).toMatch(/behavior\|body\|object\|aura/);
   });
+
+  test('both concept prompts offer the brute styles (donor lines landed 2026-08-26)', () => {
+    const seed = buildSeedSynthesisPrompt({ intelligence: 'dim', physical: 'massive', silhouette: 'hulk', origin: 'a quarry', creature_type: 'Giant' }, { cr: 5 });
+    const resolve = buildArchetypeResolvePrompt('an ogre of the quarry', '', { cr: 5 });
+    for (const p of [seed, resolve]) {
+      expect(p).toMatch(/"charger" \(it runs prey down/);
+      expect(p).toMatch(/mounted\|skulker\|hurler\|winged\|charger\|grappler\|juggernaut\|regenerator/);
+    }
+  });
 });
 
 describe('lore-driven naming (owner law: names are what creatures ARE)', () => {

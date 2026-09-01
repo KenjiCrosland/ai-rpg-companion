@@ -7,11 +7,15 @@ import { cardBudget, withinBudget } from './card-budgets.mjs';
 import { attackDamageDiceFor, saveDamageDiceFor, hpFormulaFor } from '../format-2024/dice.mjs';
 import { DONORS } from './donors.mjs';
 
-export function pickDonor(cr, style = null) {
-  // style-matched template first (the full-template lines: mounted,
-  // skulker, hurler); plain seat when the style has no line here
-  const pool = DONORS.filter((d) => (style ? d.style === style : !d.style));
-  const fallback = DONORS.filter((d) => !d.style);
+export function pickDonor(cr, style = null, archetype) {
+  // archetype is REQUIRED (owner, 2026-08-26: "kill the default") — a
+  // silent skirmisher default is how a mis-wired brute pipeline would
+  // invisibly draw the wrong chassis. Fail loudly instead; every caller
+  // states which archetype it wants.
+  if (!archetype) throw new Error('pickDonor requires an explicit archetype — no silent default');
+  const mine = DONORS.filter((d) => (d.archetypes ?? []).includes(archetype));
+  const pool = mine.filter((d) => (style ? d.style === style : !d.style));
+  const fallback = mine.filter((d) => !d.style);
   const from = (list) => list.filter((d) => d.cr <= cr).sort((a, b) => b.cr - a.cr)[0] ?? list[0];
   return (pool.length ? from(pool) : from(fallback)) ?? from(fallback);
 }
@@ -73,7 +77,14 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   // on CON 14 at CR 20 — peers run CON 20-26 on 24-31 dice)
   scaled.stats.CON = Math.max(scaled.stats.CON, 12 + Math.floor(cr / 2));
   scaled.cr = cr;
-  scaled.ac = card.ac; scaled.hp = card.hp; scaled.atk = card.atk; scaled.dc = card.dc;
+  // the donor's declared card spend (brute sweep, 2026-08-26: AC runs
+  // 2-3 UNDER the card, HP ~1.1 over — armor traded for meat). WINGED
+  // donors' hp_scale documents the speed-keyed flight tax that this
+  // function already charges below — never charge it twice.
+  scaled.ac = card.ac + (donor.ac_offset ?? 0);
+  scaled.hp = (donor.hp_scale && !/Fly/i.test(donor.speed ?? ''))
+    ? Math.round(card.hp * donor.hp_scale) : card.hp;
+  scaled.atk = card.atk; scaled.dc = card.dc;
   // full print ladder: the old ceiling of 6 shipped wrong PB/saves/skills
   // on every CR 21+ block (Stormfall +6 at CR 22, lint-caught 2026-08-20)
   scaled.pb = cr >= 29 ? 9 : cr >= 25 ? 8 : cr >= 21 ? 7 : cr >= 17 ? 6 : cr >= 13 ? 5 : cr >= 9 ? 4 : cr >= 5 ? 3 : 2;

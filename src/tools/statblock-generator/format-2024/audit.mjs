@@ -204,6 +204,7 @@ RESKIN MODE. This block's numbers, DCs, and damage budgets are engine-authored a
 4. Misspelled entry names ("Withdrawl").
 5. Doubled or contradictory limiters ("only once per turn" plus "while active, can't use it again").
 6. REDUNDANT RULES — list each benefit the block grants; if a model-written trait duplicates one the chassis already grants (two entries both giving Disadvantage on Opportunity Attacks), or a clause is made dead by another entry (a trait converting damage a row already deals), flag it and supply a rewrite trimming the duplicate clause.
+7. STAT-FICTION MISMATCH — a save whose STAT contradicts what the save represents (a Strength save to shake off a scent-lock, a Charisma save to dodge a falling rock). Propose the stat the fiction demands; the DC never changes.
 A typical reskin block carries 1-3 such findings; an empty array on a block with model-written traits usually means a MISSED finding, not a clean block — look again before returning empty. The don't-manufacture rule still stands, and every span must be copied character-for-character, capitalization included.` : ''}`;
 }
 
@@ -372,7 +373,9 @@ export function verifyAuditFindings(monster, raw) {
     const NEVER_RENAME = new Set(['Multiattack', 'Spellcasting', 'Legendary Resistance',
       // standardized escape rows (owner + print, 2026-08-26) — shared
       // names are the point; a bespoke rename recreates the tell
-      'Cunning Action', 'Nimble Escape', 'Mounted Agility', 'Aerial Agility', 'Fleet Agility', 'Withdraw']);
+      'Cunning Action', 'Nimble Escape', 'Mounted Agility', 'Aerial Agility', 'Fleet Agility', 'Withdraw',
+      // brute engine + trait standards (print reuses these verbatim)
+      'Swallow', 'Engulf', 'Smother', 'Whelm', 'Cage', 'Entomb', 'Cocoon', 'Trample', 'Regeneration', 'Immutable Form', 'Magic Resistance', 'Siege Monster']);
     let rename = null;
     if (typeof f.rename === 'string' && f.rename.trim()) {
       const proposed = f.rename.trim();

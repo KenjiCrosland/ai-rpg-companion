@@ -718,10 +718,17 @@ function updateMonster(updatedMonster) {
   }
 }
 
-function selectMonster(folderName = 'Uncategorized', index) {
+function selectMonster(folderName = 'Uncategorized', index, { fillForm = true } = {}) {
   activeFolder.value = folderName;
   activeMonsterIndex.value = index;
   monster.value = monsters.value[folderName][index];
+  // fillForm: false = display-only selection. Generation-complete used to
+  // fill the form with its own result, so roll 2's resolve call found
+  // roll 1's invented name sitting in the name/concept field and judged
+  // it USER-PROVIDED — the same name shipped 3 for 3 (the Grave-Hurler
+  // Vulture loop, 2026-08-26). The form now only fills on an explicit
+  // sidebar selection, where inheriting the identity is the point.
+  if (!fillForm) return;
   monsterName.value = monster.value.name;
   monsterType.value = monster.value.monsterType || 'Random';
   monsterDescription.value = monster.value.monsterDescription || '';
@@ -1115,7 +1122,7 @@ async function generateStatblockEngine(edition) {
         if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
         if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
         if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
-        if (['mounted', 'skulker', 'hurler', 'winged'].includes(parsed?.style)) conceptStyle = parsed.style;
+        if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator'].includes(parsed?.style)) conceptStyle = parsed.style;
         if (Array.isArray(parsed?.mechanics)) {
           const MECHS = ['thrown-weapon', 'breath', 'engulf', 'grapple', 'gaze', 'aura', 'teleport', 'summon', 'snare'];
           conceptMechanics = parsed.mechanics.filter((x) => MECHS.includes(String(x).toLowerCase()));
@@ -1203,7 +1210,7 @@ async function generateStatblockEngine(edition) {
         if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
         if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
         if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
-        if (['mounted', 'skulker', 'hurler', 'winged'].includes(parsed?.style)) conceptStyle = parsed.style;
+        if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator'].includes(parsed?.style)) conceptStyle = parsed.style;
         // blank-path parity (owner spotted the gap, 2026-08-26): the seed
         // synthesis now returns signature_elements too — without them the
         // reskin's seat machinery ran blind on every blank roll
@@ -1240,6 +1247,15 @@ async function generateStatblockEngine(edition) {
   // call reads for fit — the anti-hodgepodge anchor.
   if (conceptLore) concept += `\nLORE (the creature's story — every ability and its name should feel like they belong to it): ${conceptLore}`;
 
+  // Juggernaut is a MADE thing by its own definition (Immutable Form on a
+  // living swamp ogre, 2026-08-26) — living-flesh types demote to plain
+  // brute, same coherence family as the mount demotion.
+  if (conceptStyle === 'juggernaut' && resolvedType
+    && !['Construct', 'Elemental', 'Undead', 'Plant', 'Ooze'].includes(resolvedType)) {
+    logger.log('[concept] style demoted:', `juggernaut needs a made or mineral body — ${resolvedType} falls to plain brute`);
+    conceptStyle = null;
+  }
+
   let finalMonster;
   try {
     // THE RESKIN PATH — DEFAULT-ON for skirmisher (owner, 2026-08-26:
@@ -1248,11 +1264,15 @@ async function generateStatblockEngine(edition) {
     // 2024 skirmisher generation routes here; the slot path remains for
     // all other roles. The old pilot flag is now a KILL SWITCH:
     // localStorage['statblock-reskin-pilot']='0' restores the slot path.
-    if (archetypeName === 'skirmisher' && edition === '2024'
-      && localStorage.getItem('statblock-reskin-pilot') !== '0') {
+    // BRUTE PILOT (2026-08-26, donors landed from the n=40 composition
+    // sweep): dev-flag only — localStorage['statblock-reskin-brute']='1'.
+    if (edition === '2024' && (
+      (archetypeName === 'skirmisher' && localStorage.getItem('statblock-reskin-pilot') !== '0')
+      || (archetypeName === 'brute' && localStorage.getItem('statblock-reskin-brute') === '1'))) {
       const { generateReskin } = await import('./reskin/generate.mjs');
       finalMonster = await generateReskin(
         {
+          archetype: archetypeName,
           concept, cr, onProgress: onGenerationProgress,
           fixedName: conceptProvidedName,
           style: conceptStyle,
@@ -1500,7 +1520,9 @@ async function saveGeneratedMonster(finalMonster) {
   }
   monsters.value[folderName] = sortMonstersByCR(folderName);
   const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
-  selectMonster(folderName, newIndex);
+  // display-only: the form keeps what the user typed (the write-back
+  // here is how the Grave-Hurler Vulture named itself 3 rolls running)
+  selectMonster(folderName, newIndex, { fillForm: false });
   persistMonsters();
   loadingPart2.value = false;
   toast.success('Statblock generated and saved.');
