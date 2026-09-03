@@ -13,12 +13,12 @@ import challengeRatings from '@/data/challengeRatings.json';
 
 // the table keys fractional CRs as '1/2', not '0.5' (Thornback shipped XP 0)
 const crKey = (cr) => (cr === 0.125 ? '1/8' : cr === 0.25 ? '1/4' : cr === 0.5 ? '1/2' : String(cr));
-import { hpFormulaFor as hpFormulaForSize } from '../format-2024/dice.mjs';
+import { hpFormulaFor as hpFormulaForSize, saveDamageDiceFor as engineDiceFor } from '../format-2024/dice.mjs';
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
 
 const trace = (l, d) => logger.log(`[reskin] ${l}`, d ?? '');
-const GAME_TERM = /Attack Roll|Saving Throw|DC \d+|\b(Frightened|Poisoned|Blinded|Deafened|Prone|Restrained|Grappled|Charmed|Stunned|Incapacitated) condition\b|Advantage|Disadvantage|Dash|Disengage|Hide action|Speed|teleports?|Opportunity Attacks?|Difficult Terrain|unoccupied space|without provoking|Hit Points|\d+ feet/i;
+const GAME_TERM = /Attack Roll|Saving Throw|DC \d+|\b(Frightened|Poisoned|Blinded|Deafened|Prone|Restrained|Grappled|Charmed|Stunned|Incapacitated) condition\b|Advantage|Disadvantage|Dash|Disengage|Hide action|Speed|teleports?|Opportunity Attacks?|Difficult Terrain|unoccupied space|without provoking|Hit Points|Resistan\w*|Immun\w*|\d+ feet/i;
 // Condition menus by severity (owner call, 2026-08-18: "interpolate minor
 // and major conditions — give the llm the options").
 export const CONDITION_MENUS = {
@@ -31,6 +31,30 @@ const RULES_NAME = /^(Multiattack|Legendary Resistance|Legendary Action Uses|Spe
 
 // utility-only, theme-clustered so most concepts find a coherent pair
 export const SPELL_MENU = ['Darkness', 'Fog Cloud', 'Invisibility', 'Silence', 'Pass Without Trace', 'Misty Step', 'Expeditious Retreat', 'Spider Climb', 'Longstrider', 'Web', 'Entangle', 'Faerie Fire', 'Minor Illusion', 'Disguise Self', 'Mirror Image', 'Blur', 'Silent Image'];
+// THE BRUTE MENU (owner design, 2026-09-01: "spells that enhance
+// individual offense or defense... the golem is the precedent") — the
+// brute caster is the runed golem, the war-shaman: magic turned inward
+// on its own hide and fists, never escape tech and never damage spells.
+// Self-buffs barely use save DCs, which suits a brute's basement mental
+// stats; Shield is deliberately absent — it is a Reaction spell, and
+// print brutes have no reactions (0/40).
+// Widened to 16 (owner, 2026-09-01): the redundancy guard shrinks the
+// effective pool for construct casters (Heroism and often Stoneskin go
+// dead), so the menu grew where the frame allows — retaliation, anti-
+// control, death-defiance, and the grappler's check-advantage. Haste
+// stays out (sustained extra-attack pricing), Absorb Elements stays out
+// (Reaction spell, same law as Shield), Mage Armor stays out
+// (numerically dead on a low-DEX brute).
+export const BRUTE_SPELL_MENU = ['Enlarge/Reduce', 'Magic Weapon', 'Divine Favor', 'Stoneskin', 'Barkskin', 'Heroism', 'False Life', 'Mirror Image', 'Blur', 'Shield of Faith', 'Protection from Evil and Good', 'Jump', 'Fire Shield', 'Freedom of Movement', 'Death Ward', 'Enhance Ability'];
+// SPELL TIERS ARE THE ORGAN'S, NOT THE MODEL'S (the First Word shipped
+// "At Will: Stoneskin, Death Ward" — permanent weapon-resistance and a
+// repeatable must-kill-me-twice loop beside Legendary Resistance,
+// 2026-09-01). The model picks WHICH four spells fit the concept; the
+// organ decides at-will vs 1/Day: anything that hardens the caster
+// (defensive buffs, death-defiance) is 1/Day, print's golem shape.
+// Escape and utility tech (Misty Step, Invisibility, Fog Cloud) may sit
+// at-will — print does this on monsters.
+export const NEVER_AT_WILL = new Set(['Stoneskin', 'Death Ward', 'Fire Shield', 'Freedom of Movement', 'Mirror Image', 'Blur', 'False Life', 'Barkskin', 'Shield of Faith', 'Protection from Evil and Good', 'Heroism', 'Magic Weapon', 'Divine Favor', 'Enhance Ability', 'Enlarge/Reduce']);
 
 /** Every entry the reskin MUST rename — the validator and prompt share it. */
 export function renameKeysOf(scaled) {
@@ -119,10 +143,10 @@ Return ONLY JSON:
  "languages": "<a languages line or 'None'>",
  "renames": { ${renameSkeleton} },   <- ALL of these keys, every one, none omitted. A name that claims an element must be PAID by that row's damage: "Burning X" needs Fire on the row (or the melee rider), "Rimefrost X" needs Cold. If the damage does not pay the word, drop the word, or qualify it with the true element the way print does (the Priest\'s "Radiant Flame" deals Radiant); folklore light-compounds (witchfire, foxfire, balefire) are always legal. NAME REGISTER — print's name BUDGET (measured from the corpus): standard rows stay terse — a plain-damage attack row is ONE weapon-noun or anatomy word (Bite, Talons, Greataxe); two words only when the row does more than plain damage (Flame Whip, Arcane Burst); utility rows take plain function names. ONLY the Signature Slot and the nova row earn a flavored name, and even there print compresses: two words, three at the absolute ceiling (Dreadful Glare, Curtain Call — never "Blade Scatter Finale"), a hyphenated compound counting as its parts. Legendary actions take the two-word flavored register, verb-forward (Pounce, Mind Jolt, Cold Gale) — never three words. One flourish on a sheet of terse names reads as a designer's touch; wall-to-wall kennings read as a generator.${mind === 'bestial' ? ' THIS creature is bestial: name its attack rows by anatomy alone (Bite, Talons, Slam, Gore) — its flavor lives in the trait and the lore, never in an attack name.' : ''} Never invent a compound word — print writes "Frost Axe", never "Frostaxe".
  "damage_types": { ${damageSkeleton} },   <- REQUIRED for every attack and the area action. PHYSICAL vs ENERGY follows the BODY (print: melee attacks deal the limb's physical type — a bite Piercing, a slam Bludgeoning, a claw Slashing — with energy reserved for the ranged attack and the area action; ONLY a creature whose body IS energy — incorporeal, elemental, formless — deals energy with its melee). A fully physical creature may answer physical for everything; never give every row the same energy — but also keep to ONE energy family across the block (print rarely fields two).${energy ? ` THIS creature's energy is ${energy} — every non-physical damage type you assign must be ${energy}.` : ''}${mix === 'physical' ? ' THIS creature deals PHYSICAL damage only — Bludgeoning, Piercing, or Slashing everywhere; no energy types anywhere on the block.' : ''}
-${needsSpells ? ` "spells": { "at_will": ["<exactly 2 spells this concept would cast, from ONLY this list: ${SPELL_MENU.join(', ')}>"], "daily": ["<exactly 2 MORE from the same list, no repeats — pick by THEME: the spells must feel like this creature\'s magic>"] },\n` : ''}${needsProjectile ? ` "projectile": "<the thing it throws, 1-3 words WITH its article (a knucklebone / its barbed anchor) — it appears mid-sentence in attack text>",\n` : ''}${needsEngulf ? ` "engulf_style": "<how this body takes a creature in: swallow (a mouth) | engulf (an amorphous mass, a slime, a swarm) | smother (fabric, wrappings, a collapsing bulk) | whelm (water or liquid) | cage (chains, bars, ribs) | entomb (stone, earth, ice) | cocoon (web, silk, strands) — the engine names and words the ability to match>",\n` : ''} "slot_save": "<the Saving Throw stat the Signature Slot should use if your wildcard is not used — the stat the concept threatens: Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma>",
+${needsSpells ? ` "spells": { "at_will": ["<exactly 2 spells this concept would cast, from ONLY this list: ${(scaled.spell_menu ?? SPELL_MENU).join(', ')}>"], "daily": ["<exactly 2 MORE from the same list, no repeats — pick by THEME: the spells must feel like this creature\'s magic>"] },\n` : ''}${needsProjectile ? ` "projectile": "<the thing it throws, 1-3 words WITH its article (a knucklebone / its barbed anchor) — it appears mid-sentence in attack text>",\n` : ''}${needsEngulf ? ` "engulf_style": "<how this body takes a creature in: swallow (a mouth) | engulf (an amorphous mass, a slime, a swarm) | smother (fabric, wrappings, a collapsing bulk) | whelm (water or liquid) | cage (chains, bars, ribs) | entomb (stone, earth, ice) | cocoon (web, silk, strands) — the engine names and words the ability to match>",\n` : ''} "slot_save": "<the Saving Throw stat the Signature Slot should use if your wildcard is not used — the stat the concept threatens: Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma>",
  "melee_rider": "<the ENERGY type the melee attack deals as a rider — or \"none\" if this creature's damage is purely physical (a fifth of printed monsters are)>",
  "speed_shape": "<\"climber\" keeps the Climb speed; \"runner\" trades it for +10 ft. walk (a charger, a rider, a sprinter has no business on walls)>",
- "trait_wildcard": { "name": "<a passive trait the concept demands — its body's rule, not an attack: 4 words max>", "text": "<ONE passive rule, 2 sentences max, 2024 voice: an immunity, a sense, a movement rule, a condition interaction. No damage, no saves, no auras. Omit the object entirely if the chassis already says it.>" },
+ "trait_wildcard": { "name": "<a passive trait the concept demands — its body's rule, not an attack: 4 words max>", "text": "<ONE passive rule, 2 sentences max, 2024 voice: an immunity, a sense, a movement rule, a condition interaction. No damage, no saves, no auras. State the flavor and stop — never explain that flavor is flavor ("purely cosmetic" is not rules text). Omit the object entirely if the chassis already says it.>" },
  "lore": "<ONE sentence of world-lore: where it comes from and what it wants>",
  "vulnerability": "<a damage type this creature is VULNERABLE to — ONLY if the concept genuinely implies one (print is sparing: skeletons take extra Bludgeoning, mummies burn, a thing of ash fears Cold — the wound that made it). Most creatures have none: omit this field entirely.>",
  "conditions": { "condition_minor": "<one of: ${CONDITION_MENUS.condition_minor.join(', ')}>" },
@@ -147,7 +171,7 @@ const capTerms = (t) => t.replace(CAP_TERMS, (w) => w[0].toUpperCase() + w.slice
 // 0/329 print entries negate an attack; Evasion's "takes no damage if
 // it succeeds" is save-scoped and deliberately unmatched ("takes no
 // damage from the attack" is the narrow form).
-const NEGATION = /\b(?:attack|hit|damage)\b[^.]{0,30}\bis negated|\bnegat(?:es|ing)\b[^.]{0,40}\b(?:attack|damage|hit)|\battack misses\b|takes? no damage from (?:the|that|an?) (?:attack|hit)/i;
+const NEGATION = /\b(?:attack|hit|damage)\b[^.]{0,30}\bis negated|\bnegat(?:es|ing)\b[^.]{0,40}\b(?:attack|damage|hit)|\battack misses\b|takes? no damage from (?:the|that|an?) (?:attack|hit)|\bignores? (?:any )?attacks? that deal|\bignores? damage (?:less than|under|below)|\bdamage threshold\b/i;
 
 const ECONOMY_TO_SECTION = { action: undefined, bonus_action: 'Bonus Actions', reaction: 'Reactions', trait: 'Traits' };
 
@@ -260,13 +284,15 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
   // FIX always comes from the model via repair, never from regex surgery
   // (owner: prose rewrites garble). All three patterns: 0/329 corpus hits.
   const meterPlaceholder = /\b[XN]\/Day\b/.test(w);
-  const meterDialect = /\btimes equal to\b/i.test(w) || /regains? (?:all )?(?:expended )?uses/i.test(w)
+  const meterDialect = /\btimes equal to\b/i.test(w) || /regain(?:s|ing|ed)? (?:all )?(?:expended )?uses/i.test(w)
     // dialect #7 (Iron Warden, 2026-08-26): prose rest-gating — print
     // meters with (Recharge 5-6) or X/Day, never this sentence (0/329)
     || /until (?:it|the \w+) finishes a (?:short|long) rest/i.test(w)
     // dialect #8 (Phantom's Call, 2026-08-27): a mid-text "1/Day" in
     // prose — the count belongs in the entry-name parenthetical
-    || /(?:can happen|can do this|can use this|usable) \d+\/Day/i.test(w);
+    // "can be used" joined 2026-09-02: passive voice walked past the
+    // active forms (the Alms Saint's "This ability can be used 2/Day")
+    || /(?:can happen|can do this|can use this|can be used|usable) \d+\/Day/i.test(w);
   // a rider rides the HIT — its own targeting frame contradicts the host
   // row (3 sightings: a reach-5 melee attack whose rider grappled a
   // creature 30 feet away, the Strangler's Coat)
@@ -277,23 +303,66 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
     : /\byours?\b|\byou\b/i.test(w) ? ['second person', 'mechanical']
     : !GAME_TERM.test(w) ? ['no game term', 'mechanical']
     : (/teleport/i.test(w) && !/teleport/i.test(blockCaps)) ? ['teleport beyond the chassis', 'mechanical']
-    : (/\bfl(?:y|ies|ying)\b/i.test(w) && !/Fly/i.test(scaled.speed)) ? ['flight beyond the chassis', 'mechanical']
+    // WHO flies is the question (Ironbristle deadlock, 2026-09-01: quills
+    // "flying at the attacker" tripped the bare-word guard 4 times and
+    // burned the slot to chassis) — the CREATURE flying is a movement
+    // grant; its quills/spit/debris flying AT someone is projectile
+    // fiction, print-legal. Flag only creature-as-subject flight, a fly
+    // Speed, or flight with a distance ("flies up to 30 feet").
+    : ((/\b(?:it|the creature|this creature) (?:can )?fl(?:y|ies)\b/i.test(w) || /\bfly(?:ing)? [Ss]peed\b/i.test(w) || /\bfl(?:y|ies|ying)\b[^.]{0,20}\b\d+ f(?:ee)?t\b/i.test(w)) && !/Fly/i.test(scaled.speed)) ? ['flight beyond the chassis', 'mechanical']
     : !dcs.every((d) => d === `DC ${scaled.dc}`) ? ['DC differs from the card', 'mechanical']
     : (dmg && Number(dmg[1]) > Math.round(scaled.per_hit * 1.5)) ? ['damage over the cap', 'mechanical']
     : meterPlaceholder ? ['an unfilled use-limit placeholder — write the real number, like "2/Day"', 'mechanical']
     : ENGINE_VOCAB.test(w) ? ['engine vocabulary in rules text — chassis, donor, and template are our words, never the creature\'s', 'mechanical']
+    // PROMOTED judgment -> mechanical (owner 2026-09-01): 3/9 brute rolls
+    // reached for reactions, repair never converted one, and on the Tide
+    // King it cost the CR 21 boss its whole signature action AND shadowed
+    // the embedded-economy flag that would have caught the impossible
+    // shield-reload gate. Print: 0/40 brutes have a Reactions section.
+    // the SHAPE is reaction grammar even without the word (Battle-Shriek:
+    // "When the ragged howdah takes damage, it emits..." filed as an
+    // Action — banning the word taught the model to drop the word,
+    // 2026-09-01). Per SENTENCE, not text start: the Plague-Shrine hid
+    // the shape behind a scene-setting preamble sentence and the ^-anchor
+    // missed it (Weeping Rot, 2026-09-01)
+    : (archetype === 'brute' && (econDecl === 'reaction' || reactionMention || w.split(/(?<=\.)\s+/).some((s) => /^When(?:ever)? [^.]{0,80}(?:takes damage|is hit by|is struck|hits (?:it|the creature)\b)/i.test(s.trim())))) ? ['print brutes have no reactions (0 of 40) — DROP THE TRIGGER entirely: relabeling it keeps the broken economy (a bonus action cannot fire on an enemy\'s turn). Write what the creature DOES on its own turn, never "when" something happens to it', 'mechanical']
+    : MODEL_HEALING(w) ? ['healing is the Regeneration organ\'s job — turn-based recovery and heal-to-full never ship as custom text; drain ("regains Hit Points equal to the damage dealt") stays legal', 'mechanical']
+    : HEAL_BACK(w) ? ['a drain heals off damage DEALT to others (print\'s Life Drain) — healing back damage TAKEN is immunity in disguise and never ships', 'mechanical']
+    : NO_SAVE_RESTRAINT(w) ? ['containment by contact always offers a save — print\'s Cube saves on entry; add a Saving Throw and an exit', 'mechanical']
+    : UNENDING_RESTRAINT(w) ? ['Restrained must carry an exit — print restraint always ends somewhere: an escape DC, a repeated save at the end of the target\'s turns, or a duration like "until the start of the creature\'s next turn"', 'mechanical']
+    : UNPRICED_DISARM(w) ? ['a stolen or stuck weapon is priced and recoverable — print\'s Mimic adheres with an escape DC; give the effect a save or a check, and state how the weapon comes back', 'mechanical']
+    : UNBROKEN_DODGE(w) ? ['attack-Disadvantage defense needs a break condition — print\'s Displacement is disrupted until the end of its next turn when the beast takes damage; add a break, a use gate, or a real condition (Opportunity-Attack-only disadvantage is fine)', 'mechanical']
+    // PROMOTED judgment -> mechanical (3rd shipping sighting, Burning
+    // Gaze at-will 41x2 targets beating the multiattack, 2026-09-01):
+    // an ungated AREA action prices per TARGET — the single-target cap
+    // undercounts it by the area multiplier
+    : (/each (?:creature|target) (?:in|within)/i.test(w) && !liftedGate && dmg && Number(dmg[1]) > Math.round(scaled.per_hit * 0.75)) ? ['an ungated area action prices per TARGET — halve the dice or add a use gate like "(Recharge 5-6)"', 'mechanical']
+    // a creature dies only at 0 Hit Points (the Gallows Puppet: four
+    // slashing hits destroyed 97 HP, 2026-09-01). Print's only
+    // conditional destructions are 0-HP-anchored (Misty Escape) or
+    // duration idioms ("until it is destroyed") — both exempted.
+    : w.split(/(?<=\.)\s+/).some((s) => /\b(?:it|the creature) (?:is destroyed|collapses)\b/.test(s) && !/0 Hit Point|until (?:it|the creature) is destroyed|or (?:it|the creature) is destroyed/.test(s)) ? ['a creature dies only at 0 Hit Points — a destruction counter must be a cost an enemy CHOOSES (an action to cut, a called strike with its own AC), never a rider on ordinary damage', 'mechanical']
+    // print grants blanket all-damage resistance only to OBJECTS and
+    // shifted forms (Soul Bag, Vampire mist) — never as a self-trait
+    // (the Glacierbear: ~2x effective HP unpriced, 2026-09-01)
+    : /[Rr]esistance to all damage/.test(w) ? ['print grants TYPED resistances — blanket all-damage resistance doubles effective HP unpriced; name the one or two types the concept earns', 'mechanical']
+    : (DEFENSE_GRANT.test(w) && !DEFENSE_DURATION.test(w)) ? ['an action may buy a TEMPORARY typed defense (add "until the start of the creature\'s next turn") — an unbounded resistance or immunity grant is the derivation engine\'s jurisdiction, never the model\'s', 'mechanical']
+    : SELF_DISCLAIMER.test(w) ? ['state the flavor and stop — print never explains that flavor is flavor; drop the disclaimer sentence', 'mechanical']
     : (NEGATION.test(w) && !liftedGate && econDecl !== 'reaction') ? ['negation defense must be priced — add a use gate like "(Recharge 5-6)" or convert it to a Reaction', 'mechanical']
     : roleCollapse ? ['role collapse', 'judgment']
     : riderFramed ? ['a rider rides the hit — address "the target"; no separate targeting frame', 'judgment']
-    // 0/40 print brutes have a Reactions section (owner ruling 2026-08-27,
-    // flag-and-repair over ban — the critic liked the Gravedigger's
-    // retreat-punisher, so a repair that insists ships flagged)
-    : (archetype === 'brute' && (econDecl === 'reaction' || reactionMention)) ? ['print brutes have no reactions (0 of 40) — re-file this as an action or a bonus action', 'judgment']
+    // a rider has no NAME, so it cannot carry a use gate (gates live in
+    // entry names — the Warder's mid-rider "(2/Day)" with "this ability"
+    // pointing at nothing, 2026-09-01)
+    : (econDecl.startsWith('rider_on:') && /\(\d+\/Day\)|\(Recharge [\d–-]+\)/.test(w)) ? ['a rider has no name to carry a use gate — drop the gate (once per turn applies) or build a standalone action', 'judgment']
     : meterDialect ? ['use limits print as a count like "2/Day" — never a stat-modifier formula, never rest-recovery prose', 'judgment']
     : unrated ? ['no rate limit', 'judgment']
     : unreturned ? ['no return clause', 'judgment']
     : remoteMelee ? ['remote attacks must be ranged', 'judgment']
     : embeddedEconomy ? ['a second action economy embedded mid-entry — one entry, one economy', 'judgment']
+    // print writes the action, never narrates the action system (the
+    // Battlefield Chorus's "can use one action to target...", 2026-09-02)
+    : /can use (?:one|an|its) action to/i.test(w) ? ['print writes the action, never narrates the action system — drop "can use one action to"; the entry IS the action', 'judgment']
     : successPenalty ? ['a success clause may grant half damage or nothing — never a penalty', 'judgment']
     : w.split(/(?<=\.)\s+/).length > 4 ? ['over 4 sentences', 'judgment']
     : null;
@@ -341,7 +410,7 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
   return { okay: true, text, moveTo, riderOn, liftedGate };
 }
 
-function vetTraitWildcard(tw, sections, { name, inline }) {
+function vetTraitWildcard(tw, sections, { name, inline, archetype = null }) {
   const twName = String(tw?.name ?? '').trim();
   const twText = String(tw?.text ?? '').trim();
   if (!twName || !twText) return { okay: false, silent: true };
@@ -362,7 +431,11 @@ function vetTraitWildcard(tw, sections, { name, inline }) {
   // action vet's Pale Surveyor bug, fixed here before it fired live
   const why = twName.split(/\s+/).length > 4 ? ['name over 4 words', 'mechanical']
     : HINT_ECHO.test(twName) ? ['name copies the prompt\'s own register example — the example shows the shape, never the name', 'mechanical']
-    : /\d+ \(\d+d\d+|\*[A-Z][a-z]+ Saving Throw\*|Saving Throw:|Attack Roll:|\(Recharge|\/Day|\btimes equal to\b|regains? (?:all )?(?:expended )?uses/i.test(twText) ? ['active mechanics in a passive trait (a damage roll, a save FRAME, or a use limit — mentioning saves or attack rolls passively is fine)', 'mechanical']
+    // the informal imperative forms joined 2026-09-02: "must make a
+    // Wisdom saving throw (DC 20)" and "As a bonus action" slipped a
+    // skeleton-anchored check twice in one smoke (Grieving Weep — a
+    // bonus action with a save living in Traits — and Rusting Grip)
+    : /\d+ \(\d+d\d+|\*[A-Z][a-z]+ Saving Throw\*|Saving Throw:|Attack Roll:|\(Recharge|\/Day|\btimes equal to\b|regain(?:s|ing|ed)? (?:all )?(?:expended )?uses|must (?:make|succeed on) an? [A-Za-z]+ [Ss]aving [Tt]hrow|[Ss]aving [Tt]hrow \(DC|[Aa]s an? [Bb]onus [Aa]ction/i.test(twText) ? ['active mechanics in a passive trait (a damage roll, a save FRAME, a bonus action, or a use limit — mentioning saves or attack rolls passively is fine)', 'mechanical']
     : reachContradiction ? [`claims reach ${reachClaim[1]} feet but no attack row prints that reach — reach belongs on the rows; align with them`, 'mechanical']
     : /starts its turn/i.test(twText) ? ['recurring aura', 'mechanical']
     : /\byours?\b|\byou\b/i.test(twText) ? ['second person', 'mechanical']
@@ -371,10 +444,27 @@ function vetTraitWildcard(tw, sections, { name, inline }) {
     : /uses? (?:its|a|an) [Rr]eaction|as (?:a|its) [Rr]eaction/.test(twText) ? ['a Reaction belongs in the Reactions section with its cost declared — a trait cannot spend one', 'mechanical']
     : ENGINE_VOCAB.test(twText) ? ['engine vocabulary in rules text — chassis, donor, and template are our words, never the creature\'s', 'mechanical']
     : NEGATION.test(twText) ? ['negation defense must be a priced Reaction — a trait has no cost to pay for it', 'mechanical']
+    : /\b(?:it|the creature) (?:is destroyed|collapses)\b(?![^.]{0,30}0 Hit Point)/.test(twText.replace(/until (?:it|the creature) is destroyed|or (?:it|the creature) is destroyed/g, '')) ? ['a creature dies only at 0 Hit Points — never a destruction counter in a trait', 'mechanical']
+    : /[Rr]esistance to all damage/.test(twText) ? ['print grants TYPED resistances — blanket all-damage resistance doubles effective HP unpriced; name the one or two types the concept earns', 'mechanical']
+    : MODEL_HEALING(twText) ? ['healing is the Regeneration organ\'s job — turn-based recovery and heal-to-full never ship as custom text', 'mechanical']
+    : HEAL_BACK(twText) ? ['a drain heals off damage DEALT to others (print\'s Life Drain) — healing back damage TAKEN is immunity in disguise and never ships', 'mechanical']
+    : NO_SAVE_RESTRAINT(twText) ? ['containment by contact always offers a save — print\'s Cube saves on entry; add a Saving Throw and an exit', 'mechanical']
+    : UNENDING_RESTRAINT(twText) ? ['Restrained must carry an exit — print restraint always ends somewhere: an escape DC, a repeated save, or a duration', 'mechanical']
+    : UNPRICED_DISARM(twText) ? ['a stolen or stuck weapon is priced and recoverable — print\'s Mimic adheres with an escape DC; give the effect a save or a check, and state how the weapon comes back', 'mechanical']
+    : UNBROKEN_DODGE(twText) ? ['attack-Disadvantage defense needs a break condition — print\'s Displacement is disrupted until the end of its next turn when the beast takes damage; add a break, a use gate, or a real condition (Opportunity-Attack-only disadvantage is fine)', 'mechanical']
+    : DEFENSE_GRANT.test(twText) ? ['typed damage defenses are the derivation engine\'s — the concept\'s energy earns its resistance deterministically; a trait never grants resistance or immunity to damage types', 'mechanical']
+    : SELF_DISCLAIMER.test(twText) ? ['state the flavor and stop — print never explains that flavor is flavor; drop the disclaimer sentence', 'mechanical']
+    : (/teleport/i.test(twText) && !Object.values(sections).flat().some((e) => /teleport/i.test(e.text ?? ''))) ? ['teleport beyond the chassis — a trait cannot grant movement the block does not carry', 'mechanical']
+    : (archetype === 'brute' && OA_FREEDOM(twText)) ? ['unconditional Opportunity-Attack immunity is the skirmisher\'s chassis-priced signature — a brute trait may not grant it free; scope it to a specific move (during its charge) or drop it', 'mechanical']
     : !/Immunity|Resistance|Advantage|Disadvantage|Speed|darkvision|blindsight|tremorsense|truesight|condition|can't be|cannot be|cover|teleport|Opportunity Attack|provok|Difficult Terrain|unoccupied space|move through|Hit Points|bright light|dim light|obscured|damage|Incapacitated/i.test(twText) ? ['no game term — flavor without a rule', 'mechanical']
     : names.some((n) => n === twName.toLowerCase() || (n.length >= 6 && twName.toLowerCase().length >= 6 && (n.startsWith(twName.toLowerCase()) || twName.toLowerCase().startsWith(n)))) ? ['name collides with an existing entry (exact or near-namesake)', 'mechanical']
     : twText.split(/(?<=\.)\s+/).length > 2 ? ['over 2 sentences', 'judgment'] : null;
-  const text = capTerms(twText.split('the creature').join(inline).replace(/^The creature/, inline.charAt(0).toUpperCase() + inline.slice(1)));
+  // BOTH cases, ALL positions (the Rust-Thorn shipped a mid-text "The
+  // creature is immune to the Grappled condition" verbatim — the old
+  // ^-anchored replace only caught text-initial, and the raw sentence
+  // read as the ATTACKER gaining the immunity, 2026-09-02). Mirrors the
+  // main fill loop's split/join treatment.
+  const text = capTerms(twText.split('The creature').join(inline.charAt(0).toUpperCase() + inline.slice(1)).split('the creature').join(inline));
   if (why) return { okay: false, name: twName, draft: twText, why: why[0], tier: why[1], text };
   return { okay: true, name: twName, text };
 }
@@ -406,6 +496,84 @@ const RESERVED_NAMES = /vorpal|phylactery|holy avenger|sphere of annihilation|ta
 // OUR words may never ship in rules text (the Gaoler's "a climb speed
 // (as per chassis)", 2026-08-27 — template metadata leaked raw)
 const ENGINE_VOCAB = /\b(?:chassis|donor|template|placeholder|wildcard)\b/i;
+// HEALING BELONGS TO THE ORGAN (owner's recipe-card doctrine applied to
+// the defense hydra's 4th head, 2026-09-01: negation -> blanket resist
+// -> damage threshold -> "HP become its HP maximum" full-heal, plus a
+// hand-built duplicate Regeneration in the same batch). Model text may
+// not grant turn-based recovery or set-to-max — the Regeneration organ
+// is priced and claimable. DRAIN stays legal: "regains Hit Points equal
+// to the damage dealt" is print's Life Drain grammar (no fixed amount,
+// no turn timer). INGREDIENTS, not assembled phrases (the Plague-Shrine
+// fronted the timing clause — "At the start of each of its turns, it
+// regains 10" — and walked past the verb-first pattern, 2026-09-01;
+// third word-order evasion after containment and reaction-shape): a
+// heal verb with a fixed amount AND a turn timer in the SAME sentence,
+// in any order, or any set-to-max phrasing.
+const MODEL_HEALING = (t) => t.split(/(?<=\.)\s+/).some((s) =>
+  (/regain(?:s|ing|ed)? (?:\d+|all(?: of)?(?: its)?) Hit Points/i.test(s) && /(?:start|end) of (?:each of )?(?:its|the creature's|this creature's|every|each) turn/i.test(s))
+  || /Hit Points? (?:become|return to|are restored to)|restored to its Hit Point maximum/i.test(s));
+// containment imposed by contact or space-sharing without a save is
+// print-illegal (the Greedfall: walk onto you, Restrained, drowning, no
+// roll, no exit — print's Cube saves on entry, always)
+const NO_SAVE_RESTRAINT = (t) => t.split(/(?<=\.)\s+/).some((s) => (/(?:shar\w+|enters?|inside|in) (?:its|the creature's|this creature's) space[^.]{0,80}Restrained/i.test(s) || /Restrained[^.]{0,60}(?:shar\w+|enters?) (?:its|the creature's) space/i.test(s)) && !/[Ss]aving [Tt]hrow|must succeed/.test(s));
+// a save gates the DOOR IN; print restraint always has a door OUT too —
+// an escape DC, a repeated save, or a duration (the Gluttenwrought's
+// Drowning Deluge: Strength save to avoid, then Restrained forever,
+// 2026-09-01). Whole-text check: the exit legally lives in a later
+// sentence than the application.
+const UNENDING_RESTRAINT = (t) => /has the Restrained condition|is Restrained\b/i.test(t)
+  && !/escape DC|While Grappled|until the grapple ends|repeat\w+ the sav|at the end of (?:each of )?(?:its|their) turns?|until the (?:start|end) of|until (?:it|the target|the creature) (?:escapes|is freed|pulls free|breaks free)/i.test(t);
+// a stolen or stuck weapon is the restraint-exit rule's sibling (the
+// Unburied Field's Embedded Arsenal: every weapon hit sticks, no save,
+// no size limit, no retrieval mechanics — three rounds in, the party is
+// disarmed without a roll, 2026-09-01). Print's sticky monsters always
+// price the stick: the Mimic's Adhesive has an escape DC.
+// embedded/lodged joined 2026-09-02 (the Battlefield Chorus: "cannot be
+// removed until the battlefield chorus dies" — recovery-by-death-only is
+// harsher than anything in print; dying is not an escape clause)
+const UNPRICED_DISARM = (t) => /(?:weapons?|shields?|implements?)[^.]{0,60}(?:becomes? (?:stuck|embedded|lodged)|is (?:stuck|embedded|lodged)|stick(?:s|ing)? (?:in|to)|dissolv\w+|is (?:seized|absorbed)|is torn from|cannot be removed)/i.test(t)
+  && !/escape DC|DC \d+|[Ss]aving [Tt]hrow|(?:action|check) to (?:retrieve|free|pull|recover)|until the (?:start|end) of/i.test(t);
+// attack-Disadvantage defense is legal only WITH a break (the Quelldread:
+// permanent "melee attacks against it have Disadvantage" bought back the
+// armor the brute curve sold, ~+3-4 effective AC unpriced, 2026-09-01).
+// Print's shape is the Displacer Beast: Displacement is disrupted until
+// the end of its next turn when the beast takes damage. OA-only
+// disadvantage stays legal (narrow, print-common).
+const UNBROKEN_DODGE = (t) => t.split(/(?<=\.)\s+/).some((s) => /(?:[Aa]ttack [Rr]olls?|[Mm]elee attacks?|[Rr]anged attacks?)[^.]{0,40}against (?:it|the creature)[^.]{0,60}Disadvantage/i.test(s) && !/Opportunity Attack/i.test(s))
+  && !/disrupt\w+|until the (?:start|end) of|while\b|(?:if|when)\b[^.]{0,80}(?:hits?\b|takes damage)|Recharge|\/Day/i.test(t);
+// the drain exemption points OUTWARD only (the Battlefield-Thing,
+// 2026-09-01: "When it takes Piercing or Slashing damage, it regains Hit
+// Points equal to the damage taken" — effective immunity to the two most
+// common martial types, wearing the exemption's own clothes). Print
+// drains heal off damage DEALT to others (Life Drain); nothing in print
+// heals off damage taken. Second tell: a when-hit trigger and a self-heal
+// in the same sentence — retaliation TRAITS are legal (quills), but
+// retaliation HEALING is not.
+const HEAL_BACK = (t) => /regain(?:s|ing|ed)? Hit Points equal to [^.]{0,30}damage (?:taken|it takes|it took)/i.test(t)
+  || t.split(/(?<=\.)\s+/).some((s) => /(?:[Ww]hen(?:ever)?|[Ii]f) [^.]{0,80}(?:takes [^.]{0,30}damage|is hit|is struck|hits (?:it|the creature))/.test(s) && /regain(?:s|ing|ed)? [^.]{0,40}Hit Points/i.test(s));
+// TYPED DAMAGE DEFENSES ARE THE DERIVATION ENGINE'S (the hydra's general
+// form, 4 sightings by 2026-09-02: Fused Monarchy P/S immunity, Wickman
+// lit-gated B/P/S, First-Built flat B/P/S at CR 19 ~+60% eHP, Garden
+// Saint's retroactive "resistance against that attack"). The engine
+// derives resistances from the concept's energy — model text never
+// grants them. A TRAIT grant is free and permanent: always mechanical.
+// An ACTION may buy a TEMPORARY typed defense with its own action cost
+// (print's defensive stances) — mechanical only when unbounded.
+// "ignores Resistance" (resistance-piercing) and condition immunities
+// (no "damage" in range) stay out of scope by construction.
+// reduction grammar joined 2026-09-02 (the Gulletmaw's "Damage from
+// bludgeoning, piercing, and slashing attacks is reduced by 5" — flat DR,
+// a defense grammar 2024 print doesn't even use; resistance or nothing)
+const DEFENSE_GRANT = /(?:gain(?:s|ing)?|ha(?:s|ve|ving)|grant(?:s|ing)?|is|becomes?) (?:[Rr]esistan(?:ce|t)|[Ii]mmun(?:e|ity)) to [^.]{0,60}damage|[Dd]amage [^.]{0,60}(?:is|are) reduced by \d+|takes? \d+ less damage|reduc(?:es?|ing) (?:all |any )?damage (?:it takes|taken|dealt to it) by \d+/;
+const DEFENSE_DURATION = /until the (?:start|end) of|for 1 (?:minute|round)/i;
+// pipeline self-commentary in output (the Living Battlefield: "This is
+// purely cosmetic; it grants no mechanical benefit or trait" — the
+// writer narrating guard-compliance; print states flavor and stops)
+const SELF_DISCLAIMER = /purely cosmetic|no mechanical (?:benefit|effect)|flavor only|cosmetic only/i;
+// unconditional OA-immunity is the skirmisher's chassis-priced signature
+// (Rust-Thorn's Rusting Grip carried it as a free clause-rider on a
+// brute); a sentence carrying its own condition (during a charge) is fine
+const OA_FREEDOM = (t) => t.split(/(?<=\.)\s+/).some((s) => /(?:doesn't|does not|never) provokes? Opportunity Attacks/i.test(s) && !/\b(?:when|while|during|if|as part of)\b/i.test(s));
 // the engulf engine's fiction follows the body (critic's parameterization,
 // implemented as a closed menu — owner widened it 2026-08-27: "not enough
 // verbs"): one priced row, seven verbal skins. Four are print-verbatim
@@ -416,7 +584,9 @@ const ENGULF_FORMS = {
   swallow: null, // the authored form
   engulf: { name: 'Engulf', swaps: [['swallows', 'engulfs'], ['swallowed', 'engulfed'], ['regurgitate', 'expel'], ['exits the body', 'pulls free of the mass']] },
   smother: { name: 'Smother', swaps: [['swallows', 'smothers'], ['swallowed', 'smothered'], ['regurgitate', 'release'], ['exits the body', 'pulls free']] },
-  whelm: { name: 'Whelm', swaps: [['swallows', 'whelms'], ['swallowed', 'whelmed'], ['regurgitate', 'release'], ['exits the body', 'pulls free of the waters']] },
+  // whelm's exit is liquid-neutral ("the waters" read wrong on a tar
+  // elemental, 2026-09-01 — whelm covers any liquid, not just water)
+  whelm: { name: 'Whelm', swaps: [['swallows', 'whelms'], ['swallowed', 'whelmed'], ['regurgitate', 'release'], ['exits the body', 'pulls free']] },
   cage: { name: 'Cage', swaps: [['swallows', 'cages'], ['swallowed', 'caged'], ['regurgitate', 'release'], ['exits the body', 'pulls free']] },
   entomb: { name: 'Entomb', swaps: [['swallows', 'entombs'], ['swallowed', 'entombed'], ['regurgitate', 'release'], ['exits the body', 'breaks free']] },
   cocoon: { name: 'Cocoon', swaps: [['swallows', 'cocoons'], ['swallowed', 'cocooned'], ['regurgitate', 'release'], ['exits the body', 'tears free']] },
@@ -537,14 +707,33 @@ export function reskinDefects(scaled, p, { energy = null, mix = null } = {}) {
   if (Object.values(scaled.sections).flat().some((e) => e.engulf_engine)) {
     const st = String(p.engulf_style ?? '').trim().toLowerCase();
     if (st && !['swallow', 'engulf', 'smother', 'whelm', 'cage', 'entomb', 'cocoon'].includes(st)) defects.push(`engulf_style "${st}" is not on the menu — swallow, engulf, smother, whelm, cage, entomb, or cocoon`);
+    // the engine is PRICED; a wildcard re-implementing containment beside
+    // it ships two contradicting systems (the Cairn: two entombs, two
+    // caps, two escapes — 2026-09-01). The engine wins; the wildcard
+    // builds the concept's other face. Detection is deliberately BROAD
+    // (the Tavern's "pulled into the barroom and swallowed" beat the
+    // old word-order pattern, 2026-09-01): with the engine aboard, ANY
+    // containment vocabulary, interior cover, or an invented containment
+    // condition ("becoming Entombed (escape DC...)") is the tell.
+    const wcText = String(p.wildcard);
+    if (/(?:swallow|entomb|engulf|whelm|smother|cocoon|encase|seal)\w*/i.test(wcText)
+      || /pours? over|cover\w* (?:it|the target) in|drown\w*/i.test(wcText)
+      || /Total Cover/i.test(wcText)
+      || /becom\w+ [A-Z]\w+ \(escape DC/.test(wcText)) {
+      defects.push('the chassis already carries the priced containment engine — the wildcard must not re-implement it; build a different ability for this concept');
+    }
   }
   if (Object.values(scaled.sections).flat().some((e) => (e.text ?? '').includes('{spell_at_will}'))) {
     const aw = Array.isArray(p.spells?.at_will) ? p.spells.at_will : [];
     const dl = Array.isArray(p.spells?.daily) ? p.spells.daily : [];
     const all = [...aw, ...dl];
     if (aw.length !== 2 || dl.length !== 2) defects.push('spells missing — exactly 2 at_will and 2 daily picks from the menu');
-    for (const sp of all) if (!SPELL_MENU.includes(sp)) defects.push(`"${sp}" is not on the spell menu — pick from: ${SPELL_MENU.join(', ')}`);
+    for (const sp of all) if (!(scaled.spell_menu ?? SPELL_MENU).includes(sp)) defects.push(`"${sp}" is not on the spell menu — pick from: ${(scaled.spell_menu ?? SPELL_MENU).join(', ')}`);
     if (new Set(all).size !== all.length) defects.push('spell picks must not repeat');
+    // redundancy is no longer a repair conversation (2026-09-01: two
+    // rounds failed a one-word Heroism swap on the First Word, then
+    // shipped it anyway) — the fill site drops dead picks and backfills
+    // from the menu deterministically. Tier assignment lives there too.
   }
   return defects;
 }
@@ -585,10 +774,20 @@ export async function generateReskin(options, callLLM) {
   if (archetype === 'brute' && (options.mechanics ?? []).includes('engulf') && style !== 'grappler') {
     trace('style overridden:', `engulf claimed — the grappler line carries the engine (was ${style ?? 'plain'})`);
     style = 'grappler';
+  } else if (archetype === 'brute' && (options.mechanics ?? []).includes('regeneration') && style !== 'regenerator') {
+    // same law as engulf->grappler (regenerator seat 0/3 draws,
+    // 2026-09-01: scar-colossus seeds read as grapple/juggernaut and the
+    // authored line sat unexercised): the claimed mechanic picks the line
+    // that carries its organ. Engulf outranks — an engine beats an organ.
+    trace('style overridden:', `regeneration claimed — the regenerator line carries the organ (was ${style ?? 'plain'})`);
+    style = 'regenerator';
   }
   const donor = pickDonor(cr, style, archetype);
   const scaled = scaleDonor(donor, cr, { movement: options.movement ?? [], mechanics: options.mechanics ?? null });
   if (options.caster) {
+    // the menu follows the archetype: a skirmisher's magic is escape
+    // tech, a brute's hardens its own hide and fists (owner, 2026-09-01)
+    scaled.spell_menu = archetype === 'brute' ? BRUTE_SPELL_MENU : SPELL_MENU;
     const mental = ['INT', 'WIS', 'CHA'].sort((x, y) => scaled.stats[y] - scaled.stats[x])[0];
     const MENTAL_NAME = { INT: 'Intelligence', WIS: 'Wisdom', CHA: 'Charisma' };
     // the card DC outruns mental stats at high CR (the efreet: card 22,
@@ -611,6 +810,22 @@ export async function generateReskin(options, callLLM) {
   // the creature's nature — Troll breaks on Acid/Fire, Vampire on
   // Radiant. Derived as the FOIL of the creature's declared energy
   // (the element that unmakes it); no energy keeps print's default.
+  // REGENERATION AS AN INJECTABLE ORGAN (owner, 2026-09-01): reknit
+  // concepts kept routing to styles whose donors carry no Regeneration
+  // row, and the model hand-built garbled versions three times (wax,
+  // rust, marble). Now the concept CLAIMS it (mechanics menu) and the
+  // rules-true trait injects onto whatever donor the style routing
+  // picked — the same shape as the spellcasting organ.
+  if (archetype === 'brute' && (options.mechanics ?? []).includes('regeneration')
+    && !Object.values(scaled.sections).flat().some((e) => e.name === 'Regeneration')) {
+    const amount = cr >= 17 ? 20 : cr >= 10 ? 15 : 10;
+    (scaled.sections.Traits = scaled.sections.Traits ?? []).unshift({
+      name: 'Regeneration', rules: true,
+      text: `The creature regains ${amount} Hit Points at the start of each of its turns. If the creature takes Acid or Fire damage, this trait doesn't function on the creature's next turn. The creature dies only if it starts its turn with 0 Hit Points and doesn't regenerate.`,
+    });
+    trace('regeneration organ injected —', `${amount}/turn`);
+  }
+  let regenBaneApplied = false;
   {
     const regen = Object.values(scaled.sections).flat().find((e) => e.name === 'Regeneration');
     const REGEN_FOIL = { Necrotic: 'Radiant', Cold: 'Fire', Fire: 'Cold', Lightning: 'Thunder', Thunder: 'Lightning', Radiant: 'Necrotic', Poison: 'Fire', Acid: 'Fire' };
@@ -619,7 +834,7 @@ export async function generateReskin(options, callLLM) {
     // its own undoing, and the machinery derived Cold from Fire instead).
     // Frame-anchored so a fire-thing's own fire never reads as its bane.
     let bane = null;
-    const frame = /\bonly ([^.]{0,60}?)(?:scours|destroys|harms|undoes|unmakes|banishes|slays|stops|kills|can (?:stop|kill|slay|harm|destroy))/i.exec(concept);
+    const frame = /\bonly ([^.]{0,60}?)(?:scours|destroys|harms|undoes|unmakes|banishes|slays|stops|kills|shatters?|breaks?|fells?|parts?|severs?|sunders?|pierces?|ends?|wounds?|brings? (?:it|him|her|them) down|can (?:stop|kill|slay|harm|destroy|shatter|break|wound|end|fell|pierce|part|sever)|can truly)/i.exec(concept);
     if (frame) {
       for (const [re, type] of NAME_CLAIMS) {
         if (!re.test(frame[1])) continue;
@@ -634,6 +849,7 @@ export async function generateReskin(options, callLLM) {
       regen.text = regen.text.replace('Acid or Fire damage', `${off} damage`);
       trace('regeneration off-switch:', bane ? `${off} (the concept names its own undoing)` : `${off} (foil of ${options.energy})`);
     }
+    regenBaneApplied = bane != null;
   }
   trace('donor:', `${donor.id} -> CR ${cr}${donor.invented ? ' (invented — no printed peer)' : ''}`);
   for (const g of scaled.gated_out ?? []) trace('row gated out:', `${g} — the concept did not claim this mechanic`);
@@ -705,7 +921,7 @@ export async function generateReskin(options, callLLM) {
     const spellSlotUsed = Object.values(scaled.sections).flat().some((e) => (e.text ?? '').includes('{spell_at_will}'));
     const spellsMissing = spellSlotUsed && !(Array.isArray(p.spells?.at_will) && p.spells.at_will.length === 2
       && Array.isArray(p.spells?.daily) && p.spells.daily.length === 2
-      && [...p.spells.at_will, ...p.spells.daily].every((x) => SPELL_MENU.includes(x)));
+      && [...p.spells.at_will, ...p.spells.daily].every((x) => (scaled.spell_menu ?? SPELL_MENU).includes(x)));
     const projSlotUsed = Object.values(scaled.sections).flat().some((e) => (e.text ?? '').includes('{projectile}'));
     const projMissing = projSlotUsed && (!String(p.projectile ?? '').trim() || String(p.projectile).trim().split(/\s+/).length > 4);
     const riderSlotUsed = Object.values(scaled.sections).flat().some((e) => (e.text ?? '').includes('{damage_type_2}'));
@@ -718,7 +934,7 @@ export async function generateReskin(options, callLLM) {
 Problems found with the previous answer:
 ${defects.map((d) => `- ${d}`).join('\n')}
 Return ONLY JSON with EXACTLY these corrected pieces:
-{${missingRenames.length ? ` "renames": { ${missingRenames.map((k) => `"${k}": "<new name for this mechanic in the concept's register: plain English, 4 words MAX, different from the original, never claiming an element the row's damage does not pay>"`).join(', ')} },` : ''}${missingTypes.length ? ` "damage_types": { ${missingTypes.map((k) => `"${k}": "<damage type${declaredEnergy ? ` — ${declaredEnergy} or a physical type; this creature's energy is ${declaredEnergy}` : ''}>"`).join(', ')} },` : ''}${askRider ? ` "melee_rider": "<${declaredEnergy ? `${declaredEnergy}, a physical type, or none` : 'energy type or none'}>",` : ''}${projMissing ? ` "projectile": "<the thrown thing with its article, 1-3 words>",` : ''}${spellsMissing ? ` "spells": { "at_will": ["<exactly 2 from: ${SPELL_MENU.join(', ')}>"], "daily": ["<exactly 2 more, no repeats>"] },` : ''}${missingConds.length ? ` "conditions": { ${missingConds.map((sl) => `"${sl}": "<one of: ${CONDITION_MENUS[sl].join(', ')}>"`).join(', ')} }` : ''} }`;
+{${missingRenames.length ? ` "renames": { ${missingRenames.map((k) => `"${k}": "<new name for this mechanic in the concept's register: plain English, 4 words MAX, different from the original, never claiming an element the row's damage does not pay>"`).join(', ')} },` : ''}${missingTypes.length ? ` "damage_types": { ${missingTypes.map((k) => `"${k}": "<damage type${declaredEnergy ? ` — ${declaredEnergy} or a physical type; this creature's energy is ${declaredEnergy}` : ''}>"`).join(', ')} },` : ''}${askRider ? ` "melee_rider": "<${declaredEnergy ? `${declaredEnergy}, a physical type, or none` : 'energy type or none'}>",` : ''}${projMissing ? ` "projectile": "<the thrown thing with its article, 1-3 words>",` : ''}${spellsMissing ? ` "spells": { "at_will": ["<exactly 2 from: ${(scaled.spell_menu ?? SPELL_MENU).join(', ')}>"], "daily": ["<exactly 2 more, no repeats>"] },` : ''}${missingConds.length ? ` "conditions": { ${missingConds.map((sl) => `"${sl}": "<one of: ${CONDITION_MENUS[sl].join(', ')}>"`).join(', ')} }` : ''} }`;
     const fixRaw = await callLLM(fixPrompt, (j) => { try { return !!JSON.parse(String(j).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return false; } });
     const fix = (() => { try { return JSON.parse(String(fixRaw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; } })();
     if (!fix) break;
@@ -761,6 +977,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   p.name = String(p.name).replace(/^the\s+/i, '').trim() || p.name;
   if (!fixedName) p.name = p.name.split(/\s+/).map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
 
+  // ENGINE AS SIGNATURE (owner ruling 2026-09-01, "keep the recipe card,
+  // I don't trust the llm" — 3rd dual-containment instance): when a
+  // single-faced concept's wildcard insists on re-implementing the
+  // engine through both repair rounds, the slot is DROPPED — no bespoke
+  // twin, no fallback zap. Print's own shape: the T-Rex is bite,
+  // swallow, tail, done; no print swallower carries a second swallow.
+  let engineIsSignature = false;
+  if (Object.values(scaled.sections).flat().some((e) => e.engulf_engine)
+    && reskinDefects(scaled, p, { energy: options.energy ?? null, mix: options.mix ?? null })
+      .some((d) => d.includes('must not re-implement'))) {
+    engineIsSignature = true;
+    trace('engine is the signature —', 'the wildcard insisted on re-implementing containment; the slot is dropped');
+  }
+
   // the engulf engine wears the body's own verb (closed menu — the
   // Gaoler's "Chain-Cage... swallows one creature", 2026-08-27: a chain
   // bundle shouldn't swallow, and print names the mouth form Swallow x4
@@ -771,6 +1001,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (row && form) {
       row.name = form.name;
       for (const [from, to] of form.swaps) row.text = row.text.split(from).join(to);
+      // article agreement after vowel-initial swaps ("a entombed
+      // creature" shipped twice, 2026-09-01)
+      row.text = row.text.replace(/\ba ([aeiouAEIOU])/g, 'an $1');
       trace('engulf engine:', `${form.name} — the body's own verb`);
     }
     // engine rows fill their damage types deterministically — print's
@@ -781,6 +1014,19 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // or suffocates — print's Rug and Whelm both deal Bludgeoning
       const interior = { Swallow: 'Acid', Engulf: 'Acid' }[row.name] ?? 'Bludgeoning';
       row.text = row.text.split('{damage_type}').join(interior);
+      // interiors scale BELOW the seat floor (the Murgor: a CR 1/2 ooze
+      // carrying the brute-5 seat's 2d6 against an 8-DPR budget,
+      // 2026-09-01 — print's CR 1/4 Frog swallows with smaller dice)
+      if (cr < donor.cr) {
+        const ratio = cr / donor.cr;
+        const dm = /(\d+) \((\d+d\d+)\)/.exec(row.text);
+        if (dm) {
+          const t = engineDiceFor(Math.max(2, Math.round(Number(dm[1]) * ratio)));
+          row.text = row.text.replace(dm[0], `${t.avg} (${t.dice})`);
+        }
+        row.text = row.text.replace(/takes (\d+) damage or more/, (m2, n) => `takes ${Math.max(5, Math.round(Number(n) * ratio))} damage or more`);
+        trace('engine interior scaled —', `CR ${cr} sits below the ${donor.id} seat`);
+      }
     }
     for (const e of Object.values(scaled.sections).flat()) {
       if (e.rules && e.name === 'Trample') e.text = e.text.split('{damage_type}').join('Bludgeoning');
@@ -876,12 +1122,40 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         if (proj && proj.split(/\s+/).length <= 4) e.text = e.text.split('{projectile}').join(proj);
       }
       if (e.text.includes('{spell_at_will}') && Array.isArray(p.spells?.at_will)) {
-        const it = (list) => list.filter((x) => SPELL_MENU.includes(x)).map((x) => `*${x}*`).join(', ');
-        if (p.spells.at_will.length) e.text = e.text.split('{spell_at_will}').join(it(p.spells.at_will));
-        if (Array.isArray(p.spells.daily) && p.spells.daily.length) e.text = e.text.split('{spell_daily}').join(it(p.spells.daily));
+        const menu = scaled.spell_menu ?? SPELL_MENU;
+        // the model picked WHICH spells; the organ owns the tiers and the
+        // redundancy sweep (deterministic drop-and-backfill — two repair
+        // rounds failed a one-word Heroism swap on the First Word,
+        // 2026-09-01; this is not a model conversation)
+        const sheetText = JSON.stringify(sections);
+        const redundant = (sp) => (sp === 'Stoneskin' && /resistance to Bludgeoning, Piercing, and Slashing/i.test(sheetText))
+          || (sp === 'Heroism' && p.type === 'Construct');
+        let picks = [...new Set([...p.spells.at_will, ...(Array.isArray(p.spells.daily) ? p.spells.daily : [])])]
+          .filter((x) => menu.includes(x));
+        for (const dead of picks.filter(redundant)) {
+          picks = picks.filter((x) => x !== dead);
+          const fill = menu.find((x) => !picks.includes(x) && !redundant(x));
+          if (fill) { picks.push(fill); trace('spell redundancy dropped —', `${dead} -> ${fill}`); }
+        }
+        const atWill = picks.filter((x) => !NEVER_AT_WILL.has(x)).slice(0, 2);
+        const daily = picks.filter((x) => !atWill.includes(x));
+        const star = (list) => list.map((x) => `*${x}*`).join(', ');
+        e.text = atWill.length
+          ? e.text.split('{spell_at_will}').join(star(atWill)).split('{spell_daily}').join(star(daily))
+          // a fully defensive pick set has no at-will line at all —
+          // print's golem shape is daily buffs, not free ones
+          : e.text.replace(/- \*\*At Will:\*\* \{spell_at_will\}\n/, '').split('{spell_daily}').join(star(daily));
       }
       if (e.wildcard) pendingWildcard = e; // vetted after the trait lands (reference contract + repair)
+      if (e.wildcard && engineIsSignature) { e.dropSlot = true; pendingWildcard = null; }
       delete e.was; delete e.wildcard; delete e.gate;
+    }
+  }
+  // the dropped slot leaves no residue — no bespoke twin, no fallback zap
+  if (engineIsSignature) {
+    for (const es of Object.values(sections)) {
+      const idx = es.findIndex((e) => e.dropSlot);
+      if (idx !== -1) es.splice(idx, 1);
     }
   }
 
@@ -988,7 +1262,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // "Bloodied" x16, the 2014 half-HP phrase x0 — closed phrase, one
     // keyword, safely below the grammar line
     .replace(/\bha(s|ve) fewer than half (?:its|their) [Hh]it [Pp]oints(?: remaining)?\b/g,
-      (m, v) => (v === 've' ? 'are Bloodied' : 'is Bloodied'));
+      (m, v) => (v === 've' ? 'are Bloodied' : 'is Bloodied'))
+    // the vacuous 1-HP clause (4 sightings: Tide King, Cairn, Molten
+    // Crown, Slag Crown) — always true, does nothing; a fixed closed
+    // phrase, stripped whole at both positions
+    .replace(/(^|\. )[Ww]hile (?:it|the [\w' -]{1,30}?) has at least 1 Hit Point,\s*([a-z])/g, (m, pre, c) => pre + c.toUpperCase())
+    .replace(/,? while (?:it|the [\w' -]{1,30}?) has at least 1 Hit Point/g, '');
   const polishModelText = (t) => capRegister(applyRenamesToText(normalizeMeters(t)));
   const shipTrait = (v, label, flag) => {
     (sections.Traits = sections.Traits ?? []).unshift({ name: v.name, text: polishModelText(v.text), model: true });
@@ -1060,7 +1339,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     trace(label, `${v.text.slice(0, 100)}${flag ? ` — shipped over a judgment flag (${flag})` : ''}`);
   };
   {
-    const v = vetTraitWildcard(p.trait_wildcard, sections, { name: p.name, inline });
+    const v = vetTraitWildcard(p.trait_wildcard, sections, { name: p.name, inline, archetype });
     if (v.okay) shipTrait(v, 'trait wildcard:');
     else if (!v.silent) {
       traitRejected = v;
@@ -1090,6 +1369,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // the hit already establishes the target, and teaching the frame here
       // is how three welds got 30-ft targeting on reach-5 rows (2026-08-26)
       const riderBound = String(p.wildcard_economy ?? '').trim().toLowerCase().startsWith('rider_on:');
+      // FROZEN-ECONOMY FIX (War-Rune Colossus, 2026-09-01): when the
+      // rejection was economy-based, the repair's converted draft must
+      // not be vetted against the model's ORIGINAL declaration — it is
+      // frozen at 'reaction' and no conversion can ever pass. Clear it;
+      // the draft's own prose routes its placement.
+      const repairEconomy = /no reactions/.test(wcRejected?.why ?? '') ? null : p.wildcard_economy;
       const targeting = riderBound
         ? 'this text is appended to the attack it rides — the hit already establishes the target, so begin "When the creature hits with this attack" and address \'the target\'; do NOT introduce a new targeting frame, a range, or a second target'
         : 'establish the target FIRST ("one creature within 30 feet" or a Saving Throw frame) before saying \'the target\'';
@@ -1107,12 +1392,12 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
         let parsed; try { parsed = JSON.parse(String(j).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return false; }
         let anyGood = false;
         if (wcRejected && typeof parsed.wildcard === 'string') {
-          const v = vetActionWildcard(parsed.wildcard, scaled, { name: p.name, inline, economy: p.wildcard_economy, archetype });
+          const v = vetActionWildcard(parsed.wildcard, scaled, { name: p.name, inline, economy: repairEconomy, archetype });
           if (v.okay || v.tier === 'judgment') anyGood = true;
           else trace('repair draft rejected —', `${v.why}: ${v.draft.slice(0, 100)}`);
         }
         if (traitRejected && parsed.trait_wildcard) {
-          const v = vetTraitWildcard(parsed.trait_wildcard, sections, { name: p.name, inline });
+          const v = vetTraitWildcard(parsed.trait_wildcard, sections, { name: p.name, inline, archetype });
           if (v.okay || v.tier === 'judgment') anyGood = true;
           else if (!v.silent) trace('repair trait draft rejected —', `${v.why}: ${(v.draft ?? '').slice(0, 100)}`);
         }
@@ -1120,8 +1405,8 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
       };
       const fixRaw = await callLLM(fixPrompt, fixValidator);
       const fix = JSON.parse(String(fixRaw).replace(/^```json\s*|```\s*$/g, '').trim());
-      if (traitRejected && fix.trait_wildcard) fixedTrait = vetTraitWildcard(fix.trait_wildcard, sections, { name: p.name, inline });
-      if (wcRejected && typeof fix.wildcard === 'string') fixedWc = vetActionWildcard(fix.wildcard, scaled, { name: p.name, inline, missingTraitName: null, economy: p.wildcard_economy, archetype });
+      if (traitRejected && fix.trait_wildcard) fixedTrait = vetTraitWildcard(fix.trait_wildcard, sections, { name: p.name, inline, archetype });
+      if (wcRejected && typeof fix.wildcard === 'string') fixedWc = vetActionWildcard(fix.wildcard, scaled, { name: p.name, inline, missingTraitName: null, economy: repairEconomy, archetype });
     } catch (e3) {
       trace('wildcard repair skipped —', e3?.message ?? e3);
     }
@@ -1243,6 +1528,17 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
       && !(monster.immunities ?? '').includes(vul) && !(monster.resistances ?? '').includes(vul)) {
       monster.vulnerabilities = vul;
       trace('vulnerability shipped:', vul);
+      // the regen off-switch CONSULTS the shipped vulnerability (3rd
+      // discord sighting, 2026-09-01: "only a blessed blade parts them"
+      // missed the frame verbs, so the sheet said Vulnerable Radiant
+      // beside an Acid-or-Fire off-switch — the vulnerability provenance
+      // already answered "what is this thing's bane"; reuse the answer
+      // instead of chasing frame verbs forever)
+      const regenRow = (monster.sections.Traits ?? []).find((e) => e.name === 'Regeneration');
+      if (regenRow && !regenBaneApplied && !regenRow.text.includes(`${vul} damage`)) {
+        regenRow.text = regenRow.text.replace(/takes [A-Z]\w+(?: or [A-Z]\w+)? damage, this trait/, `takes ${vul} damage, this trait`);
+        trace('regeneration off-switch re-keyed:', `${vul} (the shipped vulnerability is the bane)`);
+      }
     } else if (vul && vul.toLowerCase() !== 'none') {
       trace('vulnerability rejected —', DAMAGE_TYPES.includes(vul) && !warranted
         ? `"${vul}" has no warrant in the concept's own text (print's default is none)`
@@ -1343,7 +1639,9 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
       const rawAudit = await callLLM(buildAuditPrompt(monster, '2024', { reskin: true }) + fallbackBrief, validateAuditResponse);
       const findings = verifyAuditFindings(monster, rawAudit);
       trace('audit:', findings.length ? findings.map((f) => `${f.loc?.entry ?? '-'}: ${f.message}`) : 'nothing flagged');
-      for (const f of findings.filter((x) => x.rewrite && x.span)) {
+      // rewrite != null: an empty rewrite is a DELETION (the Huntwind
+      // leak, 2026-09-01 — the judge's only way to remove a sentence)
+      for (const f of findings.filter((x) => x.rewrite != null && x.span)) {
         const entry = (monster.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
         // CHASSIS REWRITE-IMMUNITY (2026-08-25): the judge rewrote the
         // renamed Mobility Trait out of existence (Wolf-Born Skirmish).
@@ -1366,13 +1664,27 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
             const start = boundary === -1 ? 0 : boundary + 2;
             if (start < idx) span = entry.text.slice(start, idx) + span;
           }
-          entry.text = entry.text.split(span).join(f.rewrite).replace(/\.{2,}/g, '.');
-          trace('audit rewrite:', `${f.loc.entry}: "${span.slice(0, 60)}" -> "${f.rewrite.slice(0, 60)}"`);
+          entry.text = entry.text.split(span).join(f.rewrite).replace(/\.{2,}/g, '.').replace(/\s{2,}/g, ' ').trim();
+          trace('audit rewrite:', `${f.loc.entry}: "${span.slice(0, 60)}" -> "${f.rewrite ? f.rewrite.slice(0, 60) : '(deleted)'}"`);
         }
       }
       for (const f of findings.filter((x) => x.rename)) {
         const old = f.loc.entry; const gate = (old.match(/\s*\(.*\)$/) ?? [''])[0];
         const bare = old.replace(/\s*\(.*\)$/, '');
+        // audit renames pass the SAME name-claims vet the model's renames
+        // do (the audit renamed neutral chassis stock toward scream
+        // fiction — "Screaming Warning" -> "Shriek of Dismay" — and the
+        // rename path had no claims check at all, 2026-09-01): a rename
+        // claiming an element the entry's damage doesn't pay is blocked,
+        // the standing name stays.
+        {
+          const src = (monster.sections?.[f.loc.section] ?? []).find((e) => e.name === old);
+          const dealt = [...new Set([...(src?.text ?? '').matchAll(/\b(Bludgeoning|Piercing|Slashing|Fire|Cold|Lightning|Thunder|Poison|Acid|Necrotic|Radiant|Psychic|Force)(?= damage)/g)].map((m) => m[1]))];
+          if (!nameClaimSatisfied(f.rename, dealt)) {
+            trace('audit rename blocked —', `"${f.rename}" claims an element "${old}" does not pay (${dealt.join('/') || 'no damage'})`);
+            continue;
+          }
+        }
         const fresh = `${f.rename}${gate}`;
         let applied = false;
         for (const es of Object.values(monster.sections ?? {})) {
@@ -1387,6 +1699,10 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
       trace('audit skipped —', e2?.message ?? e2);
     }
   }
+  // signature provenance, machine-readable (critic + owner, 2026-09-02:
+  // fallback honesty lived only in traces and the audit brief — this
+  // makes the rate scorable from saved blocks alone)
+  monster.generation.signature = engineIsSignature ? 'dropped' : fallbackShipped ? 'fallback' : 'custom';
   trace('done:', `"${monster.name}" — donor ${donor.id}, CR ${cr}`);
   return monster;
 }

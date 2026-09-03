@@ -661,7 +661,7 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       const ownBase = entry.name.split(' (')[0].toLowerCase();
       for (const m of entry.text.matchAll(/\buses? (?:its |the )?([A-Z][\w' -]+?)(?:\s+(?:action|reaction))?(?=[.,;]|\s+(?:if|to|again|twice|three|or|while|on|against|and|as|instead)\b)/g)) {
         for (const refRaw of m[1].split(/\s+or\s+/)) {
-          const ref = refRaw.trim().replace(/\s*\(.*$/, '').replace(/\s+(?:stat block|twice|three times)$/i, '').toLowerCase();
+          const ref = refRaw.trim().replace(/\s*\(.*$/, '').replace(/'s\b.*$/, '').replace(/\s+(?:stat block|twice|three times)$/i, '').toLowerCase(); // possessive strip: "Molten Crown's AC bonus" refs Molten Crown (FP 2026-09-01)
           if (!ref || OK_REFS.has(ref) || /stat block/i.test(refRaw)) continue;
           const resolvedElsewhere = allEntries.some((x) => x.entry !== entry && x.entry.name.split(' (')[0].toLowerCase() === ref);
           // Self-mentions are official (reuse-restriction prose inside the
@@ -1124,7 +1124,7 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       // business, not entry-reference resolution's.
       if (/^\s+stat(?:istics|\s+block)\b/i.test(entry.text.slice(ref.index + ref[0].length))) continue;
       for (const part of ref[1].split(/ or /)) {
-        const name = part.replace(/^\([A-C]\)\s*/, '').replace(/\s+(?:action|attack|twice|once)$/, '').trim();
+        const name = part.replace(/^\([A-C]\)\s*/, '').replace(/'s\b.*$/, '').replace(/\s+(?:action|attack|twice|once)$/, '').trim();
         if (!name || !/^[A-Z]/.test(name) || /^(?:Spellcasting|Multiattack)$/i.test(name)) continue;
         if (!entryNames.some((n) => n === name || n.startsWith(name))) {
           push('undefined-attack-ref', 'reject', `${where} references a use of "${name}", which is not defined anywhere in the statblock — rewrite the reference to name a real entry`, undefined, loc);

@@ -126,16 +126,34 @@ describe('the mounted template line: full compositions, shape-frames as authorin
     // the high-CR expansion seats (2026-08-27)
     expect(pdm(12, 'charger', 'brute').id).toBe('brute-11-charger');
     expect(pdm(16, 'grappler', 'brute').id).toBe('brute-15-grappler');
-    expect(pdm(18, 'juggernaut', 'brute').id).toBe('brute-16-juggernaut');
     expect(pdm(12, 'regenerator', 'brute').id).toBe('brute-10-regenerator');
     expect(pdm(18, null, 'brute').id).toBe('brute-17'); // the boss seat, legendary menu aboard
     expect(pdm(25, null, 'brute').id).toBe('brute-21');
+    // the legendary style seats (owner, 2026-09-01: "a sub archetype for
+    // every CR" — the skirmisher one-legendary-seat-per-line rule, applied
+    // to brute after the Fused Monarchy drew brute-16-juggernaut at CR 21)
+    expect(pdm(17, 'charger', 'brute').id).toBe('brute-17-charger');
+    expect(pdm(21, 'juggernaut', 'brute').id).toBe('brute-17-juggernaut');
+    expect(pdm(18, 'juggernaut', 'brute').id).toBe('brute-17-juggernaut'); // no longer the non-legendary 16 seat
+    expect(pdm(16, 'juggernaut', 'brute').id).toBe('brute-16-juggernaut'); // below the boundary the line is unchanged
+    expect(pdm(25, 'grappler', 'brute').id).toBe('brute-17-grappler');
+    expect(pdm(20, 'regenerator', 'brute').id).toBe('brute-17-regenerator');
   });
 
   test('the brute engines are aboard: charge->prone->trample, grapple->swallow, regeneration off-switch', () => {
     const { DONORS: D } = require('../donors.mjs');
     const brutes = D.filter((d) => (d.archetypes ?? []).includes('brute'));
-    expect(brutes.length).toBe(17);
+    expect(brutes.length).toBe(21);
+    // the skirmisher rule holds family-wide (owner, 2026-09-01): every
+    // style line tops out in a legendary seat
+    for (const arch of ['skirmisher', 'brute']) {
+      const fam = D.filter((d) => (d.archetypes ?? []).includes(arch));
+      for (const style of new Set(fam.map((d) => d.style).filter(Boolean))) {
+        const line = fam.filter((d) => d.style === style).sort((a, b) => b.cr - a.cr);
+        expect(`${arch}/${style}: ${line[0].legendary ? 'legendary top seat' : 'NO LEGENDARY SEAT'}`)
+          .toBe(`${arch}/${style}: legendary top seat`);
+      }
+    }
     for (const d of brutes.filter((x) => x.style === 'charger')) {
       const rows = Object.values(d.sections).flat();
       expect(rows.find((e) => e.name === 'Melee Attack').text).toMatch(/moved 20\+ feet straight toward/);

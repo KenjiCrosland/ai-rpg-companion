@@ -2004,16 +2004,618 @@ describe('the brute plumbing (2026-08-26): archetype flows loudly end to end', (
     expect(sw.text).toMatch(/only one creature swallowed at a time/);
   });
 
-  test('a brute reaction wildcard flags for repair — 0/40 print brutes have reactions (owner: flag, not ban)', async () => {
+  test('a brute reaction wildcard is MECHANICAL — repaired once, else the chassis signature stands (owner promoted 2026-09-01)', async () => {
     let repairPrompt = null;
     const reaction = 'When a creature within 60 feet moves away from the creature, the creature can use its reaction to hurl a stone at it. The target must succeed on a DC 13 Strength saving throw or take 10 (3d6) Bludgeoning damage.';
     const m = await generateReskin({ archetype: 'brute', concept: 'a hurler of stones', cr: 5, mechanics: [] }, async (prompt) => {
-      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({ wildcard: reaction }); }
       if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
       return bruteAnswer(5).replace(/"wildcard":\s*"[^"]+"/, `"wildcard":${JSON.stringify(reaction)}`);
     });
     expect(repairPrompt).toMatch(/print brutes have no reactions/);
-    expect(m).toBeTruthy(); // fail-open: the flagged draft still ships if repair insists
+    // the repair insisted on a reaction -> fail CLOSED: no Reactions
+    // section ever ships on a brute, and the signature stays in Actions
+    // (the Tide King lost its whole signature to the old fail-open)
+    expect(m.sections.Reactions ?? []).toHaveLength(0);
+    expect((m.sections.Actions ?? []).length).toBeGreaterThanOrEqual(3);
+  });
+
+  test('a converted repair ESCAPES the frozen economy — the War-Rune Colossus bug', async () => {
+    // the model declared reaction; the repair correctly converts to a
+    // bonus action — the vet must not hold the new draft to the stale
+    // declaration (it did, and no conversion could ever pass)
+    const reaction = 'When a creature hits the creature with a melee attack, the creature can use its reaction to flare its sigils, and Opportunity Attacks against it are made with Disadvantage until the start of its next turn.';
+    const converted = 'As a bonus action, the creature braces behind its sigils, and Opportunity Attacks against it are made with Disadvantage until the start of its next turn.';
+    const m = await generateReskin({ archetype: 'brute', concept: 'a runed golem', cr: 5, mechanics: [] }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) return JSON.stringify({ wildcard: converted });
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      const base = JSON.parse(bruteAnswer(5));
+      base.wildcard = reaction;
+      base.wildcard_economy = 'reaction';
+      return JSON.stringify(base);
+    });
+    expect(m.sections.Reactions ?? []).toHaveLength(0);
+    const shipped = Object.values(m.sections).flat().find((e) => /braces behind its sigils/.test(e.text));
+    expect(shipped).toBeTruthy(); // the conversion shipped instead of the fallback
+  });
+
+  test('a brute caster draws the golem menu — self-enhancement, never escape tech', async () => {
+    const { BRUTE_SPELL_MENU: BM } = require('../generate.mjs');
+    const bruteCaster = (spells) => {
+      const base = JSON.parse(bruteAnswer(5));
+      base.spells = spells;
+      return JSON.stringify(base);
+    };
+    const m = await generateReskin({ archetype: 'brute', concept: 'a runed golem', cr: 5, caster: true, mechanics: [] },
+      quiet2(() => bruteCaster({ at_will: ['Blur', 'False Life'], daily: ['Stoneskin', 'Enlarge/Reduce'] })));
+    const sc = (m.sections.Actions ?? []).find((e) => e.name === 'Spellcasting');
+    // tier authoring (the First Word's at-will Stoneskin/Death Ward,
+    // 2026-09-01): every pick here hardens the caster, so ALL land at
+    // 1/Day and the At Will line is gone — print's golem shape
+    expect(sc.text).not.toMatch(/At Will/);
+    expect(sc.text).toMatch(/1\/Day Each:\*\* \*Blur\*, \*False Life\*, \*Stoneskin\*, \*Enlarge\/Reduce\*/);
+    // a skirmisher escape spell is OFF this menu — defect, informed repair
+    const { reskinDefects: rd } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(5, null, 'brute'), 5, { mechanics: [] });
+    scaled.spell_menu = BM;
+    scaled.sections.Actions.push({ name: 'Spellcasting', rules: true, text: 'casts {spell_at_will} {spell_daily}' });
+    const bad = JSON.parse(bruteCaster({ at_will: ['Misty Step', 'Blur'], daily: ['Stoneskin', 'Heroism'] }));
+    expect(rd(scaled, bad, {}).join(' ')).toMatch(/"Misty Step" is not on the spell menu/);
+    expect(BM).not.toContain('Shield'); // a Reaction spell — print brutes have no reactions
+    expect(BM).not.toContain('Absorb Elements'); // same law
+    expect(BM).not.toContain('Haste'); // sustained extra-attack — the pricing problem stays excluded
+    expect(BM).toHaveLength(16);
+    for (const sp of ['Fire Shield', 'Freedom of Movement', 'Death Ward', 'Enhance Ability']) expect(BM).toContain(sp);
+  });
+
+  test('spell tiers are the organ\'s: utility may sit at-will, redundant picks drop deterministically', async () => {
+    const bruteCaster = (spells, type) => {
+      const base = JSON.parse(bruteAnswer(5));
+      base.spells = spells;
+      if (type) base.type = type;
+      return JSON.stringify(base);
+    };
+    // Jump is the brute menu's one non-defensive pick — it alone keeps at-will
+    const m = await generateReskin({ archetype: 'brute', concept: 'a leaping shrine', cr: 5, caster: true, mechanics: [] },
+      quiet2(() => bruteCaster({ at_will: ['Jump', 'Heroism'], daily: ['Stoneskin', 'Blur'] }, 'Construct')));
+    const sc = (m.sections.Actions ?? []).find((e) => e.name === 'Spellcasting');
+    expect(sc.text).toMatch(/At Will:\*\* \*Jump\*/);
+    expect(sc.text).toMatch(/1\/Day Each:\*\* .*\*Stoneskin\*/);
+    // Heroism on a Construct is a dead pick — dropped and backfilled from
+    // the menu without a repair round (the First Word shipped it after
+    // TWO failed repair asks, 2026-09-01)
+    expect(sc.text).not.toMatch(/Heroism/);
+    expect(sc.text).toMatch(/\*Enlarge\/Reduce\*/); // the backfill
+  });
+
+  test('an audit rewrite can be a deletion; a rewrite describing the edit is discarded — the Huntwind leak', async () => {
+    const limiter = 'The target can do this only once per turn.';
+    const wc = `*Dexterity Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Prone condition. ${limiter}`;
+    const run = (rewrite) => generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) return JSON.stringify({});
+      if (prompt.startsWith('You are auditing')) {
+        return JSON.stringify({ findings: [{
+          entry: 'Waylay', section: 'Actions', span: limiter, rewrite,
+          issue: 'contradictory limiter', principle: 4, confidence: 'high',
+        }] });
+      }
+      return answer({ wildcard: wc });
+    });
+    // deletion: the empty rewrite removes the sentence
+    const gone = await run('');
+    const e1 = Object.values(gone.sections).flat().find((x) => x.name === 'Waylay');
+    expect(e1.text).not.toMatch(/once per turn/);
+    expect(e1.text).toMatch(/Prone condition/);
+    // meta-language: the revision note is discarded, never spliced
+    const kept = await run('This replaces the final sentence with nothing, as the reaction economy already limits it.');
+    const e2 = Object.values(kept.sections).flat().find((x) => x.name === 'Waylay');
+    expect(e2.text).not.toMatch(/replaces the final sentence/);
+    expect(e2.text).toMatch(/once per turn/); // finding dropped, text stands
+  });
+
+  test('the drain exemption points outward only — heal-back immunity dies, Life Drain lives', async () => {
+    // the Battlefield-Thing: P/S immunity wearing the exemption's clothes
+    const m = await generateReskin({ archetype: 'brute', concept: 'a scarred mass', cr: 20, mechanics: [] }, quiet2(() => {
+      const base = JSON.parse(bruteAnswer(20));
+      base.trait_wildcard = { name: 'Regenerative Scar Tissue', text: 'When the creature takes Piercing or Slashing damage, it immediately regains Hit Points equal to the damage taken. This trait fails against Fire or Acid damage.' };
+      return JSON.stringify(base);
+    }));
+    expect((m.sections.Traits ?? []).some((e) => e.name === 'Regenerative Scar Tissue')).toBe(false);
+    // the when-hit + self-heal tell catches the amount form too, in traits
+    const m2 = await generateReskin({ archetype: 'brute', concept: 'a scarred mass', cr: 11, mechanics: [] }, quiet2(() => {
+      const base = JSON.parse(bruteAnswer(11));
+      base.trait_wildcard = { name: 'Knitting Flesh', text: 'Whenever the creature takes damage, it regains 9 (2d8) Hit Points.' };
+      return JSON.stringify(base);
+    }));
+    expect((m2.sections.Traits ?? []).some((e) => e.name === 'Knitting Flesh')).toBe(false);
+    // outward drain grammar is untouched — print's Life Drain
+    const drain = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quiet2(() => answer({
+      wildcard: "*Constitution Saving Throw*: DC 15, one creature within 30 feet. *Failure:* 14 (4d6) Necrotic damage, and the creature regains Hit Points equal to half the damage dealt.",
+    })));
+    const e = Object.values(drain.sections).flat().find((x) => /Waylay/.test(x.name));
+    expect(e.text).toMatch(/regains Hit Points equal to half the damage dealt/);
+  });
+
+  test('the reaction shape hears active voice — "When a creature hits it" on a brute', async () => {
+    let repairPrompt = null;
+    const shaped = 'When a creature within 30 feet hits it with a melee attack, the attacker must succeed on a DC 16 Strength saving throw or have the Prone condition.';
+    await generateReskin({ archetype: 'brute', concept: 'a lashing mass', cr: 11, mechanics: [] }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return bruteAnswer(11).replace(/"wildcard":\s*"[^"]+"/, `"wildcard":${JSON.stringify(shaped)}`);
+    });
+    expect(repairPrompt).toMatch(/print brutes have no reactions/);
+  });
+
+  test('typed damage defenses are the derivation engine\'s — trait grants die, priced action stances live', async () => {
+    const trait = (text, name = 'Rune-Seams of Making') => generateReskin({ archetype: 'brute', concept: 'a god-forged golem', cr: 19, style: 'juggernaut', mechanics: [] }, quiet2(() => {
+      const base = JSON.parse(bruteAnswer(19, 'juggernaut'));
+      base.trait_wildcard = { name, text };
+      return JSON.stringify(base);
+    }));
+    // the First-Built's flat B/P/S grant (~+60% eHP at CR 19, unpriced)
+    const flat = await trait('The creature has resistance to Bludgeoning, Piercing, and Slashing damage. It cannot be Restrained.');
+    expect((flat.sections.Traits ?? []).some((e) => e.name === 'Rune-Seams of Making')).toBe(false);
+    // the Garden Saint's retroactive form — resistance granted against its own trigger
+    const retro = await trait('If the creature takes damage from a nonmagical attack, it gains resistance to that damage type against that attack.', 'Endless Renewal');
+    expect((retro.sections.Traits ?? []).some((e) => e.name === 'Endless Renewal')).toBe(false);
+    // an unbounded ACTION grant dies too; the duration-bound stance is
+    // pinned as legal by the existing Resistance-is-a-game-term test
+    let repairPrompt = null;
+    await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({ wildcard: 'The creature hardens its hide, gaining Resistance to Fire damage.' });
+    });
+    expect(repairPrompt).toMatch(/derivation engine's jurisdiction/);
+  });
+
+  test('informal saves and bonus actions cannot hide in traits — the Grieving Weep evasion', async () => {
+    const trait = (name, text) => generateReskin({ archetype: 'brute', concept: 'a weeping mountain', cr: 18, mechanics: [] }, quiet2(() => {
+      const base = JSON.parse(bruteAnswer(18));
+      base.trait_wildcard = { name, text };
+      return JSON.stringify(base);
+    }));
+    // a bonus action with a 2014-informal save, filed under Traits
+    const weep = await trait('Grieving Weep', 'As a bonus action, the creature weeps, and one hostile creature within 30 feet must make a Wisdom saving throw (DC 20) or have Disadvantage on attack rolls against the creature.');
+    expect((weep.sections.Traits ?? []).some((e) => e.name === 'Grieving Weep')).toBe(false);
+    // passive mention stays legal — print's own grammar
+    const ward = await trait('Old Blessing', 'The creature has Advantage on saving throws against spells and other magical effects.');
+    expect((ward.sections.Traits ?? []).some((e) => e.name === 'Old Blessing')).toBe(true);
+  });
+
+  test('a brute trait cannot grant free OA-immunity; a skirmisher still can', async () => {
+    const bruteRun = await generateReskin({ archetype: 'brute', concept: 'a rust bear', cr: 9, mechanics: [] }, quiet2(() => {
+      const base = JSON.parse(bruteAnswer(9));
+      base.trait_wildcard = { name: 'Rusting Grip', text: 'The creature ignores Difficult Terrain and does not provoke Opportunity Attacks.' };
+      return JSON.stringify(base);
+    }));
+    expect((bruteRun.sections.Traits ?? []).some((e) => e.name === 'Rusting Grip')).toBe(false);
+    const skirmRun = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quiet2(() => answer({
+      trait_wildcard: { name: 'Ghost Gait', text: 'The creature\'s movement does not provoke Opportunity Attacks.' },
+    })));
+    expect((skirmRun.sections.Traits ?? []).some((e) => e.name === 'Ghost Gait')).toBe(true);
+  });
+
+  test('a trait cannot teleport past the chassis — the Reflection Step gap', async () => {
+    const m = await generateReskin({ archetype: 'brute', concept: 'a mirror thief', cr: 6, mechanics: [] }, quiet2(() => {
+      const base = JSON.parse(bruteAnswer(6));
+      base.trait_wildcard = { name: 'Reflection Step', text: 'While within 5 feet of a reflective surface, the creature can teleport between such surfaces as part of its movement.' };
+      return JSON.stringify(base);
+    }));
+    expect((m.sections.Traits ?? []).some((e) => e.name === 'Reflection Step')).toBe(false);
+  });
+
+  test('mid-text "The creature" substitutes in traits — the Rust-Thorn antecedent muddle', async () => {
+    const m = await generateReskin({ archetype: 'brute', concept: 'a thorn bear', cr: 9, mechanics: [] }, quiet2(() => {
+      const base = JSON.parse(bruteAnswer(9));
+      base.trait_wildcard = { name: 'Thorn-Wire Carapace', text: 'Any creature that touches the creature can be seen bleeding. The creature ignores Difficult Terrain.' };
+      return JSON.stringify(base);
+    }));
+    const t = (m.sections.Traits ?? []).find((e) => e.name === 'Thorn-Wire Carapace');
+    expect(t).toBeTruthy();
+    expect(t.text).not.toMatch(/The creature/); // sentence-initial mid-text substituted
+    expect(t.text).toMatch(/ignores Difficult Terrain/);
+  });
+
+  test('the writer may not explain that flavor is flavor — the Shedding Arsenal disclaimer', async () => {
+    const m = await generateReskin({ archetype: 'brute', concept: 'a battlefield mass', cr: 20, mechanics: ['regeneration'] }, quiet2(() => {
+      const base = JSON.parse(bruteAnswer(20, 'regenerator'));
+      base.trait_wildcard = { name: 'Shedding Arsenal', text: 'When the creature takes damage, an old weapon surfaces on its body or falls nearby. This is purely cosmetic; it grants no mechanical benefit.' };
+      return JSON.stringify(base);
+    }));
+    expect((m.sections.Traits ?? []).some((e) => e.name === 'Shedding Arsenal')).toBe(false);
+  });
+
+  test('passive voice cannot smuggle a meter — "can be used 2/Day"', async () => {
+    let repairPrompt = null;
+    await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({ wildcard: '*Dexterity Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Prone condition. This ability can be used 2/Day.' });
+    });
+    expect(repairPrompt).toMatch(/use limits print as a count/);
+  });
+
+  test('inflection cannot beat the guards — "regaining", DR grammar, and "embedded" all die', async () => {
+    const trait = (name, text) => generateReskin({ archetype: 'brute', concept: 'a scarred mass', cr: 19, mechanics: [] }, quiet2(() => {
+      const base = JSON.parse(bruteAnswer(19));
+      base.trait_wildcard = { name, text };
+      return JSON.stringify(base);
+    }));
+    // the Garden Saint's conjugation evasion (same class as "gaining")
+    const regrow = await trait('Regrowing Flesh', 'When the creature takes Slashing or Piercing damage, it regrows tissue at the start of its next turn, regaining 20 Hit Points.');
+    expect((regrow.sections.Traits ?? []).some((e) => e.name === 'Regrowing Flesh')).toBe(false);
+    // the Gulletmaw's flat DR — a defense grammar 2024 print doesn't use
+    const plating = await trait('Chitinous Plating', 'The creature is immune to the Prone condition. Damage from Bludgeoning, Piercing, and Slashing attacks is reduced by 5 unless the attack is a critical hit.');
+    expect((plating.sections.Traits ?? []).some((e) => e.name === 'Chitinous Plating')).toBe(false);
+    // the Battlefield Chorus's recovery-by-death-only
+    const sust = await trait('Embedded Weapon Sustenance', 'While a weapon is embedded in the creature, it is unusable and cannot be removed until the creature dies.');
+    expect((sust.sections.Traits ?? []).some((e) => e.name === 'Embedded Weapon Sustenance')).toBe(false);
+  });
+
+  test('narrating the action system is a defect — "can use one action to"', async () => {
+    let repairPrompt = null;
+    await generateReskin({ archetype: 'brute', concept: 'a weapon eater', cr: 20, mechanics: [] }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return bruteAnswer(20).replace(/"wildcard":\s*"[^"]+"/, `"wildcard":${JSON.stringify('On each of its turns, the creature can use one action to target one creature within 30 feet. *Strength Saving Throw*: DC 21. *Failure:* The target drops one weapon it is holding.')}`);
+    });
+    expect(repairPrompt).toMatch(/never narrates the action system/);
+  });
+
+  test('a stuck weapon is priced and recoverable — the Embedded Arsenal rule', async () => {
+    const stuck = (text) => generateReskin({ archetype: 'brute', concept: 'a scarred colossus', cr: 7 }, quiet2(() => {
+      const base = JSON.parse(bruteAnswer(7));
+      base.trait_wildcard = { name: 'Embedded Arsenal', text };
+      return JSON.stringify(base);
+    }));
+    const bad = await stuck('Blades and arrows are lodged throughout the creature. Whenever the creature takes damage from a weapon attack, the weapon becomes stuck in its flesh until the wielder retrieves it.');
+    expect((bad.sections.Traits ?? []).some((e) => e.name === 'Embedded Arsenal')).toBe(false);
+    // the Mimic shape ships: the stick is priced with an escape DC
+    const good = await stuck('Blades and arrows are lodged throughout the creature. A weapon that deals it damage becomes stuck in its flesh (escape DC 14 Strength check to pull it free).');
+    expect((good.sections.Traits ?? []).some((e) => e.name === 'Embedded Arsenal')).toBe(true);
+  });
+
+  test('attack-Disadvantage defense needs a break — the Displacer rule', async () => {
+    const hide = (text) => generateReskin({ archetype: 'brute', concept: 'an iron-quilled boar', cr: 6 }, quiet2(() => {
+      const base = JSON.parse(bruteAnswer(6));
+      base.trait_wildcard = { name: 'Rending Quillhide', text };
+      return JSON.stringify(base);
+    }));
+    const bad = await hide('The creature\'s hide bristles with screaming quills. Melee attacks against the creature have Disadvantage.');
+    expect((bad.sections.Traits ?? []).some((e) => e.name === 'Rending Quillhide')).toBe(false);
+    // print's Displacement shape survives: the defense carries its break
+    const good = await hide('The creature\'s hide bristles with screaming quills. Melee attacks against the creature have Disadvantage. If the creature takes damage, this trait is disrupted until the end of its next turn.');
+    expect((good.sections.Traits ?? []).some((e) => e.name === 'Rending Quillhide')).toBe(true);
+  });
+
+  test('regeneration claimed pulls the regenerator line — the organ\'s own seat (0/3 draws before)', async () => {
+    // the engulf->grappler law extended: a juggernaut-classified reknit
+    // concept now draws the regenerator donor, whose AUTHORED Regeneration
+    // still takes the claimed-bane re-key
+    const m = await generateReskin(
+      { archetype: 'brute', concept: 'a marble warder that reknits; only holy light scours it', cr: 16, style: 'juggernaut', mechanics: ['regeneration'] },
+      quiet2(() => bruteAnswer(16, 'regenerator')));
+    expect(m.generation.donor).toBe('brute-10-regenerator');
+    const rg = (m.sections.Traits ?? []).find((e) => e.name === 'Regeneration');
+    expect(rg.rules).toBe(true);
+    expect(rg.text).toMatch(/regains 15 Hit Points/);
+    expect(rg.text).toMatch(/takes Radiant damage/); // the claimed bane re-keys authored rows too
+    // at boss CR the legendary regenerator seat finally draws
+    const boss = await generateReskin(
+      { archetype: 'brute', concept: 'its flesh regrows faster than blades can cut it', cr: 20, mechanics: ['regeneration'] },
+      quiet2(() => bruteAnswer(20, 'regenerator')));
+    expect(boss.generation.donor).toBe('brute-17-regenerator');
+  });
+
+  test('engulf outranks regeneration — the organ injects onto the grappler donor (foreign-donor path)', async () => {
+    const m = await generateReskin(
+      { archetype: 'brute', concept: 'a healing pit of tar that swallows', cr: 16, mechanics: ['engulf', 'regeneration'] },
+      quiet2(() => bruteAnswer(16, 'grappler')));
+    expect(m.generation.donor).toBe('brute-15-grappler');
+    const rg = (m.sections.Traits ?? []).find((e) => e.name === 'Regeneration');
+    expect(rg).toBeTruthy();
+    expect(rg.rules).toBe(true);
+    expect(rg.text).toMatch(/regains 15 Hit Points/); // injected — the grappler donor carries no authored regen
+  });
+
+  test('a wildcard re-implementing the containment engine is a defect — the engine wins', () => {
+    const { reskinDefects: rd } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(8, 'grappler', 'brute'), 8, { mechanics: [] });
+    const p = JSON.parse(bruteAnswer(8, 'grappler'));
+    p.wildcard = '*Strength Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target is sealed inside the creature and takes 11 (2d10) Bludgeoning damage at the start of each of its turns.';
+    expect(rd(scaled, p, {}).join(' ')).toMatch(/must not re-implement/);
+    // the Tavern's word order beat the old pattern: verb after preposition
+    p.wildcard = '*Strength Saving Throw*: DC 14, one creature within 30 feet. *Failure:* The target is pulled into the dark barroom and swallowed, becoming Entombed (escape DC 14).';
+    expect(rd(scaled, p, {}).join(' ')).toMatch(/must not re-implement/);
+  });
+
+  test('healing belongs to the organ — full-heal and turn-based recovery die; drain survives', async () => {
+    const { reskinDefects: rd } = require('../generate.mjs');
+    // the Howdah's full-heal evasion: not negation, not threshold — set-to-max
+    const m = await generateReskin({ archetype: 'brute', concept: 'a stitched beast', cr: 12, style: 'regenerator', mechanics: [] }, quiet2(() => {
+      const base = JSON.parse(bruteAnswer(12, 'regenerator'));
+      base.trait_wildcard = { name: 'Seam-Knit Hide', text: 'At the start of each of its turns, the creature\'s Hit Points become its Hit Point maximum if its current Hit Points are lower.' };
+      return JSON.stringify(base);
+    }));
+    expect((m.sections.Traits ?? []).some((e) => e.name === 'Seam-Knit Hide')).toBe(false);
+    // the Idol's hand-built duplicate regen dies the same way
+    const scaled = scaleDonor(pickDonor(9, null, 'brute'), 9, { mechanics: [] });
+    const dup = JSON.parse(bruteAnswer(9));
+    dup.trait_wildcard = { name: 'Endless Self-Reknitting', text: 'The creature regains 10 Hit Points at the start of each of its turns.' };
+    // trait vet path — verified via the full flow above; here pin the wildcard path too
+    dup.wildcard = 'The creature knits its wounds shut, and it regains 10 Hit Points at the start of each of its turns.';
+    expect(rd(scaled, dup, {})).toEqual(expect.arrayContaining([])); // rd has no wildcard-heal check; the vet carries it
+    // DRAIN stays legal — print's Life Drain grammar
+    const drain = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quiet2(() => answer({
+      wildcard: "*Constitution Saving Throw*: DC 15, one creature within 30 feet. *Failure:* 14 (4d6) Necrotic damage, and the creature regains Hit Points equal to half the damage dealt.",
+    })));
+    const e = Object.values(drain.sections).flat().find((x) => /Waylay/.test(x.name));
+    expect(e.text).toMatch(/regains Hit Points equal to/);
+  });
+
+  test('reaction-SHAPED triggers are caught without the word — "When it takes damage" on a brute', async () => {
+    let repairPrompt = null;
+    const shaped = 'When the creature takes damage, it emits a piercing wail. Each creature within 30 feet must succeed on a DC 13 Wisdom saving throw or have Disadvantage on its next attack roll.';
+    await generateReskin({ archetype: 'brute', concept: 'a howling ram', cr: 5, mechanics: [] }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return bruteAnswer(5).replace(/"wildcard":\s*"[^"]+"/, `"wildcard":${JSON.stringify(shaped)}`);
+    });
+    expect(repairPrompt).toMatch(/print brutes have no reactions/);
+    // the coaching says HOW (0/3 clean conversions before, 2026-09-01):
+    // drop the trigger, never relabel it
+    expect(repairPrompt).toMatch(/DROP THE TRIGGER/);
+  });
+
+  test('containment by contact always offers a save — the Greedfall rule', async () => {
+    const m = await generateReskin({ archetype: 'brute', concept: 'a living mudslide', cr: 7 }, quiet2(() => {
+      const base = JSON.parse(bruteAnswer(7));
+      base.trait_wildcard = { name: 'Engulfing Mudflow', text: 'The creature can occupy other creatures\' spaces. A creature sharing its space has the Restrained condition and can\'t breathe.' };
+      return JSON.stringify(base);
+    }));
+    expect((m.sections.Traits ?? []).some((e) => e.name === 'Engulfing Mudflow')).toBe(false);
+  });
+
+  test('a fronted timing clause cannot walk past the healing guard — the Plague-Shrine evasion', async () => {
+    // "At the start of each of its turns, it regains 10" — same sentence
+    // as "regains 10 at the start of", assembled in the other order
+    const m = await generateReskin({ archetype: 'brute', concept: 'a walking shrine', cr: 11, style: 'regenerator', mechanics: ['regeneration'] }, quiet2(() => {
+      const base = JSON.parse(bruteAnswer(11, 'regenerator'));
+      base.trait_wildcard = { name: 'Self-Knitting Stone', text: 'At the start of each of its turns, the creature regains 10 Hit Points. Its wounds close with a wet, holy light.' };
+      return JSON.stringify(base);
+    }));
+    expect((m.sections.Traits ?? []).some((e) => e.name === 'Self-Knitting Stone')).toBe(false);
+  });
+
+  test('a preamble sentence cannot hide the reaction shape — the Weeping Rot evasion', async () => {
+    let repairPrompt = null;
+    const shaped = 'The creature\'s wounds weep a thick, clinging rot. When the creature takes damage from a melee attack, the attacker must succeed on a DC 13 Constitution saving throw or have the Poisoned condition until the end of its next turn.';
+    await generateReskin({ archetype: 'brute', concept: 'a weeping shrine', cr: 5, mechanics: [] }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return bruteAnswer(5).replace(/"wildcard":\s*"[^"]+"/, `"wildcard":${JSON.stringify(shaped)}`);
+    });
+    expect(repairPrompt).toMatch(/print brutes have no reactions/);
+  });
+
+  test('projectile fiction is not flight — quills flying AT a target ship; the creature flying dies', async () => {
+    // the Ironbristle deadlock: 4 burned calls rejecting "quills…flying
+    // at the attacker" on the bare word
+    const quills = '*Dexterity Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The creature\'s quills scream and detach, flying at the target, and the target has Disadvantage on its next attack roll. The quills re-form by the start of the creature\'s next turn.';
+    let repaired = null;
+    const m = await generateReskin({ archetype: 'brute', concept: 'an iron-quilled boar', cr: 5, mechanics: [] }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repaired = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return bruteAnswer(5).replace(/"wildcard":\s*"[^"]+"/, `"wildcard":${JSON.stringify(quills)}`);
+    });
+    expect(repaired).toBeNull();
+    expect(Object.values(m.sections).flat().some((e) => /flying at the target/.test(e.text))).toBe(true);
+    // creature-as-subject flight is still a movement grant — still illegal
+    let repairPrompt = null;
+    const grant = '*Dexterity Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The creature flies up to 30 feet without provoking Opportunity Attacks, and the target has the Prone condition.';
+    await generateReskin({ archetype: 'brute', concept: 'an iron-quilled boar', cr: 5, mechanics: [] }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return bruteAnswer(5).replace(/"wildcard":\s*"[^"]+"/, `"wildcard":${JSON.stringify(grant)}`);
+    });
+    expect(repairPrompt).toMatch(/flight beyond the chassis/);
+  });
+
+  test('Restrained must carry an exit — save-to-avoid is a door in, not a door out', async () => {
+    let repairPrompt = null;
+    const noExit = '*Strength Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target is pulled up to 20 feet toward the creature and has the Restrained condition.';
+    await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({ wildcard: noExit });
+    });
+    expect(repairPrompt).toMatch(/Restrained must carry an exit/);
+    // the same pull with a repeated save ships clean
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quiet2(() => answer({
+      wildcard: `${noExit} The target can repeat the save at the end of each of its turns, ending the condition on a success.`,
+    })));
+    const e = Object.values(m.sections).flat().find((x) => /Waylay/.test(x.name));
+    expect(e.text).toMatch(/repeat the save/);
+  });
+
+  test('an audit rename claiming an unpaid element is blocked — the standing name stays', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are auditing')) {
+        return JSON.stringify({ findings: [{
+          entry: 'Hedge Runner', section: 'Traits',
+          span: 'Hedge Runner',
+          issue: 'name-fiction mismatch', principle: 1, confidence: 'high',
+          rename: 'Burning Hedgerow',
+        }] });
+      }
+      return answer();
+    });
+    const names = Object.values(m.sections).flat().map((e) => e.name);
+    expect(names).toContain('Hedge Runner');
+    expect(names).not.toContain('Burning Hedgerow');
+  });
+
+  test('a damage-threshold immunity is negation-family — never on a creature', async () => {
+    const m = await generateReskin({ archetype: 'brute', concept: 'a stitched hide beast', cr: 12, style: 'regenerator', mechanics: [] }, quiet2(() => {
+      const base = JSON.parse(bruteAnswer(12, 'regenerator'));
+      base.trait_wildcard = { name: 'Restitching Hides', text: 'The creature ignores attacks that deal less than 20 damage, and its seams reknit at the start of each of its turns.' };
+      return JSON.stringify(base);
+    }));
+    expect((m.sections.Traits ?? []).some((e) => e.name === 'Restitching Hides')).toBe(false);
+  });
+
+  test('the regen off-switch consults the shipped vulnerability when no bane was claimed', async () => {
+    const run = (concept) => generateReskin(
+      { archetype: 'brute', concept, cr: 10, style: 'regenerator', mechanics: ['regeneration'] },
+      quiet2(() => {
+        const base = JSON.parse(bruteAnswer(10, 'regenerator'));
+        base.vulnerability = 'Radiant';
+        return JSON.stringify(base);
+      }));
+    // "blessed" warrants Radiant but "parts them" is no frame verb... it IS
+    // one now — so use a claim the frame genuinely cannot see
+    const m = await run('a stitched beast that reknits; blessed weapons are its dread');
+    expect(m.vulnerabilities).toBe('Radiant');
+    expect((m.sections.Traits ?? []).find((e) => e.name === 'Regeneration').text)
+      .toMatch(/takes Radiant damage/); // re-keyed from the shipped vulnerability
+  });
+
+  test('the bane frame knows "parts" — only a blessed blade parts them', () => {
+    // unit-level: the frame regex sees the elephant's phrasing
+    const frame = /\bonly ([^.]{0,60}?)(?:scours|destroys|harms|undoes|unmakes|banishes|slays|stops|kills|shatters?|breaks?|fells?|parts?|severs?|sunders?|pierces?|ends?|wounds?|brings? (?:it|him|her|them) down|can (?:stop|kill|slay|harm|destroy|shatter|break|wound|end|fell|pierce|part|sever)|can truly)/i;
+    expect(frame.exec('its seams reknit; only a blessed blade parts them')[1]).toMatch(/blessed blade/);
+  });
+
+  test('an ungated area wildcard over the per-target cap flags; a gated one passes', async () => {
+    const area = (gate) => `${gate}*Dexterity Saving Throw*: DC 15, each creature in a 15-foot-radius Sphere within 60 feet. *Failure:* 14 (4d6) Fire damage. *Success:* Half damage.`;
+    const flagged = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8, energy: 'Fire' }, quiet2(() => answer({
+      wildcard: area(''),
+    })));
+    // per_hit 15 at cr 8 -> cap 11; 14 > 11, ungated -> judgment repair fired, unrepaired ships flagged
+    expect(flagged).toBeTruthy();
+    const gated = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8, energy: 'Fire' }, quiet2(() => answer({
+      wildcard: `Flame Ring (Recharge 5-6). ${area('')}`,
+    })));
+    const e = Object.values(gated.sections).flat().find((x) => /Waylay/.test(x.name));
+    expect(e.name).toMatch(/Recharge 5-6/); // the lifted gate satisfies the area pricing
+  });
+
+  test('a gated rider is a defect — riders have no name to carry a gate', async () => {
+    let repairPrompt = null;
+    await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({
+        wildcard_economy: 'rider_on:Thorn Rake',
+        wildcard: 'When the creature hits with this attack, it can activate this ability (2/Day). The target must succeed on a DC 15 Strength saving throw or have the Prone condition.',
+      });
+    });
+    expect(repairPrompt).toMatch(/no name to carry a use gate/);
+  });
+
+  test('the vacuous 1-HP clause strips at both positions', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quiet2(() => answer({
+      trait_wildcard: { name: 'Molten Drip', text: 'While it has at least 1 Hit Point, the creature sheds dim light in a 10-foot radius. It can see through this light while it has at least 1 Hit Point.' },
+    })));
+    const t = (m.sections.Traits ?? []).find((e) => e.name === 'Molten Drip');
+    expect(t.text).not.toMatch(/at least 1 Hit Point/);
+    expect(t.text).toMatch(/^The /); // leading strip re-capitalized
+  });
+
+  test('vowel-initial verb swaps keep article agreement — "an entombed creature"', async () => {
+    const withStyle2 = (style) => bruteAnswer(5, 'grappler').replace(/}$/, `,"engulf_style":${JSON.stringify(style)}}`);
+    const m = await generateReskin({ archetype: 'brute', concept: 'a cairn', cr: 5, style: 'grappler', mechanics: [] },
+      quiet2(() => withStyle2('entomb')));
+    const row = (m.sections['Bonus Actions'] ?? []).find((e) => e.rules);
+    expect(row.text).toMatch(/an entombed creature/);
+    expect(row.text).not.toMatch(/\ba entombed/);
+  });
+
+  test('engine as signature: an insistent containment wildcard drops the slot — no twin, no zap (owner: "keep the recipe card")', async () => {
+    const containment = '*Strength Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target is sealed inside the creature and takes 11 (2d10) Bludgeoning damage at the start of each of its turns.';
+    const m = await generateReskin({ archetype: 'brute', concept: 'a walking cairn that seals prey inside', cr: 5, style: 'grappler', mechanics: ['engulf', 'grapple'] }, async (prompt) => {
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) {
+        const base = JSON.parse(bruteAnswer(5, 'grappler'));
+        return JSON.stringify({ wildcard: containment, renames: base.renames }); // the model insists
+      }
+      const base = JSON.parse(bruteAnswer(5, 'grappler'));
+      base.wildcard = containment;
+      return JSON.stringify(base);
+    });
+    const all = Object.values(m.sections).flat();
+    expect(all.some((e) => /sealed inside/.test(e.text))).toBe(false); // no bespoke twin
+    expect(all.some((e) => /Disadvantage on its next attack roll/.test(e.text))).toBe(false); // no fallback zap
+    expect((m.sections['Bonus Actions'] ?? []).some((e) => e.rules)).toBe(true); // the engine IS the signature
+  });
+
+  test('an ungated over-cap area action is now MECHANICAL — chassis stands', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8, energy: 'Fire' }, quiet2(() => answer({
+      wildcard: '*Dexterity Saving Throw*: DC 15, each creature in a 15-foot-radius Sphere within 60 feet. *Failure:* 14 (4d6) Fire damage. *Success:* Half damage.',
+    })));
+    expect(Object.values(m.sections).flat().find((e) => /Waylay/.test(e.name)).text)
+      .toMatch(/Disadvantage on its next attack roll/);
+  });
+
+  test('a model-authored death condition is mechanical — a creature dies only at 0 HP', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quiet2(() => answer({
+      wildcard: '*Strength Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Prone condition. Each time the creature takes Slashing damage, one string snaps; when the fourth snaps, it collapses into dead timber and is destroyed.',
+    })));
+    expect(Object.values(m.sections).flat().find((e) => /Waylay/.test(e.name)).text)
+      .toMatch(/Disadvantage on its next attack roll/); // chassis stands
+    // print's duration idiom stays legal ("until it is destroyed")
+    const { reskinDefects: rd } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(8, null, 'skirmisher'), 8);
+    const ok = JSON.parse(answer({ wildcard: '*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Frightened condition until it is destroyed or the creature dies.' }));
+    expect(rd(scaled, ok, {}).join(' ')).not.toMatch(/dies only at 0/);
+  });
+
+  test('blanket all-damage resistance is mechanical in a trait', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quiet2(() => answer({
+      trait_wildcard: { name: 'Ice Seal', text: 'When the creature takes damage, it gains Resistance to all damage except Thunder until the start of its next turn.' },
+    })));
+    expect((m.sections.Traits ?? []).some((e) => e.name === 'Ice Seal')).toBe(false);
+  });
+
+  test('an action granting a TYPED resistance passes the vet — Resistance is a game term now', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quiet2(() => answer({
+      wildcard: 'The creature hardens its hide, gaining Resistance to Fire damage until the start of its next turn.',
+    })));
+    const e = Object.values(m.sections).flat().find((x) => /Waylay/.test(x.name));
+    expect(e.text).toMatch(/Resistance to Fire damage/); // shipped, not killed for "no game term"
+  });
+
+  test('the bane frame knows "shatter" — only thunder can shatter it', async () => {
+    const m = await generateReskin(
+      { archetype: 'brute', concept: 'an ice bear that reknits; only thunder can shatter it', cr: 10, style: 'regenerator', mechanics: ['regeneration'], energy: 'Cold' },
+      quiet2(() => bruteAnswer(10, 'regenerator')));
+    expect((m.sections.Traits ?? []).find((e) => e.name === 'Regeneration').text)
+      .toMatch(/takes Thunder damage/); // the claim beats the Cold->Fire foil
+  });
+
+  test('engine interiors scale below the seat floor — no 2d6 stomach on a CR 1/2 ooze', async () => {
+    const m = await generateReskin({ archetype: 'brute', concept: 'a hungry ooze', cr: 0.5, style: 'grappler', mechanics: [] },
+      quiet2(() => bruteAnswer(0.5, 'grappler')));
+    const row = (m.sections['Bonus Actions'] ?? []).find((e) => e.rules);
+    const avg = Number(/takes (\d+) \(/.exec(row.text)[1]);
+    expect(avg).toBeLessThanOrEqual(3);
+    expect(row.text).toMatch(/takes 5 damage or more/); // threshold scaled with the floor
+  });
+
+  test('spell redundancy is no longer a repair conversation — the fill site owns it', () => {
+    // (2026-09-01: two repair rounds failed a one-word Heroism swap on the
+    // First Word and shipped it anyway — the drop-and-backfill moved to
+    // the deterministic fill; see the tier-authoring test for the behavior)
+    const { reskinDefects: rd, BRUTE_SPELL_MENU: BM } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(5, null, 'brute'), 5, { mechanics: [] });
+    scaled.spell_menu = BM;
+    scaled.sections.Actions.push({ name: 'Spellcasting', rules: true, text: 'casts {spell_at_will} {spell_daily}' });
+    const base = JSON.parse(bruteAnswer(5));
+    base.type = 'Construct';
+    base.spells = { at_will: ['Magic Weapon', 'Heroism'], daily: ['Stoneskin', 'Blur'] };
+    expect(rd(scaled, base, {}).join(' ')).not.toMatch(/already grants/);
   });
 
   test('the engulf engine wears the body\'s verb — a chain thing cages, never swallows', async () => {
@@ -2096,10 +2698,23 @@ describe('the brute plumbing (2026-08-26): archetype flows loudly end to end', (
 
   test('containment prose passes the muddle guard — engulf wildcards write "inside the creature"', async () => {
     const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quiet2(() => answer({
-      wildcard: '*Strength Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target is drawn inside the creature. While inside the creature, the target is Restrained, and it takes 7 (2d6) Bludgeoning damage at the start of each of its turns.',
+      wildcard: '*Strength Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target is drawn inside the creature. While inside the creature, the target is Restrained, and it takes 7 (2d6) Bludgeoning damage at the start of each of its turns. The target can repeat the save at the end of each of its turns, pulling free on a success.',
     })));
     const e = Object.values(m.sections).flat().find((x) => /Waylay/.test(x.name));
     expect(e.text).toMatch(/inside the/); // shipped, not killed to fallback
+  });
+
+  test('a styled boss draws a legendary seat — the Fused Monarchy class', async () => {
+    // CR 21 + juggernaut used to draw brute-16-juggernaut (non-legendary,
+    // stretched 5 seats): a boss with no Legendary Resistance, no menu,
+    // no nova (2026-09-01). The legendary style seats close it.
+    const m = await generateReskin({ archetype: 'brute', concept: 'the mountain that ate a kingdom', cr: 21, style: 'juggernaut', mechanics: [] },
+      quiet2(() => bruteAnswer(21, 'juggernaut')));
+    expect(m.generation.donor).toBe('brute-17-juggernaut');
+    const legs = m.sections['Legendary Actions'] ?? [];
+    expect(legs.length).toBe(4);
+    expect(Object.values(m.sections).flat().some((e) => /Legendary Resistance/.test(e.name))).toBe(true);
+    expect(Object.values(m.sections).flat().some((e) => /Recharge/.test(e.name))).toBe(true); // the nova came aboard too
   });
 
   test('a claimed engulf pulls the grappler line — no more Entomb-that-does-not', async () => {
@@ -2403,5 +3018,74 @@ describe('probe-smoke pattern fixes (2026-08-26)', () => {
     // card DC 22, best mental derives 20 — organ prints 21 (derived + 1,
     // the lint's own float), never the card's unreachable 22
     expect(sc.text).toMatch(/spell save DC 21/);
+  });
+});
+
+describe('golden seeds (owner + critic nominations, 2026-09-02): the shapes the sprint is FOR, pinned', () => {
+  const quietG = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+  const { renameKeysOf: rkG } = require('../generate.mjs');
+  const shapedAnswer = (archetype, cr, style, over = {}) => {
+    const scaled = scaleDonor(pickDonor(cr, style, archetype), cr, { mechanics: [] });
+    const renames = {};
+    rkG(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name]);
+    return JSON.stringify({
+      name: 'Golden Pin', type: 'Monstrosity', size: 'Large', alignment: 'Unaligned',
+      senses: 'darkvision 60 ft.', languages: 'Common',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Slashing'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Dexterity',
+      wildcard: `*Dexterity Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has the Prone condition until the start of the creature's next turn.`,
+      ...over,
+    });
+  };
+
+  test('the Alms Saint shape: a theft wildcard with a trailing gate lifts the meter into the name', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'a mirror-stepping thief saint', cr: 6, style: 'skulker', mechanics: [] }, quietG((p) => {
+      const scaled = scaleDonor(pickDonor(6, 'skulker', 'skirmisher'), 6, { mechanics: [] });
+      return shapedAnswer('skirmisher', 6, 'skulker', {
+        wildcard: `*Dexterity Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The creature appears beside the target, stealing one non-magical item of its choice, and the target has Disadvantage on its next attack roll before the start of the creature's next turn. (2/Day)`,
+      });
+    }));
+    expect(m.generation.donor).toBe('skirmisher-3-skulker');
+    const e = Object.values(m.sections).flat().find((x) => /\(2\/Day\)/.test(x.name));
+    expect(e).toBeTruthy(); // the gate lives in the NAME
+    expect(e.text).not.toMatch(/\(2\/Day\)|can be used/);
+    expect(m.generation.signature).toBe('custom');
+  });
+
+  test('the Wound-Thing shape: the disarm engine done right ships whole', async () => {
+    const m = await generateReskin({ archetype: 'brute', concept: 'a scar colossus', cr: 20, mechanics: [] }, quietG(() => {
+      const base = JSON.parse(shapedAnswer('brute', 20, null));
+      base.trait_wildcard = { name: 'Grasping Flesh', text: 'A weapon that deals damage to the creature becomes stuck in its flesh (escape DC 14 Strength check to pull it free). The creature can hold up to three weapons this way; when a fourth sticks, the oldest falls at its feet.' };
+      return JSON.stringify(base);
+    }));
+    const t = (m.sections.Traits ?? []).find((e) => e.name === 'Grasping Flesh');
+    expect(t).toBeTruthy();
+    expect(t.text).toMatch(/escape DC 14/);
+    expect(t.text).toMatch(/up to three weapons/);
+  });
+
+  test('the Living Battlefield shape: legendary regenerator with ONE healing system and a priced pull', async () => {
+    const m = await generateReskin({ archetype: 'brute', concept: 'a battlefield that heals', cr: 20, mechanics: ['regeneration'] }, quietG(() => shapedAnswer('brute', 20, 'regenerator', {
+      wildcard: '*Strength Saving Throw*: DC 21, one creature within 30 feet. *Failure:* The target is pulled up to 20 feet toward the creature and has the Grappled condition (escape DC 21).',
+    })));
+    expect(m.generation.donor).toBe('brute-17-regenerator');
+    const heals = Object.values(m.sections).flat().filter((e) => /regains \d+ Hit Points at the start/.test(e.text));
+    expect(heals).toHaveLength(1); // the organ, alone
+    expect(heals[0].name).toBe('Regeneration');
+    expect(Object.values(m.sections).flat().some((e) => /Legendary Resistance/.test(e.name))).toBe(true);
+  });
+
+  test('the Sky-Burial Roc shape: winged legendary carries the dive rider and its menu', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'a god-outliving roc', cr: 18, style: 'winged', mechanics: [] }, quietG(() => shapedAnswer('skirmisher', 18, 'winged')));
+    expect(m.generation.donor).toBe('skirmisher-18-winged');
+    const legs = m.sections['Legendary Actions'] ?? [];
+    expect(legs.length).toBeGreaterThanOrEqual(3);
+    expect(m.generation.signature).toBe('custom');
   });
 });

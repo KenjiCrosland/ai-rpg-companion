@@ -161,6 +161,10 @@ doubled words, circular phrases), you may ALSO provide a "rewrite": the
 minimal replacement for the quoted span that repairs the text. Rules for
 rewrites: change as few words as possible; NEVER change any number, DC,
 damage type, condition name, or game term; never add or remove mechanics.
+The rewrite must BE the replacement text, never a description of the
+edit — to delete the span outright, return "" (the empty string) as the
+rewrite. A rewrite containing editing language ("replace this sentence
+with...") is discarded unapplied.
 A rewrite fixes prose, not rules. Findings from other principles never
 carry a rewrite.
 
@@ -353,15 +357,27 @@ export function verifyAuditFindings(monster, raw) {
     // and the same multiset of numbers on both sides — prose may change,
     // values may not.
     let rewrite = null;
-    if (typeof f.rewrite === 'string' && f.rewrite.trim()
+    if (typeof f.rewrite === 'string'
       && Number(f.principle) === 4
       && entry.text.includes(f.span)
       && f.rewrite.length <= f.span.length * 3 + 40) {
       const nums = (str) => [...String(str).matchAll(/\d+/g)].map((m) => m[0]).sort().join(',');
+      // META-LANGUAGE GUARD (the Huntwind leak, 2026-09-01): the judge
+      // wanted a deletion, the protocol had no way to say it, and "This
+      // replaces the final sentence with nothing, as the reaction economy
+      // already limits it" shipped VERBATIM as rules text on a boss block.
+      // A rewrite must BE the text, never describe the edit; editing
+      // vocabulary in the payload discards the rewrite unapplied.
+      if (/\breplac\w+|\bsentence\b|\breword\w*|\brevis\w+|\bdelet\w+|\bthis text\b|\bthe span\b/i.test(f.rewrite)) {
+        logger.log('audit rewrite meta-language, dropped:', f.entry, f.rewrite);
+      } else if (!f.rewrite.trim()) {
+        // deletion, expressed as an empty rewrite — legal only when the
+        // span carries no numbers (a deletion may not erase values)
+        if (!nums(f.span)) rewrite = '';
       // a rewrite identical to its span is a no-op the judge sometimes
       // emits on a false finding — logged as a "rewrite" that changed
       // nothing (live: Flowing Ash on the Emberwraith)
-      if (nums(f.span) === nums(f.rewrite) && f.rewrite.trim() !== f.span.trim()) rewrite = f.rewrite.trim();
+      } else if (nums(f.span) === nums(f.rewrite) && f.rewrite.trim() !== f.span.trim()) rewrite = f.rewrite.trim();
     }
     // Rename actuator (owner call, 2026-08-05): the judgment layer is the
     // only thing that can tell "Choir Silence that deafens nobody" from a
@@ -395,7 +411,7 @@ export function verifyAuditFindings(monster, raw) {
       severity: 'audit',
       message: `${f.issue}${f.suggestion ? ` — ${f.suggestion}` : ''} (about: "${f.span}")`,
       loc: { section, entry: entry.name },
-      ...(rewrite ? { span: f.span, rewrite } : {}),
+      ...(rewrite != null ? { span: f.span, rewrite } : {}),
       ...(rename ? { rename } : {}),
     });
     if (out.length >= MAX_MERGED_FINDINGS) break;

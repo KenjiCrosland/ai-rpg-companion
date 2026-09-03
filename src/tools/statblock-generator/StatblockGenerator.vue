@@ -1124,7 +1124,7 @@ async function generateStatblockEngine(edition) {
         if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
         if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator'].includes(parsed?.style)) conceptStyle = parsed.style;
         if (Array.isArray(parsed?.mechanics)) {
-          const MECHS = ['thrown-weapon', 'breath', 'engulf', 'grapple', 'gaze', 'aura', 'teleport', 'summon', 'snare'];
+          const MECHS = ['thrown-weapon', 'breath', 'engulf', 'grapple', 'gaze', 'aura', 'teleport', 'summon', 'snare', 'regeneration'];
           conceptMechanics = parsed.mechanics.filter((x) => MECHS.includes(String(x).toLowerCase()));
         }
         if (typeof parsed?.energy === 'string') {
@@ -1264,11 +1264,13 @@ async function generateStatblockEngine(edition) {
     // 2024 skirmisher generation routes here; the slot path remains for
     // all other roles. The old pilot flag is now a KILL SWITCH:
     // localStorage['statblock-reskin-pilot']='0' restores the slot path.
-    // BRUTE PILOT (2026-08-26, donors landed from the n=40 composition
-    // sweep): dev-flag only — localStorage['statblock-reskin-brute']='1'.
+    // BRUTE — DEFAULT-ON (owner, 2026-09-01, after 6 batches / ~30
+    // live-reviewed blocks; pilot opened 2026-08-26). Same kill-switch
+    // semantics as skirmisher: localStorage['statblock-reskin-brute']='0'
+    // restores the slot path.
     if (edition === '2024' && (
       (archetypeName === 'skirmisher' && localStorage.getItem('statblock-reskin-pilot') !== '0')
-      || (archetypeName === 'brute' && localStorage.getItem('statblock-reskin-brute') === '1'))) {
+      || (archetypeName === 'brute' && localStorage.getItem('statblock-reskin-brute') !== '0'))) {
       const { generateReskin } = await import('./reskin/generate.mjs');
       finalMonster = await generateReskin(
         {

@@ -643,6 +643,12 @@ export const DONORS = [
   //     Resistance, Regeneration) are print-standard names, rules:true
   //   - save effects exist only as Recharge novas (breath-shaped)
   // -------------------------------------------------------------------------
+  // SINGLE-ATTACK LOW-CR BRUTES ARE PRINT-CITED, not underbuilt (critic
+  // challenged it 2026-09-01, overruled): the Boar, Giant Boar, Rhino,
+  // and Ogre all swing once; the Gorgon (CR 5) attacks once with Gore
+  // and takes its second swing as Trample on Prone targets. One big hit
+  // + trample IS the charger shape until Multiattack arrives at the
+  // Dragon Turtle tier.
   {
     id: 'brute-2',
     cite: 'composition after Ogre (CR 2) — one colossal hit, no traits',
@@ -705,6 +711,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 10 ft. 45 (9d8 + 5) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +10, range 60/240 ft. 38 (8d8 + 2) {damage_type} damage.' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
     },
@@ -830,6 +837,7 @@ export const DONORS = [
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 10 ft. 35 (7d8 + 4) {damage_type} damage.' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 15, each creature in a 30-foot Cone. *Failure:* 45 (10d8) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
     },
@@ -849,7 +857,7 @@ export const DONORS = [
     sections: {
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +9, reach 10 ft. 27 (4d10 + 5) {damage_type} damage. If the target is a Large or smaller creature and the creature moved 20+ feet straight toward it immediately before the hit, the target takes an extra 12 (2d10) {damage_type} damage and has the Prone condition.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +9, reach 10 ft. 27 (4d10 + 5) {damage_type} damage. If the target is a Large or smaller creature and the creature moved 20+ feet straight toward it immediately before the hit, the target takes an extra 11 (2d10) {damage_type} damage and has the Prone condition.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 16, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -895,6 +903,139 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 58 (13d8) {damage_type} damage.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  // THE LEGENDARY STYLE SEATS (owner, 2026-09-01: "a sub archetype for
+  // every CR" — the skirmisher rule, every style line carries a legendary
+  // top seat, applied to brute after the Fused Monarchy drew a CR-16
+  // non-legendary juggernaut at CR 21). One seat per line at 17, the brute
+  // family's legendary boundary, mirroring skirmisher's one-per-line 18s.
+  // Melee-only lines swap the plain menu's Legendary Ranged Attack for a
+  // style-flavored control option — the third slot stays control-only.
+  {
+    id: 'brute-17-charger',
+    invented: true, // no printed charger boss — the Gorgon line under a giant-king legendary menu
+    legendary: true,
+    style: 'charger',
+    cr: 17, archetypes: ['brute'],
+    ac: 17, ac_offset: -2, hp: 238, hp_scale: 1.1, hp_formula: '25d12 + 75', atk: 12, dc: 19, pb: 6,
+    speed: '50 ft.',
+    stats: { STR: 22, DEX: 10, CON: 18, INT: 5, WIS: 12, CHA: 6 },
+    saves: ['STR', 'CON'], skills: 'Athletics +12, Perception +7',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 42 (8d8 + 6) {damage_type} damage. If the target is a Large or smaller creature and the creature moved 20+ feet straight toward it immediately before the hit, the target takes an extra 18 (4d8) {damage_type} damage and has the Prone condition.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Trample', rules: true, text: '*Dexterity Saving Throw*: DC 19, one creature within 5 feet that has the Prone condition. *Failure:* 22 (4d10) {damage_type} damage. *Success:* Half damage.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Stampede', text: 'The creature moves up to its Speed in a straight line without provoking Opportunity Attacks, and it can move through the spaces of Large or smaller creatures. *Dexterity Saving Throw:* DC 19, each creature whose space it enters. *Failure:* The target is pushed 10 feet out of the creature\'s path.' },
+        { name: 'Legendary Ground Stomp', text: '*Strength Saving Throw*: DC 19, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
+      ],
+    },
+  },
+  {
+    id: 'brute-17-grappler',
+    cite: 'composition after Kraken (CR 23) — the swallow engine at the legendary tier',
+    legendary: true,
+    style: 'grappler',
+    cr: 17, archetypes: ['brute'],
+    ac: 18, ac_offset: -1, hp: 227, hp_scale: 1.05, hp_formula: '22d12 + 84', atk: 12, dc: 19, pb: 6,
+    speed: '40 ft.',
+    stats: { STR: 22, DEX: 8, CON: 20, INT: 4, WIS: 10, CHA: 4 },
+    saves: ['STR', 'CON'], skills: 'Athletics +12, Perception +6',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+      ],
+      Actions: [
+        // the or-form + ranged twin is the Kraken amendment (critic +
+        // owner, 2026-09-01): a legendary grappler must threaten the
+        // party members its engine is not currently eating — the Kraken
+        // (CR 23) adds its storm on top of its swallow; the Purple Worm
+        // shape (CR 15, melee-only, NO nova — grapplers carry no cone by
+        // print's own shape, the swallow IS the payoff) holds below the
+        // legendary boundary. Do not re-file the missing nova as a gap.
+        { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 60 (12d8 + 6) {damage_type} damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 19). While Grappled, the target has the Restrained condition.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +12, range 60/240 ft. 49 (11d8) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Swallow', rules: true, engulf_engine: true, text: 'The creature swallows one Large or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 21 (6d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 40 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 10 feet of movement.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Drag', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, carrying each creature it is grappling along with it.' },
+        { name: 'Legendary Ground Stomp', text: '*Strength Saving Throw*: DC 19, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
+      ],
+    },
+  },
+  {
+    id: 'brute-17-juggernaut',
+    cite: 'composition after Tarrasque (CR 30) — the juggernaut shapes under a legendary menu',
+    legendary: true,
+    style: 'juggernaut',
+    cr: 17, archetypes: ['brute'],
+    ac: 19, ac_offset: 0, hp: 227, hp_scale: 1.05, hp_formula: '22d12 + 84', atk: 12, dc: 19, pb: 6,
+    speed: '30 ft.',
+    stats: { STR: 24, DEX: 8, CON: 20, INT: 6, WIS: 10, CHA: 4 },
+    saves: ['STR', 'CON'], skills: 'Athletics +13, Perception +6',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Immutable Form', rules: true, text: 'The creature is immune to any spell or effect that would alter its form.' },
+        { name: 'Siege Monster', rules: true, text: 'The creature deals double damage to objects and structures.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 58 (13d8) {damage_type} damage.' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 19, each creature in a 30-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Wrecking Path', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks. During this movement, it can move through Large or smaller objects and structures, destroying them.' },
+        { name: 'Legendary Ground Stomp', text: '*Strength Saving Throw*: DC 19, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
+      ],
+    },
+  },
+  {
+    id: 'brute-17-regenerator',
+    invented: true, // no printed regenerating boss — Troll composition under a legendary menu
+    legendary: true,
+    style: 'regenerator',
+    cr: 17, archetypes: ['brute'],
+    ac: 17, ac_offset: -2, hp: 238, hp_scale: 1.1, hp_formula: '25d12 + 75', atk: 12, dc: 19, pb: 6,
+    speed: '30 ft.',
+    stats: { STR: 22, DEX: 12, CON: 20, INT: 6, WIS: 10, CHA: 8 },
+    saves: ['STR', 'CON'], skills: 'Athletics +12, Perception +6',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Regeneration', rules: true, text: 'The creature regains 20 Hit Points at the start of each of its turns. If the creature takes Acid or Fire damage, this trait doesn\'t function on the creature\'s next turn. The creature dies only if it starts its turn with 0 Hit Points and doesn\'t regenerate.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 46 (9d8 + 6) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Baleful Glare', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+        { name: 'Legendary Ground Stomp', text: '*Strength Saving Throw*: DC 19, each creature within 10 feet of the creature. *Failure:* The target has the Prone condition.' },
       ],
     },
   },
