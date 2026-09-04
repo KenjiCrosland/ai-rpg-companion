@@ -307,6 +307,12 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
   };
 
   // --- Context-free consistency rules -------------------------------------
+  // the field-disjunction leak (the Unspoken's "telepathy 60 ft. (but
+  // never initiates) or None", 2026-09-02 — the field picker printed both
+  // candidates with an "or"; the alignment-lore leak's sibling)
+  if (/(?:^|\s)or None\b/i.test(String(monster.languages ?? ''))) {
+    push('field-disjunction', 'reject', `The languages line prints both candidates ("${monster.languages}") — pick one; a field never shows its deliberation`);
+  }
   if (monster.hp != null && monster.hp_formula != null) {
     const avg = avgDice(monster.hp_formula);
     if (avg === null) {
@@ -911,6 +917,19 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       const lcArea = LOWERCASE_AREA_RE.exec(entry.text);
       if (lcArea) {
         push('area-term-caps', 'reject', `Lowercase area shape "${lcArea[0]}" in ${where} — 2024 capitalizes shapes ("15-foot Cone")`, undefined, loc);
+      }
+      // THE DICE BELT (2026-09-02, the Last Dawn Knight's flat "58 Radiant
+      // damage" — second sighting of the exact number, which is the
+      // wildcard prompt's own damage cap echoed back as prose). Print
+      // always writes dice with the average; a flat figure also evades
+      // the per-hit and area caps, which key on the "N (XdY)" format.
+      // Lint-side so it catches the class wherever the dice vanish.
+      // exemption: print's ONE flat-damage shape is the self-inflicted
+      // weakness ("the vampire takes 20 Acid damage if it ends its turn
+      // in running water" — Vampire/Spawn, the corpus's only 4 sightings)
+      const flatDmg = /\b\d{2,3} (?:Acid|Bludgeoning|Cold|Fire|Force|Lightning|Necrotic|Piercing|Poison|Psychic|Radiant|Slashing|Thunder) damage(?! if it (?:starts|ends) its turn)/.exec(entry.text);
+      if (flatDmg) {
+        push('diceless-damage', 'reject', `Flat "${flatDmg[0]}" in ${where} — damage prints its dice ("58 (13d8+3) Radiant damage"); a diceless figure evades the damage caps`, undefined, loc);
       }
       // "30-foot-radius circle" — not a 5e area term (the one corpus "circle"
       // is the *Magic Circle* spell); the official shape is a Sphere.

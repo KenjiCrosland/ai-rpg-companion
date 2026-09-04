@@ -1115,6 +1115,211 @@ export const DONORS = [
       ],
     },
   },
+  // ===== THE CASTER FAMILY (corpus sweep 2026-09-02, owner + critic
+  // counter-offer ratified: ONE chassis family; the Artillery and
+  // Controller menu entries are style PRIORS over this pool, not
+  // separate archetypes — neither exists as a body plan in the 2024 SRD).
+  // Family laws, measured (n=49 Spellcasting blocks): damage lives in
+  // ATTACK ROWS (49/49 — never the spell list); the signature grammar is
+  // the HYBRID row ("Melee or Ranged Attack Roll: +X, reach 5 ft. or
+  // range 120 ft."); multiattack scales like a martial's (Mage x3,
+  // Archmage x4); at-will damage spells never exceed sustained row
+  // output; the nova is a gated save-damage EMANATION, not a spell;
+  // the defensive trade is the INVERSE of brute's — AC -1..-2, HP
+  // 0.8-0.9x, DPR at-to-above card (glass cannon). Casters keep their
+  // print reaction (the Mage's Protective Magic shape) — the no-reaction
+  // law is brute's, never this family's.
+  // Lines: plain = burst-mage (Artillery's prior), 'warpriest' = the
+  // armored twin-attack shape, 'binder' = the or-form ray/debuff shape
+  // (Controller's prior).
+  {
+    id: 'caster-6',
+    cite: 'composition after Mage (CR 6) — three Arcane Bursts and the utility list',
+    cr: 6, archetypes: ['caster'],
+    ac: 15, ac_offset: -1, hp: 84, hp_scale: 0.8, hp_formula: '13d8 + 26', atk: 7, dc: 14, pb: 3,
+    speed: '30 ft.',
+    stats: { STR: 9, DEX: 14, CON: 12, INT: 17, WIS: 12, CHA: 11 },
+    saves: ['INT', 'WIS'], skills: 'Arcana +6, Perception +4',
+    sections: {
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three Hybrid Attack attacks.' },
+        { name: 'Hybrid Attack', text: '*Melee or Ranged Attack Roll:* +7, reach 5 ft. or range 120 ft. 16 (3d8 + 3) {damage_type} damage.' },
+        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 14):\n\n- **At Will:** {spell_at_will}\n- **1/Day Each:** {spell_daily}' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 14, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      Reactions: [
+        { name: 'Protective Ward (3/Day)', rules: true, text: '*Trigger:* The creature is hit by an attack roll. *Response:* The creature adds 3 to its AC against that attack, possibly causing it to miss.' },
+      ],
+    },
+  },
+  {
+    id: 'caster-12',
+    cite: 'composition after Archmage (CR 12) — four bursts, DPR above the card, the glass cannon',
+    cr: 12, archetypes: ['caster'],
+    ac: 17, ac_offset: -1, hp: 166, hp_scale: 0.85, hp_formula: '27d8 + 44', atk: 10, dc: 17, pb: 4,
+    speed: '30 ft.',
+    stats: { STR: 10, DEX: 14, CON: 14, INT: 20, WIS: 15, CHA: 16 },
+    saves: ['INT', 'WIS'], skills: 'Arcana +9, Perception +6',
+    sections: {
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes four Hybrid Attack attacks.' },
+        { name: 'Hybrid Attack', text: '*Melee or Ranged Attack Roll:* +10, reach 5 ft. or range 150 ft. 27 (4d10 + 5) {damage_type} damage.' },
+        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 17):\n\n- **At Will:** {spell_at_will}\n- **1/Day Each:** {spell_daily}' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      Reactions: [
+        { name: 'Protective Ward (3/Day)', rules: true, text: '*Trigger:* The creature is hit by an attack roll. *Response:* The creature adds 3 to its AC against that attack, possibly causing it to miss.' },
+      ],
+    },
+  },
+  {
+    id: 'caster-21',
+    cite: 'composition after Lich (CR 21) — the printed legendary caster boss: bursts, a touch, the emanation',
+    legendary: true,
+    cr: 21, archetypes: ['caster'],
+    ac: 20, ac_offset: 0, hp: 314, hp_scale: 0.86, hp_formula: '51d8 + 85', atk: 14, dc: 21, pb: 7,
+    speed: '30 ft.',
+    stats: { STR: 11, DEX: 16, CON: 14, INT: 24, WIS: 17, CHA: 16 },
+    saves: ['INT', 'WIS', 'CON'], skills: 'Arcana +14, Perception +10',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three attacks, using Hybrid Attack or Melee Attack in any combination.' },
+        { name: 'Hybrid Attack', text: '*Melee or Ranged Attack Roll:* +14, reach 5 ft. or range 120 ft. 42 (6d12 + 3) {damage_type} damage.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +14, reach 5 ft. 42 (12d6) {damage_type} damage, and the target has the {condition_minor} condition until the start of the creature\'s next turn.' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 21, each creature in a 20-foot Emanation originating from the creature. *Failure:* 63 (14d8) {damage_type} damage. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 21):\n\n- **At Will:** {spell_at_will}\n- **1/Day Each:** {spell_daily}' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 21, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      Reactions: [
+        { name: 'Protective Ward (3/Day)', rules: true, text: '*Trigger:* The creature is hit by an attack roll. *Response:* The creature adds 3 to its AC against that attack, possibly causing it to miss.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Blast', text: 'The creature makes one Hybrid Attack attack.' },
+        { name: 'Legendary Shift', text: 'The creature teleports up to 30 feet to an unoccupied space it can see. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Dread', text: '*Wisdom Saving Throw*: DC 21, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'caster-2-warpriest',
+    cite: 'composition after Priest (CR 2) — mace-and-flame twins with the energy rider',
+    style: 'warpriest',
+    cr: 2, archetypes: ['caster'],
+    ac: 13, ac_offset: -2, hp: 38, hp_scale: 0.85, hp_formula: '7d8 + 7', atk: 5, dc: 12, pb: 2,
+    speed: '30 ft.',
+    stats: { STR: 12, DEX: 10, CON: 12, INT: 11, WIS: 16, CHA: 13 },
+    saves: ['WIS'], skills: 'Perception +5, Religion +4',
+    sections: {
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 8 (1d10 + 3) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +5, range 60 ft. 7 (2d6) {damage_type} damage.' },
+        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 12):\n\n- **At Will:** {spell_at_will}\n- **1/Day Each:** {spell_daily}' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'caster-10-warpriest',
+    cite: 'composition after Deva (CR 10) — two radiant-rider strikes on an armored chassis',
+    style: 'warpriest',
+    cr: 10, archetypes: ['caster'],
+    ac: 16, ac_offset: -1, hp: 140, hp_scale: 0.85, hp_formula: '24d8 + 32', atk: 9, dc: 16, pb: 4,
+    speed: '30 ft.',
+    stats: { STR: 16, DEX: 12, CON: 13, INT: 12, WIS: 20, CHA: 16 },
+    saves: ['WIS', 'CHA'], skills: 'Perception +8, Religion +6',
+    sections: {
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +9, reach 5 ft. 37 (6d10 + 4) {damage_type} damage.' },
+        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 16):\n\n- **At Will:** {spell_at_will}\n- **1/Day Each:** {spell_daily}' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 16, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'caster-21-warpriest',
+    cite: 'composition after Solar (CR 21) — the returning hybrid blade under a legendary menu',
+    legendary: true,
+    style: 'warpriest',
+    cr: 21, archetypes: ['caster'],
+    ac: 20, ac_offset: 0, hp: 299, hp_scale: 0.82, hp_formula: '46d8 + 92', atk: 14, dc: 21, pb: 7,
+    speed: '40 ft.',
+    stats: { STR: 22, DEX: 16, CON: 15, INT: 16, WIS: 24, CHA: 20 },
+    saves: ['WIS', 'CHA', 'CON'], skills: 'Perception +12, Religion +10',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Hybrid Attack attacks.' },
+        { name: 'Hybrid Attack', text: '*Melee or Ranged Attack Roll:* +14, reach 5 ft. or range 120 ft. 58 (9d10 + 9) {damage_type} damage. *Hit or Miss:* The weapon magically returns to the creature\'s hand.' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 21, each creature in a 20-foot Emanation originating from the creature. *Failure:* 63 (14d8) {damage_type} damage. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 21):\n\n- **At Will:** {spell_at_will}\n- **1/Day Each:** {spell_daily}' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 21, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Strike', text: 'The creature makes one Hybrid Attack attack.' },
+        { name: 'Legendary Step', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
+        { name: 'Legendary Rebuke', text: '*Wisdom Saving Throw*: DC 21, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'caster-8-binder',
+    cite: 'composition after Spirit Naga (CR 8) — the or-form bite-and-ray with the debuff single',
+    style: 'binder',
+    cr: 8, archetypes: ['caster'],
+    ac: 16, ac_offset: -1, hp: 121, hp_scale: 0.9, hp_formula: '18d10 + 22', atk: 8, dc: 15, pb: 3,
+    speed: '30 ft.',
+    stats: { STR: 14, DEX: 15, CON: 13, INT: 14, WIS: 15, CHA: 18 },
+    saves: ['CHA', 'WIS'], skills: 'Perception +5, Deception +7',
+    sections: {
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 20 (3d10 + 4) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +8, range 60 ft. 17 (5d6) {damage_type} damage.' },
+        { name: 'Debuff Ray', text: '*Constitution Saving Throw*: DC 15, one creature within 60 feet. *Failure:* 18 (4d8) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn.' },
+        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 15):\n\n- **At Will:** {spell_at_will}\n- **1/Day Each:** {spell_daily}' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'caster-17-binder',
+    cite: 'composition after Sphinx of Valor (CR 17) — the roar-nova controller under a legendary menu',
+    legendary: true,
+    style: 'binder',
+    cr: 17, archetypes: ['caster'],
+    ac: 18, ac_offset: -1, hp: 194, hp_scale: 0.9, hp_formula: '31d10 + 24', atk: 12, dc: 19, pb: 6,
+    speed: '40 ft.',
+    stats: { STR: 18, DEX: 15, CON: 14, INT: 18, WIS: 22, CHA: 18 },
+    saves: ['WIS', 'INT', 'CON'], skills: 'Perception +12, Arcana +10',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 5 ft. 47 (7d12 + 2) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +12, range 60 ft. 40 (9d8) {damage_type} damage.' },
+        { name: 'Area Nova', text: '*Wisdom Saving Throw*: DC 19, each enemy in a 30-foot Emanation originating from the creature. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 19):\n\n- **At Will:** {spell_at_will}\n- **1/Day Each:** {spell_daily}' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Strike', text: 'The creature makes one Melee Attack attack.' },
+        { name: 'Legendary Prowl', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
+        { name: 'Legendary Glare', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+      ],
+    },
+  },
   {
     id: 'brute-5-regenerator',
     cite: 'composition after Troll (CR 5) — three claws and the off-switch',

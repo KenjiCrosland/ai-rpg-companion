@@ -20,7 +20,12 @@ export function pickDonor(cr, style = null, archetype) {
   return (pool.length ? from(pool) : from(fallback)) ?? from(fallback);
 }
 
-const ATTACK_RE = /(\+\d+)(, reach [^.]+|, range [^.]+)? ?\.? (\d+) \((\d+d\d+(?:\s*\+\s*\d+)?)\) ([\w{}]+) damage/;
+// group 2's first alternative is the caster family's HYBRID row (2024's
+// signature caster grammar, corpus sweep 2026-09-02: "Melee or Ranged
+// Attack Roll: +9, reach 5 ft. or range 150 ft." — Mage/Archmage/Lich/
+// Solar); it must swallow both range clauses' periods or the damage
+// number never parses and the row never rescales.
+const ATTACK_RE = /(\+\d+)(, reach \d+ ft\. or range [\d/]+ ft\.|, reach [^.]+|, range [^.]+)? ?\.? (\d+) \((\d+d\d+(?:\s*\+\s*\d+)?)\) ([\w{}]+) damage/;
 
 export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null } = {}) {
   const card = cardBudget(cr, { legendary: !!legendary });
@@ -116,8 +121,14 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   // float +-1 off-stat, and attack+DC cannot both cohere to one stat.
   {
     const targetMod = scaled.atk - scaled.pb;
-    const striker = scaled.stats.DEX >= scaled.stats.STR ? 'DEX' : 'STR';
+    // casters strike with the MIND (corpus sweep 2026-09-02: Archmage +9
+    // = INT 5 + PB 4; raising DEX instead ships a DEX-20 wizard)
+    const isCaster = (donor.archetypes ?? []).includes('caster');
+    const striker = isCaster
+      ? ['INT', 'WIS', 'CHA'].sort((a, b) => scaled.stats[b] - scaled.stats[a])[0]
+      : (scaled.stats.DEX >= scaled.stats.STR ? 'DEX' : 'STR');
     if (Math.floor((scaled.stats[striker] - 10) / 2) < targetMod) scaled.stats[striker] = 10 + targetMod * 2;
+    scaled.striker_stat = striker;
     // skills re-derive from the FINAL stats so Stealth/Perception match
     // what a reader computes (donor skill strings are seat-authored)
     const mod = (k) => Math.floor((scaled.stats[k] - 10) / 2);
@@ -131,8 +142,8 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   // count and nova-to-sustained ratio.
   const rows = Object.entries(scaled.sections).flatMap(([sec, es]) => es.map((e) => ({ sec, e })));
   const multi = rows.find((r) => r.e.name === 'Multiattack');
-  const attacks = multi ? Number(/makes (\w+)/.exec(multi.e.text)[1].replace('two', 2).replace('three', 3)) : 1;
-  const legendaryStrikes = rows.filter((r) => r.sec === 'Legendary Actions' && /makes one (Melee Attack|Ranged Attack)/.test(r.e.text)).length;
+  const attacks = multi ? Number(/makes (\w+)/.exec(multi.e.text)[1].replace('two', 2).replace('three', 3).replace('four', 4)) : 1;
+  const legendaryStrikes = rows.filter((r) => r.sec === 'Legendary Actions' && /makes one (Melee Attack|Ranged Attack|Hybrid Attack)/.test(r.e.text)).length;
   const novaRows = rows.filter((r) => r.e.gate);
   // iterate per-hit until in band (coarse then fine — the dice snap anyway)
   let perHit = Math.max(4, Math.round(card.dpr / (attacks + legendaryStrikes + 1)));
@@ -160,9 +171,14 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   }
   const dexMod = Math.floor((scaled.stats.DEX - 10) / 2);
   const strMod = Math.floor((scaled.stats.STR - 10) / 2);
+  const strikerMod = Math.floor((scaled.stats[scaled.striker_stat ?? 'STR'] - 10) / 2);
+  const isCasterDonor = (donor.archetypes ?? []).includes('caster');
   for (const { e } of rows) {
     if (!ATTACK_RE.test(e.text)) continue;
-    const mod = /Ranged/.test(e.text) || /Melee/.test(e.text) ? Math.max(dexMod, strMod) : dexMod;
+    // caster rows carry the mental mod as their flat bonus (Arcane Burst
+    // 4d10 + 5 on INT 20 — print's stat coherence for the family)
+    const mod = isCasterDonor ? strikerMod
+      : /Ranged/.test(e.text) || /Melee/.test(e.text) ? Math.max(dexMod, strMod) : dexMod;
     // the dominated-twin price (batch four): a budget-identical ranged
     // option is strictly safer than the melee it mirrors, so the ranged
     // row pays ~15% (print's own premium: Frost Giant axe 28 vs bow 24)
@@ -198,6 +214,16 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
     // the wildcard SLOT's chassis text is the verified fallback — it must
     // carry the scaled DC too (live: a CR 20 shipped its donor's DC 20)
     if (!e.gate) e.text = e.text.replace(/DC \d+/g, `DC ${card.dc}`);
+    // UNGATED SAVE-DAMAGE ROWS RESCALE TOO (the Deacon, 2026-09-02: the
+    // binder's Debuff Ray shipped its authored CR 8 dice — 18 (4d8) —
+    // at CR 2 AND CR 11; the scaler only re-diced attack rows and gated
+    // rows, and no earlier family had a damage-bearing ungated save row).
+    // Budget: ~0.9x per-hit, print's own naga ratio (Poisonous Spittle
+    // vs Bite). Rules rows (Trample, engines) keep their authored curves.
+    if (!e.gate && !e.rules && !ATTACK_RE.test(e.text) && /Saving Throw/.test(e.text) && /\d+ \(\d+d\d+\)/.test(e.text)) {
+      const { avg, dice } = saveDamageDiceFor(Math.max(3, Math.round(perHit * 0.9)));
+      e.text = e.text.replace(/\d+ \(\d+d\d+\) ([\w{}]+) damage/, `${avg} (${dice}) $1 damage`);
+    }
     if (e.gate) {
       const { avg, dice } = saveDamageDiceFor(novaAvgFor(perHit));
       e.text = e.text.replace(/DC \d+/g, `DC ${card.dc}`)

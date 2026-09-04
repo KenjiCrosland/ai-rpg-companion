@@ -34,11 +34,13 @@ describe('authored donors obey the card', () => {
         // no Multiattack = the print low-CR brute shape (Ogre, Rhino): one hit
         const ma = rows.find((r) => r.name === 'Multiattack');
         const attacks = ma ? Number(/makes (\w+)/.exec(ma.text)[1]
-          .replace('two', 2).replace('three', 3)) : 1;
-        const perHit = avgOf(rows.find((r) => r.name === 'Melee Attack').text);
+          .replace('two', 2).replace('three', 3).replace('four', 4)) : 1;
+        // casters swing the HYBRID row (2024's caster grammar, sweep 2026-09-02)
+        const primary = rows.find((r) => r.name === 'Hybrid Attack') ?? rows.find((r) => r.name === 'Melee Attack');
+        const perHit = avgOf(primary.text);
         let sustained = attacks * perHit;
         for (const r of rows.filter((x) => x.sec === 'Legendary Actions' && !x.rules)) {
-          if (/one Melee Attack/.test(r.text)) sustained += perHit;
+          if (/one (?:Melee Attack|Hybrid Attack)/.test(r.text)) sustained += perHit;
           if (/makes one Ranged Attack/.test(r.text)) sustained += avgOf(rows.find((x) => x.name === 'Ranged Attack').text);
         }
         const novas = rows.filter((r) => r.gate).map((r) => ({ avg: avgOf(r.text), gate: r.gate }));
@@ -48,7 +50,7 @@ describe('authored donors obey the card', () => {
       });
 
       test('print shapes: melee floor, one Recharge, unique names, a wildcard slot', () => {
-        if (d.cr >= 5) expect(rows.some((r) => /Melee Attack Roll/.test(r.text))).toBe(true);
+        if (d.cr >= 5) expect(rows.some((r) => /Melee (?:or Ranged )?Attack Roll/.test(r.text))).toBe(true);
         expect(rows.filter((r) => /Recharge/.test(r.gate ?? '')).length).toBeLessThanOrEqual(1);
         const names = rows.map((r) => r.name);
         expect(new Set(names).size).toBe(names.length);
@@ -82,6 +84,26 @@ describe('authored donors obey the card', () => {
           if ((d.cr >= 5 && !d.style) || (d.cr >= 9 && d.style === 'juggernaut')) {
             expect(rows.find((r) => r.name === 'Melee Attack').text).toMatch(/reach 10 ft/);
           }
+        });
+      }
+
+      if (d.archetypes.includes('caster')) {
+        test('caster shape (corpus sweep 2026-09-02): glass cannon, spell row aboard, mind-struck', () => {
+          // the INVERSE trade from brute: AC under the card, HP 0.8-0.9x
+          expect(d.ac_offset).toBeLessThanOrEqual(0);
+          expect(d.hp_scale).toBeLessThan(1);
+          expect(d.hp_scale).toBeGreaterThanOrEqual(0.75);
+          // the Spellcasting row is CHASSIS (rules-true, template-fed) —
+          // the checkbox organ must never double it
+          const sc = rows.filter((r) => r.name === 'Spellcasting');
+          expect(sc).toHaveLength(1);
+          expect(sc[0].rules).toBe(true);
+          expect(sc[0].text).toMatch(/\{spell_at_will\}/);
+          // the plain (burst) line carries the family's signature hybrid row
+          if (!d.style) expect(rows.some((r) => /Melee or Ranged Attack Roll/.test(r.text))).toBe(true);
+          // casters keep their print reaction where authored (Mage's
+          // Protective Magic shape) — the no-reaction law is brute's
+          expect(rows.some((r) => r.sec === 'Reactions' && !/Trigger/.test(r.text))).toBe(false);
         });
       }
 
@@ -144,9 +166,22 @@ describe('the mounted template line: full compositions, shape-frames as authorin
     const { DONORS: D } = require('../donors.mjs');
     const brutes = D.filter((d) => (d.archetypes ?? []).includes('brute'));
     expect(brutes.length).toBe(21);
+    // the caster family (corpus sweep 2026-09-02): one chassis pool for
+    // both the Artillery and Controller menu entries (style PRIORS)
+    const casters = D.filter((d) => (d.archetypes ?? []).includes('caster'));
+    expect(casters.length).toBe(8);
+    expect(pdm(6, null, 'caster').id).toBe('caster-6');
+    expect(pdm(3, null, 'caster').id).toBe('caster-6'); // below the floor -> lowest seat
+    expect(pdm(15, null, 'caster').id).toBe('caster-12');
+    expect(pdm(24, null, 'caster').id).toBe('caster-21'); // the Lich seat — a CITED legendary caster boss
+    expect(pdm(5, 'warpriest', 'caster').id).toBe('caster-2-warpriest');
+    expect(pdm(21, 'warpriest', 'caster').id).toBe('caster-21-warpriest');
+    expect(pdm(10, 'binder', 'caster').id).toBe('caster-8-binder');
+    expect(pdm(20, 'binder', 'caster').id).toBe('caster-17-binder');
+    expect(pdm(8, 'skulker', 'caster').id).toBe('caster-6'); // no such line -> plain, never cross-family
     // the skirmisher rule holds family-wide (owner, 2026-09-01): every
     // style line tops out in a legendary seat
-    for (const arch of ['skirmisher', 'brute']) {
+    for (const arch of ['skirmisher', 'brute', 'caster']) {
       const fam = D.filter((d) => (d.archetypes ?? []).includes(arch));
       for (const style of new Set(fam.map((d) => d.style).filter(Boolean))) {
         const line = fam.filter((d) => d.style === style).sort((a, b) => b.cr - a.cr);

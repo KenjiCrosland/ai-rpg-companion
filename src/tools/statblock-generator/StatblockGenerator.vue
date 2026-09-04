@@ -1122,7 +1122,7 @@ async function generateStatblockEngine(edition) {
         if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
         if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
         if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
-        if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator'].includes(parsed?.style)) conceptStyle = parsed.style;
+        if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator', 'warpriest', 'binder'].includes(parsed?.style)) conceptStyle = parsed.style;
         if (Array.isArray(parsed?.mechanics)) {
           const MECHS = ['thrown-weapon', 'breath', 'engulf', 'grapple', 'gaze', 'aura', 'teleport', 'summon', 'snare', 'regeneration'];
           conceptMechanics = parsed.mechanics.filter((x) => MECHS.includes(String(x).toLowerCase()));
@@ -1165,6 +1165,9 @@ async function generateStatblockEngine(edition) {
         }
         logger.log('[concept] resolve:', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
           + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
+          // style logged since 2026-09-02: two smoke runs were unreadable
+          // on prior-vs-claim without it — the ratio file needs this line
+          + ` style=${conceptStyle ?? '—'}`
           + ` energy=${conceptEnergy ?? '—'} mix=${conceptMix ?? '—'}`
           + `${conceptIdentity ? ' identity=✓' : ''}${conceptLore ? ' lore=✓' : ''}`);
         logger.log('[concept] name:', conceptProvidedName ? `provided "${conceptProvidedName}"` : 'not provided — the input describes, the generator names it');
@@ -1210,7 +1213,7 @@ async function generateStatblockEngine(edition) {
         if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
         if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
         if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
-        if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator'].includes(parsed?.style)) conceptStyle = parsed.style;
+        if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator', 'warpriest', 'binder'].includes(parsed?.style)) conceptStyle = parsed.style;
         // blank-path parity (owner spotted the gap, 2026-08-26): the seed
         // synthesis now returns signature_elements too — without them the
         // reskin's seat machinery ran blind on every blank roll
@@ -1268,13 +1271,23 @@ async function generateStatblockEngine(edition) {
     // live-reviewed blocks; pilot opened 2026-08-26). Same kill-switch
     // semantics as skirmisher: localStorage['statblock-reskin-brute']='0'
     // restores the slot path.
+    // CASTER (2026-09-02, corpus sweep + critic counter-offer ratified):
+    // the Artillery and Controller menu entries are style PRIORS over ONE
+    // caster donor family — Artillery pins the burst prior (plain line),
+    // Controller pins 'binder'. A concept-claimed style overrides the
+    // prior (the no-force ruling). Kill switch:
+    // localStorage['statblock-reskin-caster']='0' restores the slot path.
+    const isCasterRole = archetypeName === 'artillery' || archetypeName === 'controller';
     if (edition === '2024' && (
       (archetypeName === 'skirmisher' && localStorage.getItem('statblock-reskin-pilot') !== '0')
-      || (archetypeName === 'brute' && localStorage.getItem('statblock-reskin-brute') !== '0'))) {
+      || (archetypeName === 'brute' && localStorage.getItem('statblock-reskin-brute') !== '0')
+      || (isCasterRole && localStorage.getItem('statblock-reskin-caster') !== '0'))) {
       const { generateReskin } = await import('./reskin/generate.mjs');
       finalMonster = await generateReskin(
         {
-          archetype: archetypeName,
+          archetype: isCasterRole ? 'caster' : archetypeName,
+          menuRole: isCasterRole ? archetypeName : null,
+          stylePrior: archetypeName === 'controller' ? 'binder' : null,
           concept, cr, onProgress: onGenerationProgress,
           fixedName: conceptProvidedName,
           style: conceptStyle,
