@@ -1122,7 +1122,7 @@ async function generateStatblockEngine(edition) {
         if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
         if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
         if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
-        if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator', 'warpriest', 'binder'].includes(parsed?.style)) conceptStyle = parsed.style;
+        if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator', 'warpriest', 'binder', 'phantom', 'trap'].includes(parsed?.style)) conceptStyle = parsed.style;
         if (Array.isArray(parsed?.mechanics)) {
           const MECHS = ['thrown-weapon', 'breath', 'engulf', 'grapple', 'gaze', 'aura', 'teleport', 'summon', 'snare', 'regeneration'];
           conceptMechanics = parsed.mechanics.filter((x) => MECHS.includes(String(x).toLowerCase()));
@@ -1213,7 +1213,7 @@ async function generateStatblockEngine(edition) {
         if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
         if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
         if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
-        if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator', 'warpriest', 'binder'].includes(parsed?.style)) conceptStyle = parsed.style;
+        if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator', 'warpriest', 'binder', 'phantom', 'trap'].includes(parsed?.style)) conceptStyle = parsed.style;
         // blank-path parity (owner spotted the gap, 2026-08-26): the seed
         // synthesis now returns signature_elements too — without them the
         // reskin's seat machinery ran blind on every blank roll
@@ -1277,10 +1277,15 @@ async function generateStatblockEngine(edition) {
     // Controller pins 'binder'. A concept-claimed style overrides the
     // prior (the no-force ruling). Kill switch:
     // localStorage['statblock-reskin-caster']='0' restores the slot path.
+    // LURKER (2026-09-04, corpus sweep n~22): under-card defenses paid by
+    // tech, the ambush attack-roll idiom, the conditioned hide-cycle.
+    // Three lines: plain=stalker, 'phantom', 'trap'. Kill switch:
+    // localStorage['statblock-reskin-lurker']='0' restores the slot path.
     const isCasterRole = archetypeName === 'artillery' || archetypeName === 'controller';
     if (edition === '2024' && (
       (archetypeName === 'skirmisher' && localStorage.getItem('statblock-reskin-pilot') !== '0')
       || (archetypeName === 'brute' && localStorage.getItem('statblock-reskin-brute') !== '0')
+      || (archetypeName === 'lurker' && localStorage.getItem('statblock-reskin-lurker') !== '0')
       || (isCasterRole && localStorage.getItem('statblock-reskin-caster') !== '0'))) {
       const { generateReskin } = await import('./reskin/generate.mjs');
       finalMonster = await generateReskin(
@@ -1294,6 +1299,10 @@ async function generateStatblockEngine(edition) {
           signatureElements: conceptElements ?? [],
           mind: conceptMind,
           movement: conceptMovement ?? [],
+          // the resolve's creature_type rides along — without it the
+          // reskin call re-picks and defaults to Monstrosity (4 of 5
+          // first-lurker-smoke blocks drifted, 2026-09-04)
+          resolvedType: resolvedType ?? null,
           energy: userConcept ? conceptEnergy : rolledEnergy,
           mix: userConcept ? conceptMix : rolledMix,
           caster: caster.value,

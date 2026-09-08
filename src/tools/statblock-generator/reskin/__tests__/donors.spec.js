@@ -107,6 +107,53 @@ describe('authored donors obey the card', () => {
         });
       }
 
+      if (d.archetypes.includes('lurker')) {
+        test('lurker shape (corpus sweep 2026-09-04): under-card defenses, ambush grammar, conditioned hide', () => {
+          // the family signature: defenses UNDER the card, paid by tech
+          // (Incorporeal, disguise, attach) — except the trap line's
+          // armored stillness (the Roper runs AC +4 at near-card HP)
+          if (d.style !== 'trap') {
+            expect(d.ac_offset).toBeLessThanOrEqual(-1);
+            expect(d.hp_scale).toBeLessThanOrEqual(0.8);
+          }
+          // every lurker hides: Stealth on the sheet
+          expect(d.skills).toMatch(/Stealth \+\d+/);
+          // the phantom line: native hover flight, the incorporeal cost
+          // clause, and the LIGHT BANE (the family's foil)
+          if (d.style === 'phantom') {
+            expect(d.speed).toMatch(/Fly \d+ ft\. \(hover\)/);
+            expect(rows.some((r) => /takes 5 \(1d10\) Force damage if it ends its turn inside/.test(r.text))).toBe(true);
+            expect(rows.some((r) => /[Ss]unlight/.test(r.name) || /[Ss]unlight/.test(r.text))).toBe(true);
+            expect(d.hp_scale).toBeLessThan(0.9); // the deep-scale flight rule keys on this
+            // print pairs the discount WITH the header suite (Specter/
+            // Wraith/Ghost, 2026-09-05) — the immunities are chassis
+            // data, never a wildcard's to grant
+            expect(d.defense_suite.conditions).toEqual(expect.arrayContaining(['Grappled', 'Prone', 'Restrained']));
+            expect(d.defense_suite.resist).toEqual(expect.arrayContaining(['Bludgeoning', 'Piercing', 'Slashing']));
+          }
+          // THE RIDER RE-SEATING (critic + corpus, 2026-09-04): the fiat
+          // first-round rider is ONE print block's grammar (Doppelganger,
+          // whose disguise is the state it prices) — it lives on lurker-2
+          // alone. Traps carry the grappled-form (4 print sightings:
+          // Mimic/Ankheg/Bugbear x2). The Assassin-shaped seats carry NO
+          // advantage rider: hidden-attacker advantage is a core rule,
+          // and their ambush economy is rider damage + the hide-cycle.
+          if (d.id === 'lurker-2') {
+            expect(rows.some((r) => /\(with Advantage during the first round of each combat\)/.test(r.text))).toBe(true);
+          } else if (d.style === 'trap') {
+            expect(rows.some((r) => /\(with Advantage if the target is Grappled/.test(r.text))).toBe(true);
+          } else {
+            expect(rows.some((r) => /\(with Advantage during the first round/.test(r.text))).toBe(false);
+          }
+          // the hide-cycle is CONDITIONED (Shadow Stealth's gate) — the
+          // stalker line's bonus action, never the skirmisher's free suite
+          if (!d.style) {
+            expect(rows.some((r) => r.name === 'Umbral Step' && /While in Dim Light or Darkness/.test(r.text))).toBe(true);
+          }
+          expect(rows.some((r) => /Dash, Disengage, or Hide/.test(r.text))).toBe(false); // the skirmisher suite stays out
+        });
+      }
+
       if (d.legendary) {
         test('the legendary menu: 3 options, at least one unlocked, generic-skirmisher economy', () => {
           const legs = rows.filter((r) => r.sec === 'Legendary Actions' && !r.rules);
@@ -179,9 +226,26 @@ describe('the mounted template line: full compositions, shape-frames as authorin
     expect(pdm(10, 'binder', 'caster').id).toBe('caster-8-binder');
     expect(pdm(20, 'binder', 'caster').id).toBe('caster-17-binder');
     expect(pdm(8, 'skulker', 'caster').id).toBe('caster-6'); // no such line -> plain, never cross-family
+    // the lurker family (corpus sweep 2026-09-04): plain = stalker,
+    // 'phantom' and 'trap' style lines, invented 17 seats (no print
+    // lurker above CR 8 — the defender-like ceiling, brute playbook)
+    const lurkers = D.filter((d) => (d.archetypes ?? []).includes('lurker'));
+    expect(lurkers.length).toBe(11);
+    expect(pdm(2, null, 'lurker').id).toBe('lurker-2');
+    expect(pdm(5, null, 'lurker').id).toBe('lurker-5'); // the mid seat (first smoke: lurker-2 was serving CR 3-6)
+    expect(pdm(12, null, 'lurker').id).toBe('lurker-8');
+    expect(pdm(20, null, 'lurker').id).toBe('lurker-17');
+    expect(pdm(3, 'phantom', 'lurker').id).toBe('lurker-1-phantom');
+    expect(pdm(9, 'phantom', 'lurker').id).toBe('lurker-5-phantom');
+    expect(pdm(22, 'phantom', 'lurker').id).toBe('lurker-17-phantom');
+    expect(pdm(4, 'trap', 'lurker').id).toBe('lurker-2-trap');
+    expect(pdm(6, 'trap', 'lurker').id).toBe('lurker-5-trap');
+    expect(pdm(10, 'trap', 'lurker').id).toBe('lurker-8-trap');
+    expect(pdm(18, 'trap', 'lurker').id).toBe('lurker-17-trap');
+    expect(pdm(8, 'skulker', 'lurker').id).toBe('lurker-8'); // no cross-family style bleed
     // the skirmisher rule holds family-wide (owner, 2026-09-01): every
     // style line tops out in a legendary seat
-    for (const arch of ['skirmisher', 'brute', 'caster']) {
+    for (const arch of ['skirmisher', 'brute', 'caster', 'lurker']) {
       const fam = D.filter((d) => (d.archetypes ?? []).includes(arch));
       for (const style of new Set(fam.map((d) => d.style).filter(Boolean))) {
         const line = fam.filter((d) => d.style === style).sort((a, b) => b.cr - a.cr);
@@ -214,5 +278,34 @@ describe('the mounted template line: full compositions, shape-frames as authorin
       expect(rows.find((e) => e.name === 'Melee Attack').text).toMatch(/straight line toward/);
       expect(d.speed).not.toMatch(/Climb/);
     }
+  });
+});
+
+describe('lurker scaling machinery (2026-09-04): ambush grammar survives the scaler, phantoms keep their discount', () => {
+  const { pickDonor: pdl, scaleDonor: sdl } = require('../scale.mjs');
+  const { cardBudget: cbl } = require('../card-budgets.mjs');
+
+  test('the inline ambush parenthetical is preserved AND the attack bonus re-stamps through it', () => {
+    const s = sdl(pdl(2, null, 'lurker'), 12, { mechanics: [] });
+    const row = Object.values(s.sections).flat().find((e) => e.name === 'Melee Attack');
+    expect(row.text).toMatch(/\+10 \(with Advantage during the first round of each combat\), reach/);
+    // and the damage re-diced to the new CR (not the authored 8) — the
+    // 60/40 rider split fires, so sum BOTH clauses
+    const total = [...row.text.matchAll(/(\d+) \(\d+d\d+(?:\s*\+\s*\d+)?\)/g)].reduce((n, m) => n + Number(m[1]), 0);
+    expect(total).toBeGreaterThan(12);
+  });
+
+  test('a damage-less attack row re-stamps its bonus — the Grasping Limb', () => {
+    const s = sdl(pdl(5, 'trap', 'lurker'), 13, { mechanics: [] });
+    const limb = Object.values(s.sections).flat().find((e) => e.name === 'Grasping Limb');
+    expect(limb.text).toMatch(/Attack Roll:\* \+10/); // card atk at 13 (4+6), not the authored +6
+  });
+
+  test('the phantom deep-scale: hp_scale IS the total, the flight tax never double-charges', () => {
+    const s = sdl(pdl(5, 'phantom', 'lurker'), 5, { mechanics: [] });
+    expect(s.hp).toBe(Math.round(cbl(5, {}).hp * 0.7)); // 0.7x flat — not 0.7 x 0.9
+    // and the winged skirmisher path is untouched (its tax still charges once)
+    const w = sdl(pdl(8, 'winged', 'skirmisher'), 8, { mechanics: [] });
+    expect(w.hp).toBe(Math.round(cbl(8, {}).hp * 0.9));
   });
 });

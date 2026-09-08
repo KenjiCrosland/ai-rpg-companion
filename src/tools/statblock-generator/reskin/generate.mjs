@@ -155,7 +155,7 @@ export function assignSeats(signatureElements = [], { style = null, covered = []
   return { action: action.element, trait: trait.element, packaged: action.element === trait.element, rest: [...els.map((e) => e.element).filter((x) => x !== action.element && x !== trait.element), ...demoted] };
 }
 
-export function buildReskinPrompt(scaled, { concept = '', takenNames = [], signatureElements = [], energy = null, mix = null, mind = null } = {}) {
+export function buildReskinPrompt(scaled, { concept = '', takenNames = [], signatureElements = [], energy = null, mix = null, mind = null, resolvedType = null } = {}) {
   const seats = assignSeats(signatureElements, { style: scaled.style ?? null });
   const needsProjectile = Object.values(scaled.sections).flat().some((e) => e.text.includes('{projectile}'));
   const needsSpells = Object.values(scaled.sections).flat().some((e) => e.text.includes('{spell_at_will}'));
@@ -191,7 +191,7 @@ ${rows.join('\n')}
 Return ONLY JSON:
 {
  "name": "<the creature's proper name, 1-3 plain words>",
- "type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>",
+ "type": ${resolvedType ? `"${resolvedType}",   <- FIXED by the concept resolve — echo it exactly` : '"<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>",'}
  "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>",
  "alignment": "<a 2024 alignment — follow the concept's own moral read: tragic, driven, or feral is not Evil>",
  "senses": "<a senses line, e.g. 'darkvision 60 ft.'>",
@@ -206,7 +206,7 @@ ${needsSpells ? ` "spells": { "at_will": ["<exactly 2 spells this concept would 
  "vulnerability": "<a damage type this creature is VULNERABLE to — ONLY if the concept genuinely implies one (print is sparing: skeletons take extra Bludgeoning, mummies burn, a thing of ash fears Cold — the wound that made it). Most creatures have none: omit this field entirely.>",
  "conditions": { "condition_minor": "<one of: ${CONDITION_MENUS.condition_minor.join(', ')}>" },
  "wildcard_economy": "<what the wildcard costs: action | bonus_action | reaction | trait | rider_on:<the exact new name you gave the attack it rides> — declare it; the assembler files the entry by THIS field, not by guessing from your prose. A rider is a clause appended to that attack (write it as \"When the creature hits with this attack, ...\").>",
- "wildcard": "<The monster is always 'the creature'; its victim is always 'the target' and NEVER 'the creature'. Rules text refers to the creature by epithet or 'it' — never gendered pronouns, whatever the lore says (print's register). REPLACES the 'Signature Slot' entry: the concept's single most distinctive behavior as rules text. 4 sentences max, 2024 house voice, no atmospheric prose. Must use a save DC of ${scaled.dc} if it has a save, standard conditions only, damage at most ${Math.round(scaled.per_hit * 1.2)} average — and damage is ALWAYS written as dice with the average, like "27 (5d8 + 5)", never a flat number. Never assert an effect without granting its rule. An ability that throws or detaches part of the creature's body must state what the creature loses while it is detached and when it returns. Acting or attacking from a distant point is RANGED attacks only. Use limits print as a real count after the entry name, like "(2/Day)" or "(Recharge 5-6)" — never the letter X, never as prose ("can use this three times"), never a stat or proficiency-bonus count, never tied to a rest. Never name or grant a NEW trait inside an ability — state temporary capabilities inline with a duration (\"until the start of its next turn, it can...\").>"
+ "wildcard": "<The monster is always 'the creature'; its victim is always 'the target' and NEVER 'the creature'. Rules text refers to the creature by epithet or 'it' — never gendered pronouns, whatever the lore says (print's register). REPLACES the 'Signature Slot' entry: the concept's single most distinctive behavior as rules text. 4 sentences max, 2024 house voice, no atmospheric prose. Must use a save DC of ${scaled.dc} if it has a save, standard conditions only, damage at most ${Math.round(scaled.per_hit * 1.2)} average — and damage is ALWAYS written as dice with the average, like "27 (5d8 + 5)", never a flat number. Never assert an effect without granting its rule. An ability that throws or detaches part of the creature's body must state what the creature loses while it is detached and when it returns. Acting or attacking from a distant point is RANGED attacks only. Use limits print as a real count after the entry name, like "(2/Day)" or "(Recharge 5-6)" — never the letter X, never as prose ("can use this three times"), never a stat or proficiency-bonus count, never tied to a rest. Never name or grant a NEW trait inside an ability — state temporary capabilities inline with a duration (\"until the start of its next turn, it can...\"). A strong rider may be PRICED BY THE HIT ITSELF — print's Rug of Smothering grapples 'instead of dealing damage'; write that exact trade (\"instead of dealing damage, the target...\") when the effect is worth a whole hit.>"
 }`;
 }
 
@@ -323,6 +323,15 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
   const successPenalty = /(?:\*Success:?\*|On a success(?:ful save)?,?)[^.*]{0,80}(?:Disadvantage|takes \d|has the [A-Z][a-z]+ condition|Speed is (?:halved|reduced)|can't|cannot)/i.test(w);
   const econDecl = String(economy ?? '').trim().toLowerCase();
   const reactionMention = /uses? (?:its|a|an) [Rr]eaction|as (?:a|its) [Rr]eaction/.test(w);
+  // KO conditions never ride an UNPRICED bonus action (Muffled Toll,
+  // first lurker smoke 2026-09-04: at-will BA Paralyzed at CR 5 feeding
+  // advantage + within-5-ft crits). Print's KO severity floor is LOW
+  // (Ghoul paralyzes at CR 1) — the ECONOMY is the law: 0 corpus
+  // sightings of bonus-action KO except the Incubus's Nightmare, which
+  // is Recharge 6 + HP-thresholded. Delivery must be an action, an
+  // on-hit rider, or a priced bonus action.
+  const koApplied = /(?:has|have|gains?) the (?:Paralyzed|Stunned|Unconscious) condition|\b(?:is|are|be|being|becomes?) (?:Paralyzed|Stunned|Unconscious)\b/.test(w);
+  const bonusShaped = econDecl === 'bonus_action' || /^[Aa]s an? [Bb]onus [Aa]ction/.test(w);
   const embeddedEconomy = (/bonus action/i.test(w) && econDecl !== 'bonus_action' && !/^[Aa]s an? [Bb]onus [Aa]ction/.test(w))
     // a reaction mechanic living inside an attack rider or an
     // action-declared entry (Grave-Scythe, Shard Lunge — 4 lifetime);
@@ -367,7 +376,7 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
     : /starts its turn/i.test(w) ? ['recurring aura', 'mechanical']
     : /\byours?\b|\byou\b/i.test(w) ? ['second person', 'mechanical']
     : !GAME_TERM.test(w) ? ['no game term', 'mechanical']
-    : (/teleport/i.test(w) && !/teleport/i.test(blockCaps)) ? ['teleport beyond the chassis', 'mechanical']
+    : (TELEPORT_MOVE.test(w) && !/teleport/i.test(blockCaps)) ? ['teleport beyond the chassis (a "reposition" or vanish-and-reappear IS a teleport — print says the word)', 'mechanical']
     // WHO flies is the question (Ironbristle deadlock, 2026-09-01: quills
     // "flying at the attacker" tripped the bare-word guard 4 times and
     // burned the slot to chassis) — the CREATURE flying is a movement
@@ -417,14 +426,35 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
     // slashing hits destroyed 97 HP, 2026-09-01). Print's only
     // conditional destructions are 0-HP-anchored (Misty Escape) or
     // duration idioms ("until it is destroyed") — both exempted.
-    : w.split(/(?<=\.)\s+/).some((s) => /\b(?:it|the creature) (?:is destroyed|collapses)\b/.test(s) && !/0 Hit Point|until (?:it|the creature) is destroyed|or (?:it|the creature) is destroyed/.test(s)) ? ['a creature dies only at 0 Hit Points — a destruction counter must be a cost an enemy CHOOSES (an action to cut, a called strike with its own AC), never a rider on ordinary damage', 'mechanical']
+    // "dies (if|when)" joined 2026-09-05: the Gilded Maw's INVERTED
+    // death-exit clause ("The altar dies if it ends its turn with a
+    // swallowed creature") — print's clause is subject-first ("If the
+    // creature dies, a swallowed creature exits"), which never matches
+    // this shape; "creature dies if" is 0/329
+    : w.split(/(?<=\.)\s+/).some((s) => /\b(?:[Ii]t|[Tt]he creature) (?:is destroyed|collapses|dies (?:if|when|unless))\b/.test(s) && !/0 Hit Point|until (?:it|the creature) is destroyed|or (?:it|the creature) is destroyed/.test(s)) ? ['a creature dies only at 0 Hit Points — never "dies if <condition>"; the legal death clause is subject-first ("If the creature dies, ...") and a destruction counter must be a cost an enemy CHOOSES', 'mechanical']
     // print grants blanket all-damage resistance only to OBJECTS and
     // shifted forms (Soul Bag, Vampire mist) — never as a self-trait
     // (the Glacierbear: ~2x effective HP unpriced, 2026-09-01)
     : /[Rr]esistance to all damage/.test(w) ? ['print grants TYPED resistances — blanket all-damage resistance doubles effective HP unpriced; name the one or two types the concept earns', 'mechanical']
     : (DEFENSE_GRANT.test(w) && !DEFENSE_DURATION.test(w)) ? ['an action may buy a TEMPORARY typed defense (add "until the start of the creature\'s next turn") — an unbounded resistance or immunity grant is the derivation engine\'s jurisdiction, never the model\'s', 'mechanical']
+    : conditionImmunityGrant(w, name) ? ['condition-immunity SUITES are the header\'s jurisdiction (0 of 329 print traits self-grant one; the phantom chassis already carries print\'s incorporeal suite) — keep at most ONE flavor immunity the concept clearly earns, and cut control conditions (Grappled, Restrained, Prone...) entirely', 'mechanical']
+    : STAT_ADD_GRANT.test(w) ? ['print bakes ability modifiers into the row\'s damage — never a stat-add as a choice (0 of 329); drop the clause, the numbers already include the mod', 'mechanical']
+    : RESISTANCE_BYPASS.test(w) ? ['resistance and immunity interactions are the engine\'s — print has no overcoming-resistance grammar (0 of 329 in combat); drop the clause', 'mechanical']
+    : SELF_AC_GRANT.test(w) ? ['AC is the card\'s — print\'s only AC buff is the Unicorn\'s, on ANOTHER creature, +2 and duration-bounded; a self AC grant never ships', 'mechanical']
     : SELF_DISCLAIMER.test(w) ? ['state the flavor and stop — print never explains that flavor is flavor; drop the disclaimer sentence', 'mechanical']
     : (NEGATION.test(w) && !liftedGate && econDecl !== 'reaction') ? ['negation defense must be priced — add a use gate like "(Recharge 5-6)" or convert it to a Reaction', 'mechanical']
+    : (koApplied && bonusShaped && !/Recharge|\/Day/.test(w + String(liftedGate ?? ''))) ? ['Paralyzed, Stunned, and Unconscious never ride an unpriced bonus action — print prices bonus-action KO with a gate (the Incubus\'s Nightmare is Recharge 6); add "(Recharge 5-6)", or deliver it as an action or an on-hit rider', 'mechanical']
+    // the sheet already owns the hide-cycle (Veil of Brambles re-invented
+    // Umbral Step on the same sheet, first lurker smoke 2026-09-04) — a
+    // wildcard granting the Hide action duplicates chassis economy
+    : chassisOwned(w, Object.values(scaled.sections).flat()) ? [`the sheet already owns ${chassisOwned(w, Object.values(scaled.sections).flat())} — never restate a chassis rule; build the PAYOFF of what the concept adds instead`, 'mechanical']
+    // THE TRAIT DOOR (batch three, 2026-09-05): a wildcard declaring
+    // economy 'trait' was vetted HERE — where embedded reactions and
+    // rest-metering are judgment-tier — then filed into Traits, dodging
+    // the trait chain's mechanical active-mechanics guard (the Vault's
+    // reaction-in-a-trait, the Cavernmouth's three-economy "trait").
+    // A trait spends nothing: promote those to mechanical at this door.
+    : (econDecl === 'trait' && (reactionMention || /[Bb]onus [Aa]ction/.test(w) || /until (?:it|the \w+) finishes a (?:short|long) rest/i.test(w))) ? ['a trait spends nothing — 0 of 329 print traits mention a reaction or bonus action, and rest-recovery is meter prose; move the economy to its own entry or drop it', 'mechanical']
     : roleCollapse ? ['role collapse', 'judgment']
     : riderFramed ? ['a rider rides the hit — address "the target"; no separate targeting frame', 'judgment']
     // a rider has no NAME, so it cannot carry a use gate (gates live in
@@ -435,11 +465,32 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
     : unrated ? ['no rate limit', 'judgment']
     : unreturned ? ['no return clause', 'judgment']
     : remoteMelee ? ['remote attacks must be ranged', 'judgment']
-    : embeddedEconomy ? ['a second action economy embedded mid-entry — one entry, one economy', 'judgment']
+    // print embeds a bonus action mid-entry only as a TERMINATION clause
+    // of an ongoing state (the Ghost "leaves as a Bonus Action") — the
+    // coaching names the one legal shape so repair stops bolting on
+    // fresh economies (Choke Hold's drag, Gutter Glare's move rider)
+    : embeddedEconomy ? ['a second action economy embedded mid-entry — one entry, one economy; print\'s only embedded bonus action is a termination clause ending an ongoing state (the Ghost leaves possession as a Bonus Action) — anything that ACTS is a separate entry or gets dropped', 'judgment']
+    // a trigger the rules cannot see (the Grille fired on "kneels", first
+    // lurker smoke 2026-09-04 — the garden-plant class; 0/329 corpus)
+    : /\bkneel(?:s|ing)?\b|\bpray(?:s|ing)?\b|\bbows? (?:down|before)\b/i.test(w) ? ['the game has no kneeling or praying state — gate on a real condition (Prone), on distance, or on a creature touching or willingly interacting with it', 'judgment']
     // print writes the action, never narrates the action system (the
     // Battlefield Chorus's "can use one action to target...", 2026-09-02)
     : /can use (?:one|an|its) action to/i.test(w) ? ['print writes the action, never narrates the action system — drop "can use one action to"; the entry IS the action', 'judgment']
     : successPenalty ? ['a success clause may grant half damage or nothing — never a penalty', 'judgment']
+    // the visibility class (Mirror Lunge, 2026-09-05: "when a creature
+    // looks at that surface" — 0/329 print triggers on looking)
+    : /\blooks? at\b|\bglances? at\b|\bmeets? (?:its|the) (?:gaze|eyes)\b/i.test(w) ? ['looking is not a game state — no trigger can see gaze direction; use print\'s 2024 gaze grammar (the Sea Hag): a save forced on a creature that starts its turn within X feet and can see it', 'judgment']
+    // the Hungerclock's backwards gate (2026-09-05): "If not in dim
+    // light... only once per turn" reads as UNLIMITED when the
+    // condition fails — a rate limiter binds always
+    : w.split(/(?<=\.)\s+/).some((s) => /^If [^.]{0,90}\bonly once per turn/i.test(s.trim())) ? ['a once-per-turn limit binds ALWAYS — behind a condition it reads as unlimited whenever the condition fails; state the limit as its own unconditional sentence', 'judgment']
+    : epithetDrift(w, name, inline) ? [`call the creature "the creature" — the assembler stamps the printed short form, and "the ${epithetDrift(w, name, inline)}" is a second nickname fracturing the sheet's voice`, 'judgment']
+    // the scene-state family, third species (the Last Round fired on "a
+    // target that is alone", 2026-09-05; 0/329)
+    : /\balone\b/i.test(w) ? ['"alone" is not a game state — write the distance: "while no other creature is within 30 feet of the target"', 'judgment']
+    // self-disabling geography (the Thronebound Shade: Incapacitated
+    // outside a room the sheet never establishes, 2026-09-05)
+    : /[Oo]utside (?:the|its|this) [^.]{0,40}\b(?:it|the creature) (?:is|has the) Incapacitated/.test(w) ? ['a location the sheet never establishes cannot disable the creature — add the establishing line ("the creature is bound to the chamber where it is encountered") or drop the outside clause', 'judgment']
     : w.split(/(?<=\.)\s+/).length > 4 ? ['over 4 sentences', 'judgment']
     : null;
   let text = capTerms(w.split('the creature').join(inline).split('The creature').join(inline.charAt(0).toUpperCase() + inline.slice(1)));
@@ -511,7 +562,7 @@ function vetTraitWildcard(tw, sections, { name, inline, archetype = null }) {
     // Wisdom saving throw (DC 20)" and "As a bonus action" slipped a
     // skeleton-anchored check twice in one smoke (Grieving Weep — a
     // bonus action with a save living in Traits — and Rusting Grip)
-    : /\d+ \(\d+d\d+|\*[A-Z][a-z]+ Saving Throw\*|Saving Throw:|Attack Roll:|\(Recharge|\/Day|\btimes equal to\b|regain(?:s|ing|ed)? (?:all )?(?:expended )?uses|must (?:make|succeed on) an? [A-Za-z]+ [Ss]aving [Tt]hrow|[Ss]aving [Tt]hrow \(DC|[Aa]s an? [Bb]onus [Aa]ction/i.test(twText) ? ['active mechanics in a passive trait (a damage roll, a save FRAME, a bonus action, or a use limit — mentioning saves or attack rolls passively is fine)', 'mechanical']
+    : /\d+ \(\d+d\d+|\*[A-Z][a-z]+ Saving Throw\*|Saving Throw:|Attack Roll:|\(Recharge|\/Day|\btimes equal to\b|regain(?:s|ing|ed)? (?:all )?(?:expended )?uses|must (?:make|succeed on) an? [A-Za-z]+ [Ss]aving [Tt]hrow|[Ss]aving [Tt]hrow \(DC|[Aa]s an? [Bb]onus [Aa]ction|use[sd]? an? [Bb]onus [Aa]ction/i.test(twText) ? ['active mechanics in a passive trait (a damage roll, a save FRAME, a bonus action, or a use limit — mentioning saves or attack rolls passively is fine)', 'mechanical']
     : reachContradiction ? [`claims reach ${reachClaim[1]} feet but no attack row prints that reach — reach belongs on the rows; align with them`, 'mechanical']
     : /starts its turn/i.test(twText) ? ['recurring aura', 'mechanical']
     : /\byours?\b|\byou\b/i.test(twText) ? ['second person', 'mechanical']
@@ -520,7 +571,7 @@ function vetTraitWildcard(tw, sections, { name, inline, archetype = null }) {
     : /uses? (?:its|a|an) [Rr]eaction|as (?:a|its) [Rr]eaction/.test(twText) ? ['a Reaction belongs in the Reactions section with its cost declared — a trait cannot spend one', 'mechanical']
     : ENGINE_VOCAB.test(twText) ? ['engine vocabulary in rules text — chassis, donor, and template are our words, never the creature\'s', 'mechanical']
     : NEGATION.test(twText) ? ['negation defense must be a priced Reaction — a trait has no cost to pay for it', 'mechanical']
-    : /\b(?:it|the creature) (?:is destroyed|collapses)\b(?![^.]{0,30}0 Hit Point)/.test(twText.replace(/until (?:it|the creature) is destroyed|or (?:it|the creature) is destroyed/g, '')) ? ['a creature dies only at 0 Hit Points — never a destruction counter in a trait', 'mechanical']
+    : /\b(?:[Ii]t|[Tt]he creature) (?:is destroyed|collapses|dies (?:if|when|unless))\b(?![^.]{0,30}0 Hit Point)/.test(twText.replace(/until (?:it|the creature) is destroyed|or (?:it|the creature) is destroyed/g, '')) ? ['a creature dies only at 0 Hit Points — never a destruction counter in a trait', 'mechanical']
     : /[Rr]esistance to all damage/.test(twText) ? ['print grants TYPED resistances — blanket all-damage resistance doubles effective HP unpriced; name the one or two types the concept earns', 'mechanical']
     : MODEL_HEALING(twText) ? ['healing is the Regeneration organ\'s job — turn-based recovery and heal-to-full never ship as custom text', 'mechanical']
     : HEAL_BACK(twText) ? ['a drain heals off damage DEALT to others (print\'s Life Drain) — healing back damage TAKEN is immunity in disguise and never ships', 'mechanical']
@@ -535,8 +586,13 @@ function vetTraitWildcard(tw, sections, { name, inline, archetype = null }) {
     : UNPRICED_DISARM(twText) ? ['a stolen or stuck weapon is priced and recoverable — print\'s Mimic adheres with an escape DC; give the effect a save or a check, and state how the weapon comes back', 'mechanical']
     : UNBROKEN_DODGE(twText) ? ['attack-Disadvantage defense needs a break condition — print\'s Displacement is disrupted until the end of its next turn when the beast takes damage; add a break, a use gate, or a real condition (Opportunity-Attack-only disadvantage is fine)', 'mechanical']
     : DEFENSE_GRANT.test(twText) ? ['typed damage defenses are the derivation engine\'s — the concept\'s energy earns its resistance deterministically; a trait never grants resistance or immunity to damage types', 'mechanical']
+    : conditionImmunityGrant(twText, name) ? ['condition-immunity SUITES are the header\'s jurisdiction (0 of 329 print traits self-grant one; the phantom chassis already carries print\'s incorporeal suite) — keep at most ONE flavor immunity the concept clearly earns, and cut control conditions (Grappled, Restrained, Prone...) entirely', 'mechanical']
+    : STAT_ADD_GRANT.test(twText) ? ['print bakes ability modifiers into the row\'s damage — never a stat-add as a choice (0 of 329); drop the clause, the numbers already include the mod', 'mechanical']
+    : RESISTANCE_BYPASS.test(twText) ? ['resistance and immunity interactions are the engine\'s — print has no overcoming-resistance grammar (0 of 329 in combat); drop the clause', 'mechanical']
+    : SELF_AC_GRANT.test(twText) ? ['AC is the card\'s — print\'s only AC buff is the Unicorn\'s, on ANOTHER creature, +2 and duration-bounded; a self AC grant never ships', 'mechanical']
     : SELF_DISCLAIMER.test(twText) ? ['state the flavor and stop — print never explains that flavor is flavor; drop the disclaimer sentence', 'mechanical']
-    : (/teleport/i.test(twText) && !Object.values(sections).flat().some((e) => /teleport/i.test(e.text ?? ''))) ? ['teleport beyond the chassis — a trait cannot grant movement the block does not carry', 'mechanical']
+    : (TELEPORT_MOVE.test(twText) && !Object.values(sections).flat().some((e) => /teleport/i.test(e.text ?? ''))) ? ['teleport beyond the chassis — a trait cannot grant movement the block does not carry (a "reposition" or vanish-and-reappear IS a teleport)', 'mechanical']
+    : chassisOwned(twText, Object.values(sections).flat()) ? [`the sheet already owns ${chassisOwned(twText, Object.values(sections).flat())} — never restate a chassis rule; build the PAYOFF of what the concept adds instead`, 'mechanical']
     : (archetype === 'brute' && OA_FREEDOM(twText)) ? ['unconditional Opportunity-Attack immunity is the skirmisher\'s chassis-priced signature — a brute trait may not grant it free; scope it to a specific move (during its charge) or drop it', 'mechanical']
     // object-return grammar joined 2026-09-04: blade-return traits died
     // to no-game-term 3x across two seeds ("the blade returns to its
@@ -545,6 +601,10 @@ function vetTraitWildcard(tw, sections, { name, inline, archetype = null }) {
     // anchor trait to the vocabulary gap
     : !/Immunity|Resistance|Advantage|Disadvantage|Speed|darkvision|blindsight|tremorsense|truesight|condition|can't be|cannot be|cover|teleport|Opportunity Attack|provok|Difficult Terrain|unoccupied space|move through|Hit Points|bright light|dim light|obscured|damage|Incapacitated|returns? to (?:its|the creature's) hand|reattach|regrows?/i.test(twText) ? ['no game term — flavor without a rule', 'mechanical']
     : names.some((n) => n === twName.toLowerCase() || (n.length >= 6 && twName.toLowerCase().length >= 6 && (n.startsWith(twName.toLowerCase()) || twName.toLowerCase().startsWith(n)))) ? ['name collides with an existing entry (exact or near-namesake)', 'mechanical']
+    : /\blooks? at\b|\bglances? at\b|\bmeets? (?:its|the) (?:gaze|eyes)\b/i.test(twText) ? ['looking is not a game state — no rule can see gaze direction; use print\'s 2024 gaze grammar (the Sea Hag): a save forced on a creature that starts its turn within X feet and can see it', 'judgment']
+    : epithetDrift(twText, name, inline) ? [`call the creature "the creature" — the assembler stamps the printed short form, and "the ${epithetDrift(twText, name, inline)}" is a second nickname fracturing the sheet's voice`, 'judgment']
+    : /\balone\b/i.test(twText) ? ['"alone" is not a game state — write the distance: "while no other creature is within 30 feet of the target"', 'judgment']
+    : /[Oo]utside (?:the|its|this) [^.]{0,40}\b(?:it|the creature) (?:is|has the) Incapacitated/.test(twText) ? ['a location the sheet never establishes cannot disable the creature — add the establishing line ("the creature is bound to the chamber where it is encountered") or drop the outside clause', 'judgment']
     : twText.split(/(?<=\.)\s+/).length > 2 ? ['over 2 sentences', 'judgment'] : null;
   // BOTH cases, ALL positions (the Rust-Thorn shipped a mid-text "The
   // creature is immune to the Grappled condition" verbatim — the old
@@ -673,6 +733,101 @@ const inventedCondition = (t) => {
 // "ignores damage from" joined 2026-09-04 (the Provost's cloak "ignores
 // damage from nonmagical fire" — grant-verb evasion, sighting seven)
 const DEFENSE_GRANT = /(?:gain(?:s|ing)?|ha(?:s|ve|ving)|grant(?:s|ing)?|is|becomes?) (?:[Rr]esistan(?:ce|t)|[Ii]mmun(?:e|ity)) to [^.]{0,60}damage|[Dd]amage [^.]{0,60}(?:is|are) reduced by \d+|takes? \d+ less damage|reduc(?:es?|ing) (?:all |any )?damage (?:it takes|taken|dealt to it) by \d+|ignor\w+ (?:all )?damage from/;
+// condition immunity is the header's jurisdiction (batch two 2026-09-05:
+// Ethereal Stillness + Preserved in Brine both self-granted condition
+// immunities from wildcard traits). 0/329 print traits self-grant one —
+// the three trait-text "immune to" sightings are 24-hour success
+// clauses on OTHER creatures. Self-anchored, so counterplay clauses
+// ("A creature immune to the Deafened condition is unaffected") pass.
+// SCOPE: fires on a SUITE (2+ conditions in one grant) or any control
+// condition — a single flavor immunity the concept earns stays legal
+// (the Headless precedent, pinned: "Immunity to the Frightened
+// condition" on a headless rider). Phantom chassis now carry print's
+// incorporeal suite as donor data, so a phantom trait-grant is a pure
+// duplicate of the header.
+const CONTROL_CONDITIONS = /Grappled|Restrained|Prone|Paralyzed|Stunned|Incapacitated|Unconscious|Petrified/;
+// the numeric-jurisdiction trio (batch four, 2026-09-07 — the Vigil and
+// the Drowner): the engine owns every number and every damage-type
+// interaction. All three are 0/329 as self-grants — print bakes mods
+// into the row, never offers stat-adds as a choice; the corpus's only
+// "for the purpose of" is the mule's carrying capacity; its only AC
+// buff is the Unicorn's, OTHER-target and duration-bounded.
+const STAT_ADD_GRANT = /adds? its \w+ modifier to (?:the |its )?damage/i;
+const RESISTANCE_BYPASS = /overcom\w+ [^.]{0,40}(?:resistance|immunit)|for the purposes? of overcoming/i;
+const SELF_AC_GRANT = /\b(?:[Ii]t|[Tt]he creature) (?:gains?|has) a ?\+\d+ (?:bonus )?to (?:its )?(?:AC|Armor Class)|\bits (?:AC|Armor Class) increases/;
+const conditionImmunityGrant = (t, name = null) => {
+  // the model sometimes writes the block's own NAME as subject ("the
+  // gallows bed has immunity to..." — dodged the it/the-creature anchor,
+  // 2026-09-08); normalize the name to "the creature" before testing
+  let s = String(t);
+  if (name) s = s.replace(new RegExp(`[Tt]he ${String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'gi'), 'the creature');
+  const m = /\b(?:[Ii]t|[Tt]he creature) (?:is|becomes?|has|gains?) [Ii]mmun(?:e|ity) to ((?:the )?[A-Z][^.]{0,80})/.exec(s);
+  if (!m) return false;
+  return (m[1].match(/[A-Z][a-z]+/g) ?? []).length >= 2 || CONTROL_CONDITIONS.test(m[1]);
+};
+// chassis-ownership map (3 specimens in 2 batches: Veil of Brambles and
+// Sudden Drop both re-invented the hide-cycle — Sudden Drop dodging the
+// day-old guard by inflection, "hide as a bonus action"; Ethereal
+// Stillness restated Incorporeal Movement next to it on the same sheet)
+// — a wildcard never restates an economy or trait the chassis carries
+const CHASSIS_OWNED = [
+  [/takes? the Hide action|can take the Hide action|\bhides? as a bonus action\b/i, /takes the Hide action/, 'the hide-cycle (its bonus action grants the Hide action)'],
+  // "occupied spaces" joined 2026-09-05 (Regalia of the Rounds dodged
+  // the key by synonym in its debut batch — the arms race, incorporeal
+  // edition)
+  [/move through (?:other creatures|occupied spaces)/i, /move through other creatures/, 'incorporeal movement (its rules trait)'],
+  // the disguise key (batch three: False Loot Disguise and Hidden Among
+  // Stone both restated False Form's job beside it)
+  [/indistinguishable from/i, /indistinguishable from/, 'the disguise (its False Form bonus action)'],
+];
+const chassisOwned = (text, rows) => {
+  for (const [grant, owns, label] of CHASSIS_OWNED) {
+    if (grant.test(text) && rows.some((e) => e.rules && owns.test(e.text ?? ''))) return label;
+  }
+  return null;
+};
+// teleport grammar the guard must see through (arms race, teleport
+// edition: the Toll's "vanishes into the water and repositions to a new
+// hunting ground within 60 feet" — a teleport that never says teleport;
+// "reposition" is 0/329 in print). The LICENSE side stays the bare word:
+// chassis teleport rows say "teleports".
+const TELEPORT_MOVE = /teleport|\breposition(?:s|ed|ing)?\b|vanish\w*[^.]{0,60}\b(?:appears?|reappears?|emerges?)\b/i;
+// a second nickname fractures the sheet (the Still Choir Echo spoke as
+// "the chorister" in one trait and "the echo" in the rest, 2026-09-05)
+// — sentence-initial "The <word>" must be the creature's own short
+// form, its name, or standard frame vocabulary
+const EPITHET_FRAME = new Set(['creature', 'target', 'save', 'effect', 'damage', 'condition', 'conditions', 'area', 'attack', 'attacks', 'first', 'next', 'spell', 'spells', 'roll', 'trigger', 'use', 'uses', 'dc', 'dice', 'turn', 'action', 'grapple', 'hit', 'miss', 'same']);
+// capitalized game vocabulary that legally follows "the" — the epithet
+// scan must not flag "the Hide action" or "the Grappled condition"
+const GAME_CAPS = new Set(['Hide', 'Dash', 'Disengage', 'Dodge', 'Attack', 'Help', 'Search', 'Ready', 'Utilize', 'Grapple', 'Shove', 'Magic',
+  'Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Invisible', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious', 'Exhaustion', 'Bloodied',
+  'Acid', 'Bludgeoning', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Piercing', 'Poison', 'Psychic', 'Radiant', 'Slashing', 'Thunder',
+  'Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma',
+  'Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan',
+  'Speed', 'Ethereal', 'Material', 'Plane', 'Difficult', 'Terrain', 'Opportunity', 'Bright', 'Dim', 'Light', 'Darkness', 'Total', 'Cover', 'Hit', 'Saving', 'Recharge', 'Multiattack', 'Initiative', 'Legendary', 'Resistance', 'Immunity', 'Emanation', 'DC', 'AC']);
+const epithetDrift = (text, name, inline) => {
+  const ok = new Set(EPITHET_FRAME);
+  for (const part of `${name ?? ''} ${inline ?? ''}`.toLowerCase().split(/\s+/)) if (part) ok.add(part);
+  const seen = (word) => {
+    // a word the text POSSESSES is a body part or belonging, not a
+    // nickname ("The creature's quills scream... The quills re-form" —
+    // the first live FP, an iron-quilled boar 2026-09-05)
+    if (new RegExp(`(?:its|'s) ${word}\\b`, 'i').test(text)) return null;
+    return ok.has(word.toLowerCase()) ? null : word.toLowerCase();
+  };
+  for (const m of String(text).matchAll(/(?:^|\.\s+)The ([a-z]+)\b/g)) {
+    const hit = seen(m[1]);
+    if (hit) return hit;
+  }
+  // capitalized epithets at ANY position ("the Silence can use its
+  // reaction" — dodged the sentence-initial lowercase scan, 2026-09-08)
+  for (const m of String(text).matchAll(/\b[Tt]he ([A-Z][a-z]+)\b/g)) {
+    if (GAME_CAPS.has(m[1])) continue;
+    const hit = seen(m[1]);
+    if (hit) return hit;
+  }
+  return null;
+};
 const DEFENSE_DURATION = /until the (?:start|end) of|for 1 (?:minute|round)/i;
 // pipeline self-commentary in output (the Living Battlefield: "This is
 // purely cosmetic; it grants no mechanical benefit or trait" — the
@@ -777,6 +932,27 @@ export function reskinDefects(scaled, p, { energy = null, mix = null } = {}) {
       if (!v) continue;
       if (seen.has(v)) defects.push(`renames for "${seen.get(v)}" and "${k}" are both "${String(p.renames[k]).trim()}" — every row needs its own name (give the thrown twin its own word: Scythe / Hurled Scythe)`);
       else seen.set(v, k);
+    }
+  }
+  // CONDITION name-claims (promoted from advisory lint 2026-09-08 —
+  // "Petrifying Patient" promised Petrified over a Frightened row twice
+  // in two legendary draws): a rename claiming a condition must sit on a
+  // row whose rule applies it. Validated, so the retry reconciles —
+  // the model renames honestly or the row earns the word.
+  {
+    const CONDITION_CLAIMS = [[/\bparalyz\w*/i, 'Paralyzed'], [/\bpetrif\w*/i, 'Petrified'], [/\bstunn\w*/i, 'Stunned'], [/\bblinding\b/i, 'Blinded'], [/\bdeafen\w*/i, 'Deafened'], [/\bcharm\w*/i, 'Charmed'], [/\brestrain\w*/i, 'Restrained']];
+    const rows = Object.entries(scaled.sections).flatMap(([, es]) => es);
+    for (const k of keys) {
+      const rn = String(p.renames?.[k] ?? '').trim();
+      if (!rn) continue;
+      const row = rows.find((e) => e.name === k);
+      if (!row || row.wildcard_slot) continue; // the slot's rule is the wildcard's — checked elsewhere
+      const ruleText = `${row.text} ${Object.values(p.conditions ?? {}).join(' ')}`;
+      for (const [claim, cond] of CONDITION_CLAIMS) {
+        if (claim.test(rn) && !new RegExp(`\\b${cond}\\b`).test(ruleText)) {
+          defects.push(`name "${rn}" promises ${cond} but the row never applies it — name what the rule does, or drop the claim word`);
+        }
+      }
     }
   }
   for (const k of typedNames) {
@@ -995,7 +1171,7 @@ export async function generateReskin(options, callLLM) {
   // reserved for unparseable garbage, the thing they can actually fix),
   // then up to two repair rounds that carry the full defect list. Common
   // case 1 call; worst case 3; the loud throw remains the last resort.
-  const reskinPrompt = buildReskinPrompt(scaled, { concept, takenNames: options.takenNames ?? [], signatureElements: options.signatureElements ?? [], energy: options.energy ?? null, mix: options.mix ?? null, mind: options.mind ?? null });
+  const reskinPrompt = buildReskinPrompt(scaled, { concept, takenNames: options.takenNames ?? [], signatureElements: options.signatureElements ?? [], energy: options.energy ?? null, mix: options.mix ?? null, mind: options.mind ?? null, resolvedType: options.resolvedType ?? null });
   const raw = await callLLM(reskinPrompt, validateReskinResponse);
   let p = (() => { try { return normalizeTypeFields(JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim())); } catch { return null; } })();
   if (!p) throw new Error('reskin call failed — the pilot fails loudly, never silently');
@@ -1087,6 +1263,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     };
     normalizeTypeFields(p);
   }
+  // the resolve's creature_type is the engine's, not the model's (first
+  // lurker smoke 2026-09-04: 4 of 5 blocks drifted to the Monstrosity
+  // default against the resolve — an Undead spirit shipped without its
+  // immunity stamps). Prompt pins it; this stamp makes it deterministic.
+  if (options.resolvedType && p.type !== options.resolvedType) {
+    trace('type stamped:', `the resolve said ${options.resolvedType} — the model answered ${p.type ?? 'nothing'}`);
+    p.type = options.resolvedType;
+  }
   // the folk-article class, ported from the skeleton path: templates
   // supply their own articles, so a "The Cindermoss" mints "the the"
   // TYPE HONESTY, the measured rules ported: print's Beast ceiling is
@@ -1100,7 +1284,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // a user-typed name ships VERBATIM — the slot path's oldest law
   if (fixedName) p.name = fixedName;
   p.name = String(p.name).replace(/^the\s+/i, '').trim() || p.name;
-  if (!fixedName) p.name = p.name.split(/\s+/).map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+  // title-case with lowercase connectives — the blanket capitalizer
+  // minted "Grille Of The Hollow Confession" and "Vigil Of The Pass"
+  // (2026-09-07); print writes "of the"
+  if (!fixedName) {
+    const SMALL = new Set(['of', 'the', 'a', 'an', 'and', 'or', 'in', 'on', 'at', 'to', 'for', 'from', 'with', 'by']);
+    p.name = p.name.split(/\s+/).map((w, i) => (i && SMALL.has(w.toLowerCase()) ? w.toLowerCase() : w[0].toUpperCase() + w.slice(1))).join(' ');
+  }
 
   // ENGINE AS SIGNATURE (owner ruling 2026-09-01, "keep the recipe card,
   // I don't trust the llm" — 3rd dual-containment instance): when a
@@ -1189,6 +1379,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // "X, the Y" — the title half is what the table says out loud
     if (s.includes(',')) s = s.split(',').pop().trim();
     s = s.replace(/^the\s+/i, '');
+    // "N that VP" heads on the noun BEFORE the relative ("Hush That
+    // Endures" -> hush) — the last-word rule minted "the endures", a
+    // verb wearing an article (2026-09-08)
+    if (/\s(?:that|who|which)\s/i.test(s)) s = s.split(/\s(?:that|who|which)\s/i)[0].trim();
     // "X of Y" heads on X (Sphinx of Lore -> sphinx; Rug of Smothering -> rug)
     if (/\sof\s/i.test(s)) s = s.split(/\sof\s/i)[0].trim();
     const words = s.split(/\s+/);
@@ -1428,6 +1622,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     .replace(/\b(?<=(?:its|the) )speed\b/g, 'Speed')
     .replace(/\bopportunity attack(s?)\b/g, 'Opportunity Attack$1')
     .replace(/\bdifficult terrain\b/g, 'Difficult Terrain')
+    // "adjacent to" is not 5e vocabulary in either edition (Gutter Glare
+    // shipped it past the advisory lint, 2026-09-04) — a closed
+    // phrase-for-phrase swap; bare "adjacent" stays detect-and-repair
+    .replace(/\badjacent to\b/gi, 'within 5 feet of')
     .replace(/\bhit point(s?)\b/g, 'Hit Point$1')
     // 2024 keyword swap (Tomb Warden, 2026-08-27): corpus writes
     // "Bloodied" x16, the 2014 half-HP phrase x0 — closed phrase, one
@@ -1636,6 +1834,9 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
       monster.languages = /undead/i.test(monster.type) ? 'Common plus the languages it knew in life' : 'Common';
       trace('languages defaulted for sapient:', monster.languages);
     }
+    // register: print writes "can't speak (them)", never "does not speak"
+    // (the Vigil, 2026-09-07) — a closed token swap
+    if (monster.languages) monster.languages = String(monster.languages).replace(/\bbut does not speak\b/, "but can't speak");
   }
   // DEFENSE DERIVATION (owner + critic, 2026-08-19) — three measured
   // layers. Every rate below is the corpus sweep of 2026-08-19.
@@ -1650,10 +1851,21 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
       Celestial: { damage: [], conditions: ['Charmed'], resist: ['Radiant'] }, // 7/13, 8/13
     }[monster.type];
     const resist = new Set(FLOOR?.resist ?? []);
-    if (FLOOR && (FLOOR.damage.length || FLOOR.conditions.length)) {
-      const d = [...FLOOR.damage].sort(); const c = [...FLOOR.conditions].sort();
-      monster.immunities = d.join(', ') + (c.length ? `${d.length ? '; ' : ''}${c.join(', ')}` : '');
-      trace('immunities stamped for type:', `${monster.type} -> ${monster.immunities}`);
+    // Layer 1.5 — the donor's own suite (the phantom line, 2026-09-05):
+    // print pairs the incorporeal discount WITH a header suite (Specter/
+    // Wraith/Ghost all carry Grappled/Paralyzed/Petrified/Prone/
+    // Restrained + physical resistances) — the tech that PAYS for the
+    // 0.7x HP. Chassis data, unioned over the type floor; the batch-two
+    // wildcards were reaching for this in the wrong place.
+    const suite = scaled.defense_suite ?? null;
+    for (const x of suite?.resist ?? []) resist.add(x);
+    {
+      const d = [...new Set([...(FLOOR?.damage ?? []), ...(suite?.damage ?? [])])].sort();
+      const c = [...new Set([...(FLOOR?.conditions ?? []), ...(suite?.conditions ?? [])])].sort();
+      if (d.length || c.length) {
+        monster.immunities = d.join(', ') + (c.length ? `${d.length ? '; ' : ''}${c.join(', ')}` : '');
+        trace('immunities stamped for type:', `${monster.type}${suite ? ' + donor suite' : ''} -> ${monster.immunities}`);
+      }
     }
     // Layer 2 — self-affinity, measured-safe trio ONLY: print defends its
     // own dealt type at Fire 82%, Cold 81%, Lightning 100% — but Poison
@@ -1760,7 +1972,13 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
     const CONDS = ['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Paralyzed', 'Petrified', 'Poisoned', 'Restrained', 'Stunned', 'Unconscious'];
     for (const c of CONDS) {
       // "imposes the X condition" is an APPLY (Colossus FP, 2026-08-26)
-      const applyRe = new RegExp(`ha(?:s|ve) the ${c} condition|becomes? ${c}\\b|is ${c} (?:until|for)|be ${c}\\b|imposes? the ${c} condition`, 'i');
+      // compound-apply joined 2026-09-05 (3rd FP: "is Frightened and
+      // Paralyzed until" and "is Restrained and cannot" both dodged the
+      // adjacency-anchored "is X until|for" — 2014-register applies)
+      // compound-NOUN applies joined 2026-09-08 (4th inflection: "has
+      // the Blinded and Restrained conditions" — the Span's two false
+      // orphan flags)
+      const applyRe = new RegExp(`ha(?:s|ve) the ${c} condition|ha(?:s|ve) the (?:\\w+ and )?${c} conditions?\\b|ha(?:s|ve) the ${c} and \\w+ conditions?\\b|becomes? ${c}\\b|is ${c} (?:until|for)|is (?:\\w+ and )?${c} (?:until|for|and)|be ${c}\\b|imposes? the ${c} condition`, 'i');
       // scrub defensive and application phrasings; a surviving mention is
       // a DEPENDENT reference ("against a Poisoned target") with no source
       // ("Advantage on saving throws against the X condition" is defensive

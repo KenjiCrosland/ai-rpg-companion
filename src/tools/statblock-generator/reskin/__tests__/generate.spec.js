@@ -3785,3 +3785,566 @@ describe('caster close-out (2026-09-04): the return-grammar vocabulary', () => {
     expect((m.sections.Traits ?? []).some((e) => e.name === 'Returning Blade')).toBe(true);
   });
 });
+
+describe('the lurker family plumbing (2026-09-04): three lines, the ambush idiom flows end to end', () => {
+  const quietL = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+  const lurkerAnswer = (cr, style = null) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(cr, style, 'lurker'), cr, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    return JSON.stringify({
+      name: 'Eave Stalker', type: 'Monstrosity', size: 'Medium', alignment: 'Neutral Evil',
+      senses: 'darkvision 60 ft.', languages: 'Common',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Piercing'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Wisdom',
+      wildcard: `*Wisdom Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+    });
+  };
+
+  test('a lurker generation: under-card defenses, the ambush parenthetical alive, conditioned hide, no escape suite', async () => {
+    const m = await generateReskin({ archetype: 'lurker', concept: 'a rafter-haunting stalker', cr: 8, mechanics: [] },
+      quietL(() => lurkerAnswer(8)));
+    expect(m.generation).toMatchObject({ path: 'reskin', donor: 'lurker-8', archetype: 'lurker' });
+    expect(m.generation.cite).toMatch(/Assassin/);
+    const { cardBudget } = require('../card-budgets.mjs');
+    const card = cardBudget(8, {});
+    expect(m.ac).toBeLessThan(card.ac); // the family signature: defenses under the card
+    expect(m.hp).toBeLessThan(card.hp);
+    const all = Object.values(m.sections).flat();
+    // the fiat first-round rider is lurker-2's alone (the re-seating,
+    // 2026-09-04): the Assassin-shaped CR 8 seat ships WITHOUT it — its
+    // ambush economy is the rider split + the hide-cycle
+    expect(all.some((e) => /\(with Advantage during the first round/.test(e.text))).toBe(false);
+    // the hide-cycle ships CONDITIONED (Umbral Step is rules-chassis, never renamed)
+    const hide = (m.sections['Bonus Actions'] ?? []).find((e) => e.name === 'Umbral Step');
+    expect(hide.text).toMatch(/While in Dim Light or Darkness/);
+    // never the skirmisher's unconditioned exit suite
+    expect(all.some((e) => /Dash, Disengage, or Hide/.test(e.text))).toBe(false);
+  });
+
+  test('style routing: phantom and trap claims draw their lines; an off-family claim falls to the stalker', async () => {
+    const phantom = await generateReskin({ archetype: 'lurker', style: 'phantom', concept: 'a drowned echo', cr: 5, mechanics: [] },
+      quietL(() => lurkerAnswer(5, 'phantom')));
+    expect(phantom.generation.donor).toBe('lurker-5-phantom');
+    // the phantom tells ship: hover flight, the light bane
+    expect(phantom.speed).toMatch(/Fly \d+ ft\. \(hover\)/);
+    expect(Object.values(phantom.sections).flat().some((e) => /[Ss]unlight/.test(e.name))).toBe(true);
+
+    const trap = await generateReskin({ archetype: 'lurker', style: 'trap', concept: 'a false altar', cr: 5, mechanics: [] },
+      quietL(() => lurkerAnswer(5, 'trap')));
+    expect(trap.generation.donor).toBe('lurker-5-trap');
+
+    // a skirmisher style claim has no lurker pool — pickDonor falls back to plain
+    const fallback = await generateReskin({ archetype: 'lurker', style: 'skulker', concept: 'x', cr: 8, mechanics: [] },
+      quietL(() => lurkerAnswer(8, 'skulker')));
+    expect(fallback.generation.donor).toBe('lurker-8');
+  });
+
+  test('the legendary top: every line reaches a 17 seat', async () => {
+    for (const [style, donor] of [[null, 'lurker-17'], ['phantom', 'lurker-17-phantom'], ['trap', 'lurker-17-trap']]) {
+      const m = await generateReskin({ archetype: 'lurker', style, concept: 'an apex thing', cr: 20, mechanics: [] },
+        quietL(() => lurkerAnswer(20, style)));
+      expect(m.generation.donor).toBe(donor);
+      expect((m.sections['Legendary Actions'] ?? []).length).toBeGreaterThanOrEqual(3);
+    }
+  });
+});
+
+describe('the first-smoke fix batch (2026-09-04): KO economy, hide ownership, type stamp, the phase-cycle row', () => {
+  const lurkerAnswer2 = (cr, style = null, over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(cr, style, 'lurker'), cr, { mechanics: over.__mechanics ?? [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    const { __mechanics, ...rest } = over;
+    return JSON.stringify({
+      name: 'Test Stalker', type: 'Monstrosity', size: 'Medium', alignment: 'Neutral',
+      senses: 'darkvision 60 ft.', languages: 'Common',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Piercing'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Wisdom',
+      wildcard: `*Wisdom Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      ...rest,
+    });
+  };
+  const quietF = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+
+  test('KO conditions never ride an unpriced bonus action — the Muffled Toll guard (Incubus prices with Recharge)', async () => {
+    // unpriced: mechanical, fails closed to the chassis slot text
+    const bad = await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      quietF(() => lurkerAnswer2(5, null, {
+        wildcard: '*Wisdom Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has the Paralyzed condition until the end of its next turn.',
+        wildcard_economy: 'bonus_action',
+      })));
+    expect(JSON.stringify(bad.sections)).not.toMatch(/Paralyzed/);
+    // priced the way print prices it: ships
+    const ok = await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      quietF(() => lurkerAnswer2(5, null, {
+        wildcard: '*Wisdom Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has the Paralyzed condition until the end of its next turn. (Recharge 5-6)',
+        wildcard_economy: 'bonus_action',
+      })));
+    expect(JSON.stringify(ok.sections)).toMatch(/Paralyzed/);
+  });
+
+  test('the sheet already owns the hide-cycle — a wildcard re-inventing Umbral Step fails closed (the Veil of Brambles)', async () => {
+    const m = await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      quietF(() => lurkerAnswer2(5, null, {
+        wildcard: 'While in Dim Light or Darkness, the creature takes the Hide action, and it has Advantage on the next attack roll it makes before the start of its next turn.',
+        wildcard_economy: 'bonus_action',
+      })));
+    // the duplicate hide never ships; the chassis Umbral Step remains the only hide grant
+    const hideGrants = Object.values(m.sections).flat().filter((e) => /takes the Hide action/.test(e.text));
+    expect(hideGrants).toHaveLength(1);
+    expect(hideGrants[0].name).toBe('Umbral Step');
+  });
+
+  test('the resolve creature_type is stamped over the model answer — Undead keeps its immunity stamps', async () => {
+    const m = await generateReskin({ archetype: 'lurker', concept: 'a spirit of the attics', cr: 5, resolvedType: 'Undead', mechanics: [] },
+      quietF(() => lurkerAnswer2(5))); // the answer says Monstrosity — the first-smoke drift
+    expect(m.type).toBe('Undead');
+    expect(m.immunities).toMatch(/Poison/);
+  });
+
+  test('the phase-cycle row: claimed teleport uncovers the gated bonus action AND licenses a teleport wildcard', async () => {
+    // ungated out when unclaimed
+    const closed = scaleDonor(pickDonor(8, null, 'lurker'), 8, { mechanics: [] });
+    expect(Object.values(closed.sections).flat().some((e) => e.name === 'Teleport')).toBe(false);
+    // aboard when claimed, priced the Blink Dog way
+    const open = scaleDonor(pickDonor(8, null, 'lurker'), 8, { mechanics: ['teleport'] });
+    const tp = Object.values(open.sections).flat().find((e) => e.name === 'Teleport');
+    expect(tp.gate).toMatch(/Recharge 4-6/);
+    // and with the row aboard, a teleporting wildcard is no longer beyond the chassis
+    const m = await generateReskin({ archetype: 'lurker', concept: 'x', cr: 8, mechanics: ['teleport'] },
+      quietF(() => lurkerAnswer2(8, null, {
+        __mechanics: ['teleport'],
+        wildcard: '*Dexterity Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Prone condition, and the creature teleports up to 30 feet to an unoccupied space it can see.',
+      })));
+    expect(JSON.stringify(m.sections)).toMatch(/teleports up to 30 feet/);
+  });
+
+  test('"adjacent to" is swapped to 5e vocabulary by the register actuator (Gutter Glare shipped it)', async () => {
+    const m = await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      quietF(() => lurkerAnswer2(5, null, {
+        wildcard: '*Strength Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has the Prone condition, and it is pulled to a space adjacent to the creature.',
+      })));
+    const s = JSON.stringify(m.sections);
+    expect(s).not.toMatch(/adjacent to/);
+    expect(s).toMatch(/within 5 feet of/);
+  });
+
+  test('a scene-verb trigger draws the kneeling coaching into repair (the Grille fired on "kneels")', async () => {
+    const prompts = [];
+    await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      async (prompt) => {
+        prompts.push(prompt);
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return lurkerAnswer2(5, null, {
+          wildcard: '*Dexterity Saving Throw*: DC 13, one creature within 30 feet. *Failure:* If the target is kneeling, it has the Prone condition.',
+        });
+      });
+    expect(prompts.some((p) => /no kneeling or praying state/.test(p))).toBe(true);
+  });
+});
+
+describe('the batch-two fix batch (2026-09-05): chassis ownership, header jurisdiction, teleport grammar, sheet voice', () => {
+  const lurkerAnswer3 = (cr, style = null, over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(cr, style, 'lurker'), cr, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    return JSON.stringify({
+      name: 'Test Wraith', type: 'Undead', size: 'Medium', alignment: 'Neutral',
+      senses: 'darkvision 60 ft.', languages: 'Common',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Necrotic'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Wisdom',
+      wildcard: `*Wisdom Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      ...over,
+    });
+  };
+  const quietB = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+
+  test('the hide guard sees through inflection — "hide as a bonus action" is the Sudden Drop dodge', async () => {
+    const m = await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      quietB(() => lurkerAnswer3(5, null, {
+        trait_wildcard: { name: 'Sudden Drop', text: 'The creature can hide as a bonus action while in a space it can squeeze through.' },
+      })));
+    const hides = Object.values(m.sections).flat().filter((e) => /Hide action|hide as a bonus action/i.test(e.text));
+    expect(hides).toHaveLength(1);
+    expect(hides[0].name).toBe('Umbral Step');
+  });
+
+  test('a trait restating Incorporeal Movement fails closed — the Ethereal Stillness duplicate', async () => {
+    const m = await generateReskin({ archetype: 'lurker', style: 'phantom', concept: 'x', cr: 5, mechanics: [] },
+      quietB(() => lurkerAnswer3(5, 'phantom', {
+        trait_wildcard: { name: 'Ethereal Stillness', text: 'The creature can move through other creatures and objects as if they were Difficult Terrain.' },
+      })));
+    const movers = Object.values(m.sections).flat().filter((e) => /move through other creatures/.test(e.text));
+    expect(movers).toHaveLength(1);
+    expect(movers[0].name).toBe('Incorporeal Movement');
+  });
+
+  test('condition-immunity suites die; the single Headless flavor immunity still ships', async () => {
+    const suite = await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      quietB(() => lurkerAnswer3(5, null, {
+        trait_wildcard: { name: 'Preserved', text: 'It is immune to the Charmed and Frightened conditions, and it can breathe air and water.' },
+      })));
+    expect(JSON.stringify(suite.sections)).not.toMatch(/immune to the Charmed/);
+    const single = await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      quietB(() => lurkerAnswer3(5, null, {
+        trait_wildcard: { name: 'Hollow Skull', text: 'The creature is immune to the Frightened condition.' },
+      })));
+    expect(JSON.stringify(single.sections)).toMatch(/immune to the Frightened/);
+  });
+
+  test('the phantom chassis carries print\'s incorporeal suite in the header', async () => {
+    const m = await generateReskin({ archetype: 'lurker', style: 'phantom', concept: 'x', cr: 5, resolvedType: 'Undead', mechanics: [] },
+      quietB(() => lurkerAnswer3(5, 'phantom')));
+    expect(m.immunities).toMatch(/Grappled/);
+    expect(m.immunities).toMatch(/Restrained/);
+    expect(m.resistances).toMatch(/Bludgeoning/);
+  });
+
+  test('a teleport that never says teleport — "repositions within 60 feet" is caught (0/329 print)', async () => {
+    const m = await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      quietB(() => lurkerAnswer3(5, null, {
+        wildcard: '*Wisdom Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll, and the creature vanishes into shadow and repositions to an unoccupied space within 60 feet.',
+      })));
+    expect(JSON.stringify(m.sections)).not.toMatch(/repositions/);
+  });
+
+  test('the looks-at trigger and the conditional rate limit draw their coaching into repair', async () => {
+    const prompts = [];
+    const capture = (fixture) => async (prompt) => {
+      prompts.push(prompt);
+      if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return fixture();
+    };
+    await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      capture(() => lurkerAnswer3(5, null, {
+        wildcard: 'When a creature looks at a reflective surface within 30 feet, the creature makes one attack against it with Advantage.',
+      })));
+    expect(prompts.some((p) => /looking is not a game state/.test(p))).toBe(true);
+    prompts.length = 0;
+    await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      capture(() => lurkerAnswer3(5, null, {
+        wildcard: '*Wisdom Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll. If the creature is not in Dim Light, it can use this effect only once per turn.',
+      })));
+    expect(prompts.some((p) => /binds ALWAYS/.test(p))).toBe(true);
+  });
+
+  test('a second nickname draws the sheet-voice coaching; a possessed body part never does', async () => {
+    const prompts = [];
+    await generateReskin({ archetype: 'lurker', concept: 'a spectral chorister', cr: 5, mechanics: [] },
+      async (prompt) => {
+        prompts.push(prompt);
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return lurkerAnswer3(5, null, {
+          trait_wildcard: { name: 'Still Voice', text: 'The chorister can move through webs without penalty, and it has Advantage on saving throws against being Deafened.' },
+        });
+      });
+    expect(prompts.some((p) => /second nickname/.test(p))).toBe(true);
+  });
+});
+
+describe('the batch-three fix batch (2026-09-05): the death-exit inversion, the engulf organ, the trait door', () => {
+  const lurkerAnswer4 = (cr, style = null, mechanics = [], over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(cr, style, 'lurker'), cr, { mechanics });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    return JSON.stringify({
+      name: 'Test Maw', type: 'Construct', size: 'Large', alignment: 'Unaligned',
+      senses: 'blindsight 30 ft.', languages: 'None',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Bludgeoning'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Strength',
+      engulf_style: 'swallow',
+      wildcard: `*Strength Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      ...over,
+    });
+  };
+  const quietT = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+
+  test('the inverted death-exit dies at the gate — "dies if" is 0/329; subject-first is the legal form', async () => {
+    const m = await generateReskin({ archetype: 'lurker', style: 'trap', concept: 'x', cr: 5, mechanics: [] },
+      quietT(() => lurkerAnswer4(5, 'trap', [], {
+        wildcard: '*Strength Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has the Restrained condition (escape DC 13). The creature dies if it ends its turn with a Restrained creature within 5 feet.',
+      })));
+    expect(JSON.stringify(m.sections)).not.toMatch(/dies if/);
+  });
+
+  test('the engulf organ: claimed engulf uncovers the Swallow engine on the trap chassis; unclaimed gates it out', async () => {
+    const closed = scaleDonor(pickDonor(5, 'trap', 'lurker'), 5, { mechanics: [] });
+    expect(Object.values(closed.sections).flat().some((e) => e.engulf_engine)).toBe(false);
+    const open = scaleDonor(pickDonor(5, 'trap', 'lurker'), 5, { mechanics: ['engulf'] });
+    const engine = Object.values(open.sections).flat().find((e) => e.engulf_engine);
+    expect(engine.rules).toBe(true);
+    // the organ carries the death-exit in print's direction
+    expect(engine.text).toMatch(/If the creature dies, a swallowed creature exits/);
+    // and it ships end to end under the form's rules name
+    const m = await generateReskin({ archetype: 'lurker', style: 'trap', concept: 'a false altar that swallows', cr: 5, mechanics: ['engulf'] },
+      quietT(() => lurkerAnswer4(5, 'trap', ['engulf'])));
+    expect(Object.values(m.sections).flat().some((e) => /While swallowed, the target has the Blinded and Restrained conditions/.test(e.text))).toBe(true);
+  });
+
+  test('the disguise key: a trait restating False Form fails closed on the trap chassis', async () => {
+    const m = await generateReskin({ archetype: 'lurker', style: 'trap', concept: 'x', cr: 2, mechanics: [] },
+      quietT(() => lurkerAnswer4(2, 'trap', [], {
+        trait_wildcard: { name: 'False Loot', text: 'While motionless, the creature is indistinguishable from a normal treasure chest.' },
+      })));
+    const disguises = Object.values(m.sections).flat().filter((e) => /indistinguishable from/.test(e.text));
+    expect(disguises).toHaveLength(1);
+    expect(disguises[0].name).toBe('False Form');
+  });
+
+  test('the incorporeal key sees through "occupied spaces" — the Regalia synonym dodge', async () => {
+    const m = await generateReskin({ archetype: 'lurker', style: 'phantom', concept: 'x', cr: 5, mechanics: [] },
+      quietT(() => lurkerAnswer4(5, 'phantom', [], {
+        trait_wildcard: { name: 'Regalia', text: 'The creature can move through occupied spaces as if they were Difficult Terrain.' },
+      })));
+    const movers = Object.values(m.sections).flat().filter((e) => /move through (?:other creatures|occupied spaces)/.test(e.text));
+    expect(movers).toHaveLength(1);
+    expect(movers[0].name).toBe('Incorporeal Movement');
+  });
+
+  test('the trait door closes: economy "trait" with an embedded reaction fails mechanically, never files into Traits', async () => {
+    const m = await generateReskin({ archetype: 'lurker', style: 'trap', concept: 'x', cr: 2, mechanics: [] },
+      quietT(() => lurkerAnswer4(2, 'trap', [], {
+        wildcard: 'While motionless the creature watches for prey. If a target within 5 feet touches it, the creature can make one attack against that target as a reaction, and it has Advantage on the attack roll.',
+        wildcard_economy: 'trait',
+      })));
+    expect(JSON.stringify(m.sections)).not.toMatch(/as a reaction/);
+  });
+
+  test('"alone" and self-disabling geography draw their coaching into repair', async () => {
+    const prompts = [];
+    const capture = (fixture) => async (prompt) => {
+      prompts.push(prompt);
+      if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return fixture();
+    };
+    await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      capture(() => lurkerAnswer4(5, null, [], {
+        wildcard: '*Wisdom Saving Throw*: DC 13, one creature within 30 feet that is alone. *Failure:* The target has the Frightened condition until the end of its next turn.',
+      })));
+    expect(prompts.some((p) => /"alone" is not a game state/.test(p))).toBe(true);
+    prompts.length = 0;
+    await generateReskin({ archetype: 'lurker', style: 'phantom', concept: 'x', cr: 5, mechanics: [] },
+      capture(() => lurkerAnswer4(5, 'phantom', [], {
+        trait_wildcard: { name: 'Bound Haunt', text: 'While inside the ruined chapel, the creature can move through walls. Outside the ruined chapel, the creature is Incapacitated.' },
+      })));
+    expect(prompts.some((p) => /location the sheet never establishes/.test(p))).toBe(true);
+  });
+
+  test('the orphan-condition scan reads compound applies — "is Frightened and Paralyzed until" is an apply, not an orphan', async () => {
+    const m = await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      quietT(() => lurkerAnswer4(5, null, [], {
+        wildcard: '*Wisdom Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target is Frightened and Paralyzed until the end of its next turn.',
+      })));
+    expect((m.lint_findings ?? []).join(' ')).not.toMatch(/"Paralyzed" is referenced as a state but nothing/);
+  });
+});
+
+describe('the pre-close fix batch (2026-09-07): the numeric-jurisdiction trio, title case, the Rug idiom', () => {
+  const lurkerAnswer5 = (cr, style = null, over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(cr, style, 'lurker'), cr, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    return JSON.stringify({
+      name: 'Test Shade', type: 'Undead', size: 'Medium', alignment: 'Neutral',
+      senses: 'darkvision 60 ft.', languages: 'Common',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Necrotic'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Wisdom',
+      wildcard: `*Wisdom Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      ...over,
+    });
+  };
+  const quietP = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+
+  test('connectives stay lowercase in shipped names — the Grille/Vigil title-case fix', async () => {
+    const m = await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      quietP(() => lurkerAnswer5(5, null, { name: 'vigil of the pass' })));
+    expect(m.name).toBe('Vigil of the Pass');
+  });
+
+  test('the numeric-jurisdiction trio fails closed: stat-add choice, resistance bypass, self AC grant', async () => {
+    for (const text of [
+      'The creature can add its Intelligence modifier to the damage roll of its ranged attacks.',
+      'The creature\'s attacks are considered magical for the purposes of overcoming resistance to Poison damage.',
+      'The creature gains a +5 bonus to its AC while it remains motionless in Dim Light.',
+    ]) {
+      const m = await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+        quietP(() => lurkerAnswer5(5, null, { trait_wildcard: { name: 'Bad Grant', text } })));
+      expect(Object.values(m.sections).flat().some((e) => e.name === 'Bad Grant')).toBe(false);
+    }
+  });
+
+  test('the Rug idiom is in the wildcard prompt — damage-forfeit pricing propagates in print wording', () => {
+    const scaled = scaleDonor(pickDonor(3, 'trap', 'lurker'), 3, { mechanics: [] });
+    const prompt = buildReskinPrompt(scaled, { concept: 'a wax figure' });
+    expect(prompt).toMatch(/instead of dealing damage/);
+    expect(prompt).toMatch(/Rug of Smothering/);
+  });
+
+  test('language register: "but does not speak" ships as print\'s "but can\'t speak"', async () => {
+    const m = await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      quietP(() => lurkerAnswer5(5, null, { languages: 'Celestial, understands all others but does not speak' })));
+    expect(m.languages).toMatch(/but can't speak/);
+  });
+
+  // GOLDEN SEED (library candidate): the Tableau Stalker's Still Gaze —
+  // the weeping-angel constraint (Sea Hag "can see" grammar inverted into
+  // a self-restriction) priced by the Rug trade (forfeit the hit's
+  // damage), Ghoul-severity paralysis with see-it-to-break counterplay.
+  // The family's design peak, batch four 2026-09-07.
+  test('golden seed: Still Gaze — the weeping-angel trap ships intact', async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(3, 'trap', 'lurker'), 3, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k) => { renames[k] = k === 'Melee Attack' ? 'Waxen Limb' : `Named ${k}`; });
+    const m = await generateReskin({ archetype: 'lurker', style: 'trap', concept: 'a wax figure that moves only when unobserved', cr: 3, mechanics: [] },
+      quietP(() => JSON.stringify({
+        name: 'Tableau Stalker', type: 'Construct', size: 'Medium', alignment: 'Unaligned',
+        senses: 'darkvision 60 ft.', languages: 'None',
+        renames, damage_types: { 'Waxen Limb': 'Bludgeoning' },
+        conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Constitution',
+        wildcard: `The creature can move or take actions only while no creature can see it. When it hits one creature within 30 feet with Waxen Limb, it can deal no damage instead and force the target to make a DC ${scaled.dc} Constitution saving throw. On a failed save, the target is Paralyzed for 1 minute, and it can repeat the saving throw at the end of each of its turns, ending the effect on a success. The effect also ends early if the target sees the creature.`,
+      })));
+    const gaze = Object.values(m.sections).flat().find((e) => /can move or take actions only while no creature can see it/.test(e.text));
+    expect(gaze).toBeTruthy();
+    expect(gaze.text).toMatch(/Paralyzed for 1 minute/);
+    expect(gaze.text).toMatch(/ends early if the target sees/);
+  });
+});
+
+describe('the close-out coda (2026-09-08): the short-form system, four word-form holes, two resolver cues', () => {
+  const lurkerAnswer6 = (cr, style = null, over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(cr, style, 'lurker'), cr, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    return JSON.stringify({
+      name: 'Hush That Endures', type: 'Aberration', size: 'Medium', alignment: 'Unaligned',
+      senses: 'darkvision 60 ft.', languages: 'Common',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Psychic'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Wisdom',
+      wildcard: `*Wisdom Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      ...over,
+    });
+  };
+  const quietC2 = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+
+  test('the short form heads on the noun before a relative — never "the endures"', async () => {
+    const m = await generateReskin({ archetype: 'lurker', concept: 'the silence in a library', cr: 8, mechanics: [] },
+      quietC2(() => lurkerAnswer6(8)));
+    const all = JSON.stringify(m.sections);
+    expect(all).toMatch(/the hush/);
+    expect(all).not.toMatch(/the endures/);
+  });
+
+  test('a capitalized mid-sentence epithet draws the sheet-voice coaching — "the Silence" dodge closed', async () => {
+    const prompts = [];
+    await generateReskin({ archetype: 'lurker', concept: 'the silence in a library', cr: 8, mechanics: [] },
+      async (prompt) => {
+        prompts.push(prompt);
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return lurkerAnswer6(8, null, {
+          wildcard: 'When a creature within 30 feet makes a sound, the Silence strikes at its voice, and the target must succeed on a DC 15 Wisdom saving throw or have Disadvantage on its next attack roll.',
+          wildcard_economy: 'reaction',
+        });
+      });
+    expect(prompts.some((p) => /second nickname/.test(p))).toBe(true);
+    // while "the Hide action" never trips the game-caps exclusion
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    void rk; // (exclusion is covered by every green suite that grants Hide)
+  });
+
+  test('the immunity guard reads name-subjects — the Suspended Stillness dodge closed', async () => {
+    const m = await generateReskin({ archetype: 'lurker', style: 'trap', concept: 'x', cr: 5, mechanics: [] },
+      quietC2(() => lurkerAnswer6(5, 'trap', {
+        name: 'Gallows Bed',
+        trait_wildcard: { name: 'Suspended Stillness', text: 'While motionless, the gallows bed has immunity to the Blinded and Deafened conditions.' },
+      })));
+    expect(JSON.stringify(m.sections)).not.toMatch(/immunity to the Blinded/);
+  });
+
+  test('the orphan scan reads compound-NOUN applies — "has the Blinded and Restrained conditions"', async () => {
+    const m = await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      quietC2(() => lurkerAnswer6(5, null, {
+        wildcard: '*Strength Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has the Blinded and Restrained conditions until the end of its next turn.',
+      })));
+    const findings = (m.lint_findings ?? []).join(' ');
+    expect(findings).not.toMatch(/"Blinded" is referenced as a state but nothing/);
+    expect(findings).not.toMatch(/"Restrained" is referenced as a state but nothing/);
+  });
+
+  test('"uses a bonus action" in a trait draft is active mechanics — the Flurry inflection closed', async () => {
+    const m = await generateReskin({ archetype: 'lurker', concept: 'x', cr: 5, mechanics: [] },
+      quietC2(() => lurkerAnswer6(5, null, {
+        trait_wildcard: { name: 'Blade Recall', text: 'While a knife is in the air, the creature can use a bonus action to recall all thrown knives to its hand.' },
+      })));
+    expect(Object.values(m.sections).flat().some((e) => e.name === 'Blade Recall')).toBe(false);
+  });
+
+  test('a rename promising a condition its row never applies is a defect — the Petrifying Patient class', () => {
+    const { reskinDefects: rd } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(20, null, 'lurker'), 20, { mechanics: [] });
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    // Legendary Menace applies Frightened; name it Petrifying and the vet objects
+    renames['Legendary Menace'] = 'Petrifying Stare';
+    const answer = {
+      name: 'Test Shade', renames, damage_types: {}, conditions: { condition_minor: 'Prone' },
+      wildcard: `*Wisdom Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+    };
+    expect(rd(scaled, answer, {}).join(' ')).toMatch(/"Petrifying Stare" promises Petrified but the row never applies it/);
+  });
+
+  test('the prompt cues: ghosts are ALWAYS phantom; engulf covers digestion', () => {
+    const src = require('fs').readFileSync(require('path').resolve(__dirname, '../../format-2024/generate.mjs'), 'utf8');
+    expect(src).toMatch(/a ghost or spirit is ALWAYS a phantom, even when it lurks, stalks, or hides/);
+    expect(src).toMatch(/engulf covers ANY containment: a body that swallows, engulfs, smothers, entombs, or DIGESTS prey/);
+  });
+});

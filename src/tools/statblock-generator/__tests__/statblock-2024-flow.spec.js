@@ -164,6 +164,10 @@ describe('StatblockGenerator 2024 flow', () => {
   beforeEach(() => {
     localStorage.clear();
     // Re-set after the clear: this suite exercises the CHASSIS path.
+    // The suite's test role is 'lurker', which grew a reskin family
+    // (2026-09-04) — the kill switch keeps these on the slot path they
+    // were written to exercise.
+    localStorage.setItem('statblock-reskin-lurker', '0');
     jest.clearAllMocks();
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1920 });
   });

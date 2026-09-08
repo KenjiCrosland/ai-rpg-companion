@@ -25,7 +25,13 @@ export function pickDonor(cr, style = null, archetype) {
 // Attack Roll: +9, reach 5 ft. or range 150 ft." — Mage/Archmage/Lich/
 // Solar); it must swallow both range clauses' periods or the damage
 // number never parses and the row never rescales.
-const ATTACK_RE = /(\+\d+)(, reach \d+ ft\. or range [\d/]+ ft\.|, reach [^.]+|, range [^.]+)? ?\.? (\d+) \((\d+d\d+(?:\s*\+\s*\d+)?)\) ([\w{}]+) damage/;
+// the optional "(with Advantage ...)" group is the LURKER family's
+// ambush idiom (corpus sweep 2026-09-04: 9 print sightings — the
+// Doppelganger's "(with Advantage during the first round of each
+// combat)", the Mimic's grappled-prey form, the sharks' blood-scent) —
+// it sits between +N and the reach clause and must be swallowed or the
+// damage never parses, same surgery the hybrid row needed.
+const ATTACK_RE = /(\+\d+)(?: \(with Advantage[^)]*\))?(, reach \d+ ft\. or range [\d/]+ ft\.|, reach [^.]+|, range [^.]+)? ?\.? (\d+) \((\d+d\d+(?:\s*\+\s*\d+)?)\) ([\w{}]+) damage/;
 
 export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null } = {}) {
   const card = cardBudget(cr, { legendary: !!legendary });
@@ -87,7 +93,12 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   // donors' hp_scale documents the speed-keyed flight tax that this
   // function already charges below — never charge it twice.
   scaled.ac = card.ac + (donor.ac_offset ?? 0);
-  scaled.hp = (donor.hp_scale && !/Fly/i.test(donor.speed ?? ''))
+  // a native-Fly donor with a DEEP hp_scale (< 0.9) applies it as the
+  // TOTAL discount, flight tax included (the lurker phantoms, 2026-09-04:
+  // Ghost runs 0.6x of card — Incorporeal + hover ARE the armor; the
+  // winged 0.98 path below is untouched, its tax still charges once)
+  const deepScale = donor.hp_scale && donor.hp_scale < 0.9 && /Fly/i.test(donor.speed ?? '');
+  scaled.hp = (donor.hp_scale && (deepScale || !/Fly/i.test(donor.speed ?? '')))
     ? Math.round(card.hp * donor.hp_scale) : card.hp;
   scaled.atk = card.atk; scaled.dc = card.dc;
   // full print ladder: the old ceiling of 6 shipped wrong PB/saves/skills
@@ -114,7 +125,7 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   // whose final speed carries Fly pays the measured 10% (flyers 0.98 of
   // card HP vs grounded 1.08, corpus sweep). Winged donors, movement
   // grants, and any future wings all price identically.
-  if (/Fly/.test(scaled.speed)) scaled.hp = Math.round(scaled.hp * 0.9);
+  if (/Fly/.test(scaled.speed) && !deepScale) scaled.hp = Math.round(scaled.hp * 0.9);
   // STAT COHERENCE (raise-only, the skeleton path's idiom): a reader
   // recomputes attack = striker mod + PB, so the striker stat rises to
   // pay the card's attack bonus. The DC stays at card — print lets DCs
@@ -186,7 +197,7 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
       ? Math.max(3, Math.round(perHit * 0.85)) : perHit;
     const { avg, dice } = attackDamageDiceFor(rowBudget, Math.min(mod, rowBudget - 1));
     e.text = e.text
-      .replace(/\+\d+, (reach|range)/, `+${card.atk}, $1`)
+      .replace(/\+\d+((?: \(with Advantage[^)]*\))?), (reach|range)/, `+${card.atk}$1, $2`)
       .replace(/\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) ([\w{}]+) damage/, `${avg} (${dice}) $1 damage`);
     // THE ENERGY RIDER (owner TODO, landed 2026-08-18; the Assassin datum:
     // print tops up a skirmisher's thin base with per-hit riders — the 73%
@@ -214,6 +225,10 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
     // the wildcard SLOT's chassis text is the verified fallback — it must
     // carry the scaled DC too (live: a CR 20 shipped its donor's DC 20)
     if (!e.gate) e.text = e.text.replace(/DC \d+/g, `DC ${card.dc}`);
+    // DAMAGE-LESS attack rows (the trap line's Grasping Limb — Roper's
+    // tentacle shape, 2026-09-04) never enter the re-dice loop, so their
+    // attack bonus stamps here (idempotent on rows already re-stamped)
+    if (!e.gate && /Attack Roll:\*/.test(e.text)) e.text = e.text.replace(/(Attack Roll:\* )\+\d+/, `$1+${card.atk}`);
     // UNGATED SAVE-DAMAGE ROWS RESCALE TOO (the Deacon, 2026-09-02: the
     // binder's Debuff Ray shipped its authored CR 8 dice — 18 (4d8) —
     // at CR 2 AND CR 11; the scaler only re-diced attack rows and gated

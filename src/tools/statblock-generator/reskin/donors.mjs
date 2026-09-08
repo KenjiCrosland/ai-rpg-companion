@@ -57,7 +57,7 @@ export const DONORS = [
     id: 'skirmisher-3',
     cite: 'composition after Vampire Familiar (CR 3)',
     cr: 3,
-    archetypes: ['skirmisher', 'lurker'],
+    archetypes: ['skirmisher'],
     ac: 15, hp: 60, hp_formula: '11d8 + 11', atk: 5, dc: 12, pb: 2,
     speed: '40 ft., Climb 30 ft.',
     stats: { STR: 12, DEX: 16, CON: 12, INT: 8, WIS: 12, CHA: 8 },
@@ -81,7 +81,7 @@ export const DONORS = [
     id: 'skirmisher-8',
     cite: 'composition after Assassin (CR 8) — the print skirmisher ceiling',
     cr: 8,
-    archetypes: ['skirmisher', 'lurker'],
+    archetypes: ['skirmisher'],
     ac: 17, hp: 135, hp_formula: '18d8 + 54', atk: 8, dc: 15, pb: 3,
     speed: '40 ft., Climb 40 ft.',
     stats: { STR: 14, DEX: 20, CON: 16, INT: 10, WIS: 14, CHA: 10 },
@@ -318,7 +318,7 @@ export const DONORS = [
     id: 'skirmisher-3-skulker',
     cite: 'composition after Phase Spider (CR 3) + Blink Dog; gaze after Mummy (CR 3)',
     style: 'skulker',
-    cr: 3, archetypes: ['skirmisher', 'lurker'],
+    cr: 3, archetypes: ['skirmisher'],
     ac: 15, hp: 60, hp_formula: '11d8 + 11', atk: 5, dc: 12, pb: 2,
     speed: '40 ft., Climb 30 ft.',
     stats: { STR: 12, DEX: 16, CON: 12, INT: 8, WIS: 12, CHA: 8 },
@@ -344,7 +344,7 @@ export const DONORS = [
     id: 'skirmisher-8-skulker',
     cite: 'composition after Assassin (CR 8); gaze after Mummy; blink after Blink Dog',
     style: 'skulker',
-    cr: 8, archetypes: ['skirmisher', 'lurker'],
+    cr: 8, archetypes: ['skirmisher'],
     ac: 17, hp: 135, hp_formula: '18d8 + 54', atk: 8, dc: 15, pb: 3,
     speed: '40 ft., Climb 40 ft.',
     stats: { STR: 14, DEX: 20, CON: 16, INT: 10, WIS: 14, CHA: 10 },
@@ -370,7 +370,7 @@ export const DONORS = [
     id: 'skirmisher-13-skulker',
     invented: true, // no printed skulker above CR 8; gaze rung cited (Mummy Lord CR 15)
     style: 'skulker',
-    cr: 13, archetypes: ['skirmisher', 'lurker'],
+    cr: 13, archetypes: ['skirmisher'],
     ac: 18, hp: 210, hp_formula: '28d10 + 56', atk: 10, dc: 17, pb: 5,
     speed: '50 ft., Climb 40 ft.',
     stats: { STR: 16, DEX: 22, CON: 14, INT: 10, WIS: 16, CHA: 12 },
@@ -397,7 +397,7 @@ export const DONORS = [
     id: 'skirmisher-18-skulker',
     invented: true, // no printed peer; gaze at the Solar rung, blink after Marilith
     style: 'skulker', legendary: true,
-    cr: 18, archetypes: ['skirmisher', 'lurker'],
+    cr: 18, archetypes: ['skirmisher'],
     ac: 20, hp: 285, hp_formula: '38d10 + 76', atk: 13, dc: 20, pb: 6,
     speed: '60 ft., Climb 60 ft.',
     stats: { STR: 20, DEX: 26, CON: 14, INT: 14, WIS: 18, CHA: 16 },
@@ -1317,6 +1317,308 @@ export const DONORS = [
         { name: 'Legendary Strike', text: 'The creature makes one Melee Attack attack.' },
         { name: 'Legendary Prowl', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
         { name: 'Legendary Glare', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+      ],
+    },
+  },
+  // ===== THE LURKER FAMILY (corpus sweep 2026-09-04, n~22, CR 1/4-8).
+  // Family laws: UNDER-CARD DEFENSES paid by unconventional-defense tech
+  // (the Ghost runs AC -5 / HP 0.6x — Incorporeal and hover ARE the
+  // armor) balanced by a LIGHT BANE (Sunlight Sensitivity — the family's
+  // foil, the regenerator's Acid/Fire analog); the ambush idiom is the
+  // INLINE ATTACK-ROLL CONDITION ("+N (with Advantage during the first
+  // round of each combat)" — the Doppelganger's opener); the burst is
+  // RIDER-HEAVY (Assassin: 1d6+4 plus 5d6 — the rider is the hit); the
+  // hide-cycle is CONDITIONED (Shadow Stealth's dim-light gate) —
+  // concealment re-entry, never the skirmisher's free mobility.
+  // THE FIAT RIDER IS ONE SEAT'S, NOT THE FAMILY'S (critic + corpus,
+  // 2026-09-04): "(with Advantage during the first round of each
+  // combat)" is verbatim print — but on exactly ONE block of 9 inline-
+  // advantage sightings, the Doppelganger, whose DISGUISE is the state
+  // it prices (an unrecognized infiltrator can't be worded as
+  // "hidden"). The Assassin-shaped seats carry NO advantage rider:
+  // their ambush economy is rider damage + the hide-cycle, and hidden-
+  // attacker advantage is a CORE RULE print never restates. So the
+  // rider lives on lurker-2 (its cite) and the grappled-form on traps
+  // (Mimic/Ankheg/Bugbear, 4 print sightings) — never on 5/8/17.
+  // Lines: plain = stalker (Assassin/Doppelganger/Phase Spider),
+  // 'phantom' (Ghost/Wraith/Specter — incorporeal, drain, sunlight
+  // bane), 'trap' (Mimic/Roper/Cloaker — disguise, attach, stationary).
+  // No print lurker above CR 8 — the 17 seats are invented, the
+  // hide-cycle migrating into the legendary menu (the brute playbook).
+  {
+    id: 'lurker-2',
+    cite: 'composition after Doppelganger (CR 3) — the first-round-advantage opener',
+    cr: 2, archetypes: ['lurker'],
+    ac: 14, ac_offset: -1, hp: 32, hp_scale: 0.72, hp_formula: '5d8 + 10', atk: 5, dc: 12, pb: 2,
+    speed: '30 ft.',
+    stats: { STR: 12, DEX: 16, CON: 14, INT: 11, WIS: 12, CHA: 12 },
+    saves: ['DEX'], skills: 'Perception +3, Stealth +7',
+    sections: {
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5 (with Advantage during the first round of each combat), reach 5 ft. 8 (1d10 + 3) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Umbral Step', rules: true, text: 'While in Dim Light or Darkness, the creature takes the Hide action.' },
+        { name: 'Teleport', gated_on: 'teleport', text: 'The creature teleports up to 40 feet to an unoccupied space it can see.', gate: 'Recharge 4-6' },
+      ],
+    },
+  },
+  {
+    // the mid seat (first smoke, 2026-09-04): lurker-2 served CR 3-6 and
+    // dragged the Doppelganger's infiltrator rider onto plain stalkers
+    id: 'lurker-5',
+    cite: 'composition after Phase Spider (CR 3) — the rider-heavy bite and the phase-cycle bonus action, scaled into the band',
+    cr: 5, archetypes: ['lurker'],
+    ac: 15, ac_offset: -1, hp: 65, hp_scale: 0.72, hp_formula: '10d8 + 20', atk: 6, dc: 13, pb: 3,
+    speed: '30 ft., Climb 30 ft.',
+    stats: { STR: 12, DEX: 18, CON: 14, INT: 12, WIS: 13, CHA: 10 },
+    saves: ['DEX'], skills: 'Perception +4, Stealth +10',
+    sections: {
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +6, reach 5 ft. 17 (3d8 + 4) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Umbral Step', rules: true, text: 'While in Dim Light or Darkness, the creature takes the Hide action.' },
+        { name: 'Teleport', gated_on: 'teleport', text: 'The creature teleports up to 40 feet to an unoccupied space it can see.', gate: 'Recharge 4-6' },
+      ],
+    },
+  },
+  {
+    id: 'lurker-8',
+    cite: 'composition after Assassin (CR 8) — the rider-heavy burst and the expertise Stealth',
+    cr: 8, archetypes: ['lurker'],
+    ac: 16, ac_offset: -1, hp: 97, hp_scale: 0.72, hp_formula: '15d8 + 30', atk: 8, dc: 15, pb: 3,
+    speed: '30 ft.',
+    stats: { STR: 12, DEX: 20, CON: 14, INT: 13, WIS: 14, CHA: 11 },
+    saves: ['DEX', 'INT'], skills: 'Perception +5, Stealth +11',
+    sections: {
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 19 (4d6 + 5) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +8, range 80/320 ft. 16 (2d10 + 5) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Umbral Step', rules: true, text: 'While in Dim Light or Darkness, the creature takes the Hide action.' },
+        { name: 'Teleport', gated_on: 'teleport', text: 'The creature teleports up to 40 feet to an unoccupied space it can see.', gate: 'Recharge 4-6' },
+      ],
+    },
+  },
+  {
+    id: 'lurker-17',
+    invented: true, // no printed lurker above CR 8 — the Assassin composition under a legendary menu, the hide-cycle as legendary economy
+    legendary: true,
+    cr: 17, archetypes: ['lurker'],
+    ac: 18, ac_offset: -1, hp: 173, hp_scale: 0.8, hp_formula: '27d8 + 52', atk: 12, dc: 19, pb: 6,
+    speed: '40 ft.',
+    stats: { STR: 14, DEX: 24, CON: 16, INT: 16, WIS: 18, CHA: 14 },
+    saves: ['DEX', 'INT', 'WIS'], skills: 'Perception +10, Stealth +13',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 5 ft. 40 (6d10 + 7) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +12, range 80/320 ft. 34 (6d8 + 7) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Umbral Step', rules: true, text: 'While in Dim Light or Darkness, the creature takes the Hide action.' },
+        { name: 'Teleport', gated_on: 'teleport', text: 'The creature teleports up to 40 feet to an unoccupied space it can see.', gate: 'Recharge 4-6' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Stalk', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Vanish', text: 'While in Dim Light or Darkness, the creature takes the Hide action. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Menace', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'lurker-1-phantom',
+    cite: 'composition after Specter (CR 1) — the drain touch on the incorporeal frame',
+    style: 'phantom',
+    cr: 1, archetypes: ['lurker'],
+    defense_suite: { damage: ['Poison'], conditions: ['Charmed', 'Exhaustion', 'Grappled', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained'], resist: ['Bludgeoning', 'Piercing', 'Slashing'] }, // print's incorporeal suite (Specter/Wraith/Ghost) — the tech that pays the 0.7x HP
+
+    ac: 12, ac_offset: -3, hp: 22, hp_scale: 0.72, hp_formula: '5d8', atk: 4, dc: 11, pb: 2,
+    speed: '5 ft., Fly 50 ft. (hover)',
+    stats: { STR: 1, DEX: 14, CON: 11, INT: 10, WIS: 10, CHA: 11 },
+    saves: ['DEX'], skills: 'Stealth +4',
+    sections: {
+      Traits: [
+        { name: 'Incorporeal Movement', rules: true, text: 'The creature can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object.' },
+        { name: 'Sunlight Sensitivity', rules: true, text: 'While in sunlight, the creature has Disadvantage on ability checks and attack rolls.' },
+      ],
+      Actions: [
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +4, reach 5 ft. 10 (3d6) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 11, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'lurker-5-phantom',
+    cite: 'composition after Wraith (CR 5) — Life Drain under the sunlight bane',
+    style: 'phantom',
+    cr: 5, archetypes: ['lurker'],
+    defense_suite: { damage: ['Poison'], conditions: ['Charmed', 'Exhaustion', 'Grappled', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained'], resist: ['Bludgeoning', 'Piercing', 'Slashing'] }, // print's incorporeal suite (Specter/Wraith/Ghost) — the tech that pays the 0.7x HP
+
+    ac: 13, ac_offset: -3, hp: 63, hp_scale: 0.7, hp_formula: '14d8', atk: 6, dc: 13, pb: 3,
+    speed: '5 ft., Fly 60 ft. (hover)',
+    stats: { STR: 6, DEX: 16, CON: 16, INT: 12, WIS: 14, CHA: 15 },
+    saves: ['DEX'], skills: 'Stealth +6',
+    sections: {
+      Traits: [
+        { name: 'Incorporeal Movement', rules: true, text: 'The creature can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object.' },
+        { name: 'Sunlight Sensitivity', rules: true, text: 'While in sunlight, the creature has Disadvantage on ability checks and attack rolls.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +6, reach 5 ft. 21 (4d8 + 3) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'lurker-17-phantom',
+    invented: true, // no printed phantom boss — the Wraith composition under a legendary menu
+    legendary: true,
+    style: 'phantom',
+    cr: 17, archetypes: ['lurker'],
+    defense_suite: { damage: ['Poison'], conditions: ['Charmed', 'Exhaustion', 'Grappled', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained'], resist: ['Bludgeoning', 'Piercing', 'Slashing'] }, // print's incorporeal suite (Specter/Wraith/Ghost) — the tech that pays the 0.7x HP
+
+    ac: 16, ac_offset: -3, hp: 151, hp_scale: 0.7, hp_formula: '33d8 + 3', atk: 12, dc: 19, pb: 6,
+    speed: '5 ft., Fly 60 ft. (hover)',
+    stats: { STR: 6, DEX: 22, CON: 16, INT: 15, WIS: 17, CHA: 20 },
+    saves: ['DEX', 'CHA', 'WIS'], skills: 'Stealth +12, Perception +9',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Incorporeal Movement', rules: true, text: 'The creature can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object.' },
+        { name: 'Sunlight Sensitivity', rules: true, text: 'While in sunlight, the creature has Disadvantage on ability checks and attack rolls.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 5 ft. 44 (8d8 + 8) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Drift', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Fade', text: 'The creature has the Invisible condition until the start of its next turn or until immediately after it makes an attack roll. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Chill', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'lurker-2-trap',
+    cite: 'composition after Mimic (CR 2) — disguise, adhesion, and the grappled-prey advantage',
+    style: 'trap',
+    cr: 2, archetypes: ['lurker'],
+    ac: 12, ac_offset: -3, hp: 58, hp_scale: 1.25, hp_formula: '9d8 + 18', atk: 5, dc: 12, pb: 2,
+    speed: '20 ft.',
+    stats: { STR: 17, DEX: 12, CON: 15, INT: 5, WIS: 13, CHA: 8 },
+    saves: ['STR'], skills: 'Stealth +5',
+    sections: {
+      Traits: [
+        { name: 'Adhesive Hide', rules: true, text: 'The creature adheres to anything that touches it. A Huge or smaller creature adhered to the creature has the Grappled condition (escape DC 12).' },
+      ],
+      Actions: [
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5 (with Advantage if the target is Grappled by the creature), reach 5 ft. 13 (2d8 + 4) {damage_type} damage.' },
+        // the engulf ENGINE, gated on the claim (batch three 2026-09-05:
+        // two swallowing traps hand-rolled containment — one inverted the
+        // death-exit clause into suicide; the organ knows the direction)
+        { name: 'Swallow', rules: true, engulf_engine: true, gated_on: 'engulf', text: 'The creature swallows one Medium or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 7 (2d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 15 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 5 feet of movement.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'False Form', rules: true, text: 'The creature shape-shifts to resemble a Medium or Small object while retaining its game statistics, or it returns to its true form. While it is motionless in its false form, it is indistinguishable from an ordinary object.' },
+      ],
+    },
+  },
+  {
+    id: 'lurker-5-trap',
+    cite: 'composition after Roper (CR 5) — reach-tentacle grapples, Reel, and the armored stillness',
+    style: 'trap',
+    cr: 5, archetypes: ['lurker'],
+    ac: 20, ac_offset: 4, hp: 93, hp_scale: 1.03, hp_formula: '11d10 + 33', atk: 6, dc: 13, pb: 3,
+    speed: '10 ft., Climb 20 ft.',
+    stats: { STR: 18, DEX: 8, CON: 17, INT: 7, WIS: 16, CHA: 6 },
+    saves: ['STR'], skills: 'Perception +6, Stealth +5',
+    sections: {
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks and uses Reel.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +6 (with Advantage if the target is Grappled by the creature), reach 5 ft. 18 (3d8 + 5) {damage_type} damage.' },
+        { name: 'Grasping Limb', text: '*Melee Attack Roll:* +6, reach 50 ft. The target has the Grappled condition (escape DC 13).' },
+        { name: 'Reel', rules: true, text: 'The creature pulls each creature Grappled by it up to 25 feet straight toward it.' },
+        { name: 'Swallow', rules: true, engulf_engine: true, gated_on: 'engulf', text: 'The creature swallows one Medium or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 10 (3d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 25 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 5 feet of movement.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'False Form', rules: true, text: 'The creature shape-shifts to resemble a natural feature of its surroundings while retaining its game statistics, or it returns to its true form. While it is motionless in its false form, it is indistinguishable from that feature.' },
+      ],
+    },
+  },
+  {
+    id: 'lurker-8-trap',
+    cite: 'composition after Cloaker (CR 8) — the Attach opener under Light Sensitivity',
+    style: 'trap',
+    cr: 8, archetypes: ['lurker'],
+    ac: 14, ac_offset: -3, hp: 91, hp_scale: 0.67, hp_formula: '14d10 + 14', atk: 8, dc: 15, pb: 3,
+    speed: '10 ft., Fly 40 ft.',
+    stats: { STR: 17, DEX: 15, CON: 14, INT: 13, WIS: 12, CHA: 13 },
+    saves: ['DEX'], skills: 'Stealth +5',
+    sections: {
+      Traits: [
+        { name: 'Light Sensitivity', rules: true, text: 'While in Bright Light, the creature has Disadvantage on attack rolls.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8 (with Advantage if the target is Grappled by the creature), reach 10 ft. 24 (3d10 + 8) {damage_type} damage.' },
+        { name: 'Attach', text: '*Melee Attack Roll:* +8, reach 5 ft. 13 (3d6 + 3) {damage_type} damage. If the target is a Large or smaller creature, the creature attaches to it: the target has the Grappled condition (escape DC 15), and the creature\'s attacks hit only the Grappled target while attached.' },
+        { name: 'Swallow', rules: true, engulf_engine: true, gated_on: 'engulf', text: 'The creature swallows one Medium or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 10 (3d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 25 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 5 feet of movement.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'False Form', rules: true, text: 'The creature shape-shifts to resemble a natural feature of its surroundings while retaining its game statistics, or it returns to its true form. While it is motionless in its false form, it is indistinguishable from that feature.' },
+      ],
+    },
+  },
+  {
+    id: 'lurker-17-trap',
+    invented: true, // no printed trap boss — the Roper composition under a legendary menu, the armored ambush at scale
+    legendary: true,
+    style: 'trap',
+    cr: 17, archetypes: ['lurker'],
+    ac: 21, ac_offset: 2, hp: 227, hp_scale: 1.05, hp_formula: '35d8 + 70', atk: 12, dc: 19, pb: 6,
+    speed: '10 ft., Climb 20 ft.',
+    stats: { STR: 22, DEX: 10, CON: 19, INT: 10, WIS: 18, CHA: 8 },
+    saves: ['STR', 'CON', 'WIS'], skills: 'Perception +10, Stealth +8',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks and uses Reel.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12 (with Advantage if the target is Grappled by the creature), reach 5 ft. 44 (8d8 + 8) {damage_type} damage.' },
+        { name: 'Grasping Limb', text: '*Melee Attack Roll:* +12, reach 60 ft. The target has the Grappled condition (escape DC 19).' },
+        { name: 'Reel', rules: true, text: 'The creature pulls each creature Grappled by it up to 30 feet straight toward it.' },
+        { name: 'Swallow', rules: true, engulf_engine: true, gated_on: 'engulf', text: 'The creature swallows one Large or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature, and takes 17 (5d6) {damage_type} damage at the start of each of the creature\'s turns. The creature can have only one creature swallowed at a time. If the creature takes 35 damage or more in a single turn from the swallowed creature, the creature must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the creature. If the creature dies, a swallowed creature exits the body Prone by using 10 feet of movement.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'False Form', rules: true, text: 'The creature shape-shifts to resemble a natural feature of its surroundings while retaining its game statistics, or it returns to its true form. While it is motionless in its false form, it is indistinguishable from that feature.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Snap', text: 'The creature makes one Melee Attack attack.' },
+        { name: 'Legendary Drag', text: 'The creature pulls one creature Grappled by it up to 15 feet straight toward it.' },
+        { name: 'Legendary Stillness', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
       ],
     },
   },
