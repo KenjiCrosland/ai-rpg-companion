@@ -399,7 +399,12 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
     // 2026-09-01). Per SENTENCE, not text start: the Plague-Shrine hid
     // the shape behind a scene-setting preamble sentence and the ^-anchor
     // missed it (Weeping Rot, 2026-09-01)
-    : (archetype === 'brute' && (econDecl === 'reaction' || reactionMention || w.split(/(?<=\.)\s+/).some((s) => /^When(?:ever)? [^.]{0,80}(?:takes damage|is hit by|is struck|hits (?:it|the creature)\b)/i.test(s.trim())))) ? ['print brutes have no reactions (0 of 40) — DROP THE TRIGGER entirely: relabeling it keeps the broken economy (a bonus action cannot fire on an enemy\'s turn). Write what the creature DOES on its own turn, never "when" something happens to it', 'mechanical']
+    : ((archetype === 'brute' || archetype === 'defender') && (econDecl === 'reaction' || reactionMention || w.split(/(?<=\.)\s+/).some((s) => /^When(?:ever)? [^.]{0,80}(?:takes damage|is hit by|is struck|hits (?:it|the creature)\b)/i.test(s.trim())))) ? [archetype === 'defender'
+      // the Parry class (defender sweep 2026-09-08): SRD 5.2 RETIRED
+      // Parry — 0/329; the 2014 reaction-knight lives only in training
+      // data. Print's protector wears its defense.
+      ? 'print\'s 2024 protectors WEAR their defense — Parry was retired (0 of 329 blocks; the Knight answers with AC 18, not a reaction). The armor already answers: write what the creature DOES on its own turn, or an aura or ward that protects passively'
+      : 'print brutes have no reactions (0 of 40) — DROP THE TRIGGER entirely: relabeling it keeps the broken economy (a bonus action cannot fire on an enemy\'s turn). Write what the creature DOES on its own turn, never "when" something happens to it', 'mechanical']
     : MODEL_HEALING(w) ? ['healing is the Regeneration organ\'s job — turn-based recovery and heal-to-full never ship as custom text; drain ("regains Hit Points equal to the damage dealt") stays legal', 'mechanical']
     : HEAL_BACK(w) ? ['a drain heals off damage DEALT to others (print\'s Life Drain) — healing back damage TAKEN is immunity in disguise and never ships', 'mechanical']
     : DICELESS_DAMAGE.test(w) ? ['damage prints its dice — write "58 (13d8+3)" style, never a flat number; a diceless figure evades the damage caps', 'mechanical']

@@ -176,7 +176,7 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   for (let i = 0; i < 40; i += 1) {
     const sustained = perHit * (attacks + legendaryStrikes);
     const novas = novaRows.map((r) => ({ avg: novaAvgFor(perHit), gate: r.e.gate }));
-    const { ok, actual, target } = withinBudget(cr, sustained, novas, { legendary: !!legendary });
+    const { ok, actual, target } = withinBudget(cr, sustained, novas, { legendary: !!legendary, dprScale: scaled.dpr_scale ?? 1 });
     if (ok && actual >= target * 0.9) break;
     perHit += actual < target ? 1 : -1;
   }

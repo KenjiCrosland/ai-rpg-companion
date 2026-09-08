@@ -69,9 +69,13 @@ export function summedDPR(sustainedPerRound, novas = []) {
   return total / FIGHT_ROUNDS;
 }
 
-/** Band check: within the card's orange path, approximated as median ±25%. */
+/** Band check: within the card's orange path, approximated as median ±25%.
+ * `dprScale`: a donor's measured damage discount — the ward tax (Shield
+ * Guardian prints 36 of a 55 card, 0.65x, paid by the transfer link and
+ * Regeneration; defender sweep 2026-09-08). The solver and the donor laws
+ * both price against the discounted target. */
 export function withinBudget(cr, sustainedPerRound, novas, opts = {}) {
-  const target = cardBudget(cr, opts).dpr;
+  const target = Math.round(cardBudget(cr, opts).dpr * (opts.dprScale ?? 1));
   const actual = summedDPR(sustainedPerRound, novas);
   return { target, actual, ok: actual >= target * 0.75 && actual <= target * 1.25 };
 }

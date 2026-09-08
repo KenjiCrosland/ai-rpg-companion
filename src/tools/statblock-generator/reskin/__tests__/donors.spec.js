@@ -35,8 +35,12 @@ describe('authored donors obey the card', () => {
         const ma = rows.find((r) => r.name === 'Multiattack');
         const attacks = ma ? Number(/makes (\w+)/.exec(ma.text)[1]
           .replace('two', 2).replace('three', 3).replace('four', 4)) : 1;
-        // casters swing the HYBRID row (2024's caster grammar, sweep 2026-09-02)
-        const primary = rows.find((r) => r.name === 'Hybrid Attack') ?? rows.find((r) => r.name === 'Melee Attack');
+        // the card's fight model prices HIGHEST-damage options: casters
+        // swing the hybrid row (their only row), the defender's hybrid
+        // javelin is a sidearm beside a bigger longsword (2026-09-08)
+        const primary = ['Hybrid Attack', 'Melee Attack']
+          .map((n) => rows.find((r) => r.name === n)).filter(Boolean)
+          .sort((a, b) => avgOf(b.text) - avgOf(a.text))[0];
         const perHit = avgOf(primary.text);
         let sustained = attacks * perHit;
         for (const r of rows.filter((x) => x.sec === 'Legendary Actions' && !x.rules)) {
@@ -44,7 +48,7 @@ describe('authored donors obey the card', () => {
           if (/makes one Ranged Attack/.test(r.text)) sustained += avgOf(rows.find((x) => x.name === 'Ranged Attack').text);
         }
         const novas = rows.filter((r) => r.gate).map((r) => ({ avg: avgOf(r.text), gate: r.gate }));
-        const { ok, target, actual } = withinBudget(d.cr, sustained, novas, { legendary: !!d.legendary });
+        const { ok, target, actual } = withinBudget(d.cr, sustained, novas, { legendary: !!d.legendary, dprScale: d.dpr_scale ?? 1 });
         expect(`${d.id}: ${actual} vs ${target} -> ${ok ? 'in band' : 'OUT OF BAND'}`)
           .toBe(`${d.id}: ${actual} vs ${target} -> in band`);
       });
@@ -154,6 +158,34 @@ describe('authored donors obey the card', () => {
         });
       }
 
+      if (d.archetypes.includes('defender')) {
+        test('defender shape (corpus sweep 2026-09-08): armor over the card, the ward tax, no reactions — Parry is retired', () => {
+          // the family signature: AC OVER the card (Knight 18 at CR 3,
+          // Guard Captain 18 at CR 4), paid by under-card HP and damage
+          if (!d.style) {
+            expect(d.ac_offset).toBeGreaterThanOrEqual(2);
+            expect(d.hp_scale).toBeLessThan(1);
+            // the leader half: the ally-buff emanation, gated on the
+            // aura claim (Hobgoblin Captain's grammar)
+            expect(rows.some((r) => r.gated_on === 'aura' && /Emanation originating from the creature/.test(r.text))).toBe(true);
+          }
+          // the warden line: the Bound transfer link (Shield Guardian's
+          // passive — NOT a reaction) + the measured damage discount
+          if (d.style === 'warden') {
+            expect(rows.some((r) => r.rules && /half of any damage the ward takes \(round up\) is transferred to the creature/.test(r.text))).toBe(true);
+            expect(d.dpr_scale).toBeLessThanOrEqual(0.8);
+            expect(d.ac_offset).toBeLessThanOrEqual(1);
+            expect(d.hp_scale).toBeGreaterThanOrEqual(1);
+          }
+          // SRD 5.2 retired the reaction-protector (Parry 0/329; the
+          // 2026-09-02 pin's premise was 2014 memory) — no authored
+          // Reactions anywhere in the family; answer-back lives in the
+          // legendary menu
+          expect(rows.some((r) => r.sec === 'Reactions')).toBe(false);
+          expect(rows.some((r) => /Dash, Disengage, or Hide/.test(r.text))).toBe(false);
+        });
+      }
+
       if (d.legendary) {
         test('the legendary menu: 3 options, at least one unlocked, generic-skirmisher economy', () => {
           const legs = rows.filter((r) => r.sec === 'Legendary Actions' && !r.rules);
@@ -243,9 +275,21 @@ describe('the mounted template line: full compositions, shape-frames as authorin
     expect(pdm(10, 'trap', 'lurker').id).toBe('lurker-8-trap');
     expect(pdm(18, 'trap', 'lurker').id).toBe('lurker-17-trap');
     expect(pdm(8, 'skulker', 'lurker').id).toBe('lurker-8'); // no cross-family style bleed
+    // the defender family (corpus sweep 2026-09-08): plain = soldier
+    // (Knight/Guard Captain), 'warden' (Shield Guardian), invented 17s
+    const defenders = D.filter((d) => (d.archetypes ?? []).includes('defender'));
+    expect(defenders.length).toBe(7);
+    expect(pdm(1, null, 'defender').id).toBe('defender-1');
+    expect(pdm(4, null, 'defender').id).toBe('defender-3');
+    expect(pdm(9, null, 'defender').id).toBe('defender-5');
+    expect(pdm(20, null, 'defender').id).toBe('defender-17');
+    expect(pdm(4, 'warden', 'defender').id).toBe('defender-3-warden');
+    expect(pdm(10, 'warden', 'defender').id).toBe('defender-7-warden');
+    expect(pdm(21, 'warden', 'defender').id).toBe('defender-17-warden');
+    expect(pdm(5, 'skulker', 'defender').id).toBe('defender-5'); // no cross-family style bleed
     // the skirmisher rule holds family-wide (owner, 2026-09-01): every
     // style line tops out in a legendary seat
-    for (const arch of ['skirmisher', 'brute', 'caster', 'lurker']) {
+    for (const arch of ['skirmisher', 'brute', 'caster', 'lurker', 'defender']) {
       const fam = D.filter((d) => (d.archetypes ?? []).includes(arch));
       for (const style of new Set(fam.map((d) => d.style).filter(Boolean))) {
         const line = fam.filter((d) => d.style === style).sort((a, b) => b.cr - a.cr);

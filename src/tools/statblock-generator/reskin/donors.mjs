@@ -1642,4 +1642,172 @@ export const DONORS = [
       ],
     },
   },
+
+  // ==== THE DEFENDER FAMILY (corpus sweep 2026-09-08, owner "go") ====
+  // THE PIN AMENDED BY PRINT: the 2026-09-02 design said "reaction-
+  // defined protector" — that was 2014 memory. SRD 5.2 retired Parry
+  // (0/329; the only Reactions in the corpus are three casters'
+  // Protective Magic). Print's 2024 protector package: AC OVER the card
+  // (+2..+3, Knight 18 at CR 3 / Guard Captain 18 at CR 4 / Guard 16 at
+  // CR 1/8) paid by under-card HP and damage; the WARD as a passive
+  // transfer link (Shield Guardian's Bound: "half of any damage the
+  // wearer takes (round up) is transferred to the guardian" — no
+  // reaction, and print-solo: the ward is table-designated); ally-buff
+  // EMANATIONS (Hobgoblin Captain) as the leader half. The warden line
+  // prices its tech with a measured damage discount (dpr_scale 0.65 =
+  // the Shield Guardian's own 36-of-55). Answer-back economy lives in
+  // the LEGENDARY menu (structurally the reaction budget that scales) —
+  // the surviving insight of the original pin. Juggernaut stays brute.
+  // Lines: plain = soldier (Knight/Guard Captain), 'warden' (Shield
+  // Guardian — construct guardian, transfer + Regeneration).
+  {
+    id: 'defender-1',
+    cite: 'composition after Guard (CR 1/8) and the Knight\'s armor line — the shield-wall floor',
+    cr: 1, archetypes: ['defender'],
+    ac: 17, ac_offset: 2, hp: 26, hp_scale: 0.85, hp_formula: '4d8 + 8', atk: 4, dc: 11, pb: 2,
+    speed: '30 ft.',
+    stats: { STR: 16, DEX: 11, CON: 14, INT: 10, WIS: 12, CHA: 11 },
+    saves: ['CON'], skills: 'Athletics +5, Perception +3',
+    sections: {
+      Actions: [
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +4, reach 5 ft. 10 (2d6 + 3) {damage_type} damage.' },
+        { name: 'Guard Aura', rules: true, gated_on: 'aura', text: 'While in a 10-foot Emanation originating from the creature, the creature\'s allies have Advantage on saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 11, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'defender-3',
+    cite: 'composition after Knight (CR 3) — AC 18 over 52 HP, the armor-over-everything trade',
+    cr: 3, archetypes: ['defender'],
+    ac: 18, ac_offset: 3, hp: 52, hp_scale: 0.87, hp_formula: '8d8 + 16', atk: 5, dc: 12, pb: 2,
+    speed: '30 ft.',
+    stats: { STR: 16, DEX: 11, CON: 14, INT: 11, WIS: 12, CHA: 14 },
+    saves: ['CON', 'WIS'], skills: 'Athletics +5, Perception +3',
+    sections: {
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 12 (2d8 + 3) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +5, range 100/400 ft. 11 (2d10) {damage_type} damage.' },
+        { name: 'Guard Aura', rules: true, gated_on: 'aura', text: 'While in a 10-foot Emanation originating from the creature, the creature\'s allies have Advantage on saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'defender-5',
+    cite: 'composition after Guard Captain (CR 4) — the hybrid javelin twin, scaled into the band',
+    cr: 5, archetypes: ['defender'],
+    ac: 19, ac_offset: 3, hp: 78, hp_scale: 0.87, hp_formula: '12d8 + 24', atk: 6, dc: 13, pb: 3,
+    speed: '30 ft.',
+    stats: { STR: 18, DEX: 12, CON: 14, INT: 11, WIS: 13, CHA: 14 },
+    saves: ['STR', 'CON'], skills: 'Athletics +7, Perception +4',
+    sections: {
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Hybrid Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +6, reach 5 ft. 17 (3d8 + 4) {damage_type} damage.' },
+        { name: 'Hybrid Attack', text: '*Melee or Ranged Attack Roll:* +6, reach 5 ft. or range 30/120 ft. 14 (3d6 + 4) {damage_type} damage.' },
+        { name: 'Guard Aura', rules: true, gated_on: 'aura', text: 'While in a 10-foot Emanation originating from the creature, the creature\'s allies have Advantage on saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'defender-17',
+    invented: true, // no printed defender above CR 7 — the Knight composition under a legendary menu; the parry kit lives THERE (legendary actions are the reaction economy that scales)
+    legendary: true,
+    cr: 17, archetypes: ['defender'],
+    ac: 21, ac_offset: 2, hp: 184, hp_scale: 0.85, hp_formula: '32d8 + 40', atk: 12, dc: 19, pb: 6,
+    speed: '30 ft.',
+    stats: { STR: 24, DEX: 12, CON: 16, INT: 12, WIS: 16, CHA: 16 },
+    saves: ['STR', 'CON', 'WIS'], skills: 'Athletics +13, Perception +9',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 5 ft. 40 (6d10 + 7) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +12, range 100/400 ft. 33 (6d8 + 6) {damage_type} damage.' },
+        { name: 'Guard Aura', rules: true, gated_on: 'aura', text: 'While in a 10-foot Emanation originating from the creature, the creature\'s allies have Advantage on saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Riposte', text: 'The creature makes one Melee Attack attack.' },
+        { name: 'Legendary Brace', text: 'The creature takes the Dodge action. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Rebuke', text: '*Strength Saving Throw*: DC 19, one creature within 5 feet. *Failure:* The target is pushed up to 15 feet away from the creature and has the Prone condition.' },
+      ],
+    },
+  },
+  {
+    id: 'defender-3-warden',
+    invented: true, // no printed warden below the Shield Guardian — its Bound composition at the band's entry
+    style: 'warden',
+    cr: 3, archetypes: ['defender'],
+    ac: 15, ac_offset: 0, hp: 66, hp_scale: 1.1, hp_formula: '12d8 + 12', atk: 5, dc: 12, pb: 2, dpr_scale: 0.8,
+    speed: '30 ft.',
+    stats: { STR: 16, DEX: 8, CON: 13, INT: 6, WIS: 12, CHA: 5 },
+    saves: ['CON'], skills: 'Perception +3',
+    sections: {
+      Traits: [
+        { name: 'Ward Bond', rules: true, text: 'The creature is magically bound to a ward of its choosing. While the creature is within 60 feet of its ward, half of any damage the ward takes (round up) is transferred to the creature.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 10 (2d6 + 3) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'defender-7-warden',
+    cite: 'composition after Shield Guardian (CR 7) — Bound transfer, Regeneration, the measured 0.65 damage discount',
+    style: 'warden',
+    cr: 7, archetypes: ['defender'],
+    ac: 17, ac_offset: 1, hp: 142, hp_scale: 1.18, hp_formula: '15d10 + 60', atk: 7, dc: 14, pb: 3, dpr_scale: 0.65,
+    speed: '30 ft.',
+    stats: { STR: 18, DEX: 8, CON: 18, INT: 7, WIS: 10, CHA: 3 },
+    saves: ['CON'], skills: 'Perception +3',
+    sections: {
+      Traits: [
+        { name: 'Ward Bond', rules: true, text: 'The creature is magically bound to a ward of its choosing. While the creature is within 60 feet of its ward, half of any damage the ward takes (round up) is transferred to the creature.' },
+        { name: 'Regeneration', rules: true, text: 'The creature regains 10 Hit Points at the start of each of its turns if it has at least 1 Hit Point.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +7, reach 10 ft. 18 (4d6 + 4) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 14, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'defender-17-warden',
+    invented: true, // no printed warden boss — the Shield Guardian composition under a legendary menu
+    legendary: true,
+    style: 'warden',
+    cr: 17, archetypes: ['defender'],
+    ac: 20, ac_offset: 1, hp: 238, hp_scale: 1.1, hp_formula: '35d8 + 80', atk: 12, dc: 19, pb: 6, dpr_scale: 0.7,
+    speed: '30 ft.',
+    stats: { STR: 24, DEX: 8, CON: 20, INT: 8, WIS: 14, CHA: 3 },
+    saves: ['STR', 'CON'], skills: 'Perception +8',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Ward Bond', rules: true, text: 'The creature is magically bound to a ward of its choosing. While the creature is within 60 feet of its ward, half of any damage the ward takes (round up) is transferred to the creature.' },
+        { name: 'Regeneration', rules: true, text: 'The creature regains 10 Hit Points at the start of each of its turns if it has at least 1 Hit Point.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 40 (6d10 + 7) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Riposte', text: 'The creature makes one Melee Attack attack.' },
+        { name: 'Legendary Brace', text: 'The creature takes the Dodge action. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Rebuke', text: '*Strength Saving Throw*: DC 19, one creature within 5 feet. *Failure:* The target is pushed up to 15 feet away from the creature and has the Prone condition.' },
+      ],
+    },
+  },
 ];

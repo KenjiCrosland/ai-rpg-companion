@@ -4348,3 +4348,88 @@ describe('the close-out coda (2026-09-08): the short-form system, four word-form
     expect(src).toMatch(/engulf covers ANY containment: a body that swallows, engulfs, smothers, entombs, or DIGESTS prey/);
   });
 });
+
+describe('the defender family Stage 1 (2026-09-08): the amended pin, the ward tax, Parry retired', () => {
+  const defenderAnswer = (cr, style = null, over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(cr, style, 'defender'), cr, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    return JSON.stringify({
+      name: 'Test Sentinel', type: 'Humanoid', size: 'Medium', alignment: 'Lawful Neutral',
+      senses: 'darkvision 60 ft.', languages: 'Common',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Slashing'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Strength',
+      wildcard: `*Strength Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      ...over,
+    });
+  };
+  const quietD2 = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+
+  test('a defender generation: armor over the card, damage under it, the Knight seat', async () => {
+    const m = await generateReskin({ archetype: 'defender', concept: 'a tower-shield sentinel', cr: 3, mechanics: [] },
+      quietD2(() => defenderAnswer(3)));
+    expect(m.generation).toMatchObject({ path: 'reskin', donor: 'defender-3', archetype: 'defender' });
+    expect(m.generation.cite).toMatch(/Knight/);
+    const { cardBudget } = require('../card-budgets.mjs');
+    expect(m.ac).toBeGreaterThan(cardBudget(3, {}).ac); // the family signature
+    expect(m.hp).toBeLessThan(cardBudget(3, {}).hp);
+    expect(m.sections.Reactions ?? []).toHaveLength(0);
+  });
+
+  test('the warden line: the Bound transfer ships as chassis, the ward tax holds at scale time', async () => {
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'an oath-bound tomb guardian', cr: 7, mechanics: [] },
+      quietD2(() => defenderAnswer(7, 'warden')));
+    expect(m.generation.donor).toBe('defender-7-warden');
+    const all = Object.values(m.sections).flat();
+    expect(all.some((e) => /half of any damage the ward takes \(round up\) is transferred/.test(e.text))).toBe(true);
+    expect(all.some((e) => e.name === 'Regeneration')).toBe(true);
+    // the measured discount survives the per-hit solver: sustained lands
+    // near 0.65x of the card, never re-diced up to full card dpr
+    const { cardBudget } = require('../card-budgets.mjs');
+    const melee = all.find((e) => /Attack Roll/.test(e.text) && /\d+ \(\d+d\d+/.test(e.text));
+    const perHit = Number(/(\d+) \(/.exec(melee.text)[1]);
+    expect(perHit * 2).toBeLessThanOrEqual(cardBudget(7, {}).dpr * 0.85);
+  });
+
+  test('a Parry-shaped draft dies with the defender coaching — the retired-reaction class', async () => {
+    const prompts = [];
+    const m = await generateReskin({ archetype: 'defender', concept: 'x', cr: 3, mechanics: [] },
+      async (prompt) => {
+        prompts.push(prompt);
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return defenderAnswer(3, null, {
+          wildcard: 'When the creature is hit by a melee attack, it can use its reaction to impose Disadvantage on the attack roll, deflecting the blow with its shield.',
+          wildcard_economy: 'reaction',
+        });
+      });
+    expect(JSON.stringify(m.sections)).not.toMatch(/impose Disadvantage on the attack roll/);
+    expect(prompts.some((p) => /Parry was retired/.test(p))).toBe(true);
+  });
+
+  test('the aura organ: a claimed aura uncovers the Hobgoblin emanation; unclaimed gates it out', () => {
+    const closed = scaleDonor(pickDonor(3, null, 'defender'), 3, { mechanics: [] });
+    expect(Object.values(closed.sections).flat().some((e) => e.name === 'Guard Aura')).toBe(false);
+    const open = scaleDonor(pickDonor(3, null, 'defender'), 3, { mechanics: ['aura'] });
+    const aura = Object.values(open.sections).flat().find((e) => e.name === 'Guard Aura');
+    expect(aura.rules).toBe(true);
+    expect(aura.text).toMatch(/allies have Advantage on saving throws/);
+  });
+
+  test('the legendary seats: both lines reach 17 with the answer-back menu (Riposte fires after enemy turns)', () => {
+    for (const [style, id] of [[null, 'defender-17'], ['warden', 'defender-17-warden']]) {
+      const s = scaleDonor(pickDonor(20, style, 'defender'), 20, { mechanics: [] });
+      expect(pickDonor(20, style, 'defender').id).toBe(id);
+      const legs = s.sections['Legendary Actions'] ?? [];
+      expect(legs.some((e) => /makes one Melee Attack/.test(e.text))).toBe(true); // the riposte IS print's answer-back timing
+      expect(legs.some((e) => /takes the Dodge action/.test(e.text))).toBe(true);
+    }
+  });
+});

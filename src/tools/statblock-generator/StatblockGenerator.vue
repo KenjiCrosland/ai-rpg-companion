@@ -1122,7 +1122,7 @@ async function generateStatblockEngine(edition) {
         if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
         if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
         if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
-        if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator', 'warpriest', 'binder', 'phantom', 'trap'].includes(parsed?.style)) conceptStyle = parsed.style;
+        if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator', 'warpriest', 'binder', 'phantom', 'trap', 'warden'].includes(parsed?.style)) conceptStyle = parsed.style;
         if (Array.isArray(parsed?.mechanics)) {
           const MECHS = ['thrown-weapon', 'breath', 'engulf', 'grapple', 'gaze', 'aura', 'teleport', 'summon', 'snare', 'regeneration'];
           conceptMechanics = parsed.mechanics.filter((x) => MECHS.includes(String(x).toLowerCase()));
@@ -1213,7 +1213,7 @@ async function generateStatblockEngine(edition) {
         if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
         if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
         if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
-        if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator', 'warpriest', 'binder', 'phantom', 'trap'].includes(parsed?.style)) conceptStyle = parsed.style;
+        if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator', 'warpriest', 'binder', 'phantom', 'trap', 'warden'].includes(parsed?.style)) conceptStyle = parsed.style;
         // blank-path parity (owner spotted the gap, 2026-08-26): the seed
         // synthesis now returns signature_elements too — without them the
         // reskin's seat machinery ran blind on every blank roll
@@ -1281,11 +1281,16 @@ async function generateStatblockEngine(edition) {
     // tech, the ambush attack-roll idiom, the conditioned hide-cycle.
     // Three lines: plain=stalker, 'phantom', 'trap'. Kill switch:
     // localStorage['statblock-reskin-lurker']='0' restores the slot path.
+    // DEFENDER (2026-09-08, sweep amended the 2026-09-02 pin by print:
+    // SRD 5.2 retired Parry — the protector WEARS its defense). Lines:
+    // plain=soldier (Knight/Guard Captain), 'warden' (Shield Guardian
+    // transfer link). Kill switch: statblock-reskin-defender='0'.
     const isCasterRole = archetypeName === 'artillery' || archetypeName === 'controller';
     if (edition === '2024' && (
       (archetypeName === 'skirmisher' && localStorage.getItem('statblock-reskin-pilot') !== '0')
       || (archetypeName === 'brute' && localStorage.getItem('statblock-reskin-brute') !== '0')
       || (archetypeName === 'lurker' && localStorage.getItem('statblock-reskin-lurker') !== '0')
+      || (archetypeName === 'defender' && localStorage.getItem('statblock-reskin-defender') !== '0')
       || (isCasterRole && localStorage.getItem('statblock-reskin-caster') !== '0'))) {
       const { generateReskin } = await import('./reskin/generate.mjs');
       finalMonster = await generateReskin(
