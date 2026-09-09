@@ -1258,6 +1258,15 @@ async function generateStatblockEngine(edition) {
     logger.log('[concept] style demoted:', `juggernaut needs a made or mineral body — ${resolvedType} falls to plain brute`);
     conceptStyle = null;
   }
+  // The warden is a MADE or risen guardian (smoke two, 2026-09-09: a
+  // "no magic" human sergeant routed warden and shipped Regeneration 5
+  // — flesh-knitting on a mortal). Same coherence family as juggernaut;
+  // living mortals fall to the plain soldier line.
+  if (conceptStyle === 'warden' && resolvedType
+    && !['Construct', 'Elemental', 'Undead', 'Plant', 'Ooze', 'Celestial', 'Fiend'].includes(resolvedType)) {
+    logger.log('[concept] style demoted:', `warden needs a made or risen body — ${resolvedType} falls to plain defender`);
+    conceptStyle = null;
+  }
 
   let finalMonster;
   try {

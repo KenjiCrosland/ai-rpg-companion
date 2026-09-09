@@ -1750,12 +1750,19 @@ export const DONORS = [
     stats: { STR: 16, DEX: 8, CON: 13, INT: 6, WIS: 12, CHA: 5 },
     saves: ['CON'], skills: 'Perception +3',
     sections: {
+      // THE WARD RE-SEAT (owner, 2026-09-09: "isn't warding bond a
+      // spell?"): the transfer link is the Shield Guardian SEAT's
+      // signature (amulet grammar, below), never the family default —
+      // the invented seats keep their trait space for the wildcard's
+      // creative defenses, and the bodyguard-link fantasy travels as
+      // Warding Bond the SPELL on the defender checkbox menu.
       Traits: [
-        { name: 'Ward Bond', rules: true, text: 'The creature is magically bound to a ward of its choosing. While the creature is within 60 feet of its ward, half of any damage the ward takes (round up) is transferred to the creature.' },
+        { name: 'Regeneration', rules: true, text: 'The creature regains 5 Hit Points at the start of each of its turns if it has at least 1 Hit Point.' },
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 10 (2d6 + 3) {damage_type} damage.' },
+        { name: 'Aegis', gate: '2/Day', text: 'The creature targets itself or one creature it can see within 60 feet. The target gains 10 (3d6) Temporary Hit Points, and its AC increases by 2 until the end of the creature\'s next turn.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
     },
@@ -1771,12 +1778,18 @@ export const DONORS = [
     saves: ['CON'], skills: 'Perception +3',
     sections: {
       Traits: [
-        { name: 'Ward Bond', rules: true, text: 'The creature is magically bound to a ward of its choosing. While the creature is within 60 feet of its ward, half of any damage the ward takes (round up) is transferred to the creature.' },
+        // the ward is CONCEPT-FILLED, person or object — live evidence
+        // (the Oathguard, 2026-09-09): the model names the charge itself
+        // ("the child empress"), so the bearer-of-an-object indirection
+        // welded into nonsense; the template now binds to the ward
+        // directly, like {projectile}
+        { name: 'Ward Bond', rules: true, text: 'The creature is magically bound to its ward — {ward}. While the creature is within 60 feet of its ward, half of any damage the ward takes (round up) is transferred to the creature.' },
         { name: 'Regeneration', rules: true, text: 'The creature regains 10 Hit Points at the start of each of its turns if it has at least 1 Hit Point.' },
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +7, reach 10 ft. 18 (4d6 + 4) {damage_type} damage.' },
+        { name: 'Aegis', gate: '2/Day', text: 'The creature targets itself or one creature it can see within 60 feet. The target gains 10 (3d6) Temporary Hit Points, and its AC increases by 2 until the end of the creature\'s next turn.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 14, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
     },
@@ -1794,7 +1807,6 @@ export const DONORS = [
     sections: {
       Traits: [
         { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
-        { name: 'Ward Bond', rules: true, text: 'The creature is magically bound to a ward of its choosing. While the creature is within 60 feet of its ward, half of any damage the ward takes (round up) is transferred to the creature.' },
         { name: 'Regeneration', rules: true, text: 'The creature regains 10 Hit Points at the start of each of its turns if it has at least 1 Hit Point.' },
       ],
       Actions: [
@@ -1806,7 +1818,9 @@ export const DONORS = [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Riposte', text: 'The creature makes one Melee Attack attack.' },
         { name: 'Legendary Brace', text: 'The creature takes the Dodge action. The creature can\'t take this action again until the start of its next turn.' },
-        { name: 'Legendary Rebuke', text: '*Strength Saving Throw*: DC 19, one creature within 5 feet. *Failure:* The target is pushed up to 15 feet away from the creature and has the Prone condition.' },
+        // the Unicorn's Shimmering Shield composition — print's one
+        // protection blessing, legendary-tier where print put it
+        { name: 'Legendary Aegis', text: 'The creature targets itself or one creature it can see within 60 feet. The target gains 10 (3d6) Temporary Hit Points, and its AC increases by 2 until the end of the creature\'s next turn. The creature can\'t take this action again until the start of its next turn.' },
       ],
     },
   },

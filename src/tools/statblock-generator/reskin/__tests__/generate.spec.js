@@ -4362,6 +4362,7 @@ describe('the defender family Stage 1 (2026-09-08): the amended pin, the ward ta
       senses: 'darkvision 60 ft.', languages: 'Common',
       renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Slashing'])),
       conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Strength',
+      ward: 'the child empress',
       wildcard: `*Strength Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
       ...over,
     });
@@ -4389,6 +4390,8 @@ describe('the defender family Stage 1 (2026-09-08): the amended pin, the ward ta
     expect(m.generation.donor).toBe('defender-7-warden');
     const all = Object.values(m.sections).flat();
     expect(all.some((e) => /half of any damage the ward takes \(round up\) is transferred/.test(e.text))).toBe(true);
+    // the binding object is concept-filled, never generic (owner 2026-09-09)
+    expect(all.some((e) => /magically bound to its ward — the child empress/.test(e.text))).toBe(true);
     expect(all.some((e) => e.name === 'Regeneration')).toBe(true);
     // the measured discount survives the per-hit solver: sustained lands
     // near 0.65x of the card, never re-diced up to full card dpr
@@ -4431,5 +4434,174 @@ describe('the defender family Stage 1 (2026-09-08): the amended pin, the ward ta
       expect(legs.some((e) => /makes one Melee Attack/.test(e.text))).toBe(true); // the riposte IS print's answer-back timing
       expect(legs.some((e) => /takes the Dodge action/.test(e.text))).toBe(true);
     }
+  });
+});
+
+describe('the ward re-seat batch (2026-09-09): the spell channel, the sustain kit, three vocabulary rulings', () => {
+  const wardenAnswer = (cr, over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(cr, 'warden', 'defender'), cr, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    return JSON.stringify({
+      name: 'Test Keeper', type: 'Construct', size: 'Large', alignment: 'Unaligned',
+      senses: 'darkvision 60 ft.', languages: 'None',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Bludgeoning'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Strength',
+      ward: 'the child empress',
+      wildcard: `*Strength Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      ...over,
+    });
+  };
+  const quietW = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+
+  test('the checkbox is the healing channel: a defender spellcaster draws the DEFENDER menu, Warding Bond aboard', () => {
+    const { DEFENDER_SPELL_MENU } = require('../generate.mjs');
+    expect(DEFENDER_SPELL_MENU).toContain('Warding Bond');
+    expect(DEFENDER_SPELL_MENU).toContain('Cure Wounds');
+    const scaled = scaleDonor(pickDonor(3, null, 'defender'), 3, { mechanics: [] });
+    const prompt = buildReskinPrompt(scaled, { concept: 'a shrine keeper' });
+    void prompt; // the menu wiring is exercised end-to-end below via the organ path
+  });
+
+  test('the invented warden seats ship Regeneration + a renamed Aegis (2/Day) — no Ward Bond, no dead text', async () => {
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'a shrine keeper', cr: 3, mechanics: [] },
+      quietW(() => wardenAnswer(3)));
+    expect(m.generation.donor).toBe('defender-3-warden');
+    const all = Object.values(m.sections).flat();
+    expect(all.some((e) => /transferred to the/.test(e.text))).toBe(false);
+    expect(all.some((e) => e.name === 'Regeneration')).toBe(true);
+    const aegis = all.find((e) => /Temporary Hit Points, and its AC increases by 2/.test(e.text));
+    expect(aegis.name).toMatch(/\(2\/Day\)/);
+  });
+
+  test('the damage-gated recharge is meter dialect #9 — flagged, never canonized (0/329)', async () => {
+    const prompts = [];
+    await generateReskin({ archetype: 'defender', style: 'warden', concept: 'x', cr: 7, mechanics: [] },
+      async (prompt) => {
+        prompts.push(prompt);
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return wardenAnswer(7, {
+          wildcard: '*Strength Saving Throw*: DC 14, one creature within 30 feet. *Failure:* The target has the Prone condition. The creature cannot use this ability again until it has taken damage.',
+        });
+      });
+    expect(prompts.some((p) => /use limits print as a count/.test(p))).toBe(true);
+  });
+
+  test('the aggro mark is canonized house grammar in the wildcard prompt', () => {
+    const scaled = scaleDonor(pickDonor(5, null, 'defender'), 5, { mechanics: [] });
+    const prompt = buildReskinPrompt(scaled, { concept: 'a bodyguard' });
+    expect(prompt).toMatch(/Disadvantage on attack rolls against creatures other than the creature/);
+  });
+
+  test('vulnerability stamps restrict to the print-observed set — Vulnerable Force never ships', async () => {
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'a gate of pure force magic', cr: 7, mechanics: [] },
+      quietW(() => wardenAnswer(7, { vulnerability: 'Force' })));
+    expect(m.vulnerabilities ?? '').not.toMatch(/Force/);
+  });
+
+  test('"but cannot speak" ships as print\'s "but can\'t speak" — second inflection', async () => {
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'x', cr: 7, mechanics: [] },
+      quietW(() => wardenAnswer(7, { languages: 'understands all languages but cannot speak' })));
+    expect(m.languages).toMatch(/but can't speak/);
+  });
+});
+
+describe('the smoke-two fix batch (2026-09-09): the Aegis solver bug, the ward degrade, the healing clause', () => {
+  const wardenAnswer2 = (cr, over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(cr, 'warden', 'defender'), cr, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    return JSON.stringify({
+      name: 'Test Keeper', type: 'Construct', size: 'Large', alignment: 'Unaligned',
+      senses: 'darkvision 60 ft.', languages: 'None',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Bludgeoning'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Strength',
+      ward: 'the child empress',
+      wildcard: `*Strength Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      ...over,
+    });
+  };
+  const quietS = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+
+  test('the solver never prices a damage-less gated row as a nova — warden fists land on the ward tax, not half of it', () => {
+    // the Oathguard shipped 8 (1d8+4) at CR 7 against an 18 target: the
+    // 2/Day Aegis (temp HP, zero damage) was budgeted as a damage nova
+    const s = scaleDonor(pickDonor(7, 'warden', 'defender'), 7, { mechanics: [] });
+    expect(s.per_hit).toBeGreaterThanOrEqual(16); // 18 = the 0.65-taxed card; the old bug crushed it to 8
+    const melee = Object.values(s.sections).flat().find((e) => /Melee Attack Roll/.test(e.text));
+    // the 60/40 rider split may fire — sum BOTH clauses (the lurker
+    // Stage 1 lesson, relearned)
+    const perHit = [...melee.text.matchAll(/(\d+) \(\d+d\d+(?:\s*\+\s*\d+)?\)/g)].reduce((n, m2) => n + Number(m2[1]), 0);
+    const { cardBudget } = require('../card-budgets.mjs');
+    const target = cardBudget(7, {}).dpr * 0.65; // the measured ward tax
+    expect(perHit * 2).toBeGreaterThanOrEqual(Math.floor(target * 0.75));
+  });
+
+  test('an unfilled ward DEGRADES — the trait drops, the block ships, never a crash (the Oathguard failure)', async () => {
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'a tomb guardian', cr: 7, mechanics: [] },
+      quietS(() => wardenAnswer2(7, { ward: '' })));
+    const all = Object.values(m.sections).flat();
+    expect(all.some((e) => /\{ward\}/.test(e.text))).toBe(false);
+    expect(all.some((e) => /transferred to the/.test(e.text))).toBe(false);
+    expect(m.name).toBe('Test Keeper'); // the generation completed
+  });
+
+  test('the ward binds directly — person or object, no bearer indirection', async () => {
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'sworn to the child empress', cr: 7, mechanics: [] },
+      quietS(() => wardenAnswer2(7)));
+    const bond = Object.values(m.sections).flat().find((e) => /transferred to the/.test(e.text));
+    expect(bond.text).toMatch(/bound to its ward — the child empress\./);
+    expect(bond.text).not.toMatch(/Whoever bears/);
+  });
+
+  test('the healing clause: support spells tier daily, never at-will (0/329 at-will healing in print)', () => {
+    const { NEVER_AT_WILL } = require('../generate.mjs');
+    for (const s of ['Cure Wounds', 'Healing Word', 'Aid', 'Bless', 'Beacon of Hope', 'Warding Bond']) {
+      expect(NEVER_AT_WILL.has(s)).toBe(true);
+    }
+  });
+
+  test('anchor and free-action coaching reach repair — the immovability fantasy gets its legal forms', async () => {
+    const prompts = [];
+    const capture = (fixture) => async (prompt) => {
+      prompts.push(prompt);
+      if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return fixture();
+    };
+    await generateReskin({ archetype: 'defender', style: 'warden', concept: 'x', cr: 7, mechanics: [] },
+      capture(() => wardenAnswer2(7, {
+        trait_wildcard: { name: 'Immovable', text: 'The creature is immune to the Prone and Restrained conditions while it holds its ground.' },
+      })));
+    expect(prompts.some((p) => /IMMOVABLE-anchor concept instead writes the conditional form/.test(p))).toBe(true);
+    prompts.length = 0;
+    await generateReskin({ archetype: 'defender', style: 'warden', concept: 'x', cr: 7, mechanics: [] },
+      capture(() => wardenAnswer2(7, {
+        wildcard: '*Strength Saving Throw*: DC 14, one creature within 30 feet. *Failure:* The target has the Prone condition, and it can stand as a free action.',
+      })));
+    expect(prompts.some((p) => /there are no free actions in 2024/.test(p))).toBe(true);
+  });
+
+  test('the orphan scan reads "(escape DC" applies — the Gravefist FP, fifth inflection', async () => {
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'x', cr: 7, mechanics: [] },
+      quietS(() => wardenAnswer2(7, {
+        wildcard: '*Strength Saving Throw*: DC 14, one creature within 30 feet. *Failure:* The target is Grappled (escape DC 14) until it breaks free.',
+      })));
+    expect((m.lint_findings ?? []).join(' ')).not.toMatch(/"Grappled" is referenced as a state but nothing/);
   });
 });

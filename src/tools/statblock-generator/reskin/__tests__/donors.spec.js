@@ -169,10 +169,21 @@ describe('authored donors obey the card', () => {
             // aura claim (Hobgoblin Captain's grammar)
             expect(rows.some((r) => r.gated_on === 'aura' && /Emanation originating from the creature/.test(r.text))).toBe(true);
           }
-          // the warden line: the Bound transfer link (Shield Guardian's
-          // passive — NOT a reaction) + the measured damage discount
+          // the warden line: THE WARD RE-SEAT (owner 2026-09-09 —
+          // "isn't warding bond a spell?"): the transfer link is the
+          // Shield Guardian SEAT's signature with a concept-filled
+          // binding object; the invented seats trade it for Regeneration
+          // + the Aegis support kit, and the bodyguard-link travels as
+          // Warding Bond the SPELL on the defender checkbox menu
           if (d.style === 'warden') {
-            expect(rows.some((r) => r.rules && /half of any damage the ward takes \(round up\) is transferred to the creature/.test(r.text))).toBe(true);
+            const transfer = rows.some((r) => r.rules && /half of any damage the ward takes \(round up\) is transferred to the creature/.test(r.text));
+            expect(transfer).toBe(d.id === 'defender-7-warden');
+            if (transfer) expect(rows.some((r) => /\{ward\}/.test(r.text))).toBe(true);
+            expect(rows.some((r) => r.name === 'Regeneration')).toBe(true);
+            // the sustain half (owner: "not any type of protection or
+            // healing aura") — the Unicorn's blessing on every seat:
+            // 2/Day action at the measured tiers, legendary-menu at 17
+            expect(rows.some((r) => /gains 10 \(3d6\) Temporary Hit Points, and its AC increases by 2/.test(r.text))).toBe(true);
             expect(d.dpr_scale).toBeLessThanOrEqual(0.8);
             expect(d.ac_offset).toBeLessThanOrEqual(1);
             expect(d.hp_scale).toBeGreaterThanOrEqual(1);

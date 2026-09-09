@@ -155,7 +155,11 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   const multi = rows.find((r) => r.e.name === 'Multiattack');
   const attacks = multi ? Number(/makes (\w+)/.exec(multi.e.text)[1].replace('two', 2).replace('three', 3).replace('four', 4)) : 1;
   const legendaryStrikes = rows.filter((r) => r.sec === 'Legendary Actions' && /makes one (Melee Attack|Ranged Attack|Hybrid Attack)/.test(r.e.text)).length;
-  const novaRows = rows.filter((r) => r.e.gate);
+  // DAMAGE-bearing gated rows only (the Aegis bug, 2026-09-09: the
+  // per-hit solver priced the warden's 2/Day temp-HP blessing as a
+  // damage nova and crushed every warden ~50% under budget — 8 (1d8+4)
+  // fists on a CR 7). A gated support row is budget-neutral.
+  const novaRows = rows.filter((r) => r.e.gate && /\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) [\w{}]+ damage/.test(r.e.text));
   // iterate per-hit until in band (coarse then fine — the dice snap anyway)
   let perHit = Math.max(4, Math.round(card.dpr / (attacks + legendaryStrikes + 1)));
   // PER-USE nova ceiling, measured against ALL printed single-entry
