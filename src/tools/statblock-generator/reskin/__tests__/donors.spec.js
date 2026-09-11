@@ -81,6 +81,12 @@ describe('authored donors obey the card', () => {
           else if (ma) expect(ma.text).toMatch(/makes (?:two|three) Melee Attack attacks/);
           expect(rows.filter((r) => r.sec === 'Traits' && !r.rules).length).toBeLessThanOrEqual(1); // half of print brutes have ZERO traits
           expect(d.ac_offset).toBeLessThanOrEqual(0); // armor traded for meat; the discount shrinks to 0 at the golem/titan tier
+          // the golem-cite juggernauts carry their cites' signature
+          // (Flesh->Lightning, Clay->Acid, Iron->Fire; owner 'go'
+          // 2026-09-10) — print's knowledge-check defense, verbatim
+          if (['brute-5-juggernaut', 'brute-9-juggernaut', 'brute-16-juggernaut'].includes(d.id)) {
+            expect(rows.some((r) => r.rules && /Whenever the creature is subjected to \w+ damage, it takes no damage and instead regains/.test(r.text))).toBe(true);
+          }
           expect(d.hp_scale).toBeGreaterThan(1);
           // reach 10 is the giant/big-golem pattern (Hill Giant, Stone
           // Golem); print's chargers gore and grapplers bite at reach 5
@@ -167,7 +173,9 @@ describe('authored donors obey the card', () => {
             expect(d.hp_scale).toBeLessThan(1);
             // the leader half: the ally-buff emanation, gated on the
             // aura claim (Hobgoblin Captain's grammar)
-            expect(rows.some((r) => r.gated_on === 'aura' && /Emanation originating from the creature/.test(r.text))).toBe(true);
+            const aura = rows.find((r) => r.gated_on === 'aura');
+            expect(/Emanation originating from the creature/.test(aura.text)).toBe(true);
+            expect(aura.sec).toBe('Traits'); // print files auras as traits (owner catch 2026-09-09)
           }
           // the warden line: THE WARD RE-SEAT (owner 2026-09-09 —
           // "isn't warding bond a spell?"): the transfer link is the
@@ -178,7 +186,10 @@ describe('authored donors obey the card', () => {
           if (d.style === 'warden') {
             const transfer = rows.some((r) => r.rules && /half of any damage the ward takes \(round up\) is transferred to the creature/.test(r.text));
             expect(transfer).toBe(d.id === 'defender-7-warden');
-            if (transfer) expect(rows.some((r) => /\{ward\}/.test(r.text))).toBe(true);
+            // GENERIC by owner ruling (2026-09-09): statblocks are
+            // reusable — the DM designates the ward at the table; the
+            // {ward} concept-fill was shipped once and reverted
+            if (transfer) expect(rows.some((r) => /bound to a ward of its choosing/.test(r.text))).toBe(true);
             expect(rows.some((r) => r.name === 'Regeneration')).toBe(true);
             // the sustain half (owner: "not any type of protection or
             // healing aura") — the Unicorn's blessing on every seat:
@@ -187,12 +198,30 @@ describe('authored donors obey the card', () => {
             expect(d.dpr_scale).toBeLessThanOrEqual(0.8);
             expect(d.ac_offset).toBeLessThanOrEqual(1);
             expect(d.hp_scale).toBeGreaterThanOrEqual(1);
+            // the boss seat carries the DEFENSE ENGINE menu (owner
+            // design 2026-09-10): rampart (Balor 5-ft Emanation + the
+            // wall) and punisher (Marilith Reactive + a Trigger/
+            // Response counter) — engine rows are answer-picked
+            if (d.legendary) {
+              const engines = new Set(rows.filter((r) => r.engine).map((r) => r.engine));
+              expect([...engines].sort()).toEqual(['punisher', 'rampart']);
+              expect(rows.some((r) => r.engine === 'rampart' && /5-foot Emanation originating from the creature takes \d+/.test(r.text))).toBe(true);
+              // Reactive was CUT at the critic's hold (2026-09-10):
+              // print pairs it with a parry, never a damage reaction —
+              // the counter rides the standard one-reaction economy
+              expect(rows.some((r) => /one Reaction on every turn/.test(r.text))).toBe(false);
+              expect(rows.some((r) => r.engine === 'punisher' && /\*Trigger:\*/.test(r.text) && r.sec === 'Reactions')).toBe(true);
+            }
           }
-          // SRD 5.2 retired the reaction-protector (Parry 0/329; the
-          // 2026-09-02 pin's premise was 2014 memory) — no authored
-          // Reactions anywhere in the family; answer-back lives in the
-          // legendary menu
-          expect(rows.some((r) => r.sec === 'Reactions')).toBe(false);
+          // stats CARD-COHERENT (critic holds 2026-09-09: Longsword +6
+          // beside Str 18 derived +7): striker mod + PB = the stamp
+          expect(Math.floor((d.stats.STR - 10) / 2) + d.pb).toBe(d.atk);
+          // SRD 5.2 retired the reaction-protector (Parry 0/329) — no
+          // authored Reactions OUTSIDE a defense engine's own rows (the
+          // punisher engine is print: Marilith Reactive + Hydra
+          // Reactive Heads prove reaction-economy grants in traits;
+          // amendment 2026-09-10)
+          expect(rows.some((r) => r.sec === 'Reactions' && !r.engine)).toBe(false);
           expect(rows.some((r) => /Dash, Disengage, or Hide/.test(r.text))).toBe(false);
         });
       }

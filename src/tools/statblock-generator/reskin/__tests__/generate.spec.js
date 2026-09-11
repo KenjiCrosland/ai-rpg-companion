@@ -902,10 +902,14 @@ describe('element seats + flight tax + stat coherence (owner rulings 2026-08-19)
     }
   });
 
-  test('skills re-derive from final stats — Stealth matches raised DEX', () => {
+  test('skills re-derive from final stats — Stealth matches raised DEX, and authored EXPERTISE survives', () => {
+    // the skulker donor authors Stealth at the Assassin's expertise
+    // convention (mod + 2xPB); the 2026-08-19 flattener ATE it and this
+    // test pinned the bug (critic round, 2026-09-10) — expertise scales
+    // as PB at the target CR
     const sc = sds(pds(12, 'skulker', 'skirmisher'), 12);
     const dexMod = Math.floor((sc.stats.DEX - 10) / 2);
-    expect(sc.skills).toContain(`Stealth +${dexMod + sc.pb}`);
+    expect(sc.skills).toContain(`Stealth +${dexMod + sc.pb + sc.pb}`);
   });
 });
 
@@ -4390,8 +4394,8 @@ describe('the defender family Stage 1 (2026-09-08): the amended pin, the ward ta
     expect(m.generation.donor).toBe('defender-7-warden');
     const all = Object.values(m.sections).flat();
     expect(all.some((e) => /half of any damage the ward takes \(round up\) is transferred/.test(e.text))).toBe(true);
-    // the binding object is concept-filled, never generic (owner 2026-09-09)
-    expect(all.some((e) => /magically bound to its ward — the child empress/.test(e.text))).toBe(true);
+    // generic by owner ruling (2026-09-09): reusable statblocks name no NPC
+    expect(all.some((e) => /magically bound to a ward of its choosing/.test(e.text))).toBe(true);
     expect(all.some((e) => e.name === 'Regeneration')).toBe(true);
     // the measured discount survives the per-hit solver: sustained lands
     // near 0.65x of the card, never re-diced up to full card dpr
@@ -4552,21 +4556,12 @@ describe('the smoke-two fix batch (2026-09-09): the Aegis solver bug, the ward d
     expect(perHit * 2).toBeGreaterThanOrEqual(Math.floor(target * 0.75));
   });
 
-  test('an unfilled ward DEGRADES — the trait drops, the block ships, never a crash (the Oathguard failure)', async () => {
-    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'a tomb guardian', cr: 7, mechanics: [] },
-      quietS(() => wardenAnswer2(7, { ward: '' })));
-    const all = Object.values(m.sections).flat();
-    expect(all.some((e) => /\{ward\}/.test(e.text))).toBe(false);
-    expect(all.some((e) => /transferred to the/.test(e.text))).toBe(false);
-    expect(m.name).toBe('Test Keeper'); // the generation completed
-  });
-
-  test('the ward binds directly — person or object, no bearer indirection', async () => {
+  test('the ward is GENERIC — reusable statblocks name no NPC (owner ruling 2026-09-09, reverting the concept-fill)', async () => {
     const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'sworn to the child empress', cr: 7, mechanics: [] },
       quietS(() => wardenAnswer2(7)));
     const bond = Object.values(m.sections).flat().find((e) => /transferred to the/.test(e.text));
-    expect(bond.text).toMatch(/bound to its ward — the child empress\./);
-    expect(bond.text).not.toMatch(/Whoever bears/);
+    expect(bond.text).toMatch(/bound to a ward of its choosing/);
+    expect(bond.text).not.toMatch(/child empress|Whoever bears|\{ward\}/);
   });
 
   test('the healing clause: support spells tier daily, never at-will (0/329 at-will healing in print)', () => {
@@ -4605,3 +4600,325 @@ describe('the smoke-two fix batch (2026-09-09): the Aegis solver bug, the ward d
     expect((m.lint_findings ?? []).join(' ')).not.toMatch(/"Grappled" is referenced as a state but nothing/);
   });
 });
+
+describe('the holds round (2026-09-10): coherence, the launcher vet, the mark save, the leak repro', () => {
+  const defAnswer = (cr, style = null, over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(cr, style, 'defender'), cr, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    return JSON.stringify({
+      name: 'Test Warden', type: 'Construct', size: 'Medium', alignment: 'Lawful Neutral',
+      senses: 'darkvision 60 ft.', languages: 'Common',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Bludgeoning'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Strength',
+      wildcard: `*Strength Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      ...over,
+    });
+  };
+  const quietH = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+
+  test('a launcher name never lands on a row with reach — the melee crossbow dies at validation', () => {
+    const { reskinDefects: rd } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(5, null, 'defender'), 5, { mechanics: [] });
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    // the hybrid row has reach — a crossbow name on it is the Grave-Vow defect
+    const hybridKey = rk(scaled).find((k) => /Hybrid/.test(k));
+    renames[hybridKey] = 'Heavy Crossbow';
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    const answer = {
+      name: 'Test Knight', renames,
+      damage_types: Object.fromEntries(typed.map((n) => [n, 'Piercing'])),
+      conditions: { condition_minor: 'Prone' },
+      wildcard: `*Strength Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+    };
+    expect(rd(scaled, answer, {}).join(' ')).toMatch(/"Heavy Crossbow" is a launcher but the row swings in melee/);
+  });
+
+  test('a saveless aggro mark fails closed — the Vow of Fury shape', async () => {
+    const m = await generateReskin({ archetype: 'defender', concept: 'x', cr: 5, mechanics: [] },
+      quietH(() => defAnswer(5, null, {
+        wildcard: 'The creature marks one creature it can see within 30 feet. Until the start of the creature\'s next turn, the target has Disadvantage on attack rolls against creatures other than the creature, and the creature has Advantage on attack rolls against the target.',
+        wildcard_economy: 'bonus_action',
+      })));
+    expect(JSON.stringify(m.sections)).not.toMatch(/Disadvantage on attack rolls against creatures other than.*Advantage on attack rolls against the target/);
+  });
+
+  test('the speed-discord lint fires on a permanent Speed-0 trait beside a moving header', async () => {
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'x', cr: 7, mechanics: [] },
+      quietH(() => defAnswer(7, 'warden', {
+        trait_wildcard: { name: 'Rooted', text: 'The creature can\'t be knocked Prone by nonmagical means, and its Speed is 0.' },
+      })));
+    expect((m.lint_findings ?? []).join(' ')).toMatch(/speed-discord/);
+  });
+
+  test('skills re-derive at the target CR with the full map — the Arcana gap closes', () => {
+    // caster-6 authored Arcana at its own CR; scaled to 9 (PB +4) the
+    // number must re-derive from INT (the Gloomburrow shipped +6)
+    const s = scaleDonor(pickDonor(9, null, 'caster'), 9, { mechanics: [] });
+    if (/Arcana/.test(s.skills ?? '')) {
+      const intMod = Math.floor((s.stats.INT - 10) / 2);
+      const n = Number(/Arcana \+(\d+)/.exec(s.skills)[1]);
+      expect(n).toBeGreaterThanOrEqual(intMod + s.pb);
+    }
+    // and the defender's Athletics derives from the coherent Str
+    const d5 = scaleDonor(pickDonor(5, null, 'defender'), 5, { mechanics: [] });
+    expect(d5.skills).toContain(`Athletics +${Math.floor((d5.stats.STR - 10) / 2) + d5.pb}`);
+  });
+
+  test('LEAK REPRO: a repaired trait with a condition-immunity suite never ships (the Tollkeeper)', async () => {
+    for (const text of [
+      'The creature is immune to the Grappled and Restrained conditions. It can move across vertical and horizontal surfaces.',
+      'The tollkeeper is immune to the Grappled and Restrained conditions. It can move across vertical and horizontal surfaces.',
+    ]) {
+      const m = await generateReskin({ archetype: 'defender', concept: 'a bridge troll', cr: 6, mechanics: [] },
+        async (prompt) => {
+          if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) {
+            return JSON.stringify({ trait_wildcard: { name: 'Stone Bound', text } });
+          }
+          if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+          return defAnswer(6, null, {
+            name: 'Tollkeeper',
+            trait_wildcard: { name: 'Stone Hide', text: 'The creature has resistance to Bludgeoning, Piercing, and Slashing damage.' },
+          });
+        });
+      expect(JSON.stringify(m.sections)).not.toMatch(/immune to the Grappled and Restrained/);
+    }
+  });
+});
+
+describe('the defense engine menu (2026-09-10): the immovable force, answer-picked', () => {
+  const bossAnswer = (over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(17, 'warden', 'defender'), 17, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    return JSON.stringify({
+      name: 'Test Rampart', type: 'Construct', size: 'Gargantuan', alignment: 'Unaligned',
+      senses: 'darkvision 120 ft.', languages: 'None',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Bludgeoning'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Strength',
+      defense_engine: 'rampart',
+      wildcard: `*Strength Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      ...over,
+    });
+  };
+  const quietE = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+
+  test('rampart: the aura and the wall ship renamed; the punisher rows never do', async () => {
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'a living fortress wall', cr: 17, mechanics: [] },
+      quietE(() => bossAnswer()));
+    const all = Object.values(m.sections).flat();
+    expect(all.some((e) => /5-foot Emanation originating from the test rampart takes \d+ \(\d+d\d+\) Bludgeoning damage/.test(e.text))).toBe(true);
+    const wall = all.find((e) => /raises a solid rampart/.test(e.text));
+    expect(wall.name).toMatch(/\(Recharge 5-6\)/);
+    expect(all.some((e) => /one Reaction on every turn/.test(e.text))).toBe(false);
+    expect(m.sections.Reactions ?? []).toHaveLength(0);
+    // the anchor ships in the Rakshasa grammar, chassis
+    expect(all.some((e) => /automatically succeeds on saving throws made to avoid being moved/.test(e.text))).toBe(true);
+  });
+
+  test('punisher: Reactive and the Trigger/Response counter ship; the rampart rows never do', async () => {
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'the thing that answers back', cr: 17, mechanics: [] },
+      quietE(() => bossAnswer({ defense_engine: 'punisher' })));
+    const all = Object.values(m.sections).flat();
+    // the reprice (2026-09-10): the counter is BOUNDED — one standard
+    // reaction, never the Marilith's every-turn multiplier
+    expect(all.some((e) => /one Reaction on every turn of combat/.test(e.text))).toBe(false);
+    expect((m.sections.Reactions ?? []).some((e) => /\*Trigger:\*/.test(e.text) && /makes one Named Row\d+ attack/.test(e.text))).toBe(true);
+    expect(all.some((e) => /5-foot Emanation/.test(e.text))).toBe(false);
+    expect(all.some((e) => /raises a solid rampart/.test(e.text))).toBe(false);
+  });
+
+  test('an off-menu pick is a validation defect AND assembly never fails — it defaults to rampart', async () => {
+    const { reskinDefects: rd } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(17, 'warden', 'defender'), 17, { mechanics: [] });
+    expect(rd(scaled, JSON.parse(bossAnswer({ defense_engine: 'fortress' })), {}).join(' ')).toMatch(/defense_engine missing or off the menu/);
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'x', cr: 17, mechanics: [] },
+      quietE(() => bossAnswer({ defense_engine: '' })));
+    expect(Object.values(m.sections).flat().some((e) => /5-foot Emanation/.test(e.text))).toBe(true);
+  });
+
+  test('the juggernauts carry their cites: a Flesh-cite generation ships Lightning Absorption', async () => {
+    const s = scaleDonor(pickDonor(5, 'juggernaut', 'brute'), 5, { mechanics: [] });
+    const abs = Object.values(s.sections).flat().find((e) => /Absorption/.test(e.name));
+    expect(abs.rules).toBe(true);
+    expect(abs.text).toMatch(/subjected to Lightning damage, it takes no damage and instead regains/);
+  });
+});
+
+describe('the pre-close round (2026-09-10): vacuous resilience, the bounded counter, keys and tiers', () => {
+  const bossAnswer2 = (over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(17, 'warden', 'defender'), 17, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    return JSON.stringify({
+      name: 'Test Bastion', type: 'Construct', size: 'Gargantuan', alignment: 'Unaligned',
+      senses: 'darkvision 120 ft.', languages: 'None',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Bludgeoning'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Strength',
+      defense_engine: 'rampart',
+      wildcard: `*Strength Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      ...over,
+    });
+  };
+  const quietP2 = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+
+  test('vacuous resilience dies: Advantage against a condition the type header already carries immunity to', async () => {
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'x', cr: 17, mechanics: [] },
+      quietP2(() => bossAnswer2({
+        trait_wildcard: { name: 'Forged Will', text: 'The creature has Advantage on saving throws against being Charmed or Frightened.' },
+      })));
+    expect(Object.values(m.sections).flat().some((e) => e.name === 'Forged Will')).toBe(false);
+  });
+
+  test('the anchor chassis-owned key: a wildcard re-deriving Immovable fails closed (the Unbreached Bulwark duplicate)', async () => {
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'x', cr: 17, mechanics: [] },
+      quietP2(() => bossAnswer2({
+        trait_wildcard: { name: 'Rooted Stone', text: 'The creature automatically succeeds on saving throws made to avoid being moved against its will.' },
+      })));
+    const movers = Object.values(m.sections).flat().filter((e) => /automatically succeeds on saving throws made to avoid being moved/.test(e.text));
+    expect(movers).toHaveLength(1);
+    expect(movers[0].name).toBe('Immovable');
+  });
+
+  test('a rename never repeats the block\'s head noun', () => {
+    const { reskinDefects: rd, renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(17, 'warden', 'defender'), 17, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const wallKey = rk(scaled).find((k) => /Wall/.test(k));
+    renames[wallKey] = 'Rampart';
+    const answer = JSON.parse(bossAnswer2({ renames, name: 'Unbroken Rampart' }));
+    expect(rd(scaled, answer, {}).join(' ')).toMatch(/"Rampart" repeats the creature's own name/);
+  });
+
+  test('the Aegis scales with tier: boss Temporary Hit Points track per-hit, never the CR 5 ten', () => {
+    const s = scaleDonor(pickDonor(17, 'warden', 'defender'), 17, { mechanics: [] });
+    const aegis = Object.values(s.sections).flat().find((e) => /Temporary Hit Points/.test(e.text));
+    const thp = Number(/(\d+) \(\d+d\d+\) Temporary Hit Points/.exec(aegis.text)[1]);
+    expect(thp).toBeGreaterThanOrEqual(25);
+    // and the CR 3 seat stays near the Unicorn's print ten
+    const low = scaleDonor(pickDonor(3, 'warden', 'defender'), 3, { mechanics: [] });
+    const lowAegis = Object.values(low.sections).flat().find((e) => /Temporary Hit Points/.test(e.text));
+    expect(Number(/(\d+) \(/.exec(lowAegis.text)[1])).toBeLessThanOrEqual(16);
+  });
+
+  test('a declared energy burns in the gullet: the engulf interior follows the concept (the Crucible\'s Acid furnace)', async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(15, 'grappler', 'brute'), 15, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    const m = await generateReskin({ archetype: 'brute', style: 'grappler', concept: 'a brass furnace golem', cr: 15, energy: 'Fire', mechanics: [] },
+      quietP2(() => JSON.stringify({
+        name: 'Furnace Hulk', type: 'Construct', size: 'Huge', alignment: 'Unaligned',
+        senses: 'darkvision 60 ft.', languages: 'None',
+        renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Fire'])),
+        conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Strength',
+        engulf_style: 'swallow',
+        wildcard: `*Strength Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      })));
+    const swallow = Object.values(m.sections).flat().find((e) => /While swallowed/.test(e.text));
+    expect(swallow.text).toMatch(/Fire damage at the start/);
+  });
+
+  test('a keyless chassis Regeneration gains the derived foil in Troll grammar', async () => {
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'a thunder-stone rampart', cr: 17, energy: 'Thunder', mechanics: [] },
+      quietP2(() => bossAnswer2()));
+    const regen = Object.values(m.sections).flat().find((e) => e.name === 'Regeneration');
+    // the inline substitution stamps the short form into the appended clause
+    expect(regen.text).toMatch(/If the test bastion takes Lightning damage, this trait doesn't function at the start of the test bastion's next turn\./);
+  });
+});
+
+describe('the defender close-out batch (2026-09-10): the minted-resource class, the closed languages field', () => {
+  const closeAnswer = (over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(7, 'warden', 'defender'), 7, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    return JSON.stringify({
+      name: 'Test Keeper', type: 'Construct', size: 'Large', alignment: 'Lawful Neutral',
+      senses: 'darkvision 60 ft.', languages: 'Common',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Bludgeoning'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Strength',
+      wildcard: `*Strength Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      ...over,
+    });
+  };
+  const capture = (fixture, prompts) => async (prompt) => {
+    prompts.push(prompt);
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return fixture();
+  };
+
+  test('a minted resource and an "Alternatively" weld both draw coaching — the Gorge Draught class', async () => {
+    const prompts = [];
+    await generateReskin({ archetype: 'defender', style: 'warden', concept: 'x', cr: 7, mechanics: [] },
+      capture(() => closeAnswer({
+        wildcard: 'The creature extinguishes one open flame within reach and gains one Furnace Charge. It can hold up to three Furnace Charges. Alternatively, one creature within 30 feet must succeed on a DC 14 Dexterity saving throw or take 27 (5d8 + 5) Fire damage.',
+      }), prompts));
+    expect(prompts.some((p) => /capitalized tracked resource is a homebrew subsystem/.test(p))).toBe(true);
+  });
+
+  test('meter inflection #7: "can use this ability up to 3/Day" is dialect, flagged', async () => {
+    const prompts = [];
+    await generateReskin({ archetype: 'defender', style: 'warden', concept: 'x', cr: 7, mechanics: [] },
+      capture(() => closeAnswer({
+        wildcard: '*Strength Saving Throw*: DC 14, one creature within 30 feet. *Failure:* The target has the Prone condition. The creature can use this ability up to 3/Day.',
+      }), prompts));
+    expect(prompts.some((p) => /use limits print as a count/.test(p))).toBe(true);
+  });
+
+  test('the Languages field closes: lore leaks lint, grammar branches normalize', async () => {
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'x', cr: 7, mechanics: [] },
+      quietTail(() => closeAnswer({ languages: 'Ignan, understands Dwarvish but cannot speak' })));
+    expect(m.languages).toBe("Ignan, understands Dwarvish but can't speak it");
+    const m2 = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'x', cr: 7, mechanics: [] },
+      quietTail(() => closeAnswer({ languages: 'Understands all but can\'t speak; the tomb\'s final breath remains in it' })));
+    expect(m2.languages).toMatch(/understands all languages but/);
+    expect((m2.lint_findings ?? []).join(' ')).toMatch(/languages-lore-leak/);
+  });
+
+  test('Ward Bond binds once — and the regen key never trips the type-affinity lint', async () => {
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'a radiant tomb guardian', cr: 7, energy: 'Radiant', mechanics: [] },
+      quietTail(() => closeAnswer()));
+    const bond = Object.values(m.sections).flat().find((e) => /transferred to the/.test(e.text));
+    expect(bond.text).toMatch(/only one ward at a time/);
+    // energy Radiant -> foil Necrotic in the regen key on a Construct:
+    // a vulnerability mention, never a dealt-damage affinity finding
+    expect((m.lint_findings ?? []).join(' ')).not.toMatch(/type-damage-affinity/);
+  });
+});
+const quietTail = (respond) => async (prompt) => {
+  if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+  if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+  return respond(prompt);
+};

@@ -723,7 +723,12 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // death magic). Monstrosity/Plant/Fiend/Humanoid carry it officially
     // and stay legal. The fix call re-themes the damage — or the audit
     // retypes the block.
-    if (/Necrotic damage/.test(entry.text)
+    // mention-context matters (2026-09-10 FP: a Construct's regen key
+    // "If the creature takes Necrotic damage..." is a VULNERABILITY
+    // clause, not dealt damage). The discriminator is DICE-adjacency:
+    // dealt damage always carries dice ("takes 7 (2d6) Necrotic");
+    // vulnerability mentions are diceless ("takes Necrotic damage")
+    if (/Necrotic damage/.test(entry.text.replace(/(?:takes?|is subjected to)\s+Necrotic damage/gi, ''))
       && /^(?:Elemental|Construct|Beast|Ooze|Celestial)$/i.test((monster.type ?? '').split(' ')[0])) {
       push('type-damage-affinity', 'reject', `${where}: Necrotic damage on ${monster.type} — no official ${monster.type} deals Necrotic; re-theme the damage to the creature's substance (or the type itself is wrong)`, undefined, loc);
     }

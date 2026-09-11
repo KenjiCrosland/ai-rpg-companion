@@ -141,10 +141,25 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
     if (Math.floor((scaled.stats[striker] - 10) / 2) < targetMod) scaled.stats[striker] = 10 + targetMod * 2;
     scaled.striker_stat = striker;
     // skills re-derive from the FINAL stats so Stealth/Perception match
-    // what a reader computes (donor skill strings are seat-authored)
+    // what a reader computes (donor skill strings are seat-authored).
+    // FULL skill map + expertise preservation (critic 2026-09-09: the
+    // Gloomburrow kept Arcana +6 where Int/PB derive +8 — the old map
+    // had five skills, so Arcana shipped verbatim; and the old flattener
+    // ATE authored expertise — the lurker's Assassin-cite Stealth +11
+    // shipped as bare mod+PB. Surplus over the DONOR's own derivation
+    // is expertise and survives the rescale.)
     const mod = (k) => Math.floor((scaled.stats[k] - 10) / 2);
-    const SKILL_STAT = { Perception: 'WIS', Stealth: 'DEX', Acrobatics: 'DEX', Athletics: 'STR', Intimidation: 'CHA' };
-    scaled.skills = String(scaled.skills ?? '').split(',').map((t) => t.trim().replace(/^([A-Za-z]+)\s*\+\d+$/, (m0, name) => (SKILL_STAT[name] ? `${name} +${mod(SKILL_STAT[name]) + scaled.pb}` : m0))).join(', ');
+    const donorMod = (k) => Math.floor((donor.stats[k] - 10) / 2);
+    const SKILL_STAT = { Athletics: 'STR', Acrobatics: 'DEX', 'Sleight of Hand': 'DEX', Stealth: 'DEX', Arcana: 'INT', History: 'INT', Investigation: 'INT', Nature: 'INT', Religion: 'INT', 'Animal Handling': 'WIS', Insight: 'WIS', Medicine: 'WIS', Perception: 'WIS', Survival: 'WIS', Deception: 'CHA', Intimidation: 'CHA', Performance: 'CHA', Persuasion: 'CHA' };
+    scaled.skills = String(scaled.skills ?? '').split(',').map((t) => t.trim().replace(/^([A-Za-z][A-Za-z' ]*?)\s*\+(\d+)$/, (m0, name, n) => {
+      const st = SKILL_STAT[name.trim()];
+      if (!st) return m0;
+      // expertise is recognized ONLY as the convention (surplus exactly
+      // = donor PB, the double-proficiency shape) and scales as PB;
+      // any other surplus is authoring slop and flattens as before
+      const expertise = Number(n) - donorMod(st) - donor.pb === donor.pb ? scaled.pb : 0;
+      return `${name.trim()} +${mod(st) + scaled.pb + expertise}`;
+    })).join(', ');
   }
 
   // Damage split: the donor's SHAPE decides the ratio (how much of the
@@ -247,6 +262,13 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
       const { avg, dice } = saveDamageDiceFor(novaAvgFor(perHit));
       e.text = e.text.replace(/DC \d+/g, `DC ${card.dc}`)
         .replace(/\d+ \(\d+d\d+\) ([\w{}]+) damage/, `${avg} (${dice}) $1 damage`);
+      // support blessings scale too (critic 2026-09-10: the Unicorn's
+      // 10 THP is a dead action on a CR 18 boss) — Temporary Hit Points
+      // track per-hit, so the blessing stays worth an action at tier
+      if (/Temporary Hit Points/.test(e.text)) {
+        const thp = saveDamageDiceFor(Math.max(10, Math.round(perHit)));
+        e.text = e.text.replace(/\d+ \(\d+d\d+\) Temporary Hit Points/, `${thp.avg} (${thp.dice}) Temporary Hit Points`);
+      }
     }
   }
   const conMod = Math.floor((scaled.stats.CON - 10) / 2);

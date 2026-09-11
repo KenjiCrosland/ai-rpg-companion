@@ -810,6 +810,7 @@ export const DONORS = [
     saves: ['STR', 'CON'], skills: 'Athletics +6, Perception +3',
     sections: {
       Traits: [
+        { name: 'Lightning Absorption', rules: true, text: 'Whenever the creature is subjected to Lightning damage, it takes no damage and instead regains a number of Hit Points equal to the Lightning damage dealt.' },
         { name: 'Immutable Form', rules: true, text: 'The creature is immune to any spell or effect that would alter its form.' },
         { name: 'Magic Resistance', rules: true, text: 'The creature has Advantage on saving throws against spells and other magical effects.' },
       ],
@@ -831,6 +832,7 @@ export const DONORS = [
     saves: ['STR', 'CON'], skills: 'Athletics +8, Perception +4',
     sections: {
       Traits: [
+        { name: 'Acid Absorption', rules: true, text: 'Whenever the creature is subjected to Acid damage, it takes no damage and instead regains a number of Hit Points equal to the Acid damage dealt.' },
         { name: 'Immutable Form', rules: true, text: 'The creature is immune to any spell or effect that would alter its form.' },
         { name: 'Siege Monster', rules: true, text: 'The creature deals double damage to objects and structures.' },
       ],
@@ -896,6 +898,7 @@ export const DONORS = [
     saves: ['STR', 'CON'], skills: 'Athletics +12, Perception +5',
     sections: {
       Traits: [
+        { name: 'Fire Absorption', rules: true, text: 'Whenever the creature is subjected to Fire damage, it takes no damage and instead regains a number of Hit Points equal to the Fire damage dealt.' },
         { name: 'Immutable Form', rules: true, text: 'The creature is immune to any spell or effect that would alter its form.' },
         { name: 'Siege Monster', rules: true, text: 'The creature deals double damage to objects and structures.' },
       ],
@@ -1666,12 +1669,18 @@ export const DONORS = [
     cr: 1, archetypes: ['defender'],
     ac: 17, ac_offset: 2, hp: 26, hp_scale: 0.85, hp_formula: '4d8 + 8', atk: 4, dc: 11, pb: 2,
     speed: '30 ft.',
-    stats: { STR: 16, DEX: 11, CON: 14, INT: 10, WIS: 12, CHA: 11 },
-    saves: ['CON'], skills: 'Athletics +5, Perception +3',
+    // stats CARD-COHERENT (critic hold, 2026-09-09): striker mod + PB
+    // must equal the stamped attack bonus — every number derives
+    stats: { STR: 14, DEX: 11, CON: 14, INT: 10, WIS: 12, CHA: 11 },
+    saves: ['CON'], skills: 'Athletics +4, Perception +3',
     sections: {
+      Traits: [
+        // print files auras as TRAITS (Hobgoblin Captain; owner catch
+        // 2026-09-09 — it shipped under Actions for two smokes)
+        { name: 'Guard Aura', rules: true, gated_on: 'aura', text: 'While in a 10-foot Emanation originating from the creature, the creature\'s allies have Advantage on saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
+      ],
       Actions: [
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +4, reach 5 ft. 10 (2d6 + 3) {damage_type} damage.' },
-        { name: 'Guard Aura', rules: true, gated_on: 'aura', text: 'While in a 10-foot Emanation originating from the creature, the creature\'s allies have Advantage on saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 11, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
     },
@@ -1685,11 +1694,15 @@ export const DONORS = [
     stats: { STR: 16, DEX: 11, CON: 14, INT: 11, WIS: 12, CHA: 14 },
     saves: ['CON', 'WIS'], skills: 'Athletics +5, Perception +3',
     sections: {
+      Traits: [
+        // print files auras as TRAITS (Hobgoblin Captain; owner catch
+        // 2026-09-09 — it shipped under Actions for two smokes)
+        { name: 'Guard Aura', rules: true, gated_on: 'aura', text: 'While in a 10-foot Emanation originating from the creature, the creature\'s allies have Advantage on saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
+      ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 12 (2d8 + 3) {damage_type} damage.' },
-        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +5, range 100/400 ft. 11 (2d10) {damage_type} damage.' },
-        { name: 'Guard Aura', rules: true, gated_on: 'aura', text: 'While in a 10-foot Emanation originating from the creature, the creature\'s allies have Advantage on saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +5, range 30/120 ft. 11 (2d10) {damage_type} damage.' }, // thrown-shape: Str-coherent with the stamp (a crossbow can't be)
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
     },
@@ -1700,14 +1713,18 @@ export const DONORS = [
     cr: 5, archetypes: ['defender'],
     ac: 19, ac_offset: 3, hp: 78, hp_scale: 0.87, hp_formula: '12d8 + 24', atk: 6, dc: 13, pb: 3,
     speed: '30 ft.',
-    stats: { STR: 18, DEX: 12, CON: 14, INT: 11, WIS: 13, CHA: 14 },
-    saves: ['STR', 'CON'], skills: 'Athletics +7, Perception +4',
+    stats: { STR: 16, DEX: 12, CON: 14, INT: 11, WIS: 13, CHA: 14 },
+    saves: ['STR', 'CON'], skills: 'Athletics +6, Perception +4',
     sections: {
+      Traits: [
+        // print files auras as TRAITS (Hobgoblin Captain; owner catch
+        // 2026-09-09 — it shipped under Actions for two smokes)
+        { name: 'Guard Aura', rules: true, gated_on: 'aura', text: 'While in a 10-foot Emanation originating from the creature, the creature\'s allies have Advantage on saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
+      ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Hybrid Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +6, reach 5 ft. 17 (3d8 + 4) {damage_type} damage.' },
         { name: 'Hybrid Attack', text: '*Melee or Ranged Attack Roll:* +6, reach 5 ft. or range 30/120 ft. 14 (3d6 + 4) {damage_type} damage.' },
-        { name: 'Guard Aura', rules: true, gated_on: 'aura', text: 'While in a 10-foot Emanation originating from the creature, the creature\'s allies have Advantage on saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
     },
@@ -1719,17 +1736,17 @@ export const DONORS = [
     cr: 17, archetypes: ['defender'],
     ac: 21, ac_offset: 2, hp: 184, hp_scale: 0.85, hp_formula: '32d8 + 40', atk: 12, dc: 19, pb: 6,
     speed: '30 ft.',
-    stats: { STR: 24, DEX: 12, CON: 16, INT: 12, WIS: 16, CHA: 16 },
-    saves: ['STR', 'CON', 'WIS'], skills: 'Athletics +13, Perception +9',
+    stats: { STR: 22, DEX: 12, CON: 16, INT: 12, WIS: 16, CHA: 16 },
+    saves: ['STR', 'CON', 'WIS'], skills: 'Athletics +12, Perception +9',
     sections: {
       Traits: [
         { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Guard Aura', rules: true, gated_on: 'aura', text: 'While in a 10-foot Emanation originating from the creature, the creature\'s allies have Advantage on saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 5 ft. 40 (6d10 + 7) {damage_type} damage.' },
-        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +12, range 100/400 ft. 33 (6d8 + 6) {damage_type} damage.' },
-        { name: 'Guard Aura', rules: true, gated_on: 'aura', text: 'While in a 10-foot Emanation originating from the creature, the creature\'s allies have Advantage on saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 40 (6d10 + 7) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +12, range 30/120 ft. 33 (6d8 + 6) {damage_type} damage.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Legendary Actions': [
@@ -1778,12 +1795,13 @@ export const DONORS = [
     saves: ['CON'], skills: 'Perception +3',
     sections: {
       Traits: [
-        // the ward is CONCEPT-FILLED, person or object — live evidence
-        // (the Oathguard, 2026-09-09): the model names the charge itself
-        // ("the child empress"), so the bearer-of-an-object indirection
-        // welded into nonsense; the template now binds to the ward
-        // directly, like {projectile}
-        { name: 'Ward Bond', rules: true, text: 'The creature is magically bound to its ward — {ward}. While the creature is within 60 feet of its ward, half of any damage the ward takes (round up) is transferred to the creature.' },
+        // GENERIC BY OWNER RULING (2026-09-09, after live concept-filled
+        // blocks named "the child empress" and "the sealed crypt door"):
+        // statblocks are REUSABLE — a named ward makes the block
+        // single-use; the DM designates the ward at the table. The
+        // {ward} concept-fill was built, shipped once, and reverted —
+        // do not re-derive it.
+        { name: 'Ward Bond', rules: true, text: 'The creature is magically bound to a ward of its choosing, and it can have only one ward at a time. While the creature is within 60 feet of its ward, half of any damage the ward takes (round up) is transferred to the creature.' },
         { name: 'Regeneration', rules: true, text: 'The creature regains 10 Hit Points at the start of each of its turns if it has at least 1 Hit Point.' },
       ],
       Actions: [
@@ -1796,31 +1814,46 @@ export const DONORS = [
   },
   {
     id: 'defender-17-warden',
-    invented: true, // no printed warden boss — the Shield Guardian composition under a legendary menu
+    invented: true, // no printed warden boss — the immovable force (owner design 2026-09-10), carrying a DEFENSE ENGINE the concept picks: 'rampart' (Balor 5-ft Emanation aura + a raised wall, ally-sparing per the Azer) or 'punisher' (a Trigger/Response counter on the STANDARD one-reaction economy — the family's "answers back" sentence, finally literal; Reactive was cut at the critic's hold 2026-09-10: the Marilith pairs Reactive with a PARRY, never a damage reaction, and an every-turn counter scales with the party instead of the card). Engine rows sit OUTSIDE the damage budget like gated organs: the 0.7 ward tax prices the slams alone, and the chosen engine restores effective output toward the card BOUNDED (aura ~2x14/round, or ONE riposte ~40/round) — the wall that hurts to touch, by design not by accident.
     legendary: true,
     style: 'warden',
     cr: 17, archetypes: ['defender'],
     ac: 20, ac_offset: 1, hp: 238, hp_scale: 1.1, hp_formula: '35d8 + 80', atk: 12, dc: 19, pb: 6, dpr_scale: 0.7,
-    speed: '30 ft.',
-    stats: { STR: 24, DEX: 8, CON: 20, INT: 8, WIS: 14, CHA: 3 },
+    speed: '20 ft.',
+    stats: { STR: 22, DEX: 8, CON: 20, INT: 8, WIS: 14, CHA: 3 },
     saves: ['STR', 'CON'], skills: 'Perception +8',
     sections: {
       Traits: [
         { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
         { name: 'Regeneration', rules: true, text: 'The creature regains 10 Hit Points at the start of each of its turns if it has at least 1 Hit Point.' },
+        // the anchor in the Rakshasa's auto-success grammar (the
+        // coaching's blessed form, now chassis)
+        { name: 'Immovable', rules: true, text: 'The creature automatically succeeds on saving throws made to avoid being moved against its will, and it can\'t be knocked Prone.' },
+        // RAMPART engine: the Balor's 5-foot Emanation aura with the
+        // Azer's ally-sparing choice clause, verbatim grammar
+        { name: 'Rampart Aura', engine: 'rampart', text: 'At the end of each of the creature\'s turns, each creature of the creature\'s choice in a 5-foot Emanation originating from the creature takes 14 (4d6) {damage_type} damage.' },
       ],
       Actions: [
-        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks.' },
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 40 (6d10 + 7) {damage_type} damage.' },
+        { name: 'Aegis', gate: '2/Day', text: 'The creature targets itself or one creature it can see within 60 feet. The target gains 10 (3d6) Temporary Hit Points, and its AC increases by 2 until the end of the creature\'s next turn.' },
+        // RAMPART engine: the wall row, metered the print way (the
+        // Gatekeeper's wildcard built this shape unprompted; as chassis
+        // it gets "(Recharge 5-6)" instead of the recharge-by-bleeding
+        // dialect)
+        { name: 'Raise Wall', engine: 'rampart', gate: 'Recharge 5-6', text: 'The creature raises a solid rampart 30 feet long, 10 feet high, and 1 foot thick in a line within 60 feet of itself. Each creature in the line\'s space is pushed to one side of the line (target\'s choice). The rampart provides Three-Quarters Cover to creatures behind it, blocks movement through it, and crumbles at the start of the creature\'s next turn.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      Reactions: [
+        // PUNISHER engine: the priced counter the Parry retirement left
+        // room for — attacking it (or its charge) is how you get hurt
+        { name: 'Punishing Counter', engine: 'punisher', text: '*Trigger:* A creature within 10 feet of the creature hits it or an ally of the creature with an attack roll. *Response:* The creature makes one Melee Attack attack against the triggering creature.' },
       ],
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
         { name: 'Legendary Riposte', text: 'The creature makes one Melee Attack attack.' },
         { name: 'Legendary Brace', text: 'The creature takes the Dodge action. The creature can\'t take this action again until the start of its next turn.' },
-        // the Unicorn's Shimmering Shield composition — print's one
-        // protection blessing, legendary-tier where print put it
-        { name: 'Legendary Aegis', text: 'The creature targets itself or one creature it can see within 60 feet. The target gains 10 (3d6) Temporary Hit Points, and its AC increases by 2 until the end of the creature\'s next turn. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Rebuke', text: '*Strength Saving Throw*: DC 19, one creature within 5 feet. *Failure:* The target is pushed up to 15 feet away from the creature and has the Prone condition.' },
       ],
     },
   },
