@@ -1055,6 +1055,7 @@ async function generateStatblockEngine(edition) {
   let conceptAttackMode = null;
   let conceptSignature = null;
   let conceptStyle = null;
+  let conceptBody = null;
   let conceptEnergy = null;
   let conceptMix = null;
   let conceptElements = null;
@@ -1085,7 +1086,7 @@ async function generateStatblockEngine(edition) {
         const pinKey = JSON.stringify([userConcept, monsterDescription.value, cr, givenArchetype]);
         const pinned = conceptResolutionCache.get(pinKey);
         if (pinned) {
-          ({ archetypeName, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics } = pinned);
+          ({ archetypeName, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics, conceptBody } = pinned);
           logger.log('[concept] pinned — reusing the resolution for an unchanged concept');
         } else {
         const raw = await generateGptResponse(
@@ -1123,6 +1124,7 @@ async function generateStatblockEngine(edition) {
         if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
         if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
         if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator', 'warpriest', 'binder', 'phantom', 'trap', 'warden'].includes(parsed?.style)) conceptStyle = parsed.style;
+        if (['ooze', 'swarm', 'dragon'].includes(parsed?.body)) conceptBody = parsed.body;
         if (Array.isArray(parsed?.mechanics)) {
           const MECHS = ['thrown-weapon', 'breath', 'engulf', 'grapple', 'gaze', 'aura', 'teleport', 'summon', 'snare', 'regeneration'];
           conceptMechanics = parsed.mechanics.filter((x) => MECHS.includes(String(x).toLowerCase()));
@@ -1175,7 +1177,7 @@ async function generateStatblockEngine(edition) {
         if (conceptElements) logger.log('[concept] signature elements:', conceptElements.map((e) => `${e.element}${e.kind ? ` [${e.kind}]` : ''}`).join(' | '));
         if (conceptIdentity) logger.log('[concept] identity:', conceptIdentity);
         if (conceptLore) logger.log('[concept] lore:', conceptLore);
-        conceptResolutionCache.set(pinKey, { archetypeName, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics });
+        conceptResolutionCache.set(pinKey, { archetypeName, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics, conceptBody });
         }
       } else {
         // Blank form: the same micro-call fuses the rolled axes into one
@@ -1214,6 +1216,7 @@ async function generateStatblockEngine(edition) {
         if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
         if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
         if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator', 'warpriest', 'binder', 'phantom', 'trap', 'warden'].includes(parsed?.style)) conceptStyle = parsed.style;
+        if (['ooze', 'swarm', 'dragon'].includes(parsed?.body)) conceptBody = parsed.body;
         // blank-path parity (owner spotted the gap, 2026-08-26): the seed
         // synthesis now returns signature_elements too — without them the
         // reskin's seat machinery ran blind on every blank roll
@@ -1249,6 +1252,14 @@ async function generateStatblockEngine(edition) {
   // of who-it-is-and-why that the generation designs toward and the naming
   // call reads for fit — the anti-hodgepodge anchor.
   if (conceptLore) concept += `\nLORE (the creature's story — every ability and its name should feel like they belong to it): ${conceptLore}`;
+
+  // The body field is DERIVED where the signal is deterministic (the
+  // resolver missed it on 3 of 6 concepts, smoke two 2026-09-11): a
+  // Dragon or Ooze creature_type IS the body; a concept that says
+  // "swarm of" IS a swarm. The model's field covers the rest.
+  if (!conceptBody && resolvedType === 'Dragon') conceptBody = 'dragon';
+  if (!conceptBody && resolvedType === 'Ooze') conceptBody = 'ooze';
+  if (!conceptBody && /\bswarm of\b/i.test(`${monsterName.value} ${monsterDescription.value} ${synthesizedConcept ?? ''}`)) conceptBody = 'swarm';
 
   // Juggernaut is a MADE thing by its own definition (Immutable Form on a
   // living swamp ogre, 2026-08-26) — living-flesh types demote to plain
@@ -1300,7 +1311,8 @@ async function generateStatblockEngine(edition) {
       || (archetypeName === 'brute' && localStorage.getItem('statblock-reskin-brute') !== '0')
       || (archetypeName === 'lurker' && localStorage.getItem('statblock-reskin-lurker') !== '0')
       || (archetypeName === 'defender' && localStorage.getItem('statblock-reskin-defender') !== '0')
-      || (isCasterRole && localStorage.getItem('statblock-reskin-caster') !== '0'))) {
+      || (isCasterRole && localStorage.getItem('statblock-reskin-caster') !== '0')
+      || (conceptBody && localStorage.getItem('statblock-reskin-bodies') !== '0'))) {
       const { generateReskin } = await import('./reskin/generate.mjs');
       finalMonster = await generateReskin(
         {
@@ -1317,6 +1329,10 @@ async function generateStatblockEngine(edition) {
           // reskin call re-picks and defaults to Monstrosity (4 of 5
           // first-lurker-smoke blocks drifted, 2026-09-04)
           resolvedType: resolvedType ?? null,
+          // BODY TYPE (owner 2026-09-11): ooze/swarm/dragon donor pools
+          // outrank the role at pickDonor; kill switch
+          // statblock-reskin-bodies='0'
+          bodyType: conceptBody ?? null,
           energy: userConcept ? conceptEnergy : rolledEnergy,
           mix: userConcept ? conceptMix : rolledMix,
           caster: caster.value,

@@ -138,7 +138,11 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
     const striker = isCaster
       ? ['INT', 'WIS', 'CHA'].sort((a, b) => scaled.stats[b] - scaled.stats[a])[0]
       : (scaled.stats.DEX >= scaled.stats.STR ? 'DEX' : 'STR');
-    if (Math.floor((scaled.stats[striker] - 10) / 2) < targetMod) scaled.stats[striker] = 10 + targetMod * 2;
+    // EXACT-fit, both directions (2026-09-11: the Cistern Lurker's
+    // authored Str 18 derived +7 beside a +6 card stamp at CR 5 — donor
+    // stats are ours to move; raise-only was the slot path's rule for
+    // MODEL-supplied stats)
+    if (Math.floor((scaled.stats[striker] - 10) / 2) !== targetMod) scaled.stats[striker] = 10 + targetMod * 2;
     scaled.striker_stat = striker;
     // skills re-derive from the FINAL stats so Stealth/Perception match
     // what a reader computes (donor skill strings are seat-authored).
@@ -269,6 +273,20 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
         const thp = saveDamageDiceFor(Math.max(10, Math.round(perHit)));
         e.text = e.text.replace(/\d+ \(\d+d\d+\) Temporary Hit Points/, `${thp.avg} (${thp.dice}) Temporary Hit Points`);
       }
+    }
+  }
+  // SWARM GRAMMAR (body-type sweep 2026-09-11): the Bloodied split —
+  // "7 (2d6) damage, or 3 (1d6) if the creature is Bloodied" — is a
+  // second damage clause the re-dicer never knew; it re-derives as half
+  // of the re-diced main clause (print's own ratio on all 7 swarms)
+  for (const es of Object.values(scaled.sections)) {
+    for (const e of es) {
+      const m = /, or \d+ \(\d+d\d+(?:\s*\+\s*\d+)?\)(?: \{damage_type\} damage)? if ([^.]{0,40}Bloodied)/.exec(e.text);
+      if (!m) continue;
+      const main = /(\d+) \(\d+d\d+(?:\s*\+\s*\d+)?\)/.exec(e.text);
+      if (!main) continue;
+      const half = saveDamageDiceFor(Math.max(1, Math.floor(Number(main[1]) / 2)));
+      e.text = e.text.replace(/, or \d+ \(\d+d\d+(?:\s*\+\s*\d+)?\)( \{damage_type\} damage)? if /, (m0, tok) => `, or ${half.avg} (${half.dice})${tok ?? ''} if `);
     }
   }
   const conMod = Math.floor((scaled.stats.CON - 10) / 2);

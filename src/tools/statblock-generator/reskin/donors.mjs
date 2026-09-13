@@ -1857,4 +1857,283 @@ export const DONORS = [
       ],
     },
   },
+
+  // ==== BODY TYPES (owner design + corpus sweep 2026-09-11) ====
+  // A body OUTRANKS a role: the resolve's "body" field routes here
+  // regardless of archetype. DRAGON: 42 print true dragons CR 1-24,
+  // pure composition (breath = gated Cone nova in the CONCEPT's energy;
+  // the element becomes an IMMUNITY at assembly). OOZE: print stops at
+  // the Black Pudding (CR 4) — AC 6-9, the deepest armor trade in the
+  // corpus, paid by Amorphous + Corrosive Form; invented seats above.
+  // SWARM: print stops at CR 3 — the Swarm rules trait + the Bloodied
+  // damage split + the 8-condition suite (defense_suite, the phantom
+  // precedent); invented seats above.
+  {
+    id: 'dragon-2',
+    cite: 'composition across the ten wyrmlings (CR 1-4) — bite, breath, wings',
+    cr: 2, archetypes: ['dragon'],
+    ac: 17, ac_offset: 2, hp: 49, hp_scale: 1.1, hp_formula: '9d8 + 9', atk: 5, dc: 12, pb: 2,
+    speed: '30 ft., Fly 60 ft.',
+    stats: { STR: 16, DEX: 12, CON: 14, INT: 12, WIS: 12, CHA: 14 },
+    saves: ['DEX', 'WIS'], skills: 'Perception +3, Stealth +3',
+    sections: {
+      Actions: [
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 8 (1d10 + 3) {damage_type} damage.' },
+        { name: 'Breath Weapon', gate: 'Recharge 5-6', text: '*Dexterity Saving Throw*: DC 12, each creature in a 15-foot Cone. *Failure:* 18 (4d8) {damage_type} damage. *Success:* Half damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'dragon-8',
+    cite: 'composition across the ten young dragons (CR 6-10)',
+    cr: 8, archetypes: ['dragon'],
+    ac: 18, ac_offset: 1, hp: 148, hp_scale: 1.1, hp_formula: '17d10 + 55', atk: 8, dc: 15, pb: 3,
+    speed: '40 ft., Fly 80 ft.',
+    stats: { STR: 20, DEX: 12, CON: 18, INT: 14, WIS: 12, CHA: 16 },
+    saves: ['DEX', 'WIS'], skills: 'Perception +5, Stealth +4',
+    sections: {
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 10 ft. 15 (2d8 + 6) {damage_type} damage.' },
+        { name: 'Breath Weapon', gate: 'Recharge 5-6', text: '*Dexterity Saving Throw*: DC 15, each creature in a 30-foot Cone. *Failure:* 40 (9d8) {damage_type} damage. *Success:* Half damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'dragon-15',
+    cite: 'composition across the ten adult dragons (CR 13-17) — the legendary tier begins',
+    legendary: true,
+    cr: 15, archetypes: ['dragon'],
+    ac: 19, ac_offset: 1, hp: 202, hp_scale: 1.05, hp_formula: '25d12 + 40', atk: 11, dc: 18, pb: 5,
+    speed: '40 ft., Fly 80 ft.',
+    stats: { STR: 24, DEX: 12, CON: 22, INT: 16, WIS: 14, CHA: 18 },
+    saves: ['DEX', 'WIS'], skills: 'Perception +9, Stealth +6',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +11, reach 10 ft. 33 (4d12 + 7) {damage_type} damage.' },
+        { name: 'Breath Weapon', gate: 'Recharge 5-6', text: '*Dexterity Saving Throw*: DC 18, each creature in a 60-foot Cone. *Failure:* 58 (13d8) {damage_type} damage. *Success:* Half damage.' },
+        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability: {spell_at_will}' }, // every 2024 adult+ dragon casts
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 18, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Strike', text: 'The creature makes one Melee Attack attack.' },
+        { name: 'Legendary Wing Beat', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
+        { name: 'Legendary Dread', text: '*Wisdom Saving Throw*: DC 18, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'dragon-22',
+    cite: 'composition across the ten ancient dragons (CR 20-24)',
+    legendary: true,
+    cr: 22, archetypes: ['dragon'],
+    ac: 21, ac_offset: 1, hp: 440, hp_scale: 1.06, hp_formula: '35d20 + 72', atk: 15, dc: 22, pb: 7,
+    speed: '40 ft., Fly 80 ft.',
+    stats: { STR: 26, DEX: 12, CON: 26, INT: 18, WIS: 16, CHA: 22 },
+    saves: ['DEX', 'WIS'], skills: 'Perception +12, Stealth +8',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (4/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' }, // print ancients run 4/Day
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +15, reach 15 ft. 44 (8d8 + 8) {damage_type} damage.' },
+        { name: 'Breath Weapon', gate: 'Recharge 5-6', text: '*Dexterity Saving Throw*: DC 22, each creature in a 90-foot Cone. *Failure:* 72 (16d8) {damage_type} damage. *Success:* Half damage.' },
+        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability: {spell_at_will}' }, // every 2024 adult+ dragon casts
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 22, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Strike', text: 'The creature makes one Melee Attack attack.' },
+        { name: 'Legendary Wing Beat', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
+        { name: 'Legendary Dread', text: '*Wisdom Saving Throw*: DC 22, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'ooze-1',
+    cite: 'composition after Gray Ooze / Ochre Jelly (CR 1/2-2) — the deepest armor trade in the corpus',
+    cr: 1, archetypes: ['ooze'],
+    ac: 8, ac_offset: -7, hp: 33, hp_scale: 1.1, hp_formula: '6d8 + 6', atk: 4, dc: 11, pb: 2,
+    speed: '15 ft., Climb 15 ft.',
+    stats: { STR: 14, DEX: 6, CON: 13, INT: 1, WIS: 6, CHA: 1 },
+    saves: [], skills: '',
+    sections: {
+      Traits: [
+        { name: 'Amorphous', rules: true, text: 'The creature can move through a space as narrow as 1 inch wide without squeezing.' },
+        { name: 'Corrosive Form', rules: true, text: 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 5 (1d10) {damage_type} damage.' },
+      ],
+      Actions: [
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +4, reach 5 ft. 10 (2d6 + 3) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 11, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'ooze-4',
+    cite: 'composition after Black Pudding / Gelatinous Cube (CR 2-4)',
+    cr: 4, archetypes: ['ooze'],
+    ac: 9, ac_offset: -7, hp: 83, hp_scale: 1.1, hp_formula: '15d8 + 15', atk: 6, dc: 13, pb: 2,
+    speed: '20 ft., Climb 20 ft.',
+    stats: { STR: 18, DEX: 6, CON: 13, INT: 1, WIS: 6, CHA: 1 },
+    saves: [], skills: '',
+    sections: {
+      Traits: [
+        { name: 'Amorphous', rules: true, text: 'The creature can move through a space as narrow as 1 inch wide without squeezing.' },
+        { name: 'Corrosive Form', rules: true, text: 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 5 (1d10) {damage_type} damage.' },
+        { name: 'Spider Climb', rules: true, text: 'The creature can climb difficult surfaces, including along ceilings, without needing to make an ability check.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +6, reach 5 ft. 15 (2d10 + 4) {damage_type} damage.' },
+        { name: 'Engulf', rules: true, engulf_engine: true, gated_on: 'engulf', text: 'The creature moves up to its Speed without provoking Opportunity Attacks. It can move through the spaces of Medium or smaller creatures if it has room inside itself to contain them. *Dexterity Saving Throw*: DC 13, each creature whose space the creature enters for the first time during this move. *Failure:* 10 (3d6) {damage_type} damage, and the target is engulfed. *Success:* Half the damage only, and the target is pushed out of the creature\'s space. An engulfed target is suffocating, can\'t cast spells with a Verbal component, has the Blinded and Restrained conditions, and takes 10 (3d6) {damage_type} damage at the start of each of the creature\'s turns. When the creature moves, the engulfed target moves with it. An engulfed target can take an action to make a DC 13 Strength (Athletics) check, escaping into the nearest unoccupied space on a success.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'ooze-9',
+    invented: true, // no printed ooze above the Black Pudding (CR 4) — its composition scaled into the mid band
+    cr: 9, archetypes: ['ooze'],
+    ac: 11, ac_offset: -6, hp: 165, hp_scale: 1.1, hp_formula: '22d10 + 44', atk: 8, dc: 15, pb: 4,
+    speed: '20 ft., Climb 20 ft.',
+    stats: { STR: 18, DEX: 6, CON: 15, INT: 2, WIS: 8, CHA: 1 },
+    saves: [], skills: '',
+    sections: {
+      Traits: [
+        { name: 'Amorphous', rules: true, text: 'The creature can move through a space as narrow as 1 inch wide without squeezing.' },
+        { name: 'Corrosive Form', rules: true, text: 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 9 (2d8) {damage_type} damage.' },
+        { name: 'Spider Climb', rules: true, text: 'The creature can climb difficult surfaces, including along ceilings, without needing to make an ability check.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 10 ft. 30 (4d12 + 4) {damage_type} damage.' },
+        { name: 'Engulf', rules: true, engulf_engine: true, gated_on: 'engulf', text: 'The creature moves up to its Speed without provoking Opportunity Attacks. It can move through the spaces of Large or smaller creatures if it has room inside itself to contain them. *Dexterity Saving Throw*: DC 15, each creature whose space the creature enters for the first time during this move. *Failure:* 13 (3d8) {damage_type} damage, and the target is engulfed. *Success:* Half the damage only, and the target is pushed out of the creature\'s space. An engulfed target is suffocating, can\'t cast spells with a Verbal component, has the Blinded and Restrained conditions, and takes 13 (3d8) {damage_type} damage at the start of each of the creature\'s turns. When the creature moves, the engulfed target moves with it. An engulfed target can take an action to make a DC 15 Strength (Athletics) check, escaping into the nearest unoccupied space on a success.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'ooze-17',
+    invented: true, // no printed ooze boss — the pudding composition under a legendary menu
+    legendary: true,
+    cr: 17, archetypes: ['ooze'],
+    ac: 13, ac_offset: -6, hp: 238, hp_scale: 1.1, hp_formula: '35d8 + 80', atk: 12, dc: 19, pb: 6,
+    speed: '20 ft., Climb 20 ft.',
+    stats: { STR: 22, DEX: 6, CON: 18, INT: 2, WIS: 10, CHA: 1 },
+    saves: ['CON'], skills: '',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Amorphous', rules: true, text: 'The creature can move through a space as narrow as 1 inch wide without squeezing.' },
+        { name: 'Corrosive Form', rules: true, text: 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 13 (3d8) {damage_type} damage.' },
+        { name: 'Spider Climb', rules: true, text: 'The creature can climb difficult surfaces, including along ceilings, without needing to make an ability check.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 40 (6d10 + 7) {damage_type} damage.' },
+        { name: 'Engulf', rules: true, engulf_engine: true, gated_on: 'engulf', text: 'The creature moves up to its Speed without provoking Opportunity Attacks. It can move through the spaces of Large or smaller creatures if it has room inside itself to contain them. *Dexterity Saving Throw*: DC 19, each creature whose space the creature enters for the first time during this move. *Failure:* 17 (5d6) {damage_type} damage, and the target is engulfed. *Success:* Half the damage only, and the target is pushed out of the creature\'s space. An engulfed target is suffocating, can\'t cast spells with a Verbal component, has the Blinded and Restrained conditions, and takes 17 (5d6) {damage_type} damage at the start of each of the creature\'s turns. When the creature moves, the engulfed target moves with it. An engulfed target can take an action to make a DC 19 Strength (Athletics) check, escaping into the nearest unoccupied space on a success.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Lash', text: 'The creature makes one Melee Attack attack.' },
+        { name: 'Legendary Surge', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
+        { name: 'Legendary Dissolution', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'swarm-1',
+    cite: 'composition across the seven print swarms (CR 1/4-3) — the Swarm trait and the Bloodied split',
+    cr: 1, archetypes: ['swarm'],
+    ac: 12, ac_offset: -3, hp: 27, hp_scale: 0.9, hp_formula: '6d8', atk: 4, dc: 11, pb: 2, striker_stat: 'DEX',
+    defense_suite: { damage: [], conditions: ['Charmed', 'Frightened', 'Grappled', 'Paralyzed', 'Petrified', 'Prone', 'Restrained', 'Stunned'], resist: ['Bludgeoning', 'Piercing', 'Slashing'] },
+    speed: '20 ft., Climb 20 ft.',
+    stats: { STR: 6, DEX: 14, CON: 10, INT: 2, WIS: 8, CHA: 1 },
+    saves: [], skills: '',
+    sections: {
+      Traits: [
+        { name: 'Swarm', rules: true, text: 'The creature can occupy another creature\'s space and vice versa, and the creature can move through any opening large enough for a Tiny creature. The creature can\'t regain Hit Points or gain Temporary Hit Points.' },
+      ],
+      Actions: [
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +4, reach 5 ft. 10 (4d4) {damage_type} damage, or 5 (2d4) {damage_type} damage if the creature is Bloodied.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 11, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'swarm-3',
+    cite: 'composition after Swarm of Crawling Claws (CR 3) — the swarm ceiling in print',
+    cr: 3, archetypes: ['swarm'],
+    ac: 12, ac_offset: -3, hp: 52, hp_scale: 0.87, hp_formula: '12d8', atk: 5, dc: 12, pb: 2, striker_stat: 'DEX',
+    defense_suite: { damage: [], conditions: ['Charmed', 'Frightened', 'Grappled', 'Paralyzed', 'Petrified', 'Prone', 'Restrained', 'Stunned'], resist: ['Bludgeoning', 'Piercing', 'Slashing'] },
+    speed: '30 ft., Climb 30 ft.',
+    stats: { STR: 8, DEX: 16, CON: 10, INT: 4, WIS: 10, CHA: 2 },
+    saves: [], skills: '',
+    sections: {
+      Traits: [
+        { name: 'Swarm', rules: true, text: 'The creature can occupy another creature\'s space and vice versa, and the creature can move through any opening large enough for a Tiny creature. The creature can\'t regain Hit Points or gain Temporary Hit Points.' },
+      ],
+      Actions: [
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 22 (4d8 + 4) {damage_type} damage, or 11 (2d8 + 2) {damage_type} damage if the creature is Bloodied.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'swarm-9',
+    invented: true, // no printed swarm above CR 3 — the claws composition scaled into the mid band
+    cr: 9, archetypes: ['swarm'],
+    ac: 14, ac_offset: -3, hp: 135, hp_scale: 0.9, hp_formula: '27d8 + 14', atk: 8, dc: 15, pb: 4, striker_stat: 'DEX',
+    defense_suite: { damage: [], conditions: ['Charmed', 'Frightened', 'Grappled', 'Paralyzed', 'Petrified', 'Prone', 'Restrained', 'Stunned'], resist: ['Bludgeoning', 'Piercing', 'Slashing'] },
+    speed: '30 ft., Climb 30 ft.',
+    stats: { STR: 8, DEX: 18, CON: 11, INT: 4, WIS: 10, CHA: 2 },
+    saves: [], skills: '',
+    sections: {
+      Traits: [
+        { name: 'Swarm', rules: true, text: 'The creature can occupy another creature\'s space and vice versa, and the creature can move through any opening large enough for a Tiny creature. The creature can\'t regain Hit Points or gain Temporary Hit Points.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 28 (7d6 + 4) {damage_type} damage, or 14 (4d6) {damage_type} damage if the creature is Bloodied.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'swarm-17',
+    invented: true, // no printed swarm boss — the swarm laws under a legendary menu
+    legendary: true,
+    cr: 17, archetypes: ['swarm'],
+    ac: 16, ac_offset: -3, hp: 194, hp_scale: 0.9, hp_formula: '36d8 + 32', atk: 12, dc: 19, pb: 6, striker_stat: 'DEX',
+    defense_suite: { damage: [], conditions: ['Charmed', 'Frightened', 'Grappled', 'Paralyzed', 'Petrified', 'Prone', 'Restrained', 'Stunned'], resist: ['Bludgeoning', 'Piercing', 'Slashing'] },
+    speed: '30 ft., Climb 30 ft.',
+    stats: { STR: 8, DEX: 22, CON: 12, INT: 6, WIS: 12, CHA: 4 },
+    saves: ['DEX'], skills: '',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Swarm', rules: true, text: 'The creature can occupy another creature\'s space and vice versa, and the creature can move through any opening large enough for a Tiny creature. The creature can\'t regain Hit Points or gain Temporary Hit Points.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 5 ft. 51 (13d6 + 6) {damage_type} damage, or 25 (7d6) {damage_type} damage if the creature is Bloodied.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Harry', text: 'The creature makes one Melee Attack attack.' },
+        { name: 'Legendary Flow', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
+        { name: 'Legendary Dread Hum', text: '*Wisdom Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+      ],
+    },
+  },
 ];

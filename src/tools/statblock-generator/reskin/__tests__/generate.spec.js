@@ -2231,14 +2231,18 @@ describe('the brute plumbing (2026-08-26): archetype flows loudly end to end', (
     expect((m.sections.Traits ?? []).some((e) => e.name === 'Shedding Arsenal')).toBe(false);
   });
 
-  test('passive voice cannot smuggle a meter — "can be used 2/Day"', async () => {
-    let repairPrompt = null;
-    await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
-      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+  test('the trailing meter sentence LIFTS into the entry name — "This ability can be used 2/Day." (upgraded from detect-only, 2026-09-11)', async () => {
+    // 3 sightings in two rounds, all save-action rows: the exact closed
+    // sentence now strips deterministically and its count lands in the
+    // name — same lift class as the trailing parenthetical
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
       if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
       return answer({ wildcard: '*Dexterity Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Prone condition. This ability can be used 2/Day.' });
     });
-    expect(repairPrompt).toMatch(/use limits print as a count/);
+    const e = Object.values(m.sections).flat().find((x) => /Waylay/.test(x.name));
+    expect(e.name).toMatch(/\(2\/Day\)/);
+    expect(e.text).not.toMatch(/can be used 2\/Day/);
   });
 
   test('inflection cannot beat the guards — "regaining", DR grammar, and "embedded" all die', async () => {
@@ -4656,7 +4660,11 @@ describe('the holds round (2026-09-10): coherence, the launcher vet, the mark sa
   test('the speed-discord lint fires on a permanent Speed-0 trait beside a moving header', async () => {
     const m = await generateReskin({ archetype: 'defender', style: 'warden', concept: 'x', cr: 7, mechanics: [] },
       quietH(() => defAnswer(7, 'warden', {
-        trait_wildcard: { name: 'Rooted', text: 'The creature can\'t be knocked Prone by nonmagical means, and its Speed is 0.' },
+        // the vehicle trait originally said "can't be knocked Prone" —
+        // the can't-be immunity inflection (2026-09-13) now correctly
+        // kills that grammar in the vet, so the lint vehicle is rooted
+        // without an immunity grant
+        trait_wildcard: { name: 'Rooted', text: 'The creature is anchored to the ground by iron roots, and its Speed is 0.' },
       })));
     expect((m.lint_findings ?? []).join(' ')).toMatch(/speed-discord/);
   });
@@ -4922,3 +4930,323 @@ const quietTail = (respond) => async (prompt) => {
   if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
   return respond(prompt);
 };
+
+describe('the body types (2026-09-11): body outranks role', () => {
+  const bodyAnswer = (cr, bodyArch, over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(cr, null, bodyArch), cr, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    return JSON.stringify({
+      name: 'Test Body', type: bodyArch === 'dragon' ? 'Dragon' : bodyArch === 'ooze' ? 'Ooze' : 'Beast', size: 'Large', alignment: 'Unaligned',
+      senses: 'blindsight 60 ft.', languages: 'None',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Fire'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Dexterity',
+      wildcard: `*Dexterity Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      ...over,
+    });
+  };
+  const quietB2 = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+
+  test('a dragon body routes past the role, breathes its concept energy, and is IMMUNE to it', async () => {
+    const m = await generateReskin({ archetype: 'brute', bodyType: 'dragon', concept: 'an emerald flame dragon', cr: 8, energy: 'Fire', mechanics: [] },
+      quietB2(() => bodyAnswer(8, 'dragon')));
+    expect(m.generation.donor).toBe('dragon-8');
+    expect(m.generation.body).toBe('dragon');
+    const breath = Object.values(m.sections).flat().find((e) => /30-foot Cone/.test(e.text));
+    expect(breath.text).toMatch(/Fire damage/);
+    expect(breath.name).toMatch(/Recharge 5-6/);
+    expect(m.immunities).toMatch(/Fire/);
+    expect(m.resistances ?? '').not.toMatch(/Fire/);
+  });
+
+  test('an ooze body ships the deepest armor trade with its rules kit', async () => {
+    const m = await generateReskin({ archetype: 'lurker', bodyType: 'ooze', concept: 'a molten slag ooze', cr: 4, energy: 'Fire', mechanics: [] },
+      quietB2(() => bodyAnswer(4, 'ooze')));
+    expect(m.generation.donor).toBe('ooze-4');
+    const { cardBudget } = require('../card-budgets.mjs');
+    expect(m.ac).toBeLessThanOrEqual(cardBudget(4, {}).ac - 5);
+    const all = Object.values(m.sections).flat();
+    expect(all.some((e) => /space as narrow as 1 inch/.test(e.text))).toBe(true);
+    expect(all.some((e) => /touches the test body or hits it/.test(e.text) && /Fire damage/.test(e.text))).toBe(true);
+  });
+
+  test('a swarm body: the trait, the suite in the header, and the Bloodied split scaled at both clauses', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', bodyType: 'swarm', concept: 'a swarm of razor moths', cr: 9, mechanics: [] },
+      quietB2(() => bodyAnswer(9, 'swarm')));
+    expect(m.generation.donor).toBe('swarm-9');
+    expect(m.immunities).toMatch(/Grappled/);
+    expect(m.resistances).toMatch(/Bludgeoning/);
+    const bite = Object.values(m.sections).flat().find((e) => /Bloodied/.test(e.text));
+    const clauses = [...bite.text.matchAll(/(\d+) \(\d+d\d+(?:\s*\+\s*\d+)?\)/g)].map((x) => Number(x[1]));
+    expect(clauses).toHaveLength(2);
+    // the split re-derives as half of the re-diced main clause
+    expect(Math.abs(clauses[1] - Math.floor(clauses[0] / 2))).toBeLessThanOrEqual(2);
+    expect(Object.values(m.sections).flat().some((e) => /occupy another creature's space/.test(e.text))).toBe(true);
+  });
+});
+
+describe('the smoke-two body fixes (2026-09-11): the spell degrade, the stamp order', () => {
+  const dragonAnswer = (cr, over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(cr, null, 'dragon'), cr, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    return JSON.stringify({
+      name: 'Test Wyrm', type: 'Dragon', size: 'Huge', alignment: 'Neutral',
+      senses: 'blindsight 60 ft.', languages: 'Draconic',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Cold'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Dexterity',
+      wildcard: `*Dexterity Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      ...over,
+    });
+  };
+  const quietT2 = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+
+  test('an unfilled dragon Spellcasting row DEGRADES — the Firstwinter crash class dies', async () => {
+    // no spells field at all, repair returns nothing: the row drops
+    const m = await generateReskin({ archetype: 'brute', bodyType: 'dragon', concept: 'x', cr: 22, energy: 'Cold', mechanics: [] },
+      quietT2(() => dragonAnswer(22)));
+    const all = Object.values(m.sections).flat();
+    expect(all.some((e) => /\{spell_at_will\}/.test(e.text))).toBe(false);
+    expect(m.name).toBe('Test Wyrm'); // the generation completed
+  });
+
+  test('the swarm type stamp survives the resolvedType stamp — the Sewer Choir revert dies', async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(17, null, 'swarm'), 17, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    const m = await generateReskin({ archetype: 'controller', bodyType: 'swarm', resolvedType: 'Aberration', concept: 'a psychic rat tide', cr: 17, mechanics: [] },
+      quietT2(() => JSON.stringify({
+        name: 'Test Choir', type: 'Aberration', size: 'Gargantuan', alignment: 'Neutral',
+        senses: 'darkvision 120 ft.', languages: 'None',
+        renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Psychic'])),
+        conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Strength',
+        wildcard: '*Strength Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.',
+      })));
+    expect(m.type).toBe('Swarm of Tiny Aberrations');
+  });
+});
+
+describe('the body smoke-two critic fixes (2026-09-13): the clobber, the mental-anatomy leak, two inflections', () => {
+  const quietC = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+
+  test('the ooze element immunity SURVIVES the type-floor header write — the Cistern clobber dies', async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(4, null, 'ooze'), 4, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    const m = await generateReskin({ archetype: 'lurker', bodyType: 'ooze', concept: 'a caustic sump', cr: 4, energy: 'Acid', mechanics: [] },
+      quietC(() => JSON.stringify({
+        name: 'Test Sump', type: 'Ooze', size: 'Large', alignment: 'Unaligned',
+        senses: 'blindsight 60 ft.', languages: 'None',
+        renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Acid'])),
+        conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Dexterity',
+        wildcard: `*Dexterity Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      })));
+    // BOTH survive: the element immunity AND the Ooze floor conditions
+    // (the clobber shipped the floor and dropped the Acid, trace lying)
+    expect(m.immunities).toMatch(/Acid/);
+    expect(m.immunities).toMatch(/Grappled/);
+  });
+
+  test('a mental striker cannot put an anatomical name on physical damage — the Sorrowfall Claw class dies', () => {
+    const scaled = scaleDonor(pickDonor(11, 'binder', 'caster'), 11, { mechanics: [] });
+    expect(['INT', 'WIS', 'CHA']).toContain(scaled.striker_stat);
+    const { renameKeysOf: rk, reskinDefects: rd } = require('../generate.mjs');
+    const keys = rk(scaled);
+    const renames = {};
+    keys.forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => e.name);
+    renames[typed[0]] = 'Grave Claw';
+    const mk = () => ({
+      name: 'Testling', renames: { ...renames }, wildcard: 'x',
+      damage_types: Object.fromEntries(typed.map((n) => [renames[n], 'Slashing'])),
+      conditions: {}, melee_rider: 'none',
+    });
+    expect(rd(scaled, mk(), {}).join('\n')).toMatch(/anatomical name dealing Slashing/);
+    // the print-legal shape: an implement name pays for physical damage
+    // (the Dryad's Vine Lash, +6 Wis-keyed Slashing)
+    renames[typed[0]] = 'Vine Lash';
+    expect(rd(scaled, mk(), {}).join('\n')).not.toMatch(/anatomical name/);
+    // and a magical type frees the anatomy word (print: no such row, but
+    // the guard's scope is the 0/329 triple only)
+    renames[typed[0]] = 'Grave Claw';
+    const p3 = mk();
+    p3.damage_types = Object.fromEntries(typed.map((n) => [p3.renames[n], 'Necrotic']));
+    expect(rd(scaled, p3, {}).join('\n')).not.toMatch(/anatomical name/);
+  });
+
+  test("the can't-be immunity inflection dies in the vet — the Meregrave trait class", async () => {
+    let repairPrompt = null;
+    await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({ wildcard: "*Constitution Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll. Additionally, the creature can't be Grappled, Restrained, or knocked Prone." });
+    });
+    expect(repairPrompt).toMatch(/condition-immunity SUITES/);
+  });
+
+  test('a lowercase minted condition dies — the Sewer Choir "buried condition" class', async () => {
+    let repairPrompt = null;
+    await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({ wildcard: '*Strength Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the buried condition until it escapes.' });
+    });
+    expect(repairPrompt).toMatch(/"buried" is not a rules condition/);
+  });
+});
+
+describe('the body smoke-three critic fixes (2026-09-13): the union, the typed split, riders live on rows', () => {
+  const quietD = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+  const swarmAnswer = (cr, over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(cr, null, 'swarm'), cr, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    return JSON.stringify({
+      name: 'Test Tide', type: 'Construct', size: 'Large', alignment: 'Unaligned',
+      senses: 'blindsight 60 ft. (blind beyond this radius)', languages: 'None',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Bludgeoning'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Dexterity',
+      wildcard: `*Dexterity Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      ...over,
+    });
+  };
+
+  test('a Swarm of Tiny Constructs UNIONS the Construct floor with the swarm suite — the Meregrave loss dies', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', bodyType: 'swarm', resolvedType: 'Construct', concept: 'a swarm of gravestones', cr: 6, mechanics: [] },
+      quietD(() => swarmAnswer(6)));
+    expect(m.type).toBe('Swarm of Tiny Constructs');
+    // the Construct package: Poison damage immunity + its conditions
+    expect(m.immunities).toMatch(/Poison\b/);
+    expect(m.immunities).toMatch(/Exhaustion/);
+    expect(m.immunities).toMatch(/Poisoned/);
+    // and the swarm suite still rides along
+    expect(m.immunities).toMatch(/Grappled/);
+    expect(m.immunities).toMatch(/Stunned/);
+  });
+
+  test('the Bloodied split clause is TYPED — the two-type ambiguity dies at the donor', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', bodyType: 'swarm', resolvedType: 'Construct', concept: 'a swarm of gravestones', cr: 6, mechanics: [] },
+      quietD(() => swarmAnswer(6)));
+    const row = Object.values(m.sections).flat().find((e) => /Bloodied/.test(e.text));
+    expect(row.text).toMatch(/, or \d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) Bludgeoning damage if [^.]{0,40}Bloodied/);
+  });
+
+  test('an uncountable type pluralizes as itself — no "Swarm of Tiny Undeads"', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', bodyType: 'swarm', resolvedType: 'Undead', concept: 'a swarm of grave hands', cr: 6, mechanics: [] },
+      quietD(() => swarmAnswer(6, { type: 'Undead' })));
+    expect(m.type).toBe('Swarm of Tiny Undead');
+  });
+
+  test('a DECLARED trait carrying a 2014 save frame dies — the Clotting Sludge dodge closes', async () => {
+    let repairPrompt = null;
+    await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({
+        wildcard: 'When the creature hits with its Melee attack, the target must succeed on a DC 15 Strength saving throw or have its Speed reduced by 10 feet until the end of its next turn.',
+        wildcard_economy: 'trait',
+      });
+    });
+    expect(repairPrompt).toMatch(/a trait never carries a damage roll, a save frame, or an on-hit trigger/);
+  });
+
+  test('dragon senses rise to the print tier, upgrade-only — the adult blindsight-30 dies', async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(15, null, 'dragon'), 15, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    const m = await generateReskin({ archetype: 'brute', bodyType: 'dragon', concept: 'x', cr: 15, energy: 'Psychic', mechanics: [] },
+      quietD(() => JSON.stringify({
+        name: 'Test Sorrow', type: 'Dragon', size: 'Huge', alignment: 'Neutral',
+        senses: 'blindsight 30 ft., darkvision 120 ft.', languages: 'Draconic',
+        renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Psychic'])),
+        conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Wisdom',
+        wildcard: `*Wisdom Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      })));
+    expect(m.senses).toMatch(/blindsight 60/);
+    expect(m.senses).toMatch(/darkvision 120/);
+  });
+
+  test('an unfilled dragon Spellcasting row fills from the engine menu — signature loss ends at utility picks', async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(22, null, 'dragon'), 22, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    const m = await generateReskin({ archetype: 'brute', bodyType: 'dragon', concept: 'x', cr: 22, energy: 'Cold', mechanics: [] },
+      quietD(() => JSON.stringify({
+        name: 'Test Wyrm Two', type: 'Dragon', size: 'Gargantuan', alignment: 'Neutral',
+        senses: 'blindsight 60 ft., darkvision 120 ft.', languages: 'Draconic',
+        renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Cold'])),
+        conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Dexterity',
+        wildcard: `*Dexterity Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      })));
+    const sc = Object.values(m.sections).flat().find((e) => e.name === 'Spellcasting');
+    expect(sc).toBeTruthy();
+    expect(sc.text).toMatch(/\*Detect Magic\*/);
+    expect(sc.text).not.toMatch(/\{spell/);
+  });
+
+  test('"is also Frightened of the X until" counts as an applier — the Grave Recital false positive dies', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quietD(() => answer({
+      wildcard: "*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* 9 (2d8) Psychic damage, and the target is also Frightened of the creature until the end of its next turn.",
+    })));
+    expect((m.lint_findings ?? []).join(' ')).not.toMatch(/"Frightened" is referenced as a state but nothing on the sheet applies it/);
+  });
+
+  test('a delegation row cannot rename to foreign anatomy — the Crushing Tail mismatch dies', () => {
+    const { renameKeysOf: rk, reskinDefects: rd } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(22, null, 'dragon'), 22, { mechanics: [] });
+    const keys = rk(scaled);
+    const rows = Object.values(scaled.sections).flat();
+    const del = rows.find((e) => keys.includes(e.name) && /makes one .+ attacks?\b/.test(e.text));
+    expect(del).toBeTruthy();
+    const target = /makes one (.+?) attacks?\b/.exec(del.text)[1];
+    const renames = {};
+    keys.forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    renames[target] = 'Claw';
+    renames[del.name] = 'Crushing Tail';
+    const mk = () => ({
+      name: 'Testling Two', renames: { ...renames }, wildcard: 'x',
+      damage_types: {}, conditions: {}, melee_rider: 'none',
+    });
+    expect(rd(scaled, mk(), {}).join('\n')).toMatch(/promises a tail but the row makes a Claw attack/);
+    renames[del.name] = 'Crushing Claw';
+    expect(rd(scaled, mk(), {}).join('\n')).not.toMatch(/promises a/);
+  });
+});

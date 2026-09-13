@@ -51,6 +51,9 @@ export const BRUTE_SPELL_MENU = ['Enlarge/Reduce', 'Magic Weapon', 'Divine Favor
 // (the Priest; 0 ally-healing rows in the corpus) — the checkbox IS the
 // healing channel, and Warding Bond the SPELL carries the bodyguard
 // link wherever a concept wants it off the Shield Guardian seat.
+// THE DRAGON MENU (tier table 2026-09-11): every 2024 adult+ dragon
+// casts — utility and control only, damage stays in claws and breath
+export const DRAGON_SPELL_MENU = ['Detect Magic', 'Command', 'Fear', 'Suggestion', 'Dispel Magic', 'Counterspell', 'Scrying', 'Telekinesis', 'Charm Person', 'Darkness'];
 export const DEFENDER_SPELL_MENU = ['Cure Wounds', 'Healing Word', 'Aid', 'Bless', 'Sanctuary', 'Shield of Faith', 'Warding Bond', 'Protection from Evil and Good', 'Lesser Restoration', 'Death Ward', 'Freedom of Movement', 'Beacon of Hope'];
 // THE CASTER FAMILY'S MENU (corpus sweep 2026-09-02): utility + control
 // tech, damage-spell-free — the family law is that caster damage lives
@@ -265,6 +268,14 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
     // a TRAILING gate lifts too ("...knocked Prone. (2/Day)" — the
     // Grave-Hurler shipped it glued to the text end, 2026-08-26)
     .replace(/\s*\((\d+\/Day|Recharge [\d–-]+)\)\s*\.?\s*$/, (m, gate) => {
+      liftedGate = liftedGate ?? gate;
+      return '';
+    })
+    // the trailing SENTENCE form joined 2026-09-11 (3 sightings in two
+    // rounds, all save-action rows: Gorge Draught, Stitched Arc, the
+    // Engulfing Swarm's implied limit): exact closed sentence, same
+    // lift class as the parenthetical — no prose surgery
+    .replace(/\s*This ability can be used (?:up to )?(\d+\/Day)\.\s*$/, (m, gate) => {
       liftedGate = liftedGate ?? gate;
       return '';
     });
@@ -484,6 +495,13 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
     // reaction-in-a-trait, the Cavernmouth's three-economy "trait").
     // A trait spends nothing: promote those to mechanical at this door.
     : (econDecl === 'trait' && (reactionMention || /[Bb]onus [Aa]ction/.test(w) || /until (?:it|the \w+) finishes a (?:short|long) rest/i.test(w))) ? ['a trait spends nothing — 0 of 329 print traits mention a reaction or bonus action, and rest-recovery is meter prose; move the economy to its own entry or drop it', 'mechanical']
+    // a DECLARED trait routed through this chain with a save frame, a
+    // damage roll, or an on-hit trigger (Clotting Sludge 2026-09-13:
+    // "must succeed on a DC 13 Strength saving throw" — the 2014
+    // DC-number form dodged the trait chain's frame scan, and the
+    // rider shipped in Traits; Glacial Body's bite rider was the first
+    // sighting): riders live ON the attack row
+    : (econDecl === 'trait' && /\d+ \(\d+d\d+|\*[A-Z][a-z]+ Saving Throw\*|Saving Throw:|Attack Roll:|must (?:make|succeed on) an? (?:DC \d+ )?[A-Za-z]+ [Ss]aving [Tt]hrow|\bWhen [^.]{0,40}\bhits with (?:its|this|a|an)\b/i.test(w)) ? ['a trait never carries a damage roll, a save frame, or an on-hit trigger — an ON-HIT RIDER lives on the attack row itself (declare rider_on:<that row\'s new name> and write "When the creature hits with this attack, ..."); a triggered save is an action or reaction', 'mechanical']
     : roleCollapse ? ['role collapse', 'judgment']
     : riderFramed ? ['a rider rides the hit — address "the target"; no separate targeting frame', 'judgment']
     // a rider has no NAME, so it cannot carry a use gate (gates live in
@@ -599,7 +617,7 @@ function vetTraitWildcard(tw, sections, { name, inline, archetype = null, type =
     // Wisdom saving throw (DC 20)" and "As a bonus action" slipped a
     // skeleton-anchored check twice in one smoke (Grieving Weep — a
     // bonus action with a save living in Traits — and Rusting Grip)
-    : /\d+ \(\d+d\d+|\*[A-Z][a-z]+ Saving Throw\*|Saving Throw:|Attack Roll:|\(Recharge|\/Day|\btimes equal to\b|regain(?:s|ing|ed)? (?:all )?(?:expended )?uses|must (?:make|succeed on) an? [A-Za-z]+ [Ss]aving [Tt]hrow|[Ss]aving [Tt]hrow \(DC|[Aa]s an? [Bb]onus [Aa]ction|use[sd]? an? [Bb]onus [Aa]ction/i.test(twText) ? ['active mechanics in a passive trait (a damage roll, a save FRAME, a bonus action, or a use limit — mentioning saves or attack rolls passively is fine)', 'mechanical']
+    : /\d+ \(\d+d\d+|\*[A-Z][a-z]+ Saving Throw\*|Saving Throw:|Attack Roll:|\(Recharge|\/Day|\btimes equal to\b|regain(?:s|ing|ed)? (?:all )?(?:expended )?uses|must (?:make|succeed on) an? (?:DC \d+ )?[A-Za-z]+ [Ss]aving [Tt]hrow|[Ss]aving [Tt]hrow \(DC|[Aa]s an? [Bb]onus [Aa]ction|use[sd]? an? [Bb]onus [Aa]ction/i.test(twText) ? ['active mechanics in a passive trait (a damage roll, a save FRAME, a bonus action, or a use limit — mentioning saves or attack rolls passively is fine)', 'mechanical']
     : reachContradiction ? [`claims reach ${reachClaim[1]} feet but no attack row prints that reach — reach belongs on the rows; align with them`, 'mechanical']
     : /starts its turn/i.test(twText) ? ['recurring aura', 'mechanical']
     : /\byours?\b|\byou\b/i.test(twText) ? ['second person', 'mechanical']
@@ -680,7 +698,7 @@ const NAME_CLAIMS = [
 const RESERVED_NAMES = /vorpal|phylactery|holy avenger|sphere of annihilation|tarrasque|beholder|mind flayer/i;
 // OUR words may never ship in rules text (the Gaoler's "a climb speed
 // (as per chassis)", 2026-08-27 — template metadata leaked raw)
-const ENGINE_VOCAB = /\b(?:chassis|donor|template|placeholder|wildcard)\b/i;
+const ENGINE_VOCAB = /\b(?:chassis|donor|template|placeholder|wildcard)\b|\bConstruction:/i; // Construction: joined 2026-09-11 (a scaffold label shipped in the Rat King's rules text)
 // HEALING BELONGS TO THE ORGAN (owner's recipe-card doctrine applied to
 // the defense hydra's 4th head, 2026-09-01: negation -> blanket resist
 // -> damage threshold -> "HP become its HP maximum" full-heal, plus a
@@ -753,7 +771,14 @@ const DICELESS_DAMAGE = /\b\d{2,3} (?:Acid|Bludgeoning|Cold|Fire|Force|Lightning
 const STANDARD_STATES = new Set(['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Invisible', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious', 'Exhaustion', 'Bloodied', 'Obscured', 'Hidden', 'Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']);
 const inventedCondition = (t) => {
   const m = /\b(?:becomes?|becoming|is|are) ([A-Z][a-z]+)(?= for | until |[.,;]| \()/.exec(t);
-  return m && !STANDARD_STATES.has(m[1]) ? m[1] : null;
+  if (m && !STANDARD_STATES.has(m[1])) return m[1];
+  // the lowercase dialect joined 2026-09-13 (the Sewer Choir's "the
+  // buried condition" — minted vocabulary hiding in lowercase behind
+  // the word "condition" itself)
+  const m2 = /\bthe ([a-z]+) condition\b/.exec(t);
+  if (m2 && !STANDARD_STATES.has(m2[1][0].toUpperCase() + m2[1].slice(1))
+    && !['same', 'new', 'that', 'listed', 'chosen', 'triggering'].includes(m2[1])) return m2[1];
+  return null;
 };
 // TYPED DAMAGE DEFENSES ARE THE DERIVATION ENGINE'S (the hydra's general
 // form, 4 sightings by 2026-09-02: Fused Monarchy P/S immunity, Wickman
@@ -790,7 +815,7 @@ const CONTROL_CONDITIONS = /Grappled|Restrained|Prone|Paralyzed|Stunned|Incapaci
 export const TYPE_FLOOR = {
   Construct: { damage: ['Poison'], conditions: ['Charmed', 'Exhaustion', 'Frightened', 'Paralyzed', 'Petrified', 'Poisoned'] },
   Undead: { damage: ['Poison'], conditions: ['Exhaustion', 'Poisoned'] },
-  Ooze: { damage: [], conditions: ['Charmed', 'Deafened', 'Exhaustion', 'Frightened', 'Prone'] },
+  Ooze: { damage: [], conditions: ['Charmed', 'Deafened', 'Exhaustion', 'Frightened', 'Grappled', 'Prone', 'Restrained'] }, // Grappled/Restrained joined 2026-09-11 (3/4 print oozes)
   Elemental: { damage: ['Poison'], conditions: ['Exhaustion', 'Poisoned'] }, // 12/17, 10-12/17
   Fiend: { damage: ['Poison'], conditions: ['Poisoned'], resist: ['Cold'] }, // 19/29 imm, 21/29 res
   Celestial: { damage: [], conditions: ['Charmed'], resist: ['Radiant'] }, // 7/13, 8/13
@@ -822,7 +847,11 @@ const conditionImmunityGrant = (t, name = null) => {
   // 2026-09-08); normalize the name to "the creature" before testing
   let s = String(t);
   if (name) s = s.replace(new RegExp(`[Tt]he ${String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'gi'), 'the creature');
-  const m = /\b(?:[Ii]t|[Tt]he creature) (?:is|becomes?|has|gains?) [Ii]mmun(?:e|ity) to ((?:the )?[A-Z][^.]{0,80})/.exec(s);
+  // the can't-be inflection joined 2026-09-13 (the Meregrave's "can't be
+  // Grappled, Restrained, or knocked Prone" in a trait — 0/329 print
+  // traits use the form; immunity grammar without the word immunity)
+  const m = /\b(?:[Ii]t|[Tt]he creature) (?:is|becomes?|has|gains?) [Ii]mmun(?:e|ity) to ((?:the )?[A-Z][^.]{0,80})/.exec(s)
+    ?? /\b(?:[Ii]t|[Tt]he creature) can(?:'|no)?t be ((?:knocked )?[A-Z][^.]{0,80})/.exec(s);
   if (!m) return false;
   return (m[1].match(/[A-Z][a-z]+/g) ?? []).length >= 2 || CONTROL_CONDITIONS.test(m[1]);
 };
@@ -844,6 +873,10 @@ const CHASSIS_OWNED = [
   // grammar, then the grammar became chassis — Unbreached Bulwark
   // duplicated Immovable one line above it)
   [/automatically succeeds? on saving throws (?:made )?(?:to avoid being|against being|against effects that would)[^.]{0,20}mov|can(?:'|no)t be moved against its will/i, /automatically succeeds on saving throws made to avoid being moved/, 'the anchor (its Immovable trait)'],
+  // the swarm-movement key (2026-09-13: Marsh-Bound Procession's "can
+  // move through the space of any Prone creature" — a narrower
+  // restatement of the Swarm trait one line down)
+  [/move through the spaces? of (?:any |other )?\w{0,12} ?creatures?|occup(?:y|ies) (?:another creature's|the same) space/i, /occupy another creature's space/, 'the swarm rules (its Swarm trait)'],
 ];
 const chassisOwned = (text, rows) => {
   for (const [grant, owns, label] of CHASSIS_OWNED) {
@@ -1025,6 +1058,20 @@ export function reskinDefects(scaled, p, { energy = null, mix = null } = {}) {
       if (/\b(?:crossbow|longbow|shortbow|bow|sling|musket|pistol|rifle)\b/i.test(rn) && /reach \d+ ft/.test(row.text)) {
         defects.push(`name "${rn}" is a launcher but the row swings in melee — a crossbow never has reach; use a thrown weapon or a blade`);
       }
+      // a DELEGATION row ("makes one X attack") never renames to a
+      // different anatomy than the row it delegates to ("Crushing
+      // Tail" made a Claw attack, 2026-09-13)
+      {
+        const del = /makes (?:one|two|three) (.+?) attacks?\b/.exec(row.text ?? '');
+        if (del) {
+          const targetFinal = String(p.renames?.[del[1]] ?? del[1]);
+          const ANAT = /\b(claws?|bite|fangs?|slam|fists?|tail|gore|horns?|talons?|stingers?|tentacles?|hooves|hoof|maw|jaws|pincers?|tusks?)\b/i;
+          const na = ANAT.exec(rn);
+          if (na && !new RegExp(`\\b${na[1]}`, 'i').test(targetFinal)) {
+            defects.push(`name "${rn}" promises a ${na[1].toLowerCase()} but the row makes a ${targetFinal} attack — name the delegation honestly, or without anatomy`);
+          }
+        }
+      }
       // a row never repeats the creature's own head noun ("the unbroken
       // rampart raises a... rampart", 2026-09-10)
       const head = String(p.name ?? '').trim().split(/\s+/).pop()?.toLowerCase();
@@ -1041,6 +1088,17 @@ export function reskinDefects(scaled, p, { energy = null, mix = null } = {}) {
     if (mix === 'physical' && !PHYSICAL.includes(t)) defects.push(`"${rn}" deals ${t} but this creature is declared fully physical — use Bludgeoning, Piercing, or Slashing`);
     const dealt = [t, /Melee/.test(k) || k === 'Melee Attack' ? p.melee_rider : null].filter(Boolean);
     if (!nameClaimSatisfied(rn, dealt)) defects.push(`name "${rn}" claims an element its damage (${dealt.join('/')}) does not pay`);
+    // mental strikers never put a bare anatomical name on physical
+    // damage (critic 2026-09-13, verified: print's 18 mental-keyed
+    // attack rows carry physical types only 4 times — Vine Staff, Vine
+    // Lash, Thorn Burst, Cursed Touch — every one paying with an
+    // implement or curse name; anatomical-name + mental-stat + B/P/S is
+    // 0/329. The Sorrowfall's "Claw +11 Slashing" at Str 14 was the
+    // routing bug's exhibit, but the pairing stays reachable on any
+    // caster chassis)
+    if (['INT', 'WIS', 'CHA'].includes(scaled.striker_stat) && PHYSICAL.includes(t) && /\b(?:claws?|bite|fangs?|slam|fists?|tail|gore|horns?|talons?|stingers?|tentacles?|hooves|hoof|maw|jaws|pincers?|tusks?)\b/i.test(rn)) {
+      defects.push(`"${rn}" is an anatomical name dealing ${t} on a mind-driven attacker (the attack bonus keys to ${scaled.striker_stat}) — print pays physical damage on mental strikes with implement names (the Dryad's Vine Lash, the Rakshasa's Cursed Touch) or carries a magical type (the Mage's Arcane Burst deals Force); rename to a conjured implement or pick a magical type`);
+    }
   }
   if (Object.values(scaled.sections).flat().some((e) => (e.text ?? '').includes('{damage_type_2}'))
     && !TYPES.includes(p.melee_rider) && String(p.melee_rider ?? '').trim().toLowerCase() !== 'none') {
@@ -1163,12 +1221,20 @@ export async function generateReskin(options, callLLM) {
     style = options.stylePrior;
     trace('style prior applied:', `the menu pins ${style} — the concept claimed no style`);
   }
-  const donor = pickDonor(cr, style, archetype);
+  // BODY OUTRANKS ROLE (owner design 2026-09-11): an ooze's body IS its
+  // whole combat identity (AC 6-9 paid by Amorphous + Corrosive), a
+  // dragon's kit already contains brute, artillery, and controller in
+  // one chassis, and a swarm is its rules trait. The role still
+  // resolves and records; it just doesn't pick the donor.
+  const body = ['ooze', 'swarm', 'dragon'].includes(String(options.bodyType ?? '').toLowerCase()) ? String(options.bodyType).toLowerCase() : null;
+  if (body) trace('body type:', `${body} — the body outranks the role (recorded: ${archetype})`);
+  const donor = pickDonor(cr, body ? null : style, body ?? archetype);
   const scaled = scaleDonor(donor, cr, { movement: options.movement ?? [], mechanics: options.mechanics ?? null });
   // the caster family's Spellcasting row is CHASSIS — it ships template-
   // fed with its own menu whether or not the checkbox is set, and the
   // checkbox organ must never double it (donor row exists -> skip below)
   if (archetype === 'caster') scaled.spell_menu = CASTER_SPELL_MENU;
+  if (body === 'dragon') scaled.spell_menu = DRAGON_SPELL_MENU;
   const hasChassisSpellRow = Object.values(scaled.sections).flat().some((e) => e.name === 'Spellcasting');
   if (options.caster && !hasChassisSpellRow) {
     // the menu follows the archetype: a skirmisher's magic is escape
@@ -1361,6 +1427,17 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     trace('type stamped:', `the resolve said ${options.resolvedType} — the model answered ${p.type ?? 'nothing'}`);
     p.type = options.resolvedType;
   }
+  // SWARM TYPE STAMP (critic 2026-09-11; MOVED below the resolvedType stamp 2026-09-11 — the Sewer Choir was stamped and then reverted by it): print swarms are
+  // "Swarm of Tiny X" — the Swarm trait references a designation the
+  // header must carry
+  if (body === 'swarm' && p.type && !/^Swarm of/.test(p.type)) {
+    // Fey and Undead are uncountable — "Swarm of Tiny Undeads" is not
+    // a word (latent in the pluralizer, caught 2026-09-13)
+    const plural = ['Fey', 'Undead'].includes(p.type) ? p.type
+      : p.type.endsWith('y') ? `${p.type.slice(0, -1)}ies` : `${p.type}s`;
+    trace('swarm type stamped:', `${p.type} -> Swarm of Tiny ${plural}`);
+    p.type = `Swarm of Tiny ${plural}`;
+  }
   // the folk-article class, ported from the skeleton path: templates
   // supply their own articles, so a "The Cindermoss" mints "the the"
   // TYPE HONESTY, the measured rules ported: print's Beast ceiling is
@@ -1437,6 +1514,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
     for (const e of Object.values(scaled.sections).flat()) {
       if (e.rules && e.name === 'Trample') e.text = e.text.split('{damage_type}').join('Bludgeoning');
+      // the ooze's corrode is Acid unless the concept declares an energy
+      // (a molten slag ooze corrodes with Fire; body-type sweep 2026-09-11)
+      if (e.rules && e.name === 'Corrosive Form') e.text = e.text.split('{damage_type}').join(options.energy ?? 'Acid');
     }
   }
 
@@ -1681,7 +1761,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     lore: typeof p.lore === 'string' && p.lore.trim().length > 15 ? p.lore.trim() : undefined,
     // provenance rides to the log: cited templates defend with a printed
     // rung, invented ones defend with "nothing prints here, by construction"
-    generation: { path: 'reskin', donor: donor.id, archetype, ...(options.menuRole ? { menu_role: options.menuRole } : {}), ...(donor.invented ? { invented: true } : donor.cite ? { cite: donor.cite } : {}) },
+    generation: { path: 'reskin', donor: donor.id, archetype, ...(body ? { body } : {}), ...(options.menuRole ? { menu_role: options.menuRole } : {}), ...(donor.invented ? { invented: true } : donor.cite ? { cite: donor.cite } : {}) },
     archetype, archetype_source: 'user',
   };
   // Cunning Action is HUMANOID-coded (owner, 2026-08-26: "too assassin
@@ -1912,7 +1992,28 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
   for (const [sec, es] of Object.entries(sections)) {
     for (let i = es.length - 1; i >= 0; i -= 1) {
       const e = es[i];
-      if (/\{damage_type(?:_2)?\}|\{condition_(?:minor|major)\}|\{save_stat\}|\{projectile\}|\{spell_(?:at_will|daily)\}/.test(e.text)) throw new Error(`unfilled slot in "${e.name}" — failing loudly per spec`);
+      // optional organs DEGRADE (the dragon Spellcasting row crashed a
+      // generation 2026-09-11 when an API hiccup left it unfilled —
+      // the never-fail law): the row drops, the block ships
+      if (/\{spell_(?:at_will|daily)\}/.test(e.text)) {
+        // the DRAGON menu is engine-owned, so the organ never has to
+        // drop there (Spellcasting went 0-for-2 live — both API
+        // failures during repair; critic filed the second as
+        // signature loss): deterministic utility picks stand in.
+        // Casters keep the drop — their picks are concept identity.
+        const menu = scaled.spell_menu ?? [];
+        if (menu.length >= 4) {
+          e.text = e.text
+            .replace('{spell_at_will}', menu.slice(0, 2).map((x) => `*${x}*`).join(', '))
+            .replace('{spell_daily}', menu.slice(2, 4).map((x) => `*${x}*`).join(', '));
+          trace('optional organ filled from the menu —', `"${e.name}" (the model's picks failed; the engine's utility menu stands in)`);
+          continue;
+        }
+        es.splice(i, 1);
+        trace('optional organ unfilled after repair —', `"${e.name}" dropped (the block stands without it)`);
+        continue;
+      }
+      if (/\{damage_type(?:_2)?\}|\{condition_(?:minor|major)\}|\{save_stat\}|\{projectile\}/.test(e.text)) throw new Error(`unfilled slot in "${e.name}" — failing loudly per spec`);
       if (e.moveTo && e.moveTo !== sec) {
         es.splice(i, 1);
         (sections[e.moveTo] = sections[e.moveTo] ?? []).push(e);
@@ -1956,7 +2057,13 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
     // Layer 1 — type packages, the floor (>=50% of the type in print);
     // hoisted to TYPE_FLOOR (2026-09-10) so the vacuous-resilience
     // guard reads the same header truths the stamp writes
-    const FLOOR = TYPE_FLOOR[monster.type];
+    // a swarm's header is the UNION of the swarm suite and the base
+    // type's package (critic 2026-09-13, structural: "Swarm of Tiny
+    // Constructs" missed the Construct floor — Poison/Exhaustion/
+    // Poisoned dropped; any Swarm of Tiny Undead would lose its
+    // package the same way)
+    const FLOOR = TYPE_FLOOR[monster.type]
+      ?? (/^Swarm of Tiny /.test(monster.type ?? '') ? TYPE_FLOOR[Object.keys(TYPE_FLOOR).find((k) => (monster.type ?? '').includes(k))] : undefined);
     const resist = new Set(FLOOR?.resist ?? []);
     // Layer 1.5 — the donor's own suite (the phantom line, 2026-09-05):
     // print pairs the incorporeal discount WITH a header suite (Specter/
@@ -1966,8 +2073,58 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
     // wildcards were reaching for this in the wrong place.
     const suite = scaled.defense_suite ?? null;
     for (const x of suite?.resist ?? []) resist.add(x);
+    // element immunity MERGES INTO the Layer-1 sets below (2026-09-11
+    // clobber: the Cistern's Acid immunity traced and then the FLOOR
+    // write overwrote the line; dragons survived only because Dragon
+    // has no FLOOR entry)
+    const elementImmunity = ['dragon', 'ooze'].includes(options.bodyType) && options.energy ? options.energy : null;
+    // the breath save stat keys by ELEMENT (print: White Cold = Con,
+    // Red Fire = Dex, Green Poison = Con; critic 2026-09-11 — nothing
+    // mental uses Dex)
+    if (options.bodyType === 'dragon' && options.energy) {
+      const BREATH_STAT = { Fire: 'Dexterity', Lightning: 'Dexterity', Acid: 'Dexterity', Radiant: 'Dexterity', Force: 'Dexterity', Cold: 'Constitution', Poison: 'Constitution', Necrotic: 'Constitution', Thunder: 'Constitution', Psychic: 'Wisdom' };
+      const st = BREATH_STAT[options.energy];
+      if (st && st !== 'Dexterity') {
+        for (const es of Object.values(monster.sections ?? {})) {
+          for (const e of es) {
+            if (/foot Cone/.test(e.text) && /Recharge/.test(e.name)) e.text = e.text.replace('*Dexterity Saving Throw*', `*${st} Saving Throw*`);
+          }
+        }
+      }
+    }
+    // dragons are IMMUNE to their own element, not resistant (42/42
+    // print true dragons; body-type sweep 2026-09-11) — and so are
+    // oozes (Pudding and Cube are Acid-immune, 2/2 print dealers)
+    if (elementImmunity) { resist.delete(elementImmunity); trace('element immunity:', `${elementImmunity} (merged into the header write)`); }
+    // dragon SENSES are tiered like the cones (critic 2026-09-13: an
+    // adult on the correct chassis shipped blindsight 30 — young-tier;
+    // print: wyrmling 10/60, young 30/120, adult+ 60/120). Upgrade-only
+    // — concept senses (the Geode's tremorsense) survive untouched.
+    if (options.bodyType === 'dragon' && monster.senses) {
+      const [bsF, dvF] = options.cr <= 4 ? [10, 60] : options.cr <= 12 ? [30, 120] : [60, 120];
+      for (const [label, floorV] of [['blindsight', bsF], ['darkvision', dvF]]) {
+        const sm = new RegExp(`${label} (\\d+)`, 'i').exec(monster.senses);
+        if (sm && Number(sm[1]) < floorV) {
+          monster.senses = monster.senses.replace(sm[0], `${label} ${floorV}`);
+          trace('dragon senses raised to tier:', `${label} ${sm[1]} -> ${floorV}`);
+        } else if (!sm) {
+          monster.senses = `${label} ${floorV} ft., ${monster.senses}`;
+          trace('dragon senses raised to tier:', `${label} ${floorV} added`);
+        }
+      }
+    }
+    // the Cube engulfs its OWN size or smaller (print: a Large cube
+    // takes "Large or smaller"); the engine's authored rows say Medium
+    // — stamp the block's real size (critic 2026-09-13)
+    if (options.bodyType === 'ooze' && monster.size) {
+      for (const es2 of Object.values(monster.sections ?? {})) {
+        for (const e2 of es2) {
+          if (e2.text?.includes('Medium or smaller creatures')) e2.text = e2.text.replace('Medium or smaller creatures', `${monster.size} or smaller creatures`);
+        }
+      }
+    }
     {
-      const d = [...new Set([...(FLOOR?.damage ?? []), ...(suite?.damage ?? [])])].sort();
+      const d = [...new Set([...(FLOOR?.damage ?? []), ...(suite?.damage ?? []), ...(elementImmunity ? [elementImmunity] : [])])].sort();
       const c = [...new Set([...(FLOOR?.conditions ?? []), ...(suite?.conditions ?? [])])].sort();
       if (d.length || c.length) {
         monster.immunities = d.join(', ') + (c.length ? `${d.length ? '; ' : ''}${c.join(', ')}` : '');
@@ -2092,7 +2249,7 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
       // orphan flags)
       // "(escape DC" joined 2026-09-09 (5th inflection: "is Grappled
       // (escape DC 12)" — the parenthesis dodged the until/for anchor)
-      const applyRe = new RegExp(`ha(?:s|ve) the ${c} condition|ha(?:s|ve) the (?:\\w+ and )?${c} conditions?\\b|ha(?:s|ve) the ${c} and \\w+ conditions?\\b|becomes? ${c}\\b|is ${c} (?:until|for)|is (?:\\w+ and )?${c} (?:until|for|and)|is ${c} \\(escape|is ${c} of (?:the |its )?\\w+[^.]{0,20}(?:until|for)|be ${c}\\b|imposes? the ${c} condition`, 'i');
+      const applyRe = new RegExp(`ha(?:s|ve) the ${c} condition|ha(?:s|ve) the (?:\\w+ and )?${c} conditions?\\b|ha(?:s|ve) the ${c} and \\w+ conditions?\\b|becomes? ${c}\\b|is ${c} (?:until|for)|is (?:\\w+ and )?${c} (?:until|for|and)|is ${c} \\(escape|is (?:also )?${c} of (?:the |its )?\\w+[^.]{0,30}(?:until|for)|is also ${c}\\b|be ${c}\\b|imposes? the ${c} condition`, 'i');
       // scrub defensive and application phrasings; a surviving mention is
       // a DEPENDENT reference ("against a Poisoned target") with no source
       // ("Advantage on saving throws against the X condition" is defensive
@@ -2117,8 +2274,30 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
     // speed discord (the Steadfast Mender, 2026-09-09: a trait declared
     // "its Speed is 0" beside a Speed 30 header — print puts immobility
     // in the HEADER and drops the clause)
-    if (/\b(?:breath|soul|memor\w*|heart|oath|remains|spirit|echo)\b/i.test(monster.languages ?? '')) {
+    if (/\b(?:breath|soul|memor\w*|heart|oath|remains|spirit|echo|dead|the living)\b/i.test(monster.languages ?? '')) {
       lint.findings.push({ rule: 'languages-lore-leak', severity: 'audit', message: 'the Languages line is a closed field — move the lore into the description (print writes only languages, telepathy, and the understands-but-can\'t-speak form)' });
+    }
+    // two save-row grammars on one sheet (critic 2026-09-11: Stitched
+    // Arc, Winter's Silence, Bone-Stripping Haze all 2014-form)
+    for (const [sec2, es2] of Object.entries(sections)) {
+      for (const e2 of es2) {
+        if (/must (?:make|succeed on) a DC \d+ [A-Z]\w+ saving throw, (?:taking|or)/i.test(e2.text ?? '')) {
+          lint.findings.push({ rule: 'phrasing-save-2014', severity: 'audit', message: `${sec2}/${e2.name}: 2014 save grammar — the skeleton is "*<Ability> Saving Throw:* DC n, <target>. *Failure:* <effect>"` });
+        }
+      }
+    }
+    // a trait re-granting a sense the header prints (critic 2026-09-13:
+    // the Geode's trait granted conditional tremorsense under an
+    // unconditional tremorsense 30 header — senses are header
+    // jurisdiction, the fourth header/trait-disagreement class)
+    for (const e2 of (sections.Traits ?? [])) {
+      const sm = /\b(?:has|gains?) (tremorsense|darkvision|blindsight|truesight)\b/i.exec(e2.text ?? '');
+      if (sm && new RegExp(sm[1], 'i').test(monster.senses ?? '')) {
+        lint.findings.push({ rule: 'senses-grant-in-trait', severity: 'audit', message: `Traits/${e2.name}: grants ${sm[1].toLowerCase()} the header already prints — senses are header jurisdiction; delete the grant sentence (or move the condition into the header parenthetical)` });
+      }
+    }
+    if (/blind beyond this radius/.test(monster.senses ?? '') && /darkvision/.test(monster.senses ?? '')) {
+      lint.findings.push({ rule: 'senses-contradiction', severity: 'audit', message: 'blindsight "(blind beyond this radius)" beside darkvision contradicts itself — drop one' });
     }
     if (/its Speed is 0\b(?![^.]{0,40}until)/.test(allTexts) && !/^0 ft\./.test(monster.speed ?? '')) {
       lint.findings.push({ rule: 'speed-discord', severity: 'audit', message: `a trait sets Speed 0 permanently while the header says "${monster.speed}" — print puts immobility in the header (Speed 0 ft. or 5 ft.) and deletes the trait clause` });

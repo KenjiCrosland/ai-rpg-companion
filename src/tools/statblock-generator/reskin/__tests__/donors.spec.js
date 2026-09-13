@@ -41,7 +41,9 @@ describe('authored donors obey the card', () => {
         const primary = ['Hybrid Attack', 'Melee Attack']
           .map((n) => rows.find((r) => r.name === n)).filter(Boolean)
           .sort((a, b) => avgOf(b.text) - avgOf(a.text))[0];
-        const perHit = avgOf(primary.text);
+        // the swarm's Bloodied split is the SAME attack at half rate —
+        // never summed (body-type sweep 2026-09-11)
+        const perHit = avgOf(primary.text.replace(/, or \d+ \(\d+d\d+(?:\s*\+\s*\d+)?\)(?: \{damage_type\} damage)? if [^.]{0,40}Bloodied/g, ''));
         let sustained = attacks * perHit;
         for (const r of rows.filter((x) => x.sec === 'Legendary Actions' && !x.rules)) {
           if (/one (?:Melee Attack|Hybrid Attack)/.test(r.text)) sustained += perHit;
@@ -202,7 +204,53 @@ describe('authored donors obey the card', () => {
             // design 2026-09-10): rampart (Balor 5-ft Emanation + the
             // wall) and punisher (Marilith Reactive + a Trigger/
             // Response counter) — engine rows are answer-picked
-            if (d.legendary) {
+            if (d.archetypes.includes('dragon')) {
+        test('dragon body (sweep 2026-09-11): wings, the breath nova in the concept energy, armor over card', () => {
+          expect(d.speed).toMatch(/Fly \d+ ft\./);
+          const breath = rows.find((r) => /Recharge/.test(r.gate ?? ''));
+          // the print tier table (critic 2026-09-11): 15/30/60/90 by age
+          const cone = d.cr <= 4 ? 15 : d.cr <= 10 ? 30 : d.cr <= 17 ? 60 : 90;
+          expect(breath.text).toMatch(new RegExp(`${cone}-foot Cone`));
+          // adult+ dragons cast (every 2024 adult and ancient)
+          if (d.cr >= 13) expect(rows.some((r) => r.name === 'Spellcasting' && /\{spell_at_will\}/.test(r.text))).toBe(true);
+          // print dragon saves are Dex/Wis
+          expect(d.saves).toEqual(['DEX', 'WIS']);
+          expect(breath.text).toMatch(/\{damage_type\}/);
+          expect(breath.text).toMatch(/\*Success:\* Half damage/);
+          expect(d.ac_offset).toBeGreaterThanOrEqual(1);
+          if (d.cr >= 13) expect(d.legendary).toBe(true);
+        });
+      }
+
+      if (d.archetypes.includes('ooze')) {
+        test('ooze body (sweep 2026-09-11): the deepest armor trade, paid by Amorphous + Corrosive Form', () => {
+          expect(d.ac_offset).toBeLessThanOrEqual(-5);
+          expect(d.hp_scale).toBeGreaterThanOrEqual(1);
+          expect(rows.some((r) => r.rules && /space as narrow as 1 inch/.test(r.text))).toBe(true);
+          expect(rows.some((r) => r.rules && /touches the creature or hits it with a melee attack/.test(r.text))).toBe(true);
+          expect(Number((/^(\d+)/.exec(d.speed) ?? [0, 99])[1])).toBeLessThanOrEqual(20);
+          // the Cube prints a Success line, and an OPAQUE ooze blinds —
+          // Blinded is the transparent Cube's one omission (critic
+          // 2026-09-13: both dropped in the first authoring)
+          const eng = rows.find((r) => r.name === 'Engulf');
+          if (eng) {
+            expect(eng.text).toMatch(/\*Success:\* Half the damage only, and the target is pushed out/);
+            expect(eng.text).toMatch(/Blinded and Restrained/);
+          }
+        });
+      }
+
+      if (d.archetypes.includes('swarm')) {
+        test('swarm body (sweep 2026-09-11): the Swarm trait, the suite, the Bloodied split', () => {
+          expect(rows.some((r) => r.rules && /occupy another creature's space/.test(r.text) && /can't regain Hit Points or gain Temporary Hit Points/.test(r.text))).toBe(true);
+          expect(d.defense_suite.conditions).toEqual(expect.arrayContaining(['Charmed', 'Frightened', 'Grappled', 'Paralyzed', 'Petrified', 'Prone', 'Restrained', 'Stunned']));
+          expect(d.defense_suite.resist).toEqual(expect.arrayContaining(['Bludgeoning', 'Piercing', 'Slashing']));
+          expect(rows.some((r) => /, or \d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) \{damage_type\} damage if the creature is Bloodied/.test(r.text))).toBe(true);
+          expect(d.ac_offset).toBeLessThanOrEqual(-2);
+        });
+      }
+
+      if (d.legendary) {
               const engines = new Set(rows.filter((r) => r.engine).map((r) => r.engine));
               expect([...engines].sort()).toEqual(['punisher', 'rampart']);
               expect(rows.some((r) => r.engine === 'rampart' && /5-foot Emanation originating from the creature takes \d+/.test(r.text))).toBe(true);
@@ -223,6 +271,52 @@ describe('authored donors obey the card', () => {
           // amendment 2026-09-10)
           expect(rows.some((r) => r.sec === 'Reactions' && !r.engine)).toBe(false);
           expect(rows.some((r) => /Dash, Disengage, or Hide/.test(r.text))).toBe(false);
+        });
+      }
+
+      if (d.archetypes.includes('dragon')) {
+        test('dragon body (sweep 2026-09-11): wings, the breath nova in the concept energy, armor over card', () => {
+          expect(d.speed).toMatch(/Fly \d+ ft\./);
+          const breath = rows.find((r) => /Recharge/.test(r.gate ?? ''));
+          // the print tier table (critic 2026-09-11): 15/30/60/90 by age
+          const cone = d.cr <= 4 ? 15 : d.cr <= 10 ? 30 : d.cr <= 17 ? 60 : 90;
+          expect(breath.text).toMatch(new RegExp(`${cone}-foot Cone`));
+          // adult+ dragons cast (every 2024 adult and ancient)
+          if (d.cr >= 13) expect(rows.some((r) => r.name === 'Spellcasting' && /\{spell_at_will\}/.test(r.text))).toBe(true);
+          // print dragon saves are Dex/Wis
+          expect(d.saves).toEqual(['DEX', 'WIS']);
+          expect(breath.text).toMatch(/\{damage_type\}/);
+          expect(breath.text).toMatch(/\*Success:\* Half damage/);
+          expect(d.ac_offset).toBeGreaterThanOrEqual(1);
+          if (d.cr >= 13) expect(d.legendary).toBe(true);
+        });
+      }
+
+      if (d.archetypes.includes('ooze')) {
+        test('ooze body (sweep 2026-09-11): the deepest armor trade, paid by Amorphous + Corrosive Form', () => {
+          expect(d.ac_offset).toBeLessThanOrEqual(-5);
+          expect(d.hp_scale).toBeGreaterThanOrEqual(1);
+          expect(rows.some((r) => r.rules && /space as narrow as 1 inch/.test(r.text))).toBe(true);
+          expect(rows.some((r) => r.rules && /touches the creature or hits it with a melee attack/.test(r.text))).toBe(true);
+          expect(Number((/^(\d+)/.exec(d.speed) ?? [0, 99])[1])).toBeLessThanOrEqual(20);
+          // the Cube prints a Success line, and an OPAQUE ooze blinds —
+          // Blinded is the transparent Cube's one omission (critic
+          // 2026-09-13: both dropped in the first authoring)
+          const eng = rows.find((r) => r.name === 'Engulf');
+          if (eng) {
+            expect(eng.text).toMatch(/\*Success:\* Half the damage only, and the target is pushed out/);
+            expect(eng.text).toMatch(/Blinded and Restrained/);
+          }
+        });
+      }
+
+      if (d.archetypes.includes('swarm')) {
+        test('swarm body (sweep 2026-09-11): the Swarm trait, the suite, the Bloodied split', () => {
+          expect(rows.some((r) => r.rules && /occupy another creature's space/.test(r.text) && /can't regain Hit Points or gain Temporary Hit Points/.test(r.text))).toBe(true);
+          expect(d.defense_suite.conditions).toEqual(expect.arrayContaining(['Charmed', 'Frightened', 'Grappled', 'Paralyzed', 'Petrified', 'Prone', 'Restrained', 'Stunned']));
+          expect(d.defense_suite.resist).toEqual(expect.arrayContaining(['Bludgeoning', 'Piercing', 'Slashing']));
+          expect(rows.some((r) => /, or \d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) \{damage_type\} damage if the creature is Bloodied/.test(r.text))).toBe(true);
+          expect(d.ac_offset).toBeLessThanOrEqual(-2);
         });
       }
 
@@ -327,6 +421,15 @@ describe('the mounted template line: full compositions, shape-frames as authorin
     expect(pdm(10, 'warden', 'defender').id).toBe('defender-7-warden');
     expect(pdm(21, 'warden', 'defender').id).toBe('defender-17-warden');
     expect(pdm(5, 'skulker', 'defender').id).toBe('defender-5'); // no cross-family style bleed
+    // the body-type pools (owner design 2026-09-11): body outranks role
+    expect(pdm(2, null, 'dragon').id).toBe('dragon-2');
+    expect(pdm(12, null, 'dragon').id).toBe('dragon-8');
+    expect(pdm(18, null, 'dragon').id).toBe('dragon-15');
+    expect(pdm(24, null, 'dragon').id).toBe('dragon-22');
+    expect(pdm(6, null, 'ooze').id).toBe('ooze-4');
+    expect(pdm(20, null, 'ooze').id).toBe('ooze-17');
+    expect(pdm(5, null, 'swarm').id).toBe('swarm-3');
+    expect(pdm(19, null, 'swarm').id).toBe('swarm-17');
     // the skirmisher rule holds family-wide (owner, 2026-09-01): every
     // style line tops out in a legendary seat
     for (const arch of ['skirmisher', 'brute', 'caster', 'lurker', 'defender']) {

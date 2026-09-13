@@ -296,11 +296,13 @@ describe('batch 27c: legendary budget accounting + the glass cannon role', () =>
     expect(total(12, 'glass_cannon') / total(12, 'balanced')).toBeGreaterThan(1.2);
   });
 
-  test('it is offered in the UI with a readable multi-word label', () => {
-    const { ARCHETYPE_OPTIONS, ARCHETYPE_HELP } = require('@/util/embedded-statblock.mjs');
-    const opt = ARCHETYPE_OPTIONS.find((o) => o.value === 'glass_cannon');
-    expect(opt).toBeTruthy();
-    expect(opt.label).toBe('Glass cannon');
-    expect(ARCHETYPE_HELP.glass_cannon).toContain('dies fast');
+  test('it is RETIRED from the UI menu (owner 2026-09-11) while the engine still accepts the value', () => {
+    // glass_cannon/support/swarm left the Combat-role select — no reskin
+    // family ever claimed them, and swarm returns as a body-type axis.
+    // The chassis math above still works for saved-monster regeneration.
+    const { ARCHETYPE_OPTIONS } = require('@/util/embedded-statblock.mjs');
+    for (const retired of ['glass_cannon', 'support', 'swarm']) {
+      expect(ARCHETYPE_OPTIONS.find((o) => o.value === retired)).toBeUndefined();
+    }
   });
 });

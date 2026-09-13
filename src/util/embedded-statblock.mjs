@@ -30,11 +30,13 @@ export const ARCHETYPE_HELP = {
   defender: 'High AC, protects allies, punishes movement. Animated armor, ropers.',
   skirmisher: 'Mobile hit-and-run attacker with a movement trick.',
   artillery: 'Fragile long-range damage dealer with an escape tool.',
-  glass_cannon: 'Hits harder than anything at its CR and dies fast. All offense, no cushion.',
   controller: 'Locks enemies down with conditions instead of raw damage. Aboleths.',
   lurker: "Fragile ambusher with a devastating opening strike. Ghosts, will-o'-wisps.",
-  support: 'Buffs, heals, and enables allies — underperforms its CR when fought alone.',
-  swarm: 'A mass of small creatures acting as one, hard to put down with weapons.',
+  // glass_cannon / support / swarm retired from the menu (owner,
+  // 2026-09-11): no reskin family ever claimed them — glass_cannon and
+  // support were slot-path relics, and swarm returns as a BODY TYPE
+  // axis, not a role. The engine still accepts the old values for
+  // saved-monster regeneration.
 };
 export const ARCHETYPE_OPTIONS = [
   { label: 'Auto — match my concept', value: 'auto' },
