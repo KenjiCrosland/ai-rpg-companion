@@ -128,7 +128,7 @@ export async function generateGptResponse(
         name: 'DeepSeek V3',
         endpoint: 'https://api.deepseek.com/v1/chat/completions',
         devEndpoint: '/api/ai/deepseek',
-        model: 'deepseek-chat',
+        model: 'deepseek-flash',
         type: 'openai',
       };
     }
