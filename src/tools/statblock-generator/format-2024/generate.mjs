@@ -1126,7 +1126,10 @@ export function toLegacyModel(m) {
     ...entryList('Traits'),
     // Guard: a model-emitted name that ALREADY carries the suffix must not
     // double it ("Disengage (Bonus Action) (Bonus Action)" — live finding).
-    ...entryList('Bonus Actions').map((e) => ({ ...e, name: /\(Bonus Action\)\s*$/i.test(e.name) ? e.name : `${e.name} (Bonus Action)` })),
+    // the suffix only when the text doesn't already declare the economy
+    // (post-conversion 2014 text opens "As a bonus action, ..." — the
+    // critic's note: the name-suffix form is neither edition's, 2026-09-14)
+    ...entryList('Bonus Actions').map((e) => ({ ...e, name: /\(Bonus Action\)\s*$/i.test(e.name) || /^As a bonus action/i.test(e.description ?? '') ? e.name : `${e.name} (Bonus Action)` })),
     ...entryList('Reactions').map((e) => ({ ...e, name: /\(Reaction\)\s*$/i.test(e.name) ? e.name : `${e.name} (Reaction)` })),
   ];
 
@@ -1139,15 +1142,31 @@ export function toLegacyModel(m) {
   const legacy = {
     name: m.name,
     type_and_alignment: `${m.size} ${typeLower}${m.subtype ? ` (${m.subtype.toLowerCase()})` : ''}, ${m.alignment.toLowerCase()}`,
-    armor_class: String(m.ac),
+    armor_class: (() => {
+      // 2014 prints the armor source (critic 2026-09-14: "19 (splint,
+      // shield)"). Humanoid-shaped wearers solve a real kit; everything
+      // else over its Dex line is natural armor.
+      if (m.ac_note) return `${m.ac} (${m.ac_note})`;
+      const dex = modOf(m.stats.DEX);
+      if (/humanoid/i.test(m.type)) {
+        const KITS = [['plate', 18, 0], ['splint', 17, 0], ['chain mail', 16, 0], ['half plate', 15, 2], ['breastplate', 14, 2], ['scale mail', 14, 2], ['chain shirt', 13, 2], ['studded leather', 12, 99], ['leather', 11, 99]];
+        for (const withShield of [false, true]) {
+          for (const [kit, base, cap] of KITS) {
+            if (base + Math.min(dex, cap) + (withShield ? 2 : 0) === m.ac) return `${m.ac} (${kit}${withShield ? ', shield' : ''})`;
+          }
+        }
+      }
+      if (m.ac > 10 + dex) return `${m.ac} (natural armor)`;
+      return String(m.ac);
+    })(),
     hit_points: `${m.hp} (${m.hp_formula})`,
     // 2014 lowercases movement modes; 2024 capitalizes them.
     speed: (m.speed ?? '').replace(/\b(Climb|Fly|Swim|Burrow|Hover)\b/g, (w) => w.toLowerCase()),
     attributes: STAT_ORDER.map((s) => `${s} ${m.stats[s]} (${signed(modOf(m.stats[s]))})`).join(', '),
     saving_throws: savingThrows,
     skills: m.skills ?? '',
-    senses: (m.senses ?? '').replace('Passive Perception', 'passive Perception'),
-    languages: m.languages || '—', // official style: an em-dash, never blank
+    senses: (m.senses ?? '').replace('Passive Perception', 'passive Perception').replace('; passive', ', passive'), // 2014 separates with a comma
+    languages: (m.languages || '—').replace(/^Understands\b/, 'understands'), // official style: an em-dash, never blank; lowercase 'understands' (2014)
     challenge_rating: `${m.cr_str} (${(m.xp ?? 0).toLocaleString('en-US')} XP)`,
     proficiency_bonus: `+${m.pb}`,
     abilities,
@@ -1263,7 +1282,11 @@ const CONVERSION_RULES = {
 - Reactions: "*Trigger:* <event>. *Response:* <effect>." becomes "When <event>, <the creature does the effect>."
 - Conditions, damage types, and game terms go lowercase in prose: "is knocked prone", "frightened", "slashing damage", "hit points". Never "has the X condition" — write "is stunned". Never "Attack Roll:", never "*Failure:*"/"*Success:*"/"*Trigger:*" markers.
 - 2024-only vocabulary must be translated: "Bloodied" becomes "has half of its hit points or fewer"; "each creature in a 5-foot Emanation originating from it" becomes "each creature within 5 feet of it"; an "N-foot-radius Emanation" becomes an "N-foot-radius sphere". Area shapes go lowercase: "15-foot cone", "the cone".
-- 2024 spellcasting actions convert to the 2014 style: "The creature's spellcasting ability is <Ability> (spell save DC n). It can innately cast the following spells: ..."`,
+- 2024 spellcasting actions convert to the 2014 style: "The creature's spellcasting ability is <Ability> (spell save DC n). It can innately cast the following spells: ..." — spell names lowercase italic (*bestow curse*), frequency labels "At will:" and "1/day each:", and "(level 5 version)" becomes "(cast at 5th level)".
+- An attack made with a spell, curse, conjured or spectral effect converts as "Melee Spell Attack:" / "Ranged Spell Attack:" (2014 distinguishes them); a physical weapon or body part is a "Weapon Attack".
+- Multiattack in 2014 form: "makes two attacks: one with its X and one with its Y" or "makes two melee attacks" — never "in any combination". A replacement clause drops the scaffold letters: "It can replace one attack with a use of Curse of Arrears or its Spellcasting."
+- On a SWARM, melee attacks print "reach 0 ft., one target in the swarm's space".
+- A Bonus Actions entry's text begins "As a bonus action, the <creature> ..." in 2014 voice.`,
   2024: `You are converting D&D statblock entries from classic 2014 (5e) phrasing to 2024 (5.5e) phrasing. Rewrite ONLY the wording — every number, die expression, DC, entry name, and mechanical effect stays EXACTLY the same.
 - "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage." becomes "*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage." — never "to hit", never "Weapon Attack", Damage Types Capitalized.
 - Save effects use the structured skeleton as the WHOLE sentence: "*<Ability> Saving Throw*: DC n, <who saves, e.g. each creature in a 30-foot Cone>. *Failure:* <effect>. *Success:* <lesser effect>." Omit *Success:* entirely when success does nothing. Never "must make a" or "must succeed on".
@@ -1347,7 +1370,10 @@ Return ONLY a JSON object with the SAME sections, SAME entry order, SAME entry n
       [s, es.map((e, i) => ({ ...e, text: parsed[s]?.[i]?.text ?? e.text }))])),
   };
 
-  const { chassis, plan } = buildContext(model.cr, model.archetype ?? 'balanced');
+  let ctx2;
+  try { ctx2 = buildContext(model.cr, model.archetype ?? 'balanced'); }
+  catch { ctx2 = buildContext(model.cr, 'balanced'); } // saved reskin blocks carry internal family names ('caster') — never crash a conversion on vocabulary (2026-09-14)
+  const { chassis, plan } = ctx2;
   // Chassis passed so chassis-gated rules in the conversion set (bps-
   // resistance) can fire; the set filter keeps every other chassis rule out.
   const phrasingFindings = (m) => lintStatblock(m, { edition: target, chassis }).findings

@@ -171,7 +171,7 @@ export function assignSeats(signatureElements = [], { style = null, covered = []
   return { action: action.element, trait: trait.element, packaged: action.element === trait.element, rest: [...els.map((e) => e.element).filter((x) => x !== action.element && x !== trait.element), ...demoted] };
 }
 
-export function buildReskinPrompt(scaled, { concept = '', takenNames = [], signatureElements = [], energy = null, mix = null, mind = null, resolvedType = null } = {}) {
+export function buildReskinPrompt(scaled, { concept = '', takenNames = [], signatureElements = [], energy = null, mix = null, mind = null, resolvedType = null, fixedName = null } = {}) {
   const seats = assignSeats(signatureElements, { style: scaled.style ?? null });
   const needsProjectile = Object.values(scaled.sections).flat().some((e) => e.text.includes('{projectile}'));
   const engineMenu = [...new Set(Object.values(scaled.sections).flat().filter((e) => e.engine).map((e) => e.engine))];
@@ -207,7 +207,7 @@ ${rows.join('\n')}
 
 Return ONLY JSON:
 {
- "name": "<the creature's proper name, 1-3 plain words>",
+ "name": ${fixedName ? `"<the user named it \"${fixedName}\" — keep this name, correcting ONLY an obvious misspelling or casing; never reword or replace it>",` : '"<the creature\'s proper name, 1-3 plain words>",'}
  "type": ${resolvedType ? `"${resolvedType}",   <- FIXED by the concept resolve — echo it exactly` : '"<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>",'}
  "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>",
  "alignment": "<a 2024 alignment — follow the concept's own moral read: tragic, driven, or feral is not Evil>",
@@ -457,6 +457,12 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
     // arms race, 4th sighting)
     // "each OTHER creature" joined 2026-09-02 (the Vestige — arms race #5)
     : (/(?:each|all|every)(?: other)? (?:creatures?|targets?) (?:in|within)/i.test(w) && !liftedGate && dmg && Number(dmg[1]) > Math.round(scaled.per_hit * 0.75)) ? ['an ungated area action prices per TARGET — halve the dice or add a use gate like "(Recharge 5-6)"', 'mechanical']
+    // the ATTACK-DELEGATION evasion (the Dusk Wardens' Stone Shove,
+    // 2026-09-14: "makes one Claw attack against each creature within 5
+    // feet" — the damage rides by REFERENCE, so the dmg-number gate
+    // above never saw it; three adjacent = 1.5x the Multiattack plus
+    // control, dominant every round)
+    : (/makes? (?:one|a|two) [^.]{0,30}attacks? against each (?:creature|target)/i.test(w) && !liftedGate) ? ['an attack against EACH creature multiplies the attack routine — print gates multi-target attack actions ("(Recharge 5-6)") or converts them to a save; gate it, or make it a save-based push with no attack roll', 'mechanical']
     // a creature dies only at 0 Hit Points (the Gallows Puppet: four
     // slashing hits destroyed 97 HP, 2026-09-01). Print's only
     // conditional destructions are 0-HP-anchored (Misty Escape) or
@@ -1079,7 +1085,7 @@ export function reskinDefects(scaled, p, { energy = null, mix = null } = {}) {
       // holds, 2026-09-09: "Light Crossbow" renamed onto a 100/400 row,
       // "Heavy Crossbow" onto the HYBRID row = a melee crossbow with
       // 5-foot reach)
-      if (/\b(?:crossbow|longbow|shortbow|bow|sling|musket|pistol|rifle)\b/i.test(rn) && /reach \d+ ft/.test(row.text)) {
+      if (/\b(?:crossbow|longbow|shortbow|bow|bolts?|sling|musket|pistol|rifle)\b/i.test(rn) && /reach \d+ ft/.test(row.text)) {
         defects.push(`name "${rn}" is a launcher but the row swings in melee — a crossbow never has reach; use a thrown weapon or a blade`);
       }
       // a DELEGATION row ("makes one X attack") never renames to a
@@ -1352,7 +1358,7 @@ export async function generateReskin(options, callLLM) {
   // reserved for unparseable garbage, the thing they can actually fix),
   // then up to two repair rounds that carry the full defect list. Common
   // case 1 call; worst case 3; the loud throw remains the last resort.
-  const reskinPrompt = buildReskinPrompt(scaled, { concept, takenNames: options.takenNames ?? [], signatureElements: options.signatureElements ?? [], energy: options.energy ?? null, mix: options.mix ?? null, mind: options.mind ?? null, resolvedType: options.resolvedType ?? null });
+  const reskinPrompt = buildReskinPrompt(scaled, { concept, takenNames: options.takenNames ?? [], signatureElements: options.signatureElements ?? [], energy: options.energy ?? null, mix: options.mix ?? null, mind: options.mind ?? null, resolvedType: options.resolvedType ?? null, fixedName });
   const raw = await callLLM(reskinPrompt, validateReskinResponse);
   let p = (() => { try { return normalizeTypeFields(JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim())); } catch { return null; } })();
   if (!p) throw new Error('reskin call failed — the pilot fails loudly, never silently');
@@ -1474,7 +1480,31 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     else p.alignment = 'Unaligned';
   }
   // a user-typed name ships VERBATIM — the slot path's oldest law
-  if (fixedName) p.name = fixedName;
+  if (fixedName) {
+    // the model may have CORRECTED an obvious misspelling ("chaple
+    // knight" -> "Chapel Knight") — accept its version only when it is
+    // the same name within a whisper (same word count, tiny per-word
+    // edit distance); anything further is a rewording and the user's
+    // name stands
+    const dist = (a, b) => {
+      const m = a.length; const n = b.length;
+      if (Math.abs(m - n) > 2) return 3;
+      let prev = Array.from({ length: n + 1 }, (_, j) => j);
+      for (let i = 1; i <= m; i += 1) {
+        const cur = [i];
+        for (let j = 1; j <= n; j += 1) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        prev = cur;
+      }
+      return prev[n];
+    };
+    const uw = fixedName.trim().split(/\s+/);
+    const mw = String(p.name ?? '').trim().split(/\s+/);
+    const modelCorrected = uw.length === mw.length
+      && uw.every((w, i) => dist(w.toLowerCase(), mw[i].toLowerCase()) <= 2)
+      && uw.some((w, i) => w.toLowerCase() !== mw[i].toLowerCase());
+    if (modelCorrected) trace('name spelling corrected:', `"${fixedName}" -> "${p.name}" (the model's fix is the same name within a whisper)`);
+    else p.name = fixedName;
+  }
   p.name = String(p.name).replace(/^the\s+/i, '').trim() || p.name;
   // title-case with lowercase connectives — the blanket capitalizer
   // POST-EXHAUSTION ACTUATOR (Tier A 2026-09-13: the Witch's Claw and
@@ -1494,7 +1524,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
 
   // minted "Grille Of The Hollow Confession" and "Vigil Of The Pass"
   // (2026-09-07); print writes "of the"
-  if (!fixedName) {
+  { // user names included since 2026-09-14 (owner ruling: "convert
+    // user names to the proper format if improper... if a user wants
+    // to intentionally misspell they can edit the name" — supersedes
+    // the verbatim pin). First letter per word only; interior caps
+    // ("McTavish") stay the user's.
     const SMALL = new Set(['of', 'the', 'a', 'an', 'and', 'or', 'in', 'on', 'at', 'to', 'for', 'from', 'with', 'by']);
     p.name = p.name.split(/\s+/).map((w, i) => (i && SMALL.has(w.toLowerCase()) ? w.toLowerCase() : w[0].toUpperCase() + w.slice(1))).join(' ');
   }
@@ -1821,7 +1855,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // provenance rides to the log: cited templates defend with a printed
     // rung, invented ones defend with "nothing prints here, by construction"
     generation: { path: 'reskin', donor: donor.id, archetype, ...(body ? { body } : {}), ...(options.menuRole ? { menu_role: options.menuRole } : {}), ...(donor.invented ? { invented: true } : donor.cite ? { cite: donor.cite } : {}) },
-    archetype, archetype_source: 'user',
+    archetype: options.menuRole ?? archetype, archetype_source: 'user',
   };
   // Cunning Action is HUMANOID-coded (owner, 2026-08-26: "too assassin
   // coded" — and print agrees exactly: Cunning Action appears only on
@@ -2448,6 +2482,11 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
       const sm = /\b(?:has|gains?) (tremorsense|darkvision|blindsight|truesight)\b/i.exec(e2.text ?? '');
       if (sm && new RegExp(sm[1], 'i').test(monster.senses ?? '')) {
         lint.findings.push({ rule: 'senses-grant-in-trait', severity: 'audit', message: `Traits/${e2.name}: grants ${sm[1].toLowerCase()} the header already prints — senses are header jurisdiction; delete the grant sentence (or move the condition into the header parenthetical)` });
+      } else if (sm) {
+        // the INVERSE direction (the Dusk Wardens' Stone Shell granted
+        // tremorsense the header never carried, 2026-09-14): senses are
+        // header jurisdiction in both directions
+        lint.findings.push({ rule: 'senses-grant-in-trait', severity: 'audit', message: `Traits/${e2.name}: grants ${sm[1].toLowerCase()} the header does not carry — senses are header jurisdiction; add it to the Senses line (with the condition as a parenthetical) or drop the grant` });
       }
     }
     if (/blind beyond this radius/.test(monster.senses ?? '') && /darkvision/.test(monster.senses ?? '')) {

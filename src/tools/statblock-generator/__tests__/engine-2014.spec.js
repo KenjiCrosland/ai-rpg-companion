@@ -1496,3 +1496,34 @@ describe('self-escape-immune-condition (verbatim Fracture Escape)', () => {
       .filter((f) => f.rule === 'self-escape-immune-condition')).toHaveLength(0);
   });
 });
+
+describe('the 2014 header polish (critic 2026-09-14)', () => {
+  const { toLegacyModel } = require('../format-2024/generate.mjs');
+  const base = () => ({
+    name: 'Test Knight', format: '2024', size: 'Medium', type: 'Humanoid', alignment: 'Lawful Neutral',
+    ac: 19, hp: 78, hp_formula: '12d8 + 24', speed: '30 ft.',
+    stats: { STR: 16, DEX: 12, CON: 14, INT: 11, WIS: 13, CHA: 14 },
+    saves: { STR: 6, DEX: 1, CON: 5, INT: 0, WIS: 1, CHA: 2 },
+    senses: 'darkvision 60 ft.; Passive Perception 14',
+    languages: 'Understands Common and Celestial but can\'t speak',
+    cr: 5, cr_str: '5', xp: 1800, pb: 3,
+    sections: { Actions: [{ name: 'Mace', text: 'x' }] },
+  });
+
+  test('a humanoid AC solves a real armor kit — "19 (splint, shield)" at Dex +1', () => {
+    expect(toLegacyModel(base()).armor_class).toBe('19 (splint, shield)');
+  });
+
+  test('a non-humanoid over its Dex line prints natural armor; at the Dex line, no note', () => {
+    const ooze = { ...base(), type: 'Ooze', ac: 15, stats: { ...base().stats, DEX: 6 } };
+    expect(toLegacyModel(ooze).armor_class).toBe('15 (natural armor)');
+    const lean = { ...base(), type: 'Beast', ac: 11, stats: { ...base().stats, DEX: 12 } };
+    expect(toLegacyModel(lean).armor_class).toBe('11');
+  });
+
+  test('the senses semicolon becomes a comma and Understands lowercases', () => {
+    const m = toLegacyModel(base());
+    expect(m.senses).toBe('darkvision 60 ft., passive Perception 14');
+    expect(m.languages).toMatch(/^understands Common/);
+  });
+});

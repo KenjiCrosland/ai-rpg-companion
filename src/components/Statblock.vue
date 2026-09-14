@@ -105,7 +105,7 @@
                     <input v-else v-model="editedMonster.languages" />
                 </div>
                 <div :class="propertyLineClass">
-                    <h4>CR:</h4>
+                    <h4>Challenge</h4>
                     <p v-if="!isEditing">{{ monster.challenge_rating }}</p>
                     <select style="flex-grow: 1;" v-if="isEditing" v-model="editedMonster.challenge_rating">
                         <option v-for="cr in formattedArray" :key="cr" :value="cr">{{ cr }}</option>

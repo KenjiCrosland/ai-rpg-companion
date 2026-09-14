@@ -1306,7 +1306,15 @@ async function generateStatblockEngine(edition) {
     // plain=soldier (Knight/Guard Captain), 'warden' (Shield Guardian
     // transfer link). Kill switch: statblock-reskin-defender='0'.
     const isCasterRole = archetypeName === 'artillery' || archetypeName === 'controller';
-    if (edition === '2024' && (
+    // THE 2014 MOVE (owner go 2026-09-14: "let's update the 2014"): a
+    // 2014-format generation now rides the SAME reskin pipeline — every
+    // guard, the library, the replacement clause — then one lint-gated
+    // convertEdition call rewrites the phrasing and both printings save
+    // (other_edition = the 2024 original, so the tabs flip free). The
+    // slot path remains behind the kill switch:
+    // localStorage['statblock-reskin-2014']='0'.
+    const reskin2014 = edition === '2014' && localStorage.getItem('statblock-reskin-2014') !== '0';
+    if ((edition === '2024' || reskin2014) && (
       (archetypeName === 'skirmisher' && localStorage.getItem('statblock-reskin-pilot') !== '0')
       || (archetypeName === 'brute' && localStorage.getItem('statblock-reskin-brute') !== '0')
       || (archetypeName === 'lurker' && localStorage.getItem('statblock-reskin-lurker') !== '0')
@@ -1342,6 +1350,31 @@ async function generateStatblockEngine(edition) {
         },
         (prompt, validate) => generateGptResponse(prompt, validate, 3),
       );
+      if (reskin2014) {
+        // the reskin speaks 2024; the card the user asked for is 2014.
+        // Conversion failure NEVER fails the generation — the
+        // deterministic shape ships with 2024 phrasing (honest degrade,
+        // same never-fail law as every other organ).
+        const source = JSON.parse(JSON.stringify(finalMonster));
+        try {
+          const converted = await convertEdition(source, (p, v) => generateGptResponse(p, v, 3), { degraded: isDegradedMode() });
+          delete converted._conversionNotes;
+          converted.other_edition = finalMonster;
+          finalMonster = converted;
+          logger.log('[reskin] 2014 conversion:', 'one lint-gated call — both printings saved');
+        } catch (e2) {
+          logger.warn('[reskin] 2014 conversion failed — the deterministic shape ships with 2024 phrasing:', e2?.message ?? e2);
+          const shaped = toLegacyModel(source);
+          // the classic card renders plain text — strip the 2024
+          // markdown markers so the degrade reads clean (owner note
+          // 2026-09-14: "unrendered asterisks")
+          for (const v of Object.values(shaped)) {
+            if (Array.isArray(v)) for (const en of v) { if (en && typeof en.description === 'string') en.description = en.description.replace(/\*+/g, ''); }
+          }
+          shaped.other_edition = finalMonster;
+          finalMonster = shaped;
+        }
+      }
     } else {
       finalMonster = await generateMonster2024(
       {

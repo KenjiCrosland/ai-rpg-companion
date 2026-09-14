@@ -485,3 +485,125 @@ describe('StatblockGenerator 2024 flow', () => {
     });
   });
 });
+
+// THE 2014 MOVE (owner go 2026-09-14): a 2014-format generation rides the
+// reskin pipeline, then one lint-gated convertEdition call rewrites the
+// phrasing — both printings save. The reskin module is mocked here (its
+// own suite owns its behavior); these tests own the ROUTING + conversion.
+jest.mock('../reskin/generate.mjs', () => ({ generateReskin: jest.fn() }));
+const reskinMod = require('../reskin/generate.mjs');
+
+describe('the 2014 move: reskin-first 2014 (2026-09-14)', () => {
+  const reskinStalker = () => ({
+    name: 'Gloom Stalker', format: '2024',
+    size: 'Medium', type: 'Monstrosity', alignment: 'Neutral Evil',
+    ac: 14, hp: 59, hp_formula: '13d8 + 1', speed: '40 ft.',
+    stats: { STR: 12, DEX: 16, CON: 12, INT: 6, WIS: 14, CHA: 8 },
+    saves: { STR: 1, DEX: 5, CON: 1, INT: -2, WIS: 2, CHA: -1 },
+    senses: 'darkvision 60 ft.; Passive Perception 14',
+    cr: 4, cr_str: '4', xp: 1100, pb: 2,
+    challenge_rating: '4 (XP 1,100; PB +2)',
+    archetype: 'lurker', archetype_source: 'user',
+    generation: { donor: 'lurker-3', signature: 'custom' },
+    sections: {
+      Traits: [{ name: 'Umbral Veil', text: 'While in Dim Light or Darkness, the stalker has the Invisible condition.' }],
+      Actions: [
+        { name: 'Multiattack', text: 'The stalker makes two Shadow Claw attacks.' },
+        { name: 'Shadow Claw', text: '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.' },
+      ],
+    },
+  });
+  const conversionPayload = {
+    Traits: [{ name: 'Umbral Veil', text: 'While in dim light or darkness, the stalker is invisible.' }],
+    Actions: [
+      { name: 'Multiattack', text: 'The stalker makes two Shadow Claw attacks.' },
+      { name: 'Shadow Claw', text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5) slashing damage.' },
+    ],
+  };
+
+  beforeEach(() => {
+    localStorage.clear();
+    jest.clearAllMocks();
+    localStorage.setItem('statblock-format', '2014');
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1920 });
+  });
+
+  test('a 2014-format generation routes the reskin, converts once, and saves both printings', async () => {
+    reskinMod.generateReskin.mockResolvedValue(reskinStalker());
+    aiClient.generateGptResponse.mockImplementation((prompt, validate) => {
+      if (validate === validateArchetypeResponse) return Promise.resolve(JSON.stringify({ archetype: 'lurker' }));
+      return Promise.resolve(JSON.stringify(conversionPayload)); // the conversion call
+    });
+    const wrapper = mountGenerator();
+    await wrapper.find('input#monsterName').setValue('Gloom Stalker');
+    await setCR(wrapper, '4');
+    await generate(wrapper);
+
+    expect(reskinMod.generateReskin).toHaveBeenCalledTimes(1);
+    const saved = savedMonsters().Uncategorized[0];
+    expect(saved.format).toBe('2014');
+    expect(saved.actions.find((a) => a.name === 'Shadow Claw').description).toContain('to hit');
+    expect(saved.other_edition.format).toBe('2024');
+    expect(saved.other_edition.sections.Actions[1].text).toContain('*Melee Attack Roll:*');
+    wrapper.unmount();
+  });
+
+  test('the kill switch restores the slot path — generateReskin never called', async () => {
+    // the routing is the claim; the slot path's own fixtures live in its
+    // suite, so its calls simply fail here and the error path runs
+    localStorage.setItem('statblock-reskin-2014', '0');
+    aiClient.generateGptResponse.mockImplementation((prompt, validate) => {
+      if (validate === validateArchetypeResponse) return Promise.resolve(JSON.stringify({ archetype: 'lurker' }));
+      return Promise.reject(new Error('slot path reached — fixtures live in its own suite'));
+    });
+    const wrapper = mountGenerator();
+    await wrapper.find('input#monsterName').setValue('Gloom Stalker');
+    await setCR(wrapper, '4');
+    await generate(wrapper);
+
+    expect(reskinMod.generateReskin).not.toHaveBeenCalled();
+    wrapper.unmount();
+  });
+
+  test('conversion failure NEVER fails the generation — the deterministic shape ships with the 2024 original cached', async () => {
+    reskinMod.generateReskin.mockResolvedValue(reskinStalker());
+    aiClient.generateGptResponse.mockImplementation((prompt, validate) => {
+      if (validate === validateArchetypeResponse) return Promise.resolve(JSON.stringify({ archetype: 'lurker' }));
+      return Promise.reject(new Error('Failed to generate a valid response. Please try again later.'));
+    });
+    const wrapper = mountGenerator();
+    await wrapper.find('input#monsterName').setValue('Gloom Stalker');
+    await setCR(wrapper, '4');
+    await generate(wrapper);
+
+    const saved = savedMonsters().Uncategorized[0];
+    expect(saved.format).toBe('2014'); // toLegacyModel deterministic shape
+    const claw = saved.actions.find((a) => a.name === 'Shadow Claw');
+    expect(claw).toBeTruthy();
+    expect(claw.description).not.toMatch(/\*/); // markdown stripped for the classic card (owner note 2026-09-14)
+    expect(saved.other_edition.format).toBe('2024');
+    wrapper.unmount();
+  });
+
+  test("a saved 'caster' archetype never crashes the conversion — the Tollkeeper class dies", async () => {
+    // the reskin's internal family name reached convertEdition's chassis
+    // lookup and threw (live, 2026-09-14); the conversion now falls back
+    // to the balanced chassis
+    const m = reskinStalker();
+    m.archetype = 'caster';
+    reskinMod.generateReskin.mockResolvedValue(m);
+    aiClient.generateGptResponse.mockImplementation((prompt, validate) => {
+      if (validate === validateArchetypeResponse) return Promise.resolve(JSON.stringify({ archetype: 'lurker' }));
+      return Promise.resolve(JSON.stringify(conversionPayload));
+    });
+    const wrapper = mountGenerator();
+    await wrapper.find('input#monsterName').setValue('Gloom Stalker');
+    await setCR(wrapper, '4');
+    await generate(wrapper);
+
+    const saved = savedMonsters().Uncategorized[0];
+    expect(saved.format).toBe('2014');
+    expect(saved.actions.find((a) => a.name === 'Shadow Claw').description).toContain('to hit'); // REAL conversion, not the degrade
+    wrapper.unmount();
+  });
+});

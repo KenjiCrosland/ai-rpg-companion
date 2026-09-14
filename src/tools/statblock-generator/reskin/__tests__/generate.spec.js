@@ -282,9 +282,27 @@ describe('batch four quick wins', () => {
     expect(m.xp).toBe(3900);
   });
 
-  test('a user-typed name ships verbatim — never renamed, never title-cased away', async () => {
+  // HISTORY: this pinned the VERBATIM law ("never title-cased away") —
+  // superseded by owner ruling 2026-09-14: "convert user names to the
+  // proper format if improper... intentional misspellings via edit".
+  // Casing normalizes (first letter per word, small words stay small,
+  // interior caps untouched); the WORDS remain the user's.
+  test('a user-typed name normalizes casing but is never reworded', async () => {
     const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8, fixedName: 'grishnak of the Deep Roads' }, async () => answer());
-    expect(m.name).toBe('grishnak of the Deep Roads');
+    expect(m.name).toBe('Grishnak of the Deep Roads');
+    const m2 = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8, fixedName: 'lady McTavish of the fen' }, async () => answer());
+    expect(m2.name).toBe('Lady McTavish of the Fen'); // interior caps survive
+  });
+
+  test("the model may fix an obvious misspelling; a rewording is stamped back — the owner's edit-pencil rule", async () => {
+    // model corrects "chaple" -> "Chapel": same name within a whisper
+    const fixed = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8, fixedName: 'chaple knight' },
+      async () => answer({ name: 'Chapel Knight' }));
+    expect(fixed.name).toBe('Chapel Knight');
+    // model rewords entirely: the user's name stands (cased)
+    const reword = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8, fixedName: 'chaple knight' },
+      async () => answer({ name: 'Doom Sovereign' }));
+    expect(reword.name).toBe('Chaple Knight');
   });
 
   test('the ranged twin pays the melee premium', async () => {
@@ -5619,6 +5637,58 @@ describe('the library rename-claim check (2026-09-14): a lying rename loses to t
     expect(lib).toBeTruthy();
     if (!/\bStunned\b/.test(lib.text)) {
       expect(lib.name).not.toMatch(/Stunning/);
+    }
+  });
+});
+
+describe('the 2014-move smoke fix (2026-09-14): public archetype carries the menu vocabulary', () => {
+  test("a caster-role block stamps its MENU role, not 'caster' — the conversion crash class dies at the source", async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(12, 'binder', 'caster'), 12, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    const m = await generateReskin({ archetype: 'caster', menuRole: 'controller', style: 'binder', concept: 'x', cr: 12, mechanics: [] },
+      async (prompt) => {
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return JSON.stringify({
+          name: 'Test Binder', type: 'Fiend', size: 'Medium', alignment: 'Neutral',
+          senses: 'darkvision 60 ft.', languages: 'Common',
+          renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Fire'])),
+          conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Constitution',
+          spells: { at_will: ['Detect Magic', 'Light'], daily: ['Fear', 'Darkness'] },
+          wildcard: `*Constitution Saving Throw*: DC ${scaled.dc}, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+        });
+      });
+    expect(m.archetype).toBe('controller'); // the menu vocabulary — chassis-valid
+    expect(m.generation.archetype).toBe('caster'); // the internal record survives
+  });
+});
+
+describe('the 2014-batch critic vets (2026-09-14): attack delegation, the bolt', () => {
+  test('an attack against EACH creature dies — the Stone Shove evasion closes', async () => {
+    let repairPrompt = null;
+    await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({ wildcard: 'The creature makes one Claw attack against each creature within 5 feet of it. Each target hit must succeed on a DC 15 Strength saving throw or have the Prone condition.' });
+    });
+    expect(repairPrompt).toMatch(/attack against EACH creature multiplies the attack routine/);
+  });
+
+  test("a 'Bolt' name never lands on a row with reach — the Relic Bolt class", () => {
+    const { renameKeysOf: rk, reskinDefects: rd } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(5, null, 'defender'), 5, { mechanics: [] });
+    const keys = rk(scaled);
+    const renames = {};
+    keys.forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const reachRow = Object.values(scaled.sections).flat().find((e) => keys.includes(e.name) && /reach \d+ ft/.test(e.text) && e.text.includes('{damage_type}'));
+    if (reachRow) {
+      renames[reachRow.name] = 'Relic Bolt';
+      const p = { name: 'Testman', renames, wildcard: 'x', damage_types: {}, conditions: {}, melee_rider: 'none' };
+      expect(rd(scaled, p, {}).join('\n')).toMatch(/launcher but the row swings in melee/);
     }
   });
 });
