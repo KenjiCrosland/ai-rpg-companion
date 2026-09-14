@@ -40,7 +40,12 @@ test('a cheating wildcard keeps the chassis text', async () => {
   const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => answer({
     wildcard: 'It is very scary and no one escapes its judgment, which is dreadful.',
   }));
-  expect(Object.values(m.sections).flat().find((e) => e.name === 'Waylay').text).toMatch(/Disadvantage on its next attack roll/);
+  { // fallback deleted + LIBRARY landed 2026-09-13: a rejected wildcard
+      // now draws a generified golden seed under the model's rename
+      const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
+      expect(w.library).toBe(true);
+      expect(w.text).not.toMatch(/Disadvantage on its next attack roll before the start/);
+    }
 });
 
 test('the prompt shows mechanics, never flavor, and prices the wildcard', () => {
@@ -82,15 +87,21 @@ describe('batch-review fixes (2026-08-18)', () => {
     }
   });
 
-  test('an aura-shaped or second-person wildcard keeps chassis text — with the scaled DC', async () => {
+  // HISTORY: this test pinned "chassis text stands" — the fallback was
+  // DELETED 2026-09-13 (owner + critic: dominated by construction,
+  // 0/329 print Actions lose to their own Multiattack; shipped at the
+  // wildcard failure rate under twelve names). A failed wildcard now
+  // drops the slot, symmetric with the trait slot.
+  test('an aura-shaped or second-person wildcard DROPS the slot — no fallback text ships', async () => {
     for (const bad of [
       'Each creature that starts its turn within 30 feet of the creature takes 10 (3d6) Fire damage.',
       'When a creature fails a save against your gaze (DC 15), it has Disadvantage on attack rolls.',
     ]) {
       const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 20 }, async () => answer({ wildcard: bad }));
-      const slot = Object.values(m.sections).flat().find((e) => e.name === 'Waylay');
-      expect(slot.text).toMatch(/Disadvantage on attack rolls until the start/);
-      expect(slot.text).toMatch(/DC 21/); // the fallback carries the SCALED DC now
+      const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
+      expect(w.library).toBe(true);
+      expect(w.text).toMatch(/DC 21/); // the library stamps the card DC
+      expect(m.generation.signature).toBe('library');
     }
   });
 });
@@ -160,7 +171,12 @@ describe('batch two (2026-08-18): types are reskin outputs, wildcards land in th
     const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => answer({
       wildcard: 'When the creature teleports within 5 feet of a foe, that foe must succeed on a DC 15 Dexterity Saving Throw or be Blinded until the end of its next turn.',
     }));
-    expect(Object.values(m.sections).flat().find((e) => e.name === 'Waylay').text).toMatch(/Disadvantage on its next attack roll/);
+    { // fallback deleted + LIBRARY landed 2026-09-13: a rejected wildcard
+      // now draws a generified golden seed under the model's rename
+      const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
+      expect(w.library).toBe(true);
+      expect(w.text).not.toMatch(/Disadvantage on its next attack roll before the start/);
+    }
     const m2 = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => answer({
       wildcard: 'Corrosive Snare: one creature within 30 feet must succeed on a DC 15 Dexterity Saving Throw or its Speed is halved until the end of its next turn.',
     }));
@@ -208,7 +224,12 @@ describe('batch three (2026-08-18): the repair call, pronouns, roster, size die'
     const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => answer({
       wildcard: 'One creature within 30 feet must succeed on a DC 15 Wisdom Saving Throw or be Frightened; while Frightened this way, the creature cannot willingly move closer to the creature.',
     }));
-    expect(Object.values(m.sections).flat().find((e) => e.name === 'Waylay').text).toMatch(/Disadvantage on its next attack roll/);
+    { // fallback deleted + LIBRARY landed 2026-09-13: a rejected wildcard
+      // now draws a generified golden seed under the model's rename
+      const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
+      expect(w.library).toBe(true);
+      expect(w.text).not.toMatch(/Disadvantage on its next attack roll before the start/);
+    }
   });
 
   test('the taken-names roster reaches the prompt', () => {
@@ -349,12 +370,15 @@ describe('the Rimegrave guards', () => {
 });
 
 describe('the second Horseman fixes', () => {
-  test('the slot fallback save stat interpolates — an oath threatens Wisdom', async () => {
+  // HISTORY: pinned the fallback's save-stat interpolation — the
+  // fallback was deleted 2026-09-13; a rejected-unrepaired wildcard
+  // now drops the slot entirely
+  test('a rejected-unrepaired wildcard drops the slot — nothing interpolates', async () => {
     const m = await generateReskin({ archetype: 'skirmisher', concept: 'an oath-keeper', cr: 8 }, async () => answer({
       slot_save: 'Wisdom',
-      wildcard: 'It is very scary and dreadful beyond words entirely.', // rejected -> fallback ships
+      wildcard: 'It is very scary and dreadful beyond words entirely.', // rejected -> the library stands in
     }));
-    expect(Object.values(m.sections).flat().find((e) => e.name === 'Waylay').text).toMatch(/\*Wisdom Saving Throw\*/);
+    expect(Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay')).library).toBe(true);
   });
 
   test('a Vorpal rename fails validation — icon vocabulary is reserved', () => {
@@ -484,8 +508,12 @@ describe('signature targeting + repair retry (owner go 2026-08-18)', () => {
       if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
       return answer({ wildcard: 'It is very scary and no one escapes its judgment.' });
     });
-    expect(Object.values(m.sections).flat().find((e) => e.name === 'Waylay').text)
-      .toMatch(/Disadvantage on its next attack roll/);
+    { // fallback deleted + LIBRARY landed 2026-09-13: a rejected wildcard
+      // now draws a generified golden seed under the model's rename
+      const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
+      expect(w.library).toBe(true);
+      expect(w.text).not.toMatch(/Disadvantage on its next attack roll before the start/);
+    }
   });
 
   test('a rejected trait rides the same repair call and ships repaired', async () => {
@@ -510,8 +538,12 @@ describe('signature targeting + repair retry (owner go 2026-08-18)', () => {
         wildcard: '*Wisdom Saving Throw*: DC 15, one creature that can see the Lantern Head. *Failure:* The target has the Frightened condition.',
       });
     });
-    expect(Object.values(m.sections).flat().find((e) => e.name === 'Waylay').text)
-      .toMatch(/Disadvantage on its next attack roll/);
+    { // fallback deleted + LIBRARY landed 2026-09-13: a rejected wildcard
+      // now draws a generified golden seed under the model's rename
+      const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
+      expect(w.library).toBe(true);
+      expect(w.text).not.toMatch(/Disadvantage on its next attack roll before the start/);
+    }
   });
 });
 
@@ -709,8 +741,12 @@ describe('Matador fixes (2026-08-19): muddle false positives, validated repair, 
       if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
       return answer({ wildcard: '*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The creature takes 10 (3d6) Psychic damage and has the Frightened condition.' });
     });
-    expect(Object.values(m.sections).flat().find((e) => e.name === 'Waylay').text)
-      .toMatch(/Disadvantage on its next attack roll/);
+    { // fallback deleted + LIBRARY landed 2026-09-13: a rejected wildcard
+      // now draws a generified golden seed under the model's rename
+      const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
+      expect(w.library).toBe(true);
+      expect(w.text).not.toMatch(/Disadvantage on its next attack roll before the start/);
+    }
   });
 
   test('the repair call carries a REAL validator — prod retries can fire on a bad repair', async () => {
@@ -1085,8 +1121,12 @@ describe('the tier policy (2026-08-19): mechanical fails closed, judgment fails 
       if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
       return answer({ wildcard: '*Wisdom Saving Throw*: DC 20, one creature within 30 feet. *Failure:* The target has the Frightened condition.' });
     });
-    expect(Object.values(m.sections).flat().find((e) => e.name === 'Waylay').text)
-      .toMatch(/Disadvantage on its next attack roll/);
+    { // fallback deleted + LIBRARY landed 2026-09-13: a rejected wildcard
+      // now draws a generified golden seed under the model's rename
+      const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
+      expect(w.library).toBe(true);
+      expect(w.text).not.toMatch(/Disadvantage on its next attack roll before the start/);
+    }
   });
 
   test('a judgment-flagged repair ships in preference to the original draft', async () => {
@@ -1285,8 +1325,12 @@ describe('Pilgrim kill-chain fixes (2026-08-19): three proven false positives', 
       if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
       return answer({ wildcard: 'The creature teleports up to 30 feet to an unoccupied space it can see, and it leaves behind a swirl of gray ash.' });
     });
-    expect(Object.values(m.sections).flat().find((e) => e.name === 'Waylay').text)
-      .toMatch(/Disadvantage on its next attack roll/);
+    { // fallback deleted + LIBRARY landed 2026-09-13: a rejected wildcard
+      // now draws a generified golden seed under the model's rename
+      const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
+      expect(w.library).toBe(true);
+      expect(w.text).not.toMatch(/Disadvantage on its next attack roll before the start/);
+    }
   });
 
   test('print movement-trait grammar survives the trait guard', async () => {
@@ -1397,8 +1441,11 @@ describe('acceptance-batch fixes (2026-08-23): the verified five', () => {
         wildcard: 'One creature within 30 feet that the creature can see must succeed on a DC 15 Wisdom Saving Throw or have the Frightened condition until the end of its next turn.',
       });
     });
-    expect((m.sections.Actions ?? []).some((e) => e.name === 'Waylay')).toBe(true);
-    expect((m.sections.Traits ?? []).some((e) => e.name === 'Waylay')).toBe(false);
+    // fallback deleted + library landed 2026-09-13: the rejected
+    // trait-declared frame draws a library seed — NEVER into Traits
+    // (the point of this test); the seed's own section is legal
+    expect((m.sections.Traits ?? []).some((e) => (e.name ?? '').startsWith('Waylay'))).toBe(false);
+    expect(Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'))?.library).toBe(true);
   });
 
   test('alignment ships title-cased', async () => {
@@ -1804,8 +1851,12 @@ describe('spellcasting organ + ordering + metering completion (2026-08-25)', () 
       // teleport-less chassis (mechanical) — mechanical must win, chassis ships
       return answer({ wildcard: '*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Frightened condition, and the creature can use its bonus action to teleport up to 30 feet.' });
     });
-    expect(Object.values(m.sections).flat().find((e) => e.name === 'Waylay').text)
-      .toMatch(/Disadvantage on its next attack roll/); // fail-closed, not fail-open
+    { // fallback deleted + LIBRARY landed 2026-09-13: a rejected wildcard
+      // now draws a generified golden seed under the model's rename
+      const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
+      expect(w.library).toBe(true);
+      expect(w.text).not.toMatch(/Disadvantage on its next attack roll before the start/);
+    }
   });
 
   test('"twice per day" prose meters to 2/Day', async () => {
@@ -1830,8 +1881,12 @@ describe('metering catch-all + rider pricing + reach reconciliation (2026-08-26)
     const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quiet(() => answer({
       wildcard: '*Dexterity Saving Throw*: DC 15, one creature within 30 feet. *Failure:* 10 (3d6) Necrotic damage. The creature can use this X/Day.',
     })));
-    expect(Object.values(m.sections).flat().find((e) => e.name === 'Waylay').text)
-      .toMatch(/Disadvantage on its next attack roll/);
+    { // fallback deleted + LIBRARY landed 2026-09-13: a rejected wildcard
+      // now draws a generified golden seed under the model's rename
+      const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
+      expect(w.library).toBe(true);
+      expect(w.text).not.toMatch(/Disadvantage on its next attack roll before the start/);
+    }
   });
 
   test('stat-modifier metering is judgment — repaired if possible, shipped flagged if not', async () => {
@@ -2566,16 +2621,24 @@ describe('the brute plumbing (2026-08-26): archetype flows loudly end to end', (
     const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8, energy: 'Fire' }, quiet2(() => answer({
       wildcard: '*Dexterity Saving Throw*: DC 15, each creature in a 15-foot-radius Sphere within 60 feet. *Failure:* 14 (4d6) Fire damage. *Success:* Half damage.',
     })));
-    expect(Object.values(m.sections).flat().find((e) => /Waylay/.test(e.name)).text)
-      .toMatch(/Disadvantage on its next attack roll/);
+    { // fallback deleted + LIBRARY landed 2026-09-13: a rejected wildcard
+      // now draws a generified golden seed under the model's rename
+      const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
+      expect(w.library).toBe(true);
+      expect(w.text).not.toMatch(/Disadvantage on its next attack roll before the start/);
+    }
   });
 
   test('a model-authored death condition is mechanical — a creature dies only at 0 HP', async () => {
     const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quiet2(() => answer({
       wildcard: '*Strength Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Prone condition. Each time the creature takes Slashing damage, one string snaps; when the fourth snaps, it collapses into dead timber and is destroyed.',
     })));
-    expect(Object.values(m.sections).flat().find((e) => /Waylay/.test(e.name)).text)
-      .toMatch(/Disadvantage on its next attack roll/); // chassis stands
+    { // fallback deleted + LIBRARY landed 2026-09-13: a rejected wildcard
+      // now draws a generified golden seed under the model's rename
+      const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
+      expect(w.library).toBe(true);
+      expect(w.text).not.toMatch(/Disadvantage on its next attack roll before the start/);
+    }
     // print's duration idiom stays legal ("until it is destroyed")
     const { reskinDefects: rd } = require('../generate.mjs');
     const scaled = scaleDonor(pickDonor(8, null, 'skirmisher'), 8);
@@ -2745,16 +2808,18 @@ describe('the brute plumbing (2026-08-26): archetype flows loudly end to end', (
     expect(seats.rest).toContain('wrapping crush');
   });
 
-  test('a fallback ship feeds the audit an honesty brief', async () => {
+  // HISTORY: the FALLBACK NOTICE audit brief died with the fallback
+  // (2026-09-13) — nothing ships, so there is nothing to be honest about
+  test('an unrepairable wildcard drops the slot and the audit hears no fallback brief', async () => {
     let auditPrompt = null;
     const bad = 'The creature becomes utterly invisible to yours truly and you cannot see it.'; // second person: mechanical, unrepairable
-    await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
       if (prompt.startsWith('You are repairing')) return JSON.stringify({ wildcard: bad });
       if (prompt.startsWith('You are auditing')) { auditPrompt = prompt; return JSON.stringify({ findings: [] }); }
       return answer({ wildcard: bad });
     });
-    expect(auditPrompt).toMatch(/FALLBACK NOTICE/);
-    expect(auditPrompt).toMatch(/Judge the name against the actual payload/);
+    expect(auditPrompt).not.toMatch(/FALLBACK NOTICE/);
+    expect(m.generation.signature).toBe('library');
   });
 
   test('the charger engine survives the reskin: charge rider and the Prone-gated trample', async () => {
@@ -2828,8 +2893,12 @@ describe('probe-smoke pattern fixes (2026-08-26)', () => {
     const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quiet(() => answer({
       wildcard: 'When a creature hits the creature with a melee attack, the attack is negated, and the attacker must succeed on a DC 15 Dexterity saving throw or take 10 (3d6) Fire damage.',
     })));
-    expect(Object.values(m.sections).flat().find((e) => e.name === 'Waylay').text)
-      .toMatch(/Disadvantage on its next attack roll/);
+    { // fallback deleted + LIBRARY landed 2026-09-13: a rejected wildcard
+      // now draws a generified golden seed under the model's rename
+      const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
+      expect(w.library).toBe(true);
+      expect(w.text).not.toMatch(/Disadvantage on its next attack roll before the start/);
+    }
   });
 
   test('a negation defense priced as a Reaction ships', async () => {
@@ -3141,8 +3210,11 @@ describe('the caster family plumbing (2026-09-02): one pool, two menu priors, th
     // Invisibility rides at-will since the tier fix (2026-09-04) — only
     // the NEVER_AT_WILL buff stays gated
     expect(sc[0].text).toMatch(/1\/Day Each:\*\* \*Blur\*/);
-    // the print reaction ships under its own name — rules-true, never renamed
-    expect((m.sections.Reactions ?? []).some((e) => /Protective Ward/.test(e.name))).toBe(true);
+    // the print reaction ships under its own name — rules-true, never
+    // renamed (re-authored to the Archmage's Shield-cast form
+    // 2026-09-14: the flat +3 was "the Parry shape with a gate" —
+    // critic ×2; print casters answer with the Shield SPELL)
+    expect((m.sections.Reactions ?? []).some((e) => /Protective Magic/.test(e.name) && /casts \*Shield\*/.test(e.text))).toBe(true);
   });
 
   test('the menu prior fills an unclaimed style; a concept-claimed style outranks it', async () => {
@@ -3409,8 +3481,13 @@ describe('third caster smoke fixes (2026-09-02): invented conditions, second nov
     }));
     const bad = await trait('Thick Silence', 'The creature exudes an aura of quiet fog in a 30-foot radius, lightly obscuring the area. The target has Disadvantage on Perception checks based on hearing while in that area.');
     expect((bad.sections.Traits ?? []).some((e) => e.name === 'Thick Silence')).toBe(false);
+    // HISTORY: this fixture originally LIVED (its "the target" is
+    // hit-established, not orphaned) — superseded 2026-09-14 by the
+    // rider law: 0/329 print traits key on the creature's own hits;
+    // riders weld into the attack row. The reference is sound, the
+    // HOME is wrong.
     const good = await trait('Sealed Spite', 'When the creature hits with a ranged attack, the target has Disadvantage on its next attack roll before the start of the creature\'s next turn.');
-    expect((good.sections.Traits ?? []).some((e) => e.name === 'Sealed Spite')).toBe(true);
+    expect((good.sections.Traits ?? []).some((e) => e.name === 'Sealed Spite')).toBe(false);
   });
 
   test('the dice belt and field-disjunction lint fire on final text', () => {
@@ -5248,5 +5325,300 @@ describe('the body smoke-three critic fixes (2026-09-13): the union, the typed s
     expect(rd(scaled, mk(), {}).join('\n')).toMatch(/promises a tail but the row makes a Claw attack/);
     renames[del.name] = 'Crushing Claw';
     expect(rd(scaled, mk(), {}).join('\n')).not.toMatch(/promises a/);
+  });
+});
+
+describe('the Tier A stress fixes (2026-09-13): spell caps, the exhaustion stamp, undefined states', () => {
+  const quietE2 = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+  const casterAnswer = (cr, style, over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(cr, style, 'caster'), cr, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    return { scaled, renames, typed };
+  };
+
+  test('at-will damage is capped at ONE and AoE at-will needs CR 16 — the Saint class dies', async () => {
+    const { scaled, renames, typed } = casterAnswer(8, null);
+    const m = await generateReskin({ archetype: 'caster', concept: 'x', cr: 8, mechanics: [] }, quietE2(() => JSON.stringify({
+      name: 'Test Pane', type: 'Celestial', size: 'Medium', alignment: 'Neutral',
+      senses: 'darkvision 60 ft.', languages: 'Common',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Radiant'])),
+      conditions: { condition_minor: 'Deafened' }, melee_rider: 'none', slot_save: 'Dexterity',
+      spells: { at_will: ['Guiding Bolt', 'Shatter'], daily: ['Blur', 'Blight'] },
+      wildcard: `*Dexterity Saving Throw*: DC ${scaled.dc}, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+    })));
+    const sc = Object.values(m.sections).flat().find((e) => e.name === 'Spellcasting');
+    const atWillLine = /- \*\*At Will:\*\* ([^\n]*)/.exec(sc.text)?.[1] ?? '';
+    // Shatter (AoE, CR < 16) never at will; at most one damage spell there
+    expect(atWillLine).not.toMatch(/Shatter/);
+    const dmgAtWill = ['Guiding Bolt', 'Shatter'].filter((x) => atWillLine.includes(x));
+    expect(dmgAtWill.length).toBeLessThanOrEqual(1);
+    expect(sc.text).toMatch(/1\/Day[^\n]*Shatter/);
+  });
+
+  test('the triple that survives repair exhaustion gets its type stamped magical — the shipped Glass Claw dies', async () => {
+    const { scaled, renames, typed } = casterAnswer(11, 'binder');
+    renames[Object.values(scaled.sections).flat().find((e) => e.text.includes('{damage_type}') && !e.rules).name] = 'Grave Claw';
+    const typedNames = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    const m = await generateReskin({ archetype: 'caster', style: 'binder', concept: 'x', cr: 11, energy: 'Necrotic', mechanics: [] }, quietE2(() => JSON.stringify({
+      name: 'Test Wraith', type: 'Undead', size: 'Medium', alignment: 'Neutral',
+      senses: 'darkvision 60 ft.', languages: 'Common',
+      renames, damage_types: Object.fromEntries(typedNames.map((n) => [n, n === 'Grave Claw' ? 'Slashing' : 'Necrotic'])),
+      conditions: { condition_minor: 'Deafened' }, melee_rider: 'none', slot_save: 'Constitution',
+      spells: { at_will: ['Detect Magic', 'Minor Illusion'], daily: ['Blight'] },
+      wildcard: `*Constitution Saving Throw*: DC ${scaled.dc}, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+    })));
+    const row = Object.values(m.sections).flat().find((e) => e.name === 'Grave Claw');
+    expect(row.text).not.toMatch(/Slashing/);
+    expect(row.text).toMatch(/Necrotic damage/);
+  });
+
+  test('a trait keying on a state nothing enters dies; a self-establishing state survives', async () => {
+    const run = (tw) => {
+      let repairPrompt = null;
+      return generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+        if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return answer({ trait_wildcard: { name: 'Reliquary Ward', text: tw } });
+      }).then((m) => ({ m, repairPrompt }));
+    };
+    const bad = await run('While the reliquary is planted, allies within 10 feet have Advantage on saving throws.');
+    expect(bad.repairPrompt).toMatch(/the state "planted" that nothing on the sheet enters/);
+    const good = await run('The creature plants its reliquary as part of any move it makes. While the reliquary is planted, allies within 10 feet have Advantage on saving throws.');
+    expect(good.repairPrompt).toBeNull();
+  });
+
+  test('untargetability grammar dies in both chains — the Glass Revenant hold closes', async () => {
+    let repairPrompt = null;
+    await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({ trait_wildcard: { name: 'Mirror Home', text: 'The creature cannot be targeted or affected by anything while it is inside a reflection.' } });
+    });
+    expect(repairPrompt).toMatch(/untargetability is not a grantable defense/);
+  });
+
+  test('the engine recomputes every flat average — the 18 (4d6) miss dies', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quietE2(() => answer({
+      wildcard: "*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* 18 (4d6) Necrotic damage, and the target has Disadvantage on its next attack roll before the start of the creature's next turn.",
+    })));
+    const row = Object.values(m.sections).flat().find((e) => /\(4d6\)/.test(e.text ?? ''));
+    expect(row.text).toMatch(/14 \(4d6\)/);
+    expect(row.text).not.toMatch(/18 \(4d6\)/);
+  });
+
+  test('an Actions row calling itself a bonus action is scrubbed — the Shadow Stitch label dies', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quietE2(() => answer({
+      wildcard: "*Dexterity Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn. When the creature is Bloodied, it can use this bonus action to flee without provoking Opportunity Attacks.",
+    })));
+    const t = JSON.stringify(m.sections.Actions ?? []);
+    expect(t).not.toMatch(/this bonus action/i);
+  });
+
+  test('a dragon body always speaks Draconic and prints fractional CR as print does', async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(8, null, 'dragon'), 8, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    const m = await generateReskin({ archetype: 'brute', bodyType: 'dragon', concept: 'x', cr: 8, energy: 'Fire', mechanics: [] },
+      quietE2(() => JSON.stringify({
+        name: 'Test Drake', type: 'Dragon', size: 'Large', alignment: 'Neutral',
+        senses: 'blindsight 30 ft., darkvision 120 ft.', languages: 'Common',
+        renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Fire'])),
+        conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Dexterity',
+        wildcard: `*Dexterity Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      })));
+    expect(m.languages).toMatch(/Draconic/);
+    const m2cr = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 0.5 }, quietE2(() => answer({})));
+    expect(m2cr.cr_str).toBe('1/2');
+  });
+
+  test('Undead regeneration keys to Radiant regardless of the energy foil — the Chapel Knight key', async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(7, 'warden', 'defender'), 7, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    const m = await generateReskin({ archetype: 'defender', style: 'warden', resolvedType: 'Undead', concept: 'x', cr: 7, energy: 'Radiant', mechanics: [] },
+      quietE2(() => JSON.stringify({
+        name: 'Test Knight Two', type: 'Undead', size: 'Medium', alignment: 'Neutral',
+        senses: 'darkvision 60 ft.', languages: 'Common',
+        renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Radiant'])),
+        conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Constitution',
+        wildcard: `*Constitution Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      })));
+    const regen = Object.values(m.sections).flat().find((e) => /Regeneration/.test(e.name));
+    expect(regen.text).toMatch(/Radiant damage/);
+    expect(regen.text).not.toMatch(/Necrotic damage/);
+  });
+
+  test('escape DCs re-derive from the final stats — the donor-flat drift dies', () => {
+    const scaled = scaleDonor(pickDonor(11, 'trap', 'lurker'), 11, { mechanics: [] });
+    const escDC = 8 + Math.floor((scaled.stats.STR - 10) / 2) + scaled.pb;
+    const rows = Object.values(scaled.sections).flat().filter((e) => /escape DC \d+/.test(e.text ?? ''));
+    expect(rows.length).toBeGreaterThan(0);
+    for (const r of rows) expect(r.text).toMatch(new RegExp(`escape DC ${escDC}\\b`));
+  });
+});
+
+describe('the Tier B batch-one fix (2026-09-13): the compound-predicate dodge', () => {
+  test("a suite behind 'and can't be' dies — the Bog Lantern clause", async () => {
+    let repairPrompt = null;
+    await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({ trait_wildcard: { name: 'Shadow Body', text: "The creature can move through a space as narrow as 1 inch wide without squeezing, and can't be Grappled or Restrained." } });
+    });
+    expect(repairPrompt).toMatch(/condition-immunity SUITES/);
+  });
+});
+
+describe('Tier B batch-two fixes (2026-09-14): the speed dodge, the movement grant', () => {
+  const quietG = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+
+  test('speed-discord fires on the possessive lowercase form — the Gravemold dodge dies', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quietG(() => answer({
+      trait_wildcard: { name: 'Rooted Fast', text: "The creature's speed is 0 and it cannot benefit from bonuses to speed." },
+    })));
+    expect((m.lint_findings ?? []).join(' ')).toMatch(/speed-discord/);
+  });
+
+  test('a trait granting a movement mode the header prints is flagged — the Gargoyles class', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quietG(() => answer({
+      trait_wildcard: { name: 'Dusk Wings', text: 'At dusk, the creature stirs, gaining a flying speed of 30 feet until dawn.' },
+    })));
+    if (/Fly/.test(m.speed ?? '')) {
+      expect((m.lint_findings ?? []).join(' ')).toMatch(/movement-grant-in-trait/);
+    } else {
+      expect((m.lint_findings ?? []).join(' ')).not.toMatch(/movement-grant-in-trait/);
+    }
+  });
+});
+
+describe('batch-two critic round (2026-09-14): the replacement clause, priced dailies, the swarm voice', () => {
+  const quietH2 = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+  const mkAnswer = (cr, style, arch, over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(cr, style, arch), cr, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    return { scaled, s: JSON.stringify({
+      name: 'Test Reeve', type: 'Fiend', size: 'Large', alignment: 'Neutral',
+      senses: 'darkvision 60 ft.', languages: 'Common',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Fire'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Constitution',
+      spells: { at_will: ['Scorching Ray', 'Detect Magic'], daily: ['Wall of Fire', 'Fear'] },
+      wildcard: `*Constitution Saving Throw*: DC ${scaled.dc}, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      ...over,
+    }) };
+  };
+
+  test('Multiattack gains the print replacement clause — (A) the save action or (B) Spellcasting with the named at-will', async () => {
+    const { s } = mkAnswer(12, 'binder', 'caster');
+    const m = await generateReskin({ archetype: 'caster', style: 'binder', concept: 'x', cr: 12, energy: 'Fire', mechanics: [] }, quietH2(() => s));
+    const multi = (m.sections.Actions ?? []).find((e) => e.name.startsWith('Multiattack'));
+    expect(multi.text).toMatch(/It can replace one attack with a use of \(A\) .+ or \(B\) Spellcasting to cast \*Scorching Ray\*\./);
+  });
+
+  test('a daily damage pick over 2x per-hit DROPS — the CR 5 Cloudkill class dies priced', async () => {
+    const { scaled, s } = mkAnswer(5, null, 'caster', { spells: { at_will: ['Detect Magic', 'Light'], daily: ['Cloudkill', 'Fear'] } });
+    const m = await generateReskin({ archetype: 'caster', concept: 'x', cr: 5, energy: 'Fire', mechanics: [] }, quietH2(() => s));
+    const sc = Object.values(m.sections).flat().find((e) => e.name.startsWith('Spellcasting'));
+    if ((scaled.per_hit ?? 6) * 2 < 22) {
+      expect(sc.text).not.toMatch(/Cloudkill/);
+      expect(sc.text).toMatch(/Fear/);
+    }
+  });
+
+  test('a swarm speaks as "the swarm" — the plural-subject verb disagreement dies', async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(9, null, 'swarm'), 9, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    const m = await generateReskin({ archetype: 'lurker', bodyType: 'swarm', resolvedType: 'Construct', concept: 'a swarm of gargoyles', cr: 9, mechanics: [] },
+      quietH2(() => JSON.stringify({
+        name: 'Cathedral Gargoyles', type: 'Construct', size: 'Medium', alignment: 'Unaligned',
+        senses: 'darkvision 60 ft.', languages: 'None',
+        renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Slashing'])),
+        conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Dexterity',
+        wildcard: `*Dexterity Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      })));
+    const multi = (m.sections.Actions ?? []).find((e) => e.name.startsWith('Multiattack'));
+    expect(multi.text).toMatch(/^The swarm makes/);
+    expect(JSON.stringify(m.sections)).not.toMatch(/the cathedral gargoyles makes/);
+  });
+
+  test('the dragon Spellcasting row carries the DC and the At Will label — both live sightings die', async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(16, null, 'dragon'), 16, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    const m = await generateReskin({ archetype: 'brute', bodyType: 'dragon', concept: 'x', cr: 16, energy: 'Cold', mechanics: [] },
+      quietH2(() => JSON.stringify({
+        name: 'Test Wyrm Three', type: 'Dragon', size: 'Huge', alignment: 'Neutral',
+        senses: 'blindsight 60 ft., darkvision 120 ft.', languages: 'Draconic',
+        renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Cold'])),
+        conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Dexterity',
+        wildcard: `*Dexterity Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      })));
+    const sc = Object.values(m.sections).flat().find((e) => e.name.startsWith('Spellcasting'));
+    expect(sc.text).toMatch(/spell save DC \d+/);
+    expect(sc.text).toMatch(/\*\*At Will:\*\*/);
+    expect(sc.text).not.toMatch(/\{dc\}/);
+  });
+
+  test('an ACTING embedded bonus action is now mechanical — the Tollkeeper forced-save clause dies closed', async () => {
+    let repairPrompt = null;
+    await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer({ wildcard: '*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target is marked until the end of its next turn. The creature can use a bonus action to force the marked target to repeat the save.' });
+    });
+    expect(repairPrompt).toMatch(/one entry, one economy/);
+  });
+});
+
+describe('the library rename-claim check (2026-09-14): a lying rename loses to the seed', () => {
+  test('a condition-claiming rename over a seed that never applies it ships the seed name', async () => {
+    // skirmisher shelf at this name-hash draws a non-Stun seed; the
+    // model's slot rename claims Stunned — the seed's name must win
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) return JSON.stringify({});
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      const base = JSON.parse(answer({ wildcard: 'The creature becomes utterly invisible to yours truly and you cannot see it.' }));
+      // rename the wildcard slot row to a Stunned-claiming name
+      for (const k of Object.keys(base.renames)) { if (base.renames[k] === 'Waylay') base.renames[k] = 'Stunning Plunge'; }
+      return JSON.stringify(base);
+    });
+    const lib = Object.values(m.sections).flat().find((e) => e.library);
+    expect(lib).toBeTruthy();
+    if (!/\bStunned\b/.test(lib.text)) {
+      expect(lib.name).not.toMatch(/Stunning/);
+    }
   });
 });

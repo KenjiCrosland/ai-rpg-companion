@@ -289,6 +289,22 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
       e.text = e.text.replace(/, or \d+ \(\d+d\d+(?:\s*\+\s*\d+)?\)( \{damage_type\} damage)? if /, (m0, tok) => `, or ${half.avg} (${half.dice})${tok ?? ''} if `);
     }
   }
+  // escape DCs re-derive from the FINAL stats (2024 rule: 8 + Str mod
+  // + PB; the Chandelier shipped a donor-authored 15 beside a derived
+  // 17, critic 2026-09-13)
+  {
+    const escDC = 8 + Math.floor((scaled.stats.STR - 10) / 2) + scaled.pb;
+    for (const es of Object.values(scaled.sections)) {
+      for (const e of es) {
+        if (/escape DC \d+/.test(e.text ?? '')) e.text = e.text.replace(/escape DC \d+/g, `escape DC ${escDC}`);
+      }
+    }
+  }
+  // the {dc} token stamps the card DC into authored row text (the
+  // dragon Spellcasting header, 2026-09-14)
+  for (const es of Object.values(scaled.sections)) {
+    for (const e of es) { if (e.text?.includes('{dc}')) e.text = e.text.split('{dc}').join(String(scaled.dc)); }
+  }
   const conMod = Math.floor((scaled.stats.CON - 10) / 2);
   scaled.hp_formula = hpFormulaFor(scaled.hp, scaled.size ?? 'Medium', conMod);
   scaled.per_hit = perHit;

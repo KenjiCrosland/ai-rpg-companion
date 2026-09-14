@@ -1151,7 +1151,7 @@ export const DONORS = [
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 14, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       Reactions: [
-        { name: 'Protective Ward (3/Day)', rules: true, text: '*Trigger:* The creature is hit by an attack roll. *Response:* The creature adds 3 to its AC against that attack, possibly causing it to miss.' },
+        { name: 'Protective Magic (3/Day)', rules: true, text: '*Trigger:* The creature is hit by an attack roll. *Response:* The creature casts *Shield* in response, gaining a +5 bonus to AC until the start of its next turn, including against the triggering attack.' },
       ],
     },
   },
@@ -1171,7 +1171,7 @@ export const DONORS = [
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       Reactions: [
-        { name: 'Protective Ward (3/Day)', rules: true, text: '*Trigger:* The creature is hit by an attack roll. *Response:* The creature adds 3 to its AC against that attack, possibly causing it to miss.' },
+        { name: 'Protective Magic (3/Day)', rules: true, text: '*Trigger:* The creature is hit by an attack roll. *Response:* The creature casts *Shield* in response, gaining a +5 bonus to AC until the start of its next turn, including against the triggering attack.' },
       ],
     },
   },
@@ -1197,7 +1197,7 @@ export const DONORS = [
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 21, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       Reactions: [
-        { name: 'Protective Ward (3/Day)', rules: true, text: '*Trigger:* The creature is hit by an attack roll. *Response:* The creature adds 3 to its AC against that attack, possibly causing it to miss.' },
+        { name: 'Protective Magic (3/Day)', rules: true, text: '*Trigger:* The creature is hit by an attack roll. *Response:* The creature casts *Shield* in response, gaining a +5 bonus to AC until the start of its next turn, including against the triggering attack.' },
       ],
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
@@ -1828,7 +1828,7 @@ export const DONORS = [
         { name: 'Regeneration', rules: true, text: 'The creature regains 10 Hit Points at the start of each of its turns if it has at least 1 Hit Point.' },
         // the anchor in the Rakshasa's auto-success grammar (the
         // coaching's blessed form, now chassis)
-        { name: 'Immovable', rules: true, text: 'The creature automatically succeeds on saving throws made to avoid being moved against its will, and it can\'t be knocked Prone.' },
+        { name: 'Immovable', rules: true, text: 'The creature automatically succeeds on saving throws made to avoid being moved against its will, and it can\'t have the Prone condition.' },
         // RAMPART engine: the Balor's 5-foot Emanation aura with the
         // Azer's ally-sparing choice clause, verbatim grammar
         { name: 'Rampart Aura', engine: 'rampart', text: 'At the end of each of the creature\'s turns, each creature of the creature\'s choice in a 5-foot Emanation originating from the creature takes 14 (4d6) {damage_type} damage.' },
@@ -1918,7 +1918,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +11, reach 10 ft. 33 (4d12 + 7) {damage_type} damage.' },
         { name: 'Breath Weapon', gate: 'Recharge 5-6', text: '*Dexterity Saving Throw*: DC 18, each creature in a 60-foot Cone. *Failure:* 58 (13d8) {damage_type} damage. *Success:* Half damage.' },
-        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability: {spell_at_will}' }, // every 2024 adult+ dragon casts
+        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC {dc}):\n\n- **At Will:** {spell_at_will}\n' }, // every 2024 adult+ dragon casts; labeled + DC per print (critic 2026-09-14 x2)
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 18, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Legendary Actions': [
@@ -1946,7 +1946,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +15, reach 15 ft. 44 (8d8 + 8) {damage_type} damage.' },
         { name: 'Breath Weapon', gate: 'Recharge 5-6', text: '*Dexterity Saving Throw*: DC 22, each creature in a 90-foot Cone. *Failure:* 72 (16d8) {damage_type} damage. *Success:* Half damage.' },
-        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability: {spell_at_will}' }, // every 2024 adult+ dragon casts
+        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC {dc}):\n\n- **At Will:** {spell_at_will}\n' }, // every 2024 adult+ dragon casts; labeled + DC per print (critic 2026-09-14 x2)
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 22, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Legendary Actions': [
