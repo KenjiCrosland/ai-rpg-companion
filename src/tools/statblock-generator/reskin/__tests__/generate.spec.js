@@ -5692,3 +5692,173 @@ describe('the 2014-batch critic vets (2026-09-14): attack delegation, the bolt',
     }
   });
 });
+
+describe('the 2014-smoke clause and DC fixes (2026-09-14)', () => {
+  const quietI = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+
+  test('the replacement clause never names a ribbon — control beats Detect Magic; all-ribbons drops the spell option', async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(12, 'binder', 'caster'), 12, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    const m = await generateReskin({ archetype: 'caster', style: 'binder', concept: 'x', cr: 12, energy: 'Fire', mechanics: [] }, quietI(() => JSON.stringify({
+      name: 'Test Reeve Two', type: 'Fiend', size: 'Large', alignment: 'Neutral',
+      senses: 'darkvision 60 ft.', languages: 'Common',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Fire'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Constitution',
+      spells: { at_will: ['Detect Magic', 'Hold Person'], daily: ['Fear', 'Darkness'] },
+      wildcard: `*Constitution Saving Throw*: DC ${scaled.dc}, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+    })));
+    const multi = (m.sections.Actions ?? []).find((e) => e.name.startsWith('Multiattack'));
+    expect(multi.text).not.toMatch(/Detect Magic/);
+    expect(multi.text).toMatch(/Spellcasting to cast \*Hold Person\*/);
+  });
+
+  test("a dragon's spell save DC derives from Charisma while the breath keeps the card DC", async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(16, null, 'dragon'), 16, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    const m = await generateReskin({ archetype: 'brute', bodyType: 'dragon', concept: 'x', cr: 16, energy: 'Cold', mechanics: [] },
+      quietI(() => JSON.stringify({
+        name: 'Test Wyrm Four', type: 'Dragon', size: 'Huge', alignment: 'Neutral',
+        senses: 'blindsight 60 ft., darkvision 120 ft.', languages: 'Draconic',
+        renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Cold'])),
+        conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Dexterity',
+        wildcard: `*Dexterity Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      })));
+    const sc = Object.values(m.sections).flat().find((e) => e.name.startsWith('Spellcasting'));
+    const chaDc = 8 + m.pb + Math.floor((m.stats.CHA - 10) / 2);
+    expect(sc.text).toContain(`spell save DC ${chaDc}`);
+    const breath = Object.values(m.sections).flat().find((e) => /foot Cone/.test(e.text ?? ''));
+    expect(breath.text).toContain(`DC ${scaled.dc}`);
+  });
+});
+
+describe('the 2014 damage line + dragon DC round (2026-09-14)', () => {
+  test('dprScale 0.7 prices the whole block down — the 2014 line', () => {
+    const at2024 = scaleDonor(pickDonor(12, null, 'brute'), 12, { mechanics: [] });
+    const at2014 = scaleDonor(pickDonor(12, null, 'brute'), 12, { mechanics: [], dprScale: 0.7 });
+    const perHitOf = (s) => Math.max(...Object.values(s.sections).flat()
+      .map((e) => /(\d+) \(\d+d\d+(?:\s*\+\s*\d+)?\)/.exec(e.text ?? '')?.[1] ?? 0).map(Number));
+    expect(perHitOf(at2014)).toBeLessThan(perHitOf(at2024));
+    expect(perHitOf(at2014)).toBeGreaterThan(perHitOf(at2024) * 0.5); // scaled, not gutted
+  });
+
+  test('dragon mental-condition saves derive from Charisma — the Frightful Presence class', async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(16, null, 'dragon'), 16, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    const m = await generateReskin({ archetype: 'brute', bodyType: 'dragon', concept: 'x', cr: 16, energy: 'Cold', mechanics: [] },
+      async (prompt) => {
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return JSON.stringify({
+          name: 'Test Wyrm Five', type: 'Dragon', size: 'Huge', alignment: 'Neutral',
+          senses: 'blindsight 60 ft., darkvision 120 ft.', languages: 'Draconic',
+          renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Cold'])),
+          conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Dexterity',
+          wildcard: `*Dexterity Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+        });
+      });
+    const chaDc = 8 + m.pb + Math.floor((m.stats.CHA - 10) / 2);
+    const frightRow = Object.values(m.sections).flat().find((e) => /Frightened/.test(e.text ?? '') && !/\d+ \(\d+d\d+/.test(e.text ?? '') && /DC \d+/.test(e.text ?? ''));
+    if (frightRow) expect(frightRow.text).toContain(`DC ${chaDc}`);
+    // and the dragon Spellcasting row carries a 1/Day line home for the
+    // gated picks (Scrying is NEVER_AT_WILL now)
+    const sc = Object.values(m.sections).flat().find((e) => e.name.startsWith('Spellcasting'));
+    if (sc) expect(sc.text).not.toMatch(/\{spell_daily\}/);
+  });
+});
+
+describe('the third 2014-smoke fixes (2026-09-14): the rider host, the descent', () => {
+  test('a rider pointed at a save row re-homes to an attack row — the Branding Gaze class dies', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      // the answer renames the gated save row 'Waylay' and points the rider AT IT
+      return answer({
+        wildcard: 'When the creature hits with this attack, the target must succeed on a DC 15 Wisdom saving throw or have Disadvantage on its next attack roll before the start of the creature\'s next turn.',
+        wildcard_economy: 'rider_on:Waylay',
+      });
+    });
+    const all = Object.values(m.sections).flat();
+    const saveRow = all.find((e) => (e.name ?? '').startsWith('Waylay'));
+    // wherever the rider landed, no non-attack row carries the on-hit clause
+    for (const e of all) {
+      if (/When the [\w\s]+ hits with this attack/i.test(e.text ?? '')) {
+        expect(e.text).toMatch(/Attack Roll:/);
+      }
+    }
+    if (saveRow && !/Attack Roll:/.test(saveRow.text)) expect(saveRow.text).not.toMatch(/hits with this attack/i);
+  });
+
+  test('the dprScale descent lands within 110% of target — the band-ceiling parking dies', () => {
+    const { withinBudget } = require('../card-budgets.mjs');
+    const s = scaleDonor(pickDonor(16, null, 'dragon'), 16, { mechanics: [], dprScale: 0.7 });
+    const perHit = s.per_hit;
+    const attacks = 3;
+    const legendaryStrikes = 1;
+    const { target, actual } = withinBudget(16, perHit * (attacks + legendaryStrikes), [], { legendary: true, dprScale: s.dpr_scale ?? 1 });
+    expect(actual).toBeLessThanOrEqual(target * 1.15); // dice-snap slack over the 1.1 stop
+  });
+});
+
+describe('the hold-response batch (2026-09-14): narration mechanical, the prop, the self-silence', () => {
+  const run = async (over) => {
+    let repairPrompt = null;
+    await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return answer(over);
+    });
+    return repairPrompt;
+  };
+
+  test('action-system narration is mechanical now — the Branding Gaze drag clause dies closed', async () => {
+    const rp = await run({ wildcard: '*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target is marked until the end of its next turn. The creature can use an action to drag the marked target 20 feet toward itself.' });
+    expect(rp).toMatch(/never narrates the action system/);
+  });
+
+  test('a possessive prop nothing places dies; a scene surface lives', async () => {
+    const rp = await run({ trait_wildcard: { name: 'Sworn Anchor', text: 'While the creature is within 5 feet of its portable reliquary shrine, it can\'t be moved against its will.' } });
+    expect(rp).toMatch(/the state "its portable reliquary shrine" that nothing on the sheet enters/);
+    const ok2 = await run({ trait_wildcard: { name: 'Wall Brace', text: 'While the creature is within 5 feet of a stone wall, it has Advantage on Strength checks.' } });
+    expect(ok2).toBeNull();
+  });
+
+  test('a silence aura beside its own Spellcasting dies without a self-exemption', async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(11, 'binder', 'caster'), 11, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat()
+      .filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    let repairPrompt = null;
+    await generateReskin({ archetype: 'caster', style: 'binder', concept: 'x', cr: 11, mechanics: [] }, async (prompt) => {
+      if (prompt.startsWith('You are repairing')) { repairPrompt = prompt; return JSON.stringify({}); }
+      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      return JSON.stringify({
+        name: 'Test Hush', type: 'Fey', size: 'Medium', alignment: 'Neutral',
+        senses: 'darkvision 60 ft.', languages: 'Common',
+        renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Psychic'])),
+        conditions: { condition_minor: 'Deafened' }, melee_rider: 'none', slot_save: 'Wisdom',
+        spells: { at_will: ['Minor Illusion', 'Mage Hand'], daily: ['Hold Person', 'Darkness'] },
+        trait_wildcard: { name: 'Dead Air', text: 'While the creature is conscious, the area within 10 feet of it is magically silenced.' },
+        wildcard: `*Wisdom Saving Throw*: DC ${scaled.dc}, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
+      });
+    });
+    expect(repairPrompt).toMatch(/silences the creature's own Spellcasting/);
+  });
+});

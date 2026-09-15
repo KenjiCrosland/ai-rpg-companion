@@ -172,7 +172,7 @@ export async function generateGptResponse(
       name: 'DeepSeek V4 Flash',
       endpoint: 'https://api.deepseek.com/v1/chat/completions',
       devEndpoint: '/api/ai/deepseek',
-      model: 'deepseek-v4-flash',
+      model: 'deepseek-flash',
       type: 'openai',
     };
   } else {

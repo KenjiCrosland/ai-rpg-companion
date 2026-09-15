@@ -1527,3 +1527,42 @@ describe('the 2014 header polish (critic 2026-09-14)', () => {
     expect(m.languages).toMatch(/^understands Common/);
   });
 });
+
+describe('the 2014 gate polish (smoke 2026-09-14)', () => {
+  const { toLegacyModel } = require('../format-2024/generate.mjs');
+  const m = () => ({
+    name: 'Test Wyrm', format: '2024', size: 'Huge', type: 'Dragon', alignment: 'Neutral',
+    ac: 20, hp: 187, hp_formula: '15d12 + 90', speed: '40 ft.',
+    stats: { STR: 24, DEX: 12, CON: 22, INT: 16, WIS: 14, CHA: 18 },
+    saves: { STR: 7, DEX: 6, CON: 6, INT: 3, WIS: 7, CHA: 4 },
+    senses: 'blindsight 60 ft.; Passive Perception 17', languages: 'Draconic',
+    cr: 16, cr_str: '16', xp: 15000, pb: 5,
+    sections: {
+      Actions: [
+        { name: 'Multiattack', text: 'The wyrm makes three attacks, using Bite or Claw in any combination.' },
+        { name: 'Spellcasting', text: 'The wyrm casts spells:\n\n- **At Will:** *Detect Magic*, *Command*' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', text: 'Immediately after another creature\'s turn...' },
+        { name: 'Frozen Talon', text: 'The wyrm makes one Bite attack.' },
+      ],
+    },
+  });
+
+  // HISTORY: the gate stripped ALL markdown for one day — superseded
+  // 2026-09-14 (owner: "use markdown formatting so we don't see
+  // asterisks"): the classic card renders inline markdown, so italics
+  // SURVIVE; only bullets and the 2024 Multiattack idiom scrub.
+  test('the gate keeps italics for the card renderer; bullets and "in any combination" still scrub', () => {
+    const legacy = toLegacyModel(m());
+    const sc = legacy.actions.find((a) => a.name === 'Spellcasting');
+    expect(sc.description).toMatch(/\*Detect Magic\*/);
+    expect(sc.description).not.toMatch(/^- /m);
+    expect(legacy.actions[0].description).not.toMatch(/in any combination/);
+  });
+
+  test('the 2024 Uses row never doubles the classic legendary boilerplate', () => {
+    const legacy = toLegacyModel(m());
+    expect(legacy.legendary_actions.map((e) => e.name)).toEqual(['Frozen Talon']);
+  });
+});

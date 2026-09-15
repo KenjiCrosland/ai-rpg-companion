@@ -119,7 +119,7 @@ export const SPELL_ATTACK_SPELLS = new Set(['Scorching Ray', 'Guiding Bolt', 'Ic
 // Black Dragon Fear, Glabrezu Darkness) must be met before a fourth.
 // Vampiric Touch joined 2026-09-04 (the Gravewright shipped it at-will —
 // no print at-will cite; the level-3-ceiling rule alone would admit it)
-export const NEVER_AT_WILL = new Set(['Stoneskin', 'Death Ward', 'Fire Shield', 'Freedom of Movement', 'Mirror Image', 'Blur', 'False Life', 'Barkskin', 'Shield of Faith', 'Protection from Evil and Good', 'Heroism', 'Magic Weapon', 'Divine Favor', 'Enhance Ability', 'Enlarge/Reduce', 'Web', 'Wall of Fire', 'Cloudkill', 'Sleep', 'Hypnotic Pattern', 'Vampiric Touch',
+export const NEVER_AT_WILL = new Set(['Scrying', 'Stoneskin', 'Death Ward', 'Fire Shield', 'Freedom of Movement', 'Mirror Image', 'Blur', 'False Life', 'Barkskin', 'Shield of Faith', 'Protection from Evil and Good', 'Heroism', 'Magic Weapon', 'Divine Favor', 'Enhance Ability', 'Enlarge/Reduce', 'Web', 'Wall of Fire', 'Cloudkill', 'Sleep', 'Hypnotic Pattern', 'Vampiric Touch',
   // THE HEALING CLAUSE (Looming Mercy, 2026-09-09: "At Will: Cure
   // Wounds, Bless, Aid, Beacon of Hope" — an infinite healing battery
   // that deletes the attrition game between fights). Print tiers
@@ -535,7 +535,7 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
     : /\bAlternatively,/.test(w) ? ['one entry is one action — "Alternatively" welds two actions together; split them into separate entries or pick the one the concept needs', 'judgment']
     // print writes the action, never narrates the action system (the
     // Battlefield Chorus's "can use one action to target...", 2026-09-02)
-    : /can use (?:one|an|its) action to/i.test(w) ? ['print writes the action, never narrates the action system — drop "can use one action to"; the entry IS the action', 'judgment']
+    : /can use (?:one|an|its|another) action to/i.test(w) ? ['print writes the action, never narrates the action system — drop "can use one action to"; the entry IS the action (a second capability is its OWN entry, never a narrated sub-action)', 'mechanical']
     : successPenalty ? ['a success clause may grant half damage or nothing — never a penalty', 'judgment']
     // the visibility class (Mirror Lunge, 2026-09-05: "when a creature
     // looks at that surface" — 0/329 print triggers on looking)
@@ -630,6 +630,7 @@ function vetTraitWildcard(tw, sections, { name, inline, archetype = null, type =
     : /can(?:no|')t be (?:targeted|affected)|can only be (?:harmed|hit|affected|damaged)|exists? only (?:within|inside)/i.test(twText) ? ['untargetability is not a grantable defense (0/329 — the arms race, untargetable edition: "immune to all damage" died and came back as "cannot be targeted") — print prices evasion: entering the form or space is MOVEMENT, the creature has Total Cover inside, and it must emerge to act; write the frame with its cost', 'mechanical']
     : /\bWhen [^.]{0,40}\bhits with\b|\bA creature hit by [^.]{0,40}attack/i.test(twText) ? ['an ON-HIT RIDER lives on the attack row itself, never in a trait (0/329 print traits key on the creature\'s own hits; the Tollkeeper\'s crook rider, 2026-09-14) — weld the clause into that row\'s text instead', 'mechanical']
     : undefinedState(twText, Object.values(sections).flat().map((e) => e.text ?? '').join(' ')) ? [`the trait keys on the state "${undefinedState(twText, Object.values(sections).flat().map((e) => e.text ?? '').join(' '))}" that nothing on the sheet enters — write the sentence or action that establishes it (print's form: False Appearance's "while it remains motionless"), or key on a state the rules know`, 'mechanical']
+    : (/silenc|can't cast spells|no sound can/i.test(twText) && Object.values(sections).flat().some((e2) => e2.name?.startsWith('Spellcasting')) && !/except (?:the creature|itself)|creature (?:itself )?is unaffected/i.test(twText)) ? ['the aura silences the creature\'s own Spellcasting (Verbal components die in silence) — exempt the creature ("the creature itself is unaffected") or cut the silence', 'mechanical']
     : /starts its turn/i.test(twText) ? ['recurring aura', 'mechanical']
     : /\byours?\b|\byou\b/i.test(twText) ? ['second person', 'mechanical']
     // 0/329 print traits mention reactions (Ash-Body Step, 2026-08-26 —
@@ -861,11 +862,23 @@ const SELF_AC_GRANT = /\b(?:[Ii]t|[Tt]he creature) (?:gains?|has) a ?\+\d+ (?:bo
 const STATE_VOCAB = new Set(['bloodied', 'hidden', 'grappled', 'restrained', 'charmed', 'frightened', 'paralyzed', 'petrified', 'poisoned', 'stunned', 'blinded', 'deafened', 'prone', 'incapacitated', 'invisible', 'unconscious', 'engulfed', 'swallowed', 'caged', 'concealed', 'obscured', 'submerged', 'immersed', 'mounted', 'grounded', 'winged', 'damaged', 'reduced', 'wounded', 'seated']);
 const undefinedState = (t, sheetText) => {
   const m = /[Ww]hile (?:it is |the creature is |the \w+ is )?(\w+ed)\b/.exec(t);
-  if (!m) return null;
-  const word = m[1].toLowerCase();
-  if (STATE_VOCAB.has(word)) return null;
-  const root = word.replace(/ed$/, '');
-  return new RegExp(`\\b${root}(?:s|es|ing)\\b`, 'i').test(`${sheetText} ${t}`) ? null : m[1];
+  if (m) {
+    const word = m[1].toLowerCase();
+    if (!STATE_VOCAB.has(word)) {
+      const root = word.replace(/ed$/, '');
+      if (!new RegExp(`\\b${root}(?:s|es|ing)\\b`, 'i').test(`${sheetText} ${t}`)) return m[1];
+    }
+  }
+  // the possessive-PROP form (the Chapel's "within 5 feet of its
+  // portable reliquary shrine", 2026-09-14 — nothing on the sheet
+  // places a shrine; scene surfaces like "a stone wall" stay legal
+  // because they are never possessive)
+  const mp = /[Ww]hile [^,.]{0,50}within \d+ feet of its ([\w\s-]{3,32}?)[,.]/.exec(t);
+  if (mp) {
+    const head = mp[1].trim().split(/\s+/).pop();
+    if (!new RegExp(`\\b${head}\\b`, 'i').test(sheetText)) return `its ${mp[1].trim()}`;
+  }
+  return null;
 };
 const conditionImmunityGrant = (t, name = null) => {
   // the model sometimes writes the block's own NAME as subject ("the
@@ -903,6 +916,10 @@ const CHASSIS_OWNED = [
   // grammar, then the grammar became chassis — Unbreached Bulwark
   // duplicated Immovable one line above it)
   [/automatically succeeds? on saving throws (?:made )?(?:to avoid being|against being|against effects that would)[^.]{0,20}mov|can(?:'|no)t be moved against its will/i, /automatically succeeds on saving throws made to avoid being moved/, 'the anchor (its Immovable trait)'],
+  // the protection-aura key (2026-09-14: the Chapel's wildcard granted
+  // a frightened-save aura one line above Guard Aura's blanket
+  // save-advantage — a strict subset)
+  [/(?:allies|creatures of (?:its|the \w+'s) choice) within \d+ feet [^.]{0,60}[Aa]dvantage on saving throws/, /allies [^.]{0,60}Advantage on saving throws/, 'the protection aura (its Guard Aura)'],
   // the swarm-movement key (2026-09-13: Marsh-Bound Procession's "can
   // move through the space of any Prone creature" — a narrower
   // restatement of the Swarm trait one line down)
@@ -1259,7 +1276,7 @@ export async function generateReskin(options, callLLM) {
   const body = ['ooze', 'swarm', 'dragon'].includes(String(options.bodyType ?? '').toLowerCase()) ? String(options.bodyType).toLowerCase() : null;
   if (body) trace('body type:', `${body} — the body outranks the role (recorded: ${archetype})`);
   const donor = pickDonor(cr, body ? null : style, body ?? archetype);
-  const scaled = scaleDonor(donor, cr, { movement: options.movement ?? [], mechanics: options.mechanics ?? null });
+  const scaled = scaleDonor(donor, cr, { movement: options.movement ?? [], mechanics: options.mechanics ?? null, dprScale: options.dprScale ?? 1 });
   // the caster family's Spellcasting row is CHASSIS — it ships template-
   // fed with its own menu whether or not the checkbox is set, and the
   // checkbox organ must never double it (donor row exists -> skip below)
@@ -1928,7 +1945,17 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // it after the damage clause (print's rider idiom) and retire the
       // slot entry, whose seat the rider consumed
       const bare = (n) => n.replace(/ \(.*\)$/, '').trim().toLowerCase();
-      const host = Object.values(sections).flat().find((e2) => bare(e2.name) === bare(v.riderOn));
+      let host = Object.values(sections).flat().find((e2) => bare(e2.name) === bare(v.riderOn));
+      // a rider rides an ATTACK — "When the creature hits" is
+      // meaningless on a save action (Branding Gaze, 2026-09-14: the
+      // model pointed rider_on at its own save row). Re-home to the
+      // first attack row; if none exists the fallback path below
+      // handles the slot as usual.
+      if (host && !/Attack Roll:/.test(host.text ?? '')) {
+        const attackHost = Object.values(sections).flat().find((e2) => /Attack Roll:/.test(e2.text ?? '') && !e2.gate);
+        trace('rider re-homed —', `"${host.name}" makes no attack roll; the rider rides ${attackHost ? `"${attackHost.name}"` : 'nothing (dropped)'}`);
+        host = attackHost ?? null;
+      }
       const weldRider = (row, label2) => {
         // a damage- or save-carrying rider fires per HIT — stamp the
         // print rate limit only when the draft didn't write its own
@@ -2101,7 +2128,10 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
           // burst — 2 sightings 2026-09-14), the seed's honest name
           // wins instead
           const CLAIMS = [[/paralyz/i, 'Paralyzed'], [/petrif/i, 'Petrified'], [/stunn/i, 'Stunned'], [/blinding/i, 'Blinded'], [/deafen/i, 'Deafened'], [/charm/i, 'Charmed'], [/restrain/i, 'Restrained']];
-          const lying = pendingWildcard?.name && CLAIMS.some(([re, cond]) => re.test(pendingWildcard.name) && !new RegExp(`\\b${cond}\\b`).test(drawn.row.text));
+          // verb-claims joined 2026-09-14 (3 sightings: a Grasp that
+          // burst, a Descent that pulled, a Mark that marked nothing)
+          const VERB_CLAIMS = [[/\bmark/i, /\bmark/i], [/\bgrasp|\bgrab|\bseiz/i, /pull|grapp/i]];
+          const lying = pendingWildcard?.name && (CLAIMS.some(([re, cond]) => re.test(pendingWildcard.name) && !new RegExp(`\\b${cond}\\b`).test(drawn.row.text)) || VERB_CLAIMS.some(([re, pay]) => re.test(pendingWildcard.name) && !pay.test(drawn.row.text)));
           if (pendingWildcard?.name && !lying) drawn.row.name = `${pendingWildcard.name.replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '')}${gate}`;
           else if (lying) trace('library rename refused —', `"${pendingWildcard.name}" claims a condition the seed never applies; the seed's own name ships`);
           (sections[drawn.section] = sections[drawn.section] ?? []).push(drawn.row);
@@ -2255,6 +2285,27 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
         }
       }
     }
+    // a dragon's SPELL save DC derives from Charisma, not the breath DC
+    // (print: Adult White spell save DC 14 = 8 + PB + Cha mod, beside a
+    // DC 22 breath; the spell-dc-ability lint caught the card-DC stamp
+    // live, 2026-09-14)
+    if (options.bodyType === 'dragon' && monster.stats) {
+      const chaDc = 8 + (monster.pb ?? 0) + Math.floor(((monster.stats.CHA ?? 10) - 10) / 2);
+      for (const es2 of Object.values(monster.sections ?? {})) {
+        for (const e2 of es2) {
+          if (e2.name?.startsWith('Spellcasting') && /spell save DC \d+/.test(e2.text ?? '')) {
+            e2.text = e2.text.replace(/spell save DC \d+/, `spell save DC ${chaDc}`);
+            trace('dragon spell DC derived:', `${chaDc} (8 + PB + Cha mod — the breath keeps the card DC)`);
+          } else if (/(?:Frightened|Charmed|Incapacitated)\b/.test(e2.text ?? '') && /Saving Throw|saving throw/.test(e2.text ?? '') && !/\d+ \(\d+d\d+/.test(e2.text ?? '')) {
+            // mental condition, no damage: the Frightful Presence class
+            // — Cha-derived in print (critic 2026-09-14: DC 19 breath
+            // DC on Congealing Glare and Winter's Grasp, 2 over)
+            e2.text = e2.text.replace(/DC \d+/, `DC ${chaDc}`);
+            trace('dragon mental save DC derived:', `"${e2.name}" -> ${chaDc} (the Frightful Presence class keys to Charisma)`);
+          }
+        }
+      }
+    }
     // a dragon speaks Draconic (42/42 print; the First Frost shipped
     // "Common" alone, 2026-09-13) — upgrade-only
     if (options.bodyType === 'dragon' && !/Draconic/i.test(monster.languages ?? '')) {
@@ -2356,7 +2407,9 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
     const saveAction = (sections.Actions ?? []).find((e2) => !e2.name.startsWith('Multiattack') && !e2.name.startsWith('Spellcasting')
       && !/\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e2.name) && /Saving Throw[:*]/.test(e2.text ?? '') && !/Attack Roll:/.test(e2.text ?? ''));
     if (multi && !/replace one attack/.test(multi.text)) {
-      const spell = hasSpellcasting && atWillShipped.length ? `Spellcasting to cast *${atWillShipped[0]}*` : hasSpellcasting ? 'Spellcasting' : null;
+      const RIBBONS = new Set(['Detect Magic', 'Light', 'Mage Hand', 'Prestidigitation', 'Minor Illusion', 'Disguise Self']);
+      const clauseSpell = atWillShipped.find((x) => SPELL_DAMAGE_AVG[x]) ?? atWillShipped.find((x) => !RIBBONS.has(x));
+      const spell = hasSpellcasting && clauseSpell ? `Spellcasting to cast *${clauseSpell}*` : null;
       const clause = spell && saveAction ? `It can replace one attack with a use of (A) ${saveAction.name} or (B) ${spell}.`
         : spell ? `It can replace one attack with a use of ${spell}.`
           : saveAction ? `It can replace one attack with a use of ${saveAction.name}.` : null;
@@ -2479,7 +2532,7 @@ ${wcRejected ? `ACTION draft rejected — ${wcRejected.why}. Draft: "${wcRejecte
     // unconditional tremorsense 30 header — senses are header
     // jurisdiction, the fourth header/trait-disagreement class)
     for (const e2 of (sections.Traits ?? [])) {
-      const sm = /\b(?:has|gains?) (tremorsense|darkvision|blindsight|truesight)\b/i.exec(e2.text ?? '');
+      const sm = /\b(?:has|gains?) (tremorsense|darkvision|blindsight|truesight)\b/i.exec(e2.text ?? '') ?? (/can see (?:creatures (?:and objects )?that are )?invisible/i.test(e2.text ?? '') ? [null, 'truesight'] : null);
       if (sm && new RegExp(sm[1], 'i').test(monster.senses ?? '')) {
         lint.findings.push({ rule: 'senses-grant-in-trait', severity: 'audit', message: `Traits/${e2.name}: grants ${sm[1].toLowerCase()} the header already prints — senses are header jurisdiction; delete the grant sentence (or move the condition into the header parenthetical)` });
       } else if (sm) {

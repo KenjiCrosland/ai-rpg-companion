@@ -1101,7 +1101,11 @@ export function normalizeNonmagicalClause(value) {
 }
 
 export function toLegacyModel(m) {
-  const entryList = (name) => (m.sections?.[name] ?? []).map((e) => ({ name: e.name, description: e.text }));
+  // the classic card renders INLINE MARKDOWN now (owner 2026-09-14) —
+  // italics survive the gate; only the bullets and the 2024 Multiattack
+  // idiom scrub
+  const plain = (t) => String(t ?? '').replace(/^- /gm, '').replace(/ in any combination\b/, '');
+  const entryList = (name) => (m.sections?.[name] ?? []).map((e) => ({ name: e.name, description: plain(e.text) }));
   // Split merged 2024-style defense lines into 2014's damage vs condition
   // fields. Classification is by token against the known condition
   // vocabulary, NOT by the semicolon — the LLM doesn't always emit the
@@ -1183,6 +1187,9 @@ export function toLegacyModel(m) {
   if (imm.damage) legacy.damage_immunities = normalizeNonmagicalClause(imm.damage).toLowerCase();
   if (imm.conditions) legacy.condition_immunities = imm.conditions.toLowerCase();
   const legendary = entryList('Legendary Actions')
+    // the 2024 Uses row duplicates the classic card's own boilerplate
+    // paragraph (double header, live 2026-09-14)
+    .filter((e) => !/^Legendary Action Uses/i.test(e.name))
     .map((e) => ({ ...e, name: normalizeLegendaryCost(e.name) }));
   if (legendary.length) legacy.legendary_actions = legendary;
   return legacy;
@@ -1282,11 +1289,15 @@ const CONVERSION_RULES = {
 - Reactions: "*Trigger:* <event>. *Response:* <effect>." becomes "When <event>, <the creature does the effect>."
 - Conditions, damage types, and game terms go lowercase in prose: "is knocked prone", "frightened", "slashing damage", "hit points". Never "has the X condition" — write "is stunned". Never "Attack Roll:", never "*Failure:*"/"*Success:*"/"*Trigger:*" markers.
 - 2024-only vocabulary must be translated: "Bloodied" becomes "has half of its hit points or fewer"; "each creature in a 5-foot Emanation originating from it" becomes "each creature within 5 feet of it"; an "N-foot-radius Emanation" becomes an "N-foot-radius sphere". Area shapes go lowercase: "15-foot cone", "the cone".
-- 2024 spellcasting actions convert to the 2014 style: "The creature's spellcasting ability is <Ability> (spell save DC n). It can innately cast the following spells: ..." — spell names lowercase italic (*bestow curse*), frequency labels "At will:" and "1/day each:", and "(level 5 version)" becomes "(cast at 5th level)".
+- Spellcasting stays an ACTION in the MotM 2022 form (the Multiattack replacement clause requires it): "The <creature> casts one of the following spells, requiring no material components and using <Ability> as the spellcasting ability (spell save DC n):" — spell names lowercase italic (*bestow curse*), frequency labels "At will:" and "1/day each:", and "(level 5 version)" becomes "(cast at 5th level)". Never the 2014-core innate-trait wording.
 - An attack made with a spell, curse, conjured or spectral effect converts as "Melee Spell Attack:" / "Ranged Spell Attack:" (2014 distinguishes them); a physical weapon or body part is a "Weapon Attack".
 - Multiattack in 2014 form: "makes two attacks: one with its X and one with its Y" or "makes two melee attacks" — never "in any combination". A replacement clause drops the scaffold letters: "It can replace one attack with a use of Curse of Arrears or its Spellcasting."
 - On a SWARM, melee attacks print "reach 0 ft., one target in the swarm's space".
-- A Bonus Actions entry's text begins "As a bonus action, the <creature> ..." in 2014 voice.`,
+- A Bonus Actions entry's text begins "As a bonus action, the <creature> ..." in 2014 voice.
+- A save with damage AND a condition: if the source has a *Success:* Half clause, write "...taking 24 (7d6) fire damage on a failed save, or half as much damage on a successful one. On a failed save, the target is also frightened of the <creature> until the end of its next turn." If the source has NO Success clause, write the or-form: "must succeed on a DC n <Ability> saving throw or take 24 (7d6) fire damage and be frightened of the <creature> until the end of its next turn." NEVER drop the source's half-on-success. A fear/charm effect always names its source.
+- An aura is "each ally within 10 feet of it" / "each creature within 10 feet of it" — never "sphere originating from".
+- "its AC increases by 2" becomes "it gains a +2 bonus to AC".
+- The creature's short name is lowercase mid-sentence ("the tollkeeper"); capitalized only where any noun would be.`,
   2024: `You are converting D&D statblock entries from classic 2014 (5e) phrasing to 2024 (5.5e) phrasing. Rewrite ONLY the wording — every number, die expression, DC, entry name, and mechanical effect stays EXACTLY the same.
 - "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage." becomes "*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage." — never "to hit", never "Weapon Attack", Damage Types Capitalized.
 - Save effects use the structured skeleton as the WHOLE sentence: "*<Ability> Saving Throw*: DC n, <who saves, e.g. each creature in a 30-foot Cone>. *Failure:* <effect>. *Success:* <lesser effect>." Omit *Success:* entirely when success does nothing. Never "must make a" or "must succeed on".
@@ -1351,7 +1362,21 @@ export async function convertEdition(monster, callLLM, { degraded = false } = {}
       .filter(([, es]) => es.length)
       .map(([s, es]) => [s, es.map((e) => ({ name: e.name, text: e.text }))])
   );
-  const prompt = `${CONVERSION_RULES[target]}
+  // mental-striker hint: the conversion model can't see the stat block,
+  // so when the attack bonus keys to INT/WIS/CHA (and not to STR/DEX),
+  // tell it — otherwise the Spell-Attack branch converts only the rows
+  // whose names sound magical (the half-converted Chain, 2026-09-14)
+  let mentalHint = '';
+  if (target === '2014' && model.stats && model.pb != null) {
+    const bonus = Number(/Attack Roll:\*?\s*\+(\d+)/.exec(Object.values(model.sections ?? {}).flat().map((e) => e.text).join(' '))?.[1]);
+    if (bonus) {
+      const modOf2 = (v) => Math.floor((v - 10) / 2);
+      const mental = ['INT', 'WIS', 'CHA'].some((k) => modOf2(model.stats[k]) + model.pb === bonus);
+      const physical = ['STR', 'DEX'].some((k) => modOf2(model.stats[k]) + model.pb === bonus);
+      if (mental && !physical) mentalHint = "\nNOTE: this creature's attacks are keyed to a MENTAL ability — convert every attack row, melee and ranged alike, as \"Melee Spell Attack:\" / \"Ranged Spell Attack:\".";
+    }
+  }
+  const prompt = `${CONVERSION_RULES[target]}${mentalHint}
 
 THE MONSTER: ${model.name}.
 ENTRIES TO CONVERT (grouped by section):

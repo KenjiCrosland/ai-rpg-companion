@@ -126,7 +126,7 @@
                 <div v-if="!isEditing">
                     <li v-for="(ability, index) in editedAbilities" :key="index">
                         <strong>{{ ability.name }}. </strong>
-                        <span>{{ ability.description }}</span>
+                        <span v-html="mdInline(ability.description)"></span>
                     </li>
                 </div>
                 <div v-if="isEditing && !loadingAbilities" class="ability-forms">
@@ -164,7 +164,7 @@
                 <div v-if="!isEditing">
                     <li v-for="(action, index) in editedActions" :key="'action-' + index">
                         <strong>{{ action.name }}: </strong>
-                        <span>{{ action.description }}</span>
+                        <span v-html="mdInline(action.description)"></span>
                     </li>
                 </div>
                 <div v-if="isEditing && !loadingActions" class="ability-forms">
@@ -211,7 +211,7 @@
                     <template v-if="!isEditing">
                         <li v-for="(action, index) in editedLegendaryActions" :key="'legendary-' + index">
                             <strong>{{ action.name }}: </strong>
-                            <span>{{ action.description }}</span>
+                            <span v-html="mdInline(action.description)"></span>
                         </li>
                     </template>
                     <template v-if="isEditing && !loadingLegendaryActions">
@@ -306,6 +306,15 @@ import { logger } from "@/util/logger.mjs";
 import { ref, computed, defineProps, onMounted, onBeforeUnmount, watch } from 'vue';
 import CardFooterAction from './CardFooterAction.vue';
 import CRtoXP from '../data/cr-to-xp.json';
+
+// Inline markdown for 2014 descriptions (owner 2026-09-14: "use markdown
+// formatting so we don't see asterisks") — spell names arrive as *bestow
+// curse* from the edition conversion, print's own italic convention.
+// HTML-escape FIRST: descriptions are LLM/user text, never trusted markup.
+const mdInline = (t) => String(t ?? '')
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+  .replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
 import { generateGptResponse, isDegradedMode } from "@/util/ai-client.mjs";
 // All edit re-rolls (single-entry and whole-section) run through the engine:
 // budget-constrained skeletons + lint, replacing the template-based

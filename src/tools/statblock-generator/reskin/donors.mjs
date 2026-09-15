@@ -1918,7 +1918,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +11, reach 10 ft. 33 (4d12 + 7) {damage_type} damage.' },
         { name: 'Breath Weapon', gate: 'Recharge 5-6', text: '*Dexterity Saving Throw*: DC 18, each creature in a 60-foot Cone. *Failure:* 58 (13d8) {damage_type} damage. *Success:* Half damage.' },
-        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC {dc}):\n\n- **At Will:** {spell_at_will}\n' }, // every 2024 adult+ dragon casts; labeled + DC per print (critic 2026-09-14 x2)
+        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC {dc}):\n\n- **At Will:** {spell_at_will}\n- **1/Day Each:** {spell_daily}' }, // every 2024 adult+ dragon casts; labeled + DC per print (critic 2026-09-14 x2)
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 18, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Legendary Actions': [
@@ -1946,7 +1946,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +15, reach 15 ft. 44 (8d8 + 8) {damage_type} damage.' },
         { name: 'Breath Weapon', gate: 'Recharge 5-6', text: '*Dexterity Saving Throw*: DC 22, each creature in a 90-foot Cone. *Failure:* 72 (16d8) {damage_type} damage. *Success:* Half damage.' },
-        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC {dc}):\n\n- **At Will:** {spell_at_will}\n' }, // every 2024 adult+ dragon casts; labeled + DC per print (critic 2026-09-14 x2)
+        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC {dc}):\n\n- **At Will:** {spell_at_will}\n- **1/Day Each:** {spell_daily}' }, // every 2024 adult+ dragon casts; labeled + DC per print (critic 2026-09-14 x2)
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 22, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Legendary Actions': [

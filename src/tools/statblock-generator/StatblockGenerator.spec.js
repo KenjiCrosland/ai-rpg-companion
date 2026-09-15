@@ -266,7 +266,9 @@ describe('StatblockGenerator - Prompt Generation', () => {
       // First select is the Combat role (the Build select is retired; the
       // legacy pipeline derives Build from the role via ARCHETYPE_TO_BUILD),
       // second is CR based on form structure
-      await selects[0].setValue('balanced');  // role → Build 'Balanced'
+      // 'balanced' RETIRED from the role menu (owner 2026-09-15) — a
+      // real role now steers the legacy Build via ARCHETYPE_TO_BUILD
+      await selects[0].setValue('defender');  // role → Build 'Stronger Defense'
       await selects[1].setValue('5');  // CR
 
       // Submit the form
@@ -277,7 +279,7 @@ describe('StatblockGenerator - Prompt Generation', () => {
       expect(monsterPrompts.createStatblockPrompts).toHaveBeenCalledWith(
         expect.objectContaining({
           monsterName: 'Fire Drake',
-          monsterType: 'Balanced',
+          monsterType: 'Stronger Defense',
           caster: false
         })
       );

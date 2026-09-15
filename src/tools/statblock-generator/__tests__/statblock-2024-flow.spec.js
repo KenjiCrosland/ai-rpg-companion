@@ -579,8 +579,7 @@ describe('the 2014 move: reskin-first 2014 (2026-09-14)', () => {
     const saved = savedMonsters().Uncategorized[0];
     expect(saved.format).toBe('2014'); // toLegacyModel deterministic shape
     const claw = saved.actions.find((a) => a.name === 'Shadow Claw');
-    expect(claw).toBeTruthy();
-    expect(claw.description).not.toMatch(/\*/); // markdown stripped for the classic card (owner note 2026-09-14)
+    expect(claw).toBeTruthy(); // the card renders inline markdown now — markers survive (owner 2026-09-14)
     expect(saved.other_edition.format).toBe('2024');
     wrapper.unmount();
   });

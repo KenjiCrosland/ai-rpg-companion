@@ -33,9 +33,15 @@ export function pickDonor(cr, style = null, archetype) {
 // damage never parses, same surgery the hybrid row needed.
 const ATTACK_RE = /(\+\d+)(?: \(with Advantage[^)]*\))?(, reach \d+ ft\. or range [\d/]+ ft\.|, reach [^.]+|, range [^.]+)? ?\.? (\d+) \((\d+d\d+(?:\s*\+\s*\d+)?)\) ([\w{}]+) damage/;
 
-export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null } = {}) {
+export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null, dprScale = 1 } = {}) {
   const card = cardBudget(cr, { legendary: !!legendary });
   const scaled = JSON.parse(JSON.stringify(donor));
+  // THE 2014 DAMAGE LINE (owner + critic 2026-09-14): 2014's table runs
+  // ~5 damage/CR vs 2024's ~7.5 — direct-2014 generations pass 0.7
+  // (5/7.5 = 0.667; the band's upper half). Uniform across archetypes:
+  // the ratio belongs to the edition's table, the archetypes' relative
+  // identities live in the donors. Compounds with donor taxes (ward).
+  if (dprScale !== 1) scaled.dpr_scale = (scaled.dpr_scale ?? 1) * dprScale;
   // CONCEPT GATING (owner "let's do it", 2026-08-24): rows tagged gated_on
   // ship only when the concept call listed that mechanic. mechanics=null
   // (blank path, direct callers) = ungated; an ARRAY gates — including []
@@ -200,7 +206,11 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
     const sustained = perHit * (attacks + legendaryStrikes);
     const novas = novaRows.map((r) => ({ avg: novaAvgFor(perHit), gate: r.e.gate }));
     const { ok, actual, target } = withinBudget(cr, sustained, novas, { legendary: !!legendary, dprScale: scaled.dpr_scale ?? 1 });
-    if (ok && actual >= target * 0.9) break;
+    // a scaled-down block (dprScale < 1) descends from the donor's
+    // numbers — first-in-band from above is the band CEILING, ~20%
+    // over the 2014 line (live 2026-09-14); keep descending to within
+    // 110% of target. Unscaled generations keep the historical stop.
+    if (ok && actual >= target * 0.9 && ((scaled.dpr_scale ?? 1) >= 1 || actual <= target * 1.1)) break;
     perHit += actual < target ? 1 : -1;
   }
   const dexMod = Math.floor((scaled.stats.DEX - 10) / 2);

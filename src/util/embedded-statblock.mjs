@@ -40,7 +40,11 @@ export const ARCHETYPE_HELP = {
 };
 export const ARCHETYPE_OPTIONS = [
   { label: 'Auto — match my concept', value: 'auto' },
-  { label: 'Balanced (no role)', value: 'balanced' },
+  // 'Balanced (no role)' RETIRED from the menu (owner 2026-09-15):
+  // every donor is role- or body-tagged, so "no role" meant the
+  // pre-sprint slot path — a quiet quality gap. A 'balanced' value
+  // from old saves aliases to auto; the engine keeps accepting it as
+  // chassis vocabulary (lint fallbacks, conversion fallback).
   ...Object.keys(ARCHETYPE_HELP)
     .filter((k) => k !== 'auto' && k !== 'balanced')
     // Multi-word keys (glass_cannon) render as "Glass cannon".

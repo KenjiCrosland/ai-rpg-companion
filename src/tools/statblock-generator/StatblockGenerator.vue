@@ -407,7 +407,7 @@ const archetypeHelp = computed(() => ARCHETYPE_HELP[archetype.value] ?? '');
 const BUILD_TO_ARCHETYPE = {
   'Stronger Defense': 'defender',
   'Stronger Offense': 'brute',
-  Balanced: 'balanced',
+  Balanced: 'auto', // balanced retired 2026-09-15 — old Builds resolve by concept
   Random: 'auto',
 };
 // Reverse map so the legacy two-part pipeline (escape hatch below) can still
@@ -415,7 +415,6 @@ const BUILD_TO_ARCHETYPE = {
 const ARCHETYPE_TO_BUILD = {
   defender: 'Stronger Defense',
   brute: 'Stronger Offense',
-  balanced: 'Balanced',
 };
 
 // Escape hatch: the pre-engine 2014 two-part pipeline, kept as a reachable
@@ -1074,7 +1073,9 @@ async function generateStatblockEngine(edition) {
   // call, 2026-08-04): those generations previously skipped it entirely and
   // got no identity, no lore, and no type honesty. The picked role is
   // passed as GIVEN — the call echoes it and designs around it.
-  const givenArchetype = archetypeName === 'auto' ? null : archetypeName;
+  // 'balanced' aliases to auto-detection (owner 2026-09-15): no donor
+  // is balanced-tagged, so the value routed the pre-sprint slot path
+  const givenArchetype = archetypeName === 'auto' || archetypeName === 'balanced' ? null : archetypeName;
   // Rolled BEFORE the concept call so the lore is written to it.
   const rolledEnergy = rollEnergy();
   const rolledMix = rollDamageMix();
@@ -1345,6 +1346,11 @@ async function generateStatblockEngine(edition) {
           mix: userConcept ? conceptMix : rolledMix,
           caster: caster.value,
           mechanics: userConcept ? (conceptMechanics ?? []) : null,
+          // THE 2014 DAMAGE LINE (owner ruling 2026-09-14): 2014's
+          // table runs ~5 damage/CR vs 2024's ~7.5 — direct-2014
+          // generations price at 0.7, uniform across archetypes. Tab
+          // conversions stay format-only (numbers never rebalance).
+          dprScale: reskin2014 ? 0.7 : 1,
           takenNames: Object.values(monsters.value ?? {})
             .filter(Array.isArray).flat().map((m) => m?.name).filter(Boolean),
         },
@@ -1365,12 +1371,8 @@ async function generateStatblockEngine(edition) {
         } catch (e2) {
           logger.warn('[reskin] 2014 conversion failed — the deterministic shape ships with 2024 phrasing:', e2?.message ?? e2);
           const shaped = toLegacyModel(source);
-          // the classic card renders plain text — strip the 2024
-          // markdown markers so the degrade reads clean (owner note
-          // 2026-09-14: "unrendered asterisks")
-          for (const v of Object.values(shaped)) {
-            if (Array.isArray(v)) for (const en of v) { if (en && typeof en.description === 'string') en.description = en.description.replace(/\*+/g, ''); }
-          }
+          // the classic card renders inline markdown (owner 2026-09-14)
+          // — the 2024 markers display as italic labels, no strip needed
           shaped.other_edition = finalMonster;
           finalMonster = shaped;
         }
