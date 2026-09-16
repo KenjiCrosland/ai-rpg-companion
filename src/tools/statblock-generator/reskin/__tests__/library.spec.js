@@ -69,3 +69,62 @@ describe('the fallback library (2026-09-13)', () => {
     expect(drawLibraryRow(scaled, { archetype: 'no-such-archetype', name: 'x' })).toBeNull();
   });
 });
+
+describe('the shape-space expansion (owner 2026-09-15)', () => {
+  const scaled2 = scaleDonor(pickDonor(8, null, 'lurker'), 8, { mechanics: [] });
+
+  test('every seed carries selection keys; the shelf is shape-complete, not volume-padded', () => {
+    for (const seed of LIBRARY_SEEDS) {
+      expect(Array.isArray(seed.keys) && seed.keys.length >= 2).toBe(true);
+      expect(seed.archetypes.length).toBeGreaterThan(0);
+    }
+    expect(LIBRARY_SEEDS.length).toBeGreaterThanOrEqual(20);
+    // keys are unique across seeds
+    const all = LIBRARY_SEEDS.map((x) => x.key);
+    expect(new Set(all).size).toBe(all.length);
+  });
+
+  test("the model's shapeKey wins: exact key, tag affinity, off-shelf exact ask", () => {
+    expect(drawLibraryRow(scaled2, { archetype: 'lurker', energy: 'Necrotic', name: 'x', shapeKey: 'drain' }).seed).toBe('drain');
+    expect(drawLibraryRow(scaled2, { archetype: 'lurker', energy: 'Necrotic', name: 'x', shapeKey: 'leech' }).seed).toBe('drain'); // tag
+    // an exact ask off the archetype shelf is still honored
+    const off = drawLibraryRow(scaled2, { archetype: 'lurker', name: 'x', shapeKey: 'push-prone' });
+    expect(off.seed).toBe('push-prone');
+    // garbage keys fall back to the rotation, never crash
+    expect(drawLibraryRow(scaled2, { archetype: 'lurker', name: 'x', shapeKey: 'zzz-nonsense' })).toBeTruthy();
+  });
+});
+
+describe('the dynamic shelf (owner 2026-09-15: "make A the workhorse")', () => {
+  const sc8 = scaleDonor(pickDonor(8, null, 'lurker'), 8, { mechanics: [] });
+
+  test('the exploiter renders SOURCE-BOUND conditions from what this sheet imposes', () => {
+    const d = drawLibraryRow(sc8, { archetype: 'lurker', energy: 'Necrotic', name: 'x', shapeKey: 'exploiter', imposed: ['Grappled'] });
+    expect(d.seed).toBe('exploiter');
+    expect(d.row.text).toMatch(/Grappled by the creature/);
+    const f = drawLibraryRow(sc8, { archetype: 'lurker', energy: 'Necrotic', name: 'x', shapeKey: 'exploiter', imposed: ['Frightened'] });
+    expect(f.row.text).toMatch(/Frightened of the creature/); // fear binds with OF
+  });
+
+  test('gates hold: needsImposed, requiresMechanic, minCr, and the nova flag', () => {
+    // no imposed conditions -> the exploiter is off the shelf
+    for (let i = 0; i < 40; i += 1) {
+      expect(drawLibraryRow(sc8, { archetype: 'lurker', name: `p${i}`, imposed: [] }).seed).not.toBe('exploiter');
+    }
+    // teleport never leaks without the claimed mechanic
+    for (let i = 0; i < 40; i += 1) {
+      expect(drawLibraryRow(sc8, { archetype: 'lurker', name: `p${i}`, mechanics: [] }).seed).not.toBe('phase-slip');
+    }
+    expect(drawLibraryRow(sc8, { archetype: 'lurker', name: 'x', shapeKey: 'phase-slip', mechanics: ['teleport'] }).seed).toBe('phase-slip');
+    // the summon respects its CR floor
+    const sc1 = scaleDonor(pickDonor(1, null, 'lurker'), 1, { mechanics: [] });
+    for (let i = 0; i < 40; i += 1) {
+      expect(drawLibraryRow(sc1, { archetype: 'lurker', name: `p${i}`, cr: 1 }).seed).not.toBe('summon-lite');
+    }
+    // wind-up never joins an existing Recharge nova
+    const nova = scaleDonor(pickDonor(16, null, 'dragon'), 16, { mechanics: [] });
+    for (let i = 0; i < 40; i += 1) {
+      expect(drawLibraryRow(nova, { archetype: 'brute', name: `p${i}`, cr: 16 }).seed).not.toBe('wind-up');
+    }
+  });
+});

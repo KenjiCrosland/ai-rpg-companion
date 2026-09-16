@@ -1280,6 +1280,17 @@ async function generateStatblockEngine(edition) {
     conceptStyle = null;
   }
 
+  // A style the resolved family cannot SEAT re-routes to the family
+  // that owns it (2026-09-15: the Horseman resolved lurker+mounted
+  // three times — lurker has no mounted seat, the style silently
+  // dropped, and the cavalry concept shipped on a plain stalker).
+  // Mounted is skirmisher's ladder (3/8/13/18). Same law family as the
+  // warden/juggernaut demotions, inverted.
+  if (conceptStyle === 'mounted' && archetypeName !== 'skirmisher' && !conceptBody) {
+    logger.log('[concept] style re-route:', `mounted is skirmisher's seat — ${archetypeName} re-routes`);
+    archetypeName = 'skirmisher';
+  }
+
   let finalMonster;
   try {
     // THE RESKIN PATH — DEFAULT-ON for skirmisher (owner, 2026-08-26:
