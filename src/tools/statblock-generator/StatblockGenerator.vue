@@ -1286,9 +1286,26 @@ async function generateStatblockEngine(edition) {
   // dropped, and the cavalry concept shipped on a plain stalker).
   // Mounted is skirmisher's ladder (3/8/13/18). Same law family as the
   // warden/juggernaut demotions, inverted.
-  if (conceptStyle === 'mounted' && archetypeName !== 'skirmisher' && !conceptBody) {
-    logger.log('[concept] style re-route:', `mounted is skirmisher's seat — ${archetypeName} re-routes`);
+  // generalized 2026-09-15 after the Craghide Troll (artillery+hurler
+  // routed caster-6: a bestial rock-thrower with Arcana +6 and a
+  // 120-ft Force bite — the mounted lesson, new pair)
+  const STYLE_HOME = { mounted: 'skirmisher', hurler: 'skirmisher' };
+  // contradiction belt (2026-09-15, the Cliff Troll TWICE): artillery
+  // with a physical damage mix is a mundane thrower, not a caster — on
+  // the re-run resolve dropped the hurler style entirely, so the style
+  // re-route had nothing to catch and the troll landed on caster-6
+  // again (Arcana +6, at-will Light). The mix contradiction is
+  // deterministic even when the style line is empty. (Controller stays:
+  // a physical controller — a web-weaver, a grappling binder — is a
+  // coherent claim; a physical ARTILLERY is not.)
+  if (archetypeName === 'artillery' && conceptMix === 'physical' && !conceptBody) {
+    if (!conceptStyle) conceptStyle = 'hurler';
+    logger.log('[concept] archetype re-route:', 'artillery with a physical mix is a thrower — skirmisher owns it');
     archetypeName = 'skirmisher';
+  }
+  if (STYLE_HOME[conceptStyle] && archetypeName !== STYLE_HOME[conceptStyle] && !conceptBody) {
+    logger.log('[concept] style re-route:', `${conceptStyle} is ${STYLE_HOME[conceptStyle]}'s seat — ${archetypeName} re-routes`);
+    archetypeName = STYLE_HOME[conceptStyle];
   }
 
   let finalMonster;

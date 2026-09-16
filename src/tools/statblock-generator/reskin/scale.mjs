@@ -219,10 +219,13 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   const isCasterDonor = (donor.archetypes ?? []).includes('caster');
   for (const { e } of rows) {
     if (!ATTACK_RE.test(e.text)) continue;
-    // caster rows carry the mental mod as their flat bonus (Arcane Burst
-    // 4d10 + 5 on INT 20 — print's stat coherence for the family)
-    const mod = isCasterDonor ? strikerMod
-      : /Ranged/.test(e.text) || /Melee/.test(e.text) ? Math.max(dexMod, strMod) : dexMod;
+    // ONE stat per row (critic 2026-09-15, the Cliff Troll: +6 to hit
+    // beside +4 damage — the to-hit keys the exact-fit striker while
+    // Math.max(dex, str) read the donor's OTHER physical stat, still
+    // high after a downscale only moves the striker). The flat bonus
+    // follows the same stat the reader recomputes the attack from —
+    // for casters and martials alike, that is the striker.
+    const mod = strikerMod;
     // the dominated-twin price (batch four): a budget-identical ranged
     // option is strictly safer than the melee it mirrors, so the ranged
     // row pays ~15% (print's own premium: Frost Giant axe 28 vs bow 24)
@@ -313,7 +316,15 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   // the {dc} token stamps the card DC into authored row text (the
   // dragon Spellcasting header, 2026-09-14)
   for (const es of Object.values(scaled.sections)) {
-    for (const e of es) { if (e.text?.includes('{dc}')) e.text = e.text.split('{dc}').join(String(scaled.dc)); }
+    for (const e of es) {
+      if (e.text?.includes('{dc}')) e.text = e.text.split('{dc}').join(String(scaled.dc));
+      // the donor's "+N to hit with spell attacks" is a card number too
+      // (the Prelate shipped +8 beside +9 rows, 2026-09-16); caster
+      // donors only — their card attack IS the mental-stat derivation
+      if ((donor.archetypes ?? []).includes('caster') && /to hit with spell attacks/.test(e.text ?? '')) {
+        e.text = e.text.replace(/\+\d+ to hit with spell attacks/, `+${scaled.atk} to hit with spell attacks`);
+      }
+    }
   }
   const conMod = Math.floor((scaled.stats.CON - 10) / 2);
   scaled.hp_formula = hpFormulaFor(scaled.hp, scaled.size ?? 'Medium', conMod);

@@ -116,6 +116,19 @@ describe('the dynamic shelf (owner 2026-09-15: "make A the workhorse")', () => {
       expect(drawLibraryRow(sc8, { archetype: 'lurker', name: `p${i}`, mechanics: [] }).seed).not.toBe('phase-slip');
     }
     expect(drawLibraryRow(sc8, { archetype: 'lurker', name: 'x', shapeKey: 'phase-slip', mechanics: ['teleport'] }).seed).toBe('phase-slip');
+    // the chassis already delivering the mechanic beats the claim (the
+    // Gutterwretch shipped Flickerstep AND drew Dusk Bend, 2026-09-15)
+    const scTp = scaleDonor(pickDonor(2, null, 'lurker'), 2, { mechanics: ['teleport'] });
+    expect(Object.values(scTp.sections).flat().some((e) => /teleports? up to/.test(e.text ?? ''))).toBe(true); // precondition — a vacuous pin taught us once
+    for (let i = 0; i < 20; i += 1) {
+      expect(drawLibraryRow(scTp, { archetype: 'lurker', name: `q${i}`, shapeKey: 'phase-slip', mechanics: ['teleport'] }).seed).not.toBe('phase-slip');
+    }
+    // dominance (the Ledgerhorn's Overbalance): a pure-control seed
+    // never draws into a sheet that already imposes its payload
+    for (let i = 0; i < 20; i += 1) {
+      expect(drawLibraryRow(sc8, { archetype: 'lurker', name: `d${i}`, shapeKey: 'push-prone', imposed: ['Prone'] }).seed).not.toBe('push-prone');
+    }
+    expect(drawLibraryRow(sc8, { archetype: 'lurker', name: 'd-free', shapeKey: 'push-prone', imposed: [] }).seed).toBe('push-prone');
     // the summon respects its CR floor
     const sc1 = scaleDonor(pickDonor(1, null, 'lurker'), 1, { mechanics: [] });
     for (let i = 0; i < 40; i += 1) {

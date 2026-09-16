@@ -606,3 +606,73 @@ describe('the 2014 move: reskin-first 2014 (2026-09-14)', () => {
     wrapper.unmount();
   });
 });
+
+describe('routing contradiction belt (2026-09-15): physical artillery is a thrower', () => {
+  // the Cliff Troll landed on caster-6 TWICE — once when hurler dropped
+  // at STYLE_HOME (artillery isn't its home family), once when resolve
+  // dropped the style entirely. The damage mix carries the contradiction
+  // deterministically: a caster seat claiming purely physical damage.
+  const reskinTroll = () => ({
+    name: 'Cliff Troll', format: '2024',
+    size: 'Large', type: 'Giant', alignment: 'Neutral',
+    ac: 15, hp: 75, hp_formula: '10d10 + 20', speed: '30 ft.',
+    stats: { STR: 18, DEX: 12, CON: 14, INT: 7, WIS: 12, CHA: 7 },
+    saves: { STR: 7, DEX: 1, CON: 2, INT: -2, WIS: 1, CHA: -2 },
+    senses: 'darkvision 60 ft.; Passive Perception 14',
+    cr: 5, cr_str: '5', xp: 1800, pb: 3,
+    challenge_rating: '5 (XP 1,800; PB +3)',
+    archetype: 'skirmisher', archetype_source: 'auto',
+    generation: { donor: 'skirmisher-5-hurler', signature: 'custom' },
+    sections: {
+      Actions: [{ name: 'Slab Hurl', text: '*Ranged Attack Roll:* +7, range 60/240 ft. 15 (2d10 + 4) Bludgeoning damage.' }],
+    },
+  });
+
+  beforeEach(() => {
+    localStorage.clear();
+    jest.clearAllMocks();
+    localStorage.setItem('statblock-format', '2024');
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1920 });
+  });
+
+  const resolveWith = (payload) => {
+    reskinMod.generateReskin.mockResolvedValue(reskinTroll());
+    aiClient.generateGptResponse.mockImplementation((prompt, validate) => {
+      if (validate === validateArchetypeResponse) return Promise.resolve(JSON.stringify(payload));
+      return Promise.resolve(JSON.stringify({ findings: [], candidates: [] }));
+    });
+  };
+
+  test('artillery + physical mix re-routes to skirmisher with the hurler style', async () => {
+    resolveWith({ archetype: 'artillery', damage_mix: 'physical', mechanics: ['thrown-weapon'] });
+    const wrapper = mountGenerator();
+    await wrapper.find('input#monsterName').setValue('A cliff troll that hurls slabs at climbers');
+    await setCR(wrapper, '5');
+    await generate(wrapper);
+    expect(reskinMod.generateReskin).toHaveBeenCalledTimes(1);
+    const args = reskinMod.generateReskin.mock.calls[0][0];
+    expect(args.archetype).toBe('skirmisher');
+    expect(args.style).toBe('hurler');
+    expect(args.menuRole).toBeNull();
+    wrapper.unmount();
+  });
+
+  test('a resolved style survives the re-route; a mixed-damage artillery stays a caster', async () => {
+    resolveWith({ archetype: 'artillery', damage_mix: 'physical', style: 'skulker' });
+    const w1 = mountGenerator();
+    await w1.find('input#monsterName').setValue('A sniper in the scree');
+    await setCR(w1, '5');
+    await generate(w1);
+    expect(reskinMod.generateReskin.mock.calls[0][0]).toMatchObject({ archetype: 'skirmisher', style: 'skulker' });
+    w1.unmount();
+
+    jest.clearAllMocks();
+    resolveWith({ archetype: 'artillery', damage_mix: 'both' });
+    const w2 = mountGenerator();
+    await w2.find('input#monsterName').setValue('A storm hermit calling lightning');
+    await setCR(w2, '12');
+    await generate(w2);
+    expect(reskinMod.generateReskin.mock.calls[0][0]).toMatchObject({ archetype: 'caster', menuRole: 'artillery' });
+    w2.unmount();
+  });
+});

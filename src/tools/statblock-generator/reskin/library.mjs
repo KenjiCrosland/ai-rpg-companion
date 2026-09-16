@@ -243,9 +243,18 @@ const nameHash = (s) => [...String(s)].reduce((h, c) => ((h * 31) + c.charCodeAt
 export function drawLibraryRow(scaled, { archetype = null, energy = null, mix = null, name = '', shapeKey = null, imposed = [], mechanics = null, cr = null } = {}) {
   const hasNova = Object.values(scaled.sections ?? {}).flat()
     .some((e) => (/^Recharge/.test(e.gate ?? '') || /\(Recharge [\d–-]+\)/.test(e.name ?? '')) && /\d+ \(\d+d\d+/.test(e.text ?? ''));
+  const chassisTeleports = Object.values(scaled.sections ?? {}).flat().some((e) => /teleports? up to/.test(e.text ?? ''));
   const legal = (seed) => !((seed.nova || seed.key === 'thrown-burst') && hasNova)
     && !(seed.needsImposed && !imposed.length)
     && !(seed.requiresMechanic && !(Array.isArray(mechanics) && mechanics.includes(seed.requiresMechanic)))
+    // the chassis already delivering the mechanic beats the claim (the
+    // Gutterwretch drew a second teleport beside Flickerstep, 2026-09-15)
+    && !(seed.key === 'phase-slip' && chassisTeleports)
+    // DOMINANCE (critic 2026-09-15, the Ledgerhorn's Overbalance: a
+    // 0-damage prone action on a sheet whose Gore and Steam Vent both
+    // prone already): a pure-control seed never draws into a sheet
+    // that already imposes its payload condition
+    && !(seed.key === 'push-prone' && imposed.includes('Prone'))
     && !(seed.minCr && (cr ?? scaled.cr ?? 99) < seed.minCr);
   const shelf = LIBRARY_SEEDS.filter((seed) => (!archetype || seed.archetypes.includes(archetype)) && legal(seed));
   if (!shelf.length) return null;
