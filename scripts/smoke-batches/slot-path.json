@@ -1,0 +1,12 @@
+[
+  { "cr": "8", "concept": "a lean goblin raider who circles the fight on foot",
+    "flags": { "statblock-reskin-pilot": "0" } },
+  { "cr": "5", "concept": "an ogre pit-fighter who breaks shields with its fists",
+    "flags": { "statblock-reskin-brute": "0" } },
+  { "cr": "12", "concept": "a recluse who calls lightning down on trespassers",
+    "flags": { "statblock-reskin-caster": "0" } },
+  { "cr": "9", "concept": "a cathedral-vault ooze that digests reliquaries",
+    "flags": { "statblock-reskin-bodies": "0" } },
+  { "cr": "7", "rules": "2014", "concept": "a mercenary duelist with a notched saber",
+    "flags": { "statblock-reskin-2014": "0" } }
+]

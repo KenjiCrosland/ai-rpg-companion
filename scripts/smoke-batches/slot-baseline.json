@@ -1,0 +1,12 @@
+[
+  { "cr": "8",  "concept": "a leopard-thing that stalks the canopy and drops on stragglers from above", "flags": { "statblock-reskin-lurker": "0" } },
+  { "cr": "5",  "concept": "a brass bull construct that charges through market stalls", "flags": { "statblock-reskin-brute": "0" } },
+  { "cr": "12", "concept": "a recluse who calls lightning down on trespassers from a mile away", "flags": { "statblock-reskin-caster": "0" } },
+  { "cr": "17", "concept": "a mountain of troll-flesh that knits shut around the axes left in it", "flags": { "statblock-reskin-brute": "0" } },
+  { "cr": "7",  "concept": "a stone shrine-guardian bound to the high priest it was made to protect", "flags": { "statblock-reskin-defender": "0" } },
+  { "cr": "13", "concept": "a swarm of funeral bells that ring themselves over the dying", "flags": { "statblock-reskin-bodies": "0" } },
+  { "cr": "15", "concept": "an adult storm dragon whose breath is a rolling wall of thunder", "flags": { "statblock-reskin-bodies": "0" } },
+  { "cr": "3",  "concept": "a gutter assassin that hides between lantern-flickers", "flags": { "statblock-reskin-lurker": "0" } },
+  { "cr": "11", "concept": "a vault that grew a hunger — the strongroom itself is the mimic", "flags": { "statblock-reskin-lurker": "0" } },
+  { "cr": "5",  "concept": "a cliff troll that shears slabs off the rockface and hurls them at climbers", "flags": { "statblock-reskin-pilot": "0" } }
+]
