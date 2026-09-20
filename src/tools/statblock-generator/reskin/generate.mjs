@@ -854,6 +854,11 @@ const inventedCondition = (t) => {
   // the lowercase dialect joined 2026-09-13 (the Sewer Choir's "the
   // buried condition" — minted vocabulary hiding in lowercase behind
   // the word "condition" itself)
+  // the CAPITALIZED "the X condition" form (the Hoardvault's "has the
+  // Surprised condition", 2026-09-16 — neither arm above saw it: "has"
+  // is not becomes/is/are, and the arm below is lowercase-only)
+  const m1 = /\bthe ([A-Z][a-z]+) condition\b/.exec(t);
+  if (m1 && !STANDARD_STATES.has(m1[1])) return m1[1];
   const m2 = /\bthe ([a-z]+) condition\b/.exec(t);
   if (m2 && !STANDARD_STATES.has(m2[1][0].toUpperCase() + m2[1].slice(1))
     && !['same', 'new', 'that', 'listed', 'chosen', 'triggering'].includes(m2[1])) return m2[1];
@@ -911,6 +916,14 @@ const vacuousResilience = (t, type) => {
 // the slot drops), the citation orphans. The dead name is known
 // exactly, so the sweep has no false positives: sentences citing it
 // drop, and a row left empty drops with them.
+// drop every sentence of an entry that carries `token`; returns the
+// remaining text ('' when nothing survives). Shared by the dead-name sweep
+// and the invented-condition actuator.
+export const stripSentencesWith = (text, token) => {
+  const esc = String(token).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // leave the neighbouring sentence's trailing space alone, then collapse
+  return String(text ?? '').replace(new RegExp(`[^.!?]*\\b${esc}\\b[^.!?]*[.!?]`, 'gi'), '').replace(/\s{2,}/g, ' ').trim();
+};
 const sweepDeadName = (sectionsMap, deadName, keepRow, traceFn) => {
   const bare = String(deadName ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '').trim();
   if (bare.length < 4) return;
@@ -1468,6 +1481,14 @@ export async function generateReskin(options, callLLM) {
     regenBaneApplied = bane != null;
   }
   trace('donor:', `${donor.id} -> CR ${cr}${donor.invented ? ' (invented — no printed peer)' : ''}`);
+  // a resolved style the chosen family has no line for used to vanish
+  // SILENTLY (5/48 smoke blocks; 3 of 5 on the caster family, which
+  // carries only plain/warpriest/binder) — pickDonor already falls back
+  // to the plain line; the drop just needs to be visible
+  const POSTURE = { lurker: ['skulker'] }; // the plain line already IS this style
+  if (style && !body && donor.style !== style && !(POSTURE[donor.id.split('-')[0]] ?? []).includes(style)) {
+    trace('style unserved:', `"${style}" has no ${donor.id.split('-')[0]} line — the plain line ships (resolve's style signal is noisy; not re-routed)`);
+  }
   for (const g of scaled.gated_out ?? []) trace('row gated out:', `${g} — the concept did not claim this mechanic`);
   {
     const covered = [];
@@ -2225,10 +2246,41 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           .map((e2) => `- [${sec2}] ${e2.name}: ${e2.text}`).join('\n')).filter(Boolean).join('\n');
       const el1 = (options.signatureElements ?? [])[0];
       const seatLine = (typeof el1 === 'string' ? el1 : el1?.element) ?? null;
+      // OBJECT RIDER (2026-09-20; the paired design read's one lost round):
+      // the concept named "a notched saber" and the live pipeline made the
+      // notch mechanical ON the saber's row three times over, while this
+      // path seated the object as a passive trait and let the identity
+      // drift onto the dagger. Now: when an OBJECT element's head noun
+      // names an attack row on the assembled sheet, the ENGINE decides the
+      // slot — the wildcard rides that row — and the model writes only the
+      // payload. Templating over authoring: the rider grammar, the weld,
+      // the once-per-turn stamp and the frame ban all already exist.
+      const objEl = (options.signatureElements ?? []).find((e2) => e2 && typeof e2 === 'object' && e2.kind === 'object');
+      let riderHost = null;
+      if (objEl && !String(p.wildcard_economy ?? '').trim().toLowerCase().startsWith('rider_on:')) {
+        // a compound element ("notched saber AND off-hand dagger") names its
+        // PRIMARY object first — taking the last word rode the dagger and
+        // left the saber plain, the very drift this exists to stop
+        const head = String(objEl.element).toLowerCase().split(/\s+(?:that|which|who)\s+/)[0]
+          .split(/\s+(?:and|with|or)\s+|,/)[0]
+          .replace(/^(?:a|an|the|its|his|her|their)\s+/, '').split(/\s+of\s+/)[0].trim().split(/\s+/).pop()?.replace(/s$/, '');
+        if (head && head.length > 2) {
+          riderHost = Object.values(sections).flat().find((e2) => e2 !== pendingWildcard && /Attack Roll:/.test(e2.text ?? '')
+            && !/If the .{0,60}(?:moved|flew) at least|When (?:it|the [\w' -]{1,30}?) hits with this attack/i.test(e2.text ?? '')
+            && new RegExp(`\\b${head}s?\\b`, 'i').test(e2.name ?? '')) ?? null;
+        }
+      }
+      if (riderHost) {
+        p.wildcard_economy = `rider_on:${riderHost.name.replace(/ \(.*\)$/, '')}`;
+        trace('object rider:', `"${objEl.element}" rides "${riderHost.name}" — the engine chose the slot; the model writes the payload`);
+      }
+      const targetLine = riderHost
+        ? `\nSIGNATURE TARGET: the concept names "${objEl.element}", and the row "${riderHost.name}" IS that object. Make it mechanical ON that row: write ONLY a rider clause that begins "When the creature hits with this attack, " — a bounded effect the hit itself pays for (a condition with a duration, a small extra damage die, or a debuff on the target). Address only "the target"; no new targeting frame, no range, no second target, no use gate.`
+        : (seatLine ? `\nSIGNATURE TARGET: build "${seatLine}" — the rows above already OWN their own fiction; never write another version of one.` : '');
       const informedPrompt = `You are writing the signature action for a NEARLY-COMPLETE D&D monster statblock. Everything below is already final — design the ONE action that best COMPLEMENTS it.
 THE SHEET (${p.name}, CR ${cr}, AC ${scaled.ac}, HP ${scaled.hp}):
 ${sheetLines}
-CONCEPT: ${concept}${seatLine ? `\nSIGNATURE TARGET: build "${seatLine}" — the rows above already OWN their own fiction; never write another version of one.` : ''}
+CONCEPT: ${concept}${targetLine}
 INTERLOCK, don't duplicate: key off a condition a row above applies, or apply a state those rows then exploit (print's Mummy glare escalates on its own fear).
 THE TEN COMMANDMENTS:
 1. The monster is 'the creature'; its victim is 'the target'; never 'you'.
@@ -2816,6 +2868,23 @@ ${wcRejected ? `ACTION draft rejected. THE ONE RULE IT BROKE: ${wcRejected.why}\
     }
   }
   lint.findings = lint.findings.filter((x) => !/^(?:term|condition|damage-type|area-term)-caps$/.test(x.rule));
+  // INVENTED CONDITIONS actuate (2026-09-20; release-gate item B): the
+  // reskin path has no reject loop, so "has the Surprised condition"
+  // shipped twice in 48 smoke blocks — unadjudicable text the lint had
+  // already named. The finding carries the token; the sentence goes
+  // (an emptied entry goes with it). The vet is the primary guard; this
+  // is the backstop for text that reaches lint by another road.
+  for (const f of lint.findings.filter((x) => (x.rule === 'phrasing-surprised' || x.rule === 'condition-unknown') && x.loc)) {
+    const list = sections[f.loc.section] ?? [];
+    const idx = list.findIndex((e2) => e2.name === f.loc.entry);
+    if (idx === -1) continue;
+    const token = f.rule === 'phrasing-surprised' ? 'surprised' : (/"([^"]+)"/.exec(f.message ?? '') ?? [])[1];
+    if (!token) continue;
+    const next = stripSentencesWith(list[idx].text, token);
+    if (next) { list[idx].text = next; trace('lint actuator:', `dropped the "${token}" sentence from "${f.loc.entry}" (not a 5e condition)`); }
+    else { list.splice(idx, 1); trace('lint actuator:', `dropped "${f.loc.entry}" — its only sentence minted "${token}"`); }
+  }
+  lint.findings = lint.findings.filter((x) => !(x.rule === 'phrasing-surprised' || x.rule === 'condition-unknown'));
   // correctable name fixes actuate here too (2026-09-13: the lint
   // computed "Grave-Necrotic Toll" and the reskin path dropped it on
   // the floor — the slot path's correct loop was the only consumer).

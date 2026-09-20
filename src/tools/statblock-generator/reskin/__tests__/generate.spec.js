@@ -6590,3 +6590,90 @@ describe('the Prelate (2026-09-16): the vacuous DC, stale spell bonus, caps actu
     expect((m.sections.Traits ?? []).some((e) => e.name === 'Consecrated Rot')).toBe(false);
   });
 });
+
+describe('release-gate items (2026-09-20): invented conditions, unserved styles', () => {
+  // a fixture whose renames fit the donor actually picked — the skirmisher
+  // answer() on another family trips the loud unrenamed-entry throw
+  const fitted = (opts, over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const { pickDonor: pd, scaleDonor: sd } = require('../scale.mjs');
+    const full = JSON.parse(answer());
+    full.renames = {}; full.damage_types = {};
+    rk(sd(pd(opts.cr, opts.style ?? null, opts.archetype), opts.cr, { mechanics: [] })).forEach((k) => {
+      full.renames[k] = `Named ${k}`.split(/\s+/).slice(0, 4).join(' ');
+      full.damage_types[full.renames[k]] = 'Bludgeoning';
+    });
+    return JSON.stringify({ ...full, ...over });
+  };
+
+  test('"has the Surprised condition" dies at the trait vet — the capitalized form', async () => {
+    const opts = { archetype: 'lurker', style: 'trap', concept: 'x', cr: 8, mechanics: [] };
+    const m = await generateReskin(opts, async () => fitted(opts, {
+      trait_wildcard: { name: 'Vault Guise', text: 'The creature has Advantage on Initiative rolls. Each creature that failed to notice it has the Surprised condition during the first round of combat.' },
+    }));
+    expect((m.sections.Traits ?? []).some((e) => e.name === 'Vault Guise')).toBe(false);
+  });
+
+  test('stripSentencesWith drops only the sentence carrying the token', () => {
+    const { stripSentencesWith: strip } = require('../generate.mjs');
+    expect(strip('The creature has Advantage on Initiative rolls. Each creature that failed to notice it has the Surprised condition. It climbs well.', 'surprised'))
+      .toBe('The creature has Advantage on Initiative rolls. It climbs well.');
+    expect(strip('The target has the Dazed condition until it rests.', 'Dazed')).toBe('');
+  });
+
+  test('an unserved style is logged loudly, not silently dropped', async () => {
+    const seen = [];
+    const orig = console.log;
+    console.log = (...a) => { seen.push(a.join(' ')); orig(...a); };
+    const opts = { archetype: 'caster', style: 'winged', concept: 'x', cr: 12, mechanics: [] };
+    try {
+      await generateReskin(opts, async () => fitted(opts));
+    } finally { console.log = orig; }
+    expect(seen.some((l) => /style unserved: "winged" has no caster line/.test(l))).toBe(true);
+  });
+});
+
+describe('the object rider (2026-09-20): the engine picks the slot, the model writes the payload', () => {
+  const RIDER = "When the creature hits with this attack, the target has Disadvantage on its next attack roll before the start of the creature's next turn.";
+  const run = (elements, riderText = RIDER) => {
+    const prompts = [];
+    return generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8, signatureElements: elements }, async (prompt) => {
+      prompts.push(prompt);
+      if (prompt.startsWith('You are writing the signature action')) return JSON.stringify({ wildcard: riderText });
+      return answer();
+    }).then((m) => ({ m, informed: prompts.find((x) => x.startsWith('You are writing the signature action')) ?? '' }));
+  };
+
+  test('an object element whose noun names an attack row rides THAT row', async () => {
+    const { m, informed } = await run([{ element: 'a barbed thorn rake', kind: 'object' }, { element: 'darting footwork', kind: 'behavior' }]);
+    expect(informed).toMatch(/the row "Thorn Rake" IS that object/);
+    const rake = Object.values(m.sections).flat().find((e) => e.name === 'Thorn Rake');
+    expect(rake.text).toMatch(/Disadvantage on its next attack roll/);
+    expect(Object.values(m.sections).flat().some((e) => e.name === 'Waylay')).toBe(false); // the slot was consumed by the rider
+  });
+
+  test('a compound object element rides its PRIMARY object, not the last word', async () => {
+    const { m, informed } = await run([{ element: 'a notched rake and a throwing knife', kind: 'object' }]);
+    expect(informed).toMatch(/the row "Thorn Rake" IS that object/);
+    expect(Object.values(m.sections).flat().find((e) => e.name === 'Thorn Rake').text).toMatch(/Disadvantage on its next attack roll/);
+    expect(Object.values(m.sections).flat().find((e) => e.name === 'Cast Thorn').text).not.toMatch(/hits with this attack/);
+  });
+
+  test('an object with no row bearing its noun leaves the seat logic untouched', async () => {
+    const { m, informed } = await run([{ element: 'a censer of plague-ash', kind: 'object' }], '*Dexterity Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Prone condition.');
+    expect(informed).not.toMatch(/IS that object/);
+    expect(Object.values(m.sections).flat().find((e) => e.name === 'Thorn Rake').text).not.toMatch(/When the .* hits with this attack/);
+    expect(Object.values(m.sections).flat().some((e) => e.name === 'Waylay')).toBe(true);
+  });
+
+  test('a family\'s default posture is not logged as an unserved style', async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const { pickDonor: pd, scaleDonor: sd } = require('../scale.mjs');
+    const full = JSON.parse(answer()); full.renames = {}; full.damage_types = {};
+    rk(sd(pd(3, null, 'lurker'), 3, { mechanics: [] })).forEach((k) => { full.renames[k] = `Named ${k}`.split(/\s+/).slice(0, 4).join(' '); full.damage_types[full.renames[k]] = 'Bludgeoning'; });
+    const seen = []; const orig = console.log; console.log = (...a) => { seen.push(a.join(' ')); orig(...a); };
+    try { await generateReskin({ archetype: 'lurker', style: 'skulker', concept: 'x', cr: 3, mechanics: [] }, async () => JSON.stringify(full)); }
+    finally { console.log = orig; }
+    expect(seen.some((l) => /style unserved/.test(l))).toBe(false);
+  });
+});

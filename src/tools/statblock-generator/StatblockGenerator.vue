@@ -1138,7 +1138,18 @@ async function generateStatblockEngine(edition) {
           const pn = parsed.provided_name.trim();
           // provenance, not shape: the name must actually come from the
           // name/concept field, so the call can extract but never invent
-          if (pn && monsterName.value.toLowerCase().includes(pn.toLowerCase())) conceptProvidedName = pn;
+          // SHAPE, too (2026-09-20, item F — 2/3 live rate on some inputs):
+          // the model returned the WHOLE input as provided_name and the
+          // substring test passed trivially, locking "A Scarecrow That Only
+          // Moves When Nobody Is Looking" as a user-given name — and the
+          // inline short form then took its LAST word ("the hand"). A name
+          // is at most 4 words (0/329 print names run longer) and is never
+          // the input itself; anything else is a description the generator
+          // names.
+          const inputWords = monsterName.value.trim().split(/\s+/).length;
+          const nameShaped = pn.split(/\s+/).length <= 4 && !(inputWords > 4 && pn.length >= monsterName.value.trim().length - 2);
+          if (pn && nameShaped && monsterName.value.toLowerCase().includes(pn.toLowerCase())) conceptProvidedName = pn.replace(/^(?:a|an|the)\s+/i, '');
+          else if (pn && !nameShaped) logger.log('[concept] name:', `provided_name rejected — "${pn.slice(0, 40)}…" is the description, not a name`);
         }
         if (['both', 'physical', 'energy'].includes(parsed?.damage_mix)) conceptMix = parsed.damage_mix;
         // contradiction belt: a declared element outranks a 'physical' mix
@@ -1289,7 +1300,16 @@ async function generateStatblockEngine(edition) {
   // generalized 2026-09-15 after the Craghide Troll (artillery+hurler
   // routed caster-6: a bestial rock-thrower with Arcana +6 and a
   // 120-ft Force bite — the mounted lesson, new pair)
-  const STYLE_HOME = { mounted: 'skirmisher', hurler: 'skirmisher' };
+  // grappler joined 2026-09-20 (smoke corpus: 3/3 grappler drops were troll
+  // concepts mis-resolved lurker/controller and shipped with grapple-gated
+  // finishers and NO grapple engine). The grapple engine lives only on
+  // brute-5/8/15/17-grappler. NOTE the re-route is deliberately NARROW: a
+  // style that a family simply lacks (winged/warden on caster, skulker on
+  // lurker) falls back to that family's plain line and is LOGGED in
+  // generateReskin ("style unserved") — the resolve's style signal changes
+  // on ~half of identical runs, so wholesale archetype swaps are reserved
+  // for styles that imply an ENGINE the family cannot express at all.
+  const STYLE_HOME = { mounted: 'skirmisher', hurler: 'skirmisher', grappler: 'brute' };
   // contradiction belt (2026-09-15, the Cliff Troll TWICE): artillery
   // with a physical damage mix is a mundane thrower, not a caster — on
   // the re-run resolve dropped the hurler style entirely, so the style

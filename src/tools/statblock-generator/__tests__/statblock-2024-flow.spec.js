@@ -643,6 +643,37 @@ describe('routing contradiction belt (2026-09-15): physical artillery is a throw
     });
   };
 
+  test('a grappler style on a non-brute family re-routes to brute (the grapple engine lives there)', async () => {
+    resolveWith({ archetype: 'lurker', style: 'grappler', mechanics: ['grapple'] });
+    const wrapper = mountGenerator();
+    await wrapper.find('input#monsterName').setValue('A bog troll that drags victims under the mire');
+    await setCR(wrapper, '8');
+    await generate(wrapper);
+    expect(reskinMod.generateReskin.mock.calls[0][0]).toMatchObject({ archetype: 'brute', style: 'grappler' });
+    wrapper.unmount();
+  });
+
+  test('a provided_name that is the whole input is a description, not a name (item F)', async () => {
+    const input = 'a scarecrow that only moves when nobody is looking';
+    resolveWith({ archetype: 'lurker', provided_name: input });
+    const wrapper = mountGenerator();
+    await wrapper.find('input#monsterName').setValue(input);
+    await setCR(wrapper, '4');
+    await generate(wrapper);
+    expect(reskinMod.generateReskin.mock.calls[0][0].fixedName).toBeNull();
+    wrapper.unmount();
+  });
+
+  test('a short provided_name inside a longer input is still honoured, article stripped', async () => {
+    resolveWith({ archetype: 'brute', provided_name: 'the Brazen Bull' });
+    const wrapper = mountGenerator();
+    await wrapper.find('input#monsterName').setValue('the Brazen Bull, a brass construct that charges through market stalls');
+    await setCR(wrapper, '5');
+    await generate(wrapper);
+    expect(reskinMod.generateReskin.mock.calls[0][0].fixedName).toBe('Brazen Bull');
+    wrapper.unmount();
+  });
+
   test('artillery + physical mix re-routes to skirmisher with the hurler style', async () => {
     resolveWith({ archetype: 'artillery', damage_mix: 'physical', mechanics: ['thrown-weapon'] });
     const wrapper = mountGenerator();

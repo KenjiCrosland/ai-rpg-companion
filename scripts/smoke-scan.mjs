@@ -53,7 +53,10 @@ for (const dir of runs) {
   for (const f of fs.readdirSync(dir).filter((x) => /^\d+-.*\.md$/.test(x)).sort()) {
     const md = fs.readFileSync(path.join(dir, f), 'utf8');
     const jsonPath = path.join(dir, f.replace(/\.md$/, '.json'));
-    const m = fs.existsSync(jsonPath) ? JSON.parse(fs.readFileSync(jsonPath, 'utf8')) : {};
+    // a failed generation leaves a .md with no .json (and a fallback name) —
+    // it is not a block and must not enter the rates
+    if (!fs.existsSync(jsonPath) || /TIMED OUT/.test(md)) continue;
+    const m = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
     const block = (/### Block\n```\n([\s\S]*?)\n```/.exec(md) ?? [])[1] ?? '';
     const trace = (/### Trace\n```\n([\s\S]*?)\n```/.exec(md) ?? [])[1] ?? '';
 
@@ -65,7 +68,10 @@ for (const dir of runs) {
     // (engulf claims the grappler line; a body type outranks the role) —
     // neither is a silent drop, and counting them inflated the rate to 24%
     const rerouted = /style re-route|archetype re-route|style overridden|body type: \w+ — the body outranks/.test(trace);
-    const styleDropped = style !== '—' && donor && !donor.includes(style) && !rerouted;
+    const POSTURE = { lurker: ['skulker'] }; // the plain line already IS this style
+    const family = donor.split('-')[0];
+    const styleDropped = style !== '—' && donor && !donor.includes(style) && !rerouted
+      && !(POSTURE[family] ?? []).includes(style);
 
     // lint findings that SHIPPED (the reject-gap measurement)
     const lintLine = (/\[reskin\] lint: (.*)/.exec(trace) ?? [])[1] ?? '0 findings';
