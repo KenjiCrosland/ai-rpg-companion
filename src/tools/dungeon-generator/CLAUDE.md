@@ -104,7 +104,10 @@ src/tools/dungeon-generator/
 
 4. **monster-store.mjs** - Monster generation
    - Short descriptions for quick reference
-   - Full statblock generation (two-part like StatblockGenerator)
+   - Full statblock generation ENGINE-ROUTED (2026-07-28) via
+     `@/util/embedded-statblock.mjs` — chassis numbers, lint stack, and the
+     shared 2014/2024 edition preference (`statblock-format`); displays
+     format-dispatch between Statblock and Statblock2024
    - Monster editing capabilities
    - Links monsters to specific rooms
 

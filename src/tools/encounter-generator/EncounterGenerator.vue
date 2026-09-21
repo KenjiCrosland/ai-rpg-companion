@@ -237,8 +237,18 @@
           <div v-for="(monster, index) in encounterMonsters" :key="index" class="monster-output">
             <h4><span class="monster-output__name">{{ monster.name }}</span> <span class="monster-qty">×{{ monster.quantity }}</span></h4>
 
-            <Statblock v-if="monster.statblock" :monster="monster.statblock" :premium="premium"
-              :columns="'two_columns'" :readonly="true" />
+            <!-- Both printings cached on the library copy: free read-only
+                 flip (no call, no persistence). Single printing: no tabs. -->
+            <ParTabToggle v-if="monster.statblock?.other_edition"
+              :model-value="viewEditionFor(index, monster.statblock)"
+              @update:model-value="viewEditions[index] = $event"
+              :options="EDITION_TAB_OPTIONS" data-testid="edition-switch" class="encounter-edition-tabs" />
+            <template v-if="monster.statblock">
+              <Statblock2024 v-if="displayBlockFor(index, monster.statblock).format === '2024'"
+                :monster="displayBlockFor(index, monster.statblock)" :premium="premium" :readonly="true" />
+              <Statblock v-else :monster="displayBlockFor(index, monster.statblock)" :premium="premium"
+                :columns="'two_columns'" :readonly="true" />
+            </template>
 
             <div v-else class="generate-statblock-section">
               <p>Statblock not available for this monster.</p>
@@ -332,7 +342,7 @@
 </template>
 
 <script setup>
-import { ParButton, ParCardButton, ParField, ParInput, ParSelect, ParTextarea, ParTooltip, ParAddNewButton, ParReadAloud, ParAccordion, ParAccordionGroup, ParConfirm } from "@/parchment";
+import { ParButton, ParCardButton, ParField, ParInput, ParSelect, ParTextarea, ParTooltip, ParAddNewButton, ParReadAloud, ParAccordion, ParAccordionGroup, ParConfirm, ParTabToggle } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
 import { ref, computed, onMounted, watch } from 'vue';
 import { CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
@@ -343,6 +353,7 @@ import DataManagerModal from '@/components/DataManagerModal.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import Statblock from '@/components/Statblock.vue';
+import Statblock2024 from '@/components/Statblock2024.vue';
 import MonsterPicker from './components/MonsterPicker.vue';
 import EncounterMonsterList from './components/EncounterMonsterList.vue';
 import ItemExportsSection from '@/tools/item-generator/components/ItemExportsSection.vue';
@@ -365,7 +376,27 @@ import {
 import { buildEnrichedMonsterBrief, getEncounterProfile } from '@/util/encounter-enrichment.mjs';
 import { removeReferencesForEntity, getAllReferences } from '@/util/reference-storage.mjs';
 import { statblockToMarkdown } from '@/util/convertToMarkdown.mjs';
-import { generateStatblockPart1, completeStatblock } from '@/util/statblock-generator.mjs';
+import { generateEmbeddedStatblock } from '@/util/embedded-statblock.mjs';
+import { toLegacyModel } from '@/tools/statblock-generator/format-2024/generate.mjs';
+
+const EDITION_TAB_OPTIONS = [
+  { value: '2014', label: '2014 rules' },
+  { value: '2024', label: '2024 rules' },
+];
+// Per-monster VIEW edition (index-keyed): pure display state for flipping
+// between a library monster's cached printings — never persisted.
+const viewEditions = ref({});
+function viewEditionFor(index, statblock) {
+  return viewEditions.value[index] ?? (statblock.format === '2024' ? '2024' : '2014');
+}
+function displayBlockFor(index, statblock) {
+  const view = viewEditionFor(index, statblock);
+  const active = statblock.format === '2024' ? '2024' : '2014';
+  if (view === active || !statblock.other_edition) return statblock;
+  return statblock.other_edition;
+}
+
+
 import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
 import { trackEvent } from '@/util/analytics.mjs';
 import { useToast } from '@/composables/useToast';
@@ -429,6 +460,8 @@ function getEncounterMultiplier(monsterCount, partySize) {
 
 // ─── State ────────────────────────────────────────────────────────────────────
 const encounterMonsters = ref([]);
+// A new monster list means the index-keyed edition-view state is stale.
+watch(encounterMonsters, () => { viewEditions.value = {}; });
 const highlightDeepLink = ref(false);
 const highlightMonsterIndex = ref(-1);
 const partyGroups = ref([{ players: null, level: null }]);
@@ -1042,15 +1075,14 @@ async function generateStatblock(index) {
 
   try {
     const monster = encounterMonsters.value[index];
-    const part1 = await generateStatblockPart1({
+    // Engine-routed (embedded edition migration): chassis numbers, lint
+    // stack, and the shared edition preference.
+    const fullStatblock = await generateEmbeddedStatblock({
       name: monster.name,
       cr: monster.cr,
-      type: monster.type || 'Balanced',
       description: monster.description || '',
-      isSpellcaster: monster.isSpellcaster || false,
-    }, '');
-
-    const fullStatblock = await completeStatblock(part1, '');
+      caster: monster.isSpellcaster || false,
+    });
 
     // Replace object again with statblock data
     encounterMonsters.value[index] = {
@@ -1171,13 +1203,22 @@ async function exportToMarkdown() {
 }
 
 function convertStatblockToPlainText(statblock) {
+  // 2024 blocks map through the engine's legacy-shape converter — the 2014
+  // path below then renders traits/actions/defenses at full fidelity
+  // (the earlier inline shim covered header fields only).
+  if (statblock.format === '2024') {
+    try { statblock = toLegacyModel(statblock); } catch { /* render raw */ }
+  }
   let text = `${statblock.name}\n`;
   text += `${statblock.size} ${statblock.type}, ${statblock.alignment}\n\n`;
-  text += `Armor Class: ${statblock.armor_class}\n`;
-  text += `Hit Points: ${statblock.hit_points}\n`;
+  // 2024-format statblocks carry numeric ac/hp + a stats map instead of the
+  // 2014 armor_class/hit_points/abilities fields — fall back accordingly
+  // (full interop: plans/statblock-2024-export-mappers.md).
+  text += `Armor Class: ${statblock.armor_class ?? statblock.ac}\n`;
+  text += `Hit Points: ${statblock.hit_points ?? (statblock.hp_formula ? `${statblock.hp} (${statblock.hp_formula})` : statblock.hp)}\n`;
   text += `Speed: ${statblock.speed}\n\n`;
 
-  const abilities = statblock.abilities;
+  const abilities = statblock.abilities?.STR != null ? statblock.abilities : (statblock.stats ?? {});
   text += `STR: ${abilities.STR} DEX: ${abilities.DEX} CON: ${abilities.CON} INT: ${abilities.INT} WIS: ${abilities.WIS} CHA: ${abilities.CHA}\n\n`;
 
   if (statblock.saving_throws) {
@@ -2463,4 +2504,9 @@ onMounted(async () => {
     font-weight: 600;
   }
 }
+
+.encounter-edition-tabs {
+  margin-bottom: -1px; /* document tabs sit on the card's top edge */
+}
+
 </style>

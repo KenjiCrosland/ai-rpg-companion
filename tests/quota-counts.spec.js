@@ -12,6 +12,13 @@ import { mockLLM } from './helpers/llm-mocks.js';
 test.describe('Free-tier statblock quota', () => {
   test.beforeEach(async ({ page }) => {
     await mockLLM(page, 'statblock');
+    // Pin the 2014 flow: the form defaults to 2024 rules, and the mocked LLM
+    // fixtures serve the 2014 two-part responses. Raw setItem — the format
+    // key stores a bare string (seedStorage would JSON-quote it).
+    await page.addInitScript(() => {
+      localStorage.setItem('statblock-format', '2014');
+      localStorage.setItem('statblock-legacy-2014', '1'); // legacy two-part flow (fixtures are two-part)
+    });
   });
 
   // The always-visible "+ New" lives in the sidebar footer (the in-accordion

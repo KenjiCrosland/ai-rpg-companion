@@ -41,6 +41,8 @@
       <select id="page-select" v-model="currentPage" @change="saveDevPage">
         <optgroup label="Generators">
           <option value="statblock-generator">Statblock Generator</option>
+          <option value="statblock-converter">Statblock Converter</option>
+          <option value="statblock-converter-premium">Statblock Converter (Premium)</option>
           <option value="statblock-generator-premium">Statblock Generator (Premium)</option>
           <option value="npc-generator">NPC Generator</option>
           <option value="npc-generator-premium">NPC Generator (Premium)</option>
@@ -67,6 +69,8 @@
           <option value="price-calculator">Magic Item Price Calculator</option>
           <option value="chase-tracker">Chase Tracker</option>
           <option value="chase-tracker-premium">Chase Tracker (Premium)</option>
+          <option value="backpack">Visual Backpack</option>
+          <option value="loot-splitter">Loot Splitter</option>
         </optgroup>
         <optgroup label="Examples">
           <option value="tabs-example">Tabs Example</option>
@@ -84,6 +88,8 @@
     <Dashboard v-if="currentPage === 'gm-dashboard'" />
     <DashboardPlus v-if="currentPage === 'gm-dashboard-plus'" />
     <StatblockGenerator v-if="currentPage === 'statblock-generator'" />
+    <StatblockConverter v-if="currentPage === 'statblock-converter'" />
+    <StatblockConverter :premium="true" v-if="currentPage === 'statblock-converter-premium'" />
     <StatblockGenerator :premium="true" v-if="currentPage === 'statblock-generator-premium'" />
     <BookGenerator v-if="currentPage === 'book-generator'" />
     <LoreGenerator v-if="currentPage === 'lore-generator'" />
@@ -100,6 +106,8 @@
     <PriceCalculator v-if="currentPage === 'price-calculator'" />
     <ChaseTracker v-if="currentPage === 'chase-tracker'" />
     <ChaseTracker :premium="true" v-if="currentPage === 'chase-tracker-premium'" />
+    <VisualBackpack v-if="currentPage === 'backpack'" />
+    <LootSplitter v-if="currentPage === 'loot-splitter'" />
     <TabsExample v-if="currentPage === 'tabs-example'" />
     <LandingPage v-if="currentPage === 'category-landing'" />
 
@@ -114,6 +122,7 @@ import NPCGenerator from '@/tools/npc-generator/NPCGenerator.vue';
 import Dashboard from '@/components/Dashboard.vue';
 import DashboardPlus from '@/components/DashboardPlus.vue';
 import StatblockGenerator from '@/tools/statblock-generator/StatblockGenerator.vue';
+import StatblockConverter from '@/tools/statblock-converter/StatblockConverter.vue';
 import BookGenerator from '@/components/BookGenerator.vue';
 import LegacyDungeonGenerator from '@/tools/legacy-tools/dungeon-generator/LegacyDungeonGenerator.vue';
 import LegacyDungeonGeneratorPremium from '@/tools/legacy-tools/dungeon-generator/LegacyDungeonGeneratorPremium.vue';
@@ -123,6 +132,8 @@ import SettingGenerator from '@/tools/setting-generator/SettingGenerator.vue';
 import DungeonGenerator from '@/tools/dungeon-generator/components/DungeonGenerator.vue';
 import PriceCalculator from '@/tools/price-calculator/PriceCalculator.vue';
 import ChaseTracker from '@/tools/chase-tracker/ChaseTracker.vue';
+import VisualBackpack from '@/tools/visual-backpack/VisualBackpack.vue';
+import LootSplitter from '@/tools/loot-splitter/LootSplitter.vue';
 import TabsExample from '@/components/tabs/TabsExample.vue';
 import LandingPage from '@/components/LandingPage.vue';
 import AppToast from '@/components/AppToast.vue';
@@ -139,6 +150,7 @@ export default {
     Dashboard,
     DashboardPlus,
     StatblockGenerator,
+    StatblockConverter,
     CdrLink,
     BookGenerator,
     LegacyDungeonGenerator,
@@ -150,6 +162,8 @@ export default {
     SettingGenerator,
     PriceCalculator,
     ChaseTracker,
+    VisualBackpack,
+    LootSplitter,
     TabsExample,
     LandingPage,
     AppToast

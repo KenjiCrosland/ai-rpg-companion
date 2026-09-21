@@ -17,6 +17,13 @@ const savedCount = (page) =>
 test.describe('Statblock Generator — lifecycle', () => {
   test.beforeEach(async ({ page }) => {
     await mockLLM(page, 'statblock');
+    // The form defaults to 2024 rules; these specs (and the mocked LLM
+    // fixtures) drive the 2014 two-part flow. Raw setItem — the format key
+    // stores a bare string, so seedStorage's JSON.stringify would corrupt it.
+    await page.addInitScript(() => {
+      localStorage.setItem('statblock-format', '2014');
+      localStorage.setItem('statblock-legacy-2014', '1'); // legacy two-part flow (fixtures are two-part)
+    });
   });
 
   async function createStatblock(page) {

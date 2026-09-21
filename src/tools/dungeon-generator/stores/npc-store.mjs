@@ -14,7 +14,7 @@ import {
 import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { logger } from '@/util/logger.mjs';
-import { createStatblockPrompts } from '../prompts/monster-prompts.mjs';
+import { generateEmbeddedStatblock } from '@/util/embedded-statblock.mjs';
 import { ref } from 'vue';
 import { saveStatblockToStorage } from '@/util/statblock-storage.mjs';
 import { saveNPCToStorage, dungeonNPCToCanonical } from '@/util/npc-storage.mjs';
@@ -43,34 +43,6 @@ function syncNPCIdFromCanonical(canonicalNPC, dungeonNPC, npcIndex) {
     dungeonNPC.npc_id = canonicalNPC.npc_id;
     currentDungeon.value.npcs[npcIndex].npc_id = canonicalNPC.npc_id;
     // Don't save here - let caller save once at the end
-  }
-}
-
-function sbValidationPart1(jsonString) {
-  try {
-    const data = JSON.parse(jsonString);
-    const keys = [
-      'armor_class',
-      'hit_points',
-      'speed',
-      'senses',
-      'languages',
-      'challenge_rating',
-      'proficiency_bonus',
-      'abilities',
-    ];
-    return keys.every((k) => k in data);
-  } catch {
-    return false;
-  }
-}
-
-function sbValidationPart2(jsonString) {
-  try {
-    const data = JSON.parse(jsonString);
-    return 'actions' in data;
-  } catch {
-    return false;
   }
 }
 
@@ -108,53 +80,32 @@ export async function generateNPCStatblock(
     limitReached: false,
   };
 
-  let part2Data = null;
+  let generated = null;
 
   try {
     // Build up the "description" from the NPC data
     const npcBodyString = buildNPCString(npc); // Something like "This NPC named X is..."
-    // Possibly also add the shortDescription or read_aloud_description if you want more detail
 
-    const promptOptions = {
-      monsterName: npc.name,
-      challengeRating: CR || '1',
-      monsterType: monsterType || 'Random',
-      monsterDescription: npcBodyString || 'A mysterious being',
+    // Engine-routed generation (phase 1 of the embedded edition migration):
+    // same two calls as the old part1/part2 flow, with chassis-exact
+    // numbers, the lint stack, and the shared edition preference.
+    generated = await generateEmbeddedStatblock({
+      name: npc.name,
+      cr: CR || '1',
+      description: npcBodyString || 'A mysterious being',
       caster: !!isSpellcaster,
-    };
-
-    const statblockPrompts = createStatblockPrompts(promptOptions);
-
-    // PART 1
-    const npcStatsPart1 = await generateGptResponse(
-      statblockPrompts.part1,
-      sbValidationPart1,
-      3,
-    );
-    const part1Data = JSON.parse(npcStatsPart1);
-    npc.statblock = { id: npc.name, ...part1Data }; // Just some ID, or use crypto.randomUUID()
-    // Don't save yet - wait until generation is complete
-
-    // PART 2
-    // Provide GPT the context of part1
-    const previousContext = [
-      {
-        role: 'user',
-        content: 'Please give me the first part of the D&D statblock',
+      type: monsterType || 'Humanoid',
+      onResolve: () => {
+        npcStatblockLoadingStates.value[index] = {
+          part1: false,
+          part2: true,
+          generating: true,
+          limitReached: false,
+        };
       },
-      { role: 'system', content: npcStatsPart1 },
-    ];
+    });
 
-    const npcStatsPart2 = await generateGptResponse(
-      statblockPrompts.part2,
-      sbValidationPart2,
-      3,
-      previousContext,
-    );
-    part2Data = JSON.parse(npcStatsPart2);
-
-    // Combine for final
-    const finalStatblock = { ...npc.statblock, ...part2Data };
+    const finalStatblock = { id: npc.name, ...generated };
     npc.statblock = finalStatblock;
 
     // Auto-save to shared storage
@@ -200,7 +151,7 @@ export async function generateNPCStatblock(
     };
     // Only save if we didn't already save in success path
     // (This handles error case where generation failed)
-    if (!part2Data) {
+    if (!generated) {
       saveDungeons();
     }
   }

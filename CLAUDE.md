@@ -22,7 +22,7 @@ When you finish work that resolved a plan's trigger, delete the plan file and re
 
 ## Project Overview
 
-AI RPG Companion is a Vue 3 + Vite application that provides AI-powered tabletop RPG content generation tools. The application generates D&D 5e monsters, NPCs, locations, dungeons, encounters, items, and campaign settings using multiple AI providers (DeepSeek V3 by default, with support for OpenAI GPT-4o-mini).
+AI RPG Companion is a Vue 3 + Vite application that provides AI-powered tabletop RPG content generation tools. The application generates D&D 5e monsters, NPCs, locations, dungeons, encounters, items, and campaign settings using multiple AI providers (DeepSeek by default — model `deepseek-flash` (renamed from `deepseek-v4-flash` 2026-09; DeepSeek retired the V3-era `deepseek-chat` alias in 2026-07) — with support for OpenAI GPT-4o-mini).
 
 ## Commands
 
@@ -61,7 +61,7 @@ npm test -- calculateCR.spec.js            # Run a single test file
 - [Encounter Generator](/src/tools/encounter-generator/CLAUDE.md) - Combat encounter generation with monster selection and difficulty balancing
 - [Setting Generator](/src/tools/setting-generator/CLAUDE.md) - Campaign setting creation with locations, factions, and hooks
 
-**WordPress Integration**: The `wordpress/` directory contains PHP files that act as shortcodes to embed the Vue app in WordPress pages. The `functions.php` file includes an AI proxy endpoint (`/wp-json/open-ai-proxy/api/v1/proxy`) used in production to avoid exposing API keys. Note: The proxy currently only supports OpenAI and needs updating for multi-provider support.
+**WordPress Integration**: The `wordpress/` directory contains PHP files that act as shortcodes to embed the Vue app in WordPress pages. The `functions.php` file includes an AI proxy endpoint (`/wp-json/open-ai-proxy/api/v1/proxy`) used in production to avoid exposing API keys. The proxy is multi-provider: it routes by provider id (`deepseek-v3` default, `gpt-4o-mini`) and forwards the request's model as specified.
 
 ### Key Directories
 
@@ -137,14 +137,14 @@ logger.error('failed to parse response', err); // always
 The application supports multiple AI providers with automatic provider selection and model normalization.
 
 **Supported Providers:**
-- **DeepSeek V3** (default) - Cost-effective, high-quality content generation (~$13/month for typical usage)
+- **DeepSeek V4 Flash** (default) - Cost-effective, fast content generation. NOTE: the provider *id* remains `deepseek-v3` (persisted in localStorage overrides and env values); only the model name moved to `deepseek-flash` (2026-09; formerly `deepseek-v4-flash`). `deepseek-v4-pro` also exists if quality ever warrants the upgrade.
 - **OpenAI GPT-4o-mini** - Legacy fallback (~$7/month)
 
 **Architecture:**
 
 1. **Configuration Layer** (`src/util/ai-config.mjs`):
    - Provider configurations (endpoints, models, API keys)
-   - Model normalization (maps model names across providers, e.g., `gpt-4.1-mini` → `deepseek-chat`)
+   - Model normalization (maps model names across providers, e.g., `gpt-4.1-mini` → `deepseek-flash`; retired names like `deepseek-chat` also normalize to the provider default)
    - Provider selection priority: localStorage override > environment variable > default (DeepSeek)
    - Functions: `getAIProvider()`, `getProviderConfig()`, `normalizeModel()`
 
@@ -202,12 +202,17 @@ Create a `.env.local` file with:
 
 ```bash
 # AI Provider Configuration
-# Default provider: deepseek-v3 | gpt-4o-mini
+# Default provider id: deepseek-v3 | gpt-4o-mini  (deepseek-v3 is the stable
+# provider ID; the model it sends is deepseek-flash)
 VITE_AI_DEFAULT_PROVIDER=deepseek-v3
 
-# API Keys (add keys for providers you want to use)
-VITE_DEEPSEEK_API_KEY=your-deepseek-key-here
-VITE_OPENAI_API_KEY=your-openai-key-here
+# API Keys (add keys for providers you want to use).
+# IMPORTANT: NO `VITE_` prefix on the keys — prefixed vars are bundled into
+# browser code. The dev proxy in vite.config.js reads these unprefixed names
+# and injects the Authorization header server-side; the browser never sees
+# the key. A `VITE_DEEPSEEK_API_KEY` line is silently ignored.
+DEEPSEEK_API_KEY=your-deepseek-key-here
+OPENAI_API_KEY=your-openai-key-here
 ```
 
 **Development Provider Switching:**
@@ -230,7 +235,7 @@ define('DEEPSEEK_API_KEY', 'your-deepseek-key-here');
 define('OPENAI_API_KEY', 'your-openai-key-here');
 ```
 
-**Note**: The WordPress proxy (`wordpress/functions.php`) currently only supports OpenAI in production and needs updating for multi-provider support.
+**Note**: The WordPress proxy (`wordpress/functions.php`) is multi-provider — it routes by provider id (`deepseek-v3` default) and forwards the model specified in the request. (An earlier note claiming OpenAI-only was stale; corrected 2026-09-15.)
 
 **Security Note**: Never commit API keys. The `.env.local` and `wp-config.php` files should be excluded from version control.
 

@@ -32,6 +32,6 @@ test('generate a statblock for an NPC renders it inline (no "not found")', async
 
   // Two-part generation; on completion the statblock renders inline in the card.
   await page.getByRole('button', { name: 'Generate statblock', exact: true }).click();
-  await expect(page.getByTestId('npc-output').getByText('Armor Class').first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByTestId('npc-output').getByText(/Armor Class|AC \d+/).first()).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('.statblock-not-found-message')).toHaveCount(0);
 });

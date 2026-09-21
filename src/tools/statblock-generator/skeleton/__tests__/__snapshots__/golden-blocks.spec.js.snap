@@ -1,0 +1,291 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`golden blocks (byte-exact through the refactor) G1: CR 20 forged skirmisher, never-fail placeholder path 1`] = `
+{
+  "ac": 20,
+  "alignment": "Neutral",
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "challenge_rating": "20 (XP 25,000; PB +6)",
+  "cr": 20,
+  "cr_str": "20",
+  "format": "2024",
+  "generation": {
+    "archetype": "skirmisher",
+    "package": null,
+    "path": "skeleton",
+  },
+  "hp": 319,
+  "hp_formula": "22d12 + 176",
+  "initiative_bonus": 5,
+  "initiative_score": 15,
+  "legendary_uses": 3,
+  "name": "Unnamed Creature",
+  "pb": 6,
+  "saves": {
+    "CHA": 0,
+    "CON": 8,
+    "DEX": 7,
+    "INT": 0,
+    "STR": 8,
+    "WIS": 6,
+  },
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The unnamed creature makes three attacks, using Barnacled Lash or Brine Lash in any combination.",
+      },
+      {
+        "name": "Barnacled Lash",
+        "text": "*Melee or Ranged Attack Roll:* +14, reach 10 ft. or range 120 ft. 17 (2d8 + 8) Slashing damage plus 13 (3d8) Fire damage.",
+      },
+      {
+        "name": "Brine Lash",
+        "text": "*Melee Attack Roll:* +14, reach 10 ft. 30 (5d8 + 8) Slashing damage.",
+      },
+      {
+        "name": "Salt-Crusted Surge (Recharge 5-6)",
+        "text": "*Dexterity Saving Throw*: DC 22, each creature in a 90-foot-long, 5-foot-wide Line. *Failure:* 91 (14d12) Fire damage. *Success:* Half damage.",
+      },
+      {
+        "name": "Tidewrack Hold",
+        "text": "*Constitution Saving Throw*: DC 22, one creature the unnamed creature can see within 120 feet. *Failure:* 31 (9d6) Fire damage, and the target has the Poisoned condition for 1 hour. *Failure by 5 or More:* While Poisoned, the target also has the Unconscious condition, which ends early if the target takes damage or a creature within 10 feet of it takes an action to wake it.",
+      },
+    ],
+    "Legendary Actions": [
+      {
+        "name": "Barnacled Reprisal",
+        "text": "The unnamed creature moves up to half its Speed, and it makes one Barnacled Lash attack.",
+      },
+      {
+        "name": "Brine Riposte",
+        "text": "*Dexterity Saving Throw*: DC 22, one creature the unnamed creature can see within 120 feet. *Failure:* 17 (5d6) Fire damage, and the target has Disadvantage on saving throws to maintain Concentration until the end of its next turn. *Failure or Success*: the unnamed creature can't take this action again until the start of its next turn.",
+      },
+      {
+        "name": "Salt-Crusted Riposte",
+        "text": "*Constitution Saving Throw*: DC 22, each creature in a 20-foot-radius Sphere centered on a point the unnamed creature can see within 120 feet. *Failure:* 17 (5d6) Fire damage, and the target has the Deafened condition until the end of its next turn.",
+      },
+    ],
+    "Traits": [
+      {
+        "name": "Legendary Resistance (3/Day)",
+        "text": "If the unnamed creature fails a saving throw, it can choose to succeed instead.",
+      },
+      {
+        "name": "Salt-Crusted Aspect",
+        "text": "The unnamed creature has Advantage on an attack roll against a creature if at least one of the unnamed creature's allies is within 5 feet of the creature and the ally doesn't have the Incapacitated condition.",
+      },
+      {
+        "name": "Tidewrack Aspect",
+        "text": "The unnamed creature can move across and climb mud and shallow water without needing to make an ability check. Additionally, Difficult Terrain composed of mud and shallow water doesn't cost it extra movement.",
+      },
+    ],
+  },
+  "senses": "Passive Perception 10",
+  "size": "Huge",
+  "speed": "40 ft.",
+  "stats": {
+    "CHA": 10,
+    "CON": 26,
+    "DEX": 12,
+    "INT": 10,
+    "STR": 26,
+    "WIS": 10,
+  },
+  "type": "Monstrosity",
+  "xp": 25000,
+}
+`;
+
+exports[`golden blocks (byte-exact through the refactor) G2: CR 9 named path — choices, per-entry physical, renames, corrections 1`] = `
+{
+  "ac": 17,
+  "alignment": "Unaligned",
+  "archetype": "controller",
+  "archetype_source": "user",
+  "challenge_rating": "9 (XP 5,000; PB +4)",
+  "cr": 9,
+  "cr_str": "9",
+  "format": "2024",
+  "generation": {
+    "archetype": "controller",
+    "package": null,
+    "path": "skeleton",
+  },
+  "hp": 147,
+  "hp_formula": "14d10 + 70",
+  "initiative_bonus": 6,
+  "initiative_score": 16,
+  "name": "Golden Test Subject",
+  "pb": 4,
+  "saves": {
+    "CHA": -1,
+    "CON": 5,
+    "DEX": 2,
+    "INT": -2,
+    "STR": 10,
+    "WIS": 6,
+  },
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The golden test subject makes three Keeper Move 1 attacks. It can replace one attack with a use of Keeper Move 2.",
+      },
+      {
+        "name": "Keeper Move 1",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 15 (2d8 + 6) Piercing damage.",
+      },
+      {
+        "name": "Keeper Move 2",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 10 (1d8 + 6) Piercing damage plus 6 (1d12) Cold damage, and the target's Hit Point maximum decreases by an amount equal to the Piercing damage taken.",
+      },
+      {
+        "name": "Keeper Move 3 (2/Day)",
+        "text": "*Wisdom Saving Throw*: DC 17, one creature the golden test subject can see within 90 feet. *Failure:* The target has the Charmed condition until the golden test subject dies or is on a different plane of existence from the target. While Charmed, the target acts as an ally to the golden test subject and is under its control while within 60 feet of it. In addition, the golden test subject and the target can communicate telepathically with each other over any distance. The target repeats the save whenever it takes damage as well as after every 24 hours it spends at least 1 mile away from the golden test subject, ending the effect on itself on a success.",
+      },
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Keeper Move 4",
+        "text": "The golden test subject shape-shifts into a Large wolf-humanoid hybrid or a Medium wolf, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn't transformed.",
+      },
+    ],
+    "Traits": [
+      {
+        "name": "Brine Aspect",
+        "text": "While underwater, the golden test subject is surrounded by barnacle scrape. *Constitution Saving Throw*: DC 17, each creature in a 5-foot Emanation originating from the golden test subject at the end of the golden test subject's turn. *Failure:* The target is cursed. Until the curse ends, the target's skin becomes slimy, the target can breathe air and water, and it can't regain Hit Points unless it is underwater. While the cursed creature is outside a body of water, the creature takes 14 (4d6) Cold damage at the end of every 10 minutes unless moisture is applied to its skin before those minutes have passed.",
+      },
+      {
+        "name": "Salt-Crusted Aspect",
+        "text": "Whenever the golden test subject is subjected to Cold damage, it takes no damage and instead regains a number of Hit Points equal to the Cold damage dealt.",
+      },
+    ],
+  },
+  "senses": "darkvision 60 ft.; Passive Perception 16",
+  "size": "Large",
+  "skills": "Perception +6",
+  "speed": "40 ft.",
+  "stats": {
+    "CHA": 8,
+    "CON": 20,
+    "DEX": 14,
+    "INT": 6,
+    "STR": 22,
+    "WIS": 14,
+  },
+  "type": "Monstrosity",
+  "xp": 5000,
+}
+`;
+
+exports[`golden blocks (byte-exact through the refactor) G3: CR 12 web signature — restraint scaling, physics, condition menus 1`] = `
+{
+  "ac": 18,
+  "alignment": "Neutral",
+  "archetype": "controller",
+  "archetype_source": "user",
+  "challenge_rating": "12 (XP 8,400; PB +4)",
+  "cr": 12,
+  "cr_str": "12",
+  "format": "2024",
+  "generation": {
+    "archetype": "controller",
+    "package": "Adult Brass Dragon package",
+    "path": "skeleton",
+  },
+  "hp": 176,
+  "hp_formula": "32d8 + 32",
+  "initiative_bonus": 5,
+  "initiative_score": 15,
+  "legendary_uses": 3,
+  "name": "Unnamed Creature",
+  "pb": 4,
+  "saves": {
+    "CHA": 6,
+    "CON": 1,
+    "DEX": 1,
+    "INT": 0,
+    "STR": 6,
+    "WIS": 0,
+  },
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The unnamed creature makes three Thornclad Lash attacks.",
+      },
+      {
+        "name": "Thornclad Lash",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 10 (1d8 + 6) Slashing damage plus 7 (2d6) Poison damage.",
+      },
+      {
+        "name": "Rootbound Surge (Recharge 5-6)",
+        "text": "*Wisdom Saving Throw*: DC 18, each enemy in a 300-foot Emanation originating from the unnamed creature. *Failure:* 54 (12d8) Poison damage, and the target has the Incapacitated condition until the start of the unnamed creature's next turn.",
+      },
+      {
+        "name": "Creeping Sear",
+        "text": "*Dexterity Saving Throw*: DC 18, one creature the unnamed creature can see within 90 feet. *Failure:* 16 (3d10) Poison damage, and the target receives a grievous wound if it doesn't have one. While wounded, the target loses 10 (3d6) Hit Points at the start of each of its turns. The wound closes after 1 minute, after a spell restores Hit Points to the target, or after the target or a creature within 5 feet of it takes an action to stanch the wound, doing so by succeeding on a DC 18 Wisdom (Medicine) check.",
+      },
+      {
+        "name": "Thornclad Step",
+        "text": "The unnamed creature teleports up to 60 feet to an unoccupied space it can see.",
+      },
+      {
+        "name": "Thornclad Snare (1/Day)",
+        "text": "*Dexterity Saving Throw*: DC 18, one creature the unnamed creature can see within 90 feet. *Failure:* The target has the Restrained condition until the thorn-lash snare is destroyed (AC 15; HP 20; Vulnerability to Fire damage; Immunity to Poison and Psychic damage).",
+      },
+      {
+        "name": "Spellcasting",
+        "text": "The unnamed creature casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 18):
+
+- **At Will:** *Detect Magic*, *Scorching Ray*, *Guiding Bolt*",
+      },
+    ],
+    "Legendary Actions": [
+      {
+        "name": "Creeping Reprisal",
+        "text": "The unnamed creature uses Spellcasting to cast *Scorching Ray*.",
+      },
+      {
+        "name": "Rootbound Riposte",
+        "text": "The unnamed creature uses Spellcasting to cast *Guiding Bolt*. The unnamed creature can't take this action again until the start of its next turn.",
+      },
+      {
+        "name": "Creeping Riposte",
+        "text": "*Constitution Saving Throw*: DC 18, one creature the unnamed creature can see within 90 feet. *Failure:* The target gains 1 Exhaustion level. While the target has any Exhaustion levels, it appears 3d10 years older. *Failure or Success*: The unnamed creature can't take this action again until the start of its next turn.",
+      },
+    ],
+    "Reactions": [
+      {
+        "name": "Briar Step (3/Day)",
+        "text": "The unnamed creature casts  or  in response to the spell's trigger, using the same spellcasting ability as Spellcasting.",
+      },
+    ],
+    "Traits": [
+      {
+        "name": "Legendary Resistance (3/Day)",
+        "text": "If the unnamed creature fails a saving throw, it can choose to succeed instead.",
+      },
+      {
+        "name": "Thornclad Aspect",
+        "text": "The unnamed creature has Advantage on saving throws against spells and other magical effects.",
+      },
+    ],
+  },
+  "senses": "Passive Perception 10",
+  "size": "Medium",
+  "speed": "30 ft.",
+  "stats": {
+    "CHA": 22,
+    "CON": 12,
+    "DEX": 12,
+    "INT": 10,
+    "STR": 22,
+    "WIS": 10,
+  },
+  "type": "Monstrosity",
+  "xp": 8400,
+}
+`;

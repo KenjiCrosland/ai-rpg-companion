@@ -17,10 +17,10 @@ const PROVIDERS = {
 
 const PROVIDER_CONFIGS = {
   [PROVIDERS.DEEPSEEK]: {
-    name: 'DeepSeek V3',
+    name: 'DeepSeek V4 Flash',
     endpoint: 'https://api.deepseek.com/v1/chat/completions',
     devEndpoint: '/api/ai/deepseek', // Proxied in dev - API key injected server-side
-    model: 'deepseek-chat',
+    model: 'deepseek-flash',
     type: 'openai-compatible', // Uses OpenAI API format
   },
   [PROVIDERS.OPENAI]: {

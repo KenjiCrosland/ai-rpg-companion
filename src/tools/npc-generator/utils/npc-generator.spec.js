@@ -16,6 +16,7 @@ import { goblinoidCharacterEpithets } from '@/shared/registers/goblinoid.mjs';
 
 jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
+  isDegradedMode: jest.fn(() => false),
 }));
 
 const validPart1 = {

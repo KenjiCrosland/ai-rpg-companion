@@ -1,8 +1,22 @@
+import { renderStatblock2024 as statblock2024Markdown } from '@/tools/statblock-generator/format-2024/render.mjs';
 import { renderOverview } from './renderDungeonOverview.mjs';
 import { overviewAstToHtml } from '@/util/renderSettingOverview.mjs';
 
 // Example statblockToHTML. You can format your statblock however you wish.
 function statblockToHTML(statblock) {
+  if (statblock?.format === '2024') {
+    // 2024 sections model: render the engine's markdown and present it
+    // preformatted (markup lightly converted).
+    const md = statblock2024Markdown(statblock)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/^### (.*)$/gm, '<h5>$1</h5>')
+      .replace(/^## (.*)$/gm, '<h4>$1</h4>')
+      .replace(/\n/g, '<br/>');
+    return `<div class="statblock">${md}</div>`;
+  }
   let html = `<div class="statblock">`;
   html += `<h4>${statblock.name}</h4>`;
   html += `<p><strong>Type & Alignment:</strong> ${statblock.type_and_alignment}</p>`;

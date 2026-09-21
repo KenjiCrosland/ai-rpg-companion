@@ -18,6 +18,7 @@ import * as monsterPrompts from '@/prompts/monster-prompts.mjs';
 // Mock the open-ai module
 jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
+  isDegradedMode: jest.fn(() => false),
 }));
 
 // Mock monster-prompts
@@ -137,7 +138,9 @@ jest.mock('@rei/cedar', () => ({
 jest.mock('@/composables/useToast', () => ({
   useToast: () => ({
     success: jest.fn(),
-    error: jest.fn()
+    error: jest.fn(),
+    info: jest.fn(),
+    warning: jest.fn()
   })
 }));
 
@@ -186,6 +189,22 @@ describe('StatblockGenerator - Prompt Generation', () => {
     // Setup localStorage mock
     localStorageMock = new LocalStorageMock();
     global.localStorage = localStorageMock;
+
+    // This suite exercises the LEGACY 2014 two-part generation flow, which now
+    // lives behind an escape flag (2014 defaults to the engine path). Pin both
+    // the format toggle and the legacy flag. Written to both the mock and the
+    // real jsdom store — depending on jsdom version the component's bare
+    // `localStorage` binding may resolve to either.
+    // The engine pipeline has its own suites (statblock-2024-flow.spec.js,
+    // engine-2014.spec.js).
+    localStorageMock.setItem('statblock-format', '2014');
+    localStorageMock.setItem('statblock-legacy-2014', '1');
+    try {
+      window.localStorage.setItem('statblock-format', '2014');
+      window.localStorage.setItem('statblock-legacy-2014', '1');
+    } catch {
+      /* jsdom storage unavailable — mock covers it */
+    }
 
     // Reset all mocks
     jest.clearAllMocks();
@@ -244,8 +263,12 @@ describe('StatblockGenerator - Prompt Generation', () => {
       await nameInput.setValue('Fire Drake');
 
       const selects = wrapper.findAll('select');
-      // First select is monsterType, second is CR based on form structure
-      await selects[0].setValue('Balanced');  // type
+      // First select is the Combat role (the Build select is retired; the
+      // legacy pipeline derives Build from the role via ARCHETYPE_TO_BUILD),
+      // second is CR based on form structure
+      // 'balanced' RETIRED from the role menu (owner 2026-09-15) — a
+      // real role now steers the legacy Build via ARCHETYPE_TO_BUILD
+      await selects[0].setValue('defender');  // role → Build 'Stronger Defense'
       await selects[1].setValue('5');  // CR
 
       // Submit the form
@@ -256,7 +279,7 @@ describe('StatblockGenerator - Prompt Generation', () => {
       expect(monsterPrompts.createStatblockPrompts).toHaveBeenCalledWith(
         expect.objectContaining({
           monsterName: 'Fire Drake',
-          monsterType: 'Balanced',
+          monsterType: 'Stronger Defense',
           caster: false
         })
       );
@@ -533,5 +556,148 @@ describe('StatblockGenerator - localStorage Operations', () => {
     expect(sidebarContent.text()).toContain('Dragons');
     expect(sidebarContent.text()).toContain('Undead');
     expect(sidebarContent.text()).toContain('Uncategorized');
+  });
+});
+
+describe('StatblockGenerator - mid-generation navigation (save-target capture)', () => {
+  // Live bug: generating, then clicking another monster in the sidebar while
+  // the call was in flight, saved the fresh generation OVER the clicked
+  // monster — the save target was resolved at completion time instead of
+  // generation start.
+  let wrapper;
+  let localStorageMock;
+
+  const seeded = () => ({
+    Uncategorized: [
+      { name: 'Askor', challenge_rating: '15 (13,000 XP)', armor_class: '20', hit_points: '294', actions: [] },
+      { name: 'Tarwurm', challenge_rating: '22 (41,000 XP)', armor_class: '23', hit_points: '418', actions: [] },
+    ],
+  });
+  const part1 = {
+    name: 'Test Goblin',
+    type_and_alignment: 'Small humanoid, neutral evil',
+    armor_class: '13', hit_points: '7 (2d6)', speed: '30 ft.',
+    attributes: 'STR 8 (-1), DEX 14 (+2), CON 10 (+0), INT 10 (+0), WIS 8 (-1), CHA 8 (-1)',
+    saving_throws: '', skills: '', damage_resistances: '', damage_immunities: '',
+    condition_immunities: '', senses: 'darkvision 60 ft.', languages: 'Common',
+    challenge_rating: '1/4 (50 XP)', proficiency_bonus: '+2', abilities: [],
+  };
+  const part2 = { abilities: [], actions: [{ name: 'Scimitar', description: 'Melee attack: +4 to hit, 5 (1d6+2) slashing damage' }], legendary_actions: [] };
+
+  beforeEach(() => {
+    localStorageMock = new LocalStorageMock();
+    global.localStorage = localStorageMock;
+    localStorageMock.setItem('statblock-format', '2014');
+    localStorageMock.setItem('statblock-legacy-2014', '1');
+    localStorageMock.setItem('monsters', JSON.stringify(seeded()));
+    try {
+      window.localStorage.setItem('statblock-format', '2014');
+      window.localStorage.setItem('statblock-legacy-2014', '1');
+      window.localStorage.setItem('monsters', JSON.stringify(seeded()));
+    } catch { /* mock covers it */ }
+    jest.clearAllMocks();
+    // Earlier describes queue mockResolvedValueOnce values that their
+    // non-submitting tests never consume; clearAllMocks doesn't drop a
+    // pending once-queue, so reset this mock fully before queueing ours.
+    openAi.generateGptResponse.mockReset();
+  });
+
+  afterEach(() => {
+    if (wrapper) wrapper.unmount();
+    localStorageMock.clear();
+    try { window.localStorage.clear(); } catch { /* ignore */ }
+  });
+
+  const clickRow = async (name) => {
+    const btn = wrapper.findAll('.statblock-row__button').find((b) => b.text().includes(name));
+    expect(btn).toBeTruthy();
+    await btn.trigger('click');
+  };
+
+  // The main form hides while a monster is selected; regenerate rides the
+  // regenerate bar, toggled by the statblock footer action.
+  const regenerate = async () => {
+    wrapper.findComponent({ name: 'Statblock' }).vm.$emit('toggle-regenerate');
+    await nextTick();
+    const btn = wrapper.find('.regenerate-bar__button');
+    expect(btn.exists()).toBe(true);
+    await btn.trigger('click');
+  };
+
+  it('a sidebar click during generation must not receive the generated monster', async () => {
+    let resolvePart2;
+    openAi.generateGptResponse
+      .mockResolvedValueOnce(JSON.stringify(part1))
+      .mockImplementationOnce(() => new Promise((res) => { resolvePart2 = res; }));
+
+    wrapper = mount(StatblockGenerator, { props: { premium: true } });
+    await nextTick();
+
+    // Fresh generation — nothing selected.
+    await wrapper.find('form').trigger('submit');
+    await flushPromises();
+
+    // User browses to Tarwurm while part 2 is still in flight.
+    await clickRow('Tarwurm');
+
+    resolvePart2(JSON.stringify(part2));
+    await flushPromises();
+    await nextTick();
+
+    const saved = JSON.parse(localStorage.getItem('monsters'));
+    const names = saved.Uncategorized.map((m) => m.name).sort();
+    expect(names).toEqual(['Askor', 'Tarwurm', 'Test Goblin']);
+  });
+
+  it('regenerate replaces the monster selected at click time, even after browsing away', async () => {
+    let resolvePart2;
+    openAi.generateGptResponse
+      .mockResolvedValueOnce(JSON.stringify(part1))
+      .mockImplementationOnce(() => new Promise((res) => { resolvePart2 = res; }));
+
+    wrapper = mount(StatblockGenerator, { props: { premium: true } });
+    await nextTick();
+
+    await clickRow('Askor');
+    await regenerate();
+    await flushPromises();
+
+    await clickRow('Tarwurm');
+
+    resolvePart2(JSON.stringify(part2));
+    await flushPromises();
+    await nextTick();
+
+    const saved = JSON.parse(localStorage.getItem('monsters'));
+    const names = saved.Uncategorized.map((m) => m.name).sort();
+    expect(names).toEqual(['Tarwurm', 'Test Goblin']);
+  });
+
+  it('a target deleted mid-generation saves as new instead of overwriting a stranger', async () => {
+    let resolvePart2;
+    openAi.generateGptResponse
+      .mockResolvedValueOnce(JSON.stringify(part1))
+      .mockImplementationOnce(() => new Promise((res) => { resolvePart2 = res; }));
+
+    wrapper = mount(StatblockGenerator, { props: { premium: true } });
+    await nextTick();
+
+    await clickRow('Askor');
+    await regenerate();
+    await flushPromises();
+
+    // Askor vanishes while the call is in flight (delete/import elsewhere).
+    const store = JSON.parse(localStorage.getItem('monsters'));
+    store.Uncategorized = store.Uncategorized.filter((m) => m.name !== 'Askor');
+    localStorage.setItem('monsters', JSON.stringify(store));
+    wrapper.vm.$.setupState.monsters.value = store;
+
+    resolvePart2(JSON.stringify(part2));
+    await flushPromises();
+    await nextTick();
+
+    const saved = JSON.parse(localStorage.getItem('monsters'));
+    const names = saved.Uncategorized.map((m) => m.name).sort();
+    expect(names).toEqual(['Tarwurm', 'Test Goblin']);
   });
 });

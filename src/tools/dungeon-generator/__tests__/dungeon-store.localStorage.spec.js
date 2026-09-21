@@ -9,6 +9,7 @@
 // Mock all API-related modules BEFORE importing the store
 jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
+  isDegradedMode: jest.fn(() => false),
 }));
 
 jest.mock('../stores/overview-store.mjs', () => ({

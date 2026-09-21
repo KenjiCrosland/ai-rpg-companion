@@ -1,0 +1,217 @@
+/**
+ * THE SHAPE CATALOG (owner design arc, 2026-08-18; per-band templates per
+ * owner call: "for each shape one template per band"). Mechanical grammars
+ * with ONE explicit template per CR band the shape spans — because print's
+ * own forms grow CLAUSES across tiers, not just dice (Dreadful Glare CR 3
+ * is Frightened-only; the Mummy Lord's CR 15 version adds damage and
+ * Paralyzed). Each band entry is individually owner-tunable.
+ *
+ * Bands (corpus-verified seams): 0-2 | 3-5 | 6-9 | 10-12 | 13-20 | 21+.
+ * Numbers still come from the card at fill time ({dc} {avg} {dice} {atk});
+ * distances written literally are print constants for that band. Measured
+ * shapes cite their printed rung(s); inventions carry invented: true.
+ * `replaces` names the chassis row the shape swaps in for, budget-neutral.
+ */
+
+export const BANDS = ['0-2', '3-5', '6-9', '10-12', '13-20', '21+'];
+export function bandFor(cr) {
+  return cr <= 2 ? '0-2' : cr <= 5 ? '3-5' : cr <= 9 ? '6-9' : cr <= 12 ? '10-12' : cr <= 20 ? '13-20' : '21+';
+}
+
+export const SHAPES = [
+  {
+    id: 'trample', name: 'Trample', cite: 'Centaur Trooper/Trampling Charge (CR 2)',
+    roles: ['skirmisher', 'brute'], styles: ['mounted'], cr_range: [2, 30], replaces: 'nova', gate: 'Recharge 5-6',
+    frames: {
+      '0-2': 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Medium or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC {dc}. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition.',
+      '3-5': 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Medium or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC {dc}. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition.',
+      '6-9': 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Large or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC {dc}. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage only.',
+      '10-12': 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Large or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC {dc}. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage, and the target is pushed 5 feet straight away.',
+      '13-20': 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Huge or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC {dc}. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage.',
+      '21+': 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Huge or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC {dc}. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition and can\'t take Reactions until the start of its next turn. *Success:* Half damage.',
+    },
+  },
+  {
+    id: 'leap', name: 'Crushing Leap', cite: 'Bulette/Deadly Leap (CR 5)',
+    roles: ['skirmisher', 'brute'], styles: ['skulker', 'mounted'], cr_range: [3, 12], replaces: 'nova',
+    frames: {
+      '3-5': 'The creature spends 5 feet of movement to jump to a space within 15 feet that contains one or more Large or smaller creatures. *Dexterity Saving Throw*: DC {dc}, each creature in the destination space. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage, and the target is pushed 5 feet straight away.',
+      '6-9': 'The creature spends 5 feet of movement to jump to a space within 20 feet that contains one or more Large or smaller creatures. *Dexterity Saving Throw*: DC {dc}, each creature in the destination space. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage, and the target is pushed 5 feet straight away.',
+      '10-12': 'The creature spends 5 feet of movement to jump to a space within 30 feet that contains one or more Huge or smaller creatures. *Dexterity Saving Throw*: DC {dc}, each creature in the destination space. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage, and the target is pushed 5 feet straight away.',
+    },
+  },
+  {
+    id: 'thrown-burst', name: 'Hurled Burst', cite: 'Giant Ape/Boulder Toss (CR 7); Storm Giant/Lightning Storm (CR 13)',
+    roles: ['skirmisher', 'artillery', 'brute'], styles: ['hurler'], cr_range: [6, 30], replaces: 'nova', gate: 'Recharge 5-6',
+    frames: {
+      '6-9': 'The creature hurls {projectile} at a point it can see within 90 feet. *Dexterity Saving Throw*: DC {dc}, each creature in a 5-foot-radius Sphere centered on that point. *Failure:* {avg} ({dice}) {damage_type} damage. If the target is Large or smaller, it has the Prone condition. *Success:* Half damage.',
+      '10-12': 'The creature hurls {projectile} at a point it can see within 120 feet. *Dexterity Saving Throw*: DC {dc}, each creature in a 10-foot-radius Sphere centered on that point. *Failure:* {avg} ({dice}) {damage_type} damage. If the target is Large or smaller, it has the Prone condition. *Success:* Half damage.',
+      '13-20': 'The creature hurls {projectile} at a point it can see within 300 feet. *Dexterity Saving Throw*: DC {dc}, each creature in a 10-foot-radius Sphere centered on that point. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
+      '21+': 'The creature hurls {projectile} at a point it can see within 500 feet. *Dexterity Saving Throw*: DC {dc}, each creature in a 15-foot-radius Sphere centered on that point. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage.',
+    },
+  },
+  {
+    id: 'gaze-single', name: 'Dread Gaze', cite: 'Mummy/Dreadful Glare (CR 3); Mummy Lord/Dreadful Glare (CR 15); Solar/Blinding Gaze (CR 21)',
+    roles: ['skirmisher', 'controller', 'lurker'], styles: ['skulker'], cr_range: [2, 30], replaces: 'signature',
+    frames: {
+      '0-2': '*Wisdom Saving Throw*: DC {dc}, one creature the creature can see within 30 feet. *Failure:* The target has the Frightened condition until the end of the creature\'s next turn.',
+      '3-5': '*Wisdom Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* The target has the Frightened condition until the end of the creature\'s next turn. *Success:* The target is immune to this creature\'s gaze for 24 hours.',
+      '6-9': '*Wisdom Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* The target has the {condition_minor} condition until the end of the creature\'s next turn. *Success:* The target is immune to this creature\'s gaze for 24 hours.',
+      '10-12': '*Wisdom Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target has the {condition_minor} condition until the end of the creature\'s next turn.',
+      '13-20': '*Wisdom Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Paralyzed condition until the end of the creature\'s next turn.',
+      '21+': '*Constitution Saving Throw*: DC {dc}, one creature the creature can see within 120 feet. *Failure:* The target has the Blinded condition for 1 minute. *Failure or Success:* The creature can\'t use this gaze again until the start of its next turn.',
+    },
+  },
+  {
+    id: 'snare', name: 'Binding Snare', cite: 'Giant Spider/Web (CR 1); Ettercap/Web Strand (CR 2); Erinyes/Entangling Rope (CR 12)',
+    roles: ['skirmisher', 'controller'], styles: ['skulker', 'hurler'], cr_range: [1, 23], replaces: 'signature', gate: 'Recharge 5-6',
+    frames: {
+      '0-2': '*Dexterity Saving Throw*: DC {dc}, one Large or smaller creature the creature can see within 30 feet. *Failure:* The target has the Restrained condition until the {restraint} is destroyed (AC 10; HP 5; Vulnerability to {r_vuln} damage; Immunity to Poison and Psychic damage).',
+      '3-5': '*Dexterity Saving Throw*: DC {dc}, one Large or smaller creature the creature can see within 60 feet. *Failure:* The target has the Restrained condition until the {restraint} is destroyed (AC 10; HP 10; Vulnerability to {r_vuln} damage; Immunity to Poison and Psychic damage).',
+      '6-9': '*Dexterity Saving Throw*: DC {dc}, one Huge or smaller creature the creature can see within 60 feet. *Failure:* The target has the Restrained condition until the {restraint} is destroyed (AC 12; HP 15; Vulnerability to {r_vuln} damage; Immunity to Poison and Psychic damage).',
+      '10-12': '*Strength Saving Throw*: DC {dc}, one creature the creature can see within 120 feet. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target has the Restrained condition until the {restraint} is destroyed (AC 15; HP 20; Vulnerability to {r_vuln} damage; Immunity to Poison and Psychic damage).',
+      '13-20': '*Strength Saving Throw*: DC {dc}, one creature the creature can see within 120 feet. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target has the Restrained condition until the {restraint} is destroyed (AC 15; HP 20; Vulnerability to {r_vuln} damage; Immunity to Poison and Psychic damage).',
+      '21+': '*Strength Saving Throw*: DC {dc}, one creature the creature can see within 120 feet. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target has the Restrained condition until the {restraint} is destroyed (AC 18; HP 30; Vulnerability to {r_vuln} damage; Immunity to Poison and Psychic damage).',
+    },
+  },
+  {
+    id: 'reel', name: 'Reel', cite: 'Merrow/Harpoon (CR 2); Ettercap/Reel (CR 2); Shambling Mound/Charged Tendril (CR 5)',
+    roles: ['skirmisher', 'controller'], styles: ['hurler', 'skulker'], cr_range: [2, 19], replaces: 'signature',
+    frames: {
+      '0-2': '*Strength Saving Throw*: DC {dc}, one Medium or smaller creature within 30 feet. *Failure:* The target is pulled up to 15 feet straight toward the creature.',
+      '3-5': '*Strength Saving Throw*: DC {dc}, one Medium or smaller creature within 30 feet. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target is pulled up to 15 feet straight toward the creature.',
+      '6-9': '*Strength Saving Throw*: DC {dc}, one Large or smaller creature within 30 feet. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target is pulled up to 20 feet straight toward the creature.',
+      '10-12': '*Strength Saving Throw*: DC {dc}, one Large or smaller creature within 60 feet. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target is pulled up to 25 feet straight toward the creature.',
+      '13-20': '*Strength Saving Throw*: DC {dc}, one Huge or smaller creature within 60 feet. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target is pulled up to 25 feet straight toward the creature, and it has the Prone condition.',
+    },
+  },
+  {
+    id: 'condition-payoff', name: 'Condition Payoff', composing: true,
+    cite: 'Sea Hag/Death Glare (Frightened, CR 2); Gorgon/Trample (Prone, CR 5); Succubus/Draining Kiss (Charmed, CR 4); Glabrezu/Pummel (Grappled, CR 9)',
+    roles: ['skirmisher', 'controller', 'lurker', 'brute'], styles: [], cr_range: [2, 23], replaces: 'signature',
+    frames: {
+      '0-2': '*{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage. *Success:* Half damage.',
+      '3-5': '*{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage. *Success:* Half damage.',
+      '6-9': '*{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage. *Success:* Half damage.',
+      '10-12': '*{save_stat} Saving Throw*: DC {dc}, one creature within 60 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage.',
+      '13-20': '*{save_stat} Saving Throw*: DC {dc}, one creature within 60 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage.',
+      '21+': '*{save_stat} Saving Throw*: DC {dc}, one creature within 60 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage, and the target has the Stunned condition until the end of its next turn. *Success:* Half damage.',
+    },
+  },
+  {
+    id: 'rampage', name: 'Rampage', cite: 'Gnoll Warrior/Rampage (CR 1/2); Giant Hyena/Rampage (CR 1)',
+    roles: ['skirmisher', 'brute'], styles: ['mounted', 'skulker'], cr_range: [1, 12], replaces: 'bonus-alt', gate: '1/Day',
+    frames: {
+      '0-2': 'Immediately after dealing damage to a creature that is already Bloodied, the creature moves up to half its Speed, and it makes one {melee_name} attack.',
+      '3-5': 'Immediately after dealing damage to a creature that is already Bloodied, the creature moves up to half its Speed, and it makes one {melee_name} attack.',
+      '6-9': 'Immediately after dealing damage to a creature that is already Bloodied, the creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one {melee_name} attack.',
+      '10-12': 'Immediately after dealing damage to a creature that is already Bloodied, the creature moves up to its Speed without provoking Opportunity Attacks, and it makes one {melee_name} attack.',
+    },
+  },
+  {
+    id: 'blink', name: 'Blink Step', cite: 'Blink Dog/Teleport (40 ft, CR 1/4); Marilith/Teleport (120 ft, CR 16); Solar/Radiant Teleport (CR 21)',
+    roles: ['skirmisher', 'lurker'], styles: ['skulker'], cr_range: [0.25, 30], replaces: 'bonus-alt', gate: 'Recharge 4-6',
+    frames: {
+      '0-2': 'The creature teleports up to 40 feet to an unoccupied space it can see.',
+      '3-5': 'The creature teleports up to 40 feet to an unoccupied space it can see.',
+      '6-9': 'The creature teleports up to 60 feet to an unoccupied space it can see.',
+      '10-12': 'The creature teleports up to 60 feet to an unoccupied space it can see.',
+      '13-20': 'The creature teleports up to 120 feet to an unoccupied space it can see.',
+      '21+': 'The creature teleports up to 60 feet to an unoccupied space it can see. *Dexterity Saving Throw*: DC {dc}, each creature in a 10-foot Emanation originating from the creature at its destination space. *Failure:* {avg_half} ({dice_half}) {damage_type} damage.',
+    },
+  },
+  {
+    id: 'zone', name: 'Sustained Zone', cite: 'Darkmantle/Darkness Aura (CR 1/2); Djinni/Create Whirlwind (CR 11); Harpy/Luring Song (CR 1)',
+    roles: ['controller'], styles: ['skulker'], cr_range: [0.5, 12], replaces: 'signature', gate: '1/Day',
+    frames: {
+      '0-2': 'The creature creates {zone_effect} in a 15-foot Emanation originating from itself. The effect lasts while the creature maintains Concentration on it, up to 10 minutes. {zone_rule}',
+      '3-5': 'The creature creates {zone_effect} in a 15-foot Emanation originating from itself. The effect lasts while the creature maintains Concentration on it, up to 10 minutes. {zone_rule}',
+      '6-9': 'The creature creates {zone_effect} in a 20-foot Emanation originating from itself. The effect lasts while the creature maintains Concentration on it, up to 10 minutes. {zone_rule}',
+      '10-12': 'The creature creates {zone_effect} filling a 20-foot-radius, 60-foot-high Cylinder centered on a point it can see within 120 feet. The effect lasts while the creature maintains Concentration on it, up to 10 minutes. As a Bonus Action, the creature can move the zone up to 20 feet. {zone_rule}',
+    },
+  },
+  {
+    id: 'execute', name: 'Threshold Execute', cite: 'Sea Hag/Death Glare (CR 2, <=20 -> 0 HP); Incubus/Nightmare (CR 4, <=20 -> Unconscious); Solar/Slaying Bow (CR 21, <=100 -> dies)',
+    roles: ['lurker', 'controller'], styles: ['skulker'], cr_range: [2, 30], replaces: 'signature', gate: '1/Day',
+    frames: {
+      '0-2': '*{save_stat} Saving Throw*: DC {dc}, one Frightened creature the creature can see within 30 feet. *Failure:* If the target has 20 Hit Points or fewer, it drops to 0 Hit Points. Otherwise, it takes {avg} ({dice}) {damage_type} damage.',
+      '3-5': '*{save_stat} Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* If the target has 20 Hit Points or fewer, it has the Unconscious condition for 1 hour, until it takes damage, or until a creature within 5 feet of it takes an action to wake it. Otherwise, it takes {avg} ({dice}) {damage_type} damage.',
+      '6-9': '*{save_stat} Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* If the target has 30 Hit Points or fewer, it drops to 0 Hit Points. Otherwise, it takes {avg} ({dice}) {damage_type} damage.',
+      '10-12': '*{save_stat} Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* If the target has 50 Hit Points or fewer, it drops to 0 Hit Points. Otherwise, it takes {avg} ({dice}) {damage_type} damage.',
+      '13-20': '*{save_stat} Saving Throw*: DC {dc}, one creature the creature can see within 90 feet. *Failure:* If the target has 75 Hit Points or fewer, it drops to 0 Hit Points. Otherwise, it takes {avg} ({dice}) {damage_type} damage.',
+      '21+': '*{save_stat} Saving Throw*: DC {dc}, one creature the creature can see within 120 feet. *Failure:* If the target has 100 Hit Points or fewer, it dies. Otherwise, it takes {avg} ({dice}) {damage_type} damage.',
+    },
+  },
+  {
+    id: 'affliction', name: 'Lingering Wound', cite: 'Bearded Devil/Infernal Glaive (CR 3); Horned Devil/Infernal Tail (CR 11)',
+    roles: ['skirmisher', 'brute', 'lurker'], styles: [], cr_range: [3, 12], replaces: 'melee-rider',
+    frames: {
+      '3-5': 'If the target is a creature and doesn\'t already have a {wound_noun}, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target receives a {wound_noun}. While wounded, the target loses 5 (1d10) Hit Points at the start of each of its turns. The wound closes after 1 minute, after a spell restores Hit Points to the target, or after the target or a creature within 5 feet of it takes an action to stanch the wound, succeeding on a DC {dc} Wisdom (Medicine) check.',
+      '6-9': 'If the target is a creature and doesn\'t already have a {wound_noun}, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target receives a {wound_noun}. While wounded, the target loses 7 (2d6) Hit Points at the start of each of its turns. The wound closes after 1 minute, after a spell restores Hit Points to the target, or after the target or a creature within 5 feet of it takes an action to stanch the wound, succeeding on a DC {dc} Wisdom (Medicine) check.',
+      '10-12': 'If the target is a creature and doesn\'t already have a {wound_noun}, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target receives a {wound_noun}. While wounded, the target loses 10 (3d6) Hit Points at the start of each of its turns. The wound closes after 1 minute, after a spell restores Hit Points to the target, or after the target or a creature within 5 feet of it takes an action to stanch the wound, succeeding on a DC {dc} Wisdom (Medicine) check.',
+    },
+  },
+  {
+    id: 'death-burst', name: 'Death Burst', cite: 'Dust Mephit (CR 1/2, 5 ft); Magmin (CR 1/2, 10 ft); Balor/Death Throes (CR 19, 30 ft dual-type)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker'], styles: [], cr_range: [0.5, 20], replaces: 'trait',
+    frames: {
+      '0-2': 'The creature explodes when it dies. *Dexterity Saving Throw*: DC {dc}, each creature in a 5-foot Emanation originating from the creature. *Failure:* {avg_half} ({dice_half}) {damage_type} damage. *Success:* Half damage.',
+      '3-5': 'The creature explodes when it dies. *Dexterity Saving Throw*: DC {dc}, each creature in a 10-foot Emanation originating from the creature. *Failure:* {avg_half} ({dice_half}) {damage_type} damage. *Success:* Half damage.',
+      '6-9': 'The creature explodes when it dies. *Dexterity Saving Throw*: DC {dc}, each creature in a 10-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
+      '10-12': 'The creature explodes when it dies. *Dexterity Saving Throw*: DC {dc}, each creature in a 15-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
+      '13-20': 'The creature explodes when it dies. *Dexterity Saving Throw*: DC {dc}, each creature in a 30-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage. The explosion destroys the creature\'s body.',
+    },
+  },
+  // ----- inventions: no printed frame exists at any band; flagged -----
+  {
+    id: 'charge', name: 'Charge', invented: true,
+    roles: ['skirmisher', 'brute'], styles: ['mounted'], cr_range: [1, 30], replaces: 'melee-rider',
+    frames: {
+      '0-2': 'If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra {avg_half} ({dice_half}) {damage_type} damage.',
+      '3-5': 'If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra {avg_half} ({dice_half}) {damage_type} damage and, if it is Medium or smaller, has the Prone condition.',
+      '6-9': 'If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra {avg_half} ({dice_half}) {damage_type} damage and, if it is Large or smaller, has the Prone condition.',
+      '10-12': 'If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra {avg_half} ({dice_half}) {damage_type} damage and, if it is Large or smaller, has the Prone condition.',
+      '13-20': 'If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra {avg_half} ({dice_half}) {damage_type} damage and, if it is Huge or smaller, has the Prone condition.',
+      '21+': 'If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra {avg_half} ({dice_half}) {damage_type} damage and, if it is Huge or smaller, has the Prone condition and can\'t take Reactions until the start of its next turn.',
+    },
+  },
+  {
+    id: 'throw-recall', name: 'Throw and Recall', invented: true,
+    roles: ['skirmisher', 'artillery'], styles: ['hurler'], cr_range: [3, 20], replaces: 'ranged',
+    frames: {
+      '3-5': '*Ranged Attack Roll:* +{atk}, range 30/90 ft. {avg} ({dice}) {damage_type} damage, and {projectile} returns to the creature\'s grasp. While {projectile} is thrown and not yet returned, the creature can\'t make this attack.',
+      '6-9': '*Ranged Attack Roll:* +{atk}, range 30/90 ft. {avg} ({dice}) {damage_type} damage, and {projectile} returns to the creature\'s grasp. While {projectile} is thrown and not yet returned, the creature can\'t make this attack.',
+      '10-12': '*Ranged Attack Roll:* +{atk}, range 60/180 ft. {avg} ({dice}) {damage_type} damage, and {projectile} returns to the creature\'s grasp. While {projectile} is thrown and not yet returned, the creature can\'t make this attack.',
+      '13-20': '*Ranged Attack Roll:* +{atk}, range 60/180 ft. {avg} ({dice}) {damage_type} damage, and {projectile} returns to the creature\'s grasp. While {projectile} is thrown and not yet returned, the creature can\'t make this attack.',
+    },
+  },
+  {
+    id: 'burrow-ambush', name: 'Erupting Ambush', invented: true,
+    roles: ['skirmisher', 'lurker'], styles: ['skulker'], cr_range: [2, 16], replaces: 'signature', gate: 'Recharge 5-6',
+    requires_movement: 'Burrow',
+    frames: {
+      '0-2': 'If the creature is burrowing, it erupts from the ground at a point within 5 feet of one creature. *Dexterity Saving Throw*: DC {dc}, that creature. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target has the Prone condition.',
+      '3-5': 'If the creature is burrowing, it erupts from the ground at a point within 5 feet of one creature. *Dexterity Saving Throw*: DC {dc}, that creature. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target has the Prone condition. The creature then makes one {melee_name} attack against the target.',
+      '6-9': 'If the creature is burrowing, it erupts from the ground at a point within 5 feet of one creature. *Dexterity Saving Throw*: DC {dc}, that creature. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target has the Prone condition. The creature then makes one {melee_name} attack against the target.',
+      '10-12': 'If the creature is burrowing, it erupts from the ground at a point within 5 feet of one creature. *Dexterity Saving Throw*: DC {dc}, that creature. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition. The creature then makes one {melee_name} attack against the target.',
+      '13-20': 'If the creature is burrowing, it erupts from the ground at a point within 5 feet of one creature. *Dexterity Saving Throw*: DC {dc}, that creature. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition. The creature then makes one {melee_name} attack against the target.',
+    },
+  },
+];
+
+export const STYLES = {
+  mounted: 'a charger or rider — speed, momentum, ride-down attacks',
+  skulker: 'an ambusher — stealth, gazes, leaps, vanishing',
+  hurler: 'a thrower — projectiles, bursts, reeling lines',
+};
+
+/** The triple filter, band-resolved: returns shapes with `frame` set for the CR. */
+export function shapesFor({ role, style = null, cr, movement = '' }) {
+  const band = bandFor(cr);
+  return SHAPES.filter((s) => s.roles.includes(role)
+    && (!style || s.styles.length === 0 || s.styles.includes(style))
+    && cr >= s.cr_range[0] && cr <= s.cr_range[1]
+    && s.frames[band]
+    && (!s.requires_movement || new RegExp(s.requires_movement, 'i').test(movement)))
+    .map((s) => ({ ...s, frame: s.frames[band] }));
+}

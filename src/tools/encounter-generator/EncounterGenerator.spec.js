@@ -17,6 +17,7 @@ import * as openAi from "@/util/ai-client.mjs";
 // Mock the open-ai module
 jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
+  isDegradedMode: jest.fn(() => false),
 }));
 
 // Mock encounter prompts

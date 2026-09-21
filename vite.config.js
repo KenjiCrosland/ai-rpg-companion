@@ -31,6 +31,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         input: {
           statblock: 'src/entries/statblock.js',
+          'statblock-converter': 'src/entries/statblock-converter.js',
           npc: 'src/entries/npc.js',
           item: 'src/entries/item.js',
           encounter: 'src/entries/encounter.js',
@@ -46,6 +47,8 @@ export default defineConfig(({ mode }) => {
           landing: 'src/entries/landing.js',
           'price-calculator': 'src/entries/price-calculator.js',
           'chase-tracker': 'src/entries/chase-tracker.js',
+          backpack: 'src/entries/backpack.js',
+          'loot-splitter': 'src/entries/loot-splitter.js',
         },
       },
     },

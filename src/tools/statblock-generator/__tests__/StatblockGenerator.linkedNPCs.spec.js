@@ -47,7 +47,8 @@ jest.mock('@/components/DataManagerModal.vue', () => ({
 
 // Mock API calls
 jest.mock('@/util/ai-client.mjs', () => ({
-  generateGptResponse: jest.fn()
+  generateGptResponse: jest.fn(),
+  isDegradedMode: jest.fn(() => false)
 }));
 
 // Mock navigation

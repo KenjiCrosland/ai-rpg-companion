@@ -8,6 +8,7 @@ import * as aiClient from '@/util/ai-client.mjs';
 
 jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
+  isDegradedMode: jest.fn(() => false),
 }));
 
 describe('validateInferenceResponse — JSON-shape validation', () => {

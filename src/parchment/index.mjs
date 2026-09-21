@@ -27,6 +27,7 @@ export { default as ParCheckbox } from './ParCheckbox.vue';
 export { default as ParTooltip } from './ParTooltip.vue';
 export { default as ParReadAloud } from './ParReadAloud.vue';
 export { default as ParTabToggle } from './ParTabToggle.vue';
+export { default as ParSwitch } from './ParSwitch.vue';
 export { default as ParTabs } from './ParTabs.vue';
 export { default as ParModal } from './ParModal.vue';
 export { default as ParConfirm } from './ParConfirm.vue';

@@ -1,3 +1,4 @@
+import { renderStatblock2024 as statblock2024Markdown } from '@/tools/statblock-generator/format-2024/render.mjs';
 import { renderOverview } from './renderDungeonOverview.mjs';
 import { overviewAstToText } from '@/util/renderSettingOverview.mjs';
 
@@ -75,7 +76,7 @@ export function dungeonToPlainText(dungeon) {
 
       // If NPC also has a statblock
       if (npc.statblock) {
-        text += statblockToPlainText(npc.statblock);
+        text += anyStatblockToPlainText(npc.statblock);
       }
     });
   }
@@ -121,12 +122,22 @@ export function dungeonToPlainText(dungeon) {
 
       // If monster has a statblock
       if (monster.statblock) {
-        text += statblockToPlainText(monster.statblock);
+        text += anyStatblockToPlainText(monster.statblock);
       }
     });
   }
 
   return text;
+}
+
+// 2024-format embedded statblocks render via the engine's markdown
+// renderer with markup stripped (plain-text surface).
+function anyStatblockToPlainText(sb) {
+  if (sb?.format === '2024') {
+    // Lazy import avoided — converter files are sync; markdown → plain.
+    return statblock2024Markdown(sb).replace(/[*_#]/g, '') + '\n';
+  }
+  return statblockToPlainText(sb);
 }
 
 function statblockToPlainText(statblock) {

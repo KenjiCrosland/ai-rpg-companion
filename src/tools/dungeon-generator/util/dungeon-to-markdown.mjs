@@ -1,4 +1,11 @@
 import { statblockToMarkdown } from './statblock-to-markdown.mjs';
+import { renderStatblock2024Homebrewery } from '@/tools/statblock-generator/format-2024/render.mjs';
+
+// Embedded statblocks carry `format` since the engine migration — 2024
+// blocks render through the engine's own markdown renderer.
+const anyStatblockToMarkdown = (sb, columns) => (sb?.format === '2024'
+  ? renderStatblock2024Homebrewery(sb) + '\n'
+  : statblockToMarkdown(sb, columns));
 import { renderOverview } from './renderDungeonOverview.mjs';
 import { overviewAstToMarkdown } from '@/util/renderSettingOverview.mjs';
 
@@ -63,7 +70,7 @@ export function dungeonToMarkdown(dungeon) {
       if (npc.statblock) {
         text += addMarkdownSectionTitle(`${npc.name} Statblock`, 4) + '\n';
         // Replace 'two_columns' with 'one_column' or something else if you want
-        text += statblockToMarkdown(npc.statblock, 'two_columns') + '\n\n';
+        text += anyStatblockToMarkdown(npc.statblock, 'two_columns') + '\n\n';
       }
     });
   }
@@ -109,7 +116,7 @@ export function dungeonToMarkdown(dungeon) {
 
         if (monster.statblock) {
           text +=
-            statblockToMarkdown(monster.statblock, 'two_columns') + '\n\n';
+            anyStatblockToMarkdown(monster.statblock, 'two_columns') + '\n\n';
         }
       }
     });

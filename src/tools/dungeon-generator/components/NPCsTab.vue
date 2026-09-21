@@ -1,7 +1,11 @@
 <template>
   <div class="dungeon-npcs-section parchment">
     <div class="dungeon-npcs-header">
-      <h3 class="dungeon-npcs-title">Notable NPCs</h3>
+      <div class="dungeon-npcs-header__row">
+        <h3 class="dungeon-npcs-title">Notable NPCs</h3>
+        <ParSwitch v-model="rulesIs2024" data-testid="rules-switch"
+          off-label="2014 rules" on-label="2024 rules" aria-label="Use 2024 rules" />
+      </div>
       <p class="dungeon-npcs-subtitle">
         People found in this dungeon — extracted from its overview or
         <button
@@ -191,7 +195,11 @@
                 dungeonStore.npcStatblockLoadingStates[entry.index]?.part1 ||
                 dungeonStore.npcStatblockLoadingStates[entry.index]?.part2
               " style="margin-top: 1rem;">
-                <Statblock :monster="entry.npc.statblock" :premium="premium" :readonly="true"
+                <Statblock2024
+                  v-if="entry.npc.statblock?.format === '2024' || (rulesIs2024 && !entry.npc.statblock && dungeonStore.npcStatblockLoadingStates[entry.index]?.generating)"
+                  :monster="entry.npc.statblock" :premium="premium" :readonly="true"
+                  :loading="dungeonStore.npcStatblockLoadingStates[entry.index]?.generating && !entry.npc.statblock" />
+                <Statblock v-else :monster="entry.npc.statblock" :premium="premium" :readonly="true"
                   :loadingPart1="dungeonStore.npcStatblockLoadingStates[entry.index]?.part1 || false"
                   :loadingPart2="dungeonStore.npcStatblockLoadingStates[entry.index]?.part2 || false"
                   @update-monster="updateNpcStatblock(entry.index, $event)" />
@@ -269,12 +277,22 @@
 </template>
 
 <script setup>
-import { ParButton, ParCardButton, ParAddNewButton } from "@/parchment";
+import { ParButton, ParCardButton, ParAddNewButton, ParSwitch } from "@/parchment";
 import { ref, reactive, computed, nextTick, onBeforeMount, onMounted, onUnmounted, watch } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import { navigateToTool } from '@/util/navigation.mjs';
 import NPCSkeleton from './skeletons/NPCSkeleton.vue';
 import Statblock from '@/components/Statblock.vue';
+import Statblock2024 from '@/components/Statblock2024.vue';
+import { setPreferredEdition, editionPreferenceRef } from '@/util/embedded-statblock.mjs';
+
+// Shared app-wide edition preference — same reactive source as the
+// Monsters tab and NPC generator switches.
+const editionPref = editionPreferenceRef();
+const rulesIs2024 = computed({
+  get: () => editionPref.value === '2024',
+  set: (v) => setPreferredEdition(v ? '2024' : '2014'),
+});
 import NPCCard from '@/components/NPCCard.vue';
 import { saveNPCToStorage, dungeonNPCToCanonical, normalizeDungeonNPC, findNPCByIdAcrossFolders, getNPCStatblockRef } from '@/util/npc-storage.mjs';
 import { getStatblockFromStorage } from '@/util/statblock-storage.mjs';
@@ -1213,5 +1231,13 @@ function clearNpcStatblockReference(index) {
 .statblock-not-found-message .button-group {
   margin-top: 1rem;
   margin-bottom: 0;
+}
+
+.dungeon-npcs-header__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem 1.5rem;
+  flex-wrap: wrap;
 }
 </style>

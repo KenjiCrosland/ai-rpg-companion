@@ -1,44 +1,16 @@
 import { currentDungeon, monsterLoadingStates } from './dungeon-state.mjs';
 import { saveDungeons, findMonsterById } from './dungeon-utils.mjs';
 import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
-import { generateGptResponse } from "@/util/ai-client.mjs";
-import { createStatblockPrompts } from '../prompts/monster-prompts.mjs';
+import { generateEmbeddedStatblock } from '@/util/embedded-statblock.mjs';
 import { generateStatblockForCreature } from '../util/statblock-generator.mjs';
 import { saveStatblockToStorage } from '@/util/statblock-storage.mjs';
 import { logger } from '@/util/logger.mjs';
-
-function sbValidationPart1(jsonString) {
-  try {
-    const data = JSON.parse(jsonString);
-    const keys = [
-      'armor_class',
-      'hit_points',
-      'speed',
-      'senses',
-      'languages',
-      'challenge_rating',
-      'proficiency_bonus',
-      'abilities',
-    ];
-    return keys.every((k) => k in data);
-  } catch {
-    return false;
-  }
-}
-
-function sbValidationPart2(jsonString) {
-  try {
-    const data = JSON.parse(jsonString);
-    return 'actions' in data;
-  } catch {
-    return false;
-  }
-}
 
 export async function createAndGenerateMonster({
   name,
   shortDescription,
   monsterType,
+  archetype,
   CR,
   isSpellcaster,
   premium,
@@ -59,6 +31,7 @@ export async function createAndGenerateMonster({
     name: monsterName,
     CR: CR || '1',
     monsterType: monsterType || 'Random',
+    archetype: archetype || 'auto',
     isSpellcaster: !!isSpellcaster,
     // We'll store the short user-provided text in `description` so GPT can expand it
     description: monsterDesc,
@@ -112,64 +85,39 @@ export async function generateMonsterStatblock(monsterId, premium) {
     limitReached: false,
   };
 
-  let part1Data = null;
-  let part2Data = null;
+  let generated = null;
 
   try {
-    // Build prompt data
+    // Engine-routed generation (phase 1 of the embedded edition migration):
+    // resolve call + main call — same two calls as the old part1/part2 flow,
+    // now with chassis-exact numbers, the full lint stack, and the shared
+    // edition preference. 2014 output arrives in the legacy shape this
+    // store already persists; 2024 output is the sections model (rendered
+    // by Statblock2024, format-dispatched in MonstersTab).
     const fullDescription = monster.detailedDescription
       ? Object.values(monster.detailedDescription).join('\n')
       : monster.description || 'A mysterious being';
-    const promptOptions = {
-      monsterName: monster.name,
-      challengeRating: monster.CR || '1',
-      monsterType: monster.monsterType || 'Random',
-      monsterDescription: fullDescription,
+    generated = await generateEmbeddedStatblock({
+      name: monster.name,
+      cr: monster.CR || '1',
+      description: fullDescription,
       caster: monster.isSpellcaster || false,
-    };
-    const statblockPrompts = createStatblockPrompts(promptOptions);
-
-    // Part 1
-    const npcStatsPart1 = await generateGptResponse(
-      statblockPrompts.part1,
-      sbValidationPart1,
-      3,
-    );
-    part1Data = JSON.parse(npcStatsPart1);
-
-    // Assign partial statblock so user sees progress
-    monster.statblock = { id: monster.id, ...part1Data };
-    // Don't save yet - wait until generation is complete
-
-    monsterLoadingStates.value[monsterId] = {
-      part1: false,
-      part2: true,
-      description: false,
-      generating: true,
-      limitReached: false,
-    };
-
-    // Provide conversation context for GPT
-    const previousContext = [
-      {
-        role: 'user',
-        content:
-          'Please give me the first part of a D&D statblock in the following format',
+      // monster.monsterType is the LEGACY Build value ('Stronger Defense')
+      // on old saves — map it onto a role; new monsters carry `archetype`.
+      archetype: monster.archetype
+        ?? ({ 'Stronger Defense': 'defender', 'Stronger Offense': 'brute', Balanced: 'balanced' }[monster.monsterType] ?? 'auto'),
+      onResolve: () => {
+        monsterLoadingStates.value[monsterId] = {
+          part1: false,
+          part2: true,
+          description: false,
+          generating: true,
+          limitReached: false,
+        };
       },
-      { role: 'system', content: npcStatsPart1 },
-    ];
+    });
 
-    // Part 2
-    const npcStatsPart2 = await generateGptResponse(
-      statblockPrompts.part2,
-      sbValidationPart2,
-      3,
-      previousContext,
-    );
-    part2Data = JSON.parse(npcStatsPart2);
-
-    // Assign final statblock
-    const finalStatblock = { id: monster.id, ...part1Data, ...part2Data };
+    const finalStatblock = { id: monster.id, ...generated };
     monster.statblock = finalStatblock;
 
     // Auto-save to shared storage
@@ -182,10 +130,7 @@ export async function generateMonsterStatblock(monsterId, premium) {
     saveDungeons();
   } catch (error) {
     logger.error('Error generating monster statblock:', error);
-    if (part1Data && !part2Data) {
-      // If we got part1 but failed to get part2, clear the partial data
-      monster.statblock = undefined;
-    }
+    monster.statblock = undefined;
     // Don't save here - let finally block handle it
     throw error;
   } finally {
@@ -198,7 +143,7 @@ export async function generateMonsterStatblock(monsterId, premium) {
     };
     // Only save if we didn't already save in success path
     // (This handles error case where we cleared partial statblock)
-    if (!part2Data) {
+    if (!generated) {
       saveDungeons();
     }
   }

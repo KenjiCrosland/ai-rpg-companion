@@ -679,6 +679,120 @@ function rpg_companion_chrome_styles() {
 }
 
 /**
+ * Loot-split control hardening (LootSplit.vue), parameterized by scope.
+ *
+ * The loot splitter renders in two places: the standalone page (inside #app) and
+ * the backpack's "Split this loot" modal (ParModal teleports to <body>, OUTSIDE
+ * #app — so a #app-scoped rule can't reach it). Genesis styles bare <button> with
+ * padding/min-width/min-height, which balloons the shares stepper and the
+ * Copy / Add-to-my-pack / Re-deal buttons. This re-asserts each control's
+ * parchment box, prefixed by $scope so callers pass '#app' (standalone) or
+ * '.par-modal' (modal). No !important — the scope prefix carries the specificity.
+ * Values mirror LootSplit.vue (1rem = 10px); keep in sync if it's restyled.
+ *
+ * @param string $scope Selector prefix, e.g. '#app' or '.par-modal'.
+ */
+function rpg_loot_split_control_styles( $scope ) {
+    return "
+        /* Shares stepper */
+        {$scope} .ls__step {
+            width: 2.6rem;
+            height: 2.6rem;
+            min-width: 0;
+            margin: 0;
+            padding: 0;
+            border: 0.5px solid #c9b99a;
+            border-radius: 3px;
+            background: #fbf7f0;
+            box-shadow: none;
+            color: #555;
+            font-size: 1.6rem;
+            font-weight: 600;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+        {$scope} .ls__step:disabled { color: #ccc; background: #fbf7f0; cursor: not-allowed; }
+        {$scope} .ls__shares-n {
+            min-width: 1.6rem;
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #222;
+        }
+
+        /* Re-deal items / Print all shares */
+        {$scope} .ls__redeal {
+            min-width: 0;
+            min-height: 2.8rem;
+            margin: 0;
+            padding: 0 1rem;
+            border: 0.5px solid #cbb8a0;
+            border-radius: 3px;
+            background: transparent;
+            box-shadow: none;
+            color: #555;
+            font-size: 1.2rem;
+            line-height: 1;
+            text-transform: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+        {$scope} .ls__redeal:hover { background: #f3ebda; color: #222; }
+
+        /* Pile actions: Copy / Add to my pack — the component sets no padding, so
+           the theme padding balloons them; pin the box and center the label. */
+        {$scope} .ls__pile-actions { display: flex; gap: 0.5rem; }
+        {$scope} .ls__copy,
+        {$scope} .ls__claim,
+        {$scope} .ls__claimed {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            flex: 1 1 0;
+            min-width: 0;
+            min-height: 3rem;
+            margin: 0;
+            padding: 0.3rem 0.5rem;
+            border-radius: 3px;
+            box-shadow: none;
+            font-size: 1.15rem;
+            font-weight: 500;
+            line-height: 1.2;
+            text-transform: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+        {$scope} .ls__copy {
+            border: 0.5px solid #cbb8a0;
+            background: transparent;
+            color: #555;
+        }
+        {$scope} .ls__copy:hover { background: #f3ebda; color: #222; }
+        {$scope} .ls__claim {
+            border: 0.5px solid #365a85;
+            background: transparent;
+            color: #365a85;
+            font-weight: 600;
+        }
+        {$scope} .ls__claim:hover:not(:disabled) { background: #365a85; color: #fbf7f0; }
+        {$scope} .ls__claim:disabled { border-color: #e4d8c4; color: #9a9082; background: transparent; cursor: not-allowed; }
+        {$scope} .ls__claimed {
+            border: 0.5px solid #8aa06a;
+            background: rgba(138, 160, 106, 0.15);
+            color: #4d6a3c;
+            cursor: default;
+        }
+    ";
+}
+
+/**
  * Parchment style guards — re-assert parchment-design values that the
  * per-template structural overrides (Genesis-theme resets) would otherwise
  * clobber on app content. These DUPLICATE the parchment intent with just

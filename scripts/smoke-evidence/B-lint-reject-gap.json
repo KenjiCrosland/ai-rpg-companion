@@ -1,0 +1,134 @@
+{
+  "name": "Bone-Swarm",
+  "type_and_alignment": "Tiny swarm of Tiny beasts, unaligned",
+  "armor_class": "15",
+  "hit_points": "188 (29d4 + 116)",
+  "speed": "30 ft., climb 30 ft., burrow 30 ft.",
+  "attributes": "STR 8 (-1), DEX 20 (+5), CON 18 (+4), INT 4 (-3), WIS 10 (+0), CHA 2 (-4)",
+  "saving_throws": "",
+  "skills": "",
+  "senses": "blindsight 30 ft., darkvision 60 ft., passive Perception 10",
+  "languages": "None",
+  "challenge_rating": "13 (10,000 XP)",
+  "proficiency_bonus": "+5",
+  "abilities": [
+    {
+      "name": "Carrion Dormancy",
+      "description": "The swarm can burrow through corpses and loose earth, and it has advantage on Dexterity (Stealth) checks made to hide within a corpse or grave soil. While dormant inside a corpse, it is indistinguishable from ordinary carrion insects."
+    },
+    {
+      "name": "Swarm",
+      "description": "The swarm can occupy another creature's space and vice versa, and the swarm can move through any opening large enough for a Tiny creature. The swarm can't regain hit points or gain temporary hit points."
+    },
+    {
+      "name": "Grave Tide (Recharge 5-6) (Reaction)",
+      "description": "When one creature within 30 feet that the swarm can see must make a DC 17 Dexterity saving throw, taking 14 (4d6) slashing damage plus 14 (4d6) necrotic damage on a failed save, or half as much damage on a successful one. If the target is poisoned by this swarm, it is also incapacitated until the end of its next turn. If this damage reduces the target to 0 hit points, the target is stripped to a skeleton and the swarm regains 10 hit points."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The swarm makes two Mandibles attacks."
+    },
+    {
+      "name": "Mandibles",
+      "description": "Melee Weapon Attack: +10 to hit, reach 5 ft., one target. Hit: 19 (4d6 + 5) piercing damage plus 13 (3d8) necrotic damage, or 9 (2d8) piercing damage if the swarm has half of its hit points or fewer."
+    }
+  ],
+  "format": "2014",
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "damage_resistances": "bludgeoning, piercing, slashing",
+  "condition_immunities": "charmed, frightened, grappled, paralyzed, petrified, prone, restrained, stunned",
+  "other_edition": {
+    "name": "Bone-Swarm",
+    "format": "2024",
+    "cr": 13,
+    "cr_str": "13",
+    "xp": 10000,
+    "challenge_rating": "13 (XP 10,000; PB +5)",
+    "type": "Swarm of Tiny Beasts",
+    "size": "Tiny",
+    "alignment": "Unaligned",
+    "ac": 15,
+    "hp": 188,
+    "hp_formula": "29d4 + 116",
+    "pb": 5,
+    "speed": "30 ft., Climb 30 ft., Burrow 30 ft.",
+    "stats": {
+      "STR": 8,
+      "DEX": 20,
+      "CON": 18,
+      "INT": 4,
+      "WIS": 10,
+      "CHA": 2
+    },
+    "saves": {
+      "STR": -1,
+      "DEX": 5,
+      "CON": 4,
+      "INT": -3,
+      "WIS": 0,
+      "CHA": -4
+    },
+    "skills": "",
+    "senses": "blindsight 30 ft., darkvision 60 ft.; Passive Perception 10",
+    "languages": "None",
+    "initiative_bonus": 5,
+    "initiative_score": 15,
+    "sections": {
+      "Traits": [
+        {
+          "name": "Carrion Dormancy",
+          "text": "The swarm can burrow through corpses and loose earth, and it has Advantage on Dexterity (Stealth) checks made to hide within a corpse or grave soil. While dormant inside a corpse, it is indistinguishable from ordinary carrion insects.",
+          "model": true
+        },
+        {
+          "name": "Swarm",
+          "text": "The swarm can occupy another creature's space and vice versa, and the swarm can move through any opening large enough for a Tiny creature. The swarm can't regain Hit Points or gain Temporary Hit Points.",
+          "rules": true
+        }
+      ],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The swarm makes two Mandibles attacks."
+        },
+        {
+          "name": "Mandibles",
+          "text": "*Melee Attack Roll:* +10, reach 5 ft. 19 (4d6 + 5) Piercing damage plus 13 (3d8) Necrotic damage, or 9 (2d8) Piercing damage if the swarm is Bloodied."
+        }
+      ],
+      "Reactions": [
+        {
+          "name": "Grave Tide (Recharge 5-6)",
+          "text": "One creature within 30 feet that the swarm can see must make a DC 17 Dexterity saving throw, taking 14 (4d6) Slashing damage plus 14 (4d6) Necrotic damage on a failed save, or half as much damage on a successful one. If the target is Poisoned by this swarm, it is also Incapacitated until the end of its next turn. If this damage reduces the target to 0 Hit Points, the target is stripped to a skeleton and the swarm regains 10 Hit Points.",
+          "model": true
+        }
+      ]
+    },
+    "lore": "Grave beetles are a necromantic infestation bred in unburied battlefields, consuming the dead until their hunger turns to the living, and they retain the memories of every corpse they have stripped.",
+    "generation": {
+      "path": "reskin",
+      "donor": "swarm-9",
+      "archetype": "lurker",
+      "body": "swarm",
+      "invented": true,
+      "signature": "custom"
+    },
+    "archetype": "lurker",
+    "archetype_source": "user",
+    "immunities": "Charmed, Frightened, Grappled, Paralyzed, Petrified, Prone, Restrained, Stunned",
+    "resistances": "Bludgeoning, Piercing, Slashing",
+    "lint_findings": [
+      "reaction-trigger: Reactions/Grave Tide (Recharge 5-6) has no trigger — a Reaction is not a free action; it must state when it fires: \"*Trigger:* <specific event>. *Response:* <what the creature does>.\"",
+      "swarm-heal-contradiction: Reactions/Grave Tide (Recharge 5-6) heals the swarm, but the Swarm trait says it can't regain Hit Points — the healing is stripped (heal-only entries are removed)",
+      "orphan-condition-ref: \"Poisoned\" is referenced as a state but nothing on the sheet applies it",
+      "phrasing-save-2014: Reactions/Grave Tide (Recharge 5-6): 2014 save grammar — the skeleton is \"*<Ability> Saving Throw:* DC n, <target>. *Failure:* <effect>\""
+    ]
+  },
+  "monsterDescription": "",
+  "selectedChallengeRating": "13",
+  "monsterName": "a swarm of grave beetles that strips a body to bone in seconds",
+  "caster": false
+}

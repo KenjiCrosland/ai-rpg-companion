@@ -4,7 +4,8 @@
 
 // Mock dependencies BEFORE imports
 jest.mock('@/util/ai-client.mjs', () => ({
-  generateGptResponse: jest.fn()
+  generateGptResponse: jest.fn(),
+  isDegradedMode: jest.fn(() => false)
 }));
 jest.mock('@rei/cedar', () => ({
   CdrButton: { name: 'CdrButton', template: '<button><slot /></button>' },
