@@ -122,6 +122,119 @@ function vue_app_enqueue_assets() {
             #app .sb24-body--editing .sb24-ability-cell {
                 grid-template-columns: 32px 52px 29px 29px;
             }
+            /* 2024 CARD — full typographic pin (2026-09-21). The component is
+               written in rem against a 10px root (Cedar reset, 62.5%); the theme
+               root is 16px and its .entry-content h2/h3/p rules outrank the
+               scoped component styles. Every value below is the component value
+               converted at 1rem = 10px, anchored on #app for specificity. */
+            #app .sb24-card {
+                font-family: \'Source Serif 4\', Georgia, serif;
+                font-size: 14px;
+                line-height: 1.45;
+                color: #1a1712;
+                background: #fdf9ef;
+                border: 1.5px solid #d0b88a;
+                border-radius: 10px;
+                padding: 20px 24px 24px;
+            }
+            #app .sb24-card p,
+            #app .sb24-card h2,
+            #app .sb24-card h3 {
+                font-family: inherit;
+                text-transform: none;
+                text-shadow: none;
+            }
+            #app .sb24-card p {
+                font-size: inherit;
+                line-height: inherit;
+                color: inherit;
+            }
+            #app .sb24-card strong,
+            #app .sb24-card em,
+            #app .sb24-card b,
+            #app .sb24-card i {
+                color: inherit;
+                font-family: inherit;
+            }
+            #app .sb24-card .sb24-header {
+                margin-bottom: 10px;
+            }
+            #app .sb24-card h2.sb24-name {
+                margin: 0;
+                font-size: 21px;
+                line-height: 1.2;
+                font-weight: 700;
+                font-variant: small-caps;
+                letter-spacing: 0.03em;
+                color: #7a1f1f;
+            }
+            #app .sb24-card p.sb24-subtitle {
+                margin: 1px 0 0;
+                font-style: italic;
+                color: #5a5347;
+            }
+            #app .sb24-card .sb24-solo-note {
+                margin: -2px 0 8px;
+                font-size: 12px;
+                font-style: italic;
+                font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', sans-serif;
+                color: #8a8172;
+            }
+            #app .sb24-card .sb24-details {
+                margin-bottom: 6px;
+            }
+            #app .sb24-card p.sb24-line {
+                margin: 1.5px 0;
+            }
+            #app .sb24-card .sb24-line strong {
+                color: #7a1f1f;
+                font-weight: 700;
+            }
+            #app .sb24-card .sb24-section {
+                margin-top: 12px;
+            }
+            #app .sb24-card h3.sb24-section-title {
+                margin: 0 0 6px;
+                font-size: 15px;
+                line-height: 1.3;
+                font-weight: 700;
+                font-variant: small-caps;
+                letter-spacing: 0.06em;
+                color: #7a1f1f;
+                border-bottom: 1.5px solid #c9ab6e;
+                padding-bottom: 2px;
+            }
+            #app .sb24-card p.sb24-entry {
+                margin: 0 0 8px;
+            }
+            #app .sb24-card .sb24-entry strong em {
+                color: #1a1712;
+            }
+            #app .sb24-abilities {
+                margin: 10px 0;
+            }
+            #app .sb24-ability-head {
+                font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', sans-serif;
+                font-weight: 600;
+                letter-spacing: 0.05em;
+                color: #8a8172;
+            }
+            #app .sb24-ability-abbr {
+                font-weight: 700;
+                font-variant: small-caps;
+            }
+            #app .sb24-ability-cell:not(.sb24-ability-head) {
+                border-top: 1px solid #e6dcc6;
+                padding: 2.5px 0;
+            }
+            #app .sb24-ability-mod {
+                background: #f0e4cb;
+                padding: 2.5px 0;
+            }
+            #app .sb24-ability-save {
+                background: #e9e5da;
+                padding: 2.5px 0;
+            }
             select {
                 padding: 1rem;
             }
