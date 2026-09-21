@@ -2782,28 +2782,32 @@ ${wcRejected ? `ACTION draft rejected. THE ONE RULE IT BROKE: ${wcRejected.why}\
       const head = String(concept ?? '').split(/\s+(?:that|who|which)\s+|,/i)[0];
       const source = `${monster.name} ${head}`;
       const hasRow = (re) => Object.values(sections).flat().some((e2) => re.test(`${e2.name} ${e2.text}`));
+      // a canon cue the resolve REJECTED on the sentence never re-applies off
+      // the shipped name (the troll-HUNTING knight named "Troll-Tooth Knight"
+      // was stamped Regeneration, 2026-09-21)
+      const skip = new Set((options.rejectedCanon ?? []).map((x) => String(x).toLowerCase()));
       const Inline = inline.charAt(0).toUpperCase() + inline.slice(1);
       const canon = [];
-      if (/\btrolls?\b/i.test(source) && !hasRow(/\bRegeneration\b|regains \d+ Hit Points at the start/i)) {
+      if (!skip.has('troll') && /\btrolls?\b/i.test(source) && !hasRow(/\bRegeneration\b|regains \d+ Hit Points at the start/i)) {
         // print pegs the rate: 5 at CR 1/2 (Troll Limb), 15 at CR 5 (Troll)
         const rate = cr <= 1 ? 5 : cr <= 4 ? 10 : cr <= 9 ? 15 : 20;
         const off = ['Acid', 'Fire'].filter((t) => !(monster.immunities ?? '').includes(t) && !(monster.resistances ?? '').includes(t));
         if (off.length < 2) off.push('Cold'); // the off-switch stays LIVE — a type the sheet shrugs at is no counterplay
         canon.push({ name: 'Regeneration', text: `${Inline} regains ${rate} Hit Points at the start of each of its turns. If ${inline} takes ${off.join(' or ')} damage, this trait doesn't function on ${inline}'s next turn. ${Inline} dies only if it starts its turn with 0 Hit Points and doesn't regenerate.` });
       }
-      if (/\bzombies?\b/i.test(source) && !hasRow(/Undead Fortitude|drops to 1 Hit Point instead/i)) {
+      if (!skip.has('zombie') && /\bzombies?\b/i.test(source) && !hasRow(/Undead Fortitude|drops to 1 Hit Point instead/i)) {
         canon.push({ name: 'Undead Fortitude', text: `If damage reduces ${inline} to 0 Hit Points, it makes a Constitution saving throw (DC 5 plus the damage taken) unless the damage is Radiant or from a Critical Hit. On a successful save, ${inline} drops to 1 Hit Point instead.` });
       }
-      if (/\bgolems?\b/i.test(source) && !hasRow(/Immutable Form|can't shape-shift/i)) {
+      if (!skip.has('golem') && /\bgolems?\b/i.test(source) && !hasRow(/Immutable Form|can't shape-shift/i)) {
         canon.push({ name: 'Immutable Form', text: `${Inline} can't shape-shift.` });
       }
-      if (/\b(?:golems?|devils?)\b/i.test(source) && !hasRow(/Magic Resistance|Advantage on saving throws against spells/i)) {
+      if (!(skip.has('golem') && !/\bdevils?\b/i.test(source)) && /\b(?:golems?|devils?)\b/i.test(source) && !hasRow(/Magic Resistance|Advantage on saving throws against spells/i)) {
         canon.push({ name: 'Magic Resistance', text: `${Inline} has Advantage on saving throws against spells and other magical effects.` });
       }
-      if (/\bspiders?\b/i.test(source) && !hasRow(/Spider Climb|climb difficult surfaces/i)) {
+      if (!skip.has('spider') && /\bspiders?\b/i.test(source) && !hasRow(/Spider Climb|climb difficult surfaces/i)) {
         canon.push({ name: 'Spider Climb', text: `${Inline} can climb difficult surfaces, including along ceilings, without needing to make an ability check.` });
       }
-      if (/\bmephits?\b/i.test(source) && !hasRow(/Death Burst|explodes when it dies/i)) {
+      if (!skip.has('mephit') && /\bmephits?\b/i.test(source) && !hasRow(/Death Burst|explodes when it dies/i)) {
         const dice = cr < 1 ? '5 (2d4)' : cr <= 3 ? '7 (2d6)' : cr <= 8 ? '14 (4d6)' : '21 (6d6)';
         canon.push({ name: 'Death Burst', text: `${Inline} explodes when it dies. *Dexterity Saving Throw*: DC ${scaled.dc}, each creature in a 5-foot Emanation originating from ${inline}. *Failure:* ${dice} ${options.energy ?? 'Fire'} damage. *Success:* Half damage.` });
       }

@@ -15,6 +15,23 @@ import {
   validateArchetypeResponse, validateGenerationResponse, validateSeedSynthesisResponse,
   validateNamingResponse,
 } from '../format-2024/generate.mjs';
+import { validateRouteResponse } from '../reskin/route.mjs';
+
+// ROUTE-CALL MOCKS (two calls since 2026-09-21): the route reply names a
+// shelf line and QUOTES the concept (chooseLine verifies the quote against
+// the input, so the mock lifts it from the prompt's own Concept line)
+const conceptOf = (prompt) => (/^Concept: (.*)$/m.exec(prompt)?.[1] ?? '');
+const quoteOf = (prompt) => conceptOf(prompt).split(/\s+/).slice(0, 6).join(' ');
+const lineIdFor = (p) => {
+  const fam = ['artillery', 'controller'].includes(p.archetype) ? 'caster' : (p.archetype ?? 'lurker');
+  const style = p.style ?? p.styles?.[0]?.style ?? null;
+  return p.body ?? (style ? `${fam}-${style}` : fam);
+};
+const routeReply = (prompt, archetypeOrPayload) => {
+  const p = typeof archetypeOrPayload === 'string' ? { archetype: archetypeOrPayload } : (archetypeOrPayload ?? {});
+  if (p.route) return p.route;
+  return { picks: [{ line: lineIdFor(p), because: quoteOf(prompt) }], creature_type: p.creature_type, extras: (p.mechanics ?? []).map((mm) => ({ mechanic: mm, because: quoteOf(prompt) })) };
+};
 import { validateAuditResponse } from '../format-2024/audit.mjs';
 import { validateFlavorResponse } from '../skeleton/flavor-prompt.mjs';
 
@@ -119,6 +136,9 @@ function mockLLM({ resolvedArchetype = 'lurker' } = {}) {
   aiClient.generateGptResponse.mockImplementation((prompt, validate) => {
     if (validate === validateAuditResponse) {
       return Promise.resolve(JSON.stringify({ findings: [] })); // gate opened: all CRs audit
+    }
+    if (validate === validateRouteResponse) {
+      return Promise.resolve(JSON.stringify(routeReply(prompt, resolvedArchetype)));
     }
     if (validate === validateArchetypeResponse) {
       return Promise.resolve(JSON.stringify({ archetype: resolvedArchetype }));
@@ -233,7 +253,7 @@ describe('StatblockGenerator 2024 flow', () => {
 
       // resolve (user role passes as GIVEN — owner call 2026-08-04) +
       // skeleton flavor + naming pass (audit CR-gated below eligibility here)
-      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(3);
+      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(4); // route + identity + flavor + naming
       const saved = savedMonsters().Uncategorized[0];
       expect(saved.archetype).toBe('lurker');
       expect(saved.archetype_source).toBe('user');
@@ -247,9 +267,10 @@ describe('StatblockGenerator 2024 flow', () => {
       await setCR(wrapper, '4');
       await generate(wrapper);
 
-      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(3);
-      expect(aiClient.generateGptResponse.mock.calls[0][1]).toBe(validateArchetypeResponse);
-      expect(aiClient.generateGptResponse.mock.calls[1][1]).toBe(validateFlavorResponse);
+      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(4); // route + identity + flavor + naming
+      expect(aiClient.generateGptResponse.mock.calls[0][1]).toBe(validateRouteResponse); // the route call runs first
+      expect(aiClient.generateGptResponse.mock.calls[1][1]).toBe(validateArchetypeResponse);
+      expect(aiClient.generateGptResponse.mock.calls[2][1]).toBe(validateFlavorResponse);
       const saved = savedMonsters().Uncategorized[0];
       expect(saved.archetype).toBe('lurker');
       expect(saved.archetype_source).toBe('auto');
@@ -273,7 +294,8 @@ describe('StatblockGenerator 2024 flow', () => {
       const calls = aiClient.generateGptResponse.mock.calls;
       expect(calls.length).toBeGreaterThanOrEqual(2);
       expect(calls[0][1]).toBe(validateSeedSynthesisResponse);
-      expect(calls[1][1]).toBe(validateFlavorResponse);
+      expect(calls[1][1]).toBe(validateRouteResponse); // blank path: synthesis first, then route on the fused creature
+      expect(calls[2][1]).toBe(validateFlavorResponse);
       const saved = savedMonsters().Uncategorized[0];
       expect(saved.archetype).toBe('lurker');
       expect(saved.archetype_source).toBe('auto');
@@ -531,6 +553,7 @@ describe('the 2014 move: reskin-first 2014 (2026-09-14)', () => {
   test('a 2014-format generation routes the reskin, converts once, and saves both printings', async () => {
     reskinMod.generateReskin.mockResolvedValue(reskinStalker());
     aiClient.generateGptResponse.mockImplementation((prompt, validate) => {
+      if (validate === validateRouteResponse) return Promise.resolve(JSON.stringify(routeReply(prompt, 'lurker')));
       if (validate === validateArchetypeResponse) return Promise.resolve(JSON.stringify({ archetype: 'lurker' }));
       return Promise.resolve(JSON.stringify(conversionPayload)); // the conversion call
     });
@@ -553,6 +576,7 @@ describe('the 2014 move: reskin-first 2014 (2026-09-14)', () => {
     // suite, so its calls simply fail here and the error path runs
     localStorage.setItem('statblock-reskin-2014', '0');
     aiClient.generateGptResponse.mockImplementation((prompt, validate) => {
+      if (validate === validateRouteResponse) return Promise.resolve(JSON.stringify(routeReply(prompt, 'lurker')));
       if (validate === validateArchetypeResponse) return Promise.resolve(JSON.stringify({ archetype: 'lurker' }));
       return Promise.reject(new Error('slot path reached — fixtures live in its own suite'));
     });
@@ -568,6 +592,7 @@ describe('the 2014 move: reskin-first 2014 (2026-09-14)', () => {
   test('conversion failure NEVER fails the generation — the deterministic shape ships with the 2024 original cached', async () => {
     reskinMod.generateReskin.mockResolvedValue(reskinStalker());
     aiClient.generateGptResponse.mockImplementation((prompt, validate) => {
+      if (validate === validateRouteResponse) return Promise.resolve(JSON.stringify(routeReply(prompt, 'lurker')));
       if (validate === validateArchetypeResponse) return Promise.resolve(JSON.stringify({ archetype: 'lurker' }));
       return Promise.reject(new Error('Failed to generate a valid response. Please try again later.'));
     });
@@ -592,6 +617,7 @@ describe('the 2014 move: reskin-first 2014 (2026-09-14)', () => {
     m.archetype = 'caster';
     reskinMod.generateReskin.mockResolvedValue(m);
     aiClient.generateGptResponse.mockImplementation((prompt, validate) => {
+      if (validate === validateRouteResponse) return Promise.resolve(JSON.stringify(routeReply(prompt, 'lurker')));
       if (validate === validateArchetypeResponse) return Promise.resolve(JSON.stringify({ archetype: 'lurker' }));
       return Promise.resolve(JSON.stringify(conversionPayload));
     });
@@ -638,20 +664,11 @@ describe('routing contradiction belt (2026-09-15): physical artillery is a throw
   const resolveWith = (payload) => {
     reskinMod.generateReskin.mockResolvedValue(reskinTroll());
     aiClient.generateGptResponse.mockImplementation((prompt, validate) => {
+      if (validate === validateRouteResponse) return Promise.resolve(JSON.stringify(routeReply(prompt, payload)));
       if (validate === validateArchetypeResponse) return Promise.resolve(JSON.stringify(payload));
       return Promise.resolve(JSON.stringify({ findings: [], candidates: [] }));
     });
   };
-
-  test('a grappler style on a non-brute family re-routes to brute (the grapple engine lives there)', async () => {
-    resolveWith({ archetype: 'lurker', style: 'grappler', mechanics: ['grapple'] });
-    const wrapper = mountGenerator();
-    await wrapper.find('input#monsterName').setValue('A bog troll that drags victims under the mire');
-    await setCR(wrapper, '8');
-    await generate(wrapper);
-    expect(reskinMod.generateReskin.mock.calls[0][0]).toMatchObject({ archetype: 'brute', style: 'grappler' });
-    wrapper.unmount();
-  });
 
   test('a provided_name that is the whole input is a description, not a name (item F)', async () => {
     const input = 'a scarecrow that only moves when nobody is looking';
@@ -674,36 +691,112 @@ describe('routing contradiction belt (2026-09-15): physical artillery is a throw
     wrapper.unmount();
   });
 
-  test('artillery + physical mix re-routes to skirmisher with the hurler style', async () => {
-    resolveWith({ archetype: 'artillery', damage_mix: 'physical', mechanics: ['thrown-weapon'] });
-    const wrapper = mountGenerator();
-    await wrapper.find('input#monsterName').setValue('A cliff troll that hurls slabs at climbers');
-    await setCR(wrapper, '5');
-    await generate(wrapper);
-    expect(reskinMod.generateReskin).toHaveBeenCalledTimes(1);
-    const args = reskinMod.generateReskin.mock.calls[0][0];
-    expect(args.archetype).toBe('skirmisher');
-    expect(args.style).toBe('hurler');
-    expect(args.menuRole).toBeNull();
-    wrapper.unmount();
-  });
-
-  test('a resolved style survives the re-route; a mixed-damage artillery stays a caster', async () => {
-    resolveWith({ archetype: 'artillery', damage_mix: 'physical', style: 'skulker' });
+  test('a lowercase fragment of a description is never a provided name; a capitalized one, or a short input, is', async () => {
+    resolveWith({ archetype: 'brute', style: 'charger', provided_name: 'brass bull' });
     const w1 = mountGenerator();
-    await w1.find('input#monsterName').setValue('A sniper in the scree');
+    await w1.find('input#monsterName').setValue('a brass bull that charges down anyone who enters its pen');
     await setCR(w1, '5');
     await generate(w1);
-    expect(reskinMod.generateReskin.mock.calls[0][0]).toMatchObject({ archetype: 'skirmisher', style: 'skulker' });
+    expect(reskinMod.generateReskin.mock.calls[0][0].fixedName ?? null).toBeNull();
     w1.unmount();
 
     jest.clearAllMocks();
-    resolveWith({ archetype: 'artillery', damage_mix: 'both' });
+    resolveWith({ archetype: 'brute', style: 'charger', provided_name: 'Brazen Bull' });
     const w2 = mountGenerator();
-    await w2.find('input#monsterName').setValue('A storm hermit calling lightning');
-    await setCR(w2, '12');
+    await w2.find('input#monsterName').setValue('Brazen Bull - a brass bull that charges down anyone who enters its pen');
+    await setCR(w2, '5');
     await generate(w2);
-    expect(reskinMod.generateReskin.mock.calls[0][0]).toMatchObject({ archetype: 'caster', menuRole: 'artillery' });
+    expect(reskinMod.generateReskin.mock.calls[0][0].fixedName).toBe('Brazen Bull');
     w2.unmount();
+
+    jest.clearAllMocks();
+    resolveWith({ archetype: 'brute', style: 'charger', provided_name: 'brazen bull' });
+    const w3 = mountGenerator();
+    await w3.find('input#monsterName').setValue('brazen bull');
+    await setCR(w3, '5');
+    await generate(w3);
+    expect(reskinMod.generateReskin.mock.calls[0][0].fixedName).toBe('brazen bull');
+    w3.unmount();
+  });
+
+  test('the route call runs first and the identity call is conditioned on the routed line', async () => {
+    resolveWith({ route: { picks: [{ line: 'brute-charger', because: 'charges down anyone who enters' }], creature_type: 'Construct' }, identity: 'It paws once, then thunders down the first thing across the threshold.' });
+    const wrapper = mountGenerator();
+    await wrapper.find('input#monsterName').setValue('A brass bull that charges down anyone who enters its pen');
+    await setCR(wrapper, '5');
+    await generate(wrapper);
+    const calls = aiClient.generateGptResponse.mock.calls;
+    expect(calls[0][1]).toBe(validateRouteResponse);
+    expect(calls[0][0]).toMatch(/THE SHELF/);
+    expect(calls[1][1]).toBe(validateArchetypeResponse);
+    expect(calls[1][0]).toMatch(/CHASSIS: this creature has been routed onto the "brute-charger"/);
+    expect(calls[1][0]).toMatch(/Creature type: Construct/);
+    expect(reskinMod.generateReskin.mock.calls[0][0]).toMatchObject({ archetype: 'brute', style: 'charger', resolvedType: 'Construct', mechanics: [] });
+    wrapper.unmount();
+  });
+
+  test('a grappler pick carries the engulf engine to brute (the toad, the iron maiden)', async () => {
+    resolveWith({ route: { picks: [{ line: 'brute-grappler', because: 'drags victims under the mire' }], creature_type: 'Giant' } });
+    const wrapper = mountGenerator();
+    await wrapper.find('input#monsterName').setValue('A bog troll that drags victims under the mire');
+    await setCR(wrapper, '8');
+    await generate(wrapper);
+    expect(reskinMod.generateReskin.mock.calls[0][0]).toMatchObject({ archetype: 'brute', style: 'grappler', mechanics: ['grapple', 'engulf'] });
+    wrapper.unmount();
+  });
+
+  test('a pick whose quote is not in the input falls to the NEXT pick, never to a plain line', async () => {
+    resolveWith({ route: { picks: [{ line: 'ooze', because: 'an amorphous mass of tar' }, { line: 'brute-grappler', because: 'drags cattle into the bog' }], creature_type: 'Beast' } });
+    const wrapper = mountGenerator();
+    await wrapper.find('input#monsterName').setValue('A tar-mouthed toad the size of a cart that drags cattle into the bog');
+    await setCR(wrapper, '5');
+    await generate(wrapper);
+    const a = reskinMod.generateReskin.mock.calls[0][0];
+    expect(a.bodyType).toBeNull();
+    expect(a).toMatchObject({ archetype: 'brute', style: 'grappler' });
+    wrapper.unmount();
+  });
+
+  test('a caster-binder pick records the controller menu role and its binder prior', async () => {
+    resolveWith({ route: { picks: [{ line: 'caster-binder', because: 'curses the unbelievers from the pulpit' }], creature_type: 'Undead' } });
+    const wrapper = mountGenerator();
+    await wrapper.find('input#monsterName').setValue('A wax preacher that curses the unbelievers from the pulpit');
+    await setCR(wrapper, '6');
+    await generate(wrapper);
+    expect(reskinMod.generateReskin.mock.calls[0][0]).toMatchObject({ archetype: 'caster', menuRole: 'controller', stylePrior: 'binder', style: 'binder' });
+    wrapper.unmount();
+  });
+
+  test('a swarm pick ships the swarm body; "swarm of" derives it even when the route misses', async () => {
+    resolveWith({ route: { picks: [{ line: 'swarm', because: 'a swarm of grave beetles' }] } });
+    const w1 = mountGenerator();
+    await w1.find('input#monsterName').setValue('A swarm of grave beetles that strips a body to bone');
+    await setCR(w1, '3');
+    await generate(w1);
+    expect(reskinMod.generateReskin.mock.calls[0][0]).toMatchObject({ archetype: 'swarm', bodyType: 'swarm' });
+    w1.unmount();
+
+    jest.clearAllMocks();
+    resolveWith({ route: { picks: [{ line: 'lurker', because: 'strips a body to bone' }] } });
+    const w2 = mountGenerator();
+    await w2.find('input#monsterName').setValue('A swarm of grave beetles that strips a body to bone');
+    await setCR(w2, '3');
+    await generate(w2);
+    expect(reskinMod.generateReskin.mock.calls[0][0]).toMatchObject({ bodyType: 'swarm' });
+    w2.unmount();
+  });
+
+  test('a route that names nothing on the shelf still generates — a plain line ships (never-fail)', async () => {
+    resolveWith({ route: { picks: [{ line: 'ninja', because: 'x' }] } });
+    const wrapper = mountGenerator();
+    const roleSelect = wrapper.findAll('select').find((sel) => sel.findAll('option').some((op) => op.attributes('value') === 'brute'));
+    await roleSelect.setValue('brute');
+    await wrapper.find('input#monsterName').setValue('A thing');
+    await setCR(wrapper, '5');
+    await generate(wrapper);
+    const a = reskinMod.generateReskin.mock.calls[0][0];
+    expect(a).toMatchObject({ archetype: 'brute' });
+    expect(a.style ?? null).toBeNull();
+    wrapper.unmount();
   });
 });

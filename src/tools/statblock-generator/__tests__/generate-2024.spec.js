@@ -649,11 +649,12 @@ describe('naming pass', () => {
 });
 
 describe('archetype resolve helpers', () => {
-  test('validateSeedSynthesisResponse requires a real archetype and a synthesis sentence', () => {
+  test('validateSeedSynthesisResponse requires a synthesis sentence', () => {
     const { validateSeedSynthesisResponse } = require('../format-2024/generate.mjs');
     expect(validateSeedSynthesisResponse(JSON.stringify({ archetype: 'lurker', synthesis: 'A pale drifting hunger that haunts the passes.' }))).toBe(true);
     expect(validateSeedSynthesisResponse(JSON.stringify({ archetype: 'lurker' }))).toBe(false);
-    expect(validateSeedSynthesisResponse(JSON.stringify({ archetype: 'tank', synthesis: 'A perfectly nice sentence.' }))).toBe(false);
+    // the role is no longer this call's job (the route call owns it, 2026-09-21)
+    expect(validateSeedSynthesisResponse(JSON.stringify({ synthesis: 'A perfectly nice sentence.' }))).toBe(true);
     expect(validateSeedSynthesisResponse(JSON.stringify({ archetype: 'lurker', synthesis: 'short' }))).toBe(false);
   });
 
@@ -669,9 +670,9 @@ describe('archetype resolve helpers', () => {
     expect(concept).toContain('banned as the name\'s HEAD noun');
   });
 
-  test('validateArchetypeResponse accepts the eight archetypes only', () => {
-    expect(validateArchetypeResponse('{"archetype": "lurker"}')).toBe(true);
-    expect(validateArchetypeResponse('{"archetype": "tank"}')).toBe(false);
+  test('validateArchetypeResponse (now the identity validator) needs an identity string, not a role', () => {
+    expect(validateArchetypeResponse('{"identity": "It hunts from shadow."}')).toBe(true);
+    expect(validateArchetypeResponse('{"archetype": "lurker"}')).toBe(false);
     expect(validateArchetypeResponse('nope')).toBe(false);
   });
 

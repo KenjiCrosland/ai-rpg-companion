@@ -23,8 +23,21 @@ touching anything under `chassis/` or `format-2024/`.
   + PB (raise-only stamp, caster-aware via `attackStatFor`), attack damage
   flat bonus = striker mod, save damage pure dice, HP formula bonus =
   dice × CON mod. One Combat role
-  select for both editions: Auto (micro resolve call when a concept exists,
-  random pick when blank), Balanced, or one of 8 roles.
+  select for both editions: Auto, Balanced (aliases Auto), or one of the
+  roles.
+- **Resolve is TWO calls** (2026-09-21, `reskin/route.mjs`): the ROUTE call
+  shows the model the donor shelf (~22 lines, one blurb + print exemplars
+  each) and asks for up to three picks, each with a phrase QUOTED from the
+  input; `chooseLine` verifies every quote against the input and falls to
+  the next pick on a veto (living juggernaut/warden, quote not found, user
+  role mismatch). Its output is exactly `generateReskin`'s interface
+  (archetype, style, body, mechanics, resolvedType). The IDENTITY call
+  (`buildIdentityPrompt`) then writes the prose conditioned on the routed
+  line. Blank rolls run SYNTHESIS first, then ROUTE on the fused creature.
+  There are no label-translation belts in the Vue any more; the shelf has
+  no unserved styles. Ad hoc tools: `scripts/smoke-replay-resolve.mjs`
+  replays only the route call; `scripts/smoke-statblock.mjs` captures the
+  `[route]` trace line.
 - **2024 edition**: sections-based model, markdown render
   (`format-2024/render.mjs`), display via `@/components/Statblock2024.vue`
   with inline editing (engine band hints on numeric edits — advisory, never

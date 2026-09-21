@@ -409,13 +409,15 @@ describe('the second Horseman fixes', () => {
     expect(v(JSON.stringify(claim))).toBe(false);
   });
 
-  test('the style field is in both concept-call JSON schemas', () => {
+  test('the style choice moved to the ROUTE call: the shelf carries every style; the prose prompts carry none', () => {
     const { buildSeedSynthesisPrompt: bsp, buildArchetypeResolvePrompt: bap } = require('../../format-2024/generate.mjs');
+    const { buildRoutePrompt } = require('../route.mjs');
+    expect(buildRoutePrompt('a horseman', { cr: 8 })).toMatch(/- skirmisher-mounted — a RIDER/);
     for (const prompt of [
       bsp({ intelligence: 'x', physical: 'x', silhouette: 'x', origin: 'x' }, { cr: 8 }),
       bap('a horseman', '', { cr: 8 }),
     ]) {
-      expect(prompt).toMatch(/"style": "<mounted\|skulker\|hurler/);
+      expect(prompt).not.toMatch(/"styles?":/);
     }
   });
 });
@@ -1627,11 +1629,11 @@ describe('concept gating (owner "let\'s do it", 2026-08-24): stock organs ship o
     expect(mounted.gated_out).toEqual([]);
   });
 
-  test('the interview asks the gating question', () => {
-    const { buildArchetypeResolvePrompt: barG } = require('../../format-2024/generate.mjs');
-    const pr = barG('bog lurker', '', { cr: 6 });
-    expect(pr).toMatch(/"mechanics": \["<zero or more of/);
-    expect(pr).toMatch(/gates for pre-built abilities/);
+  test('the route call asks the gating question (extras need their own quote)', () => {
+    const { buildRoutePrompt } = require('../route.mjs');
+    const pr = buildRoutePrompt('bog lurker', { cr: 6 });
+    expect(pr).toMatch(/"extras": \[\{"mechanic":/);
+    expect(pr).toMatch(/gated add-on mechanics the concept ITSELF shows/);
   });
 });
 
@@ -4472,9 +4474,11 @@ describe('the close-out coda (2026-09-08): the short-form system, four word-form
   });
 
   test('the prompt cues: ghosts are ALWAYS phantom; engulf covers digestion', () => {
-    const src = require('fs').readFileSync(require('path').resolve(__dirname, '../../format-2024/generate.mjs'), 'utf8');
-    expect(src).toMatch(/a ghost or spirit is ALWAYS a phantom, even when it lurks, stalks, or hides/);
-    expect(src).toMatch(/engulf covers ANY containment: a body that swallows, engulfs, smothers, entombs, or DIGESTS prey/);
+    // the cues live on the SHELF now (reskin/route.mjs, 2026-09-21)
+    const src = require('fs').readFileSync(require('path').resolve(__dirname, '../route.mjs'), 'utf8');
+    expect(src).toMatch(/a ghost or spirit is ALWAYS this/);
+    expect(src).toMatch(/a body that swallows, engulfs, smothers, or drags prey inside itself/);
+    expect(src).toMatch(/holds, seizes, swallows, entombs, or folds shut around prey is brute-grappler/);
   });
 });
 
@@ -6800,5 +6804,15 @@ describe('reactions need triggers (critic round 2, 2026-09-20)', () => {
     }));
     const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
     expect(w.library).toBe(true);
+  });
+});
+
+describe('name canon honours a rejected hint (2026-09-21)', () => {
+  test('"Troll-Tooth Knight" gets no Regeneration when the resolve rejected the troll cue', async () => {
+    const full = JSON.parse(answer()); full.name = 'Troll-Tooth Knight';
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'a knight who hunts trolls', cr: 8, rejectedCanon: ['troll'] }, async () => JSON.stringify(full));
+    expect((m.sections.Traits ?? []).some((e) => e.name === 'Regeneration')).toBe(false);
+    const still = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => JSON.stringify(full));
+    expect((still.sections.Traits ?? []).some((e) => e.name === 'Regeneration')).toBe(true); // without the rejection the stamp still fires
   });
 });
