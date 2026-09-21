@@ -6614,6 +6614,20 @@ describe('release-gate items (2026-09-20): invented conditions, unserved styles'
     expect((m.sections.Traits ?? []).some((e) => e.name === 'Vault Guise')).toBe(false);
   });
 
+  test('"is Bleeding from" dies; "becomes Stable" (print) and "is Grappled by" stay legal', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => answer({
+      wildcard: 'One creature within 5 feet that is Bleeding from the creature\'s blade must succeed on a DC 15 Constitution Saving Throw or have the Prone condition.',
+    }));
+    expect(Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay')).library).toBe(true);
+    for (const text of [
+      '*Dexterity Saving Throw*: DC 15, one creature within 30 feet that is Grappled by the creature. *Failure:* The target has the Prone condition.',
+      '*Constitution Saving Throw*: DC 15, one creature within 30 feet. *Failure:* 14 (4d6) Poison damage. If this damage reduces the target to 0 Hit Points, the target becomes Stable, and it has the Poisoned condition.',
+    ]) {
+      const ok = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => answer({ wildcard: text }));
+      expect(Object.values(ok.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay')).library).toBeFalsy();
+    }
+  });
+
   test('stripSentencesWith drops only the sentence carrying the token', () => {
     const { stripSentencesWith: strip } = require('../generate.mjs');
     expect(strip('The creature has Advantage on Initiative rolls. Each creature that failed to notice it has the Surprised condition. It climbs well.', 'surprised'))
@@ -6675,5 +6689,116 @@ describe('the object rider (2026-09-20): the engine picks the slot, the model wr
     try { await generateReskin({ archetype: 'lurker', style: 'skulker', concept: 'x', cr: 3, mechanics: [] }, async () => JSON.stringify(full)); }
     finally { console.log = orig; }
     expect(seen.some((l) => /style unserved/.test(l))).toBe(false);
+  });
+});
+
+describe('the last four (2026-09-20): swarm clamp, dead control rows, computable actuators', () => {
+  const fitted = (opts, over = {}) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const { pickDonor: pd, scaleDonor: sd } = require('../scale.mjs');
+    const full = JSON.parse(answer()); full.renames = {}; full.damage_types = {};
+    rk(sd(pd(opts.cr, opts.style ?? null, opts.bodyType ?? opts.archetype), opts.cr, { mechanics: [] })).forEach((k) => {
+      full.renames[k] = `Named ${k}`.split(/\s+/).slice(0, 4).join(' '); full.damage_types[full.renames[k]] = 'Bludgeoning';
+    });
+    return JSON.stringify({ ...full, ...over });
+  };
+
+  test('a swarm is never Tiny — size clamps to Medium and the hit die follows', async () => {
+    const opts = { archetype: 'lurker', bodyType: 'swarm', concept: 'x', cr: 13, mechanics: [] };
+    const m = await generateReskin(opts, async () => fitted(opts, { size: 'Tiny', type: 'Beast' }));
+    expect(m.size).toBe('Medium');
+    expect(m.hp_formula).toMatch(/d8/);
+    const big = await generateReskin(opts, async () => fitted(opts, { size: 'Gargantuan', type: 'Beast' }));
+    expect(big.size).toBe('Large');
+  });
+
+  test('a frame-less, damage-less library row becomes a Bonus Action; a damaging one stays an Action', async () => {
+    const dying = 'When the creature teleports within 5 feet of a foe, that foe must succeed on a DC 15 Dexterity Saving Throw or be Blinded until the end of its next turn.';
+    const zone = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => answer({ wildcard: dying, fallback_shape: 'zone' }));
+    const z = (zone.sections['Bonus Actions'] ?? []).find((e) => e.library && /Lightly Obscured/.test(e.text));
+    expect(z).toBeTruthy();
+    expect((zone.sections.Actions ?? []).some((e) => e.library && /Lightly Obscured/.test(e.text))).toBe(false);
+    // a save-FRAMED control row is priced by the Multiattack menu and stays an Action
+    const disarm = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => answer({ wildcard: dying, fallback_shape: 'disarm' }));
+    expect((disarm.sections.Actions ?? []).some((e) => e.library && /Saving Throw/.test(e.text))).toBe(true);
+    expect((disarm.sections['Bonus Actions'] ?? []).some((e) => e.library)).toBe(false);
+  });
+
+  test('a network-class failure on any call is retried once; a persistent one still fails', async () => {
+    let calls = 0;
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => {
+      calls += 1;
+      if (calls === 1) throw new TypeError('Failed to fetch');
+      return answer();
+    });
+    expect(m.name).toBe('Gloam Courser');
+    let n = 0;
+    await expect(generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => { n += 1; throw new TypeError('Failed to fetch'); }))
+      .rejects.toThrow(/Failed to fetch/);
+    expect(n).toBe(2); // exactly one retry, never a loop
+    // a validation-shaped error is NOT retried by this layer
+    let v = 0;
+    await expect(generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => { v += 1; throw new Error('Failed to generate a valid response. Please try again later.'); }))
+      .rejects.toThrow(/valid response/);
+    expect(v).toBe(1);
+  });
+
+  test('"adjacent" actuates to "within 5 feet"', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => answer({
+      wildcard: '*Dexterity Saving Throw*: DC 15, one creature adjacent to the creature. *Failure:* The target has the Prone condition.',
+    }));
+    const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
+    expect(w.text).toMatch(/within 5 feet of/);
+    expect(w.text).not.toMatch(/adjacent/);
+  });
+});
+
+describe('reactions need triggers (critic round 2, 2026-09-20)', () => {
+  test('a reaction written "When X, Y" is rewritten to the Trigger/Response skeleton and ships', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => answer({
+      wildcard_economy: 'reaction',
+      wildcard: 'When a creature within 5 feet of the creature makes a melee attack against it, the creature moves up to 10 feet without provoking Opportunity Attacks.',
+    }));
+    const r = (m.sections.Reactions ?? []).find((e) => e.name === 'Waylay');
+    expect(r).toBeTruthy();
+    expect(r.text).toMatch(/^\*Trigger:\* A creature within 5 feet .* makes a melee attack against it\. \*Response:\* The (?:creature|gloam courser) moves up to 10 feet/);
+  });
+
+  test('a reaction with no trigger at all dies at the vet instead of shipping', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => answer({
+      wildcard_economy: 'reaction',
+      wildcard: 'The creature drops onto one creature it can see beneath it; the target must succeed on a DC 15 Strength saving throw or have the Prone condition.',
+    }));
+    expect((m.sections.Reactions ?? []).some((e) => e.name === 'Waylay')).toBe(false);
+  });
+
+  test('a plain "Trigger:" lead files to Reactions whatever the model declared, with the skeleton normalized', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => answer({
+      wildcard_economy: 'action',
+      wildcard: 'Trigger: A creature misses the creature with a melee attack. The creature moves up to 10 feet without provoking Opportunity Attacks.',
+    }));
+    expect((m.sections.Actions ?? []).some((e) => e.name === 'Waylay')).toBe(false);
+    const r = (m.sections.Reactions ?? []).find((e) => e.name === 'Waylay');
+    expect(r).toBeTruthy();
+    expect(r.text).toMatch(/^\*Trigger:\* A creature misses .*\. \*Response:\* The (?:creature|gloam courser) moves up to 10 feet/);
+  });
+
+  test('a brute cannot smuggle a reaction in through the Trigger lead', async () => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const { pickDonor: pd, scaleDonor: sd } = require('../scale.mjs');
+    const full = JSON.parse(answer()); full.renames = {}; full.damage_types = {};
+    rk(sd(pd(5, null, 'brute'), 5, { mechanics: [] })).forEach((k) => { full.renames[k] = `Named ${k}`.split(/\s+/).slice(0, 4).join(' '); full.damage_types[full.renames[k]] = 'Bludgeoning'; });
+    full.wildcard_economy = 'action';
+    full.wildcard = 'Trigger: A creature hits the creature with a melee attack. The creature makes one attack against it.';
+    const m = await generateReskin({ archetype: 'brute', concept: 'x', cr: 5, mechanics: [] }, async () => JSON.stringify(full));
+    expect((m.sections.Reactions ?? []).length).toBe(0);
+  });
+
+  test('2014 attack grammar ("+5 to hit") is an attack roll and dies like one', async () => {
+    const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async () => answer({
+      wildcard: '+5 to hit, range 60/180 ft., one target. Hit: 10 (3d6) Bludgeoning damage.',
+    }));
+    const w = Object.values(m.sections).flat().find((e) => (e.name ?? '').startsWith('Waylay'));
+    expect(w.library).toBe(true);
   });
 });

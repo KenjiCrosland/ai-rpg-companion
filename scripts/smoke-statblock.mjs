@@ -65,7 +65,11 @@ const run = async () => {
   let lines = [];
   page.on('console', (msg) => {
     const t = msg.text();
-    if (/\[concept\]|\[reskin\]|audit|Archetype resolve failed|Failed to generate/.test(t)) {
+    // every warning/error is captured (minus browser noise) — a "Statblock
+    // generation failed: TypeError: Failed to fetch" was dropped by the old
+    // allowlist and a dead run looked like a resolve hiccup (2026-09-20)
+    const noise = /font-src|Content Security Policy|runtime\.lastError|Receiving end does not exist/.test(t);
+    if (!noise && (/\[concept\]|\[reskin\]|audit|resolve failed|generation failed|Failed to/.test(t) || msg.type() === 'warning' || msg.type() === 'error')) {
       lines.push(`${msg.type() === 'warning' || msg.type() === 'error' ? '!! ' : ''}${t}`);
     }
   });
@@ -140,6 +144,53 @@ const run = async () => {
       status = 'TIMED OUT / no save';
     }
 
+    // ENRICHMENT runs after the save and is not awaited by the app — moving
+    // to the next entry the instant the save lands aborted it on 8 of 10
+    // blocks ("Failed to enrich ... Failed to fetch"), which read like a
+    // product failure until an isolated run came back clean. Wait (bounded)
+    // for its localStorage write before navigating; never fail the run on it.
+    if (status === 'ok') {
+      await page.waitForFunction((known) => {
+        const ci = JSON.parse(localStorage.getItem('creature-intelligence') || '{}');
+        const m = JSON.parse(localStorage.getItem('monsters') || '{}');
+        const fresh = Object.values(m).filter(Array.isArray).flat().map((x) => x?.name).filter((nm) => !known.includes(nm));
+        return fresh.length && fresh.every((nm) => nm in ci);
+      }, namesBefore, { timeout: 20_000 }).catch(() => lines.push('(enrichment did not settle within 20s — moving on)'));
+    }
+    // EDITION CONVERSION (entry.convert: true): the tab flip is the one
+    // advertised path only mocked tests had touched. Flip to the other
+    // edition's tab, press the one-time Convert, wait for `other_edition`
+    // to land on the saved monster, and capture the now-active card.
+    let converted = null;
+    if (status === 'ok' && entry.convert) {
+      const born = entry.rules === '2014' ? '2014' : '2024';
+      const target = born === '2014' ? '2024' : '2014';
+      try {
+        await page.locator('[data-testid="edition-switch"]').getByText(`${target} rules`).click({ timeout: 15_000 })
+          .catch((e) => { throw new Error(`tab "${target} rules" — ${e.message.split('\n')[0]}`); });
+        // a born-2014 block already CARRIES its 2024 printing (the 2014 move
+        // saves both), so the tab is a free cache swap — no Convert button
+        // ever appears. Only press Convert when the other edition is absent.
+        const cached = await page.evaluate((known) => {
+          const m = JSON.parse(localStorage.getItem('monsters') || '{}');
+          const fresh = Object.values(m).filter(Array.isArray).flat().filter((x) => !known.includes(x?.name));
+          return fresh.length && fresh.every((x) => x?.other_edition);
+        }, namesBefore);
+        if (cached) lines.push('[harness] other edition already cached — free tab flip, no Convert call');
+        else await page.locator('[data-testid="convert-edition"]').click({ timeout: 15_000 })
+          .catch((e) => { throw new Error(`Convert button — ${e.message.split('\n')[0]}`); });
+        await page.waitForFunction((known) => {
+          const m = JSON.parse(localStorage.getItem('monsters') || '{}');
+          const fresh = Object.values(m).filter(Array.isArray).flat().filter((x) => !known.includes(x?.name));
+          return fresh.length && fresh.every((x) => x?.other_edition);
+        }, namesBefore, { timeout: GEN_TIMEOUT_MS });
+        converted = await page.locator('.sb24-container, .statblock').allInnerTexts().then((t) => t.join('\n\n'));
+        lines.push(`[harness] converted ${born} -> ${target}`);
+      } catch (e) {
+        converted = `(conversion did not complete: ${String(e?.message ?? e).slice(0, 120)})`;
+        lines.push(`!! [harness] conversion failed: ${String(e?.message ?? e).slice(0, 120)}`);
+      }
+    }
     // the rendered card, exactly as it reads on screen
     // the 2014 card is TWO .statblock divs (part-1 stats, part-2 actions) —
     // .first() captured only the stat column and silently dropped every
@@ -170,6 +221,7 @@ const run = async () => {
       `**Signature:** ${(monster?.generation ?? monster?.other_edition?.generation)?.signature ?? '—'} · **elapsed** ${secs}s`,
       '',
       '### Block', '```', card, '```', '',
+      ...(converted ? ['### Converted', '```', converted, '```', ''] : []),
       '### Trace', '```', lines.join('\n') || '(no trace captured)', '```', '',
     ].join('\n');
 

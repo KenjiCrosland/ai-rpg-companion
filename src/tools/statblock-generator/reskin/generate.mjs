@@ -261,6 +261,12 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
   // a leading self-label ("Corrosive Snare:") is the rename half-landing
   // inside the body — strip it (never the save frame)
   let liftedGate = null;
+  // read the economy EARLY (econDecl is derived after the washer): a
+  // reaction-declared draft written as "When <event>, <response>" is
+  // rewritten to print's skeleton deterministically — templating, not
+  // coaching (critic round 2: "a reaction without a trigger is the one
+  // wrapper defect that isn't fudgeable")
+  const econEarly = String(economy ?? '').trim().toLowerCase();
   // the parenthetical is a GATE (lifted into the entry name) or an
   // economy label like "(Trait)" (noise — the declaration field owns the
   // economy; the Devil's "Tumble-Pocket Arsenal (Trait)." shipped as a
@@ -274,7 +280,10 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
       return '';
     })
     .replace(/^(?!\*)([A-Z][\w' -]{2,28})(?: \((\d+\/Day|Recharge [\d–-]+|1\/Turn)\)| \((?:Trait|Action|Bonus Action|Reaction)\))?[.:]\s+/, (m, g, gate) => {
-      if (/Saving Throw|Attack Roll/.test(g)) return m;
+      // "Trigger:" / "Response:" are print's reaction skeleton, not a
+      // self-label — stripping them here left the reaction lead-less and it
+      // filed to Actions by declaration (2026-09-20)
+      if (/Saving Throw|Attack Roll|^(?:Trigger|Response)$/.test(g)) return m;
       if (gate && gate !== '1/Turn') liftedGate = gate; // "(1/Turn)" is prose's job — stripped with the label (the Outrider, 2026-09-15)
       return '';
     })
@@ -316,6 +325,15 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
     // sighting and fixed by nothing until now
     .replace(/\b((?:one|each|a|any) creature[^.]{0,60}?|[Tt]he target)\s+must (?:make|succeed on) a DC (\d+) (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) saving throw, taking (\d+ \([^)]+\) \w+ damage) on a failed save(,? or half as much damage on a successful (?:one|save))?\.\s*/i,
       (m0, target, dc, stat, dmg, half) => { const t = target.trim(); return `*${stat} Saving Throw:* DC ${dc}, ${t.charAt(0).toLowerCase()}${t.slice(1)}. *Failure:* ${dmg}.${half ? ' *Success:* Half damage.' : ''} `; })
+    .replace(/^(?:When(?:ever)?|After|Immediately after|If) ([^,]{5,140}), (.+)$/s, (m0, ev, resp) => (econEarly === 'reaction'
+      ? `*Trigger:* ${ev.charAt(0).toUpperCase()}${ev.slice(1).replace(/\.$/, '')}. *Response:* ${resp.charAt(0).toUpperCase()}${resp.slice(1)}`
+      : m0))
+    // the Revenant wrote print's reaction skeleton WITHOUT the asterisks and
+    // without "Response:" ("Trigger: A creature misses... The revenant makes
+    // one Rapier attack") — normalize the markup; the vet keys on it
+    .replace(/^\*?Trigger:\*?\s*/, '*Trigger:* ')
+    .replace(/(\.\s*)\*?Response:\*?\s*/, '$1*Response:* ')
+    .replace(/^(\*Trigger:\* [^.]+\.)\s+(?!\*Response:\*)([A-Z])/, '$1 *Response:* $2')
     // the trailing SENTENCE form joined 2026-09-11 (3 sightings in two
     // rounds, all save-action rows: Gorge Draught, Stitched Arc, the
     // Engulfing Swarm's implied limit): exact closed sentence, same
@@ -479,7 +497,7 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
     // 2026-09-01). Per SENTENCE, not text start: the Plague-Shrine hid
     // the shape behind a scene-setting preamble sentence and the ^-anchor
     // missed it (Weeping Rot, 2026-09-01)
-    : ((archetype === 'brute' || archetype === 'defender') && (econDecl === 'reaction' || reactionMention || w.split(/(?<=\.)\s+/).some((s) => /^When(?:ever)? [^.]{0,80}(?:takes damage|is hit by|is struck|hits (?:it|the creature)\b)/i.test(s.trim())))) ? [archetype === 'defender'
+    : ((archetype === 'brute' || archetype === 'defender') && (econDecl === 'reaction' || reactionMention || /^\*Trigger:\*/.test(w) || w.split(/(?<=\.)\s+/).some((s) => /^When(?:ever)? [^.]{0,80}(?:takes damage|is hit by|is struck|hits (?:it|the creature)\b)/i.test(s.trim())))) ? [archetype === 'defender'
       // the Parry class (defender sweep 2026-09-08): SRD 5.2 RETIRED
       // Parry — 0/329; the 2014 reaction-knight lives only in training
       // data. Print's protector wears its defense.
@@ -593,7 +611,11 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
     : (/\b(?:hurls?|throws?|flings?|lobs?) (?:its|his|her|their)\b/i.test(w) && /\bone (?:creature|target)\b/i.test(w) && /Saving Throw/i.test(w)
       && Object.values(scaled.sections).flat().some((e) => /Ranged Attack Roll/.test(e.text ?? ''))) ? ['the chassis\'s ranged row already carries the thrown fiction — rename THAT row for the throw (its numbers are derived) and write a DIFFERENT signature, or declare rider_on:<that row\'s name>', 'mechanical']
     : /\(AC \d+[,)]|\bAC \d+\b[^.]{0,20}\b\d+ (?:HP|Hit Points)\b/i.test(w) ? ['object statistics are the engine\'s jurisdiction — never mint AC/HP for a piece of the creature; keep the piece narrative, or price its loss as a condition (a Blinded-while-detached clause is the right instinct)', 'mechanical']
-    : /Attack Roll:|[Ww]eapon Attack:|[Ss]pell Attack:/.test(w) ? ['attack rolls are the chassis\'s jurisdiction — the donor rows carry the attacks and the engine derives every bonus; write the signature as a SAVE or an effect, or declare rider_on:<an attack row\'s name> to ride one', 'mechanical']
+    // a Reaction is not a free action (Ambush Drop / Tolling Rockfall, both
+    // model-declared reactions with no trigger, 2026-09-20) — the lint's
+    // reaction-trigger rule had been catching this AFTER assembly and shipping it
+    : (econDecl === 'reaction' && !/\*Trigger:\*/.test(w) && !/\bin response to\b/i.test(w)) ? ['a Reaction must state when it fires — write print\'s skeleton: "*Trigger:* <specific event>. *Response:* <what the creature does>." — or declare it an action', 'mechanical']
+    : /Attack Roll:|[Ww]eapon Attack:|[Ss]pell Attack:|\+\d+ to hit\b/.test(w) ? ['attack rolls are the chassis\'s jurisdiction — the donor rows carry the attacks and the engine derives every bonus; write the signature as a SAVE or an effect, or declare rider_on:<an attack row\'s name> to ride one', 'mechanical']
     : ((w.match(/(?:\*[A-Z][a-z]+ Saving Throw\*?:|must (?:make|succeed on) an? (?:DC \d+ )?[A-Za-z]+ [Ss]aving [Tt]hrow)/g) ?? []).length >= 2) ? ['one save per action — a second nested save is the fragment class (3 sightings); print ESCALATES on the existing state instead: the Mummy\'s "If the target is already Frightened by this, it also..." — key the escalation on the condition, never on a second roll', 'mechanical']
     : /can use (?:one|an|its|another) action to/i.test(w) ? ['print writes the action, never narrates the action system — drop "can use one action to"; the entry IS the action (a second capability is its OWN entry, never a narrated sub-action)', 'mechanical']
     : successPenalty ? ['a success clause grants half damage or NOTHING — never a fresh penalty (owner ruling 2026-09-15, 2nd live ship: Mire Snare, Headless Dread\'s damage-on-success); reward the save or end the sentence', 'mechanical']
@@ -634,6 +656,11 @@ function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null,
     // no matter what the model declared (Sister Vesper's Gaze of the
     // Living shipped as a costless trait, 2026-08-20) — fall through to
     // the prose-based placement instead
+  } else if (/^\*Trigger:\*/.test(text)) {
+    // the grammar IS the economy: print's Trigger/Response skeleton is a
+    // Reaction whatever the model declared (Thrust Punishment shipped as an
+    // ACTION with a Trigger, 2026-09-20)
+    moveTo = 'Reactions';
   } else if (Object.prototype.hasOwnProperty.call(ECONOMY_TO_SECTION, declared)) {
     // THE ECONOMY DECLARATION (owner go, 2026-08-19, third filing error in
     // three blocks): the model declares the cost, the assembler files by
@@ -847,9 +874,12 @@ const DICELESS_DAMAGE = /\b\d{2,3} (?:Acid|Bludgeoning|Cold|Fire|Force|Lightning
 // minting capitalized condition vocabulary). The mechanic under it is
 // often GOOD — the coaching says restructure, never delete: use a
 // standard condition, or describe the state in lowercase prose.
-const STANDARD_STATES = new Set(['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Invisible', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious', 'Exhaustion', 'Bloodied', 'Obscured', 'Hidden', 'Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']);
+const STANDARD_STATES = new Set(['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Invisible', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious', 'Exhaustion', 'Bloodied', 'Obscured', 'Hidden', 'Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan', 'Stable']);
 const inventedCondition = (t) => {
-  const m = /\b(?:becomes?|becoming|is|are) ([A-Z][a-z]+)(?= for | until |[.,;]| \()/.exec(t);
+  // " from " / " by " joined 2026-09-20 ("that is Bleeding from the
+  // tollhouse blade's Saber" dodged the lookahead); corpus-swept 0/329
+  // once Stable (the Phase Spider's print state) joined STANDARD_STATES
+  const m = /\b(?:becomes?|becoming|is|are) ([A-Z][a-z]+)(?= for | until | from | by |[.,;]| \()/.exec(t);
   if (m && !STANDARD_STATES.has(m[1])) return m[1];
   // the lowercase dialect joined 2026-09-13 (the Sewer Choir's "the
   // buried condition" — minted vocabulary hiding in lowercase behind
@@ -1359,6 +1389,22 @@ export function validateReskinResponse(jsonString) {
 }
 
 export async function generateReskin(options, callLLM) {
+  // ONE NETWORK-CLASS RETRY (2026-09-20; the never-fail asymmetry's real
+  // face): ai-client retries malformed JSON but EXITS on providerError, so
+  // a transient "TypeError: Failed to fetch" or a timeout on any call here
+  // killed the whole generation with nothing saved (a duelist died that
+  // way in the smoke). One retry, network errors only — validation
+  // failures keep their existing paths.
+  const rawCall = callLLM;
+  callLLM = async (...a) => {
+    try { return await rawCall(...a); } catch (e) {
+      const net = e?.timedOut === true || (e?.name === 'TypeError' && /fetch/i.test(String(e?.message)))
+        || /Failed to fetch|NetworkError|ECONN|ETIMEDOUT|socket hang up/i.test(String(e?.message));
+      if (!net) throw e;
+      trace('network retry:', `${String(e?.message).slice(0, 60)} — retrying the call once`);
+      return rawCall(...a);
+    }
+  };
   const { concept = '', cr, onProgress = null, fixedName = null } = options;
   // no silent archetype default (owner ruling, 2026-08-26, same law as
   // pickDonor): a mis-wired route fails loudly, never ships the wrong
@@ -1655,6 +1701,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       : p.type.endsWith('y') ? `${p.type.slice(0, -1)}ies` : `${p.type}s`;
     trace('swarm type stamped:', `${p.type} -> Swarm of Tiny ${plural}`);
     p.type = `Swarm of Tiny ${plural}`;
+  }
+  // SWARM SIZE CLAMP (2026-09-20; 1 of 7 smoke swarms shipped "Tiny Swarm
+  // of Tiny Beasts" on 29d4): print swarms are Medium or Large — Tiny is
+  // the COMPONENT creature's size and already sits in the type line. The
+  // hit die follows size through hpFormulaForSize, so the d4 goes too.
+  if (body === 'swarm') {
+    const want = ['Large', 'Huge', 'Gargantuan'].includes(p.size) ? 'Large' : 'Medium';
+    if (p.size !== want) { trace('swarm size clamped:', `${p.size ?? 'unset'} -> ${want} (print swarms are Medium or Large)`); p.size = want; }
   }
   // the folk-article class, ported from the skeleton path: templates
   // supply their own articles, so a "The Cindermoss" mints "the the"
@@ -2798,6 +2852,35 @@ ${wcRejected ? `ACTION draft rejected. THE ONE RULE IT BROKE: ${wcRejected.why}\
         : `"${vul}" is dealt, defended, or not a damage type`);
     }
   }
+  // DEAD CONTROL ROWS (critic 2026-09-16, both pipelines, ~1 per block):
+  // an Action that deals no damage and delivers no KO-tier condition is
+  // never worth the action beside a Multiattack. Print's shape for a
+  // control option is the UNGATED (A)/(B) replacement — the dragons'
+  // Sleep/Slowing/Weakening Breath carry no Recharge — so a save-framed
+  // one sheds its gate and joins the menu built below; a frame-less one
+  // (an obscuring zone) becomes a Bonus Action. Model/library rows only;
+  // donor-authored control is the chassis's business.
+  {
+    const KO = /\b(?:Paralyzed|Stunned|Incapacitated|Unconscious|Petrified|Restrained|Grappled)\b/;
+    const acts = sections.Actions ?? [];
+    for (let i = acts.length - 1; i >= 0; i -= 1) {
+      const e2 = acts[i];
+      if (!(e2.library || e2.wildcard)) continue;
+      const t = e2.text ?? '';
+      if (/\d+ \(\d+d\d+/.test(t) || KO.test(t) || /Attack Roll:/.test(t)) continue;
+      const framed = /Saving Throw[:*]|must (?:make|succeed on) a DC \d+/.test(t);
+      if (framed) {
+        if (/ \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(e2.name)) {
+          e2.name = e2.name.replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, ''); e2.gate = undefined;
+          trace('dead control row:', `"${e2.name}" sheds its gate — no damage, no KO condition; it joins the Multiattack menu instead`);
+        }
+      } else {
+        acts.splice(i, 1);
+        (sections['Bonus Actions'] = sections['Bonus Actions'] ?? []).push(e2);
+        trace('dead control row:', `"${e2.name}" moves to Bonus Actions — no damage, no save, no KO condition`);
+      }
+    }
+  }
   {
     const multi = (sections.Actions ?? []).find((e2) => e2.name.startsWith('Multiattack'));
     const hasSpellcasting = (sections.Actions ?? []).some((e2) => e2.name.startsWith('Spellcasting'));
@@ -2885,6 +2968,25 @@ ${wcRejected ? `ACTION draft rejected. THE ONE RULE IT BROKE: ${wcRejected.why}\
     else { list.splice(idx, 1); trace('lint actuator:', `dropped "${f.loc.entry}" — its only sentence minted "${token}"`); }
   }
   lint.findings = lint.findings.filter((x) => !(x.rule === 'phrasing-surprised' || x.rule === 'condition-unknown'));
+  // COMPUTABLE REJECT RULES actuate (2026-09-20; the reskin path has no
+  // model-driven correct loop — adding one is a cost decision for the
+  // owner — so the rules whose fix is deterministic apply it here):
+  // "adjacent" is not 5e vocabulary; a can't-heal swarm loses its heal.
+  for (const f of lint.findings.filter((x) => x.rule === 'vocab-adjacent' && x.loc)) {
+    const entry = (sections[f.loc.section] ?? []).find((e2) => e2.name === f.loc.entry);
+    if (!entry) continue;
+    entry.text = entry.text.replace(/\badjacent to\b/g, 'within 5 feet of').replace(/\badjacent\b/g, 'within 5 feet');
+    trace('lint actuator:', `"adjacent" -> "within 5 feet" in "${f.loc.entry}"`);
+  }
+  for (const f of lint.findings.filter((x) => x.rule === 'swarm-heal-contradiction' && x.loc)) {
+    const list = sections[f.loc.section] ?? [];
+    const idx = list.findIndex((e2) => e2.name === f.loc.entry);
+    if (idx === -1) continue;
+    const next = list[idx].text.replace(/[^.!?]*\bregains? \d+[^.!?]*Hit Points[^.!?]*[.!?]/gi, '').replace(/\s{2,}/g, ' ').trim();
+    if (next) { list[idx].text = next; trace('lint actuator:', `stripped the heal from "${f.loc.entry}" — the Swarm trait says it can't regain Hit Points`); }
+    else { list.splice(idx, 1); trace('lint actuator:', `dropped "${f.loc.entry}" — it was only a heal on a swarm that can't heal`); }
+  }
+  lint.findings = lint.findings.filter((x) => !(x.rule === 'vocab-adjacent' || x.rule === 'swarm-heal-contradiction'));
   // correctable name fixes actuate here too (2026-09-13: the lint
   // computed "Grave-Necrotic Toll" and the reskin path dropped it on
   // the floor — the slot path's correct loop was the only consumer).

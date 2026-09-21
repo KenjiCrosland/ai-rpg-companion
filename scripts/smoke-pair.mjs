@@ -24,12 +24,16 @@ const args = process.argv.slice(2);
 const outPath = args.includes('--out') ? args[args.indexOf('--out') + 1]
   : 'scripts/smoke-evidence/PAIRED-for-critic.md';
 const allowJson = args.includes('--allow-json');
+// --runs a,b : only pair captures from run dirs whose name starts with one of
+// these prefixes — otherwise an OLD capture of the same concept can be paired
+const runPrefixes = args.includes('--runs') ? args[args.indexOf('--runs') + 1].split(',') : null;
 
 const hasActions = (b) => /\bActions\b|\bACTIONS\b/.test(b) && /Attack Roll|to hit|Saving Throw|saving throw/.test(b);
 
 // ---- gather every capture, keyed by input prefix, split by pipeline
 const cap = {};
 for (const d of fs.readdirSync('smoke-out')) {
+  if (runPrefixes && !runPrefixes.some((p) => d.startsWith(p))) continue;
   for (const f of fs.readdirSync(path.join('smoke-out', d)).filter((x) => /^\d+-.*\.md$/.test(x))) {
     const md = fs.readFileSync(path.join('smoke-out', d, f), 'utf8');
     const input = ((/\*\*Input:\*\* `(.*?)`/.exec(md) ?? [])[1] ?? '').slice(0, 30);
