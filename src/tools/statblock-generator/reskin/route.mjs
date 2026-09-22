@@ -150,7 +150,18 @@ export function chooseLine(parsed, { text, menuRole = null } = {}) {
     break;
   }
   if (!chosen) {
-    // the family judgment survives an unquotable engine claim; the engine does not
+    // RANK, don't default (critic run three: the vault "fell to lurker's plain
+    // line" and shipped a Dex 20 stealth chassis with no disguise): the first
+    // known pick that passes the HARD vetoes stands, its quote unverified
+    for (const k of picks) {
+      const line = BY_ID.get(lineIdOf(k?.line) ?? '');
+      if (!line || (family && line.family !== family)) continue;
+      if (line.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType)) continue;
+      if (line.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)) continue;
+      chosen = line; notes.push(`${line.id}: taken on rank — its quote was not found, no hard veto`); break;
+    }
+  }
+  if (!chosen) {
     const fam = family ?? firstKnown?.family ?? null;
     if (fam) {
       chosen = BY_ID.get(fam) ?? null;

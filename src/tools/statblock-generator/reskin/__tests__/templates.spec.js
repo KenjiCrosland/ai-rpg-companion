@@ -11,7 +11,7 @@ describe('the catalog', () => {
     expect(TEMPLATES.filter((t) => t.id === 'lure').length).toBe(1);
     const ctx = { scaled: sheet(15, null, 'lurker'), archetype: 'lurker', cr: 15, energy: null, mix: 'physical', meleeName: 'Claw', imposed: [], name: 'X' };
     expect(renderTemplate(lure, ctx, { lure_source: 'the lamp' }).text).toMatch(/within 90 feet that can see or hear the lamp/);
-    expect(renderTemplate(lure, ctx, {})).toBeNull(); // the fiction slot is required
+    expect(renderTemplate(lure, ctx, {}).text).toMatch(/can see or hear the creature/); // a missing fill falls to the plain default, never a miss
     expect(renderTemplate(hook, { ...ctx, scaled: sheet(3, null, 'brute'), archetype: 'brute', cr: 3 }, { hook: 'its barbed chain' }).text).toMatch(/pulled up to 20 feet straight toward the creature by its barbed chain/);
     expect(lure.keys).toEqual(expect.arrayContaining(['lure', 'beckon', 'lamp']));
   });
@@ -29,7 +29,20 @@ describe('the catalog', () => {
     const over = valueCheck({ name: 'Ruin', text: `*Dexterity Saving Throw*: DC 15, each creature in a 20-foot Emanation. *Failure:* ${per * 4} (12d8) Fire damage. *Success:* Half damage only.` }, { scaled, sections, section: 'Actions' });
     expect(over.name).toMatch(/\(Recharge 5-6\)$/);
     const bonus = valueCheck({ name: 'Focus', text: 'The creature has Advantage on its next attack roll.' }, { scaled, sections, section: 'Bonus Actions' });
-    expect(bonus.steps).toEqual([]);
+    expect(bonus.ev).toBeGreaterThan(0); // Advantage is worth a quarter of the attack
+    expect(bonus.steps).toEqual([]); // and clears the bonus-action minimum
+    expect(valueCheck({ name: 'Idle', text: 'The creature looks around.' }, { scaled, sections, section: 'Bonus Actions' }).steps.join(' ')).toMatch(/free row that does nothing/);
+    // a mass effect is priced by targets whether gated or not
+    const mass = valueCheck({ name: 'Choir', text: `*Wisdom Saving Throw*: DC 15, each creature of the creature's choice within 60 feet. *Failure:* The target has the Charmed condition until the start of the creature's next turn and can't take Reactions.` }, { scaled, sections, section: 'Actions' });
+    expect(mass.name).toMatch(/\(Recharge 5-6\)$/);
+    // the fill ladder: an empty fills object never costs the signature
+    expect(renderTemplate(TEMPLATES.find((t) => t.id === 'false-appearance'), { scaled, archetype: 'brute', cr: 6, energy: null, mix: 'physical', meleeName: 'Slam', imposed: [], name: 'X' }, {}).text).toMatch(/indistinguishable from an ordinary object/);
+    expect(renderTemplate(TEMPLATES.find((t) => t.id === 'throw-retrieve'), { scaled, archetype: 'brute', cr: 6, energy: null, mix: 'physical', meleeName: 'Slam', imposed: [], name: 'X', projectile: 'its iron lance' }, {}).text).toMatch(/hurls its iron lance/);
+    // a hurler sheet excludes the named-weapon retrieve
+    const hurler = { Actions: [{ name: 'Slab', text: '*Ranged Attack Roll:* +7, range 60/240 ft. 20 (3d10 + 4) Bludgeoning damage.' }] };
+    expect(templatesFor({ archetype: 'skirmisher', style: 'hurler', cr: 6, sections: hurler, section: 'action' }).map((t) => t.id)).not.toContain('throw-retrieve');
+    const gatedBonus = valueCheck({ name: 'Bedrock Grasp (2/Day)', text: `*Strength Saving Throw*: DC 15, one creature within 30 feet. *Failure:* ${Math.round(per / 4)} (1d8) Bludgeoning damage, and the target has the Grappled condition (escape DC 15).` }, { scaled, sections, section: 'Bonus Actions' });
+    expect(gatedBonus.steps).toEqual([]); // a gated bonus action is not a nova
     const prereq = valueCheck({ name: 'Lash', text: `*Strength Saving Throw*: DC 15, one creature within 30 feet that is Grappled by the creature. *Failure:* ${per} (2d8) Slashing damage.` }, { scaled, sections, section: 'Actions' });
     expect(prereq.name).toBe('Lash'); // a prerequisite condition is not a payload — no gate
     const gatedNova = valueCheck({ name: 'Toll (Recharge 5-6)', text: `*Constitution Saving Throw*: DC 15, each creature within 15 feet. *Failure:* ${per} (2d8) Thunder damage. *Success:* Half damage only.` }, { scaled, sections, section: 'Actions' });
@@ -42,6 +55,26 @@ describe('the catalog', () => {
     expect(gatedNova.name).toBe('Toll (Recharge 5-6)'); // already gated — never double-gated
     // on an area nova, Deafened is a hit's worth, not a quarter
     expect(rowValue(`*Constitution Saving Throw*: DC 15, each creature within 15 feet. *Failure:* ${per} (2d8) Thunder damage, and the target has the Deafened condition.`, per, { area: true }).ev).toBeGreaterThan(rowValue(`*Constitution Saving Throw*: DC 15, one creature within 15 feet. *Failure:* ${per} (2d8) Thunder damage, and the target has the Deafened condition.`, per).ev);
+  });
+  test('the rider roadmap: pounce, isolation, snatch (flyers only), a ward reaction, and Assassinate bind by verb', () => {
+    const lurk = sheet(8, null, 'lurker');
+    const ctx = { scaled: lurk, archetype: 'lurker', cr: 8, energy: null, mix: 'physical', meleeName: 'Claw', imposed: [], name: 'X' };
+    const riders = templatesFor({ archetype: 'lurker', cr: 8, sections: {}, section: 'rider', movement: '' }).map((t) => t.id);
+    expect(riders).toEqual(expect.arrayContaining(['pounce', 'isolation']));
+    expect(riders).not.toContain('snatch'); // needs Fly
+    expect(templatesFor({ archetype: 'skirmisher', cr: 8, sections: {}, section: 'rider', movement: 'Fly 60 ft.' }).map((t) => t.id)).toContain('snatch');
+    expect(rankByVerb(templatesFor({ archetype: 'lurker', cr: 8, sections: {}, section: 'rider' }), 'a leopard-thing that stalks the canopy and drops on stragglers from above')[0].t.id).toBe('pounce');
+    expect(renderTemplate(TEMPLATES.find((t) => t.id === 'pounce'), ctx, {}).text).toMatch(/one Claw attack against it as a Bonus Action/);
+    expect(templatesFor({ archetype: 'defender', cr: 7, sections: {}, section: 'reaction' }).map((t) => t.id)).toContain('ward-retaliation');
+    expect(templatesFor({ archetype: 'brute', cr: 7, sections: {}, section: 'reaction' }).map((t) => t.id)).not.toContain('ward-retaliation'); // print brutes have no reactions
+    expect(rankByVerb(templatesFor({ archetype: 'lurker', cr: 8, sections: {}, section: 'trait' }), 'an assassin who strikes before they notice')[0].t.id).toBe('assassinate');
+    expect(rankByVerb(templatesFor({ archetype: 'lurker', cr: 4, sections: {}, section: 'trait' }), 'a mimic posing as a strongroom chest')[0].t.id).toBe('adhesive');
+  });
+  test('a payoff needs a producer; a blink has a value', () => {
+    const noHold = templatesFor({ archetype: 'brute', cr: 9, sections: {}, section: 'action', imposed: [] }).map((t) => t.id);
+    expect(noHold).not.toContain('condition-payoff'); expect(noHold).not.toContain('exploiter');
+    expect(templatesFor({ archetype: 'brute', cr: 9, sections: {}, section: 'action', imposed: ['Grappled'] }).map((t) => t.id)).toContain('condition-payoff');
+    expect(rowValue('The creature teleports up to 30 feet to an unoccupied space it can see.', 12).ev).toBeGreaterThan(0.25 * 0.65 * 12); // clears the bonus-action minimum
   });
   test('every template id is unique across shapes and seeds', () => {
     const ids = TEMPLATES.map((t) => t.id);
@@ -71,7 +104,7 @@ describe('the catalog', () => {
     const s11 = sheet(11);
     expect(renderTemplate(gaze, { ...ctx, scaled: s11, cr: 11 }, {}).text).toContain('Necrotic damage'); // the 10-12 band adds damage
     const burst = TEMPLATES.find((t) => t.id === 'thrown-burst');
-    expect(renderTemplate(burst, { ...ctx, archetype: 'brute', cr: 8 }, { projectile: 'a 20-pound stone' })).toBeNull();
+    expect(renderTemplate(burst, { ...ctx, archetype: 'brute', cr: 8 }, { projectile: 'a 20-pound stone' }).text).toMatch(/hurls a hurled object/); // a fill with digits is refused and the default stands in
     expect(renderTemplate(burst, { ...ctx, archetype: 'brute', cr: 8 }, { projectile: 'a grave-slab' }).text).toContain('hurls a grave-slab');
   });
   test('templatesFor filters by line, CR band, movement, section, and what the sheet owns; a second nova is refused', () => {
@@ -116,6 +149,7 @@ describe('the catalog', () => {
     const scaled = sheet(7, 'phantom', 'lurker');
     const ctx = { archetype: 'lurker', style: 'phantom', cr: 7, sections: scaled.sections };
     const blind = fallbackMenu(ctx, 'a thing with no verbs at all').map((t) => t.id);
+    for (const n of ['leap', 'trample', 'thrown-burst', 'thrown-burst-seed', 'wind-up', 'active-toll']) expect(blind).not.toContain(n); // no nova stands in for one attack
     for (const u of ['zone-seed', 'focus', 'feint-slip', 'phase-slip', 'rally', 'reveal', 'coating']) expect(blind).not.toContain(u);
     const keeper = fallbackMenu(ctx, 'a lighthouse keeper\'s drowned wife who beckons and lures anyone who follows her down').map((t) => t.id);
     expect(['lure', 'obstacle-pull', 'hook-drag']).toContain(keeper[0]);
@@ -189,7 +223,7 @@ describe('the catalog', () => {
     expect(menu.map((t) => t.id)).toEqual(expect.arrayContaining(['heated-body', 'false-appearance']));
     expect(renderTemplate(menu.find((t) => t.id === 'heated-body'), ctx, {}).text).toMatch(/hits it with a melee attack while within 5 feet of it takes \d+ \(\d+d\d+\) Fire damage/);
     expect(renderTemplate(menu.find((t) => t.id === 'false-appearance'), ctx, { disguise: 'a brass statue' }).text).toBe('While the creature remains motionless, it is indistinguishable from a brass statue.');
-    expect(renderTemplate(menu.find((t) => t.id === 'false-appearance'), ctx, {})).toBeNull();
+    expect(renderTemplate(menu.find((t) => t.id === 'false-appearance'), ctx, {}).text).toMatch(/an ordinary object/);
   });
 });
 
@@ -259,11 +293,11 @@ describe('generateReskin in template mode', () => {
     const prompts = [];
     const m = await run((prompt) => { prompts.push(prompt); return /gaze-single/.test(prompt) ? JSON.stringify({ template: 'gaze-single', because: 'fixes one traveler with its stare', name: 'Rooting Stare', fills: { condition_minor: 'Frightened' } }) : JSON.stringify({ template: 'none' }); });
     const rows = Object.values(m.sections).flat();
-    const stare = rows.find((e) => e.name === 'Rooting Stare');
-    expect(stare).toBeTruthy();
-    expect(m.sections.Actions.map((e) => e.name)).toContain('Rooting Stare');
-    expect(stare.text).toMatch(/Wisdom Saving Throw\*: DC \d+/);
-    expect(stare.text).toMatch(/Frightened condition/);
+    // THE FLOOR BLOCKS: a Frightened-only gaze at CR 8 is a dead replacement
+    // (EV ~0.25 of an attack) — it is dropped and a seed that clears the
+    // floor stands in; the fit's name never reaches the page
+    expect(rows.map((e) => e.name)).not.toContain('Rooting Stare');
+    expect(rows.some((e) => e.library)).toBe(true);
     expect(rows.map((e) => e.name)).not.toContain('Waylay');
     expect(rows.map((e) => e.name)).not.toContain('Signature Slot');
     expect(m.generation?.signature ?? 'library').toBe('library');

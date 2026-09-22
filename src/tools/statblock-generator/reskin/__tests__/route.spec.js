@@ -86,8 +86,9 @@ describe('chooseLine', () => {
   });
   test('when every pick fails the family of the first known pick survives as its plain line', () => {
     const r = chooseLine({ picks: [{ line: 'lurker-trap', because: 'invented phrase here' }] }, { text: bull });
-    expect(r).toMatchObject({ line: 'lurker', archetype: 'lurker', style: null });
-    expect(r.notes.at(-1)).toMatch(/fell to lurker's plain line/);
+    expect(r).toMatchObject({ line: 'lurker-trap', archetype: 'lurker', style: 'trap' }); // ranked, not defaulted: the shape survives an unverified quote
+    expect(r.notes.at(-1)).toMatch(/taken on rank/);
+    expect(chooseLine({ picks: [{ line: 'brute-juggernaut', because: 'x' }], creature_type: 'Beast' }, { text: bull }).line).toBe('brute'); // a hard veto still falls to the plain line
     expect(chooseLine({ picks: [{ line: 'ninja', because: 'x' }] }, { text: bull }).line).toBeNull();
     expect(chooseLine(null, { text: bull }).line).toBeNull();
   });

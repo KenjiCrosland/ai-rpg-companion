@@ -2343,7 +2343,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
     const fitSeat = async (seat, idea) => {
       if (!idea) return null;
-      const menu = templatesFor({ ...ctxT, section: idea.section, trigger: idea.trigger });
+      const menu = templatesFor({ ...ctxT, section: idea.section, trigger: idea.trigger, text: `${options.userConcept ?? concept} ${idea.idea}`, imposed: imposedT });
       trace(`signature idea (${seat}):`, `"${idea.idea}" ${tagOf(idea)} — menu: ${menu.map((t) => t.id).join(', ') || 'EMPTY'}`);
       if (!menu.length && idea.section === 'reaction') {
         // print's answer for "when something hits me, this happens" on a line
@@ -2378,7 +2378,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (!conceptBound.length) {
         // …and the TRIGGER: a trait idea tagged "always" must still see the
         // on-being-hit bell cards when the concept says "rings it when wounded"
-        const wide = (seat === 'trait' ? ['trait'] : ['action', 'bonus_action', 'reaction', 'rider']).flatMap((sec) => templatesFor({ ...ctxT, section: sec, trigger: null }));
+        const wide = (seat === 'trait' ? ['trait'] : ['action', 'bonus_action', 'reaction', 'rider']).flatMap((sec) => templatesFor({ ...ctxT, section: sec, trigger: null, text: verbText, imposed: imposedT }));
         conceptBound = rankByVerb(wide, verbText).filter((r) => r.concept.length).map((r) => r.t);
       }
       // the STRONGEST concept match decides — "seal, sermon, psalm, wither"
@@ -2393,7 +2393,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       try {
         const rawFit = await callLLM(buildFitPrompt({ name: p.name, idea, menu: offered, cr, concept: verbText }), validateFitResponse);
         let fit = parseFit(rawFit, offered, p.name);
-        if (!fit.template && conceptBound.length) {
+        if (!fit.template && conceptBound.length && seat !== 'trait') { // a trait has no fallback: when the binder says none, none (critic run two)
           // the idea drifted off the concept's verb and the model honestly said
           // none — pour the CONCEPT itself (the user's words + the seat element)
           // into the verb's template instead; the idea only ever supplied fiction
@@ -2407,7 +2407,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         }
         const rendered = renderTemplate(fit.template, ctxT, fit.fills);
         if (!rendered) {
-          trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — "${fit.template.id}" could not be filled (fills: ${JSON.stringify(fit.fills).slice(0, 80)})`);
+          trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — "${fit.template.id}" ${fit.template.kind === 'seed' ? 'is not legal on this sheet (its library gate — dominance, nova, or a missing imposed condition)' : `could not be filled (fills: ${JSON.stringify(fit.fills).slice(0, 80)})`}`);
           return null;
         }
         const bare = fit.name ?? rendered.name;
@@ -2428,7 +2428,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       }
     };
     if (pendingWildcard) {
-    const actionT = await fitSeat('action', ideasT?.action);
+    let actionT = await fitSeat('action', ideasT?.action);
     // the slot row leaves either way — a proven row stands where it stood
     wcDropped = true;
     for (const es2 of Object.values(sections)) {
@@ -2445,11 +2445,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         trace('signature rider:', `${actionT.template} -> ${host.name} (appended; ${actionT.because})`);
         if (deadBareT) sweepDeadName(sections, deadBareT, host, trace);
       } else trace('signature miss:', `action — a rider fit (${actionT.template}) but the sheet has no melee row to ride`);
-    } else if (actionT) {
+    }
+    if (actionT && actionT.section !== 'Rider') {
       // THE VALUE CHECK — the row must be worth the attack it replaces
       const vc = valueCheck(actionT.row, { scaled, sections, section: actionT.section });
       if (vc.steps.length) { actionT.row.text = vc.text; actionT.row.name = vc.name; }
       trace('value check:', `"${actionT.row.name}" EV ${vc.ev} vs floor ${vc.floor} (${vc.replaced})${vc.steps.length ? ` — ${vc.steps.join('; ')}` : ' — worth the trade'}`);
+      // THE FLOOR BLOCKS (critic run two: a dead disarm shipped past the floor
+      // "with a paper trail"): a row the ladder could not lift is a MISS
+      if (vc.steps.some((st) => /still under|does nothing/.test(st))) {
+        trace('signature dropped by the floor:', `"${actionT.row.name}" — the ladder could not lift it; the fallback stands in`);
+        actionT = null;
+      }
+    }
+    if (actionT && actionT.section !== 'Rider') {
       // a template that SUPERSEDES a chassis row removes it (one lance, one
       // physics — the lancer's returning throw beside the retrieve, v4 read)
       const sup = actionT.supersedes;
@@ -2464,13 +2473,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // the same filtered menu the fit saw (engine families, ownership); the
       // blind library hash is the last resort only when that menu is empty
       const fbVerbText = `${options.userConcept ?? concept} ${seatsT?.action ?? ''}`;
-      const shelfT = fallbackMenu(ctxT, fbVerbText);
+      const shelfT = fallbackMenu({ ...ctxT, text: fbVerbText, imposed: imposedT }, fbVerbText);
       const verbFirst = rankByVerb(shelfT, fbVerbText).filter((r) => r.matched.length).length; // the verb-ranked head is taken in order; only the rest rotates
       let drawn = null;
       for (let i = 0; i < shelfT.length && !drawn; i += 1) {
         const t = i < verbFirst ? shelfT[i] : shelfT[verbFirst + ((nameHash(p.name) + i) % Math.max(1, shelfT.length - verbFirst))];
         const r = renderTemplate(t, ctxT, {}, { blind: true });
-        if (r) drawn = { seed: t.id, section: r.section, row: { name: `${r.name}${r.gate ? ` (${r.gate})` : ''}`, text: r.text, library: true } };
+        if (!r) continue;
+        const cand = { seed: t.id, section: r.section, row: { name: `${r.name}${r.gate ? ` (${r.gate})` : ''}`, text: r.text, library: true } };
+        // a seed the floor cannot lift is skipped for the next one, never shipped
+        const pre = valueCheck(cand.row, { scaled, sections, section: cand.section });
+        if (pre.steps.some((st) => /still under|does nothing/.test(st))) { trace('fallback skipped by the floor:', `${t.id} (EV ${pre.ev} vs ${pre.floor})`); continue; }
+        drawn = cand;
       }
       if (!drawn) drawn = drawLibraryRow(scaled, { archetype, energy: options.energy ?? null, mix: options.mix ?? null, name: p.name, shapeKey: null, imposed: imposedT, mechanics: options.mechanics ?? null, cr });
       if (drawn && /\{[a-z_]+\}/.test(drawn.row.text)) drawn = null; // a seed with an unfilled flavor blank never ships raw
@@ -2478,6 +2492,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const vc = valueCheck(drawn.row, { scaled, sections, section: drawn.section });
         if (vc.steps.length) { drawn.row.text = vc.text; drawn.row.name = vc.name; }
         trace('value check:', `"${drawn.row.name}" EV ${vc.ev} vs floor ${vc.floor} (${vc.replaced})${vc.steps.length ? ` — ${vc.steps.join('; ')}` : ' — worth the trade'}`);
+        if (vc.steps.some((st) => /still under|does nothing/.test(st))) { trace('signature dropped by the floor:', `"${drawn.row.name}" — a seed that cannot be lifted does not ship`); drawn = null; }
+      }
+      if (drawn) {
         drawn.row.text = stampT(drawn.row.text);
         (sections[drawn.section] = sections[drawn.section] ?? []).push(drawn.row);
         libraryDrawn = true;
@@ -3384,11 +3401,18 @@ ${wcRejected ? `ACTION draft rejected. THE ONE RULE IT BROKE: ${wcRejected.why}\
             continue;
           }
         }
-        const fresh = `${f.rename}${gate}`;
+        let fresh = `${f.rename}${gate}`;
         let applied = false;
         for (const es of Object.values(monster.sections ?? {})) {
           for (const e of es) {
-            if (e.name === old) { e.name = fresh; applied = true; }
+            // match by BARE name and keep the ROW's own gate — the audit echoes
+            // names without their gate and a ceiling gate was stripped on
+            // rename ("Warden's Beckon." with no Recharge, critic run two)
+            const rowBare = String(e.name ?? '').replace(/\s*\(.*\)$/, '');
+            if (e.name === old || rowBare === bare) {
+              const rowGate = (String(e.name ?? '').match(/\s*\(.*\)$/) ?? [''])[0];
+              fresh = `${f.rename}${rowGate || gate}`; e.name = fresh; applied = true;
+            }
             e.text = e.text.replace(new RegExp(`${bare.replace(/[.*+?^$()|[\]{}]/g, '\\$&')}(?! Roll)`, 'g'), f.rename);
           }
         }

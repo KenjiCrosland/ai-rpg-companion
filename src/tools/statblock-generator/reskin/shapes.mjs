@@ -33,7 +33,7 @@ export const SHAPES = [
   },
   {
     id: 'leap', name: 'Crushing Leap', cite: 'Bulette/Deadly Leap (CR 5)',
-    roles: ['skirmisher', 'brute'], styles: ['skulker', 'mounted'], cr_range: [3, 12], replaces: 'nova',
+    roles: ['skirmisher', 'brute', 'lurker'], styles: [], cr_range: [3, 12], replaces: 'nova', // lurker joined + style gate dropped: the pounce is the Tiger's shape (the canopy leopard, critic 2026-09-22)
     frames: {
       '3-5': 'The creature spends 5 feet of movement to jump to a space within 15 feet that contains one or more Large or smaller creatures. *Dexterity Saving Throw*: DC {dc}, each creature in the destination space. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage, and the target is pushed 5 feet straight away.',
       '6-9': 'The creature spends 5 feet of movement to jump to a space within 20 feet that contains one or more Large or smaller creatures. *Dexterity Saving Throw*: DC {dc}, each creature in the destination space. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage, and the target is pushed 5 feet straight away.',
@@ -257,6 +257,33 @@ export const SHAPES = [
     id: 'pull-through', name: 'Dragging Passage', invented: true, // the keeper's pull-through-walls, BOUNDED: the target lands in the nearest unoccupied space
     roles: ['lurker'], styles: [], cr_range: [3, 30], replaces: 'signature', // phantom by verb (through walls, drown, phase), not by style gate
     frames: Object.fromEntries(['3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Strength Saving Throw*: DC {dc}, one Medium or smaller creature the creature is touching. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the creature drags the target up to 15 feet through a wall, floor, or other solid object it can pass through; the target emerges Prone in the nearest unoccupied space at the far side. If no such space is within 15 feet, the target is not moved but takes the damage again.'])),
+  },
+  // THE RIDER ROADMAP (critic's table from the balance read, 2026-09-22): six
+  // of the ten action misses were on-hit riders print already has.
+  {
+    id: 'pounce', name: 'Pounce', cite: 'Tiger/Pounce (CR 1); Saber-Toothed Tiger (CR 2); Lion (CR 1)',
+    roles: ['skirmisher', 'lurker', 'brute'], styles: [], cr_range: [0, 30], replaces: 'melee-rider',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the creature moved at least 20 feet straight toward the target immediately before the hit and the target is Large or smaller, the target has the Prone condition, and the creature can make one {melee_name} attack against it as a Bonus Action.'])),
+  },
+  {
+    id: 'isolation', name: 'Isolated Prey', invented: true, // Convention 26 rendered as distance — the lone straggler takes more
+    roles: ['skirmisher', 'lurker'], styles: [], cr_range: [1, 30], replaces: 'melee-rider',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If no creature other than the creature is within 5 feet of the target, the target takes an extra {avg_half} ({dice_half}) {damage_type} damage.'])),
+  },
+  {
+    id: 'snatch', name: 'Snatch', cite: 'Roc/Talons (CR 11); Giant Eagle (CR 1); Griffon (CR 2)',
+    roles: ['skirmisher', 'brute', 'lurker'], styles: [], cr_range: [1, 30], replaces: 'melee-rider', requires_movement: 'Fly',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the target is a Medium or smaller creature, it has the Grappled condition (escape DC {dc}) and is carried by the creature; the creature can drop it as part of its movement, and a dropped target falls.'])),
+  },
+  {
+    id: 'ward-retaliation', name: 'Guardian\'s Answer', cite: 'Shield Guardian/Shield (CR 7) and the bodyguard reaction family',
+    roles: ['defender', 'lurker', 'skirmisher', 'controller', 'artillery'], styles: [], cr_range: [1, 30], replaces: 'reaction',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Trigger:* A creature within 30 feet that the creature guards is hit by an attack roll. *Response:* The creature moves up to half its Speed toward the attacker without provoking Opportunity Attacks and makes one {melee_name} attack against it if it is within reach.'])),
+  },
+  {
+    id: 'assassinate', name: 'Assassinate', cite: 'Assassin/Assassinate (CR 8, 2024)',
+    roles: ['lurker', 'skirmisher'], styles: [], cr_range: [2, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'During the first round of each combat, the creature has Advantage on attack rolls against any creature that hasn\'t taken a turn. If the creature hits a creature during that round, the target takes an extra {avg_half} ({dice_half}) {damage_type} damage.'])),
   },
   {
     id: 'death-burst', name: 'Death Burst', cite: 'Dust Mephit (CR 1/2, 5 ft); Magmin (CR 1/2, 10 ft); Balor/Death Throes (CR 19, 30 ft dual-type)',
