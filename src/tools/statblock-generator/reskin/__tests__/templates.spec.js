@@ -366,14 +366,4 @@ describe('generateReskin in template mode', () => {
     expect(rows.every((e) => !/\{[a-z_]+\}/.test(e.text))).toBe(true);
     expect(rows.map((e) => e.name)).not.toContain('Stone Toss');
   });
-
-  test('signatureMode freetext keeps the old path (the main call is asked for a wildcard)', async () => {
-    let askedWildcard = false;
-    await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8, signatureMode: 'freetext' }, async (prompt) => {
-      if (/"wildcard": "<The monster is always/.test(prompt)) askedWildcard = true;
-      if (/findings/.test(prompt)) return JSON.stringify({ findings: [] });
-      return JSON.stringify({ ...JSON.parse(mainAnswer()), wildcard: '*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Prone condition.', wildcard_economy: 'action' });
-    }).catch(() => {});
-    expect(askedWildcard).toBe(true);
-  });
 });

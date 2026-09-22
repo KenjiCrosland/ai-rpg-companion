@@ -58,10 +58,9 @@ touching anything under `chassis/` or `format-2024/`.
   (`reskin/corpus-tags.mjs` → `node scripts/tag-corpus.mjs` →
   `scripts/corpus-shapes.json`) tags every print ability in the same
   grammar so `scripts/smoke-misses.mjs` cites print rows under each
-  miss tag. The free-text
-  wildcard + vet chain + repair loop survive behind
-  `localStorage['statblock-signature-freetext']='1'` (spec pins use
-  `signatureMode: 'freetext'`) until the paired blind read decides.
+  miss tag. The free-text wildcard, its vet chain, and its repair loop were retired
+  2026-09-22 (goldens 19/19 on the template path); rules text has one
+  source, the catalog.
 - **2024 edition**: sections-based model, markdown render
   (`format-2024/render.mjs`), display via `@/components/Statblock2024.vue`
   with inline editing (engine band hints on numeric edits — advisory, never

@@ -8,7 +8,7 @@
 import { pickDonor, scaleDonor } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses } from './header.mjs';
 import { templatesFor, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit } from './templates.mjs';
-import { drawLibraryRow, LIBRARY_KEYS, nameHash } from './library.mjs';
+import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
 import { logger } from '@/util/logger.mjs';
@@ -173,12 +173,10 @@ export function assignSeats(signatureElements = [], { style = null, covered = []
   return { action: action.element, trait: trait.element, packaged: action.element === trait.element, rest: [...els.map((e) => e.element).filter((x) => x !== action.element && x !== trait.element), ...demoted] };
 }
 
-export function buildReskinPrompt(scaled, { concept = '', takenNames = [], signatureElements = [], energy = null, mix = null, mind = null, resolvedType = null, fixedName = null, traitWildcard = true, signature = 'freetext' } = {}) {
-  const seats = assignSeats(signatureElements, { style: scaled.style ?? null });
+export function buildReskinPrompt(scaled, { concept = '', takenNames = [], energy = null, mix = null, mind = null, resolvedType = null, fixedName = null, } = {}) {
   const needsProjectile = Object.values(scaled.sections).flat().some((e) => e.text.includes('{projectile}'));
-  // signature 'template' (2026-09-21): the main call renames only — the
-  // signature is created and fitted in two later calls (templates.mjs)
-  const hasSlot = signature !== 'template' && Object.values(scaled.sections).flat().some((e) => e.wildcard_slot);
+  // the main call renames only — the signature is created and fitted in
+  // two later calls (templates.mjs); nothing here asks for rules text
   const engineMenu = [...new Set(Object.values(scaled.sections).flat().filter((e) => e.engine).map((e) => e.engine))];
   const needsSpells = Object.values(scaled.sections).flat().some((e) => e.text.includes('{spell_at_will}'));
   const needsEngulf = Object.values(scaled.sections).flat().some((e) => e.engulf_engine);
@@ -206,7 +204,7 @@ export function buildReskinPrompt(scaled, { concept = '', takenNames = [], signa
   return `You are reskinning a mechanical monster chassis to a concept. The mechanics are FIXED; you provide identity.
 
 CONCEPT: ${concept}
-${scaled.style === 'mounted' ? 'MOUNT HANDLING: print never writes rules about a mount — the Centaur Trooper is just its Speed and its charge. Express the mount through names, lore, and attack flavor (a bite, hooves, a saddle-borne strike); never write rules ABOUT the mount (no separate actions or turns, no targeting it, no mounting or dismounting, no describing how rider and mount are joined, and never a rule keyed on being mounted). The chassis speed and charge mechanics already are the mount.\n' : ''}${hasSlot && seats ? `\nSIGNATURE TARGET: ${seats.packaged ? `the concept's defining element is "${seats.action}". The trait_wildcard is the passive rule that makes it true on the sheet; the wildcard is its ACTIVE use` : `the wildcard builds the MECHANICS of "${seats.action}" — the concept's defining behavior; the trait_wildcard is the passive rule that makes "${seats.trait}" true on the sheet`} — build the element's MECHANICS; the element phrase names what to build, not necessarily what to call it. The wildcard may reference the trait_wildcard by its exact name${seats.packaged ? ` — and since both build the same element they SHOULD reference each other, the action stating what the trait's rule costs or grants while the action is in effect` : ''}. Reference nothing else that is not on the sheet. The rows you rename OWN their fiction — never write the wildcard as another version of a renamed attack row. The BEST wildcards INTERLOCK with the sheet instead: key off a condition a renamed row applies (a charge's Prone, a mark's Frightened), or apply a state the attack rows then exploit — print's Mummy glare escalates on its own fear, and its rot punishes the already-cursed.${seats.rest.length ? ` Remaining elements — spend them in renames and lore where they fit naturally: ${seats.rest.join('; ')}.` : ''}\n` : ''}${takenNames.length ? `\nNAMES ALREADY TAKEN — never reuse or closely echo any: ${takenNames.slice(0, 40).join(', ')}\n` : ''}
+${scaled.style === 'mounted' ? 'MOUNT HANDLING: print never writes rules about a mount — the Centaur Trooper is just its Speed and its charge. Express the mount through names, lore, and attack flavor (a bite, hooves, a saddle-borne strike); never write rules ABOUT the mount (no separate actions or turns, no targeting it, no mounting or dismounting, no describing how rider and mount are joined, and never a rule keyed on being mounted). The chassis speed and charge mechanics already are the mount.\n' : ''}${takenNames.length ? `\nNAMES ALREADY TAKEN — never reuse or closely echo any: ${takenNames.slice(0, 40).join(', ')}\n` : ''}
 THE CHASSIS (CR ${scaled.cr}, AC ${scaled.ac}, HP ${scaled.hp}):
 ${rows.join('\n')}
 
@@ -220,744 +218,15 @@ Return ONLY JSON:
  "languages": "<a languages line or 'None'>",
  "renames": { ${renameSkeleton} },   <- ALL of these keys, every one, none omitted. A name that claims an element must be PAID by that row's damage: "Burning X" needs Fire on the row (or the melee rider), "Rimefrost X" needs Cold. If the damage does not pay the word, drop the word, or qualify it with the true element the way print does (the Priest\'s "Radiant Flame" deals Radiant); folklore light-compounds (witchfire, foxfire, balefire) are always legal. NAME REGISTER — print's name BUDGET (measured from the corpus): standard rows stay terse — a plain-damage attack row is ONE weapon-noun or anatomy word (Bite, Talons, Greataxe); two words only when the row does more than plain damage (Flame Whip, Arcane Burst); utility rows take plain function names. ONLY the Signature Slot and the nova row earn a flavored name, and even there print compresses: two words, three at the absolute ceiling (Dreadful Glare, Curtain Call — never "Blade Scatter Finale"), a hyphenated compound counting as its parts. Legendary actions take the two-word flavored register, verb-forward (Pounce, Mind Jolt, Cold Gale) — never three words. One flourish on a sheet of terse names reads as a designer's touch; wall-to-wall kennings read as a generator.${mind === 'bestial' ? ' THIS creature is bestial: name its attack rows by anatomy alone (Bite, Talons, Slam, Gore) — its flavor lives in the trait and the lore, never in an attack name.' : ''} Never invent a compound word — print writes "Frost Axe", never "Frostaxe".
  "damage_types": { ${damageSkeleton} },   <- REQUIRED for every attack and the area action. PHYSICAL vs ENERGY follows the BODY (print: melee attacks deal the limb's physical type — a bite Piercing, a slam Bludgeoning, a claw Slashing — with energy reserved for the ranged attack and the area action; ONLY a creature whose body IS energy — incorporeal, elemental, formless — deals energy with its melee). A fully physical creature may answer physical for everything; never give every row the same energy — but also keep to ONE energy family across the block (print rarely fields two).${energy ? ` THIS creature's energy is ${energy} — every non-physical damage type you assign must be ${energy}.` : ''}${mix === 'physical' ? ' THIS creature deals PHYSICAL damage only — Bludgeoning, Piercing, or Slashing everywhere; no energy types anywhere on the block.' : ''}
-${needsSpells ? ` "spells": { "at_will": ["<exactly 2 spells this concept would cast, from ONLY this list: ${(scaled.spell_menu ?? SPELL_MENU).join(', ')}>"], "daily": ["<exactly 2 MORE from the same list, no repeats — pick by THEME: the spells must feel like this creature\'s magic. A blaster picks its SIGNATURE damage spells (Fireball, Scorching Ray, Shatter...) — the engine prices the tiers>"] },\n` : ''}${needsProjectile ? ` "projectile": "<the thing it throws, 1-3 words WITH its article (a knucklebone / its barbed anchor) — it appears mid-sentence in attack text>",\n` : ''}${engineMenu.length ? ` "defense_engine": "<what this concept's defense IS — rampart (a punishing presence: a damaging emanation and a raised wall) | punisher (it answers every blow: a counter-strike reaction). Pick ONE from: ${engineMenu.join(', ')}>",\n` : ''}${needsEngulf ? ` "engulf_style": "<how this body takes a creature in: swallow (a mouth) | engulf (an amorphous mass, a slime, a swarm) | smother (fabric, wrappings, a collapsing bulk) | whelm (water or liquid) | cage (chains, bars, ribs) | entomb (stone, earth, ice) | cocoon (web, silk, strands) — the engine names and words the ability to match>",\n` : ''}${hasSlot ? ` "fallback_shape": "<if your wildcard fails our vets, the engine substitutes a proven shape — pick the ONE key nearest this concept's signature: ${LIBRARY_KEYS.join(' | ')}>",
- "fallback_name": "<a name for that fallback shape in THIS creature's register, 4 words max — it prints if the engine uses the shape, so name the SHAPE (a mark, a pull, a dread), never your wildcard>",
-` : ''} "slot_save": "<the Saving Throw stat the Signature Slot should use if your wildcard is not used — the stat the concept threatens: Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma>",
+${needsSpells ? ` "spells": { "at_will": ["<exactly 2 spells this concept would cast, from ONLY this list: ${(scaled.spell_menu ?? SPELL_MENU).join(', ')}>"], "daily": ["<exactly 2 MORE from the same list, no repeats — pick by THEME: the spells must feel like this creature\'s magic. A blaster picks its SIGNATURE damage spells (Fireball, Scorching Ray, Shatter...) — the engine prices the tiers>"] },\n` : ''}${needsProjectile ? ` "projectile": "<the thing it throws, 1-3 words WITH its article (a knucklebone / its barbed anchor) — it appears mid-sentence in attack text>",\n` : ''}${engineMenu.length ? ` "defense_engine": "<what this concept's defense IS — rampart (a punishing presence: a damaging emanation and a raised wall) | punisher (it answers every blow: a counter-strike reaction). Pick ONE from: ${engineMenu.join(', ')}>",\n` : ''}${needsEngulf ? ` "engulf_style": "<how this body takes a creature in: swallow (a mouth) | engulf (an amorphous mass, a slime, a swarm) | smother (fabric, wrappings, a collapsing bulk) | whelm (water or liquid) | cage (chains, bars, ribs) | entomb (stone, earth, ice) | cocoon (web, silk, strands) — the engine names and words the ability to match>",\n` : ''} "slot_save": "<the Saving Throw stat the Signature Slot should use — the stat the concept threatens: Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma>",
  "melee_rider": "<the ENERGY type the melee attack deals as a rider — or \"none\" if this creature's damage is purely physical (a fifth of printed monsters are)>",
  "speed_shape": "<\"climber\" keeps the Climb speed; \"runner\" trades it for +10 ft. walk (a charger, a rider, a sprinter has no business on walls)>",
-${traitWildcard ? ` "trait_wildcard": { "name": "<a passive trait the concept demands — its body's rule, not an attack: 4 words max>", "text": "<ONE passive rule, 2 sentences max, 2024 voice: an immunity, a sense, a movement rule, a condition interaction. No damage, no saves, no auras. State the flavor and stop — never explain that flavor is flavor ("purely cosmetic" is not rules text). Omit the object entirely if the chassis already says it.>" },
-` : ''}
  "lore": "<ONE sentence of world-lore: where it comes from and what it wants>",
  "vulnerability": "<a damage type this creature is VULNERABLE to — ONLY if the concept genuinely implies one (print is sparing: skeletons take extra Bludgeoning, mummies burn, a thing of ash fears Cold — the wound that made it). Most creatures have none: omit this field entirely.>",
  "conditions": { "condition_minor": "<one of: ${CONDITION_MENUS.condition_minor.join(', ')}>" },
-${hasSlot ? ` "wildcard_economy": "<what the wildcard costs: action | bonus_action | reaction | trait | rider_on:<the exact new name you gave the attack it rides> — declare it; the assembler files the entry by THIS field, not by guessing from your prose. A rider is a clause appended to that attack (write it as \"When the creature hits with this attack, ...\").>",
- "wildcard": "<The monster is always 'the creature'; its victim is always 'the target' and NEVER 'the creature'. Rules text refers to the creature by epithet or 'it' — never gendered pronouns, whatever the lore says (print's register). REPLACES the 'Signature Slot' entry: ${seats ? 'build the SIGNATURE TARGET element (named below) as rules text — NOT whichever element feels most distinctive' : "the concept's single most distinctive behavior as rules text"}. The renamed attack rows already OWN their fiction — a behavior a renamed row carries (a hurled head, a lashing chain) is DONE, and the wildcard shows a DIFFERENT face of the concept. ${(scaled.cr ?? 99) <= 5 ? '3' : '4'} sentences max, 2024 house voice, no atmospheric prose. Must use a save DC of ${scaled.dc} if it has a save, standard conditions only, damage at most ${Math.round(scaled.per_hit * 1.2)} average — and damage is ALWAYS written as dice with the average, like "27 (5d8 + 5)", never a flat number. Never assert an effect without granting its rule. An ability that throws or detaches part of the creature's body must state what the creature loses while it is detached and when it returns. Acting or attacking from a distant point is RANGED attacks only. Use limits print as a real count after the entry name, like "(2/Day)" or "(Recharge 5-6)" — never the letter X, never as prose ("can use this three times"), never a stat or proficiency-bonus count, never tied to a rest. Never name or grant a NEW trait inside an ability — state temporary capabilities inline with a duration (\"until the start of its next turn, it can...\"). A strong rider may be PRICED BY THE HIT ITSELF — print's Rug of Smothering grapples 'instead of dealing damage'; write that exact trade (\"instead of dealing damage, the target...\") when the effect is worth a whole hit. THE AGGRO MARK (house grammar, converged 4x across families): a protector or taunter marks a foe — \"the target has Disadvantage on attack rolls against creatures other than the creature\" — always save-gated, duration-bounded, ONE creature marked at a time.>"
-` : ""}
 }`;
 }
 
-// THE GUARD BATTERY, FACTORED (repair retry, owner go 2026-08-18): one
-// function vets a draft at first pass AND after the repair call — the v4
-// trace showed the guards correctly rejecting the fear aura for a fixable
-// pronoun error, then shipping boilerplate because rejection had no
-// second chance.
-const CAP_TERMS = /(?<!-)\b(advantage|disadvantage|blinded|charmed|deafened|frightened|grappled|incapacitated|invisible|paralyzed|petrified|poisoned|prone|restrained|stunned|unconscious|exhaustion)\b/g;
-const capTerms = (t) => t.replace(CAP_TERMS, (w) => w[0].toUpperCase() + w.slice(1));
-
-// NEGATION-DEFENSE GATE (critic promoted 2026-08-26; 3 lifetime: Storm
-// Veil, Scattering Assault, Ash-Body Step — the last shipped an ungated
-// trait that strictly dominated its own 3/Day reaction sibling on the
-// same sheet). An unhittable block removes martial characters from the
-// game: fight-breaking, mechanical tier. Grammar is corpus-clean —
-// 0/329 print entries negate an attack; Evasion's "takes no damage if
-// it succeeds" is save-scoped and deliberately unmatched ("takes no
-// damage from the attack" is the narrow form).
-// spell-negation joined 2026-09-02 (Grandmother Hush's Hush Aura: a free
-// permanent counterspell zone — "the spell is wasted" is action-negation
-// by another vocabulary; the squeezed balloon after the Silence menu
-// rejection. Print's Silence is a costed concentration SPELL; no print
-// trait auto-wastes enemy casting.)
-const NEGATION = /\b(?:attack|hit|damage)\b[^.]{0,30}\bis negated|\bnegat(?:es|ing)\b[^.]{0,40}\b(?:attack|damage|hit)|\battack misses\b|takes? no damage from (?:the|that|an?) (?:attack|hit)|\bignores? (?:any )?attacks? that deal|\bignores? damage (?:less than|under|below)|\bdamage threshold\b|\bspell (?:is )?(?:wasted|lost)\b|\bspell fails\b|\bcasting fails\b/i;
-
-const ECONOMY_TO_SECTION = { action: undefined, bonus_action: 'Bonus Actions', reaction: 'Reactions', trait: 'Traits' };
-
-function vetActionWildcard(raw, scaled, { name, inline, missingTraitName = null, economy = null, archetype = null, type = null }) {
-  // a leading self-label ("Corrosive Snare:") is the rename half-landing
-  // inside the body — strip it (never the save frame)
-  let liftedGate = null;
-  // read the economy EARLY (econDecl is derived after the washer): a
-  // reaction-declared draft written as "When <event>, <response>" is
-  // rewritten to print's skeleton deterministically — templating, not
-  // coaching (critic round 2: "a reaction without a trigger is the one
-  // wrapper defect that isn't fudgeable")
-  const econEarly = String(economy ?? '').trim().toLowerCase();
-  // the parenthetical is a GATE (lifted into the entry name) or an
-  // economy label like "(Trait)" (noise — the declaration field owns the
-  // economy; the Devil's "Tumble-Pocket Arsenal (Trait)." shipped as a
-  // double name inside its own entry text, 2026-08-26)
-  const w = String(raw).trim()
-    // a BOLD leading label ("**Gravewound Skewer (2/Day).**") is still a
-    // label — the (?!\*) lookahead protects italic save frames, and the
-    // bold form dodged it (the Lancer, 2026-09-15)
-    .replace(/^\*\*([A-Z][\w' -]{2,28})(?: \((\d+\/Day|Recharge [\d–-]+|1\/Turn)\))?\.?\*\*:?\s*/, (m, g, gate) => {
-      if (gate && gate !== '1/Turn') liftedGate = gate;
-      return '';
-    })
-    .replace(/^(?!\*)([A-Z][\w' -]{2,28})(?: \((\d+\/Day|Recharge [\d–-]+|1\/Turn)\)| \((?:Trait|Action|Bonus Action|Reaction)\))?[.:]\s+/, (m, g, gate) => {
-      // "Trigger:" / "Response:" are print's reaction skeleton, not a
-      // self-label — stripping them here left the reaction lead-less and it
-      // filed to Actions by declaration (2026-09-20)
-      if (/Saving Throw|Attack Roll|^(?:Trigger|Response)$/.test(g)) return m;
-      if (gate && gate !== '1/Turn') liftedGate = gate; // "(1/Turn)" is prose's job — stripped with the label (the Outrider, 2026-09-15)
-      return '';
-    })
-    // a TRAILING gate lifts too ("...knocked Prone. (2/Day)" — the
-    // Grave-Hurler shipped it glued to the text end, 2026-08-26)
-    .replace(/\s*\((\d+\/Day|Recharge [\d–-]+)\)\s*\.?\s*$/, (m, gate) => {
-      liftedGate = liftedGate ?? gate;
-      return '';
-    })
-    // the TRAILING self-label (2026-09-15, Skull Harvest's "…regains 30
-    // Hit Points. Harvest Skull" — the audit saw it, the rewrite never
-    // landed; the leading strip gains its twin)
-    .replace(/\.\s+[A-Z][\w' -]{2,28}$/, (m) => (/Saving Throw|Attack Roll|Hit Point|damage/.test(m) ? m : '.'))
-    // a save without a DC is unadjudicable, and the DC-differs check is
-    // VACUOUS on it — every() over zero extracted DCs passes (the
-    // Sepsis Benediction, 2026-09-16). The engine owns the number.
-    .replace(/must (make|succeed on) an? (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) [Ss]aving [Tt]hrow/g,
-      (m0, verb, stat) => `must ${verb} a DC ${scaled.dc} ${stat} Saving Throw`)
-    // THE WRAPPER (critic 2026-09-15, sixth sighting in six blocks —
-    // "the content keeps being decent and the wrapper keeps being the
-    // only thing wrong"): the model writes its save in 2014 dialect —
-    // "one creature within 30 feet must make a DC 13 Dexterity Saving
-    // Throw. Failure: ..." — and the lint skeleton AND the Multiattack-
-    // replacement finder both miss the row. The frame is deterministic;
-    // the engine rewrites it instead of coaching it.
-    .replace(/\b((?:one|each|a|any) creature[^.]{0,60}?|the target)\s+must (?:make|succeed on) a DC (\d+) (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) [Ss]aving [Tt]hrow[.,]\s*(?:\*?Failure:\*?|On a fail(?:ed save|ure),)\s*/i,
-      (m0, target, dc, stat) => { const t = target.trim(); return `*${stat} Saving Throw:* DC ${dc}, ${t.charAt(0).toLowerCase()}${t.slice(1)}. *Failure:* `; })
-    .replace(/(\*Failure:\*[^]*?[.!]\s*)(?:\*?Success:\*?|On a successful save,)\s*/, '$1*Success:* ')
-    // the third dialect (the Sludgehold rider, 2026-09-15): "On a
-    // failure, the target takes..." — label-map it even when the frame
-    // is too exotic to rewrite whole
-    .replace(/\bOn a failure,\s+(\w)/g, (m0, c) => `*Failure:* ${c.toUpperCase()}`)
-    .replace(/\bOn a success,\s+(\w)/g, (m0, c) => `*Success:* ${c.toUpperCase()}`)
-    .replace(/(\*(?:Failure|Success):\*\s+)([a-z])/g, (m0, lbl, c) => lbl + c.toUpperCase())
-    // the FOURTH dialect (the Storm Hermit's Lightning-Mark,
-    // 2026-09-16): "must make a DC 17 Dexterity saving throw, taking 18
-    // (4d8) Lightning damage on a failed save, or half as much damage
-    // on a successful one" — pure 2014, flagged by lint on every
-    // sighting and fixed by nothing until now
-    .replace(/\b((?:one|each|a|any) creature[^.]{0,60}?|[Tt]he target)\s+must (?:make|succeed on) a DC (\d+) (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) saving throw, taking (\d+ \([^)]+\) \w+ damage) on a failed save(,? or half as much damage on a successful (?:one|save))?\.\s*/i,
-      (m0, target, dc, stat, dmg, half) => { const t = target.trim(); return `*${stat} Saving Throw:* DC ${dc}, ${t.charAt(0).toLowerCase()}${t.slice(1)}. *Failure:* ${dmg}.${half ? ' *Success:* Half damage.' : ''} `; })
-    .replace(/^(?:When(?:ever)?|After|Immediately after|If) ([^,]{5,140}), (.+)$/s, (m0, ev, resp) => (econEarly === 'reaction'
-      ? `*Trigger:* ${ev.charAt(0).toUpperCase()}${ev.slice(1).replace(/\.$/, '')}. *Response:* ${resp.charAt(0).toUpperCase()}${resp.slice(1)}`
-      : m0))
-    // the Revenant wrote print's reaction skeleton WITHOUT the asterisks and
-    // without "Response:" ("Trigger: A creature misses... The revenant makes
-    // one Rapier attack") — normalize the markup; the vet keys on it
-    .replace(/^\*?Trigger:\*?\s*/, '*Trigger:* ')
-    .replace(/(\.\s*)\*?Response:\*?\s*/, '$1*Response:* ')
-    .replace(/^(\*Trigger:\* [^.]+\.)\s+(?!\*Response:\*)([A-Z])/, '$1 *Response:* $2')
-    // the trailing SENTENCE form joined 2026-09-11 (3 sightings in two
-    // rounds, all save-action rows: Gorge Draught, Stitched Arc, the
-    // Engulfing Swarm's implied limit): exact closed sentence, same
-    // lift class as the parenthetical — no prose surgery
-    .replace(/\s*This ability can be used (?:up to )?(\d+\/Day)\.\s*$/, (m, gate) => {
-      liftedGate = liftedGate ?? gate;
-      return '';
-    })
-    // the BARE trailing sentence ("... Recharge 5-6." with no parens —
-    // owner catch 2026-09-15, the Butcher's Kiss tail)
-    .replace(/\s*Recharge (\d[–-]\d)\.?\s*$/, (m, gate) => {
-      liftedGate = liftedGate ?? `Recharge ${gate}`;
-      return '';
-    });
-  const dcs = w.match(/DC (\d+)/g) ?? [];
-  const dmg = w.match(/(\d+) \(\d+d\d+(?:\s*\+\s*\d+)?\)/);
-  const blockCaps = Object.values(scaled.sections).flat().map((x) => x.text).join(' ') + scaled.speed;
-  // pronoun muddle: 'the creature' with a VICTIM-shaped predicate means
-  // the model cast the monster as its own target — substitution would mint
-  // self-reference. The old heuristic (2+ 'the creature' per sentence)
-  // false-positived on legal double monster-references ("until the start
-  // of the creature's next turn, and the creature has Advantage") and
-  // killed correct drafts through repair (the Matador, 2026-08-19).
-  // (?<!of |from |to )(?<!near ) — a locative ("within 30 feet of the
-  // creature must make...") names the victim's POSITION, not the monster
-  // as victim (the Pilgrim: 3 repair drafts killed, 2026-08-19)
-  // containment prepositions joined 2026-08-27: engulf wildcards are
-  // structurally forced to write "inside the creature" / "swallowed by
-  // the creature" — the old lookbehind vocabulary predates any ability
-  // that puts a victim INSIDE the monster (2 deadlocks, 6 burned calls:
-  // Gravewater Host, Walking Cairn — both fell to chassis fallback)
-  // perception-verb objects + 'on' joined 2026-09-02 (muddle round 2,
-  // 3 deadlocks/~9 calls in one smoke): "that can hear the creature must
-  // succeed" — 'the creature' is the OBJECT of hearing, the subject's
-  // verb follows (the Riddle); "centered on the creature must make" —
-  // 'on' was the one locative missing from the list (the Hoardheart).
-  const victimPredicate = /(?<!\bof )(?<!\bfrom )(?<!\bto )(?<!\bnear )(?<!\bby )(?<!\binside )(?<!\bwithin )(?<!\binto )(?<!\bbeneath )(?<!\bunder )(?<!\bon )(?<!\bhear )(?<!\bhears )(?<!\bsee )(?<!\bsees )[Tt]he creature (?:must (?:make|succeed)|takes \d|has the [A-Z][a-z]+ condition|repeats the save|can(?:not|'t) (?:willingly )?(?:move|approach))/.test(w);
-  // count only NON-ACTOR references: "the creature hits/can see" is the
-  // monster acting (legal, Stormfall's taunt died 3x on it); a doubled
-  // "the creature" in victim position is the muddle
-  const doubledInVictimContext = w.split(/(?<=\.)\s+/).some((sent) => {
-    const total = (sent.match(/the creature/gi) ?? []).length;
-    const actor = (sent.match(/the creature (?:hits|makes|uses|moves|can see|targets)/gi) ?? []).length;
-    const locative = (sent.match(/(?:of|from|to|near|by|inside|within|into|beneath|under|on|hear|hears|see|sees) the creature/gi) ?? []).length;
-    return total - actor - locative >= 2
-      && !/\b(?:the|a) target\b/i.test(sent)
-      && /must (?:make|succeed)|Saving Throw|Frightened|Charmed|Paralyzed|Stunned|Restrained|Poisoned|Blinded|Prone|Incapacitated/i.test(sent);
-  });
-  const selfRef = victimPredicate || doubledInVictimContext;
-  // role collapse: "the target" may not appear before anything establishes
-  // one. A hit-trigger ESTABLISHES the target (probe smoke, 2026-08-26):
-  // the prompt's own rider grammar is "When the creature hits with this
-  // attack, ..." — this guard rejected that exact grammar 3 times
-  // (Surveyor, Archivist, +1), and the repair's establish-first
-  // instruction then taught a 30-ft targeting frame that contradicted the
-  // host row (a reach-5 coat grappling at 30 feet). The guard
-  // manufactured the defect pattern it existed to prevent.
-  const firstTarget = w.search(/\bthe target\b/);
-  const established = w.search(/\b(?:one|each|a|any) (?:creature|target)\b|saving throw|When the creature hits/i);
-  const roleCollapse = firstTarget !== -1 && (established === -1 || firstTarget < established);
-  // an attack-triggered wildcard is reaction-shaped: it needs a rate limit
-  const unrated = /When a creature[^.]{0,80}attacks/i.test(w)
-    && !/Reaction|once per (?:round|turn)|can't [^.]{0,40}again until/i.test(w);
-  // one-directional reference contract: the draft may name the trait
-  // wildcard — but only if that trait actually shipped
-  const dangling = !!missingTraitName && w.includes(missingTraitName);
-  // detachment accounting (Hollow Gaze, v6): a thrown body part that never
-  // says when it returns is simultaneously destroyed, present, and
-  // infinitely renewable — one missing sentence, repair-shaped
-  const detaches = /throws? its (?:severed )?(?:head|skull|eye|hand|arm|heart|tail|limb)|detach(?:es|ing)?\b/i.test(w);
-  const unreturned = detaches && !/returns?|reattach|retriev|re-?forms?|recover/i.test(w);
-  // remote-origin actions are ranged only — a scimitar cannot swing from a
-  // disembodied point 30 feet away
-  const remoteMelee = /from that point/i.test(w) && /attack/i.test(w) && !/[Rr]anged attack/.test(w);
-  // a second action economy embedded mid-entry (the Outrider's javelin
-  // throw with a conditional bonus-action wolf-command welded inside):
-  // one entry, one economy
-  // print's success clauses grant half damage or nothing — never a fresh
-  // penalty (Mire Snare punished on a success, 2026-08-25)
-  const successPenalty = /(?:\*Success:?\*|On a success(?:ful save)?,?)[^.*]{0,80}(?:Disadvantage|takes \d|has the [A-Z][a-z]+ condition|Speed is (?:halved|reduced)|can't|cannot)/i.test(w);
-  const econDecl = String(economy ?? '').trim().toLowerCase();
-  const reactionMention = /uses? (?:its|a|an) [Rr]eaction|as (?:a|its) [Rr]eaction/.test(w);
-  // KO conditions never ride an UNPRICED bonus action (Muffled Toll,
-  // first lurker smoke 2026-09-04: at-will BA Paralyzed at CR 5 feeding
-  // advantage + within-5-ft crits). Print's KO severity floor is LOW
-  // (Ghoul paralyzes at CR 1) — the ECONOMY is the law: 0 corpus
-  // sightings of bonus-action KO except the Incubus's Nightmare, which
-  // is Recharge 6 + HP-thresholded. Delivery must be an action, an
-  // on-hit rider, or a priced bonus action.
-  const koApplied = /(?:has|have|gains?) the (?:Paralyzed|Stunned|Unconscious) condition|\b(?:is|are|be|being|becomes?) (?:Paralyzed|Stunned|Unconscious)\b/.test(w);
-  const bonusShaped = econDecl === 'bonus_action' || /^[Aa]s an? [Bb]onus [Aa]ction/.test(w);
-  const embeddedEconomy = (/bonus action/i.test(w) && econDecl !== 'bonus_action' && !/^[Aa]s an? [Bb]onus [Aa]ction/.test(w))
-    // a reaction mechanic living inside an attack rider or an
-    // action-declared entry (Grave-Scythe, Shard Lunge — 4 lifetime);
-    // an UNDECLARED reaction-shaped draft still routes via placement
-    || (reactionMention && (econDecl.startsWith('rider_on:') || (econDecl !== '' && econDecl !== 'reaction')));
-  // THE TIER POLICY (owner go, 2026-08-19: "guards doing more harm than
-  // good"): 'judgment' guards — the brittle-pattern checks with
-  // demonstrated false positives (role collapse killed 3 straight
-  // signatures; the sentence cap rejected 10% of print's register) —
-  // FAIL OPEN: flag, repair once, and if the repair also fails, ship the
-  // draft with a loud trace. 'mechanical' guards — math and ground-truth
-  // checks (DC, damage cap, capability, dangling refs) plus the
-  // register absolutes (second person, auras, no-rules text) — FAIL
-  // CLOSED to the chassis, as ever. A wrong DC breaks the sheet; an
-  // ambiguous antecedent survives the table.
-  // ORDERING IS LOAD-BEARING (2026-08-25): every MECHANICAL check comes
-  // before every judgment check — the chain is first-match, and a
-  // judgment flag evaluated early shadowed a teleport-beyond-chassis
-  // violation into fail-open (the Pale Surveyor's Lantern's Mark).
-  // metering catch-all (owner go, 2026-08-26): the rewriter was an open
-  // list of SEEN dialects — the batch promptly invented dialect #6 ("a
-  // number of times equal to its Charisma modifier... regains all uses
-  // when it finishes a short or long rest", Final Toll). Detect-only; the
-  // FIX always comes from the model via repair, never from regex surgery
-  // (owner: prose rewrites garble). All three patterns: 0/329 corpus hits.
-  const meterPlaceholder = /\b[XN]\/Day\b/.test(w);
-  const meterDialect = /\btimes equal to\b/i.test(w) || /regain(?:s|ing|ed)? (?:all )?(?:expended )?uses/i.test(w)
-    // dialect #7 (Iron Warden, 2026-08-26): prose rest-gating — print
-    // meters with (Recharge 5-6) or X/Day, never this sentence (0/329)
-    || /until (?:it|the \w+) finishes a (?:short|long) rest/i.test(w)
-    // dialect #8 (Phantom's Call, 2026-08-27): a mid-text "1/Day" in
-    // prose — the count belongs in the entry-name parenthetical
-    // "can be used" joined 2026-09-02: passive voice walked past the
-    // active forms (the Alms Saint's "This ability can be used 2/Day")
-    || /(?:can happen|can do this|can use this(?: \w+)?(?: up to)?|can be used|usable) \d+\/Day/i.test(w)
-    // dialect #9 (Keeper's Revocation, 2026-09-08): recharge-by-taking-
-    // damage — flavorful (the shield renews when the bearer bleeds) but
-    // 0/329; the critic's canonization bid was declined for lack of a
-    // print cite (the Rug idiom crossed only because it WAS print)
-    || /again until it (?:has )?take[sn][^.]{0,20}damage/i.test(w);
-  // a rider rides the HIT — its own targeting frame contradicts the host
-  // row (3 sightings: a reach-5 melee attack whose rider grappled a
-  // creature 30 feet away, the Strangler's Coat)
-  const riderFramed = econDecl.startsWith('rider_on:') && /\b(?:one|each|any)(?: \w+){0,3} creature[^.]{0,30}?within \d+ feet/i.test(w);
-  const why = selfRef ? ['pronoun muddle', 'mechanical']
-    : dangling ? ['references a trait that did not ship', 'mechanical']
-    : /starts its turn/i.test(w) ? ['recurring aura', 'mechanical']
-    : /\byours?\b|\byou\b/i.test(w) ? ['second person', 'mechanical']
-    : !GAME_TERM.test(w) ? ['no game term', 'mechanical']
-    : (TELEPORT_MOVE.test(w) && !/teleport/i.test(blockCaps)) ? ['teleport beyond the chassis (a "reposition" or vanish-and-reappear IS a teleport — print says the word)', 'mechanical']
-    // WHO flies is the question (Ironbristle deadlock, 2026-09-01: quills
-    // "flying at the attacker" tripped the bare-word guard 4 times and
-    // burned the slot to chassis) — the CREATURE flying is a movement
-    // grant; its quills/spit/debris flying AT someone is projectile
-    // fiction, print-legal. Flag only creature-as-subject flight, a fly
-    // Speed, or flight with a distance ("flies up to 30 feet").
-    : ((/\b(?:it|the creature|this creature) (?:can )?fl(?:y|ies)\b/i.test(w) || /\bfly(?:ing)? [Ss]peed\b/i.test(w) || /\bfl(?:y|ies|ying)\b[^.]{0,20}\b\d+ f(?:ee)?t\b/i.test(w)) && !/Fly/i.test(scaled.speed)) ? ['flight beyond the chassis', 'mechanical']
-    : !dcs.every((d) => d === `DC ${scaled.dc}`) ? ['DC differs from the card', 'mechanical']
-    : (dmg && Number(dmg[1]) > Math.round(scaled.per_hit * 1.5)) ? ['damage over the cap', 'mechanical']
-    : meterPlaceholder ? ['an unfilled use-limit placeholder — write the real number, like "2/Day"', 'mechanical']
-    : ENGINE_VOCAB.test(w) ? ['engine vocabulary in rules text — chassis, donor, and template are our words, never the creature\'s', 'mechanical']
-    // PROMOTED judgment -> mechanical (owner 2026-09-01): 3/9 brute rolls
-    // reached for reactions, repair never converted one, and on the Tide
-    // King it cost the CR 21 boss its whole signature action AND shadowed
-    // the embedded-economy flag that would have caught the impossible
-    // shield-reload gate. Print: 0/40 brutes have a Reactions section.
-    // the SHAPE is reaction grammar even without the word (Battle-Shriek:
-    // "When the ragged howdah takes damage, it emits..." filed as an
-    // Action — banning the word taught the model to drop the word,
-    // 2026-09-01). Per SENTENCE, not text start: the Plague-Shrine hid
-    // the shape behind a scene-setting preamble sentence and the ^-anchor
-    // missed it (Weeping Rot, 2026-09-01)
-    : ((archetype === 'brute' || archetype === 'defender') && (econDecl === 'reaction' || reactionMention || /^\*Trigger:\*/.test(w) || w.split(/(?<=\.)\s+/).some((s) => /^When(?:ever)? [^.]{0,80}(?:takes damage|is hit by|is struck|hits (?:it|the creature)\b)/i.test(s.trim())))) ? [archetype === 'defender'
-      // the Parry class (defender sweep 2026-09-08): SRD 5.2 RETIRED
-      // Parry — 0/329; the 2014 reaction-knight lives only in training
-      // data. Print's protector wears its defense.
-      ? 'print\'s 2024 protectors WEAR their defense — Parry was retired (0 of 329 blocks; the Knight answers with AC 18, not a reaction). The armor already answers: write what the creature DOES on its own turn, or an aura or ward that protects passively'
-      : 'print brutes have no reactions (0 of 40) — DROP THE TRIGGER entirely: relabeling it keeps the broken economy (a bonus action cannot fire on an enemy\'s turn). Write what the creature DOES on its own turn, never "when" something happens to it', 'mechanical']
-    : MODEL_HEALING(w) ? ['healing is the Regeneration organ\'s job — turn-based recovery and heal-to-full never ship as custom text; drain ("regains Hit Points equal to the damage dealt") stays legal', 'mechanical']
-    : HEAL_BACK(w) ? ['a drain heals off damage DEALT to others (print\'s Life Drain) — healing back damage TAKEN is immunity in disguise and never ships', 'mechanical']
-    : DICELESS_DAMAGE.test(w) ? ['damage prints its dice — write "58 (13d8+3)" style, never a flat number; a diceless figure evades the damage caps', 'mechanical']
-    : inventedCondition(w) ? [`"${inventedCondition(w)}" is not a rules condition — use a standard condition, or describe the state in lowercase prose ("the target is pacified: it can't...") — never mint capitalized condition vocabulary`, 'mechanical']
-    // print never fields two Recharge entries (the Last Dawn Knight
-    // shipped Solar Gut + Candle's Dying Breath both at 5-6, 2026-09-02);
-    // a DAMAGING second nova duplicates the chassis's priced one — a
-    // utility Recharge (a teleport) stays legal
-    : (Object.values(scaled.sections).flat().some((e) => e.gate) && dmg && (/\(Recharge/.test(w) || /Recharge/.test(String(liftedGate ?? '')))) ? ['the chassis already carries its priced Recharge nova — print never fields two; use "2/Day", or make this modest and ungated', 'mechanical']
-    : NO_SAVE_RESTRAINT(w) ? ['containment by contact always offers a save — print\'s Cube saves on entry; add a Saving Throw and an exit', 'mechanical']
-    : UNENDING_RESTRAINT(w) ? ['Restrained must carry an exit — print restraint always ends somewhere: an escape DC, a repeated save at the end of the target\'s turns, or a duration like "until the start of the creature\'s next turn"', 'mechanical']
-    : UNPRICED_DISARM(w) ? ['a stolen or stuck weapon is priced and recoverable — print\'s Mimic adheres with an escape DC; give the effect a save or a check, and state how the weapon comes back', 'mechanical']
-    : UNBROKEN_DODGE(w) ? ['attack-Disadvantage defense needs a break condition — print\'s Displacement is disrupted until the end of its next turn when the beast takes damage; add a break, a use gate, or a real condition (Opportunity-Attack-only disadvantage is fine)', 'mechanical']
-    // PROMOTED judgment -> mechanical (3rd shipping sighting, Burning
-    // Gaze at-will 41x2 targets beating the multiattack, 2026-09-01):
-    // an ungated AREA action prices per TARGET — the single-target cap
-    // undercounts it by the area multiplier
-    // "all/every" joined 2026-09-02: the Orbiting Mote's "all creatures
-    // within 10 feet" walked past the each-anchored pattern (word-form
-    // arms race, 4th sighting)
-    // "each OTHER creature" joined 2026-09-02 (the Vestige — arms race #5)
-    : (/(?:each|all|every)(?: other)? (?:creatures?|targets?) (?:in|within)/i.test(w) && !liftedGate && dmg && Number(dmg[1]) > Math.round(scaled.per_hit * 0.75)) ? ['an ungated area action prices per TARGET — halve the dice or add a use gate like "(Recharge 5-6)"', 'mechanical']
-    // the ATTACK-DELEGATION evasion (the Dusk Wardens' Stone Shove,
-    // 2026-09-14: "makes one Claw attack against each creature within 5
-    // feet" — the damage rides by REFERENCE, so the dmg-number gate
-    // above never saw it; three adjacent = 1.5x the Multiattack plus
-    // control, dominant every round)
-    : (/makes? (?:one|a|two) [^.]{0,30}attacks? against each (?:creature|target)/i.test(w) && !liftedGate) ? ['an attack against EACH creature multiplies the attack routine — print gates multi-target attack actions ("(Recharge 5-6)") or converts them to a save; gate it, or make it a save-based push with no attack roll', 'mechanical']
-    // a creature dies only at 0 Hit Points (the Gallows Puppet: four
-    // slashing hits destroyed 97 HP, 2026-09-01). Print's only
-    // conditional destructions are 0-HP-anchored (Misty Escape) or
-    // duration idioms ("until it is destroyed") — both exempted.
-    // "dies (if|when)" joined 2026-09-05: the Gilded Maw's INVERTED
-    // death-exit clause ("The altar dies if it ends its turn with a
-    // swallowed creature") — print's clause is subject-first ("If the
-    // creature dies, a swallowed creature exits"), which never matches
-    // this shape; "creature dies if" is 0/329
-    : w.split(/(?<=\.)\s+/).some((s) => /\b(?:[Ii]t|[Tt]he creature) (?:is destroyed|collapses|dies (?:if|when|unless))\b/.test(s) && !/0 Hit Point|until (?:it|the creature) is destroyed|or (?:it|the creature) is destroyed/.test(s)) ? ['a creature dies only at 0 Hit Points — never "dies if <condition>"; the legal death clause is subject-first ("If the creature dies, ...") and a destruction counter must be a cost an enemy CHOOSES', 'mechanical']
-    // print grants blanket all-damage resistance only to OBJECTS and
-    // shifted forms (Soul Bag, Vampire mist) — never as a self-trait
-    // (the Glacierbear: ~2x effective HP unpriced, 2026-09-01)
-    : /[Rr]esistance to all damage/.test(w) ? ['print grants TYPED resistances — blanket all-damage resistance doubles effective HP unpriced; name the one or two types the concept earns', 'mechanical']
-    : (DEFENSE_GRANT.test(w) && !DEFENSE_DURATION.test(w)) ? ['an action may buy a TEMPORARY typed defense (add "until the start of the creature\'s next turn") — an unbounded resistance or immunity grant is the derivation engine\'s jurisdiction, never the model\'s', 'mechanical']
-    : conditionImmunityGrant(w, name) ? [`condition-immunity SUITES are the header\'s jurisdiction (0 of 329 print traits self-grant one; the phantom chassis already carries print\'s incorporeal suite) — keep at most ONE flavor immunity the concept clearly earns, and cut control conditions (Grappled, Restrained, Prone...) entirely${ANCHOR_COACHING}`, 'mechanical']
-    : vacuousResilience(w, type) ? [`the ${type} header already carries immunity to ${vacuousResilience(w, type)} — the clause is vacuous; spend the words on something the header does not already say`, 'mechanical']
-    : STAT_ADD_GRANT.test(w) ? ['print bakes ability modifiers into the row\'s damage — never a stat-add as a choice (0 of 329); drop the clause, the numbers already include the mod', 'mechanical']
-    : RESISTANCE_BYPASS.test(w) ? ['resistance and immunity interactions are the engine\'s — print has no overcoming-resistance grammar (0 of 329 in combat); drop the clause', 'mechanical']
-    : SELF_AC_GRANT.test(w) ? [`AC is the card\'s — print\'s one AC buff is the Unicorn\'s Shimmering Shield (itself or one creature, +2, duration-bounded, priced as a limited action), and the Aegis organ already carries that shape; a free AC stance never ships${ANCHOR_COACHING}`, 'mechanical']
-    : SELF_DISCLAIMER.test(w) ? ['state the flavor and stop — print never explains that flavor is flavor; drop the disclaimer sentence', 'mechanical']
-    : /can(?:no|')t be (?:targeted|affected)|can only be (?:harmed|hit|affected|damaged)|exists? only (?:within|inside)/i.test(w) ? ['untargetability is not a grantable defense (0/329 — the arms race, untargetable edition) — print prices evasion: entering the form or space is MOVEMENT, the creature has Total Cover inside, and it must emerge to act; write the frame with its cost', 'mechanical']
-    : (NEGATION.test(w) && !liftedGate && econDecl !== 'reaction') ? ['negation defense must be priced — add a use gate like "(Recharge 5-6)" or convert it to a Reaction', 'mechanical']
-    : (koApplied && bonusShaped && !/Recharge|\/Day/.test(w + String(liftedGate ?? ''))) ? ['Paralyzed, Stunned, and Unconscious never ride an unpriced bonus action — print prices bonus-action KO with a gate (the Incubus\'s Nightmare is Recharge 6); add "(Recharge 5-6)", or deliver it as an action or an on-hit rider', 'mechanical']
-    // the sheet already owns the hide-cycle (Veil of Brambles re-invented
-    // Umbral Step on the same sheet, first lurker smoke 2026-09-04) — a
-    // wildcard granting the Hide action duplicates chassis economy
-    : chassisOwned(w, Object.values(scaled.sections).flat()) ? [`the sheet already owns ${chassisOwned(w, Object.values(scaled.sections).flat())} — never restate a chassis rule; build the PAYOFF of what the concept adds instead`, 'mechanical']
-    // the aggro mark is SAVE-GATED, always (Vow of Fury shipped an
-    // at-will no-save mark, 2026-09-09 — free Advantage for the marker,
-    // free Disadvantage for the target; the Tollkeeper's Cha-save form
-    // is the canonized shape)
-    : (/Disadvantage on attack rolls against (?:creatures|targets|any creature) other than/i.test(w) && !/[Ss]aving [Tt]hrow/.test(w)) ? ['the aggro mark is save-gated, always — no save, no mark (the canonized shape: a save, a duration, ONE creature marked at a time)', 'mechanical']
-    // THE TRAIT DOOR (batch three, 2026-09-05): a wildcard declaring
-    // economy 'trait' was vetted HERE — where embedded reactions and
-    // rest-metering are judgment-tier — then filed into Traits, dodging
-    // the trait chain's mechanical active-mechanics guard (the Vault's
-    // reaction-in-a-trait, the Cavernmouth's three-economy "trait").
-    // A trait spends nothing: promote those to mechanical at this door.
-    : (econDecl === 'trait' && (reactionMention || /[Bb]onus [Aa]ction/.test(w) || /until (?:it|the \w+) finishes a (?:short|long) rest/i.test(w))) ? ['a trait spends nothing — 0 of 329 print traits mention a reaction or bonus action, and rest-recovery is meter prose; move the economy to its own entry or drop it', 'mechanical']
-    // a DECLARED trait routed through this chain with a save frame, a
-    // damage roll, or an on-hit trigger (Clotting Sludge 2026-09-13:
-    // "must succeed on a DC 13 Strength saving throw" — the 2014
-    // DC-number form dodged the trait chain's frame scan, and the
-    // rider shipped in Traits; Glacial Body's bite rider was the first
-    // sighting): riders live ON the attack row
-    : (econDecl === 'trait' && /\d+ \(\d+d\d+|\*[A-Z][a-z]+ Saving Throw\*|Saving Throw:|Attack Roll:|must (?:make|succeed on) an? (?:DC \d+ )?[A-Za-z]+ [Ss]aving [Tt]hrow|(?:When(?:ever)?|Immediately after) (?:it|the [\w' -]{1,30}?) hits\b/i.test(w)) ? ['a trait never carries a damage roll, a save frame, or an on-hit trigger — an ON-HIT RIDER lives on the attack row itself (declare rider_on:<that row\'s new name> and write "When the creature hits with this attack, ..."); a triggered save is an action or reaction', 'mechanical']
-    : roleCollapse ? ['role collapse', 'judgment']
-    : riderFramed ? ['a rider rides the hit — address "the target"; no separate targeting frame', 'judgment']
-    // a rider has no NAME, so it cannot carry a use gate (gates live in
-    // entry names — the Warder's mid-rider "(2/Day)" with "this ability"
-    // pointing at nothing, 2026-09-01)
-    // a rider wearing an action's economy (the Outrider's "Immediately
-    // after the wolfpack outrider hits a target with Rusted Blade..."
-    // shipped as an Action row, 2026-09-15) — trigger-shaped text with
-    // the MONSTER as the hitting subject is a rider whatever it declares
-    : (!econDecl.startsWith('rider_on:') && econDecl !== 'trait' && /(?:When(?:ever)?|Immediately after) (?:it|the [\w' -]{1,30}?) hits\b/i.test(w) && !/deals? no damage instead|instead of dealing damage/i.test(w)) ? ['an action never triggers off the creature\'s own hit — that text is an ON-HIT RIDER: declare rider_on:<the attack row\'s new name> and write "When the creature hits with this attack, ..."', 'mechanical']
-    : (econDecl.startsWith('rider_on:') && /\(\d+\/Day\)|\(Recharge [\d–-]+\)/.test(w)) ? ['a rider has no name to carry a use gate — drop the gate (once per turn applies) or build a standalone action', 'judgment']
-    : meterDialect ? ['use limits print as a count like "2/Day" — never a stat-modifier formula, never rest-recovery prose', 'judgment']
-    : unrated ? ['no rate limit', 'judgment']
-    : unreturned ? ['no return clause', 'judgment']
-    : remoteMelee ? ['remote attacks must be ranged', 'judgment']
-    // print embeds a bonus action mid-entry only as a TERMINATION clause
-    // of an ongoing state (the Ghost "leaves as a Bonus Action") — the
-    // coaching names the one legal shape so repair stops bolting on
-    // fresh economies (Choke Hold's drag, Gutter Glare's move rider)
-    : embeddedEconomy ? ['a second action economy embedded mid-entry — one entry, one economy; print\'s only embedded bonus action is a termination clause ending an ongoing state (the Ghost leaves possession as a Bonus Action) — anything that ACTS is a separate entry or gets dropped', /can use a bonus action to|as a bonus action[^.]{0,40}(?:forces?|deals?|makes?|attacks?)/i.test(w) ? 'mechanical' : 'judgment']
-    // a trigger the rules cannot see (the Grille fired on "kneels", first
-    // lurker smoke 2026-09-04 — the garden-plant class; 0/329 corpus)
-    : /\bkneel(?:s|ing)?\b|\bpray(?:s|ing)?\b|\bbows? (?:down|before)\b/i.test(w) ? ['the game has no kneeling or praying state — gate on a real condition (Prone), on distance, or on a creature touching or willingly interacting with it', 'judgment']
-    // the minted-resource class (Furnace Charges, 2026-09-10: a
-    // capitalized tracked resource with a cap, stacking, and decay —
-    // homebrew subsystem bolted to a monster)
-    : /gains? (?:one|a|an|\d+) [A-Z]\w+ (?:Charge|Token|Stack|Counter|Point)s?\b/.test(w) ? ['a capitalized tracked resource is a homebrew subsystem — write the intent as recharge-by-condition: "When X happens, its attacks deal an extra N (dice) damage until the end of its next turn" (golem-absorption grammar pointed at offense)', 'judgment']
-    : /\bAlternatively,/.test(w) ? ['one entry is one action — "Alternatively" welds two actions together; split them into separate entries or pick the one the concept needs', 'judgment']
-    // print writes the action, never narrates the action system (the
-    // Battlefield Chorus's "can use one action to target...", 2026-09-02)
-    : (/\b(?:hurls?|throws?|flings?|lobs?) (?:its|his|her|their)\b/i.test(w) && /\bone (?:creature|target)\b/i.test(w) && /Saving Throw/i.test(w)
-      && Object.values(scaled.sections).flat().some((e) => /Ranged Attack Roll/.test(e.text ?? ''))) ? ['the chassis\'s ranged row already carries the thrown fiction — rename THAT row for the throw (its numbers are derived) and write a DIFFERENT signature, or declare rider_on:<that row\'s name>', 'mechanical']
-    : /\(AC \d+[,)]|\bAC \d+\b[^.]{0,20}\b\d+ (?:HP|Hit Points)\b/i.test(w) ? ['object statistics are the engine\'s jurisdiction — never mint AC/HP for a piece of the creature; keep the piece narrative, or price its loss as a condition (a Blinded-while-detached clause is the right instinct)', 'mechanical']
-    // a Reaction is not a free action (Ambush Drop / Tolling Rockfall, both
-    // model-declared reactions with no trigger, 2026-09-20) — the lint's
-    // reaction-trigger rule had been catching this AFTER assembly and shipping it
-    : (econDecl === 'reaction' && !/\*Trigger:\*/.test(w) && !/\bin response to\b/i.test(w)) ? ['a Reaction must state when it fires — write print\'s skeleton: "*Trigger:* <specific event>. *Response:* <what the creature does>." — or declare it an action', 'mechanical']
-    : /Attack Roll:|[Ww]eapon Attack:|[Ss]pell Attack:|\+\d+ to hit\b/.test(w) ? ['attack rolls are the chassis\'s jurisdiction — the donor rows carry the attacks and the engine derives every bonus; write the signature as a SAVE or an effect, or declare rider_on:<an attack row\'s name> to ride one', 'mechanical']
-    : ((w.match(/(?:\*[A-Z][a-z]+ Saving Throw\*?:|must (?:make|succeed on) an? (?:DC \d+ )?[A-Za-z]+ [Ss]aving [Tt]hrow)/g) ?? []).length >= 2) ? ['one save per action — a second nested save is the fragment class (3 sightings); print ESCALATES on the existing state instead: the Mummy\'s "If the target is already Frightened by this, it also..." — key the escalation on the condition, never on a second roll', 'mechanical']
-    : /can use (?:one|an|its|another) action to/i.test(w) ? ['print writes the action, never narrates the action system — drop "can use one action to"; the entry IS the action (a second capability is its OWN entry, never a narrated sub-action)', 'mechanical']
-    : successPenalty ? ['a success clause grants half damage or NOTHING — never a fresh penalty (owner ruling 2026-09-15, 2nd live ship: Mire Snare, Headless Dread\'s damage-on-success); reward the save or end the sentence', 'mechanical']
-    // the penalty ban's mirror (the Storm Hermit, 2026-09-16: "On a
-    // successful save, the target also gains immunity to Lightning
-    // damage" — 0/329 print actions gift the victim a defense in
-    // EITHER direction)
-    : /(?:\*Success:\*|[Oo]n a success(?:ful save)?,?)[^.]*(?:\balso\b|gains? (?:immunity|resistance|Advantage)|has (?:immunity|resistance|Advantage))/.test(w) ? ['a success clause grants half damage or NOTHING — never a fresh reward either: no immunity, resistance, Advantage, or "also" clauses on a save (0/329)', 'mechanical']
-    : /the target (?:gains?|has) (?:immunity|resistance) to \w+ damage/i.test(w) ? ['defenses are never gifts to the victim (0/329) — drop the grant', 'mechanical']
-    // the visibility class (Mirror Lunge, 2026-09-05: "when a creature
-    // looks at that surface" — 0/329 print triggers on looking)
-    : /\blooks? at\b|\bglances? at\b|\bmeets? (?:its|the) (?:gaze|eyes)\b/i.test(w) ? ['looking is not a game state — no trigger can see gaze direction; use print\'s 2024 gaze grammar (the Sea Hag): a save forced on a creature that starts its turn within X feet and can see it', 'judgment']
-    // the Hungerclock's backwards gate (2026-09-05): "If not in dim
-    // light... only once per turn" reads as UNLIMITED when the
-    // condition fails — a rate limiter binds always
-    : w.split(/(?<=\.)\s+/).some((s) => /^If [^.]{0,90}\bonly once per turn/i.test(s.trim())) ? ['a once-per-turn limit binds ALWAYS — behind a condition it reads as unlimited whenever the condition fails; state the limit as its own unconditional sentence', 'judgment']
-    : epithetDrift(w, name, inline) ? [`call the creature "the creature" — the assembler stamps the printed short form, and "the ${epithetDrift(w, name, inline)}" is a second nickname fracturing the sheet's voice`, 'judgment']
-    // 2024 has no free actions (the Gravebound's "release as a free
-    // action", 2026-09-09; 0/329)
-    : /\bfree action\b/i.test(w) ? ['there are no free actions in 2024 — write "(no action required)" or simply let the rule happen', 'judgment']
-    // the scene-state family, third species (the Last Round fired on "a
-    // target that is alone", 2026-09-05; 0/329)
-    : /\balone\b/i.test(w) ? ['"alone" is not a game state — write the distance: "while no other creature is within 30 feet of the target"', 'judgment']
-    // self-disabling geography (the Thronebound Shade: Incapacitated
-    // outside a room the sheet never establishes, 2026-09-05)
-    : /[Oo]utside (?:the|its|this) [^.]{0,40}\b(?:it|the creature) (?:is|has the) Incapacitated/.test(w) ? ['a location the sheet never establishes cannot disable the creature — add the establishing line ("the creature is bound to the chamber where it is encountered") or drop the outside clause', 'judgment']
-    : w.split(/(?<=\.)\s+/).length > ((scaled.cr ?? 99) <= 5 ? 3 : 4) ? [`over ${(scaled.cr ?? 99) <= 5 ? 3 : 4} sentences${(scaled.cr ?? 99) <= 5 ? ' — a low-CR block is a short block (print: Dreadful Glare is 3 sentences at CR 3)' : ''}`, 'judgment']
-    : null;
-  let text = capTerms(w.split('the creature').join(inline).split('The creature').join(inline.charAt(0).toUpperCase() + inline.slice(1)));
-  let moveTo;
-  const declared = String(economy ?? '').trim().toLowerCase();
-  let riderOn = null;
-  const targetingSave = /(?:one|each) (?:creature|target)[^.]{0,80}(?:must succeed|must make|saving throw)/i.test(w);
-  if (declared.startsWith('rider_on:')) {
-    riderOn = String(economy).slice('rider_on:'.length).trim();
-  } else if (declared === 'trait' && targetingSave) {
-    // declaration coherence: a save frame aimed at a target is an action
-    // no matter what the model declared (Sister Vesper's Gaze of the
-    // Living shipped as a costless trait, 2026-08-20) — fall through to
-    // the prose-based placement instead
-  } else if (/^\*Trigger:\*/.test(text)) {
-    // the grammar IS the economy: print's Trigger/Response skeleton is a
-    // Reaction whatever the model declared (Thrust Punishment shipped as an
-    // ACTION with a Trigger, 2026-09-20)
-    moveTo = 'Reactions';
-  } else if (Object.prototype.hasOwnProperty.call(ECONOMY_TO_SECTION, declared)) {
-    // THE ECONOMY DECLARATION (owner go, 2026-08-19, third filing error in
-    // three blocks): the model declares the cost, the assembler files by
-    // it — placement regexes demote to the undeclared fallback
-    moveTo = ECONOMY_TO_SECTION[declared];
-    if (declared === 'bonus_action') text = text.replace(/[Aa]s a [Bb]onus [Aa]ction,?\s*(\w)/, (m0, c) => c.toUpperCase());
-    if (declared === 'trait' && /^When /i.test(text) && !/once (?:per|a|each) (?:turn|round)/i.test(text)) text += ' It can do this only once per turn.';
-  } else if (/uses? its Reaction|as (?:a|its) [Rr]eaction|^When the .{0,40}takes damage/.test(text)) moveTo = 'Reactions';
-  else if (/^When (?:the|a|it) .{0,60}moves/i.test(text)) {
-    // mark-on-move is print's TRAIT grammar (free, once per turn stated)
-    moveTo = 'Traits';
-    if (!/once (?:per|a|each) turn/i.test(text)) text += ' It can do this only once per turn.';
-  } else if (/[Aa]s a [Bb]onus [Aa]ction,?\s*/.test(text)) {
-    text = text.replace(/[Aa]s a [Bb]onus [Aa]ction,?\s*(\w)/, (m0, c) => c.toUpperCase());
-    moveTo = 'Bonus Actions';
-  }
-  if (declared === 'reaction') {
-    // the reaction economy itself enforces once-per-round; a limiter
-    // clause is the belt-and-suspenders tell (the Courier's two
-    // dialects) — strip it. Riders are NOT in this branch: a rider fires
-    // per HIT (x3 under multiattack), so its limiter is load-bearing
-    // (the Pale Surveyor's unlimited 18-damage mark, 2026-08-26)
-    text = text.replace(/\s*(?:It|The creature) can (?:do|use) this(?: action)? only once (?:per|a|each) (?:turn|round)\.?/g, '').trim();
-  }
-  // a damage-dealing wildcard never files as a Bonus Action — summedDPR
-  // prices multiattack, legendary strikes, and gated novas; a damaging BA
-  // is invisible sustained DPR (Vexing Shriek, ~15 over band at CR 11)
-  if (moveTo === 'Bonus Actions' && /\d+ \(\d+d\d+/.test(text)) moveTo = undefined;
-  if (why) return { okay: false, why: why[0], tier: why[1], draft: w, text, moveTo, riderOn, liftedGate };
-  return { okay: true, text, moveTo, riderOn, liftedGate };
-}
-
-function vetTraitWildcard(tw, sections, { name, inline, archetype = null, type = null }) {
-  const twName = String(tw?.name ?? '').trim();
-  const twText = String(tw?.text ?? '').trim();
-  if (!twName || !twText) return { okay: false, silent: true };
-  const names = Object.values(sections).flat().map((e) => e.name.toLowerCase());
-  // reach reconciliation (two-sightings rule, 2026-08-26: Outrider, then
-  // the Covetous Shade's "reach 10 feet" trait over "reach 5 ft." rows):
-  // print states reach on the attack row, never in a trait (0/329 traits
-  // claim reach) — a trait asserting a reach no row prints is the
-  // two-writers contradiction. Read-only diff; the fix comes from repair.
-  const rowReaches = new Set();
-  for (const e of Object.values(sections).flat()) {
-    for (const rm of (e.text ?? '').matchAll(/reach (\d+) ?ft/gi)) rowReaches.add(rm[1]);
-  }
-  const reachClaim = /reach (\d+) ?f(?:ee)?t/i.exec(twText);
-  const reachContradiction = reachClaim && !rowReaches.has(reachClaim[1]);
-  // ORDERING IS LOAD-BEARING (2026-08-26): mechanical checks before the
-  // judgment sentence cap — same first-match shadowing class as the
-  // action vet's Pale Surveyor bug, fixed here before it fired live
-  const why = twName.split(/\s+/).length > 4 ? ['name over 4 words', 'mechanical']
-    : HINT_ECHO.test(twName) ? ['name copies the prompt\'s own register example — the example shows the shape, never the name', 'mechanical']
-    // the informal imperative forms joined 2026-09-02: "must make a
-    // Wisdom saving throw (DC 20)" and "As a bonus action" slipped a
-    // skeleton-anchored check twice in one smoke (Grieving Weep — a
-    // bonus action with a save living in Traits — and Rusting Grip)
-    : /\d+ \(\d+d\d+|\*[A-Z][a-z]+ Saving Throw\*|Saving Throw:|Attack Roll:|\(Recharge|\/Day|\btimes equal to\b|regain(?:s|ing|ed)? (?:all )?(?:expended )?uses|must (?:make|succeed on) an? (?:DC \d+ )?[A-Za-z]+ [Ss]aving [Tt]hrow|[Ss]aving [Tt]hrow \(DC|[Aa]s an? [Bb]onus [Aa]ction|use[sd]? (?:its |an? )[Bb]onus [Aa]ction/i.test(twText) ? ['active mechanics in a passive trait (a damage roll, a save FRAME, a bonus action, or a use limit — mentioning saves or attack rolls passively is fine)', 'mechanical']
-    : reachContradiction ? [`claims reach ${reachClaim[1]} feet but no attack row prints that reach — reach belongs on the rows; align with them`, 'mechanical']
-    : /can(?:no|')t be (?:targeted|affected)|can only be (?:harmed|hit|affected|damaged)|exists? only (?:within|inside)/i.test(twText) ? ['untargetability is not a grantable defense (0/329 — the arms race, untargetable edition: "immune to all damage" died and came back as "cannot be targeted") — print prices evasion: entering the form or space is MOVEMENT, the creature has Total Cover inside, and it must emerge to act; write the frame with its cost', 'mechanical']
-    : /(?:When(?:ever)?|Immediately after) (?:it|the [\w' -]{1,30}?) hits\b|\bA creature hit by [^.]{0,40}attack/i.test(twText) ? ['an ON-HIT RIDER lives on the attack row itself, never in a trait (0/329 print traits key on the creature\'s own hits; the Tollkeeper\'s crook rider, 2026-09-14) — weld the clause into that row\'s text instead', 'mechanical']
-    : /[Ss]peed (?:increases|is increased) by \d+|\+\d+ (?:feet |ft\.? )?(?:to|bonus to) (?:its )?[Ss]peed|(?:has|gains) an? (?:Climb|Fly|Swim|Burrow)(?:ing)? [Ss]peed/i.test(twText) ? ['speed is the header\'s number (0 of 329 print traits self-grant a speed bonus) — the engine derives movement; a mount or gait is fiction for the description, not a stat add', 'mechanical']
-    : undefinedState(twText, Object.values(sections).flat().map((e) => e.text ?? '').join(' ')) ? [`the trait keys on the state "${undefinedState(twText, Object.values(sections).flat().map((e) => e.text ?? '').join(' '))}" that nothing on the sheet enters — write the sentence or action that establishes it (print's form: False Appearance's "while it remains motionless"), or key on a state the rules know`, 'mechanical']
-    : (/silenc|can't cast spells|no sound can/i.test(twText) && Object.values(sections).flat().some((e2) => e2.name?.startsWith('Spellcasting')) && !/except (?:the creature|itself)|creature (?:itself )?is unaffected/i.test(twText)) ? ['the aura silences the creature\'s own Spellcasting (Verbal components die in silence) — exempt the creature ("the creature itself is unaffected") or cut the silence', 'mechanical']
-    : /starts its turn/i.test(twText) ? ['recurring aura', 'mechanical']
-    : /\byours?\b|\byou\b/i.test(twText) ? ['second person', 'mechanical']
-    // 0/329 print traits mention reactions (Ash-Body Step, 2026-08-26 —
-    // the trait vet lacked the check the action vet has had for weeks)
-    : /uses? (?:its|a|an) [Rr]eaction|as (?:a|its) [Rr]eaction/.test(twText) ? ['a Reaction belongs in the Reactions section with its cost declared — a trait cannot spend one', 'mechanical']
-    : ENGINE_VOCAB.test(twText) ? ['engine vocabulary in rules text — chassis, donor, and template are our words, never the creature\'s', 'mechanical']
-    : NEGATION.test(twText) ? ['negation defense must be a priced Reaction — a trait has no cost to pay for it', 'mechanical']
-    : /\b(?:[Ii]t|[Tt]he creature) (?:is destroyed|collapses|dies (?:if|when|unless))\b(?![^.]{0,30}0 Hit Point)/.test(twText.replace(/until (?:it|the creature) is destroyed|or (?:it|the creature) is destroyed/g, '')) ? ['a creature dies only at 0 Hit Points — never a destruction counter in a trait', 'mechanical']
-    : /[Rr]esistance to all damage/.test(twText) ? ['print grants TYPED resistances — blanket all-damage resistance doubles effective HP unpriced; name the one or two types the concept earns', 'mechanical']
-    : MODEL_HEALING(twText) ? ['healing is the Regeneration organ\'s job — turn-based recovery and heal-to-full never ship as custom text', 'mechanical']
-    : HEAL_BACK(twText) ? ['a drain heals off damage DEALT to others (print\'s Life Drain) — healing back damage TAKEN is immunity in disguise and never ships', 'mechanical']
-    : DICELESS_DAMAGE.test(twText) ? ['damage prints its dice — write "58 (13d8+3)" style, never a flat number', 'mechanical']
-    : inventedCondition(twText) ? [`"${inventedCondition(twText)}" is not a rules condition — use a standard condition, or describe the state in lowercase prose`, 'mechanical']
-    // "the target" with nothing establishing one (Thick Silence's aura,
-    // 3rd antecedent sighting, 2026-09-02): a trait names its subject —
-    // "a creature in that area", never an orphan "the target"
-    : (/\bthe target\b/i.test(twText) && !/(?:one|each|any|a|that) creature|hits?\b|is hit|attack roll/i.test(twText)) ? ['"the target" with nothing establishing one — a trait names its subject ("a creature in that area"), never an orphan target', 'mechanical']
-    : NO_SAVE_RESTRAINT(twText) ? ['containment by contact always offers a save — print\'s Cube saves on entry; add a Saving Throw and an exit', 'mechanical']
-    : UNENDING_RESTRAINT(twText) ? ['Restrained must carry an exit — print restraint always ends somewhere: an escape DC, a repeated save, or a duration', 'mechanical']
-    : UNPRICED_DISARM(twText) ? ['a stolen or stuck weapon is priced and recoverable — print\'s Mimic adheres with an escape DC; give the effect a save or a check, and state how the weapon comes back', 'mechanical']
-    : UNBROKEN_DODGE(twText) ? ['attack-Disadvantage defense needs a break condition — print\'s Displacement is disrupted until the end of its next turn when the beast takes damage; add a break, a use gate, or a real condition (Opportunity-Attack-only disadvantage is fine)', 'mechanical']
-    : DEFENSE_GRANT.test(twText) ? ['typed damage defenses are the derivation engine\'s — the concept\'s energy earns its resistance deterministically; a trait never grants resistance or immunity to damage types', 'mechanical']
-    : conditionImmunityGrant(twText, name) ? [`condition-immunity SUITES are the header\'s jurisdiction (0 of 329 print traits self-grant one; the phantom chassis already carries print\'s incorporeal suite) — keep at most ONE flavor immunity the concept clearly earns, and cut control conditions (Grappled, Restrained, Prone...) entirely${ANCHOR_COACHING}`, 'mechanical']
-    : vacuousResilience(twText, type) ? [`the ${type} header already carries immunity to ${vacuousResilience(twText, type)} — the clause is vacuous; spend the trait on something the header does not already say`, 'mechanical']
-    : STAT_ADD_GRANT.test(twText) ? ['print bakes ability modifiers into the row\'s damage — never a stat-add as a choice (0 of 329); drop the clause, the numbers already include the mod', 'mechanical']
-    : RESISTANCE_BYPASS.test(twText) ? ['resistance and immunity interactions are the engine\'s — print has no overcoming-resistance grammar (0 of 329 in combat); drop the clause', 'mechanical']
-    : SELF_AC_GRANT.test(twText) ? [`AC is the card\'s — print\'s one AC buff is the Unicorn\'s Shimmering Shield (itself or one creature, +2, duration-bounded, priced as a limited action), and the Aegis organ already carries that shape; a free AC stance never ships${ANCHOR_COACHING}`, 'mechanical']
-    : SELF_DISCLAIMER.test(twText) ? ['state the flavor and stop — print never explains that flavor is flavor; drop the disclaimer sentence', 'mechanical']
-    : (TELEPORT_MOVE.test(twText) && !Object.values(sections).flat().some((e) => /teleport/i.test(e.text ?? ''))) ? ['teleport beyond the chassis — a trait cannot grant movement the block does not carry (a "reposition" or vanish-and-reappear IS a teleport)', 'mechanical']
-    : chassisOwned(twText, Object.values(sections).flat()) ? [`the sheet already owns ${chassisOwned(twText, Object.values(sections).flat())} — never restate a chassis rule; build the PAYOFF of what the concept adds instead`, 'mechanical']
-    : (archetype === 'brute' && OA_FREEDOM(twText)) ? ['unconditional Opportunity-Attack immunity is the skirmisher\'s chassis-priced signature — a brute trait may not grant it free; scope it to a specific move (during its charge) or drop it', 'mechanical']
-    // object-return grammar joined 2026-09-04: blade-return traits died
-    // to no-game-term 3x across two seeds ("the blade returns to its
-    // hand at the end of its turn" IS a rules statement — object-state
-    // machinery, not flavor) and the blade fantasy kept losing its
-    // anchor trait to the vocabulary gap
-    : !/Immunity|Resistance|Advantage|Disadvantage|Speed|darkvision|blindsight|tremorsense|truesight|condition|can't be|cannot be|cover|teleport|Opportunity Attack|provok|Difficult Terrain|unoccupied space|move through|Hit Points|bright light|dim light|obscured|damage|Incapacitated|returns? to (?:its|the creature's) hand|reattach|regrows?/i.test(twText) ? ['no game term — flavor without a rule', 'mechanical']
-    : names.some((n) => n === twName.toLowerCase() || (n.length >= 6 && twName.toLowerCase().length >= 6 && (n.startsWith(twName.toLowerCase()) || twName.toLowerCase().startsWith(n)))) ? ['name collides with an existing entry (exact or near-namesake)', 'mechanical']
-    : /\blooks? at\b|\bglances? at\b|\bmeets? (?:its|the) (?:gaze|eyes)\b/i.test(twText) ? ['looking is not a game state — no rule can see gaze direction; use print\'s 2024 gaze grammar (the Sea Hag): a save forced on a creature that starts its turn within X feet and can see it', 'judgment']
-    : epithetDrift(twText, name, inline) ? [`call the creature "the creature" — the assembler stamps the printed short form, and "the ${epithetDrift(twText, name, inline)}" is a second nickname fracturing the sheet's voice`, 'judgment']
-    : /\balone\b/i.test(twText) ? ['"alone" is not a game state — write the distance: "while no other creature is within 30 feet of the target"', 'judgment']
-    : /[Oo]utside (?:the|its|this) [^.]{0,40}\b(?:it|the creature) (?:is|has the) Incapacitated/.test(twText) ? ['a location the sheet never establishes cannot disable the creature — add the establishing line ("the creature is bound to the chamber where it is encountered") or drop the outside clause', 'judgment']
-    : twText.split(/(?<=\.)\s+/).length > 2 ? ['over 2 sentences', 'judgment'] : null;
-  // BOTH cases, ALL positions (the Rust-Thorn shipped a mid-text "The
-  // creature is immune to the Grappled condition" verbatim — the old
-  // ^-anchored replace only caught text-initial, and the raw sentence
-  // read as the ATTACKER gaining the immunity, 2026-09-02). Mirrors the
-  // main fill loop's split/join treatment.
-  const text = capTerms(twText.split('The creature').join(inline.charAt(0).toUpperCase() + inline.slice(1)).split('the creature').join(inline));
-  if (why) return { okay: false, name: twName, draft: twText, why: why[0], tier: why[1], text };
-  return { okay: true, name: twName, text };
-}
-
-/**
- * Per-generation validator: rename COMPLETENESS is validated HERE so the
- * caller's retry loop fires on an omission (live: "Mobility Trait" omitted
- * -> the loud throw fired where a retry should have). The throw in
- * generateReskin remains as the final backstop only.
- */
-// name-claim bank for the Burning-Claw class (owner: "either have fire
-// damage or just call it Claw") — validated, so the RETRY reconciles it:
-// the model either supplies the energy or drops the claim word.
-// word-boundaried: 'ice' must not match inside 'Dice' (the Gambler died
-// 3x on "Cursed Dice Blast" claiming Cold, 2026-08-19)
-const NAME_CLAIMS = [
-  [/\b(?:burn\w*|flam\w*|fire\w*|cinder\w*|scorch\w*|sear\w*|ember\w*|molten)\b/i, 'Fire'],
-  [/\b(?:frost\w*|ice|icy|chill\w*|rime\w*|gelid|freez\w*|froz\w*)\b/i, 'Cold'],
-  [/\b(?:storm\w*|lightning|volt\w*|shock\w*|thunder\w*)\b/i, null], // Lightning OR Thunder ('spark' dropped: metaphorical range too wide — Stolen Spark, 2026-08-19)
-  [/\b(?:venom\w*|toxic|poison\w*)\b/i, 'Poison'],
-  [/\b(?:acid\w*|caustic|corrosi\w*)\b/i, 'Acid'],
-  // holy/sacred/sunlight joined 2026-08-27: "only holy light scours it
-  // clean" failed the Radiant warrant check with the warrant in hand
-  [/\b(?:radiant|hallow\w*|holy|sacred|blessed|sunlight|consecrat\w*)\b/i, 'Radiant'],
-  [/\b(?:necrotic|grave-?rot)\b/i, 'Necrotic'],
-];
-// icon-owned vocabulary may not enter a rename (the Vorpal Saber class)
-const RESERVED_NAMES = /vorpal|phylactery|holy avenger|sphere of annihilation|tarrasque|beholder|mind flayer/i;
-// OUR words may never ship in rules text (the Gaoler's "a climb speed
-// (as per chassis)", 2026-08-27 — template metadata leaked raw)
-const ENGINE_VOCAB = /\b(?:chassis|donor|template|placeholder|wildcard)\b|\bConstruction:/i; // Construction: joined 2026-09-11 (a scaffold label shipped in the Rat King's rules text)
-// HEALING BELONGS TO THE ORGAN (owner's recipe-card doctrine applied to
-// the defense hydra's 4th head, 2026-09-01: negation -> blanket resist
-// -> damage threshold -> "HP become its HP maximum" full-heal, plus a
-// hand-built duplicate Regeneration in the same batch). Model text may
-// not grant turn-based recovery or set-to-max — the Regeneration organ
-// is priced and claimable. DRAIN stays legal: "regains Hit Points equal
-// to the damage dealt" is print's Life Drain grammar (no fixed amount,
-// no turn timer). INGREDIENTS, not assembled phrases (the Plague-Shrine
-// fronted the timing clause — "At the start of each of its turns, it
-// regains 10" — and walked past the verb-first pattern, 2026-09-01;
-// third word-order evasion after containment and reaction-shape): a
-// heal verb with a fixed amount AND a turn timer in the SAME sentence,
-// in any order, or any set-to-max phrasing.
-const MODEL_HEALING = (t) => t.split(/(?<=\.)\s+/).some((s) =>
-  (/regain(?:s|ing|ed)? (?:\d+|all(?: of)?(?: its)?) Hit Points/i.test(s) && /(?:start|end) of (?:each of )?(?:its|the creature's|this creature's|every|each) turn/i.test(s))
-  || /Hit Points? (?:become|return to|are restored to)|restored to its Hit Point maximum/i.test(s));
-// containment imposed by contact or space-sharing without a save is
-// print-illegal (the Greedfall: walk onto you, Restrained, drowning, no
-// roll, no exit — print's Cube saves on entry, always)
-const NO_SAVE_RESTRAINT = (t) => t.split(/(?<=\.)\s+/).some((s) => (/(?:shar\w+|enters?|inside|in) (?:its|the creature's|this creature's) space[^.]{0,80}Restrained/i.test(s) || /Restrained[^.]{0,60}(?:shar\w+|enters?) (?:its|the creature's) space/i.test(s)) && !/[Ss]aving [Tt]hrow|must succeed/.test(s));
-// a save gates the DOOR IN; print restraint always has a door OUT too —
-// an escape DC, a repeated save, or a duration (the Gluttenwrought's
-// Drowning Deluge: Strength save to avoid, then Restrained forever,
-// 2026-09-01). Whole-text check: the exit legally lives in a later
-// sentence than the application.
-const UNENDING_RESTRAINT = (t) => /has the Restrained condition|is Restrained\b/i.test(t)
-  && !/escape DC|While Grappled|until the grapple ends|repeat\w+ the sav|at the end of (?:each of )?(?:its|their) turns?|until the (?:start|end) of|until (?:it|the target|the creature) (?:escapes|is freed|pulls free|breaks free)/i.test(t);
-// a stolen or stuck weapon is the restraint-exit rule's sibling (the
-// Unburied Field's Embedded Arsenal: every weapon hit sticks, no save,
-// no size limit, no retrieval mechanics — three rounds in, the party is
-// disarmed without a roll, 2026-09-01). Print's sticky monsters always
-// price the stick: the Mimic's Adhesive has an escape DC.
-// embedded/lodged joined 2026-09-02 (the Battlefield Chorus: "cannot be
-// removed until the battlefield chorus dies" — recovery-by-death-only is
-// harsher than anything in print; dying is not an escape clause)
-const UNPRICED_DISARM = (t) => /(?:weapons?|shields?|implements?)[^.]{0,60}(?:becomes? (?:stuck|embedded|lodged)|is (?:stuck|embedded|lodged)|stick(?:s|ing)? (?:in|to)|dissolv\w+|is (?:seized|absorbed)|is torn from|cannot be removed)/i.test(t)
-  && !/escape DC|DC \d+|[Ss]aving [Tt]hrow|(?:action|check) to (?:retrieve|free|pull|recover)|until the (?:start|end) of/i.test(t);
-// attack-Disadvantage defense is legal only WITH a break (the Quelldread:
-// permanent "melee attacks against it have Disadvantage" bought back the
-// armor the brute curve sold, ~+3-4 effective AC unpriced, 2026-09-01).
-// Print's shape is the Displacer Beast: Displacement is disrupted until
-// the end of its next turn when the beast takes damage. OA-only
-// disadvantage stays legal (narrow, print-common).
-const UNBROKEN_DODGE = (t) => t.split(/(?<=\.)\s+/).some((s) => /(?:[Aa]ttack [Rr]olls?|[Mm]elee attacks?|[Rr]anged attacks?)[^.]{0,40}against (?:it|the creature)[^.]{0,60}Disadvantage/i.test(s) && !/Opportunity Attack/i.test(s))
-  && !/disrupt\w+|until the (?:start|end) of|while\b|(?:if|when)\b[^.]{0,80}(?:hits?\b|takes damage)|Recharge|\/Day/i.test(t);
-// the drain exemption points OUTWARD only (the Battlefield-Thing,
-// 2026-09-01: "When it takes Piercing or Slashing damage, it regains Hit
-// Points equal to the damage taken" — effective immunity to the two most
-// common martial types, wearing the exemption's own clothes). Print
-// drains heal off damage DEALT to others (Life Drain); nothing in print
-// heals off damage taken. Second tell: a when-hit trigger and a self-heal
-// in the same sentence — retaliation TRAITS are legal (quills), but
-// retaliation HEALING is not.
-const HEAL_BACK = (t) => /regain(?:s|ing|ed)? Hit Points equal to [^.]{0,30}damage (?:taken|it takes|it took)/i.test(t)
-  || t.split(/(?<=\.)\s+/).some((s) => /(?:[Ww]hen(?:ever)?|[Ii]f) [^.]{0,80}(?:takes [^.]{0,30}damage|is hit|is struck|hits (?:it|the creature))/.test(s) && /regain(?:s|ing|ed)? [^.]{0,40}Hit Points/i.test(s));
-// DAMAGE PRINTS ITS DICE (the Vestige's "58 Radiant damage", 2026-09-02):
-// a flat number with no die expression is invisible to BOTH damage caps —
-// they key on the "N (XdY)" format — so diceless damage is a defect in
-// itself, re-arming every downstream guard at once. Two digits = >=10;
-// tiny flat retaliation ("takes 5 Piercing damage", the quill shape)
-// stays legal — print itself flattens single-die chip damage.
-// (the self-bane exemption mirrors print's one flat shape: the Vampire's
-// "takes 20 Acid damage if it ends its turn in running water")
-const DICELESS_DAMAGE = /\b\d{2,3} (?:Acid|Bludgeoning|Cold|Fire|Force|Lightning|Necrotic|Piercing|Poison|Psychic|Radiant|Slashing|Thunder) damage(?! if it (?:starts|ends) its turn)/;
-// INVENTED CONDITIONS (the Unspoken's "becomes Placid for 1 minute",
-// 2026-09-02 — the Entombed class outside the engine's scope: the writer
-// minting capitalized condition vocabulary). The mechanic under it is
-// often GOOD — the coaching says restructure, never delete: use a
-// standard condition, or describe the state in lowercase prose.
-const STANDARD_STATES = new Set(['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Invisible', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious', 'Exhaustion', 'Bloodied', 'Obscured', 'Hidden', 'Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan', 'Stable']);
-const inventedCondition = (t) => {
-  // " from " / " by " joined 2026-09-20 ("that is Bleeding from the
-  // tollhouse blade's Saber" dodged the lookahead); corpus-swept 0/329
-  // once Stable (the Phase Spider's print state) joined STANDARD_STATES
-  const m = /\b(?:becomes?|becoming|is|are) ([A-Z][a-z]+)(?= for | until | from | by |[.,;]| \()/.exec(t);
-  if (m && !STANDARD_STATES.has(m[1])) return m[1];
-  // the lowercase dialect joined 2026-09-13 (the Sewer Choir's "the
-  // buried condition" — minted vocabulary hiding in lowercase behind
-  // the word "condition" itself)
-  // the CAPITALIZED "the X condition" form (the Hoardvault's "has the
-  // Surprised condition", 2026-09-16 — neither arm above saw it: "has"
-  // is not becomes/is/are, and the arm below is lowercase-only)
-  const m1 = /\bthe ([A-Z][a-z]+) condition\b/.exec(t);
-  if (m1 && !STANDARD_STATES.has(m1[1])) return m1[1];
-  const m2 = /\bthe ([a-z]+) condition\b/.exec(t);
-  if (m2 && !STANDARD_STATES.has(m2[1][0].toUpperCase() + m2[1].slice(1))
-    && !['same', 'new', 'that', 'listed', 'chosen', 'triggering'].includes(m2[1])) return m2[1];
-  return null;
-};
-// TYPED DAMAGE DEFENSES ARE THE DERIVATION ENGINE'S (the hydra's general
-// form, 4 sightings by 2026-09-02: Fused Monarchy P/S immunity, Wickman
-// lit-gated B/P/S, First-Built flat B/P/S at CR 19 ~+60% eHP, Garden
-// Saint's retroactive "resistance against that attack"). The engine
-// derives resistances from the concept's energy — model text never
-// grants them. A TRAIT grant is free and permanent: always mechanical.
-// An ACTION may buy a TEMPORARY typed defense with its own action cost
-// (print's defensive stances) — mechanical only when unbounded.
-// "ignores Resistance" (resistance-piercing) and condition immunities
-// (no "damage" in range) stay out of scope by construction.
-// reduction grammar joined 2026-09-02 (the Gulletmaw's "Damage from
-// bludgeoning, piercing, and slashing attacks is reduced by 5" — flat DR,
-// a defense grammar 2024 print doesn't even use; resistance or nothing)
-// "ignores damage from" joined 2026-09-04 (the Provost's cloak "ignores
-// damage from nonmagical fire" — grant-verb evasion, sighting seven)
-const DEFENSE_GRANT = /(?:gain(?:s|ing)?|ha(?:s|ve|ving)|grant(?:s|ing)?|is|becomes?) (?:[Rr]esistan(?:ce|t)|[Ii]mmun(?:e|ity)) to [^.]{0,60}damage|[Dd]amage [^.]{0,60}(?:is|are) reduced by \d+|takes? \d+ less damage|reduc(?:es?|ing) (?:all |any )?damage (?:it takes|taken|dealt to it) by \d+|ignor\w+ (?:all )?damage from/;
-// condition immunity is the header's jurisdiction (batch two 2026-09-05:
-// Ethereal Stillness + Preserved in Brine both self-granted condition
-// immunities from wildcard traits). 0/329 print traits self-grant one —
-// the three trait-text "immune to" sightings are 24-hour success
-// clauses on OTHER creatures. Self-anchored, so counterplay clauses
-// ("A creature immune to the Deafened condition is unaffected") pass.
-// SCOPE: fires on a SUITE (2+ conditions in one grant) or any control
-// condition — a single flavor immunity the concept earns stays legal
-// (the Headless precedent, pinned: "Immunity to the Frightened
-// condition" on a headless rider). Phantom chassis now carry print's
-// incorporeal suite as donor data, so a phantom trait-grant is a pure
-// duplicate of the header.
-const CONTROL_CONDITIONS = /Grappled|Restrained|Prone|Paralyzed|Stunned|Incapacitated|Unconscious|Petrified/;
-// the type packages, shared by the header stamp and the vacuous-
-// resilience guard (two constructs shipped Advantage-vs-Charmed/
-// Frightened beside header immunity to both, 2026-09-10)
-export const TYPE_FLOOR = {
-  Construct: { damage: ['Poison'], conditions: ['Charmed', 'Exhaustion', 'Frightened', 'Paralyzed', 'Petrified', 'Poisoned'] },
-  Undead: { damage: ['Poison'], conditions: ['Exhaustion', 'Poisoned'] },
-  Ooze: { damage: [], conditions: ['Charmed', 'Deafened', 'Exhaustion', 'Frightened', 'Grappled', 'Prone', 'Restrained'] }, // Grappled/Restrained joined 2026-09-11 (3/4 print oozes)
-  Elemental: { damage: ['Poison'], conditions: ['Exhaustion', 'Poisoned'] }, // 12/17, 10-12/17
-  Fiend: { damage: ['Poison'], conditions: ['Poisoned'], resist: ['Cold'] }, // 19/29 imm, 21/29 res
-  Celestial: { damage: [], conditions: ['Charmed'], resist: ['Radiant'] }, // 7/13, 8/13
-};
-const vacuousResilience = (t, type) => {
-  const floor = TYPE_FLOOR[type];
-  if (!floor) return null;
-  const m = /(?:Advantage on saving throws against|[Rr]esistan(?:ce|t) to|[Ii]mmun(?:e|ity) to)[^.]{0,60}?\b(Charmed|Frightened|Paralyzed|Petrified|Poisoned|Exhaustion|Deafened|Prone)\b/.exec(t);
-  return m && floor.conditions.includes(m[1]) ? m[1] : null;
-};
-// THE DEAD NAME (the Pitbreaker's "marked with Shield Sunder",
-// 2026-09-15): the model's trait may cite its PLANNED wildcard by name;
-// when the wildcard dies and the library ships under another name (or
-// the slot drops), the citation orphans. The dead name is known
-// exactly, so the sweep has no false positives: sentences citing it
-// drop, and a row left empty drops with them.
-// drop every sentence of an entry that carries `token`; returns the
-// remaining text ('' when nothing survives). Shared by the dead-name sweep
-// and the invented-condition actuator.
-export const stripSentencesWith = (text, token) => {
-  const esc = String(token).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  // leave the neighbouring sentence's trailing space alone, then collapse
-  return String(text ?? '').replace(new RegExp(`[^.!?]*\\b${esc}\\b[^.!?]*[.!?]`, 'gi'), '').replace(/\s{2,}/g, ' ').trim();
-};
 const sweepDeadName = (sectionsMap, deadName, keepRow, traceFn) => {
   const bare = String(deadName ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '').trim();
   if (bare.length < 4) return;
@@ -996,144 +265,49 @@ const SELF_AC_GRANT = /\b(?:[Ii]t|[Tt]he creature) (?:gains?|has) a ?\+\d+ (?:bo
 // entry verb somewhere on the sheet — print's own form is False
 // Appearance's "while it remains motionless", a state the rules know.
 const STATE_VOCAB = new Set(['bloodied', 'hidden', 'grappled', 'restrained', 'charmed', 'frightened', 'paralyzed', 'petrified', 'poisoned', 'stunned', 'blinded', 'deafened', 'prone', 'incapacitated', 'invisible', 'unconscious', 'engulfed', 'swallowed', 'caged', 'concealed', 'obscured', 'submerged', 'immersed', 'mounted', 'grounded', 'winged', 'damaged', 'reduced', 'wounded', 'seated']);
-const undefinedState = (t, sheetText) => {
-  const m = /[Ww]hile (?:it is |the creature is |the \w+ is )?(\w+ed)\b/.exec(t);
-  if (m) {
-    const word = m[1].toLowerCase();
-    if (!STATE_VOCAB.has(word)) {
-      const root = word.replace(/ed$/, '');
-      if (!new RegExp(`\\b${root}(?:s|es|ing)\\b`, 'i').test(`${sheetText} ${t}`)) return m[1];
-    }
-  }
-  // the relative-clause form (the Prelate's "creatures other than
-  // those it has blessed", 2026-09-16): a qualifier keyed on a verb
-  // no row on the sheet performs
-  const mr = /(?:other than|except) (?:those|creatures?|any creature) (?:it|the creature) has (\w+?)(?:ed|en)\b/.exec(t);
-  if (mr && !new RegExp(`\\b${mr[1]}(?:s|es|ed|en|ing)?\\b`, 'i').test(sheetText)) return `it has ${mr[1]}ed`;
-  // the possessive-PROP form (the Chapel's "within 5 feet of its
-  // portable reliquary shrine", 2026-09-14 — nothing on the sheet
-  // places a shrine; scene surfaces like "a stone wall" stay legal
-  // because they are never possessive)
-  const mp = /[Ww]hile [^,.]{0,50}within \d+ feet of its ([\w\s-]{3,32}?)[,.]/.exec(t);
-  if (mp) {
-    const head = mp[1].trim().split(/\s+/).pop();
-    if (!new RegExp(`\\b${head}\\b`, 'i').test(sheetText)) return `its ${mp[1].trim()}`;
-  }
-  return null;
-};
-const conditionImmunityGrant = (t, name = null) => {
-  // the model sometimes writes the block's own NAME as subject ("the
-  // gallows bed has immunity to..." — dodged the it/the-creature anchor,
-  // 2026-09-08); normalize the name to "the creature" before testing
-  let s = String(t);
-  if (name) s = s.replace(new RegExp(`[Tt]he ${String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'gi'), 'the creature');
-  // the can't-be inflection joined 2026-09-13 (the Meregrave's "can't be
-  // Grappled, Restrained, or knocked Prone" in a trait — 0/329 print
-  // traits use the form; immunity grammar without the word immunity)
-  const m = /\b(?:[Ii]t|[Tt]he creature) (?:is|becomes?|has|gains?) [Ii]mmun(?:e|ity) to ((?:the )?[A-Z][^.]{0,80})/.exec(s)
-    ?? /\b(?:[Ii]t|[Tt]he creature) can(?:'|no)?t be ((?:knocked )?[A-Z][^.]{0,80})/.exec(s)
-    // the compound-predicate dodge (the Bog Lantern, 2026-09-13: "The
-    // bog lantern can move through a space... and can't be Grappled or
-    // Restrained" — the subject sits a clause away from the verb)
-    ?? /\b(?:[Ii]t|[Tt]he creature)\b[^.]{0,100}(?:\band |,\s*(?:and )?)can(?:'|no)?t be ((?:knocked )?[A-Z][^.]{0,80})/.exec(s);
-  if (!m) return false;
-  return (m[1].match(/[A-Z][a-z]+/g) ?? []).length >= 2 || CONTROL_CONDITIONS.test(m[1]);
-};
-// chassis-ownership map (3 specimens in 2 batches: Veil of Brambles and
-// Sudden Drop both re-invented the hide-cycle — Sudden Drop dodging the
-// day-old guard by inflection, "hide as a bonus action"; Ethereal
-// Stillness restated Incorporeal Movement next to it on the same sheet)
-// — a wildcard never restates an economy or trait the chassis carries
-const CHASSIS_OWNED = [
-  [/takes? the Hide action|can take the Hide action|\bhides? as a bonus action\b/i, /takes the Hide action/, 'the hide-cycle (its bonus action grants the Hide action)'],
-  // "occupied spaces" joined 2026-09-05 (Regalia of the Rounds dodged
-  // the key by synonym in its debut batch — the arms race, incorporeal
-  // edition)
-  [/move through (?:other creatures|occupied spaces)/i, /move through other creatures/, 'incorporeal movement (its rules trait)'],
-  // the disguise key (batch three: False Loot Disguise and Hidden Among
-  // Stone both restated False Form's job beside it)
-  [/indistinguishable from/i, /indistinguishable from/, 'the disguise (its False Form bonus action)'],
-  // the anchor key (2026-09-10: the coaching taught the immovability
-  // grammar, then the grammar became chassis — Unbreached Bulwark
-  // duplicated Immovable one line above it)
-  [/automatically succeeds? on saving throws (?:made )?(?:to avoid being|against being|against effects that would)[^.]{0,20}mov|can(?:'|no)t be moved against its will/i, /automatically succeeds on saving throws made to avoid being moved/, 'the anchor (its Immovable trait)'],
-  // the footing key (2026-09-15: Sepulchral Steed restated Grave
-  // Rider's ignores-Difficult-Terrain one line above it)
-  [/ignores? Difficult Terrain/i, /ignores Difficult Terrain/, 'the footing (its chassis trait)'],
-  // the protection-aura key (2026-09-14: the Chapel's wildcard granted
-  // a frightened-save aura one line above Guard Aura's blanket
-  // save-advantage — a strict subset)
-  [/(?:allies|creatures of (?:its|the \w+'s) choice) within \d+ feet [^.]{0,60}[Aa]dvantage on saving throws/, /allies [^.]{0,60}Advantage on saving throws/, 'the protection aura (its Guard Aura)'],
-  // the swarm-movement key (2026-09-13: Marsh-Bound Procession's "can
-  // move through the space of any Prone creature" — a narrower
-  // restatement of the Swarm trait one line down)
-  [/move through the spaces? of (?:any |other )?\w{0,12} ?creatures?|occup(?:y|ies) (?:another creature's|the same) space/i, /occupy another creature's space/, 'the swarm rules (its Swarm trait)'],
+// name-claim bank for the Burning-Claw class (owner: "either have fire
+// damage or just call it Claw") — validated, so the RETRY reconciles it:
+// the model either supplies the energy or drops the claim word.
+// word-boundaried: 'ice' must not match inside 'Dice' (the Gambler died
+// 3x on "Cursed Dice Blast" claiming Cold, 2026-08-19)
+const NAME_CLAIMS = [
+  [/\b(?:burn\w*|flam\w*|fire\w*|cinder\w*|scorch\w*|sear\w*|ember\w*|molten)\b/i, 'Fire'],
+  [/\b(?:frost\w*|ice|icy|chill\w*|rime\w*|gelid|freez\w*|froz\w*)\b/i, 'Cold'],
+  [/\b(?:storm\w*|lightning|volt\w*|shock\w*|thunder\w*)\b/i, null], // Lightning OR Thunder ('spark' dropped: metaphorical range too wide — Stolen Spark, 2026-08-19)
+  [/\b(?:venom\w*|toxic|poison\w*)\b/i, 'Poison'],
+  [/\b(?:acid\w*|caustic|corrosi\w*)\b/i, 'Acid'],
+  // holy/sacred/sunlight joined 2026-08-27: "only holy light scours it
+  // clean" failed the Radiant warrant check with the warrant in hand
+  [/\b(?:radiant|hallow\w*|holy|sacred|blessed|sunlight|consecrat\w*)\b/i, 'Radiant'],
+  [/\b(?:necrotic|grave-?rot)\b/i, 'Necrotic'],
 ];
-const chassisOwned = (text, rows) => {
-  for (const [grant, owns, label] of CHASSIS_OWNED) {
-    // donor text is chassis-owned whether or not the row renames — the
-    // rules-flag gate structurally excluded every renameable donor row
-    // (the mounted Mobility Trait; Deathless Pursuit duplicated it
-    // verbatim and vetted clean, 2026-09-15). Model-touched rows stay
-    // out: their text is not the chassis's.
-    if (grant.test(text) && rows.some((e) => !e.model && owns.test(e.text ?? ''))) return label;
-  }
-  return null;
+// icon-owned vocabulary may not enter a rename (the Vorpal Saber class)
+const RESERVED_NAMES = /vorpal|phylactery|holy avenger|sphere of annihilation|tarrasque|beholder|mind flayer/i;
+// the type packages, shared by the header stamp and the vacuous-
+// resilience guard (two constructs shipped Advantage-vs-Charmed/
+// Frightened beside header immunity to both, 2026-09-10)
+export const TYPE_FLOOR = {
+  Construct: { damage: ['Poison'], conditions: ['Charmed', 'Exhaustion', 'Frightened', 'Paralyzed', 'Petrified', 'Poisoned'] },
+  Undead: { damage: ['Poison'], conditions: ['Exhaustion', 'Poisoned'] },
+  Ooze: { damage: [], conditions: ['Charmed', 'Deafened', 'Exhaustion', 'Frightened', 'Grappled', 'Prone', 'Restrained'] }, // Grappled/Restrained joined 2026-09-11 (3/4 print oozes)
+  Elemental: { damage: ['Poison'], conditions: ['Exhaustion', 'Poisoned'] }, // 12/17, 10-12/17
+  Fiend: { damage: ['Poison'], conditions: ['Poisoned'], resist: ['Cold'] }, // 19/29 imm, 21/29 res
+  Celestial: { damage: [], conditions: ['Charmed'], resist: ['Radiant'] }, // 7/13, 8/13
 };
-// teleport grammar the guard must see through (arms race, teleport
-// edition: the Toll's "vanishes into the water and repositions to a new
-// hunting ground within 60 feet" — a teleport that never says teleport;
-// "reposition" is 0/329 in print). The LICENSE side stays the bare word:
-// chassis teleport rows say "teleports".
-const TELEPORT_MOVE = /teleport|\breposition(?:s|ed|ing)?\b|vanish\w*[^.]{0,60}\b(?:appears?|reappears?|emerges?)\b/i;
-// a second nickname fractures the sheet (the Still Choir Echo spoke as
-// "the chorister" in one trait and "the echo" in the rest, 2026-09-05)
-// — sentence-initial "The <word>" must be the creature's own short
-// form, its name, or standard frame vocabulary
-const EPITHET_FRAME = new Set(['creature', 'target', 'save', 'effect', 'damage', 'condition', 'conditions', 'area', 'attack', 'attacks', 'first', 'next', 'spell', 'spells', 'roll', 'trigger', 'use', 'uses', 'dc', 'dice', 'turn', 'action', 'grapple', 'hit', 'miss', 'same']);
-// capitalized game vocabulary that legally follows "the" — the epithet
-// scan must not flag "the Hide action" or "the Grappled condition"
-const GAME_CAPS = new Set(['Hide', 'Dash', 'Disengage', 'Dodge', 'Attack', 'Help', 'Search', 'Ready', 'Utilize', 'Grapple', 'Shove', 'Magic',
-  'Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Invisible', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious', 'Exhaustion', 'Bloodied',
-  'Acid', 'Bludgeoning', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Piercing', 'Poison', 'Psychic', 'Radiant', 'Slashing', 'Thunder',
-  'Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma',
-  'Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan',
-  'Speed', 'Ethereal', 'Material', 'Plane', 'Difficult', 'Terrain', 'Opportunity', 'Bright', 'Dim', 'Light', 'Darkness', 'Total', 'Cover', 'Hit', 'Saving', 'Recharge', 'Multiattack', 'Initiative', 'Legendary', 'Resistance', 'Immunity', 'Emanation', 'DC', 'AC']);
-const epithetDrift = (text, name, inline) => {
-  const ok = new Set(EPITHET_FRAME);
-  for (const part of `${name ?? ''} ${inline ?? ''}`.toLowerCase().split(/\s+/)) if (part) ok.add(part);
-  const seen = (word) => {
-    // a word the text POSSESSES is a body part or belonging, not a
-    // nickname ("The creature's quills scream... The quills re-form" —
-    // the first live FP, an iron-quilled boar 2026-09-05)
-    if (new RegExp(`(?:its|'s) ${word}\\b`, 'i').test(text)) return null;
-    return ok.has(word.toLowerCase()) ? null : word.toLowerCase();
-  };
-  for (const m of String(text).matchAll(/(?:^|\.\s+)The ([a-z]+)\b/g)) {
-    const hit = seen(m[1]);
-    if (hit) return hit;
-  }
-  // capitalized epithets at ANY position ("the Silence can use its
-  // reaction" — dodged the sentence-initial lowercase scan, 2026-09-08)
-  for (const m of String(text).matchAll(/\b[Tt]he ([A-Z][a-z]+)\b/g)) {
-    if (GAME_CAPS.has(m[1])) continue;
-    const hit = seen(m[1]);
-    if (hit) return hit;
-  }
-  return null;
+// THE DEAD NAME (the Pitbreaker's "marked with Shield Sunder",
+// 2026-09-15): the model's trait may cite its PLANNED wildcard by name;
+// when the wildcard dies and the library ships under another name (or
+// the slot drops), the citation orphans. The dead name is known
+// exactly, so the sweep has no false positives: sentences citing it
+// drop, and a row left empty drops with them.
+// drop every sentence of an entry that carries `token`; returns the
+// remaining text ('' when nothing survives). Shared by the dead-name sweep
+// and the invented-condition actuator.
+export const stripSentencesWith = (text, token) => {
+  const esc = String(token).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // leave the neighbouring sentence's trailing space alone, then collapse
+  return String(text ?? '').replace(new RegExp(`[^.!?]*\\b${esc}\\b[^.!?]*[.!?]`, 'gi'), '').replace(/\s{2,}/g, ' ').trim();
 };
-const DEFENSE_DURATION = /until the (?:start|end) of|for 1 (?:minute|round)/i;
-// pipeline self-commentary in output (the Living Battlefield: "This is
-// purely cosmetic; it grants no mechanical benefit or trait" — the
-// writer narrating guard-compliance; print states flavor and stops)
-// bookkeeping vocabulary joined 2026-09-04 ("tracked as a pool of two
-// spell slots" — NPC blocks never surface slot accounting; engine-vocab
-// family wearing rules-speak)
-const SELF_DISCLAIMER = /purely cosmetic|no mechanical (?:benefit|effect)|flavor only|cosmetic only|tracked as a|spell slots?\b/i;
-// unconditional OA-immunity is the skirmisher's chassis-priced signature
-// (Rust-Thorn's Rusting Grip carried it as a free clause-rider on a
-// brute); a sentence carrying its own condition (during a charge) is fine
-const OA_FREEDOM = (t) => t.split(/(?<=\.)\s+/).some((s) => /(?:doesn't|does not|never) provokes? Opportunity Attacks/i.test(s) && !/\b(?:when|while|during|if|as part of)\b/i.test(s));
 // the engulf engine's fiction follows the body (critic's parameterization,
 // implemented as a closed menu — owner widened it 2026-08-27: "not enough
 // verbs"): one priced row, seven verbal skins. Four are print-verbatim
@@ -1197,9 +371,8 @@ function normalizeTypeFields(p) {
  * informed round instead of burning blind retries one field at a time.
  */
 export function reskinDefects(scaled, p, { energy = null, mix = null } = {}) {
-  const hasSlotD = Object.values(scaled.sections ?? {}).flat().some((e) => e.wildcard_slot);
-  if (!p || typeof p.name !== 'string' || !p.renames || (hasSlotD && typeof p.wildcard !== 'string')) {
-    return ['unparseable, or name/renames/wildcard missing'];
+  if (!p || typeof p.name !== 'string' || !p.renames) {
+    return ['unparseable, or name/renames missing'];
   }
   const defects = [];
   const keys = renameKeysOf(scaled);
@@ -1388,7 +561,7 @@ export function makeReskinValidator(scaled, { energy = null, mix = null } = {}) 
 export function validateReskinResponse(jsonString) {
   try {
     const p = JSON.parse(String(jsonString).replace(/^```json\s*|```\s*$/g, '').trim());
-    return !!p && typeof p.name === 'string' && !!p.renames && typeof p.wildcard === 'string';
+    return !!p && typeof p.name === 'string' && !!p.renames;
   } catch { return false; }
 }
 
@@ -1414,11 +587,10 @@ export async function generateReskin(options, callLLM) {
   // pickDonor): a mis-wired route fails loudly, never ships the wrong
   // chassis family
   const archetype = options.archetype;
-  // THE TEMPLATE SIGNATURE (owner 2026-09-21) is the default; the free-text
-  // wildcard + vet chain + repair loop survive behind signatureMode 'freetext'
-  // (localStorage['statblock-signature-freetext']='1' in the Vue) until the
-  // paired blind read decides
-  const templateMode = options.signatureMode !== 'freetext';
+  // THE TEMPLATE SIGNATURE (owner 2026-09-21) is the only signature path;
+  // the free-text wildcard, its vet chain, and its repair loop were retired
+  // 2026-09-22 (goldens 19/19 on the template path; the kill switch never
+  // shipped a different block to a user)
   if (!archetype) throw new Error('generateReskin requires an explicit archetype — no silent default');
   const progress = (phase, data) => { try { onProgress?.({ phase, ...data }); } catch { /* display-only */ } };
   // mechanics-informed pick (3rd sighting — efreet teleport, the Gulper
@@ -1579,17 +751,11 @@ export async function generateReskin(options, callLLM) {
     trace('claim gate:', `CR ${cr} with no claimed mechanics — the wildcard slot drops (print: 74% of CR<=2 blocks carry no non-attack action)`);
   }
   if (!traitWildcardAllowed) trace('claim gate:', 'the trait wildcard is closed at CR <= 2 — the chassis carries the traits');
-  const hasSlotG = Object.values(scaled.sections).flat().some((eG) => eG.wildcard_slot);
-  const reskinPrompt = buildReskinPrompt(scaled, { concept, takenNames: options.takenNames ?? [], signatureElements: options.signatureElements ?? [], energy: options.energy ?? null, mix: options.mix ?? null, mind: options.mind ?? null, resolvedType: options.resolvedType ?? null, fixedName, traitWildcard: traitWildcardAllowed && !templateMode, signature: templateMode ? 'template' : 'freetext' });
-  const raw = await callLLM(reskinPrompt, (j) => {
-    if (validateReskinResponse(j)) return true;
-    if (hasSlotG && !templateMode) return false;
-    // slotless (claim-gated) blocks need no wildcard field
-    try { const q = JSON.parse(String(j).replace(/^```json\s*|```\s*$/g, '').trim()); return !!q && typeof q.name === 'string' && !!q.renames; } catch { return false; }
-  });
+  const reskinPrompt = buildReskinPrompt(scaled, { concept, takenNames: options.takenNames ?? [], signatureElements: options.signatureElements ?? [], energy: options.energy ?? null, mix: options.mix ?? null, mind: options.mind ?? null, resolvedType: options.resolvedType ?? null, fixedName });
+  const raw = await callLLM(reskinPrompt, validateReskinResponse);
   let p = (() => { try { return normalizeTypeFields(JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim())); } catch { return null; } })();
   if (!p) throw new Error('reskin call failed — the pilot fails loudly, never silently');
-  if (templateMode) { p.wildcard = ''; p.wildcard_economy = 'action'; delete p.trait_wildcard; } // the defect checker and the weld read these; nothing free-text exists yet
+  p.wildcard = ''; p.wildcard_economy = 'action'; delete p.trait_wildcard; // the defect checker and the weld read these; nothing free-text exists
   for (let round = 1; round <= 2; round += 1) {
     const defects = reskinDefects(scaled, p, { energy: options.energy ?? null, mix: options.mix ?? null });
     if (!defects.length) break;
@@ -2051,8 +1217,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           e.text = e.text.replace(/\(spell save DC (\d+)\)/, (m0, dc) => `(spell save DC ${dc}, +${Number(dc) - 8} to hit with spell attacks)`);
         }
       }
-      if (e.wildcard) pendingWildcard = e; // vetted after the trait lands (reference contract + repair)
-      if (e.wildcard && engineIsSignature && !templateMode) { e.dropSlot = true; pendingWildcard = null; } // template mode: the menu excludes containment, so the fit builds the concept's OTHER half
+      if (e.wildcard) pendingWildcard = e; // the slot row: the template signature replaces it (or the library seed does)
       delete e.was; delete e.wildcard; delete e.gate;
     }
   }
@@ -2133,157 +1298,6 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       }
     }
   }
-  let traitShipped = null; let traitRejected = null;
-  // pattern fixes (2026-08-25): model-written text gets the rename map
-  // (the Pale Surveyor's trait cited "Ranged Save Effect" — donor
-  // vocabulary that the row-rename pass never touched because wildcards
-  // ship after that loop) and the closed metering vocabulary (print
-  // meters as X/Day, Recharge, rest-scoped, until-end-of-turn, 1 minute
-  // — PB-counts, per-encounter, and round-counts rewrite to it).
-  const applyRenamesToText = (t) => {
-    for (const [old, fresh] of renamed) t = t.replace(new RegExp(`${old}(?! Roll)`, 'g'), fresh);
-    return t;
-  };
-  const normalizeMeters = (t) => t
-    .replace(/a number of times (?:per day )?equal to (twice )?(?:its )?proficiency bonus(?: per day)?/gi,
-      (m, twice) => `${twice ? scaled.pb * 2 : scaled.pb}/Day`)
-    .replace(/\b(once|twice|thrice|two times|three times|(\d+) times?) per day\b/gi,
-      (m, word, num) => `${num ?? ({ once: 1, twice: 2, thrice: 3, 'two times': 2, 'three times': 3 })[word.toLowerCase()]}/Day`)
-    .replace(/once per (?:encounter|combat)/gi, '1/Day')
-    .replace(/for (?:two|2) rounds/gi, 'until the end of its next turn')
-    .replace(/for (?:three|3) rounds/gi, 'for 1 minute');
-  // register-caps actuator (probe smoke, 2026-08-26: 6 of 8 blocks shipped
-  // advisory caps findings — lint saw them, nothing fixed them). All
-  // single closed-vocabulary token swaps, below the grammar line per the
-  // no-prose-surgery doctrine; clause-level register (prone-vocab) stays
-  // detect-and-repair.
-  const capRegister = (t) => capTerms(t)
-    .replace(/\b(acid|bludgeoning|cold|fire|force|lightning|necrotic|piercing|poison|psychic|radiant|slashing|thunder)(?= damage\b)/g, (m) => m[0].toUpperCase() + m.slice(1))
-    .replace(/\b(?<=(?:its|the) )speed\b/g, 'Speed')
-    .replace(/\bopportunity attack(s?)\b/g, 'Opportunity Attack$1')
-    .replace(/\bdifficult terrain\b/g, 'Difficult Terrain')
-    // "adjacent to" is not 5e vocabulary in either edition (Gutter Glare
-    // shipped it past the advisory lint, 2026-09-04) — a closed
-    // phrase-for-phrase swap; bare "adjacent" stays detect-and-repair
-    .replace(/\badjacent to\b/gi, 'within 5 feet of')
-    .replace(/\bhit point(s?)\b/g, 'Hit Point$1')
-    // 2024 keyword swap (Tomb Warden, 2026-08-27): corpus writes
-    // "Bloodied" x16, the 2014 half-HP phrase x0 — closed phrase, one
-    // keyword, safely below the grammar line
-    .replace(/\bha(s|ve) fewer than half (?:its|their) [Hh]it [Pp]oints(?: remaining)?\b/g,
-      (m, v) => (v === 've' ? 'are Bloodied' : 'is Bloodied'))
-    // the vacuous 1-HP clause (4 sightings: Tide King, Cairn, Molten
-    // Crown, Slag Crown) — always true, does nothing; a fixed closed
-    // phrase, stripped whole at both positions
-    .replace(/(^|\. )[Ww]hile (?:it|the [\w' -]{1,30}?) has at least 1 Hit Point,\s*([a-z])/g, (m, pre, c) => pre + c.toUpperCase())
-    .replace(/,? while (?:it|the [\w' -]{1,30}?) has at least 1 Hit Point/g, '');
-  const polishModelText = (t) => capRegister(applyRenamesToText(normalizeMeters(t)));
-  const shipTrait = (v, label, flag) => {
-    (sections.Traits = sections.Traits ?? []).unshift({ name: v.name, text: polishModelText(v.text), model: true });
-    traitShipped = v.name;
-    trace(label, `"${v.name}"${flag ? ` — shipped over a judgment flag (${flag})` : ''}`);
-  };
-  const shipWildcard = (v, label, flag) => {
-    if (v.riderOn) {
-      // rider_on: the wildcard is a clause on an existing attack — append
-      // it after the damage clause (print's rider idiom) and retire the
-      // slot entry, whose seat the rider consumed
-      const bare = (n) => n.replace(/ \(.*\)$/, '').trim().toLowerCase();
-      let host = Object.values(sections).flat().find((e2) => bare(e2.name) === bare(v.riderOn));
-      // a rider rides an ATTACK — "When the creature hits" is
-      // meaningless on a save action (Branding Gaze, 2026-09-14: the
-      // model pointed rider_on at its own save row). Re-home to the
-      // first attack row; if none exists the fallback path below
-      // handles the slot as usual.
-      if (host && !/Attack Roll:/.test(host.text ?? '')) {
-        const attackHost = Object.values(sections).flat().find((e2) => /Attack Roll:/.test(e2.text ?? '') && !e2.gate);
-        trace('rider re-homed —', `"${host.name}" makes no attack roll; the rider rides ${attackHost ? `"${attackHost.name}"` : 'nothing (dropped)'}`);
-        host = attackHost ?? null;
-      }
-      const weldRider = (row, label2) => {
-        // a damage- or save-carrying rider fires per HIT — stamp the
-        // print rate limit only when the draft didn't write its own
-        // (append-only, per the no-prose-surgery doctrine)
-        let riderText = polishModelText(v.text);
-        const riderPriced = /\d+ \(\d+d\d+/.test(riderText) || /must (?:succeed|make)[^.]{0,60}[Ss]aving [Tt]hrow|Saving Throw:/.test(riderText);
-        if (riderPriced && !/once (?:per|a|each) (?:turn|round)/i.test(riderText)) riderText += ' This effect can be applied only once per turn.';
-        row.text = `${row.text} ${riderText}`;
-        // a rider-hosting row carries MODEL text now — it must be
-        // rewrite-eligible (the Emberward's Dawn-Throw, 2026-09-04:
-        // five audit findings on rider garbles, every rewrite blocked
-        // by chassis-immunity because the row was never marked)
-        row.model = true;
-        for (const es of Object.values(sections)) {
-          const idx = es.indexOf(pendingWildcard);
-          if (idx !== -1) es.splice(idx, 1);
-        }
-        trace(label2, `${flag ? v.text : v.text.slice(0, 80)}${flag ? ` — shipped over a judgment flag (${flag})` : ''}`);
-      };
-      if (host && /If the .{0,60}(?:moved|flew) at least/.test(host.text)) {
-        // RE-ANCHOR FIRST (the Petrel's Dazzling Static, 2026-08-26):
-        // before demoting to action/trait, offer the rider to a
-        // rider-free sibling attack row — the declared host is often the
-        // wrong twin (chain lightning that "arcs from its beak" was
-        // declared onto the talon row; the beak row sat free)
-        const twin = Object.values(sections).flat().find((e2) => e2 !== host && e2 !== pendingWildcard
-          && /Attack Roll:/.test(e2.text) && !/If the .{0,60}(?:moved|flew) at least/.test(e2.text));
-        if (twin) {
-          weldRider(twin, `rider re-anchored to "${twin.name}" ("${host.name}" already carries a rider):`);
-          return;
-        }
-        // one rider per attack (critic's cap, 2026-08-20): the charge/dive
-        // rider is already aboard — a second fused mechanic made 4-6
-        // sentence attacks with two Prone clauses (Corroded Lance)
-        // action-shaped content (a targeting save or damage) stays an
-        // ACTION — the cap's first fallback filed an 18-damage save
-        // effect into Traits (Shriek of the Crags, 2026-08-24)
-        const actionShaped = /\d+ \(\d+d\d+/.test(v.text) || /(?:one|each) (?:creature|target)[^.]{0,80}(?:must succeed|must make|saving throw)/i.test(v.text);
-        trace('rider host already carries a rider —', `"${host.name}"; filing as ${actionShaped ? 'an action' : 'a trait'} instead`);
-        if (!actionShaped) {
-          pendingWildcard.moveTo = 'Traits';
-          pendingWildcard.text = polishModelText(/^When /i.test(v.text) && !/once (?:per|a|each) (?:turn|round)/i.test(v.text) ? `${v.text} It can do this only once per turn.` : v.text);
-        } else {
-          pendingWildcard.text = polishModelText(v.text);
-        }
-        return;
-      }
-      // A FRAME-BEARING rider is an ACTION wearing a rider's economy
-      // (critic 2026-09-15, the Sludgehold's tar splash: an unpriced
-      // two-target save welded onto a 54-damage Multiattack ran ~90 DPR
-      // against a 60 budget — the seventh signature-row wrapper). A
-      // rider rides the hit and addresses "the target"; text that opens
-      // its OWN targeting frame re-homes to a standalone action, where
-      // the Multiattack replacement clause prices it as a traded attack.
-      if (/\b(?:one|each|any)(?: \w+){0,3} creature[^.]{0,30}?within \d+ feet/i.test(v.text)) {
-        const bareText = v.text.replace(/^When(?:ever)? (?:it|the [\w' -]{1,30}?) hits with this attack,?\s*/i, '');
-        pendingWildcard.text = polishModelText(bareText.charAt(0).toUpperCase() + bareText.slice(1));
-        trace('rider re-homed to an action —', 'it opens its own targeting frame; the replacement clause prices it as a traded attack');
-        return;
-      }
-      if (host && host !== pendingWildcard) {
-        weldRider(host, `rider appended to "${host.name}":`);
-        return;
-      }
-      trace('rider host not found —', `"${v.riderOn}"; filing as a trait instead`);
-      pendingWildcard.moveTo = 'Traits';
-      pendingWildcard.text = polishModelText(v.text);
-      return;
-    }
-    pendingWildcard.text = polishModelText(v.text);
-    pendingWildcard.model = true;
-    if (v.moveTo) pendingWildcard.moveTo = v.moveTo;
-    if (v.liftedGate && !/\(/.test(pendingWildcard.name)) pendingWildcard.name += ` (${v.liftedGate})`;
-    trace(label, `${flag ? v.text : v.text.slice(0, 100)}${flag ? ` — shipped over a judgment flag (${flag})` : ''}`);
-  };
-  if (traitWildcardAllowed && !templateMode) {
-    const v = vetTraitWildcard(p.trait_wildcard, sections, { name: p.name, inline, archetype, type: p.type });
-    if (v.okay) shipTrait(v, 'trait wildcard:');
-    else if (!v.silent) {
-      traitRejected = v;
-      trace('trait wildcard rejected —', `${v.why}: ${v.draft.slice(0, 120)}`);
-    }
-  }
-  let wcRejected = null;
   let wcDropped = false;
   let libraryDrawn = false;
   let libraryGenericName = null;
@@ -2303,7 +1317,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // in one blind pass. The main call's wildcard survives as the
   // never-fail fallback when this call dies; vet, repair, pivot, and
   // the library are unchanged downstream.
-  if (templateMode && (pendingWildcard || body)) { // body lines have no slot row but still get a TRAIT seat (three seatless bodies, the wide run)
+  if (pendingWildcard || body) { // body lines have no slot row but still get a TRAIT seat (three seatless bodies, the wide run)
     // THE TEMPLATE SIGNATURE — create (plain words) → tag → fit (closed
     // menu) → render at the sheet's numbers → ship; a miss logs and the
     // library seed stands in. No vet, no repair: rules text is never free.
@@ -2573,222 +1587,6 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         trace('signature template (trait):', `${traitT.template} -> Traits/"${traitT.row.name}" ("${traitT.because}")`);
       }
     }
-  } else {
-  if (pendingWildcard) {
-    try {
-      const sheetLines = Object.entries(sections)
-        .map(([sec2, es2]) => es2.filter((e2) => e2 !== pendingWildcard)
-          .map((e2) => `- [${sec2}] ${e2.name}: ${e2.text}`).join('\n')).filter(Boolean).join('\n');
-      const el1 = (options.signatureElements ?? [])[0];
-      const seatLine = (typeof el1 === 'string' ? el1 : el1?.element) ?? null;
-      // OBJECT RIDER (2026-09-20; the paired design read's one lost round):
-      // the concept named "a notched saber" and the live pipeline made the
-      // notch mechanical ON the saber's row three times over, while this
-      // path seated the object as a passive trait and let the identity
-      // drift onto the dagger. Now: when an OBJECT element's head noun
-      // names an attack row on the assembled sheet, the ENGINE decides the
-      // slot — the wildcard rides that row — and the model writes only the
-      // payload. Templating over authoring: the rider grammar, the weld,
-      // the once-per-turn stamp and the frame ban all already exist.
-      const objEl = (options.signatureElements ?? []).find((e2) => e2 && typeof e2 === 'object' && e2.kind === 'object');
-      let riderHost = null;
-      if (objEl && !String(p.wildcard_economy ?? '').trim().toLowerCase().startsWith('rider_on:')) {
-        // a compound element ("notched saber AND off-hand dagger") names its
-        // PRIMARY object first — taking the last word rode the dagger and
-        // left the saber plain, the very drift this exists to stop
-        const head = String(objEl.element).toLowerCase().split(/\s+(?:that|which|who)\s+/)[0]
-          .split(/\s+(?:and|with|or)\s+|,/)[0]
-          .replace(/^(?:a|an|the|its|his|her|their)\s+/, '').split(/\s+of\s+/)[0].trim().split(/\s+/).pop()?.replace(/s$/, '');
-        if (head && head.length > 2) {
-          riderHost = Object.values(sections).flat().find((e2) => e2 !== pendingWildcard && /Attack Roll:/.test(e2.text ?? '')
-            && !/If the .{0,60}(?:moved|flew) at least|When (?:it|the [\w' -]{1,30}?) hits with this attack/i.test(e2.text ?? '')
-            && new RegExp(`\\b${head}s?\\b`, 'i').test(e2.name ?? '')) ?? null;
-        }
-      }
-      if (riderHost) {
-        p.wildcard_economy = `rider_on:${riderHost.name.replace(/ \(.*\)$/, '')}`;
-        trace('object rider:', `"${objEl.element}" rides "${riderHost.name}" — the engine chose the slot; the model writes the payload`);
-      }
-      const targetLine = riderHost
-        ? `\nSIGNATURE TARGET: the concept names "${objEl.element}", and the row "${riderHost.name}" IS that object. Make it mechanical ON that row: write ONLY a rider clause that begins "When the creature hits with this attack, " — a bounded effect the hit itself pays for (a condition with a duration, a small extra damage die, or a debuff on the target). Address only "the target"; no new targeting frame, no range, no second target, no use gate.`
-        : (seatLine ? `\nSIGNATURE TARGET: build "${seatLine}" — the rows above already OWN their own fiction; never write another version of one.` : '');
-      const informedPrompt = `You are writing the signature action for a NEARLY-COMPLETE D&D monster statblock. Everything below is already final — design the ONE action that best COMPLEMENTS it.
-THE SHEET (${p.name}, CR ${cr}, AC ${scaled.ac}, HP ${scaled.hp}):
-${sheetLines}
-CONCEPT: ${concept}${targetLine}
-INTERLOCK, don't duplicate: key off a condition a row above applies, or apply a state those rows then exploit (print's Mummy glare escalates on its own fear).
-THE TEN COMMANDMENTS:
-1. The monster is 'the creature'; its victim is 'the target'; never 'you'.
-2. Establish the target first ("one creature within 30 feet" or a Saving Throw frame) before saying 'the target'.
-3. One save per action, always DC ${scaled.dc}; escalate on an existing condition, never with a second roll.
-4. Damage as dice with the average — at most ${Math.round(scaled.per_hit * 1.2)} average. SAVE damage is PURE dice ("18 (4d8)"), never dice + a bonus. No attack rolls — the rows above carry the attacks.${options.energy ? ` Damage types: ${options.energy} or a physical type only.` : ''}
-5. ${(scaled.cr ?? 99) <= 5 ? 'Three' : 'Four'} sentences max.
-6. Standard conditions only.
-7. Use limits print after the entry name — "(2/Day)", "(Recharge 5-6)" — never as prose.
-8. Write the action itself — never "can use an action to".
-9. The creature never grants itself immunity, resistance, or untargetability.
-10. Reference only what is on the sheet; on-hit riders live on attack rows.${archetype === 'brute' ? '\n11. Never a Reaction and never a triggered response — print brutes field none (0 of 40); write what the creature DOES on its own turn.' : ''}
-Return ONLY JSON: { "wildcard": "<the action rule>" }`;
-      const rawInformed = await callLLM(informedPrompt, (j) => { try { return typeof JSON.parse(String(j).replace(/^```json\s*|```\s*$/g, '').trim()).wildcard === 'string'; } catch { return false; } });
-      const parsedInformed = JSON.parse(String(rawInformed).replace(/^```json\s*|```\s*$/g, '').trim());
-      if (parsedInformed.wildcard.trim()) {
-        if (parsedInformed.wildcard.trim() !== String(p.wildcard ?? '').trim()) trace('informed wildcard —', 'written against the assembled sheet');
-        p.wildcard = weldSwap(parsedInformed.wildcard);
-      }
-    } catch (e6) {
-      trace('informed wildcard skipped —', `${e6?.message ?? e6}; the main draft stands`);
-    }
-  }
-  if (pendingWildcard) {
-    const v = vetActionWildcard(p.wildcard, scaled, { name: p.name, inline, missingTraitName: traitRejected?.name ?? null, economy: p.wildcard_economy, archetype, type: p.type });
-    if (v.okay) shipWildcard(v, 'wildcard accepted:');
-    else {
-      wcRejected = v;
-      trace('wildcard rejected —', `${v.why}: ${v.draft.slice(0, 120)}`);
-    }
-  }
-  // THE REPAIR RETRY + FAIL-OPEN (owner 2026-08-18/19): one repair with
-  // the reason fed back; then judgment-tier failures SHIP the best draft
-  // with a loud flag (the guards killed 3 straight signatures), while
-  // mechanical failures keep the chassis fallback.
-  if (wcRejected || traitRejected) {
-    let fixedTrait = null; let fixedWc = null;
-    try {
-      const el = (options.signatureElements ?? [])[0];
-      const elText = typeof el === 'string' ? el : el?.element;
-      // a rider-bound rewrite must NOT get the establish-first instruction:
-      // the hit already establishes the target, and teaching the frame here
-      // is how three welds got 30-ft targeting on reach-5 rows (2026-08-26)
-      const riderBound = String(p.wildcard_economy ?? '').trim().toLowerCase().startsWith('rider_on:');
-      // FROZEN-ECONOMY FIX (War-Rune Colossus, 2026-09-01): when the
-      // rejection was economy-based, the repair's converted draft must
-      // not be vetted against the model's ORIGINAL declaration — it is
-      // frozen at 'reaction' and no conversion can ever pass. Clear it;
-      // the draft's own prose routes its placement.
-      const repairEconomy = /no reactions/.test(wcRejected?.why ?? '') ? null : p.wildcard_economy;
-      const targeting = riderBound
-        ? 'this text is appended to the attack it rides — the hit already establishes the target, so begin "When the creature hits with this attack" and address \'the target\'; do NOT introduce a new targeting frame, a range, or a second target'
-        : 'establish the target FIRST ("one creature within 30 feet" or a Saving Throw frame) before saying \'the target\'';
-      // an uninformed retry resends the same violation (the efreet burned
-      // 3 byte-identical teleport drafts) — the mechanical reason becomes
-      // an explicit constraint the rewrite can actually obey
-      const whyConstraint = /teleport/i.test(wcRejected?.why ?? '') ? ' This chassis does not support teleportation: the rewrite must not teleport, blink, or relocate instantly in any form — express the concept through movement, senses, or attacks instead.'
-        : /flight/i.test(wcRejected?.why ?? '') ? ' This chassis does not fly: the rewrite must stay grounded.'
-        : '';
-      const fixPrompt = `You are repairing rejected ability drafts for the D&D monster "${p.name}". CONCEPT: ${concept}${elText ? `\nThe ability must build the mechanics for: ${elText}.` : ''}
-${wcRejected ? `ACTION draft rejected. THE ONE RULE IT BROKE: ${wcRejected.why}\nFix exactly that. The rejected draft (its SHAPE may not be resubmitted in any wording): "${wcRejected.draft}"\nTHE TEN COMMANDMENTS:\n1. The monster is 'the creature'; its victim is 'the target'; never 'you'.\n2. ${targeting}.\n3. One save per action, always DC ${scaled.dc}; escalate on an existing condition, never with a second roll.\n4. Damage as dice with the average — at most ${Math.round(scaled.per_hit * 1.2)} average; SAVE damage is PURE dice, never dice + a bonus.${options.energy ? ` Damage types: ${options.energy} or a physical type only.` : ''}\n5. ${(scaled.cr ?? 99) <= 5 ? 'Three' : 'Four'} sentences max.\n6. Standard conditions only.\n7. Use limits print after the name — "(2/Day)", "(Recharge 5-6)" — never as prose.\n8. Write the action itself — never "can use an action to".\n9. The creature never grants itself immunity, resistance, or untargetability.\n10. Reference only what is on the sheet; on-hit riders live on attack rows.${archetype === 'brute' ? '\n11. Never a Reaction and never a triggered response — print brutes field none (0 of 40); write what the creature DOES on its own turn.' : ''}${whyConstraint}\n` : ''}${traitRejected ? `TRAIT draft rejected — ${traitRejected.why}. Name: "${traitRejected.name}" Text: "${traitRejected.draft}"\nRewrite it: ONE passive rule, 2 sentences max, 2024 voice — an immunity, a sense, a movement rule, a condition interaction. No damage numbers, no saves, no Recharge, no auras, no second person.\n` : ''}Return ONLY JSON: {${wcRejected ? ' "wildcard": "<the rewritten action rule>"' : ''}${wcRejected && traitRejected ? ',' : ''}${traitRejected ? ' "trait_wildcard": { "name": "<4 words max>", "text": "<2 sentences max>" }' : ''} }`;
-      // per-piece; a judgment-tier repair passes validation (it will ship
-      // flagged anyway) — only mechanical failures burn a retry
-      const fixValidator = (j) => {
-        let parsed; try { parsed = JSON.parse(String(j).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return false; }
-        let anyGood = false;
-        if (wcRejected && typeof parsed.wildcard === 'string') {
-          const v = vetActionWildcard(parsed.wildcard, scaled, { name: p.name, inline, economy: repairEconomy, archetype, type: p.type });
-          if (v.okay || v.tier === 'judgment') anyGood = true;
-          else trace('repair draft rejected —', `${v.why}: ${v.draft.slice(0, 100)}`);
-        }
-        if (traitRejected && parsed.trait_wildcard) {
-          const v = vetTraitWildcard(parsed.trait_wildcard, sections, { name: p.name, inline, archetype, type: p.type });
-          if (v.okay || v.tier === 'judgment') anyGood = true;
-          else if (!v.silent) trace('repair trait draft rejected —', `${v.why}: ${(v.draft ?? '').slice(0, 100)}`);
-        }
-        return anyGood;
-      };
-      const fixRaw = await callLLM(fixPrompt, fixValidator);
-      const fix = JSON.parse(String(fixRaw).replace(/^```json\s*|```\s*$/g, '').trim());
-      if (traitRejected && fix.trait_wildcard) fixedTrait = vetTraitWildcard(fix.trait_wildcard, sections, { name: p.name, inline, archetype, type: p.type });
-      if (wcRejected && typeof fix.wildcard === 'string') fixedWc = vetActionWildcard(fix.wildcard, scaled, { name: p.name, inline, missingTraitName: null, economy: repairEconomy, archetype, type: p.type });
-    } catch (e3) {
-      trace('wildcard repair skipped —', e3?.message ?? e3);
-    }
-    if (traitRejected) {
-      if (fixedTrait?.okay) shipTrait(fixedTrait, 'trait wildcard repaired:');
-      else if (fixedTrait && !fixedTrait.silent && fixedTrait.tier === 'judgment') shipTrait(fixedTrait, 'trait wildcard repaired:', fixedTrait.why);
-      else if (traitRejected.tier === 'judgment') shipTrait(traitRejected, 'trait wildcard:', traitRejected.why);
-      else trace('trait repair failed —', `${fixedTrait?.why ?? 'no repair'}; no trait ships`);
-    }
-    if (wcRejected) {
-      if (fixedWc?.okay) shipWildcard(fixedWc, 'wildcard repaired:');
-      else if (fixedWc && fixedWc.tier === 'judgment') shipWildcard(fixedWc, 'wildcard repaired:', fixedWc.why);
-      else if (wcRejected.tier === 'judgment') shipWildcard(wcRejected, 'wildcard accepted:', wcRejected.why);
-      else {
-        // THE WORKHORSE POSTURE (owner 2026-09-15: "make A the
-        // workhorse"): the PIVOT is retired — the informed wildcard
-        // gets its one vet pass plus one repair, and anything further
-        // draws from the dynamic shelf instead of fighting. (The pivot
-        // lived 2026-09-15 only; its rescue behavior is the library's
-        // job now, at zero calls.)
-        // DELETION (owner + critic discussion, 2026-09-13): the
-        // placeholder was dominated by construction — 0/329 print
-        // Actions lose to their own Multiattack, and this one shipped
-        // at the wildcard failure rate under twelve names. A failed
-        // wildcard now ships NOTHING, symmetric with the trait slot
-        // ("no trait ships") and the engulf engine ("the slot is
-        // dropped"). Budget-safe: the solver prices only damage-bearing
-        // gated rows. The fallback LIBRARY is the planned replacement.
-        wcDropped = true;
-        for (const es2 of Object.values(sections)) {
-          const ix = pendingWildcard ? es2.indexOf(pendingWildcard) : -1;
-          if (ix !== -1) es2.splice(ix, 1);
-        }
-        // THE LIBRARY (owner go 2026-09-13): a generified golden seed
-        // stands in — priced at the block's numbers, shipped under the
-        // model's rename so the fiction re-attaches. An empty draw
-        // leaves the deletion.
-        // the interlock read: conditions THIS sheet imposes (apply
-        // grammar over the assembled rows) feed the dynamic seeds
-        const CONDS = ['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned'];
-        const sheetText2 = Object.values(sections).flat().map((e2) => e2.text ?? '').join(' ');
-        const imposed = CONDS.filter((c) => new RegExp(`has the (?:\\w+ and )?${c} condition|is also ${c}\\b|be ${c}\\b`).test(sheetText2));
-        const drawn = drawLibraryRow(scaled, { archetype, energy: options.energy ?? null, mix: options.mix ?? null, name: p.name, shapeKey: p.fallback_shape ?? null, imposed, mechanics: options.mechanics ?? null, cr });
-        if (drawn) {
-          const gate = / \((?:Recharge [\d–-]+|\d\/Day)\)$/.exec(drawn.row.name)?.[0] ?? '';
-          // the model's rename was written for the DEAD wildcard — when
-          // it claims a condition the seed never applies ("Stunning
-          // Descent" over a pull-and-root; "Seeding Grasp" over a
-          // burst — 2 sightings 2026-09-14), the seed's honest name
-          // wins instead
-          const CLAIMS = [[/paralyz/i, 'Paralyzed'], [/petrif/i, 'Petrified'], [/stunn/i, 'Stunned'], [/blinding/i, 'Blinded'], [/deafen/i, 'Deafened'], [/charm/i, 'Charmed'], [/restrain/i, 'Restrained']];
-          // verb-claims joined 2026-09-14 (3 sightings: a Grasp that
-          // burst, a Descent that pulled, a Mark that marked nothing)
-          const VERB_CLAIMS = [[/\bmark/i, /\bmark/i], [/\bgrasp|\bgrab|\bseiz/i, /pull|grapp/i]];
-          const liesAbout = (nm) => nm && (CLAIMS.some(([re, cond]) => re.test(nm) && !new RegExp(`\\b${cond}\\b`).test(drawn.row.text)) || VERB_CLAIMS.some(([re, pay]) => re.test(nm) && !pay.test(drawn.row.text)));
-          // FIRST CHOICE (owner 2026-09-15: "shouldn't the name be
-          // authored by the llm?"): fallback_name — asked in the main
-          // call, written FOR the picked shape in the creature's
-          // register. The slot rename was written for the DEAD
-          // wildcard; it is only ever the second choice.
-          const fbName = String(p.fallback_name ?? '').trim();
-          const fbOk = fbName && fbName.split(/\s+/).length <= 4 && !RESERVED_NAMES.test(fbName) && !liesAbout(fbName);
-          if (fbOk) drawn.row.name = `${fbName}${gate}`;
-          else if (pendingWildcard?.name && !liesAbout(pendingWildcard.name)) drawn.row.name = `${pendingWildcard.name.replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '')}${gate}`;
-          else {
-            if (fbName || pendingWildcard?.name) trace('library rename refused —', `"${fbName || pendingWildcard.name}" claims what the seed never does; the seed's own name ships`);
-            // the authored seed name is the LAST resort — the audit
-            // proposes the concept-fitted name
-            libraryGenericName = drawn.row.name;
-          }
-          // the short-form stamp already ran over the sections — a row
-          // drawn after it ships saying "the creature" beside rows
-          // saying "the cliff troll" (audit flagged it twice, applied
-          // never, 2026-09-15); the seeds' SOURCE-BOUND clauses ("by
-          // the creature") get the same treatment print would give them
-          drawn.row.text = drawn.row.text
-            .split('The creature').join(inline.charAt(0).toUpperCase() + inline.slice(1))
-            .split('the creature').join(inline);
-          (sections[drawn.section] = sections[drawn.section] ?? []).push(drawn.row);
-          libraryDrawn = true;
-          trace('library seed drawn:', `${drawn.seed} -> ${drawn.section}/"${drawn.row.name}" (the wildcard died; a proven shape stands in)`);
-          const shippedBare = drawn.row.name.replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '');
-          const deadBare = String(pendingWildcard?.name ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '');
-          if (deadBare && deadBare !== shippedBare) sweepDeadName(sections, deadBare, drawn.row, trace);
-        } else {
-          trace('wildcard repair failed —', `${fixedWc?.why ?? 'no repair'}; the slot is dropped (no fallback text ships)`);
-          sweepDeadName(sections, pendingWildcard?.name, null, trace);
-        }
-      }
-    }
-  }
   }
   for (const [sec, es] of Object.entries(sections)) {
     for (let i = es.length - 1; i >= 0; i -= 1) {
