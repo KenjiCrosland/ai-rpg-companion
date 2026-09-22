@@ -126,7 +126,7 @@ export const LIBRARY_SEEDS = [
     key: 'delayed-brand', keys: ['brand', 'ember', 'fuse', 'venom'],
     section: 'Actions', archetypes: ['caster', 'lurker', 'skirmisher'],
     name: 'Lingering Brand', dpr_frac: 0.6, // the delayed-tick class
-    text: "*Constitution Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target is seared by a lingering brand: it takes {burst} {damage_type} damage at the start of its next turn unless it uses its action to douse the brand.",
+    text: "*Constitution Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target is branded: it takes {burst} {damage_type} damage at the start of each of its turns until it uses its action to {douse}",  // dilemma rows are DoT-until-action (Fire Elemental grammar, critic 2026-09-22): a single tick never binds
   },
   {
     key: 'curse-debt', keys: ['curse', 'debt', 'rebuke', 'price'],

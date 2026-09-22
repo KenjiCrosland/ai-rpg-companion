@@ -34,6 +34,14 @@ describe('the catalog', () => {
     expect(prereq.name).toBe('Lash'); // a prerequisite condition is not a payload — no gate
     const gatedNova = valueCheck({ name: 'Toll (Recharge 5-6)', text: `*Constitution Saving Throw*: DC 15, each creature within 15 feet. *Failure:* ${per} (2d8) Thunder damage. *Success:* Half damage only.` }, { scaled, sections, section: 'Actions' });
     expect(gatedNova.replaced).toMatch(/whole Multiattack/);
+    // a gated nova climbs to the NOVA budget (2x the round) and lands inside [1.3x, 2.5x] of the Multiattack
+    const maEV = 0.65 * per * 2;
+    expect(gatedNova.steps.join(' ')).toMatch(/nova budget/);
+    expect(gatedNova.ev).toBeGreaterThanOrEqual(1.3 * maEV - 0.5);
+    expect(gatedNova.ev).toBeLessThanOrEqual(2.5 * maEV + 0.65 * per * 2); // an already-gated row may sit over the ceiling; it is never double-gated
+    expect(gatedNova.name).toBe('Toll (Recharge 5-6)'); // already gated — never double-gated
+    // on an area nova, Deafened is a hit's worth, not a quarter
+    expect(rowValue(`*Constitution Saving Throw*: DC 15, each creature within 15 feet. *Failure:* ${per} (2d8) Thunder damage, and the target has the Deafened condition.`, per, { area: true }).ev).toBeGreaterThan(rowValue(`*Constitution Saving Throw*: DC 15, one creature within 15 feet. *Failure:* ${per} (2d8) Thunder damage, and the target has the Deafened condition.`, per).ev);
   });
   test('every template id is unique across shapes and seeds', () => {
     const ids = TEMPLATES.map((t) => t.id);

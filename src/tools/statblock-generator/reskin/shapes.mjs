@@ -240,6 +240,24 @@ export const SHAPES = [
       '21+': '*Strength Saving Throw:* DC {dc}, one Huge or smaller creature within 90 feet. *Failure:* The target is pulled up to 30 feet straight toward the creature by {hook} and has the Grappled condition (escape DC {dc}). While Grappled this way, the target has the Restrained condition.',
     },
   },
+  // THE TWO OWED DONOR ROWS (critic, from the free-text winners, 2026-09-22)
+  {
+    id: 'active-toll', name: 'Tolling Peal', invented: true, // the crab's active toll: Thunder + Deafened from the creature, a nova
+    roles: ['brute', 'defender', 'lurker', 'controller', 'artillery'], styles: [], cr_range: [1, 30], replaces: 'nova', gate: 'Recharge 5-6',
+    frames: {
+      '0-2': '*Constitution Saving Throw*: DC {dc}, each creature in a 10-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.',
+      '3-5': '*Constitution Saving Throw*: DC {dc}, each creature in a 15-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.',
+      '6-9': '*Constitution Saving Throw*: DC {dc}, each creature in a 20-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.',
+      '10-12': '*Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.',
+      '13-20': '*Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.',
+      '21+': '*Constitution Saving Throw*: DC {dc}, each creature in a 60-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.',
+    },
+  },
+  {
+    id: 'pull-through', name: 'Dragging Passage', invented: true, // the keeper's pull-through-walls, BOUNDED: the target lands in the nearest unoccupied space
+    roles: ['lurker'], styles: [], cr_range: [3, 30], replaces: 'signature', // phantom by verb (through walls, drown, phase), not by style gate
+    frames: Object.fromEntries(['3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Strength Saving Throw*: DC {dc}, one Medium or smaller creature the creature is touching. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the creature drags the target up to 15 feet through a wall, floor, or other solid object it can pass through; the target emerges Prone in the nearest unoccupied space at the far side. If no such space is within 15 feet, the target is not moved but takes the damage again.'])),
+  },
   {
     id: 'death-burst', name: 'Death Burst', cite: 'Dust Mephit (CR 1/2, 5 ft); Magmin (CR 1/2, 10 ft); Balor/Death Throes (CR 19, 30 ft dual-type)',
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker'], styles: [], cr_range: [0.5, 20], replaces: 'trait',

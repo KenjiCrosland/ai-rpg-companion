@@ -22,6 +22,7 @@
 import { SHAPES, bandFor } from './shapes.mjs';
 import { LIBRARY_SEEDS, drawLibraryRow } from './library.mjs';
 import { saveDamageDiceFor } from '../format-2024/dice.mjs';
+import { AREA_TARGETS } from './card-budgets.mjs';
 
 export const SECTION_OF = { trait: 'Traits', action: 'Actions', bonus_action: 'Bonus Actions', reaction: 'Reactions', rider: 'Rider' }; // Rider = a clause appended to the melee attack row
 export const TRIGGERS = ['on_hit', 'save', 'on_being_hit', 'start_of_turn', 'once_per_fight', 'always'];
@@ -36,7 +37,7 @@ const PHYSICAL = ['Bludgeoning', 'Piercing', 'Slashing'];
 // closed-vocabulary slots: the model may propose, the engine only accepts a listed value
 const VOCAB = { save_stat: SAVE_STATS, consumed_condition: CONDITIONS, condition_minor: MINOR, restraint: RESTRAINTS, r_vuln: DAMAGE };
 // flavor slots: the model's words, bounded (no digits, no rules grammar, short)
-export const FLAVOR_SLOTS = ['projectile', 'wound_noun', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook'];
+export const FLAVOR_SLOTS = ['projectile', 'wound_noun', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse'];
 // engine slots: never the model's
 const ENGINE_SLOTS = ['dc', 'atk', 'avg', 'dice', 'avg_half', 'dice_half', 'damage_type', 'melee_name'];
 
@@ -47,7 +48,7 @@ const SHAPE_TAGS = {
   'gaze-single': ['save', 'condition'], snare: ['save', 'condition'], reel: ['save', 'movement'],
   'condition-payoff': ['save', 'damage'], rampage: ['once_per_fight', 'damage'], blink: ['always', 'movement'],
   zone: ['once_per_fight', 'condition'], execute: ['save', 'damage'], 'death-burst': ['always', 'damage'],
-  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
+  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
 };
 // ENGINE FAMILIES: a template that re-implements an engine the sheet already
 // carries is off the menu by construction (iron maiden x4: hook-drag beside
@@ -143,6 +144,8 @@ export const VERB_KEYS = {
   absorption: ['absorb', 'drink', 'feed', 'immune', 'devour', 'eat', 'soak', 'siphon', 'heal', 'mend', 'stronger', 'feeds on'],
   'bloodied-burst': ['toll', 'ring', 'peal', 'bloodied', 'wounded', 'crack', 'bell', 'burst', 'erupt', 'shatter', 'scream', 'wail', 'when hurt', 'when struck'],
   'shell-withdraw': ['withdraw', 'shell', 'retreat', 'curl', 'armor', 'carapace', 'hide inside', 'close', 'seal itself', 'turtle', 'crab', 'bell'],
+  'active-toll': ['toll', 'ring', 'peal', 'bell', 'clang', 'chime', 'gong', 'deafen', 'thunder', 'knell', 'boom'],
+  'pull-through': ['through walls', 'through the wall', 'through the floor', 'drag under', 'pull under', 'into the surf', 'drown', 'through stone', 'phase', 'incorporeal'],
   'death-burst': ['explode', 'burst', 'die', 'death', 'detonate', 'final', 'last breath', 'shatter', 'dying'],
   'burrow-ambush': ['erupt', 'burrow', 'ambush', 'tunnel', 'beneath', 'underground', 'sand', 'earth', 'surface', 'rise from'],
   'resonant-body': ['ring', 'toll', 'clang', 'resonate', 'bell', 'chime', 'hum', 'gong', 'thunder', 'bronze', 'peal', 'echo', 'deafen', 'struck'],
@@ -301,7 +304,7 @@ const shortFlavor = (s) => typeof s === 'string' && s.trim().split(/\s+/).length
  * ctx: { scaled, energy, mix, meleeName, conditionMinor, projectile, archetype, imposed, mechanics, cr, name }
  */
 // generic fills for a BLIND render (the fallback): the fiction is plain, never wrong
-const BLIND_FILLS = { projectile: 'a hurled object', wound_noun: 'wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'gathering itself', lure_source: 'the creature', hook: 'its grip' };
+const BLIND_FILLS = { douse: 'tear the brand away', projectile: 'a hurled object', wound_noun: 'wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'gathering itself', lure_source: 'the creature', hook: 'its grip' };
 export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   if (blind) fills = { ...BLIND_FILLS, ...fills };
   const { scaled } = ctx;
@@ -458,7 +461,7 @@ export function multiattackShape(sections = {}) {
   const m = /makes (one|two|three|four|five)/i.exec(ma?.text ?? '');
   return { attacks: m ? words[m[1].toLowerCase()] : 1, present: !!ma };
 }
-export function rowValue(text, perHit) {
+export function rowValue(text, perHit, { area = false } = {}) {
   // only the PAYLOAD counts: a condition in the targeting frame ("one creature
   // that is Grappled") is a prerequisite, not something the row applies (the
   // exploiter read 31.9 and was gated on every caged sheet, 2026-09-22)
@@ -467,7 +470,8 @@ export function rowValue(text, perHit) {
   const avg = d ? Number(d[1]) : 0;
   const half = /\*Success:\*\s*Half/i.test(text);
   let ev = P_FAIL * avg + (half ? (1 - P_FAIL) * avg / 2 : 0);
-  if (WORTH_AN_ATTACK.test(payload)) ev += P_FAIL * perHit;
+  // on an AREA nova any condition is a hit's worth — it lands on the whole party
+  if (WORTH_AN_ATTACK.test(payload) || (area && MINOR_EFFECT.test(payload))) ev += P_FAIL * perHit;
   else if (MINOR_EFFECT.test(payload)) ev += P_FAIL * perHit * 0.25;
   return { ev, avg, half, hasDamage: !!d };
 }
@@ -480,15 +484,26 @@ export function valueCheck(row, { scaled, sections, section }) {
   const gated = /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(row.name ?? '');
   const ma = multiattackShape(sections);
   // a bonus action is free (no trade — ceiling only); a gated action stands alone
-  const replaced = section === 'Bonus Actions' ? 0 : gated ? attackEV * ma.attacks : attackEV;
+  // A GATED NOVA fires ~1 round in 3 and must beat the round it replaces or a
+  // DM skips the row: print prices breaths and bursts at 1.5–2.5x the
+  // Multiattack (owner + critic, 2026-09-22). Floor 1.3x, ceiling 2.5x, and the
+  // ladder's top rung is the NOVA budget (2x the round), not the attack's die.
+  const maEV = attackEV * ma.attacks;
+  const replaced = section === 'Bonus Actions' ? 0 : gated ? maEV : attackEV;
   const label = section === 'Bonus Actions' ? 'a bonus action (free)' : gated ? `the whole Multiattack (${ma.attacks} attacks)` : `one attack of ${ma.attacks}`;
-  const floor = 0.8 * replaced; const ceiling = 1.5 * (replaced || attackEV);
+  const floor = gated ? 1.3 * maEV : 0.8 * replaced; const ceiling = gated ? 2.5 * maEV : 1.5 * (replaced || attackEV);
+  const area = /each creature/i.test(row.text);
+  // an AREA nova earns its premium by TARGETS (the Adult Red's breath deals about
+  // its Multiattack's damage to each creature in the cone) — its per-target
+  // budget is the round's damage; a single-target nova takes 2x the round's EV
+  const budget = gated ? (area ? Math.max(perHit, Math.round(ma.attacks * perHit)) : Math.max(perHit, Math.round(2 * maEV))) : perHit;
   let text = row.text; let name = row.name; const steps = [];
-  let v = rowValue(text, perHit);
-  if (v.ev < floor && v.hasDamage && !v.half) { text = `${text.trim()} *Success:* Half damage only.`; steps.push('added Success: Half'); v = rowValue(text, perHit); }
-  if (v.ev < floor && v.hasDamage && v.avg < perHit) {
-    const full = saveDamageDiceFor(perHit);
-    text = text.replace(DMG, `${full.avg} (${full.dice})`); steps.push(`dice ${v.avg} → ${full.avg}`); v = rowValue(text, perHit);
+  const value = (t) => { const r = rowValue(t, perHit, { area: gated && area }); return gated && area ? { ...r, ev: r.ev * AREA_TARGETS } : r; };
+  let v = value(text);
+  if (v.ev < floor && v.hasDamage && !v.half) { text = `${text.trim()} *Success:* Half damage only.`; steps.push('added Success: Half'); v = value(text); }
+  if (v.ev < floor && v.hasDamage && v.avg < budget) {
+    const full = saveDamageDiceFor(budget);
+    text = text.replace(DMG, `${full.avg} (${full.dice})`); steps.push(`dice ${v.avg} → ${full.avg}${gated ? ' (nova budget)' : ''}`); v = value(text);
   }
   if (v.ev < floor) steps.push('still under — needs a condition from the worth-an-attack list (logged)');
   if (v.ev > ceiling && !gated && section !== 'Traits') { name = `${name} (Recharge 5-6)`; steps.push('over the ceiling — gated Recharge 5-6'); }

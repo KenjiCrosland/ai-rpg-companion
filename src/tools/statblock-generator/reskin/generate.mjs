@@ -2421,7 +2421,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — the model picked "${fit.template.id}" (no verb) over a concept-verb template (${verbRanked.filter((r) => r.concept.length).map((r) => r.t.id).join(', ')})`);
           return null;
         }
-        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, text: stampT(rendered.text), library: true, template: fit.template.id }, section: rendered.section, template: fit.template.id, supersedes: fit.template.supersedes ?? null, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
+        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, text: stampT(rendered.text), library: true, template: fit.template.id }, templateName: rendered.name, section: rendered.section, template: fit.template.id, supersedes: fit.template.supersedes ?? null, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
       } catch (e8) {
         trace('signature fit call failed —', `${seat}: ${e8?.message ?? e8}`);
         return null;
@@ -2493,6 +2493,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (traitWildcardAllowed && ideasT?.trait) {
       const traitT = await fitSeat('trait', ideasT.trait);
       if (traitT) {
+        // two rows never share a name (the Carillon's action and trait were both
+        // "Funeral Peal"): on a collision the trait takes its template's own name
+        const bareT = traitT.row.name.replace(/ \(.*\)$/, '').toLowerCase();
+        if (Object.values(sections).flat().some((e2) => String(e2.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === bareT)) {
+          trace('trait renamed:', `"${traitT.row.name}" already names a row — the trait ships as "${traitT.templateName}"`);
+          traitT.row.name = traitT.templateName;
+        }
         (sections.Traits = sections.Traits ?? []).unshift(traitT.row);
         trace('signature template (trait):', `${traitT.template} -> Traits/"${traitT.row.name}" ("${traitT.because}")`);
       }
