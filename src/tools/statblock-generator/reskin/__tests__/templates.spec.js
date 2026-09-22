@@ -20,7 +20,7 @@ describe('the catalog', () => {
       const r = renderTemplate(t, ctx, fills);
       if (!r) continue; // a seed illegal on this sheet is a legitimate null
       expect(r.text).not.toMatch(/\{[a-z_]+\}/);
-      expect(['Traits', 'Actions', 'Bonus Actions', 'Reactions']).toContain(r.section);
+      expect(['Traits', 'Actions', 'Bonus Actions', 'Reactions', 'Rider']).toContain(r.section);
     }
   });
   test('engine slots are the sheet\'s numbers; a vocabulary slot only accepts a listed value; a flavor slot with digits or rules words is a miss', () => {
@@ -166,14 +166,19 @@ describe('the two calls', () => {
     expect(f).toMatch(/or none/);
   });
   test('print section grammar: an "on_hit" action is a save action; a "when hurt" action is a reaction; a start-of-turn action is a trait', () => {
-    expect(normaliseTag('action', 'on_hit')).toEqual({ section: 'action', trigger: 'save' });
+    expect(normaliseTag('action', 'on_hit')).toEqual({ section: 'rider', trigger: 'on_hit' });
     expect(normaliseTag('action', 'on_being_hit')).toEqual({ section: 'reaction', trigger: 'on_being_hit' });
     expect(normaliseTag('bonus_action', 'start_of_turn')).toEqual({ section: 'trait', trigger: 'start_of_turn' });
     expect(normaliseTag('trait', 'save')).toEqual({ section: 'trait', trigger: 'always' });
     expect(normaliseTag('reaction', 'save')).toEqual({ section: 'reaction', trigger: 'on_being_hit' });
     expect(normaliseTag('action', 'save')).toEqual({ section: 'action', trigger: 'save' });
     const ideas = parseIdeas(JSON.stringify({ action: { idea: 'When its claw lands it floods the victim with brine and they cannot breathe for a moment.', section: 'action', trigger: 'on_hit', effect: 'condition' } }));
-    expect(ideas.action).toMatchObject({ section: 'action', trigger: 'save' });
+    expect(ideas.action).toMatchObject({ section: 'rider', trigger: 'on_hit' });
+    const riders = templatesFor({ archetype: 'brute', cr: 6, sections: {}, section: 'rider' }).map((t) => t.id);
+    expect(riders).toEqual(expect.arrayContaining(['affliction', 'charge']));
+    const charger = sheet(5, 'charger', 'brute');
+    expect(templatesFor({ archetype: 'brute', style: 'charger', cr: 5, sections: charger.sections, section: 'rider' }).map((t) => t.id)).not.toContain('charge'); // the chassis already charges
+    expect(templatesFor({ archetype: 'ooze', cr: 4, sections: {}, section: 'trait' }).length).toBeGreaterThan(0); // body lines borrow a shelf
   });
   test('parsers are tolerant: bad tags default, a decorated id resolves, a long or numeric name is dropped', () => {
     expect(validateIdeaResponse(JSON.stringify({ action: { idea: 'short' } }))).toBe(false);

@@ -2302,7 +2302,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // in one blind pass. The main call's wildcard survives as the
   // never-fail fallback when this call dies; vet, repair, pivot, and
   // the library are unchanged downstream.
-  if (templateMode && pendingWildcard) {
+  if (templateMode && (pendingWildcard || body)) { // body lines have no slot row but still get a TRAIT seat (three seatless bodies, the wide run)
     // THE TEMPLATE SIGNATURE — create (plain words) → tag → fit (closed
     // menu) → render at the sheet's numbers → ship; a miss logs and the
     // library seed stands in. No vet, no repair: rules text is never free.
@@ -2378,7 +2378,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (!conceptBound.length) {
         // …and the TRIGGER: a trait idea tagged "always" must still see the
         // on-being-hit bell cards when the concept says "rings it when wounded"
-        const wide = (seat === 'trait' ? ['trait'] : ['action', 'bonus_action', 'reaction']).flatMap((sec) => templatesFor({ ...ctxT, section: sec, trigger: null }));
+        const wide = (seat === 'trait' ? ['trait'] : ['action', 'bonus_action', 'reaction', 'rider']).flatMap((sec) => templatesFor({ ...ctxT, section: sec, trigger: null }));
         conceptBound = rankByVerb(wide, verbText).filter((r) => r.concept.length).map((r) => r.t);
       }
       // the STRONGEST concept match decides — "seal, sermon, psalm, wither"
@@ -2427,6 +2427,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         return null;
       }
     };
+    if (pendingWildcard) {
     const actionT = await fitSeat('action', ideasT?.action);
     // the slot row leaves either way — a proven row stands where it stood
     wcDropped = true;
@@ -2435,7 +2436,16 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (ix !== -1) es2.splice(ix, 1);
     }
     const deadBareT = String(pendingWildcard?.name ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '');
-    if (actionT) {
+    if (actionT && actionT.section === 'Rider') {
+      // A RIDER rides the melee row: the clause is appended, no new row ships
+      const host = Object.values(sections).flat().find((e2) => /Melee Attack Roll/.test(e2.text ?? ''));
+      if (host) {
+        host.text = `${host.text.trim()} ${actionT.row.text.trim()}`;
+        libraryDrawn = true;
+        trace('signature rider:', `${actionT.template} -> ${host.name} (appended; ${actionT.because})`);
+        if (deadBareT) sweepDeadName(sections, deadBareT, host, trace);
+      } else trace('signature miss:', `action — a rider fit (${actionT.template}) but the sheet has no melee row to ride`);
+    } else if (actionT) {
       // a template that SUPERSEDES a chassis row removes it (one lance, one
       // physics — the lancer's returning throw beside the retrieve, v4 read)
       const sup = actionT.supersedes;
@@ -2471,6 +2481,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         trace('signature dropped —', 'no template held the idea and no seed is legal on this sheet');
         sweepDeadName(sections, deadBareT || null, null, trace);
       }
+    }
     }
     if (traitWildcardAllowed && ideasT?.trait) {
       const traitT = await fitSeat('trait', ideasT.trait);

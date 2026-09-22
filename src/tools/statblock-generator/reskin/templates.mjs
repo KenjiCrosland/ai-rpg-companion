@@ -23,7 +23,7 @@ import { SHAPES, bandFor } from './shapes.mjs';
 import { LIBRARY_SEEDS, drawLibraryRow } from './library.mjs';
 import { saveDamageDiceFor } from '../format-2024/dice.mjs';
 
-export const SECTION_OF = { trait: 'Traits', action: 'Actions', bonus_action: 'Bonus Actions', reaction: 'Reactions' };
+export const SECTION_OF = { trait: 'Traits', action: 'Actions', bonus_action: 'Bonus Actions', reaction: 'Reactions', rider: 'Rider' }; // Rider = a clause appended to the melee attack row
 export const TRIGGERS = ['on_hit', 'save', 'on_being_hit', 'start_of_turn', 'once_per_fight', 'always'];
 export const EFFECTS = ['damage', 'condition', 'movement', 'resource', 'defense'];
 const SAVE_STATS = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma'];
@@ -47,12 +47,12 @@ const SHAPE_TAGS = {
   'gaze-single': ['save', 'condition'], snare: ['save', 'condition'], reel: ['save', 'movement'],
   'condition-payoff': ['save', 'damage'], rampage: ['once_per_fight', 'damage'], blink: ['always', 'movement'],
   zone: ['once_per_fight', 'condition'], execute: ['save', 'damage'], 'death-burst': ['always', 'damage'],
-  'burrow-ambush': ['save', 'damage'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
+  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
 };
 // ENGINE FAMILIES: a template that re-implements an engine the sheet already
 // carries is off the menu by construction (iron maiden x4: hook-drag beside
 // Cage, 2026-09-21). Sheet engines are read from the rows themselves.
-const ENGINE_OF = { 'hook-drag': 'containment', 'obstacle-pull': 'containment', reel: 'containment', snare: 'containment', 'false-appearance': 'disguise', adhesive: 'adhesive', 'heated-body': 'contact-damage', 'resonant-body': 'contact-damage' };
+const ENGINE_OF = { charge: 'charge-rider', 'hook-drag': 'containment', 'obstacle-pull': 'containment', reel: 'containment', snare: 'containment', 'false-appearance': 'disguise', adhesive: 'adhesive', 'heated-body': 'contact-damage', 'resonant-body': 'contact-damage' };
 export function sheetEngines(sections = {}) {
   const rows = Object.values(sections).flat();
   const out = new Set();
@@ -63,6 +63,7 @@ export function sheetEngines(sections = {}) {
     if (e.engulf_engine || /pulls each creature Grappled by it/.test(e.text ?? '')) out.add('containment');
     if (/indistinguishable from|resemble an? (?:\w+ ){0,3}object|shape-shifts? to resemble/i.test(e.text ?? '')) out.add('disguise'); // the trap line's own False Form (two disguise traits on one gargoyle)
     if (e.engine) out.add(e.engine);
+    if (/moved (?:at least )?\d+\+? feet straight toward/i.test(e.text ?? '')) out.add('charge-rider');
     if (/adheres to anything that touches/i.test(e.text ?? '')) out.add('adhesive');
     if (/hits it with a melee attack while within 5 feet of it takes/i.test(e.text ?? '')) out.add('contact-damage');
   }
@@ -121,11 +122,13 @@ export const VERB_KEYS = {
   snare: ['snare', 'web', 'bind', 'net', 'tangle', 'silk', 'strand', 'thread', 'entangle', 'rope', 'lasso', 'wrap', 'cocoon', 'chain'],
   reel: ['reel', 'pull', 'drag', 'haul', 'yank', 'tow', 'wrench', 'draw in', 'hook', 'line', 'tongue'],
   'condition-payoff': ['exploit', 'punish', 'finish', 'helpless', 'downed', 'prone', 'fallen', 'trapped', 'caught', 'grind', 'crush'],
+  affliction: ['wound', 'bleed', 'fester', 'gash', 'lingering', 'sludge', 'venom', 'poison', 'rot', 'infect', 'alchemical', 'lasting', 'scar', 'sepsis'],
+  charge: ['charge', 'gore', 'momentum', 'straight line', 'ram', 'lance', 'joust', 'impale', 'run down', 'spur', 'gallop'],
   rampage: ['rampage', 'frenzy', 'bloodied', 'berserk', 'rage', 'fury', 'blood', 'wound', 'savage'],
   blink: ['blink', 'teleport', 'vanish', 'flicker', 'phase', 'step through', 'shadow', 'shimmer', 'wink', 'disappear'],
   zone: ['fog', 'cloud', 'field', 'zone', 'murk', 'mist', 'smoke', 'haze', 'aura', 'miasma', 'spores', 'steam', 'darkness'],
   execute: ['execute', 'finish', 'slay', 'kill', 'behead', 'sever', 'end', 'reap', 'harvest', 'death'],
-  'heated-body': ['heat', 'burn', 'scald', 'sear', 'molten', 'touch', 'furnace', 'fire', 'flame', 'ember', 'brass', 'iron', 'glow', 'hot', 'spines', 'thorns', 'barbs', 'spikes'],
+  'heated-body': ['heat', 'burn', 'scald', 'sear', 'molten', 'touch', 'furnace', 'fire', 'flame', 'ember', 'brass', 'iron', 'glow', 'hot', 'spines', 'thorns', 'barbs', 'spikes', 'lightning', 'storm', 'shock', 'splinter', 'shard', 'jagged', 'thundercloud', 'acid', 'frost', 'rime'], // the wide run: a thundercloud body, a shipwreck body, a bone-splinter body all wanted this shape with another type
   'false-appearance': ['disguise', 'motionless', 'statue', 'mimic', 'still', 'stone', 'object', 'pretend', 'pose', 'perch', 'harmless', 'ordinary', 'hidden', 'blend'],
   absorption: ['absorb', 'drink', 'feed', 'immune', 'devour', 'eat', 'soak', 'siphon', 'heal', 'mend', 'stronger', 'feeds on'],
   'bloodied-burst': ['toll', 'ring', 'peal', 'bloodied', 'wounded', 'crack', 'bell', 'burst', 'erupt', 'shatter', 'scream', 'wail', 'when hurt', 'when struck'],
@@ -184,7 +187,7 @@ export function rankByVerb(menu, conceptText, ideaText = '') {
     .sort((a, b) => b.score - a.score || a.i - b.i);
 }
 
-const SECTION_BY_REPLACES = { signature: 'action', nova: 'action', 'bonus-alt': 'bonus_action', trait: 'trait' };
+const SECTION_BY_REPLACES = { signature: 'action', nova: 'action', 'bonus-alt': 'bonus_action', trait: 'trait', 'melee-rider': 'rider' };
 
 const slotsOf = (text) => [...new Set([...String(text).matchAll(/\{([a-z_]+)\}/g)].map((m) => m[1]))];
 
@@ -215,7 +218,8 @@ export const TEMPLATES = [
 ];
 const BY_ID = new Map(TEMPLATES.map((t) => [t.id, t]));
 
-const rolesFor = (archetype) => (archetype === 'caster' ? ['artillery', 'controller', 'caster'] : [archetype]);
+const BODY_ROLES = { dragon: ['brute', 'artillery', 'controller'], ooze: ['brute', 'lurker'], swarm: ['skirmisher', 'lurker'] }; // body lines borrow the shelf of the families they play like
+const rolesFor = (archetype) => (archetype === 'caster' ? ['artillery', 'controller', 'caster'] : BODY_ROLES[archetype] ?? [archetype]);
 
 /**
  * The menu for one seat: legal for the line, the CR, the movement, the
@@ -338,7 +342,7 @@ THE SHEET (${name}, CR ${cr}):
 ${sheetLines}
 CONCEPT: ${concept}
 ${verbs.length ? `THE CONCEPT'S OWN VERBS: ${verbs.join(', ')} — the signature is one of these verbs made mechanical; an idea that abandons them for something the concept never said (a teleport, a mist, a generic burst) is the wrong idea however clever. ` : ''}${seats ? `BUILD THIS: the action idea builds "${seats.action}"${wantTrait && !seats.packaged ? `; the trait idea makes "${seats.trait}" true on the sheet` : ''}. ` : ''}${engines.length ? `THE SHEET'S ENGINE IS ALREADY BUILT: ${engines.join(', ')} — the concept's holding, swallowing, or caging is DONE by those rows; do not describe it again in any wording. Build the concept's OTHER face. ` : ''}The rows above already OWN their fiction — never describe another version of one; the best ideas key off a condition a row applies, or set up a state the rows exploit.${energy ? ` This creature's energy is ${energy}.` : ''}
-Tag each idea: "section" is action | bonus_action | reaction${wantTrait ? ' (the trait idea is always a trait)' : ''}; "trigger" is one of ${TRIGGERS.join(' | ')}; "effect" is one of ${EFFECTS.join(' | ')}.
+NOT A SIGNATURE (the wide run's biggest miss class, 12 of 48): a damage resistance or immunity, "blades only chip it", "can't be moved", "immune to its own fire", or a saving-throw bonus — those are the HEADER's to grant and the engine already derives them from type and energy. A trait idea must be a RULE that happens: something the creature does, or something that happens to whoever touches, hits, or holds it. Tag each idea: "section" is action | bonus_action | reaction | rider (a clause on the creature's own attack: "when it hits, …")${wantTrait ? ' (the trait idea is always a trait)' : ''}; "trigger" is one of ${TRIGGERS.join(' | ')}; "effect" is one of ${EFFECTS.join(' | ')}.
 Return ONLY JSON: {"action": {"idea": "<2-3 plain sentences>", "section": "<action|bonus_action|reaction>", "trigger": "<...>", "effect": "<...>"}${wantTrait ? ', "trait": {"idea": "<1-2 plain sentences: a passive rule of its body or nature>", "trigger": "<...>", "effect": "<...>"}' : ''}}`;
 }
 
@@ -353,15 +357,16 @@ export function validateIdeaResponse(jsonString) {
 // "on_hit" there means a save action; "on_being_hit" means the idea IS a
 // reaction; "start_of_turn" means it is a trait. A reaction only ever fires
 // on being hit; a trait never uses the creature's action.
-const LEGAL = { action: ['save', 'always', 'once_per_fight'], bonus_action: ['save', 'always', 'once_per_fight'], reaction: ['on_being_hit'], trait: ['always', 'on_being_hit', 'start_of_turn'] };
+const LEGAL = { action: ['save', 'always', 'once_per_fight'], bonus_action: ['save', 'always', 'once_per_fight'], reaction: ['on_being_hit'], trait: ['always', 'on_being_hit', 'start_of_turn'], rider: ['on_hit'] };
 export function normaliseTag(section, trigger) {
   if (LEGAL[section].includes(trigger)) return { section, trigger };
   if (section === 'action' || section === 'bonus_action') {
-    if (trigger === 'on_hit') return { section, trigger: 'save' };
+    if (trigger === 'on_hit') return { section: 'rider', trigger: 'on_hit' }; // "when it hits" IS a rider on the creature's own attack (the wide run: 3 of 5 action misses)
     if (trigger === 'on_being_hit') return { section: 'reaction', trigger };
     if (trigger === 'start_of_turn') return { section: 'trait', trigger };
   }
   if (section === 'reaction') return { section, trigger: 'on_being_hit' };
+  if (section === 'rider') return { section, trigger: 'on_hit' };
   return { section, trigger: 'always' };
 }
 
@@ -369,7 +374,7 @@ export function parseIdeas(raw) {
   const p = tryParse(raw);
   const norm = (o, forced) => {
     if (!o || typeof o.idea !== 'string' || o.idea.trim().length < 20) return null;
-    const section0 = forced ?? (['action', 'bonus_action', 'reaction'].includes(String(o.section).toLowerCase()) ? String(o.section).toLowerCase() : 'action');
+    const section0 = forced ?? (['action', 'bonus_action', 'reaction', 'rider'].includes(String(o.section).toLowerCase()) ? String(o.section).toLowerCase() : 'action');
     const trigger0 = TRIGGERS.includes(o.trigger) ? o.trigger : 'always';
     const { section, trigger } = normaliseTag(section0, trigger0);
     return { idea: o.idea.trim().slice(0, 400), section, trigger, effect: EFFECTS.includes(o.effect) ? o.effect : 'damage' };
