@@ -6,7 +6,7 @@
  * THE BLOCK LOUDLY (owner spec: no silent fallback names).
  */
 import { pickDonor, scaleDonor } from './scale.mjs';
-import { templatesFor, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit } from './templates.mjs';
+import { templatesFor, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit } from './templates.mjs';
 import { drawLibraryRow, LIBRARY_KEYS, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
@@ -2446,6 +2446,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         if (deadBareT) sweepDeadName(sections, deadBareT, host, trace);
       } else trace('signature miss:', `action — a rider fit (${actionT.template}) but the sheet has no melee row to ride`);
     } else if (actionT) {
+      // THE VALUE CHECK — the row must be worth the attack it replaces
+      const vc = valueCheck(actionT.row, { scaled, sections, section: actionT.section });
+      if (vc.steps.length) { actionT.row.text = vc.text; actionT.row.name = vc.name; }
+      trace('value check:', `"${actionT.row.name}" EV ${vc.ev} vs floor ${vc.floor} (${vc.replaced})${vc.steps.length ? ` — ${vc.steps.join('; ')}` : ' — worth the trade'}`);
       // a template that SUPERSEDES a chassis row removes it (one lance, one
       // physics — the lancer's returning throw beside the retrieve, v4 read)
       const sup = actionT.supersedes;
@@ -2465,12 +2469,15 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       let drawn = null;
       for (let i = 0; i < shelfT.length && !drawn; i += 1) {
         const t = i < verbFirst ? shelfT[i] : shelfT[verbFirst + ((nameHash(p.name) + i) % Math.max(1, shelfT.length - verbFirst))];
-        const r = renderTemplate(t, ctxT, {});
+        const r = renderTemplate(t, ctxT, {}, { blind: true });
         if (r) drawn = { seed: t.id, section: r.section, row: { name: `${r.name}${r.gate ? ` (${r.gate})` : ''}`, text: r.text, library: true } };
       }
       if (!drawn) drawn = drawLibraryRow(scaled, { archetype, energy: options.energy ?? null, mix: options.mix ?? null, name: p.name, shapeKey: null, imposed: imposedT, mechanics: options.mechanics ?? null, cr });
       if (drawn && /\{[a-z_]+\}/.test(drawn.row.text)) drawn = null; // a seed with an unfilled flavor blank never ships raw
       if (drawn) {
+        const vc = valueCheck(drawn.row, { scaled, sections, section: drawn.section });
+        if (vc.steps.length) { drawn.row.text = vc.text; drawn.row.name = vc.name; }
+        trace('value check:', `"${drawn.row.name}" EV ${vc.ev} vs floor ${vc.floor} (${vc.replaced})${vc.steps.length ? ` — ${vc.steps.join('; ')}` : ' — worth the trade'}`);
         drawn.row.text = stampT(drawn.row.text);
         (sections[drawn.section] = sections[drawn.section] ?? []).push(drawn.row);
         libraryDrawn = true;

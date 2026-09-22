@@ -213,6 +213,33 @@ export const SHAPES = [
     roles: ['brute', 'lurker', 'skirmisher', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature adheres to anything that touches it. A Huge or smaller creature adhered to the creature is also Grappled by it (escape DC {dc}). Ability checks made to escape this grapple have Disadvantage.'])),
   },
+  // PROMOTED SEEDS (2026-09-22): the two most-drawn seeds become shapes —
+  // one frame per band (print grows range and reach with tier) and a flavor
+  // slot for the fiction the seed used to bake in. The seeds retire.
+  {
+    id: 'lure', name: 'Luring Presence', cite: 'Harpy/Luring Song (CR 1); Siren-class lures',
+    roles: ['lurker', 'artillery', 'controller', 'skirmisher'], styles: [], cr_range: [0, 30], replaces: 'signature',
+    frames: {
+      '0-2': "*Wisdom Saving Throw:* DC {dc}, one creature within 30 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn.",
+      '3-5': "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn.",
+      '6-9': "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
+      '10-12': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice within 60 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
+      '13-20': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice within 90 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
+      '21+': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice within 120 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
+    },
+  },
+  {
+    id: 'hook-drag', name: 'Hooked Lash', cite: 'Roper/Tendril + Reel (CR 5); Chain Devil class',
+    roles: ['brute', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'signature',
+    frames: {
+      '0-2': '*Strength Saving Throw:* DC {dc}, one creature within 20 feet. *Failure:* The target is pulled up to 15 feet straight toward the creature by {hook} and has the Grappled condition (escape DC {dc}).',
+      '3-5': '*Strength Saving Throw:* DC {dc}, one creature within 30 feet. *Failure:* The target is pulled up to 20 feet straight toward the creature by {hook} and has the Grappled condition (escape DC {dc}).',
+      '6-9': '*Strength Saving Throw:* DC {dc}, one creature within 30 feet. *Failure:* The target is pulled up to 25 feet straight toward the creature by {hook} and has the Grappled condition (escape DC {dc}).',
+      '10-12': '*Strength Saving Throw:* DC {dc}, one Huge or smaller creature within 60 feet. *Failure:* The target is pulled up to 30 feet straight toward the creature by {hook} and has the Grappled condition (escape DC {dc}). While Grappled this way, the target has the Restrained condition.',
+      '13-20': '*Strength Saving Throw:* DC {dc}, one Huge or smaller creature within 60 feet. *Failure:* The target is pulled up to 30 feet straight toward the creature by {hook} and has the Grappled condition (escape DC {dc}). While Grappled this way, the target has the Restrained condition.',
+      '21+': '*Strength Saving Throw:* DC {dc}, one Huge or smaller creature within 90 feet. *Failure:* The target is pulled up to 30 feet straight toward the creature by {hook} and has the Grappled condition (escape DC {dc}). While Grappled this way, the target has the Restrained condition.',
+    },
+  },
   {
     id: 'death-burst', name: 'Death Burst', cite: 'Dust Mephit (CR 1/2, 5 ft); Magmin (CR 1/2, 10 ft); Balor/Death Throes (CR 19, 30 ft dual-type)',
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker'], styles: [], cr_range: [0.5, 20], replaces: 'trait',

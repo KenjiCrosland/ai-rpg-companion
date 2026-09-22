@@ -36,7 +36,7 @@ const PHYSICAL = ['Bludgeoning', 'Piercing', 'Slashing'];
 // closed-vocabulary slots: the model may propose, the engine only accepts a listed value
 const VOCAB = { save_stat: SAVE_STATS, consumed_condition: CONDITIONS, condition_minor: MINOR, restraint: RESTRAINTS, r_vuln: DAMAGE };
 // flavor slots: the model's words, bounded (no digits, no rules grammar, short)
-export const FLAVOR_SLOTS = ['projectile', 'wound_noun', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph'];
+export const FLAVOR_SLOTS = ['projectile', 'wound_noun', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook'];
 // engine slots: never the model's
 const ENGINE_SLOTS = ['dc', 'atk', 'avg', 'dice', 'avg_half', 'dice_half', 'damage_type', 'melee_name'];
 
@@ -47,12 +47,22 @@ const SHAPE_TAGS = {
   'gaze-single': ['save', 'condition'], snare: ['save', 'condition'], reel: ['save', 'movement'],
   'condition-payoff': ['save', 'damage'], rampage: ['once_per_fight', 'damage'], blink: ['always', 'movement'],
   zone: ['once_per_fight', 'condition'], execute: ['save', 'damage'], 'death-burst': ['always', 'damage'],
-  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
+  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
 };
 // ENGINE FAMILIES: a template that re-implements an engine the sheet already
 // carries is off the menu by construction (iron maiden x4: hook-drag beside
 // Cage, 2026-09-21). Sheet engines are read from the rows themselves.
-const ENGINE_OF = { charge: 'charge-rider', 'hook-drag': 'containment', 'obstacle-pull': 'containment', reel: 'containment', snare: 'containment', 'false-appearance': 'disguise', adhesive: 'adhesive', 'heated-body': 'contact-damage', 'resonant-body': 'contact-damage' };
+// A template is OFF THE MENU when the sheet carries an engine it would double
+// (containment beside a Cage) — or, THE DIRECTION RULE (critic, 2026-09-22): an
+// engine it would work AGAINST. A grappler, swallower, or cage needs the victim
+// adjacent; a repeller (Frightened, a push) sends it away. Holders stay.
+const EXCLUDE_ON = {
+  charge: ['charge-rider'],
+  'hook-drag': ['containment'], 'obstacle-pull': ['containment'], reel: ['containment'], snare: ['containment'],
+  'false-appearance': ['disguise'], adhesive: ['adhesive'], 'heated-body': ['contact-damage'], 'resonant-body': ['contact-damage'],
+  // repellers, off every containment seat
+  'escalating-dread': ['containment'], 'terror-pulse': ['containment'], 'push-prone': ['containment'], 'gaze-single': ['containment'],
+};
 export function sheetEngines(sections = {}) {
   const rows = Object.values(sections).flat();
   const out = new Set();
@@ -121,7 +131,7 @@ export const VERB_KEYS = {
   'gaze-single': ['gaze', 'stare', 'glare', 'eye', 'look', 'behold', 'petrify', 'transfix', 'eyes', 'sight'],
   snare: ['snare', 'web', 'bind', 'net', 'tangle', 'silk', 'strand', 'thread', 'entangle', 'rope', 'lasso', 'wrap', 'cocoon', 'chain'],
   reel: ['reel', 'pull', 'drag', 'haul', 'yank', 'tow', 'wrench', 'draw in', 'hook', 'line', 'tongue'],
-  'condition-payoff': ['exploit', 'punish', 'finish', 'helpless', 'downed', 'prone', 'fallen', 'trapped', 'caught', 'grind', 'crush'],
+  'condition-payoff': ['exploit', 'punish', 'finish', 'helpless', 'prone', 'fallen', 'trapped', 'caught', 'grind', 'crush'], // "downed" stemmed to "down" and matched every "down"
   affliction: ['wound', 'bleed', 'fester', 'gash', 'lingering', 'sludge', 'venom', 'poison', 'rot', 'infect', 'alchemical', 'lasting', 'scar', 'sepsis'],
   charge: ['charge', 'gore', 'momentum', 'straight line', 'ram', 'lance', 'joust', 'impale', 'run down', 'spur', 'gallop'],
   rampage: ['rampage', 'frenzy', 'bloodied', 'berserk', 'rage', 'fury', 'blood', 'wound', 'savage'],
@@ -246,7 +256,7 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
   const roles = rolesFor(archetype);
   const engines = sheetEngines(sections);
   return TEMPLATES.filter((t) => t.roles.some((r) => roles.includes(r))
-    && !(ENGINE_OF[t.id] && engines.has(ENGINE_OF[t.id]))
+    && !(EXCLUDE_ON[t.id] ?? []).some((fam) => engines.has(fam))
     && (!style || t.styles.length === 0 || t.styles.includes(style))
     && cr >= t.cr_range[0] && cr <= t.cr_range[1]
     && (t.kind !== 'shape' || t.frames[band])
@@ -269,8 +279,11 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
 // else fit". They ship only when the concept's verb asks for them.
 const UTILITY = new Set(['zone-seed', 'focus', 'feint-slip', 'phase-slip', 'rally', 'reveal', 'coating']);
 export function fallbackMenu(ctx, verbText = '') {
-  const legal = templatesFor({ ...ctx, section: 'action', trigger: null }).filter((t) => t.kind === 'seed' && t.section === 'action')
-    .concat(templatesFor({ ...ctx, section: 'bonus_action', trigger: null }).filter((t) => t.kind === 'seed'));
+  // seeds AND flavor-free shapes render blind; a shape that needs the model's
+  // fiction cannot (the preacher: the bound seal shape lost the fallback to a
+  // seed with a weaker verb because only seeds were eligible)
+  const legal = templatesFor({ ...ctx, section: 'action', trigger: null }).filter((t) => t.section === 'action')
+    .concat(templatesFor({ ...ctx, section: 'bonus_action', trigger: null }));
   // the fallback obeys the VERB too: a concept-verb seed first, then any
   // verb-matched seed, then the non-utility rest in hash order
   const ranked = rankByVerb(legal, verbText);
@@ -287,7 +300,10 @@ const shortFlavor = (s) => typeof s === 'string' && s.trim().split(/\s+/).length
  * cannot be filled (a miss, never a half-filled row).
  * ctx: { scaled, energy, mix, meleeName, conditionMinor, projectile, archetype, imposed, mechanics, cr, name }
  */
-export function renderTemplate(t, ctx, fills = {}) {
+// generic fills for a BLIND render (the fallback): the fiction is plain, never wrong
+const BLIND_FILLS = { projectile: 'a hurled object', wound_noun: 'wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'gathering itself', lure_source: 'the creature', hook: 'its grip' };
+export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
+  if (blind) fills = { ...BLIND_FILLS, ...fills };
   const { scaled } = ctx;
   if (t.kind === 'seed') {
     const drawn = drawLibraryRow(scaled, { archetype: ctx.archetype, energy: ctx.energy, mix: ctx.mix, name: ctx.name ?? '', shapeKey: t.key, imposed: ctx.imposed ?? [], mechanics: ctx.mechanics ?? null, cr: ctx.cr });
@@ -424,3 +440,57 @@ function tryParse(raw) {
 }
 
 export { BY_ID as TEMPLATE_BY_ID };
+
+// ---------------------------------------------------------------- THE VALUE CHECK
+// (critic + owner, 2026-09-22: "it has to be worth the trade"). A template
+// row replaces ONE attack of the Multiattack (the replacement clause) or, when
+// gated, stands alone against the whole Multiattack. Its expected value is
+// derived from the sheet — never guessed — and an under row climbs the
+// ladder: add the half clause, raise the dice to the attack's budget, then log
+// that it still needs a condition. An over row gets a Recharge gate.
+const P_FAIL = 0.55; const P_HIT = 0.65;
+const WORTH_AN_ATTACK = /\b(?:Restrained|Grappled|Charmed|Paralyzed|Stunned|Incapacitated|Petrified)\b|can't regain Hit Points.{0,40}(?:1 minute|repeat)/;
+const MINOR_EFFECT = /\b(?:Frightened|Deafened|Blinded|Poisoned|Prone)\b|Disadvantage|pulled|pushed|Speed is (?:halved|0)/;
+const DMG = /(\d+) \((\d+d\d+(?:\s*\+\s*\d+)?)\)/;
+export function multiattackShape(sections = {}) {
+  const ma = Object.values(sections).flat().find((e) => /^Multiattack/i.test(e.name ?? ''));
+  const words = { one: 1, two: 2, three: 3, four: 4, five: 5 };
+  const m = /makes (one|two|three|four|five)/i.exec(ma?.text ?? '');
+  return { attacks: m ? words[m[1].toLowerCase()] : 1, present: !!ma };
+}
+export function rowValue(text, perHit) {
+  // only the PAYLOAD counts: a condition in the targeting frame ("one creature
+  // that is Grappled") is a prerequisite, not something the row applies (the
+  // exploiter read 31.9 and was gated on every caged sheet, 2026-09-22)
+  const payload = /\*Failure:\*/.test(text) ? text.slice(text.indexOf('*Failure:*')) : text;
+  const d = DMG.exec(payload);
+  const avg = d ? Number(d[1]) : 0;
+  const half = /\*Success:\*\s*Half/i.test(text);
+  let ev = P_FAIL * avg + (half ? (1 - P_FAIL) * avg / 2 : 0);
+  if (WORTH_AN_ATTACK.test(payload)) ev += P_FAIL * perHit;
+  else if (MINOR_EFFECT.test(payload)) ev += P_FAIL * perHit * 0.25;
+  return { ev, avg, half, hasDamage: !!d };
+}
+/**
+ * @returns {{ text, name, ev, floor, replaced, steps: string[] }}
+ */
+export function valueCheck(row, { scaled, sections, section }) {
+  const perHit = Math.max(3, Math.round(scaled.per_hit ?? 6));
+  const attackEV = P_HIT * perHit;
+  const gated = /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(row.name ?? '');
+  const ma = multiattackShape(sections);
+  // a bonus action is free (no trade — ceiling only); a gated action stands alone
+  const replaced = section === 'Bonus Actions' ? 0 : gated ? attackEV * ma.attacks : attackEV;
+  const label = section === 'Bonus Actions' ? 'a bonus action (free)' : gated ? `the whole Multiattack (${ma.attacks} attacks)` : `one attack of ${ma.attacks}`;
+  const floor = 0.8 * replaced; const ceiling = 1.5 * (replaced || attackEV);
+  let text = row.text; let name = row.name; const steps = [];
+  let v = rowValue(text, perHit);
+  if (v.ev < floor && v.hasDamage && !v.half) { text = `${text.trim()} *Success:* Half damage only.`; steps.push('added Success: Half'); v = rowValue(text, perHit); }
+  if (v.ev < floor && v.hasDamage && v.avg < perHit) {
+    const full = saveDamageDiceFor(perHit);
+    text = text.replace(DMG, `${full.avg} (${full.dice})`); steps.push(`dice ${v.avg} → ${full.avg}`); v = rowValue(text, perHit);
+  }
+  if (v.ev < floor) steps.push('still under — needs a condition from the worth-an-attack list (logged)');
+  if (v.ev > ceiling && !gated && section !== 'Traits') { name = `${name} (Recharge 5-6)`; steps.push('over the ceiling — gated Recharge 5-6'); }
+  return { text, name, ev: Math.round(v.ev * 10) / 10, floor: Math.round(floor * 10) / 10, replaced: label, steps };
+}

@@ -1,17 +1,47 @@
-import { TEMPLATES, templatesFor, renderTemplate, coveredBySheet, triggerCompatible, fallbackMenu, normaliseTag, rankByVerb, conceptVerbs, buildIdeaPrompt, buildFitPrompt, parseIdeas, parseFit, validateIdeaResponse, validateFitResponse, FLAVOR_SLOTS } from '../templates.mjs';
+import { TEMPLATES, templatesFor, renderTemplate, coveredBySheet, triggerCompatible, fallbackMenu, normaliseTag, rankByVerb, conceptVerbs, valueCheck, rowValue, multiattackShape, buildIdeaPrompt, buildFitPrompt, parseIdeas, parseFit, validateIdeaResponse, validateFitResponse, FLAVOR_SLOTS } from '../templates.mjs';
 import { pickDonor, scaleDonor } from '../scale.mjs';
 import { generateReskin } from '../generate.mjs';
 
 const sheet = (cr = 8, style = null, archetype = 'skirmisher') => scaleDonor(pickDonor(cr, style, archetype), cr, { mechanics: [] });
 
 describe('the catalog', () => {
+  test('promoted seeds: lure and hook-drag are shapes now — band frames, flavor slots, seeds retired', () => {
+    const lure = TEMPLATES.find((t) => t.id === 'lure'); const hook = TEMPLATES.find((t) => t.id === 'hook-drag');
+    expect(lure.kind).toBe('shape'); expect(hook.kind).toBe('shape');
+    expect(TEMPLATES.filter((t) => t.id === 'lure').length).toBe(1);
+    const ctx = { scaled: sheet(15, null, 'lurker'), archetype: 'lurker', cr: 15, energy: null, mix: 'physical', meleeName: 'Claw', imposed: [], name: 'X' };
+    expect(renderTemplate(lure, ctx, { lure_source: 'the lamp' }).text).toMatch(/within 90 feet that can see or hear the lamp/);
+    expect(renderTemplate(lure, ctx, {})).toBeNull(); // the fiction slot is required
+    expect(renderTemplate(hook, { ...ctx, scaled: sheet(3, null, 'brute'), archetype: 'brute', cr: 3 }, { hook: 'its barbed chain' }).text).toMatch(/pulled up to 20 feet straight toward the creature by its barbed chain/);
+    expect(lure.keys).toEqual(expect.arrayContaining(['lure', 'beckon', 'lamp']));
+  });
+  test('the value check: an under row climbs the ladder; a worth-an-attack condition passes; an over row is gated; a bonus action is free', () => {
+    const scaled = sheet(6, null, 'brute'); const per = Math.round(scaled.per_hit);
+    const sections = { Actions: [{ name: 'Multiattack', text: 'The creature makes two Slam attacks.' }, { name: 'Slam', text: `*Melee Attack Roll:* +7, reach 5 ft. ${per} (2d8 + 4) Bludgeoning damage.` }] };
+    expect(multiattackShape(sections).attacks).toBe(2);
+    const half = Math.max(2, Math.round(per / 2));
+    const under = valueCheck({ name: 'Sealing Sermon', text: `*Constitution Saving Throw*: DC 15, one creature within 30 feet. *Failure:* ${half} (2d4) Fire damage, and the target can't regain Hit Points until the end of the creature's next turn.` }, { scaled, sections, section: 'Actions' });
+    expect(under.steps.join(' ')).toMatch(/Success: Half/);
+    expect(under.steps.join(' ')).toMatch(/dice/);
+    expect(rowValue(under.text, per).ev).toBeGreaterThanOrEqual(under.floor);
+    const lure = valueCheck({ name: 'Lure', text: '*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Charmed condition until the start of the creature\'s next turn.' }, { scaled, sections, section: 'Actions' });
+    expect(lure.steps).toEqual([]);
+    const over = valueCheck({ name: 'Ruin', text: `*Dexterity Saving Throw*: DC 15, each creature in a 20-foot Emanation. *Failure:* ${per * 4} (12d8) Fire damage. *Success:* Half damage only.` }, { scaled, sections, section: 'Actions' });
+    expect(over.name).toMatch(/\(Recharge 5-6\)$/);
+    const bonus = valueCheck({ name: 'Focus', text: 'The creature has Advantage on its next attack roll.' }, { scaled, sections, section: 'Bonus Actions' });
+    expect(bonus.steps).toEqual([]);
+    const prereq = valueCheck({ name: 'Lash', text: `*Strength Saving Throw*: DC 15, one creature within 30 feet that is Grappled by the creature. *Failure:* ${per} (2d8) Slashing damage.` }, { scaled, sections, section: 'Actions' });
+    expect(prereq.name).toBe('Lash'); // a prerequisite condition is not a payload — no gate
+    const gatedNova = valueCheck({ name: 'Toll (Recharge 5-6)', text: `*Constitution Saving Throw*: DC 15, each creature within 15 feet. *Failure:* ${per} (2d8) Thunder damage. *Success:* Half damage only.` }, { scaled, sections, section: 'Actions' });
+    expect(gatedNova.replaced).toMatch(/whole Multiattack/);
+  });
   test('every template id is unique across shapes and seeds', () => {
     const ids = TEMPLATES.map((t) => t.id);
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids).toContain('zone-seed');
   });
   test('every template renders at a mid CR with flavor slots supplied and no slot left unfilled', () => {
-    const fills = { disguise: 'an inanimate statue', projectile: 'a knucklebone', wound_noun: 'gash', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls while inside it', save_stat: 'Wisdom', consumed_condition: 'Frightened', condition_minor: 'Prone', restraint: 'Restrained', r_vuln: 'Fire' };
+    const fills = { lure_source: 'the lamp', hook: 'its barbed chain', disguise: 'an inanimate statue', projectile: 'a knucklebone', wound_noun: 'gash', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls while inside it', save_stat: 'Wisdom', consumed_condition: 'Frightened', condition_minor: 'Prone', restraint: 'Restrained', r_vuln: 'Fire' };
     for (const t of TEMPLATES) {
       const cr = Math.max(t.cr_range[0], Math.min(8, t.cr_range[1]));
       const archetype = t.roles.includes('skirmisher') ? 'skirmisher' : t.roles.includes('brute') ? 'brute' : t.roles.includes('lurker') ? 'lurker' : t.roles.includes('caster') ? 'caster' : t.roles.includes('defender') ? 'defender' : 'skirmisher';
@@ -55,6 +85,10 @@ describe('the catalog', () => {
     const ids = templatesFor({ archetype: 'brute', style: 'grappler', cr: 8, sections: caged, section: 'action' }).map((t) => t.id);
     for (const x of ['hook-drag', 'obstacle-pull', 'reel', 'snare']) expect(ids).not.toContain(x);
     expect(templatesFor({ archetype: 'brute', cr: 8, sections: {}, section: 'action' }).map((t) => t.id)).toContain('hook-drag');
+    // the direction rule: no repeller on a cage seat; holders stay; both come back on an open sheet
+    for (const x of ['escalating-dread', 'terror-pulse', 'push-prone', 'gaze-single']) expect(ids).not.toContain(x);
+    expect(ids).toEqual(expect.arrayContaining(['condition-payoff', 'exploiter']));
+    expect(templatesFor({ archetype: 'brute', cr: 8, sections: {}, section: 'action' }).map((t) => t.id)).toContain('push-prone');
   });
   test('a temporal trigger is structural: an on_being_hit idea sees no telegraphed nova (the bell hermit); save/always/once_per_fight interchange', () => {
     const scaled = sheet(6, 'grappler', 'brute');
@@ -85,7 +119,8 @@ describe('the catalog', () => {
     const ids = fallbackMenu({ archetype: 'lurker', style: 'trap', cr: 6, sections: roper }).map((t) => t.id);
     expect(ids.length).toBeGreaterThan(0);
     for (const x of ['obstacle-pull', 'hook-drag', 'reel', 'snare']) expect(ids).not.toContain(x);
-    expect(ids.every((id) => TEMPLATES.find((t) => t.id === id).kind === 'seed')).toBe(true);
+    expect(renderTemplate(TEMPLATES.find((t) => t.id === 'lure'), { scaled: sheet(6, 'trap', 'lurker'), archetype: 'lurker', cr: 6, energy: null, mix: 'physical', meleeName: 'Claw', imposed: [], name: 'X' }, {}, { blind: true }).text).toMatch(/can see or hear the creature/);
+    expect(fallbackMenu({ archetype: 'caster', cr: 6, sections: {} }, 'a wax preacher whose sermons seal the wounds of its flock')[0]).toMatchObject({ id: 'seal' });
   });
   test('the blind read\'s five: x2 slots render; a trap sheet gets no second disguise; the verb ranks the menu; retired and gated seeds', () => {
     const scaled = sheet(7, null, 'lurker');

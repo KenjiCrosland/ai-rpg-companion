@@ -41,7 +41,8 @@ export const LIBRARY_SEEDS = [
     text: "*Strength Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target is pulled up to 15 feet straight toward the creature, and its Speed is 0 until the start of the creature's next turn.",
   },
   {
-    key: 'lure', keys: ['lure', 'beguile', 'song', 'call'],
+    key: 'lure', retired: true, // promoted to a shape (shapes.mjs) 2026-09-22
+    keys: ['lure', 'beguile', 'song', 'call'],
     section: 'Actions', archetypes: ['lurker', 'caster', 'skirmisher'],
     name: 'Luring Presence', // Dull Compliance + the Bog Lantern's live proof
     text: "*Wisdom Saving Throw:* DC {dc}, one creature within 30 feet that can see or hear the creature. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn.",
@@ -102,7 +103,8 @@ export const LIBRARY_SEEDS = [
     text: "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice within 30 feet. *Failure:* The target immediately moves up to half its Speed in a direction of the creature's choice, using the safest available route.",
   },
   {
-    key: 'hook-drag', keys: ['hook', 'chain', 'harpoon', 'drag', 'grapple'],
+    key: 'hook-drag', retired: true, // promoted to a shape (shapes.mjs) 2026-09-22
+    keys: ['hook', 'chain', 'harpoon', 'drag', 'grapple'],
     section: 'Actions', archetypes: ['brute', 'lurker', 'defender'],
     name: 'Hooked Lash', // the whip-and-drag class
     text: '*Strength Saving Throw:* DC {dc}, one creature within 30 feet. *Failure:* The target is pulled up to 20 feet straight toward the creature and has the Grappled condition (escape DC {dc}).',
