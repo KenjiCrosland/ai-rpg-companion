@@ -223,7 +223,7 @@ const run = async () => {
       const routeGot = (/\[route\] ([a-z-]+)/.exec(tr) ?? [])[1] ?? null;
       // a seed drawn by the verb-ranked fallback IS the card (the bishop's mark
       // shipped as "Binding Mark" and the golden had counted only fits)
-      const tmplGot = [...tr.matchAll(/signature template(?: \(trait\))?: ([a-z-]+)|library seed drawn: ([a-z-]+)/g)].map((m) => m[1] ?? m[2]);
+      const tmplGot = [...tr.matchAll(/signature template(?: \(trait\))?: ([a-z-]+)|signature rider: ([a-z-]+)|library seed drawn: ([a-z-]+)/g)].map((m) => m[1] ?? m[2] ?? m[3]);
       const routeOk = !entry.expect.route || (routeGot && entry.expect.route.includes(routeGot));
       const tmplOk = !entry.expect.template || entry.expect.template.some((t) => tmplGot.includes(t));
       // an API failure is an ERROR, not a verdict on the build

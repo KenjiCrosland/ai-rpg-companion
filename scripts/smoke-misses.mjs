@@ -47,8 +47,19 @@ for (const m of misses) {
 }
 console.log(`${blocks} template-signature blocks in ${newest.size} run(s): action templates ${hits.template}, trait templates ${hits.trait}, seeds ${seeds.drawn}, misses ${misses.length} (${misses.filter((m) => m.seat === 'action').length} action / ${misses.filter((m) => m.seat === 'trait').length} trait)\n`);
 console.log('MISSES BY TAG (most first) — each line is an idea a template could have held:\n');
+// THE LOOKUP: for each miss tag, the print rows with the same section/trigger/
+// effect, ranked by key overlap with the ideas — authoring is a copy, not a search
+let shapes = []; try { shapes = JSON.parse(fs.readFileSync('scripts/corpus-shapes.json', 'utf8')); } catch { /* run scripts/tag-corpus.mjs first */ }
+const words = (t) => new Set(String(t).toLowerCase().split(/[^a-z-]+/).filter((w) => w.length >= 4));
 for (const [k, list] of [...byTag.entries()].sort((a, b) => b[1].length - a[1].length)) {
   console.log(`${String(list.length).padStart(3)}  ${k}`);
   for (const m of list) console.log(`       ${m.file.replace(/\.md$/, '').padEnd(34)} ${m.idea.slice(0, 120)}${m.idea.length > 120 ? '…' : ''}`);
+  const [, , sec, trig, eff] = /^(\w+)\s+(\w+)\/(\w+)\/(\w+)$/.exec(k.replace(/\s+/, ' ')) ?? [];
+  if (shapes.length && sec) {
+    const ideaWords = words(list.map((m) => m.idea).join(' '));
+    const cands = shapes.filter((r) => r.section === sec && r.trigger === trig && r.effect === eff)
+      .map((r) => ({ r, n: r.keys.filter((w) => ideaWords.has(w)).length })).sort((a, b) => b.n - a.n).slice(0, 3);
+    if (cands.length) console.log(`       PRINT: ${cands.map(({ r, n }) => `${r.monster} · ${r.name} (CR ${r.cr}${n ? `, ${n} shared words` : ''})`).join(' | ')}`);
+  }
   console.log('');
 }

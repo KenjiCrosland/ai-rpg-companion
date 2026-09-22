@@ -159,5 +159,94 @@
         "leap"
       ]
     }
+  },
+  {
+    "cr": "6",
+    "concept": "a lighthouse hermit-mage whose lantern beam brands whoever it falls on, so her bolts find them again in the dark",
+    "expect": {
+      "route": [
+        "caster-binder",
+        "caster"
+      ],
+      "template": [
+        "bolt-mark",
+        "condition-payoff",
+        "seal"
+      ]
+    }
+  },
+  {
+    "cr": "9",
+    "concept": "a court astrologer who reads a foe's next move in the stars and pins them with a falling shard of light",
+    "expect": {
+      "route": [
+        "caster-binder",
+        "caster"
+      ],
+      "template": [
+        "bolt-restrain",
+        "condition-payoff"
+      ]
+    }
+  },
+  {
+    "cr": "8",
+    "concept": "a temple gong given legs that walks the cloister at night and strikes itself whenever it is struck",
+    "expect": {
+      "template": [
+        "active-toll",
+        "resonant-body"
+      ]
+    }
+  },
+  {
+    "cr": "4",
+    "concept": "a burrowing mole-hound that hunts by tremor and surfaces beneath sleepers",
+    "expect": {
+      "route": [
+        "lurker"
+      ],
+      "template": [
+        "burrow-ambush",
+        "assassinate"
+      ]
+    }
+  },
+  {
+    "cr": "7",
+    "concept": "a drowned bell-diver who still climbs the harbor chains at night, dragging anyone on the pier down with him",
+    "expect": {
+      "route": [
+        "lurker-phantom"
+      ],
+      "template": [
+        "hook-drag",
+        "assassinate",
+        "lure",
+        "pull-through"
+      ]
+    }
+  },
+  {
+    "cr": "3",
+    "concept": "a carrion goat that eats grave-flowers and vomits a choking cloud when cornered",
+    "expect": {
+      "route": [
+        "skirmisher"
+      ],
+      "template": [
+        "spew",
+        "bloodied-burst"
+      ]
+    }
+  },
+  {
+    "cr": "10",
+    "concept": "a glass ox forged for a tyrant's parade, hollow and humming, that charges the loudest voice in the square",
+    "expect": {
+      "route": [
+        "brute-charger"
+      ]
+    }
   }
 ]

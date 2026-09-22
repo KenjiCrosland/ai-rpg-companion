@@ -176,7 +176,7 @@ export const VERB_KEYS = {
   disarm: ['disarm', 'twist', 'strip', 'weapon', 'snatch', 'steal', 'pluck', 'wrench', 'knock away', 'take'],
   'push-prone': ['shove', 'topple', 'slam', 'bowl', 'knock', 'push', 'fling', 'throw down', 'trip', 'batter', 'bull', 'ram', 'sweep'],
   herd: ['herd', 'drive', 'command', 'stampede', 'scatter', 'chase', 'flush', 'corral', 'compel', 'sermon', 'order', 'call'],
-  'hook-drag': ['hook', 'chain', 'harpoon', 'drag', 'grapple', 'reel', 'pull', 'haul', 'line', 'tether', 'anchor', 'claw', 'tongue', 'into the surf', 'under'],
+  'hook-drag': ['hook', 'chain', 'harpoon', 'drag', 'grapple', 'reel', 'pull', 'haul', 'tether', 'anchor', 'claw', 'tongue', 'into the surf', 'under'],
   'thrown-burst-seed': ['hurl', 'bomb', 'burst', 'volley', 'throw', 'lob', 'toss', 'shatter', 'explode', 'grenade', 'flask'],
   drain: ['drain', 'leech', 'feed', 'siphon', 'suck', 'drink', 'sap', 'wither', 'devour', 'life', 'vampire', 'hunger'],
   'delayed-brand': ['brand', 'ember', 'fuse', 'venom', 'poison', 'infect', 'rot', 'fester', 'curse', 'mark', 'smolder', 'seed'],
@@ -210,7 +210,16 @@ const ING_ROOTS = new Set(['lightning', 'morning', 'evening', 'king', 'ring', 's
 const stem = (w) => { const l = w.toLowerCase(); return ING_ROOTS.has(l) ? l : l.replace(/(?<=[sxz]|ch|sh)es$/, '').replace(/(?<!s)s$/, '').replace(/ing$/, '').replace(/(?<=[a-z]{3})ed$/, ''); };
 // prefix match covers INFLECTION only ("dragg"/"drag"), never a compound: "night"
 // bound the bishop to "nightmare" (goldens 2026-09-21)
-const sameStem = (a, b) => a === b || (Math.min(a.length, b.length) >= 4 && Math.abs(a.length - b.length) <= 2 && (a.startsWith(b) || b.startsWith(a)));
+// bound the bishop to "nightmare" (goldens 2026-09-21); a length bound still let
+// "market" bind the bull to "marks" (goldens 2026-09-22) — the remainder must
+// BE an inflection: a doubled consonant ("dragg"), a dropped -e, or -y/-i
+const sameStem = (a, b) => {
+  if (a === b) return true;
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+  if (short.length < 4 || !long.startsWith(short)) return false;
+  const rest = long.slice(short.length);
+  return rest === short.at(-1) || rest === 'e' || rest === 'y' || rest === 'i';
+};
 const wordsOf = (t) => [...new Set(String(t ?? '').toLowerCase().split(/[^a-z]+/).filter((w) => w.length >= 3).map(stem))]; // hyphens split: "tar-mouthed" carries "tar"
 /**
  * Rank a menu by verb overlap. THE CONCEPT'S verbs (the user's words + the
@@ -290,8 +299,13 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
   const hasNova = rows.some((e) => (/^Recharge/.test(e.gate ?? '') || /\(Recharge [\d–-]+\)/.test(e.name ?? '')) && /\d+ \(\d+d\d+/.test(e.text ?? ''));
   const roles = rolesFor(archetype);
   const engines = sheetEngines(sections);
+  // a template that SUPERSEDES a row on this sheet replaces that row's engine
+  // family rather than doubling it: the returning throw IS what Hurled Weapon
+  // rewrites, so the family it constitutes cannot exclude it (the lancer's
+  // donor row said "throws", goldens 2026-09-22)
+  const supersedesRow = (t) => t.supersedes instanceof RegExp && rows.some((e) => t.supersedes.test(e.text ?? ''));
   return TEMPLATES.filter((t) => t.roles.some((r) => roles.includes(r))
-    && !(EXCLUDE_ON[t.id] ?? []).some((fam) => engines.has(fam))
+    && (!(EXCLUDE_ON[t.id] ?? []).some((fam) => engines.has(fam)) || supersedesRow(t))
     && (!style || t.styles.length === 0 || t.styles.includes(style))
     && cr >= t.cr_range[0] && cr <= t.cr_range[1]
     && (t.kind !== 'shape' || t.frames[band])
@@ -317,7 +331,21 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
 // obscurement row "the new dead row … appearing as a fallback when nothing
 // else fit". They ship only when the concept's verb asks for them.
 const UTILITY = new Set(['zone-seed', 'focus', 'feint-slip', 'phase-slip', 'rally', 'reveal', 'coating']);
-export function fallbackMenu(ctx, verbText = '') {
+// BLIND-DEALABLE (goldens 2026-09-22: a bull was dealt "Hooked Lash", a vault
+// "Hurled Weapon"): a seed with no verb earned is dealt only where its fiction
+// is any-body — a curse or a bolt is any caster, a bellow or a shove is any
+// brute, a hook, a shell, a thrown weapon, a lure are nobody's blind. Closed
+// authored metadata, like `nova` and UTILITY: absent = never blind.
+const ALL = 'all';
+export const BLIND_ROLES = {
+  'condition-payoff': ALL, execute: ALL, 'gaze-single': ALL, rampage: ALL, 'burrow-ambush': ALL, charge: ALL, 'thrown-burst': ALL,
+  affliction: ALL, pounce: ALL, isolation: ALL, snatch: ALL, 'bolt-restrain': ALL, 'bolt-drag': ALL, 'bolt-mark': ALL, 'ward-retaliation': ALL, interpose: ALL,
+  seal: ['controller', 'artillery'],
+  'escalating-dread': ALL, 'terror-pulse': ALL, 'sensory-strike': ALL, disarm: ALL, 'push-prone': ALL, herd: ALL, 'own-turn-punisher': ALL, exploiter: ALL,
+  'aggro-curse': ['caster'], pacify: ['caster'], 'snare-bolt': ['caster'], 'slow-bolt': ['caster'], drain: ['caster', 'lurker'], 'delayed-brand': ['caster'], 'curse-debt': ['caster'], 'blighted-ground': ['caster'],
+};
+export const blindDealable = (t, archetype) => { const b = BLIND_ROLES[t.id]; return b === ALL || (Array.isArray(b) && b.some((r) => rolesFor(archetype).includes(r))); };
+export function fallbackMenu(ctx, verbText = '', ideaText = '') {
   // seeds AND flavor-free shapes render blind; a shape that needs the model's
   // fiction cannot (the preacher: the bound seal shape lost the fallback to a
   // seed with a weaker verb because only seeds were eligible)
@@ -327,9 +355,12 @@ export function fallbackMenu(ctx, verbText = '') {
     .concat(templatesFor({ ...ctx, section: 'bonus_action', trigger: null }));
   // the fallback obeys the VERB too: a concept-verb seed first, then any
   // verb-matched seed, then the non-utility rest in hash order
-  const ranked = rankByVerb(legal, verbText);
+  // the same two tiers as the fit: the user's own words are the concept, the
+  // seat element is idea-level prose (a "straight-line charge" dealt the bull
+  // a hook, goldens 2026-09-22)
+  const ranked = rankByVerb(legal, verbText, ideaText);
   const byVerb = ranked.filter((r) => r.concept.length).map((r) => r.t).concat(ranked.filter((r) => !r.concept.length && r.idea.length).map((r) => r.t));
-  const rest = ranked.filter((r) => !r.matched.length && !UTILITY.has(r.t.id)).map((r) => r.t);
+  const rest = ranked.filter((r) => !r.matched.length && !UTILITY.has(r.t.id) && blindDealable(r.t, ctx.archetype)).map((r) => r.t);
   return [...byVerb, ...rest];
 }
 

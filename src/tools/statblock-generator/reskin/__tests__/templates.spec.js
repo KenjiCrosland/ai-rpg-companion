@@ -184,6 +184,22 @@ describe('the catalog', () => {
     expect(['lure', 'obstacle-pull', 'hook-drag']).toContain(keeper[0]);
     const dark = fallbackMenu(ctx, 'a shadow that fills the hall with darkness and murk').map((t) => t.id);
     expect(dark[0]).toBe('zone-seed'); // a utility row ships only when the concept asks for it
+    // the seat element is idea-level, and a generic noun in it never steers the blind draw (the bull's "straight-line charge" dealt a hook)
+    const bull = fallbackMenu({ archetype: 'brute', style: 'charger', cr: 5, sections: {} }, 'a brass bull construct that charges through market stalls', 'straight-line charge that ends in a gore');
+    expect(bull[0].id).not.toBe('hook-drag');
+    // and with no verb earned, the blind rest holds only any-body fictions: no hook, no shell, no hurled weapon on a bull
+    for (const id of ['hook-drag', 'shell-withdraw', 'throw-retrieve', 'lure', 'reel', 'obstacle-pull', 'aggro-curse', 'drain']) expect(bull.map((t) => t.id)).not.toContain(id);
+    expect(bull.length).toBeGreaterThan(0);
+    const priest = fallbackMenu({ archetype: 'caster', style: 'warpriest', cr: 6, sections: {} }, 'a thing with no verbs at all').map((t) => t.id);
+    expect(priest).toContain('aggro-curse'); // a mark is any caster's
+    const bullRanked = rankByVerb(bull, 'a brass bull construct that charges through market stalls', 'straight-line charge that ends in a gore');
+    expect(bullRanked.find((r) => r.t.id === 'hook-drag')?.matched ?? []).toEqual([]);
+  });
+  test('a template that supersedes a sheet row is offered despite that row\'s engine family; a plain thrown row still excludes it', () => {
+    const returning = { Actions: [{ name: 'Thrown Lance', text: 'The creature throws its lance. *Ranged Attack Roll:* +8, range 30/90 ft. 13 (2d8 + 4) Piercing damage. *Hit or Miss:* Immediately after the attack, the lance returns to its hand.' }] };
+    expect(templatesFor({ archetype: 'skirmisher', style: 'hurler', cr: 9, sections: returning, section: 'action' }).map((t) => t.id)).toContain('throw-retrieve');
+    const boulder = { Actions: [{ name: 'Boulder', text: 'The creature hurls a boulder. *Ranged Attack Roll:* +8, range 60/240 ft. 22 (4d10) Bludgeoning damage.' }] };
+    expect(templatesFor({ archetype: 'skirmisher', style: 'hurler', cr: 9, sections: boulder, section: 'action' }).map((t) => t.id)).not.toContain('throw-retrieve');
   });
   test('the miss fallback draws from the SAME filtered menu — a caged or reeling sheet never gets a containment seed', () => {
     const roper = { Actions: [{ name: 'Tongue Snare', text: '*Melee Attack Roll:* +7, reach 50 ft. The target has the Grappled condition (escape DC 15).' }, { name: 'Reel', text: 'The creature pulls each creature Grappled by it up to 25 feet straight toward it.' }] };
@@ -203,6 +219,11 @@ describe('the catalog', () => {
     const menu = templatesFor({ archetype: 'lurker', cr: 7, sections: {}, section: 'action' });
     const ranked = rankByVerb(menu, 'a lighthouse ghost whose lamp beckons and lures sailors onto the rocks');
     expect(rankByVerb(menu, 'a bishop that walks the poor quarter at night').find((r) => r.t.id === 'escalating-dread').matched).toEqual([]); // "night" is not "nightmare"
+    // a prefix is a match only when the remainder IS an inflection (goldens 2026-09-22: "market" bound the bull to "marks")
+    const riders = templatesFor({ archetype: 'artillery', cr: 6, sections: {}, section: 'rider' });
+    expect(rankByVerb(riders, 'a brass bull that charges through market stalls').find((r) => r.t.id === 'bolt-mark').matched).toEqual([]);
+    expect(rankByVerb(riders, 'a hunter whose bolt marks the straggler').find((r) => r.t.id === 'bolt-mark').concept).toEqual(expect.arrayContaining(['bolt', 'marks', 'straggler']));
+    expect(rankByVerb(menu, 'a thing that keeps dragging its prey under').find((r) => r.t.id === 'hook-drag').concept).toEqual(expect.arrayContaining(['drag', 'under'])); // "dragging" still inflects to "drag"
     const knight = rankByVerb(menu, 'a drowned knight who rides the causeway', 'the tide draws them to follow and lures them under');
     expect(knight.find((r) => r.t.id === 'lure').concept).toEqual([]);
     expect(knight.find((r) => r.t.id === 'lure').idea).toContain('lure');

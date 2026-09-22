@@ -2346,9 +2346,29 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (!idea) return null;
       // a template already on this sheet (by id, whatever it was named) is not offered again
       const shippedIds = new Set(Object.values(sections).flat().map((e2) => e2.template).filter(Boolean));
-      const menu = templatesFor({ ...ctxT, section: idea.section, trigger: idea.trigger, text: `${options.userConcept ?? concept} ${idea.idea}`, imposed: imposedT }).filter((t) => !shippedIds.has(t.id));
-      trace(`signature idea (${seat}):`, `"${idea.idea}" ${tagOf(idea)} — menu: ${menu.map((t) => t.id).join(', ') || 'EMPTY'}`);
-      if (!menu.length && idea.section === 'reaction') {
+      // LEGAL MEANS RENDERS: a template the sheet cannot render (a seed's
+      // dominance gate, a missing imposed condition) is never offered, so a
+      // bind can never end in "not legal on this sheet" (the bull's push-prone)
+      const pruned = [];
+      const legalT = (t) => { if (shippedIds.has(t.id)) return false; if (renderTemplate(t, ctxT, {}, { blind: true }) !== null) return true; pruned.push(t.id); return false; };
+      const menu = templatesFor({ ...ctxT, section: idea.section, trigger: idea.trigger, text: `${options.userConcept ?? concept} ${idea.idea}`, imposed: imposedT }).filter(legalT);
+      // a CONCEPT verb must string-match the user's own words; the seat element is
+      // the model's prose and counts as idea-level (the binder "rationalized"
+      // wither/bloodied as concept verbs, critic run six)
+      const verbText = `${options.userConcept ?? concept}`;
+      const seatText = `${seat === 'trait' ? (seatsT?.trait ?? '') : (seatsT?.action ?? '')}`;
+      // THE WHOLE SHELF IS IN THE RACE (goldens 2026-09-22): the concept's verb
+      // decides the SECTION (the bishop's "blesses" is a bonus-action mark) and
+      // the TRIGGER (a trait idea tagged "always" must still see the on-being-hit
+      // cards when the concept says "knits shut around the axes"); the idea's own
+      // tag only orders the menu it is shown. Before this the section menu was
+      // the whole race: the troll's Weapon Lodge and the keeper's Marking Bolt
+      // (seven of her words) missed on a tag the model chose
+      const wide = (seat === 'trait' ? ['trait'] : ['action', 'bonus_action', 'reaction', 'rider']).flatMap((sec) => templatesFor({ ...ctxT, section: sec, trigger: null, text: verbText, imposed: imposedT })).filter(legalT);
+      const pool = [...menu, ...wide.filter((t) => !menu.some((m) => m.id === t.id))];
+      if (pruned.length) trace('menu pruned:', `${seat} — ${[...new Set(pruned)].join(', ')} (the sheet cannot render them)`);
+      trace(`signature idea (${seat}):`, `"${idea.idea}" ${tagOf(idea)} — menu: ${menu.map((t) => t.id).join(', ') || 'EMPTY'}${pool.length > menu.length ? ` (+ shelf: ${pool.filter((t) => !menu.includes(t)).map((t) => t.id).join(', ')})` : ''}`);
+      if (!pool.length && idea.section === 'reaction') {
         // print's answer for "when something hits me, this happens" on a line
         // with no reaction seat is a TRAIT (Heated Body, Death Burst): re-seat
         // the idea rather than miss on a section the line never had
@@ -2356,19 +2376,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         trace('signature re-seated:', `${seat} — this line has no reaction seat; the idea "${idea.idea.slice(0, 60)}…" is a trait`);
         return fitSeat(seat, asTrait);
       }
-      if (!menu.length) {
-        trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — no template exists for this section on this line`);
+      if (!pool.length) {
+        trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — no template exists for this seat on this line`);
         return null;
       }
       // no verb of this concept OR this idea is on the shelf → the fit would be
       // a shape fit by construction (v2 blind read: "template variety went up,
       // template fit went down"); an honest miss, no call spent
-      const seatText = `${seat === 'trait' ? (seatsT?.trait ?? '') : (seatsT?.action ?? '')}`;
-      // a CONCEPT verb must string-match the user's own words; the seat element is
-      // the model's prose and counts as idea-level (the binder "rationalized"
-      // wither/bloodied as concept verbs, critic run six)
-      const verbText = `${options.userConcept ?? concept}`;
-      const verbRanked = rankByVerb(menu, verbText, `${seatText} ${idea.idea}`);
+      const verbRanked = rankByVerb(pool, verbText, `${seatText} ${idea.idea}`);
       if (!verbRanked.some((r) => r.matched.length)) {
         if (idea.section === 'rider') {
           // the rider shelf is small: a rider idea with no verb there is re-seated
@@ -2376,23 +2391,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           trace('signature re-seated:', `${seat} — no rider shares the verb; the idea "${idea.idea.slice(0, 60)}…" is tried as an action`);
           return fitSeat(seat, { ...idea, section: 'action', trigger: 'save' });
         }
-        trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — no template on the shelf shares a verb with the concept or the idea (offered: ${menu.map((t) => t.id).join(', ')})`);
+        trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — no template on the shelf shares a verb with the concept or the idea (offered: ${pool.map((t) => t.id).join(', ')})`);
         return null;
       }
       // BIND TO THE CONCEPT'S VERB (critic v3: "the lure goes to things that
       // beckon; the Bloodied burst to things with a bell"): when the user's
       // own words name a template's verb, the fit sees ONLY those templates —
       // the idea supplies the fiction and the name, never the choice
-      // the concept's verb decides the SECTION too: for the action seat, look
-      // across action / bonus action / reaction (the bishop's "blesses" is a
-      // bonus-action mark; the idea had been tagged action and never saw it)
       let conceptBound = verbRanked.filter((r) => r.concept.length).map((r) => r.t);
-      if (!conceptBound.length) {
-        // …and the TRIGGER: a trait idea tagged "always" must still see the
-        // on-being-hit bell cards when the concept says "rings it when wounded"
-        const wide = (seat === 'trait' ? ['trait'] : ['action', 'bonus_action', 'reaction', 'rider']).flatMap((sec) => templatesFor({ ...ctxT, section: sec, trigger: null, text: verbText, imposed: imposedT }));
-        conceptBound = rankByVerb(wide, verbText).filter((r) => r.concept.length).map((r) => r.t);
-      }
       // the STRONGEST concept match decides — "seal, sermon, psalm, wither"
       // outranks "flock"; offering both let the model pick the weaker (rally)
       if (conceptBound.length > 1) {
@@ -2400,8 +2406,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const top = scored[0].concept.length;
         conceptBound = scored.filter((r) => r.concept.length === top).map((r) => r.t);
       }
-      const offered = conceptBound.length ? conceptBound : menu;
-      if (conceptBound.length) trace('signature bound to the concept\'s verb:', `${seat} — ${conceptBound.map((t) => t.id).join(', ')} (${[...new Set(verbRanked.flatMap((r) => r.concept))].join(', ')})`);
+      // no concept bind: the idea's own menu, plus any shelf row the IDEA's verbs name
+      const ideaNamed = verbRanked.filter((r) => r.idea.length && !menu.includes(r.t)).map((r) => r.t);
+      const offered = conceptBound.length ? conceptBound : [...menu, ...ideaNamed];
+      if (conceptBound.length) trace('signature bound to the concept\'s verb:', `${seat} — ${conceptBound.map((t) => t.id).join(', ')} (${[...new Set(rankByVerb(conceptBound, verbText).flatMap((r) => r.concept))].join(', ')})`);
       try {
         const rawFit = await callLLM(buildFitPrompt({ name: p.name, idea, menu: offered, cr, concept: verbText }), validateFitResponse);
         let fit = parseFit(rawFit, offered, p.name);
@@ -2421,7 +2429,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           fit = parseFit(await callLLM(buildFitPrompt({ name: p.name, idea: conceptIdea, menu: offered, cr, concept: verbText }), validateFitResponse), offered, p.name);
         }
         if (!fit.template) {
-          trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — the model found no template that holds it (offered: ${menu.map((t) => t.id).join(', ')})`);
+          trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — the model found no template that holds it (offered: ${offered.map((t) => t.id).join(', ')})`);
           return null;
         }
         const rendered = renderTemplate(fit.template, ctxT, fit.fills);
@@ -2455,6 +2463,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (ix !== -1) es2.splice(ix, 1);
     }
     const deadBareT = String(pendingWildcard?.name ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '');
+    let riderShipped = false;
     if (actionT && actionT.section === 'Rider') {
       // A RIDER rides the melee row: the clause is appended, no new row ships
       const wantRanged = actionT.host === 'ranged';
@@ -2470,6 +2479,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         }
         host.text = `${host.text.trim()} ${riderText}`;
         libraryDrawn = true;
+        riderShipped = true;
         trace('signature rider:', `${actionT.template} -> ${host.name} (appended; ${actionT.because})`);
         if (deadBareT) sweepDeadName(sections, deadBareT, host, trace);
       } else trace('signature miss:', `action — a rider fit (${actionT.template}) but the sheet has no ${wantRanged ? 'ranged' : 'melee'} row to ride`);
@@ -2486,7 +2496,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         actionT = null;
       }
     }
-    if (actionT && actionT.section !== 'Rider') {
+    if (riderShipped) {
+      // a rider that rode IS the signature — the fallback never deals a second
+      // row beside it (every rider fit shipped plus a blind seed, goldens 2026-09-22)
+    } else if (actionT && actionT.section !== 'Rider') {
       // a template that SUPERSEDES a chassis row removes it (one lance, one
       // physics — the lancer's returning throw beside the retrieve, v4 read)
       const sup = actionT.supersedes;
@@ -2500,9 +2513,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     } else {
       // the same filtered menu the fit saw (engine families, ownership); the
       // blind library hash is the last resort only when that menu is empty
-      const fbVerbText = `${options.userConcept ?? concept} ${seatsT?.action ?? ''}`;
-      const shelfT = fallbackMenu({ ...ctxT, text: fbVerbText, imposed: imposedT }, fbVerbText);
-      const verbFirst = rankByVerb(shelfT, fbVerbText).filter((r) => r.matched.length).length; // the verb-ranked head is taken in order; only the rest rotates
+      const fbVerbText = `${options.userConcept ?? concept}`; const fbSeatText = `${seatsT?.action ?? ''}`; // the user's words are the concept; the seat element is idea-level
+      const shelfT = fallbackMenu({ ...ctxT, text: `${fbVerbText} ${fbSeatText}`, imposed: imposedT }, fbVerbText, fbSeatText);
+      const verbFirst = rankByVerb(shelfT, fbVerbText, fbSeatText).filter((r) => r.matched.length).length; // the verb-ranked head is taken in order; only the rest rotates
       let drawn = null;
       for (let i = 0; i < shelfT.length && !drawn; i += 1) {
         const t = i < verbFirst ? shelfT[i] : shelfT[verbFirst + ((nameHash(p.name) + i) % Math.max(1, shelfT.length - verbFirst))];

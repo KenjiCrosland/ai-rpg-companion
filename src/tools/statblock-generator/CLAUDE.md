@@ -49,7 +49,16 @@ touching anything under `chassis/` or `format-2024/`.
   and refuses a half-filled row. A miss traces as `signature miss:` with
   the idea and tag — that log IS the template backlog, authored from
   print (`shapes.mjs` frames + `library.mjs` seeds are the catalog). The
-  library seed stands in on a miss; no vet, no repair. The free-text
+  library seed stands in on a miss; no vet, no repair. A rider fit rides
+  the host row and IS the signature (no seed beside it); the whole shelf
+  (all sections, all triggers) is in the race before the "no verb" gate
+  and the strongest concept match wins; a menu holds only rows the sheet
+  can render; a blind seed is dealt only where `BLIND_ROLES` says its
+  fiction is any-body. The COOKBOOK INDEX
+  (`reskin/corpus-tags.mjs` → `node scripts/tag-corpus.mjs` →
+  `scripts/corpus-shapes.json`) tags every print ability in the same
+  grammar so `scripts/smoke-misses.mjs` cites print rows under each
+  miss tag. The free-text
   wildcard + vet chain + repair loop survive behind
   `localStorage['statblock-signature-freetext']='1'` (spec pins use
   `signatureMode: 'freetext'`) until the paired blind read decides.
