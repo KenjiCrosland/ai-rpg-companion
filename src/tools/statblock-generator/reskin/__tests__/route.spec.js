@@ -25,6 +25,14 @@ describe('the shelf', () => {
   });
 });
 
+describe('the shelf rules', () => {
+  test('a drowned dead thing that pulls the living is told it is a phantom, not a grappler', () => {
+    const p = buildRoutePrompt('a drowned wife who pulls anyone who follows her down into the surf', { cr: 7 });
+    expect(p).toMatch(/drowned dead thing that pulls, drags, or drowns the living is lurker-phantom, never brute-grappler/);
+    expect(p).toMatch(/a ghost that pulls you under is lurker-phantom/);
+  });
+});
+
 describe('evidenceIn', () => {
   test('a light paraphrase of the input passes; an invented quote or an empty one fails', () => {
     const t = 'a tar-mouthed toad the size of a cart that drags cattle into the bog';

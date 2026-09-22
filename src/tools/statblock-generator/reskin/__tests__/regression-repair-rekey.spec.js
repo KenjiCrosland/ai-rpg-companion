@@ -1,4 +1,7 @@
-import { generateReskin, renameKeysOf } from '../generate.mjs';
+import { generateReskin as generateReskinRaw, renameKeysOf } from '../generate.mjs';
+// these pins exercise the FREE-TEXT signature path (kept behind signatureMode 'freetext'
+// since the template signature became the default, 2026-09-21)
+const generateReskin = (opts, cb) => generateReskinRaw({ signatureMode: 'freetext', ...opts }, cb);
 import { pickDonor, scaleDonor } from '../scale.mjs';
 
 // THE HEADLESS HORSEMAN CRASH (2026-09-15, user-visible x3): damage

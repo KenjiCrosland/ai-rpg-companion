@@ -35,6 +35,7 @@ const args = process.argv.slice(2);
 const headed = args.includes('--headed');
 const onlyIdx = args.includes('--only') ? Number(args[args.indexOf('--only') + 1]) : null;
 const batchName = args.find((a) => !a.startsWith('--') && a !== String(onlyIdx)) ?? 'batch';
+let goldenFailures = 0;
 
 const batchPath = path.resolve('scripts/smoke-batches', `${batchName}.json`);
 if (!fs.existsSync(batchPath)) {
@@ -212,6 +213,26 @@ const run = async () => {
       return all.find((x) => !seen.has(JSON.stringify(x))) ?? null;   // no new block => null, never the previous one
     }, namesBefore);
 
+    // GOLDENS (critic, v2 blind read 2026-09-21: "freeze the v1 winners — if a
+    // build can't reproduce the bishop's peal and the keeper's lure on those
+    // concepts, it fails before review"): an entry's `expect` names the route
+    // line(s) and signature template(s) it must reproduce; the run prints
+    // PASS/FAIL and the batch exits 2 on any failure.
+    if (entry.expect) {
+      const tr = lines.join('\n');
+      const routeGot = (/\[route\] ([a-z-]+)/.exec(tr) ?? [])[1] ?? null;
+      // a seed drawn by the verb-ranked fallback IS the card (the bishop's mark
+      // shipped as "Binding Mark" and the golden had counted only fits)
+      const tmplGot = [...tr.matchAll(/signature template(?: \(trait\))?: ([a-z-]+)|library seed drawn: ([a-z-]+)/g)].map((m) => m[1] ?? m[2]);
+      const routeOk = !entry.expect.route || (routeGot && entry.expect.route.includes(routeGot));
+      const tmplOk = !entry.expect.template || entry.expect.template.some((t) => tmplGot.includes(t));
+      // an API failure is an ERROR, not a verdict on the build
+      const apiDied = /call failed|Failed to fetch|Circuit breaker opened/.test(tr);
+      const verdict = routeOk && tmplOk ? 'PASS' : apiDied ? 'ERROR' : 'FAIL';
+      if (verdict === 'FAIL') goldenFailures += 1;
+      lines.push(`[golden] ${verdict} — route ${routeGot ?? 'none'} (want ${(entry.expect.route ?? ['any']).join('|')}); templates ${tmplGot.join(',') || 'none'} (want ${(entry.expect.template ?? ['any']).join('|')})`);
+      console.log(`  [golden] ${verdict}`);
+    }
     const secs = ((Date.now() - t0) / 1000).toFixed(0);
     console.log(`${status === 'ok' ? '✓' : '✗ ' + status} ${secs}s`);
 
@@ -243,4 +264,4 @@ const run = async () => {
   console.log(`\n${summary}\n\nWrote ${results.length} block(s) to ${outDir}\n  all.md  — everything in one file`);
 };
 
-run().catch((e) => { console.error(e); process.exit(1); });
+run().then(() => { if (goldenFailures) { console.log(`${goldenFailures} golden(s) FAILED`); process.exit(2); } }).catch((e) => { console.error(e); process.exit(1); });

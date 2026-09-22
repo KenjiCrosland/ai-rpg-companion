@@ -1,0 +1,71 @@
+[
+  {
+    "cr": "7",
+    "concept": "a lighthouse keeper's drowned wife who still climbs the stairs each night to light the lamp, and pulls anyone who follows her back down into the surf",
+    "expect": {
+      "route": [
+        "lurker-phantom"
+      ],
+      "template": [
+        "obstacle-pull",
+        "lure",
+        "herd",
+        "hook-drag"
+      ]
+    }
+  },
+  {
+    "cr": "6",
+    "concept": "a hermit crab the size of a wagon that wears a stolen bronze church bell as its shell and rings it by slamming its own body against the inside when it is wounded",
+    "expect": {
+      "template": [
+        "bloodied-burst",
+        "resonant-body"
+      ]
+    }
+  },
+  {
+    "cr": "5",
+    "concept": "a tar-mouthed toad the size of a cart that drags cattle into the bog",
+    "expect": {
+      "template": [
+        "adhesive",
+        "hook-drag",
+        "obstacle-pull",
+        "reel"
+      ]
+    }
+  },
+  {
+    "cr": "9",
+    "concept": "a hollow suit of tourney armor that hurls its own lance and then thunders across the field to retrieve it",
+    "expect": {
+      "template": [
+        "throw-retrieve"
+      ]
+    }
+  },
+  {
+    "cr": "6",
+    "concept": "a wax preacher whose sermons seal the wounds of its flock while its psalms wither the unbelievers",
+    "expect": {
+      "template": [
+        "seal"
+      ]
+    }
+  },
+  {
+    "cr": "9",
+    "concept": "a clockwork bishop that blesses the poor by day and at night unfolds into a cage of brass ribs around whoever it has chosen",
+    "expect": {
+      "route": [
+        "brute-grappler"
+      ],
+      "template": [
+        "aggro-curse",
+        "bloodied-burst",
+        "rally"
+      ]
+    }
+  }
+]

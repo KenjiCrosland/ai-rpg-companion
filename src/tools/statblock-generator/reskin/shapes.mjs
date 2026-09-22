@@ -151,6 +151,68 @@ export const SHAPES = [
       '10-12': 'If the target is a creature and doesn\'t already have a {wound_noun}, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target receives a {wound_noun}. While wounded, the target loses 10 (3d6) Hit Points at the start of each of its turns. The wound closes after 1 minute, after a spell restores Hit Points to the target, or after the target or a creature within 5 feet of it takes an action to stanch the wound, succeeding on a DC {dc} Wisdom (Medicine) check.',
     },
   },
+  // THE FIRST TEMPLATE-BACKLOG PASS (2026-09-21): the template signature's
+  // miss log asked for these on 6 of its first 17 blocks. Both are print-
+  // exact trait grammars; neither depends on the CR band.
+  {
+    id: 'heated-body', name: 'Heated Body', cite: 'Remorhaz/Heated Body (CR 11); Fire Elemental/Fire Form (CR 5); Azer (CR 2)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes {avg_half} ({dice_half}) {damage_type} damage.'])),
+  },
+  {
+    id: 'false-appearance', name: 'False Appearance', cite: 'Mimic/False Appearance (CR 2); Gargoyle/False Appearance (CR 2); Animated Armor (CR 1)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'While the creature remains motionless, it is indistinguishable from {disguise}.'])),
+  },
+  {
+    id: 'absorption', name: 'Absorption', cite: 'Iron Golem/Fire Absorption (CR 16); Flesh Golem/Lightning Absorption (CR 5); Clay Golem/Acid Absorption (CR 9)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'Whenever the creature is subjected to {damage_type} damage, it takes no damage and instead regains a number of Hit Points equal to the {damage_type} damage dealt.'])),
+  },
+  // BACKLOG PASS TWO (2026-09-21, from scripts/smoke-misses.mjs): the bell
+  // hermit's wound-rung peal (on_being_hit emanation, asked 3/3) and the
+  // "my shell is my armor" trait (asked 2x). Print has no exact wound-
+  // triggered emanation — Death Burst's shape on the Bloodied trigger is the
+  // nearest honest kin, so it is marked invented; Shell Defense is Tortle.
+  {
+    id: 'bloodied-burst', name: 'Bloodied Burst', invented: true, // Death Burst's shape (Magmin, Balor) on the 2024 Bloodied trigger — no printed peer
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: {
+      '0-2': 'The first time the creature is Bloodied in a fight, it releases a burst. *Constitution Saving Throw*: DC {dc}, each creature in a 10-foot Emanation originating from the creature. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn.',
+      '3-5': 'The first time the creature is Bloodied in a fight, it releases a burst. *Constitution Saving Throw*: DC {dc}, each creature in a 15-foot Emanation originating from the creature. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn.',
+      '6-9': 'The first time the creature is Bloodied in a fight, it releases a burst. *Constitution Saving Throw*: DC {dc}, each creature in a 15-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.',
+      '10-12': 'The first time the creature is Bloodied in a fight, it releases a burst. *Constitution Saving Throw*: DC {dc}, each creature in a 20-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.',
+      '13-20': 'The first time the creature is Bloodied in a fight, it releases a burst. *Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.',
+      '21+': 'The first time the creature is Bloodied in a fight, it releases a burst. *Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.',
+    },
+  },
+  {
+    id: 'shell-withdraw', name: 'Shell Defense', cite: 'Tortle/Shell Defense (Monsters of the Multiverse)',
+    roles: ['brute', 'defender', 'lurker'], styles: [], cr_range: [0, 30], replaces: 'bonus-alt',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature withdraws into {shell}. Until it emerges, it gains a +4 bonus to Armor Class and has the Prone condition; its Speed is 0 and can\'t increase, it has Disadvantage on Dexterity saving throws, it can\'t take Reactions, and the only action it can take is a Bonus Action to emerge.'])),
+  },
+  // BACKLOG PASS THREE (2026-09-21, the keys-and-templates pass): four cards
+  // the miss log and the critic's v2 read asked for by name.
+  {
+    id: 'resonant-body', name: 'Resonant Body', invented: true, // Heated Body's shape (Remorhaz) with Thunder + Deafened; asked by the bell hermit 3/3
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'A creature that hits the creature with a melee attack while within 5 feet of it takes {avg_half} ({dice_half}) Thunder damage and has the Deafened condition until the end of its next turn.'])),
+  },
+  {
+    id: 'throw-retrieve', name: 'Hurled Weapon', invented: true, supersedes: /returns to (?:its|the creature's|the \w+'s) hand|Hit or Miss/i, // one lance, one physics: the chassis's returning throw leaves when this ships // the critic's v2 pick from the free-text side: hurl the weapon, Speed halved until it is recovered
+    roles: ['skirmisher', 'brute', 'defender'], styles: [], cr_range: [1, 30], replaces: 'signature',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature hurls {projectile}. *Ranged Attack Roll:* {atk}, range 30/120 ft. {avg} ({dice}) {damage_type} damage. The weapon lands in an unoccupied space within 5 feet of the target; until the creature spends 5 feet of movement in that space to recover it, the creature\'s Speed is halved and it can\'t use this action.'])),
+  },
+  {
+    id: 'seal', name: 'Sealing Touch', invented: true, // "sermons seal": a save that stops healing (2014 kin: Wight/Vampire life drain; 2024 kin: the Chasme's drone) — the preacher's verb, asked twice
+    roles: ['controller', 'artillery', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'signature',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target can\'t regain Hit Points until the end of the creature\'s next turn.'])),
+  },
+  {
+    id: 'adhesive', name: 'Adhesive', cite: 'Mimic/Adhesive (CR 2)',
+    roles: ['brute', 'lurker', 'skirmisher', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature adheres to anything that touches it. A Huge or smaller creature adhered to the creature is also Grappled by it (escape DC {dc}). Ability checks made to escape this grapple have Disadvantage.'])),
+  },
   {
     id: 'death-burst', name: 'Death Burst', cite: 'Dust Mephit (CR 1/2, 5 ft); Magmin (CR 1/2, 10 ft); Balor/Death Throes (CR 19, 30 ft dual-type)',
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker'], styles: [], cr_range: [0.5, 20], replaces: 'trait',

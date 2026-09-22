@@ -38,6 +38,21 @@ touching anything under `chassis/` or `format-2024/`.
   no unserved styles. Ad hoc tools: `scripts/smoke-replay-resolve.mjs`
   replays only the route call; `scripts/smoke-statblock.mjs` captures the
   `[route]` trace line.
+- **The signature is TEMPLATE-fitted** (2026-09-21, `reskin/templates.mjs`;
+  owner: "create, tag, try to fit, ship the fit or the seed, log the
+  miss"). Rules text is never free. IDEA call: the ability in plain words
+  plus a tag (section/trigger/effect), no templates shown. FIT call: the
+  idea plus the templates legal for the line, CR, movement and section
+  (minus what the sheet owns, minus a second nova); pick one or `none`,
+  quote the idea words it carries, name it, fill the FLAVOR slots. The
+  engine fills numbers and closed-vocabulary slots, renders the frame,
+  and refuses a half-filled row. A miss traces as `signature miss:` with
+  the idea and tag — that log IS the template backlog, authored from
+  print (`shapes.mjs` frames + `library.mjs` seeds are the catalog). The
+  library seed stands in on a miss; no vet, no repair. The free-text
+  wildcard + vet chain + repair loop survive behind
+  `localStorage['statblock-signature-freetext']='1'` (spec pins use
+  `signatureMode: 'freetext'`) until the paired blind read decides.
 - **2024 edition**: sections-based model, markdown render
   (`format-2024/render.mjs`), display via `@/components/Statblock2024.vue`
   with inline editing (engine band hints on numeric edits — advisory, never

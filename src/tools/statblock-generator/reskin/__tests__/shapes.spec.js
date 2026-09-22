@@ -56,6 +56,6 @@ describe('the shape catalog: one template per band, cited or invented', () => {
 
   test('the invention ledger holds', () => {
     expect(SHAPES.filter((s) => s.invented).map((s) => s.id).sort())
-      .toEqual(['burrow-ambush', 'charge', 'throw-recall']);
+      .toEqual(['bloodied-burst', 'burrow-ambush', 'charge', 'resonant-body', 'seal', 'throw-recall', 'throw-retrieve']); // bloodied-burst joined 2026-09-21 (the bell hermit's wound-rung peal)
   });
 });

@@ -27,7 +27,7 @@ export const LINES = [
   // ---- brute: hits hard up close, soaks damage, easy to hit
   { id: 'brute', family: 'brute', style: null, blurb: 'a plain bruiser — big weapon or big limbs, stands and trades, no trick', exemplars: 'Ogre, Hill Giant, Minotaur' },
   { id: 'brute-charger', family: 'brute', style: 'charger', blurb: 'runs prey down — a straight rush that hits hardest at the end, gores, tramples the prone', exemplars: 'Gorgon, Rhinoceros, Triceratops' },
-  { id: 'brute-grappler', family: 'brute', style: 'grappler', blurb: 'seizes and holds — jaws, coils, tentacles, a body that swallows, engulfs, smothers, or drags prey inside itself', exemplars: 'Roper, Giant Constrictor Snake, Otyugh, Purple Worm', implies: ['grapple', 'engulf'] },
+  { id: 'brute-grappler', family: 'brute', style: 'grappler', blurb: 'a solid BODY that seizes and holds — jaws, coils, tentacles, a maw or cage that swallows, engulfs, smothers, or drags prey inside itself (a ghost that pulls you under is lurker-phantom)', exemplars: 'Roper, Giant Constrictor Snake, Otyugh, Purple Worm', implies: ['grapple', 'engulf'] },
   { id: 'brute-juggernaut', family: 'brute', style: 'juggernaut', blurb: 'a MADE thing — poured, forged, carved, or animated stone or metal; immune to being reshaped, breaks what it walks through', exemplars: 'Stone Golem, Iron Golem, Animated Armor (large)', made: true },
   { id: 'brute-regenerator', family: 'brute', style: 'regenerator', blurb: 'its wounds close as fast as they open — flesh, wax, or iron that reknits, regrows, or reassembles; only its bane stops it', exemplars: 'Troll, Hydra', implies: ['regeneration'] },
   // ---- skirmisher: mobile hit-and-run
@@ -103,7 +103,7 @@ ${shelf}
 
 RULES
 - Rank up to THREE picks, best first. For EACH pick, quote the phrase of the concept that earns it ("because") — copy the words as written. A pick you cannot quote for is a pick you should not make: the engine checks every quote against the input and discards picks it cannot find there.
-- What the creature IS outranks what it uses, hunts, wears, rides, or is compared to. A troll-hunter is not a troll; a knight who rides a horse is mounted but not a beast; a sword forged by a golem is not a golem; a thing with a tar-slick mouth is not an ooze.
+- What the creature IS outranks what it DOES to its victims, and what it uses, hunts, wears, rides, or is compared to. An incorporeal or drowned dead thing that pulls, drags, or drowns the living is lurker-phantom, never brute-grappler: the grappler is a BODY that holds prey in its grip or inside itself. A troll-hunter is not a troll; a knight who rides a horse is mounted but not a beast; a sword forged by a golem is not a golem; a thing with a tar-slick mouth is not an ooze.
 - brute-juggernaut and defender-warden are MADE or risen things (construct, elemental, undead, plant, ooze). Living flesh, however armored, takes another chassis.
 - swarm, ooze, and dragon only when the BODY is that thing — a mass of many, an amorphous mass, a true dragon.
 - A concept that holds, seizes, swallows, entombs, or folds shut around prey is brute-grappler however it is built — that chassis alone carries the containment engine. A thing that traps by LOOKING harmless is lurker-trap.

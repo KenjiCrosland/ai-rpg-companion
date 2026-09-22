@@ -1344,6 +1344,11 @@ async function generateStatblockEngine(edition) {
           caster: caster.value,
           mechanics: conceptMechanics ?? null,
           rejectedCanon: conceptRejectedCanon,
+          // THE TEMPLATE SIGNATURE (owner 2026-09-21) is the default; the
+          // free-text wildcard survives behind this kill switch until the
+          // paired blind read decides
+          signatureMode: localStorage.getItem('statblock-signature-freetext') === '1' ? 'freetext' : 'template',
+          userConcept: baseConcept, // the user's own words — the verb the signature must serve (the identity prose is the model's)
           // THE 2014 DAMAGE LINE (owner ruling 2026-09-14): 2014's
           // table runs ~5 damage/CR vs 2024's ~7.5 — direct-2014
           // generations price at 0.7, uniform across archetypes. Tab

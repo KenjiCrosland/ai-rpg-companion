@@ -1,4 +1,7 @@
-import { generateReskin, buildReskinPrompt } from '../generate.mjs';
+import { generateReskin as generateReskinRaw, buildReskinPrompt } from '../generate.mjs';
+// these pins exercise the FREE-TEXT signature path (kept behind signatureMode 'freetext'
+// since the template signature became the default, 2026-09-21)
+const generateReskin = (opts, cb) => generateReskinRaw({ signatureMode: 'freetext', ...opts }, cb);
 import { pickDonor, scaleDonor } from '../scale.mjs';
 
 const answer = (over = {}) => JSON.stringify({
@@ -4477,7 +4480,7 @@ describe('the close-out coda (2026-09-08): the short-form system, four word-form
     // the cues live on the SHELF now (reskin/route.mjs, 2026-09-21)
     const src = require('fs').readFileSync(require('path').resolve(__dirname, '../route.mjs'), 'utf8');
     expect(src).toMatch(/a ghost or spirit is ALWAYS this/);
-    expect(src).toMatch(/a body that swallows, engulfs, smothers, or drags prey inside itself/);
+    expect(src).toMatch(/a maw or cage that swallows, engulfs, smothers, or drags prey inside itself/);
     expect(src).toMatch(/holds, seizes, swallows, entombs, or folds shut around prey is brute-grappler/);
   });
 });

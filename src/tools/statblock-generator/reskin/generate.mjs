@@ -6,7 +6,8 @@
  * THE BLOCK LOUDLY (owner spec: no silent fallback names).
  */
 import { pickDonor, scaleDonor } from './scale.mjs';
-import { drawLibraryRow, LIBRARY_KEYS } from './library.mjs';
+import { templatesFor, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit } from './templates.mjs';
+import { drawLibraryRow, LIBRARY_KEYS, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
 import { logger } from '@/util/logger.mjs';
@@ -171,10 +172,12 @@ export function assignSeats(signatureElements = [], { style = null, covered = []
   return { action: action.element, trait: trait.element, packaged: action.element === trait.element, rest: [...els.map((e) => e.element).filter((x) => x !== action.element && x !== trait.element), ...demoted] };
 }
 
-export function buildReskinPrompt(scaled, { concept = '', takenNames = [], signatureElements = [], energy = null, mix = null, mind = null, resolvedType = null, fixedName = null, traitWildcard = true } = {}) {
+export function buildReskinPrompt(scaled, { concept = '', takenNames = [], signatureElements = [], energy = null, mix = null, mind = null, resolvedType = null, fixedName = null, traitWildcard = true, signature = 'freetext' } = {}) {
   const seats = assignSeats(signatureElements, { style: scaled.style ?? null });
   const needsProjectile = Object.values(scaled.sections).flat().some((e) => e.text.includes('{projectile}'));
-  const hasSlot = Object.values(scaled.sections).flat().some((e) => e.wildcard_slot);
+  // signature 'template' (2026-09-21): the main call renames only — the
+  // signature is created and fitted in two later calls (templates.mjs)
+  const hasSlot = signature !== 'template' && Object.values(scaled.sections).flat().some((e) => e.wildcard_slot);
   const engineMenu = [...new Set(Object.values(scaled.sections).flat().filter((e) => e.engine).map((e) => e.engine))];
   const needsSpells = Object.values(scaled.sections).flat().some((e) => e.text.includes('{spell_at_will}'));
   const needsEngulf = Object.values(scaled.sections).flat().some((e) => e.engulf_engine);
@@ -1410,6 +1413,11 @@ export async function generateReskin(options, callLLM) {
   // pickDonor): a mis-wired route fails loudly, never ships the wrong
   // chassis family
   const archetype = options.archetype;
+  // THE TEMPLATE SIGNATURE (owner 2026-09-21) is the default; the free-text
+  // wildcard + vet chain + repair loop survive behind signatureMode 'freetext'
+  // (localStorage['statblock-signature-freetext']='1' in the Vue) until the
+  // paired blind read decides
+  const templateMode = options.signatureMode !== 'freetext';
   if (!archetype) throw new Error('generateReskin requires an explicit archetype — no silent default');
   const progress = (phase, data) => { try { onProgress?.({ phase, ...data }); } catch { /* display-only */ } };
   // mechanics-informed pick (3rd sighting — efreet teleport, the Gulper
@@ -1571,15 +1579,16 @@ export async function generateReskin(options, callLLM) {
   }
   if (!traitWildcardAllowed) trace('claim gate:', 'the trait wildcard is closed at CR <= 2 — the chassis carries the traits');
   const hasSlotG = Object.values(scaled.sections).flat().some((eG) => eG.wildcard_slot);
-  const reskinPrompt = buildReskinPrompt(scaled, { concept, takenNames: options.takenNames ?? [], signatureElements: options.signatureElements ?? [], energy: options.energy ?? null, mix: options.mix ?? null, mind: options.mind ?? null, resolvedType: options.resolvedType ?? null, fixedName, traitWildcard: traitWildcardAllowed });
+  const reskinPrompt = buildReskinPrompt(scaled, { concept, takenNames: options.takenNames ?? [], signatureElements: options.signatureElements ?? [], energy: options.energy ?? null, mix: options.mix ?? null, mind: options.mind ?? null, resolvedType: options.resolvedType ?? null, fixedName, traitWildcard: traitWildcardAllowed && !templateMode, signature: templateMode ? 'template' : 'freetext' });
   const raw = await callLLM(reskinPrompt, (j) => {
     if (validateReskinResponse(j)) return true;
-    if (hasSlotG) return false;
+    if (hasSlotG && !templateMode) return false;
     // slotless (claim-gated) blocks need no wildcard field
     try { const q = JSON.parse(String(j).replace(/^```json\s*|```\s*$/g, '').trim()); return !!q && typeof q.name === 'string' && !!q.renames; } catch { return false; }
   });
   let p = (() => { try { return normalizeTypeFields(JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim())); } catch { return null; } })();
   if (!p) throw new Error('reskin call failed — the pilot fails loudly, never silently');
+  if (templateMode) { p.wildcard = ''; p.wildcard_economy = 'action'; delete p.trait_wildcard; } // the defect checker and the weld read these; nothing free-text exists yet
   for (let round = 1; round <= 2; round += 1) {
     const defects = reskinDefects(scaled, p, { energy: options.energy ?? null, mix: options.mix ?? null });
     if (!defects.length) break;
@@ -2042,7 +2051,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         }
       }
       if (e.wildcard) pendingWildcard = e; // vetted after the trait lands (reference contract + repair)
-      if (e.wildcard && engineIsSignature) { e.dropSlot = true; pendingWildcard = null; }
+      if (e.wildcard && engineIsSignature && !templateMode) { e.dropSlot = true; pendingWildcard = null; } // template mode: the menu excludes containment, so the fit builds the concept's OTHER half
       delete e.was; delete e.wildcard; delete e.gate;
     }
   }
@@ -2265,7 +2274,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (v.liftedGate && !/\(/.test(pendingWildcard.name)) pendingWildcard.name += ` (${v.liftedGate})`;
     trace(label, `${flag ? v.text : v.text.slice(0, 100)}${flag ? ` — shipped over a judgment flag (${flag})` : ''}`);
   };
-  if (traitWildcardAllowed) {
+  if (traitWildcardAllowed && !templateMode) {
     const v = vetTraitWildcard(p.trait_wildcard, sections, { name: p.name, inline, archetype, type: p.type });
     if (v.okay) shipTrait(v, 'trait wildcard:');
     else if (!v.silent) {
@@ -2293,6 +2302,184 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // in one blind pass. The main call's wildcard survives as the
   // never-fail fallback when this call dies; vet, repair, pivot, and
   // the library are unchanged downstream.
+  if (templateMode && pendingWildcard) {
+    // THE TEMPLATE SIGNATURE — create (plain words) → tag → fit (closed
+    // menu) → render at the sheet's numbers → ship; a miss logs and the
+    // library seed stands in. No vet, no repair: rules text is never free.
+    const sheetLinesT = Object.entries(sections)
+      .map(([sec2, es2]) => es2.filter((e2) => e2 !== pendingWildcard).map((e2) => `- [${sec2}] ${e2.name}: ${e2.text}`).join('\n')).filter(Boolean).join('\n');
+    // the seat must not point at an element the ENGINE already implements
+    // (the same demotion the free-text path applies): a seat on "folds
+    // shut around" produced five clasp ideas beside Cage
+    const coveredT = [];
+    if (Object.values(sections).flat().some((e2) => e2.engulf_engine)) coveredT.push(/wrap|crush|swallow|gulp|engulf|drown|entomb|seal|smother|constrict|cocoon|whelm|cage|fold|clasp|clamp/i);
+    if (Object.values(sections).flat().some((e2) => /Ranged Attack Roll/.test(e2.text ?? ''))) coveredT.push(/\bhurl|throw|toss|lob|fling|\bdetach|\bsevered|as a weapon\b/i);
+    if (Object.values(sections).flat().some((e2) => e2.name === 'Regeneration')) coveredT.push(/rekni|regrow|regenerat|heal|reform|reassembl/i);
+    const sheetCovered = coveredBySheet(Object.fromEntries(Object.entries(sections).map(([k, es]) => [k, es.filter((e2) => e2 !== pendingWildcard)])));
+    if (sheetCovered.regex) coveredT.push(sheetCovered.regex);
+    const seatsT = assignSeats(options.signatureElements ?? [], { style: scaled.style ?? null, covered: coveredT });
+    const enginesT = [...new Set([
+      ...Object.values(sections).flat().filter((e2) => e2 !== pendingWildcard && (e2.engulf_engine || e2.engine || /has the Grappled condition \(escape DC/.test(e2.text ?? ''))).map((e2) => e2.name),
+      ...sheetCovered.names,
+    ])];
+    const CONDS_T = ['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned'];
+    const sheetText3 = Object.values(sections).flat().map((e2) => e2.text ?? '').join(' ');
+    const imposedT = CONDS_T.filter((c) => new RegExp(`has the (?:\\w+ and )?${c} condition|is also ${c}\\b|be ${c}\\b`).test(sheetText3));
+    const meleeRowT = Object.values(sections).flat().find((e2) => e2 !== pendingWildcard && /Melee Attack Roll/.test(e2.text ?? ''));
+    const ctxT = {
+      scaled, sections, archetype, style: scaled.style ?? null, cr, movement: (options.movement ?? []).join(' '),
+      energy: options.energy ?? null, mix: options.mix ?? null, meleeName: meleeRowT?.name?.replace(/ \(.*\)$/, '') ?? 'Slam',
+      conditionMinor: p.conditions?.condition_minor ?? null, projectile: p.projectile ?? null,
+      imposed: imposedT, mechanics: options.mechanics ?? null, name: p.name,
+    };
+    const stampT = (t) => String(t).split('The creature').join(inline.charAt(0).toUpperCase() + inline.slice(1)).split('the creature').join(inline);
+    const tagOf = (idea) => `[${idea.section}/${idea.trigger}/${idea.effect}]`;
+    let ideasT = null;
+    try {
+      const rawIdea = await callLLM(buildIdeaPrompt({ name: p.name, cr, concept, sheetLines: sheetLinesT, seats: seatsT, energy: options.energy ?? null, wantTrait: traitWildcardAllowed, engines: enginesT, verbs: conceptVerbs(`${options.userConcept ?? concept} ${seatsT?.action ?? ''} ${seatsT?.trait ?? ''}`) }), validateIdeaResponse);
+      ideasT = parseIdeas(rawIdea);
+    } catch (e7) {
+      trace('signature idea call failed —', `${e7?.message ?? e7}; the library stands in`);
+    }
+    const fitSeat = async (seat, idea) => {
+      if (!idea) return null;
+      const menu = templatesFor({ ...ctxT, section: idea.section, trigger: idea.trigger });
+      trace(`signature idea (${seat}):`, `"${idea.idea}" ${tagOf(idea)} — menu: ${menu.map((t) => t.id).join(', ') || 'EMPTY'}`);
+      if (!menu.length && idea.section === 'reaction') {
+        // print's answer for "when something hits me, this happens" on a line
+        // with no reaction seat is a TRAIT (Heated Body, Death Burst): re-seat
+        // the idea rather than miss on a section the line never had
+        const asTrait = { ...idea, section: 'trait' };
+        trace('signature re-seated:', `${seat} — this line has no reaction seat; the idea "${idea.idea.slice(0, 60)}…" is a trait`);
+        return fitSeat(seat, asTrait);
+      }
+      if (!menu.length) {
+        trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — no template exists for this section on this line`);
+        return null;
+      }
+      // no verb of this concept OR this idea is on the shelf → the fit would be
+      // a shape fit by construction (v2 blind read: "template variety went up,
+      // template fit went down"); an honest miss, no call spent
+      const seatText = `${seat === 'trait' ? (seatsT?.trait ?? '') : (seatsT?.action ?? '')}`;
+      const verbText = `${options.userConcept ?? concept} ${seatText}`;
+      const verbRanked = rankByVerb(menu, verbText, idea.idea);
+      if (!verbRanked.some((r) => r.matched.length)) {
+        trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — no template on the shelf shares a verb with the concept or the idea (offered: ${menu.map((t) => t.id).join(', ')})`);
+        return null;
+      }
+      // BIND TO THE CONCEPT'S VERB (critic v3: "the lure goes to things that
+      // beckon; the Bloodied burst to things with a bell"): when the user's
+      // own words name a template's verb, the fit sees ONLY those templates —
+      // the idea supplies the fiction and the name, never the choice
+      // the concept's verb decides the SECTION too: for the action seat, look
+      // across action / bonus action / reaction (the bishop's "blesses" is a
+      // bonus-action mark; the idea had been tagged action and never saw it)
+      let conceptBound = verbRanked.filter((r) => r.concept.length).map((r) => r.t);
+      if (!conceptBound.length) {
+        // …and the TRIGGER: a trait idea tagged "always" must still see the
+        // on-being-hit bell cards when the concept says "rings it when wounded"
+        const wide = (seat === 'trait' ? ['trait'] : ['action', 'bonus_action', 'reaction']).flatMap((sec) => templatesFor({ ...ctxT, section: sec, trigger: null }));
+        conceptBound = rankByVerb(wide, verbText).filter((r) => r.concept.length).map((r) => r.t);
+      }
+      // the STRONGEST concept match decides — "seal, sermon, psalm, wither"
+      // outranks "flock"; offering both let the model pick the weaker (rally)
+      if (conceptBound.length > 1) {
+        const scored = rankByVerb(conceptBound, verbText);
+        const top = scored[0].concept.length;
+        conceptBound = scored.filter((r) => r.concept.length === top).map((r) => r.t);
+      }
+      const offered = conceptBound.length ? conceptBound : menu;
+      if (conceptBound.length) trace('signature bound to the concept\'s verb:', `${seat} — ${conceptBound.map((t) => t.id).join(', ')} (${[...new Set(verbRanked.flatMap((r) => r.concept))].join(', ')})`);
+      try {
+        const rawFit = await callLLM(buildFitPrompt({ name: p.name, idea, menu: offered, cr, concept: verbText }), validateFitResponse);
+        let fit = parseFit(rawFit, offered, p.name);
+        if (!fit.template && conceptBound.length) {
+          // the idea drifted off the concept's verb and the model honestly said
+          // none — pour the CONCEPT itself (the user's words + the seat element)
+          // into the verb's template instead; the idea only ever supplied fiction
+          const conceptIdea = { ...idea, idea: `${verbText}. Build the concept's own verb (${[...new Set(verbRanked.flatMap((r) => r.concept))].join(', ')}) as this ability.` };
+          trace('signature re-poured:', `${seat} — the idea left the concept's verb; the concept itself is poured into ${conceptBound.map((t) => t.id).join(', ')}`);
+          fit = parseFit(await callLLM(buildFitPrompt({ name: p.name, idea: conceptIdea, menu: offered, cr, concept: verbText }), validateFitResponse), offered, p.name);
+        }
+        if (!fit.template) {
+          trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — the model found no template that holds it (offered: ${menu.map((t) => t.id).join(', ')})`);
+          return null;
+        }
+        const rendered = renderTemplate(fit.template, ctxT, fit.fills);
+        if (!rendered) {
+          trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — "${fit.template.id}" could not be filled (fills: ${JSON.stringify(fit.fills).slice(0, 80)})`);
+          return null;
+        }
+        const bare = fit.name ?? rendered.name;
+        // the tally distinguishes a VERB fit (the template's own verbs appear in
+        // the concept/idea) from a SHAPE fit — the critic's split, made measurable
+        const vr = rankByVerb([fit.template], verbText, idea.idea)[0];
+        const verbs = [...(vr?.concept ?? []).map((k) => `${k}:concept`), ...(vr?.idea ?? []).map((k) => `${k}:idea`)];
+        // a shape fit chosen while a CONCEPT-verb template was on the menu is a
+        // miss (critic v2: "template variety went up, template fit went down")
+        if (!verbs.length && verbRanked.some((r) => r.concept.length)) {
+          trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — the model picked "${fit.template.id}" (no verb) over a concept-verb template (${verbRanked.filter((r) => r.concept.length).map((r) => r.t.id).join(', ')})`);
+          return null;
+        }
+        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, text: stampT(rendered.text), library: true, template: fit.template.id }, section: rendered.section, template: fit.template.id, supersedes: fit.template.supersedes ?? null, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
+      } catch (e8) {
+        trace('signature fit call failed —', `${seat}: ${e8?.message ?? e8}`);
+        return null;
+      }
+    };
+    const actionT = await fitSeat('action', ideasT?.action);
+    // the slot row leaves either way — a proven row stands where it stood
+    wcDropped = true;
+    for (const es2 of Object.values(sections)) {
+      const ix = es2.indexOf(pendingWildcard);
+      if (ix !== -1) es2.splice(ix, 1);
+    }
+    const deadBareT = String(pendingWildcard?.name ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '');
+    if (actionT) {
+      // a template that SUPERSEDES a chassis row removes it (one lance, one
+      // physics — the lancer's returning throw beside the retrieve, v4 read)
+      const sup = actionT.supersedes;
+      if (sup) for (const [secS, esS] of Object.entries(sections)) {
+        for (let i = esS.length - 1; i >= 0; i -= 1) if (sup.test(esS[i].text ?? '')) { trace('row superseded:', `${secS}/"${esS[i].name}" leaves — "${actionT.row.name}" owns the throw now`); sweepDeadName(sections, esS[i].name, actionT.row, trace); esS.splice(i, 1); }
+      }
+      (sections[actionT.section] = sections[actionT.section] ?? []).push(actionT.row);
+      libraryDrawn = true;
+      trace('signature template:', `${actionT.template} -> ${actionT.section}/"${actionT.row.name}" ("${actionT.because}")`);
+      if (deadBareT && deadBareT !== actionT.row.name.replace(/ \(.*\)$/, '')) sweepDeadName(sections, deadBareT, actionT.row, trace);
+    } else {
+      // the same filtered menu the fit saw (engine families, ownership); the
+      // blind library hash is the last resort only when that menu is empty
+      const fbVerbText = `${options.userConcept ?? concept} ${seatsT?.action ?? ''}`;
+      const shelfT = fallbackMenu(ctxT, fbVerbText);
+      const verbFirst = rankByVerb(shelfT, fbVerbText).filter((r) => r.matched.length).length; // the verb-ranked head is taken in order; only the rest rotates
+      let drawn = null;
+      for (let i = 0; i < shelfT.length && !drawn; i += 1) {
+        const t = i < verbFirst ? shelfT[i] : shelfT[verbFirst + ((nameHash(p.name) + i) % Math.max(1, shelfT.length - verbFirst))];
+        const r = renderTemplate(t, ctxT, {});
+        if (r) drawn = { seed: t.id, section: r.section, row: { name: `${r.name}${r.gate ? ` (${r.gate})` : ''}`, text: r.text, library: true } };
+      }
+      if (!drawn) drawn = drawLibraryRow(scaled, { archetype, energy: options.energy ?? null, mix: options.mix ?? null, name: p.name, shapeKey: null, imposed: imposedT, mechanics: options.mechanics ?? null, cr });
+      if (drawn && /\{[a-z_]+\}/.test(drawn.row.text)) drawn = null; // a seed with an unfilled flavor blank never ships raw
+      if (drawn) {
+        drawn.row.text = stampT(drawn.row.text);
+        (sections[drawn.section] = sections[drawn.section] ?? []).push(drawn.row);
+        libraryDrawn = true;
+        libraryGenericName = drawn.row.name;
+        trace('library seed drawn:', `${drawn.seed} -> ${drawn.section}/"${drawn.row.name}" (no template held the idea; a proven shape stands in)`);
+        if (deadBareT) sweepDeadName(sections, deadBareT, drawn.row, trace);
+      } else {
+        trace('signature dropped —', 'no template held the idea and no seed is legal on this sheet');
+        sweepDeadName(sections, deadBareT || null, null, trace);
+      }
+    }
+    if (traitWildcardAllowed && ideasT?.trait) {
+      const traitT = await fitSeat('trait', ideasT.trait);
+      if (traitT) {
+        (sections.Traits = sections.Traits ?? []).unshift(traitT.row);
+        trace('signature template (trait):', `${traitT.template} -> Traits/"${traitT.row.name}" ("${traitT.because}")`);
+      }
+    }
+  } else {
   if (pendingWildcard) {
     try {
       const sheetLines = Object.entries(sections)
@@ -2507,6 +2694,7 @@ ${wcRejected ? `ACTION draft rejected. THE ONE RULE IT BROKE: ${wcRejected.why}\
         }
       }
     }
+  }
   }
   for (const [sec, es] of Object.entries(sections)) {
     for (let i = es.length - 1; i >= 0; i -= 1) {
