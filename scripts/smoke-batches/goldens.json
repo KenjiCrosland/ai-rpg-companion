@@ -67,5 +67,97 @@
         "rally"
       ]
     }
+  },
+  {
+    "cr": "5",
+    "concept": "a brass bull construct that charges through market stalls",
+    "expect": {
+      "route": [
+        "brute-charger"
+      ],
+      "template": [
+        "heated-body",
+        "charge",
+        "trample",
+        "aggro-curse",
+        "push-prone"
+      ]
+    }
+  },
+  {
+    "cr": "7",
+    "concept": "a stone shrine-guardian bound to the high priest it was made to protect",
+    "expect": {
+      "route": [
+        "defender-warden"
+      ],
+      "template": [
+        "rally",
+        "interpose",
+        "heated-body"
+      ]
+    }
+  },
+  {
+    "cr": "15",
+    "concept": "an adult storm dragon whose breath is a rolling wall of thunder",
+    "expect": {
+      "route": [
+        "dragon"
+      ],
+      "template": [
+        "reel",
+        "heated-body",
+        "resonant-body",
+        "hook-drag"
+      ]
+    }
+  },
+  {
+    "cr": "17",
+    "concept": "a mountain of troll-flesh that knits shut around the axes left in it",
+    "expect": {
+      "route": [
+        "brute-regenerator",
+        "brute-grappler"
+      ],
+      "template": [
+        "hook-drag",
+        "heated-body",
+        "weapon-lodge"
+      ]
+    }
+  },
+  {
+    "cr": "3",
+    "concept": "a gutter assassin that hides between lantern-flickers",
+    "expect": {
+      "route": [
+        "skirmisher-skulker",
+        "lurker"
+      ],
+      "template": [
+        "blink",
+        "assassinate",
+        "phase-slip"
+      ]
+    }
+  },
+  {
+    "cr": "8",
+    "concept": "a leopard-thing that stalks the canopy and drops on stragglers from above",
+    "expect": {
+      "route": [
+        "lurker",
+        "lurker-trap",
+        "skirmisher-skulker"
+      ],
+      "template": [
+        "pounce",
+        "assassinate",
+        "isolation",
+        "leap"
+      ]
+    }
   }
 ]

@@ -6,7 +6,8 @@
  * THE BLOCK LOUDLY (owner spec: no silent fallback names).
  */
 import { pickDonor, scaleDonor } from './scale.mjs';
-import { templatesFor, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit } from './templates.mjs';
+import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses } from './header.mjs';
+import { templatesFor, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit } from './templates.mjs';
 import { drawLibraryRow, LIBRARY_KEYS, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
@@ -2508,7 +2509,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
     }
     if (traitWildcardAllowed && ideasT?.trait) {
-      const traitT = await fitSeat('trait', ideasT.trait);
+      let traitT = await fitSeat('trait', ideasT.trait);
+      // the seat's OWED trait stands in when the fit misses (interpose is a reaction: it files under Reactions)
+      const owed = SEAT_DEFAULT_TRAIT[scaled.style ?? ''] ?? SEAT_DEFAULT_TRAIT[archetype];
+      if (!traitT && owed && TEMPLATE_BY_ID.get(owed) && templatesFor({ ...ctxT, section: TEMPLATE_BY_ID.get(owed).section, trigger: null }).some((t) => t.id === owed)) {
+        const r = renderTemplate(TEMPLATE_BY_ID.get(owed), ctxT, {}, { blind: true });
+        if (r) { traitT = { row: { name: r.name, text: stampT(r.text), library: true, template: owed }, templateName: r.name, section: r.section, template: owed, because: 'the seat owes it by print' }; trace('seat default:', `${scaled.style} owes ${owed} — it stands in for the missed trait`); }
+      }
       if (traitT) {
         // two rows never share a name (the Carillon's action and trait were both
         // "Funeral Peal"): on a collision the trait takes its template's own name
@@ -2517,7 +2524,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           trace('trait renamed:', `"${traitT.row.name}" already names a row — the trait ships as "${traitT.templateName}"`);
           traitT.row.name = traitT.templateName;
         }
-        (sections.Traits = sections.Traits ?? []).unshift(traitT.row);
+        const secT = traitT.section === 'Reactions' ? 'Reactions' : 'Traits';
+        (sections[secT] = sections[secT] ?? []).unshift(traitT.row);
         trace('signature template (trait):', `${traitT.template} -> Traits/"${traitT.row.name}" ("${traitT.because}")`);
       }
     }
@@ -2801,6 +2809,23 @@ ${wcRejected ? `ACTION draft rejected. THE ONE RULE IT BROKE: ${wcRejected.why}\
     // the dice, the dice own the printed number (lint: 240 vs 238, Matador)
     const dm = /(\d+)d(\d+)(?:\s*\+\s*(\d+))?/.exec(monster.hp_formula ?? '');
     if (dm) monster.hp = Math.floor(Number(dm[1]) * (Number(dm[2]) + 1) / 2) + Number(dm[3] ?? 0);
+  }
+  // HEADER HONESTY (owner + critic 2026-09-22): speed from the concept's
+  // movement set, languages from the mind, attack names from anatomy, fire
+  // defenses from the material — all derived, all closed sets (header.mjs)
+  {
+    const sp = honestSpeed(monster.speed, { movement: options.movement ?? [], style: scaled.style ?? null, bodyType: options.bodyType ?? null });
+    if (sp.dropped.length || sp.added.length) { monster.speed = sp.speed; trace('speed by concept:', `${sp.dropped.length ? `dropped ${sp.dropped.join(', ')}` : ''}${sp.dropped.length && sp.added.length ? '; ' : ''}${sp.added.length ? `added ${sp.added.join(', ')}` : ''} — the concept's movement set decides`); }
+    if (options.mind) {
+      const before = monster.languages; monster.languages = honestLanguages(monster.languages, { mind: options.mind, type: monster.type ?? '' });
+      if (before !== monster.languages) trace('languages by mind:', `"${before}" -> "${monster.languages}" (${options.mind})`);
+    }
+    for (const c of honestAttackNames(monster.sections, { projectile: p.projectile ?? null })) {
+      trace('attack name by anatomy:', `"${c.from}" -> "${c.to}" — ${c.why}`);
+      if (c.from !== c.to) sweepDeadName(monster.sections, c.from.replace(/ \(.*\)$/, ''), { name: c.to }, trace);
+    }
+    const fd = honestFireDefenses(monster, { material: options.material ?? null });
+    if (fd) trace('defenses by material:', fd);
   }
   // Languages: the model answered 'None' on four of six Horsemen. A
   // sapient creature speaks; print's idiom for intelligent undead is

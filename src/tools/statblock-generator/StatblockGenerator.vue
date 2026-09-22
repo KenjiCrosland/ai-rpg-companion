@@ -1349,6 +1349,7 @@ async function generateStatblockEngine(edition) {
           // paired blind read decides
           signatureMode: localStorage.getItem('statblock-signature-freetext') === '1' ? 'freetext' : 'template',
           userConcept: baseConcept, // the user's own words — the verb the signature must serve (the identity prose is the model's)
+          material: conceptHouse, // the body's material — fire defenses derive from it (wax is vulnerable, never resistant)
           // THE 2014 DAMAGE LINE (owner ruling 2026-09-14): 2014's
           // table runs ~5 damage/CR vs 2024's ~7.5 — direct-2014
           // generations price at 0.7, uniform across archetypes. Tab

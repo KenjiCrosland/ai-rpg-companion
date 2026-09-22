@@ -48,7 +48,7 @@ const SHAPE_TAGS = {
   'gaze-single': ['save', 'condition'], snare: ['save', 'condition'], reel: ['save', 'movement'],
   'condition-payoff': ['save', 'damage'], rampage: ['once_per_fight', 'damage'], blink: ['always', 'movement'],
   zone: ['once_per_fight', 'condition'], execute: ['save', 'damage'], 'death-burst': ['always', 'damage'],
-  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
+  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
 };
 // ENGINE FAMILIES: a template that re-implements an engine the sheet already
 // carries is off the menu by construction (iron maiden x4: hook-drag beside
@@ -146,6 +146,8 @@ export const VERB_KEYS = {
   'bloodied-burst': ['toll', 'ring', 'peal', 'bloodied', 'wounded', 'crack', 'bell', 'burst', 'erupt', 'shatter', 'scream', 'wail', 'when hurt', 'when struck', 'dying', 'the dying', 'half its'],
   'shell-withdraw': ['withdraw', 'shell', 'retreat', 'curl', 'armor', 'carapace', 'hide inside', 'close', 'seal itself', 'turtle', 'crab', 'bell'],
   'active-toll': ['toll', 'ring', 'peal', 'bell', 'clang', 'chime', 'gong', 'deafen', 'thunder', 'knell', 'boom'],
+  'weapon-lodge': ['lodge', 'lodged', 'stuck in', 'knits shut around', 'swallows blades', 'keeps the weapon', 'embedded', 'axes', 'blades in its', 'grows around'],
+  interpose: ['interpose', 'shields', 'takes the blow', 'in the way', 'protects', 'bodyguard', 'guards', 'its charge', 'ward', 'sworn to protect'],
   pounce: ['pounce', 'drop on', 'drops on', 'leap onto', 'from above', 'ambush from', 'stragglers', 'spring', 'pin', 'pins'],
   isolation: ['isolated', 'alone', 'straggler', 'stragglers', 'lone', 'separated', 'cut off', 'apart from', 'picks off', 'singles out'],
   snatch: ['snatch', 'carry off', 'carries off', 'talons', 'swoop', 'drop them', 'drops them', 'lift', 'carry', 'from the sky'],
@@ -378,6 +380,11 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate };
 }
 
+// SEAT DEFAULTS (critic run four): some seats OWE a trait by print — the 2024
+// Assassin has Assassinate whatever else it does. When the trait seat misses
+// on such a seat, the default renders blind; when it fits, the fit wins.
+export const SEAT_DEFAULT_TRAIT = { skulker: 'assassinate', trap: 'false-appearance', warden: 'interpose', lurker: 'assassinate' }; // keyed by style, else by family (the plain stalker seat owes Assassinate too)
+
 // ---------------------------------------------------------------- the two calls
 
 /** The verbs the concept itself names, across the whole catalog (not menu-limited) — the idea's brief. */
@@ -540,7 +547,7 @@ export function valueCheck(row, { scaled, sections, section }) {
   // creature lure read 11.6 as one target and should have gated, critic 2026-09-22)
   const value = (t) => { const r = rowValue(t, perHit, { area }); return area ? { ...r, ev: r.ev * AREA_TARGETS } : r; };
   let v = value(text);
-  if (v.ev < floor && v.hasDamage && !v.half) { text = `${text.trim()} *Success:* Half damage only.`; steps.push('added Success: Half'); v = value(text); }
+  if (v.ev < floor && v.hasDamage && !v.half) { text = `${text.trim().replace(/[^.!?]$/, (c) => `${c}.`)} *Success:* Half damage only.`; steps.push('added Success: Half'); v = value(text); } // the sentence ends before the clause (a missing period, two runs)
   if (v.ev < floor && v.hasDamage && v.avg < budget) {
     const full = saveDamageDiceFor(budget);
     text = text.replace(DMG, `${full.avg} (${full.dice})`); steps.push(`dice ${v.avg} → ${full.avg}${gated ? ' (nova budget)' : ''}`); v = value(text);
