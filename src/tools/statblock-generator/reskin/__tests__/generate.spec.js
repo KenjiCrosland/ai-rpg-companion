@@ -43,6 +43,16 @@ test('the last-resort seed obeys the blind-role map: a siege ram never draws a s
   expect(['library', 'dropped']).toContain(m.generation.signature);
 });
 
+test('a kept crawl beside a fly speed is written to the card, not only an added or dropped mode (the lamplighter\'s Swim 5)', async () => {
+  const { renameKeysOf: rk } = require('../generate.mjs');
+  const scaled = scaleDonor(pickDonor(6, 'phantom', 'lurker'), 6, { mechanics: [] });
+  const renames = {}; rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+  const typed = Object.values(scaled.sections).flat().filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name]);
+  const ghost = JSON.stringify({ name: 'Lamplighter', type: 'Undead', size: 'Medium', alignment: 'Neutral', senses: 'darkvision 60 ft.', languages: 'Common', renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Necrotic'])), conditions: { condition_minor: 'Frightened' }, melee_rider: 'none', slot_save: 'Wisdom' });
+  const m = await generateReskin({ archetype: 'lurker', style: 'phantom', concept: 'a canal ghost', cr: 6, movement: ['swim'], mind: 'sapient' }, async () => ghost);
+  if (/Fly/.test(m.speed)) expect(m.speed).not.toMatch(/\b(?:Swim|Climb|Burrow) (?:5|10|15) ft/);
+});
+
 test('an unrenamed entry fails the block LOUDLY — no fallback names', async () => {
   const partial = JSON.parse(answer());
   delete partial.renames['Mobility Trait'];

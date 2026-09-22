@@ -1666,7 +1666,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // defenses from the material — all derived, all closed sets (header.mjs)
   {
     const sp = honestSpeed(monster.speed, { movement: options.movement ?? [], style: scaled.style ?? null, bodyType: options.bodyType ?? null });
-    if (sp.dropped.length || sp.added.length) { monster.speed = sp.speed; trace('speed by concept:', `${sp.dropped.length ? `dropped ${sp.dropped.join(', ')}` : ''}${sp.dropped.length && sp.added.length ? '; ' : ''}${sp.added.length ? `added ${sp.added.join(', ')}` : ''} — the concept's movement set decides`); }
+    // written whenever the line CHANGED, not only on an add or a drop: a kept
+    // crawl lifted beside a fly speed (the lamplighter's Swim 5, manual smoke
+    // 2026-09-22) is a change too
+    if (sp.speed !== String(monster.speed ?? '')) { monster.speed = sp.speed; trace('speed by concept:', `${sp.dropped.length ? `dropped ${sp.dropped.join(', ')}` : ''}${sp.dropped.length && sp.added.length ? '; ' : ''}${sp.added.length ? `added ${sp.added.join(', ')}` : ''} — the concept's movement set decides`); }
     if (options.mind) {
       const before = monster.languages; monster.languages = honestLanguages(monster.languages, { mind: options.mind, type: monster.type ?? '' });
       if (before !== monster.languages) trace('languages by mind:', `"${before}" -> "${monster.languages}" (${options.mind})`);
