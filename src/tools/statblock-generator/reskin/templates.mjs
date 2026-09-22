@@ -48,7 +48,7 @@ const SHAPE_TAGS = {
   'gaze-single': ['save', 'condition'], snare: ['save', 'condition'], reel: ['save', 'movement'],
   'condition-payoff': ['save', 'damage'], rampage: ['once_per_fight', 'damage'], blink: ['always', 'movement'],
   zone: ['once_per_fight', 'condition'], execute: ['save', 'damage'], 'death-burst': ['always', 'damage'],
-  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], spew: ['save', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
+  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], spew: ['save', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'hook-rider': ['on_hit', 'movement'], riposte: ['on_being_hit', 'damage'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
 };
 // ENGINE FAMILIES: a template that re-implements an engine the sheet already
 // carries is off the menu by construction (iron maiden x4: hook-drag beside
@@ -59,7 +59,7 @@ const SHAPE_TAGS = {
 // adjacent; a repeller (Frightened, a push) sends it away. Holders stay.
 const EXCLUDE_ON = {
   charge: ['charge-rider'], 'throw-retrieve': ['thrown-weapon'], pounce: ['charge-rider'],
-  'hook-drag': ['containment'], 'obstacle-pull': ['containment'], reel: ['containment'], snare: ['containment'],
+  'hook-drag': ['containment'], 'hook-rider': ['containment'], 'obstacle-pull': ['containment'], reel: ['containment'], snare: ['containment'],
   'false-appearance': ['disguise'], adhesive: ['adhesive'], 'heated-body': ['contact-damage'], 'resonant-body': ['contact-damage'],
   // repellers, off every containment seat
   'escalating-dread': ['containment'], 'terror-pulse': ['containment'], 'push-prone': ['containment'], 'gaze-single': ['containment'],
@@ -149,6 +149,8 @@ export const VERB_KEYS = {
   spew: ['vomits', 'vomit', 'spews', 'spew', 'belches', 'spits', 'choking cloud', 'cloud of', 'breathes', 'exhales', 'retches', 'noxious', 'stink', 'gas'],
   'bolt-restrain': ['bolt', 'binds', 'root', 'roots', 'pins', 'freezes', 'locks', 'holds fast', 'from afar', 'a mile away', 'lightning strike', 'from the sky'],
   'bolt-drag': ['bolt', 'reel', 'drags', 'pulls', 'tether', 'lash', 'from afar', 'lightning lure', 'draws them'],
+  'hook-rider': ['barb', 'barbed', 'barbs', 'hook', 'hooks', 'lodge', 'lodged', 'lodges', 'drag', 'drags', 'harpoon', 'gaff', 'reel in', 'yank', 'tears free', 'hauls it'],
+  riposte: ['riposte', 'parry', 'parries', 'parried', 'counterattack', 'counter', 'off-hand', 'dagger', 'rapier', 'saber', 'sabre', 'duelist', 'fencer', 'opening', 'when they miss', 'second blade', 'two blades', 'twin blades'],
   'bolt-mark': ['bolt', 'marks', 'brands', 'brand', 'singles out', 'hunts', 'tracks', 'isolated', 'lone', 'straggler', 'from afar', 'a mile away', 'find them again', 'finds them', 'in the dark', 'lantern beam', 'beam'],
   'weapon-lodge': ['lodge', 'lodged', 'stuck in', 'knits shut around', 'swallows blades', 'keeps the weapon', 'embedded', 'axes', 'blades in its', 'grows around'],
   interpose: ['interpose', 'shields', 'takes the blow', 'in the way', 'protects', 'bodyguard', 'guards', 'its charge', 'ward', 'sworn to protect'],
@@ -218,7 +220,9 @@ const sameStem = (a, b) => {
   const [short, long] = a.length <= b.length ? [a, b] : [b, a];
   if (short.length < 4 || !long.startsWith(short)) return false;
   const rest = long.slice(short.length);
-  return rest === short.at(-1) || rest === 'e' || rest === 'y' || rest === 'i';
+  // a dropped -e / -y / -i needs five letters of stem: at four, "stars" is
+  // "stare" and "spar" is "spare" (the astrologer bound pacify, goldens 2026-09-22)
+  return rest === short.at(-1) || (short.length >= 5 && (rest === 'e' || rest === 'y' || rest === 'i'));
 };
 const wordsOf = (t) => [...new Set(String(t ?? '').toLowerCase().split(/[^a-z]+/).filter((w) => w.length >= 3).map(stem))]; // hyphens split: "tar-mouthed" carries "tar"
 /**
@@ -330,7 +334,7 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
 // repositioning) never stand in blind: the critic's v3 read named the
 // obscurement row "the new dead row … appearing as a fallback when nothing
 // else fit". They ship only when the concept's verb asks for them.
-const UTILITY = new Set(['zone-seed', 'focus', 'feint-slip', 'phase-slip', 'rally', 'reveal', 'coating']);
+export const UTILITY = new Set(['zone-seed', 'focus', 'feint-slip', 'phase-slip', 'rally', 'reveal', 'coating']);
 // BLIND-DEALABLE (goldens 2026-09-22: a bull was dealt "Hooked Lash", a vault
 // "Hurled Weapon"): a seed with no verb earned is dealt only where its fiction
 // is any-body — a curse or a bolt is any caster, a bellow or a shove is any
@@ -339,7 +343,7 @@ const UTILITY = new Set(['zone-seed', 'focus', 'feint-slip', 'phase-slip', 'rall
 const ALL = 'all';
 export const BLIND_ROLES = {
   'condition-payoff': ALL, execute: ALL, 'gaze-single': ALL, rampage: ALL, 'burrow-ambush': ALL, charge: ALL, 'thrown-burst': ALL,
-  affliction: ALL, pounce: ALL, isolation: ALL, snatch: ALL, 'bolt-restrain': ALL, 'bolt-drag': ALL, 'bolt-mark': ALL, 'ward-retaliation': ALL, interpose: ALL,
+  affliction: ALL, pounce: ALL, isolation: ALL, snatch: ALL, 'bolt-restrain': ALL, 'bolt-drag': ALL, 'bolt-mark': ALL, 'ward-retaliation': ALL, interpose: ALL, riposte: ALL,
   seal: ['controller', 'artillery'],
   'escalating-dread': ALL, 'terror-pulse': ALL, 'sensory-strike': ALL, disarm: ALL, 'push-prone': ALL, herd: ALL, 'own-turn-punisher': ALL, exploiter: ALL,
   'aggro-curse': ['caster'], pacify: ['caster'], 'snare-bolt': ['caster'], 'slow-bolt': ['caster'], drain: ['caster', 'lurker'], 'delayed-brand': ['caster'], 'curse-debt': ['caster'], 'blighted-ground': ['caster'],
@@ -386,7 +390,9 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     let text = drawn.row.text;
     for (const k of FLAVOR_SLOTS) {
       if (!text.includes(`{${k}}`)) continue;
-      const v = fills[k];
+      // the same ladder as a shape: a fill the bound rejects falls to the blind
+      // default, never to a miss (the ledger's Delayed Brand died on its douse, fresh two)
+      const v = shortFlavor(fills[k]) ? fills[k] : BLIND_FILLS[k];
       if (!shortFlavor(v)) return null;
       text = text.split(`{${k}}`).join(v.trim());
     }
@@ -554,6 +560,9 @@ export function rowValue(text, perHit, { area = false } = {}) {
   if (/\b(?:Advantage|Disadvantage)\b/.test(payload)) ev += 0.25 * P_HIT * perHit;
   // repositioning is worth about 0.3 of an attack (a blink that escapes and re-places is the concept on a hider — the value model deleted it, critic run three)
   if (/teleports? up to|moves? up to (?:half )?its Speed|takes the (?:Dash|Disengage) action|without provoking Opportunity Attacks/i.test(text)) ev += 0.3 * P_HIT * perHit;
+  // an attack GRANT is worth the attack it grants (the riposte, the guardian's
+  // answer: "makes one X attack" read 0 and every reaction sat under the floor)
+  if (/makes one [\w' -]+ attack\b/i.test(text)) ev += P_HIT * perHit;
   return { ev, avg, half, hasDamage: !!d };
 }
 /**
@@ -570,11 +579,12 @@ export function valueCheck(row, { scaled, sections, section }) {
   // Multiattack (owner + critic, 2026-09-22). Floor 1.3x, ceiling 2.5x, and the
   // ladder's top rung is the NOVA budget (2x the round), not the attack's die.
   const maEV = attackEV * ma.attacks;
-  const replaced = section === 'Bonus Actions' ? 0 : gated ? maEV : attackEV;
-  const label = section === 'Bonus Actions' ? 'a bonus action (free)' : gated ? `the whole Multiattack (${ma.attacks} attacks)` : `one attack of ${ma.attacks}`;
+  const free = section === 'Bonus Actions' || section === 'Reactions';
+  const replaced = free ? 0 : gated ? maEV : attackEV;
+  const label = free ? `a ${section === 'Reactions' ? 'reaction' : 'bonus action'} (free)` : gated ? `the whole Multiattack (${ma.attacks} attacks)` : `one attack of ${ma.attacks}`;
   // a BONUS ACTION trades for nothing: no floor, no ladder, ceiling only (a gated
   // bonus action is not a nova — Bedrock Grasp 2/Day climbed to 45 dice, 2026-09-22)
-  const bonus = section === 'Bonus Actions';
+  const bonus = section === 'Bonus Actions' || section === 'Reactions'; // a reaction's cost is the reaction, not an action: a free row too
   const floor = bonus ? 0.25 * attackEV : gated ? 1.3 * maEV : 0.8 * replaced; // a free row still has to DO something
   const ceiling = bonus ? 1.5 * attackEV : gated ? 2.5 * maEV : 1.5 * (replaced || attackEV);
   const area = /each creature/i.test(row.text);

@@ -59,6 +59,6 @@ describe('the shape catalog: one template per band, cited or invented', () => {
 
   test('the invention ledger holds', () => {
     expect(SHAPES.filter((s) => s.invented).map((s) => s.id).sort())
-      .toEqual(['active-toll', 'bloodied-burst', 'bolt-drag', 'bolt-mark', 'bolt-restrain', 'burrow-ambush', 'charge', 'isolation', 'pull-through', 'resonant-body', 'seal', 'throw-recall', 'throw-retrieve', 'weapon-lodge']); // bloodied-burst joined 2026-09-21 (the bell hermit's wound-rung peal)
+      .toEqual(['active-toll', 'bloodied-burst', 'bolt-drag', 'bolt-mark', 'bolt-restrain', 'burrow-ambush', 'charge', 'hook-rider', 'isolation', 'pull-through', 'resonant-body', 'riposte', 'seal', 'throw-recall', 'throw-retrieve', 'weapon-lodge']); // bloodied-burst joined 2026-09-21 (the bell hermit's wound-rung peal); hook-rider and riposte 2026-09-22 (the miss log's two clusters)
   });
 });

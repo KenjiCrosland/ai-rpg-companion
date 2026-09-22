@@ -7,7 +7,7 @@
  */
 import { pickDonor, scaleDonor } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses } from './header.mjs';
-import { templatesFor, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit } from './templates.mjs';
+import { templatesFor, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY } from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
@@ -1448,7 +1448,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         }
         const rendered = renderTemplate(fit.template, ctxT, fit.fills);
         if (!rendered) {
-          trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — "${fit.template.id}" ${fit.template.kind === 'seed' ? 'is not legal on this sheet (its library gate — dominance, nova, or a missing imposed condition)' : `could not be filled (fills: ${JSON.stringify(fit.fills).slice(0, 80)})`}`);
+          trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — "${fit.template.id}" could not be filled (fills: ${JSON.stringify(fit.fills).slice(0, 80)})`);
           return null;
         }
         const bare = fit.name ?? rendered.name;
@@ -1534,14 +1534,23 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       for (let i = 0; i < shelfT.length && !drawn; i += 1) {
         const t = i < verbFirst ? shelfT[i] : shelfT[verbFirst + ((nameHash(p.name) + i) % Math.max(1, shelfT.length - verbFirst))];
         const r = renderTemplate(t, ctxT, {}, { blind: true });
-        if (!r) continue;
+        if (!r) { trace('fallback skipped:', `${t.id} (the sheet cannot render it)`); continue; }
         const cand = { seed: t.id, section: r.section, row: { name: `${r.name}${r.gate ? ` (${r.gate})` : ''}`, text: r.text, library: true } };
         // a seed the floor cannot lift is skipped for the next one, never shipped
         const pre = valueCheck(cand.row, { scaled, sections, section: cand.section });
         if (pre.steps.some((st) => /still under|does nothing/.test(st))) { trace('fallback skipped by the floor:', `${t.id} (EV ${pre.ev} vs ${pre.floor})`); continue; }
         drawn = cand;
       }
-      if (!drawn) drawn = drawLibraryRow(scaled, { archetype, energy: options.energy ?? null, mix: options.mix ?? null, name: p.name, shapeKey: null, imposed: imposedT, mechanics: options.mechanics ?? null, cr });
+      // the LAST RESORT obeys the same law as the shelf: only a blind-dealable
+      // seed, in hash order (the siege ram drew "Shell Defense" from the bare
+      // library hash after every shelf row failed to render, fresh two)
+      if (!drawn) {
+        const keys = TEMPLATES.filter((t) => t.kind === 'seed' && blindDealable(t, archetype) && !UTILITY.has(t.id)).map((t) => t.key);
+        for (let i = 0; i < keys.length && !drawn; i += 1) {
+          const key = keys[(nameHash(p.name) + i) % keys.length];
+          drawn = drawLibraryRow(scaled, { archetype, energy: options.energy ?? null, mix: options.mix ?? null, name: p.name, shapeKey: key, imposed: imposedT, mechanics: options.mechanics ?? null, cr });
+        }
+      }
       if (drawn && /\{[a-z_]+\}/.test(drawn.row.text)) drawn = null; // a seed with an unfilled flavor blank never ships raw
       if (drawn) {
         const vc = valueCheck(drawn.row, { scaled, sections, section: drawn.section });
@@ -2293,7 +2302,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // signature provenance, machine-readable (critic + owner, 2026-09-02:
   // fallback honesty lived only in traces and the audit brief — this
   // makes the rate scorable from saved blocks alone)
-  monster.generation.signature = engineIsSignature ? 'dropped' : libraryDrawn ? 'library' : wcDropped ? 'dropped' : 'custom';
+  monster.generation.signature = engineIsSignature ? 'dropped' : libraryDrawn ? 'library' : wcDropped ? 'dropped' : 'none'; // 'none': no slot on this sheet (claim-gated low CR)
   trace('done:', `"${monster.name}" — donor ${donor.id}, CR ${cr}`);
   return monster;
 }

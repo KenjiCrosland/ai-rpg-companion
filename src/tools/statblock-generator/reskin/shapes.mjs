@@ -261,6 +261,15 @@ export const SHAPES = [
   },
   // THE RIDER ROADMAP (critic's table from the balance read, 2026-09-22): six
   // of the ten action misses were on-hit riders print already has.
+  // THE BARBED-LANCE CLUSTER (wide run 2026-09-22: four rider misses — the
+  // ashen lancer, the bridle of bones, the star-binder's shard): "when it
+  // hits, the barbs hook and drag". Merrow Harpoon (2024 MM) grammar on the
+  // melee row — the pull is the whole rider; the lodge is the name's.
+  {
+    id: 'hook-rider', name: 'Hooking Strike', invented: true, // kin: Merrow/Harpoon (2024 MM, not in this corpus); bolt-drag's melee twin
+    roles: ['skirmisher', 'brute', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'melee-rider',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the target is a Large or smaller creature, it is pulled up to 10 feet straight toward the creature.'])),
+  },
   {
     id: 'pounce', name: 'Pounce', cite: 'Tiger/Pounce (CR 1); Saber-Toothed Tiger (CR 2); Lion (CR 1)',
     roles: ['skirmisher', 'lurker', 'brute'], styles: [], cr_range: [0, 30], replaces: 'melee-rider',
@@ -292,6 +301,15 @@ export const SHAPES = [
     id: 'weapon-lodge', name: 'Weapon Lodge', invented: true, // the mound's "knits shut around the axes": a hit weapon stays
     roles: ['brute', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'When a creature hits the creature with a melee weapon attack using a nonmagical weapon, the weapon lodges in the creature\'s body. A lodged weapon can be pulled free by a creature within reach that succeeds on a DC {dc} Strength (Athletics) check as an action; while lodged, the creature can use it: its {melee_name} attacks deal an extra {avg_half} ({dice_half}) {damage_type} damage per lodged weapon (maximum two).'])),
+  },
+  // THE DUELIST CLUSTER (wide run 2026-09-22: three reaction misses — the
+  // sable notch, the scarred duelist, the coin-bought duelist): "when a blow
+  // misses, the off-hand answers". Parry (Bandit Captain, 2024 MM) answered
+  // with the Battle Master's Riposte: one attack bought by the miss.
+  {
+    id: 'riposte', name: 'Riposte', invented: true, // kin: Bandit Captain/Parry (2024 MM) + Riposte maneuver (PHB); neither is in this corpus
+    roles: ['skirmisher', 'defender', 'lurker'], styles: [], cr_range: [1, 30], replaces: 'reaction',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Trigger:* A creature within 5 feet of the creature misses it with a melee attack roll. *Response:* The creature makes one {melee_name} attack against that creature.'])),
   },
   {
     id: 'interpose', name: 'Interpose', cite: 'Shield Guardian/Shield (CR 7)',

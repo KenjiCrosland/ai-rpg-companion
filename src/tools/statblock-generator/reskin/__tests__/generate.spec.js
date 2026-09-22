@@ -29,6 +29,20 @@ test('a full reskin ships: renames applied, references follow', async () => {
   expect(m.generation.cite).toMatch(/Assassin/); // cited template carries its rung
 });
 
+test('the last-resort seed obeys the blind-role map: a siege ram never draws a shell, a hook, or a hurled weapon blind', async () => {
+  // the mock answers every call with the main-call JSON, so the idea call fails and the library stands in
+  const { renameKeysOf: rk } = require('../generate.mjs');
+  const scaled = scaleDonor(pickDonor(9, 'charger', 'brute'), 9, { mechanics: [] });
+  const renames = {}; rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+  const typed = Object.values(scaled.sections).flat().filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name]);
+  const ram = JSON.stringify({ name: 'Ironclad Ram', type: 'Construct', size: 'Large', alignment: 'Unaligned', senses: 'darkvision 60 ft.', languages: 'None', renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Bludgeoning'])), conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Strength' });
+  const concept = 'a siege ram given a bull\'s temper, iron-shod, that will not stop until the gate or itself is splinters';
+  const m = await generateReskin({ archetype: 'brute', style: 'charger', concept, userConcept: concept, cr: 9 }, async () => ram);
+  const names = Object.values(m.sections).flat().map((e) => e.name).join('|');
+  expect(names).not.toMatch(/Shell Defense|Hooked Lash|Hurled Weapon|Luring Presence/);
+  expect(['library', 'dropped']).toContain(m.generation.signature);
+});
+
 test('an unrenamed entry fails the block LOUDLY — no fallback names', async () => {
   const partial = JSON.parse(answer());
   delete partial.renames['Mobility Trait'];

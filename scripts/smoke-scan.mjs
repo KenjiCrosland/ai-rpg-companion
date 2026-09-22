@@ -105,7 +105,7 @@ const count = (fn) => rows.filter(fn).length;
 console.log(`\n=== SMOKE SCAN — ${n} block(s) across ${runs.length} run(s) ===\n`);
 
 console.log('SIGNATURE CHANNEL (the redesign\'s scoreboard)');
-for (const s of ['custom', 'library', 'dropped', '—']) {
+for (const s of ['none', 'library', 'dropped', '—']) {
   const k = count((r) => r.signature === s);
   if (k) console.log(`  ${s.padEnd(10)} ${pct(k)}`);
 }

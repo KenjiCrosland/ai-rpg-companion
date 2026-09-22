@@ -195,6 +195,34 @@ describe('the catalog', () => {
     const bullRanked = rankByVerb(bull, 'a brass bull construct that charges through market stalls', 'straight-line charge that ends in a gore');
     expect(bullRanked.find((r) => r.t.id === 'hook-drag')?.matched ?? []).toEqual([]);
   });
+  test('a seed\'s rejected flavor fill falls to the blind default, never to a miss (the fill ladder is one ladder)', () => {
+    const scaled = sheet(6, 'warpriest', 'caster');
+    const ctx = { scaled, archetype: 'caster', style: 'warpriest', cr: 6, sections: scaled.sections, meleeName: 'Mace', energy: 'Fire', mix: 'both', imposed: [], name: 'B' };
+    const brand = TEMPLATES.find((t) => t.id === 'delayed-brand');
+    const blind = renderTemplate(brand, ctx, {}, { blind: true });
+    if (blind) { // legal on this sheet: the model's bad fill must not kill it
+      const r = renderTemplate(brand, ctx, { douse: 'takes 5 (1d10) Fire damage' });
+      expect(r).not.toBeNull(); expect(r.text).toContain('tear the brand away'); expect(r.text).not.toMatch(/\{[a-z_]+\}/);
+    }
+  });
+  test('the miss log\'s two clusters: the barbed lance binds the hooking rider, the duelist binds the riposte; both render and price', () => {
+    const scaled = sheet(7, null, 'skirmisher');
+    const ctx = { scaled, archetype: 'skirmisher', cr: 7, sections: scaled.sections, meleeName: 'Lance', energy: null, mix: null, imposed: [], name: 'L' };
+    const riders = templatesFor({ archetype: 'skirmisher', cr: 7, sections: scaled.sections, section: 'rider' });
+    expect(rankByVerb(riders, 'an ashen lancer whose barbed lance hooks and drags whoever it strikes')[0].t.id).toBe('hook-rider');
+    const hook = renderTemplate(TEMPLATES.find((t) => t.id === 'hook-rider'), ctx);
+    expect(hook.section).toBe('Rider'); expect(hook.text).toMatch(/pulled up to 10 feet straight toward/);
+    const reactions = templatesFor({ archetype: 'skirmisher', cr: 7, sections: scaled.sections, section: 'reaction' });
+    expect(rankByVerb(reactions, 'a scarred duelist whose saber parries and whose off-hand dagger answers every miss')[0].t.id).toBe('riposte');
+    const rip = renderTemplate(TEMPLATES.find((t) => t.id === 'riposte'), ctx);
+    expect(rip.section).toBe('Reactions'); expect(rip.text).toMatch(/misses it with a melee attack roll.*makes one Lance attack/);
+    // a reaction is a free row whose attack grant is worth an attack — it clears the floor without a ladder
+    const vc = valueCheck({ name: rip.name, text: rip.text }, { scaled, sections: scaled.sections, section: 'Reactions' });
+    expect(vc.steps).toEqual([]); expect(vc.replaced).toMatch(/reaction \(free\)/); expect(vc.ev).toBeGreaterThan(vc.floor);
+    // the direction rule: a caged sheet gets no pull rider either
+    const caged = { Actions: [{ name: 'Reel', text: 'The creature pulls each creature Grappled by it up to 25 feet straight toward it.' }] };
+    expect(templatesFor({ archetype: 'skirmisher', cr: 7, sections: caged, section: 'rider' }).map((t) => t.id)).not.toContain('hook-rider');
+  });
   test('a template that supersedes a sheet row is offered despite that row\'s engine family; a plain thrown row still excludes it', () => {
     const returning = { Actions: [{ name: 'Thrown Lance', text: 'The creature throws its lance. *Ranged Attack Roll:* +8, range 30/90 ft. 13 (2d8 + 4) Piercing damage. *Hit or Miss:* Immediately after the attack, the lance returns to its hand.' }] };
     expect(templatesFor({ archetype: 'skirmisher', style: 'hurler', cr: 9, sections: returning, section: 'action' }).map((t) => t.id)).toContain('throw-retrieve');
@@ -224,6 +252,7 @@ describe('the catalog', () => {
     expect(rankByVerb(riders, 'a brass bull that charges through market stalls').find((r) => r.t.id === 'bolt-mark').matched).toEqual([]);
     expect(rankByVerb(riders, 'a hunter whose bolt marks the straggler').find((r) => r.t.id === 'bolt-mark').concept).toEqual(expect.arrayContaining(['bolt', 'marks', 'straggler']));
     expect(rankByVerb(menu, 'a thing that keeps dragging its prey under').find((r) => r.t.id === 'hook-drag').concept).toEqual(expect.arrayContaining(['drag', 'under'])); // "dragging" still inflects to "drag"
+    expect(rankByVerb(templatesFor({ archetype: 'caster', cr: 9, sections: {}, section: 'action' }), 'an astrologer who reads the stars').find((r) => r.t.id === 'pacify').matched).toEqual([]); // "stars" is not "stare"
     const knight = rankByVerb(menu, 'a drowned knight who rides the causeway', 'the tide draws them to follow and lures them under');
     expect(knight.find((r) => r.t.id === 'lure').concept).toEqual([]);
     expect(knight.find((r) => r.t.id === 'lure').idea).toContain('lure');
