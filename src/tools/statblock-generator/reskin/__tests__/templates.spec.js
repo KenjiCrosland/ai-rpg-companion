@@ -76,6 +76,16 @@ describe('the catalog', () => {
     expect(templatesFor({ archetype: 'brute', cr: 9, sections: {}, section: 'action', imposed: ['Grappled'] }).map((t) => t.id)).toContain('condition-payoff');
     expect(rowValue('The creature teleports up to 30 feet to an unoccupied space it can see.', 12).ev).toBeGreaterThan(0.25 * 0.65 * 12); // clears the bonus-action minimum
   });
+  test('the caster line has a rider section now; contact damage is a print constant by band', () => {
+    const riders = templatesFor({ archetype: 'caster', cr: 7, sections: {}, section: 'rider' });
+    expect(riders.map((t) => t.id)).toEqual(expect.arrayContaining(['bolt-restrain', 'bolt-drag', 'bolt-mark']));
+    expect(riders.every((t) => t.host === 'ranged')).toBe(true);
+    expect(rankByVerb(riders, 'a hermit who calls down a lightning strike from a mile away and pins the lone climber')[0].t.id).toMatch(/^bolt-/);
+    const hb = TEMPLATES.find((t) => t.id === 'heated-body');
+    const ctx17 = { scaled: sheet(17, null, 'brute'), archetype: 'brute', cr: 17, energy: 'Fire', mix: 'both', meleeName: 'Slam', imposed: [], name: 'X' };
+    expect(renderTemplate(hb, ctx17, {}).text).toMatch(/takes 10 \(3d6\) Fire damage/); // the Balor's number at its tier, not 5d8
+    expect(renderTemplate(hb, { ...ctx17, scaled: sheet(2, null, 'brute'), cr: 2 }, {}).text).toMatch(/takes 3 \(1d6\) Fire damage/);
+  });
   test('every template id is unique across shapes and seeds', () => {
     const ids = TEMPLATES.map((t) => t.id);
     expect(new Set(ids).size).toBe(ids.length);

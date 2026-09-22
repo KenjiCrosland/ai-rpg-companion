@@ -25,7 +25,7 @@ describe('the shape catalog: one template per band, cited or invented', () => {
     for (const s of SHAPES) {
       for (const r of s.roles) expect(ROLES).toContain(r);
       for (const st of s.styles) expect(Object.keys(STYLES)).toContain(st);
-      for (const f of Object.values(s.frames)) expect(f).toMatch(/\{[a-z_]+\}|Saving Throw|attack|teleports|Speed/i);
+      for (const f of Object.values(s.frames)) expect(f).toMatch(/\{[a-z_]+\}|Saving Throw|attack|teleports|Speed|condition|pulled|Advantage/i);
     }
   });
 
@@ -56,6 +56,6 @@ describe('the shape catalog: one template per band, cited or invented', () => {
 
   test('the invention ledger holds', () => {
     expect(SHAPES.filter((s) => s.invented).map((s) => s.id).sort())
-      .toEqual(['active-toll', 'bloodied-burst', 'burrow-ambush', 'charge', 'isolation', 'pull-through', 'resonant-body', 'seal', 'throw-recall', 'throw-retrieve', 'weapon-lodge']); // bloodied-burst joined 2026-09-21 (the bell hermit's wound-rung peal)
+      .toEqual(['active-toll', 'bloodied-burst', 'bolt-drag', 'bolt-mark', 'bolt-restrain', 'burrow-ambush', 'charge', 'isolation', 'pull-through', 'resonant-body', 'seal', 'throw-recall', 'throw-retrieve', 'weapon-lodge']); // bloodied-burst joined 2026-09-21 (the bell hermit's wound-rung peal)
   });
 });

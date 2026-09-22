@@ -2422,7 +2422,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — the model picked "${fit.template.id}" (no verb) over a concept-verb template (${verbRanked.filter((r) => r.concept.length).map((r) => r.t.id).join(', ')})`);
           return null;
         }
-        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, text: stampT(rendered.text), library: true, template: fit.template.id }, templateName: rendered.name, section: rendered.section, template: fit.template.id, supersedes: fit.template.supersedes ?? null, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
+        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, text: stampT(rendered.text), library: true, template: fit.template.id }, templateName: rendered.name, section: rendered.section, template: fit.template.id, host: fit.template.host ?? 'melee', supersedes: fit.template.supersedes ?? null, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
       } catch (e8) {
         trace('signature fit call failed —', `${seat}: ${e8?.message ?? e8}`);
         return null;
@@ -2439,7 +2439,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     const deadBareT = String(pendingWildcard?.name ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '');
     if (actionT && actionT.section === 'Rider') {
       // A RIDER rides the melee row: the clause is appended, no new row ships
-      const host = Object.values(sections).flat().find((e2) => /Melee Attack Roll/.test(e2.text ?? ''));
+      const wantRanged = actionT.host === 'ranged';
+      const host = Object.values(sections).flat().find((e2) => (wantRanged ? /Ranged Attack Roll/ : /Melee Attack Roll/).test(e2.text ?? '')); // a hybrid "Melee or Ranged Attack Roll" row hosts either
       if (host) {
         host.text = `${host.text.trim()} ${actionT.row.text.trim()}`;
         libraryDrawn = true;

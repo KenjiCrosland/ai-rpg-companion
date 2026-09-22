@@ -1,4 +1,4 @@
-import { lexicalHints, hintsBlock, filterVerdicts, rejectedCanon } from '../lexicon.mjs';
+import { headNoun, lexicalHints, hintsBlock, filterVerdicts, rejectedCanon } from '../lexicon.mjs';
 import { buildArchetypeResolvePrompt, buildSeedSynthesisPrompt } from '../../format-2024/generate.mjs';
 
 describe('lexical hints (2026-09-21): guide the resolve call, never route it', () => {
@@ -52,3 +52,13 @@ describe('hint verdicts are filtered and rejected canon is honoured (2026-09-21)
   });
 });
 
+
+describe('the head noun protects the canon stamp', () => {
+  test('a cliff troll IS a troll whatever the verdict said; a troll-hunter is not', () => {
+    expect(headNoun('a cliff troll that shears slabs off the rockface and hurls them at climbers')).toBe('troll');
+    expect(headNoun('a knight in dented plate who hunts trolls in the high passes')).toBe('plate');
+    const no = [{ cue: 'troll', field: 'canon', accepted: false, because: 'the concept is a Giant, not the print Troll' }];
+    expect(rejectedCanon(no, 'a cliff troll that shears slabs off the rockface and hurls them at climbers')).toEqual([]);
+    expect(rejectedCanon(no, 'a knight in dented plate who hunts trolls in the high passes')).toEqual(['troll']);
+  });
+});

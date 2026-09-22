@@ -48,7 +48,7 @@ const SHAPE_TAGS = {
   'gaze-single': ['save', 'condition'], snare: ['save', 'condition'], reel: ['save', 'movement'],
   'condition-payoff': ['save', 'damage'], rampage: ['once_per_fight', 'damage'], blink: ['always', 'movement'],
   zone: ['once_per_fight', 'condition'], execute: ['save', 'damage'], 'death-burst': ['always', 'damage'],
-  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
+  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
 };
 // ENGINE FAMILIES: a template that re-implements an engine the sheet already
 // carries is off the menu by construction (iron maiden x4: hook-drag beside
@@ -146,6 +146,9 @@ export const VERB_KEYS = {
   'bloodied-burst': ['toll', 'ring', 'peal', 'bloodied', 'wounded', 'crack', 'bell', 'burst', 'erupt', 'shatter', 'scream', 'wail', 'when hurt', 'when struck', 'dying', 'the dying', 'half its'],
   'shell-withdraw': ['withdraw', 'shell', 'retreat', 'curl', 'armor', 'carapace', 'hide inside', 'close', 'seal itself', 'turtle', 'crab', 'bell'],
   'active-toll': ['toll', 'ring', 'peal', 'bell', 'clang', 'chime', 'gong', 'deafen', 'thunder', 'knell', 'boom'],
+  'bolt-restrain': ['bolt', 'binds', 'root', 'roots', 'pins', 'freezes', 'locks', 'holds fast', 'from afar', 'a mile away', 'lightning strike', 'from the sky'],
+  'bolt-drag': ['bolt', 'reel', 'drags', 'pulls', 'tether', 'lash', 'from afar', 'lightning lure', 'draws them'],
+  'bolt-mark': ['bolt', 'marks', 'brands', 'singles out', 'hunts', 'tracks', 'isolated', 'lone', 'straggler', 'from afar', 'a mile away'],
   'weapon-lodge': ['lodge', 'lodged', 'stuck in', 'knits shut around', 'swallows blades', 'keeps the weapon', 'embedded', 'axes', 'blades in its', 'grows around'],
   interpose: ['interpose', 'shields', 'takes the blow', 'in the way', 'protects', 'bodyguard', 'guards', 'its charge', 'ward', 'sworn to protect'],
   pounce: ['pounce', 'drop on', 'drops on', 'leap onto', 'from above', 'ambush from', 'stragglers', 'spring', 'pin', 'pins'],
@@ -225,7 +228,8 @@ export function rankByVerb(menu, conceptText, ideaText = '') {
 // grapples, critic run three) — off the menu when the sheet imposes nothing
 const REQUIRES_IMPOSED = new Set(['condition-payoff', 'exploiter']);
 
-const SECTION_BY_REPLACES = { signature: 'action', nova: 'action', 'bonus-alt': 'bonus_action', trait: 'trait', 'melee-rider': 'rider', reaction: 'reaction' };
+const SECTION_BY_REPLACES = { signature: 'action', nova: 'action', 'bonus-alt': 'bonus_action', trait: 'trait', 'melee-rider': 'rider', 'ranged-rider': 'rider', reaction: 'reaction' };
+const HOST_BY_REPLACES = { 'melee-rider': 'melee', 'ranged-rider': 'ranged' }; // which attack row a rider appends to
 
 const slotsOf = (text) => [...new Set([...String(text).matchAll(/\{([a-z_]+)\}/g)].map((m) => m[1]))];
 
@@ -235,6 +239,7 @@ export const TEMPLATES = [
     id: s.id, name: s.name, kind: 'shape', cite: s.cite,
     section: SECTION_BY_REPLACES[s.replaces], roles: s.roles, styles: s.styles, cr_range: s.cr_range,
     gate: s.gate ?? null, nova: s.replaces === 'nova', requires_movement: s.requires_movement ?? null, supersedes: s.supersedes ?? null,
+    host: HOST_BY_REPLACES[s.replaces] ?? null,
     trigger: SHAPE_TAGS[s.id][0], effect: SHAPE_TAGS[s.id][1],
     keys: [...new Set([...(VERB_KEYS[s.id] ?? []), ...(SHAPE_KEYS[s.id] ?? [])])],
     frames: s.frames, flavor: Object.values(s.frames).flatMap(slotsOf).filter((x) => FLAVOR_SLOTS.includes(x)),

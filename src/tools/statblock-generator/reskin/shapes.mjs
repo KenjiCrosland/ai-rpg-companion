@@ -157,7 +157,8 @@ export const SHAPES = [
   {
     id: 'heated-body', name: 'Heated Body', cite: 'Remorhaz/Heated Body (CR 11); Fire Elemental/Fire Form (CR 5); Azer (CR 2)',
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
-    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes {avg_half} ({dice_half}) {damage_type} damage.'])),
+    // contact damage is a print CONSTANT by band, not a budget fraction: Azer 5 (1d10) at CR 2, Fire Elemental 5 (1d10) at CR 5, Remorhaz 10 (3d6) at CR 11, Balor 10 (3d6) at CR 19 — a nuisance, not an attack (critic, four runs)
+    frames: { '0-2': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 3 (1d6) {damage_type} damage.', '3-5': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 5 (1d10) {damage_type} damage.', '6-9': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 7 (2d6) {damage_type} damage.', '10-12': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 10 (3d6) {damage_type} damage.', '13-20': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 10 (3d6) {damage_type} damage.', '21+': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 14 (4d6) {damage_type} damage.' },
   },
   {
     id: 'false-appearance', name: 'False Appearance', cite: 'Mimic/False Appearance (CR 2); Gargoyle/False Appearance (CR 2); Animated Armor (CR 1)',
@@ -196,7 +197,7 @@ export const SHAPES = [
   {
     id: 'resonant-body', name: 'Resonant Body', invented: true, // Heated Body's shape (Remorhaz) with Thunder + Deafened; asked by the bell hermit 3/3
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
-    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'A creature that hits the creature with a melee attack while within 5 feet of it takes {avg_half} ({dice_half}) Thunder damage and has the Deafened condition until the end of its next turn.'])),
+    frames: { '0-2': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 3 (1d6) Thunder damage and has the Deafened condition until the end of its next turn.', '3-5': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 5 (1d10) Thunder damage and has the Deafened condition until the end of its next turn.', '6-9': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 7 (2d6) Thunder damage and has the Deafened condition until the end of its next turn.', '10-12': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 10 (3d6) Thunder damage and has the Deafened condition until the end of its next turn.', '13-20': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 10 (3d6) Thunder damage and has the Deafened condition until the end of its next turn.', '21+': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 14 (4d6) Thunder damage and has the Deafened condition until the end of its next turn.' },
   },
   {
     id: 'throw-retrieve', name: 'Hurled Weapon', invented: true, supersedes: /returns to (?:its|the creature's|the \w+'s) hand|Hit or Miss/i, // one lance, one physics: the chassis's returning throw leaves when this ships // the critic's v2 pick from the free-text side: hurl the weapon, Speed halved until it is recovered
@@ -296,6 +297,24 @@ export const SHAPES = [
     id: 'interpose', name: 'Interpose', cite: 'Shield Guardian/Shield (CR 7)',
     roles: ['defender', 'controller', 'artillery', 'lurker', 'skirmisher'], styles: [], cr_range: [1, 30], replaces: 'reaction',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Trigger:* A creature within 5 feet of the creature that it guards is hit by an attack roll. *Response:* The attack hits the creature instead, and the creature has Resistance to the attack\'s damage.'])),
+  },
+  // THE CASTER LINE'S RIDER SECTION (the hermit's mile-bolt missed four runs
+  // with "no template exists for this section on this line"): riders that
+  // append to the RANGED or hybrid attack row.
+  {
+    id: 'bolt-restrain', name: 'Binding Bolt', invented: true, // Web / Hold-style rider on a spell attack
+    roles: ['artillery', 'controller'], styles: [], cr_range: [1, 30], replaces: 'ranged-rider',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the target is a Large or smaller creature, it has the Restrained condition until the end of its next turn.'])),
+  },
+  {
+    id: 'bolt-drag', name: 'Reeling Bolt', invented: true, // Thorn Whip / Lightning Lure grammar as a rider
+    roles: ['artillery', 'controller', 'lurker'], styles: [], cr_range: [1, 30], replaces: 'ranged-rider',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the target is a Large or smaller creature, it is pulled up to 15 feet straight toward the creature.'])),
+  },
+  {
+    id: 'bolt-mark', name: 'Marking Bolt', invented: true, // Hunter\'s Mark grammar as a rider: the struck target is easier to strike again
+    roles: ['artillery', 'controller', 'skirmisher'], styles: [], cr_range: [1, 30], replaces: 'ranged-rider',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'Until the end of the creature\'s next turn, the creature has Advantage on attack rolls against the target, and the target can\'t take the Hide action.'])),
   },
   {
     id: 'death-burst', name: 'Death Burst', cite: 'Dust Mephit (CR 1/2, 5 ft); Magmin (CR 1/2, 10 ft); Balor/Death Throes (CR 19, 30 ft dual-type)',

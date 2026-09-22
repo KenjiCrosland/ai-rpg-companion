@@ -30,7 +30,7 @@ const CUES = [
   ['teleport', 'mechanics', /\b(?:teleports?|blinks?|flickers? (?:between|out)|vanish(?:es)? and reappears?)\b/i, 'usually the "teleport" mechanic; a candle that flickers is not'],
   ['engulf', 'mechanics', /\b(?:swallows?|engulfs?|smothers?|digests?|entombs?|devours? whole|(?:folds?|closes?|snaps?|clamps?|slams?|shuts?) (?:shut |closed )?(?:around|over|on) |(?:seals?|locks?|traps?|shuts?) (?:\w+ )?(?:inside|within)|drags? (?:\w+ )?(?:under|down into|into (?:its|the)))\b/i, 'usually the "engulf" mechanic (containment); swallowing pride or a story is not'],
   ['summon', 'mechanics', /\b(?:summons?|calls? forth|raises? the dead|conjures?)\b/i, 'usually the "summon" mechanic; summoning courage is not'],
-  ['troll', 'canon', /\btrolls?\b/i, 'a troll carries print Regeneration — unless the creature only HUNTS, WEARS, or is NAMED AFTER trolls'],
+  ['troll', 'canon', /\btrolls?\b/i, 'a troll carries print Regeneration — unless the creature only HUNTS, WEARS, or is NAMED AFTER trolls; a troll typed Giant is still a troll — print\'s Troll IS a Giant'],
   ['golem', 'canon', /\bgolems?\b/i, 'a golem carries print Immutable Form and Magic Resistance — unless "golem" is a comparison or a maker\'s mark'],
   ['zombie', 'canon', /\bzombies?\b/i, 'a zombie carries print Undead Fortitude — unless the word is figurative'],
   ['spider', 'canon', /\bspiders?\b/i, 'a spider carries print Spider Climb — unless it merely weaves, wears, or hunts spiders'],
@@ -85,7 +85,18 @@ export function filterVerdicts(verdicts, text) {
 
 /** Canon cues the model REJECTED on the sentence — the name-canon stamp must
  *  not re-apply them off a name the model then chose ("Troll-Tooth Knight"). */
+/** The concept's HEAD NOUN: "a cliff troll that shears slabs" → troll (the words before the first that/who/which/whose, last word). */
+export function headNoun(text) {
+  const lead = String(text ?? '').toLowerCase().split(/\s+(?:that|who|which|whose|with|wearing|riding)\b/)[0];
+  return (lead.trim().split(/[^a-z-]+/).filter(Boolean).pop() ?? '').replace(/s$/, '');
+}
 export function rejectedCanon(verdicts, text) {
-  return filterVerdicts(verdicts, text).filter((v) => v.field === 'canon' && !v.accepted).map((v) => v.cue);
+  const head = headNoun(text);
+  return filterVerdicts(verdicts, text).filter((v) => v.field === 'canon' && !v.accepted)
+    // a canon cue that IS the concept's head noun cannot be rejected — the
+    // Scarp Troll lost Regeneration to "the concept is a Giant, not the print
+    // Troll" (print's Troll is a Giant); the rejection is for troll-HUNTERS
+    .filter((v) => v.cue !== head && !head.startsWith(v.cue))
+    .map((v) => v.cue);
 }
 
