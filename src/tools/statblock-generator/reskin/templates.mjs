@@ -48,7 +48,7 @@ const SHAPE_TAGS = {
   'gaze-single': ['save', 'condition'], snare: ['save', 'condition'], reel: ['save', 'movement'],
   'condition-payoff': ['save', 'damage'], rampage: ['once_per_fight', 'damage'], blink: ['always', 'movement'],
   zone: ['once_per_fight', 'condition'], execute: ['save', 'damage'], 'death-burst': ['always', 'damage'],
-  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
+  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], spew: ['save', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
 };
 // ENGINE FAMILIES: a template that re-implements an engine the sheet already
 // carries is off the menu by construction (iron maiden x4: hook-drag beside
@@ -141,14 +141,15 @@ export const VERB_KEYS = {
   zone: ['fog', 'cloud', 'field', 'zone', 'murk', 'mist', 'smoke', 'haze', 'aura', 'miasma', 'spores', 'steam', 'darkness'],
   execute: ['execute', 'finish', 'slay', 'kill', 'behead', 'sever', 'end', 'reap', 'harvest', 'death'],
   'heated-body': ['heat', 'burn', 'scald', 'sear', 'molten', 'touch', 'furnace', 'fire', 'flame', 'ember', 'brass', 'iron', 'glow', 'hot', 'spines', 'thorns', 'barbs', 'spikes', 'lightning', 'storm', 'shock', 'splinter', 'shard', 'jagged', 'thundercloud', 'acid', 'frost', 'rime'], // the wide run: a thundercloud body, a shipwreck body, a bone-splinter body all wanted this shape with another type
-  'false-appearance': ['disguise', 'motionless', 'statue', 'mimic', 'still', 'stone', 'object', 'pretend', 'pose', 'perch', 'harmless', 'ordinary', 'hidden', 'blend'],
+  'false-appearance': ['disguise', 'motionless', 'statue', 'mimic', 'still', 'stone', 'object', 'pretend', 'pose', 'perch', 'harmless', 'ordinary', 'hidden', 'blend', 'scarecrow', 'effigy', 'dummy', 'mannequin', 'stuffed'], // print's Scarecrow has it (third run)
   absorption: ['absorb', 'drink', 'feed', 'immune', 'devour', 'eat', 'soak', 'siphon', 'heal', 'mend', 'stronger', 'feeds on'],
-  'bloodied-burst': ['toll', 'ring', 'peal', 'bloodied', 'wounded', 'crack', 'bell', 'burst', 'erupt', 'shatter', 'scream', 'wail', 'when hurt', 'when struck', 'dying', 'the dying', 'half its'],
+  'bloodied-burst': ['toll', 'ring', 'peal', 'bloodied', 'wounded', 'crack', 'bell', 'burst', 'erupt', 'shatter', 'scream', 'wail', 'when hurt', 'when struck', 'dying', 'the dying', 'half its', 'cornered', 'when cornered', 'at bay', 'desperate', 'vomits', 'spews'], // "when cornered" IS Bloodied (the goat, critic run six)
   'shell-withdraw': ['withdraw', 'shell', 'retreat', 'curl', 'armor', 'carapace', 'hide inside', 'close', 'seal itself', 'turtle', 'crab', 'bell'],
   'active-toll': ['toll', 'ring', 'peal', 'bell', 'clang', 'chime', 'gong', 'deafen', 'thunder', 'knell', 'boom'],
+  spew: ['vomits', 'vomit', 'spews', 'spew', 'belches', 'spits', 'choking cloud', 'cloud of', 'breathes', 'exhales', 'retches', 'noxious', 'stink', 'gas'],
   'bolt-restrain': ['bolt', 'binds', 'root', 'roots', 'pins', 'freezes', 'locks', 'holds fast', 'from afar', 'a mile away', 'lightning strike', 'from the sky'],
   'bolt-drag': ['bolt', 'reel', 'drags', 'pulls', 'tether', 'lash', 'from afar', 'lightning lure', 'draws them'],
-  'bolt-mark': ['bolt', 'marks', 'brands', 'singles out', 'hunts', 'tracks', 'isolated', 'lone', 'straggler', 'from afar', 'a mile away'],
+  'bolt-mark': ['bolt', 'marks', 'brands', 'brand', 'singles out', 'hunts', 'tracks', 'isolated', 'lone', 'straggler', 'from afar', 'a mile away', 'find them again', 'finds them', 'in the dark', 'lantern beam', 'beam'],
   'weapon-lodge': ['lodge', 'lodged', 'stuck in', 'knits shut around', 'swallows blades', 'keeps the weapon', 'embedded', 'axes', 'blades in its', 'grows around'],
   interpose: ['interpose', 'shields', 'takes the blow', 'in the way', 'protects', 'bodyguard', 'guards', 'its charge', 'ward', 'sworn to protect'],
   pounce: ['pounce', 'drop on', 'drops on', 'leap onto', 'from above', 'ambush from', 'stragglers', 'spring', 'pin', 'pins'],
@@ -161,7 +162,7 @@ export const VERB_KEYS = {
   'burrow-ambush': ['erupt', 'burrow', 'ambush', 'tunnel', 'beneath', 'underground', 'sand', 'earth', 'surface', 'rise from'],
   'resonant-body': ['ring', 'toll', 'clang', 'resonate', 'bell', 'chime', 'hum', 'gong', 'thunder', 'bronze', 'peal', 'echo', 'deafen', 'struck'],
   'throw-retrieve': ['lance', 'spear', 'axe', 'retrieve', 'recover', 'fetch', 'javelin', 'harpoon', 'anchor', 'hammer', 'thrown weapon', 'its weapon'], // a NAMED weapon — "hurls" alone is the hurler's thrown-burst (Scarpfang walked to pick up a rock from a cliff of rocks)
-  seal: ['seal', 'wax', 'cauterize', 'stopper', 'close the wound', 'no healing', 'wither', 'cannot heal', 'curse', 'psalm', 'sermon', 'brand'],
+  seal: ['seal', 'wax', 'cauterize', 'stopper', 'close the wound', 'no healing', 'wither', 'cannot heal', 'curse', 'psalm', 'sermon'], // "brand" is the MARK's word: "so her bolts find them again" (critic run six)
   adhesive: ['stick', 'sticky', 'tar', 'glue', 'adhere', 'cling', 'gum', 'pitch', 'resin', 'slime', 'sap', 'grip', 'held fast', 'stuck', 'mimic', 'strongroom', 'chest', 'vault', 'coffer'], // a mimic is adhesive by print (the Hollow Trust had none though offered)
   'aggro-curse': ['mark', 'taunt', 'oath', 'challenge', 'goad', 'provoke', 'duel', 'single out', 'chosen', 'brand', 'sworn'], // "bless" is rally's — a mark is not a blessing (the bishop, v4 read)
   'obstacle-pull': ['pull', 'yank', 'reel', 'beckon', 'drag', 'draw', 'summon closer', 'tug', 'haul', 'tether', 'chain', 'tongue', 'tide', 'undertow'],
@@ -205,7 +206,8 @@ export function deniedBy(t, text) {
   const raw = String(text ?? '').toLowerCase();
   return (DENY_KEYS[t.id] ?? []).filter((k) => raw.includes(k));
 }
-const stem = (w) => w.toLowerCase().replace(/(?<=[sxz]|ch|sh)es$/, '').replace(/(?<!s)s$/, '').replace(/ing$/, '').replace(/(?<=[a-z]{3})ed$/, '');
+const ING_ROOTS = new Set(['lightning', 'morning', 'evening', 'king', 'ring', 'sting', 'string', 'spring', 'wing', 'thing', 'nothing', 'something', 'ceiling', 'building', 'being', 'during', 'bring', 'cling', 'fling', 'sling', 'swing', 'wring']); // -ing is the root, not an inflection (the diviner's "lightning:concept" on a concept that says light)
+const stem = (w) => { const l = w.toLowerCase(); return ING_ROOTS.has(l) ? l : l.replace(/(?<=[sxz]|ch|sh)es$/, '').replace(/(?<!s)s$/, '').replace(/ing$/, '').replace(/(?<=[a-z]{3})ed$/, ''); };
 // prefix match covers INFLECTION only ("dragg"/"drag"), never a compound: "night"
 // bound the bishop to "nightmare" (goldens 2026-09-21)
 const sameStem = (a, b) => a === b || (Math.min(a.length, b.length) >= 4 && Math.abs(a.length - b.length) <= 2 && (a.startsWith(b) || b.startsWith(a)));
@@ -298,6 +300,8 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     && triggerCompatible(trigger, t.trigger)
     && !(text && deniedBy(t, text).length)
     && !(REQUIRES_IMPOSED.has(t.id) && Array.isArray(imposed) && !imposed.length)
+    // a rider needs its host row on the sheet (a ranged rider was offered to a phantom with no ranged row)
+    && !(t.host && rows.length && !rows.some((e) => (t.host === 'ranged' ? /Ranged Attack Roll/ : /Melee Attack Roll/).test(e.text ?? '')))
     && !(t.nova && hasNova)
     && !owned.has(t.name.toLowerCase()));
 }

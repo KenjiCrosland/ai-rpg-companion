@@ -1821,7 +1821,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // energy — a furnace gullet burns (the Crucible Hulk swallowed
       // with Acid inside a Fire body, 2026-09-10); every other
       // containment crushes — print's Rug and Whelm deal Bludgeoning
-      const interior = ['Swallow', 'Engulf'].includes(row.name) ? (options.energy ?? 'Acid') : 'Bludgeoning';
+      const interior = options.energy ?? (['Swallow', 'Engulf'].includes(row.name) ? 'Acid' : 'Bludgeoning');
       row.text = row.text.split('{damage_type}').join(interior);
       // interiors scale BELOW the seat floor (the Murgor: a CR 1/2 ooze
       // carrying the brute-5 seat's 2d6 against an 8-DPR budget,
@@ -2344,7 +2344,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
     const fitSeat = async (seat, idea) => {
       if (!idea) return null;
-      const menu = templatesFor({ ...ctxT, section: idea.section, trigger: idea.trigger, text: `${options.userConcept ?? concept} ${idea.idea}`, imposed: imposedT });
+      // a template already on this sheet (by id, whatever it was named) is not offered again
+      const shippedIds = new Set(Object.values(sections).flat().map((e2) => e2.template).filter(Boolean));
+      const menu = templatesFor({ ...ctxT, section: idea.section, trigger: idea.trigger, text: `${options.userConcept ?? concept} ${idea.idea}`, imposed: imposedT }).filter((t) => !shippedIds.has(t.id));
       trace(`signature idea (${seat}):`, `"${idea.idea}" ${tagOf(idea)} — menu: ${menu.map((t) => t.id).join(', ') || 'EMPTY'}`);
       if (!menu.length && idea.section === 'reaction') {
         // print's answer for "when something hits me, this happens" on a line
@@ -2362,9 +2364,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // a shape fit by construction (v2 blind read: "template variety went up,
       // template fit went down"); an honest miss, no call spent
       const seatText = `${seat === 'trait' ? (seatsT?.trait ?? '') : (seatsT?.action ?? '')}`;
-      const verbText = `${options.userConcept ?? concept} ${seatText}`;
-      const verbRanked = rankByVerb(menu, verbText, idea.idea);
+      // a CONCEPT verb must string-match the user's own words; the seat element is
+      // the model's prose and counts as idea-level (the binder "rationalized"
+      // wither/bloodied as concept verbs, critic run six)
+      const verbText = `${options.userConcept ?? concept}`;
+      const verbRanked = rankByVerb(menu, verbText, `${seatText} ${idea.idea}`);
       if (!verbRanked.some((r) => r.matched.length)) {
+        if (idea.section === 'rider') {
+          // the rider shelf is small: a rider idea with no verb there is re-seated
+          // as a save action before it can miss (eight seeds for four fits, fresh ten)
+          trace('signature re-seated:', `${seat} — no rider shares the verb; the idea "${idea.idea.slice(0, 60)}…" is tried as an action`);
+          return fitSeat(seat, { ...idea, section: 'action', trigger: 'save' });
+        }
         trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — no template on the shelf shares a verb with the concept or the idea (offered: ${menu.map((t) => t.id).join(', ')})`);
         return null;
       }
@@ -2394,6 +2405,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       try {
         const rawFit = await callLLM(buildFitPrompt({ name: p.name, idea, menu: offered, cr, concept: verbText }), validateFitResponse);
         let fit = parseFit(rawFit, offered, p.name);
+        if (!fit.template && conceptBound.length && rankByVerb([conceptBound[0]], verbText)[0].concept.length >= 2) {
+          // an EXACT concept match (two or more of the user's own verbs) is the
+          // engine's call, not the model's — the bell's resonant-body and the
+          // goat's Bloodied burst were on the shelf and declined (critic run six)
+          trace('signature bound by force:', `${seat} — "${conceptBound[0].id}" matches ${rankByVerb([conceptBound[0]], verbText)[0].concept.join('+')} in the user's words; the model's none is overruled`);
+          fit = { template: conceptBound[0], because: 'exact concept match', name: null, fills: {} };
+        }
         if (!fit.template && conceptBound.length && seat !== 'trait') { // a trait has no fallback: when the binder says none, none (critic run two)
           // the idea drifted off the concept's verb and the model honestly said
           // none — pour the CONCEPT itself (the user's words + the seat element)
@@ -2442,13 +2460,21 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const wantRanged = actionT.host === 'ranged';
       const host = Object.values(sections).flat().find((e2) => (wantRanged ? /Ranged Attack Roll/ : /Melee Attack Roll/).test(e2.text ?? '')); // a hybrid "Melee or Ranged Attack Roll" row hosts either
       if (host) {
-        host.text = `${host.text.trim()} ${actionT.row.text.trim()}`;
+        // a rider that imposes a hold on every hit of a repeatable row needs a
+        // gate (the astrologer's no-save Restrained x3 a turn, fresh ten):
+        // print's idiom is "once per turn" when there is no save
+        let riderText = actionT.row.text.trim();
+        if (/\b(?:Restrained|Grappled|Paralyzed|Stunned|Incapacitated|Charmed)\b/.test(riderText) && !/Saving Throw/.test(riderText) && !/once per turn/i.test(riderText)) {
+          riderText = `${riderText} This effect can be applied only once per turn.`;
+          trace('rider gated:', `"${actionT.template}" imposes a hold with no save — once per turn`);
+        }
+        host.text = `${host.text.trim()} ${riderText}`;
         libraryDrawn = true;
         trace('signature rider:', `${actionT.template} -> ${host.name} (appended; ${actionT.because})`);
         if (deadBareT) sweepDeadName(sections, deadBareT, host, trace);
-      } else trace('signature miss:', `action — a rider fit (${actionT.template}) but the sheet has no melee row to ride`);
+      } else trace('signature miss:', `action — a rider fit (${actionT.template}) but the sheet has no ${wantRanged ? 'ranged' : 'melee'} row to ride`);
     }
-    if (actionT && actionT.section !== 'Rider') {
+    if (actionT && actionT.section !== 'Rider' && actionT.section !== 'Traits') { // a re-seated TRAIT never climbs the ladder (Wounded Tolling: 27 per hit, no save — fresh ten)
       // THE VALUE CHECK — the row must be worth the attack it replaces
       const vc = valueCheck(actionT.row, { scaled, sections, section: actionT.section });
       if (vc.steps.length) { actionT.row.text = vc.text; actionT.row.name = vc.name; }
@@ -2513,7 +2539,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       let traitT = await fitSeat('trait', ideasT.trait);
       // the seat's OWED trait stands in when the fit misses (interpose is a reaction: it files under Reactions)
       const owed = SEAT_DEFAULT_TRAIT[scaled.style ?? ''] ?? SEAT_DEFAULT_TRAIT[archetype];
-      if (!traitT && owed && TEMPLATE_BY_ID.get(owed) && templatesFor({ ...ctxT, section: TEMPLATE_BY_ID.get(owed).section, trigger: null }).some((t) => t.id === owed)) {
+      const owedOnSheet = owed && (traitT?.template === owed || Object.values(sections).flat().some((e2) => e2.template === owed));
+      if (owed && !owedOnSheet && TEMPLATE_BY_ID.get(owed) && templatesFor({ ...ctxT, section: TEMPLATE_BY_ID.get(owed).section, trigger: null }).some((t) => t.id === owed)) {
+        // deterministic (critic run six): the owed row ships whenever it is absent, beside a fitted trait if there is one
+        if (traitT) { const secF = traitT.section === 'Reactions' ? 'Reactions' : 'Traits'; (sections[secF] = sections[secF] ?? []).unshift(traitT.row); traitT = null; }
         const r = renderTemplate(TEMPLATE_BY_ID.get(owed), ctxT, {}, { blind: true });
         if (r) { traitT = { row: { name: r.name, text: stampT(r.text), library: true, template: owed }, templateName: r.name, section: r.section, template: owed, because: 'the seat owes it by print' }; trace('seat default:', `${scaled.style} owes ${owed} — it stands in for the missed trait`); }
       }
@@ -2527,6 +2556,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         }
         const secT = traitT.section === 'Reactions' ? 'Reactions' : 'Traits';
         (sections[secT] = sections[secT] ?? []).unshift(traitT.row);
+        if (traitT.template === 'assassinate') for (const es2 of Object.values(sections)) for (const e2 of es2) if (/\(with Advantage during the first round of each combat\)/.test(e2.text ?? '')) { e2.text = e2.text.replace(/ ?\(with Advantage during the first round of each combat\)/, ''); trace('inline rider retired:', `${e2.name} — Assassinate grants the first-round Advantage now`); }
         trace('signature template (trait):', `${traitT.template} -> Traits/"${traitT.row.name}" ("${traitT.because}")`);
       }
     }
@@ -2825,7 +2855,7 @@ ${wcRejected ? `ACTION draft rejected. THE ONE RULE IT BROKE: ${wcRejected.why}\
       trace('attack name by anatomy:', `"${c.from}" -> "${c.to}" — ${c.why}`);
       if (c.from !== c.to) sweepDeadName(monster.sections, c.from.replace(/ \(.*\)$/, ''), { name: c.to }, trace);
     }
-    const fd = honestFireDefenses(monster, { material: options.material ?? null });
+    const fd = honestFireDefenses(monster, { material: options.material ?? null, concept: options.userConcept ?? concept });
     if (fd) trace('defenses by material:', fd);
   }
   // Languages: the model answered 'None' on four of six Horsemen. A
@@ -3021,6 +3051,7 @@ ${wcRejected ? `ACTION draft rejected. THE ONE RULE IT BROKE: ${wcRejected.why}\
         if (secC === 'Traits' && !(esC[j].text ?? '').trim()) { esC.splice(j, 1); trace('emptied trait dropped —', 'its only clause moved to the header'); }
       }
     }
+    for (const v of String(monster.vulnerabilities ?? '').split(/,\s*/).filter(Boolean)) resist.delete(v); // a material vulnerability is never also a resistance
     if (resist.size) {
       monster.resistances = [...resist].sort().join(', ');
       trace('resistances derived:', monster.resistances);

@@ -21,11 +21,15 @@ export function honestSpeed(speed, { movement = [], style = null, bodyType = nul
   for (const p of parts.slice(parts.indexOf(walk) === -1 ? 0 : 1)) {
     const mode = (/^(Fly|Swim|Climb|Burrow)\b/i.exec(p) ?? [])[1]?.toLowerCase();
     if (!mode) continue;
-    if (want.has(mode)) kept.push(p); else dropped.push(p);
+    if (!want.has(mode)) { dropped.push(p); continue; }
+    // a kept mode never crawls either: a mode under 20 ft beside a fly speed lifts to 30 (the diver's donor Swim 5)
+    const ft = Number((/(\d+)/.exec(p) ?? [0, 0])[1]);
+    kept.push(ft && ft < 20 && walkFt < 20 && parts.some((q) => /^Fly/i.test(q)) ? p.replace(/\d+ ft/, '30 ft') : p);
   }
   for (const m of MODES) {
     if (want.has(m) && !kept.some((p) => new RegExp(`^${m}\\b`, 'i').test(p))) {
-      const line = `${m[0].toUpperCase()}${m.slice(1)} ${m === 'burrow' ? Math.max(10, walkFt - 10) : walkFt} ft.`;
+      const base = walkFt < 20 ? 30 : walkFt; // an added mode never inherits a crawl (the diver's Swim 5, Climb 5 beside Fly 60)
+      const line = `${m[0].toUpperCase()}${m.slice(1)} ${m === 'burrow' ? Math.max(10, base - 10) : base} ft.`;
       kept.push(line); added.push(line);
     }
   }
@@ -94,14 +98,27 @@ export function honestAttackNames(sections, { projectile = null } = {}) {
   return changes;
 }
 
-const FLAMMABLE = ['wax', 'tallow', 'straw', 'paper', 'parchment', 'oil', 'pitch', 'hay', 'cloth', 'linen', 'kindling'];
+const FLAMMABLE = ['wax', 'tallow', 'straw', 'paper', 'parchment', 'oil', 'pitch', 'hay', 'cloth', 'linen', 'kindling', 'lamp-oil', 'tinder', 'rag', 'rags'];
+// MATERIAL AFFINITY (critic, fresh ten): a body's material names its weakness —
+// read from the CONCEPT's own words as well as the model's material field; a
+// glass ox is never immune to Thunder, a hay scarecrow never resists Fire
+export const MATERIAL_VULN = { glass: 'Thunder', crystal: 'Thunder', porcelain: 'Bludgeoning', ice: 'Fire', frost: 'Fire', snow: 'Fire', wax: 'Fire', tallow: 'Fire', straw: 'Fire', hay: 'Fire', paper: 'Fire', parchment: 'Fire', oil: 'Fire', 'lamp-oil': 'Fire', pitch: 'Fire', cloth: 'Fire', rags: 'Fire', tinder: 'Fire', kindling: 'Fire' };
+export function materialVulnerability(conceptText, material) {
+  const words = `${conceptText ?? ''} ${material ?? ''}`.toLowerCase();
+  for (const [m, v] of Object.entries(MATERIAL_VULN)) if (new RegExp(`\\b${m}\\b`).test(words)) return { material: m, vulnerability: v };
+  return null;
+}
 /** A body of a flammable material is vulnerable to Fire and never resistant to it. */
-export function honestFireDefenses(monster, { material = null } = {}) {
-  if (!FLAMMABLE.includes(String(material ?? '').toLowerCase())) return null;
-  const res = String(monster.resistances ?? '').split(/,\s*/).filter((r) => r && !/^Fire$/i.test(r));
-  monster.resistances = res.join(', ') || undefined;
+export function honestFireDefenses(monster, { material = null, concept = '' } = {}) {
+  const hit = materialVulnerability(concept, material) ?? (FLAMMABLE.includes(String(material ?? '').toLowerCase()) ? { material, vulnerability: 'Fire' } : null);
+  if (!hit) return null;
+  const V = hit.vulnerability;
+  const strip = (line) => String(line ?? '').split(/,\s*/).filter((r) => r && !new RegExp(`^${V}$`, 'i').test(r)).join(', ') || undefined;
+  monster.resistances = strip(monster.resistances); monster.immunities = monster.immunities ? strip(monster.immunities) : monster.immunities;
   const vul = String(monster.vulnerabilities ?? '').split(/,\s*/).filter(Boolean);
-  if (!vul.some((v) => /^Fire$/i.test(v))) vul.push('Fire');
+  if (!vul.some((v) => new RegExp(`^${V}$`, 'i').test(v))) vul.push(V);
   monster.vulnerabilities = vul.join(', ');
-  return `a ${material} body is vulnerable to Fire and never resists it`;
+  // an absorption trait of the same type is the same contradiction
+  for (const es of Object.values(monster.sections ?? {})) for (let i = es.length - 1; i >= 0; i -= 1) if (new RegExp(`subjected to ${V} damage, it takes no damage`, 'i').test(es[i].text ?? '')) es.splice(i, 1);
+  return `a ${hit.material} body is vulnerable to ${V} and never resists, absorbs, or ignores it`;
 }

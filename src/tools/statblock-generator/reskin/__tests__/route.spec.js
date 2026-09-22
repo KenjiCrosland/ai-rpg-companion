@@ -1,4 +1,4 @@
-import { LINES, buildRoutePrompt, validateRouteResponse, chooseLine, evidenceIn, familyFor, shelfCoverage, lineIdOf } from '../route.mjs';
+import { LINES, buildRoutePrompt, validateRouteResponse, chooseLine, evidenceIn, familyFor, shelfCoverage, lineIdOf, verbLines } from '../route.mjs';
 import { pickDonor } from '../scale.mjs';
 
 describe('the shelf', () => {
@@ -30,6 +30,19 @@ describe('the shelf rules', () => {
     const p = buildRoutePrompt('a drowned wife who pulls anyone who follows her down into the surf', { cr: 7 });
     expect(p).toMatch(/drowned dead thing that pulls, drags, or drowns the living is lurker-phantom, never brute-grappler/);
     expect(p).toMatch(/a ghost that pulls you under is lurker-phantom/);
+  });
+});
+
+describe('the verb decides the seat', () => {
+  test('a glass ox that CHARGES is a charger however made it is; a goat that vomits is not a hurler; a hound that surfaces beneath is a lurker, not a trap', () => {
+    expect(verbLines('a glass ox forged for a parade that charges the loudest voice')).toContain('brute-charger');
+    const ox = chooseLine({ picks: [{ line: 'brute-juggernaut', because: 'a glass ox forged for a parade' }], creature_type: 'Construct' }, { text: 'a glass ox forged for a parade that charges the loudest voice in the square' });
+    expect(ox.line).toBe('brute-charger');
+    expect(ox.notes.at(-1)).toMatch(/VERB outranks the noun/);
+    const hound = chooseLine({ picks: [{ line: 'lurker-trap', because: 'surfaces beneath sleepers' }], creature_type: 'Beast' }, { text: 'a burrowing mole-hound that hunts by tremor and surfaces beneath sleepers' });
+    expect(hound.line).toBe('lurker');
+    const goat = chooseLine({ picks: [{ line: 'skirmisher-hurler', because: 'vomits a choking cloud' }], creature_type: 'Beast' }, { text: 'a carrion goat that eats grave-flowers and vomits a choking cloud when cornered' });
+    expect(goat.line).toBe('skirmisher'); // an emission verb is a signature's business; the chassis is the plain line
   });
 });
 
@@ -86,9 +99,12 @@ describe('chooseLine', () => {
   });
   test('when every pick fails the family of the first known pick survives as its plain line', () => {
     const r = chooseLine({ picks: [{ line: 'lurker-trap', because: 'invented phrase here' }] }, { text: bull });
-    expect(r).toMatchObject({ line: 'lurker-trap', archetype: 'lurker', style: 'trap' }); // ranked, not defaulted: the shape survives an unverified quote
-    expect(r.notes.at(-1)).toMatch(/taken on rank/);
-    expect(chooseLine({ picks: [{ line: 'brute-juggernaut', because: 'x' }], creature_type: 'Beast' }, { text: bull }).line).toBe('brute'); // a hard veto still falls to the plain line
+    expect(r).toMatchObject({ line: 'brute-charger', archetype: 'brute', style: 'charger' }); // ranked, then the VERB: the bull charges
+    expect(r.notes.some((n) => /taken on rank/.test(n))).toBe(true);
+    expect(r.notes.at(-1)).toMatch(/VERB outranks the noun/);
+    const quiet = chooseLine({ picks: [{ line: 'lurker-trap', because: 'invented phrase here' }] }, { text: 'a brass ornament in a pen' });
+    expect(quiet.line).toBe('lurker-trap'); // no verb in the text: the ranked pick stands
+    expect(chooseLine({ picks: [{ line: 'brute-juggernaut', because: 'x' }], creature_type: 'Beast' }, { text: bull }).line).toBe('brute-charger'); // a hard veto falls to the plain line, then the VERB lifts it to the charger
     expect(chooseLine({ picks: [{ line: 'ninja', because: 'x' }] }, { text: bull }).line).toBeNull();
     expect(chooseLine(null, { text: bull }).line).toBeNull();
   });

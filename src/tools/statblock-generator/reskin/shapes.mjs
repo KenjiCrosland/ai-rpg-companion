@@ -86,7 +86,7 @@ export const SHAPES = [
     },
   },
   {
-    id: 'condition-payoff', name: 'Condition Payoff', composing: true,
+    id: 'condition-payoff', name: 'Merciless Strike', composing: true, // the shape's print-register name — "Condition Payoff" is a design term and reached a page (fresh ten, 2026-09-22)
     cite: 'Sea Hag/Death Glare (Frightened, CR 2); Gorgon/Trample (Prone, CR 5); Succubus/Draining Kiss (Charmed, CR 4); Glabrezu/Pummel (Grappled, CR 9)',
     roles: ['skirmisher', 'controller', 'lurker', 'brute'], styles: [], cr_range: [2, 23], replaces: 'signature',
     frames: {
@@ -315,6 +315,19 @@ export const SHAPES = [
     id: 'bolt-mark', name: 'Marking Bolt', invented: true, // Hunter\'s Mark grammar as a rider: the struck target is easier to strike again
     roles: ['artillery', 'controller', 'skirmisher'], styles: [], cr_range: [1, 30], replaces: 'ranged-rider',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'Until the end of the creature\'s next turn, the creature has Advantage on attack rolls against the target, and the target can\'t take the Hide action.'])),
+  },
+  // (3) a bodily emission comes FROM the creature — a Cone, not a lobbed sphere (the goat's vomit, critic run seven)
+  {
+    id: 'spew', name: 'Noxious Spew', cite: 'Poison-breath Cone family (Green Dragon Wyrmling CR 2, Black Dragon Wyrmling CR 2)',
+    roles: ['skirmisher', 'brute', 'lurker', 'controller'], styles: [], cr_range: [0, 30], replaces: 'nova', gate: 'Recharge 5-6',
+    frames: {
+      '0-2': '*Constitution Saving Throw*: DC {dc}, each creature in a 15-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+      '3-5': '*Constitution Saving Throw*: DC {dc}, each creature in a 15-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+      '6-9': '*Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+      '10-12': '*Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+      '13-20': '*Constitution Saving Throw*: DC {dc}, each creature in a 60-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+      '21+': '*Constitution Saving Throw*: DC {dc}, each creature in a 90-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+    },
   },
   {
     id: 'death-burst', name: 'Death Burst', cite: 'Dust Mephit (CR 1/2, 5 ft); Magmin (CR 1/2, 10 ft); Balor/Death Throes (CR 19, 30 ft dual-type)',

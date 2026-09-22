@@ -54,6 +54,35 @@ export const LINES = [
 ];
 
 const BY_ID = new Map(LINES.map((l) => [l.id, l]));
+// THE VERB DECIDES THE SEAT (critic, fresh ten: "nouns are outranking verbs" —
+// a glass ox that CHARGES went juggernaut, a goat that VOMITS a cloud went
+// hurler, a hound that SURFACES BENEATH went trap). Same rule the signature
+// already obeys: a line whose verbs appear in the user's words outranks a
+// line picked on a noun. The nouns still pick the type and the material.
+export const LINE_VERBS = {
+  'brute-charger': ['charge', 'charges', 'gore', 'gores', 'run down', 'runs down', 'trample', 'tramples', 'ram', 'rams', 'stampede', 'barrels', 'thunders across'],
+  'brute-grappler': ['grab', 'grabs', 'seize', 'seizes', 'hold', 'holds', 'swallow', 'swallows', 'engulf', 'crush', 'crushes', 'hug', 'hugs', 'squeeze', 'constrict', 'drags into', 'folds around', 'cage', 'cages'],
+  'brute-regenerator': ['regenerate', 'regenerates', 'reknit', 'reknits', 'knits shut', 'regrow', 'regrows', 'heals its wounds'],
+  'brute-juggernaut': ['unstoppable', 'immovable', 'grinds forward', 'smashes through', 'breaks through walls'],
+  'skirmisher-mounted': ['rides', 'ride down', 'rides down', 'astride', 'gallops', 'saddle'],
+  'skirmisher-skulker': ['hides', 'hide', 'sneaks', 'stalks', 'ambushes', 'vanishes', 'slips away', 'strikes from hiding', 'unseen'],
+  'skirmisher-hurler': ['hurl', 'hurls', 'throw', 'throws', 'lob', 'lobs', 'sling', 'slings', 'fling', 'flings', 'pelts'],
+  'skirmisher-winged': ['swoop', 'swoops', 'dives', 'dive', 'flies', 'on the wing', 'snatches from above'],
+  lurker: ['surfaces beneath', 'erupts from', 'bursts from', 'rises from', 'strikes once', 'stalks', 'waits beneath', 'hunts by tremor', 'burrows'],
+  'lurker-phantom': ['drifts', 'haunts', 'drowns', 'passes through walls', 'through walls', 'wails', 'possesses', 'incorporeal', 'climbs the chains at night'],
+  'lurker-trap': ['lies in wait', 'disguised as', 'looks like', 'poses as', 'motionless until', 'snaps shut', 'pretends to be', 'mimics'],
+  'caster-binder': ['curses', 'hexes', 'binds with', 'reads', 'foretells', 'pins with', 'dooms', 'marks with'],
+  'caster-warpriest': ['blesses', 'prays', 'smites', 'consecrates', 'psalms', 'sermons', 'crusades'],
+  caster: ['casts', 'conjures', 'calls down', 'hurls bolts', 'blasts', 'spells'],
+  'defender-warden': ['guards', 'protects', 'sworn to', 'stands between', 'shields', 'bound to protect', 'wards'],
+  defender: ['holds the line', 'shield wall', 'bodyguard', 'blocks', 'interposes'],
+  // bodily-emission verbs are a SIGNATURE (a cloud, a spit), not a thrower's chassis — the plain skirmisher line
+  skirmisher: ['vomits', 'spits', 'spews', 'belches', 'sprays', 'darts', 'harries', 'flits', 'nips'],
+};
+export function verbLines(text) {
+  const raw = String(text ?? '').toLowerCase();
+  return Object.entries(LINE_VERBS).filter(([, keys]) => keys.some((k) => new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(raw))).map(([id]) => id);
+}
 // the model sometimes decorates an id ("brute-grappler (ooze?)", "Brute-Grappler",
 // "brute grappler"): take the LONGEST shelf id that appears in what it wrote
 const IDS_LONGEST_FIRST = [...BY_ID.keys()].sort((a, b) => b.length - a.length);
@@ -166,6 +195,17 @@ export function chooseLine(parsed, { text, menuRole = null } = {}) {
     if (fam) {
       chosen = BY_ID.get(fam) ?? null;
       if (chosen) notes.push(`fell to ${fam}'s plain line`);
+    }
+  }
+  // the verb outranks the noun: if the user's words name a line's VERB and the
+  // chosen line was not one of those, the verb line stands (hard vetoes kept)
+  {
+    const byVerb = verbLines(text).map((id) => BY_ID.get(id)).filter((l) => l && (!family || l.family === family)
+      && !(l.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType))
+      && !(l.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)));
+    if (byVerb.length && chosen && !byVerb.some((l) => l.id === chosen.id)) {
+      notes.push(`${chosen.id} -> ${byVerb[0].id}: the concept's VERB outranks the noun (${LINE_VERBS[byVerb[0].id].find((k) => new RegExp(`\\b${k}\\b`).test(String(text).toLowerCase()))})`);
+      chosen = byVerb[0];
     }
   }
   const extras = [];

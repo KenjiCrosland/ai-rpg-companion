@@ -1,6 +1,9 @@
 import { SHAPES, STYLES, shapesFor, bandFor, BANDS } from '../shapes.mjs';
 
 describe('the shape catalog: one template per band, cited or invented', () => {
+  test('no shape name is a design term — every name could print at the top of a row', () => {
+    for (const s of SHAPES) expect(s.name).not.toMatch(/payoff|template|slot|condition|rider|wildcard|nova|signature|seed/i);
+  });
   test('every shape has a print citation XOR an invented flag', () => {
     for (const s of SHAPES) {
       expect(`${s.id}: ${Boolean(s.cite) !== Boolean(s.invented) ? 'ok' : 'BAD PROVENANCE'}`).toBe(`${s.id}: ok`);

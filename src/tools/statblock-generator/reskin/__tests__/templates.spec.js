@@ -86,6 +86,25 @@ describe('the catalog', () => {
     expect(renderTemplate(hb, ctx17, {}).text).toMatch(/takes 10 \(3d6\) Fire damage/); // the Balor's number at its tier, not 5d8
     expect(renderTemplate(hb, { ...ctx17, scaled: sheet(2, null, 'brute'), cr: 2 }, {}).text).toMatch(/takes 3 \(1d6\) Fire damage/);
   });
+  test('a rider is offered only when its host row is on the sheet', () => {
+    const meleeOnly = { Actions: [{ name: 'Claw', text: '*Melee Attack Roll:* +6, reach 5 ft. 9 (1d8 + 5) Slashing damage.' }] };
+    const ids = templatesFor({ archetype: 'lurker', cr: 7, sections: meleeOnly, section: 'rider' }).map((t) => t.id);
+    expect(ids).toContain('pounce'); expect(ids).not.toContain('bolt-drag');
+    const rangedOnly = { Actions: [{ name: 'Bolt', text: '*Ranged Attack Roll:* +6, range 120 ft. 9 (1d8 + 5) Lightning damage.' }] };
+    const ids2 = templatesFor({ archetype: 'caster', cr: 7, sections: rangedOnly, section: 'rider' }).map((t) => t.id);
+    expect(ids2).toContain('bolt-drag'); expect(ids2).not.toContain('pounce');
+  });
+  test('"brand" binds the targeting mark, not the seal', () => {
+    const riders = templatesFor({ archetype: 'caster', cr: 6, sections: { Actions: [{ name: 'Bolt', text: '*Ranged Attack Roll:* +6, range 120 ft. 9 (2d8) Radiant damage.' }] }, section: 'rider' });
+    expect(rankByVerb(riders, 'a lighthouse hermit-mage whose lantern beam brands whoever it falls on, so her bolts find them again in the dark')[0].t.id).toBe('bolt-mark');
+    expect(TEMPLATES.find((t) => t.id === 'seal').keys).not.toContain('brand');
+  });
+  test('a vomited cloud is a Cone from the goat; "light" is not "lightning"; a scarecrow binds False Appearance', () => {
+    const menu = templatesFor({ archetype: 'skirmisher', cr: 3, sections: {}, section: 'action' });
+    expect(rankByVerb(menu, 'a carrion goat that vomits a choking cloud when cornered')[0].t.id).toBe('spew');
+    expect(rankByVerb(templatesFor({ archetype: 'brute', cr: 5, sections: {}, section: 'trait' }), 'a shard of light').find((r) => r.t.id === 'heated-body').concept).not.toContain('lightning');
+    expect(rankByVerb(templatesFor({ archetype: 'brute', cr: 5, sections: {}, section: 'trait' }), 'a scarecrow stuffed with hay')[0].t.id).toBe('false-appearance');
+  });
   test('every template id is unique across shapes and seeds', () => {
     const ids = TEMPLATES.map((t) => t.id);
     expect(new Set(ids).size).toBe(ids.length);

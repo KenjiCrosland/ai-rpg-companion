@@ -1,10 +1,12 @@
-import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses } from '../header.mjs';
+import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability } from '../header.mjs';
 
 describe('header honesty', () => {
   test('speed: donor modes the concept lacks are dropped; modes it names are added; a phantom or winged line keeps its flight', () => {
     expect(honestSpeed('10 ft., Fly 40 ft.', { movement: [], style: 'trap' })).toMatchObject({ speed: '10 ft.', dropped: ['Fly 40 ft.'] });
     expect(honestSpeed('30 ft.', { movement: ['climb'] })).toMatchObject({ speed: '30 ft., Climb 30 ft.', added: ['Climb 30 ft.'] });
+    expect(honestSpeed('5 ft., Fly 60 ft. (hover)', { movement: ['climb', 'swim'], style: 'phantom' }).speed).toBe('5 ft., Fly 60 ft. (hover), Swim 30 ft., Climb 30 ft.'); // an added mode never inherits a crawl
     expect(honestSpeed('5 ft., Fly 60 ft. (hover), Swim 5 ft.', { movement: [], style: 'phantom' })).toMatchObject({ speed: '5 ft., Fly 60 ft. (hover)', dropped: ['Swim 5 ft.'] });
+    expect(honestSpeed('5 ft., Fly 60 ft. (hover), Swim 5 ft.', { movement: ['swim'], style: 'phantom' }).speed).toBe('5 ft., Fly 60 ft. (hover), Swim 30 ft.'); // a kept crawl lifts too
     expect(honestSpeed('40 ft., Fly 80 ft.', { movement: [], bodyType: 'dragon' }).dropped).toEqual([]);
   });
   test('languages: mind decides the register; sapient lines keep print tokens only', () => {
@@ -31,5 +33,10 @@ describe('header honesty', () => {
     expect(honestFireDefenses(m, { material: 'wax' })).toMatch(/vulnerable to Fire/);
     expect(m).toMatchObject({ resistances: 'Cold', vulnerabilities: 'Fire' });
     expect(honestFireDefenses({ resistances: 'Fire' }, { material: 'iron' })).toBeNull();
+    // read from the concept's own words: a glass ox is never immune to Thunder
+    expect(materialVulnerability('a glass ox forged for a parade, hollow and humming', 'iron')).toEqual({ material: 'glass', vulnerability: 'Thunder' });
+    const ox = { immunities: 'Thunder; Charmed', resistances: '', vulnerabilities: '', sections: { Traits: [{ name: 'Absorb', text: 'Whenever the creature is subjected to Thunder damage, it takes no damage and instead regains Hit Points.' }] } };
+    expect(honestFireDefenses(ox, { material: 'iron', concept: 'a glass ox that charges' })).toMatch(/vulnerable to Thunder/);
+    expect(ox.vulnerabilities).toBe('Thunder'); expect(ox.sections.Traits.length).toBe(0);
   });
 });
