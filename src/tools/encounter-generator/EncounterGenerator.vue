@@ -313,7 +313,7 @@
       <!-- Footer is the free-tier upgrade prompt only; premium has no callout
            (Backup/Restore lives in the sidebar Data options). -->
       <div v-if="!premium" class="encounter-footer">
-        <PatreonCallout :patreon-url="patreonLoginUrl" location="encounter-footer">
+        <PatreonCallout location="encounter-footer">
           <template #body>
             <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs your encounters across devices.</p>
           </template>
@@ -478,10 +478,6 @@ const showDataManagerModal = ref(false);
 const showExport = ref(false);
 
 // ─── Premium / Patreon ───────────────────────────────────────────────────────
-const patreonLoginUrl = computed(() => {
-  const returnUrl = encodeURIComponent(window.location.href);
-  return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
-});
 
 // ─── Folder management ───────────────────────────────────────────────────────
 const showFolderMover = ref(false);

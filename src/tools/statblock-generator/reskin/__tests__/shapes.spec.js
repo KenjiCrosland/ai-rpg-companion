@@ -1,6 +1,9 @@
 import { SHAPES, STYLES, shapesFor, bandFor, BANDS } from '../shapes.mjs';
 
 describe('the shape catalog: one template per band, cited or invented', () => {
+  test('no shape name is a design term — every name could print at the top of a row', () => {
+    for (const s of SHAPES) expect(s.name).not.toMatch(/payoff|template|slot|condition|rider|wildcard|nova|signature|seed/i);
+  });
   test('every shape has a print citation XOR an invented flag', () => {
     for (const s of SHAPES) {
       expect(`${s.id}: ${Boolean(s.cite) !== Boolean(s.invented) ? 'ok' : 'BAD PROVENANCE'}`).toBe(`${s.id}: ok`);
@@ -25,7 +28,7 @@ describe('the shape catalog: one template per band, cited or invented', () => {
     for (const s of SHAPES) {
       for (const r of s.roles) expect(ROLES).toContain(r);
       for (const st of s.styles) expect(Object.keys(STYLES)).toContain(st);
-      for (const f of Object.values(s.frames)) expect(f).toMatch(/\{[a-z_]+\}|Saving Throw|attack|teleports|Speed/i);
+      for (const f of Object.values(s.frames)) expect(f).toMatch(/\{[a-z_]+\}|Saving Throw|attack|teleports|Speed|condition|pulled|Advantage/i);
     }
   });
 
@@ -56,6 +59,6 @@ describe('the shape catalog: one template per band, cited or invented', () => {
 
   test('the invention ledger holds', () => {
     expect(SHAPES.filter((s) => s.invented).map((s) => s.id).sort())
-      .toEqual(['burrow-ambush', 'charge', 'throw-recall']);
+      .toEqual(['active-toll', 'bloodied-burst', 'bolt-drag', 'bolt-mark', 'bolt-restrain', 'burrow-ambush', 'charge', 'hook-rider', 'isolation', 'pull-through', 'resonant-body', 'riposte', 'seal', 'throw-recall', 'throw-retrieve', 'weapon-lodge']); // bloodied-burst joined 2026-09-21 (the bell hermit's wound-rung peal); hook-rider and riposte 2026-09-22 (the miss log's two clusters)
   });
 });

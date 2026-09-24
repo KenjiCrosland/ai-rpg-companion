@@ -104,3 +104,28 @@ describe('DeepSeek thinking parameter', () => {
     expect(bodies[1][1].thinking).toBeUndefined();
   });
 });
+
+describe('retry prompts (2026-09-21): a semantic rejection resamples, an unparseable reply gets the JSON fix', () => {
+  let generateGptResponse;
+  beforeEach(() => {
+    jest.resetModules();
+    localStorage.clear();
+    global.fetch = jest.fn();
+    ({ generateGptResponse } = require('./ai-client.mjs'));
+  });
+
+  test('validator rejection re-sends the ORIGINAL prompt; only an unparseable reply gets "fix the JSON"', async () => {
+    global.fetch
+      .mockResolvedValueOnce(okResponse('{"x": 1}'))          // parses, validator says no
+      .mockResolvedValueOnce(okResponse('not json at all'))   // cannot be parsed
+      .mockResolvedValueOnce(okResponse('{"x": 2}'));         // accepted
+    const validate = (str) => JSON.parse(str).x === 2;
+    const out = await generateGptResponse('ORIGINAL PROMPT', validate, 3);
+    expect(JSON.parse(out).x).toBe(2);
+    const asked = global.fetch.mock.calls.map(([, opts]) => JSON.parse(opts.body).messages.at(-1).content);
+    expect(asked[0]).toBe('ORIGINAL PROMPT');
+    expect(asked[1]).toBe('ORIGINAL PROMPT'); // the old code sent "fix the JSON" + the rejected draft here
+    expect(asked[2]).toMatch(/may not be formatted correctly/);
+    expect(asked[2]).toMatch(/not json at all/);
+  });
+});

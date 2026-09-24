@@ -1307,7 +1307,11 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       if (dealt.length) {
         for (const ty of TYPE_WORDS) {
           if (new RegExp(`\\b${ty}\\b`, 'i').test(entry.name) && !dealt.includes(ty)) {
-            const fixed = entry.name.replace(new RegExp(`\\b${ty}\\b`, 'i'), dealt[0]);
+            // if the name already carries the dealt type, DROP the wrong word
+            // rather than doubling it ("Lance of Radiant Radiant", blind read 2026-09-21)
+            const fixed = new RegExp(`\\b${dealt[0]}\\b`, 'i').test(entry.name)
+              ? entry.name.replace(new RegExp(`\\s*\\b${ty}\\b`, 'i'), '').replace(/\s+(?:of|the)\s*$/i, '').trim()
+              : entry.name.replace(new RegExp(`\\b${ty}\\b`, 'i'), dealt[0]);
             push('entry-name-type-mismatch', 'correctable',
               `${where}: the name says ${ty} but the entry deals ${dealt.join('/')} — a type-named ability must deal its named type (0/329 officials mismatch). Renamed to "${fixed}"`,
               fixed, loc);

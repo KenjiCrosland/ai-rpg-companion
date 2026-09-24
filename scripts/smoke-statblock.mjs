@@ -35,6 +35,7 @@ const args = process.argv.slice(2);
 const headed = args.includes('--headed');
 const onlyIdx = args.includes('--only') ? Number(args[args.indexOf('--only') + 1]) : null;
 const batchName = args.find((a) => !a.startsWith('--') && a !== String(onlyIdx)) ?? 'batch';
+let goldenFailures = 0;
 
 const batchPath = path.resolve('scripts/smoke-batches', `${batchName}.json`);
 if (!fs.existsSync(batchPath)) {
@@ -69,7 +70,7 @@ const run = async () => {
     // generation failed: TypeError: Failed to fetch" was dropped by the old
     // allowlist and a dead run looked like a resolve hiccup (2026-09-20)
     const noise = /font-src|Content Security Policy|runtime\.lastError|Receiving end does not exist/.test(t);
-    if (!noise && (/\[concept\]|\[reskin\]|audit|resolve failed|generation failed|Failed to/.test(t) || msg.type() === 'warning' || msg.type() === 'error')) {
+    if (!noise && (/\[concept\]|\[reskin\]|\[route\]|audit|resolve failed|generation failed|Failed to/.test(t) || msg.type() === 'warning' || msg.type() === 'error')) {
       lines.push(`${msg.type() === 'warning' || msg.type() === 'error' ? '!! ' : ''}${t}`);
     }
   });
@@ -93,9 +94,13 @@ const run = async () => {
     await page.goto(BASE, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#monsterName', { timeout: 30_000 });
     const before = await savedCount(page);
+    // identity, not name: five runs of one concept can all be named "Brass
+    // Bull", and a name-set diff then reports the INPUT as the new monster
+    // with no signature (clear-variance 2026-09-21). The new monster is the
+    // one whose serialized form was not there before.
     const namesBefore = await page.evaluate(() => {
       const m = JSON.parse(localStorage.getItem('monsters') || '{}');
-      return Object.values(m).filter(Array.isArray).flat().map((x) => x?.name);
+      return Object.values(m).filter(Array.isArray).flat().map((x) => JSON.stringify(x));
     });
 
     // NOT a click — `statblock-format` persists, so clicking every load
@@ -153,7 +158,7 @@ const run = async () => {
       await page.waitForFunction((known) => {
         const ci = JSON.parse(localStorage.getItem('creature-intelligence') || '{}');
         const m = JSON.parse(localStorage.getItem('monsters') || '{}');
-        const fresh = Object.values(m).filter(Array.isArray).flat().map((x) => x?.name).filter((nm) => !known.includes(nm));
+        const fresh = Object.values(m).filter(Array.isArray).flat().filter((x) => !known.includes(JSON.stringify(x))).map((x) => x?.name);
         return fresh.length && fresh.every((nm) => nm in ci);
       }, namesBefore, { timeout: 20_000 }).catch(() => lines.push('(enrichment did not settle within 20s — moving on)'));
     }
@@ -173,7 +178,7 @@ const run = async () => {
         // ever appears. Only press Convert when the other edition is absent.
         const cached = await page.evaluate((known) => {
           const m = JSON.parse(localStorage.getItem('monsters') || '{}');
-          const fresh = Object.values(m).filter(Array.isArray).flat().filter((x) => !known.includes(x?.name));
+          const fresh = Object.values(m).filter(Array.isArray).flat().filter((x) => !known.includes(JSON.stringify(x)));
           return fresh.length && fresh.every((x) => x?.other_edition);
         }, namesBefore);
         if (cached) lines.push('[harness] other edition already cached — free tab flip, no Convert call');
@@ -181,7 +186,7 @@ const run = async () => {
           .catch((e) => { throw new Error(`Convert button — ${e.message.split('\n')[0]}`); });
         await page.waitForFunction((known) => {
           const m = JSON.parse(localStorage.getItem('monsters') || '{}');
-          const fresh = Object.values(m).filter(Array.isArray).flat().filter((x) => !known.includes(x?.name));
+          const fresh = Object.values(m).filter(Array.isArray).flat().filter((x) => !known.includes(JSON.stringify(x)));
           return fresh.length && fresh.every((x) => x?.other_edition);
         }, namesBefore, { timeout: GEN_TIMEOUT_MS });
         converted = await page.locator('.sb24-container, .statblock').allInnerTexts().then((t) => t.join('\n\n'));
@@ -205,9 +210,29 @@ const run = async () => {
       const m = JSON.parse(localStorage.getItem('monsters') || '{}');
       const all = Object.values(m).filter(Array.isArray).flat();
       const seen = new Set(known);
-      return all.find((x) => !seen.has(x?.name)) ?? null;   // no new block => null, never the previous one
+      return all.find((x) => !seen.has(JSON.stringify(x))) ?? null;   // no new block => null, never the previous one
     }, namesBefore);
 
+    // GOLDENS (critic, v2 blind read 2026-09-21: "freeze the v1 winners — if a
+    // build can't reproduce the bishop's peal and the keeper's lure on those
+    // concepts, it fails before review"): an entry's `expect` names the route
+    // line(s) and signature template(s) it must reproduce; the run prints
+    // PASS/FAIL and the batch exits 2 on any failure.
+    if (entry.expect) {
+      const tr = lines.join('\n');
+      const routeGot = (/\[route\] ([a-z-]+)/.exec(tr) ?? [])[1] ?? null;
+      // a seed drawn by the verb-ranked fallback IS the card (the bishop's mark
+      // shipped as "Binding Mark" and the golden had counted only fits)
+      const tmplGot = [...tr.matchAll(/signature template(?: \(trait\))?: ([a-z-]+)|signature rider: ([a-z-]+)|library seed drawn: ([a-z-]+)/g)].map((m) => m[1] ?? m[2] ?? m[3]);
+      const routeOk = !entry.expect.route || (routeGot && entry.expect.route.includes(routeGot));
+      const tmplOk = !entry.expect.template || entry.expect.template.some((t) => tmplGot.includes(t));
+      // an API failure is an ERROR, not a verdict on the build
+      const apiDied = /call failed|Failed to fetch|Circuit breaker opened/.test(tr);
+      const verdict = routeOk && tmplOk ? 'PASS' : apiDied ? 'ERROR' : 'FAIL';
+      if (verdict === 'FAIL') goldenFailures += 1;
+      lines.push(`[golden] ${verdict} — route ${routeGot ?? 'none'} (want ${(entry.expect.route ?? ['any']).join('|')}); templates ${tmplGot.join(',') || 'none'} (want ${(entry.expect.template ?? ['any']).join('|')})`);
+      console.log(`  [golden] ${verdict}`);
+    }
     const secs = ((Date.now() - t0) / 1000).toFixed(0);
     console.log(`${status === 'ok' ? '✓' : '✗ ' + status} ${secs}s`);
 
@@ -239,4 +264,4 @@ const run = async () => {
   console.log(`\n${summary}\n\nWrote ${results.length} block(s) to ${outDir}\n  all.md  — everything in one file`);
 };
 
-run().catch((e) => { console.error(e); process.exit(1); });
+run().then(() => { if (goldenFailures) { console.log(`${goldenFailures} golden(s) FAILED`); process.exit(2); } }).catch((e) => { console.error(e); process.exit(1); });

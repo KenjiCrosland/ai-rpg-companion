@@ -33,7 +33,7 @@ export const SHAPES = [
   },
   {
     id: 'leap', name: 'Crushing Leap', cite: 'Bulette/Deadly Leap (CR 5)',
-    roles: ['skirmisher', 'brute'], styles: ['skulker', 'mounted'], cr_range: [3, 12], replaces: 'nova',
+    roles: ['skirmisher', 'brute', 'lurker'], styles: [], cr_range: [3, 12], replaces: 'nova', // lurker joined + style gate dropped: the pounce is the Tiger's shape (the canopy leopard, critic 2026-09-22)
     frames: {
       '3-5': 'The creature spends 5 feet of movement to jump to a space within 15 feet that contains one or more Large or smaller creatures. *Dexterity Saving Throw*: DC {dc}, each creature in the destination space. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage, and the target is pushed 5 feet straight away.',
       '6-9': 'The creature spends 5 feet of movement to jump to a space within 20 feet that contains one or more Large or smaller creatures. *Dexterity Saving Throw*: DC {dc}, each creature in the destination space. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage, and the target is pushed 5 feet straight away.',
@@ -86,7 +86,7 @@ export const SHAPES = [
     },
   },
   {
-    id: 'condition-payoff', name: 'Condition Payoff', composing: true,
+    id: 'condition-payoff', name: 'Merciless Strike', composing: true, // the shape's print-register name — "Condition Payoff" is a design term and reached a page (fresh ten, 2026-09-22)
     cite: 'Sea Hag/Death Glare (Frightened, CR 2); Gorgon/Trample (Prone, CR 5); Succubus/Draining Kiss (Charmed, CR 4); Glabrezu/Pummel (Grappled, CR 9)',
     roles: ['skirmisher', 'controller', 'lurker', 'brute'], styles: [], cr_range: [2, 23], replaces: 'signature',
     frames: {
@@ -149,6 +149,202 @@ export const SHAPES = [
       '3-5': 'If the target is a creature and doesn\'t already have a {wound_noun}, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target receives a {wound_noun}. While wounded, the target loses 5 (1d10) Hit Points at the start of each of its turns. The wound closes after 1 minute, after a spell restores Hit Points to the target, or after the target or a creature within 5 feet of it takes an action to stanch the wound, succeeding on a DC {dc} Wisdom (Medicine) check.',
       '6-9': 'If the target is a creature and doesn\'t already have a {wound_noun}, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target receives a {wound_noun}. While wounded, the target loses 7 (2d6) Hit Points at the start of each of its turns. The wound closes after 1 minute, after a spell restores Hit Points to the target, or after the target or a creature within 5 feet of it takes an action to stanch the wound, succeeding on a DC {dc} Wisdom (Medicine) check.',
       '10-12': 'If the target is a creature and doesn\'t already have a {wound_noun}, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target receives a {wound_noun}. While wounded, the target loses 10 (3d6) Hit Points at the start of each of its turns. The wound closes after 1 minute, after a spell restores Hit Points to the target, or after the target or a creature within 5 feet of it takes an action to stanch the wound, succeeding on a DC {dc} Wisdom (Medicine) check.',
+    },
+  },
+  // THE FIRST TEMPLATE-BACKLOG PASS (2026-09-21): the template signature's
+  // miss log asked for these on 6 of its first 17 blocks. Both are print-
+  // exact trait grammars; neither depends on the CR band.
+  {
+    id: 'heated-body', name: 'Heated Body', cite: 'Remorhaz/Heated Body (CR 11); Fire Elemental/Fire Form (CR 5); Azer (CR 2)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    // contact damage is a print CONSTANT by band, not a budget fraction: Azer 5 (1d10) at CR 2, Fire Elemental 5 (1d10) at CR 5, Remorhaz 10 (3d6) at CR 11, Balor 10 (3d6) at CR 19 — a nuisance, not an attack (critic, four runs)
+    frames: { '0-2': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 3 (1d6) {damage_type} damage.', '3-5': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 5 (1d10) {damage_type} damage.', '6-9': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 7 (2d6) {damage_type} damage.', '10-12': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 10 (3d6) {damage_type} damage.', '13-20': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 10 (3d6) {damage_type} damage.', '21+': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 14 (4d6) {damage_type} damage.' },
+  },
+  {
+    id: 'false-appearance', name: 'False Appearance', cite: 'Mimic/False Appearance (CR 2); Gargoyle/False Appearance (CR 2); Animated Armor (CR 1)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'While the creature remains motionless, it is indistinguishable from {disguise}.'])),
+  },
+  {
+    id: 'absorption', name: 'Absorption', cite: 'Iron Golem/Fire Absorption (CR 16); Flesh Golem/Lightning Absorption (CR 5); Clay Golem/Acid Absorption (CR 9)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'Whenever the creature is subjected to {damage_type} damage, it takes no damage and instead regains a number of Hit Points equal to the {damage_type} damage dealt.'])),
+  },
+  // BACKLOG PASS TWO (2026-09-21, from scripts/smoke-misses.mjs): the bell
+  // hermit's wound-rung peal (on_being_hit emanation, asked 3/3) and the
+  // "my shell is my armor" trait (asked 2x). Print has no exact wound-
+  // triggered emanation — Death Burst's shape on the Bloodied trigger is the
+  // nearest honest kin, so it is marked invented; Shell Defense is Tortle.
+  {
+    id: 'bloodied-burst', name: 'Bloodied Burst', invented: true, // Death Burst's shape (Magmin, Balor) on the 2024 Bloodied trigger — no printed peer
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: {
+      '0-2': 'The first time the creature is Bloodied in a fight, it releases a burst. *Constitution Saving Throw*: DC {dc}, each creature in a 10-foot Emanation originating from the creature. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn.',
+      '3-5': 'The first time the creature is Bloodied in a fight, it releases a burst. *Constitution Saving Throw*: DC {dc}, each creature in a 15-foot Emanation originating from the creature. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn.',
+      '6-9': 'The first time the creature is Bloodied in a fight, it releases a burst. *Constitution Saving Throw*: DC {dc}, each creature in a 15-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.',
+      '10-12': 'The first time the creature is Bloodied in a fight, it releases a burst. *Constitution Saving Throw*: DC {dc}, each creature in a 20-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.',
+      '13-20': 'The first time the creature is Bloodied in a fight, it releases a burst. *Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.',
+      '21+': 'The first time the creature is Bloodied in a fight, it releases a burst. *Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.',
+    },
+  },
+  {
+    id: 'shell-withdraw', name: 'Shell Defense', cite: 'Tortle/Shell Defense (Monsters of the Multiverse)',
+    roles: ['brute', 'defender', 'lurker'], styles: [], cr_range: [0, 30], replaces: 'bonus-alt',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature withdraws into {shell}. Until it emerges, it gains a +4 bonus to Armor Class and has the Prone condition; its Speed is 0 and can\'t increase, it has Disadvantage on Dexterity saving throws, it can\'t take Reactions, and the only action it can take is a Bonus Action to emerge.'])),
+  },
+  // BACKLOG PASS THREE (2026-09-21, the keys-and-templates pass): four cards
+  // the miss log and the critic's v2 read asked for by name.
+  {
+    id: 'resonant-body', name: 'Resonant Body', invented: true, // Heated Body's shape (Remorhaz) with Thunder + Deafened; asked by the bell hermit 3/3
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: { '0-2': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 3 (1d6) Thunder damage and has the Deafened condition until the end of its next turn.', '3-5': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 5 (1d10) Thunder damage and has the Deafened condition until the end of its next turn.', '6-9': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 7 (2d6) Thunder damage and has the Deafened condition until the end of its next turn.', '10-12': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 10 (3d6) Thunder damage and has the Deafened condition until the end of its next turn.', '13-20': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 10 (3d6) Thunder damage and has the Deafened condition until the end of its next turn.', '21+': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 14 (4d6) Thunder damage and has the Deafened condition until the end of its next turn.' },
+  },
+  {
+    id: 'throw-retrieve', name: 'Hurled Weapon', invented: true, supersedes: /returns to (?:its|the creature's|the \w+'s) hand|Hit or Miss/i, // one lance, one physics: the chassis's returning throw leaves when this ships // the critic's v2 pick from the free-text side: hurl the weapon, Speed halved until it is recovered
+    roles: ['skirmisher', 'brute', 'defender'], styles: [], cr_range: [1, 30], replaces: 'signature',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature hurls {projectile}. *Ranged Attack Roll:* {atk}, range 30/120 ft. {avg} ({dice}) {damage_type} damage. The weapon lands in an unoccupied space within 5 feet of the target; until the creature spends 5 feet of movement in that space to recover it, the creature\'s Speed is halved and it can\'t use this action.'])),
+  },
+  {
+    id: 'seal', name: 'Sealing Touch', invented: true, // "sermons seal": a save that stops healing (2014 kin: Wight/Vampire life drain; 2024 kin: the Chasme's drone) — the preacher's verb, asked twice
+    roles: ['controller', 'artillery', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'signature',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target can\'t regain Hit Points until the end of the creature\'s next turn.'])),
+  },
+  {
+    id: 'adhesive', name: 'Adhesive', cite: 'Mimic/Adhesive (CR 2)',
+    roles: ['brute', 'lurker', 'skirmisher', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature adheres to anything that touches it. A Huge or smaller creature adhered to the creature is also Grappled by it (escape DC {dc}). Ability checks made to escape this grapple have Disadvantage.'])),
+  },
+  // PROMOTED SEEDS (2026-09-22): the two most-drawn seeds become shapes —
+  // one frame per band (print grows range and reach with tier) and a flavor
+  // slot for the fiction the seed used to bake in. The seeds retire.
+  {
+    id: 'lure', name: 'Luring Presence', cite: 'Harpy/Luring Song (CR 1); Siren-class lures',
+    roles: ['lurker', 'artillery', 'controller', 'skirmisher'], styles: [], cr_range: [0, 30], replaces: 'signature',
+    frames: {
+      '0-2': "*Wisdom Saving Throw:* DC {dc}, one creature within 30 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn.",
+      '3-5': "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn.",
+      '6-9': "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
+      '10-12': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice within 60 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
+      '13-20': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice within 90 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
+      '21+': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice within 120 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
+    },
+  },
+  {
+    id: 'hook-drag', name: 'Hooked Lash', cite: 'Roper/Tendril + Reel (CR 5); Chain Devil class',
+    roles: ['brute', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'signature',
+    frames: {
+      '0-2': '*Strength Saving Throw:* DC {dc}, one creature within 20 feet. *Failure:* The target is pulled up to 15 feet straight toward the creature by {hook} and has the Grappled condition (escape DC {dc}).',
+      '3-5': '*Strength Saving Throw:* DC {dc}, one creature within 30 feet. *Failure:* The target is pulled up to 20 feet straight toward the creature by {hook} and has the Grappled condition (escape DC {dc}).',
+      '6-9': '*Strength Saving Throw:* DC {dc}, one creature within 30 feet. *Failure:* The target is pulled up to 25 feet straight toward the creature by {hook} and has the Grappled condition (escape DC {dc}).',
+      '10-12': '*Strength Saving Throw:* DC {dc}, one Huge or smaller creature within 60 feet. *Failure:* The target is pulled up to 30 feet straight toward the creature by {hook} and has the Grappled condition (escape DC {dc}). While Grappled this way, the target has the Restrained condition.',
+      '13-20': '*Strength Saving Throw:* DC {dc}, one Huge or smaller creature within 60 feet. *Failure:* The target is pulled up to 30 feet straight toward the creature by {hook} and has the Grappled condition (escape DC {dc}). While Grappled this way, the target has the Restrained condition.',
+      '21+': '*Strength Saving Throw:* DC {dc}, one Huge or smaller creature within 90 feet. *Failure:* The target is pulled up to 30 feet straight toward the creature by {hook} and has the Grappled condition (escape DC {dc}). While Grappled this way, the target has the Restrained condition.',
+    },
+  },
+  // THE TWO OWED DONOR ROWS (critic, from the free-text winners, 2026-09-22)
+  {
+    id: 'active-toll', name: 'Tolling Peal', invented: true, // the crab's active toll: Thunder + Deafened from the creature, a nova
+    roles: ['brute', 'defender', 'lurker', 'controller', 'artillery'], styles: [], cr_range: [1, 30], replaces: 'nova', gate: 'Recharge 5-6',
+    frames: {
+      '0-2': '*Constitution Saving Throw*: DC {dc}, each creature in a 10-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.',
+      '3-5': '*Constitution Saving Throw*: DC {dc}, each creature in a 15-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.',
+      '6-9': '*Constitution Saving Throw*: DC {dc}, each creature in a 20-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.',
+      '10-12': '*Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.',
+      '13-20': '*Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.',
+      '21+': '*Constitution Saving Throw*: DC {dc}, each creature in a 60-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.',
+    },
+  },
+  {
+    id: 'pull-through', name: 'Dragging Passage', invented: true, // the keeper's pull-through-walls, BOUNDED: the target lands in the nearest unoccupied space
+    roles: ['lurker'], styles: [], cr_range: [3, 30], replaces: 'signature', // phantom by verb (through walls, drown, phase), not by style gate
+    frames: Object.fromEntries(['3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Strength Saving Throw*: DC {dc}, one Medium or smaller creature the creature is touching. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the creature drags the target up to 15 feet through a wall, floor, or other solid object it can pass through; the target emerges Prone in the nearest unoccupied space at the far side. If no such space is within 15 feet, the target is not moved but takes the damage again.'])),
+  },
+  // THE RIDER ROADMAP (critic's table from the balance read, 2026-09-22): six
+  // of the ten action misses were on-hit riders print already has.
+  // THE BARBED-LANCE CLUSTER (wide run 2026-09-22: four rider misses — the
+  // ashen lancer, the bridle of bones, the star-binder's shard): "when it
+  // hits, the barbs hook and drag". Merrow Harpoon (2024 MM) grammar on the
+  // melee row — the pull is the whole rider; the lodge is the name's.
+  {
+    id: 'hook-rider', name: 'Hooking Strike', invented: true, // kin: Merrow/Harpoon (2024 MM, not in this corpus); bolt-drag's melee twin
+    roles: ['skirmisher', 'brute', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'melee-rider',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the target is a Large or smaller creature, it is pulled up to 10 feet straight toward the creature.'])),
+  },
+  {
+    id: 'pounce', name: 'Pounce', cite: 'Tiger/Pounce (CR 1); Saber-Toothed Tiger (CR 2); Lion (CR 1)',
+    roles: ['skirmisher', 'lurker', 'brute'], styles: [], cr_range: [0, 30], replaces: 'melee-rider',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the creature moved at least 20 feet straight toward the target immediately before the hit and the target is Large or smaller, the target has the Prone condition, and the creature can make one {melee_name} attack against it as a Bonus Action.'])),
+  },
+  {
+    id: 'isolation', name: 'Isolated Prey', invented: true, // Convention 26 rendered as distance — the lone straggler takes more
+    roles: ['skirmisher', 'lurker'], styles: [], cr_range: [1, 30], replaces: 'melee-rider',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If no creature other than the creature is within 5 feet of the target, the target takes an extra {avg_half} ({dice_half}) {damage_type} damage.'])),
+  },
+  {
+    id: 'snatch', name: 'Snatch', cite: 'Roc/Talons (CR 11); Giant Eagle (CR 1); Griffon (CR 2)',
+    roles: ['skirmisher', 'brute', 'lurker'], styles: [], cr_range: [1, 30], replaces: 'melee-rider', requires_movement: 'Fly',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the target is a Medium or smaller creature, it has the Grappled condition (escape DC {dc}) and is carried by the creature; the creature can drop it as part of its movement, and a dropped target falls.'])),
+  },
+  {
+    id: 'ward-retaliation', name: 'Guardian\'s Answer', cite: 'Shield Guardian/Shield (CR 7) and the bodyguard reaction family',
+    roles: ['defender', 'lurker', 'skirmisher', 'controller', 'artillery'], styles: [], cr_range: [1, 30], replaces: 'reaction',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Trigger:* A creature within 30 feet that the creature guards is hit by an attack roll. *Response:* The creature moves up to half its Speed toward the attacker without provoking Opportunity Attacks and makes one {melee_name} attack against it if it is within reach.'])),
+  },
+  {
+    id: 'assassinate', name: 'Assassinate', cite: 'Assassin/Assassinate (CR 8, 2024)',
+    roles: ['lurker', 'skirmisher'], styles: [], cr_range: [2, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'During the first round of each combat, the creature has Advantage on attack rolls against any creature that hasn\'t taken a turn. If the creature hits a creature during that round, the target takes an extra {avg_half} ({dice_half}) {damage_type} damage.'])),
+  },
+  // THE TWO 4/4 PROPOSALS (critic run four): weapon-lodge and the Shield
+  // Guardian's interpose — asked in every run of the held-out set.
+  {
+    id: 'weapon-lodge', name: 'Weapon Lodge', invented: true, // the mound's "knits shut around the axes": a hit weapon stays
+    roles: ['brute', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'When a creature hits the creature with a melee weapon attack using a nonmagical weapon, the weapon lodges in the creature\'s body. A lodged weapon can be pulled free by a creature within reach that succeeds on a DC {dc} Strength (Athletics) check as an action; while lodged, the creature can use it: its {melee_name} attacks deal an extra {avg_half} ({dice_half}) {damage_type} damage per lodged weapon (maximum two).'])),
+  },
+  // THE DUELIST CLUSTER (wide run 2026-09-22: three reaction misses — the
+  // sable notch, the scarred duelist, the coin-bought duelist): "when a blow
+  // misses, the off-hand answers". Parry (Bandit Captain, 2024 MM) answered
+  // with the Battle Master's Riposte: one attack bought by the miss.
+  {
+    id: 'riposte', name: 'Riposte', invented: true, // kin: Bandit Captain/Parry (2024 MM) + Riposte maneuver (PHB); neither is in this corpus
+    roles: ['skirmisher', 'defender', 'lurker'], styles: [], cr_range: [1, 30], replaces: 'reaction',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Trigger:* A creature within 5 feet of the creature misses it with a melee attack roll. *Response:* The creature makes one {melee_name} attack against that creature.'])),
+  },
+  {
+    id: 'interpose', name: 'Interpose', cite: 'Shield Guardian/Shield (CR 7)',
+    roles: ['defender', 'controller', 'artillery', 'lurker', 'skirmisher'], styles: [], cr_range: [1, 30], replaces: 'reaction',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Trigger:* A creature within 5 feet of the creature that it guards is hit by an attack roll. *Response:* The attack hits the creature instead, and the creature has Resistance to the attack\'s damage.'])),
+  },
+  // THE CASTER LINE'S RIDER SECTION (the hermit's mile-bolt missed four runs
+  // with "no template exists for this section on this line"): riders that
+  // append to the RANGED or hybrid attack row.
+  {
+    id: 'bolt-restrain', name: 'Binding Bolt', invented: true, // Web / Hold-style rider on a spell attack
+    roles: ['artillery', 'controller'], styles: [], cr_range: [1, 30], replaces: 'ranged-rider',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the target is a Large or smaller creature, it has the Restrained condition until the end of its next turn.'])),
+  },
+  {
+    id: 'bolt-drag', name: 'Reeling Bolt', invented: true, // Thorn Whip / Lightning Lure grammar as a rider
+    roles: ['artillery', 'controller', 'lurker'], styles: [], cr_range: [1, 30], replaces: 'ranged-rider',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the target is a Large or smaller creature, it is pulled up to 15 feet straight toward the creature.'])),
+  },
+  {
+    id: 'bolt-mark', name: 'Marking Bolt', invented: true, // Hunter\'s Mark grammar as a rider: the struck target is easier to strike again
+    roles: ['artillery', 'controller', 'skirmisher'], styles: [], cr_range: [1, 30], replaces: 'ranged-rider',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'Until the end of the creature\'s next turn, the creature has Advantage on attack rolls against the target, and the target can\'t take the Hide action.'])),
+  },
+  // (3) a bodily emission comes FROM the creature — a Cone, not a lobbed sphere (the goat's vomit, critic run seven)
+  {
+    id: 'spew', name: 'Noxious Spew', cite: 'Poison-breath Cone family (Green Dragon Wyrmling CR 2, Black Dragon Wyrmling CR 2)',
+    roles: ['skirmisher', 'brute', 'lurker', 'controller'], styles: [], cr_range: [0, 30], replaces: 'nova', gate: 'Recharge 5-6',
+    frames: {
+      '0-2': '*Constitution Saving Throw*: DC {dc}, each creature in a 15-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+      '3-5': '*Constitution Saving Throw*: DC {dc}, each creature in a 15-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+      '6-9': '*Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+      '10-12': '*Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+      '13-20': '*Constitution Saving Throw*: DC {dc}, each creature in a 60-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+      '21+': '*Constitution Saving Throw*: DC {dc}, each creature in a 90-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
     },
   },
   {

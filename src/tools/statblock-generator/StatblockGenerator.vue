@@ -115,7 +115,7 @@
              the upsell; premium users no longer need a save/load callout —
              the sidebar footer's Data options covers backup/restore. -->
         <div class="footer-meta" v-if="!premium">
-          <PatreonCallout :patreon-url="patreonLoginUrl" location="statblock-footer">
+          <PatreonCallout location="statblock-footer">
             <template #body>
               <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited statblock generation.</p>
             </template>
@@ -267,7 +267,7 @@
       <!-- Footer below monster content (free users only — premium's
            backup/restore lives in the sidebar footer's Data options). -->
       <div class="footer-meta" v-if="monster && !loadingPart2 && !premium">
-        <PatreonCallout :patreon-url="patreonLoginUrl" location="statblock-footer">
+        <PatreonCallout location="statblock-footer">
           <template #body>
             <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited statblock generation.</p>
           </template>
@@ -306,7 +306,7 @@ import { ref, onMounted, onUnmounted, computed, reactive, watch } from 'vue';
 import Statblock from '@/components/Statblock.vue';
 import Statblock2024 from '@/components/Statblock2024.vue';
 import {
-  generateMonster2024, buildArchetypeResolvePrompt, validateArchetypeResponse,
+  generateMonster2024, buildIdentityPrompt, validateIdentityResponse,
   buildSeedSynthesisPrompt, validateSeedSynthesisResponse,
   parseGenerationResponse, pickRandomArchetype, rollEnergy, rollDamageMix, rollNamingConvention, crNumberFor, crKeyFor, ENERGY_TYPES,
   convertEdition, toLegacyModel, fromLegacyModel,
@@ -327,6 +327,8 @@ import { sweepOrphanReferences } from '@/util/sweep-orphan-references.mjs';
 import challengeRatingData from '@/data/challengeRatings.json';
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
+import { filterVerdicts, rejectedCanon } from './reskin/lexicon.mjs';
+import { buildRoutePrompt, validateRouteResponse, chooseLine } from './reskin/route.mjs';
 import { ARCHETYPE_HELP, ARCHETYPE_OPTIONS } from "@/util/embedded-statblock.mjs";
 import { QUOTA_FIELDS, RESERVED_HOST_FIELDS } from "@/util/quota-storage.mjs";
 import { renameStatblockReferences, moveStatblockToNewFolder } from '@/util/statblock-storage.mjs';
@@ -344,10 +346,6 @@ const props = defineProps({
   }
 })
 
-const patreonLoginUrl = computed(() => {
-  const returnUrl = encodeURIComponent(window.location.href);
-  return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
-});
 
 const loadingPart1 = ref(false);
 const loadingPart2 = ref(false);
@@ -1057,6 +1055,7 @@ async function generateStatblockEngine(edition) {
   let conceptBody = null;
   let conceptEnergy = null;
   let conceptMix = null;
+  let conceptRejectedCanon = []; // canon cues the resolve REJECTED on the sentence (lexical hints)
   let conceptElements = null;
   // THE NAME RULING (owner, 2026-08-20): whether the input NAMED the
   // creature is the concept call's judgment, not a word-count heuristic.
@@ -1080,6 +1079,121 @@ async function generateStatblockEngine(edition) {
   const rolledEnergy = rollEnergy();
   const rolledMix = rollDamageMix();
   const rolledNaming = rollNamingConvention();
+  // THE TWO CALLS (owner, 2026-09-21: "let's do two calls. go"):
+  //   1. ROUTE (reskin/route.mjs) — the model picks a chassis FROM THE SHELF
+  //      by analogy to printed monsters and quotes the input phrase that
+  //      earns it; chooseLine verifies every quote and falls to the next
+  //      pick on a veto. Its output is exactly generateReskin's interface.
+  //   2. IDENTITY (format-2024/generate.mjs) — the prose, written knowing
+  //      the chassis, so words and block agree from the start.
+  // The blank path runs them the other way round: SYNTHESIS first (there is
+  // no concept until the rolled axes fuse), then ROUTE on the fused creature.
+  // The old belt stack (STYLE_HOME, demotions, the artillery/engulf belts,
+  // the regex claim guards) is gone: the shelf has no unserved styles and no
+  // labels to translate.
+  let conceptRole = null; // the menu label the saved monster records (artillery/controller for caster lines)
+  let conceptLine = null;
+  const hintText = `${monsterName.value} ${monsterDescription.value}`;
+  const FACETS = ['bestial','armed','amorphous','grave','fiendish','celestial','fey','draconic','elemental','verdant','forged','mind','venomous','terror','beguiling','grasping','devouring','aquatic','subterranean','aerial','uncanny','arcane','voice','gaze','breath'];
+  const KINDS = ['behavior', 'body', 'object', 'aura'];
+  // one prose reader for both calls — the identity call (user path) and the
+  // synthesis call (blank path) return the same fields but for the lead
+  const readProse = (parsed, { blank }) => {
+    if (!blank && typeof parsed?.identity === 'string' && parsed.identity.trim().length > 20) conceptIdentity = parsed.identity.trim();
+    if (blank && parsed?.synthesis) synthesizedConcept = buildSynthesizedConcept(randomSeed, parsed.synthesis);
+    if (typeof parsed?.lore === 'string' && parsed.lore.trim().length > 15) conceptLore = parsed.lore.trim();
+    // the route decides the type from substance; the prose only fills a gap
+    if (!resolvedType && typeof parsed?.creature_type === 'string') resolvedType = parsed.creature_type;
+    if (Array.isArray(parsed?.themes)) {
+      const t = parsed.themes.filter((x) => FACETS.includes(String(x).toLowerCase())).slice(0, 2);
+      if (t.length) conceptThemes = t;
+    }
+    if (typeof parsed?.name === 'string' && parsed.name.trim() && parsed.name.trim().split(/\s+/).length <= 4) conceptProposedName = parsed.name.trim();
+    if (typeof parsed?.material === 'string' && parsed.material.trim()) conceptHouse = parsed.material.trim().toLowerCase();
+    if (['sapient', 'bestial', 'mindless'].includes(parsed?.mind)) conceptMind = parsed.mind;
+    if (typeof parsed?.size === 'string') conceptSize = parsed.size;
+    if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
+    if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
+    if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
+    if (Array.isArray(parsed?.signature_elements)) {
+      const els = parsed.signature_elements
+        .map((x) => (typeof x === 'string' ? { element: x, kind: null } : { element: String(x?.element ?? ''), kind: KINDS.includes(x?.kind) ? x.kind : null }))
+        .filter((x) => x.element.trim()).map((x) => ({ element: x.element.trim().slice(0, 80), kind: x.kind })).slice(0, 3);
+      if (els.length) conceptElements = els;
+    }
+    if (!blank) {
+      if (typeof parsed?.energy === 'string') {
+        const hit = ENERGY_TYPES.find((t) => t.toLowerCase() === parsed.energy.trim().toLowerCase());
+        if (hit) conceptEnergy = hit;
+      }
+      if (typeof parsed?.provided_name === 'string') {
+        const pn = parsed.provided_name.trim();
+        // provenance AND shape (2026-08-20 / 2026-09-20 item F): the name must
+        // come from the name/concept field, be at most 4 words (0/329 print
+        // names run longer), and never be the whole input — that is the
+        // description, which the generator names
+        const inputWords = monsterName.value.trim().split(/\s+/).length;
+        const nameShaped = pn.split(/\s+/).length <= 4 && !(inputWords > 4 && pn.length >= monsterName.value.trim().length - 2);
+        // and CASE (two-call smoke 2026-09-21: "grave beetles", "Brass bull",
+        // "Drowned Knight" were lifted out of lowercase descriptions 5/15 and
+        // locked the generator out of naming): inside a longer input a name is
+        // written as one — every word capitalized in the input itself. A short
+        // input (≤4 words) is the name however it is cased ("brazen bull").
+        const hit = pn && new RegExp(pn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').exec(monsterName.value);
+        const asWritten = hit ? hit[0].replace(/^(?:a|an|the)\s+/i, '') : '';
+        const properCase = inputWords <= 4 || (asWritten && asWritten.split(/\s+/).every((w) => /^[A-Z]/.test(w)));
+        if (pn && nameShaped && hit && properCase) conceptProvidedName = asWritten;
+        else if (pn && hit && !properCase) logger.log('[concept] name:', `provided_name rejected — "${pn.slice(0, 40)}" is written in lowercase inside a description; the generator names it`);
+        else if (pn && !nameShaped) logger.log('[concept] name:', `provided_name rejected — "${pn.slice(0, 40)}…" is the description, not a name`);
+      }
+      if (['both', 'physical', 'energy'].includes(parsed?.damage_mix)) conceptMix = parsed.damage_mix;
+      // contradiction belt: a declared element outranks a 'physical' mix
+      // (the icon-first principle) — the model meant 'both'
+      if (conceptMix === 'physical' && conceptEnergy) conceptMix = 'both';
+      if (conceptMix === 'energy' && !conceptEnergy) conceptMix = null;
+    }
+    // prose-first: a "bestial" mind whose own identity taunts, performs, or
+    // duels is sapient (the Matador read bull, 2026-08-19)
+    if (conceptMind === 'bestial'
+      && /taunt|mock|jeer|perform|danc|duel|toy(?:s|ing)? with/i.test(`${conceptIdentity ?? ''} ${(conceptElements ?? []).map((e) => e.element).join(' ')}`)) {
+      conceptMind = 'sapient';
+      logger.log('[concept] mind promoted to sapient — the identity asserts performance/taunting');
+    }
+    // lexical hints ride the prose call as questions; a REJECTED canon cue
+    // is carried forward so the name-canon stamp cannot re-apply it off a
+    // name the model then chooses ("Troll-Tooth Knight" got Regeneration)
+    const verdicts = filterVerdicts(parsed?.hint_verdicts, hintText);
+    conceptRejectedCanon = rejectedCanon(parsed?.hint_verdicts, hintText);
+    if (verdicts.length) logger.log('[concept] hints:', verdicts.map((h) => `${h.cue}→${h.field} ${h.accepted ? '✓' : '✗'}${h.because ? ` ("${h.because.slice(0, 40)}")` : ''}`).join(' | '));
+  };
+  const routeOn = async (text) => {
+    try {
+      const raw = await generateGptResponse(buildRoutePrompt(text, { cr, menuRole: givenArchetype }), validateRouteResponse, 2);
+      return chooseLine(parseGenerationResponse(raw), { text, menuRole: givenArchetype });
+    } catch (e) {
+      logger.warn('[route] call failed:', e?.message ?? e);
+      return null;
+    }
+  };
+  const applyRoute = (route) => {
+    if (route?.line) {
+      archetypeName = route.archetype;
+      conceptRole = route.role;
+      conceptLine = route.line;
+      conceptStyle = route.style;
+      conceptBody = route.body;
+      conceptMechanics = route.mechanics;
+      if (route.resolvedType) resolvedType = route.resolvedType;
+      logger.log('[route]', `${route.line}${route.role && route.role !== route.archetype ? ` (${route.role})` : ''} type=${resolvedType ?? '?'} mechanics=${route.mechanics.join(', ') || 'none'} — ${route.notes.join(' | ')}`);
+    } else {
+      // never-fail: the user's role, else a random plain line — drawn from the
+      // SHELF's families (pickRandomArchetype can return swarm/support/glass_cannon,
+      // which have no reskin route and fell to the retired slot path: toad, 2026-09-21)
+      archetypeName = givenArchetype ?? ['brute', 'skirmisher', 'lurker', 'defender', 'artillery'][Math.floor(Math.random() * 5)];
+      conceptMechanics = [];
+      logger.log('[route]', `nothing routed${route ? ` (${route.notes.join(' | ')})` : ' — the call failed'}; ${givenArchetype ? `the user's ${givenArchetype}` : `random ${archetypeName}`} plain line ships`);
+    }
+  };
   {
     archetypeSource = givenArchetype ? 'user' : 'auto';
     try {
@@ -1087,158 +1201,44 @@ async function generateStatblockEngine(edition) {
         const pinKey = JSON.stringify([userConcept, monsterDescription.value, cr, givenArchetype]);
         const pinned = conceptResolutionCache.get(pinKey);
         if (pinned) {
-          ({ archetypeName, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics, conceptBody } = pinned);
+          ({ archetypeName, conceptRole, conceptLine, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics, conceptBody, conceptRejectedCanon } = pinned);
           logger.log('[concept] pinned — reusing the resolution for an unchanged concept');
         } else {
-        const raw = await generateGptResponse(
-          buildArchetypeResolvePrompt(userConcept, monsterDescription.value, { cr, archetype: givenArchetype }),
-          validateArchetypeResponse,
-          2,
-        );
-        const parsed = parseGenerationResponse(raw);
-        archetypeName = givenArchetype ?? (parsed?.archetype || pickRandomArchetype());
-        // The resolve call also sketches a combat identity (tactics, per-round
-        // behavior, temperament) — riding it into the concept gives the
-        // generation one coherent identity to design toward instead of a bare
-        // phrase (the anti-incoherent-ability-set mechanism, user-concept side).
-        if (typeof parsed?.identity === 'string' && parsed.identity.trim().length > 20) {
-          conceptIdentity = parsed.identity.trim();
-        }
-        if (typeof parsed?.lore === 'string' && parsed.lore.trim().length > 15) {
-          conceptLore = parsed.lore.trim();
-        }
-        if (typeof parsed?.creature_type === 'string') resolvedType = parsed.creature_type;
-        if (Array.isArray(parsed?.themes)) {
-          const FACETS = ['bestial','armed','amorphous','grave','fiendish','celestial','fey','draconic','elemental','verdant','forged','mind','venomous','terror','beguiling','grasping','devouring','aquatic','subterranean','aerial','uncanny','arcane','voice','gaze','breath'];
-          const t = parsed.themes.filter((x) => FACETS.includes(String(x).toLowerCase())).slice(0, 2);
-          if (t.length) conceptThemes = t;
-        }
-        if (typeof parsed?.name === 'string' && parsed.name.trim() && parsed.name.trim().split(/\s+/).length <= 4) {
-          conceptProposedName = parsed.name.trim();
-        }
-        if (typeof parsed?.material === 'string' && parsed.material.trim()) {
-          conceptHouse = parsed.material.trim().toLowerCase();
-        }
-        if (['sapient', 'bestial', 'mindless'].includes(parsed?.mind)) conceptMind = parsed.mind;
-        if (typeof parsed?.size === 'string') conceptSize = parsed.size;
-        if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
-        if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
-        if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
-        if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator', 'warpriest', 'binder', 'phantom', 'trap', 'warden'].includes(parsed?.style)) conceptStyle = parsed.style;
-        if (['ooze', 'swarm', 'dragon'].includes(parsed?.body)) conceptBody = parsed.body;
-        if (Array.isArray(parsed?.mechanics)) {
-          const MECHS = ['thrown-weapon', 'breath', 'engulf', 'grapple', 'gaze', 'aura', 'teleport', 'summon', 'snare', 'regeneration'];
-          conceptMechanics = parsed.mechanics.filter((x) => MECHS.includes(String(x).toLowerCase()));
-        }
-        if (typeof parsed?.energy === 'string') {
-          const hit = ENERGY_TYPES.find((t) => t.toLowerCase() === parsed.energy.trim().toLowerCase());
-          if (hit) conceptEnergy = hit;
-        }
-        if (typeof parsed?.provided_name === 'string') {
-          const pn = parsed.provided_name.trim();
-          // provenance, not shape: the name must actually come from the
-          // name/concept field, so the call can extract but never invent
-          // SHAPE, too (2026-09-20, item F — 2/3 live rate on some inputs):
-          // the model returned the WHOLE input as provided_name and the
-          // substring test passed trivially, locking "A Scarecrow That Only
-          // Moves When Nobody Is Looking" as a user-given name — and the
-          // inline short form then took its LAST word ("the hand"). A name
-          // is at most 4 words (0/329 print names run longer) and is never
-          // the input itself; anything else is a description the generator
-          // names.
-          const inputWords = monsterName.value.trim().split(/\s+/).length;
-          const nameShaped = pn.split(/\s+/).length <= 4 && !(inputWords > 4 && pn.length >= monsterName.value.trim().length - 2);
-          if (pn && nameShaped && monsterName.value.toLowerCase().includes(pn.toLowerCase())) conceptProvidedName = pn.replace(/^(?:a|an|the)\s+/i, '');
-          else if (pn && !nameShaped) logger.log('[concept] name:', `provided_name rejected — "${pn.slice(0, 40)}…" is the description, not a name`);
-        }
-        if (['both', 'physical', 'energy'].includes(parsed?.damage_mix)) conceptMix = parsed.damage_mix;
-        // contradiction belt: a declared element outranks a 'physical' mix
-        // (the icon-first principle) — the model meant 'both'
-        if (conceptMix === 'physical' && conceptEnergy) conceptMix = 'both';
-        if (conceptMix === 'energy' && !conceptEnergy) conceptMix = null;
-        if (Array.isArray(parsed?.signature_elements)) {
-          const KINDS = ['behavior', 'body', 'object', 'aura'];
-          const els = parsed.signature_elements
-            .map((x) => (typeof x === 'string' ? { element: x, kind: null } : { element: String(x?.element ?? ''), kind: KINDS.includes(x?.kind) ? x.kind : null }))
-            .filter((x) => x.element.trim()).map((x) => ({ element: x.element.trim().slice(0, 80), kind: x.kind })).slice(0, 3);
-          if (els.length) conceptElements = els;
-        }
-        // prose-first, again: a "bestial" mind whose own identity taunts,
-        // performs, or duels is sapient (the Matador read bull, 2026-08-19)
-        if (conceptMind === 'bestial'
-          && /taunt|mock|jeer|perform|danc|duel|toy(?:s|ing)? with/i.test(`${conceptIdentity ?? ''} ${(conceptElements ?? []).map((e) => e.element).join(' ')}`)) {
-          conceptMind = 'sapient';
-          logger.log('[concept] mind promoted to sapient — the identity asserts performance/taunting');
-        }
-        {
-          logger.log('[concept] synthesis:', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
+          // CALL 1 — ROUTE
+          applyRoute(await routeOn(`${userConcept} ${monsterDescription.value}`.trim()));
+          // CALL 2 — IDENTITY, conditioned on the routed line
+          try {
+            const raw = await generateGptResponse(
+              buildIdentityPrompt(userConcept, monsterDescription.value, { cr, archetype: givenArchetype, line: conceptLine, resolvedType }),
+              validateIdentityResponse,
+              2,
+            );
+            readProse(parseGenerationResponse(raw), { blank: false });
+          } catch (e) {
+            logger.warn('[concept] identity call failed — the routed line ships without prose:', e?.message ?? e);
+          }
+          logger.log('[concept] resolve:', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
             + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
-            + `${synthesizedConcept ? ' concept=✓' : ''}${conceptLore ? ' lore=✓' : ''}`);
-          if (parsed?.synthesis) logger.log('[concept] synthesis text:', parsed.synthesis);
+            + ` style=${conceptStyle ?? '—'}`
+            + ` energy=${conceptEnergy ?? '—'} mix=${conceptMix ?? '—'}`
+            + `${conceptIdentity ? ' identity=✓' : ''}${conceptLore ? ' lore=✓' : ''}`);
+          logger.log('[concept] name:', conceptProvidedName ? `provided "${conceptProvidedName}"` : 'not provided — the input describes, the generator names it');
+          logger.log('[concept] mechanics:', (conceptMechanics ?? []).join(', ') || 'none claimed');
+          if (conceptElements) logger.log('[concept] signature elements:', conceptElements.map((e) => `${e.element}${e.kind ? ` [${e.kind}]` : ''}`).join(' | '));
+          if (conceptIdentity) logger.log('[concept] identity:', conceptIdentity);
           if (conceptLore) logger.log('[concept] lore:', conceptLore);
-        }
-        logger.log('[concept] resolve:', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
-          + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
-          // style logged since 2026-09-02: two smoke runs were unreadable
-          // on prior-vs-claim without it — the ratio file needs this line
-          + ` style=${conceptStyle ?? '—'}`
-          + ` energy=${conceptEnergy ?? '—'} mix=${conceptMix ?? '—'}`
-          + `${conceptIdentity ? ' identity=✓' : ''}${conceptLore ? ' lore=✓' : ''}`);
-        logger.log('[concept] name:', conceptProvidedName ? `provided "${conceptProvidedName}"` : 'not provided — the input describes, the generator names it');
-        logger.log('[concept] mechanics:', (conceptMechanics ?? []).join(', ') || 'none claimed');
-        if (conceptElements) logger.log('[concept] signature elements:', conceptElements.map((e) => `${e.element}${e.kind ? ` [${e.kind}]` : ''}`).join(' | '));
-        if (conceptIdentity) logger.log('[concept] identity:', conceptIdentity);
-        if (conceptLore) logger.log('[concept] lore:', conceptLore);
-        conceptResolutionCache.set(pinKey, { archetypeName, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics, conceptBody });
+          conceptResolutionCache.set(pinKey, { archetypeName, conceptRole, conceptLine, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics, conceptBody, conceptRejectedCanon });
         }
       } else {
-        // Blank form: the same micro-call fuses the rolled axes into one
-        // creature identity AND picks the role — generation designs from
-        // the fused sentence, not the axis list.
+        // CALL 1 — SYNTHESIS: fuse the rolled axes into one creature
         const raw = await generateGptResponse(
           buildSeedSynthesisPrompt(randomSeed, { cr, archetype: givenArchetype, energy: rolledEnergy, damageMix: rolledMix, naming: rolledNaming }),
           validateSeedSynthesisResponse,
           2,
         );
-        const parsed = parseGenerationResponse(raw);
-        archetypeName = givenArchetype ?? (parsed?.archetype || pickRandomArchetype());
-        if (parsed?.synthesis) {
-          synthesizedConcept = buildSynthesizedConcept(randomSeed, parsed.synthesis);
-        }
-        if (typeof parsed?.lore === 'string' && parsed.lore.trim().length > 15) {
-          conceptLore = parsed.lore.trim();
-        }
-        // Synthesis may override the rolled type when the fused concept's
-        // substance contradicts it (the Amber-Hound-as-Humanoid class).
-        if (typeof parsed?.creature_type === 'string') resolvedType = parsed.creature_type;
-        if (Array.isArray(parsed?.themes)) {
-          const FACETS = ['bestial','armed','amorphous','grave','fiendish','celestial','fey','draconic','elemental','verdant','forged','mind','venomous','terror','beguiling','grasping','devouring','aquatic','subterranean','aerial','uncanny','arcane','voice','gaze','breath'];
-          const t = parsed.themes.filter((x) => FACETS.includes(String(x).toLowerCase())).slice(0, 2);
-          if (t.length) conceptThemes = t;
-        }
-        if (typeof parsed?.name === 'string' && parsed.name.trim() && parsed.name.trim().split(/\s+/).length <= 4) {
-          conceptProposedName = parsed.name.trim();
-        }
-        if (typeof parsed?.material === 'string' && parsed.material.trim()) {
-          conceptHouse = parsed.material.trim().toLowerCase();
-        }
-        if (['sapient', 'bestial', 'mindless'].includes(parsed?.mind)) conceptMind = parsed.mind;
-        if (typeof parsed?.size === 'string') conceptSize = parsed.size;
-        if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
-        if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
-        if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
-        if (['mounted', 'skulker', 'hurler', 'winged', 'charger', 'grappler', 'juggernaut', 'regenerator', 'warpriest', 'binder', 'phantom', 'trap', 'warden'].includes(parsed?.style)) conceptStyle = parsed.style;
-        if (['ooze', 'swarm', 'dragon'].includes(parsed?.body)) conceptBody = parsed.body;
-        // blank-path parity (owner spotted the gap, 2026-08-26): the seed
-        // synthesis now returns signature_elements too — without them the
-        // reskin's seat machinery ran blind on every blank roll
-        if (Array.isArray(parsed?.signature_elements)) {
-          const KINDS = ['behavior', 'body', 'object', 'aura'];
-          const els = parsed.signature_elements
-            .map((x) => (typeof x === 'string' ? { element: x, kind: null } : { element: String(x?.element ?? ''), kind: KINDS.includes(x?.kind) ? x.kind : null }))
-            .filter((x) => x.element.trim()).map((x) => ({ element: x.element.trim().slice(0, 80), kind: x.kind })).slice(0, 3);
-          if (els.length) conceptElements = els;
-        }
+        readProse(parseGenerationResponse(raw), { blank: true });
+        // CALL 2 — ROUTE on the fused creature
+        applyRoute(await routeOn(synthesizedConcept ?? randomSeed.concept));
         logger.log('[concept] synthesis (blank roll):', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
           + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
           + ` style=${conceptStyle ?? '—'}${conceptLore ? ' lore=✓' : ''}`);
@@ -1249,8 +1249,8 @@ async function generateStatblockEngine(edition) {
       }
     } catch (e) {
       logger.warn('Archetype resolve failed:', e);
-      archetypeName = givenArchetype ?? pickRandomArchetype();
     }
+    if (!archetypeName || archetypeName === 'auto' || archetypeName === 'balanced') archetypeName = givenArchetype ?? ['brute', 'skirmisher', 'lurker', 'defender', 'artillery'][Math.floor(Math.random() * 5)];
   }
 
   const baseConcept = monsterName.value.trim()
@@ -1265,68 +1265,12 @@ async function generateStatblockEngine(edition) {
   // call reads for fit — the anti-hodgepodge anchor.
   if (conceptLore) concept += `\nLORE (the creature's story — every ability and its name should feel like they belong to it): ${conceptLore}`;
 
-  // The body field is DERIVED where the signal is deterministic (the
-  // resolver missed it on 3 of 6 concepts, smoke two 2026-09-11): a
-  // Dragon or Ooze creature_type IS the body; a concept that says
-  // "swarm of" IS a swarm. The model's field covers the rest.
+  // Two body derivations stay deterministic where print is certain: a
+  // Dragon creature_type IS the dragon body; "swarm of" IS a swarm. (The
+  // Ooze-type derivation is gone — a tar-mouthed toad typed Ooze shipped
+  // on ooze-4; the route now decides the ooze body from quoted evidence.)
   if (!conceptBody && resolvedType === 'Dragon') conceptBody = 'dragon';
-  if (!conceptBody && resolvedType === 'Ooze') conceptBody = 'ooze';
   if (!conceptBody && /\bswarm of\b/i.test(`${monsterName.value} ${monsterDescription.value} ${synthesizedConcept ?? ''}`)) conceptBody = 'swarm';
-
-  // Juggernaut is a MADE thing by its own definition (Immutable Form on a
-  // living swamp ogre, 2026-08-26) — living-flesh types demote to plain
-  // brute, same coherence family as the mount demotion.
-  if (conceptStyle === 'juggernaut' && resolvedType
-    && !['Construct', 'Elemental', 'Undead', 'Plant', 'Ooze'].includes(resolvedType)) {
-    logger.log('[concept] style demoted:', `juggernaut needs a made or mineral body — ${resolvedType} falls to plain brute`);
-    conceptStyle = null;
-  }
-  // The warden is a MADE or risen guardian (smoke two, 2026-09-09: a
-  // "no magic" human sergeant routed warden and shipped Regeneration 5
-  // — flesh-knitting on a mortal). Same coherence family as juggernaut;
-  // living mortals fall to the plain soldier line.
-  if (conceptStyle === 'warden' && resolvedType
-    && !['Construct', 'Elemental', 'Undead', 'Plant', 'Ooze', 'Celestial', 'Fiend'].includes(resolvedType)) {
-    logger.log('[concept] style demoted:', `warden needs a made or risen body — ${resolvedType} falls to plain defender`);
-    conceptStyle = null;
-  }
-
-  // A style the resolved family cannot SEAT re-routes to the family
-  // that owns it (2026-09-15: the Horseman resolved lurker+mounted
-  // three times — lurker has no mounted seat, the style silently
-  // dropped, and the cavalry concept shipped on a plain stalker).
-  // Mounted is skirmisher's ladder (3/8/13/18). Same law family as the
-  // warden/juggernaut demotions, inverted.
-  // generalized 2026-09-15 after the Craghide Troll (artillery+hurler
-  // routed caster-6: a bestial rock-thrower with Arcana +6 and a
-  // 120-ft Force bite — the mounted lesson, new pair)
-  // grappler joined 2026-09-20 (smoke corpus: 3/3 grappler drops were troll
-  // concepts mis-resolved lurker/controller and shipped with grapple-gated
-  // finishers and NO grapple engine). The grapple engine lives only on
-  // brute-5/8/15/17-grappler. NOTE the re-route is deliberately NARROW: a
-  // style that a family simply lacks (winged/warden on caster, skulker on
-  // lurker) falls back to that family's plain line and is LOGGED in
-  // generateReskin ("style unserved") — the resolve's style signal changes
-  // on ~half of identical runs, so wholesale archetype swaps are reserved
-  // for styles that imply an ENGINE the family cannot express at all.
-  const STYLE_HOME = { mounted: 'skirmisher', hurler: 'skirmisher', grappler: 'brute' };
-  // contradiction belt (2026-09-15, the Cliff Troll TWICE): artillery
-  // with a physical damage mix is a mundane thrower, not a caster — on
-  // the re-run resolve dropped the hurler style entirely, so the style
-  // re-route had nothing to catch and the troll landed on caster-6
-  // again (Arcana +6, at-will Light). The mix contradiction is
-  // deterministic even when the style line is empty. (Controller stays:
-  // a physical controller — a web-weaver, a grappling binder — is a
-  // coherent claim; a physical ARTILLERY is not.)
-  if (archetypeName === 'artillery' && conceptMix === 'physical' && !conceptBody) {
-    if (!conceptStyle) conceptStyle = 'hurler';
-    logger.log('[concept] archetype re-route:', 'artillery with a physical mix is a thrower — skirmisher owns it');
-    archetypeName = 'skirmisher';
-  }
-  if (STYLE_HOME[conceptStyle] && archetypeName !== STYLE_HOME[conceptStyle] && !conceptBody) {
-    logger.log('[concept] style re-route:', `${conceptStyle} is ${STYLE_HOME[conceptStyle]}'s seat — ${archetypeName} re-routes`);
-    archetypeName = STYLE_HOME[conceptStyle];
-  }
 
   let finalMonster;
   try {
@@ -1354,7 +1298,8 @@ async function generateStatblockEngine(edition) {
     // SRD 5.2 retired Parry — the protector WEARS its defense). Lines:
     // plain=soldier (Knight/Guard Captain), 'warden' (Shield Guardian
     // transfer link). Kill switch: statblock-reskin-defender='0'.
-    const isCasterRole = archetypeName === 'artillery' || archetypeName === 'controller';
+    const isCasterRole = archetypeName === 'caster' || archetypeName === 'artillery' || archetypeName === 'controller';
+    const menuRole = isCasterRole ? (conceptRole ?? (archetypeName !== 'caster' ? archetypeName : 'artillery')) : null;
     // THE 2014 MOVE (owner go 2026-09-14: "let's update the 2014"): a
     // 2014-format generation now rides the SAME reskin pipeline — every
     // guard, the library, the replacement clause — then one lint-gated
@@ -1374,8 +1319,8 @@ async function generateStatblockEngine(edition) {
       finalMonster = await generateReskin(
         {
           archetype: isCasterRole ? 'caster' : archetypeName,
-          menuRole: isCasterRole ? archetypeName : null,
-          stylePrior: archetypeName === 'controller' ? 'binder' : null,
+          menuRole,
+          stylePrior: menuRole === 'controller' ? 'binder' : null,
           concept, cr, onProgress: onGenerationProgress,
           fixedName: conceptProvidedName,
           style: conceptStyle,
@@ -1393,7 +1338,10 @@ async function generateStatblockEngine(edition) {
           energy: userConcept ? conceptEnergy : rolledEnergy,
           mix: userConcept ? conceptMix : rolledMix,
           caster: caster.value,
-          mechanics: userConcept ? (conceptMechanics ?? []) : null,
+          mechanics: conceptMechanics ?? null,
+          rejectedCanon: conceptRejectedCanon,
+          userConcept: baseConcept, // the user's own words — the verb the signature must serve (the identity prose is the model's)
+          material: conceptHouse, // the body's material — fire defenses derive from it (wax is vulnerable, never resistant)
           // THE 2014 DAMAGE LINE (owner ruling 2026-09-14): 2014's
           // table runs ~5 damage/CR vs 2024's ~7.5 — direct-2014
           // generations price at 0.7, uniform across archetypes. Tab
@@ -1431,7 +1379,7 @@ async function generateStatblockEngine(edition) {
         concept,
         description: monsterDescription.value,
         cr,
-        archetypeName,
+        archetypeName: archetypeName === 'caster' ? (conceptRole ?? 'artillery') : archetypeName,
         caster: caster.value,
         archetypeSource,
         edition,

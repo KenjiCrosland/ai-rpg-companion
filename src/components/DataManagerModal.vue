@@ -23,6 +23,20 @@
           Support on Patreon
         </ParButton>
       </div>
+
+      <!-- The CTA above goes to the Patreon membership page, which cannot
+           create a session here. Without this line a logged-out patron who
+           opens Backup/Restore has NO route to premium from this modal: they
+           land on Patreon, see they are already a member, and come back
+           still logged out. Same wording as PatreonCallout's sign-in line.
+           Same tab on purpose — the flow redirects back to this page, and in
+           a new tab the original tab keeps its stale logged-out premium
+           flag. -->
+      <p class="dm-signin">
+        Already a patron?
+        <a :href="patreonLoginUrl" @click="onLoginClick">Log in</a>
+        to activate premium in this browser.
+      </p>
     </div>
 
     <!-- Premium: single bundled download/upload -->
@@ -64,7 +78,7 @@
 import { ParButton, ParModal } from "@/parchment";
 import { ref, computed } from 'vue';
 import { logger } from '@/util/logger.mjs';
-import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
+import { patreonTiersUrl, buildPatreonLoginUrl } from '@/util/patreon-urls.mjs';
 import { trackEvent } from '@/util/analytics.mjs';
 import { QUOTA_FIELDS, seedFreshQuotas } from '@/util/quota-storage.mjs';
 import { runPendingMigrations } from '@/util/migration-runner.mjs';
@@ -89,6 +103,16 @@ const emit = defineEmits(['update:opened']);
 // Analytics: the modal's "Support on Patreon" CTA (conversion click).
 function onPatreonClick() {
   trackEvent('patreon_click', { location: 'data-manager' });
+}
+
+// The Patreon Connect flow, returning to whichever tool page hosts this
+// modal. Defaulted rather than passed as a prop: the modal is mounted by
+// every tool and none of them has anything tool-specific to contribute.
+const patreonLoginUrl = computed(() => buildPatreonLoginUrl());
+
+// Analytics: activation clicks, tracked apart from pledge clicks above.
+function onLoginClick() {
+  trackEvent('patreon_login_click', { location: 'data-manager' });
 }
 
 /**
@@ -364,6 +388,39 @@ function handleFileChange(event) {
   align-items: center;
   flex-wrap: wrap;
   margin-top: 1.25rem;
+}
+
+/* Sign-in line under the upsell CTA. Mirrors PatreonCallout's
+   `.patreon-callout__signin`: secondary text, slate link deepening to
+   lapis on hover, sitting below the CTA at supporting volume. */
+.dm-signin {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 14px;
+  color: var(--par-color-text-secondary, #555);
+  line-height: 1.6;
+  margin: 0.875rem 0 0;
+}
+
+.dm-signin a {
+  color: var(--color-action-secondary-rest, #5A7A9A);
+  text-decoration: none;
+  border-bottom: 0.5px solid var(--color-action-secondary-rest, #5A7A9A);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.dm-signin a:hover {
+  color: var(--color-action-rest, #365A85);
+  border-color: var(--color-action-rest, #365A85);
+}
+
+.dm-signin a:focus {
+  outline: none;
+}
+
+.dm-signin a:focus-visible {
+  outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 /* Inner callout in the pale-lapis chrome register so the summary

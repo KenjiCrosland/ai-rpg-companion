@@ -1,0 +1,252 @@
+[
+  {
+    "cr": "7",
+    "concept": "a lighthouse keeper's drowned wife who still climbs the stairs each night to light the lamp, and pulls anyone who follows her back down into the surf",
+    "expect": {
+      "route": [
+        "lurker-phantom"
+      ],
+      "template": [
+        "obstacle-pull",
+        "lure",
+        "herd",
+        "hook-drag"
+      ]
+    }
+  },
+  {
+    "cr": "6",
+    "concept": "a hermit crab the size of a wagon that wears a stolen bronze church bell as its shell and rings it by slamming its own body against the inside when it is wounded",
+    "expect": {
+      "template": [
+        "bloodied-burst",
+        "resonant-body"
+      ]
+    }
+  },
+  {
+    "cr": "5",
+    "concept": "a tar-mouthed toad the size of a cart that drags cattle into the bog",
+    "expect": {
+      "template": [
+        "adhesive",
+        "hook-drag",
+        "obstacle-pull",
+        "reel"
+      ]
+    }
+  },
+  {
+    "cr": "9",
+    "concept": "a hollow suit of tourney armor that hurls its own lance and then thunders across the field to retrieve it",
+    "expect": {
+      "template": [
+        "throw-retrieve"
+      ]
+    }
+  },
+  {
+    "cr": "6",
+    "concept": "a wax preacher whose sermons seal the wounds of its flock while its psalms wither the unbelievers",
+    "expect": {
+      "template": [
+        "seal"
+      ]
+    }
+  },
+  {
+    "cr": "9",
+    "concept": "a clockwork bishop that blesses the poor by day and at night unfolds into a cage of brass ribs around whoever it has chosen",
+    "expect": {
+      "route": [
+        "brute-grappler"
+      ],
+      "template": [
+        "aggro-curse",
+        "bloodied-burst",
+        "rally"
+      ]
+    }
+  },
+  {
+    "cr": "5",
+    "concept": "a brass bull construct that charges through market stalls",
+    "expect": {
+      "route": [
+        "brute-charger"
+      ],
+      "template": [
+        "heated-body",
+        "charge",
+        "trample",
+        "aggro-curse",
+        "push-prone"
+      ]
+    }
+  },
+  {
+    "cr": "7",
+    "concept": "a stone shrine-guardian bound to the high priest it was made to protect",
+    "expect": {
+      "route": [
+        "defender-warden"
+      ],
+      "template": [
+        "rally",
+        "interpose",
+        "heated-body"
+      ]
+    }
+  },
+  {
+    "cr": "15",
+    "concept": "an adult storm dragon whose breath is a rolling wall of thunder",
+    "expect": {
+      "route": [
+        "dragon"
+      ],
+      "template": [
+        "reel",
+        "heated-body",
+        "resonant-body",
+        "hook-drag"
+      ]
+    }
+  },
+  {
+    "cr": "17",
+    "concept": "a mountain of troll-flesh that knits shut around the axes left in it",
+    "expect": {
+      "route": [
+        "brute-regenerator",
+        "brute-grappler"
+      ],
+      "template": [
+        "hook-drag",
+        "heated-body",
+        "weapon-lodge"
+      ]
+    }
+  },
+  {
+    "cr": "3",
+    "concept": "a gutter assassin that hides between lantern-flickers",
+    "expect": {
+      "route": [
+        "skirmisher-skulker",
+        "lurker"
+      ],
+      "template": [
+        "blink",
+        "assassinate",
+        "phase-slip"
+      ]
+    }
+  },
+  {
+    "cr": "8",
+    "concept": "a leopard-thing that stalks the canopy and drops on stragglers from above",
+    "expect": {
+      "route": [
+        "lurker",
+        "lurker-trap",
+        "skirmisher-skulker"
+      ],
+      "template": [
+        "pounce",
+        "assassinate",
+        "isolation",
+        "leap"
+      ]
+    }
+  },
+  {
+    "cr": "6",
+    "concept": "a lighthouse hermit-mage whose lantern beam brands whoever it falls on, so her bolts find them again in the dark",
+    "expect": {
+      "route": [
+        "caster-binder",
+        "caster"
+      ],
+      "template": [
+        "bolt-mark",
+        "condition-payoff",
+        "seal"
+      ]
+    }
+  },
+  {
+    "cr": "9",
+    "concept": "a court astrologer who reads a foe's next move in the stars and pins them with a falling shard of light",
+    "expect": {
+      "route": [
+        "caster-binder",
+        "caster"
+      ],
+      "template": [
+        "bolt-restrain",
+        "condition-payoff"
+      ]
+    }
+  },
+  {
+    "cr": "8",
+    "concept": "a temple gong given legs that walks the cloister at night and strikes itself whenever it is struck",
+    "expect": {
+      "template": [
+        "active-toll",
+        "resonant-body"
+      ]
+    }
+  },
+  {
+    "cr": "4",
+    "concept": "a burrowing mole-hound that hunts by tremor and surfaces beneath sleepers",
+    "expect": {
+      "route": [
+        "lurker"
+      ],
+      "template": [
+        "burrow-ambush",
+        "assassinate"
+      ]
+    }
+  },
+  {
+    "cr": "7",
+    "concept": "a drowned bell-diver who still climbs the harbor chains at night, dragging anyone on the pier down with him",
+    "expect": {
+      "route": [
+        "lurker-phantom"
+      ],
+      "template": [
+        "hook-drag",
+        "assassinate",
+        "lure",
+        "pull-through"
+      ]
+    }
+  },
+  {
+    "cr": "3",
+    "concept": "a carrion goat that eats grave-flowers and vomits a choking cloud when cornered",
+    "expect": {
+      "route": [
+        "skirmisher"
+      ],
+      "template": [
+        "spew",
+        "bloodied-burst"
+      ]
+    }
+  },
+  {
+    "cr": "10",
+    "concept": "a glass ox forged for a tyrant's parade, hollow and humming, that charges the loudest voice in the square",
+    "expect": {
+      "route": [
+        "brute-charger"
+      ]
+    }
+  }
+]

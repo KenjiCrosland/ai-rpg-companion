@@ -96,7 +96,7 @@
 
         <!-- ZONE 3: Footer with save/load or upgrade prompt -->
         <div v-if="!premium" class="dungeon-footer">
-          <PatreonCallout :patreon-url="patreonLoginUrl" location="dungeon-footer">
+          <PatreonCallout location="dungeon-footer">
             <template #body>
               <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited monster statblock generation within your dungeons.</p>
             </template>
@@ -151,7 +151,7 @@
 
       <!-- Footer below content (free tier only — the upgrade prompt) -->
       <div v-if="!premium && (dungeonStore.currentDungeon || isGenerating)" class="dungeon-footer">
-        <PatreonCallout :patreon-url="patreonLoginUrl" location="dungeon-footer">
+        <PatreonCallout location="dungeon-footer">
           <template #body>
             <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited monster statblock generation within your dungeons.</p>
           </template>
@@ -263,11 +263,6 @@ function navigateBackToSeedSource() {
 const motionToggle = ref(true);
 provide('motionToggle', motionToggle);
 
-// Patreon OAuth URL with return to current page
-const patreonLoginUrl = computed(() => {
-  const returnUrl = encodeURIComponent(window.location.href);
-  return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
-});
 
 // Handle dungeon generation with local loading state
 async function handleGenerateDungeon() {

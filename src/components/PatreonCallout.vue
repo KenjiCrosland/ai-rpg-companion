@@ -94,7 +94,9 @@
       <ParButton
         variant="luminous"
         tag="a"
-        :href="patreonUrl"
+        :href="patreonTiersUrl"
+        target="_blank"
+        rel="noopener"
         @click="onCtaClick"
       >
         <template #icon-left>
@@ -106,6 +108,33 @@
         Support on Patreon
       </ParButton>
     </div>
+
+    <!-- Subordinate sign-in path. The CTA above takes a pledge; this takes
+         an existing patron to the only flow that creates a session here.
+         Two audiences, two destinations, and the "Already a patron?"
+         qualifier is what routes them — it names the reader's situation, so
+         a prospect skips the line on its first two words while a patron
+         recognizes themselves. Reported failure mode: patrons pledging on
+         Patreon, returning, and finding no way to activate.
+
+         Same tab on purpose, unlike the CTA: this flow redirects back to
+         the current page, and in a new tab the original tab would keep its
+         stale logged-out premium flag.
+
+         Shown to every free user, not only to logged-out patrons. The app
+         can't tell those apart: `premium` is stamped once onto #app at page
+         render and never re-checked. Narrowing it would mean wiring
+         `kenji/v1/auth-status` (already registered in kenji-premium-gate.php,
+         returns `logged_in`, currently called by nothing) into every tool's
+         mount path and making `premium` reactive. Owner weighed that
+         2026-09-24 and chose to carry the extra line instead — one line of
+         upsell space is cheaper than a network hop in every mount. Don't
+         re-propose it without a new reason. -->
+    <p class="patreon-callout__signin">
+      Already a patron?
+      <a :href="loginUrl" @click="onSignInClick">Log in</a>
+      to activate premium in this browser.
+    </p>
   </div>
 </template>
 
@@ -124,22 +153,24 @@
  * (button trigger with aria-expanded/controls, v-show content) so the
  * extraction is mechanical when earned.
  *
+ * Both Patreon destinations are owned here rather than passed in. There is
+ * nothing per-consumer about either one: the pledge page is a constant, and
+ * the login flow only needs a return URL, which defaults to the current
+ * page. An earlier `patreonUrl` prop existed for this and had drifted —
+ * thirteen call sites passed the login flow (making a button labelled
+ * "Support on Patreon" skip the pledge page entirely) and ToolSuiteShowcase
+ * passed a third, hardcoded campaign URL.
+ *
  * Props:
- *   patreonUrl — required. The Patreon link the existing implementation
- *                used. Pass through whatever variable or constant the
- *                calling generator resolves to.
+ *   location — stable analytics label for WHERE this upsell was clicked.
  */
 
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { ParButton } from '@/parchment';
-import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
+import { patreonTiersUrl, buildPatreonLoginUrl } from '@/util/patreon-urls.mjs';
 import { trackEvent } from '@/util/analytics.mjs';
 
 const props = defineProps({
-  patreonUrl: {
-    type: String,
-    required: true,
-  },
   // Stable analytics label for WHERE this upsell was clicked (e.g.
   // 'item-form', 'dungeon-monster-statblock-limit'). Content-free.
   location: {
@@ -148,10 +179,22 @@ const props = defineProps({
   },
 });
 
+// Returns to whichever tool page this callout is rendered on.
+const loginUrl = computed(() => buildPatreonLoginUrl());
+
 // Analytics: fired before navigation (ParButton emits click; the anchor's
 // default navigation still proceeds, and gtag beacons survive page unload).
 function onCtaClick() {
   trackEvent('patreon_click', { location: props.location });
+}
+
+// Analytics: the sign-in line. Deliberately a DIFFERENT event name from
+// the CTA above even though both navigate to the same URL — the whole
+// point of the line is to find out how many clicks were activation
+// attempts rather than pledge intent, and one shared event would hide
+// exactly that.
+function onSignInClick() {
+  trackEvent('patreon_login_click', { location: props.location });
 }
 
 const isExpanded = ref(false);
@@ -218,6 +261,41 @@ function toggleExpandable() {
   gap: 0.75rem;
   align-items: center;
   flex-wrap: wrap;
+}
+
+/* Sign-in line under the CTA. Secondary text colour and the same slate
+   link treatment as the bullet-list links below, so it reads at
+   supporting volume and never competes with the luminous CTA. No
+   `:slotted()` pairs here — unlike the body/aside/list rules, this
+   content is component-owned and can't be overridden by a consumer. */
+.patreon-callout__signin {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 14px;
+  color: var(--par-color-text-secondary, #555);
+  line-height: 1.6;
+  margin: 0.875rem 0 0;
+}
+
+.patreon-callout__signin a {
+  color: var(--color-action-secondary-rest, #5A7A9A);
+  text-decoration: none;
+  border-bottom: 0.5px solid var(--color-action-secondary-rest, #5A7A9A);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.patreon-callout__signin a:hover {
+  color: var(--color-action-rest, #365A85);
+  border-color: var(--color-action-rest, #365A85);
+}
+
+.patreon-callout__signin a:focus {
+  outline: none;
+}
+
+.patreon-callout__signin a:focus-visible {
+  outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 /* Inline expandable. Sits between the aside copy and the actions row so

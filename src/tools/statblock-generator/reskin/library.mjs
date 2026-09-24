@@ -30,7 +30,7 @@ export const LIBRARY_SEEDS = [
   // ——— control ———
   {
     key: 'aggro-curse', keys: ['mark', 'taunt', 'oath', 'challenge'],
-    section: 'Bonus Actions', archetypes: ['defender', 'brute', 'skirmisher'],
+    section: 'Bonus Actions', archetypes: ['defender', 'brute', 'skirmisher', 'caster'],
     name: 'Binding Mark', // Brinefrost Salt Demand, generified
     text: "*Wisdom Saving Throw:* DC {dc}, one creature within 30 feet. *Failure:* Until the start of the creature's next turn, the target has Disadvantage on attack rolls against creatures other than the creature.",
   },
@@ -41,7 +41,8 @@ export const LIBRARY_SEEDS = [
     text: "*Strength Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target is pulled up to 15 feet straight toward the creature, and its Speed is 0 until the start of the creature's next turn.",
   },
   {
-    key: 'lure', keys: ['lure', 'beguile', 'song', 'call'],
+    key: 'lure', retired: true, // promoted to a shape (shapes.mjs) 2026-09-22
+    keys: ['lure', 'beguile', 'song', 'call'],
     section: 'Actions', archetypes: ['lurker', 'caster', 'skirmisher'],
     name: 'Luring Presence', // Dull Compliance + the Bog Lantern's live proof
     text: "*Wisdom Saving Throw:* DC {dc}, one creature within 30 feet that can see or hear the creature. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn.",
@@ -102,7 +103,8 @@ export const LIBRARY_SEEDS = [
     text: "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice within 30 feet. *Failure:* The target immediately moves up to half its Speed in a direction of the creature's choice, using the safest available route.",
   },
   {
-    key: 'hook-drag', keys: ['hook', 'chain', 'harpoon', 'drag', 'grapple'],
+    key: 'hook-drag', retired: true, // promoted to a shape (shapes.mjs) 2026-09-22
+    keys: ['hook', 'chain', 'harpoon', 'drag', 'grapple'],
     section: 'Actions', archetypes: ['brute', 'lurker', 'defender'],
     name: 'Hooked Lash', // the whip-and-drag class
     text: '*Strength Saving Throw:* DC {dc}, one creature within 30 feet. *Failure:* The target is pulled up to 20 feet straight toward the creature and has the Grappled condition (escape DC {dc}).',
@@ -124,7 +126,7 @@ export const LIBRARY_SEEDS = [
     key: 'delayed-brand', keys: ['brand', 'ember', 'fuse', 'venom'],
     section: 'Actions', archetypes: ['caster', 'lurker', 'skirmisher'],
     name: 'Lingering Brand', dpr_frac: 0.6, // the delayed-tick class
-    text: "*Constitution Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target is seared by a lingering brand: it takes {burst} {damage_type} damage at the start of its next turn unless it uses its action to douse the brand.",
+    text: "*Constitution Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target is branded: it takes {burst} {damage_type} damage at the start of each of its turns until it uses its action to {douse}",  // dilemma rows are DoT-until-action (Fire Elemental grammar, critic 2026-09-22): a single tick never binds
   },
   {
     key: 'curse-debt', keys: ['curse', 'debt', 'rebuke', 'price'],
@@ -153,14 +155,14 @@ export const LIBRARY_SEEDS = [
   },
   {
     key: 'rally', keys: ['rally', 'bolster', 'ward', 'blessing'],
-    section: 'Bonus Actions', archetypes: ['defender', 'caster'],
+    section: 'Bonus Actions', archetypes: ['defender', 'caster', 'brute'],
     name: 'Bolstering Cry (2/Day)', dpr_frac: 0.5, // the commander THP class
     text: 'Each ally within 30 feet of the creature gains {burst} Temporary Hit Points.',
   },
   {
     key: 'focus', keys: ['focus', 'aim', 'stalk', 'poise'],
     section: 'Bonus Actions', archetypes: ['skirmisher', 'brute', 'lurker'],
-    name: 'Predatory Focus', // the aim class
+    name: 'Predatory Focus (2/Day)', // the aim class — gated (blind read 2026-09-21: at-will self-Advantage is unpriced)
     text: 'The creature has Advantage on the next attack roll it makes before the end of its turn.',
   },
   {
@@ -170,7 +172,7 @@ export const LIBRARY_SEEDS = [
     text: 'The creature takes the Disengage action, and the next attack roll made against it before the start of its next turn has Disadvantage.',
   },
   {
-    key: 'unnerve', keys: ['unnerve', 'croon', 'whisper', 'hex'],
+    key: 'unnerve', keys: ['unnerve', 'croon', 'whisper', 'hex'], retired: true, // the deleted placeholder's payload came back through the library (blind read 2026-09-21, the bishop's "Dissonant Hymn")
     section: 'Bonus Actions', archetypes: ['lurker', 'caster', 'defender', 'brute', 'skirmisher'],
     name: 'Unnerving Croon', // the old fallback's payload, on the RIGHT economy
     // (a bonus-action debuff never competes with Multiattack — the
@@ -192,7 +194,7 @@ LIBRARY_SEEDS.push(
     key: 'wind-up', keys: ['gather', 'charge-up', 'telegraph', 'brew'],
     section: 'Actions', archetypes: ['brute', 'caster', 'defender'], nova: true,
     name: 'Gathering Ruin (Recharge 5-6)', dpr_frac: 1.2,
-    text: "The creature begins gathering destructive power, shedding light in a 15-foot radius until the start of its next turn — when the power erupts. *Dexterity Saving Throw:* DC {dc}, each creature within 15 feet of the creature at that moment. *Failure:* {burst} {damage_type} damage. *Success:* Half damage.",
+    text: "The creature begins gathering destructive power, {telegraph} until the start of its next turn — when the power erupts. *Dexterity Saving Throw:* DC {dc}, each creature within 15 feet of the creature at that moment. *Failure:* {burst} {damage_type} damage. *Success:* Half damage.",
   },
   {
     key: 'coating', keys: ['coat', 'venom', 'anoint', 'charge-weapon'],
@@ -238,7 +240,7 @@ export const LIBRARY_KEYS = LIBRARY_SEEDS.map((s) => s.key);
 
 // deterministic, block-varied: the same block always draws the same
 // seed; different blocks rotate through their eligible shelf
-const nameHash = (s) => [...String(s)].reduce((h, c) => ((h * 31) + c.charCodeAt(0)) >>> 0, 7);
+export const nameHash = (s) => [...String(s)].reduce((h, c) => ((h * 31) + c.charCodeAt(0)) >>> 0, 7);
 
 export function drawLibraryRow(scaled, { archetype = null, energy = null, mix = null, name = '', shapeKey = null, imposed = [], mechanics = null, cr = null } = {}) {
   const hasNova = Object.values(scaled.sections ?? {}).flat()

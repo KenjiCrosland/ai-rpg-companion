@@ -112,12 +112,16 @@ describe('concept-call lore threading (owner design, 2026-08-04)', () => {
     expect(p).toMatch(/behavior\|body\|object\|aura/);
   });
 
-  test('both concept prompts offer the brute styles (donor lines landed 2026-08-26)', () => {
+  test('the shelf lives in the ROUTE prompt; neither prose prompt asks for a style any more (two calls, 2026-09-21)', () => {
+    const { buildRoutePrompt } = require('../reskin/route.mjs');
+    const route = buildRoutePrompt('an ogre of the quarry', { cr: 5 });
+    expect(route).toMatch(/- brute-charger — runs prey down/);
+    expect(route).toMatch(/- skirmisher-mounted —/);
     const seed = buildSeedSynthesisPrompt({ intelligence: 'dim', physical: 'massive', silhouette: 'hulk', origin: 'a quarry', creature_type: 'Giant' }, { cr: 5 });
     const resolve = buildArchetypeResolvePrompt('an ogre of the quarry', '', { cr: 5 });
     for (const p of [seed, resolve]) {
-      expect(p).toMatch(/"charger" \(it runs prey down/);
-      expect(p).toMatch(/mounted\|skulker\|hurler\|winged\|charger\|grappler\|juggernaut\|regenerator/);
+      expect(p).not.toMatch(/"styles?":/);
+      expect(p).not.toMatch(/"archetype":/);
     }
   });
 });

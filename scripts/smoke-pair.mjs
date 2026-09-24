@@ -40,7 +40,9 @@ for (const d of fs.readdirSync('smoke-out')) {
     const trace = (/### Trace\n```\n([\s\S]*?)\n```/.exec(md) ?? [])[1] ?? '';
     const block = (/### Block\n```\n([\s\S]*?)\n```/.exec(md) ?? [])[1] ?? '';
     if (!input || !block) continue;
-    const k = /\[reskin\]/.test(trace) ? 'B' : 'A';
+    // --b-marker <regex>: the trace line that marks side B (default: the reskin path)
+    const bMarker = new RegExp(args.includes('--b-marker') ? args[args.indexOf('--b-marker') + 1] : '\\[reskin\\]');
+    const k = bMarker.test(trace) ? 'B' : 'A';
     const json = path.join('smoke-out', d, f.replace(/\.md$/, '.json'));
     (cap[input] = cap[input] ?? { A: [], B: [] })[k].push({ block, json: fs.existsSync(json) ? json : null });
   }

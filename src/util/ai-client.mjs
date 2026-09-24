@@ -203,10 +203,15 @@ export async function generateGptResponse(
 
   while (attempts < maxAttempts && !validJson && !providerError) {
     try {
-      if (previousJSONString) {
-        retryPrompt = `This JSON may not be formatted correctly. If not formatted correctly can you fix it for me? Please only return a valid JSON string and no comments please.
-                ${previousJSONString}`;
-      }
+      // The fix-the-JSON prompt is right ONLY when no JSON could be extracted.
+      // When the JSON parsed and the VALIDATOR rejected it, re-sending the
+      // reply with "fix the formatting" hands back the same rejected draft
+      // every attempt (three identical trait drafts on every failed repair,
+      // 2026-09-21). A semantic rejection resamples the ORIGINAL prompt.
+      retryPrompt = previousJSONString
+        ? `This JSON may not be formatted correctly. If not formatted correctly can you fix it for me? Please only return a valid JSON string and no comments please.
+                ${previousJSONString}`
+        : undefined;
 
       // Build messages array
       const messages = [
@@ -304,8 +309,8 @@ export async function generateGptResponse(
       if (validateJSONKeys) {
         validJson = validateJSONKeys(validJsonString);
         if (!validJson) {
-          // JSON validation failure - NOT a provider error, just retry
-          previousJSONString = responseContent;
+          // parsed but REJECTED by the validator: resample the original prompt
+          previousJSONString = '';
         }
       } else {
         validJson = true;

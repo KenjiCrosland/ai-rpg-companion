@@ -1563,7 +1563,7 @@ export const DONORS = [
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
-        { name: 'False Form', rules: true, text: 'The creature shape-shifts to resemble a natural feature of its surroundings while retaining its game statistics, or it returns to its true form. While it is motionless in its false form, it is indistinguishable from that feature.' },
+        { name: 'False Form', rules: true, text: 'The creature shape-shifts to resemble an ordinary object or fixture of the place it waits in while retaining its game statistics, or it returns to its true form. While it is motionless in its false form, it is indistinguishable from that feature.' },
       ],
     },
   },
@@ -1588,7 +1588,7 @@ export const DONORS = [
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
-        { name: 'False Form', rules: true, text: 'The creature shape-shifts to resemble a natural feature of its surroundings while retaining its game statistics, or it returns to its true form. While it is motionless in its false form, it is indistinguishable from that feature.' },
+        { name: 'False Form', rules: true, text: 'The creature shape-shifts to resemble an ordinary object or fixture of the place it waits in while retaining its game statistics, or it returns to its true form. While it is motionless in its false form, it is indistinguishable from that feature.' },
       ],
     },
   },
@@ -1615,7 +1615,7 @@ export const DONORS = [
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
-        { name: 'False Form', rules: true, text: 'The creature shape-shifts to resemble a natural feature of its surroundings while retaining its game statistics, or it returns to its true form. While it is motionless in its false form, it is indistinguishable from that feature.' },
+        { name: 'False Form', rules: true, text: 'The creature shape-shifts to resemble an ordinary object or fixture of the place it waits in while retaining its game statistics, or it returns to its true form. While it is motionless in its false form, it is indistinguishable from that feature.' },
       ],
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },

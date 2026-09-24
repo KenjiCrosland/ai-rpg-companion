@@ -23,8 +23,44 @@ touching anything under `chassis/` or `format-2024/`.
   + PB (raise-only stamp, caster-aware via `attackStatFor`), attack damage
   flat bonus = striker mod, save damage pure dice, HP formula bonus =
   dice × CON mod. One Combat role
-  select for both editions: Auto (micro resolve call when a concept exists,
-  random pick when blank), Balanced, or one of 8 roles.
+  select for both editions: Auto, Balanced (aliases Auto), or one of the
+  roles.
+- **Resolve is TWO calls** (2026-09-21, `reskin/route.mjs`): the ROUTE call
+  shows the model the donor shelf (~22 lines, one blurb + print exemplars
+  each) and asks for up to three picks, each with a phrase QUOTED from the
+  input; `chooseLine` verifies every quote against the input and falls to
+  the next pick on a veto (living juggernaut/warden, quote not found, user
+  role mismatch). Its output is exactly `generateReskin`'s interface
+  (archetype, style, body, mechanics, resolvedType). The IDENTITY call
+  (`buildIdentityPrompt`) then writes the prose conditioned on the routed
+  line. Blank rolls run SYNTHESIS first, then ROUTE on the fused creature.
+  There are no label-translation belts in the Vue any more; the shelf has
+  no unserved styles. Ad hoc tools: `scripts/smoke-replay-resolve.mjs`
+  replays only the route call; `scripts/smoke-statblock.mjs` captures the
+  `[route]` trace line.
+- **The signature is TEMPLATE-fitted** (2026-09-21, `reskin/templates.mjs`;
+  owner: "create, tag, try to fit, ship the fit or the seed, log the
+  miss"). Rules text is never free. IDEA call: the ability in plain words
+  plus a tag (section/trigger/effect), no templates shown. FIT call: the
+  idea plus the templates legal for the line, CR, movement and section
+  (minus what the sheet owns, minus a second nova); pick one or `none`,
+  quote the idea words it carries, name it, fill the FLAVOR slots. The
+  engine fills numbers and closed-vocabulary slots, renders the frame,
+  and refuses a half-filled row. A miss traces as `signature miss:` with
+  the idea and tag — that log IS the template backlog, authored from
+  print (`shapes.mjs` frames + `library.mjs` seeds are the catalog). The
+  library seed stands in on a miss; no vet, no repair. A rider fit rides
+  the host row and IS the signature (no seed beside it); the whole shelf
+  (all sections, all triggers) is in the race before the "no verb" gate
+  and the strongest concept match wins; a menu holds only rows the sheet
+  can render; a blind seed is dealt only where `BLIND_ROLES` says its
+  fiction is any-body. The COOKBOOK INDEX
+  (`reskin/corpus-tags.mjs` → `node scripts/tag-corpus.mjs` →
+  `scripts/corpus-shapes.json`) tags every print ability in the same
+  grammar so `scripts/smoke-misses.mjs` cites print rows under each
+  miss tag. The free-text wildcard, its vet chain, and its repair loop were retired
+  2026-09-22 (goldens 19/19 on the template path); rules text has one
+  source, the catalog.
 - **2024 edition**: sections-based model, markdown render
   (`format-2024/render.mjs`), display via `@/components/Statblock2024.vue`
   with inline editing (engine band hints on numeric edits — advisory, never

@@ -1,4 +1,5 @@
-import { generateReskin, renameKeysOf } from '../generate.mjs';
+import { generateReskin as generateReskinRaw, renameKeysOf } from '../generate.mjs';
+const generateReskin = (opts, cb) => generateReskinRaw(opts, cb);
 import { pickDonor, scaleDonor } from '../scale.mjs';
 
 // THE HEADLESS HORSEMAN CRASH (2026-09-15, user-visible x3): damage

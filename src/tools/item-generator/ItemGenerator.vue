@@ -116,7 +116,7 @@
                benefits (Lore Builder, Quest Hook) are stated explicitly at
                the call site rather than relied on as PatreonCallout's
                default. Other tools' migrations follow the same shape. -->
-          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" location="item-footer">
+          <PatreonCallout v-if="!premium" location="item-footer">
             <template #features>
               <li>Cross-device save and load — your campaigns sync between browsers and devices.</li>
               <li>Unlimited Lore Builder generations — no daily cap.</li>
@@ -303,7 +303,7 @@
       <div class="footer-meta" v-if="magicItemDescription && !loadingItem">
         <!-- Free users: PatreonCallout owns the upsell messaging end-to-end.
              Same slot content as the form-sidebar instance above. -->
-        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" location="item-footer">
+        <PatreonCallout v-if="!premium" location="item-footer">
           <template #features>
             <li>Cross-device save and load — your campaigns sync between browsers and devices.</li>
             <li>Unlimited Lore Builder generations — no daily cap.</li>
@@ -425,10 +425,6 @@ const props = defineProps({
   }
 });
 
-const patreonLoginUrl = computed(() => {
-  const returnUrl = encodeURIComponent(window.location.href);
-  return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
-});
 
 
 const itemName = ref('');
