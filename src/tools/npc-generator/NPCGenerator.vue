@@ -132,7 +132,7 @@
                 <!-- Free users only — premium's backup/restore lives in the
                      sidebar footer's Data options. -->
                 <div class="footer-meta" v-if="!premium">
-                    <PatreonCallout :patreon-url="patreonLoginUrl" location="npc-footer">
+                    <PatreonCallout location="npc-footer">
                         <template #body>
                             <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs
                                 across devices and unlocks unlimited combat statblock generation for your NPCs.</p>
@@ -320,7 +320,7 @@
             <!-- Free users only — premium's backup/restore lives in the
                  sidebar footer's Data options. -->
             <div class="footer-meta" v-if="npcDescriptionPart1 && !loadingPart1 && !premium">
-                <PatreonCallout :patreon-url="patreonLoginUrl" location="npc-footer">
+                <PatreonCallout location="npc-footer">
                     <template #body>
                         <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across
                             devices and unlocks unlimited combat statblock generation for your NPCs.</p>
@@ -488,10 +488,6 @@ const props = defineProps({
     }
 });
 
-const patreonLoginUrl = computed(() => {
-    const returnUrl = encodeURIComponent(window.location.href);
-    return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
-});
 
 // Same-tab navigation to the Statblock Generator with the linked statblock
 // pre-selected. Goes through `navigateToTool` rather than a hardcoded

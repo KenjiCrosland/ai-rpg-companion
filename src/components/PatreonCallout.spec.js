@@ -1,12 +1,12 @@
 import { mount } from '@vue/test-utils';
 import PatreonCallout from './PatreonCallout.vue';
+import { trackEvent } from '@/util/analytics.mjs';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 
-const PATREON_URL = 'https://patreon.com/example';
+jest.mock('@/util/analytics.mjs', () => ({ trackEvent: jest.fn() }));
 
 function makeWrapper(props = {}) {
-  return mount(PatreonCallout, {
-    props: { patreonUrl: PATREON_URL, ...props },
-  });
+  return mount(PatreonCallout, { props });
 }
 
 describe('PatreonCallout', () => {
@@ -19,13 +19,23 @@ describe('PatreonCallout', () => {
       expect(text).toContain('built and maintained by one developer');
     });
 
-    it('passes patreonUrl through to the action button href', () => {
-      // The bullet list now also contains an <a> (membership link), so we
-      // target the action button by its par-button class to avoid matching
-      // the wrong anchor.
+    it('sends the action button to the Patreon pledge page', () => {
+      // "Support on Patreon" must land where you can actually pledge. It
+      // used to take a `patreonUrl` prop, which every tool filled with the
+      // OAuth login flow — so the button skipped the pledge page entirely.
+      // The bullet list also contains an <a>, so target the button by its
+      // par-button class to avoid matching the wrong anchor.
       const wrapper = makeWrapper();
       const action = wrapper.find('.par-button');
-      expect(action.attributes('href')).toBe(PATREON_URL);
+      expect(action.attributes('href')).toBe(patreonTiersUrl);
+    });
+
+    it('opens the pledge page in a new tab, safely', () => {
+      // Matches DataManagerModal's CTA and every "See all premium tiers"
+      // link. The tool page is mid-work; leaving it in place matters.
+      const action = makeWrapper().find('.par-button');
+      expect(action.attributes('target')).toBe('_blank');
+      expect(action.attributes('rel')).toContain('noopener');
     });
 
     it('renders the action button as <a>, not <button>', () => {
@@ -116,7 +126,7 @@ describe('PatreonCallout', () => {
   describe('body and aside slots', () => {
     it('renders custom body content when #body slot is provided', () => {
       const wrapper = mount(PatreonCallout, {
-        props: { patreonUrl: PATREON_URL },
+        props: {},
         slots: {
           body: '<p class="patreon-callout__body">Custom dungeon-specific body copy.</p>',
         },
@@ -128,7 +138,7 @@ describe('PatreonCallout', () => {
 
     it('renders custom aside content when #aside slot is provided', () => {
       const wrapper = mount(PatreonCallout, {
-        props: { patreonUrl: PATREON_URL },
+        props: {},
         slots: {
           aside: '<p class="patreon-callout__aside">Custom aside copy.</p>',
         },
@@ -150,7 +160,7 @@ describe('PatreonCallout', () => {
       const wrapper = mount({
         components: { PatreonCallout },
         template: `
-          <PatreonCallout patreon-url="${PATREON_URL}">
+          <PatreonCallout>
             <template #body></template>
           </PatreonCallout>
         `,
@@ -163,7 +173,7 @@ describe('PatreonCallout', () => {
       const wrapper = mount({
         components: { PatreonCallout },
         template: `
-          <PatreonCallout patreon-url="${PATREON_URL}">
+          <PatreonCallout>
             <template #aside></template>
           </PatreonCallout>
         `,
@@ -184,10 +194,73 @@ describe('PatreonCallout', () => {
     });
   });
 
+  describe('sign-in line', () => {
+    // Why this exists: an existing patron who is logged out reads
+    // "Support on Patreon" as "pay again" and never clicks it, so they
+    // never reach the only flow that creates a session. The qualifier
+    // phrase is what routes them.
+    it('renders the "Already a patron?" line with a Log in link', () => {
+      const wrapper = makeWrapper();
+      const signin = wrapper.find('.patreon-callout__signin');
+      expect(signin.exists()).toBe(true);
+      expect(signin.text()).toContain('Already a patron?');
+      expect(signin.text()).toContain('activate premium in this browser');
+      expect(signin.find('a').text()).toBe('Log in');
+    });
+
+    it('sends Log in to the Patreon flow, a different place than the CTA', () => {
+      // Two audiences, two destinations. The pledge page cannot create a
+      // session here, and the login flow does not take a pledge, so a
+      // single destination cannot serve both readers.
+      const wrapper = makeWrapper();
+      const login = wrapper.find('.patreon-callout__signin a').attributes('href');
+      expect(login).toContain('https://cros.land/patreon-flow/');
+      expect(login).toContain('patreon-login=yes');
+      expect(login).not.toContain(patreonTiersUrl);
+      expect(wrapper.find('.par-button').attributes('href')).toBe(patreonTiersUrl);
+    });
+
+    it('does not open the login flow in a new tab', () => {
+      // The flow redirects back to this page. In a new tab the original
+      // tab keeps its stale logged-out premium flag.
+      const wrapper = makeWrapper();
+      expect(wrapper.find('.patreon-callout__signin a').attributes('target')).toBeUndefined();
+    });
+
+    it('fires a distinct analytics event from the pledge CTA', async () => {
+      // Both navigate to the same URL, so a shared event would make it
+      // impossible to tell activation attempts from pledge intent — which
+      // is the one question this line was added to answer.
+      trackEvent.mockClear();
+      const wrapper = makeWrapper({ location: 'item-footer' });
+      await wrapper.find('.patreon-callout__signin a').trigger('click');
+      expect(trackEvent).toHaveBeenCalledWith('patreon_login_click', { location: 'item-footer' });
+
+      trackEvent.mockClear();
+      await wrapper.find('.par-button').trigger('click');
+      expect(trackEvent).toHaveBeenCalledWith('patreon_click', { location: 'item-footer' });
+    });
+
+    it('renders even when the body and aside slots are suppressed', () => {
+      // The stripped-down inline limit-reached shape (dungeon
+      // NPCsTab/MonstersTab) is exactly where a blocked patron lands.
+      const wrapper = mount({
+        components: { PatreonCallout },
+        template: `
+          <PatreonCallout>
+            <template #body></template>
+            <template #aside></template>
+          </PatreonCallout>
+        `,
+      });
+      expect(wrapper.find('.patreon-callout__signin').exists()).toBe(true);
+    });
+  });
+
   describe('features slot', () => {
     it('renders custom slot content instead of the default bullets when #features is provided', async () => {
       const wrapper = mount(PatreonCallout, {
-        props: { patreonUrl: PATREON_URL },
+        props: {},
         slots: {
           features: `
             <li>Custom NPC bullet one</li>

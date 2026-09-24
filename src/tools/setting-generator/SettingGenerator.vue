@@ -109,7 +109,7 @@
         <!-- ZONE 3: Footer meta (free users only — premium's backup/restore
              lives in the sidebar footer's Data options). -->
         <div class="footer-meta" v-if="!premium">
-          <PatreonCallout :patreon-url="patreonLoginUrl" location="setting-footer">
+          <PatreonCallout location="setting-footer">
             <template #body>
               <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs your settings across devices.</p>
             </template>
@@ -159,7 +159,7 @@
 
       <!-- Footer below content (free users only). -->
       <div class="footer-meta" v-if="settingOverviewExists && !premium">
-        <PatreonCallout :patreon-url="patreonLoginUrl" location="setting-footer">
+        <PatreonCallout location="setting-footer">
           <template #body>
             <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs your settings across devices.</p>
           </template>
@@ -262,11 +262,6 @@ const props = defineProps({
   }
 });
 
-// Patreon OAuth URL
-const patreonLoginUrl = computed(() => {
-  const returnUrl = encodeURIComponent(window.location.href);
-  return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
-});
 
 const showDataManagerModal = ref(false);
 

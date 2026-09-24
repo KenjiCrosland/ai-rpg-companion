@@ -115,7 +115,7 @@
              the upsell; premium users no longer need a save/load callout —
              the sidebar footer's Data options covers backup/restore. -->
         <div class="footer-meta" v-if="!premium">
-          <PatreonCallout :patreon-url="patreonLoginUrl" location="statblock-footer">
+          <PatreonCallout location="statblock-footer">
             <template #body>
               <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited statblock generation.</p>
             </template>
@@ -267,7 +267,7 @@
       <!-- Footer below monster content (free users only — premium's
            backup/restore lives in the sidebar footer's Data options). -->
       <div class="footer-meta" v-if="monster && !loadingPart2 && !premium">
-        <PatreonCallout :patreon-url="patreonLoginUrl" location="statblock-footer">
+        <PatreonCallout location="statblock-footer">
           <template #body>
             <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited statblock generation.</p>
           </template>
@@ -346,10 +346,6 @@ const props = defineProps({
   }
 })
 
-const patreonLoginUrl = computed(() => {
-  const returnUrl = encodeURIComponent(window.location.href);
-  return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
-});
 
 const loadingPart1 = ref(false);
 const loadingPart2 = ref(false);

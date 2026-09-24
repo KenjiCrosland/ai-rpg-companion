@@ -229,7 +229,7 @@
                 class="statblock-limit-message">
                 <p><strong>Statblock generation limit reached</strong></p>
                 <p>You are at your daily statblock generation limit (5 per 24 hours).</p>
-                <PatreonCallout :patreon-url="patreonLoginUrl" location="dungeon-npc-statblock-limit">
+                <PatreonCallout location="dungeon-npc-statblock-limit">
                   <template #body></template>
                   <template #aside></template>
                   <template #features>
@@ -472,11 +472,6 @@ const reducedMotion = ref(
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 );
 
-// Patreon OAuth URL
-const patreonLoginUrl = computed(() => {
-  const returnUrl = encodeURIComponent(window.location.href);
-  return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
-});
 
 // Statblock Generator URL with query params (the href used in production,
 // where the link opens the cros.land page in a new tab).

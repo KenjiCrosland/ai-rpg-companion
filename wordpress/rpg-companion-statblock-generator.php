@@ -328,9 +328,14 @@ function rpg_statblock_seo_content() {
           layout or the new 2024 style. A math engine sets the numbers: Armor
           Class, hit points, attack bonuses, save DCs, and damage all derive
           from the Challenge Rating you pick, on curves calibrated against
-          every monster in the 5e SRD. The AI writes the creature's abilities
-          and flavor around numbers it cannot change, so a CR 12 skirmisher
-          from this tool hits like an official CR 12 skirmisher.
+          every monster in the 5e SRD. The abilities come from a library of
+          shapes written against the official monsters of each kind: an
+          ambusher, a charger, a grappler, a binder, a tomb warden. Each shape
+          is scaled to your CR and fitted to your concept. The AI names the
+          creature, writes its lore, and proposes a signature ability that the
+          tool fits to the closest shape, all around numbers it cannot change,
+          so a CR 12 skirmisher from this tool hits like an official CR 12
+          skirmisher.
         </p>
 
         <p>
@@ -358,7 +363,7 @@ function rpg_statblock_seo_content() {
           budget on their own turn and the rest through legendary actions,
           matching how official legendaries are costed. Save DCs always derive
           from 8&nbsp;+&nbsp;proficiency&nbsp;+&nbsp;ability modifier, and
-          every block passes an automated review of roughly ninety checks
+          every block passes an automated review of more than a hundred checks
           calibrated so that no official SRD monster would trip them.
         </p>
 
@@ -371,21 +376,27 @@ function rpg_statblock_seo_content() {
         </p>
 
         <ul class="rpg-seo-list">
-          <li><strong>Balanced:</strong> the raw mathematical baseline for the CR.</li>
-          <li><strong>Brute:</strong> trades a point of AC for about 25% more hit points and harder single hits.</li>
+          <li><strong>Brute:</strong> trades a point of AC for about 30% more hit points and harder single hits.</li>
           <li><strong>Defender:</strong> +2 AC and extra hit points, paid for with about 15% less damage. Usually carries a protection reaction.</li>
           <li><strong>Skirmisher:</strong> baseline numbers plus a movement trick like bonus-action disengage, flyby, or burrow.</li>
           <li><strong>Artillery:</strong> thin defenses in exchange for long-range attacks and an escape tool.</li>
           <li><strong>Controller:</strong> +1 to save DCs and about 30% less damage. Restraints, slows, and blinds do the work.</li>
           <li><strong>Lurker:</strong> fragile and weak in a stand-up fight, with an opening strike that spends the missing damage all at once.</li>
-          <li><strong>Support:</strong> buffs, heals, and enables allies. Deliberately underperforms its CR when fought alone.</li>
-          <li><strong>Swarm:</strong> a mass of Tiny creatures with weapon resistances, extra hit points, and damage that halves below half hit points, per the official swarm rules.</li>
         </ul>
 
         <p>
           Leave the role on <strong>Auto</strong> and the tool reads your
           concept and picks: a &ldquo;tomb guardian&rdquo; resolves to a
           defender, a &ldquo;dune ambusher&rdquo; to a lurker.
+        </p>
+
+        <p>
+          Some monsters are defined by their body rather than a role. Swarms,
+          oozes, and true dragons are read from your concept and built on
+          their own chassis. A swarm gets the official weapon resistances,
+          extra hit points, and damage that halves at half hit points. An
+          ooze corrodes, engulfs, and squeezes through cracks. A dragon gets
+          the breath weapon, flight, and frightful presence in one kit.
         </p>
 
         <h3>2014 vs. 2024 statblocks</h3>
@@ -404,13 +415,18 @@ function rpg_statblock_seo_content() {
         </p>
 
         <p>
-          Both editions run on the same math engine here, so the numbers are
-          identical either way. Any saved monster can be converted to the
-          other edition once. After that, both printings are stored on the
-          monster and tabs flip between them instantly. Conversion translates
-          wording only, with one exception that matches the official 2024
-          reprints: blanket resistance to nonmagical bludgeoning, piercing,
-          and slashing is dropped, and the tool tells you when it does this.
+          Both editions run on the same math engine, but each is priced to
+          its own damage curve. The 2014 damage-per-CR curve runs lower than
+          the 2024 one, so a monster generated under 2014 rules hits a little
+          softer than its 2024 counterpart, on purpose. A monster generated
+          under the 2014 rules is born with its 2024 printing, and tabs on the
+          card flip between them instantly. A 2024 monster, or one saved
+          before this change, converts to the other edition once with an AI
+          pass and then carries both printings the same way. Conversion
+          translates wording only and never changes numbers, with one
+          exception that matches the official 2024 reprints: blanket
+          resistance to nonmagical bludgeoning, piercing, and slashing is
+          dropped, and the tool tells you when it does this.
         </p>
 
         <h3>Frequently asked questions</h3>
@@ -434,10 +450,13 @@ function rpg_statblock_seo_content() {
             <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
               <p itemprop="text">
                 Yes. The AI never chooses the numbers. AC, hit points, attack
-                bonuses, save DCs, and damage are computed from the CR and
-                combat role on curves calibrated against the official SRD
-                monsters, and an automated review checks every block against
-                the conventions those monsters follow.
+              bonuses, save DCs, and damage are computed from the CR and
+              combat role on curves calibrated against the official SRD
+              monsters. Abilities are fitted from shapes written against those
+              monsters and scaled to the CR, and an automated review checks
+              every block against the conventions they follow. When no shape
+              fits the AI's idea for a signature ability, a proven one from
+              the library stands in rather than an unchecked ability.
               </p>
             </div>
           </details>
@@ -459,11 +478,13 @@ function rpg_statblock_seo_content() {
             <summary itemprop="name">Can I convert a monster between 2014 and 2024 rules?</summary>
             <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
               <p itemprop="text">
-                Yes. A one-time AI conversion rewrites the wording into the
-                other edition's style while the numbers stay identical. Both
-                printings are then saved on the monster, with tabs to flip
-                between them instantly. A conversion counts as one generation
-                on the free tier.
+                Yes. Monsters generated under the 2014 rules arrive with both
+              printings already saved, at no extra cost. For a 2024 monster, or
+              one saved before that change, a one-time AI conversion rewrites
+              the wording into the other edition's style while the numbers stay
+              identical. Both printings are then saved on the monster, with tabs
+              to flip between them instantly. A conversion counts as one
+              generation on the free tier.
               </p>
             </div>
           </details>

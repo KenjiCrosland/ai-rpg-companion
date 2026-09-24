@@ -1575,9 +1575,14 @@ describe('EncounterGenerator', () => {
     it('should show upgrade prompt for free users', () => {
       wrapper = mount(EncounterGenerator, { props: { premium: false } });
 
-      // Free users see the Patreon unlock message
+      // Free users see the Patreon upsell. The URLs moved into
+      // PatreonCallout, which owns both the pledge page and the login
+      // flow; the tool no longer holds a `patreonLoginUrl` of its own.
       expect(wrapper.vm.premium).toBe(false);
-      expect(wrapper.vm.patreonLoginUrl).toContain('patreon-login=yes');
+      const callout = wrapper.find('.patreon-callout');
+      expect(callout.exists()).toBe(true);
+      expect(callout.find('.patreon-callout__signin a').attributes('href'))
+        .toContain('patreon-login=yes');
     });
   });
 
