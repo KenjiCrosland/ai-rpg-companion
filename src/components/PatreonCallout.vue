@@ -119,7 +119,17 @@
 
          Same tab on purpose, unlike the CTA: this flow redirects back to
          the current page, and in a new tab the original tab would keep its
-         stale logged-out premium flag. -->
+         stale logged-out premium flag.
+
+         Shown to every free user, not only to logged-out patrons. The app
+         can't tell those apart: `premium` is stamped once onto #app at page
+         render and never re-checked. Narrowing it would mean wiring
+         `kenji/v1/auth-status` (already registered in kenji-premium-gate.php,
+         returns `logged_in`, currently called by nothing) into every tool's
+         mount path and making `premium` reactive. Owner weighed that
+         2026-09-24 and chose to carry the extra line instead — one line of
+         upsell space is cheaper than a network hop in every mount. Don't
+         re-propose it without a new reason. -->
     <p class="patreon-callout__signin">
       Already a patron?
       <a :href="loginUrl" @click="onSignInClick">Log in</a>
