@@ -358,6 +358,10 @@ import MonsterPicker from './components/MonsterPicker.vue';
 import EncounterMonsterList from './components/EncounterMonsterList.vue';
 import ItemExportsSection from '@/tools/item-generator/components/ItemExportsSection.vue';
 import encounterDifficulty from '@/data/encounter-difficulty.json';
+import {
+  totalPlayers, totalMonsters, thresholdsFor,
+  rawXpFor, multiplierFor, adjustedXpFor, difficultyFor,
+} from '@/util/encounter-math.mjs';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import {
   buildCall1StructurePrompt,
@@ -410,54 +414,6 @@ const props = defineProps({
 
 const toast = useToast();
 
-// ─── CR-to-XP lookup (5e DMG) ────────────────────────────────────────────────
-const CR_TO_XP = {
-  '0': 10, '1/8': 25, '1/4': 50, '1/2': 100,
-  '1': 200, '2': 450, '3': 700, '4': 1100, '5': 1800,
-  '6': 2300, '7': 2900, '8': 3900, '9': 5000, '10': 5900,
-  '11': 7200, '12': 8400, '13': 10000, '14': 11500, '15': 13000,
-  '16': 15000, '17': 18000, '18': 20000, '19': 22000, '20': 25000,
-  '21': 33000, '22': 41000, '23': 50000, '24': 62000, '25': 75000,
-  '26': 90000, '27': 105000, '28': 120000, '29': 135000, '30': 155000
-};
-
-/**
- * Normalize CR values from various formats to the string keys used in CR_TO_XP.
- * Handles: 0.125, 0.25, 0.5, "1/8", "1/4", "1/2", 5, "5", etc.
- */
-function normalizeCR(cr) {
-  if (cr === undefined || cr === null) return '0';
-  const s = String(cr);
-  if (s.includes('/')) return s;
-  const num = parseFloat(s);
-  if (isNaN(num)) return '0';
-  if (num === 0.125) return '1/8';
-  if (num === 0.25) return '1/4';
-  if (num === 0.5) return '1/2';
-  return String(Math.floor(num));
-}
-
-/**
- * 5e encounter multiplier table (DMG p. 82).
- * Adjusts tier up for small parties (<3) and down for large parties (>5).
- */
-function getEncounterMultiplier(monsterCount, partySize) {
-  let tier;
-  if (monsterCount <= 1) tier = 0;
-  else if (monsterCount === 2) tier = 1;
-  else if (monsterCount <= 6) tier = 2;
-  else if (monsterCount <= 10) tier = 3;
-  else if (monsterCount <= 14) tier = 4;
-  else tier = 5;
-
-  const multipliers = [1, 1.5, 2, 2.5, 3, 4];
-
-  if (partySize < 3) tier = Math.min(tier + 1, 5);
-  else if (partySize > 5) tier = Math.max(tier - 1, 0);
-
-  return multipliers[tier];
-}
-
 // ─── State ────────────────────────────────────────────────────────────────────
 const encounterMonsters = ref([]);
 // A new monster list means the index-keyed edition-view state is stale.
@@ -495,29 +451,11 @@ const encounterEditForm = ref({
 const showHomebreweryLink = ref(false);
 
 // ─── Party calculations ──────────────────────────────────────────────────────
-const totalPartySize = computed(() =>
-  partyGroups.value.reduce((sum, group) => sum + (Number(group.players) || 0), 0)
+const totalPartySize = computed(() => totalPlayers(partyGroups.value));
+
+const difficultyThresholds = computed(() =>
+  thresholdsFor(partyGroups.value, encounterDifficulty.encounter_difficulty)
 );
-
-const difficultyThresholds = computed(() => {
-  let easy = 0, medium = 0, hard = 0, deadly = 0;
-  const table = encounterDifficulty.encounter_difficulty;
-
-  partyGroups.value.forEach(group => {
-    const level = Number(group.level) || 0;
-    const players = Number(group.players) || 0;
-    const levelData = table[level - 1]; // 0-indexed array, level 1 = index 0
-
-    if (levelData && players > 0 && level > 0) {
-      easy += levelData.Easy * players;
-      medium += levelData.Medium * players;
-      hard += levelData.Hard * players;
-      deadly += levelData.Deadly * players;
-    }
-  });
-
-  return { easy, medium, hard, deadly };
-});
 
 // XP-threshold summary for the Party info tooltip (ParTooltip takes plain text).
 const thresholdTooltipText = computed(() => {
@@ -535,38 +473,21 @@ const partySummary = computed(() => {
 });
 
 // ─── Monster XP & Difficulty ─────────────────────────────────────────────────
-const totalMonsterCount = computed(() =>
-  encounterMonsters.value.reduce((sum, m) => sum + (m.quantity || 1), 0)
+const totalMonsterCount = computed(() => totalMonsters(encounterMonsters.value));
+
+const rawXp = computed(() => rawXpFor(encounterMonsters.value));
+
+const currentEncounterMultiplier = computed(() =>
+  multiplierFor(totalMonsterCount.value, totalPartySize.value)
 );
 
-const rawXp = computed(() =>
-  encounterMonsters.value.reduce((sum, m) => {
-    const xp = CR_TO_XP[normalizeCR(m.cr)] || 0;
-    return sum + (xp * (m.quantity || 1));
-  }, 0)
+const adjustedXp = computed(() =>
+  adjustedXpFor(encounterMonsters.value, totalPartySize.value)
 );
 
-const currentEncounterMultiplier = computed(() => {
-  if (totalMonsterCount.value === 0) return 1;
-  return getEncounterMultiplier(totalMonsterCount.value, totalPartySize.value);
-});
-
-const adjustedXp = computed(() => {
-  if (totalMonsterCount.value === 0) return 0;
-  return Math.floor(rawXp.value * currentEncounterMultiplier.value);
-});
-
-const difficultyRating = computed(() => {
-  const xp = adjustedXp.value;
-  const t = difficultyThresholds.value;
-  if (xp === 0) return 'None';
-  if (t.easy === 0) return 'Unknown'; // party not configured
-  if (xp >= t.deadly) return 'Deadly';
-  if (xp >= t.hard) return 'Hard';
-  if (xp >= t.medium) return 'Medium';
-  if (xp >= t.easy) return 'Easy';
-  return 'Trivial';
-});
+const difficultyRating = computed(() =>
+  difficultyFor(adjustedXp.value, difficultyThresholds.value)
+);
 
 const folderNames = computed(() => {
   return Object.keys(savedEncounters.value).filter(
