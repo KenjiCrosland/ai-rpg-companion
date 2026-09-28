@@ -4795,6 +4795,11 @@ describe('the critic\'s refinements, end to end (2026-09-28)', () => {
     const pc = printCanonFor('an archer', 4);
     expect(pc.name).toBe('Scout'); expect(pc.ranged).toContain('Longbow');
     expect(printCanonFor('a knight', 3).name).toBe('Knight');
+    // fresh six: the whole phrase first, and a Melee-or-Ranged print row names the melee row
+    expect(printCanonFor('a giant spider', 8).name).toBe('Giant Spider');
+    expect(printCanonFor('a giant spider', 8).rangedRows).toHaveLength(0); // its Web is a save action in 2024, not a ranged attack roll
+    expect(printCanonFor('a guard', 3).melee).toContain('Spear');
+    expect(printCanonFor('a guard', 3).rangedRows).toHaveLength(0);
   });
   test('the wolf\'s Bite is Piercing and knocks Prone, with no energy rider', async () => {
     const { rows } = await run({ archetype: 'skirmisher', concept: 'a wolf', userConcept: 'a wolf', resolvedType: 'Beast', mind: 'bestial' }, { name: 'Wild Hunt Wolf', melee_rider: 'Poison' });

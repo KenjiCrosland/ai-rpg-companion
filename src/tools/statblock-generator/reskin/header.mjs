@@ -43,6 +43,7 @@ export function honestLanguages(line, { mind = null, type = '' } = {}) {
   if (mind === 'mindless') return /construct/i.test(type) ? "Understands the languages of its creator but can't speak" : 'None';
   if (mind === 'bestial') return 'None';
   if (/^Beast\b/i.test(String(type))) return 'None'; // 0/89 print Beasts speak — Common on a bird (critic 2026-09-28)
+  if (/^Elemental\b/i.test(String(type)) && !/\b(?:Primordial|Ignan|Auran|Terran|Aquan)\b/i.test(raw)) return 'Primordial'; // 17/17 print Elementals speak Primordial — Common on a wildfire (critic, fresh six); a dialect already on the line stands
   // sapient: keep the print tokens only
   const kept = [];
   for (const tok of raw.split(/[,;]\s*|\s+plus\s+/i)) {

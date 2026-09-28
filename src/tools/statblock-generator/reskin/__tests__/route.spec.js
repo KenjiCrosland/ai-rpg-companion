@@ -165,3 +165,8 @@ test("subject inversion: 'runs anyone who blocks it off the cliff' is the courie
   expect(verbLines("a courier's ghost who still runs the mountain road, and runs anyone who blocks it off the cliff")).not.toContain('defender');
   expect(verbLines('a shield-bearer who blocks the bridge')).toContain('defender');
 });
+
+test("'eats sheep' is a grappler's verb (the hedge, fresh six)", () => {
+  const { verbLines } = require('../route.mjs');
+  expect(verbLines('a hedge that eats sheep')).toContain('brute-grappler');
+});

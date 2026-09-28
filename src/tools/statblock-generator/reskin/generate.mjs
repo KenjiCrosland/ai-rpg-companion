@@ -200,19 +200,22 @@ export function printCanonFor(conceptText, cr) {
   const head0 = words.at(-1); const head = (PRINT_ALIAS[head0] ?? head0).toLowerCase(); const heads = [head, head.replace(/ies$/, 'y').replace(/ves$/, 'f').replace(/s$/, '')];
   const list = Array.isArray(printBlocks) ? printBlocks : [];
   const lower = (b) => String(b.name ?? '').toLowerCase();
-  const exact = list.find((b) => heads.includes(lower(b))) ?? list.find((b) => lower(b) === words.join(' '));
+  // the WHOLE phrase first ("a giant spider" is the Giant Spider, not the Spider), then the head noun
+  const phrase = words.join(' ');
+  const exact = list.find((b) => lower(b) === phrase || lower(b) === phrase.replace(/s$/, '')) ?? list.find((b) => heads.includes(lower(b)));
   const ending = list.filter((b) => heads.some((h) => lower(b).endsWith(` ${h}`)));
   const pick = exact ?? (ending.length ? ending.sort((a, b) => Math.abs(Number(a.cr) - cr) - Math.abs(Number(b.cr) - cr))[0] : null);
   if (!pick) return null;
   const last = lower(pick).split(/\s+/).at(-1);
   const traits = (pick.sections?.Traits ?? []).filter((t) => t?.name && !PRINT_BOILER.test(t.name)).map((t) => ({ name: t.name.replace(/ \(.*\)$/, ''), text: String(t.text ?? '') }));
   const rowOf = (a) => { const t = String(a.text ?? ''); const m = /\d+ \(\d+d\d+(?: \+ \d+)?\) (Bludgeoning|Piercing|Slashing)(?: damage)?\.?\s*([^]*)$/.exec(t); return { name: a.name.replace(/ \(.*\)$/, ''), type: m?.[1] ?? null, rider: m ? m[2].trim() : '' }; };
-  const meleeRows = (pick.sections?.Actions ?? []).filter((a) => /Melee Attack Roll/.test(a.text ?? '') && !/Melee or Ranged/.test(a.text ?? '')).map(rowOf);
+  const meleeRows = (pick.sections?.Actions ?? []).filter((a) => /Melee Attack Roll|Melee or Ranged Attack Roll/.test(a.text ?? '')).map(rowOf); // a Melee-or-Ranged print row (the Guard's Spear) names the melee row too
   const melee = meleeRows.map((r) => r.name);
-  const rangedRows = (pick.sections?.Actions ?? []).filter((a) => /Ranged Attack Roll/.test(a.text ?? '')).map((a) => ({ name: a.name.replace(/ \(.*\)$/, ''), range: (/range (\d+\/\d+) ft\./.exec(a.text ?? '') ?? [])[1] ?? null }));
+  const rangedRows = (pick.sections?.Actions ?? []).filter((a) => /Ranged Attack Roll/.test(a.text ?? '') && !/Melee or Ranged/.test(a.text ?? '')).map((a) => ({ name: a.name.replace(/ \(.*\)$/, ''), range: (/range (\d+\/\d+) ft\./.exec(a.text ?? '') ?? [])[1] ?? null })); // pure ranged rows only (the Giant Spider's Web)
   const ranged = rangedRows.map((r) => r.name);
   const modes = [...String(pick.speed ?? '').matchAll(/\b(Fly|Swim|Climb|Burrow)\b/gi)].map((m) => m[1].toLowerCase());
-  return { name: pick.name, last, traits, melee, meleeRows, ranged, rangedRows, modes };
+  const senses = String(pick.senses ?? '').replace(/;?\s*Passive Perception \d+/i, '').trim();
+  return { name: pick.name, last, traits, melee, meleeRows, ranged, rangedRows, modes, senses };
 }
 export function chassisSheet(scaled, { name = 'the chassis', type = '', size = '', headerOnly = false } = {}) {
   try {
@@ -860,6 +863,7 @@ export async function generateReskin(options, callLLM) {
         const esc = (x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const gone = [limb.name, ...rows.filter((e) => /pulls each creature Grappled by it/.test(e.text ?? '')).map((e) => e.name)];
         scaled.sections.Actions = rows.filter((e) => !gone.includes(e.name));
+        for (const e of scaled.sections.Actions) if (/^Multiattack/.test(e.name)) e.text = e.text.replace(new RegExp(`, makes \\w+ ${esc(limb.name)} attacks, and uses \\w+\\.`), '.'); // the Roper line collapses to its bites
         for (const e of scaled.sections.Actions) if (/^Multiattack/.test(e.name)) for (const g of gone) e.text = e.text.replace(new RegExp(`(?:,? and uses ${esc(g)}| and uses ${esc(g)}|uses ${esc(g)} and |\\buses ${esc(g)}\\.?)`, 'g'), (m) => (m.endsWith('.') ? '.' : '')).replace(/\s+\./g, '.').replace(/\.\./g, '.');
         trace('reach folded:', `"${limb.name}" (reach 50) and ${gone.slice(1).join(', ') || 'no Reel'} leave — no tether in the concept; the grapple rides "${primary?.name ?? 'the attack'}" (the Giant Crab's shape)`);
       }
@@ -876,8 +880,11 @@ export async function generateReskin(options, callLLM) {
   // is re-keyed to the surviving row. An unknown type is left alone.
   {
     const typeR = String(options.resolvedType ?? '').trim();
-    const rangedByNature = scaled.style === 'hurler' || archetype === 'caster' || (scaled.archetypes ?? []).includes('artillery') || !typeR || /^(?:Humanoid|Giant|Fey)$/i.test(typeR);
-    const claimed = ['ranged', 'mixed'].includes(String(options.attackMode ?? '').toLowerCase()) || (Array.isArray(options.mechanics) && options.mechanics.some((m) => /thrown-weapon|breath/.test(String(m))));
+    // a plain PRINT creature keeps a ranged row iff print gives it one (the Giant
+    // Spider's Web stays; the Guard's javelin, which print never gave it, goes)
+    const pcR = printPlain ? printCanonFor(options.userConcept ?? concept, cr) : null;
+    const rangedByNature = pcR ? pcR.rangedRows.length > 0 : (scaled.style === 'hurler' || archetype === 'caster' || (scaled.archetypes ?? []).includes('artillery') || !typeR || /^(?:Humanoid|Giant|Fey)$/i.test(typeR));
+    const claimed = !pcR && (['ranged', 'mixed'].includes(String(options.attackMode ?? '').toLowerCase()) || (Array.isArray(options.mechanics) && options.mechanics.some((m) => /thrown-weapon|breath/.test(String(m)))));
     if (!rangedByNature && !claimed) {
       const esc = (x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const dropped = [];
@@ -1890,6 +1897,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     const pcSpeed = printCanonFor(options.userConcept ?? concept, cr);
     const movementBase = pcSpeed ? pcSpeed.modes : (options.movement ?? []); // a print creature moves the way print says (a wolf climbed at 50 ft.)
     if (pcSpeed) trace('print canon speed:', `modes ${pcSpeed.modes.join(', ') || 'walk only'} — the ${pcSpeed.name}'s`);
+    if (pcSpeed) { // and print's senses (a boar has none; ours printed darkvision 30 — critic, fresh six)
+      const pp = (/Passive Perception \d+/.exec(monster.senses ?? '') ?? ['Passive Perception 10'])[0];
+      monster.senses = pcSpeed.senses ? `${pcSpeed.senses}; ${pp}` : pp;
+      trace('print canon senses:', `"${pcSpeed.senses || 'none'}" — the ${pcSpeed.name}'s`);
+    }
     const movementT2 = movementBase.filter((m) => !(negatedFly && String(m).toLowerCase() === 'fly'));
     if (negatedFly && (options.movement ?? []).some((m) => String(m).toLowerCase() === 'fly')) trace('flight removed by the concept:', 'a negative clause names the wings — Fly leaves the movement set');
     const sp = honestSpeed(monster.speed, { movement: movementT2, style: scaled.style ?? null, bodyType: options.bodyType ?? null });
@@ -1897,8 +1909,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // crawl lifted beside a fly speed (the lamplighter's Swim 5, manual smoke
     // 2026-09-22) is a change too
     if (sp.speed !== String(monster.speed ?? '')) { monster.speed = sp.speed; trace('speed by concept:', `${sp.dropped.length ? `dropped ${sp.dropped.join(', ')}` : ''}${sp.dropped.length && sp.added.length ? '; ' : ''}${sp.added.length ? `added ${sp.added.join(', ')}` : ''} — the concept's movement set decides`); }
-    if (/^Construct\b/i.test(monster.type ?? '') && scaled.style === 'trap' && !/\b(?:speaks?|voices?|talks?|whispers?|sings?|says?|mimics?)\b/i.test(options.userConcept ?? concept ?? '')) {
-      // a lurking OBJECT has no voice unless the concept gives it one (Common on a rain barrel, 2026-09-28)
+    if (/^Construct\b/i.test(monster.type ?? '') && options.mind !== 'sapient' && /^(?:common|none|)$/i.test(String(monster.languages ?? '').trim()) && !/\b(?:speaks?|voices?|talks?|whispers?|sings?|says?|mimics?|chants?|prays?)\b/i.test(options.userConcept ?? concept ?? '')) { // a bare "Common" is the leak; a named tongue (Ignan, Dwarvish) is a claim and stands
+      // a Construct on ANY line has no voice unless the concept gives it one or the resolve read a sapient mind (the barrow-warden got Common while the doll got its creator's — critic, fresh six)
       monster.languages = "Understands the languages of its creator but can't speak"; trace('languages by body:', 'a trap-line Construct with no voice in the concept');
     } else if (options.mind || /^Beast\b/i.test(monster.type ?? '')) { // a Beast never speaks even when the resolve read no mind (Common on a crab, a bird, 2026-09-28)
       const before = monster.languages; monster.languages = honestLanguages(monster.languages, { mind: options.mind, type: monster.type ?? '' });

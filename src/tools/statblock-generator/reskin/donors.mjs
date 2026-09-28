@@ -1555,7 +1555,7 @@ export const DONORS = [
     saves: ['STR'], skills: 'Perception +6, Stealth +5',
     sections: {
       Actions: [
-        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks and uses Reel.' },
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks, makes two Grasping Limb attacks, and uses Reel.' }, // the Roper's line: bites, tentacles, Reel — the limb had sat outside the Multiattack (critic, fresh six); the damaging count leads so the budget reads it
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +6 (with Advantage if the target is Grappled by the creature), reach 5 ft. 18 (3d8 + 5) {damage_type} damage.' },
         { name: 'Grasping Limb', text: '*Melee Attack Roll:* +6, reach 50 ft. The target has the Grappled condition (escape DC 13).' },
         { name: 'Reel', rules: true, text: 'The creature pulls each creature Grappled by it up to 25 feet straight toward it.' },
@@ -1607,7 +1607,7 @@ export const DONORS = [
         { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
       ],
       Actions: [
-        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks and uses Reel.' },
+        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks, makes two Grasping Limb attacks, and uses Reel.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +12 (with Advantage if the target is Grappled by the creature), reach 5 ft. 44 (8d8 + 8) {damage_type} damage.' },
         { name: 'Grasping Limb', text: '*Melee Attack Roll:* +12, reach 60 ft. The target has the Grappled condition (escape DC 19).' },
         { name: 'Reel', rules: true, text: 'The creature pulls each creature Grappled by it up to 30 feet straight toward it.' },

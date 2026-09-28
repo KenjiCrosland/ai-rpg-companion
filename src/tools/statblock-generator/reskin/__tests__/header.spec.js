@@ -45,3 +45,7 @@ test('a Beast never speaks, whatever the resolve read into its mind (0/89 in pri
   expect(honestLanguages('Common', { mind: 'sapient', type: 'Beast' })).toBe('None');
   expect(honestLanguages('Common', { mind: 'sapient', type: 'Humanoid' })).toBe('Common');
 });
+
+test('an Elemental speaks Primordial (17/17 in print; Common on a wildfire, fresh six)', () => {
+  expect(honestLanguages('Common', { mind: 'sapient', type: 'Elemental' })).toBe('Primordial');
+});

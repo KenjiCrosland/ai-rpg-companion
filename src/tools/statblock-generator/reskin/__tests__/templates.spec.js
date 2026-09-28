@@ -623,3 +623,11 @@ describe('the critic\'s three refinements (2026-09-28)', () => {
     expect(w?.text ?? '').not.toMatch(/gathering destructive power, gathering/);
   });
 });
+
+test('fresh six: an obscuring breath blinds; a nonmagical weapon lodges in 2024 grammar', () => {
+  const spew = TEMPLATES.find((x) => x.id === 'spew');
+  const ctx = (concept) => ({ scaled: sheet(14, null, 'brute'), archetype: 'brute', cr: 14, energy: 'Fire', mix: 'both', meleeName: 'Slam', imposed: [], name: 'X', concept });
+  expect(renderTemplate(spew, ctx('a wildfire that breathes a cone of ash'), { condition_minor: 'Deafened' }).text).toMatch(/Blinded condition/);
+  expect(renderTemplate(spew, ctx('a dragon that breathes fire'), {}).text).toMatch(/Poisoned condition/); // the Poison-breath frame's own rider stands when nothing obscures
+  expect(TEMPLATES.find((x) => x.id === 'weapon-lodge').frames['6-9']).toMatch(/^When a creature hits the creature with a nonmagical weapon/);
+});
