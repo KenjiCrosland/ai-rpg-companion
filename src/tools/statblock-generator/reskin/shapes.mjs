@@ -214,6 +214,164 @@ export const SHAPES = [
     roles: ['brute', 'lurker', 'skirmisher', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature adheres to anything that touches it. A Huge or smaller creature adhered to the creature is also Grappled by it (escape DC {dc}). Ability checks made to escape this grapple have Disadvantage.'])),
   },
+  // THE TRAIT SHELF PASS (2026-09-27, from scripts/smoke-misses.mjs): traits
+  // were two thirds of every miss (62 of 94) and the always-on shelf held
+  // nothing that MOVES — always/movement missed 11 times, and a "knows where
+  // its quarry is" idea missed seven times across the movement and condition
+  // tags (the jurist's tether, the keeper's lit bolt, the ashwalker's brand).
+  // Three print-exact grammars and one flagged invention. None carry numbers,
+  // so none climb the ladder; a trait that grants a mode reads the header.
+  {
+    id: 'spider-climb', name: 'Spider Climb', cite: 'Drider/Spider Climb (CR 6); Roper (CR 5); Vampire (CR 13); Black Pudding (CR 4); Giant Spider (CR 1)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait', requires_movement: 'Climb', // print pairs the trait with a Climb Speed every time (the Swarm's "if the swarm has a Climb Speed")
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature can climb difficult surfaces, including along ceilings, without needing to make an ability check.'])),
+  },
+  {
+    id: 'terrain-walk', name: 'Sure Footing', cite: 'Adult White Dragon/Ice Walk (CR 13); White Dragon Wyrmling (CR 2); Drider/Web Walker (CR 6) — the Ice Walk grammar with the terrain as the slot',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'Difficult Terrain composed of {terrain} doesn\'t cost the creature extra movement, and the creature can move across {terrain} without needing to make an ability check.'])),
+  },
+  {
+    id: 'aberrant-ground', name: 'Aberrant Ground', cite: 'Gibbering Mouther/Aberrant Ground (CR 2)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The ground in a 10-foot Emanation originating from the creature is Difficult Terrain.'])),
+  },
+  {
+    id: 'faultless-tracker', name: 'Faultless Tracker', invented: true, // Invisible Stalker/Faultless Tracker (2014 SRD: a quarry named by its summoner) with the quarry earned by a wound; Drider's Web Walker "knows the location" is the 2024 kin
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature knows the direction and distance to any creature it has damaged within the last 24 hours, as long as the two of them are on the same plane of existence.'])),
+  },
+  {
+    id: 'web-walker', name: 'Web Walker', cite: 'Drider/Web Walker (CR 6); Ettercap/Web Walker (CR 2) — the 2024 text folds 2014\'s Web Sense into it', // the rafter widow's "knows every thread of its web" (critic, trait-shelf run 2026-09-27)
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature ignores movement restrictions caused by webs, and the creature knows the location of any other creature in contact with the same web.'])),
+  },
+  // THE FOURTEEN (owner go 2026-09-28): print's whole recurring trait
+  // vocabulary the shelf lacked (eight families, measured over the 329-block
+  // corpus: 144 text families, 39 recurring, the rest chassis/header/lore) plus
+  // six inventions the miss log asked for by cluster, each with a print kin and
+  // print grammar only. Numbers are band constants from print, never budget.
+  {
+    id: 'fire-aura', name: 'Searing Aura', cite: 'Azer Sentinel/Fire Aura (CR 2, 5 ft 1d10); Fire Elemental (CR 5, 1d10); Remorhaz/Heat Aura (CR 11, 3d10); Balor (CR 19, 3d8)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: { '0-2': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 5 (1d10) {damage_type} damage.', '3-5': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 5 (1d10) {damage_type} damage.', '6-9': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 7 (2d6) {damage_type} damage.', '10-12': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 10 (3d6) {damage_type} damage.', '13-20': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 13 (3d8) {damage_type} damage.', '21+': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 16 (3d10) {damage_type} damage.' },
+  },
+  {
+    id: 'noxious-aura', name: 'Noxious Aura', cite: 'Ghast/Stench (CR 2, 5 ft); Hezrou/Stench (CR 8, 10 ft); Pit Fiend/Fear Aura (CR 20, 20 ft); Sea Hag/Vile Appearance (CR 2)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: { '0-2': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 5-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.', '3-5': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 5-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.', '6-9': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 10-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.', '10-12': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 10-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.', '13-20': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 20-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.', '21+': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 20-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.' },
+  },
+  {
+    id: 'bloodied-fury', name: 'Bloodied Fury', cite: 'Boar/Bloodied Fury (CR 1/4); Giant Boar (CR 2); Berserker/Bloodied Frenzy (CR 2); Sahuagin/Blood Frenzy (CR 1/2)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'While Bloodied, the creature has Advantage on attack rolls.'])),
+  },
+  {
+    id: 'uncanny-sense', name: 'Uncanny Sense', cite: 'Rust Monster/Iron Scent (CR 1/2, 30 ft); Xorn/Treasure Sense (CR 5, 60 ft); Chuul/Sense Magic (CR 4, 120 ft)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    frames: { '0-2': 'The creature can pinpoint the location of {sense_target} within 30 feet of itself.', '3-5': 'The creature can pinpoint the location of {sense_target} within 60 feet of itself.', '6-9': 'The creature can pinpoint the location of {sense_target} within 60 feet of itself.', '10-12': 'The creature can pinpoint the location of {sense_target} within 60 feet of itself.', '13-20': 'The creature can pinpoint the location of {sense_target} within 120 feet of itself.', '21+': 'The creature can pinpoint the location of {sense_target} within 120 feet of itself.' },
+  },
+  {
+    id: 'earth-glide', name: 'Earth Glide', cite: 'Earth Elemental/Earth Glide (CR 5); Xorn (CR 5)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait', requires_movement: 'Burrow',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature can burrow through nonmagical, unworked earth and stone. While doing so, the creature doesn\'t disturb the material it moves through.'])),
+  },
+  {
+    id: 'tunneler', name: 'Tunneler', cite: 'Ankheg/Tunneler (CR 2); Purple Worm (CR 15)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait', requires_movement: 'Burrow',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature can burrow through solid rock at half its Burrow Speed and leaves a 10-foot-diameter tunnel in its wake.'])),
+  },
+  {
+    id: 'berserk', name: 'Berserk', cite: 'Clay Golem/Berserk (CR 9); Flesh Golem (CR 5)',
+    roles: ['brute', 'defender', 'skirmisher'], styles: [], cr_range: [2, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'Whenever the creature starts its turn Bloodied, roll 1d6. On a 6, the creature goes berserk. On each of its turns while berserk, the creature attacks the nearest creature it can see. If no creature is near enough to move to and attack, the creature attacks an object. Once the creature goes berserk, it remains so until it is destroyed or it is no longer Bloodied.'])),
+  },
+  {
+    id: 'shielded-mind', name: 'Shielded Mind', cite: 'Couatl/Shielded Mind (CR 4); Sphinx of Lore/Inscrutable (CR 11)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature\'s thoughts can\'t be read by any means, and other creatures can communicate with it telepathically only if it allows them.'])),
+  },
+  {
+    id: 'evasion', name: 'Evasion', cite: 'Assassin/Evasion (CR 8)',
+    roles: ['lurker', 'skirmisher'], styles: [], cr_range: [2, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the creature is subjected to an effect that allows it to make a Dexterity saving throw to take only half damage, the creature instead takes no damage if it succeeds on the save and only half damage if it fails. It can\'t use this trait if it has the Incapacitated condition.'])),
+  },
+  // ----- the six inventions (kin in the comment; grammar is print's) -----
+  {
+    id: 'relentless-pursuit', name: 'Relentless Pursuit', invented: true, // Ice Walk's clause + Faultless Tracker's quarry; the ox, the gallows, the causeway knight, the ashwalker (4 sightings)
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'While the creature is moving toward a creature it has damaged within the last 24 hours, the creature\'s Speed can\'t be reduced and Difficult Terrain doesn\'t cost it extra movement.'])),
+  },
+  {
+    id: 'bound', name: 'Bound', invented: true, // Shield Guardian/Bound (print, to an amulet) with the anchor as a place: the hour's warden "cannot leave the tower"
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature is bound to {anchor}. It can\'t willingly move more than 120 feet from {anchor}, and it always knows the direction and distance to {anchor}.'])),
+  },
+  {
+    id: 'marking-light', name: 'Marking Light', invented: true, // Faerie Fire's 2024 clause on a damage trigger: the lighthouse keeper's lit bolt, the orrery's star-shard (5 sightings)
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'A creature the creature damages sheds Dim Light in a 5-foot radius until the end of the creature\'s next turn and can\'t benefit from the Invisible condition while it does.'])),
+  },
+  {
+    id: 'sealed-body', name: 'Sealed Body', invented: true, // Immutable Form + Shielded Mind fused for the sealed reliquary (the bishop, the penitent)
+    roles: ['brute', 'defender', 'controller'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature can\'t shape-shift, and its thoughts can\'t be read by any means. Other creatures can communicate with it telepathically only if it allows them.'])),
+  },
+  {
+    id: 'warded-mending', name: 'Warded Mending', invented: true, // Regeneration (Troll 15 at CR 5, Oni 10 at CR 7) with the ward as the off-switch: the altar sentinel
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait', supersedes: /regains \d+ Hit Points at the start of each of its turns/, // one body, one mending: the warden chassis's Regeneration leaves when the ward-gated form ships (the litanist warden bound absorption on "mend" because this was excluded)
+    frames: { '0-2': 'The creature regains 5 Hit Points at the start of each of its turns if it has at least 1 Hit Point and {ward} is within 30 feet of it.', '3-5': 'The creature regains 10 Hit Points at the start of each of its turns if it has at least 1 Hit Point and {ward} is within 30 feet of it.', '6-9': 'The creature regains 10 Hit Points at the start of each of its turns if it has at least 1 Hit Point and {ward} is within 30 feet of it.', '10-12': 'The creature regains 15 Hit Points at the start of each of its turns if it has at least 1 Hit Point and {ward} is within 30 feet of it.', '13-20': 'The creature regains 20 Hit Points at the start of each of its turns if it has at least 1 Hit Point and {ward} is within 30 feet of it.', '21+': 'The creature regains 20 Hit Points at the start of each of its turns if it has at least 1 Hit Point and {ward} is within 30 feet of it.' },
+  },
+  {
+    id: 'guarded-stance', name: 'Guarded Stance', invented: true, // Blurred Form (Steam Mephit, CR 1/4, unpriced) with the Bloodied off-switch: the iron riposte's seamless guard, the gloam weasel
+    roles: ['defender', 'skirmisher'], styles: [], cr_range: [3, 30], replaces: 'trait', // no 0-2 rung: the only print instance is a CR 1/4 mephit and the pricing question starts there
+    frames: Object.fromEntries(['3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'While the creature isn\'t Bloodied, melee attack rolls against it are made with Disadvantage.'])),
+  },
+  // FRESH THREE (2026-09-28): two print families the held-out set asked for by
+  // clause — the hedge knight "whose oath keeps him standing after his body
+  // should have quit" (the Zombie's own trait) and the magpie that "steals
+  // voices and mimics them" (the Green Hag's, the Raven's).
+  {
+    id: 'undead-fortitude', name: 'Undead Fortitude', cite: 'Zombie/Undead Fortitude (CR 1/4); Ogre Zombie (CR 2)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If damage reduces the creature to 0 Hit Points, it makes a Constitution saving throw (DC 5 plus the damage taken) unless the damage is Radiant or from a Critical Hit. On a successful save, the creature drops to 1 Hit Point instead.'])),
+  },
+  {
+    id: 'mimicry', name: 'Mimicry', cite: 'Green Hag/Mimicry (CR 3, DC 14); Raven (CR 0, DC 10)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature can mimic animal sounds and humanoid voices. A creature that hears the sounds can tell they are imitations only with a successful DC {dc} Wisdom (Insight) check.'])),
+  },
+  {
+    id: 'wail', name: 'Wail', invented: true, // Banshee/Wail (2024 MM, not in this corpus) = the area form of Threshold Execute (Sea Hag/Death Glare, cited there): the drowned choir "whose hymn stops hearts" (critic, fresh three)
+    roles: ['lurker', 'controller', 'artillery'], styles: [], cr_range: [3, 30], replaces: 'nova', gate: '1/Day',
+    frames: { '3-5': '*Constitution Saving Throw*: DC {dc}, each creature within 30 feet of the creature that can hear it. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and if the target has 20 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. *Success:* Half damage only.', '6-9': '*Constitution Saving Throw*: DC {dc}, each creature within 30 feet of the creature that can hear it. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and if the target has 30 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. *Success:* Half damage only.', '10-12': '*Constitution Saving Throw*: DC {dc}, each creature within 30 feet of the creature that can hear it. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and if the target has 50 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. *Success:* Half damage only.', '13-20': '*Constitution Saving Throw*: DC {dc}, each creature within 60 feet of the creature that can hear it. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and if the target has 75 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. *Success:* Half damage only.', '21+': '*Constitution Saving Throw*: DC {dc}, each creature within 60 feet of the creature that can hear it. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and if the target has 100 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. *Success:* Half damage only.' },
+  },
+  {
+    id: 'truth-aura', name: 'Aura of Truth', invented: true, // Zone of Truth as an aura (the spell's own save and clause); the reliquary knight "will not let a lie be spoken near it" — mechanics=aura detected, nothing rendered (critic, fresh four 2026-09-28)
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Charisma Saving Throw*: DC {dc}, any creature that starts its turn in a 15-foot Emanation originating from the creature. *Failure:* Until the start of its next turn, the target can\'t speak a deliberate lie.'])),
+  },
+  // THE GAZE, TRAIT FORM (critic, fresh five 2026-09-28: two of ten concepts
+  // wanted "looks at / looks into" and the shelf had only the action form,
+  // which seats standalone against the whole Multiattack and floors). Print's
+  // passive gaze is the Sea Hag's Vile Appearance: a save each turn, keyed on
+  // sight, Frightened-tier — the {condition_minor} vocabulary IS the tier cap
+  // (Prone/Poisoned/Deafened/Frightened; a Medusa's Petrifying Gaze earns KO
+  // only as a gated bonus action with the escalation clause).
+  {
+    id: 'gaze-aura', name: 'Vile Appearance', cite: 'Sea Hag/Vile Appearance (CR 2, 30 ft, Wis, Frightened)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Wisdom Saving Throw*: DC {dc}, any creature that starts its turn within 30 feet of the creature and can see it. *Failure:* The target has the Frightened condition until the start of its next turn. *Success:* The target is immune to this creature\'s gaze for 24 hours.'])), // print literal: a gaze frightens (the barrel's took Prone on a Strength save, 2026-09-28)
+  },
+  // THE CHARGE, PUSH FORM (critic: "off the cliff" is a push, not a bite-down;
+  // kin the 2024 Minotaur's Gore — moved 20+ feet straight, pushed 10 feet and
+  // Prone — not in this corpus). Opened to the phantom and lurker seats too:
+  // the courier who runs anyone off the cliff had no row for its own verb.
+  {
+    id: 'charge-push', name: 'Run-Down', invented: true,
+    roles: ['skirmisher', 'brute', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'melee-rider',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra {avg_half} ({dice_half}) {damage_type} damage and, if it is Large or smaller, is pushed up to 10 feet straight away from the creature and has the Prone condition.'])),
+  },
   // PROMOTED SEEDS (2026-09-22): the two most-drawn seeds become shapes —
   // one frame per band (print grows range and reach with tier) and a flavor
   // slot for the fiction the seed used to bake in. The seeds retire.
@@ -287,7 +445,7 @@ export const SHAPES = [
   },
   {
     id: 'ward-retaliation', name: 'Guardian\'s Answer', cite: 'Shield Guardian/Shield (CR 7) and the bodyguard reaction family',
-    roles: ['defender', 'lurker', 'skirmisher', 'controller', 'artillery'], styles: [], cr_range: [1, 30], replaces: 'reaction',
+    roles: ['defender', 'lurker', 'skirmisher', 'controller', 'artillery'], styles: [], cr_range: [1, 30], replaces: 'reaction', requires_style: 'warden', // "a creature that the creature guards" presupposes a ward: the iron-march duelist seated it with none (critic, the fourteen)
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Trigger:* A creature within 30 feet that the creature guards is hit by an attack roll. *Response:* The creature moves up to half its Speed toward the attacker without provoking Opportunity Attacks and makes one {melee_name} attack against it if it is within reach.'])),
   },
   {
@@ -313,7 +471,7 @@ export const SHAPES = [
   },
   {
     id: 'interpose', name: 'Interpose', cite: 'Shield Guardian/Shield (CR 7)',
-    roles: ['defender', 'controller', 'artillery', 'lurker', 'skirmisher'], styles: [], cr_range: [1, 30], replaces: 'reaction',
+    roles: ['defender', 'controller', 'artillery', 'lurker', 'skirmisher'], styles: [], cr_range: [1, 30], replaces: 'reaction', requires_style: 'warden',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Trigger:* A creature within 5 feet of the creature that it guards is hit by an attack roll. *Response:* The attack hits the creature instead, and the creature has Resistance to the attack\'s damage.'])),
   },
   // THE CASTER LINE'S RIDER SECTION (the hermit's mile-bolt missed four runs
@@ -383,7 +541,7 @@ export const SHAPES = [
   },
   {
     id: 'burrow-ambush', name: 'Erupting Ambush', invented: true,
-    roles: ['skirmisher', 'lurker'], styles: ['skulker'], cr_range: [2, 16], replaces: 'signature', gate: 'Recharge 5-6',
+    roles: ['skirmisher', 'lurker', 'brute', 'controller', 'defender', 'artillery'], styles: [], cr_range: [2, 16], replaces: 'signature', gate: 'Recharge 5-6', // any BURROWER's row, not the skulker's alone — requires_movement already gates it (the grave-worm, a brute-grappler, could not see it: critic 2026-09-28)
     requires_movement: 'Burrow',
     frames: {
       '0-2': 'If the creature is burrowing, it erupts from the ground at a point within 5 feet of one creature. *Dexterity Saving Throw*: DC {dc}, that creature. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target has the Prone condition.',

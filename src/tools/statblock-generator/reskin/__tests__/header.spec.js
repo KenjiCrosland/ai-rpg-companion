@@ -40,3 +40,8 @@ describe('header honesty', () => {
     expect(ox.vulnerabilities).toBe('Thunder'); expect(ox.sections.Traits.length).toBe(0);
   });
 });
+
+test('a Beast never speaks, whatever the resolve read into its mind (0/89 in print; Common on a bird, 2026-09-28)', () => {
+  expect(honestLanguages('Common', { mind: 'sapient', type: 'Beast' })).toBe('None');
+  expect(honestLanguages('Common', { mind: 'sapient', type: 'Humanoid' })).toBe('Common');
+});

@@ -94,7 +94,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 14 (2d8 + 5) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +8, range 30/90 ft. 12 (2d6 + 5) {damage_type} damage.' },
-        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 15, each creature in a 30-foot-long, 5-foot-wide Line. *Failure:* 45 (10d8) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 15, each creature in a 30-foot-long, 5-foot-wide Line. *Failure:* 45 (10d8) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -120,7 +120,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 10 ft. 20 (4d6 + 6) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +10, range 60/180 ft. 17 (2d10 + 6) {damage_type} damage.' },
-        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 17, each creature in a 60-foot-long, 5-foot-wide Line. *Failure:* 63 (14d8) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 17, each creature in a 60-foot-long, 5-foot-wide Line. *Failure:* 63 (14d8) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -148,7 +148,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +13, reach 10 ft. 26 (4d8 + 8) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +13, range 60/180 ft. 24 (3d10 + 8) {damage_type} damage.' },
-        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 20, each creature in a 60-foot-long, 10-foot-wide Line. *Failure:* 90 (20d8) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 20, each creature in a 60-foot-long, 10-foot-wide Line. *Failure:* 90 (20d8) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 20, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -182,7 +182,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +15, reach 10 ft. 39 (6d10 + 6) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +15, range 90/240 ft. 37 (9d6 + 6) {damage_type} damage.' },
-        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 22, each creature in a 90-foot-long, 10-foot-wide Line. *Failure:* 77 (14d10) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Sweeping Area Attack', text: '*Strength Saving Throw*: DC 22, each creature in a 90-foot-long, 10-foot-wide Line. *Failure:* 77 (14d10) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 22, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -711,7 +711,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 10 ft. 45 (9d8 + 5) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +10, range 60/240 ft. 38 (8d8 + 2) {damage_type} damage.' },
-        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
     },
@@ -747,7 +747,7 @@ export const DONORS = [
     sections: {
       Actions: [
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +6, reach 5 ft. 16 (3d8 + 3) {damage_type} damage. If the target is a Large or smaller creature and the creature moved 20+ feet straight toward it immediately before the hit, the target takes an extra 9 (2d8) {damage_type} damage and has the Prone condition.' },
-        { name: 'Area Breath Attack', text: '*Constitution Saving Throw*: DC 13, each creature in a 30-foot Cone. *Failure:* 22 (5d8) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Area Breath Attack', text: '*Constitution Saving Throw*: DC 13, each creature in a 30-foot Cone. *Failure:* 22 (5d8) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -811,7 +811,7 @@ export const DONORS = [
     sections: {
       Traits: [
         { name: 'Lightning Absorption', rules: true, text: 'Whenever the creature is subjected to Lightning damage, it takes no damage and instead regains a number of Hit Points equal to the Lightning damage dealt.' },
-        { name: 'Immutable Form', rules: true, text: 'The creature is immune to any spell or effect that would alter its form.' },
+        { name: 'Immutable Form', rules: true, text: 'The creature can\'t shape-shift.' },
         { name: 'Magic Resistance', rules: true, text: 'The creature has Advantage on saving throws against spells and other magical effects.' },
       ],
       Actions: [
@@ -833,13 +833,13 @@ export const DONORS = [
     sections: {
       Traits: [
         { name: 'Acid Absorption', rules: true, text: 'Whenever the creature is subjected to Acid damage, it takes no damage and instead regains a number of Hit Points equal to the Acid damage dealt.' },
-        { name: 'Immutable Form', rules: true, text: 'The creature is immune to any spell or effect that would alter its form.' },
+        { name: 'Immutable Form', rules: true, text: 'The creature can\'t shape-shift.' },
         { name: 'Siege Monster', rules: true, text: 'The creature deals double damage to objects and structures.' },
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 10 ft. 35 (7d8 + 4) {damage_type} damage.' },
-        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 15, each creature in a 30-foot Cone. *Failure:* 45 (10d8) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 15, each creature in a 30-foot Cone. *Failure:* 45 (10d8) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
     },
@@ -899,7 +899,7 @@ export const DONORS = [
     sections: {
       Traits: [
         { name: 'Fire Absorption', rules: true, text: 'Whenever the creature is subjected to Fire damage, it takes no damage and instead regains a number of Hit Points equal to the Fire damage dealt.' },
-        { name: 'Immutable Form', rules: true, text: 'The creature is immune to any spell or effect that would alter its form.' },
+        { name: 'Immutable Form', rules: true, text: 'The creature can\'t shape-shift.' },
         { name: 'Siege Monster', rules: true, text: 'The creature deals double damage to objects and structures.' },
       ],
       Actions: [
@@ -997,13 +997,13 @@ export const DONORS = [
     sections: {
       Traits: [
         { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
-        { name: 'Immutable Form', rules: true, text: 'The creature is immune to any spell or effect that would alter its form.' },
+        { name: 'Immutable Form', rules: true, text: 'The creature can\'t shape-shift.' },
         { name: 'Siege Monster', rules: true, text: 'The creature deals double damage to objects and structures.' },
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 58 (13d8) {damage_type} damage.' },
-        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 19, each creature in a 30-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 19, each creature in a 30-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Legendary Actions': [
@@ -1079,7 +1079,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 46 (9d8 + 6) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +12, range 60/240 ft. 39 (6d10 + 6) {damage_type} damage.' },
-        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 19, each creature in a 30-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 19, each creature in a 30-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Legendary Actions': [
@@ -1107,7 +1107,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +14, reach 10 ft. 56 (11d8 + 7) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +14, range 60/240 ft. 44 (8d10) {damage_type} damage.' },
-        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 21, each creature in a 60-foot Cone. *Failure:* 63 (14d8) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 21, each creature in a 60-foot Cone. *Failure:* 63 (14d8) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 21, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Legendary Actions': [
@@ -1311,7 +1311,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 5 ft. 47 (7d12 + 2) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +12, range 60 ft. 40 (9d8) {damage_type} damage.' },
-        { name: 'Area Nova', text: '*Wisdom Saving Throw*: DC 19, each enemy in a 30-foot Emanation originating from the creature. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Area Nova', text: '*Wisdom Saving Throw*: DC 19, each enemy in a 30-foot Emanation originating from the creature. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 19):\n\n- **At Will:** {spell_at_will}\n- **1/Day Each:** {spell_daily}' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],

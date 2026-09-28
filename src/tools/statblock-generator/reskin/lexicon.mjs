@@ -29,7 +29,6 @@ const CUES = [
   ['gaze', 'mechanics', /\b(?:gaze|stare|eyes? that (?:turn|freeze|burn|petrify))\b/i, 'usually the "gaze" mechanic; "a distant gaze" as description is not'],
   ['teleport', 'mechanics', /\b(?:teleports?|blinks?|flickers? (?:between|out)|vanish(?:es)? and reappears?)\b/i, 'usually the "teleport" mechanic; a candle that flickers is not'],
   ['engulf', 'mechanics', /\b(?:swallows?|engulfs?|smothers?|digests?|entombs?|devours? whole|(?:folds?|closes?|snaps?|clamps?|slams?|shuts?) (?:shut |closed )?(?:around|over|on) |(?:seals?|locks?|traps?|shuts?) (?:\w+ )?(?:inside|within)|drags? (?:\w+ )?(?:under|down into|into (?:its|the)))\b/i, 'usually the "engulf" mechanic (containment); swallowing pride or a story is not'],
-  ['summon', 'mechanics', /\b(?:summons?|calls? forth|raises? the dead|conjures?)\b/i, 'usually the "summon" mechanic; summoning courage is not'],
   ['troll', 'canon', /\btrolls?\b/i, 'a troll carries print Regeneration — unless the creature only HUNTS, WEARS, or is NAMED AFTER trolls; a troll typed Giant is still a troll — print\'s Troll IS a Giant'],
   ['golem', 'canon', /\bgolems?\b/i, 'a golem carries print Immutable Form and Magic Resistance — unless "golem" is a comparison or a maker\'s mark'],
   ['zombie', 'canon', /\bzombies?\b/i, 'a zombie carries print Undead Fortitude — unless the word is figurative'],

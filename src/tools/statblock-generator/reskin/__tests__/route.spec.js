@@ -131,3 +131,37 @@ describe('chooseLine', () => {
     expect(r.notes).toContainEqual(expect.stringMatching(/extra gaze: quote not found/));
   });
 });
+
+describe('homographs in the verb table (2026-09-28): a noun is not a verb', () => {
+  const { verbLines } = require('../route.mjs');
+  test('"whose hide crumbles" is the noun — a rockslide never routes to the skulker line', () => {
+    expect(verbLines('a ridge exile of living scree whose hide crumbles into a wake of rubble')).not.toContain('skirmisher-skulker');
+    expect(verbLines('its hide is stone-hard')).not.toContain('skirmisher-skulker');
+    // the verb read survives intact
+    expect(verbLines('a gutter assassin that hides between lantern-flickers')).toContain('skirmisher-skulker');
+    expect(verbLines('it will hide until the lamps gutter')).toContain('skirmisher-skulker');
+  });
+  test("a warden's charge is a person, not a rush", () => {
+    expect(verbLines('a knight sworn to stand between its charge and every blade')).not.toContain('brute-charger');
+    expect(verbLines('a brass bull construct that charges through market stalls')).toContain('brute-charger');
+  });
+  test('a noun that still names its own engine is NOT guarded — the bishop keeps its cage (goldens 2026-09-28)', () => {
+    expect(verbLines('a clockwork bishop that unfolds into a cage of brass ribs around whoever it has chosen')).toContain('brute-grappler');
+  });
+  test('mimicking VOICES is the lure, not the Mimic (the magpie, fresh three)', () => {
+    expect(verbLines('a magpie-thing that steals voices and mimics them to lure travelers off the road')).not.toContain('lurker-trap');
+    // an object-mimic still routes to the trap line
+    expect(verbLines('a strongroom chest that mimics the furniture until someone reaches in')).toContain('lurker-trap');
+  });
+});
+
+test("a thing you climb into is a grappler: 'cooks whatever climbs in' names the engulf engine (golden 2026-09-28)", () => {
+  const { verbLines } = require('../route.mjs');
+  expect(verbLines("a bog witch's iron cauldron that walks on three legs and cooks whatever climbs in")).toContain('brute-grappler');
+});
+
+test("subject inversion: 'runs anyone who blocks it off the cliff' is the courier's run, not the blocker's block (blind A/B 2026-09-28)", () => {
+  const { verbLines } = require('../route.mjs');
+  expect(verbLines("a courier's ghost who still runs the mountain road, and runs anyone who blocks it off the cliff")).not.toContain('defender');
+  expect(verbLines('a shield-bearer who blocks the bridge')).toContain('defender');
+});

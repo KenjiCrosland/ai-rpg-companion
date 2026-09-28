@@ -65,7 +65,7 @@ describe('the catalog', () => {
     expect(templatesFor({ archetype: 'skirmisher', cr: 8, sections: {}, section: 'rider', movement: 'Fly 60 ft.' }).map((t) => t.id)).toContain('snatch');
     expect(rankByVerb(templatesFor({ archetype: 'lurker', cr: 8, sections: {}, section: 'rider' }), 'a leopard-thing that stalks the canopy and drops on stragglers from above')[0].t.id).toBe('pounce');
     expect(renderTemplate(TEMPLATES.find((t) => t.id === 'pounce'), ctx, {}).text).toMatch(/one Claw attack against it as a Bonus Action/);
-    expect(templatesFor({ archetype: 'defender', cr: 7, sections: {}, section: 'reaction' }).map((t) => t.id)).toContain('ward-retaliation');
+    expect(templatesFor({ archetype: 'defender', cr: 7, style: 'warden', sections: {}, section: 'reaction' }).map((t) => t.id)).toContain('ward-retaliation'); // the warden seat (a plain defender has no ward to answer for, 2026-09-28)
     expect(templatesFor({ archetype: 'brute', cr: 7, sections: {}, section: 'reaction' }).map((t) => t.id)).not.toContain('ward-retaliation'); // print brutes have no reactions
     expect(rankByVerb(templatesFor({ archetype: 'lurker', cr: 8, sections: {}, section: 'trait' }), 'an assassin who strikes before they notice')[0].t.id).toBe('assassinate');
     expect(rankByVerb(templatesFor({ archetype: 'lurker', cr: 4, sections: {}, section: 'trait' }), 'a mimic posing as a strongroom chest')[0].t.id).toBe('adhesive');
@@ -308,7 +308,7 @@ describe('the catalog', () => {
 
 describe('the two calls', () => {
   test('the idea prompt never shows a template; the fit prompt shows the menu with slots and vocabularies', () => {
-    expect(conceptVerbs('a lighthouse keeper\'s drowned wife who pulls anyone who follows her back down into the surf')).toEqual(expect.arrayContaining(['pull', 'follow']));
+    expect(conceptVerbs('a lighthouse keeper\'s drowned wife who pulls anyone who follows her back down into the surf')).toEqual(expect.arrayContaining(['pull', 'follows'])); // 'follows' is the tracker's now; bare 'follow' left the lure (fresh four 2026-09-28)
     const p = buildIdeaPrompt({ name: 'X', cr: 8, concept: 'a thing', sheetLines: '- [Actions] Claw: x', seats: { action: 'a hurled skull', trait: 'bone hide', packaged: false }, wantTrait: true, engines: ['Cage'], verbs: ['hurl', 'throw'] });
     expect(p).toMatch(/THE CONCEPT'S OWN VERBS: hurl, throw/);
     expect(p).toMatch(/PLAIN WORDS/);
@@ -394,5 +394,232 @@ describe('generateReskin in template mode', () => {
     const rows = Object.values(m.sections).flat();
     expect(rows.every((e) => !/\{[a-z_]+\}/.test(e.text))).toBe(true);
     expect(rows.map((e) => e.name)).not.toContain('Stone Toss');
+  });
+});
+
+describe('the seat owes a LIST, not a row (2026-09-28)', () => {
+  test("the skulker seat owes Assassinate AND Evasion — print's 2024 Assassin carries both", () => {
+    const { SEAT_DEFAULT_TRAIT } = require('../templates.mjs');
+    expect(Array.isArray(SEAT_DEFAULT_TRAIT.skulker)).toBe(true);
+    expect(SEAT_DEFAULT_TRAIT.skulker).toEqual(['assassinate', 'evasion']);
+    for (const owed of Object.values(SEAT_DEFAULT_TRAIT)) for (const id of owed) expect(TEMPLATES.find((t) => t.id === id)).toBeDefined();
+  });
+  test('any burrower may erupt — the shape is gated by the Burrow speed, not by the skulker seat', () => {
+    const ids = (archetype) => templatesFor({ archetype, cr: 6, sections: {}, section: 'action', movement: '30 ft., Burrow 30 ft.' }).map((t) => t.id);
+    expect(ids('brute')).toContain('burrow-ambush');
+    expect(ids('lurker')).toContain('burrow-ambush');
+    expect(templatesFor({ archetype: 'brute', cr: 6, sections: {}, section: 'action', movement: '30 ft.' }).map((t) => t.id)).not.toContain('burrow-ambush');
+  });
+});
+
+describe('the trait shelf pass (2026-09-27): four always-on cards from the miss log', () => {
+  const ctx = (cr, archetype = 'brute', extra = {}) => ({ scaled: sheet(cr, null, archetype), archetype, cr, energy: null, mix: 'physical', meleeName: 'Slam', imposed: [], name: 'X', ...extra });
+  test('all four are trait-section, always-trigger, and render at every band', () => {
+    for (const id of ['spider-climb', 'terrain-walk', 'aberrant-ground', 'faultless-tracker']) {
+      const t = TEMPLATES.find((x) => x.id === id);
+      expect(t.section).toBe('trait'); expect(t.trigger).toBe('always');
+      for (const cr of [1, 4, 8, 11, 16, 24]) expect(renderTemplate(t, ctx(cr), {})).not.toBeNull();
+    }
+  });
+  test('Spider Climb is offered only when the concept gave the header a Climb speed', () => {
+    const ids = (movement) => templatesFor({ archetype: 'lurker', cr: 5, sections: {}, section: 'trait', movement }).map((t) => t.id);
+    expect(ids('climb')).toContain('spider-climb');
+    expect(ids('climb fly')).toContain('spider-climb');
+    expect(ids('')).not.toContain('spider-climb');
+    expect(ids('swim')).not.toContain('spider-climb');
+    expect(rankByVerb(templatesFor({ archetype: 'lurker', cr: 5, sections: {}, section: 'trait', movement: 'climb' }), 'a gargoyle-thing that scuttles along the cathedral ceiling and drops from the gutters')[0].t.id).toBe('spider-climb');
+  });
+  test('Sure Footing is the Ice Walk grammar with the terrain as the slot; the blind fill is plain', () => {
+    const t = TEMPLATES.find((x) => x.id === 'terrain-walk');
+    expect(t.flavor).toEqual(['terrain']);
+    expect(renderTemplate(t, ctx(7), { terrain: 'ice or snow' }).text).toBe("Difficult Terrain composed of ice or snow doesn't cost the creature extra movement, and the creature can move across ice or snow without needing to make an ability check.");
+    expect(renderTemplate(t, ctx(7), {}).text).toMatch(/composed of mud/);
+    expect(renderTemplate(t, ctx(7), { terrain: 'a DC 15 saving throw of mud' })).not.toBeNull(); // a rules-grammar fill falls to the default, never to a miss
+    expect(rankByVerb(templatesFor({ archetype: 'brute', cr: 7, sections: {}, section: 'trait' }), 'a bog troll one with the mire, whose muddy ground never slows it')[0].t.id).toBe('terrain-walk');
+    expect(rankByVerb(templatesFor({ archetype: 'skirmisher', cr: 3, sections: {}, section: 'trait' }), 'a swamp heron that spears frogs and men alike, then wades backward into the reeds where nothing can follow')[0].t.id).toBe('terrain-walk');
+  });
+  test('Aberrant Ground carries the wake ideas; Faultless Tracker carries the quarry ideas', () => {
+    expect(renderTemplate(TEMPLATES.find((x) => x.id === 'aberrant-ground'), ctx(6), {}).text).toBe('The ground in a 10-foot Emanation originating from the creature is Difficult Terrain.');
+    expect(rankByVerb(templatesFor({ archetype: 'brute', cr: 6, sections: {}, section: 'trait' }), 'a drowned keeper, bloated and waterlogged, who leaves a spreading slick of brine and seawater wherever she moves')[0].t.id).toBe('aberrant-ground');
+    expect(rankByVerb(templatesFor({ archetype: 'brute', cr: 6, sections: {}, section: 'trait' }), 'a stone exile whose hide crumbles into a wake of rubble and scree that pursuers slow in').slice(0, 2).map((r) => r.t.id)).toContain('aberrant-ground');
+    const ft = TEMPLATES.find((x) => x.id === 'faultless-tracker');
+    expect(ft.cite).toBeFalsy(); // an invention carries no print cite
+    expect(renderTemplate(ft, ctx(13, 'lurker'), {}).text).toMatch(/knows the direction and distance to any creature it has damaged within the last 24 hours/);
+    expect(rankByVerb(templatesFor({ archetype: 'controller', cr: 13, sections: {}, section: 'trait' }), 'a hanged judge whose noose still tightens around the guilty from a hundred feet away; it always knows exactly where its quarry stands')[0].t.id).toBe('faultless-tracker');
+    expect(rankByVerb(templatesFor({ archetype: 'artillery', cr: 7, sections: {}, section: 'trait' }), "a lighthouse keeper whose lantern marks the drowning so her bolts find them again, tracking them through the dark")[0].t.id).toBe('faultless-tracker');
+    // Web Walker (print, 2024 text): the widow's "knows every thread of its web"
+    expect(renderTemplate(TEMPLATES.find((x) => x.id === 'web-walker'), ctx(3, 'lurker'), {}).text).toMatch(/knows the location of any other creature in contact with the same web/);
+    expect(rankByVerb(templatesFor({ archetype: 'lurker', cr: 3, sections: {}, section: 'trait', movement: 'climb' }), 'a cellar spider the size of a hound that hangs from the rafters and knows every thread of its web')[0].t.id).toBe('web-walker');
+    // and none of them shows up on a sheet that already ships it
+    const shipped = { Traits: [{ name: 'Faultless Tracker', text: 'x', template: 'faultless-tracker' }] };
+    expect(templatesFor({ archetype: 'controller', cr: 13, sections: shipped, section: 'trait' }).map((t) => t.id)).not.toContain('faultless-tracker');
+  });
+});
+
+describe('the fourteen (2026-09-28): eight print families, six kin-cited inventions', () => {
+  const ctx = (cr, archetype = 'brute', extra = {}) => ({ scaled: sheet(cr, null, archetype), archetype, cr, energy: 'Fire', mix: 'both', meleeName: 'Slam', imposed: [], name: 'X', ...extra });
+  const IDS = ['fire-aura', 'noxious-aura', 'bloodied-fury', 'uncanny-sense', 'earth-glide', 'tunneler', 'berserk', 'shielded-mind', 'evasion', 'relentless-pursuit', 'bound', 'marking-light', 'sealed-body', 'warded-mending', 'guarded-stance'];
+  test('all fifteen cards are traits and render at every band inside their range', () => {
+    for (const id of IDS) {
+      const t = TEMPLATES.find((x) => x.id === id);
+      expect(`${id}: ${t ? t.section : 'MISSING'}`).toBe(`${id}: trait`);
+      for (const cr of [1, 4, 8, 11, 16, 24]) if (cr >= t.cr_range[0]) expect(`${id}@${cr}: ${renderTemplate(t, ctx(cr, t.roles[0]), {}) ? 'ok' : 'NULL'}`).toBe(`${id}@${cr}: ok`);
+    }
+  });
+  test('print constants by band: the aura, the mending, the sense range', () => {
+    const fa = TEMPLATES.find((x) => x.id === 'fire-aura');
+    expect(renderTemplate(fa, ctx(2), {}).text).toMatch(/5-foot Emanation originating from the creature takes 5 \(1d10\) Fire damage/);
+    expect(renderTemplate(fa, ctx(19), {}).text).toMatch(/takes 13 \(3d8\) Fire damage/); // the Balor's number
+    expect(renderTemplate(TEMPLATES.find((x) => x.id === 'warded-mending'), ctx(5), { ward: 'the high priest' }).text).toMatch(/regains 10 Hit Points at the start of each of its turns if it has at least 1 Hit Point and the high priest is within 30 feet/);
+    expect(renderTemplate(TEMPLATES.find((x) => x.id === 'uncanny-sense'), ctx(1), { sense_target: 'ferrous metal' }).text).toMatch(/pinpoint the location of ferrous metal within 30 feet/);
+    const na = renderTemplate(TEMPLATES.find((x) => x.id === 'noxious-aura'), ctx(8), { save_stat: 'Constitution', condition_minor: 'Poisoned' }).text;
+    expect(na).toMatch(/\*Constitution Saving Throw\*: DC \d+, any creature that starts its turn in a 10-foot Emanation/);
+    expect(na).toMatch(/Poisoned condition until the start of its next turn/);
+  });
+  test('gates: burrow cards need a Burrow speed; one aura per body; sealed minds and mending never double the chassis', () => {
+    const ids = (movement) => templatesFor({ archetype: 'brute', cr: 5, sections: {}, section: 'trait', movement }).map((t) => t.id);
+    expect(ids('burrow')).toEqual(expect.arrayContaining(['earth-glide', 'tunneler']));
+    expect(ids('')).not.toContain('earth-glide'); expect(ids('')).not.toContain('tunneler');
+    const heated = { Traits: [{ name: 'Molten Hide', text: 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 5 (1d10) Fire damage.' }] };
+    expect(templatesFor({ archetype: 'brute', cr: 5, sections: heated, section: 'trait' }).map((t) => t.id)).not.toContain('fire-aura');
+    const aura = { Traits: [{ name: 'Heat Aura', text: "At the end of each of the creature's turns, each creature in a 5-foot Emanation originating from the creature takes 5 (1d10) Fire damage." }] };
+    const onAura = templatesFor({ archetype: 'brute', cr: 5, sections: aura, section: 'trait' }).map((t) => t.id);
+    expect(onAura).not.toContain('noxious-aura'); expect(onAura).not.toContain('heated-body');
+    const golem = { Traits: [{ name: 'Immutable Form', text: 'The creature is immune to any spell or effect that would alter its form.' }] };
+    expect(templatesFor({ archetype: 'brute', cr: 9, sections: golem, section: 'trait' }).map((t) => t.id)).not.toContain('sealed-body');
+    const regen = { Traits: [{ name: 'Regeneration', text: 'The creature regains 15 Hit Points at the start of each of its turns. If the creature takes Acid or Fire damage, this trait doesn\'t function on the creature\'s next turn.' }] };
+    expect(templatesFor({ archetype: 'brute', cr: 7, sections: regen, section: 'trait' }).map((t) => t.id)).toContain('warded-mending'); // offered because it SUPERSEDES the Regeneration row (one body, one mending)
+    expect(templatesFor({ archetype: 'brute', cr: 7, sections: {}, section: 'trait' }).map((t) => t.id)).toContain('warded-mending');
+  });
+  test('the concept binds each card by its own words', () => {
+    const top = (archetype, cr, text, movement = '') => rankByVerb(templatesFor({ archetype, cr, sections: {}, section: 'trait', movement }), text)[0].t.id;
+    expect(top('brute', 9, 'a clockwork bull that runs amok when its brass is cracked')).toBe('berserk');
+    expect(top('lurker', 2, "a bell-ringer's ghost who tolls the hour and cannot leave the tower")).toBe('bound');
+    expect(top('brute', 9, 'a rusted gallows that never stops walking toward the nearest living thing')).toBe('relentless-pursuit');
+    expect(top('artillery', 7, "a lighthouse keeper whose lantern's glow clings to whoever it lights up")).toBe('marking-light');
+    expect(top('brute', 4, 'a rust-eater that can smell iron through a foot of stone', 'burrow')).toBe('uncanny-sense');
+    // ground-sense is the header's Tremorsense: a tremor concept never binds the sense card
+    expect(templatesFor({ archetype: 'lurker', cr: 4, sections: {}, section: 'trait', text: 'a burrowing mole-hound that hunts by tremor' }).map((t) => t.id)).not.toContain('uncanny-sense');
+    // "mend" is not absorption's verb; the ward-gated mending SUPERSEDES chassis Regeneration rather than being excluded by it
+    const regen = { Traits: [{ name: 'Regeneration', text: 'The creature regains 10 Hit Points at the start of each of its turns if it has at least 1 Hit Point.' }] };
+    const onRegen = rankByVerb(templatesFor({ archetype: 'defender', cr: 7, style: 'warden', sections: regen, section: 'trait' }), 'a shrine-guardian whose cracks mend while litanies are spoken nearby');
+    expect(onRegen[0].t.id).toBe('warded-mending');
+    expect(onRegen.find((r) => r.t.id === 'absorption')?.concept ?? []).toEqual([]);
+    // a ward-shaped reaction needs the warden seat: a plain defender never seats "a creature that it guards"
+    expect(templatesFor({ archetype: 'defender', cr: 6, style: null, sections: {}, section: 'reaction' }).map((t) => t.id)).not.toContain('ward-retaliation');
+    expect(templatesFor({ archetype: 'defender', cr: 6, style: 'warden', sections: {}, section: 'reaction' }).map((t) => t.id)).toEqual(expect.arrayContaining(['ward-retaliation', 'interpose']));
+    expect(top('defender', 7, 'an iron duelist whose shield and blade form a seamless guard')).toBe('guarded-stance');
+    expect(top('defender', 7, 'a consecrated shrine-stone sentinel whose cracks mend when litanies are spoken nearby')).toBe('warded-mending');
+    expect(top('brute', 11, 'a foundry overseer welded into his furnace-suit; the air around him shimmers with waste heat')).toBe('fire-aura');
+    expect(top('brute', 8, 'a hezrou-thing whose stench sickens everything that stands near it')).toBe('noxious-aura');
+    // fresh three: the Zombie's and the Green Hag's own traits, bound by the concept's clause
+    expect(top('defender', 7, 'a hedge knight sworn to a dead king, whose oath keeps him standing after his body should have quit')).toBe('undead-fortitude');
+    expect(top('lurker', 3, 'a magpie-thing that steals voices and mimics them to lure travelers off the road')).toBe('mimicry');
+    expect(renderTemplate(TEMPLATES.find((x) => x.id === 'mimicry'), ctx(3, 'lurker'), {}).text).toMatch(/only with a successful DC \d+ Wisdom \(Insight\) check/);
+    expect(renderTemplate(TEMPLATES.find((x) => x.id === 'undead-fortitude'), ctx(7, 'defender'), {}).text).toMatch(/DC 5 plus the damage taken/);
+    expect(top('lurker', 15, "a drowned cathedral's choir, one body of many mouths, whose hymn stops hearts")).toBe('noxious-aura');
+    // the choir's ACTION seat: the Wail is the area Threshold Execute, 1/Day, priced as a nova
+    const wailMenu = templatesFor({ archetype: 'lurker', cr: 15, sections: {}, section: 'action' });
+    expect(rankByVerb(wailMenu, "a drowned cathedral's choir, one body of many mouths, whose hymn stops hearts")[0].t.id).toBe('wail');
+    const w = renderTemplate(TEMPLATES.find((x) => x.id === 'wail'), { ...ctx(15, 'lurker'), energy: 'Necrotic' }, {});
+    expect(w.text).toMatch(/each creature within 60 feet of the creature that can hear it/);
+    expect(w.text).toMatch(/75 Hit Points or fewer after taking this damage, it drops to 0 Hit Points/);
+    expect(w.gate).toBe('1/Day');
+    // the kill clause IS the payload: the Wail never climbs the dice ladder
+    const s15 = sheet(15, null, 'lurker'); const per15 = Math.round(s15.per_hit);
+    const secs = { Actions: [{ name: 'Multiattack', text: 'The creature makes three Mouth attacks.' }, { name: 'Mouth', text: `*Melee Attack Roll:* +11, reach 5 ft. ${per15} (10d8 + 6) Necrotic damage.` }] }; // three attacks: the nova floor a two-target area sits under
+    const vc = valueCheck({ name: 'Drowning Hymn (1/Day)', text: w.text }, { scaled: s15, sections: secs, section: 'Actions' });
+    expect(vc.steps.join(' ')).not.toMatch(/dice/);
+    // a construct concept no longer binds Berserk by its type noun alone
+    expect(rankByVerb(templatesFor({ archetype: 'brute', cr: 8, sections: {}, section: 'trait' }), 'a plague-doctor construct of lacquered leather').filter((r) => r.concept.length).map((r) => r.t.id)).not.toContain('berserk');
+    expect(top('controller', 9, "a clockwork bishop whose thoughts can't be read and who cannot be talked down")).toMatch(/^(sealed-body|shielded-mind)$/);
+  });
+});
+
+test("the auxiliary 'will' is not the noun: a hulk that will not be moved has no sealed mind (2026-09-28)", () => {
+  const menu = templatesFor({ archetype: 'brute', cr: 12, sections: {}, section: 'trait' });
+  expect(rankByVerb(menu, 'a mountain of old iron that will not be moved').filter((r) => r.concept.length).map((r) => r.t.id)).not.toContain('shielded-mind');
+  expect(rankByVerb(menu, "a clockwork bishop whose thoughts can't be read").filter((r) => r.concept.length).map((r) => r.t.id)).toContain('shielded-mind');
+});
+
+describe('fresh four (2026-09-28): the header rides along, the save follows the condition, novas stop at breath scale', () => {
+  const { NOVA_CAP } = require('../templates.mjs');
+  test('no call is an island: both prompts carry the whole sheet so far', () => {
+    const sheet = '## X\n*Large Fiend*\n\n**AC** 15\n| STR | 18 | +4 | +4 |\n\n### Actions\n**Bite.** x';
+    const idea = buildIdeaPrompt({ name: 'X', cr: 8, concept: 'a thing', sheetLines: sheet });
+    expect(idea).toMatch(/THE SHEET SO FAR \(X, CR 8\)[^\n]*\n## X\n\*Large Fiend\*/);
+    expect(idea).toMatch(/\*\*AC\*\* 15/); expect(idea).toMatch(/\| STR \| 18 \|/);
+    const t = TEMPLATES.find((x) => x.id === 'noxious-aura');
+    const fit = buildFitPrompt({ name: 'X', idea: { idea: 'it reeks', section: 'trait', trigger: 'save', effect: 'condition' }, menu: [t], cr: 8, sheet });
+    expect(fit).toMatch(/MONSTER: X \(CR 8\)\nTHE SHEET SO FAR[^\n]*\n## X/);
+    expect(fit).toMatch(/\| STR \| 18 \|/);
+  });
+  test('a condition aura saves by its condition, whatever the model proposed', () => {
+    const t = TEMPLATES.find((x) => x.id === 'noxious-aura');
+    const ctx = { scaled: sheet(8, null, 'brute'), archetype: 'brute', cr: 8, energy: 'Poison', mix: 'both', meleeName: 'Slam', imposed: [], name: 'X' };
+    expect(renderTemplate(t, ctx, { save_stat: 'Wisdom', condition_minor: 'Poisoned' }).text).toMatch(/^\*Constitution Saving Throw\*/);
+    expect(renderTemplate(t, ctx, { save_stat: 'Constitution', condition_minor: 'Frightened' }).text).toMatch(/^\*Wisdom Saving Throw\*/);
+    expect(renderTemplate(t, ctx, { condition_minor: 'Deafened' }).text).toMatch(/^\*Constitution Saving Throw\*.*Deafened condition/);
+  });
+  test("a gated nova's dice never climb past print's breath scale for the CR", () => {
+    expect(NOVA_CAP(14)).toBe(71); expect(NOVA_CAP(6)).toBe(33); expect(NOVA_CAP(24)).toBe(111);
+    const scaled = sheet(14, null, 'lurker'); const per = Math.round(scaled.per_hit);
+    const sections = { Actions: [{ name: 'Multiattack', text: 'The creature makes three Claw attacks.' }, { name: 'Claw', text: `*Melee Attack Roll:* +9, reach 5 ft. ${per} (3d10 + 5) Slashing damage.` }] };
+    const vc = valueCheck({ name: 'Saltcrack Field (2/Day)', text: '*Dexterity Saving Throw*: DC 17, one creature within 60 feet. *Failure:* 19 (3d12) Acid damage. *Success:* Half damage only.' }, { scaled, sections, section: 'Actions', cr: 14 });
+    const avg = Number((/(\d+) \(\d+d\d+/.exec(vc.text) ?? [0, 0])[1]);
+    expect(avg).toBeLessThanOrEqual(71);
+  });
+  test('the truth aura binds the reliquary knight and never doubles another aura', () => {
+    const top = rankByVerb(templatesFor({ archetype: 'defender', cr: 6, sections: {}, section: 'trait' }), "a reliquary knight, a hollow suit built around a saint's fingerbone that will not let a lie be spoken near it")[0].t.id;
+    expect(top).toBe('truth-aura');
+    const withAura = { Traits: [{ name: 'Stench', text: '*Constitution Saving Throw*: DC 12, any creature that starts its turn in a 5-foot Emanation originating from the creature. *Failure:* x' }] };
+    expect(templatesFor({ archetype: 'defender', cr: 6, sections: withAura, section: 'trait' }).map((t) => t.id)).not.toContain('truth-aura');
+  });
+});
+
+describe('value check after the blind A/B (2026-09-28)', () => {
+  test('a delayed payload never gains Success: Half; a control row never gains a gate', () => {
+    const scaled = sheet(13, null, 'lurker'); const per = Math.round(scaled.per_hit);
+    const sections = { Actions: [{ name: 'Multiattack', text: 'The creature makes three Noose attacks.' }, { name: 'Noose', text: `*Melee Attack Roll:* +9, reach 5 ft. ${per} (3d10 + 5) Necrotic damage.` }] };
+    const dread = valueCheck({ name: 'Creeping Dread', text: "*Wisdom Saving Throw:* DC 17, one creature within 60 feet. *Failure:* The target has the Frightened condition until the end of the creature's next turn. If the target was already Frightened by this ability, it also takes 9 (2d8) Psychic damage." }, { scaled, sections, section: 'Actions', cr: 13 });
+    expect(dread.text).not.toMatch(/Success:\*? Half/);
+    const glare = valueCheck({ name: 'Horrid Display', text: "*Wisdom Saving Throw*: DC 15, each creature of the creature's choice within 30 feet that can see or hear it. *Failure:* The target has the Frightened condition until the end of its next turn." }, { scaled, sections, section: 'Actions', cr: 13 });
+    expect(glare.name).toBe('Horrid Display');
+    expect(glare.steps.join(' ')).toMatch(/control row|^$/);
+  });
+});
+
+test('a forced bind fills the terrain from the concept: an ice goat walks on ice or snow, not mud (2026-09-28)', () => {
+  const t = TEMPLATES.find((x) => x.id === 'terrain-walk');
+  const ctx = (concept) => ({ scaled: sheet(8, null, 'brute'), archetype: 'brute', cr: 8, energy: null, mix: 'physical', meleeName: 'Slam', imposed: [], name: 'X', concept });
+  expect(renderTemplate(t, ctx('a mountain goat with antlers of living ice that freezes the handholds'), {}).text).toMatch(/composed of ice or snow/);
+  expect(renderTemplate(t, ctx('a bog troll one with the mire'), {}).text).toMatch(/composed of mud/);
+  expect(renderTemplate(t, ctx('a thing'), {}).text).toMatch(/composed of mud/); // the blind default when the concept says nothing
+});
+
+describe('the critic\'s three refinements (2026-09-28)', () => {
+  test('the gaze trait is Frightened-tier by construction: a KO condition falls to the vocabulary default, never to an at-will lock', () => {
+    const t = TEMPLATES.find((x) => x.id === 'gaze-aura');
+    const ctx = { scaled: sheet(7, null, 'lurker'), archetype: 'lurker', cr: 7, energy: null, mix: 'physical', meleeName: 'Claw', imposed: [], name: 'X' };
+    const r = renderTemplate(t, ctx, { save_stat: 'Wisdom', condition_minor: 'Paralyzed' }).text;
+    expect(r).not.toMatch(/Paralyzed|Stunned|Petrified|Incapacitated/);
+    expect(r).toMatch(/and can see it\. \*Failure:\* The target has the Frightened condition until the start of its next turn/);
+    expect(rankByVerb(templatesFor({ archetype: 'lurker', cr: 7, sections: {}, section: 'trait' }), 'a taxidermied bear that hates being looked at')[0].t.id).toBe('gaze-aura');
+    const { MECHANIC_OWED_TRAIT } = require('../templates.mjs'); expect(MECHANIC_OWED_TRAIT.gaze).toEqual(['gaze-aura']);
+  });
+  test('the push form of the charge binds the run-down verbs and is offered to the phantom seat', () => {
+    const riders = templatesFor({ archetype: 'lurker', cr: 6, sections: { Actions: [{ name: 'Slam', text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Bludgeoning damage.' }] }, section: 'rider' });
+    expect(riders.map((t) => t.id)).toContain('charge-push');
+    expect(rankByVerb(riders, "a courier's ghost who runs anyone who blocks it off the cliff")[0].t.id).toBe('charge-push');
+    expect(renderTemplate(TEMPLATES.find((x) => x.id === 'charge-push'), { scaled: sheet(6, null, 'lurker'), archetype: 'lurker', cr: 6, energy: null, mix: 'physical', meleeName: 'Slam', imposed: [], name: 'X' }, {}).text).toMatch(/pushed up to 10 feet straight away from the creature and has the Prone condition/);
+  });
+  test('a solid breath is physical; a fill never doubles the frame\'s verb', () => {
+    const spew = TEMPLATES.find((x) => x.id === 'spew');
+    const ctx = (concept) => ({ scaled: sheet(8, null, 'brute'), archetype: 'brute', cr: 8, energy: 'Fire', mix: 'both', meleeName: 'Slam', imposed: [], name: 'X', concept });
+    expect(renderTemplate(spew, ctx('a furnace that swallows sand and breathes out glass shards'), {}).text).toMatch(/Slashing damage/);
+    expect(renderTemplate(spew, ctx('a furnace that breathes fire'), {}).text).toMatch(/Fire damage/);
+    const wind = TEMPLATES.find((x) => x.id === 'wind-up');
+    const w = renderTemplate(wind, { ...ctx('x'), archetype: 'brute' }, { telegraph: 'gathering itself' });
+    expect(w?.text ?? '').not.toMatch(/gathering destructive power, gathering/);
   });
 });

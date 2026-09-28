@@ -28,7 +28,7 @@ describe('the shape catalog: one template per band, cited or invented', () => {
     for (const s of SHAPES) {
       for (const r of s.roles) expect(ROLES).toContain(r);
       for (const st of s.styles) expect(Object.keys(STYLES)).toContain(st);
-      for (const f of Object.values(s.frames)) expect(f).toMatch(/\{[a-z_]+\}|Saving Throw|attack|teleports|Speed|condition|pulled|Advantage/i);
+      for (const f of Object.values(s.frames)) expect(f).toMatch(/\{[a-z_]+\}|Saving Throw|attack|teleports|Speed|condition|pulled|Advantage|ability check|Difficult Terrain|direction and distance|movement restrictions|burrow|can't be read|Hit Points|Insight/i); // the trait shelf's movement grammars (2026-09-27)
     }
   });
 
@@ -59,6 +59,6 @@ describe('the shape catalog: one template per band, cited or invented', () => {
 
   test('the invention ledger holds', () => {
     expect(SHAPES.filter((s) => s.invented).map((s) => s.id).sort())
-      .toEqual(['active-toll', 'bloodied-burst', 'bolt-drag', 'bolt-mark', 'bolt-restrain', 'burrow-ambush', 'charge', 'hook-rider', 'isolation', 'pull-through', 'resonant-body', 'riposte', 'seal', 'throw-recall', 'throw-retrieve', 'weapon-lodge']); // bloodied-burst joined 2026-09-21 (the bell hermit's wound-rung peal); hook-rider and riposte 2026-09-22 (the miss log's two clusters)
+      .toEqual(['active-toll', 'bloodied-burst', 'bolt-drag', 'bolt-mark', 'bolt-restrain', 'bound', 'burrow-ambush', 'charge', 'charge-push', 'faultless-tracker', 'guarded-stance', 'hook-rider', 'isolation', 'marking-light', 'pull-through', 'relentless-pursuit', 'resonant-body', 'riposte', 'seal', 'sealed-body', 'throw-recall', 'throw-retrieve', 'truth-aura', 'wail', 'warded-mending', 'weapon-lodge']); // bloodied-burst joined 2026-09-21 (the bell hermit's wound-rung peal); hook-rider and riposte 2026-09-22 (the miss log's two clusters); faultless-tracker 2026-09-27 (the trait shelf pass: seven quarry misses); bound/guarded-stance/marking-light/relentless-pursuit/sealed-body/warded-mending 2026-09-28 (the fourteen)
   });
 });

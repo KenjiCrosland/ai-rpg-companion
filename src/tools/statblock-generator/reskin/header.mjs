@@ -42,6 +42,7 @@ export function honestLanguages(line, { mind = null, type = '' } = {}) {
   const raw = String(line ?? '').trim();
   if (mind === 'mindless') return /construct/i.test(type) ? "Understands the languages of its creator but can't speak" : 'None';
   if (mind === 'bestial') return 'None';
+  if (/^Beast\b/i.test(String(type))) return 'None'; // 0/89 print Beasts speak — Common on a bird (critic 2026-09-28)
   // sapient: keep the print tokens only
   const kept = [];
   for (const tok of raw.split(/[,;]\s*|\s+plus\s+/i)) {

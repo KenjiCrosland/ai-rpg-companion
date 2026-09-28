@@ -129,7 +129,7 @@ describe('the dynamic shelf (owner 2026-09-15: "make A the workhorse")', () => {
       expect(drawLibraryRow(sc8, { archetype: 'lurker', name: `d${i}`, shapeKey: 'push-prone', imposed: ['Prone'] }).seed).not.toBe('push-prone');
     }
     expect(drawLibraryRow(sc8, { archetype: 'lurker', name: 'd-free', shapeKey: 'push-prone', imposed: [] }).seed).toBe('push-prone');
-    // the summon respects its CR floor
+    // the summon is RETIRED (no group templates, owner 2026-09-28): never drawn at any CR
     const sc1 = scaleDonor(pickDonor(1, null, 'lurker'), 1, { mechanics: [] });
     for (let i = 0; i < 40; i += 1) {
       expect(drawLibraryRow(sc1, { archetype: 'lurker', name: `p${i}`, cr: 1 }).seed).not.toBe('summon-lite');

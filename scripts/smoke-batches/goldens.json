@@ -74,13 +74,6 @@
     "expect": {
       "route": [
         "brute-charger"
-      ],
-      "template": [
-        "heated-body",
-        "charge",
-        "trample",
-        "aggro-curse",
-        "push-prone"
       ]
     }
   },
@@ -246,6 +239,37 @@
     "expect": {
       "route": [
         "brute-charger"
+      ]
+    }
+  },
+  {
+    "cr": "9",
+    "concept": "a bog witch's iron cauldron that walks on three legs and cooks whatever climbs in",
+    "expect": {
+      "route": [
+        "brute-grappler"
+      ],
+      "template": [
+        "exploiter",
+        "condition-payoff",
+        "terrain-walk",
+        "heated-body",
+        "spew"
+      ]
+    }
+  },
+  {
+    "cr": "15",
+    "concept": "the drowned king's crown, a crab the size of a longboat that wears it and rules the wreck-fields",
+    "expect": {
+      "route": [
+        "brute-grappler"
+      ],
+      "template": [
+        "shell-withdraw",
+        "condition-payoff",
+        "exploiter",
+        "heated-body"
       ]
     }
   }

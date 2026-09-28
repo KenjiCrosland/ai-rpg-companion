@@ -61,7 +61,7 @@ const BY_ID = new Map(LINES.map((l) => [l.id, l]));
 // line picked on a noun. The nouns still pick the type and the material.
 export const LINE_VERBS = {
   'brute-charger': ['charge', 'charges', 'gore', 'gores', 'run down', 'runs down', 'trample', 'tramples', 'ram', 'rams', 'stampede', 'barrels', 'thunders across'],
-  'brute-grappler': ['grab', 'grabs', 'seize', 'seizes', 'hold', 'holds', 'swallow', 'swallows', 'engulf', 'crush', 'crushes', 'hug', 'hugs', 'squeeze', 'constrict', 'drags into', 'folds around', 'cage', 'cages'],
+  'brute-grappler': ['grab', 'grabs', 'seize', 'seizes', 'hold', 'holds', 'swallow', 'swallows', 'engulf', 'crush', 'crushes', 'hug', 'hugs', 'squeeze', 'constrict', 'drags into', 'folds around', 'cage', 'cages', 'climbs in', 'climbs into', 'crawls in', 'falls in', 'falls into', 'whatever climbs', 'whatever falls', 'whoever climbs', 'cooks whatever', 'anything that enters'], // a thing you climb INTO is a container: the cauldron rolled juggernaut on 'iron' (golden 2026-09-28)
   'brute-regenerator': ['regenerate', 'regenerates', 'reknit', 'reknits', 'knits shut', 'regrow', 'regrows', 'heals its wounds'],
   'brute-juggernaut': ['unstoppable', 'immovable', 'grinds forward', 'smashes through', 'breaks through walls'],
   'skirmisher-mounted': ['rides', 'ride down', 'rides down', 'astride', 'gallops', 'saddle'],
@@ -79,9 +79,40 @@ export const LINE_VERBS = {
   // bodily-emission verbs are a SIGNATURE (a cloud, a spit), not a thrower's chassis — the plain skirmisher line
   skirmisher: ['vomits', 'spits', 'spews', 'belches', 'sprays', 'darts', 'harries', 'flits', 'nips'],
 };
+// HOMOGRAPHS (critic, two sightings 2026-09-27/28): a line verb that is also a
+// common noun only counts where it READS as a verb. "whose hide crumbles" sent a
+// rockslide to the skulker line (Dex 18, Stealth +12); "steals voices and mimics
+// them" sent a magpie to the Mimic's trap line and gave a bird Adhesive Hide.
+// Two guards, both narrow: a determiner or possessive in front makes the word
+// the noun every time, and a verb that names a print CREATURE's own trick loses
+// it when the concept names a different object.
+// ONLY TRUE HOMOGRAPHS BELONG HERE. A noun that still names its own engine is
+// not one: "unfolds into a cage of brass ribs" is a caging creature, and
+// guarding 'cage' sent the clockwork bishop off its grappler line (goldens
+// 2026-09-28). These two mean something else entirely as nouns — a hide is skin,
+// a charge is the person you guard.
+const NOUN_WHEN_OWNED = new Set(['hide', 'charge']);
+const OWNED_BY = /\b(?:its|his|her|their|our|my|your|whose|the|a|an|this|that|each|every|one|two|three|four|several|many)\s+$/;
+// "Mimic with voice, call, or song is the Harpy's lure, not the Mimic" (critic)
+const VERB_DENY = { mimics: /\b(?:voices?|sounds?|songs?|calls?|speech|words?|cries|tongues?)\b/ };
+// SUBJECT INVERSION (critic, blind A/B 2026-09-28): "runs anyone who BLOCKS it
+// off the cliff" — the verb after an indefinite head belongs to the ENEMY, and
+// it routed a courier's ghost to the defender line. A verb inside a clause
+// headed by anyone/whoever/those who/any creature that is not the creature's.
+const ENEMY_SUBJECT = /\b(?:anyone|anybody|whoever|whomever|those|anything|whatever|everyone|everybody|someone|somebody|any (?:creature|one|foe|enemy|traveler|thing)|all)\s+(?:who|that|which)\s+(?:\w+\s+){0,2}$/i;
 export function verbLines(text) {
   const raw = String(text ?? '').toLowerCase();
-  return Object.entries(LINE_VERBS).filter(([, keys]) => keys.some((k) => new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(raw))).map(([id]) => id);
+  const reads = (k) => {
+    if (VERB_DENY[k]?.test(raw)) return false;
+    const re = new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+    for (let m = re.exec(raw); m; m = re.exec(raw)) {
+      if (NOUN_WHEN_OWNED.has(k) && OWNED_BY.test(raw.slice(0, m.index))) continue; // "its charge", "whose hide"
+      if (ENEMY_SUBJECT.test(raw.slice(0, m.index))) continue; // "anyone who blocks it" — the enemy's verb
+      return true;
+    }
+    return false;
+  };
+  return Object.entries(LINE_VERBS).filter(([, keys]) => keys.some(reads)).map(([id]) => id);
 }
 // the model sometimes decorates an id ("brute-grappler (ooze?)", "Brute-Grappler",
 // "brute grappler"): take the LONGEST shelf id that appears in what it wrote
@@ -93,7 +124,7 @@ export function lineIdOf(raw) {
 }
 export const MADE_TYPES = ['Construct', 'Elemental', 'Undead', 'Plant', 'Ooze'];
 const WARDEN_TYPES = [...MADE_TYPES, 'Celestial', 'Fiend'];
-export const EXTRA_MECHANICS = ['gaze', 'teleport', 'aura', 'breath', 'summon', 'snare', 'thrown-weapon', 'grapple'];
+export const EXTRA_MECHANICS = ['gaze', 'teleport', 'aura', 'breath', 'snare', 'thrown-weapon', 'grapple']; // 'summon' retired with the group templates (owner 2026-09-28): the tag opened the CR<=2 wildcard slot for a mechanic nothing renders
 const TYPES = ['Aberration', 'Beast', 'Celestial', 'Construct', 'Dragon', 'Elemental', 'Fey', 'Fiend', 'Giant', 'Humanoid', 'Monstrosity', 'Ooze', 'Plant', 'Undead'];
 
 /** The family a user-picked menu role maps to (artillery and controller are the caster family). */

@@ -185,7 +185,7 @@ export const LIBRARY_SEEDS = [
 // ——— the 2026-09-15 completion pass (owner: "make A the workhorse") ———
 LIBRARY_SEEDS.push(
   {
-    key: 'summon-lite', keys: ['summon', 'call', 'servitor', 'raise'],
+    key: 'summon-lite', keys: ['summon', 'call', 'servitor', 'raise'], retired: true, // NO GROUP TEMPLATES (owner ruling 2026-09-28): print puts companions in their own blocks (one Animate Trees in 329); a concept's pack is fiction on the rows
     section: 'Actions', archetypes: ['caster', 'defender', 'lurker'], minCr: 3,
     name: 'Servitor Call (1/Day)', // the Debtor's Claim print idiom
     text: "The creature calls a servitor formed of its own substance in an unoccupied space within 30 feet. The servitor uses the *Skeleton* statistics, acts on the creature's initiative immediately after it, and obeys its silent commands. It crumbles after 1 minute, when reduced to 0 Hit Points, or when the creature dies.",
