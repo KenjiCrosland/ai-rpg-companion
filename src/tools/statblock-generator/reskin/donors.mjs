@@ -1663,6 +1663,272 @@ export const DONORS = [
   // the surviving insight of the original pin. Juggernaut stays brute.
   // Lines: plain = soldier (Knight/Guard Captain), 'warden' (Shield
   // Guardian — construct guardian, transfer + Regeneration).
+  // ================================================================
+  // THE THREE NEW LINES (owner 2026-09-28: "make these new donor templates").
+  // Print roles the five families never carried: the ARCHER (primary ranged,
+  // a bow not a throw), the LEADER (a modest attacker whose signature is what
+  // it does for allies), the SHIFTER (two forms, "(X Form Only)" gates). Card
+  // numbers copied from the same-CR donors; composition after the cited
+  // print blocks; the wildcard slot and the family's exit row per the spec.
+  // ================================================================
+  // ----- archer: Scout (CR 1/2) / Hobgoblin Captain's longbow line / Spy -----
+  {
+    id: 'skirmisher-3-archer',
+    cite: 'composition after Scout (CR 1/2, Shortsword + Longbow 150/600) and Spy (CR 1, Cunning Action) scaled to the CR 3 card',
+    style: 'archer',
+    cr: 3, archetypes: ['skirmisher', 'artillery'],
+    ac: 15, hp: 60, hp_formula: '11d8 + 11', atk: 5, dc: 12, pb: 2,
+    speed: '30 ft.',
+    stats: { STR: 11, DEX: 16, CON: 12, INT: 11, WIS: 14, CHA: 11 },
+    saves: ['DEX'], skills: 'Perception +4, Stealth +5',
+    sections: {
+      Traits: [
+        { name: 'Mobility Trait', text: 'The creature ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 12 (2d8 + 3) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +5, range 150/600 ft. 12 (2d8 + 3) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 60 feet. *Failure:* 7 (2d6) {damage_type} damage, and the target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Escape Action', text: 'The creature takes the Dash, Disengage, or Hide action.' },
+      ],
+    },
+  },
+  {
+    id: 'skirmisher-8-archer',
+    invented: true, // the Scout line at CR 8 — no printed archer sits here; the Archer (2024 MM, CR 3) is not in this corpus
+    style: 'archer',
+    cr: 8, archetypes: ['skirmisher', 'artillery'],
+    ac: 17, hp: 135, hp_formula: '18d8 + 54', atk: 8, dc: 15, pb: 3,
+    speed: '30 ft.',
+    stats: { STR: 12, DEX: 20, CON: 16, INT: 12, WIS: 16, CHA: 12 },
+    saves: ['DEX', 'WIS'], skills: 'Perception +6, Stealth +8',
+    sections: {
+      Traits: [
+        { name: 'Mobility Trait', text: 'The creature ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 21 (3d10 + 5) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +8, range 150/600 ft. 21 (3d10 + 5) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 60 feet. *Failure:* 10 (3d6) {damage_type} damage, and the target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Escape Action', text: 'The creature takes the Dash, Disengage, or Hide action.' },
+      ],
+    },
+  },
+  {
+    id: 'skirmisher-13-archer',
+    invented: true, // the Scout line at CR 13
+    style: 'archer',
+    cr: 13, archetypes: ['skirmisher', 'artillery'],
+    ac: 18, hp: 210, hp_formula: '28d10 + 56', atk: 10, dc: 17, pb: 5,
+    speed: '30 ft.',
+    stats: { STR: 14, DEX: 22, CON: 14, INT: 12, WIS: 18, CHA: 12 },
+    saves: ['DEX', 'WIS'], skills: 'Perception +9, Stealth +11',
+    sections: {
+      Traits: [
+        { name: 'Mobility Trait', text: 'The creature ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 5 ft. 25 (3d12 + 6) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +10, range 150/600 ft. 25 (3d12 + 6) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 60 feet. *Failure:* 16 (3d10) {damage_type} damage, and the target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Escape Action', text: 'The creature takes the Dash, Disengage, or Hide action.' },
+      ],
+    },
+  },
+  // ----- leader: Hobgoblin Captain (CR 3) / Bandit Captain (CR 2) / Pirate Captain (CR 6) -----
+  {
+    id: 'defender-3-leader',
+    cite: 'composition after Hobgoblin Captain (CR 3: Aura of Authority + Greatsword/Longbow); the Bandit Captain\'s Parry is retired by the family sweep (2026-09-08: defenders carry no reactions)',
+    style: 'leader',
+    cr: 3, archetypes: ['defender'],
+    ac: 15, hp: 60, hp_formula: '11d8 + 11', atk: 5, dc: 12, pb: 2,
+    speed: '30 ft.',
+    stats: { STR: 16, DEX: 14, CON: 14, INT: 12, WIS: 11, CHA: 15 }, // STR mod + PB = the card's attack bonus
+    saves: ['CON', 'CHA'], skills: 'Athletics +4, Persuasion +4',
+    sections: {
+      Traits: [
+        { name: 'Aura of Authority', rules: true, text: 'While in a 10-foot Emanation originating from the creature, the creature and its allies have Advantage on attack rolls and saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Hybrid Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 12 (2d8 + 3) {damage_type} damage.' },
+        { name: 'Hybrid Attack', text: '*Melee or Ranged Attack Roll:* +5, reach 5 ft. or range 30/120 ft. 10 (2d6 + 3) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
+    id: 'defender-8-leader',
+    invented: true, // the captain line at CR 8 — Pirate Captain (CR 6) is the nearest print rung
+    style: 'leader',
+    cr: 8, archetypes: ['defender'],
+    ac: 17, hp: 135, hp_formula: '18d8 + 54', atk: 8, dc: 15, pb: 3,
+    speed: '30 ft.',
+    stats: { STR: 20, DEX: 14, CON: 16, INT: 12, WIS: 13, CHA: 18 },
+    saves: ['CON', 'CHA'], skills: 'Athletics +7, Persuasion +7',
+    sections: {
+      Traits: [
+        { name: 'Aura of Authority', rules: true, text: 'While in a 10-foot Emanation originating from the creature, the creature and its allies have Advantage on attack rolls and saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Hybrid Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 21 (3d10 + 5) {damage_type} damage.' },
+        { name: 'Hybrid Attack', text: '*Melee or Ranged Attack Roll:* +8, reach 5 ft. or range 30/120 ft. 18 (3d8 + 5) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  // ----- shifter: Werewolf (CR 3) / Weretiger (CR 4) / Doppelganger (CR 3) -----
+  {
+    id: 'skirmisher-3-shifter',
+    cite: 'composition after Werewolf (CR 3: Scratch + gated Bite + Shape-Shift) and Weretiger (CR 4: Prowl)',
+    style: 'shifter',
+    cr: 3, archetypes: ['skirmisher'],
+    ac: 15, hp: 60, hp_formula: '11d8 + 11', atk: 5, dc: 12, pb: 2,
+    speed: '30 ft.',
+    stats: { STR: 16, DEX: 14, CON: 14, INT: 10, WIS: 11, CHA: 10 },
+    saves: ['STR'], skills: 'Perception +2, Stealth +4',
+    sections: {
+      Traits: [
+        { name: 'Mobility Trait', text: 'The creature ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks. It can replace one attack with a Bite Attack attack.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 12 (2d8 + 3) {damage_type} damage.' },
+        { name: 'Bite Attack', gate: 'Beast or Hybrid Form Only', text: '*Melee Attack Roll:* +5, reach 5 ft. 12 (2d8 + 3) Piercing damage. If the target is a Humanoid, it is subjected to the following effect. *Constitution Saving Throw*: DC 12. *Failure:* The target has the Poisoned condition until the end of its next turn.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* 7 (2d6) {damage_type} damage, and the target has the Frightened condition until the end of its next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Shape-Shift', rules: true, text: 'The creature shape-shifts into a Large beast-humanoid hybrid or a Medium beast, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn\'t transformed.' },
+        { name: 'Escape Action', text: 'The creature takes the Dash, Disengage, or Hide action.' },
+      ],
+    },
+  },
+  {
+    id: 'skirmisher-8-shifter',
+    invented: true, // the were line at CR 8 — Werebear (CR 5) is the highest print rung
+    style: 'shifter',
+    cr: 8, archetypes: ['skirmisher'],
+    ac: 17, hp: 135, hp_formula: '18d8 + 54', atk: 8, dc: 15, pb: 3,
+    speed: '30 ft.',
+    stats: { STR: 20, DEX: 16, CON: 16, INT: 10, WIS: 12, CHA: 10 },
+    saves: ['STR', 'CON'], skills: 'Perception +4, Stealth +6',
+    sections: {
+      Traits: [
+        { name: 'Mobility Trait', text: 'The creature ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks. It can replace one attack with a Bite Attack attack.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 21 (3d10 + 5) {damage_type} damage.' },
+        { name: 'Bite Attack', gate: 'Beast or Hybrid Form Only', text: '*Melee Attack Roll:* +8, reach 5 ft. 21 (3d10 + 5) Piercing damage. If the target is a Humanoid, it is subjected to the following effect. *Constitution Saving Throw*: DC 15. *Failure:* The target has the Poisoned condition until the end of its next turn.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* 10 (3d6) {damage_type} damage, and the target has the Frightened condition until the end of its next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Shape-Shift', rules: true, text: 'The creature shape-shifts into a Large beast-humanoid hybrid or a Medium beast, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn\'t transformed.' },
+        { name: 'Escape Action', text: 'The creature takes the Dash, Disengage, or Hide action.' },
+      ],
+    },
+  },
+  // ----- the three lines' legendary top seats (owner rule 2026-09-01: every style line tops out in a legendary seat) -----
+  {
+    id: 'skirmisher-18-archer',
+    invented: true, // no printed archer boss — the Scout line at the skulker-18 card
+    style: 'archer', legendary: true,
+    cr: 18, archetypes: ['skirmisher', 'artillery'],
+    ac: 20, hp: 285, hp_formula: '38d10 + 76', atk: 13, dc: 20, pb: 6,
+    speed: '40 ft.',
+    stats: { STR: 16, DEX: 26, CON: 14, INT: 14, WIS: 20, CHA: 14 },
+    saves: ['DEX', 'WIS'], skills: 'Perception +11, Stealth +14',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Mobility Trait', text: 'The creature ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +13, reach 5 ft. 30 (5d8 + 8) {damage_type} damage.' },
+        { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +13, range 150/600 ft. 30 (5d8 + 8) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 20, one creature within 120 feet. *Failure:* 22 (4d10) {damage_type} damage, and the target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Escape Action', text: 'The creature takes the Dash, Disengage, or Hide action.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Ranged Attack', text: 'The creature makes one Ranged Attack attack. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Escape', text: 'The creature takes the Disengage or Hide action.' },
+      ],
+    },
+  },
+  {
+    id: 'skirmisher-18-shifter',
+    invented: true, // no printed were boss — the were line at the skulker-18 card
+    style: 'shifter', legendary: true,
+    cr: 18, archetypes: ['skirmisher'],
+    ac: 20, hp: 285, hp_formula: '38d10 + 76', atk: 13, dc: 20, pb: 6,
+    speed: '40 ft.',
+    stats: { STR: 24, DEX: 20, CON: 18, INT: 12, WIS: 16, CHA: 14 },
+    saves: ['STR', 'CON'], skills: 'Perception +9, Stealth +11',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Mobility Trait', text: 'The creature ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes three Melee Attack attacks. It can replace one attack with a Bite Attack attack.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +13, reach 5 ft. 30 (5d8 + 8) {damage_type} damage.' },
+        { name: 'Bite Attack', gate: 'Beast or Hybrid Form Only', text: '*Melee Attack Roll:* +13, reach 5 ft. 30 (5d8 + 8) Piercing damage. If the target is a Humanoid, it is subjected to the following effect. *Constitution Saving Throw*: DC 20. *Failure:* The target has the Poisoned condition until the end of its next turn.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 20, one creature within 30 feet. *Failure:* 22 (4d10) {damage_type} damage, and the target has the Frightened condition until the end of its next turn.' },
+      ],
+      'Bonus Actions': [
+        { name: 'Shape-Shift', rules: true, text: 'The creature shape-shifts into a Large beast-humanoid hybrid or a Large beast, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn\'t transformed.' },
+        { name: 'Escape Action', text: 'The creature takes the Dash, Disengage, or Hide action.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Rend', text: 'The creature makes one Melee Attack attack. The creature can\'t take this action again until the start of its next turn.' },
+        { name: 'Legendary Escape', text: 'The creature takes the Disengage or Hide action.' },
+      ],
+    },
+  },
+  {
+    id: 'defender-17-leader',
+    invented: true, // no printed captain boss — the leader line at the warden-17 card (the defender family's armor-over-card, meat-over-damage tax)
+    style: 'leader', legendary: true,
+    cr: 17, archetypes: ['defender'],
+    ac: 20, ac_offset: 1, hp: 238, hp_scale: 1.1, hp_formula: '35d8 + 80', atk: 12, dc: 19, pb: 6, dpr_scale: 0.7,
+    speed: '30 ft.',
+    stats: { STR: 22, DEX: 14, CON: 20, INT: 14, WIS: 16, CHA: 20 },
+    saves: ['CON', 'CHA'], skills: 'Athletics +12, Persuasion +11',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Aura of Authority', rules: true, text: 'While in a 10-foot Emanation originating from the creature, the creature and its allies have Advantage on attack rolls and saving throws, provided the creature doesn\'t have the Incapacitated condition.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 40 (6d10 + 7) {damage_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Move and Attack', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Command', text: 'One ally of the creature that can see or hear it can immediately use its Reaction to move up to half its Speed or to make one attack.' },
+        { name: 'Legendary Rally', text: 'The creature and each of its allies within 10 feet of it that can see or hear it end the Charmed and Frightened conditions on themselves.' },
+      ],
+    },
+  },
   {
     id: 'defender-1',
     cite: 'composition after Guard (CR 1/8) and the Knight\'s armor line — the shield-wall floor',

@@ -412,7 +412,7 @@ describe('the mounted template line: full compositions, shape-frames as authorin
     // the defender family (corpus sweep 2026-09-08): plain = soldier
     // (Knight/Guard Captain), 'warden' (Shield Guardian), invented 17s
     const defenders = D.filter((d) => (d.archetypes ?? []).includes('defender'));
-    expect(defenders.length).toBe(7);
+    expect(defenders.length).toBe(10); // + the three leader rungs (2026-09-28)
     expect(pdm(1, null, 'defender').id).toBe('defender-1');
     expect(pdm(4, null, 'defender').id).toBe('defender-3');
     expect(pdm(9, null, 'defender').id).toBe('defender-5');

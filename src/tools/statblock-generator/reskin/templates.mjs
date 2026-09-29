@@ -171,7 +171,7 @@ export const VERB_KEYS = {
   'pull-through': ['through walls', 'through the wall', 'through the floor', 'drag under', 'pull under', 'into the surf', 'drown', 'through stone', 'phase', 'incorporeal'],
   'death-burst': ['explode', 'burst', 'die', 'death', 'detonate', 'final', 'last breath', 'shatter', 'dying'],
   'burrow-ambush': ['erupt', 'burrow', 'ambush', 'tunnel', 'beneath', 'underground', 'sand', 'earth', 'surface', 'rise from'],
-  'resonant-body': ['ring', 'toll', 'clang', 'resonate', 'bell', 'chime', 'hum', 'gong', 'thunder', 'bronze', 'peal', 'echo', 'deafen', 'struck'],
+  'resonant-body': ['ring', 'toll', 'resonate', 'bell', 'chime', 'gong', 'bronze', 'brass', 'iron', 'crystal', 'glass', 'hollow', 'peal'], // MATERIAL keys only: 'thunder'/'echo'/'struck'/'hum'/'clang'/'deafen' bound a bell to a boar's bone shards (critic, new lines 2026-09-28)
   'throw-retrieve': ['lance', 'spear', 'axe', 'retrieve', 'recover', 'fetch', 'javelin', 'harpoon', 'anchor', 'hammer', 'thrown weapon', 'its weapon'], // a NAMED weapon — "hurls" alone is the hurler's thrown-burst (Scarpfang walked to pick up a rock from a cliff of rocks)
   seal: ['seal', 'wax', 'cauterize', 'stopper', 'close the wound', 'no healing', 'wither', 'cannot heal', 'curse', 'psalm', 'sermon'], // "brand" is the MARK's word: "so her bolts find them again" (critic run six)
   adhesive: ['stick', 'sticky', 'tar', 'glue', 'adhere', 'cling', 'gum', 'pitch', 'resin', 'slime', 'sap', 'grip', 'held fast', 'stuck', 'mimic', 'strongroom', 'chest', 'vault', 'coffer'], // a mimic is adhesive by print (the Hollow Trust had none though offered)
@@ -195,7 +195,7 @@ export const VERB_KEYS = {
   'own-turn-punisher': ['punish', 'sting', 'answer', 'reprisal', 'retaliate', 'strike back', 'avenge', 'counter', 'spite', 'lash'],
   'zone-seed': ['fog', 'murk', 'cloud', 'field', 'mist', 'smoke', 'haze', 'spores', 'steam', 'darkness', 'shroud'],
   reveal: ['reveal', 'light', 'outline', 'expose', 'illuminate', 'lamp', 'lantern', 'faerie fire', 'glow', 'mark', 'shine'],
-  rally: ['rally', 'bolster', 'ward', 'blessing', 'bless', 'shield', 'protect', 'inspire', 'hymn', 'prayer', 'heal', 'mend', 'flock'],
+  rally: ['rally', 'bolster', 'ward', 'blessing', 'bless', 'shield', 'protect', 'inspire', 'hymn', 'prayer', 'heal', 'mend', 'flock', 'command', 'orders', 'troops', 'battle cry', 'war cry', 'frenzy', 'bellows'], // a leader's command IS the rally shape (print: bonus-action Leadership / the commander's THP) — three leaders' commands seated as 2/Day standalones and floored (critic, new lines 2026-09-28)
   focus: ['focus', 'aim', 'stalk', 'poise', 'sight', 'lock on', 'hunt', 'track', 'study', 'patience'],
   'feint-slip': ['feint', 'slip', 'blur', 'weave', 'dodge', 'dart', 'sidestep', 'evade', 'dance', 'trick'],
   'wind-up': ['gather', 'charge-up', 'telegraph', 'brew', 'build', 'swell', 'ratchet', 'wind', 'coil', 'inhale', 'gathering', 'storm'],
@@ -223,7 +223,7 @@ export const VERB_KEYS = {
   'marking-light': ['lit by', 'glow', 'glowing', 'lantern', 'beacon', 'sheds light', 'light clings', 'burning mark', 'starlight', 'shard of light', 'faerie fire', 'luminous', 'cannot hide from', 'lit up', 'shines on', 'outlines', 'limned'],
   'sealed-body': ['sealed', 'reliquary', 'closed cell', 'cannot be opened', 'iron body', 'clockwork', 'no way in', 'cannot be swayed', 'cannot be read', 'grinds on', 'talked down', 'made to flee', 'locked'],
   'warded-mending': ['mend', 'mends', 'mending', 'knits', 'knits itself', 'repairs itself', 'heals near', 'consecrated', 'litany', 'litanies', 'prayer', 'prayers', 'its ward', 'while near', 'shrine', 'altar', 'regrows', 'seeps into', 'restored by'],
-  'guarded-stance': ['guard', 'seamless guard', 'parry', 'parries', 'blade and shield', 'shield and blade', 'stance', 'hard to hit', 'blows glance', 'glance off', 'slips every blow', 'weaves between', 'nothing lands', 'footwork', 'duelist', 'light bends', 'reads only as', 'hard to track'],
+  'guarded-stance': ['guard', 'seamless guard', 'parry', 'parries', 'turns aside', 'turn aside', 'turns every blade', 'blade aside', 'blades aside', 'deflects', 'deflect', 'blade and shield', 'shield and blade', 'stance', 'hard to hit', 'blows glance', 'glance off', 'slips every blow', 'weaves between', 'nothing lands', 'footwork', 'duelist', 'light bends', 'reads only as', 'hard to track'],
   'undead-fortitude': ['keeps him standing', 'keeps her standing', 'keeps it standing', 'should have quit', 'refuses to die', "won't stay down", 'gets back up', 'oath keeps', 'will not fall', 'undying', 'zombie', 'shambling', 'body should have', 'not yet dead', 'keeps fighting', 'dead on its feet', 'corpse', 'after death', 'too stubborn to die'],
   mimicry: ['mimic', 'mimics', 'mimicry', 'imitates', 'imitation', 'steals voices', 'stolen voice', 'stolen voices', 'ventriloquist', 'parrot', 'magpie', 'throws its voice', 'speaks in', 'borrowed voice', 'sounds like', 'voices'],
   wail: ['wail', 'wails', 'wailing', 'keening', 'shriek', 'shrieks', 'scream', 'screams', 'hymn', 'dirge', 'stops hearts', 'stops the heart', 'banshee', 'death song', 'lament', 'voice kills', 'song kills'],
@@ -236,6 +236,7 @@ export const VERB_KEYS = {
 // on a recluse and on a stealth assassin — direction and seat are part of the
 // binding, not an afterthought)
 export const DENY_KEYS = {
+  leap: ['erupt', 'erupts', 'eruption', 'around it', 'in a circle', 'wide circle', 'from beneath'], // a leap is jump-to-a-space; a self-centred ground burst is another card (Gravesoil Eruption, critic 2026-09-29)
   lure: ['recluse', 'hermit', 'solitary', 'shuns', 'keeps away', 'from afar', 'at a distance', 'hides', 'hiding', 'hidden', 'unseen', 'stealth', 'assassin', 'stalks'],
   herd: ['recluse', 'hermit', 'solitary', 'hides', 'hiding', 'unseen', 'assassin'],
   'false-appearance': ['hurls', 'throws', 'charges', 'rides', 'flies', 'prowls'],
@@ -268,9 +269,13 @@ const wordsOf = (t) => [...new Set(String(t ?? '').toLowerCase().split(/[^a-z]+/
  * sent the lure to a charging knight because the idea text said "drawn to
  * follow". Returns [{ t, concept: [...], idea: [...] }], best first, stable.
  */
+// a HOMOGRAPH binds once, in the sense its phrase carries: "roots up the graves"
+// is digging (the Burrow the route gave), not the hold-fast sense three templates
+// key on — the miller was Burrowing AND restraining from 60 feet (critic, new lines 2026-09-28)
+const SENSE_DENY = { root: /\broots? (?:up|through|around|about|in|out|for)\b/i, roots: /\broots? (?:up|through|around|about|in|out|for)\b/i };
 export function rankByVerb(menu, conceptText, ideaText = '') {
   const c = wordsOf(conceptText); const d = wordsOf(ideaText);
-  const hit = (t, words, raw) => (t.keys ?? []).filter((k) => (k.includes(' ') ? String(raw ?? '').toLowerCase().includes(k) : words.some((w) => sameStem(w, stem(k)))));
+  const hit = (t, words, raw) => (t.keys ?? []).filter((k) => !(SENSE_DENY[k] && SENSE_DENY[k].test(String(raw ?? ''))) && (k.includes(' ') ? String(raw ?? '').toLowerCase().includes(k) : words.some((w) => sameStem(w, stem(k)))));
   return menu.map((t, i) => { const concept = hit(t, c, conceptText); const idea = hit(t, d, ideaText).filter((k) => !concept.includes(k)); return { t, i, concept, idea, matched: [...concept, ...idea], score: concept.length * 2 + idea.length }; })
     .sort((a, b) => b.score - a.score || a.i - b.i);
 }
@@ -290,7 +295,7 @@ export const TEMPLATES = [
   ...SHAPES.filter((s) => SECTION_BY_REPLACES[s.replaces] && SHAPE_TAGS[s.id]).map((s) => ({
     id: s.id, name: s.name, kind: 'shape', cite: s.cite,
     section: SECTION_BY_REPLACES[s.replaces], roles: s.roles, styles: s.styles, cr_range: s.cr_range,
-    gate: s.gate ?? null, nova: s.replaces === 'nova', requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null,
+    gate: s.gate ?? null, nova: s.replaces === 'nova', requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null,
     host: HOST_BY_REPLACES[s.replaces] ?? null,
     trigger: SHAPE_TAGS[s.id][0], effect: SHAPE_TAGS[s.id][1],
     keys: [...new Set([...(VERB_KEYS[s.id] ?? []), ...(SHAPE_KEYS[s.id] ?? [])])],
@@ -333,7 +338,7 @@ export function triggerCompatible(want, have) {
   return true;
 }
 
-export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null } = {}) {
+export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '' } = {}) {
   const band = bandFor(cr);
   const rows = Object.values(sections).flat();
   const owned = new Set(rows.map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase()));
@@ -352,6 +357,7 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     && (t.kind !== 'shape' || t.frames[band])
     && (!t.requires_movement || new RegExp(t.requires_movement, 'i').test(movement))
     && (!t.requires_style || t.requires_style === style) // a ward-shaped reaction needs the warden seat, not just a defender line
+    && !(t.deny_types && type && t.deny_types.some((ty) => new RegExp(`^${ty}\\b`, 'i').test(String(type)))) // a body trait is a BODY's: contact damage on a Humanoid pirate queen read her name as brine (critic, new lines 2026-09-28)
     && (!section || t.section === section)
     && triggerCompatible(trigger, t.trigger)
     && !(text && deniedBy(t, text).length)
@@ -669,8 +675,17 @@ export function valueCheck(row, { scaled, sections, section, cr = null }) {
   let text = row.text; let name = row.name; const steps = [];
   // MASS effects are priced by targets whether gated or not (the hermit's each-
   // creature lure read 11.6 as one target and should have gated, critic 2026-09-22)
-  const value = (t) => { const r = rowValue(t, perHit, { area }); return area ? { ...r, ev: r.ev * AREA_TARGETS } : r; };
+  // a RECURRING tick ("at the start of each of its turns until it uses its action")
+  // is worth about two turns and its die is print's small one (Fire Form 1d10 beside
+  // a 10-point hit) — the thorn-wall's brand climbed to 6d6 a turn priced as one hit
+  // (critic, new lines 2026-09-28)
+  const recurring = /at the start of each of its turns until/i.test(text);
+  const value = (t) => { const r = rowValue(t, perHit, { area }); const mult = (area ? AREA_TARGETS : 1) * (recurring ? 2 : 1); return mult === 1 ? r : { ...r, ev: r.ev * mult }; };
   let v = value(text);
+  if (recurring && v.hasDamage && v.avg > Math.max(1, Math.round(perHit / 2))) {
+    const tick = saveDamageDiceFor(Math.max(1, Math.round(perHit / 2)));
+    text = text.replace(DMG, `${tick.avg} (${tick.dice})`); steps.push(`recurring tick ${v.avg} → ${tick.avg} (half a hit, priced by two turns)`); v = value(text);
+  }
   // a DELAYED payload ("at the start of each of its turns", "if it was already
   // Frightened") has no immediate damage to halve — the half clause read as a
   // rule on nothing (the jurist's Creeping Dread, three sightings)
@@ -679,7 +694,7 @@ export function valueCheck(row, { scaled, sections, section, cr = null }) {
   // a THRESHOLD KILL row is priced by its threshold, never by its dice: print's
   // Banshee wails for 3d6 and kills at the line (the choir's hymn climbed to 16d12)
   const kill = /drops to 0 Hit Points|it dies\b/.test(text);
-  if (v.ev < floor && v.hasDamage && v.avg < budget && !kill) {
+  if (v.ev < floor && v.hasDamage && v.avg < budget && !kill && !recurring) {
     const full = saveDamageDiceFor(budget);
     text = text.replace(DMG, `${full.avg} (${full.dice})`); steps.push(`dice ${v.avg} → ${full.avg}${gated ? ' (nova budget)' : ''}`); v = value(text);
   }

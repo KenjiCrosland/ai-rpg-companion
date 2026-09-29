@@ -3126,9 +3126,12 @@ describe('the holds round (2026-09-10): coherence, the launcher vet, the mark sa
     const { renameKeysOf: rk } = require('../generate.mjs');
     const renames = {};
     rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
-    // the hybrid row has reach — a crossbow name on it is the Grave-Vow defect
+    // the hybrid row has reach — a crossbow name on it WAS the Grave-Vow defect; since the
+    // weapon table (2026-09-28) the hybrid row is retabled into a crossbow row, so the
+    // defect is the pure MELEE row's alone
     const hybridKey = rk(scaled).find((k) => /Hybrid/.test(k));
-    renames[hybridKey] = 'Heavy Crossbow';
+    renames[hybridKey] = 'Named Hybrid';
+    renames[rk(scaled).find((k) => /^Melee Attack$/.test(k))] = 'Heavy Crossbow';
     const typed = Object.values(scaled.sections).flat()
       .filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
     const answer = {
@@ -4842,5 +4845,151 @@ describe('the critic\'s refinements, end to end (2026-09-28)', () => {
     // the claimed gaze OWES its trait, and a lurking object has no voice
     expect(rows.some((e) => e.template === 'gaze-aura')).toBe(true);
     expect(m.languages).toMatch(/can't speak/);
+  });
+});
+
+test("the shifter's beast is the concept's: a miller who turns into a boar prints boar forms and a Boar-gated bite (2026-09-28)", async () => {
+  const { renameKeysOf: rk } = require('../generate.mjs');
+  const sc = scaleDonor(pickDonor(3, 'shifter', 'skirmisher'), 3, { mechanics: [] });
+  const renames = {}; rk(sc).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+  const typed = Object.values(sc.sections).flat().filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name]);
+  const ans = JSON.stringify({ name: 'Grave Miller', type: 'Humanoid', size: 'Medium', alignment: 'Chaotic Evil', senses: 'darkvision 60 ft.', languages: 'Common', renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Piercing'])), conditions: { condition_minor: 'Prone' }, melee_rider: 'none' });
+  const m = await generateReskin({ archetype: 'skirmisher', style: 'shifter', concept: 'a miller who turns into a boar under the moon', userConcept: 'a miller who turns into a boar under the moon', cr: 3, mechanics: [], resolvedType: 'Humanoid' }, async (prompt) => {
+    if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({});
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return ans;
+  });
+  const rows = Object.values(m.sections).flat();
+  expect(rows.find((e) => /^Shape-Shift/.test(e.name))?.text).toMatch(/boar-humanoid hybrid or a Medium boar/);
+  expect(rows.some((e) => /\(Boar or Hybrid Form Only\)/.test(e.name ?? ''))).toBe(true);
+  expect(m.generation.donor).toBe('skirmisher-3-shifter');
+});
+
+describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
+  const { printCanonFor, reskinDefects, renameKeysOf } = require('../generate.mjs');
+  const run = async (opts, over = {}) => {
+    const lines = []; const orig = console.log; console.log = (...a) => { lines.push(a.join(' ')); };
+    let m;
+    try {
+      m = await generateReskin({ cr: 8, mechanics: [], ...opts }, async (prompt) => {
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({});
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return answer(over);
+      });
+    } finally { console.log = orig; }
+    return { m, trace: lines.join('\n'), rows: Object.values(m.sections).flat() };
+  };
+  test('a print name as the HEAD NOUN of a longer concept is its block — unless the block is a Beast (reskin material)', () => {
+    expect(printCanonFor('a doppelganger who wears the faces of the dead in Ash Row', 3).name).toBe('Doppelganger');
+    expect(printCanonFor('a knight who commands the garrison of the eastern wall', 3).name).toBe('Knight');
+    expect(printCanonFor('a wolf that hunts the moon and eats the stars out of the sky', 5)).toBeNull();
+    expect(printCanonFor('a miller who turns into a boar under the moon and roots up the graves', 3)).toBeNull(); // no print block heads it
+    // print's rules rows outside Traits ride along: the Doppelganger's Shape-Shift (Bonus Action) and Read Thoughts (Action)
+    const dop = printCanonFor('a doppelganger who wears the faces of the dead in Ash Row', 3);
+    expect(dop.rulesRows.map((r) => `${r.section}/${r.name}`)).toEqual(expect.arrayContaining(['Bonus Actions/Shape-Shift', 'Actions/Read Thoughts']));
+    expect(dop.rulesRows.map((r) => r.name)).not.toContain('Slam');
+    expect(dop.casts).toBe(false); expect(dop.size).toMatch(/^Medium/);
+    expect(dop.exact).toBe(true); expect(printCanonFor('a hungry ooze', 0.5).exact).toBe(false); expect(printCanonFor('a canal ghost', 6).exact).toBe(false); expect(printCanonFor('a wolf', 5).exact).toBe(true); // a modified or ending match borrows rows; only the whole name re-routes
+    expect(printCanonFor('a mage who hoards the eastern wind', 6).casts).toBe(true);
+  });
+  test('a print name as the head noun outranks the verb router: the doppelganger is not a caster, and the seat style stands down', async () => {
+    const r = await run({ archetype: 'caster', style: 'skulker', concept: 'a doppelganger who reads what the living are thinking', userConcept: 'a doppelganger who reads what the living are thinking', cr: 3, resolvedType: 'Monstrosity', mind: 'sapient' },
+      fullAnswer(scaleDonor(pickDonor(3, null, 'skirmisher'), 3, { mechanics: [] }), 'Mourning Mask', { 'Melee Attack': 'Claw' }));
+    expect(r.trace).toMatch(/casts no spells — the caster family stands down for the plain skirmisher line/);
+    expect(r.trace).toMatch(/the skulker seat stands down for the plain line/);
+    expect(r.rows.some((e) => /^Spellcasting$/.test(e.name))).toBe(false);
+    expect((r.m.sections['Bonus Actions'] ?? []).some((e) => e.name === 'Shape-Shift')).toBe(true);
+    expect(r.rows.some((e) => e.name === 'Read Thoughts')).toBe(true);
+    // print's ARRAY rides with print's rows; a row that names its stat derives its DC from it; the roll note rides along
+    expect(r.trace).toMatch(/print canon array: STR 11, DEX \d+, CON 14, INT 11, WIS 12, CHA 14/);
+    expect(r.m.stats.CHA).toBe(14);
+    const rt = r.rows.find((e) => e.name === 'Read Thoughts');
+    expect(rt.text).toMatch(new RegExp(`spell save DC ${8 + r.m.pb + 2}\\)`));
+    expect(r.rows.find((e) => e.name === 'Slam').text).toMatch(/Melee Attack Roll:\*? \+\d+ \(with Advantage during the first round of each combat\), reach/);
+  });
+  test('the sheet\'s inline form: the model declares a personal name and the rules stand behind it; an energy rider on a Humanoid needs the concept\'s warrant; digging earns Burrow; the vulnerability warrant is the user\'s text', async () => {
+    const leader = scaleDonor(pickDonor(3, 'leader', 'defender'), 3, { mechanics: [] });
+    const base = { archetype: 'defender', style: 'leader', cr: 3, resolvedType: 'Humanoid', mind: 'sapient' };
+    const g = await run({ ...base, concept: 'an orc warlord at the head of his warband', userConcept: 'an orc warlord at the head of his warband' },
+      { ...fullAnswer(leader, 'Gormak Skullsplitter', { 'Melee Attack': 'Cleaver', 'Hybrid Attack': 'Handaxe' }), inline: 'Gormak', melee_rider: 'Poison', vulnerability: 'Fire', lore: 'Gormak fears fire above all things.' });
+    expect(g.rows.find((e) => e.name === 'Multiattack').text).toMatch(/^Gormak makes/);
+    expect(g.trace).toMatch(/inline form: "Gormak"/);
+    expect(g.rows.find((e) => e.name === 'Cleaver').text).not.toMatch(/plus \d+ \(\d+d\d+\) Poison/); // no venom in the concept's words
+    expect(g.trace).toMatch(/energy rider withheld: Poison on a Humanoid/);
+    expect(String(g.m.vulnerabilities ?? '')).toBe(''); // the lore's fire is not the user's
+    expect(g.trace).toMatch(/vulnerability rejected/);
+    const bad = await run({ ...base, concept: 'an orc warlord whose venomed cleaver rots the wound', userConcept: 'an orc warlord whose venomed cleaver rots the wound' },
+      { ...fullAnswer(leader, 'Gormak Skullsplitter', { 'Melee Attack': 'Cleaver', 'Hybrid Attack': 'Handaxe' }), inline: 'the Warlord Gormak', melee_rider: 'Poison' });
+    expect(bad.rows.find((e) => e.name === 'Multiattack').text).toMatch(/^The gormak skullsplitter makes/); // a malformed declaration falls to the rules
+    expect(bad.rows.find((e) => e.name === 'Cleaver').text).toMatch(/plus \d+ \(\d+d\d+\) Poison damage/); // "venomed" warrants it
+    const miller = await run({ archetype: 'skirmisher', style: 'shifter', cr: 3, concept: 'a miller who turns into a boar under the moon and roots up the graves', userConcept: 'a miller who turns into a boar under the moon and roots up the graves', resolvedType: 'Humanoid', mind: 'sapient' },
+      fullAnswer(scaleDonor(pickDonor(3, 'shifter', 'skirmisher'), 3, { mechanics: [] }), 'Grave Miller', { 'Melee Attack': 'Fist' }));
+    expect(miller.m.speed).toMatch(/Burrow \d+ ft\./);
+    expect(miller.trace).toMatch(/burrow by concept/);
+    // a natural-weapon name that survives the repair round falls to print's Scratch
+    const tusk = await run({ archetype: 'skirmisher', style: 'shifter', cr: 3, concept: 'a miller who turns into a boar under the moon', userConcept: 'a miller who turns into a boar under the moon', resolvedType: 'Humanoid', mind: 'sapient' },
+      fullAnswer(scaleDonor(pickDonor(3, 'shifter', 'skirmisher'), 3, { mechanics: [] }), 'Hollowtusk', { 'Melee Attack': 'Tusk' }));
+    expect(tusk.trace).toMatch(/"Tusk" is a beast's weapon on an every-form row — "Melee Attack" takes print's Scratch/);
+    expect(tusk.rows.some((e) => e.name === 'Scratch' && /Melee Attack Roll/.test(e.text))).toBe(true);
+    expect(tusk.rows.some((e) => /^Tusk$/.test(e.name))).toBe(false);
+  });
+  const fullAnswer = (scaled, name, over) => {
+    const renames = {}; renameKeysOf(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; }); Object.assign(renames, over);
+    const typed = Object.values(scaled.sections).flat().filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    return { name, type: 'Humanoid', renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Slashing'])), conditions: { condition_minor: 'Prone' }, melee_rider: 'none' };
+  };
+  test('the weapon table: a launcher renamed onto the hybrid row becomes a ranged row at print\'s range; a thrown weapon keeps both halves at its own', async () => {
+    const leader = scaleDonor(pickDonor(8, 'leader', 'defender'), 8, { mechanics: [] });
+    const xbow = await run({ archetype: 'defender', style: 'leader', concept: 'a sergeant who orders a volley', userConcept: 'a sergeant who orders a volley', resolvedType: 'Humanoid', mind: 'sapient' },
+      fullAnswer(leader, 'Sergeant Haldrun Ironvolley', { 'Melee Attack': 'Shield Bash', 'Hybrid Attack': 'Heavy Crossbow' }));
+    const hx = xbow.rows.find((e) => /^Heavy Crossbow/.test(e.name));
+    expect(hx).toBeDefined();
+    expect(hx.text).toMatch(/Ranged Attack Roll:\*? \+\d+, range 100\/400 ft\./);
+    expect(hx.text).not.toMatch(/Melee or Ranged|reach \d+ ft/);
+    // a launcher rolls Dexterity: the row's bonus is Dex mod + PB, whatever the striker stat paid
+    const dexBonus = Math.floor(((xbow.m.stats.DEX ?? 10) - 10) / 2) + xbow.m.pb;
+    expect(Number(/\+(\d+), range/.exec(hx.text)[1])).toBe(dexBonus);
+    // and the damage side takes Dex too
+    const dexMod = Math.floor(((xbow.m.stats.DEX ?? 10) - 10) / 2);
+    const dm = /\d+ \(\d+d\d+(?: ([+-]) (\d+))?\)/.exec(hx.text);
+    expect(dm[1] ? (dm[1] === '-' ? -Number(dm[2]) : Number(dm[2])) : 0).toBe(dexMod);
+    const gun = await run({ archetype: 'defender', style: 'leader', concept: 'a pirate queen who commands from the quarterdeck', userConcept: 'a pirate queen who commands from the quarterdeck', resolvedType: 'Humanoid', mind: 'sapient' },
+      fullAnswer(leader, 'Salt-Crowned Admiral', { 'Melee Attack': 'Cutlass', 'Hybrid Attack': 'Flintlock' }));
+    const fl = gun.rows.find((e) => /^Flintlock/.test(e.name));
+    expect(fl.text).toMatch(/^\*?Ranged Attack Roll:\*? \+\d+, range 30\/90 ft\./);
+    expect(xbow.trace).toMatch(/weapon table: "Heavy Crossbow" — a launcher, never thrown, range 100\/400/);
+    // the personal name: a rank-titled name speaks by its rank
+    expect(xbow.rows.find((e) => e.name === 'Multiattack').text).toMatch(/^The sergeant makes/);
+    const mod = await run({ archetype: 'defender', style: 'leader', concept: 'a sergeant who orders a volley', userConcept: 'a sergeant who orders a volley', resolvedType: 'Humanoid', mind: 'sapient' },
+      fullAnswer(leader, 'Volley Sergeant Koldrek', { 'Melee Attack': 'Shield Bash', 'Hybrid Attack': 'Heavy Crossbow' }));
+    expect(mod.rows.find((e) => e.name === 'Multiattack').text).toMatch(/^The sergeant makes/); // a modifier before the rank is still a rank-titled name
+    const axe = await run({ archetype: 'defender', style: 'leader', concept: 'a warlord who bellows her troops into a frenzy', userConcept: 'a warlord who bellows her troops into a frenzy', resolvedType: 'Humanoid', mind: 'sapient' },
+      fullAnswer(leader, 'Drumkalla the Red', { 'Melee Attack': 'Cleaver', 'Hybrid Attack': 'Handaxe' }));
+    const ha = axe.rows.find((e) => /^Handaxe/.test(e.name));
+    expect(ha.text).toMatch(/Melee or Ranged Attack Roll:\*? \+\d+, reach 5 ft\. or range 20\/60 ft\./);
+    // "Name the Epithet" speaks by the given name, no article
+    expect(axe.rows.find((e) => e.name === 'Multiattack').text).toMatch(/^Drumkalla makes/);
+    expect(axe.rows.map((e) => e.text).join('\n')).not.toMatch(/\bthe red\b/);
+    // the leader's fallback owes the rally shape, not a punisher drawn by hash
+    expect(axe.trace).toMatch(/library seed drawn: rally -> Bonus Actions/); // the command words rank rally first; the style default heads it when they don't
+    expect(axe.trace).not.toMatch(/own-turn-punisher/);
+    expect((axe.m.sections['Bonus Actions'] ?? []).some((e) => /Temporary Hit Points/.test(e.text))).toBe(true);
+  });
+  test('a shifter\'s all-forms row is a weapon or unarmed strike, never the beast\'s natural weapon; a water beast\'s shifter is Amphibious', async () => {
+    const scaled = scaleDonor(pickDonor(3, 'shifter', 'skirmisher'), 3, { mechanics: [] });
+    const renames = {}; renameKeysOf(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    renames['Melee Attack'] = 'Gore';
+    const typed = Object.values(scaled.sections).flat().filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name]);
+    const p = { name: 'Grave-Reaper Miller', type: 'Humanoid', renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Piercing'])), conditions: { condition_minor: 'Prone' }, melee_rider: 'none' };
+    expect(reskinDefects(scaled, p, {}).join('\n')).toMatch(/"Gore" is a beast's natural weapon on a row usable in EVERY form/);
+    renames['Melee Attack'] = 'Scratch';
+    expect(reskinDefects(scaled, p, {}).join('\n')).not.toMatch(/natural weapon/);
+    const shark = await run({ archetype: 'skirmisher', style: 'shifter', cr: 8, concept: "a sea-hag's daughter who becomes a shark", userConcept: "a sea-hag's daughter who becomes a shark", resolvedType: 'Humanoid', mind: 'sapient' },
+      fullAnswer(scaleDonor(pickDonor(8, 'shifter', 'skirmisher'), 8, { mechanics: [] }), 'Brineveil', { 'Melee Attack': 'Scratch' }));
+    expect((shark.m.sections.Traits ?? []).find((e) => e.name === 'Amphibious')?.text).toBe('The brineveil can breathe air and water.');
+    expect(shark.rows.some((e) => /\(Shark or Hybrid Form Only\)/.test(e.name))).toBe(true);
+    expect(shark.m.languages).not.toBe('None'); // a Humanoid speaks (the miller printed None)
   });
 });

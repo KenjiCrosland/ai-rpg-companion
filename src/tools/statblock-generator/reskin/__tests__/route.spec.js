@@ -94,7 +94,7 @@ describe('chooseLine', () => {
     const r = chooseLine({ picks: [{ line: 'brute-juggernaut', because: 'a swamp ogre' }, { line: 'brute', because: 'a swamp ogre' }], creature_type: 'Giant' }, { text: 'a swamp ogre that stands its ground' });
     expect(r.line).toBe('brute');
     const w = chooseLine({ picks: [{ line: 'defender-warden', because: 'sergeant sworn to guard the gate' }], creature_type: 'Humanoid' }, { text: 'a sergeant sworn to guard the gate' });
-    expect(w.line).toBe('defender');
+    expect(w.line).toBe('defender-leader'); // the veto falls to the family, and a SERGEANT's own rank then routes it to the leader line (2026-09-28)
     expect(w.notes[0]).toMatch(/not a made or risen guardian/);
   });
   test('when every pick fails the family of the first known pick survives as its plain line', () => {
@@ -169,4 +169,46 @@ test("subject inversion: 'runs anyone who blocks it off the cliff' is the courie
 test("'eats sheep' is a grappler's verb (the hedge, fresh six)", () => {
   const { verbLines } = require('../route.mjs');
   expect(verbLines('a hedge that eats sheep')).toContain('brute-grappler');
+});
+
+describe('the three new lines (2026-09-28): archer, shifter, leader', () => {
+  const { verbLines, LINES } = require('../route.mjs');
+  const { pickDonor } = require('../scale.mjs');
+  test('each line is on the shelf with a style, and its verbs route to it', () => {
+    for (const id of ['skirmisher-archer', 'skirmisher-shifter', 'defender-leader']) expect(LINES.find((l) => l.id === id)?.style).toBeTruthy();
+    expect(verbLines('a hobgoblin sniper who picks off torch-bearers from the ridge')).toContain('skirmisher-archer');
+    expect(verbLines('a miller who turns into a boar under the moon')).toContain('skirmisher-shifter');
+    expect(verbLines('an orc warlord at the head of his warband')).toContain('defender-leader');
+    expect(verbLines("a lighthouse hermit-mage whose lantern beam brands whoever it touches, so her bolts find them again in the dark")).not.toContain('skirmisher-archer'); // a caster's bolts are not arrows
+  });
+  test('the donors draw by style at every rung', () => {
+    expect(pickDonor(3, 'archer', 'skirmisher').id).toBe('skirmisher-3-archer');
+    expect(pickDonor(10, 'archer', 'skirmisher').id).toBe('skirmisher-8-archer');
+    expect(pickDonor(6, 'archer', 'artillery').id).toBe('skirmisher-3-archer'); // the artillery menu role draws a shooter, not a thrower
+    expect(pickDonor(5, 'shifter', 'skirmisher').id).toBe('skirmisher-3-shifter');
+    expect(pickDonor(9, 'leader', 'defender').id).toBe('defender-8-leader');
+  });
+});
+
+describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
+  test('a print NOUN is not a line verb: "doppelganger" routes by print canon, not by the shifter\'s verb rule', () => {
+    expect(verbLines('a doppelganger who wears the faces of the dead in Ash Row')).not.toContain('skirmisher-shifter');
+    expect(verbLines('a miller who turns into a boar under the moon')).toContain('skirmisher-shifter');
+  });
+  test('a leader is print\'s Humanoid class: a Beast that "rules" is vetoed off the leader line (the crab golden)', () => {
+    const r = chooseLine({ picks: [{ line: 'defender-leader', because: 'wears it and rules the wreck-fields' }, { line: 'brute-grappler', because: 'a crab the size of a longboat' }], creature_type: 'Beast' }, { text: "the drowned king's crown, a crab the size of a longboat that wears it and rules the wreck-fields" });
+    expect(r.line).not.toBe('defender-leader');
+    expect(r.notes.join(' ')).toMatch(/a Beast commands no troops/);
+    expect(r.line).toBe('brute-grappler'); // a crab is print's grappling body (Giant Crab's Claw grapples)
+    const h = chooseLine({ picks: [{ line: 'defender-leader', because: 'commands from the quarterdeck' }], creature_type: 'Humanoid' }, { text: 'a pirate queen who commands from the quarterdeck' });
+    expect(h.line).toBe('defender-leader');
+  });
+  test('an archer shoots a named weapon: a lantern-mage whose bolts find them is vetoed off the archer line', () => {
+    const t = "a lighthouse hermit-mage whose lantern beam brands whoever it lights, and her bolts find them again in the dark";
+    const r = chooseLine({ picks: [{ line: 'skirmisher-archer', because: 'her bolts find them again in the dark' }, { line: 'caster-binder', because: 'lantern beam brands whoever it lights' }], creature_type: 'Humanoid' }, { text: t });
+    expect(r.line).toBe('caster-binder');
+    expect(r.notes.join(' ')).toMatch(/no bow, arrow or shot in the words/);
+    const a = chooseLine({ picks: [{ line: 'skirmisher-archer', because: 'picks off torch-bearers' }], creature_type: 'Humanoid' }, { text: 'a hobgoblin sniper who picks off torch-bearers from the ridge with a heavy crossbow' });
+    expect(a.line).toBe('skirmisher-archer');
+  });
 });

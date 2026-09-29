@@ -156,7 +156,7 @@ export const SHAPES = [
   // exact trait grammars; neither depends on the CR band.
   {
     id: 'heated-body', name: 'Heated Body', cite: 'Remorhaz/Heated Body (CR 11); Fire Elemental/Fire Form (CR 5); Azer (CR 2)',
-    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait', deny_types: ['Humanoid'],
     // contact damage is a print CONSTANT by band, not a budget fraction: Azer 5 (1d10) at CR 2, Fire Elemental 5 (1d10) at CR 5, Remorhaz 10 (3d6) at CR 11, Balor 10 (3d6) at CR 19 — a nuisance, not an attack (critic, four runs)
     frames: { '0-2': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 3 (1d6) {damage_type} damage.', '3-5': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 5 (1d10) {damage_type} damage.', '6-9': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 7 (2d6) {damage_type} damage.', '10-12': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 10 (3d6) {damage_type} damage.', '13-20': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 10 (3d6) {damage_type} damage.', '21+': 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 14 (4d6) {damage_type} damage.' },
   },
@@ -253,12 +253,12 @@ export const SHAPES = [
   // print grammar only. Numbers are band constants from print, never budget.
   {
     id: 'fire-aura', name: 'Searing Aura', cite: 'Azer Sentinel/Fire Aura (CR 2, 5 ft 1d10); Fire Elemental (CR 5, 1d10); Remorhaz/Heat Aura (CR 11, 3d10); Balor (CR 19, 3d8)',
-    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait', deny_types: ['Humanoid'],
     frames: { '0-2': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 5 (1d10) {damage_type} damage.', '3-5': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 5 (1d10) {damage_type} damage.', '6-9': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 7 (2d6) {damage_type} damage.', '10-12': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 10 (3d6) {damage_type} damage.', '13-20': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 13 (3d8) {damage_type} damage.', '21+': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 16 (3d10) {damage_type} damage.' },
   },
   {
     id: 'noxious-aura', name: 'Noxious Aura', cite: 'Ghast/Stench (CR 2, 5 ft); Hezrou/Stench (CR 8, 10 ft); Pit Fiend/Fear Aura (CR 20, 20 ft); Sea Hag/Vile Appearance (CR 2)',
-    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait', deny_types: ['Humanoid'],
     frames: { '0-2': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 5-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.', '3-5': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 5-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.', '6-9': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 10-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.', '10-12': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 10-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.', '13-20': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 20-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.', '21+': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 20-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.' },
   },
   {
@@ -557,6 +557,9 @@ export const STYLES = {
   mounted: 'a charger or rider — speed, momentum, ride-down attacks',
   skulker: 'an ambusher — stealth, gazes, leaps, vanishing',
   hurler: 'a thrower — projectiles, bursts, reeling lines',
+  archer: 'a shooter — bows and bolts, distance, a marked target',
+  shifter: 'a creature of two forms — a beast side and a human side, gated attacks',
+  leader: 'a commander — an aura for allies, a parry, a captain among troops',
 };
 
 /** The triple filter, band-resolved: returns shapes with `frame` set for the CR. */

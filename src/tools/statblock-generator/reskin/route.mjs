@@ -35,6 +35,8 @@ export const LINES = [
   { id: 'skirmisher-mounted', family: 'skirmisher', style: 'mounted', blurb: 'a RIDER, or a beast carrying one — speed, momentum, ride-down attacks that carry it past the target; a lone charging beast with no rider is brute-charger', exemplars: 'Knight on a warhorse, Centaur, Wight cavalry' },
   { id: 'skirmisher-skulker', family: 'skirmisher', style: 'skulker', blurb: 'a bodied sneak — hides, strikes with advantage, vanishes; a living or solid creature, never a ghost', exemplars: 'Assassin, Doppelganger, Goblin Boss' },
   { id: 'skirmisher-hurler', family: 'skirmisher', style: 'hurler', blurb: 'a thrower — boulders, spears, nets, javelins, reeling lines; a physical creature that fights at range with its arm', exemplars: 'Hill Giant (rocks), Cyclops, a net-thrower', implies: ['thrown-weapon'] },
+  { id: 'skirmisher-archer', family: 'skirmisher', style: 'archer', blurb: 'a SHOOTER — bows, crossbows, slings, darts; a creature whose primary attack is a missile it does not throw, and who keeps its distance', exemplars: 'Scout, Spy, a kobold sniper, a hobgoblin longbow line' },
+  { id: 'skirmisher-shifter', family: 'skirmisher', style: 'shifter', blurb: 'a creature of TWO FORMS — a humanoid that becomes a beast or a hybrid, or a thing that wears other shapes; some attacks belong to one form only', exemplars: 'Werewolf, Weretiger, Doppelganger' },
   { id: 'skirmisher-winged', family: 'skirmisher', style: 'winged', blurb: 'a flyer — dives, swooping strikes, snatches and drops, attacks on the wing', exemplars: 'Griffon, Wyvern, Peryton' },
   // ---- lurker: fragile ambusher with a devastating opening strike
   { id: 'lurker', family: 'lurker', style: null, blurb: 'a stalker — invisible or hidden, one devastating opening strike, then the hide-cycle', exemplars: 'Invisible Stalker, Hunter Shark, Displacer Beast' },
@@ -46,6 +48,7 @@ export const LINES = [
   { id: 'caster-warpriest', family: 'caster', role: 'artillery', style: 'warpriest', blurb: 'an armored battle-cleric or crusader — weapon strikes that carry holy or profane energy, prayers as war-gear', exemplars: 'Priest, War Priest, a paladin-shaped fiend' },
   // ---- defender: protects, punishes movement
   { id: 'defender', family: 'defender', style: null, blurb: 'a living soldier or bodyguard — shield, armor, holds the line, punishes anyone who moves past', exemplars: 'Knight, Guard Captain, Veteran' },
+  { id: 'defender-leader', family: 'defender', style: 'leader', blurb: 'a COMMANDER whose signature is what it does for allies — an aura of authority, a parry, a captain who fights beside troops; a warlord, chieftain, captain, sergeant', exemplars: 'Hobgoblin Captain, Bandit Captain, Pirate Captain' },
   { id: 'defender-warden', family: 'defender', style: 'warden', blurb: 'a MADE or risen guardian bound to a charge — a construct sentinel or tomb-bound spirit that shields something specific with its own body', exemplars: 'Shield Guardian, Helmed Horror, a tomb golem', made: true },
   // ---- bodies: the body IS the chassis
   { id: 'swarm', family: 'swarm', body: 'swarm', style: null, blurb: 'a mass of small creatures (or small things) acting as one — occupies space, halves when bloodied', exemplars: 'Swarm of Insects, Swarm of Bats, Swarm of Ravens' },
@@ -61,13 +64,16 @@ const BY_ID = new Map(LINES.map((l) => [l.id, l]));
 // line picked on a noun. The nouns still pick the type and the material.
 export const LINE_VERBS = {
   'brute-charger': ['charge', 'charges', 'gore', 'gores', 'run down', 'runs down', 'trample', 'tramples', 'ram', 'rams', 'stampede', 'barrels', 'thunders across'],
-  'brute-grappler': ['grab', 'grabs', 'seize', 'seizes', 'hold', 'holds', 'swallow', 'swallows', 'engulf', 'crush', 'crushes', 'hug', 'hugs', 'squeeze', 'constrict', 'drags into', 'folds around', 'cage', 'cages', 'climbs in', 'climbs into', 'crawls in', 'falls in', 'falls into', 'whatever climbs', 'whatever falls', 'whoever climbs', 'cooks whatever', 'anything that enters', 'devours', 'feeds on', 'swallows whole', 'gulps down', 'eats whatever', 'eats anyone', 'eats anything', 'eats sheep', 'eats cattle', 'eats goats', 'eats men', 'eats travelers', 'eats children', 'eats the living'], // bare 'eats' read a goat that eats grave-flowers as an engulfer // "a hedge that eats sheep" never tripped the engulf read (critic, fresh six) // a thing you climb INTO is a container: the cauldron rolled juggernaut on 'iron' (golden 2026-09-28)
+  'brute-grappler': ['grab', 'grabs', 'seize', 'seizes', 'hold', 'holds', 'swallow', 'swallows', 'engulf', 'crush', 'crushes', 'hug', 'hugs', 'squeeze', 'constrict', 'drags into', 'folds around', 'cage', 'cages', 'climbs in', 'climbs into', 'crawls in', 'falls in', 'falls into', 'whatever climbs', 'whatever falls', 'whoever climbs', 'cooks whatever', 'anything that enters', 'devours', 'feeds on', 'swallows whole', 'gulps down', 'eats whatever', 'eats anyone', 'eats anything', 'eats sheep', 'eats cattle', 'eats goats', 'eats men', 'eats travelers', 'eats children', 'eats the living', 'crab', 'crabs', 'scorpion', 'octopus', 'lobster', 'kraken'], // print's GRAPPLING BODIES: 2024 Giant Crab, Giant Scorpion, Giant Octopus all grapple on the attack row — a crab that "rules" fell to plain brute once the leader line was vetoed (golden 2026-09-28) // bare 'eats' read a goat that eats grave-flowers as an engulfer // "a hedge that eats sheep" never tripped the engulf read (critic, fresh six) // a thing you climb INTO is a container: the cauldron rolled juggernaut on 'iron' (golden 2026-09-28)
   'brute-regenerator': ['regenerate', 'regenerates', 'reknit', 'reknits', 'knits shut', 'regrow', 'regrows', 'heals its wounds'],
   'brute-juggernaut': ['unstoppable', 'immovable', 'grinds forward', 'smashes through', 'breaks through walls'],
   'skirmisher-mounted': ['rides', 'ride down', 'rides down', 'astride', 'gallops', 'saddle'],
   'skirmisher-skulker': ['hides', 'hide', 'sneaks', 'stalks', 'ambushes', 'vanishes', 'slips away', 'strikes from hiding', 'unseen'],
   'skirmisher-hurler': ['hurl', 'hurls', 'throw', 'throws', 'lob', 'lobs', 'sling', 'slings', 'fling', 'flings', 'pelts'],
   'skirmisher-winged': ['swoop', 'swoops', 'dives', 'dive', 'flies', 'on the wing', 'snatches from above'],
+  'skirmisher-archer': ['archer', 'archers', 'bowman', 'bowmen', 'longbow', 'shortbow', 'crossbow', 'crossbows', 'arrows', 'arrow', 'sniper', 'marksman', 'markswoman', 'sharpshooter', 'volley of arrows', 'picks off', 'nocks', 'shoots arrows', 'shoots an arrow'], // 'bolts'/'shoots' dropped: a hermit-mage whose BOLTS find them in the dark was routed off the caster line (golden 2026-09-28)
+  'skirmisher-shifter': ['shape-shifts', 'shapeshifts', 'transforms into', 'turns into', 'becomes a', 'by night becomes', 'under the moon', 'werewolf', 'wererat', 'werebear', 'weretiger', 'wereboar', 'lycanthrope', 'two forms', 'takes the form', 'wears the shape', 'wears other faces', 'changes shape'], // 'doppelganger' is a print NOUN, not a verb — it routes by print canon (critic, new lines 2026-09-28)
+  'defender-leader': ['commands', 'commanding', 'rallies', 'leads his', 'leads her', 'leads its', 'leads the', 'leads a', 'captain', 'warlord', 'chieftain', 'sergeant', 'at the head of', 'his troops', 'her troops', 'its troops', 'the troops', 'the warband', 'the company', 'lieutenant', 'commander', 'gives orders', 'barks orders'], // bare 'leading'/'orders'/'general' routed a drifting hunger that was "leading" climbers astray (flow spec, 2026-09-28)
   lurker: ['surfaces beneath', 'erupts from', 'bursts from', 'rises from', 'strikes once', 'stalks', 'waits beneath', 'hunts by tremor', 'burrows'],
   'lurker-phantom': ['drifts', 'haunts', 'drowns', 'passes through walls', 'through walls', 'wails', 'possesses', 'incorporeal', 'climbs the chains at night'],
   'lurker-trap': ['lies in wait', 'disguised as', 'looks like', 'poses as', 'motionless until', 'snaps shut', 'pretends to be', 'mimics'],
@@ -124,6 +130,13 @@ export function lineIdOf(raw) {
 }
 export const MADE_TYPES = ['Construct', 'Elemental', 'Undead', 'Plant', 'Ooze'];
 const WARDEN_TYPES = [...MADE_TYPES, 'Celestial', 'Fiend'];
+// a LEADER is print's Humanoid class (Hobgoblin Captain, Bandit Captain) — a crab that
+// "rules the wreck-fields" took the leader line and an Aura of Authority (golden 2026-09-28)
+const NO_LEADER_TYPES = ['Beast', ...MADE_TYPES];
+// an ARCHER shoots a named weapon: a lantern-mage whose "bolts find them in the
+// dark" was picked for the archer line by the route model (golden 2026-09-29) —
+// no bow, arrow, crossbow, sling or shot in the words, no archer seat ('bolts' is a caster's too)
+const ARCHER_NOUN = /\b(?:bows?|longbows?|shortbows?|crossbows?|arrows?|quivers?|slings?|archers?|bowman|bowmen|marksman|markswoman|marksmen|sniper|sharpshooter|shoots?|shooting|nocks?|volley)\b/i;
 export const EXTRA_MECHANICS = ['gaze', 'teleport', 'aura', 'breath', 'snare', 'thrown-weapon', 'grapple']; // 'summon' retired with the group templates (owner 2026-09-28): the tag opened the CR<=2 wildcard slot for a mechanic nothing renders
 const TYPES = ['Aberration', 'Beast', 'Celestial', 'Construct', 'Dragon', 'Elemental', 'Fey', 'Fiend', 'Giant', 'Humanoid', 'Monstrosity', 'Ooze', 'Plant', 'Undead'];
 
@@ -205,6 +218,8 @@ export function chooseLine(parsed, { text, menuRole = null } = {}) {
     if (!evidenceIn(k?.because, text)) { notes.push(`${id}: quote not found in the input ("${String(k?.because ?? '').slice(0, 40)}")`); continue; }
     if (line.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} is not a made thing`); continue; }
     if (line.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} is not a made or risen guardian`); continue; }
+    if (line.id === 'defender-leader' && resolvedType && NO_LEADER_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} commands no troops`); continue; }
+    if (line.id === 'skirmisher-archer' && !ARCHER_NOUN.test(String(text ?? ''))) { notes.push(`${id}: no bow, arrow or shot in the words`); continue; }
     chosen = line;
     notes.push(`${id}: ✓ ("${String(k.because).slice(0, 40)}")`);
     break;
@@ -218,6 +233,8 @@ export function chooseLine(parsed, { text, menuRole = null } = {}) {
       if (!line || (family && line.family !== family)) continue;
       if (line.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType)) continue;
       if (line.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)) continue;
+      if (line.id === 'defender-leader' && resolvedType && NO_LEADER_TYPES.includes(resolvedType)) continue;
+      if (line.id === 'skirmisher-archer' && !ARCHER_NOUN.test(String(text ?? ''))) continue;
       chosen = line; notes.push(`${line.id}: taken on rank — its quote was not found, no hard veto`); break;
     }
   }
@@ -233,7 +250,8 @@ export function chooseLine(parsed, { text, menuRole = null } = {}) {
   {
     const byVerb = verbLines(text).map((id) => BY_ID.get(id)).filter((l) => l && (!family || l.family === family)
       && !(l.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType))
-      && !(l.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)));
+      && !(l.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType))
+      && !(l.id === 'defender-leader' && resolvedType && NO_LEADER_TYPES.includes(resolvedType)));
     if (byVerb.length && chosen && !byVerb.some((l) => l.id === chosen.id)) {
       notes.push(`${chosen.id} -> ${byVerb[0].id}: the concept's VERB outranks the noun (${LINE_VERBS[byVerb[0].id].find((k) => new RegExp(`\\b${k}\\b`).test(String(text).toLowerCase()))})`);
       chosen = byVerb[0];

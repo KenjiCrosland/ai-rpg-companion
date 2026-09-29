@@ -631,3 +631,44 @@ test('fresh six: an obscuring breath blinds; a nonmagical weapon lodges in 2024 
   expect(renderTemplate(spew, ctx('a dragon that breathes fire'), {}).text).toMatch(/Poisoned condition/); // the Poison-breath frame's own rider stands when nothing obscures
   expect(TEMPLATES.find((x) => x.id === 'weapon-lodge').frames['6-9']).toMatch(/^When a creature hits the creature with a nonmagical weapon/);
 });
+
+describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
+  test('a homograph binds in the sense its phrase carries: "roots up the graves" digs, "roots him in place" holds', () => {
+    const snare = TEMPLATES.find((t) => t.id === 'snare-bolt');
+    expect(rankByVerb([snare], 'a miller who turns into a boar and roots up the graves')[0].matched).not.toContain('root');
+    expect(rankByVerb([snare], 'a warden who roots him in place with a word')[0].matched).toContain('root');
+  });
+  test('guarded-stance hears "turns every blade aside"; resonant-body binds on a material, not on a thunderous idea', () => {
+    const gs = TEMPLATES.find((t) => t.id === 'guarded-stance');
+    expect(rankByVerb([gs], 'a pirate queen who turns every blade aside with a laugh')[0].matched.length).toBeGreaterThan(0);
+    const rb = TEMPLATES.find((t) => t.id === 'resonant-body');
+    expect(rankByVerb([rb], 'a miller who turns into a boar', 'splintered bone shards recoil with a thunderous crack that echoes and deafens')[0].matched).toEqual([]);
+    expect(rankByVerb([rb], 'a hermit crab that wears a stolen bronze church bell')[0].matched.length).toBeGreaterThan(0);
+  });
+  test('a leap is jump-to-a-space: a self-centred ground burst is denied the card', () => {
+    const ids = (text) => templatesFor({ archetype: 'skirmisher', cr: 3, sections: {}, section: 'action', text }).map((t) => t.id);
+    expect(ids('roots up the ground in a wide circle around it')).not.toContain('leap');
+    expect(ids('drops on a straggler from above')).toContain('leap');
+  });
+  test('a leader\'s command words are the rally\'s keys', () => {
+    const rally = TEMPLATES.find((t) => t.id === 'rally');
+    expect(rankByVerb([rally], 'a warlord who bellows her troops into a frenzy')[0].concept.length).toBeGreaterThanOrEqual(2);
+  });
+  test('a body trait is a BODY\'s: contact damage and auras are off a Humanoid\'s trait shelf', () => {
+    const ids = (type) => templatesFor({ archetype: 'defender', cr: 8, sections: {}, section: 'trait', type }).map((t) => t.id);
+    expect(ids('Humanoid')).not.toContain('heated-body');
+    expect(ids('Humanoid')).not.toContain('noxious-aura');
+    expect(ids('Undead')).toContain('heated-body');
+    expect(ids('')).toContain('heated-body'); // no type known: no exclusion
+  });
+  test('a recurring tick is priced by two turns and capped at half a hit — never climbed to the round', () => {
+    const scaled = sheet(8, null, 'skirmisher');
+    const row = { name: 'Venom Numb Shot', text: '*Constitution Saving Throw:* DC 15, one creature within 60 feet. *Failure:* The target is branded: it takes 21 (6d6) Poison damage at the start of each of its turns until it uses its action to claw the poison from its flesh.' };
+    const vc = valueCheck(row, { scaled, sections: scaled.sections, cr: 8, section: 'Actions' });
+    expect(vc.steps.join('; ')).toMatch(/recurring tick 21 → \d+ \(half a hit, priced by two turns\)/);
+    expect(vc.steps.join('; ')).not.toMatch(/dice \d+ → \d+/);
+    const tick = Number(/takes (\d+) \(/.exec(vc.text)[1]);
+    expect(tick).toBeLessThanOrEqual(11);
+    expect(vc.text).toMatch(/flesh\.$/);
+  });
+});

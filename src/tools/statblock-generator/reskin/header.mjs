@@ -41,6 +41,7 @@ const PRINT_LANGUAGES = ['Common', 'Elvish', 'Dwarvish', 'Giant', 'Draconic', 'I
 export function honestLanguages(line, { mind = null, type = '' } = {}) {
   const raw = String(line ?? '').trim();
   if (mind === 'mindless') return /construct/i.test(type) ? "Understands the languages of its creator but can't speak" : 'None';
+  if (/^Humanoid\b/i.test(String(type)) && (!raw || /^none$/i.test(raw) || mind === 'bestial')) return raw && !/^none$/i.test(raw) ? raw : 'Common'; // every print Humanoid speaks — a boar-shifter miller read as bestial printed None (critic, new lines 2026-09-28)
   if (mind === 'bestial') return 'None';
   if (/^Beast\b/i.test(String(type))) return 'None'; // 0/89 print Beasts speak — Common on a bird (critic 2026-09-28)
   if (/^Elemental\b/i.test(String(type)) && !/\b(?:Primordial|Ignan|Auran|Terran|Aquan)\b/i.test(raw)) return 'Primordial'; // 17/17 print Elementals speak Primordial — Common on a wildfire (critic, fresh six); a dialect already on the line stands
@@ -55,6 +56,7 @@ export function honestLanguages(line, { mind = null, type = '' } = {}) {
     else if (/languages it knew in life/i.test(t)) kept.push('the languages it knew in life');
     else if (/^understands? .*can't speak/i.test(t)) kept.push(t);
   }
+  if (/^Humanoid\b/i.test(String(type)) && !kept.includes('Common')) kept.unshift('Common'); // a print Humanoid speaks Common (Elvish + Sylvan on an elf who shoots for sport, critic 2026-09-29)
   if (!kept.length) return /undead/i.test(type) ? 'Common plus the languages it knew in life' : 'Common';
   return kept.length > 1 && kept.includes('the languages it knew in life') ? `${kept.filter((k) => k !== 'the languages it knew in life').join(', ')} plus the languages it knew in life` : kept.join(', ');
 }

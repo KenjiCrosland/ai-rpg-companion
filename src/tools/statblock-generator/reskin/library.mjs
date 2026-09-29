@@ -125,8 +125,8 @@ export const LIBRARY_SEEDS = [
   {
     key: 'delayed-brand', keys: ['brand', 'ember', 'fuse', 'venom'],
     section: 'Actions', archetypes: ['caster', 'lurker', 'skirmisher'],
-    name: 'Lingering Brand', dpr_frac: 0.6, // the delayed-tick class
-    text: "*Constitution Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target is branded: it takes {burst} {damage_type} damage at the start of each of its turns until it uses its action to {douse}",  // dilemma rows are DoT-until-action (Fire Elemental grammar, critic 2026-09-22): a single tick never binds
+    name: 'Lingering Brand', dpr_frac: 0.25, // print's tick is SMALL: Fire Form 1d10 beside a 10-point hit (CR 5) — 0.6 of the round minted 6d6 a turn, uncapped (critic, new lines 2026-09-28) // the delayed-tick class
+    text: "*Constitution Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target is branded: it takes {burst} {damage_type} damage at the start of each of its turns until it uses its action to {douse}.",  // dilemma rows are DoT-until-action (Fire Elemental grammar, critic 2026-09-22): a single tick never binds
   },
   {
     key: 'curse-debt', keys: ['curse', 'debt', 'rebuke', 'price'],

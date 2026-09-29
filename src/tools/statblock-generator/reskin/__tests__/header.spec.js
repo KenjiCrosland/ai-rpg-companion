@@ -49,3 +49,13 @@ test('a Beast never speaks, whatever the resolve read into its mind (0/89 in pri
 test('an Elemental speaks Primordial (17/17 in print; Common on a wildfire, fresh six)', () => {
   expect(honestLanguages('Common', { mind: 'sapient', type: 'Elemental' })).toBe('Primordial');
 });
+
+describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
+  test('every print Humanoid speaks: a bestial read on a Humanoid shifter never prints None', () => {
+    expect(honestLanguages('None', { mind: 'bestial', type: 'Humanoid' })).toBe('Common');
+    expect(honestLanguages('', { mind: 'sapient', type: 'Humanoid' })).toBe('Common');
+    expect(honestLanguages('Common, Orc', { mind: 'bestial', type: 'Humanoid' })).toBe('Common, Orc');
+    expect(honestLanguages('None', { mind: 'bestial', type: 'Beast' })).toBe('None');
+    expect(honestLanguages('Elvish, Sylvan', { mind: 'sapient', type: 'Humanoid' })).toBe('Common, Elvish, Sylvan'); // a print Humanoid speaks Common
+  });
+});
