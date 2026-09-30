@@ -256,7 +256,8 @@
         "condition-payoff",
         "terrain-walk",
         "heated-body",
-        "spew"
+        "spew",
+        "hook-drag"
       ]
     }
   },
@@ -272,6 +273,64 @@
         "condition-payoff",
         "exploiter",
         "heated-body"
+      ]
+    }
+  },
+  {
+    "cr": "5",
+    "concept": "a dwarven crossbow sergeant who orders a volley and holds the shield line",
+    "expect": {
+      "route": [
+        "defender-leader"
+      ],
+      "template": [
+        "volley-order"
+      ]
+    }
+  },
+  {
+    "cr": "3",
+    "concept": "a goblin warchief who screams fire at will to her archers from the palisade",
+    "expect": {
+      "route": [
+        "defender-leader"
+      ],
+      "template": [
+        "volley-order"
+      ]
+    }
+  },
+  {
+    "cr": "4",
+    "concept": "a hobgoblin sniper who snaps off a shot at anyone who closes to melee with him",
+    "expect": {
+      "route": [
+        "skirmisher-archer"
+      ],
+      "template": [
+        "snap-shot"
+      ]
+    }
+  },
+  {
+    "cr": "7",
+    "concept": "a barrow-wight that erupts in a shockwave of grave earth around it when roused",
+    "expect": {
+      "template": [
+        "ground-burst"
+      ]
+    }
+  },
+  {
+    "cr": "9",
+    "concept": "a temple gong given legs that stomps and sends a tremor in all directions",
+    "expect": {
+      "route": [
+        "brute-juggernaut"
+      ],
+      "template": [
+        "resonant-body",
+        "active-toll"
       ]
     }
   }

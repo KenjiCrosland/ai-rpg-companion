@@ -641,6 +641,7 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
   test('guarded-stance hears "turns every blade aside"; resonant-body binds on a material, not on a thunderous idea', () => {
     const gs = TEMPLATES.find((t) => t.id === 'guarded-stance');
     expect(rankByVerb([gs], 'a pirate queen who turns every blade aside with a laugh')[0].matched.length).toBeGreaterThan(0);
+    expect(rankByVerb([gs], 'a sergeant who orders a volley and holds the shield line')[0].concept).toEqual(expect.arrayContaining(['keeps the shield line', 'shield line'])); // the fixed phrase's own key
     const rb = TEMPLATES.find((t) => t.id === 'resonant-body');
     expect(rankByVerb([rb], 'a miller who turns into a boar', 'splintered bone shards recoil with a thunderous crack that echoes and deafens')[0].matched).toEqual([]);
     expect(rankByVerb([rb], 'a hermit crab that wears a stolen bronze church bell')[0].matched.length).toBeGreaterThan(0);
@@ -649,6 +650,64 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     const ids = (text) => templatesFor({ archetype: 'skirmisher', cr: 3, sections: {}, section: 'action', text }).map((t) => t.id);
     expect(ids('roots up the ground in a wide circle around it')).not.toContain('leap');
     expect(ids('drops on a straggler from above')).toContain('leap');
+  });
+  test('the library round (2026-09-29): a self-centred burst, a snap shot that needs a bow, a volley order for the leader', () => {
+    const brute = sheet(9, null, 'brute');
+    const gb = templatesFor({ archetype: 'brute', cr: 9, sections: brute.sections, section: 'action', text: 'a barrow-wight that erupts in a shockwave of grave earth around it' }).find((t) => t.id === 'ground-burst');
+    expect(gb).toBeDefined();
+    expect(rankByVerb([gb], 'a barrow-wight that erupts in a shockwave of grave earth around it')[0].concept.length).toBeGreaterThanOrEqual(2);
+    const r = renderTemplate(gb, { scaled: brute, sections: brute.sections, archetype: 'brute', cr: 9, energy: null, mix: 'physical', concept: 'a barrow-wight that erupts', conditionMinor: 'Prone' }, { save_stat: 'Dexterity' }, { blind: true });
+    expect(r.text).toMatch(/^\*Dexterity Saving Throw\*: DC \d+, each creature in a 15-foot Emanation originating from the creature\. \*Failure:\* \d+ \(\d+d\d+\) Bludgeoning damage\. \*Success:\* Half damage\.$/);
+    expect(r.gate).toBe('Recharge 5-6');
+    // grave earth bruises whatever the body's energy; a stomp knocks Prone
+    const earth = renderTemplate(gb, { scaled: brute, sections: brute.sections, archetype: 'brute', cr: 9, energy: 'Necrotic', mix: null, concept: 'a barrow-wight that erupts in a shockwave of grave earth around it', conditionMinor: 'Prone' }, { save_stat: 'Dexterity' }, { blind: true });
+    expect(earth.text).toMatch(/Bludgeoning damage\. \*Success:\* Half damage\.$/);
+    const stomp = renderTemplate(gb, { scaled: brute, sections: brute.sections, archetype: 'brute', cr: 9, energy: null, mix: 'physical', concept: 'a temple gong given legs that stomps and sends a tremor', conditionMinor: 'Prone' }, { save_stat: 'Dexterity' }, { blind: true });
+    expect(stomp.text).toMatch(/Bludgeoning damage, and the target has the Prone condition\. \*Success:\* Half damage only\.$/);
+    // the snap shot needs a pure ranged row on the sheet and names it
+    const archer = sheet(8, 'archer', 'skirmisher'); const bowName = Object.values(archer.sections).flat().find((e) => /Ranged Attack Roll/.test(e.text) && !/Melee or Ranged/.test(e.text)).name;
+    expect(templatesFor({ archetype: 'skirmisher', style: 'archer', cr: 8, sections: archer.sections, section: 'reaction' }).map((t) => t.id)).toContain('snap-shot');
+    expect(templatesFor({ archetype: 'brute', cr: 8, sections: brute.sections, section: 'reaction' }).map((t) => t.id)).not.toContain('snap-shot');
+    const ss = TEMPLATES.find((t) => t.id === 'snap-shot');
+    const sr = renderTemplate(ss, { scaled: archer, sections: archer.sections, archetype: 'skirmisher', cr: 8, energy: null, rangedName: bowName, concept: 'a sniper who snaps off a shot as they close' }, {}, { blind: true });
+    expect(sr.text).toBe(`*Trigger:* A creature the creature can see moves to within 5 feet of it. *Response:* The creature makes one ${bowName} attack against that creature.`); // it fires when someone ENGAGES, not every round at 30 feet
+    // the volley order outranks the rally on "orders a volley"
+    const leader = sheet(5, 'leader', 'defender');
+    const vtext = 'a dwarven crossbow sergeant who orders a volley and holds the shield line';
+    const bonus = templatesFor({ archetype: 'defender', style: 'leader', cr: 5, sections: leader.sections, section: 'bonus_action', text: vtext }).map((t) => t.id);
+    expect(bonus).toContain('volley-order'); expect(bonus).not.toContain('rally'); // a volley is not a rally
+    expect(templatesFor({ archetype: 'defender', style: null, cr: 5, sections: sheet(5, null, 'defender').sections, section: 'bonus_action' }).map((t) => t.id)).not.toContain('volley-order'); // leader-gated
+    const vo = TEMPLATES.find((t) => t.id === 'volley-order');
+    expect(renderTemplate(vo, { scaled: leader, sections: leader.sections, archetype: 'defender', style: 'leader', cr: 5, energy: null, concept: vtext }, {}, { blind: true })).toMatchObject({ gate: '2/Day', text: 'Each ally within 30 feet of the creature that can see or hear it can take a Reaction to make one ranged attack roll.' });
+  });
+  test('fixed phrases carry one sense, read before any table (critic, library round 2026-09-29)', () => {
+    const { readPhrases } = require('../lexicon.mjs');
+    expect(readPhrases('a goblin warchief who screams fire at will to her archers')).toBe('a goblin warchief who screams looses at will to her archers');
+    expect(readPhrases('a sergeant who holds the shield line and held the gate')).toBe('a sergeant who keeps the shield line and kept the gate');
+    expect(readPhrases('a miller who roots up the graves')).toBe('a miller who digs up the graves');
+    expect(readPhrases('a ferryman who takes a toll from the dead')).toBe('a ferryman who takes a price from the dead');
+    expect(readPhrases('a fisher who spears the eels')).toBe('a fisher who impales the eels');
+    expect(readPhrases('a bell that tolls the hour and holds its prey')).toBe('a bell that tolls the hour and holds its prey'); // the bell and the grapple keep their words
+    const { deniedBy } = require('../templates.mjs');
+    const rally = TEMPLATES.find((t) => t.id === 'rally'); const vo = TEMPLATES.find((t) => t.id === 'volley-order');
+    expect(deniedBy(rally, 'screams fire at will to her archers').length).toBeGreaterThan(0);
+    expect(rankByVerb([vo], 'screams fire at will to her archers')[0].concept.length).toBeGreaterThanOrEqual(2);
+    const rb = TEMPLATES.find((t) => t.id === 'resonant-body');
+    expect(rankByVerb([rb], 'a ferryman who takes a toll from the dead')[0].matched).toEqual([]);
+  });
+  test('overshoot scales DOWN to the ceiling before the ladder gates (the gong\'s 13d6 Prone follow-up)', () => {
+    const scaled = sheet(9, null, 'brute');
+    const row = { name: 'Toppling Tremor', text: '*Dexterity Saving Throw*: DC 15, one creature within 30 feet. *Failure:* 77 (22d6) Bludgeoning damage, and the target has the Prone condition.' };
+    const vc = valueCheck(row, { scaled, sections: scaled.sections, cr: 9, section: 'Actions' });
+    expect(vc.steps.join('; ')).toMatch(/dice 77 → \d+ \(scaled down to the ceiling\)/);
+    expect(vc.name).not.toMatch(/Recharge/);
+    expect(Number(/(\d+) \(/.exec(vc.text)[1])).toBeLessThan(77);
+  });
+  test('the head noun stops at "given": a temple gong given legs is a gong', () => {
+    const { headNoun } = require('../lexicon.mjs');
+    expect(headNoun('a temple gong given legs that stomps and sends a tremor in all directions')).toBe('gong');
+    expect(headNoun('a cliff troll that shears slabs')).toBe('troll');
+    expect(headNoun('a hollow suit of tourney armor that hurls its own lance')).toBe('armor');
   });
   test('a leader\'s command words are the rally\'s keys', () => {
     const rally = TEMPLATES.find((t) => t.id === 'rally');

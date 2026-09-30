@@ -1,4 +1,4 @@
-import { LINES, buildRoutePrompt, validateRouteResponse, chooseLine, evidenceIn, familyFor, shelfCoverage, lineIdOf, verbLines } from '../route.mjs';
+import { LINES, buildRoutePrompt, validateRouteResponse, chooseLine, evidenceIn, familyFor, shelfCoverage, lineIdOf, verbLines, verbHits, keyClass } from '../route.mjs';
 import { pickDonor } from '../scale.mjs';
 
 describe('the shelf', () => {
@@ -38,7 +38,7 @@ describe('the verb decides the seat', () => {
     expect(verbLines('a glass ox forged for a parade that charges the loudest voice')).toContain('brute-charger');
     const ox = chooseLine({ picks: [{ line: 'brute-juggernaut', because: 'a glass ox forged for a parade' }], creature_type: 'Construct' }, { text: 'a glass ox forged for a parade that charges the loudest voice in the square' });
     expect(ox.line).toBe('brute-charger');
-    expect(ox.notes.at(-1)).toMatch(/VERB outranks the noun/);
+    expect(ox.notes.join(' | ')).toMatch(/VERB outranks the noun/); // the primary line's key-and-class note now closes the list
     const hound = chooseLine({ picks: [{ line: 'lurker-trap', because: 'surfaces beneath sleepers' }], creature_type: 'Beast' }, { text: 'a burrowing mole-hound that hunts by tremor and surfaces beneath sleepers' });
     expect(hound.line).toBe('lurker');
     const goat = chooseLine({ picks: [{ line: 'skirmisher-hurler', because: 'vomits a choking cloud' }], creature_type: 'Beast' }, { text: 'a carrion goat that eats grave-flowers and vomits a choking cloud when cornered' });
@@ -101,7 +101,7 @@ describe('chooseLine', () => {
     const r = chooseLine({ picks: [{ line: 'lurker-trap', because: 'invented phrase here' }] }, { text: bull });
     expect(r).toMatchObject({ line: 'brute-charger', archetype: 'brute', style: 'charger' }); // ranked, then the VERB: the bull charges
     expect(r.notes.some((n) => /taken on rank/.test(n))).toBe(true);
-    expect(r.notes.at(-1)).toMatch(/VERB outranks the noun/);
+    expect(r.notes.join(' | ')).toMatch(/VERB outranks the noun/);
     const quiet = chooseLine({ picks: [{ line: 'lurker-trap', because: 'invented phrase here' }] }, { text: 'a brass ornament in a pen' });
     expect(quiet.line).toBe('lurker-trap'); // no verb in the text: the ranked pick stands
     expect(chooseLine({ picks: [{ line: 'brute-juggernaut', because: 'x' }], creature_type: 'Beast' }, { text: bull }).line).toBe('brute-charger'); // a hard veto falls to the plain line, then the VERB lifts it to the charger
@@ -210,5 +210,35 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(r.notes.join(' ')).toMatch(/no bow, arrow or shot in the words/);
     const a = chooseLine({ picks: [{ line: 'skirmisher-archer', because: 'picks off torch-bearers' }], creature_type: 'Humanoid' }, { text: 'a hobgoblin sniper who picks off torch-bearers from the ridge with a heavy crossbow' });
     expect(a.line).toBe('skirmisher-archer');
+    expect(verbLines('a goblin warchief who screams fire at will to her archers from the palisade')).not.toContain('skirmisher-archer'); // "her archers" are a leader's troops
+  });
+  test('key classes: a job noun never wins the override, a body noun may, and the log names the key and its class', () => {
+    expect(keyClass('archers')).toBe('noun'); expect(keyClass('sergeant')).toBe('noun'); expect(keyClass('crab')).toBe('body'); expect(keyClass('werewolf')).toBe('body'); expect(keyClass('picks off')).toBe('verb');
+    // a title alone: the route model's leader pick stands, and the note says why
+    const w = chooseLine({ picks: [{ line: 'defender-leader', because: 'rallies the archers' }], creature_type: 'Humanoid' }, { text: 'a captain who rallies archers on the wall' });
+    expect(w.line).toBe('defender-leader');
+    expect(w.notes.join(' ')).toMatch(/skirmisher-archer: "archers" is a noun \(a title\), not a verb — no override/);
+    // a body noun overrides, and says so as a BODY
+    const c = chooseLine({ picks: [{ line: 'brute', because: 'a crab the size of a longboat' }], creature_type: 'Beast' }, { text: "the drowned king's crown, a crab the size of a longboat that wears it and rules the wreck-fields" });
+    expect(c.line).toBe('brute-grappler');
+    expect(c.notes.join(' ')).toMatch(/brute -> brute-grappler: the concept's BODY outranks the noun \(key "crab", class body\)/);
+    // a verb overrides, and says so as a VERB with its key
+    const v = chooseLine({ picks: [{ line: 'skirmisher', because: 'a miller' }], creature_type: 'Humanoid' }, { text: 'a miller who turns into a boar under the moon' });
+    expect(v.line).toBe('skirmisher-shifter');
+    expect(v.notes.join(' ')).toMatch(/VERB outranks the noun \(key "turns into", class verb\)/);
+    expect(verbHits('a sergeant who picks off stragglers').map((h) => `${h.id}:${h.key}:${h.cls}`)).toEqual(expect.arrayContaining(['skirmisher-archer:picks off:verb', 'defender-leader:sergeant:noun']));
+    // "holds the shield line" is a stand, not a grapple: the sergeant keeps the leader line by its own verbs
+    const s = chooseLine({ picks: [{ line: 'defender-leader', because: 'orders a volley' }], creature_type: 'Humanoid' }, { text: 'a dwarven crossbow sergeant who orders a volley and holds the shield line' });
+    expect(s.line).toBe('defender-leader');
+    expect(verbLines('a dwarven crossbow sergeant who orders a volley and holds the shield line')).not.toContain('brute-grappler');
+    expect(verbLines('a swamp thing that holds its prey under the water')).toContain('brute-grappler');
+    // the PRIMARY line prints its key and class, or says the model read its quote
+    expect(s.notes.join(' | ')).toMatch(/defender-leader: key "orders a" \(class verb\)|defender-leader: key "holds the line" \(class verb\)/);
+    const t = chooseLine({ picks: [{ line: 'lurker-trap', because: 'erupts in a shockwave of grave earth around it when roused' }], creature_type: 'Undead' }, { text: 'a barrow-wight that erupts in a shockwave of grave earth around it when roused' });
+    expect(t.notes.join(' | ')).toMatch(/lurker-trap: no line key in the words — the model's read of its quote/);
+    // a drowned wife is a phantom by BODY: the seat is her words', not the route model's paraphrased quote
+    const wife = chooseLine({ picks: [{ line: 'lurker-phantom', because: 'an incorporeal dead or spectral thing' }, { line: 'brute-grappler', because: 'pulls anyone who follows her back down' }], creature_type: 'Undead' }, { text: "a lighthouse keeper's drowned wife who still climbs the stairs each night to light the lamp, and pulls anyone who follows her back down into the surf" });
+    expect(wife.line).toBe('lurker-phantom');
+    expect(wife.notes.join(' | ')).toMatch(/brute-grappler -> lurker-phantom: the concept's BODY outranks the noun \(key "drowned", class body\)/);
   });
 });

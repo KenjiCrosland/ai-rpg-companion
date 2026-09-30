@@ -20,6 +20,7 @@
  * resolvedType) is exactly what generateReskin already consumes — nothing
  * below resolve changes.
  */
+import { readPhrases } from './lexicon.mjs';
 import { DONORS } from './donors.mjs';
 
 /** The shelf, in the order the model sees it. `role` is the menu label the saved monster records. */
@@ -73,9 +74,9 @@ export const LINE_VERBS = {
   'skirmisher-winged': ['swoop', 'swoops', 'dives', 'dive', 'flies', 'on the wing', 'snatches from above'],
   'skirmisher-archer': ['archer', 'archers', 'bowman', 'bowmen', 'longbow', 'shortbow', 'crossbow', 'crossbows', 'arrows', 'arrow', 'sniper', 'marksman', 'markswoman', 'sharpshooter', 'volley of arrows', 'picks off', 'nocks', 'shoots arrows', 'shoots an arrow'], // 'bolts'/'shoots' dropped: a hermit-mage whose BOLTS find them in the dark was routed off the caster line (golden 2026-09-28)
   'skirmisher-shifter': ['shape-shifts', 'shapeshifts', 'transforms into', 'turns into', 'becomes a', 'by night becomes', 'under the moon', 'werewolf', 'wererat', 'werebear', 'weretiger', 'wereboar', 'lycanthrope', 'two forms', 'takes the form', 'wears the shape', 'wears other faces', 'changes shape'], // 'doppelganger' is a print NOUN, not a verb — it routes by print canon (critic, new lines 2026-09-28)
-  'defender-leader': ['commands', 'commanding', 'rallies', 'leads his', 'leads her', 'leads its', 'leads the', 'leads a', 'captain', 'warlord', 'chieftain', 'sergeant', 'at the head of', 'his troops', 'her troops', 'its troops', 'the troops', 'the warband', 'the company', 'lieutenant', 'commander', 'gives orders', 'barks orders'], // bare 'leading'/'orders'/'general' routed a drifting hunger that was "leading" climbers astray (flow spec, 2026-09-28)
+  'defender-leader': ['commands', 'commanding', 'rallies', 'leads his', 'leads her', 'leads its', 'leads the', 'leads a', 'captain', 'warlord', 'chieftain', 'sergeant', 'at the head of', 'his troops', 'her troops', 'its troops', 'the troops', 'the warband', 'the company', 'lieutenant', 'commander', 'gives orders', 'barks orders', 'orders a', 'orders the', 'holds the line', 'hold the line', 'holds the shield line', 'holds the wall', 'holds the gate'], // bare 'leading'/'orders'/'general' routed a drifting hunger that was "leading" climbers astray (flow spec, 2026-09-28)
   lurker: ['surfaces beneath', 'erupts from', 'bursts from', 'rises from', 'strikes once', 'stalks', 'waits beneath', 'hunts by tremor', 'burrows'],
-  'lurker-phantom': ['drifts', 'haunts', 'drowns', 'passes through walls', 'through walls', 'wails', 'possesses', 'incorporeal', 'climbs the chains at night'],
+  'lurker-phantom': ['drifts', 'haunts', 'drowns', 'passes through walls', 'through walls', 'wails', 'possesses', 'incorporeal', 'climbs the chains at night', 'drowned', 'ghost', 'ghosts', 'wraith', 'spectre', 'specter', 'phantom', 'shade', 'apparition', 'revenant', 'poltergeist'], // + the BODY nouns: a drowned wife is a phantom by body, whatever the route model quotes (golden 2026-09-30: its quote was a paraphrase twice)
   'lurker-trap': ['lies in wait', 'disguised as', 'looks like', 'poses as', 'motionless until', 'snaps shut', 'pretends to be', 'mimics'],
   'caster-binder': ['curses', 'hexes', 'binds with', 'reads', 'foretells', 'pins with', 'dooms', 'marks with'],
   'caster-warpriest': ['blesses', 'prays', 'smites', 'consecrates', 'psalms', 'sermons', 'crusades'],
@@ -97,17 +98,41 @@ export const LINE_VERBS = {
 // guarding 'cage' sent the clockwork bishop off its grappler line (goldens
 // 2026-09-28). These two mean something else entirely as nouns — a hide is skin,
 // a charge is the person you guard.
-const NOUN_WHEN_OWNED = new Set(['hide', 'charge']);
+const NOUN_WHEN_OWNED = new Set(['hide', 'charge', 'archer', 'archers']); // "her archers" are a leader's troops, not the archer seat (the warchief, library round 2026-09-29)
 const OWNED_BY = /\b(?:its|his|her|their|our|my|your|whose|the|a|an|this|that|each|every|one|two|three|four|several|many)\s+$/;
 // "Mimic with voice, call, or song is the Harpy's lure, not the Mimic" (critic)
-const VERB_DENY = { mimics: /\b(?:voices?|sounds?|songs?|calls?|speech|words?|cries|tongues?)\b/ };
+const VERB_DENY = { mimics: /\b(?:voices?|sounds?|songs?|calls?|speech|words?|cries|tongues?)\b/ }; // "holds the line" and its kin are FIXED PHRASES now (lexicon.mjs readPhrases), rewritten before this table reads them
 // SUBJECT INVERSION (critic, blind A/B 2026-09-28): "runs anyone who BLOCKS it
 // off the cliff" — the verb after an indefinite head belongs to the ENEMY, and
 // it routed a courier's ghost to the defender line. A verb inside a clause
 // headed by anyone/whoever/those who/any creature that is not the creature's.
 const ENEMY_SUBJECT = /\b(?:anyone|anybody|whoever|whomever|those|anything|whatever|everyone|everybody|someone|somebody|any (?:creature|one|foe|enemy|traveler|thing)|all)\s+(?:who|that|which)\s+(?:\w+\s+){0,2}$/i;
+// KEY CLASSES (critic, library round 2026-09-29: the override logged "archers",
+// "doppelganger" as the VERB that outranked the noun). A line key is a verb, a
+// BODY noun (a crab grapples, a werewolf shifts — the body is the line), or a
+// JOB noun (archer, captain, sergeant — a title the route model may weigh, but
+// never a verb that overrides its pick). The override prints the key and its class.
+const BODY_NOUNS = new Set(['crab', 'crabs', 'scorpion', 'octopus', 'lobster', 'kraken', 'werewolf', 'wererat', 'werebear', 'weretiger', 'wereboar', 'lycanthrope', 'drowned', 'ghost', 'ghosts', 'wraith', 'spectre', 'specter', 'phantom', 'shade', 'apparition', 'revenant', 'poltergeist']);
+const JOB_NOUNS = new Set(['archer', 'archers', 'bowman', 'bowmen', 'longbow', 'shortbow', 'crossbow', 'crossbows', 'arrows', 'arrow', 'sniper', 'marksman', 'markswoman', 'sharpshooter', 'volley of arrows',
+  'captain', 'warlord', 'chieftain', 'sergeant', 'lieutenant', 'commander', 'his troops', 'her troops', 'its troops', 'the troops', 'the warband', 'the company', 'two forms']);
+export const keyClass = (k) => (BODY_NOUNS.has(k) ? 'body' : JOB_NOUNS.has(k) ? 'noun' : 'verb');
+/** Every line whose keys the text reads, with the first key that read and its class. */
+export function verbHits(text) {
+  const raw = readPhrases(String(text ?? '')).toLowerCase(); // fixed phrases first: "holds the line", "fire at will"
+  const reads = (k) => {
+    if (VERB_DENY[k]?.test(raw)) return false;
+    const re = new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+    for (let m = re.exec(raw); m; m = re.exec(raw)) {
+      if (NOUN_WHEN_OWNED.has(k) && OWNED_BY.test(raw.slice(0, m.index))) continue;
+      if (ENEMY_SUBJECT.test(raw.slice(0, m.index))) continue;
+      return true;
+    }
+    return false;
+  };
+  return Object.entries(LINE_VERBS).map(([id, keys]) => { const hit = keys.filter(reads); const best = hit.find((k) => keyClass(k) === 'verb') ?? hit.find((k) => keyClass(k) === 'body') ?? hit[0] ?? null; return best ? { id, key: best, cls: keyClass(best) } : null; }).filter(Boolean);
+}
 export function verbLines(text) {
-  const raw = String(text ?? '').toLowerCase();
+  const raw = readPhrases(String(text ?? '')).toLowerCase();
   const reads = (k) => {
     if (VERB_DENY[k]?.test(raw)) return false;
     const re = new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
@@ -238,24 +263,42 @@ export function chooseLine(parsed, { text, menuRole = null } = {}) {
       chosen = line; notes.push(`${line.id}: taken on rank — its quote was not found, no hard veto`); break;
     }
   }
+  let fellToFamily = false;
   if (!chosen) {
     const fam = family ?? firstKnown?.family ?? null;
     if (fam) {
       chosen = BY_ID.get(fam) ?? null;
-      if (chosen) notes.push(`fell to ${fam}'s plain line`);
+      if (chosen) { notes.push(`fell to ${fam}'s plain line`); fellToFamily = true; }
     }
   }
   // the verb outranks the noun: if the user's words name a line's VERB and the
   // chosen line was not one of those, the verb line stands (hard vetoes kept)
   {
-    const byVerb = verbLines(text).map((id) => BY_ID.get(id)).filter((l) => l && (!family || l.family === family)
+    const hits = verbHits(text).map((h) => ({ ...h, line: BY_ID.get(h.id) })).filter(({ line: l }) => l && (!family || l.family === family)
       && !(l.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType))
       && !(l.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType))
-      && !(l.id === 'defender-leader' && resolvedType && NO_LEADER_TYPES.includes(resolvedType)));
-    if (byVerb.length && chosen && !byVerb.some((l) => l.id === chosen.id)) {
-      notes.push(`${chosen.id} -> ${byVerb[0].id}: the concept's VERB outranks the noun (${LINE_VERBS[byVerb[0].id].find((k) => new RegExp(`\\b${k}\\b`).test(String(text).toLowerCase()))})`);
-      chosen = byVerb[0];
+      && !(l.id === 'defender-leader' && resolvedType && NO_LEADER_TYPES.includes(resolvedType))
+      && !(l.id === 'skirmisher-archer' && !ARCHER_NOUN.test(String(text ?? ''))));
+    // a JOB noun cannot win an override whose rule is that verbs outrank nouns
+    // — unless the family FELL to its plain line with no pick to override: a
+    // title then names the style (a SERGEANT sworn to guard the gate, warden vetoed)
+    const nounOnly = hits.filter((h) => h.cls === 'noun' && chosen && h.id !== chosen.id);
+    if (fellToFamily && nounOnly.length && nounOnly[0].line.family === chosen.family) {
+      notes.push(`${chosen.id} -> ${nounOnly[0].id}: the concept's TITLE names the line (key "${nounOnly[0].key}", class noun) — the plain family had no pick to override`);
+      chosen = nounOnly[0].line; fellToFamily = false;
+    } else for (const h of nounOnly) notes.push(`${h.id}: "${h.key}" is a noun (a title), not a verb — no override`);
+    const byVerb = hits.filter((h) => h.cls !== 'noun');
+    if (byVerb.length && chosen && !byVerb.some((h) => h.id === chosen.id)) {
+      notes.push(`${chosen.id} -> ${byVerb[0].id}: the concept's ${byVerb[0].cls === 'body' ? 'BODY' : 'VERB'} outranks the noun (key "${byVerb[0].key}", class ${byVerb[0].cls})`);
+      chosen = byVerb[0].line;
     }
+  }
+  // the PRIMARY line prints its key and class too (critic 2026-09-29: the wight's
+  // trap route cited its quote and no key — one line should say whether a line
+  // word or the model's read of the quote chose the seat)
+  if (chosen) {
+    const own = verbHits(text).find((h) => h.id === chosen.id);
+    notes.push(own ? `${chosen.id}: key "${own.key}" (class ${own.cls})` : `${chosen.id}: no line key in the words — the model's read of its quote`);
   }
   const extras = [];
   for (const x of Array.isArray(parsed?.extras) ? parsed.extras : []) {

@@ -1427,9 +1427,8 @@ describe('the brute plumbing (2026-08-26): archetype flows loudly end to end', (
 
   test('the trait ceiling counts the whole sheet — a material body seats a fourth trait, a meat body does not', async () => {
     const chassis = await ceilingRun('Giant');
-    expect(chassis.traits).toHaveLength(3); // the juggernaut's own Acid Absorption + Immutable Form + Siege Monster
-    expect(chassis.traits).not.toContain('Bloodied Fury');
-    expect(chassis.trace).toMatch(/trait ceiling: .*does not ship — 3 traits already, and print's ceiling for a meat body is 3/);
+    expect(chassis.traits.length).toBeLessThanOrEqual(3); // the juggernaut's own Acid Absorption + Siege Monster (Immutable Form is a golem's and leaves a Giant, 2026-09-29) + at most one fitted: print's ceiling for a meat body is 3
+    expect(chassis.traits).toContain('Acid Absorption'); expect(chassis.traits).toContain('Siege Monster'); expect(chassis.traits).not.toContain('Immutable Form');
     const material = await ceilingRun('Construct');
     expect(material.traits).toHaveLength(4);
     // the FIT call sees the whole sheet so far too (no call is an island)
@@ -4886,6 +4885,9 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(printCanonFor('a knight who commands the garrison of the eastern wall', 3).name).toBe('Knight');
     expect(printCanonFor('a wolf that hunts the moon and eats the stars out of the sky', 5)).toBeNull();
     expect(printCanonFor('a miller who turns into a boar under the moon and roots up the graves', 3)).toBeNull(); // no print block heads it
+    const bw = printCanonFor('a barrow-wight', 3); expect(bw.name).toBe('Wight'); expect(bw.exact).toBe(false); // a hyphenated head borrows the Wight's rows, keeps its seat
+    const bwl = printCanonFor('a barrow-wight that erupts in a shockwave of grave earth around it when roused', 7); expect(bwl?.name).toBe('Wight'); expect(bwl.exact).toBe(false); expect(bwl.borrowOnly).toBe(true); expect(bwl.traits.map((t) => t.name)).toContain('Sunlight Sensitivity');
+    expect(printCanonFor('a doppelganger who wears the faces of the dead', 3).borrowOnly).toBe(false);
     // print's rules rows outside Traits ride along: the Doppelganger's Shape-Shift (Bonus Action) and Read Thoughts (Action)
     const dop = printCanonFor('a doppelganger who wears the faces of the dead in Ash Row', 3);
     expect(dop.rulesRows.map((r) => `${r.section}/${r.name}`)).toEqual(expect.arrayContaining(['Bonus Actions/Shape-Shift', 'Actions/Read Thoughts']));
@@ -4922,7 +4924,7 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(g.trace).toMatch(/vulnerability rejected/);
     const bad = await run({ ...base, concept: 'an orc warlord whose venomed cleaver rots the wound', userConcept: 'an orc warlord whose venomed cleaver rots the wound' },
       { ...fullAnswer(leader, 'Gormak Skullsplitter', { 'Melee Attack': 'Cleaver', 'Hybrid Attack': 'Handaxe' }), inline: 'the Warlord Gormak', melee_rider: 'Poison' });
-    expect(bad.rows.find((e) => e.name === 'Multiattack').text).toMatch(/^The gormak skullsplitter makes/); // a malformed declaration falls to the rules
+    expect(bad.rows.find((e) => e.name === 'Multiattack').text).toMatch(/^Gormak makes/); // a malformed declaration falls to the rules — and the coined-surname rule reads Skullsplitter as a family name (2026-09-29)
     expect(bad.rows.find((e) => e.name === 'Cleaver').text).toMatch(/plus \d+ \(\d+d\d+\) Poison damage/); // "venomed" warrants it
     const miller = await run({ archetype: 'skirmisher', style: 'shifter', cr: 3, concept: 'a miller who turns into a boar under the moon and roots up the graves', userConcept: 'a miller who turns into a boar under the moon and roots up the graves', resolvedType: 'Humanoid', mind: 'sapient' },
       fullAnswer(scaleDonor(pickDonor(3, 'shifter', 'skirmisher'), 3, { mechanics: [] }), 'Grave Miller', { 'Melee Attack': 'Fist' }));
@@ -4965,6 +4967,8 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     const mod = await run({ archetype: 'defender', style: 'leader', concept: 'a sergeant who orders a volley', userConcept: 'a sergeant who orders a volley', resolvedType: 'Humanoid', mind: 'sapient' },
       fullAnswer(leader, 'Volley Sergeant Koldrek', { 'Melee Attack': 'Shield Bash', 'Hybrid Attack': 'Heavy Crossbow' }));
     expect(mod.rows.find((e) => e.name === 'Multiattack').text).toMatch(/^The sergeant makes/); // a modifier before the rank is still a rank-titled name
+    // "orders a volley" draws the volley order, not the rally (library round 2026-09-29)
+    expect((mod.m.sections['Bonus Actions'] ?? []).some((e) => /^Volley Order/.test(e.name) && /can take a Reaction to make one ranged attack roll/.test(e.text))).toBe(true);
     const axe = await run({ archetype: 'defender', style: 'leader', concept: 'a warlord who bellows her troops into a frenzy', userConcept: 'a warlord who bellows her troops into a frenzy', resolvedType: 'Humanoid', mind: 'sapient' },
       fullAnswer(leader, 'Drumkalla the Red', { 'Melee Attack': 'Cleaver', 'Hybrid Attack': 'Handaxe' }));
     const ha = axe.rows.find((e) => /^Handaxe/.test(e.name));
@@ -4976,6 +4980,180 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(axe.trace).toMatch(/library seed drawn: rally -> Bonus Actions/); // the command words rank rally first; the style default heads it when they don't
     expect(axe.trace).not.toMatch(/own-turn-punisher/);
     expect((axe.m.sections['Bonus Actions'] ?? []).some((e) => /Temporary Hit Points/.test(e.text))).toBe(true);
+  });
+  test('a chassis nova that sends a tremor in all directions is an Emanation; a golem\'s Immutable Form leaves a non-Construct', async () => {
+    const jug = scaleDonor(pickDonor(9, 'juggernaut', 'brute'), 9, { mechanics: [] });
+    const r = await run({ archetype: 'brute', style: 'juggernaut', cr: 9, concept: 'a barrow ossuary given legs that stomps and sends a tremor in all directions', userConcept: 'a barrow ossuary given legs that stomps and sends a tremor in all directions', resolvedType: 'Undead', mind: 'mindless' },
+      Object.assign(fullAnswer(jug, 'Barrow Ossuary', {}), { type: 'Undead' }));
+    const nova = r.rows.find((e) => /\(Recharge [\d–-]+\)/.test(e.name) && /Emanation originating from the barrow ossuary/.test(e.text));
+    expect(nova).toBeDefined(); expect(nova.text).not.toMatch(/Cone/);
+    expect(r.trace).toMatch(/nova geometry: .* 30-foot Cone → 15-foot Emanation/);
+    expect(r.rows.some((e) => e.name === 'Immutable Form')).toBe(false);
+    expect(r.trace).toMatch(/trait stripped: Traits\/Immutable Form — a golem's trait on a Undead/);
+    // a chassis nova obeys the cap a fitted one obeys
+    expect(r.trace).toMatch(/nova capped: ".*" \d+ → \d+ \(the chassis nova obeys the cap: 50 at CR 9\)/);
+    expect(Number(/(\d+) \(\d+d\d+/.exec(nova.text)[1])).toBeLessThanOrEqual(50);
+  });
+  test('a borrowed print body outranks a body-shaped seat no verb named; the concept keeps its movement; the "plus" clause sits in the damage clause; a coined surname is a person', async () => {
+    const trap = scaleDonor(pickDonor(7, 'trap', 'lurker'), 7, { mechanics: [] });
+    const w = await run({ archetype: 'lurker', style: 'trap', cr: 7, movement: ['burrow'], concept: 'a barrow-wight that erupts in a shockwave of grave earth around it when roused', userConcept: 'a barrow-wight that erupts in a shockwave of grave earth around it when roused', resolvedType: 'Undead', mind: 'sapient' },
+      Object.assign(fullAnswer(scaleDonor(pickDonor(7, null, 'lurker'), 7, { mechanics: [] }), 'Barrow-Wight', { 'Melee Attack': 'Barrow-Fist' }), { type: 'Undead' }));
+    expect(w.trace).toMatch(/print canon route: the Wight's body outranks the trap seat — no verb in the words names it; the plain lurker line/);
+    expect(w.trace).toMatch(/donor: lurker-\d+ ->/); expect(w.trace).not.toMatch(/donor: lurker-\d+-trap/);
+    expect(w.m.speed).toMatch(/Burrow \d+ ft\./); // a borrowed head keeps the concept's own movement
+    const sword = w.rows.find((e) => e.name === 'Necrotic Sword');
+    if (sword && / plus \d+ \(/.test(sword.text)) expect(sword.text).toMatch(/(?:Bludgeoning|Piercing|Slashing) damage plus \d+ \(\d+d\d+\) Necrotic damage\./);
+    const leader = scaleDonor(pickDonor(3, 'leader', 'defender'), 3, { mechanics: [] });
+    const g = await run({ archetype: 'defender', style: 'leader', cr: 3, concept: 'a goblin warchief who screams fire at will to her archers', userConcept: 'a goblin warchief who screams fire at will to her archers', resolvedType: 'Humanoid', mind: 'sapient' },
+      { ...fullAnswer(leader, 'Bramblewrack Ironmother', { 'Melee Attack': 'Scimitar', 'Hybrid Attack': 'Handaxe' }), inline: 'the bramblewrack ironmother' });
+    expect(g.rows.find((e) => e.name === 'Multiattack').text).toMatch(/^Bramblewrack makes/); // the coined surname rule outranks the model's declaration
+  });
+  test('the sixth-roll asks: a print body with no seat verb takes the plain line; a hurled weapon needs a thrown row; a Humanoid\'s weapon and header never key on its name; a species speaks its language', async () => {
+    // seat: juggernaut on the wight stands down (no verb names it) — the chassis stops flipping between rolls
+    const jugW = await run({ archetype: 'brute', style: 'juggernaut', cr: 7, movement: ['burrow'], concept: 'a barrow-wight that erupts in a shockwave of grave earth around it when roused', userConcept: 'a barrow-wight that erupts in a shockwave of grave earth around it when roused', resolvedType: 'Undead', mind: 'sapient' },
+      Object.assign(fullAnswer(scaleDonor(pickDonor(7, null, 'brute'), 7, { mechanics: [] }), 'Barrow King', { 'Melee Attack': 'Grave-Fist' }), { type: 'Undead' }));
+    expect(jugW.trace).toMatch(/the Wight's body outranks the juggernaut seat — no verb in the words names it; the plain brute line/);
+    // body plan: the hurled weapon is off any shelf without a thrown row
+    const { templatesFor } = require('../templates.mjs');
+    const jug = scaleDonor(pickDonor(9, 'juggernaut', 'brute'), 9, { mechanics: [] });
+    expect(templatesFor({ archetype: 'brute', cr: 9, sections: jug.sections, section: 'action' }).map((t) => t.id)).not.toContain('throw-retrieve');
+    const charger = scaleDonor(pickDonor(9, 'charger', 'brute'), 9, { mechanics: [] });
+    expect(templatesFor({ archetype: 'brute', style: 'charger', cr: 9, sections: charger.sections, section: 'action', concept: 'a hollow suit of tourney armor that hurls its own lance' }).map((t) => t.id)).toContain('throw-retrieve'); // the user's lance is something to throw
+    expect(templatesFor({ archetype: 'brute', cr: 9, sections: jug.sections, section: 'action', concept: 'a temple gong given legs that stomps' }).map((t) => t.id)).not.toContain('throw-retrieve');
+    const hurler = scaleDonor(pickDonor(9, 'hurler', 'skirmisher'), 9, { mechanics: [] });
+    expect(templatesFor({ archetype: 'skirmisher', style: 'hurler', cr: 9, sections: hurler.sections, section: 'action' }).map((t) => t.id)).toContain('throw-retrieve');
+    // a Humanoid's weapon: "Firebrand" dealing Fire with no fire in the words is a defect; the withheld energy never returns as a resistance
+    const leader = scaleDonor(pickDonor(3, 'leader', 'defender'), 3, { mechanics: [] });
+    const renames = {}; renameKeysOf(leader).forEach((k, i) => { renames[k] = `Named Row${i}`; }); renames['Melee Attack'] = 'Firebrand';
+    const typed = Object.values(leader.sections).flat().filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    const dt = Object.fromEntries(typed.map((n) => [n, 'Slashing'])); dt.Firebrand = 'Fire';
+    const p = { name: 'Skarn Emberbrand', type: 'Humanoid', renames, damage_types: dt, conditions: { condition_minor: 'Prone' }, melee_rider: 'none' };
+    expect(reskinDefects(leader, p, { energy: null, resolvedType: 'Humanoid', concept: 'a goblin warchief who screams fire at will to her archers' }).join('\n')).toMatch(/"Firebrand" deals Fire on a Humanoid whose concept names no Fire/);
+    expect(reskinDefects(leader, p, { energy: null, resolvedType: 'Humanoid', concept: 'a goblin warchief whose torch-sword burns' }).join('\n')).not.toMatch(/names no Fire/);
+    const sk = await run({ archetype: 'defender', style: 'leader', cr: 3, energy: 'Fire', concept: 'a goblin warchief who screams fire at will to her archers from the palisade', userConcept: 'a goblin warchief who screams fire at will to her archers from the palisade', resolvedType: 'Humanoid', mind: 'sapient' },
+      { ...fullAnswer(leader, 'Skarn Emberbrand', { 'Melee Attack': 'Scimitar', 'Hybrid Attack': 'Handaxe' }), resistances: 'Fire' });
+    expect(String(sk.m.resistances ?? '')).not.toMatch(/Fire/); // the withheld energy never returns through the header (the header vet or the withheld guard, whichever meets it first)
+    expect(sk.m.languages).toMatch(/Goblin/); // a goblin speaks Goblin
+    expect(sk.trace).toMatch(/languages by species: Goblin/);
+  });
+  test('a print body\'s row set is closed: its array and Life Drain ride, the seat owes nothing, the sword keeps print\'s split; one verb binds once; row names are unique', async () => {
+    const lurk = scaleDonor(pickDonor(7, null, 'lurker'), 7, { mechanics: [] });
+    const lines = []; const orig = console.log; console.log = (...a) => { lines.push(a.join(' ')); };
+    let m;
+    try {
+      m = await generateReskin({ cr: 7, mechanics: [], archetype: 'lurker', style: null, movement: ['burrow'], energy: 'Necrotic', concept: 'a barrow-wight that erupts in a shockwave of grave earth around it when roused', userConcept: 'a barrow-wight that erupts in a shockwave of grave earth around it when roused', resolvedType: 'Undead', mind: 'sapient' }, async (prompt) => {
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ action: { idea: 'The wight erupts in a shockwave of grave earth around it, battering everything nearby.', section: 'action', trigger: 'save', effect: 'damage' }, trait: { idea: 'When roused it erupts again, spraying grave-dirt that clings and slows the living.', section: 'trait', trigger: 'once_per_fight', effect: 'damage' } });
+        if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify(/clings and slows/.test(prompt) && !/battering everything/.test(prompt) ? { template: 'bloodied-burst', because: 'erupts when roused', name: 'Grave-Dirt Spray' } : { template: 'ground-burst', because: 'erupts around it', name: 'Grave Eruption' });
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return answer(Object.assign(fullAnswer(lurk, 'Barrow-Wight', { 'Melee Attack': 'Grave Claw' }), { type: 'Undead' }));
+      });
+    } finally { console.log = orig; }
+    const trace = lines.join('\n'); const rows = Object.values(m.sections).flat();
+    expect(trace).toMatch(/print canon array: STR 15, DEX \d+, CON 16, INT 10, WIS 13, CHA 15/); // the Wight's own array rides on a borrow (the striker re-fits to the card)
+    expect(rows.some((e) => e.name === 'Life Drain')).toBe(true); // print's signature rides
+    expect(rows.some((e) => e.name === 'Assassinate')).toBe(false); // the seat owes nothing on a print body
+    expect(trace).toMatch(/print canon: chassis row leaves — Bonus Actions\//); // the lurker's escape BA is the seat's, not the Wight's
+    const sword = rows.find((e) => e.name === 'Necrotic Sword');
+    expect(sword.text).toMatch(/Slashing damage plus \d+ \(\d+d\d+\) Necrotic damage/);
+    expect(trace).toMatch(/keys spent by the action: .*erupt/);
+    expect(trace).toMatch(/trait cards excluded — verb spent by the action: .*bloodied-burst/);
+    expect(rows.some((e) => e.template === 'bloodied-burst')).toBe(false); // one verb, one bind
+    expect(rows.some((e) => e.template === 'ground-burst')).toBe(true);
+    const names = rows.map((e) => String(e.name).replace(/ \(.*\)$/, '').toLowerCase());
+    expect(new Set(names).size).toBe(names.length); // unique row names
+  });
+  test('concept-key first: when the idea path has nothing, the user\'s own words bind the trait shelf (the sergeant\'s stance); a reaction\'s name never sits on an attack row', async () => {
+    const leader = scaleDonor(pickDonor(5, 'leader', 'defender'), 5, { mechanics: [] });
+    const s = await run({ archetype: 'defender', style: 'leader', cr: 5, concept: 'a dwarven crossbow sergeant who orders a volley and holds the shield line', userConcept: 'a dwarven crossbow sergeant who orders a volley and holds the shield line', resolvedType: 'Humanoid', mind: 'sapient' },
+      fullAnswer(leader, 'Shieldwall Sergeant', { 'Melee Attack': 'Warhammer', 'Hybrid Attack': 'Hand Crossbow' }));
+    expect(s.trace).toMatch(/trait bound to the concept's verb \(concept-first\): guarded-stance — .*shield line.* in the user's words; the idea path had nothing/);
+    expect((s.m.sections.Traits ?? []).some((e) => e.name === 'Guarded Stance')).toBe(true);
+    expect(s.trace).toMatch(/volley-order/); // the concept's verb draws the volley card beside the stance
+    // one key that is the creature's own head noun binds too (the cloister gong: resonant-body on "gong")
+    const jug = scaleDonor(pickDonor(8, 'juggernaut', 'brute'), 8, { mechanics: [] });
+    const gong = await run({ archetype: 'brute', style: 'juggernaut', cr: 8, concept: 'a temple gong given legs that walks the cloister at night and tolls for the dead', userConcept: 'a temple gong given legs that walks the cloister at night and tolls for the dead', resolvedType: 'Construct', mind: 'mindless' },
+      Object.assign(fullAnswer(jug, 'Cloister Gong', {}), { type: 'Construct' }));
+    expect(gong.trace).toMatch(/trait bound to the concept's verb \(concept-first\): resonant-body — .*gong.* in the user's words/);
+    expect((gong.m.sections.Traits ?? []).some((e) => e.template === 'resonant-body')).toBe(true);
+    const renames = {}; renameKeysOf(leader).forEach((k, i) => { renames[k] = `Named Row${i}`; }); renames['Melee Attack'] = 'Jagged Parry';
+    const typed = Object.values(leader.sections).flat().filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    const p = { name: 'Grixa', type: 'Humanoid', renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Slashing'])), conditions: { condition_minor: 'Prone' }, melee_rider: 'none' };
+    expect(reskinDefects(leader, p, {}).join('\n')).toMatch(/"Jagged Parry" is a reaction's name on an attack row/);
+  });
+  test('a chassis nova carries its provenance line', async () => {
+    const jug = scaleDonor(pickDonor(9, 'juggernaut', 'brute'), 9, { mechanics: [] });
+    const g = await run({ archetype: 'brute', style: 'juggernaut', cr: 9, concept: 'a temple gong given legs that stomps and sends a tremor in all directions', userConcept: 'a temple gong given legs that stomps and sends a tremor in all directions', resolvedType: 'Construct', mind: 'mindless' },
+      Object.assign(fullAnswer(jug, 'Iron Chime', { 'Area Nova': 'Tremor Toll' }), { type: 'Construct' }));
+    expect(g.trace).toMatch(/chassis nova: "Tremor Toll \(Recharge 5-6\)" — the brute-9-juggernaut's own nova row \(its "Area Nova", renamed by the model\)/);
+  });
+  test('a hyphenated head borrows print\'s rows and KEEPS its seat; a "plus" damage clause joins the damage line', async () => {
+    const jug = scaleDonor(pickDonor(7, 'juggernaut', 'brute'), 7, { mechanics: [] });
+    const w = await run({ archetype: 'brute', style: 'juggernaut', cr: 7, concept: 'a barrow-wight that erupts in a shockwave of grave earth around it when roused', userConcept: 'a barrow-wight that erupts in a shockwave of grave earth around it when roused', resolvedType: 'Undead', mind: 'sapient' },
+      Object.assign(fullAnswer(jug, 'Barrow-Wight', { 'Melee Attack': 'Barrow-Fist' }), { type: 'Undead' }));
+    expect(w.trace).toMatch(/print canon: .* heads on the Wight — print's rows ride along; the seat stays/);
+    expect(w.trace).not.toMatch(/the seats stand down/);
+    expect((w.m.sections.Traits ?? []).some((e) => e.name === 'Sunlight Sensitivity')).toBe(true);
+    const sword = w.rows.find((e) => e.name === 'Necrotic Sword');
+    expect(sword).toBeDefined(); expect(sword.text).toMatch(/Slashing damage plus \d+ \(\d+d\d+\) Necrotic damage\./); expect(sword.text).not.toMatch(/damage\. plus/);
+  });
+  test('a Humanoid\'s energy needs the user\'s words with fixed phrases read first; an arrow is the bow\'s row; an idea-only trait bind is declined on a meat body', async () => {
+    const leader = scaleDonor(pickDonor(3, 'leader', 'defender'), 3, { mechanics: [] });
+    const sk = await run({ archetype: 'defender', style: 'leader', cr: 3, energy: 'Fire', concept: 'a goblin warchief who screams fire at will to her archers from the palisade', userConcept: 'a goblin warchief who screams fire at will to her archers from the palisade', resolvedType: 'Humanoid', mind: 'sapient' },
+      fullAnswer(leader, 'Skarnna the Palisade', { 'Melee Attack': 'Scimitar', 'Hybrid Attack': 'Falling Arrow' }));
+    expect(sk.trace).toMatch(/energy withheld: Fire on a Humanoid with no Fire in the concept's own words/);
+    expect(sk.rows.map((e) => e.text).join('\n')).not.toMatch(/Fire damage/);
+    const arrow = sk.rows.find((e) => /^Falling Arrow/.test(e.name));
+    expect(arrow.text).toMatch(/^\*?Ranged Attack Roll:\*? \+\d+, range 150\/600 ft\./); // an arrow is the bow's, never a javelin
+    const fiery = await run({ archetype: 'defender', style: 'leader', cr: 3, energy: 'Fire', concept: 'a goblin warchief whose torch-sword burns the palisade', userConcept: 'a goblin warchief whose torch-sword burns the palisade', resolvedType: 'Humanoid', mind: 'sapient' },
+      fullAnswer(leader, 'Skarnna', { 'Melee Attack': 'Torch-Sword', 'Hybrid Attack': 'Handaxe' }));
+    expect(fiery.trace).not.toMatch(/energy withheld/); // "burns" warrants it
+    // the sniper's tracker: a trait bound only on the idea's own words
+    const archer = scaleDonor(pickDonor(4, 'archer', 'skirmisher'), 4, { mechanics: [] });
+    const lines = []; const orig = console.log; console.log = (...a) => { lines.push(a.join(' ')); };
+    let m;
+    try {
+      m = await generateReskin({ cr: 4, mechanics: [], archetype: 'skirmisher', style: 'archer', concept: 'a hobgoblin sniper who snaps off a shot at anyone who closes to melee with him', userConcept: 'a hobgoblin sniper who snaps off a shot at anyone who closes to melee with him', resolvedType: 'Humanoid', mind: 'sapient' }, async (prompt) => {
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ trait: { idea: 'Its quarry is marked with an iron bead; it tracks the marked creature anywhere it runs and cannot lose the trail.', section: 'trait', trigger: 'always', effect: 'defense' } });
+        if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify({ template: 'faultless-tracker', because: 'it tracks the marked quarry', name: 'Marked Quarry' });
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return answer(fullAnswer(archer, 'Iron Legion Sharpshot', { 'Melee Attack': 'Shortsword' }));
+      });
+    } finally { console.log = orig; }
+    expect(lines.join('\n')).toMatch(/trait declined: "Marked Quarry" — bound only on the idea's own words/);
+    expect((m.sections.Traits ?? []).some((e) => e.name === 'Marked Quarry')).toBe(false);
+  });
+  test('a nova taken on shape alone is declined: the cauldron\'s vent (library round 2026-09-29)', async () => {
+    const brute = scaleDonor(pickDonor(9, 'grappler', 'brute'), 9, { mechanics: [] });
+    const lines = []; const orig = console.log; console.log = (...a) => { lines.push(a.join(' ')); };
+    let m;
+    try {
+      m = await generateReskin({ cr: 9, mechanics: [], archetype: 'brute', style: 'grappler', concept: "a bog witch's iron cauldron that walks on three legs and cooks whatever climbs in", userConcept: "a bog witch's iron cauldron that walks on three legs and cooks whatever climbs in", resolvedType: 'Construct', mind: 'mindless' }, async (prompt) => {
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ action: { idea: 'The kettlewright hooks the nearest creature with its ladle-arm, then vents scalding steam and molten iron splash from its seams; every creature nearby is scalded.', section: 'action', trigger: 'save', effect: 'damage' } });
+        if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify({ template: 'ground-burst', because: 'a vent of steam around it', name: 'Scalding Vent' });
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return answer(Object.assign(fullAnswer(brute, 'Kettlewright', {}), { type: 'Construct' }));
+      });
+    } finally { console.log = orig; }
+    const trace = lines.join('\n');
+    expect(trace).toMatch(/nova declined: "Scalding Vent \(Recharge 5-6\)" — a whole-round ability taken on shape alone/);
+    expect(Object.values(m.sections).flat().some((e) => /Emanation originating from/.test(e.text ?? '') && /Recharge/.test(e.name))).toBe(false);
+    // and a nova bound only on the IDEA's words ("around it" in the proposal, not the concept) is declined too
+    const lines2 = []; console.log = (...a) => { lines2.push(a.join(' ')); };
+    let m2;
+    try {
+      m2 = await generateReskin({ cr: 9, mechanics: [], archetype: 'brute', style: 'grappler', concept: "a bog witch's iron cauldron that walks on three legs and cooks whatever climbs in", userConcept: "a bog witch's iron cauldron that walks on three legs and cooks whatever climbs in", resolvedType: 'Construct', mind: 'mindless' }, async (prompt) => {
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ action: { idea: 'The cauldron tips and spills scalding bog-water in a wide hissing wave around it, scalding everything nearby.', section: 'action', trigger: 'save', effect: 'damage' } });
+        if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify({ template: 'ground-burst', because: 'a wave around it', name: 'Scalding Spill' });
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return answer(Object.assign(fullAnswer(brute, 'Kettlewright', {}), { type: 'Construct' }));
+      });
+    } finally { console.log = orig; }
+    expect(lines2.join('\n')).toMatch(/nova declined: "Scalding Spill \(Recharge 5-6\)" — a whole-round ability bound only on the idea's own words/);
+    expect(Object.values(m2.sections).flat().some((e) => e.template === 'ground-burst')).toBe(false);
   });
   test('a shifter\'s all-forms row is a weapon or unarmed strike, never the beast\'s natural weapon; a water beast\'s shifter is Amphibious', async () => {
     const scaled = scaleDonor(pickDonor(3, 'shifter', 'skirmisher'), 3, { mechanics: [] });

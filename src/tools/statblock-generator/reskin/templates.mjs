@@ -22,6 +22,7 @@
 import { SHAPES, bandFor } from './shapes.mjs';
 import { LIBRARY_SEEDS, drawLibraryRow } from './library.mjs';
 import { saveDamageDiceFor } from '../format-2024/dice.mjs';
+import { readPhrases } from './lexicon.mjs';
 import { AREA_TARGETS } from './card-budgets.mjs';
 
 export const SECTION_OF = { trait: 'Traits', action: 'Actions', bonus_action: 'Bonus Actions', reaction: 'Reactions', rider: 'Rider' }; // Rider = a clause appended to the melee attack row
@@ -39,7 +40,7 @@ const VOCAB = { save_stat: SAVE_STATS, consumed_condition: CONDITIONS, condition
 // flavor slots: the model's words, bounded (no digits, no rules grammar, short)
 export const FLAVOR_SLOTS = ['projectile', 'wound_noun', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
 // engine slots: never the model's
-const ENGINE_SLOTS = ['dc', 'atk', 'avg', 'dice', 'avg_half', 'dice_half', 'damage_type', 'melee_name'];
+const ENGINE_SLOTS = ['dc', 'atk', 'avg', 'dice', 'avg_half', 'dice_half', 'damage_type', 'melee_name', 'ranged_name'];
 
 // the shapes' tags (section comes from `replaces`); melee-rider / ranged
 // replacements weld INTO an existing row and are not a standalone template
@@ -48,7 +49,7 @@ const SHAPE_TAGS = {
   'gaze-single': ['save', 'condition'], snare: ['save', 'condition'], reel: ['save', 'movement'],
   'condition-payoff': ['save', 'damage'], rampage: ['once_per_fight', 'damage'], blink: ['always', 'movement'],
   zone: ['once_per_fight', 'condition'], execute: ['save', 'damage'], 'death-burst': ['always', 'damage'],
-  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], spew: ['save', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'hook-rider': ['on_hit', 'movement'], riposte: ['on_being_hit', 'damage'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
+  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], spew: ['save', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'hook-rider': ['on_hit', 'movement'], riposte: ['on_being_hit', 'damage'], 'snap-shot': ['on_being_hit', 'damage'], 'ground-burst': ['save', 'damage'], 'volley-order': ['always', 'resource'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
   'spider-climb': ['always', 'movement'], 'terrain-walk': ['always', 'movement'], 'aberrant-ground': ['always', 'movement'], 'faultless-tracker': ['always', 'condition'], 'web-walker': ['always', 'movement'],
   'fire-aura': ['start_of_turn', 'damage'], 'noxious-aura': ['save', 'condition'], 'bloodied-fury': ['always', 'defense'], 'uncanny-sense': ['always', 'defense'], 'earth-glide': ['always', 'movement'], tunneler: ['always', 'movement'], berserk: ['always', 'condition'], 'shielded-mind': ['always', 'defense'], evasion: ['always', 'defense'],
   'relentless-pursuit': ['always', 'movement'], bound: ['always', 'movement'], 'marking-light': ['always', 'condition'], 'sealed-body': ['always', 'defense'], 'warded-mending': ['start_of_turn', 'resource'], 'guarded-stance': ['always', 'defense'], 'undead-fortitude': ['always', 'defense'], mimicry: ['always', 'defense'], wail: ['once_per_fight', 'damage'], 'truth-aura': ['save', 'condition'], 'gaze-aura': ['save', 'condition'], 'charge-push': ['on_hit', 'movement'],
@@ -124,6 +125,9 @@ export function coveredBySheet(sections = {}) {
 // expresses it"). Every template carries verb keys; the fit menu is RANKED by
 // overlap with the concept + idea and the matches are named to the model.
 const SHAPE_KEYS = {
+  'volley-order': ['volley', 'orders a volley', 'looses at will', 'loose', 'on my mark', 'archers', 'crossbowmen'],
+  'ground-burst': ['erupt', 'eruption', 'burst', 'shockwave', 'stomp', 'quake', 'tremor', 'around it', 'in all directions', 'wave of', 'pulse', 'detonate', 'slams the ground', 'stamps'],
+  'snap-shot': ['snap shot', 'snaps off', 'covering fire', 'as they close', 'closes to melee', 'before it can strike', 'on approach', 'anyone who approaches', 'draws near', 'comes within'],
   trample: ['trample', 'charge', 'rush', 'stampede'], leap: ['leap', 'pounce', 'drop', 'jump'], 'thrown-burst': ['hurl', 'throw', 'lob', 'burst'],
   'gaze-single': ['gaze', 'stare', 'glare', 'eye'], snare: ['snare', 'web', 'bind', 'net', 'tangle'], reel: ['reel', 'pull', 'drag', 'haul'],
   'condition-payoff': ['exploit', 'punish', 'finish', 'helpless'], rampage: ['rampage', 'frenzy', 'bloodied'], blink: ['blink', 'teleport', 'vanish', 'flicker'],
@@ -159,6 +163,9 @@ export const VERB_KEYS = {
   'bolt-restrain': ['bolt', 'binds', 'root', 'roots', 'pins', 'freezes', 'locks', 'holds fast', 'from afar', 'a mile away', 'lightning strike', 'from the sky'],
   'bolt-drag': ['bolt', 'reel', 'drags', 'pulls', 'tether', 'lash', 'from afar', 'lightning lure', 'draws them'],
   'hook-rider': ['barb', 'barbed', 'barbs', 'hook', 'hooks', 'lodge', 'lodged', 'lodges', 'drag', 'drags', 'harpoon', 'gaff', 'reel in', 'yank', 'tears free', 'hauls it'],
+  'volley-order': ['volley', 'orders a volley', 'looses at will', 'looses arrows', 'loose', 'on my mark', 'archers', 'crossbowmen', 'shoot on'],
+  'ground-burst': ['erupt', 'eruption', 'erupts', 'burst', 'shockwave', 'stomp', 'stomps', 'quake', 'tremor', 'around it', 'in all directions', 'wave of', 'pulse', 'detonate', 'slams the ground', 'stamps'],
+  'snap-shot': ['snap shot', 'snaps off', 'covering fire', 'as they close', 'closes to melee', 'before it can strike', 'on approach', 'anyone who approaches', 'draws near', 'comes within'],
   riposte: ['riposte', 'parry', 'parries', 'parried', 'counterattack', 'counter', 'off-hand', 'dagger', 'rapier', 'saber', 'sabre', 'duelist', 'fencer', 'opening', 'when they miss', 'second blade', 'two blades', 'twin blades'],
   'bolt-mark': ['bolt', 'marks', 'brands', 'brand', 'singles out', 'hunts', 'tracks', 'isolated', 'lone', 'straggler', 'from afar', 'a mile away', 'find them again', 'finds them', 'in the dark', 'lantern beam', 'beam'],
   'weapon-lodge': ['lodge', 'lodged', 'stuck in', 'knits shut around', 'swallows blades', 'keeps the weapon', 'embedded', 'axes', 'blades in its', 'grows around'],
@@ -223,7 +230,7 @@ export const VERB_KEYS = {
   'marking-light': ['lit by', 'glow', 'glowing', 'lantern', 'beacon', 'sheds light', 'light clings', 'burning mark', 'starlight', 'shard of light', 'faerie fire', 'luminous', 'cannot hide from', 'lit up', 'shines on', 'outlines', 'limned'],
   'sealed-body': ['sealed', 'reliquary', 'closed cell', 'cannot be opened', 'iron body', 'clockwork', 'no way in', 'cannot be swayed', 'cannot be read', 'grinds on', 'talked down', 'made to flee', 'locked'],
   'warded-mending': ['mend', 'mends', 'mending', 'knits', 'knits itself', 'repairs itself', 'heals near', 'consecrated', 'litany', 'litanies', 'prayer', 'prayers', 'its ward', 'while near', 'shrine', 'altar', 'regrows', 'seeps into', 'restored by'],
-  'guarded-stance': ['guard', 'seamless guard', 'parry', 'parries', 'turns aside', 'turn aside', 'turns every blade', 'blade aside', 'blades aside', 'deflects', 'deflect', 'blade and shield', 'shield and blade', 'stance', 'hard to hit', 'blows glance', 'glance off', 'slips every blow', 'weaves between', 'nothing lands', 'footwork', 'duelist', 'light bends', 'reads only as', 'hard to track'],
+  'guarded-stance': ['guard', 'seamless guard', 'keeps the line', 'keeps the shield line', 'shield line', 'shield wall', 'parry', 'parries', 'turns aside', 'turn aside', 'turns every blade', 'blade aside', 'blades aside', 'deflects', 'deflect', 'blade and shield', 'shield and blade', 'stance', 'hard to hit', 'blows glance', 'glance off', 'slips every blow', 'weaves between', 'nothing lands', 'footwork', 'duelist', 'light bends', 'reads only as', 'hard to track'],
   'undead-fortitude': ['keeps him standing', 'keeps her standing', 'keeps it standing', 'should have quit', 'refuses to die', "won't stay down", 'gets back up', 'oath keeps', 'will not fall', 'undying', 'zombie', 'shambling', 'body should have', 'not yet dead', 'keeps fighting', 'dead on its feet', 'corpse', 'after death', 'too stubborn to die'],
   mimicry: ['mimic', 'mimics', 'mimicry', 'imitates', 'imitation', 'steals voices', 'stolen voice', 'stolen voices', 'ventriloquist', 'parrot', 'magpie', 'throws its voice', 'speaks in', 'borrowed voice', 'sounds like', 'voices'],
   wail: ['wail', 'wails', 'wailing', 'keening', 'shriek', 'shrieks', 'scream', 'screams', 'hymn', 'dirge', 'stops hearts', 'stops the heart', 'banshee', 'death song', 'lament', 'voice kills', 'song kills'],
@@ -236,6 +243,7 @@ export const VERB_KEYS = {
 // on a recluse and on a stealth assassin — direction and seat are part of the
 // binding, not an afterthought)
 export const DENY_KEYS = {
+  rally: ['volley', 'looses at will', 'looses arrows'], // a volley is the volley order's ("fire at will" reads as "looses at will" — a fixed phrase), not a rally's (the sergeant, library round 2026-09-29)
   leap: ['erupt', 'erupts', 'eruption', 'around it', 'in a circle', 'wide circle', 'from beneath'], // a leap is jump-to-a-space; a self-centred ground burst is another card (Gravesoil Eruption, critic 2026-09-29)
   lure: ['recluse', 'hermit', 'solitary', 'shuns', 'keeps away', 'from afar', 'at a distance', 'hides', 'hiding', 'hidden', 'unseen', 'stealth', 'assassin', 'stalks'],
   herd: ['recluse', 'hermit', 'solitary', 'hides', 'hiding', 'unseen', 'assassin'],
@@ -243,7 +251,7 @@ export const DENY_KEYS = {
   'uncanny-sense': ['tremor', 'tremors', 'vibration', 'vibrations', 'footsteps', 'every step'], // ground-sense is the header's Tremorsense, never a trait (the hound printed Treasure Sense)
 };
 export function deniedBy(t, text) {
-  const raw = String(text ?? '').toLowerCase();
+  const raw = readPhrases(String(text ?? '')).toLowerCase();
   return (DENY_KEYS[t.id] ?? []).filter((k) => raw.includes(k));
 }
 const ING_ROOTS = new Set(['lightning', 'morning', 'evening', 'king', 'ring', 'sting', 'string', 'spring', 'wing', 'thing', 'nothing', 'something', 'ceiling', 'building', 'being', 'during', 'bring', 'cling', 'fling', 'sling', 'swing', 'wring']); // -ing is the root, not an inflection (the diviner's "lightning:concept" on a concept that says light)
@@ -273,7 +281,8 @@ const wordsOf = (t) => [...new Set(String(t ?? '').toLowerCase().split(/[^a-z]+/
 // is digging (the Burrow the route gave), not the hold-fast sense three templates
 // key on — the miller was Burrowing AND restraining from 60 feet (critic, new lines 2026-09-28)
 const SENSE_DENY = { root: /\broots? (?:up|through|around|about|in|out|for)\b/i, roots: /\broots? (?:up|through|around|about|in|out|for)\b/i };
-export function rankByVerb(menu, conceptText, ideaText = '') {
+export function rankByVerb(menu, conceptText0, ideaText0 = '') {
+  const conceptText = readPhrases(conceptText0); const ideaText = readPhrases(ideaText0); // fixed phrases carry one sense
   const c = wordsOf(conceptText); const d = wordsOf(ideaText);
   const hit = (t, words, raw) => (t.keys ?? []).filter((k) => !(SENSE_DENY[k] && SENSE_DENY[k].test(String(raw ?? ''))) && (k.includes(' ') ? String(raw ?? '').toLowerCase().includes(k) : words.some((w) => sameStem(w, stem(k)))));
   return menu.map((t, i) => { const concept = hit(t, c, conceptText); const idea = hit(t, d, ideaText).filter((k) => !concept.includes(k)); return { t, i, concept, idea, matched: [...concept, ...idea], score: concept.length * 2 + idea.length }; })
@@ -295,8 +304,8 @@ export const TEMPLATES = [
   ...SHAPES.filter((s) => SECTION_BY_REPLACES[s.replaces] && SHAPE_TAGS[s.id]).map((s) => ({
     id: s.id, name: s.name, kind: 'shape', cite: s.cite,
     section: SECTION_BY_REPLACES[s.replaces], roles: s.roles, styles: s.styles, cr_range: s.cr_range,
-    gate: s.gate ?? null, nova: s.replaces === 'nova', requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null,
-    host: HOST_BY_REPLACES[s.replaces] ?? null,
+    gate: s.gate ?? null, nova: s.replaces === 'nova', requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null, requires_row: s.requires_row ?? null,
+    host: s.host ?? HOST_BY_REPLACES[s.replaces] ?? null, // a reaction that fires a ranged row needs one on the sheet (snap-shot)
     trigger: SHAPE_TAGS[s.id][0], effect: SHAPE_TAGS[s.id][1],
     keys: [...new Set([...(VERB_KEYS[s.id] ?? []), ...(SHAPE_KEYS[s.id] ?? [])])],
     frames: s.frames, flavor: [...new Set(Object.values(s.frames).flatMap(slotsOf))].filter((x) => FLAVOR_SLOTS.includes(x)), // one entry per slot, not one per band (the fit prompt printed "you fill: {lure_source}" six times)
@@ -338,7 +347,7 @@ export function triggerCompatible(want, have) {
   return true;
 }
 
-export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '' } = {}) {
+export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '', concept = '' } = {}) {
   const band = bandFor(cr);
   const rows = Object.values(sections).flat();
   const owned = new Set(rows.map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase()));
@@ -357,7 +366,8 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     && (t.kind !== 'shape' || t.frames[band])
     && (!t.requires_movement || new RegExp(t.requires_movement, 'i').test(movement))
     && (!t.requires_style || t.requires_style === style) // a ward-shaped reaction needs the warden seat, not just a defender line
-    && !(t.deny_types && type && t.deny_types.some((ty) => new RegExp(`^${ty}\\b`, 'i').test(String(type)))) // a body trait is a BODY's: contact damage on a Humanoid pirate queen read her name as brine (critic, new lines 2026-09-28)
+    && !(t.deny_types && type && t.deny_types.some((ty) => new RegExp(`^${ty}\\b`, 'i').test(String(type))))
+    && !(t.requires_row instanceof RegExp && rows.length && !rows.some((e) => t.requires_row.test(e.text ?? '')) && !(t.keys ?? []).some((k) => new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(readPhrases(String(concept ?? ''))))) // a body-plan filter: a hurled weapon needs something to throw — a thrown/ranged row on the sheet, or a weapon the USER's words name (the armor's lance; never the gong) // a body trait is a BODY's: contact damage on a Humanoid pirate queen read her name as brine (critic, new lines 2026-09-28)
     && (!section || t.section === section)
     && triggerCompatible(trigger, t.trigger)
     && !(text && deniedBy(t, text).length)
@@ -378,7 +388,7 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
 // repositioning) never stand in blind: the critic's v3 read named the
 // obscurement row "the new dead row … appearing as a fallback when nothing
 // else fit". They ship only when the concept's verb asks for them.
-export const UTILITY = new Set(['zone-seed', 'focus', 'feint-slip', 'phase-slip', 'rally', 'reveal', 'coating']);
+export const UTILITY = new Set(['zone-seed', 'focus', 'feint-slip', 'phase-slip', 'rally', 'reveal', 'coating', 'volley-order']);
 // BLIND-DEALABLE (goldens 2026-09-22: a bull was dealt "Hooked Lash", a vault
 // "Hurled Weapon"): a seed with no verb earned is dealt only where its fiction
 // is any-body — a curse or a bolt is any caster, a bellow or a shove is any
@@ -387,7 +397,7 @@ export const UTILITY = new Set(['zone-seed', 'focus', 'feint-slip', 'phase-slip'
 const ALL = 'all';
 export const BLIND_ROLES = {
   'condition-payoff': ALL, execute: ALL, 'gaze-single': ALL, rampage: ALL, 'burrow-ambush': ALL, charge: ALL, 'thrown-burst': ALL,
-  affliction: ALL, pounce: ALL, isolation: ALL, snatch: ALL, 'bolt-restrain': ALL, 'bolt-drag': ALL, 'bolt-mark': ALL, 'ward-retaliation': ALL, interpose: ALL, riposte: ALL,
+  affliction: ALL, pounce: ALL, isolation: ALL, snatch: ALL, 'bolt-restrain': ALL, 'bolt-drag': ALL, 'bolt-mark': ALL, 'ward-retaliation': ALL, interpose: ALL, riposte: ALL, 'snap-shot': ALL, 'ground-burst': ALL,
   seal: ['controller', 'artillery'],
   'escalating-dread': ALL, 'terror-pulse': ALL, 'sensory-strike': ALL, disarm: ALL, 'push-prone': ALL, herd: ALL, 'own-turn-punisher': ALL, exploiter: ALL,
   'aggro-curse': ['caster'], pacify: ['caster'], 'snare-bolt': ['caster'], 'slow-bolt': ['caster'], drain: ['caster', 'lurker'], 'delayed-brand': ['caster'], 'curse-debt': ['caster'], 'blighted-ground': ['caster'],
@@ -464,12 +474,16 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // a SOLID breath is physical whatever the body's energy: glass shards cut, bone
   // splinters pierce, salt and stone bruise (the slagmaw breathed shards as Fire, 2026-09-28)
   const SOLID_BREATH = [[/\b(?:glass|shards?|blades?|razors?)\b/i, 'Slashing'], [/\b(?:bones?|nails?|needles?|splinters?|spines?|thorns?|quills?)\b/i, 'Piercing'], [/\b(?:salt|stones?|gravel|rubble|sand)\b/i, 'Bludgeoning']];
-  const solid = t.id === 'spew' ? (SOLID_BREATH.find(([re]) => re.test(String(ctx.concept ?? ''))) ?? [])[1] : null;
+  const EARTH = /\b(?:earth|grave earth|grave-earth|soil|dirt|stones?|rock|rocks|gravel|rubble|sand|mud|clay|ground)\b/i; // a shockwave of grave earth bruises, whatever the body's energy (the barrow-wight's Necrotic burst, critic 2026-09-29)
+  const solid = t.id === 'spew' ? (SOLID_BREATH.find(([re]) => re.test(String(ctx.concept ?? ''))) ?? [])[1]
+    : t.id === 'ground-burst' && EARTH.test(String(ctx.concept ?? '')) ? 'Bludgeoning' : null;
+  const stomping = t.id === 'ground-burst' && /\b(?:stomps?|stamps?|slams? the ground|quake|tremor|earthquake)\b/i.test(String(ctx.concept ?? '')); // print's ground slam knocks Prone
   const obscuring = t.id === 'spew' && /\b(?:ash|ashes|smoke|dust|sand|soot|cinders|spores|chaff)\b/i.test(String(ctx.concept ?? '')); // an OBSCURING breath blinds — the pyre's ash cone poisoned (critic, fresh six)
   const dtype = solid ?? (ctx.mix === 'physical' || !ctx.energy ? (PHYSICAL.includes(fills.damage_type) ? fills.damage_type : 'Bludgeoning') : ctx.energy);
-  const engine = { dc: String(scaled.dc), atk: `+${scaled.atk}`, avg: String(full.avg), dice: full.dice, avg_half: String(half.avg), dice_half: half.dice, avg_x2: String(dbl.avg), dice_x2: dbl.dice, damage_type: dtype, melee_name: ctx.meleeName ?? 'Slam' };
+  const engine = { dc: String(scaled.dc), atk: `+${scaled.atk}`, avg: String(full.avg), dice: full.dice, avg_half: String(half.avg), dice_half: half.dice, avg_x2: String(dbl.avg), dice_x2: dbl.dice, damage_type: dtype, melee_name: ctx.meleeName ?? 'Slam', ranged_name: ctx.rangedName ?? 'Longbow' };
   for (const [k, v] of Object.entries(engine)) text = text.split(`{${k}}`).join(v);
   if (obscuring) text = text.replace('has the Poisoned condition', 'has the Blinded condition'); // the Poison-breath frame's own rider, retyped for what ash does
+  if (stomping) text = text.replace(/ damage\. \*Success:\* Half damage\.$/, ' damage, and the target has the Prone condition. *Success:* Half damage only.');
   // THE SAVE FOLLOWS THE CONDITION on a condition aura (critic fresh four: Stench
   // is Con on the toad and became Wis on the kilnblight — the stat drifted to the
   // caster's spell stat). Print: Poisoned/Deafened = Constitution, Frightened =
@@ -636,7 +650,7 @@ export function rowValue(text, perHit, { area = false } = {}) {
   if (/teleports? up to|moves? up to (?:half )?its Speed|takes the (?:Dash|Disengage) action|without provoking Opportunity Attacks/i.test(text)) ev += 0.3 * P_HIT * perHit;
   // an attack GRANT is worth the attack it grants (the riposte, the guardian's
   // answer: "makes one X attack" read 0 and every reaction sat under the floor)
-  if (/makes one [\w' -]+ attack\b/i.test(text)) ev += P_HIT * perHit;
+  if (/makes? one [\w' -]+ attack(?: roll)?\b/i.test(text)) ev += P_HIT * perHit; // an ally grant ("can take a Reaction to make one ranged attack roll") is an attack grant too (the volley order, 2026-09-29)
   return { ev, avg, half, hasDamage: !!d };
 }
 /**
@@ -704,6 +718,23 @@ export function valueCheck(row, { scaled, sections, section, cr = null }) {
   // gate anyway, so the value check never adds one (the rimehorn's Horrid
   // Display was priced as a nova, then ungated: two passes disagreeing, 2026-09-27)
   const controlOnly = !v.hasDamage && !WORTH_AN_ATTACK.test(text);
+  // OVERSHOOT from a proposal scales DOWN to the ceiling first (the gong's 13d6
+  // Prone follow-up was gated into a 45-damage Recharge row where an 18-damage
+  // ungated exploiter had sat, critic 2026-09-29); a gate is for scale the
+  // concept demands — when even a per-hit die would clear the ceiling
+  if (v.ev > ceiling && !gated && section !== 'Traits' && !controlOnly && v.hasDamage && !kill && !recurring) {
+    // the row's value is damage PLUS a condition's worth, so the scale is measured,
+    // not assumed: step the dice down until the value clears the ceiling or the
+    // die reaches one hit's worth
+    const startAvg = v.avg; let cur = v.avg;
+    for (let i = 0; i < 6 && v.ev > ceiling && cur > perHit; i += 1) {
+      let next = Math.max(perHit, Math.floor(cur * ceiling / v.ev)); if (next >= cur) next = Math.max(perHit, cur - Math.max(1, Math.ceil(perHit / 2)));
+      let d = saveDamageDiceFor(next); if (d.avg >= cur) d = saveDamageDiceFor(Math.max(perHit, cur - Math.max(1, Math.ceil(perHit / 2)))); // the die table rounds back up: step a half-hit instead
+      if (d.avg >= cur) break;
+      text = text.replace(DMG, `${d.avg} (${d.dice})`); v = value(text); cur = v.avg;
+    }
+    if (cur < startAvg) steps.push(`dice ${startAvg} → ${cur} (scaled down to the ceiling)`);
+  }
   if (v.ev > ceiling && !gated && section !== 'Traits' && !controlOnly) { name = `${name} (Recharge 5-6)`; steps.push('over the ceiling — gated Recharge 5-6'); }
   else if (v.ev > ceiling && !gated && section !== 'Traits' && controlOnly) steps.push('over the ceiling but a control row (no damage, no KO) — print leaves these ungated');
   return { text, name, ev: Math.round(v.ev * 10) / 10, floor: Math.round(floor * 10) / 10, replaced: label, steps };

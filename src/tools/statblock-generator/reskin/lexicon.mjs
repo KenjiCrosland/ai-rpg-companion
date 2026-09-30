@@ -86,7 +86,7 @@ export function filterVerdicts(verdicts, text) {
  *  not re-apply them off a name the model then chose ("Troll-Tooth Knight"). */
 /** The concept's HEAD NOUN: "a cliff troll that shears slabs" → troll (the words before the first that/who/which/whose, last word). */
 export function headNoun(text) {
-  const lead = String(text ?? '').toLowerCase().split(/\s+(?:that|who|which|whose|with|wearing|riding)\b/)[0];
+  const lead = String(text ?? '').toLowerCase().split(/\s+(?:that|who|which|whose|with|wearing|riding|given|granted|bearing|holding|carrying|made|built|forged|cast)\b/)[0]; // "a temple gong given legs" heads on the gong, not the legs (2026-09-30)
   return (lead.trim().split(/[^a-z-]+/).filter(Boolean).pop() ?? '').replace(/s$/, '');
 }
 export function rejectedCanon(verdicts, text) {
@@ -99,3 +99,26 @@ export function rejectedCanon(verdicts, text) {
     .map((v) => v.cue);
 }
 
+
+// FIXED PHRASES (critic, library round 2026-09-29: six homographs in six runs —
+// hide, toll, spear, roots, holds, fire). A fixed phrase carries ONE sense, read
+// phrase-first like a print name, before any verb table, key list or element
+// bank sees the words: "fire at will" is a command, not a flame; "holds the line"
+// is a stand, not a grapple; "roots up" digs; "takes a toll" is a price, not a bell.
+// Each rewrite keeps the sense's own key word so the right line still reads it.
+const FIXED_PHRASES = [
+  [/\bfires? at will\b/gi, 'looses at will'],
+  [/\bopens? fire\b/gi, 'looses arrows'],
+  [/\bfires? (a|the|another) volley\b/gi, 'looses $1 volley'],
+  [/\bunder fire\b/gi, 'under attack'],
+  [/\b(holds?|holding|held) (the |a |his |her |its |their |our )?(shield ?)?(line|gate|pass|bridge|wall|door|ground|position|fort|breach|stairs?|rear)\b/gi, (m, v, det, sh, obj) => `${v.toLowerCase().startsWith('held') ? 'kept' : v.toLowerCase().startsWith('holding') ? 'keeping' : v.toLowerCase().endsWith('s') ? 'keeps' : 'keep'} ${det ?? ''}${sh ?? ''}${obj}`],
+  [/\broots? (up|through|around|about|out)\b/gi, (m, p) => `${m.toLowerCase().startsWith('roots') ? 'digs' : 'dig'} ${p}`],
+  [/\b(takes?|exacts?|took|taking) (a|its|his|her|their|the) toll\b/gi, '$1 $2 price'],
+  [/\bspears? (the|a|an|its|his|her|their|any|every|each)\b/gi, (m, det) => `${m.toLowerCase().startsWith('spears') ? 'impales' : 'impale'} ${det}`],
+];
+/** The text with every fixed phrase rewritten to its one sense. */
+export function readPhrases(text) {
+  let out = String(text ?? '');
+  for (const [re, to] of FIXED_PHRASES) out = out.replace(re, to);
+  return out;
+}

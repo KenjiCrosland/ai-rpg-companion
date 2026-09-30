@@ -200,7 +200,8 @@ export const SHAPES = [
     frames: { '0-2': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 3 (1d6) Thunder damage and has the Deafened condition until the end of its next turn.', '3-5': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 5 (1d10) Thunder damage and has the Deafened condition until the end of its next turn.', '6-9': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 7 (2d6) Thunder damage and has the Deafened condition until the end of its next turn.', '10-12': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 10 (3d6) Thunder damage and has the Deafened condition until the end of its next turn.', '13-20': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 10 (3d6) Thunder damage and has the Deafened condition until the end of its next turn.', '21+': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 14 (4d6) Thunder damage and has the Deafened condition until the end of its next turn.' },
   },
   {
-    id: 'throw-retrieve', name: 'Hurled Weapon', invented: true, supersedes: /returns to (?:its|the creature's|the \w+'s) hand|Hit or Miss/i, // one lance, one physics: the chassis's returning throw leaves when this ships // the critic's v2 pick from the free-text side: hurl the weapon, Speed halved until it is recovered
+    id: 'throw-retrieve', name: 'Hurled Weapon', invented: true, requires_row: /Ranged Attack Roll|hurls|throws|returns to/i, // something to throw: a thrown, ranged or returning row (the charger's lance) // a body with nothing to throw never draws it (the gong's Discordant Toll, critic 2026-09-29)
+    supersedes: /returns to (?:its|the creature's|the \w+'s) hand|Hit or Miss/i, // one lance, one physics: the chassis's returning throw leaves when this ships // the critic's v2 pick from the free-text side: hurl the weapon, Speed halved until it is recovered
     roles: ['skirmisher', 'brute', 'defender'], styles: [], cr_range: [1, 30], replaces: 'signature',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature hurls {projectile}. *Ranged Attack Roll:* {atk}, range 30/120 ft. {avg} ({dice}) {damage_type} damage. The weapon lands in an unoccupied space within 5 feet of the target; until the creature spends 5 feet of movement in that space to recover it, the creature\'s Speed is halved and it can\'t use this action.'])),
   },
@@ -464,6 +465,27 @@ export const SHAPES = [
   // sable notch, the scarred duelist, the coin-bought duelist): "when a blow
   // misses, the off-hand answers". Parry (Bandit Captain, 2024 MM) answered
   // with the Battle Master's Riposte: one attack bought by the miss.
+  {
+    id: 'volley-order', name: 'Volley Order', invented: true, gate: '2/Day', // kin: Hobgoblin Warlord/Leadership (2014 MM) + Commander's Strike (PHB); the leader-seat shape "orders a volley" named (critic 2026-09-28) — allies' Reaction attacks, so a shape, not a seed (seeds are reaction-free by construction)
+    roles: ['defender'], styles: [], cr_range: [1, 30], replaces: 'bonus-alt', requires_style: 'leader',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'Each ally within 30 feet of the creature that can see or hear it can take a Reaction to make one ranged attack roll.'])),
+  },
+  {
+    id: 'ground-burst', name: 'Shockwave', cite: 'Nalfeshnee/Horror Nimbus (CR 13); Vrock/Stunning Screech (CR 6)', // print's SELF-CENTRED Emanation nova; "eruption" concepts borrowed the leap (critic 2026-09-29)
+    roles: ['brute', 'defender', 'controller', 'skirmisher', 'lurker'], styles: [], cr_range: [3, 30], replaces: 'nova', gate: 'Recharge 5-6', // lurker too: a barrow-wight routed to the trap seat lost its eruption (2026-09-29)
+    frames: {
+      '3-5': '*{save_stat} Saving Throw*: DC {dc}, each creature in a 10-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
+      '6-9': '*{save_stat} Saving Throw*: DC {dc}, each creature in a 15-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
+      '10-12': '*{save_stat} Saving Throw*: DC {dc}, each creature in a 15-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
+      '13-20': '*{save_stat} Saving Throw*: DC {dc}, each creature in a 20-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
+      '21+': '*{save_stat} Saving Throw*: DC {dc}, each creature in a 30-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
+    },
+  },
+  {
+    id: 'snap-shot', name: 'Snap Shot', invented: true, host: 'ranged', // kin: riposte (this shelf) + Bandit Captain/Parry (2024 MM): the ranged punisher a sergeant's "snaps off a shot as they close" asked for (critic 2026-09-28)
+    roles: ['skirmisher', 'artillery', 'defender'], styles: [], cr_range: [1, 30], replaces: 'reaction',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Trigger:* A creature the creature can see moves to within 5 feet of it. *Response:* The creature makes one {ranged_name} attack against that creature.'])),
+  },
   {
     id: 'riposte', name: 'Riposte', invented: true, // kin: Bandit Captain/Parry (2024 MM) + Riposte maneuver (PHB); neither is in this corpus
     roles: ['skirmisher', 'defender', 'lurker'], styles: [], cr_range: [1, 30], replaces: 'reaction',

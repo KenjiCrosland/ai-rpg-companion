@@ -21,7 +21,7 @@ for (const f of fs.readdirSync(dir).filter((x) => /^\d+-.*\.md$/.test(x)).sort()
   const trace = (/### Trace\n```\n([\s\S]*?)\n```/.exec(md) ?? [])[1] ?? '';
   if (!block) { doc += `\n\n---\n\n## ${f.replace(/^\d+-|\.md$/g, '')}\n\n**Concept:** ${input}\n\n_(no block — the generation did not complete; see the run's trace)_\n`; continue; } // a missing capture is noted, a truncated one refuses
   if (!hasActions(block)) { problems.push(`${f}: no Actions section captured`); continue; }
-  const lines = trace.split('\n').filter((l) => /value check|signature template|signature rider|library seed drawn|signature miss|^\[route\]|row superseded|trait renamed/.test(l)).map((l) => l.replace(/^\[reskin\] /, ''));
+  const lines = trace.split('\n').filter((l) => /value check|signature template|signature rider|library seed drawn|signature miss|^\[route\]|row superseded|trait renamed|chassis nova|nova geometry|nova capped|nova declined|print canon|trait bound|trait declined|energy withheld|movement owed|rename reverted|trait stripped/.test(l)).map((l) => l.replace(/^\[reskin\] /, ''));
   doc += `\n\n---\n\n## ${f.replace(/^\d+-|\.md$/g, '')}\n\n**Concept:** ${input}\n\n\`\`\`\n${block.trim()}\n\`\`\`\n\n**Engine trace**\n\n\`\`\`\n${lines.join('\n')}\n\`\`\`\n`;
 }
 if (problems.length) { console.error('REFUSING TO WRITE:\n  ' + problems.join('\n  ')); process.exit(1); }
