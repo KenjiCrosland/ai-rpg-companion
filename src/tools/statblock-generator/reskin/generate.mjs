@@ -201,7 +201,7 @@ export function printCanonFor(conceptText, cr) {
   // routed to the shifter seat and grew a beast form, critic, new lines 2026-09-28):
   // the phrase before the relative clause, matched EXACTLY, no alias, no nearest-CR
   if (words.length > 4) {
-    const hw = wordsOf(String(conceptText ?? '').split(/\s(?:who|that|which|whose)\s|,|\s[—–]\s/i)[0]);
+    const hw = wordsOf(String(conceptText ?? '').split(/\s(?:who|that|which|whose|gone|turned|driven|cursed|bound|sworn|doomed|condemned|left|lost|born|raised|made|sent)\s|,|\s[—–]\s/i)[0]); // "a unicorn gone mad from grief" heads on the Unicorn (day-one two, 2026-10-01)
     if (!hw.length || hw.length > 4 || hw.length >= words.length) return null;
     words = hw; headOnly = true;
   }
@@ -218,12 +218,14 @@ export function printCanonFor(conceptText, cr) {
   const exactPhrase = list.find((b) => lower(b) === phrase || lower(b) === phrase.replace(/s$/, ''));
   const hyphenHead = headOnly && words.length === 1 && headSeg ? list.find((b) => lower(b) === headSeg) : null; // "a barrow-wight that…" borrows the Wight's rows (not a whole-name match: the seat stays) // the WHOLE phrase is the name ("a wolf", "a doppelganger who…") — "a canal ghost" borrows the Ghost's rows but keeps its claimed seat
   const exact = headOnly ? (exactPhrase ?? hyphenHead) : (exactPhrase ?? list.find((b) => heads.includes(lower(b))));
-  const ending = headOnly ? [] : list.filter((b) => heads.some((h) => lower(b).endsWith(` ${h}`)));
+  // a short head may end-match a print FAMILY ("a hag who trades in teeth" → the nearest-CR Hag) — a borrow, like every head match
+  const ending = headOnly && words.length > 2 ? [] : list.filter((b) => heads.some((h) => lower(b).endsWith(` ${h}`)));
   const pick = exact ?? (ending.length ? ending.sort((a, b) => Math.abs(Number(a.cr) - cr) - Math.abs(Number(b.cr) - cr))[0] : null);
   if (!pick) return null;
   if (headOnly && /^Beast\b/i.test(String(pick.type ?? ''))) return null;
   // an NPC CLASS as the head of a longer concept ("a knight who has sworn never to sleep…") lends its rows and array and keeps the seat — the clause is the creature; a print MONSTER head (the Doppelganger) is its block (day-one 2026-09-30)
-  const npcHead = headOnly && !!exactPhrase && /^Humanoid\b/i.test(String(pick.type ?? '')); // a rich concept on a print BEAST is reskin material ("a wolf that eats the stars" keeps its seats); a composed print character is its block
+  // every HEAD match is a borrow (rows + array ride, the seat stays, no blind fallback): a print monster as the head of a longer concept keeps the clause's seat too — the Doppelganger's block came out the same either way once print bodies stopped drawing the fallback (day-one two, 2026-10-01)
+  const npcHead = headOnly; // a rich concept on a print BEAST is reskin material ("a wolf that eats the stars" keeps its seats); a composed print character is its block
   const last = lower(pick).split(/\s+/).at(-1);
   const traits = (pick.sections?.Traits ?? []).filter((t) => t?.name && !PRINT_BOILER.test(t.name)).map((t) => ({ name: t.name.replace(/ \(.*\)$/, ''), text: String(t.text ?? '') }));
   const rowOf = (a) => { const t = String(a.text ?? ''); const m = /\d+ \(\d+d\d+(?: \+ \d+)?\) (Bludgeoning|Piercing|Slashing)(?: damage)?\.?\s*([^]*)$/.exec(t); const note = /Attack Roll:\*? \+\d+ (\([^)]*\)),/.exec(t)?.[1] ?? null; return { name: a.name.replace(/ \(.*\)$/, ''), type: m?.[1] ?? null, rider: m ? m[2].trim() : '', note }; }; // note: print's roll parenthetical (the Doppelganger's "(with Advantage during the first round of each combat)" is its 2024 Surprise Attack)
@@ -237,9 +239,9 @@ export function printCanonFor(conceptText, cr) {
   // or the spell list — the Doppelganger's Shape-Shift (Bonus Action) and Read Thoughts
   // (Action) are the block as much as a trait is (critic, new lines 2026-09-28)
   const rulesRows = ['Actions', 'Bonus Actions', 'Reactions'].flatMap((sec) => (pick.sections?.[sec] ?? [])
-    .filter((a) => a?.name && !/^(?:Multiattack|Spellcasting)$/i.test(a.name) && !/Attack Roll/.test(a.text ?? '') && !PRINT_BOILER.test(a.name)) // dice rows ride too (the Wight's Life Drain is its signature, critic 2026-09-29) — re-priced to the sheet by the value check at the stamp
+    .filter((a) => a?.name && !/^Multiattack$/i.test(a.name) && !/Attack Roll/.test(a.text ?? '') && (!PRINT_BOILER.test(a.name) || /^Spellcasting$/i.test(a.name))) // print's own Spellcasting rides too (it is boiler for the TRAIT stamp, not here) (deduped at the stamp against a caster chassis's row); dice rows ride too (the Wight's Life Drain is its signature, critic 2026-09-29) — re-priced to the sheet by the value check at the stamp
     .map((a) => ({ section: sec, name: a.name, text: String(a.text ?? '') })));
-  return { name: pick.name, last, traits, melee, meleeRows, ranged, rangedRows, modes, senses, rulesRows, stats: pick.stats ?? null, exact: !!exactPhrase && !npcHead, borrowOnly: (headOnly && !exactPhrase) || npcHead, casts: !!pick.derived?.has_spellcasting || (pick.sections?.Actions ?? []).some((a) => /^Spellcasting$/i.test(a?.name ?? '')), size: String(pick.size ?? '') };
+  return { name: pick.name, last, traits, melee, meleeRows, ranged, rangedRows, modes, senses, rulesRows, stats: pick.stats ?? null, exact: !!exactPhrase && !npcHead, borrowOnly: (headOnly && !exactPhrase) || npcHead, casts: (!!pick.derived?.has_spellcasting || (pick.sections?.Actions ?? []).some((a) => /^Spellcasting$/i.test(a?.name ?? ''))) && !(pick.sections?.Actions ?? []).some((a) => /Melee Attack Roll/.test(a?.text ?? '') && !/Melee or Ranged/.test(a?.text ?? '')), size: String(pick.size ?? '') };
 }
 export function chassisSheet(scaled, { name = 'the chassis', type = '', size = '', headerOnly = false } = {}) {
   try {
@@ -760,11 +762,11 @@ export async function generateReskin(options, callLLM) {
     trace('print canon route:', `the ${pcRoute.name}'s body outranks the ${style} seat — no verb in the words names it; the plain ${archetype} line`);
     style = null;
   }
-  if (pcRoute && pcRoute.exact && !body) { // an EXACT print name ("a wolf", "a doppelganger who…") — the nearest-CR ending match ("a hungry ooze" → Gray Ooze) borrows rows but keeps the claimed seat
+  if (pcRoute && (pcRoute.exact || pcRoute.borrowOnly) && !body) { // a print name, whole or at the head ("a wolf", "a doppelganger who…") — the nearest-CR ending match ("a hungry ooze" → Gray Ooze) borrows rows but keeps the claimed seat
     if (style && !(shootsABow && style === 'hurler')) { trace('print canon route:', `"${options.userConcept ?? concept}" is the ${pcRoute.name} — the ${style} seat stands down for the plain line`); style = null; }
     if (archetype === 'caster' && !pcRoute.casts) {
       const plain = /^(?:Large|Huge|Gargantuan)/i.test(pcRoute.size) ? 'brute' : 'skirmisher';
-      trace('print canon route:', `the ${pcRoute.name} casts no spells — the caster family stands down for the plain ${plain} line`);
+      trace('print canon route:', `the ${pcRoute.name} is not a caster first${pcRoute.rulesRows?.some((r) => /^Spellcasting$/i.test(r.name)) ? ' (its own Spellcasting rides as print\'s row)' : ' — it casts no spells'} — the caster family stands down for the plain ${plain} line`);
       archetype = plain;
     }
   }
@@ -1685,7 +1687,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // trait seat reads the concept with those words masked
     let consumedKeysT = [];
     const maskConsumed = (text) => consumedKeysT.reduce((t, k) => t.replace(new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi'), '…'), String(text ?? ''));
-    const spendKeys = (because) => { const m = /\[verb: ([^\]]*)\]/.exec(because ?? ''); consumedKeysT = m ? m[1].split(', ').filter((x) => /:concept$/.test(x)).map((x) => x.replace(/:concept$/, '')) : []; if (consumedKeysT.length) trace('keys spent by the action:', consumedKeysT.join(', ')); };
+    // a VERB is spent; the creature's head noun and its MATERIALS are not — they
+    // describe the body and may inform more than one card (the hermit crab's shell
+    // action spent "crab", "shell" and "bell" and starved its resonant trait, goldens 2026-10-01)
+    const MATERIAL_NOUNS = new Set(['bell', 'bells', 'bronze', 'brass', 'iron', 'steel', 'copper', 'silver', 'gold', 'glass', 'crystal', 'stone', 'rock', 'shell', 'bone', 'bones', 'wax', 'salt', 'earth', 'soil', 'tar', 'oil', 'pitch', 'ice', 'wood', 'clay', 'mud', 'sand', 'brine', 'water', 'fire', 'ash', 'smoke', 'thorn', 'thorns', 'vine', 'vines', 'bark', 'hide', 'fur', 'scale', 'scales', 'horn', 'horns', 'tusk', 'tusks', 'claw', 'claws']);
+    const spendKeys = (because) => { const m = /\[verb: ([^\]]*)\]/.exec(because ?? ''); const hn = headNoun(options.userConcept ?? concept ?? ''); consumedKeysT = m ? m[1].split(', ').filter((x) => /:concept$/.test(x)).map((x) => x.replace(/:concept$/, '')).filter((k) => !MATERIAL_NOUNS.has(k) && k !== hn && k !== `${hn}s`) : []; if (consumedKeysT.length) trace('keys spent by the action:', consumedKeysT.join(', ')); };
     // UNIQUE ROW NAMES (two "Tremor Toll (Recharge 5-6)" rows on the gong, critic
     // 2026-09-29): a shipped row that collides with a row already on the sheet takes
     // its template's own name, or a numbered form when it has none

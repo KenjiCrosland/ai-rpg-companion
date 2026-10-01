@@ -4887,7 +4887,10 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(printCanonFor('a miller who turns into a boar under the moon and roots up the graves', 3)).toBeNull(); // no print block heads it
     const bw = printCanonFor('a barrow-wight', 3); expect(bw.name).toBe('Wight'); expect(bw.exact).toBe(false); // a hyphenated head borrows the Wight's rows, keeps its seat
     const bwl = printCanonFor('a barrow-wight that erupts in a shockwave of grave earth around it when roused', 7); expect(bwl?.name).toBe('Wight'); expect(bwl.exact).toBe(false); expect(bwl.borrowOnly).toBe(true); expect(bwl.traits.map((t) => t.name)).toContain('Sunlight Sensitivity');
-    expect(printCanonFor('a doppelganger who wears the faces of the dead', 3).borrowOnly).toBe(false);
+    expect(printCanonFor('a doppelganger who wears the faces of the dead', 3).borrowOnly).toBe(true); // every head match is a borrow now (day-one two, 2026-10-01): rows + array ride, the seat stays, no blind fallback
+    const uni = printCanonFor('a unicorn gone mad from grief', 13); expect(uni?.name).toBe('Unicorn'); expect(uni.borrowOnly).toBe(true); // "gone" splits the head phrase
+    const hag = printCanonFor("a hag who trades in children's teeth", 4); expect(hag?.name).toMatch(/Hag$/); expect(hag.borrowOnly).toBe(true); // a short head end-matches a print family
+    expect(printCanonFor('a wolf that hunts the moon and eats the stars out of the sky', 5)).toBeNull(); // a Beast head is still reskin material
     const kn = printCanonFor('a knight who has sworn never to sleep until the king is avenged', 8); expect(kn.name).toBe('Knight'); expect(kn.exact).toBe(false); expect(kn.borrowOnly).toBe(true); // an NPC class heads a borrow: the vow keeps its seat
   });
   test('print canon renames: a two-word ranged name is renamed whole (the Bandit\'s Multiattack read "Hurled Scimitar")', async () => {
@@ -4901,14 +4904,17 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(dop.rulesRows.map((r) => `${r.section}/${r.name}`)).toEqual(expect.arrayContaining(['Bonus Actions/Shape-Shift', 'Actions/Read Thoughts']));
     expect(dop.rulesRows.map((r) => r.name)).not.toContain('Slam');
     expect(dop.casts).toBe(false); expect(dop.size).toMatch(/^Medium/);
-    expect(dop.exact).toBe(true); expect(printCanonFor('a hungry ooze', 0.5).exact).toBe(false); expect(printCanonFor('a canal ghost', 6).exact).toBe(false); expect(printCanonFor('a wolf', 5).exact).toBe(true); // a modified or ending match borrows rows; only the whole name re-routes
+    expect(dop.exact).toBe(false); expect(dop.borrowOnly).toBe(true); expect(printCanonFor('a hungry ooze', 0.5).exact).toBe(false); expect(printCanonFor('a canal ghost', 6).exact).toBe(false); expect(printCanonFor('a wolf', 5).exact).toBe(true); // a modified or ending match borrows rows; only the whole name re-routes
     expect(printCanonFor('a mage who hoards the eastern wind', 6).casts).toBe(true);
+    expect(printCanonFor('a unicorn gone mad from grief', 13).casts).toBe(false); // casts in print, fights in melee: not casting-PRIMARY
+    expect(printCanonFor("a hag who trades in children's teeth", 4).casts).toBe(false);
+    expect(printCanonFor('a unicorn gone mad from grief', 13).rulesRows.map((r) => r.name)).toContain('Spellcasting'); // print's own list rides along
   });
   test('a print name as the head noun outranks the verb router: the doppelganger is not a caster, and the seat style stands down', async () => {
     const r = await run({ archetype: 'caster', style: 'skulker', concept: 'a doppelganger who reads what the living are thinking', userConcept: 'a doppelganger who reads what the living are thinking', cr: 3, resolvedType: 'Monstrosity', mind: 'sapient' },
       fullAnswer(scaleDonor(pickDonor(3, null, 'skirmisher'), 3, { mechanics: [] }), 'Mourning Mask', { 'Melee Attack': 'Claw' }));
-    expect(r.trace).toMatch(/casts no spells — the caster family stands down for the plain skirmisher line/);
-    expect(r.trace).toMatch(/the skulker seat stands down for the plain line/);
+    expect(r.trace).toMatch(/is not a caster first — it casts no spells — the caster family stands down for the plain skirmisher line/);
+    expect(r.trace).toMatch(/the Doppelganger's body outranks the skulker seat — no verb in the words names it; the plain (?:caster|skirmisher) line/); // the seat stands down first; the caster demotion line follows it
     expect(r.rows.some((e) => /^Spellcasting$/.test(e.name))).toBe(false);
     expect((r.m.sections['Bonus Actions'] ?? []).some((e) => e.name === 'Shape-Shift')).toBe(true);
     expect(r.rows.some((e) => e.name === 'Read Thoughts')).toBe(true);
@@ -5065,6 +5071,11 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     const sword = rows.find((e) => e.name === 'Necrotic Sword');
     expect(sword.text).toMatch(/Slashing damage plus \d+ \(\d+d\d+\) Necrotic damage/);
     expect(trace).toMatch(/keys spent by the action: .*erupt/);
+    // the creature's head noun and its materials are never spent: a shell action on a bell-crab leaves "crab", "shell", "bell" to the trait shelf
+    const crabT = scaleDonor(pickDonor(6, 'grappler', 'brute'), 6, { mechanics: [] });
+    const crab = await run({ archetype: 'brute', style: 'grappler', cr: 6, concept: 'a hermit crab the size of a wagon that wears a stolen bronze church bell as its shell and rings it by slamming its own body against the inside when it is wounded', userConcept: 'a hermit crab the size of a wagon that wears a stolen bronze church bell as its shell and rings it by slamming its own body against the inside when it is wounded', resolvedType: 'Beast', mind: 'bestial' },
+      Object.assign(fullAnswer(crabT, 'Bell Crab', {}), { type: 'Beast' }));
+    expect(crab.trace).not.toMatch(/keys spent by the action: .*(?:crab|shell|bell)/);
     expect(trace).toMatch(/trait cards excluded — verb spent by the action: .*bloodied-burst/);
     expect(rows.some((e) => e.template === 'bloodied-burst')).toBe(false); // one verb, one bind
     expect(rows.some((e) => e.template === 'ground-burst')).toBe(true);
