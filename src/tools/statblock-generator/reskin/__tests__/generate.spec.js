@@ -5050,6 +5050,57 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(sk.m.languages).toMatch(/Goblin/); // a goblin speaks Goblin
     expect(sk.trace).toMatch(/languages by species: Goblin/);
   });
+  test('the small round (2026-10-01): print size/speed/reach ride; a second print melee row rides; the rider slot refuses idea-only binds; a bleed needs an edge; signature elements are rewritten; a Humanoid swings a weapon; the seat owes only when the words earned it', async () => {
+    // size, base speed, reach, second melee row — the Unicorn on a Large chassis
+    const brute = scaleDonor(pickDonor(13, null, 'brute'), 13, { mechanics: [] });
+    const u = await run({ archetype: 'brute', style: null, cr: 13, concept: 'a unicorn gone mad from grief', userConcept: 'a unicorn gone mad from grief', resolvedType: 'Celestial', mind: 'sapient' },
+      Object.assign(fullAnswer(brute, 'Grieving Horn', { 'Melee Attack': 'Hoof' }), { type: 'Celestial', size: 'Huge' }));
+    expect(u.m.size).toBe('Large'); expect(u.m.speed).toMatch(/^50 ft\./);
+    expect(u.rows.some((e) => e.name === 'Hooves')).toBe(true); expect(u.rows.some((e) => e.name === 'Radiant Horn')).toBe(true);
+    expect(u.rows.find((e) => e.name === 'Multiattack').text).toMatch(/using Hooves or Radiant Horn in any combination/);
+    expect(u.rows.find((e) => e.name === 'Hooves').text).toMatch(/reach 5 ft\./);
+    // the rider slot: an idea-only bind is declined on every body; the bleed card needs an edge
+    const { templatesFor } = require('../templates.mjs');
+    const jug = scaleDonor(pickDonor(9, 'juggernaut', 'brute'), 9, { mechanics: [] });
+    expect(templatesFor({ archetype: 'brute', cr: 9, sections: jug.sections, section: 'rider', concept: 'a temple gong given legs' }).map((t) => t.id)).not.toContain('affliction'); // Slam only
+    const lines = []; const orig = console.log; console.log = (...a) => { lines.push(a.join(' ')); };
+    let m;
+    try {
+      m = await generateReskin({ cr: 9, mechanics: [], archetype: 'brute', style: 'juggernaut', concept: 'a temple gong given legs that stomps and sends a tremor in all directions', userConcept: 'a temple gong given legs that stomps and sends a tremor in all directions', resolvedType: 'Construct', mind: 'mindless' }, async (prompt) => {
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ action: { idea: 'When its slam lands, the target is hooked on the rim and dragged a few feet toward the gong by the ringing.', section: 'rider', trigger: 'on_hit', effect: 'movement' } });
+        if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify({ template: 'hook-rider', because: 'hooked and dragged', name: 'Bone-Rattling Note' });
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return answer(Object.assign(fullAnswer(jug, 'Iron Chime', {}), { type: 'Construct' }));
+      });
+    } finally { console.log = orig; }
+    expect(lines.join('\n')).toMatch(/rider declined: "Bone-Rattling Note" — bound on shape or on the idea's own words alone/);
+    expect(Object.values(m.sections).flat().some((e) => e.template === 'hook-rider' || /pulled|dragged/.test(e.text ?? '') && /Slam/.test(e.name ?? ''))).toBe(false);
+    // signature elements are rewritten before the naming pass; a Humanoid swings a weapon; the seat owes only when earned
+    const leader = scaleDonor(pickDonor(3, 'leader', 'defender'), 3, { mechanics: [] });
+    let mainPrompt = '';
+    const lines2 = []; console.log = (...a) => { lines2.push(a.join(' ')); };
+    try {
+      await generateReskin({ cr: 3, mechanics: [], archetype: 'defender', style: 'leader', signatureElements: ['screams fire at will to her archers [behavior]'], concept: 'a goblin warchief who screams fire at will to her archers', userConcept: 'a goblin warchief who screams fire at will to her archers', resolvedType: 'Humanoid', mind: 'sapient' }, async (prompt) => {
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({});
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        mainPrompt = mainPrompt || prompt;
+        return answer(fullAnswer(leader, 'Skarrag', { 'Melee Attack': 'Scimitar', 'Hybrid Attack': 'Handaxe' }));
+      });
+    } finally { console.log = orig; }
+    expect(mainPrompt).toMatch(/looses at will/); expect(mainPrompt).not.toMatch(/fire at will/);
+    const renames = {}; renameKeysOf(leader).forEach((k, i) => { renames[k] = `Named Row${i}`; }); renames['Melee Attack'] = 'Claw';
+    const typed = Object.values(leader.sections).flat().filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name] ?? e.name);
+    const p = { name: 'Skarrag', type: 'Humanoid', renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Slashing'])), conditions: { condition_minor: 'Prone' }, melee_rider: 'none' };
+    expect(reskinDefects(leader, p, { resolvedType: 'Humanoid', concept: 'a goblin warchief who screams at her archers' }).join('\n')).toMatch(/"Claw" is a natural weapon on a Humanoid whose concept gives it none/);
+    expect(reskinDefects(leader, p, { resolvedType: 'Humanoid', concept: 'a goblin warchief with iron claws' }).join('\n')).not.toMatch(/natural weapon on a Humanoid/);
+    const skulk = scaleDonor(pickDonor(4, 'skulker', 'skirmisher'), 4, { mechanics: [] });
+    const h = await run({ archetype: 'skirmisher', style: 'skulker', cr: 4, concept: 'a hermit who talks to crows', userConcept: 'a hermit who talks to crows', resolvedType: 'Humanoid', mind: 'sapient' },
+      fullAnswer(skulk, 'Carrion Hermit', { 'Melee Attack': 'Bone Knife' }));
+    expect(h.trace).toMatch(/seat owes nothing: the skulker line was the model's read of its quote/);
+    expect(h.rows.some((e) => e.name === 'Assassinate')).toBe(false);
+  });
   test('a print body\'s row set is closed: its array and Life Drain ride, the seat owes nothing, the sword keeps print\'s split; one verb binds once; row names are unique', async () => {
     const lurk = scaleDonor(pickDonor(7, null, 'lurker'), 7, { mechanics: [] });
     const lines = []; const orig = console.log; console.log = (...a) => { lines.push(a.join(' ')); };

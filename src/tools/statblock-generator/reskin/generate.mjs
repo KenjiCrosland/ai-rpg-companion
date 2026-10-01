@@ -228,7 +228,7 @@ export function printCanonFor(conceptText, cr) {
   const npcHead = headOnly; // a rich concept on a print BEAST is reskin material ("a wolf that eats the stars" keeps its seats); a composed print character is its block
   const last = lower(pick).split(/\s+/).at(-1);
   const traits = (pick.sections?.Traits ?? []).filter((t) => t?.name && !PRINT_BOILER.test(t.name)).map((t) => ({ name: t.name.replace(/ \(.*\)$/, ''), text: String(t.text ?? '') }));
-  const rowOf = (a) => { const t = String(a.text ?? ''); const m = /\d+ \(\d+d\d+(?: \+ \d+)?\) (Bludgeoning|Piercing|Slashing)(?: damage)?\.?\s*([^]*)$/.exec(t); const note = /Attack Roll:\*? \+\d+ (\([^)]*\)),/.exec(t)?.[1] ?? null; return { name: a.name.replace(/ \(.*\)$/, ''), type: m?.[1] ?? null, rider: m ? m[2].trim() : '', note }; }; // note: print's roll parenthetical (the Doppelganger's "(with Advantage during the first round of each combat)" is its 2024 Surprise Attack)
+  const rowOf = (a) => { const t = String(a.text ?? ''); const m = /\d+ \(\d+d\d+(?: \+ \d+)?\) ([A-Z][a-z]+)(?: damage)?\.?\s*([^]*)$/.exec(t); /* any damage word: the Unicorn's Radiant Horn deals Radiant outright */ const note = /Attack Roll:\*? \+\d+ (\([^)]*\)),/.exec(t)?.[1] ?? null; const reach = /reach (\d+) ft/.exec(t)?.[1] ?? null; return { name: a.name.replace(/ \(.*\)$/, ''), type: m?.[1] ?? null, rider: m ? m[2].trim() : '', note, reach }; }; // note: print's roll parenthetical (the Doppelganger's "(with Advantage during the first round of each combat)" is its 2024 Surprise Attack)
   const meleeRows = (pick.sections?.Actions ?? []).filter((a) => /Melee Attack Roll|Melee or Ranged Attack Roll/.test(a.text ?? '')).map(rowOf); // a Melee-or-Ranged print row (the Guard's Spear) names the melee row too
   const melee = meleeRows.map((r) => r.name);
   const rangedRows = (pick.sections?.Actions ?? []).filter((a) => /Ranged Attack Roll/.test(a.text ?? '') && !/Melee or Ranged/.test(a.text ?? '')).map((a) => ({ name: a.name.replace(/ \(.*\)$/, ''), range: (/range (\d+\/\d+) ft\./.exec(a.text ?? '') ?? [])[1] ?? null })); // pure ranged rows only (the Giant Spider's Web)
@@ -241,7 +241,7 @@ export function printCanonFor(conceptText, cr) {
   const rulesRows = ['Actions', 'Bonus Actions', 'Reactions'].flatMap((sec) => (pick.sections?.[sec] ?? [])
     .filter((a) => a?.name && !/^Multiattack$/i.test(a.name) && !/Attack Roll/.test(a.text ?? '') && (!PRINT_BOILER.test(a.name) || /^Spellcasting$/i.test(a.name))) // print's own Spellcasting rides too (it is boiler for the TRAIT stamp, not here) (deduped at the stamp against a caster chassis's row); dice rows ride too (the Wight's Life Drain is its signature, critic 2026-09-29) — re-priced to the sheet by the value check at the stamp
     .map((a) => ({ section: sec, name: a.name, text: String(a.text ?? '') })));
-  return { name: pick.name, last, traits, melee, meleeRows, ranged, rangedRows, modes, senses, rulesRows, stats: pick.stats ?? null, exact: !!exactPhrase && !npcHead, borrowOnly: (headOnly && !exactPhrase) || npcHead, casts: (!!pick.derived?.has_spellcasting || (pick.sections?.Actions ?? []).some((a) => /^Spellcasting$/i.test(a?.name ?? ''))) && !(pick.sections?.Actions ?? []).some((a) => /Melee Attack Roll/.test(a?.text ?? '') && !/Melee or Ranged/.test(a?.text ?? '')), size: String(pick.size ?? '') };
+  return { name: pick.name, last, traits, melee, meleeRows, ranged, rangedRows, modes, senses, rulesRows, stats: pick.stats ?? null, exact: !!exactPhrase && !npcHead, borrowOnly: (headOnly && !exactPhrase) || npcHead, speedBase: /^(\d+) ft/.exec(String(pick.speed ?? ''))?.[1] ?? null, casts: (!!pick.derived?.has_spellcasting || (pick.sections?.Actions ?? []).some((a) => /^Spellcasting$/i.test(a?.name ?? ''))) && !(pick.sections?.Actions ?? []).some((a) => /Melee Attack Roll/.test(a?.text ?? '') && !/Melee or Ranged/.test(a?.text ?? '')), size: String(pick.size ?? '') };
 }
 export function chassisSheet(scaled, { name = 'the chassis', type = '', size = '', headerOnly = false } = {}) {
   try {
@@ -534,6 +534,11 @@ export function reskinDefects(scaled, p, { energy = null, mix = null, resolvedTy
       // row, critic 2026-09-29): a parry, riposte or interposition is a response, not a swing
       if (/\b(?:parry|riposte|interpose|interposition|counter|deflect|deflection)\b/i.test(rn) && /Attack Roll/.test(row.text ?? '')) {
         defects.push(`name "${rn}" is a reaction's name on an attack row — a parry answers a blow, it does not swing one; name the attack for what it hits with`);
+      }
+      // a HUMANOID's melee default is a weapon (the goblin warchief's Claw, critic 2026-09-30):
+      // a natural weapon on an ungated Humanoid row needs that word in the user's own
+      if (/^Humanoid\b/i.test(String(resolvedType ?? '')) && scaled.style !== 'shifter' && !row.gate && !/Form Only\)/.test(row.name ?? '') && /Attack Roll/.test(row.text ?? '') && /\b(?:claws?|bite|fangs?|talons?|tusks?|horns?|gore|sting|stinger|maw|jaws|hooves|hoof|antlers?)\b/i.test(rn) && !new RegExp(`\\b${String((/\b(claws?|bite|fangs?|talons?|tusks?|horns?|gore|sting|stinger|maw|jaws|hooves|hoof|antlers?)\b/i.exec(rn) ?? [])[1] ?? 'zzz').replace(/s$/i, '')}s?\\b`, 'i').test(readPhrases(String(concept ?? '')))) { // plural-tolerant: "iron claws" warrants a Claw
+        defects.push(`name "${rn}" is a natural weapon on a Humanoid whose concept gives it none — a Humanoid swings a weapon (Scimitar, Club, Spear)`);
       }
       // a SHIFTER's ungated attack row is swung in every form, the human one
       // included: a beast's natural weapon there is a fiction error (print keeps
@@ -1011,7 +1016,7 @@ export async function generateReskin(options, callLLM) {
       }
     }
   }
-  const reskinPrompt = buildReskinPrompt(scaled, { concept: readPhrases(concept), takenNames: options.takenNames ?? [], signatureElements: options.signatureElements ?? [], energy: options.energy ?? null, mix: options.mix ?? null, mind: options.mind ?? null, resolvedType: options.resolvedType ?? null, fixedName });
+  const reskinPrompt = buildReskinPrompt(scaled, { concept: readPhrases(concept), takenNames: options.takenNames ?? [], signatureElements: (options.signatureElements ?? []).map((x) => (typeof x === 'string' ? readPhrases(x) : x && typeof x.text === 'string' ? { ...x, text: readPhrases(x.text) } : x)), /* the concept call's elements carry the raw "fire at will" — rewritten before the naming pass sees them (2026-10-01) */ energy: options.energy ?? null, mix: options.mix ?? null, mind: options.mind ?? null, resolvedType: options.resolvedType ?? null, fixedName });
   const raw = await callLLM(reskinPrompt, validateReskinResponse);
   let p = (() => { try { return normalizeTypeFields(JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim())); } catch { return null; } })();
   if (!p) throw new Error('reskin call failed — the pilot fails loudly, never silently');
@@ -1841,6 +1846,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
     const deadBareT = String(pendingWildcard?.name ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '');
     let riderShipped = false;
+    if (actionT && actionT.section === 'Rider' && (/\[shape fit, no verb match\]/.test(actionT.because ?? '') || (/\[verb: [^\]]*\]/.test(actionT.because ?? '') && !/:concept\b/.test(actionT.because ?? '')))) {
+      trace('rider declined:', `"${actionT.row.name}" — bound on shape or on the idea's own words alone; a rider on the user's attack needs the user's verb (the gong's bandaged concussion, 2026-10-01)`);
+      actionT = null;
+    }
     if (actionT && actionT.section === 'Rider') {
       // A RIDER rides the melee row: the clause is appended, no new row ships
       // an ARCHER's damage rider rides the bow: "picks off torch-bearers from the
@@ -1995,7 +2004,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // lost their defining clause to a proposal the shelf could not hold. The
       // list is print's composition for that seat, not one row.
       const owedList = [...(SEAT_DEFAULT_TRAIT[scaled.style ?? ''] ?? SEAT_DEFAULT_TRAIT[archetype] ?? []), ...(Array.isArray(options.mechanics) ? options.mechanics.flatMap((mk) => MECHANIC_OWED_TRAIT[String(mk)] ?? []) : [])]; // a claimed mechanic owes its trait too (gaze → Vile Appearance)
-      for (const owed of printBody ? [] : owedList) { // a print body's row set is closed against seat-owed rows (Assassinate on a Wight, critic 2026-09-29)
+      const MADE_SEAT_TYPES = { warden: /^(?:Construct|Elemental|Undead|Plant|Ooze|Celestial|Fiend)\b/i, juggernaut: /^(?:Construct|Elemental|Undead|Plant|Ooze)\b/i }; // a made seat is earned by its type gate (a stone shrine-guardian is a warden by what it is)
+      const seatEarned = !scaled.style || verbHits(readPhrases(String(options.userConcept ?? concept ?? ''))).some((h) => h.id === `${archetype}-${scaled.style}`) || !!(MADE_SEAT_TYPES[scaled.style]?.test(String(options.resolvedType ?? '')));
+      if (!printBody && !seatEarned && owedList.length) trace('seat owes nothing:', `the ${scaled.style} line was the model's read of its quote, not a key in the words (a hermit was handed Assassinate, day-one 2026-09-30)`);
+      for (const owed of (printBody || !seatEarned) ? [] : owedList) { // a print body's row set is closed against seat-owed rows (Assassinate on a Wight, critic 2026-09-29)
         if (traitT?.template === owed || Object.values(sections).flat().some((e2) => e2.template === owed)) continue;
         const ot = TEMPLATE_BY_ID.get(owed);
         if (!ot || !templatesFor({ ...ctxT, section: ot.section, trigger: null }).some((x) => x.id === owed)) continue;
@@ -2250,6 +2262,29 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const pc = printCanonFor(options.userConcept ?? concept, cr);
       if (pc && pc.melee.length) {
         const meleeRows = Object.values(monster.sections).flat().filter((e) => /Melee Attack Roll/.test(e.text ?? '') && !/Melee or Ranged/.test(e.text ?? ''));
+        // the print BODY brings its size and base speed (a Medium Wight came out Large at 40 ft., critic 2026-09-30)
+        if (printBody) {
+          if (pc.size && !/swarm/i.test(monster.size ?? '') && String(monster.size ?? '') !== pc.size) { trace('print canon size:', `${monster.size} -> ${pc.size} — the ${pc.name}'s`); monster.size = pc.size; }
+          if (pc.speedBase && /^\d+ ft\./.test(monster.speed ?? '') && !monster.speed.startsWith(`${pc.speedBase} ft.`)) { trace('print canon speed:', `${monster.speed.split(',')[0]} -> ${pc.speedBase} ft. — the ${pc.name}'s walk; the concept's other modes stay`); monster.speed = monster.speed.replace(/^\d+ ft\./, `${pc.speedBase} ft.`); }
+          // a second print melee row rides beside the chassis's one (the Unicorn's Horn beside its Hooves)
+          if (meleeRows.length === 1 && pc.meleeRows.length > 1) {
+            const base = meleeRows[0];
+            for (const pr of pc.meleeRows.slice(1)) {
+              if (Object.values(monster.sections).flat().some((o) => String(o.name ?? '').replace(/ \(.*\)$/, '') === pr.name)) continue;
+              const clone = { ...base, name: pr.name, text: (pr.reach ? base.text.replace(/reach \d+ ft\./, `reach ${pr.reach} ft.`) : base.text).replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\)) ([A-Z][a-z]+) damage/, `$1 ${pr.type ?? '$2'} damage`).replace(/( plus \d+ \(\d+d\d+\) \w+ damage)/, ''), print: true };
+              if (pr.rider && /^plus \d+ \(/.test(pr.rider)) clone.text = clone.text.replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\) (?:Bludgeoning|Piercing|Slashing) damage)/, `$1 ${pr.rider.replace(/\.$/, '')}`); // print's own split pays the name (Radiant Horn: Piercing plus Radiant)
+              else if (pr.rider && !/If the target|has the \w+ condition/.test(clone.text)) clone.text = `${clone.text.trim().replace(/[^.!?]$/, (c) => `${c}.`)} ${pr.rider.replace(new RegExp(`\\bthe ${pc.last}\\b`, 'gi'), inline)}`;
+              const sec = Object.entries(monster.sections).find(([, es]) => es.includes(base))?.[0] ?? 'Actions';
+              monster.sections[sec].splice(monster.sections[sec].indexOf(base) + 1, 0, clone);
+              const ma = Object.values(monster.sections).flat().find((o) => o.name === 'Multiattack');
+              if (ma && !new RegExp(`\\b${pr.name}\\b`).test(ma.text)) {
+                if (/using ([^,]+?) or ([^,]+?) in any combination/.test(ma.text)) ma.text = ma.text.replace(/using ([^,]+?) or ([^,]+?) in any combination/, `using $1, $2, or ${pr.name} in any combination`); // print's three-row idiom
+                else ma.text = ma.text.replace(/makes (\w+) [A-Z][A-Za-z' -]*? attacks/, `makes $1 attacks, using ${String(base.name).replace(/ \(.*\)$/, '')} or ${pr.name} in any combination`);
+              }
+              trace('print canon row:', `Actions/${pr.name} — the ${pc.name}'s second melee row, beside the chassis's`);
+            }
+          }
+        }
         meleeRows.forEach((e, i) => {
           const pr = pc.meleeRows[Math.min(i, pc.meleeRows.length - 1)]; const to = pr?.name; const from = String(e.name ?? '').replace(/ \(.*\)$/, '');
           if (!to) return;
@@ -2258,6 +2293,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // rider leaves a plain print creature
           if (pr.type) e.text = e.text.replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\)) ([A-Z][a-z]+) damage/, `$1 ${pr.type} damage`); // print's own physical type, whatever the seat dealt (the Wight's sword is Slashing plus Necrotic)
           if (pr.note && !e.text.includes(pr.note)) e.text = e.text.replace(/(Melee Attack Roll:\*? \+\d+)/, `$1 ${pr.note}`); // print's roll parenthetical rides along (the Doppelganger's first-round Advantage)
+          if (printBody && pr.reach && !new RegExp(`reach ${pr.reach} ft`).test(e.text)) e.text = e.text.replace(/reach \d+ ft\./, `reach ${pr.reach} ft.`); // print's reach on a print body (the Wight's sword at reach 10)
           e.text = e.text.replace(/ plus \d+ \(\d+d\d+(?: \+ \d+)?\) [A-Z][a-z]+ damage/, '');
           if (pr.rider && /^plus \d+ \(/.test(pr.rider) && !/ plus \d+ \(/.test(e.text)) e.text = e.text.replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\) (?:Bludgeoning|Piercing|Slashing) damage)/, `$1 ${pr.rider.replace(/\.$/, '')}`); // a "plus N (XdY) T damage" clause is the damage line's own, no period before it (the Wight's Necrotic Sword)
           else if (pr.rider && !/If the target|has the \w+ condition/.test(e.text)) e.text = `${e.text.trim().replace(/[^.!?]$/, (c) => `${c}.`)} ${pr.rider.replace(new RegExp(`\\bthe ${pc.last}\\b`, 'gi'), inline)}`;

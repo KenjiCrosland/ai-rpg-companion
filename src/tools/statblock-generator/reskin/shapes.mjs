@@ -143,7 +143,7 @@ export const SHAPES = [
     },
   },
   {
-    id: 'affliction', name: 'Lingering Wound', cite: 'Bearded Devil/Infernal Glaive (CR 3); Horned Devil/Infernal Tail (CR 11)',
+    id: 'affliction', name: 'Lingering Wound', cite: 'Bearded Devil/Infernal Glaive (CR 3); Horned Devil/Infernal Tail (CR 11)', requires_row: /(?:Slashing|Piercing) damage/, // a wound that bleeds needs an edge (a bandaged concussion on a Slam, critic 2026-09-30)
     roles: ['skirmisher', 'brute', 'lurker'], styles: [], cr_range: [3, 12], replaces: 'melee-rider',
     frames: {
       '3-5': 'If the target is a creature and doesn\'t already have a {wound_noun}, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target receives a {wound_noun}. While wounded, the target loses 5 (1d10) Hit Points at the start of each of its turns. The wound closes after 1 minute, after a spell restores Hit Points to the target, or after the target or a creature within 5 feet of it takes an action to stanch the wound, succeeding on a DC {dc} Wisdom (Medicine) check.',
