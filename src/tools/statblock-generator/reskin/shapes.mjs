@@ -416,7 +416,7 @@ export const SHAPES = [
   {
     id: 'pull-through', name: 'Dragging Passage', invented: true, // the keeper's pull-through-walls, BOUNDED: the target lands in the nearest unoccupied space
     roles: ['lurker'], styles: [], cr_range: [3, 30], replaces: 'signature', // phantom by verb (through walls, drown, phase), not by style gate
-    frames: Object.fromEntries(['3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Strength Saving Throw*: DC {dc}, one Medium or smaller creature the creature is touching. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the creature drags the target up to 15 feet through a wall, floor, or other solid object it can pass through; the target emerges Prone in the nearest unoccupied space at the far side. If no such space is within 15 feet, the target is not moved but takes the damage again.'])),
+    frames: Object.fromEntries(['3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Strength Saving Throw*: DC {dc}, one Medium or smaller creature the creature is touching. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the creature drags the target up to 15 feet through a wall, floor, or other solid object it can pass through; the target emerges Prone in the nearest unoccupied space at the far side. If no such space is within 15 feet, the target is not moved.'])), // the "takes the damage again" clause left: a failed drag is a failed drag (critic 2026-10-01)
   },
   // THE RIDER ROADMAP (critic's table from the balance read, 2026-09-22): six
   // of the ten action misses were on-hit riders print already has.
@@ -465,6 +465,22 @@ export const SHAPES = [
   // sable notch, the scarred duelist, the coin-bought duelist): "when a blow
   // misses, the off-hand answers". Parry (Bandit Captain, 2024 MM) answered
   // with the Battle Master's Riposte: one attack bought by the miss.
+  {
+    id: 'random-ray', name: 'Eye Rays', invented: true, gate: 'Recharge 5-6', // kin: the dragon's breath in the nova slot. The TABLE IS COMPOSED BY THE ENGINE from library bolt cards (slow-bolt, snare-bolt, sensory-strike, gaze-single, push-prone, drain) — the model flavors a ray, it never defines one (critic 2026-10-01: the authored table was the MM's ten)
+    roles: ['brute', 'defender', 'controller', 'artillery', 'lurker', 'skirmisher'], styles: [], cr_range: [3, 30], replaces: 'nova',
+    frames: {
+      '3-5': 'The creature fires three rays at random creatures it can see within 120 feet, rolling a d4 for each ray (a creature can be the target of only one ray a turn): {ray_table}',
+      '6-9': 'The creature fires three rays at random creatures it can see within 120 feet, rolling a d6 for each ray (a creature can be the target of only one ray a turn): {ray_table}',
+      '10-12': 'The creature fires three rays at random creatures it can see within 120 feet, rolling a d6 for each ray (a creature can be the target of only one ray a turn): {ray_table}',
+      '13-20': 'The creature fires three rays at random creatures it can see within 120 feet, rolling a d6 for each ray (a creature can be the target of only one ray a turn): {ray_table}',
+      '21+': 'The creature fires three rays at random creatures it can see within 120 feet, rolling a d6 for each ray (a creature can be the target of only one ray a turn): {ray_table}',
+    },
+  },
+  {
+    id: 'blurred-form', name: 'Blurred Form', invented: true, // kin: Steam Mephit/Blurred Form (CR 1/4) + Blur (PHB); the displaced image a few feet from where it stands — owed to the ghost seats since the first lurker review (PI follow-up 2026-10-01)
+    roles: ['lurker', 'skirmisher', 'controller'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'Attack rolls against the creature have Disadvantage. If the creature is hit by an attack roll, this trait is disabled until the end of its next turn.'])),
+  },
   {
     id: 'volley-order', name: 'Volley Order', invented: true, gate: '2/Day', // kin: Hobgoblin Warlord/Leadership (2014 MM) + Commander's Strike (PHB); the leader-seat shape "orders a volley" named (critic 2026-09-28) — allies' Reaction attacks, so a shape, not a seed (seeds are reaction-free by construction)
     roles: ['defender'], styles: [], cr_range: [1, 30], replaces: 'bonus-alt', requires_style: 'leader',

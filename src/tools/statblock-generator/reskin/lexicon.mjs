@@ -108,17 +108,97 @@ export function rejectedCanon(verdicts, text) {
 // Each rewrite keeps the sense's own key word so the right line still reads it.
 const FIXED_PHRASES = [
   [/\bfires? at will\b/gi, 'looses at will'],
+  [/\b(fires?|firing|fired) (a|an|the|its|their|each|one|another|different|three) ((?:different |single |second )?(?:rays?|beams?|bolts?|shots?|volleys?|arrows?|darts?|blasts?))\b/gi, (m, v, det, obj) => `${v.toLowerCase().startsWith('fired') ? 'loosed' : v.toLowerCase().startsWith('firing') ? 'loosing' : v.toLowerCase().endsWith('s') ? 'looses' : 'loose'} ${det} ${obj}`], // "each fire a different ray" is no flame (the orb drew a Heated Body, 2026-10-01)
   [/\bopens? fire\b/gi, 'looses arrows'],
   [/\bfires? (a|the|another) volley\b/gi, 'looses $1 volley'],
   [/\bunder fire\b/gi, 'under attack'],
   [/\b(holds?|holding|held) (the |a |his |her |its |their |our )?(shield ?)?(line|gate|pass|bridge|wall|door|ground|position|fort|breach|stairs?|rear)\b/gi, (m, v, det, sh, obj) => `${v.toLowerCase().startsWith('held') ? 'kept' : v.toLowerCase().startsWith('holding') ? 'keeping' : v.toLowerCase().endsWith('s') ? 'keeps' : 'keep'} ${det ?? ''}${sh ?? ''}${obj}`],
   [/\broots? (up|through|around|about|out)\b/gi, (m, p) => `${m.toLowerCase().startsWith('roots') ? 'digs' : 'dig'} ${p}`],
-  [/\b(takes?|exacts?|took|taking) (a|its|his|her|their|the) toll\b/gi, '$1 $2 price'],
+  [/\b(takes?|exacts?|took|taking|collects?|collected|collecting|demands?|charges?|levies|levied) (a|an|its|his|her|their|the) toll\b/gi, '$1 $2 fee'], // a toll collected at a bridge is a fee, not a bell (the troll, critic-ten 2026-10-01)
   [/\bspears? (the|a|an|its|his|her|their|any|every|each)\b/gi, (m, det) => `${m.toLowerCase().startsWith('spears') ? 'impales' : 'impale'} ${det}`],
 ];
 /** The text with every fixed phrase rewritten to its one sense. */
 export function readPhrases(text) {
-  let out = String(text ?? '');
+  let out = rewritePI(String(text ?? '')).text; // PI names first: the description is what every pass reads
   for (const [re, to] of FIXED_PHRASES) out = out.replace(re, to);
+  return out;
+}
+
+// THE PROMPT NAMES ITS OWN CR (critic-ten 2026-10-01: "something nasty for a level 3
+// party" rolled a random CR because the select was empty). A party level reads as
+// that CR; an explicit "cr 5" reads as 5; fractions read as written.
+export function crFromPrompt(text) {
+  const t = String(text ?? '').toLowerCase();
+  const explicit = /\bcr\s*(\d{1,2}(?:\/[248])?)\b/.exec(t); if (explicit) return explicit[1];
+  const level = /\blevel[- ](\d{1,2})\b|\b(\d{1,2})(?:st|nd|rd|th)[- ]level\b|\blevels? (\d{1,2})\b/.exec(t);
+  if (level) { const n = Number(level[1] ?? level[2] ?? level[3]); if (n >= 1 && n <= 20) return String(n); }
+  return null;
+}
+
+// PRODUCT IDENTITY ALIASES (spec 2026-10-01). A dozen names GMs type are Wizards
+// Product Identity and absent from the SRD. The name is rewritten to a functional
+// description of the thing, phrase-first on the raw concept, before ANY pass reads
+// the words — the same stage and mechanism as the fixed phrases. The donor table
+// and the print corpus hold no such name, so lookup returns nothing and the block
+// is built from the library as homebrew. An output guard keeps the token and its
+// lore vocabulary off the finished block.
+export const PI_ALIASES = [
+  { keys: ['beholder', 'eye tyrant'], noun: 'orb', text: 'a floating orb with one great central eye and a crown of eyestalks that each fire a different ray' },
+  { keys: ['gauth'], noun: 'orb', text: 'a smaller floating orb with one central eye and a ring of eyestalks that fire rays' },
+  { keys: ['mind flayer', 'mindflayer', 'illithid'], noun: 'aberration', text: 'a tentacle-faced psychic aberration that stuns minds and eats brains' },
+  { keys: ['displacer beast'], noun: 'panther', text: 'a six-legged panther with two tentacles whose image appears a few feet from where it stands' },
+  { keys: ['umber hulk'], noun: 'brute', text: 'a burrowing insectile brute with mandibles whose gaze scrambles thought' },
+  { keys: ['carrion crawler'], noun: 'worm', text: 'a many-legged worm whose tentacles paralyze what they touch' },
+  { keys: ['yuan-ti abomination', 'yuan ti abomination'], noun: 'humanoid', text: 'a giant serpent-bodied humanoid with arms and a snake\'s head' },
+  { keys: ['yuan-ti', 'yuan ti', 'yuanti'], noun: 'humanoid', text: 'a serpent-blooded humanoid who sheds human form for scales and fangs' },
+  { keys: ['githyanki'], noun: 'warrior', text: 'a gaunt psychic warrior who steps between planes' },
+  { keys: ['githzerai'], noun: 'monk', text: 'a gaunt psychic monk who steps between planes' },
+  { keys: ['slaad', 'slaadi', 'red slaad', 'blue slaad', 'green slaad', 'gray slaad', 'grey slaad', 'death slaad'], noun: 'beast', text: 'a toad-headed chaos beast from the outer planes whose claws spread infection' },
+  { keys: ['kuo-toa', 'kuo toa', 'kuotoa'], noun: 'cultist', text: 'a fish-headed humanoid cultist of the deep who fights with net and spear' },
+];
+// longest key first, so "yuan-ti abomination" wins over "yuan-ti" and "death slaad" over "slaad"
+const PI_KEYS = PI_ALIASES.flatMap((a) => a.keys.map((k) => ({ key: k, entry: a }))).sort((x, y) => y.key.length - x.key.length);
+const piRegex = (k) => new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/[- ]/g, '[- ]')}(?:'s|es|s)?\\b`, 'gi');
+/** Rewrite every PI name to its description. Returns the text and the alias record for each key that fired. */
+export function rewritePI(text) {
+  let out = String(text ?? ''); const hits = [];
+  for (const { key, entry } of PI_KEYS) {
+    const re = piRegex(key);
+    if (!re.test(out)) continue;
+    out = out.replace(re, (m) => { hits.push({ key, matched: m, text: entry.text }); const lead = /^[A-Z]/.test(m) ? entry.text.charAt(0).toUpperCase() + entry.text.slice(1) : entry.text; return lead; });
+  }
+  // an article before the description doubles up ("a a floating orb") — fold it
+  out = out.replace(/\b(a|an|the) (a|an|the) /gi, '$2 ');
+  return { text: out, hits };
+}
+/** The alias records a raw concept would fire, without rewriting. */
+export function piAliasesIn(text) { return rewritePI(text).hits; }
+// LORE DENYLIST (output only): the keys and synonyms, plus the lore words the spec names
+export const PI_DENYLIST = [...new Set([...PI_ALIASES.flatMap((a) => a.keys), 'elder brain', 'ceremorphosis', 'illithid', 'eye tyrant'])].sort((x, y) => y.length - x.length);
+/** Scrub a string of denylisted tokens (each replaced by its alias's plain noun). Returns { text, hits }. */
+export function piScrub(str) {
+  let out = String(str ?? ''); const hits = [];
+  for (const token of PI_DENYLIST) {
+    const re = piRegex(token); if (!re.test(out)) continue;
+    const entry = PI_ALIASES.find((a) => a.keys.includes(token)) ?? PI_ALIASES.find((a) => a.keys.includes('mind flayer'));
+    out = out.replace(re, (m) => { hits.push(token); return /^[A-Z]/.test(m) ? entry.noun.charAt(0).toUpperCase() + entry.noun.slice(1) : entry.noun; });
+  }
+  return { text: out, hits };
+}
+/** The output guard: the finished block's name, row names and texts carry no PI token. Mutates and returns the hits. */
+export function piGuard(monster) {
+  const hits = [];
+  const fix = (v) => { const r = piScrub(v); if (r.hits.length) hits.push(...r.hits); return r.text; };
+  if (monster?.name) monster.name = fix(monster.name);
+  for (const es of Object.values(monster?.sections ?? {})) for (const e of es) { if (e?.name) e.name = fix(e.name); if (e?.text) e.text = fix(e.text); }
+  for (const k of ['description', 'lore', 'flavor']) if (typeof monster?.[k] === 'string') monster[k] = fix(monster[k]);
+  return [...new Set(hits)];
+}
+// REMOVAL CLAUSES: "lost its tentacles", "without wings", "no longer has eyes" — the
+// nouns the concept takes away, read on the rewritten text
+export function removalClauses(text) {
+  const t = readPhrases(text).toLowerCase(); const out = [];
+  const re = /\b(?:lost|lacks|lacking|without|missing|no longer has|severed|cut off|torn off|stripped of|shorn of|minus)\s+(?:its|his|her|their|all|both|any|the|every)?\s*(?:own\s+)?([a-z-]+)/g; // one noun per clause: "lost its tentacles and fights" takes only the tentacles
+  for (let m = re.exec(t); m; m = re.exec(t)) if (m[1] && !out.includes(m[1])) out.push(m[1]);
   return out;
 }

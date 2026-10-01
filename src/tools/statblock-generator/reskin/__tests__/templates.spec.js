@@ -685,8 +685,11 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(readPhrases('a goblin warchief who screams fire at will to her archers')).toBe('a goblin warchief who screams looses at will to her archers');
     expect(readPhrases('a sergeant who holds the shield line and held the gate')).toBe('a sergeant who keeps the shield line and kept the gate');
     expect(readPhrases('a miller who roots up the graves')).toBe('a miller who digs up the graves');
-    expect(readPhrases('a ferryman who takes a toll from the dead')).toBe('a ferryman who takes a price from the dead');
+    expect(readPhrases('a ferryman who takes a toll from the dead')).toBe('a ferryman who takes a fee from the dead');
+    expect(readPhrases('a troll that guards the bridge and collects a toll')).toBe('a troll that guards the bridge and collects a fee'); // the troll's toll is a fee, not a bell
     expect(readPhrases('a fisher who spears the eels')).toBe('a fisher who impales the eels');
+    expect(readPhrases('eyestalks that each fire a different ray')).toBe('eyestalks that each loose a different ray'); // no flame in a fired ray (the orb's Heated Body)
+    expect(readPhrases('she fires a bolt of light')).toBe('she looses a bolt of light');
     expect(readPhrases('a bell that tolls the hour and holds its prey')).toBe('a bell that tolls the hour and holds its prey'); // the bell and the grapple keep their words
     const { deniedBy } = require('../templates.mjs');
     const rally = TEMPLATES.find((t) => t.id === 'rally'); const vo = TEMPLATES.find((t) => t.id === 'volley-order');
@@ -712,6 +715,33 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
   test('a blind creature never draws a gaze (the half-blind dragon\'s Dread Gaze)', () => {
     const ids = templatesFor({ archetype: 'brute', cr: 15, sections: {}, section: 'action', text: 'the last dragon of the northern range, old and half-blind' }).map((t) => t.id);
     expect(ids).not.toContain('gaze-single');
+  });
+  test('the prompt names its own CR: a party level or an explicit cr reads before the dice roll', () => {
+    const { crFromPrompt } = require('../lexicon.mjs');
+    expect(crFromPrompt('something nasty for a level 3 party, forest, ambush')).toBe('3');
+    expect(crFromPrompt('big ogre with a club, cr 5')).toBe('5');
+    expect(crFromPrompt('a wisp for a 1st-level party')).toBe('1');
+    expect(crFromPrompt('a swarm of rats, CR 1/4')).toBe('1/4');
+    expect(crFromPrompt('a wolf')).toBeNull();
+  });
+  test('the PI follow-up cards: Eye Rays renders a closed per-band ray table; Blurred Form is the displaced image', () => {
+    const rr = TEMPLATES.find((t) => t.id === 'random-ray'); const bf = TEMPLATES.find((t) => t.id === 'blurred-form');
+    const b3 = renderTemplate(rr, { scaled: sheet(4, null, 'brute'), sections: {}, archetype: 'brute', cr: 4, energy: null, concept: 'a floating orb with eyestalks' }, {}, { blind: true });
+    expect(b3.text).toMatch(/^The creature fires three rays .* rolling a d4 for each ray/); expect(b3.text).toMatch(/4 — Dread Ray/); expect(b3.text).not.toMatch(/5 — /); expect(b3.gate).toBe('Recharge 5-6');
+    const b13 = renderTemplate(rr, { scaled: sheet(13, null, 'brute'), sections: {}, archetype: 'brute', cr: 13, energy: null, concept: 'a floating orb with eyestalks' }, {}, { blind: true });
+    expect(b13.text).toMatch(/rolling a d6 for each ray/); expect(b13.text).toMatch(/6 — Withering Ray: \*Constitution Saving Throw\*: DC \d+\. \*Failure:\* \d+ \(\d+d\d+\) Necrotic damage\./); expect(b13.text).not.toMatch(/\{[a-z_]+\}/);
+    // the table is COMPOSED from library cards, not authored: it shares at most two names with the Monster Manual's ten
+    const MM_RAYS = ['Charm Ray', 'Paralyzing Ray', 'Fear Ray', 'Slowing Ray', 'Enervation Ray', 'Telekinetic Ray', 'Sleep Ray', 'Petrification Ray', 'Disintegration Ray', 'Death Ray'];
+    const names = [...b13.text.matchAll(/\d — ([A-Z][a-z]+ Ray):/g)].map((m) => m[1]);
+    expect(names.length).toBe(6); expect(names.filter((n) => MM_RAYS.includes(n)).length).toBeLessThanOrEqual(2);
+    expect(b13.text).toMatch(/Binding Ray: \*Dexterity Saving Throw\*: DC \d+\. \*Failure:\* The target has the Restrained condition/); // snare-bolt's own clause
+    expect((b13.text.match(/\d+ \(\d+d\d+\)/g) ?? []).length).toBe(1); // equal worth: only the Withering Ray deals damage; the rest are bare conditions
+    expect(TEMPLATES.find((t) => t.id === 'adhesive').keys).not.toContain('vault');
+    expect(templatesFor({ archetype: 'skirmisher', style: 'hurler', cr: 5, sections: sheet(5, 'hurler', 'skirmisher').sections, section: 'action', text: 'fights with net and spear' }).map((t) => t.id)).not.toContain('throw-retrieve'); // a net is never a returning throw
+    expect(rankByVerb([rr], 'a floating orb with one great central eye and a crown of eyestalks that each fire a different ray')[0].concept.length).toBeGreaterThanOrEqual(2);
+    const f = renderTemplate(bf, { scaled: sheet(3, null, 'skirmisher'), sections: {}, archetype: 'skirmisher', cr: 3, energy: null, concept: 'a six-legged panther whose image appears a few feet from where it stands' }, {}, { blind: true });
+    expect(f.text).toBe('Attack rolls against the creature have Disadvantage. If the creature is hit by an attack roll, this trait is disabled until the end of its next turn.');
+    expect(rankByVerb([bf], 'a six-legged panther with two tentacles whose image appears a few feet from where it stands')[0].concept.length).toBeGreaterThanOrEqual(2);
   });
   test('a leader\'s command words are the rally\'s keys', () => {
     const rally = TEMPLATES.find((t) => t.id === 'rally');

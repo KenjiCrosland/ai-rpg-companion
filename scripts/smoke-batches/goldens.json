@@ -327,5 +327,15 @@
         "active-toll"
       ]
     }
+  },
+  {
+    "cr": "13",
+    "concept": "a beholder that guards a vault",
+    "expect": {}
+  },
+  {
+    "cr": "7",
+    "concept": "a mind flayer that lost its tentacles and fights with a sword",
+    "expect": {}
   }
 ]

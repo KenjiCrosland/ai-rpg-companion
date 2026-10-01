@@ -170,7 +170,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17, +9 to hit with spell attacks):\n\n- **At Will:** *Detect Magic*, *Fear*, *Acid Arrow*\n- **1e/Day Each:** *Speak with Dead*, *Vitriolic Sphere*"
+          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17, +9 to hit with spell attacks):\n\n- **At Will:** *Detect Magic*, *Fear*, *Acid Arrow*\n- **1/Day Each:** *Speak with Dead*, *Vitriolic Sphere*"
         }
       ],
       "Legendary Actions": [
@@ -264,7 +264,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 18):\n\n- **At Will:** *Detect Magic*, *Invisibility*, *Mage Hand*, *Shatter*\n- **1e/Day Each:** *Scrying*, *Sending*"
+          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 18):\n\n- **At Will:** *Detect Magic*, *Invisibility*, *Mage Hand*, *Shatter*\n- **1/Day Each:** *Scrying*, *Sending*"
         }
       ],
       "Legendary Actions": [
@@ -362,7 +362,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 16):\n\n- **At Will:** *Detect Magic*, *Minor Illusion*, *Scorching Ray*, *Shapechange*, *Speak with Animals*\n- **1e/Day Each:** *Detect Thoughts*, *Control Weather*"
+          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 16):\n\n- **At Will:** *Detect Magic*, *Minor Illusion*, *Scorching Ray*, *Shapechange*, *Speak with Animals*\n- **1/Day Each:** *Detect Thoughts*, *Control Weather*"
         }
       ],
       "Legendary Actions": [
@@ -464,7 +464,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17, +10 to hit with spell attacks):\n\n- **At Will:** *Detect Magic*, *Guiding Bolt*, *Shapechange*, *Speak with Animals*, *Thaumaturgy*\n- **1e/Day Each:** *Detect Thoughts*, *Water Breathing*"
+          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17, +10 to hit with spell attacks):\n\n- **At Will:** *Detect Magic*, *Guiding Bolt*, *Shapechange*, *Speak with Animals*, *Thaumaturgy*\n- **1/Day Each:** *Detect Thoughts*, *Water Breathing*"
         }
       ],
       "Legendary Actions": [
@@ -562,7 +562,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17):\n\n- **At Will:** *Detect Magic*, *Mind Spike*, *Minor Illusion*, *Shapechange*\n- **1e/Day Each:** *Greater Restoration*, *Major Image*"
+          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17):\n\n- **At Will:** *Detect Magic*, *Mind Spike*, *Minor Illusion*, *Shapechange*\n- **1/Day Each:** *Greater Restoration*, *Major Image*"
         }
       ],
       "Legendary Actions": [
@@ -664,7 +664,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21, +13 to hit with spell attacks):\n\n- **At Will:** *Detect Magic*, *Guiding Bolt*, *Shapechange*\n- **1e/Day Each:** *Flame Strike*, *Zone of Truth*"
+          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21, +13 to hit with spell attacks):\n\n- **At Will:** *Detect Magic*, *Guiding Bolt*, *Shapechange*\n- **1/Day Each:** *Flame Strike*, *Zone of Truth*"
         }
       ],
       "Legendary Actions": [
@@ -954,7 +954,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 19, +11 to hit with spell attacks):\n\n- **At Will:** *Detect Magic*, *Hold Monster*, *Ice Knife*, *Shapechange*\n- **1e/Day Each:** *Ice Storm*, *Zone of Truth*"
+          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 19, +11 to hit with spell attacks):\n\n- **At Will:** *Detect Magic*, *Hold Monster*, *Ice Knife*, *Shapechange*\n- **1/Day Each:** *Ice Storm*, *Zone of Truth*"
         }
       ],
       "Legendary Actions": [
@@ -1219,7 +1219,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21, +13 to hit with spell attacks):\n\n- **At Will:** *Detect Magic*, *Fear*, *Acid Arrow*\n- **1e/Day Each:** *Create Undead*, *Speak with Dead*, *Vitriolic Sphere*"
+          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21, +13 to hit with spell attacks):\n\n- **At Will:** *Detect Magic*, *Fear*, *Acid Arrow*\n- **1/Day Each:** *Create Undead*, *Speak with Dead*, *Vitriolic Sphere*"
         }
       ],
       "Legendary Actions": [
@@ -1313,7 +1313,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 22):\n\n- **At Will:** *Detect Magic*, *Invisibility*, *Mage Hand*, *Shatter*\n- **1e/Day Each:** *Scrying*, *Sending*"
+          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 22):\n\n- **At Will:** *Detect Magic*, *Invisibility*, *Mage Hand*, *Shatter*\n- **1/Day Each:** *Scrying*, *Sending*"
         }
       ],
       "Legendary Actions": [
@@ -1411,7 +1411,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 20):\n\n- **At Will:** *Detect Magic*, *Minor Illusion*, *Scorching Ray*, *Shapechange*, *Speak with Animals*\n- **1e/Day Each:** *Control Weather*, *Detect Thoughts*"
+          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 20):\n\n- **At Will:** *Detect Magic*, *Minor Illusion*, *Scorching Ray*, *Shapechange*, *Speak with Animals*\n- **1/Day Each:** *Control Weather*, *Detect Thoughts*"
         }
       ],
       "Legendary Actions": [
@@ -1513,7 +1513,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 22, +14 to hit with spell attacks):\n\n- **At Will:** *Detect Magic*, *Guiding Bolt*, *Shapechange*, *Speak with Animals*, *Thaumaturgy*\n- **1e/Day Each:** *Detect Thoughts*, *Control Water*, *Scrying*, *Water Breathing*"
+          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 22, +14 to hit with spell attacks):\n\n- **At Will:** *Detect Magic*, *Guiding Bolt*, *Shapechange*, *Speak with Animals*, *Thaumaturgy*\n- **1/Day Each:** *Detect Thoughts*, *Control Water*, *Scrying*, *Water Breathing*"
         }
       ],
       "Legendary Actions": [
@@ -1611,7 +1611,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21):\n\n- **At Will:** *Detect Magic*, *Mind Spike*, *Minor Illusion*, *Shapechange*\n- **1e/Day Each:** *Greater Restoration*, *Major Image*, *Project Image*"
+          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21):\n\n- **At Will:** *Detect Magic*, *Mind Spike*, *Minor Illusion*, *Shapechange*\n- **1/Day Each:** *Greater Restoration*, *Major Image*, *Project Image*"
         }
       ],
       "Legendary Actions": [
@@ -1713,7 +1713,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 24, +16 to hit with spell attacks):\n\n- **At Will:** *Detect Magic*, *Guiding Bolt*, *Shapechange*\n- **1e/Day Each:** *Flame Strike*, *Word of Recall*, *Zone of Truth*"
+          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 24, +16 to hit with spell attacks):\n\n- **At Will:** *Detect Magic*, *Guiding Bolt*, *Shapechange*\n- **1/Day Each:** *Flame Strike*, *Word of Recall*, *Zone of Truth*"
         }
       ],
       "Legendary Actions": [
@@ -1811,7 +1811,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21):\n\n- **At Will:** *Detect Magic*, *Mind Spike*\n- **1e/Day Each:** *Geas*, *Modify Memory*"
+          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21):\n\n- **At Will:** *Detect Magic*, *Mind Spike*\n- **1/Day Each:** *Geas*, *Modify Memory*"
         }
       ],
       "Legendary Actions": [
@@ -1905,7 +1905,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 23, +15 to hit with spell attacks):\n\n- **At Will:** *Command*, *Detect Magic*, *Scorching Ray*\n- **1e/Day Each:** *Fireball*, *Scrying*"
+          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 23, +15 to hit with spell attacks):\n\n- **At Will:** *Command*, *Detect Magic*, *Scorching Ray*\n- **1/Day Each:** *Fireball*, *Scrying*"
         }
       ],
       "Legendary Actions": [
@@ -2003,7 +2003,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 23, +15 to hit with spell attacks):\n\n- **At Will:** *Detect Magic*, *Hold Monster*, *Ice Knife*, *Shapechange*\n- **1e/Day Each:** *Control Weather*, *Ice Storm*, *Teleport*, *Zone of Truth*"
+          "text": "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 23, +15 to hit with spell attacks):\n\n- **At Will:** *Detect Magic*, *Hold Monster*, *Ice Knife*, *Shapechange*\n- **1/Day Each:** *Control Weather*, *Ice Storm*, *Teleport*, *Zone of Truth*"
         }
       ],
       "Legendary Actions": [
@@ -2426,7 +2426,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The archmage casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 17):\n\n- **At Will:** *Detect Magic*, *Detect Thoughts*, *Disguise Self*, *Invisibility*, *Light*, *Mage Armor*, *Mage Hand*, *Prestidigitation*\n- **2e/Day Each:** *Fly*, *Lightning Bolt*\n- **1e/Day Each:** *Cone of Cold*, *Mind Blank*, *Scrying*, *Teleport*"
+          "text": "The archmage casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 17):\n\n- **At Will:** *Detect Magic*, *Detect Thoughts*, *Disguise Self*, *Invisibility*, *Light*, *Mage Armor*, *Mage Hand*, *Prestidigitation*\n- **2/Day Each:** *Fly*, *Lightning Bolt*\n- **1/Day Each:** *Cone of Cold*, *Mind Blank*, *Scrying*, *Teleport*"
         }
       ],
       "Bonus Actions": [
@@ -4613,7 +4613,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The giant casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 15):\n\n- **At Will:** *Detect Magic*, *Fog Cloud*, *Light*\n- **1e/Day Each:** *Control Weather*, *Gaseous Form*, *Telekinesis*"
+          "text": "The giant casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 15):\n\n- **At Will:** *Detect Magic*, *Fog Cloud*, *Light*\n- **1/Day Each:** *Control Weather*, *Gaseous Form*, *Telekinesis*"
         }
       ],
       "Bonus Actions": [
@@ -4883,7 +4883,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The couatl casts one of the following spells, requiring no spell components and using Wisdom as the spellcasting ability (spell save DC 15):\n\n- **At Will:** *Detect Evil and Good*, *Detect Magic*, *Detect Thoughts*, *Shapechange*\n- **1e/Day Each:** *Create Food and Water*, *Dream*, *Greater Restoration*, *Scrying*, *Sleep*"
+          "text": "The couatl casts one of the following spells, requiring no spell components and using Wisdom as the spellcasting ability (spell save DC 15):\n\n- **At Will:** *Detect Evil and Good*, *Detect Magic*, *Detect Thoughts*, *Shapechange*\n- **1/Day Each:** *Create Food and Water*, *Dream*, *Greater Restoration*, *Scrying*, *Sleep*"
         }
       ],
       "Bonus Actions": [
@@ -5219,7 +5219,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The deva casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17):\n\n- **At Will:** *Detect Evil and Good*, *Shapechange*\n- **1e/Day Each:** *Commune*, *Raise Dead*"
+          "text": "The deva casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17):\n\n- **At Will:** *Detect Evil and Good*, *Shapechange*\n- **1/Day Each:** *Commune*, *Raise Dead*"
         }
       ],
       "Bonus Actions": [
@@ -5314,7 +5314,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The djinni casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17):\n\n- **At Will:** *Detect Evil and Good*, *Detect Magic*\n- **2e/Day Each:** *Create Food and Water*, *Tongues*, *Wind Walk*\n- **1e/Day Each:** *Creation*, *Gaseous Form*, *Invisibility*, *Major Image*, *Plane Shift*"
+          "text": "The djinni casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 17):\n\n- **At Will:** *Detect Evil and Good*, *Detect Magic*\n- **2/Day Each:** *Create Food and Water*, *Tongues*, *Wind Walk*\n- **1/Day Each:** *Creation*, *Gaseous Form*, *Invisibility*, *Major Image*, *Plane Shift*"
         }
       ]
     },
@@ -5688,7 +5688,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The druid casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 13):\n\n- **At Will:** *Druidcraft*, *Speak with Animals*\n- **2e/Day Each:** *Entangle*, *Thunderwave*\n- **1e/Day Each:** *Animal Messenger*, *Longstrider*, *Moonbeam*"
+          "text": "The druid casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 13):\n\n- **At Will:** *Druidcraft*, *Speak with Animals*\n- **2/Day Each:** *Entangle*, *Thunderwave*\n- **1/Day Each:** *Animal Messenger*, *Longstrider*, *Moonbeam*"
         }
       ]
     },
@@ -5768,7 +5768,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The dryad casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 14):\n\n- **At Will:** *Animal Friendship*, *Charm Monster*, *Druidcraft*\n- **1e/Day Each:** *Entangle*, *Pass without Trace*"
+          "text": "The dryad casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 14):\n\n- **At Will:** *Animal Friendship*, *Charm Monster*, *Druidcraft*\n- **1/Day Each:** *Entangle*, *Pass without Trace*"
         }
       ],
       "Bonus Actions": [
@@ -6010,7 +6010,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The efreeti casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 16):\n\n- **At Will:** *Detect Magic*, *Elementalism*\n- **1e/Day Each:** *Gaseous Form*, *Invisibility*, *Major Image*, *Plane Shift*, *Tongues*, *Wall of Fire*"
+          "text": "The efreeti casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 16):\n\n- **At Will:** *Detect Magic*, *Elementalism*\n- **1/Day Each:** *Gaseous Form*, *Invisibility*, *Major Image*, *Plane Shift*, *Tongues*, *Wall of Fire*"
         }
       ]
     },
@@ -7065,7 +7065,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The glabrezu casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 16):\n\n- **At Will:** *Darkness*, *Detect Magic*, *Dispel Magic*\n- **1e/Day Each:** *Confusion*, *Fly*, *Power Word Stun*"
+          "text": "The glabrezu casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 16):\n\n- **At Will:** *Darkness*, *Detect Magic*, *Dispel Magic*\n- **1/Day Each:** *Confusion*, *Fly*, *Power Word Stun*"
         }
       ]
     },
@@ -8101,7 +8101,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The naga casts one of the following spells, requiring no Somatic or Material components and using Wisdom as the spellcasting ability (spell save DC 16):\n\n- **At Will:** *Thaumaturgy*\n- **1e/Day Each:** *Clairvoyance*, *Cure Wounds*, *Flame Strike*, *Geas*, *True Seeing*"
+          "text": "The naga casts one of the following spells, requiring no Somatic or Material components and using Wisdom as the spellcasting ability (spell save DC 16):\n\n- **At Will:** *Thaumaturgy*\n- **1/Day Each:** *Clairvoyance*, *Cure Wounds*, *Flame Strike*, *Geas*, *True Seeing*"
         }
       ]
     },
@@ -9259,7 +9259,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The incubus casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 15):\n\n- **At Will:** *Disguise Self*, *Etherealness*\n- **1e/Day Each:** *Dream*, *Hypnotic Pattern*"
+          "text": "The incubus casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 15):\n\n- **At Will:** *Disguise Self*, *Etherealness*\n- **1/Day Each:** *Dream*, *Hypnotic Pattern*"
         }
       ],
       "Bonus Actions": [
@@ -9734,7 +9734,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The lamia casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 13):\n\n- **At Will:** *Disguise Self*, *Minor Illusion*\n- **1e/Day Each:** *Geas*, *Major Image*, *Scrying*"
+          "text": "The lamia casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 13):\n\n- **At Will:** *Disguise Self*, *Minor Illusion*\n- **1/Day Each:** *Geas*, *Major Image*, *Scrying*"
         }
       ],
       "Bonus Actions": [
@@ -9894,7 +9894,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The lich casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 20):\n\n- **At Will:** *Detect Magic*, *Detect Thoughts*, *Dispel Magic*, *Fireball*, *Invisibility*, *Lightning Bolt*, *Mage Hand*, *Prestidigitation*\n- **2e/Day Each:** *Animate Dead*, *Dimension Door*, *Plane Shift*\n- **1e/Day Each:** *Chain Lightning*, *Finger of Death*, *Power Word Kill*, *Scrying*"
+          "text": "The lich casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 20):\n\n- **At Will:** *Detect Magic*, *Detect Thoughts*, *Dispel Magic*, *Fireball*, *Invisibility*, *Lightning Bolt*, *Mage Hand*, *Prestidigitation*\n- **2/Day Each:** *Animate Dead*, *Dimension Door*, *Plane Shift*\n- **1/Day Each:** *Chain Lightning*, *Finger of Death*, *Power Word Kill*, *Scrying*"
         }
       ],
       "Reactions": [
@@ -9981,7 +9981,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The mage casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 14):\n\n- **At Will:** *Detect Magic*, *Light*, *Mage Armor*, *Mage Hand*, *Prestidigitation*\n- **2e/Day Each:** *Fireball*, *Invisibility*\n- **1e/Day Each:** *Cone of Cold*, *Fly*"
+          "text": "The mage casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 14):\n\n- **At Will:** *Detect Magic*, *Light*, *Mage Armor*, *Mage Hand*, *Prestidigitation*\n- **2/Day Each:** *Fireball*, *Invisibility*\n- **1/Day Each:** *Cone of Cold*, *Fly*"
         }
       ],
       "Bonus Actions": [
@@ -10792,7 +10792,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The mummy casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 17, +9 to hit with spell attacks):\n\n- **At Will:** *Dispel Magic*, *Thaumaturgy*\n- **1e/Day Each:** *Animate Dead*, *Harm*, *Insect Plague*"
+          "text": "The mummy casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 17, +9 to hit with spell attacks):\n\n- **At Will:** *Dispel Magic*, *Thaumaturgy*\n- **1/Day Each:** *Animate Dead*, *Harm*, *Insect Plague*"
         }
       ],
       "Legendary Actions": [
@@ -11035,7 +11035,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The hag casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 14):\n\n- **At Will:** *Detect Magic*, *Etherealness*, *Magic Missile*\n- **2e/Day Each:** *Phantasmal Killer*, *Plane Shift*"
+          "text": "The hag casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 14):\n\n- **At Will:** *Detect Magic*, *Etherealness*, *Magic Missile*\n- **2/Day Each:** *Phantasmal Killer*, *Plane Shift*"
         },
         {
           "name": "Nightmare Haunting (1/Day; Requires Soul Bag)",
@@ -11451,7 +11451,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The oni casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 13):\n\n- **At Will:** \n- **1e/Day Each:** *Charm Person*, *Darkness*, *Gaseous Form*, *Sleep*"
+          "text": "The oni casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 13):\n\n- **At Will:** \n- **1/Day Each:** *Charm Person*, *Darkness*, *Gaseous Form*, *Sleep*"
         }
       ],
       "Bonus Actions": [
@@ -12047,7 +12047,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The planetar casts one of the following spells, requiring no Material components and using Charisma as spellcasting ability (spell save DC 20):\n\n- **At Will:** *Detect Evil and Good*\n- **1e/Day Each:** *Commune*, *Control Weather*, *Dispel Evil and Good*, *Raise Dead*"
+          "text": "The planetar casts one of the following spells, requiring no Material components and using Charisma as spellcasting ability (spell save DC 20):\n\n- **At Will:** *Detect Evil and Good*\n- **1/Day Each:** *Commune*, *Control Weather*, *Dispel Evil and Good*, *Raise Dead*"
         }
       ],
       "Bonus Actions": [
@@ -12512,7 +12512,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The rakshasa casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 18):\n\n- **At Will:** *Detect Magic*, *Detect Thoughts*, *Disguise Self*, *Mage Hand*, *Minor Illusion*\n- **1e/Day Each:** *Fly*, *Invisibility*, *Major Image*, *Plane Shift*"
+          "text": "The rakshasa casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 18):\n\n- **At Will:** *Detect Magic*, *Detect Thoughts*, *Disguise Self*, *Mage Hand*, *Minor Illusion*\n- **1/Day Each:** *Fly*, *Invisibility*, *Major Image*, *Plane Shift*"
         }
       ]
     },
@@ -13739,7 +13739,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The solar casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 25):\n\n- **At Will:** *Detect Evil and Good*\n- **1e/Day Each:** *Commune*, *Control Weather*, *Dispel Evil and Good*, *Resurrection*"
+          "text": "The solar casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 25):\n\n- **At Will:** *Detect Evil and Good*\n- **1/Day Each:** *Commune*, *Control Weather*, *Dispel Evil and Good*, *Resurrection*"
         }
       ],
       "Bonus Actions": [
@@ -13908,7 +13908,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The sphinx casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 16):\n\n- **At Will:** *Detect Magic*, *Identify*, *Mage Hand*, *Minor Illusion*, *Prestidigitation*\n- **1e/Day Each:** *Dispel Magic*, *Legend Lore*, *Locate Object*, *Plane Shift*, *Remove Curse*, *Tongues*"
+          "text": "The sphinx casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save DC 16):\n\n- **At Will:** *Detect Magic*, *Identify*, *Mage Hand*, *Minor Illusion*, *Prestidigitation*\n- **1/Day Each:** *Dispel Magic*, *Legend Lore*, *Locate Object*, *Plane Shift*, *Remove Curse*, *Tongues*"
         }
       ],
       "Legendary Actions": [
@@ -14002,7 +14002,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The sphinx casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 20):\n\n- **At Will:** *Detect Evil and Good*, *Thaumaturgy*\n- **1e/Day Each:** *Detect Magic*, *Dispel Magic*, *Greater Restoration*, *Heroes' Feast*, *Zone of Truth*"
+          "text": "The sphinx casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 20):\n\n- **At Will:** *Detect Evil and Good*, *Thaumaturgy*\n- **1/Day Each:** *Detect Magic*, *Dispel Magic*, *Greater Restoration*, *Heroes' Feast*, *Zone of Truth*"
         }
       ],
       "Legendary Actions": [
@@ -14153,7 +14153,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The naga casts one of the following spells, requiring no Somatic or Material components and using Intelligence as the spellcasting ability (spell save DC 14):\n\n- **At Will:** *Detect Magic*, *Mage Hand*, *Minor Illusion*, *Water Breathing*\n- **2e/Day Each:** *Detect Thoughts*, *Dimension Door*, *Hold Person*, *Lightning Bolt*"
+          "text": "The naga casts one of the following spells, requiring no Somatic or Material components and using Intelligence as the spellcasting ability (spell save DC 14):\n\n- **At Will:** *Detect Magic*, *Mage Hand*, *Minor Illusion*, *Water Breathing*\n- **2/Day Each:** *Detect Thoughts*, *Dimension Door*, *Hold Person*, *Lightning Bolt*"
         }
       ]
     },
@@ -15285,7 +15285,7 @@
         },
         {
           "name": "Spellcasting",
-          "text": "The unicorn casts one of the following spells, requiring no spell components and using Charisma as the spellcasting ability (spell save DC 14):\n\n- **At Will:** *Detect Evil and Good*, *Druidcraft*\n- **1e/Day Each:** *Calm Emotions*, *Dispel Evil and Good*, *Entangle*, *Pass without Trace*, *Word of Recall*"
+          "text": "The unicorn casts one of the following spells, requiring no spell components and using Charisma as the spellcasting ability (spell save DC 14):\n\n- **At Will:** *Detect Evil and Good*, *Druidcraft*\n- **1/Day Each:** *Calm Emotions*, *Dispel Evil and Good*, *Entangle*, *Pass without Trace*, *Word of Recall*"
         }
       ],
       "Bonus Actions": [

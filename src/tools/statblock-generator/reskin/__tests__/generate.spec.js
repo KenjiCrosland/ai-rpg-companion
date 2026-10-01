@@ -4889,6 +4889,13 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     const bwl = printCanonFor('a barrow-wight that erupts in a shockwave of grave earth around it when roused', 7); expect(bwl?.name).toBe('Wight'); expect(bwl.exact).toBe(false); expect(bwl.borrowOnly).toBe(true); expect(bwl.traits.map((t) => t.name)).toContain('Sunlight Sensitivity');
     expect(printCanonFor('a doppelganger who wears the faces of the dead', 3).borrowOnly).toBe(true); // every head match is a borrow now (day-one two, 2026-10-01): rows + array ride, the seat stays, no blind fallback
     const uni = printCanonFor('a unicorn gone mad from grief', 13); expect(uni?.name).toBe('Unicorn'); expect(uni.borrowOnly).toBe(true); // "gone" splits the head phrase
+    // the critic's ten (2026-10-01): a prefix name, a two-word head, an override clause, a whole name that names the sheet
+    const fg = printCanonFor('fire giant blacksmith', 9); expect(fg?.name).toBe('Fire Giant'); expect(fg.borrowOnly).toBe(true); expect(fg.nameIsPrint).toBe(false);
+    const og = printCanonFor('big ogre with a club, cr 5', 5); expect(og?.name).toBe('Ogre'); expect(og.exact).toBe(false); // a head-word match: the Ogre's rows ride, the seat stays, and the fallback stands down when nothing is asked
+    const dw = printCanonFor('a dire wolf but undead', 1); expect(dw?.name).toBe('Dire Wolf'); expect(dw.exact).toBe(true); expect(dw.nameIsPrint).toBe(true);
+    expect(printCanonFor('goblin boss', 1).nameIsPrint).toBe(true); expect(printCanonFor('a mind flayer that lost its tentacles', 7)).toBeNull(); // no Mind Flayer in the SRD corpus
+    expect(fg.cr).toBe(9); expect(fg.atk).toBe(11); // print's own numbers ride for the at-CR rule
+    expect(printCanonFor('a lighthouse hermit-mage whose lantern beam brands whoever it lights', 6).shootsAtRange).toBe(true); // the Mage's Arcane Burst is a ranged attack: the chassis ranged row stays
     const hag = printCanonFor("a hag who trades in children's teeth", 4); expect(hag?.name).toMatch(/Hag$/); expect(hag.borrowOnly).toBe(true); // a short head end-matches a print family
     expect(printCanonFor('a wolf that hunts the moon and eats the stars out of the sky', 5)).toBeNull(); // a Beast head is still reskin material
     const kn = printCanonFor('a knight who has sworn never to sleep until the king is avenged', 8); expect(kn.name).toBe('Knight'); expect(kn.exact).toBe(false); expect(kn.borrowOnly).toBe(true); // an NPC class heads a borrow: the vow keeps its seat
@@ -5050,12 +5057,82 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(sk.m.languages).toMatch(/Goblin/); // a goblin speaks Goblin
     expect(sk.trace).toMatch(/languages by species: Goblin/);
   });
+  test('a missing damage type after repair is typed by anatomy, never a failed block (the forest ambusher\'s Spine)', async () => {
+    const lk = scaleDonor(pickDonor(3, null, 'lurker'), 3, { mechanics: [] });
+    const ans = fullAnswer(lk, 'Needlethorn', { 'Melee Attack': 'Spine' }); delete ans.damage_types.Spine;
+    const r = await run({ archetype: 'lurker', style: null, cr: 3, concept: 'something nasty for a level 3 party, forest, ambush', userConcept: 'something nasty for a level 3 party, forest, ambush', resolvedType: 'Monstrosity', mind: 'bestial' }, Object.assign(ans, { type: 'Monstrosity' }));
+    expect(r.trace).toMatch(/damage type by anatomy: "Spine" -> Piercing \(repair exhausted/);
+    expect(r.rows.find((e) => e.name === 'Spine').text).toMatch(/Piercing damage/);
+  });
+  test('the floating-orb overlay (PI follow-up 2026-10-01): speed 0 / Fly 20 hover, Prone immunity, one Bite, darkvision 120, Eye Rays imposed, legendary rays at CR 13; a net is 5/15', async () => {
+    const vault = scaleDonor(pickDonor(13, null, 'defender'), 13, { mechanics: [] });
+    const b = await run({ archetype: 'defender', style: null, cr: 13, concept: 'a floating orb with one great central eye and a crown of eyestalks that each fire a different ray that guards a vault', userConcept: 'a floating orb with one great central eye and a crown of eyestalks that each fire a different ray that guards a vault', resolvedType: 'Aberration', mind: 'sapient' },
+      Object.assign(fullAnswer(vault, 'Vaultkeeper Crown', { 'Melee Attack': 'Crushing Jaw' }), { type: 'Aberration' }));
+    expect(b.trace).toMatch(/floating-orb overlay: speed 0 \/ Fly 20 \(hover\), Prone immunity, one Bite row, darkvision 120; the rays are the nova$/m); // nothing announced that the sheet doesn't carry
+    expect(b.m.speed).toBe('0 ft., Fly 20 ft. (hover)'); expect(b.m.immunities).toMatch(/Prone/); expect(b.m.senses).toMatch(/^darkvision 120 ft\./);
+    const attacks = b.rows.filter((e) => /Attack Roll/.test(e.text ?? '')); expect(attacks.length).toBe(1); expect(attacks[0].name).toBe('Bite');
+    expect(b.m.stats.STR).toBe(10); expect(b.m.stats.INT).toBeGreaterThanOrEqual(16); expect(String(b.m.skills ?? '')).not.toMatch(/Athletics/); // the overlay's array is mental, whatever the seat
+    expect(attacks[0].text).toMatch(new RegExp(`Attack Roll:\\*? \\+${b.m.pb},`)); expect(attacks[0].text).toMatch(/Piercing damage/); // a natural bite rolls Str (10) and bites
+    expect(b.trace).not.toMatch(/legendary row/); // no legendary rows at CR 13: the overlay announces none
+    expect(b.rows.some((e) => /^Eye Rays \(Recharge 5-6\)$/.test(e.name) && e.template === 'random-ray')).toBe(true);
+    // legendary rows live on the 17-rung: an orb there fires one ray per legendary turn
+    const vault17 = scaleDonor(pickDonor(17, null, 'defender'), 17, { mechanics: [] });
+    const b17 = await run({ archetype: 'defender', style: null, cr: 17, concept: 'a floating orb with a crown of eyestalks that each fire a different ray', userConcept: 'a floating orb with a crown of eyestalks that each fire a different ray', resolvedType: 'Aberration', mind: 'sapient' },
+      Object.assign(fullAnswer(vault17, 'Tyrant Orb', { 'Melee Attack': 'Crushing Jaw' }), { type: 'Aberration' }));
+    expect(b17.rows.filter((e) => e.name === 'Legendary Ray').length).toBeGreaterThanOrEqual(1);
+    expect(b17.rows.some((e) => /^Legendary/.test(e.name) && /Attack Roll/.test(e.text ?? ''))).toBe(false); // no limb rows in the legendary trio either
+    expect(b.rows.find((e) => e.name === 'Multiattack').text).toMatch(/makes one Bite attack and uses Eye Rays if available/);
+    // a net is a thrown 5/15 weapon; a yuan-ti's alias text names the shifter seat
+    const sk = scaleDonor(pickDonor(2, null, 'skirmisher'), 2, { mechanics: [] });
+    const kt = await run({ archetype: 'skirmisher', style: null, cr: 2, concept: 'a fish-headed humanoid cultist of the deep who fights with net and spear', userConcept: 'a fish-headed humanoid cultist of the deep who fights with net and spear', resolvedType: 'Humanoid', mind: 'sapient' },
+      fullAnswer(sk, 'Drowned Netter', { 'Melee Attack': 'Spear', 'Ranged Attack': 'Net' }));
+    const netRow = kt.rows.find((e) => /^Net/.test(e.name)); expect(netRow.text).toMatch(/range 5\/15 ft\./); expect(netRow.text).toMatch(/Large or smaller, it has the Restrained condition until it escapes \(escape DC \d+\)/); expect(netRow.text).not.toMatch(/damage|returns to/); // the 2024 Net
+    expect((kt.m.sections.Traits ?? []).some((e) => e.name === 'Amphibious')).toBe(true); // of the deep
+    const cs = scaleDonor(pickDonor(5, 'warpriest', 'caster'), 5, { mechanics: [] });
+    const kc = await run({ archetype: 'caster', style: 'warpriest', cr: 5, concept: 'a fish-headed humanoid cultist of the deep who fights with net and spear', userConcept: 'a fish-headed humanoid cultist of the deep who fights with net and spear', resolvedType: 'Humanoid', mind: 'sapient' },
+      fullAnswer(cs, 'Deepcaller', Object.fromEntries(Object.keys(fullAnswer(cs, 'x', {}).renames).filter((k) => /Ranged/.test(k)).map((k) => [k, 'Net']))));
+    const netC = kc.rows.find((e) => /^Net/.test(e.name)); if (netC) { expect(netC.text).toMatch(/range 5\/15 ft\./); expect(netC.text).toMatch(/Restrained condition until it escapes/); } // the caster chassis's single-range row takes the net too
+    const sp = { name: 'Husk', type: 'Aberration', renames: { 'Melee Attack': 'Mindspike' }, damage_types: { Mindspike: 'Psychic' }, spells: { at_will: ['Mind Spike', 'Fear'], daily: [] }, conditions: { condition_minor: 'Prone' }, melee_rider: 'none' };
+    expect(reskinDefects(sk, sp, { resolvedType: 'Aberration', concept: 'a psychic aberration' }).join('\n')).toMatch(/"Mindspike" is a spell on this creature's own list/);
+    const { verbLines } = require('../route.mjs');
+    expect(verbLines('a serpent-blooded humanoid who sheds human form for scales and fangs')).toContain('skirmisher-shifter');
+  });
+  test('the critic\'s ten (2026-10-01): a whole print name names the sheet; a user-named type outranks print\'s; a ghost owes no Assassinate', async () => {
+    const sk = scaleDonor(pickDonor(1, null, 'skirmisher'), 1, { mechanics: [] });
+    const gb = await run({ archetype: 'defender', style: 'leader', cr: 1, concept: 'goblin boss', userConcept: 'goblin boss', resolvedType: 'Humanoid', mind: 'sapient' },
+      Object.assign(fullAnswer(scaleDonor(pickDonor(1, null, 'defender'), 1, { mechanics: [] }), 'Krag the Iron Standard', { 'Melee Attack': 'Iron Blade' }), { type: 'Fey' }));
+    expect(gb.m.name).toBe('Goblin Boss'); expect(gb.m.type).toBe('Fey'); // print's own name and print's own type (2024 goblins are Fey)
+    // at print's own CR the array and attack bonus are print's: the Fire Giant at CR 9
+    const fgRun = await run({ archetype: 'brute', style: null, cr: 9, concept: 'fire giant blacksmith', userConcept: 'fire giant blacksmith', resolvedType: 'Giant', mind: 'sapient' },
+      Object.assign(fullAnswer(scaleDonor(pickDonor(9, null, 'brute'), 9, { mechanics: [] }), 'Forge Giant', { 'Melee Attack': 'Forgehammer' }), { type: 'Giant' }));
+    expect(fgRun.m.stats.STR).toBe(25); expect(fgRun.trace).toMatch(/print canon array: .* at its own CR; attack \+\d+ -> \+11/);
+    expect(fgRun.rows.find((e) => e.name === 'Flame Sword').text).toMatch(/Melee Attack Roll:\*? \+11/);
+    const dw = await run({ archetype: 'skirmisher', style: null, cr: 1, concept: 'a dire wolf but undead', userConcept: 'a dire wolf but undead', resolvedType: 'Undead', mind: 'bestial' },
+      Object.assign(fullAnswer(sk, 'Thawborn', { 'Melee Attack': 'Bite' }), { type: 'Undead' }));
+    expect(dw.m.type).toBe('Undead'); expect(dw.m.name).toBe('Dire Wolf'); expect((dw.m.sections.Traits ?? []).some((e) => e.name === 'Pack Tactics')).toBe(true);
+    expect(dw.trace).toMatch(/print canon type: Undead stays — the words say undead/);
+    const ph = scaleDonor(pickDonor(4, 'phantom', 'lurker'), 4, { mechanics: [] });
+    const gh = await run({ archetype: 'lurker', style: 'phantom', cr: 4, concept: 'the ghost of a bride who drowned on her wedding day', userConcept: 'the ghost of a bride who drowned on her wedding day', resolvedType: 'Undead', mind: 'sapient' },
+      Object.assign(fullAnswer(ph, 'Drowned Vow', {}), { type: 'Undead' }));
+    expect(gh.rows.some((e) => e.name === 'Assassinate')).toBe(false);
+  });
   test('the small round (2026-10-01): print size/speed/reach ride; a second print melee row rides; the rider slot refuses idea-only binds; a bleed needs an edge; signature elements are rewritten; a Humanoid swings a weapon; the seat owes only when the words earned it', async () => {
     // size, base speed, reach, second melee row — the Unicorn on a Large chassis
     const brute = scaleDonor(pickDonor(13, null, 'brute'), 13, { mechanics: [] });
     const u = await run({ archetype: 'brute', style: null, cr: 13, concept: 'a unicorn gone mad from grief', userConcept: 'a unicorn gone mad from grief', resolvedType: 'Celestial', mind: 'sapient' },
       Object.assign(fullAnswer(brute, 'Grieving Horn', { 'Melee Attack': 'Hoof' }), { type: 'Celestial', size: 'Huge' }));
     expect(u.m.size).toBe('Large'); expect(u.m.speed).toMatch(/^50 ft\./);
+    expect(u.m.type).toBe('Celestial'); expect(u.m.languages).toMatch(/Celestial, Elvish, Sylvan; telepathy 120 ft\./); // the header is print's too (2026-10-01)
+    expect(u.rows.some((e) => /Ranged Attack Roll/.test(e.text ?? '') && !/Melee or Ranged/.test(e.text ?? ''))).toBe(false); // the brute's ranged row leaves a Unicorn
+    expect(u.rows.some((e) => /\(Recharge [\d–-]+\)/.test(e.name ?? '') && !e.library)).toBe(false); // and so does its chassis nova
+    expect(u.rows.find((e) => e.name === 'Multiattack').text).not.toMatch(/Bolt|Nova|Named Row/);
+    const uf = await run({ archetype: 'brute', style: null, cr: 13, movement: ['fly'], concept: 'a unicorn gone mad from grief', userConcept: 'a unicorn gone mad from grief', resolvedType: 'Celestial', mind: 'sapient' },
+      Object.assign(fullAnswer(brute, 'Grieving Horn', { 'Melee Attack': 'Hoof' }), { type: 'Celestial', size: 'Huge' }));
+    expect(uf.m.speed).not.toMatch(/Fly/); expect(uf.trace).toMatch(/print canon modes: fly off/); // a model-added mode needs the user's words
+    const uw = await run({ archetype: 'brute', style: null, cr: 13, movement: ['fly'], concept: 'a winged unicorn gone mad from grief', userConcept: 'a winged unicorn gone mad from grief', resolvedType: 'Celestial', mind: 'sapient' },
+      Object.assign(fullAnswer(brute, 'Grieving Horn', { 'Melee Attack': 'Hoof' }), { type: 'Celestial', size: 'Huge' }));
+    expect(uw.m.speed).toMatch(/Fly/);
+    expect(JSON.stringify(require('../../../../data/srd52-monsters.json'))).not.toMatch(/\de\/Day/); // the SRD scrape's "1e/Day" is normalized in the data
     expect(u.rows.some((e) => e.name === 'Hooves')).toBe(true); expect(u.rows.some((e) => e.name === 'Radiant Horn')).toBe(true);
     expect(u.rows.find((e) => e.name === 'Multiattack').text).toMatch(/using Hooves or Radiant Horn in any combination/);
     expect(u.rows.find((e) => e.name === 'Hooves').text).toMatch(/reach 5 ft\./);
@@ -5158,9 +5235,9 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(g.trace).toMatch(/chassis nova: "Tremor Toll \(Recharge 5-6\)" — the brute-9-juggernaut's own nova row \(its "Area Nova", renamed by the model\)/);
   });
   test('a hyphenated head borrows print\'s rows and KEEPS its seat; a "plus" damage clause joins the damage line', async () => {
-    const jug = scaleDonor(pickDonor(7, 'juggernaut', 'brute'), 7, { mechanics: [] });
+    const jug = scaleDonor(pickDonor(7, null, 'brute'), 7, { mechanics: [] }); // the seat stands down to the plain brute, whose rows the mock must name (the Wight keeps a ranged row: print's Necrotic Bow)
     const w = await run({ archetype: 'brute', style: 'juggernaut', cr: 7, concept: 'a barrow-wight that erupts in a shockwave of grave earth around it when roused', userConcept: 'a barrow-wight that erupts in a shockwave of grave earth around it when roused', resolvedType: 'Undead', mind: 'sapient' },
-      Object.assign(fullAnswer(jug, 'Barrow-Wight', { 'Melee Attack': 'Barrow-Fist' }), { type: 'Undead' }));
+      Object.assign(fullAnswer(jug, 'Barrow-Wight', { 'Melee Attack': 'Barrow-Fist', 'Ranged Attack': 'Barrow-Bow' }), { type: 'Undead' }));
     expect(w.trace).toMatch(/print canon: .* heads on the Wight — print's rows ride along; the seat stays/);
     expect(w.trace).not.toMatch(/the seats stand down/);
     expect((w.m.sections.Traits ?? []).some((e) => e.name === 'Sunlight Sensitivity')).toBe(true);

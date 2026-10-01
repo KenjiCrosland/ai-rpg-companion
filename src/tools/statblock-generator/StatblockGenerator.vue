@@ -174,15 +174,23 @@
             <p class="edition-preview__note">One-time AI conversion (counts as one generation) — the numbers stay identical; the wording is rewritten in {{ previewEdition }} style. After that the tabs flip instantly.</p>
           </div>
         </div>
-        <Statblock v-else-if="displayFormat === '2014' && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
-          :width="850" :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
-          :linked-npcs-count="linkedNPCs.length" @update-monster="updateMonster"
-          @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
-          @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
-          @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
+        <template v-else-if="displayFormat === '2014' && (loadingPart1 || loadingPart2 || monster)">
+          <div v-if="!loadingPart1 && !loadingPart2 && monster && piAliasNote" class="sb24-stage-note" data-testid="pi-alias-note">
+            “{{ piAliasNote }}” isn’t in the free D&D rules, so this is an original creature in its spirit.
+          </div>
+          <Statblock :loadingPart1="loadingPart1"
+            :width="850" :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
+            :linked-npcs-count="linkedNPCs.length" @update-monster="updateMonster"
+            @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
+            @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
+            @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
+        </template>
         <template v-else-if="displayFormat === '2024' && (loadingPart1 || monster)">
           <div v-if="loadingPart1 && generationStage" class="sb24-stage-note" data-testid="generation-stage">
             {{ generationStage }}
+          </div>
+          <div v-if="!loadingPart1 && monster && piAliasNote" class="sb24-stage-note" data-testid="pi-alias-note">
+            “{{ piAliasNote }}” isn’t in the free D&D rules, so this is an original creature in its spirit.
           </div>
           <!-- Staged loading (owner ask, 2026-07-30): the assembled draft
                renders read-only while the audit/fix ladder polishes it;
@@ -329,6 +337,7 @@ import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { filterVerdicts, rejectedCanon } from './reskin/lexicon.mjs';
 import { buildRoutePrompt, validateRouteResponse, chooseLine } from './reskin/route.mjs';
+import { crFromPrompt, readPhrases, piAliasesIn } from './reskin/lexicon.mjs';
 import { ARCHETYPE_HELP, ARCHETYPE_OPTIONS } from "@/util/embedded-statblock.mjs";
 import { QUOTA_FIELDS, RESERVED_HOST_FIELDS } from "@/util/quota-storage.mjs";
 import { renameStatblockReferences, moveStatblockToNewFolder } from '@/util/statblock-storage.mjs';
@@ -426,6 +435,8 @@ const displayFormat = computed(() =>
   monster.value ? (monster.value.format === '2024' ? '2024' : '2014') : format.value
 );
 const monsterDescription = ref('');
+// one line under the result when a Product Identity name was rewritten to a description (PI alias spec 2026-10-01)
+const piAliasNote = ref(''); // the name the user typed (e.g. "mind flayer"), or '' when no alias fired
 const selectedChallengeRating = ref(null);
 const monster = ref(null);
 const caster = ref(false);
@@ -1022,7 +1033,8 @@ async function generateStatblockEngine(edition) {
   // two-call flow set both, which is what filled both columns. The engine
   // is a single call, but the 2014 display still wants both halves ghosted.
   loadingPart2.value = true;
-  const crInput = selectedChallengeRating.value || rollRandomCR();
+  piAliasNote.value = piAliasesIn(`${monsterName.value ?? ''} ${monsterDescription.value ?? ''}`)[0]?.matched?.replace(/'s$/i, '') ?? '';
+  const crInput = selectedChallengeRating.value || crFromPrompt(`${monsterName.value ?? ''} ${monsterDescription.value ?? ''}`) || rollRandomCR(); // the words name a CR before the dice do ("level 3 party", "cr 5")
   const cr = crNumberFor(crInput);
 
   // Archetype resolution order (settled in the architecture doc):
@@ -1168,8 +1180,9 @@ async function generateStatblockEngine(edition) {
   };
   const routeOn = async (text) => {
     try {
-      const raw = await generateGptResponse(buildRoutePrompt(text, { cr, menuRole: givenArchetype }), validateRouteResponse, 2);
-      return chooseLine(parseGenerationResponse(raw), { text, menuRole: givenArchetype });
+      for (const h of piAliasesIn(text)) logger.log('[route] pi alias:', `"${h.matched}" → "${h.text}"`);
+      const raw = await generateGptResponse(buildRoutePrompt(readPhrases(text), { cr, menuRole: givenArchetype }), validateRouteResponse, 2); // the rewritten concept is the only text the route reads (PI alias spec 2026-10-01)
+      return chooseLine(parseGenerationResponse(raw), { text: readPhrases(text), rawText: text, menuRole: givenArchetype }); // the quote check reads the same rewritten text the model saw
     } catch (e) {
       logger.warn('[route] call failed:', e?.message ?? e);
       return null;
@@ -1209,7 +1222,7 @@ async function generateStatblockEngine(edition) {
           // CALL 2 — IDENTITY, conditioned on the routed line
           try {
             const raw = await generateGptResponse(
-              buildIdentityPrompt(userConcept, monsterDescription.value, { cr, archetype: givenArchetype, line: conceptLine, resolvedType }),
+              buildIdentityPrompt(readPhrases(userConcept), readPhrases(monsterDescription.value), { cr, archetype: givenArchetype, line: conceptLine, resolvedType }),
               validateIdentityResponse,
               2,
             );

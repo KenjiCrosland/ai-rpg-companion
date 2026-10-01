@@ -1,5 +1,7 @@
 # 2024 Statblock Support — Architecture Handoff
 
+> **Historical.** This is the July–August 2026 journal of the renderer, lint and conversion sprints. The engine that generates 2024 blocks today is the reskin pipeline, described in [`docs/reskin-architecture.md`](reskin-architecture.md); read that first.
+
 > This design was settled in strategy sessions; treat it as the contract. Don't reinvent it.
 
 ## Context

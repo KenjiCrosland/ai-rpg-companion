@@ -20,7 +20,7 @@
  * resolvedType) is exactly what generateReskin already consumes — nothing
  * below resolve changes.
  */
-import { readPhrases } from './lexicon.mjs';
+import { readPhrases, rewritePI } from './lexicon.mjs';
 import { DONORS } from './donors.mjs';
 
 /** The shelf, in the order the model sees it. `role` is the menu label the saved monster records. */
@@ -73,16 +73,17 @@ export const LINE_VERBS = {
   'skirmisher-hurler': ['hurl', 'hurls', 'throw', 'throws', 'lob', 'lobs', 'sling', 'slings', 'fling', 'flings', 'pelts'],
   'skirmisher-winged': ['swoop', 'swoops', 'dives', 'dive', 'flies', 'on the wing', 'snatches from above'],
   'skirmisher-archer': ['archer', 'archers', 'bowman', 'bowmen', 'longbow', 'shortbow', 'crossbow', 'crossbows', 'arrows', 'arrow', 'sniper', 'marksman', 'markswoman', 'sharpshooter', 'volley of arrows', 'picks off', 'nocks', 'shoots arrows', 'shoots an arrow'], // 'bolts'/'shoots' dropped: a hermit-mage whose BOLTS find them in the dark was routed off the caster line (golden 2026-09-28)
-  'skirmisher-shifter': ['shape-shifts', 'shapeshifts', 'transforms into', 'turns into', 'becomes a', 'by night becomes', 'under the moon', 'werewolf', 'wererat', 'werebear', 'weretiger', 'wereboar', 'lycanthrope', 'two forms', 'takes the form', 'wears the shape', 'wears other faces', 'changes shape'], // 'doppelganger' is a print NOUN, not a verb — it routes by print canon (critic, new lines 2026-09-28)
+  'skirmisher-shifter': ['shape-shifts', 'shapeshifts', 'transforms into', 'turns into', 'becomes a', 'by night becomes', 'under the moon', 'werewolf', 'wererat', 'werebear', 'weretiger', 'wereboar', 'lycanthrope', 'two forms', 'takes the form', 'wears the shape', 'wears other faces', 'changes shape', 'sheds human form', 'sheds its form', 'sheds her form', 'sheds his form'], // 'doppelganger' is a print NOUN, not a verb — it routes by print canon (critic, new lines 2026-09-28)
   'defender-leader': ['commands', 'commanding', 'rallies', 'leads his', 'leads her', 'leads its', 'leads the', 'leads a', 'captain', 'warlord', 'chieftain', 'sergeant', 'at the head of', 'his troops', 'her troops', 'its troops', 'the troops', 'the warband', 'the company', 'lieutenant', 'commander', 'gives orders', 'barks orders', 'orders a', 'orders the', 'holds the line', 'hold the line', 'holds the shield line', 'holds the wall', 'holds the gate'], // bare 'leading'/'orders'/'general' routed a drifting hunger that was "leading" climbers astray (flow spec, 2026-09-28)
   lurker: ['surfaces beneath', 'erupts from', 'bursts from', 'rises from', 'strikes once', 'stalks', 'waits beneath', 'hunts by tremor', 'burrows'],
   'lurker-phantom': ['drifts', 'haunts', 'drowns', 'passes through walls', 'through walls', 'wails', 'possesses', 'incorporeal', 'climbs the chains at night', 'drowned', 'ghost', 'ghosts', 'wraith', 'spectre', 'specter', 'phantom', 'shade', 'apparition', 'revenant', 'poltergeist'], // + the BODY nouns: a drowned wife is a phantom by body, whatever the route model quotes (golden 2026-09-30: its quote was a paraphrase twice)
   'lurker-trap': ['lies in wait', 'disguised as', 'looks like', 'poses as', 'motionless until', 'snaps shut', 'pretends to be', 'mimics'],
   'caster-binder': ['curses', 'hexes', 'binds with', 'reads', 'foretells', 'pins with', 'dooms', 'marks with'],
-  'caster-warpriest': ['blesses', 'prays', 'smites', 'consecrates', 'psalms', 'sermons', 'crusades'],
+  'caster-warpriest': ['blesses', 'prays', 'smites', 'consecrates', 'psalms', 'sermons', 'crusades', 'priest', 'priestess', 'cleric', 'acolyte'], /* job nouns: never an override on their own (the title rule) */
   caster: ['casts', 'conjures', 'calls down', 'hurls bolts', 'blasts', 'spells'],
   'defender-warden': ['guards', 'protects', 'sworn to', 'stands between', 'shields', 'bound to protect', 'wards'],
-  defender: ['holds the line', 'shield wall', 'bodyguard', 'blocks', 'interposes'],
+  dragon: ['dragon', 'dragons', 'wyrm', 'wyrms', 'drake', 'drakes', 'dragonborn'], /* BODY nouns: a dragon is a dragon whatever the route model quotes (the storm dragon lost its body to a paraphrased quote, 2026-10-01) */
+  defender: ['holds the line', 'keeps the line', 'shield wall', 'bodyguard', 'blocks', 'interposes', 'guards the', 'guards a', 'guards its', 'guards his', 'guards her', 'stands guard', 'guarding the'],
   // bodily-emission verbs are a SIGNATURE (a cloud, a spit), not a thrower's chassis — the plain skirmisher line
   skirmisher: ['vomits', 'spits', 'spews', 'belches', 'sprays', 'darts', 'harries', 'flits', 'nips'],
 };
@@ -99,6 +100,7 @@ export const LINE_VERBS = {
 // 2026-09-28). These two mean something else entirely as nouns — a hide is skin,
 // a charge is the person you guard.
 const NOUN_WHEN_OWNED = new Set(['hide', 'charge', 'archer', 'archers']); // "her archers" are a leader's troops, not the archer seat (the warchief, library round 2026-09-29)
+const OF_PHRASE = /\b(?:of|from|by|for|to|with|under|beneath|over|against)\s+(?:a|an|the|his|her|its|their|some|that)?\s*(?:\w+\s+)?$/i;
 const OWNED_BY = /\b(?:its|his|her|their|our|my|your|whose|the|a|an|this|that|each|every|one|two|three|four|several|many)\s+$/;
 // "Mimic with voice, call, or song is the Harpy's lure, not the Mimic" (critic)
 const VERB_DENY = { mimics: /\b(?:voices?|sounds?|songs?|calls?|speech|words?|cries|tongues?)\b/ }; // "holds the line" and its kin are FIXED PHRASES now (lexicon.mjs readPhrases), rewritten before this table reads them
@@ -112,9 +114,9 @@ const ENEMY_SUBJECT = /\b(?:anyone|anybody|whoever|whomever|those|anything|whate
 // BODY noun (a crab grapples, a werewolf shifts — the body is the line), or a
 // JOB noun (archer, captain, sergeant — a title the route model may weigh, but
 // never a verb that overrides its pick). The override prints the key and its class.
-const BODY_NOUNS = new Set(['crab', 'crabs', 'scorpion', 'octopus', 'lobster', 'kraken', 'werewolf', 'wererat', 'werebear', 'weretiger', 'wereboar', 'lycanthrope', 'drowned', 'ghost', 'ghosts', 'wraith', 'spectre', 'specter', 'phantom', 'shade', 'apparition', 'revenant', 'poltergeist']);
+const BODY_NOUNS = new Set(['crab', 'crabs', 'scorpion', 'octopus', 'lobster', 'kraken', 'werewolf', 'wererat', 'werebear', 'weretiger', 'wereboar', 'lycanthrope', 'drowned', 'ghost', 'ghosts', 'wraith', 'spectre', 'specter', 'phantom', 'shade', 'apparition', 'revenant', 'poltergeist', 'dragon', 'dragons', 'wyrm', 'wyrms', 'drake', 'drakes']);
 const JOB_NOUNS = new Set(['archer', 'archers', 'bowman', 'bowmen', 'longbow', 'shortbow', 'crossbow', 'crossbows', 'arrows', 'arrow', 'sniper', 'marksman', 'markswoman', 'sharpshooter', 'volley of arrows',
-  'captain', 'warlord', 'chieftain', 'sergeant', 'lieutenant', 'commander', 'his troops', 'her troops', 'its troops', 'the troops', 'the warband', 'the company', 'two forms']);
+  'captain', 'warlord', 'chieftain', 'sergeant', 'lieutenant', 'commander', 'his troops', 'her troops', 'its troops', 'the troops', 'the warband', 'the company', 'two forms', 'priest', 'priestess', 'cleric', 'acolyte']);
 export const keyClass = (k) => (BODY_NOUNS.has(k) ? 'body' : JOB_NOUNS.has(k) ? 'noun' : 'verb');
 /** Every line whose keys the text reads, with the first key that read and its class. */
 export function verbHits(text) {
@@ -124,6 +126,7 @@ export function verbHits(text) {
     const re = new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
     for (let m = re.exec(raw); m; m = re.exec(raw)) {
       if (NOUN_WHEN_OWNED.has(k) && OWNED_BY.test(raw.slice(0, m.index))) continue;
+      if (keyClass(k) !== 'verb' && OF_PHRASE.test(raw.slice(0, m.index))) continue; // "priest of a drowned god": the attribute inside an of-phrase modifies that noun, not the creature (critic 2026-10-01)
       if (ENEMY_SUBJECT.test(raw.slice(0, m.index))) continue;
       return true;
     }
@@ -137,7 +140,8 @@ export function verbLines(text) {
     if (VERB_DENY[k]?.test(raw)) return false;
     const re = new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
     for (let m = re.exec(raw); m; m = re.exec(raw)) {
-      if (NOUN_WHEN_OWNED.has(k) && OWNED_BY.test(raw.slice(0, m.index))) continue; // "its charge", "whose hide"
+      if (NOUN_WHEN_OWNED.has(k) && OWNED_BY.test(raw.slice(0, m.index))) continue;
+      if (keyClass(k) !== 'verb' && OF_PHRASE.test(raw.slice(0, m.index))) continue; // "priest of a drowned god": the attribute inside an of-phrase modifies that noun, not the creature (critic 2026-10-01) // "its charge", "whose hide"
       if (ENEMY_SUBJECT.test(raw.slice(0, m.index))) continue; // "anyone who blocks it" — the enemy's verb
       return true;
     }
@@ -164,6 +168,8 @@ const SWARM_WORDS = /\b(?:swarms?|swarming|flocks?|murder of|clouds? of|mass of|
 // a TRAP body is a thing that lies in wait (a mimic, a rug, a chest): a living
 // person who SETS traps is not one (the kobold trapmaker drew False Form, day-one 2026-09-30)
 const NOT_TRAP_TYPES = ['Humanoid', 'Beast', 'Giant', 'Fey', 'Celestial', 'Dragon'];
+// a PHANTOM body is incorporeal: a living Humanoid cultist is not one (the kuo-toa drew Fly 60 (hover) and the ghost's immunities, 2026-10-01)
+const NOT_PHANTOM_TYPES = ['Humanoid', 'Beast', 'Giant', 'Plant', 'Construct', 'Dragon', 'Ooze'];
 // an ARCHER shoots a named weapon: a lantern-mage whose "bolts find them in the
 // dark" was picked for the archer line by the route model (golden 2026-09-29) —
 // no bow, arrow, crossbow, sling or shot in the words, no archer seat ('bolts' is a caster's too)
@@ -233,7 +239,7 @@ export function validateRouteResponse(jsonString) {
  *   lines); role is the menu label to record. line is null when nothing
  *   routed (the caller falls to its own default).
  */
-export function chooseLine(parsed, { text, menuRole = null } = {}) {
+export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {}) {
   const notes = [];
   const family = familyFor(menuRole);
   const resolvedType = TYPES.includes(parsed?.creature_type) ? parsed.creature_type : null;
@@ -253,6 +259,8 @@ export function chooseLine(parsed, { text, menuRole = null } = {}) {
     if (line.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} is not a made or risen guardian`); continue; }
     if (line.id === 'defender-leader' && resolvedType && NO_LEADER_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} commands no troops`); continue; }
     if (line.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} sets traps; it is not one`); continue; }
+    if (line.id === 'lurker-phantom' && resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} has a body; a phantom has none`); continue; }
+    if (line.id === 'skirmisher-shifter' && !verbHits(text).some((h) => h.id === 'skirmisher-shifter')) { notes.push(`${id}: a shifter is named by its words (shape-shifts, turns into, a were-) — none here`); continue; } // a mind flayer with a sword drew a Beast Bite (critic-ten 2026-10-01)
     if (line.id === 'skirmisher-archer' && !ARCHER_NOUN.test(String(text ?? ''))) { notes.push(`${id}: no bow, arrow or shot in the words`); continue; }
     chosen = line;
     notes.push(`${id}: ✓ ("${String(k.because).slice(0, 40)}")`);
@@ -269,7 +277,9 @@ export function chooseLine(parsed, { text, menuRole = null } = {}) {
       if (line.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)) continue;
       if (line.id === 'defender-leader' && resolvedType && NO_LEADER_TYPES.includes(resolvedType)) continue;
       if (line.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType)) continue;
+      if (line.id === 'lurker-phantom' && resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType)) continue;
       if (line.id === 'swarm' && !SWARM_WORDS.test(String(text ?? ''))) continue;
+      if (line.id === 'skirmisher-shifter' && !verbHits(text).some((h) => h.id === 'skirmisher-shifter')) continue;
       if (line.id === 'skirmisher-archer' && !ARCHER_NOUN.test(String(text ?? ''))) continue;
       chosen = line; notes.push(`${line.id}: taken on rank — its quote was not found, no hard veto`); break;
     }
@@ -293,6 +303,8 @@ export function chooseLine(parsed, { text, menuRole = null } = {}) {
       && !(l.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType))
       && !(l.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType))
       && !(l.id === 'defender-leader' && resolvedType && NO_LEADER_TYPES.includes(resolvedType))
+      && !(l.id === 'lurker-phantom' && resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType)) // the override obeys the body vetoes too (the kuo-toa went phantom on a verb, 2026-10-01)
+      && !(l.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType))
       && !(l.id === 'skirmisher-archer' && !ARCHER_NOUN.test(String(text ?? ''))));
     // a JOB noun cannot win an override whose rule is that verbs outrank nouns
     // — unless the family FELL to its plain line with no pick to override: a
@@ -306,6 +318,23 @@ export function chooseLine(parsed, { text, menuRole = null } = {}) {
     if (byVerb.length && chosen && !byVerb.some((h) => h.id === chosen.id)) {
       notes.push(`${chosen.id} -> ${byVerb[0].id}: the concept's ${byVerb[0].cls === 'body' ? 'BODY' : 'VERB'} outranks the noun (key "${byVerb[0].key}", class ${byVerb[0].cls})`);
       chosen = byVerb[0].line;
+    }
+  }
+  /* THE USER'S OWN NOUN OUTRANKS THE ALIAS'S DEFAULT VERBS (critic 2026-10-01): the alias
+     text supplies a body ("fights with net and spear"); the user supplies the request
+     ("priest"). A pick whose quote came from the alias description yields to a line the
+     user's remaining words name by any key class. */
+  if (chosen && rawText) {
+    const hits = rewritePI(String(rawText)).hits;
+    if (hits.length) {
+      const aliasTexts = hits.map((h) => h.text.toLowerCase());
+      const because = String((Array.isArray(parsed?.picks) ? parsed.picks : []).find((k) => lineIdOf(k?.line) === chosen.id)?.because ?? '').toLowerCase();
+      const quotedFromAlias = because && aliasTexts.some((a) => a.includes(because));
+      if (quotedFromAlias) {
+        let userOnly = String(rawText); for (const h of hits) userOnly = userOnly.replace(h.matched, ' ');
+        const userHit = verbHits(userOnly).find((h) => h.id !== chosen.id && BY_ID.get(h.id));
+        if (userHit) { notes.push(`${chosen.id} -> ${userHit.id}: the user's own word "${userHit.key}" (class ${userHit.cls}) outranks a pick quoted from the alias text`); chosen = BY_ID.get(userHit.id); }
+      }
     }
   }
   // the PRIMARY line prints its key and class too (critic 2026-09-29: the wight's

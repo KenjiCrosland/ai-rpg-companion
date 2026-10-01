@@ -8,6 +8,8 @@ The Statblock Generator creates complete D&D 5e monster statblocks using a two-p
 
 ## Architecture
 
+**The current engine is the reskin pipeline.** Read [docs/reskin-architecture.md](/docs/reskin-architecture.md) first (as of 2026-10-01); the July handoff linked below is history.
+
 **Both editions are engine-first** behind a 2024/2014 rules toggle (default
 2024, persisted to `localStorage['statblock-format']`; a loaded monster's own
 `format` field decides which display renders). The contract is

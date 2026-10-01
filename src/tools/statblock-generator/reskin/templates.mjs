@@ -40,7 +40,7 @@ const VOCAB = { save_stat: SAVE_STATS, consumed_condition: CONDITIONS, condition
 // flavor slots: the model's words, bounded (no digits, no rules grammar, short)
 export const FLAVOR_SLOTS = ['projectile', 'wound_noun', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
 // engine slots: never the model's
-const ENGINE_SLOTS = ['dc', 'atk', 'avg', 'dice', 'avg_half', 'dice_half', 'damage_type', 'melee_name', 'ranged_name'];
+const ENGINE_SLOTS = ['dc', 'atk', 'avg', 'dice', 'avg_half', 'dice_half', 'damage_type', 'melee_name', 'ranged_name', 'ray_table'];
 
 // the shapes' tags (section comes from `replaces`); melee-rider / ranged
 // replacements weld INTO an existing row and are not a standalone template
@@ -49,7 +49,7 @@ const SHAPE_TAGS = {
   'gaze-single': ['save', 'condition'], snare: ['save', 'condition'], reel: ['save', 'movement'],
   'condition-payoff': ['save', 'damage'], rampage: ['once_per_fight', 'damage'], blink: ['always', 'movement'],
   zone: ['once_per_fight', 'condition'], execute: ['save', 'damage'], 'death-burst': ['always', 'damage'],
-  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], spew: ['save', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'hook-rider': ['on_hit', 'movement'], riposte: ['on_being_hit', 'damage'], 'snap-shot': ['on_being_hit', 'damage'], 'ground-burst': ['save', 'damage'], 'volley-order': ['always', 'resource'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
+  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], spew: ['save', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'hook-rider': ['on_hit', 'movement'], riposte: ['on_being_hit', 'damage'], 'snap-shot': ['on_being_hit', 'damage'], 'ground-burst': ['save', 'damage'], 'volley-order': ['always', 'resource'], 'random-ray': ['save', 'condition'], 'blurred-form': ['always', 'defense'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
   'spider-climb': ['always', 'movement'], 'terrain-walk': ['always', 'movement'], 'aberrant-ground': ['always', 'movement'], 'faultless-tracker': ['always', 'condition'], 'web-walker': ['always', 'movement'],
   'fire-aura': ['start_of_turn', 'damage'], 'noxious-aura': ['save', 'condition'], 'bloodied-fury': ['always', 'defense'], 'uncanny-sense': ['always', 'defense'], 'earth-glide': ['always', 'movement'], tunneler: ['always', 'movement'], berserk: ['always', 'condition'], 'shielded-mind': ['always', 'defense'], evasion: ['always', 'defense'],
   'relentless-pursuit': ['always', 'movement'], bound: ['always', 'movement'], 'marking-light': ['always', 'condition'], 'sealed-body': ['always', 'defense'], 'warded-mending': ['start_of_turn', 'resource'], 'guarded-stance': ['always', 'defense'], 'undead-fortitude': ['always', 'defense'], mimicry: ['always', 'defense'], wail: ['once_per_fight', 'damage'], 'truth-aura': ['save', 'condition'], 'gaze-aura': ['save', 'condition'], 'charge-push': ['on_hit', 'movement'],
@@ -125,6 +125,8 @@ export function coveredBySheet(sections = {}) {
 // expresses it"). Every template carries verb keys; the fit menu is RANKED by
 // overlap with the concept + idea and the matches are named to the model.
 const SHAPE_KEYS = {
+  'random-ray': ['eyestalks', 'eyestalk', 'eye rays', 'rays', 'ray', 'many-eyed', 'beams'],
+  'blurred-form': ['blurred', 'blur', 'displaced', 'image appears', 'a few feet from where it stands', 'afterimage', 'shimmers', 'mirage', 'where it stands'],
   'volley-order': ['volley', 'orders a volley', 'looses at will', 'loose', 'on my mark', 'archers', 'crossbowmen'],
   'ground-burst': ['erupt', 'eruption', 'burst', 'shockwave', 'stomp', 'quake', 'tremor', 'around it', 'in all directions', 'wave of', 'pulse', 'detonate', 'slams the ground', 'stamps'],
   'snap-shot': ['snap shot', 'snaps off', 'covering fire', 'as they close', 'closes to melee', 'before it can strike', 'on approach', 'anyone who approaches', 'draws near', 'comes within'],
@@ -163,6 +165,8 @@ export const VERB_KEYS = {
   'bolt-restrain': ['bolt', 'binds', 'root', 'roots', 'pins', 'freezes', 'locks', 'holds fast', 'from afar', 'a mile away', 'lightning strike', 'from the sky'],
   'bolt-drag': ['bolt', 'reel', 'drags', 'pulls', 'tether', 'lash', 'from afar', 'lightning lure', 'draws them'],
   'hook-rider': ['barb', 'barbed', 'barbs', 'hook', 'hooks', 'lodge', 'lodged', 'lodges', 'drag', 'drags', 'harpoon', 'gaff', 'reel in', 'yank', 'tears free', 'hauls it'],
+  'random-ray': ['eyestalks', 'eyestalk', 'eye rays', 'rays', 'many-eyed', 'beams', 'fire a different ray', 'eye beams'],
+  'blurred-form': ['blurred', 'blur', 'displaced', 'image appears', 'few feet from where it stands', 'afterimage', 'shimmers', 'mirage', 'where it stands', 'displacement'],
   'volley-order': ['volley', 'orders a volley', 'looses at will', 'looses arrows', 'loose', 'on my mark', 'archers', 'crossbowmen', 'shoot on'],
   'ground-burst': ['erupt', 'eruption', 'erupts', 'burst', 'shockwave', 'stomp', 'stomps', 'quake', 'tremor', 'around it', 'in all directions', 'wave of', 'pulse', 'detonate', 'slams the ground', 'stamps'],
   'snap-shot': ['snap shot', 'snaps off', 'covering fire', 'as they close', 'closes to melee', 'before it can strike', 'on approach', 'anyone who approaches', 'draws near', 'comes within'],
@@ -181,7 +185,7 @@ export const VERB_KEYS = {
   'resonant-body': ['ring', 'toll', 'resonate', 'bell', 'chime', 'gong', 'bronze', 'brass', 'iron', 'crystal', 'glass', 'hollow', 'peal'], // MATERIAL keys only: 'thunder'/'echo'/'struck'/'hum'/'clang'/'deafen' bound a bell to a boar's bone shards (critic, new lines 2026-09-28)
   'throw-retrieve': ['lance', 'spear', 'axe', 'retrieve', 'recover', 'fetch', 'javelin', 'harpoon', 'anchor', 'hammer', 'thrown weapon', 'its weapon'], // a NAMED weapon — "hurls" alone is the hurler's thrown-burst (Scarpfang walked to pick up a rock from a cliff of rocks)
   seal: ['seal', 'wax', 'cauterize', 'stopper', 'close the wound', 'no healing', 'wither', 'cannot heal', 'curse', 'psalm', 'sermon'], // "brand" is the MARK's word: "so her bolts find them again" (critic run six)
-  adhesive: ['stick', 'sticky', 'tar', 'glue', 'adhere', 'cling', 'gum', 'pitch', 'resin', 'slime', 'sap', 'grip', 'held fast', 'stuck', 'mimic', 'strongroom', 'chest', 'vault', 'coffer'], // a mimic is adhesive by print (the Hollow Trust had none though offered)
+  adhesive: ['stick', 'sticky', 'tar', 'glue', 'adhere', 'cling', 'gum', 'pitch', 'resin', 'slime', 'sap', 'grip', 'held fast', 'stuck', 'mimic', 'chest', 'coffer'], // 'vault'/'strongroom' left: a floating orb that guards a vault stuck to whatever touched it (critic 2026-10-01) // a mimic is adhesive by print (the Hollow Trust had none though offered)
   'aggro-curse': ['mark', 'taunt', 'oath', 'challenge', 'goad', 'provoke', 'duel', 'single out', 'chosen', 'brand', 'sworn'], // "bless" is rally's — a mark is not a blessing (the bishop, v4 read)
   'obstacle-pull': ['pull', 'yank', 'reel', 'beckon', 'drag', 'draw', 'summon closer', 'tug', 'haul', 'tether', 'chain', 'tongue', 'tide', 'undertow'],
   lure: ['lure', 'beguile', 'song', 'call', 'beckon', 'lamp', 'light', 'invite', 'follow it', 'follow him', 'follow her', 'follow the', 'made to follow', 'drawn to follow', 'entice', 'draw', 'tempt', 'siren', 'lantern', 'glow', 'whisper', 'hymn'], // bare 'follow' read the wrong direction: a highwayman who FOLLOWS the coach got a Luring Presence (fresh four); the target follows a lure, the creature follows a quarry
@@ -243,6 +247,7 @@ export const VERB_KEYS = {
 // on a recluse and on a stealth assassin — direction and seat are part of the
 // binding, not an afterthought)
 export const DENY_KEYS = {
+  'thrown-burst': ['net', 'nets', 'netting'], 'thrown-burst-seed': ['net', 'nets', 'netting'], 'throw-retrieve': ['net', 'nets', 'netting'], // a net is a Restrain rider, never a grenade or a returning throw (the kuo-toa's three nets, critic 2026-10-01)
   'gaze-single': ['blind', 'half-blind', 'eyeless', 'sightless', 'no eyes', 'blinded'], 'gaze-aura': ['blind', 'half-blind', 'eyeless', 'sightless', 'no eyes', 'blinded'], // a half-blind dragon drew Dread Gaze from the fallback (day-one 2026-09-30)
   rally: ['volley', 'looses at will', 'looses arrows'], // a volley is the volley order's ("fire at will" reads as "looses at will" — a fixed phrase), not a rally's (the sergeant, library round 2026-09-29)
   leap: ['erupt', 'erupts', 'eruption', 'around it', 'in a circle', 'wide circle', 'from beneath'], // a leap is jump-to-a-space; a self-centred ground burst is another card (Gravesoil Eruption, critic 2026-09-29)
@@ -441,6 +446,26 @@ const shortFlavor = (s) => typeof s === 'string' && s.trim().split(/\s+/).length
  */
 // generic fills for a BLIND render (the fallback): the fiction is plain, never wrong
 const BLIND_FILLS = { douse: 'tear the brand away', projectile: 'a hurled object', wound_noun: 'wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'its whole frame tensing', lure_source: 'the creature', hook: 'its grip', terrain: 'mud', sense_target: 'moving creatures', anchor: 'its resting place', ward: 'its ward' }; // sense_target is the neutral sense: a rejected fill on a hound printed "precious metal" (the fourteen, 2026-09-28)
+// THE RAY TABLE is composed from library cards, never authored (critic 2026-10-01): each
+// ray takes its save and its failure clause from a bolt or pulse card already on the
+// shelf; the names are the engine's own. A band of 3-5 rolls a d4 over the first four.
+const RAY_SOURCES = [
+  { name: 'Numbing Ray', seed: 'slow-bolt' }, { name: 'Binding Ray', seed: 'snare-bolt' }, { name: 'Blinding Ray', seed: 'sensory-strike' },
+  { name: 'Dread Ray', shape: 'gaze-single' }, { name: 'Shoving Ray', seed: 'push-prone' }, { name: 'Withering Ray', seed: 'drain', damage: 'Necrotic' },
+];
+export function composeRayTable(band) {
+  const n = band === '3-5' ? 4 : 6;
+  return RAY_SOURCES.slice(0, n).map((r, i) => {
+    const src = r.seed ? LIBRARY_SEEDS.find((x) => x.key === r.seed)?.text : SHAPES.find((x) => x.id === r.shape)?.frames?.[band] ?? SHAPES.find((x) => x.id === r.shape)?.frames?.['6-9'];
+    const stat = /\*(\w+) Saving Throw/.exec(src ?? '')?.[1] ?? 'Dexterity';
+    let clause = (/\*Failure:\*\s*([^]*?)(?:\s*\*Success:\*[^]*)?$/.exec(src ?? '')?.[1] ?? '').trim();
+    clause = clause.replace(/, and the creature regains Hit Points[^.]*\./, '.').replace(/\{burst\}/g, '{avg_half} ({dice_half})').replace(/\{damage_type\}/g, r.damage ?? '{damage_type}');
+    // a random table wants rows of roughly equal worth: a CONDITION ray carries no damage clause (Dread Ray was 45 + Paralyzed beside four bare conditions, critic 2026-10-01)
+    if (!r.damage) clause = clause.replace(/\{avg[a-z_0-9]*\} \(\{dice[a-z_0-9]*\}\) \{?[A-Za-z_]+\}? damage(?:,? and )?/g, '').replace(/^\s*[,.]\s*/, '').replace(/^the target/i, 'The target');
+    if (!/[.!?]$/.test(clause)) clause = `${clause}.`;
+    return `${i + 1} — ${r.name}: *${stat} Saving Throw*: DC {dc}. *Failure:* ${clause}`;
+  }).join(' ');
+}
 export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // the fiction ladder: the model's fill > the sheet's own noun > the blind
   // default; an empty fills object cost four signatures (critic, 2026-09-22)
@@ -481,7 +506,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   const stomping = t.id === 'ground-burst' && /\b(?:stomps?|stamps?|slams? the ground|quake|tremor|earthquake)\b/i.test(String(ctx.concept ?? '')); // print's ground slam knocks Prone
   const obscuring = t.id === 'spew' && /\b(?:ash|ashes|smoke|dust|sand|soot|cinders|spores|chaff)\b/i.test(String(ctx.concept ?? '')); // an OBSCURING breath blinds — the pyre's ash cone poisoned (critic, fresh six)
   const dtype = solid ?? (ctx.mix === 'physical' || !ctx.energy ? (PHYSICAL.includes(fills.damage_type) ? fills.damage_type : 'Bludgeoning') : ctx.energy);
-  const engine = { dc: String(scaled.dc), atk: `+${scaled.atk}`, avg: String(full.avg), dice: full.dice, avg_half: String(half.avg), dice_half: half.dice, avg_x2: String(dbl.avg), dice_x2: dbl.dice, damage_type: dtype, melee_name: ctx.meleeName ?? 'Slam', ranged_name: ctx.rangedName ?? 'Longbow' };
+  const engine = { ray_table: t.id === 'random-ray' ? composeRayTable(bandFor(ctx.cr)) : '', /* first: the composed table carries {dc} and damage slots the keys below fill */ dc: String(scaled.dc), atk: `+${scaled.atk}`, avg: String(full.avg), dice: full.dice, avg_half: String(half.avg), dice_half: half.dice, avg_x2: String(dbl.avg), dice_x2: dbl.dice, damage_type: dtype, melee_name: ctx.meleeName ?? 'Slam', ranged_name: ctx.rangedName ?? 'Longbow' };
   for (const [k, v] of Object.entries(engine)) text = text.split(`{${k}}`).join(v);
   if (obscuring) text = text.replace('has the Poisoned condition', 'has the Blinded condition'); // the Poison-breath frame's own rider, retyped for what ash does
   if (stomping) text = text.replace(/ damage\. \*Success:\* Half damage\.$/, ' damage, and the target has the Prone condition. *Success:* Half damage only.');
@@ -518,7 +543,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
 // on such a seat, the default renders blind; when it fits, the fit wins.
 // a CLAIMED MECHANIC owes a trait the way a seat does (critic: both gaze concepts rendered no gaze — the action form floored; the trait form is free)
 export const MECHANIC_OWED_TRAIT = { gaze: ['gaze-aura'] };
-export const SEAT_DEFAULT_TRAIT = { skulker: ['assassinate', 'evasion'], trap: ['false-appearance'], warden: ['interpose'], lurker: ['assassinate'] }; // a LIST: print's composition for the seat, not one row (the 2024 Assassin carries Assassinate AND Evasion — critic, the fourteen) // keyed by style, else by family (the plain stalker seat owes Assassinate too)
+export const SEAT_DEFAULT_TRAIT = { phantom: [], skulker: ['assassinate', 'evasion'], trap: ['false-appearance'], warden: ['interpose'], lurker: ['assassinate'] }; // a LIST: print's composition for the seat, not one row (the 2024 Assassin carries Assassinate AND Evasion — critic, the fourteen) // keyed by style, else by family (the plain stalker seat owes Assassinate too)
 
 // ---------------------------------------------------------------- the two calls
 

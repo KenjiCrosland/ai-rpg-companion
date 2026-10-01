@@ -1,5 +1,6 @@
 import { LINES, buildRoutePrompt, validateRouteResponse, chooseLine, evidenceIn, familyFor, shelfCoverage, lineIdOf, verbLines, verbHits, keyClass } from '../route.mjs';
 import { pickDonor } from '../scale.mjs';
+import { readPhrases as readPhrasesFor } from '../lexicon.mjs';
 
 describe('the shelf', () => {
   test('every donor line is on the shelf and every shelf id has a donor', () => {
@@ -248,5 +249,23 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     const kobold = chooseLine({ picks: [{ line: 'lurker-trap', because: 'a kobold trapmaker' }], creature_type: 'Humanoid' }, { text: 'a kobold trapmaker' });
     expect(kobold.line).toBe('lurker');
     expect(kobold.notes.join(' | ')).toMatch(/lurker-trap: a Humanoid sets traps; it is not one/);
+    // a shifter is named by its words; "guards the bridge" is the defender's
+    const mf = chooseLine({ picks: [{ line: 'skirmisher-shifter', because: 'lost its tentacles and fights with a sword' }], creature_type: 'Aberration' }, { text: 'a mind flayer that lost its tentacles and fights with a sword' });
+    expect(mf.line).not.toBe('skirmisher-shifter'); expect(mf.notes.join(' | ')).toMatch(/a shifter is named by its words/);
+    expect(verbLines('a troll that guards the bridge and collects a toll')).toContain('defender');
+    // a phantom has no body: a living Humanoid cultist is vetoed off the phantom seat
+    const kt = chooseLine({ picks: [{ line: 'lurker-phantom', because: 'cultist of the deep' }], creature_type: 'Humanoid' }, { text: 'a fish-headed humanoid cultist of the deep who fights with net and spear' });
+    expect(kt.line).not.toBe('lurker-phantom'); expect(kt.notes.join(' | ')).toMatch(/a Humanoid has a body; a phantom has none/);
+    const kt2 = chooseLine({ picks: [{ line: 'skirmisher-hurler', because: 'fights with net and spear' }], creature_type: 'Humanoid' }, { text: 'a fish-headed humanoid cultist of the deep who drowns sailors and fights with net and spear' });
+    expect(kt2.line).not.toBe('lurker-phantom'); // the verb override obeys the body veto too
+    // an attribute inside an of-phrase modifies that noun: the drowned one is the god
+    expect(verbHits('a fish-headed cultist priest of a drowned god').some((h) => h.id === 'lurker-phantom')).toBe(false);
+    expect(verbHits("a lighthouse keeper's drowned wife").some((h) => h.id === 'lurker-phantom')).toBe(true);
+    // a dragon is a body: a paraphrased quote on the dragon pick does not cost it the body seat
+    const sd = chooseLine({ picks: [{ line: 'dragon', because: 'a true dragon — breath weapon, flight' }, { line: 'caster', because: 'breath is a rolling wall of thunder' }], creature_type: 'Dragon' }, { text: 'an adult storm dragon whose breath is a rolling wall of thunder' });
+    expect(sd.line).toBe('dragon'); expect(sd.notes.join(' | ')).toMatch(/BODY outranks the noun \(key "dragon", class body\)/);
+    // the user's own noun outranks a pick quoted from the alias text: "kuo-toa priest" is a priest
+    const pr = chooseLine({ picks: [{ line: 'skirmisher-hurler', because: 'fights with net and spear' }], creature_type: 'Humanoid' }, { text: readPhrasesFor('kuo-toa priest of a drowned god'), rawText: 'kuo-toa priest of a drowned god' });
+    expect(pr.line).toBe('caster-warpriest'); expect(pr.notes.join(' | ')).toMatch(/the user's own word "priest" \(class noun\) outranks a pick quoted from the alias text/);
   });
 });

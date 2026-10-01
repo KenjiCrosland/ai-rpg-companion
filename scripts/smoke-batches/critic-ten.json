@@ -1,0 +1,12 @@
+[
+  { "cr": "1", "concept": "goblin boss" },
+  { "cr": "5", "concept": "a troll that guards the bridge and collects a toll" },
+  { "cr": "3", "concept": "Lord Varrick Thane, a corrupt baron with a poisoned dagger" },
+  { "cr": "5", "concept": "big ogre with a club, cr 5" },
+  { "cr": "1", "concept": "kobold trapsmith who throws caltrops and runs" },
+  { "cr": "1", "concept": "a dire wolf but undead" },
+  { "cr": "9", "concept": "fire giant blacksmith" },
+  { "cr": "4", "concept": "the ghost of a bride who drowned on her wedding day" },
+  { "cr": "7", "concept": "a mind flayer that lost its tentacles and fights with a sword" },
+  { "cr": "auto", "concept": "something nasty for a level 3 party, forest, ambush" }
+]
