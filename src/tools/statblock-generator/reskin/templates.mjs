@@ -243,6 +243,7 @@ export const VERB_KEYS = {
 // on a recluse and on a stealth assassin — direction and seat are part of the
 // binding, not an afterthought)
 export const DENY_KEYS = {
+  'gaze-single': ['blind', 'half-blind', 'eyeless', 'sightless', 'no eyes', 'blinded'], 'gaze-aura': ['blind', 'half-blind', 'eyeless', 'sightless', 'no eyes', 'blinded'], // a half-blind dragon drew Dread Gaze from the fallback (day-one 2026-09-30)
   rally: ['volley', 'looses at will', 'looses arrows'], // a volley is the volley order's ("fire at will" reads as "looses at will" — a fixed phrase), not a rally's (the sergeant, library round 2026-09-29)
   leap: ['erupt', 'erupts', 'eruption', 'around it', 'in a circle', 'wide circle', 'from beneath'], // a leap is jump-to-a-space; a self-centred ground burst is another card (Gravesoil Eruption, critic 2026-09-29)
   lure: ['recluse', 'hermit', 'solitary', 'shuns', 'keeps away', 'from afar', 'at a distance', 'hides', 'hiding', 'hidden', 'unseen', 'stealth', 'assassin', 'stalks'],

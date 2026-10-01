@@ -709,6 +709,10 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(headNoun('a cliff troll that shears slabs')).toBe('troll');
     expect(headNoun('a hollow suit of tourney armor that hurls its own lance')).toBe('armor');
   });
+  test('a blind creature never draws a gaze (the half-blind dragon\'s Dread Gaze)', () => {
+    const ids = templatesFor({ archetype: 'brute', cr: 15, sections: {}, section: 'action', text: 'the last dragon of the northern range, old and half-blind' }).map((t) => t.id);
+    expect(ids).not.toContain('gaze-single');
+  });
   test('a leader\'s command words are the rally\'s keys', () => {
     const rally = TEMPLATES.find((t) => t.id === 'rally');
     expect(rankByVerb([rally], 'a warlord who bellows her troops into a frenzy')[0].concept.length).toBeGreaterThanOrEqual(2);

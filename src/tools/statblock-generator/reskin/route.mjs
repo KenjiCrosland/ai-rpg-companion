@@ -158,6 +158,12 @@ const WARDEN_TYPES = [...MADE_TYPES, 'Celestial', 'Fiend'];
 // a LEADER is print's Humanoid class (Hobgoblin Captain, Bandit Captain) — a crab that
 // "rules the wreck-fields" took the leader line and an Aura of Authority (golden 2026-09-28)
 const NO_LEADER_TYPES = ['Beast', ...MADE_TYPES];
+// a SWARM is a mass of many: the words must say so (a hermit who talks to crows came
+// out as a Swarm of Tiny Humanoids with Beaks — day-one 2026-09-30)
+const SWARM_WORDS = /\b(?:swarms?|swarming|flocks?|murder of|clouds? of|mass of|masses|hosts? of|plague of|shoals?|colony|colonies|hive|nest of|hordes?|hundreds|thousands|countless|myriad|legion of|carpet of|tide of|teeming)\b/i;
+// a TRAP body is a thing that lies in wait (a mimic, a rug, a chest): a living
+// person who SETS traps is not one (the kobold trapmaker drew False Form, day-one 2026-09-30)
+const NOT_TRAP_TYPES = ['Humanoid', 'Beast', 'Giant', 'Fey', 'Celestial', 'Dragon'];
 // an ARCHER shoots a named weapon: a lantern-mage whose "bolts find them in the
 // dark" was picked for the archer line by the route model (golden 2026-09-29) —
 // no bow, arrow, crossbow, sling or shot in the words, no archer seat ('bolts' is a caster's too)
@@ -234,16 +240,19 @@ export function chooseLine(parsed, { text, menuRole = null } = {}) {
   const picks = Array.isArray(parsed?.picks) ? parsed.picks.slice(0, 3) : [];
   let chosen = null;
   let firstKnown = null;
+  let bodyVetoed = false;
   for (const k of picks) {
     const id = lineIdOf(k?.line);
     const line = id ? BY_ID.get(id) : null;
     if (!line) { notes.push(`${String(k?.line ?? '?').slice(0, 30)}: not on the shelf`); continue; }
+    if (line.id === 'swarm' && !SWARM_WORDS.test(String(text ?? ''))) { notes.push(`${id}: a swarm is a mass of many — no mass in the words`); bodyVetoed = true; continue; } // before the family seed: a vetoed swarm must not seed itself
     firstKnown = firstKnown ?? line;
     if (family && line.family !== family) { notes.push(`${id}: outside the user's ${menuRole} role`); continue; }
     if (!evidenceIn(k?.because, text)) { notes.push(`${id}: quote not found in the input ("${String(k?.because ?? '').slice(0, 40)}")`); continue; }
     if (line.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} is not a made thing`); continue; }
     if (line.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} is not a made or risen guardian`); continue; }
     if (line.id === 'defender-leader' && resolvedType && NO_LEADER_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} commands no troops`); continue; }
+    if (line.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} sets traps; it is not one`); continue; }
     if (line.id === 'skirmisher-archer' && !ARCHER_NOUN.test(String(text ?? ''))) { notes.push(`${id}: no bow, arrow or shot in the words`); continue; }
     chosen = line;
     notes.push(`${id}: ✓ ("${String(k.because).slice(0, 40)}")`);
@@ -259,6 +268,8 @@ export function chooseLine(parsed, { text, menuRole = null } = {}) {
       if (line.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType)) continue;
       if (line.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)) continue;
       if (line.id === 'defender-leader' && resolvedType && NO_LEADER_TYPES.includes(resolvedType)) continue;
+      if (line.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType)) continue;
+      if (line.id === 'swarm' && !SWARM_WORDS.test(String(text ?? ''))) continue;
       if (line.id === 'skirmisher-archer' && !ARCHER_NOUN.test(String(text ?? ''))) continue;
       chosen = line; notes.push(`${line.id}: taken on rank — its quote was not found, no hard veto`); break;
     }
@@ -270,6 +281,10 @@ export function chooseLine(parsed, { text, menuRole = null } = {}) {
       chosen = BY_ID.get(fam) ?? null;
       if (chosen) { notes.push(`fell to ${fam}'s plain line`); fellToFamily = true; }
     }
+  }
+  if (!chosen && bodyVetoed) { // a body veto left no pick: the plain line by type (print's Humanoid NPCs are skirmishers first)
+    const byType = /^Humanoid\b/i.test(String(resolvedType ?? '')) ? 'skirmisher' : 'brute';
+    chosen = BY_ID.get(byType) ?? null; if (chosen) { notes.push(`${byType}: the plain line by type — a body veto left no pick`); fellToFamily = true; }
   }
   // the verb outranks the noun: if the user's words name a line's VERB and the
   // chosen line was not one of those, the verb line stands (hard vetoes kept)

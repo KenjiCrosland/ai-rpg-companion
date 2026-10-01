@@ -4888,6 +4888,14 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     const bw = printCanonFor('a barrow-wight', 3); expect(bw.name).toBe('Wight'); expect(bw.exact).toBe(false); // a hyphenated head borrows the Wight's rows, keeps its seat
     const bwl = printCanonFor('a barrow-wight that erupts in a shockwave of grave earth around it when roused', 7); expect(bwl?.name).toBe('Wight'); expect(bwl.exact).toBe(false); expect(bwl.borrowOnly).toBe(true); expect(bwl.traits.map((t) => t.name)).toContain('Sunlight Sensitivity');
     expect(printCanonFor('a doppelganger who wears the faces of the dead', 3).borrowOnly).toBe(false);
+    const kn = printCanonFor('a knight who has sworn never to sleep until the king is avenged', 8); expect(kn.name).toBe('Knight'); expect(kn.exact).toBe(false); expect(kn.borrowOnly).toBe(true); // an NPC class heads a borrow: the vow keeps its seat
+  });
+  test('print canon renames: a two-word ranged name is renamed whole (the Bandit\'s Multiattack read "Hurled Scimitar")', async () => {
+    const sk = scaleDonor(pickDonor(2, null, 'skirmisher'), 2, { mechanics: [] });
+    const b = await run({ archetype: 'skirmisher', cr: 2, concept: 'a bandit who robs pilgrims on the mountain road', userConcept: 'a bandit who robs pilgrims on the mountain road', resolvedType: 'Humanoid', mind: 'sapient' },
+      fullAnswer(sk, 'Pawnbroker', { 'Melee Attack': 'Knife', 'Ranged Attack': 'Hurled Knife' }));
+    const ma = b.rows.find((e) => e.name === 'Multiattack');
+    expect(ma.text).toMatch(/Scimitar or Light Crossbow/); expect(ma.text).not.toMatch(/Hurled/);
     // print's rules rows outside Traits ride along: the Doppelganger's Shape-Shift (Bonus Action) and Read Thoughts (Action)
     const dop = printCanonFor('a doppelganger who wears the faces of the dead in Ash Row', 3);
     expect(dop.rulesRows.map((r) => `${r.section}/${r.name}`)).toEqual(expect.arrayContaining(['Bonus Actions/Shape-Shift', 'Actions/Read Thoughts']));

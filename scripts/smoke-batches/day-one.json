@@ -1,0 +1,14 @@
+[
+  { "cr": "5", "concept": "a wolf" },
+  { "cr": "9", "concept": "an ogre" },
+  { "cr": "5", "concept": "a vampire spawn" },
+  { "cr": "1", "concept": "a goblin boss" },
+  { "cr": "2", "concept": "a kobold trapmaker" },
+  { "cr": "3", "concept": "a village priest" },
+  { "cr": "0.25", "concept": "a bandit who robs pilgrims on the mountain road" },
+  { "cr": "4", "concept": "a hermit who talks to crows" },
+  { "cr": "8", "concept": "a knight who has sworn never to sleep until the king is avenged" },
+  { "cr": "6", "concept": "a haunted wedding dress" },
+  { "cr": "12", "concept": "a sentient fog that rolls in off the marsh" },
+  { "cr": "15", "concept": "the last dragon of the northern range, old and half-blind" }
+]

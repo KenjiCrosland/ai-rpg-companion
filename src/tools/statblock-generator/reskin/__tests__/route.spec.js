@@ -240,5 +240,13 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     const wife = chooseLine({ picks: [{ line: 'lurker-phantom', because: 'an incorporeal dead or spectral thing' }, { line: 'brute-grappler', because: 'pulls anyone who follows her back down' }], creature_type: 'Undead' }, { text: "a lighthouse keeper's drowned wife who still climbs the stairs each night to light the lamp, and pulls anyone who follows her back down into the surf" });
     expect(wife.line).toBe('lurker-phantom');
     expect(wife.notes.join(' | ')).toMatch(/brute-grappler -> lurker-phantom: the concept's BODY outranks the noun \(key "drowned", class body\)/);
+    // day-one (2026-09-30): a hermit who talks to crows is not a swarm; a kobold who sets traps is not a trap
+    const hermit = chooseLine({ picks: [{ line: 'swarm', because: 'talks to crows' }], creature_type: 'Humanoid' }, { text: 'a hermit who talks to crows' });
+    expect(hermit.line).toBe('skirmisher');
+    expect(hermit.notes.join(' | ')).toMatch(/swarm: a swarm is a mass of many — no mass in the words/);
+    expect(chooseLine({ picks: [{ line: 'swarm', because: 'a murder of crows' }], creature_type: 'Beast' }, { text: 'a murder of crows that follows a hermit' }).line).toBe('swarm');
+    const kobold = chooseLine({ picks: [{ line: 'lurker-trap', because: 'a kobold trapmaker' }], creature_type: 'Humanoid' }, { text: 'a kobold trapmaker' });
+    expect(kobold.line).toBe('lurker');
+    expect(kobold.notes.join(' | ')).toMatch(/lurker-trap: a Humanoid sets traps; it is not one/);
   });
 });

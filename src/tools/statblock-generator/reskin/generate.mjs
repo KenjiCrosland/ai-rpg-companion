@@ -221,7 +221,9 @@ export function printCanonFor(conceptText, cr) {
   const ending = headOnly ? [] : list.filter((b) => heads.some((h) => lower(b).endsWith(` ${h}`)));
   const pick = exact ?? (ending.length ? ending.sort((a, b) => Math.abs(Number(a.cr) - cr) - Math.abs(Number(b.cr) - cr))[0] : null);
   if (!pick) return null;
-  if (headOnly && /^Beast\b/i.test(String(pick.type ?? ''))) return null; // a rich concept on a print BEAST is reskin material ("a wolf that eats the stars" keeps its seats); a composed print character is its block
+  if (headOnly && /^Beast\b/i.test(String(pick.type ?? ''))) return null;
+  // an NPC CLASS as the head of a longer concept ("a knight who has sworn never to sleep…") lends its rows and array and keeps the seat — the clause is the creature; a print MONSTER head (the Doppelganger) is its block (day-one 2026-09-30)
+  const npcHead = headOnly && !!exactPhrase && /^Humanoid\b/i.test(String(pick.type ?? '')); // a rich concept on a print BEAST is reskin material ("a wolf that eats the stars" keeps its seats); a composed print character is its block
   const last = lower(pick).split(/\s+/).at(-1);
   const traits = (pick.sections?.Traits ?? []).filter((t) => t?.name && !PRINT_BOILER.test(t.name)).map((t) => ({ name: t.name.replace(/ \(.*\)$/, ''), text: String(t.text ?? '') }));
   const rowOf = (a) => { const t = String(a.text ?? ''); const m = /\d+ \(\d+d\d+(?: \+ \d+)?\) (Bludgeoning|Piercing|Slashing)(?: damage)?\.?\s*([^]*)$/.exec(t); const note = /Attack Roll:\*? \+\d+ (\([^)]*\)),/.exec(t)?.[1] ?? null; return { name: a.name.replace(/ \(.*\)$/, ''), type: m?.[1] ?? null, rider: m ? m[2].trim() : '', note }; }; // note: print's roll parenthetical (the Doppelganger's "(with Advantage during the first round of each combat)" is its 2024 Surprise Attack)
@@ -237,7 +239,7 @@ export function printCanonFor(conceptText, cr) {
   const rulesRows = ['Actions', 'Bonus Actions', 'Reactions'].flatMap((sec) => (pick.sections?.[sec] ?? [])
     .filter((a) => a?.name && !/^(?:Multiattack|Spellcasting)$/i.test(a.name) && !/Attack Roll/.test(a.text ?? '') && !PRINT_BOILER.test(a.name)) // dice rows ride too (the Wight's Life Drain is its signature, critic 2026-09-29) — re-priced to the sheet by the value check at the stamp
     .map((a) => ({ section: sec, name: a.name, text: String(a.text ?? '') })));
-  return { name: pick.name, last, traits, melee, meleeRows, ranged, rangedRows, modes, senses, rulesRows, stats: pick.stats ?? null, exact: !!exactPhrase, borrowOnly: headOnly && !exactPhrase, casts: !!pick.derived?.has_spellcasting || (pick.sections?.Actions ?? []).some((a) => /^Spellcasting$/i.test(a?.name ?? '')), size: String(pick.size ?? '') };
+  return { name: pick.name, last, traits, melee, meleeRows, ranged, rangedRows, modes, senses, rulesRows, stats: pick.stats ?? null, exact: !!exactPhrase && !npcHead, borrowOnly: (headOnly && !exactPhrase) || npcHead, casts: !!pick.derived?.has_spellcasting || (pick.sections?.Actions ?? []).some((a) => /^Spellcasting$/i.test(a?.name ?? '')), size: String(pick.size ?? '') };
 }
 export function chassisSheet(scaled, { name = 'the chassis', type = '', size = '', headerOnly = false } = {}) {
   try {
@@ -1884,7 +1886,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       trace('signature template:', `${actionT.template} -> ${actionT.section}/"${actionT.row.name}" ("${actionT.because}")`);
       spendKeys(actionT.because);
       if (deadBareT && deadBareT !== actionT.row.name.replace(/ \(.*\)$/, '')) sweepDeadName(sections, deadBareT, actionT.row, trace);
-    } else if (wildcardAllowed && !printPlain) { // the claim gate closes the ACTION seat at CR<=2 — the fallback is that seat's, and a material body's open TRAIT seat must not reopen it (review 2026-09-28)
+    } else if (wildcardAllowed && !printPlain && !printBody && !body) { // a BODY chassis (dragon, ooze, swarm) is a complete kit — no blind fallback either (the half-blind dragon drew a Sealing Touch, day-one 2026-09-30); a print body never draws the blind fallback: its own rows are the composition, and only a verb-bound fit adds to them (day-one 2026-09-30) — the claim gate closes the ACTION seat at CR<=2 — the fallback is that seat's, and a material body's open TRAIT seat must not reopen it (review 2026-09-28)
       // the same filtered menu the fit saw (engine families, ownership); the
       // blind library hash is the last resort only when that menu is empty
       const fbVerbText = `${options.userConcept ?? concept}`; const fbSeatText = `${seatsT?.action ?? ''}`; // the user's words are the concept; the seat element is idea-level
@@ -2254,7 +2256,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           if (pr.rider && /^plus \d+ \(/.test(pr.rider) && !/ plus \d+ \(/.test(e.text)) e.text = e.text.replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\) (?:Bludgeoning|Piercing|Slashing) damage)/, `$1 ${pr.rider.replace(/\.$/, '')}`); // a "plus N (XdY) T damage" clause is the damage line's own, no period before it (the Wight's Necrotic Sword)
           else if (pr.rider && !/If the target|has the \w+ condition/.test(e.text)) e.text = `${e.text.trim().replace(/[^.!?]$/, (c) => `${c}.`)} ${pr.rider.replace(new RegExp(`\\bthe ${pc.last}\\b`, 'gi'), inline)}`;
           if (from === to || meleeRows.some((o) => o !== e && String(o.name ?? '').replace(/ \(.*\)$/, '') === to)) return;
-          const re = new RegExp(`\\b${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+          const re = new RegExp(`(?<![A-Z][a-z]+ )\\b${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g'); // not inside a two-word ranged name: "Hurled Knife" is the ranged row's to rename (the Bandit's Multiattack read "Hurled Scimitar", day-one 2026-09-30)
           e.name = to;
           for (const es3 of Object.values(monster.sections)) for (const e3 of es3) if (e3 !== e && re.test(e3.text ?? '')) e3.text = e3.text.replace(re, to);
           trace('print canon attack:', `"${from}" -> "${to}" — the ${pc.name}'s own row`);

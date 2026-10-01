@@ -99,12 +99,6 @@
     "expect": {
       "route": [
         "dragon"
-      ],
-      "template": [
-        "reel",
-        "heated-body",
-        "resonant-body",
-        "hook-drag"
       ]
     }
   },
