@@ -141,3 +141,14 @@ describe('the dynamic shelf (owner 2026-09-15: "make A the workhorse")', () => {
     }
   });
 });
+
+describe('form-ten seeds (2026-10-01)', () => {
+  test('"can turn invisible once per day" has a card: the Vanish seed, a bonus action casting Invisibility on itself (the Imp\'s shape)', () => {
+    const seed = LIBRARY_SEEDS.find((s) => s.key === 'self-invisibility');
+    expect(seed).toBeTruthy();
+    expect(seed.section).toBe('Bonus Actions');
+    expect(seed.keys).toEqual(expect.arrayContaining(['invisible', 'invisibility', 'vanish']));
+    expect(seed.text).toMatch(/casts \*Invisibility\* on itself/);
+    expect(seed.name).toMatch(/1\/Day/);
+  });
+});

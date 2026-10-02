@@ -68,7 +68,7 @@ export const LINE_VERBS = {
   'brute-grappler': ['grab', 'grabs', 'seize', 'seizes', 'hold', 'holds', 'swallow', 'swallows', 'engulf', 'crush', 'crushes', 'hug', 'hugs', 'squeeze', 'constrict', 'drags into', 'folds around', 'cage', 'cages', 'climbs in', 'climbs into', 'crawls in', 'falls in', 'falls into', 'whatever climbs', 'whatever falls', 'whoever climbs', 'cooks whatever', 'anything that enters', 'devours', 'feeds on', 'swallows whole', 'gulps down', 'eats whatever', 'eats anyone', 'eats anything', 'eats sheep', 'eats cattle', 'eats goats', 'eats men', 'eats travelers', 'eats children', 'eats the living', 'crab', 'crabs', 'scorpion', 'octopus', 'lobster', 'kraken'], // print's GRAPPLING BODIES: 2024 Giant Crab, Giant Scorpion, Giant Octopus all grapple on the attack row — a crab that "rules" fell to plain brute once the leader line was vetoed (golden 2026-09-28) // bare 'eats' read a goat that eats grave-flowers as an engulfer // "a hedge that eats sheep" never tripped the engulf read (critic, fresh six) // a thing you climb INTO is a container: the cauldron rolled juggernaut on 'iron' (golden 2026-09-28)
   'brute-regenerator': ['regenerate', 'regenerates', 'reknit', 'reknits', 'knits shut', 'regrow', 'regrows', 'heals its wounds'],
   'brute-juggernaut': ['unstoppable', 'immovable', 'grinds forward', 'smashes through', 'breaks through walls'],
-  'skirmisher-mounted': ['rides', 'ride down', 'rides down', 'astride', 'gallops', 'saddle'],
+  'skirmisher-mounted': ['horseman', 'horsemen', 'horsewoman', 'cavalier', 'lancer', 'dragoon', 'outrider', 'rides', 'riding', 'rider', 'ride down', 'rides down', 'astride', 'gallops', 'saddle', 'mounted on', 'on horseback', 'in the saddle'],
   'skirmisher-skulker': ['hides', 'hide', 'sneaks', 'stalks', 'ambushes', 'vanishes', 'slips away', 'strikes from hiding', 'unseen'],
   'skirmisher-hurler': ['hurl', 'hurls', 'throw', 'throws', 'lob', 'lobs', 'sling', 'slings', 'fling', 'flings', 'pelts'],
   'skirmisher-winged': ['swoop', 'swoops', 'dives', 'dive', 'flies', 'on the wing', 'snatches from above'],
@@ -114,7 +114,7 @@ const ENEMY_SUBJECT = /\b(?:anyone|anybody|whoever|whomever|those|anything|whate
 // BODY noun (a crab grapples, a werewolf shifts — the body is the line), or a
 // JOB noun (archer, captain, sergeant — a title the route model may weigh, but
 // never a verb that overrides its pick). The override prints the key and its class.
-const BODY_NOUNS = new Set(['crab', 'crabs', 'scorpion', 'octopus', 'lobster', 'kraken', 'werewolf', 'wererat', 'werebear', 'weretiger', 'wereboar', 'lycanthrope', 'drowned', 'ghost', 'ghosts', 'wraith', 'spectre', 'specter', 'phantom', 'shade', 'apparition', 'revenant', 'poltergeist', 'dragon', 'dragons', 'wyrm', 'wyrms', 'drake', 'drakes']);
+const BODY_NOUNS = new Set(['horseman', 'horsemen', 'horsewoman', 'cavalier', 'lancer', 'dragoon', 'outrider', /* a rider IS mounted — the placeholder's Headless Horseman went phantom, critic form-ten 2026-10-01 */ 'crab', 'crabs', 'scorpion', 'octopus', 'lobster', 'kraken', 'werewolf', 'wererat', 'werebear', 'weretiger', 'wereboar', 'lycanthrope', 'drowned', 'ghost', 'ghosts', 'wraith', 'spectre', 'specter', 'phantom', 'shade', 'apparition', 'revenant', 'poltergeist', 'dragon', 'dragons', 'wyrm', 'wyrms', 'drake', 'drakes']);
 const JOB_NOUNS = new Set(['archer', 'archers', 'bowman', 'bowmen', 'longbow', 'shortbow', 'crossbow', 'crossbows', 'arrows', 'arrow', 'sniper', 'marksman', 'markswoman', 'sharpshooter', 'volley of arrows',
   'captain', 'warlord', 'chieftain', 'sergeant', 'lieutenant', 'commander', 'his troops', 'her troops', 'its troops', 'the troops', 'the warband', 'the company', 'two forms', 'priest', 'priestess', 'cleric', 'acolyte']);
 export const keyClass = (k) => (BODY_NOUNS.has(k) ? 'body' : JOB_NOUNS.has(k) ? 'noun' : 'verb');
@@ -220,7 +220,7 @@ RULES
 - creature_type from the concept's SUBSTANCE — what it physically is: animated objects and machines are Construct; remains or spirits of the dead are Undead; natural animals are Beast; fungus and vegetation are Plant; giants are Giant. Humanoid is the NPC type — a remade, fused, grown, or woven thing is a Monstrosity however upright it stands. Never type by vibe.
 - extras: gated add-on mechanics the concept ITSELF shows, from: ${EXTRA_MECHANICS.join(', ')} — each with its own quote. Most concepts have none. Never list what would merely be cool.
 
-Return ONLY JSON, no markdown: {"picks": [{"line": "<id from the shelf>", "because": "<phrase copied from the concept>"}], "creature_type": "<one of: ${TYPES.join(', ')}>", "extras": [{"mechanic": "<one of the list>", "because": "<phrase copied from the concept>"}]}`;
+Return ONLY JSON, no markdown: {"picks": [{"line": "<id from the shelf>", "because": "<phrase copied from the concept>"}], "cr": "<the Challenge Rating this creature reads as, 0 to 30 (e.g. 5, or 1/2) — print's own CR for a print creature; otherwise the tier a table meets it at — village and folklore threats read 1 to 8, only world-enders read 17 or more>", "creature_type": "<one of: ${TYPES.join(', ')}>", "extras": [{"mechanic": "<one of the list>", "because": "<phrase copied from the concept>"}]}`;
 }
 
 function tryParse(raw) {
@@ -354,6 +354,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
   const mechanics = [...new Set([...(chosen?.implies ?? []), ...extras])];
   return {
     line: chosen?.id ?? null,
+    cr: /^\d{1,2}(?:\/[248])?$/.test(String(parsed?.cr ?? '').trim()) ? String(parsed.cr).trim() : null, // the route's CR read, used only when the user set none (form-ten 2026-10-01: a placeholder Horseman rolled CR 24)
     archetype: chosen?.family ?? null,
     role: chosen ? (chosen.role ?? (chosen.body ? null : chosen.family)) : null,
     style: chosen?.style ?? null,

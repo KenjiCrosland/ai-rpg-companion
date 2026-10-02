@@ -269,3 +269,22 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(pr.line).toBe('caster-warpriest'); expect(pr.notes.join(' | ')).toMatch(/the user's own word "priest" \(class noun\) outranks a pick quoted from the alias text/);
   });
 });
+
+describe('form-ten route reads (2026-10-01)', () => {
+  test('the route call carries its own CR read; a blank form takes it in place of the dice', () => {
+    expect(chooseLine({ picks: [{ line: 'skirmisher-mounted', because: 'riding a worg' }], creature_type: 'Fey', cr: '5' }, { text: 'Goblin Boss — riding a worg' }).cr).toBe('5');
+    expect(chooseLine({ picks: [{ line: 'skirmisher-mounted', because: 'riding a worg' }], creature_type: 'Fey', cr: '1/2' }, { text: 'Goblin Boss — riding a worg' }).cr).toBe('1/2');
+    expect(chooseLine({ picks: [{ line: 'skirmisher-mounted', because: 'riding a worg' }], creature_type: 'Fey', cr: 'high' }, { text: 'Goblin Boss — riding a worg' }).cr).toBeNull();
+    expect(chooseLine({ picks: [{ line: 'skirmisher-mounted', because: 'riding a worg' }], creature_type: 'Fey' }, { text: 'Goblin Boss — riding a worg' }).cr).toBeNull();
+  });
+  test('"riding a worg" is the mounted seat\'s verb (it stood down for want of the word, form-ten)', () => {
+    expect(verbLines('Goblin Boss — riding a worg')).toContain('skirmisher-mounted');
+    const r = chooseLine({ picks: [{ line: 'skirmisher-mounted', because: 'riding a worg' }], creature_type: 'Fey' }, { text: 'Goblin Boss — riding a worg' });
+    expect(r.line).toBe('skirmisher-mounted');
+  });
+  test('"Headless Horseman" is a rider: the placeholder example reaches the mounted seat over a phantom pick', () => {
+    expect(verbLines('Headless Horseman')).toContain('skirmisher-mounted');
+    const r = chooseLine({ picks: [{ line: 'lurker-phantom', because: 'Headless Horseman' }], creature_type: 'Undead' }, { text: 'Headless Horseman' });
+    expect(r.line).toBe('skirmisher-mounted');
+  });
+});

@@ -765,3 +765,11 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(vc.text).toMatch(/flesh\.$/);
   });
 });
+
+describe('form-ten template reads (2026-10-01)', () => {
+  test('"carries plague" is the contagion rider\'s verb — a disease, not a wound (the swarm shipped unbound, then bound to the bleed card)', () => {
+    const ranked = rankByVerb(templatesFor({ archetype: 'brute', cr: 6, sections: {}, section: 'rider' }), 'a swarm of rats that carries plague');
+    expect(ranked[0].t.id).toBe('contagion');
+    expect(rankByVerb(templatesFor({ archetype: 'brute', cr: 1, sections: {}, section: 'rider' }), 'a swarm of rats that carries plague')[0].t.id).toBe('contagion'); // at the rat swarm's own CR too
+  });
+});

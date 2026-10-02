@@ -168,7 +168,7 @@
               :width="850" :columns="userColumnsPreference" />
           </div>
           <div class="edition-preview__overlay">
-            <ParButton data-testid="convert-edition" :disabled="converting" @click="convertMonsterEdition">
+            <ParButton data-testid="convert-edition" :disabled="converting || !!monster?.language" @click="convertMonsterEdition">
               {{ converting ? 'Converting…' : `Convert to ${previewEdition} rules` }}
             </ParButton>
             <p class="edition-preview__note">One-time AI conversion (counts as one generation) — the numbers stay identical; the wording is rewritten in {{ previewEdition }} style. After that the tabs flip instantly.</p>
@@ -177,6 +177,10 @@
         <template v-else-if="displayFormat === '2014' && (loadingPart1 || loadingPart2 || monster)">
           <div v-if="!loadingPart1 && !loadingPart2 && monster && piAliasNote" class="sb24-stage-note" data-testid="pi-alias-note">
             “{{ piAliasNote }}” isn’t in the free D&D rules, so this is an original creature in its spirit.
+          </div>
+          <div v-if="!loadingPart1 && !loadingPart2 && monster && languageNote" class="sb24-stage-note" data-testid="language-note">
+            <template v-if="languageState === 'translated'">Translated into {{ languageNote }} by one extra generation; the block was built and checked in English first.</template>
+            <template v-else>The {{ languageNote }} translation didn't go through this time, so this one is in English.</template>
           </div>
           <Statblock :loadingPart1="loadingPart1"
             :width="850" :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
@@ -191,6 +195,9 @@
           </div>
           <div v-if="!loadingPart1 && monster && piAliasNote" class="sb24-stage-note" data-testid="pi-alias-note">
             “{{ piAliasNote }}” isn’t in the free D&D rules, so this is an original creature in its spirit.
+          </div>
+          <div v-if="!loadingPart1 && monster && languageNote" class="sb24-stage-note" data-testid="language-note">
+            Translation is available on 2024-format blocks only, so this 2014 block is in English.
           </div>
           <!-- Staged loading (owner ask, 2026-07-30): the assembled draft
                renders read-only while the audit/fix ladder polishes it;
@@ -317,7 +324,7 @@ import {
   generateMonster2024, buildIdentityPrompt, validateIdentityResponse,
   buildSeedSynthesisPrompt, validateSeedSynthesisResponse,
   parseGenerationResponse, pickRandomArchetype, rollEnergy, rollDamageMix, rollNamingConvention, crNumberFor, crKeyFor, ENERGY_TYPES,
-  convertEdition, toLegacyModel, fromLegacyModel,
+  convertEdition, translateStatblock, toLegacyModel, fromLegacyModel,
 } from './format-2024/generate.mjs';
 import { readRecent, recordShipped } from './skeleton/frequency-ledger.mjs';
 import { buildRandomConceptSeed, buildSynthesizedConcept, rollRandomCR } from './format-2024/concept-seeds.mjs';
@@ -337,7 +344,7 @@ import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { filterVerdicts, rejectedCanon } from './reskin/lexicon.mjs';
 import { buildRoutePrompt, validateRouteResponse, chooseLine } from './reskin/route.mjs';
-import { crFromPrompt, readPhrases, piAliasesIn } from './reskin/lexicon.mjs';
+import { crFromPrompt, crFromWords, readPhrases, piAliasesIn } from './reskin/lexicon.mjs';
 import { ARCHETYPE_HELP, ARCHETYPE_OPTIONS } from "@/util/embedded-statblock.mjs";
 import { QUOTA_FIELDS, RESERVED_HOST_FIELDS } from "@/util/quota-storage.mjs";
 import { renameStatblockReferences, moveStatblockToNewFolder } from '@/util/statblock-storage.mjs';
@@ -437,6 +444,8 @@ const displayFormat = computed(() =>
 const monsterDescription = ref('');
 // one line under the result when a Product Identity name was rewritten to a description (PI alias spec 2026-10-01)
 const piAliasNote = ref(''); // the name the user typed (e.g. "mind flayer"), or '' when no alias fired
+const languageNote = ref(''); // the output language the user asked for, or ''
+const languageState = ref(''); // 'translated' | 'failed' | ''
 const selectedChallengeRating = ref(null);
 const monster = ref(null);
 const caster = ref(false);
@@ -1034,8 +1043,12 @@ async function generateStatblockEngine(edition) {
   // is a single call, but the 2014 display still wants both halves ghosted.
   loadingPart2.value = true;
   piAliasNote.value = piAliasesIn(`${monsterName.value ?? ''} ${monsterDescription.value ?? ''}`)[0]?.matched?.replace(/'s$/i, '') ?? '';
-  const crInput = selectedChallengeRating.value || crFromPrompt(`${monsterName.value ?? ''} ${monsterDescription.value ?? ''}`) || rollRandomCR(); // the words name a CR before the dice do ("level 3 party", "cr 5")
-  const cr = crNumberFor(crInput);
+  const crFromUser = selectedChallengeRating.value || crFromPrompt(`${monsterName.value ?? ''} ${monsterDescription.value ?? ''}`); // the words name a CR before the dice do ("level 3 party", "cr 5")
+  const crInput = crFromUser || rollRandomCR();
+  let cr = crNumberFor(crInput); // a named concept with no CR takes the route call's read below; only a blank form keeps the roll
+  /* "uses 2014 rules format" in the words is a directive, not flavor (form-ten 2026-10-01) */
+  if (/\bin (?:german|french|spanish|italian|portuguese|japanese|chinese|polish|dutch|russian|korean)\b/i.test(`${monsterName.value ?? ''} ${monsterDescription.value ?? ''}`)) { languageNote.value = (/\bin (german|french|spanish|italian|portuguese|japanese|chinese|polish|dutch|russian|korean)\b/i.exec(`${monsterName.value ?? ''} ${monsterDescription.value ?? ''}`) ?? [])[1] ?? ''; languageState.value = ''; logger.log('[concept] output-language directive:', `${languageNote.value} — the block is built and checked in English, then translated in one extra call`); }
+  if (/\b2014\b[^.]{0,20}\b(?:rules|format|edition)\b|\b(?:rules|format|edition)\b[^.]{0,20}\b2014\b/i.test(`${monsterName.value ?? ''} ${monsterDescription.value ?? ''}`)) { edition = '2014'; logger.log('[concept] edition directive:', 'the words ask for the 2014 format'); }
 
   // Archetype resolution order (settled in the architecture doc):
   // user-picked → no call; Auto + concept → micro resolve call;
@@ -1218,7 +1231,15 @@ async function generateStatblockEngine(edition) {
           logger.log('[concept] pinned — reusing the resolution for an unchanged concept');
         } else {
           // CALL 1 — ROUTE
-          applyRoute(await routeOn(`${userConcept} ${monsterDescription.value}`.trim()));
+          const routed = await routeOn(userConcept); // name — description, once (the route quoted "Flying speed of 60ft Flying speed of 60f" from the doubled text)
+          applyRoute(routed);
+          if (!crFromUser) {
+            // a print creature with no CR set is its own CR (the Goblin Boss read 4 from the route, print says 1); otherwise the route's read; only a blank form keeps the roll
+            const { printHeadCr } = await import('./reskin/generate.mjs');
+            const headCr = printHeadCr(readPhrases(monsterName.value.trim() || userConcept)); // a print name in the NAME box, or heading the words ("a swarm of rats that…"), carries its own CR
+            if (Number.isFinite(headCr)) { cr = crNumberFor(headCr); logger.log('[concept] cr from print:', `${headCr} — a print creature heads the words and the user set none`); }
+            else { const ladder = crFromWords(`${monsterName.value ?? ''} ${monsterDescription.value ?? ''}`); cr = ladder; logger.log('[concept] cr from the words:', `${ladder} — the user set none and no print name heads the words; a fixed ladder, never the model's read (critic form-ten 2026-10-01)`); }
+          }
           // CALL 2 — IDENTITY, conditioned on the routed line
           try {
             const raw = await generateGptResponse(
@@ -1266,8 +1287,10 @@ async function generateStatblockEngine(edition) {
     if (!archetypeName || archetypeName === 'auto' || archetypeName === 'balanced') archetypeName = givenArchetype ?? ['brute', 'skirmisher', 'lurker', 'defender', 'artillery'][Math.floor(Math.random() * 5)];
   }
 
-  const baseConcept = monsterName.value.trim()
-    || monsterDescription.value.trim()
+  // the user's own words are NAME AND DESCRIPTION together — the name alone
+  // dropped "Flying speed of 60ft" and "no legendary actions" on the floor
+  // (form-ten 2026-10-01: the engine read "Owlbear" and "Ancient Red Dragon")
+  const baseConcept = userConcept
     || synthesizedConcept
     || randomSeed.concept;
   let concept = conceptIdentity
@@ -1340,6 +1363,7 @@ async function generateStatblockEngine(edition) {
           signatureElements: conceptElements ?? [],
           mind: conceptMind,
           movement: conceptMovement ?? [],
+          edition, // the form's edition: print's 2024-only reclasses (goblins to Fey) are not 2014's (form-ten 2026-10-01)
           // the resolve's creature_type rides along — without it the
           // reskin call re-picks and defaults to Monstrosity (4 of 5
           // first-lurker-smoke blocks drifted, 2026-09-04)
@@ -1461,6 +1485,15 @@ async function generateStatblockEngine(edition) {
 
   // Regen params — same fields the 2014 path stamps, so selectMonster
   // restores the form for Regenerate.
+  // THE TRANSLATION PASS: one extra call on the finished, lint-clean English block (owner 2026-10-01); never fails the generation
+  if (languageNote.value && finalMonster.format === '2024') {
+    try {
+      finalMonster = await translateStatblock(finalMonster, languageNote.value, (p, v) => generateGptResponse(p, v, 3));
+      languageState.value = 'translated';
+      logger.log('[concept] translated:', `${languageNote.value} — one extra call; the engine built and checked the block in English${finalMonster._translationNotes ? ` (${finalMonster._translationNotes})` : ''}`);
+      delete finalMonster._translationNotes;
+    } catch (e3) { languageState.value = 'failed'; logger.warn('[concept] translation failed — the English block ships:', e3?.message ?? e3); }
+  } else if (languageNote.value) languageState.value = 'failed';
   finalMonster.monsterDescription = monsterDescription.value;
   finalMonster.selectedChallengeRating = crKeyFor(cr);
   finalMonster.monsterName = monsterName.value || finalMonster.name;

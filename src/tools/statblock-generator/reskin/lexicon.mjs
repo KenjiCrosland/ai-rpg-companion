@@ -112,6 +112,8 @@ const FIXED_PHRASES = [
   [/\bopens? fire\b/gi, 'looses arrows'],
   [/\bfires? (a|the|another) volley\b/gi, 'looses $1 volley'],
   [/\bunder fire\b/gi, 'under attack'],
+  [/\b(?:uses?|using|in|output(?:ted)? in|with|use) (?:the )?(?:2014|2024) (?:rules|format|edition)(?: format)?\b,?\s*/gi, ''], // an edition directive is read by the form, never by the creature
+  [/\b(?:output(?:ted)?|write|written|render(?:ed)?|print(?:ed)?|give|produce|translate[d]?|make)(?: the| this| it)?(?: stat ?block| sheet| creature| monster)?(?: out)? in (?:german|french|spanish|italian|portuguese|japanese|chinese|polish|dutch|russian|korean|swedish|norwegian|danish|finnish|czech|turkish|english)\b,?\.?\s*/gi, ''], // an output-language directive is the form's business, never the creature's ("Output statblock in German" became German signature proposals, form-ten 2026-10-01)
   [/\b(holds?|holding|held) (the |a |his |her |its |their |our )?(shield ?)?(line|gate|pass|bridge|wall|door|ground|position|fort|breach|stairs?|rear)\b/gi, (m, v, det, sh, obj) => `${v.toLowerCase().startsWith('held') ? 'kept' : v.toLowerCase().startsWith('holding') ? 'keeping' : v.toLowerCase().endsWith('s') ? 'keeps' : 'keep'} ${det ?? ''}${sh ?? ''}${obj}`],
   [/\broots? (up|through|around|about|out)\b/gi, (m, p) => `${m.toLowerCase().startsWith('roots') ? 'digs' : 'dig'} ${p}`],
   [/\b(takes?|exacts?|took|taking|collects?|collected|collecting|demands?|charges?|levies|levied) (a|an|its|his|her|their|the) toll\b/gi, '$1 $2 fee'], // a toll collected at a bridge is a fee, not a bell (the troll, critic-ten 2026-10-01)
@@ -127,6 +129,16 @@ export function readPhrases(text) {
 // THE PROMPT NAMES ITS OWN CR (critic-ten 2026-10-01: "something nasty for a level 3
 // party" rolled a random CR because the select was empty). A party level reads as
 // that CR; an explicit "cr 5" reads as 5; fractions read as written.
+// BLANK CR, no print name: a fixed ladder from the user's own words, never the
+// model's taste (the same "Headless Horseman" read CR 2 one run and 18 the next —
+// critic form-ten 2026-10-01). Legendary words sit high, rank words mid, the rest
+// at a table's middle tier.
+export function crFromWords(text) {
+  const t = readPhrases(String(text ?? ''));
+  if (/\b(?:ancient|elder|arch(?:lich|mage|devil|fiend)|lich|titan|god|goddess|demon lord|avatar|primordial|kraken|tarrasque|empyrean|solar|leviathan|colossus|dragon|wyrm)\b/i.test(t)) return 15;
+  if (/\b(?:greater|dire|giant|huge|massive|monstrous|lord|lady|king|queen|champion|chief|chieftain|captain|warlord|warchief|high priest|archpriest|matriarch|patriarch|boss|elite|veteran|knight|master)\b/i.test(t)) return 8;
+  return 4;
+}
 export function crFromPrompt(text) {
   const t = String(text ?? '').toLowerCase();
   const explicit = /\bcr\s*(\d{1,2}(?:\/[248])?)\b/.exec(t); if (explicit) return explicit[1];
@@ -198,7 +210,10 @@ export function piGuard(monster) {
 // nouns the concept takes away, read on the rewritten text
 export function removalClauses(text) {
   const t = readPhrases(text).toLowerCase(); const out = [];
-  const re = /\b(?:lost|lacks|lacking|without|missing|no longer has|severed|cut off|torn off|stripped of|shorn of|minus)\s+(?:its|his|her|their|all|both|any|the|every)?\s*(?:own\s+)?([a-z-]+)/g; // one noun per clause: "lost its tentacles and fights" takes only the tentacles
+  const re = /\b(?:lost|lacks|lacking|without|missing|no longer has|severed|cut off|torn off|stripped of|shorn of|minus)\s+(?:(?:its|his|her|their|all|both|any|the|every|an?)\s+)?(?:own\s+)?([a-z-]+)/g; // an article is never the noun ("without a head" took "a", form-ten 2026-10-01) // one noun per clause: "lost its tentacles and fights" takes only the tentacles
   for (let m = re.exec(t); m; m = re.exec(t)) if (m[1] && !out.includes(m[1])) out.push(m[1]);
+  // the "no X" form: "no legendary actions, no lair" (two words at most, never "no longer")
+  const reNo = /\bno (?!longer\b)((?:legendary|lair) actions?|legendary resistance|lairs?|wings|tail|horns|breath weapon|spellcasting|spells)\b/g;
+  for (let m = reNo.exec(t); m; m = reNo.exec(t)) if (!out.includes(m[1])) out.push(m[1]);
   return out;
 }

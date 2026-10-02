@@ -1,4 +1,4 @@
-import { PI_ALIASES, PI_DENYLIST, rewritePI, readPhrases, piAliasesIn, piGuard, piScrub, removalClauses } from '../lexicon.mjs';
+import { PI_ALIASES, PI_DENYLIST, rewritePI, readPhrases, piAliasesIn, piGuard, piScrub, removalClauses, crFromWords } from '../lexicon.mjs';
 import { printCanonFor } from '../generate.mjs';
 import { chooseLine, verbLines } from '../route.mjs';
 import { DONORS } from '../donors.mjs';
@@ -48,5 +48,22 @@ describe('the Product Identity alias layer (spec 2026-10-01)', () => {
     const clean = { name: 'Vault Warden', sections: { Actions: [{ name: 'Ray Sweep', text: 'A floating orb fires a ray.' }] } };
     const before = JSON.stringify(clean); expect(piGuard(clean)).toEqual([]); expect(JSON.stringify(clean)).toBe(before);
     expect(piScrub('a gaunt githyanki knight').text).toBe('a gaunt warrior knight');
+  });
+});
+
+describe('form-ten lexicon reads (2026-10-01)', () => {
+  test('"no X" is a removal clause: the dragon the GM wants beatable loses its legendary actions and its lair', () => {
+    const got = removalClauses('Ancient Red Dragon — no legendary actions, no lair, I want it beatable by a level 10 party');
+    expect(got).toEqual(expect.arrayContaining(['legendary actions', 'lair']));
+    expect(removalClauses('a hound that no longer sleeps')).toEqual([]); // "no longer" is not a removal
+    expect(removalClauses('a hulk without a head, stripped of an arm')).toEqual(['head', 'arm']); // an article is never the noun
+  });
+  test('an edition directive is read by the form, never by the creature: "uses 2014 rules format" leaves the concept', () => {
+    expect(readPhrases('Goblin Boss — riding a worg, uses 2014 rules format')).not.toMatch(/2014|rules format/);
+    expect(readPhrases('Goblin Boss — riding a worg, uses 2014 rules format')).toMatch(/riding a worg/);
+    expect(readPhrases('Stone Golem — Output statblock in German')).not.toMatch(/german/i); // an output-language directive never reaches the creature
+  });
+  test('blank CR with no print name is a fixed ladder from the words, never the model\'s read', () => {
+    expect(crFromWords('Headless Horseman')).toBe(4); expect(crFromWords('a goblin warchief who screams')).toBe(8); expect(crFromWords('an ancient red wyrm')).toBe(15); expect(crFromWords('')).toBe(4);
   });
 });

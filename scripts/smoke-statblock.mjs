@@ -85,7 +85,7 @@ const run = async () => {
   const results = [];
   for (const [i, entry] of entries.entries()) {
     const n = String(i + 1).padStart(2, '0');
-    const label = entry.name ?? entry.concept;
+    const label = entry.name || entry.concept || entry.description || '(blank)';
     process.stdout.write(`[${n}/${entries.length}] CR ${entry.cr} — ${String(label).slice(0, 56)}… `);
     lines = [];
     const t0 = Date.now();
@@ -121,8 +121,16 @@ const run = async () => {
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.waitForSelector('#monsterName', { timeout: 30_000 });
     }
-    await page.fill('#monsterName', entry.name ?? entry.concept);
-    if (entry.name && entry.concept) await page.fill('textarea', entry.concept);
+    // FORM-SHAPED entries (2026-10-01): `name` goes to the name field even when empty,
+    // `description` to the textarea; the older concept-only shape still types the
+    // concept into the name field (and into the textarea when a name is given too)
+    if ('description' in entry || 'name' in entry) {
+      await page.fill('#monsterName', String(entry.name ?? ''));
+      if (entry.description) await page.fill('textarea', String(entry.description));
+      if (!('description' in entry) && entry.name && entry.concept) await page.fill('textarea', entry.concept);
+    } else {
+      await page.fill('#monsterName', entry.concept ?? '');
+    }
 
     // ParSelect renders a native <select>; pick the one that actually offers
     // this value (CR vs Combat role) rather than guessing at order
@@ -239,7 +247,7 @@ const run = async () => {
     const md = [
       `## ${n}. ${monster?.name ?? label} — CR ${entry.cr}${status === 'ok' ? '' : `  [${status}]`}`,
       '',
-      `**Input:** \`${entry.name ? `name: ${entry.name} | ` : ''}${entry.concept}\``,
+      `**Input:** \`${entry.name ? `name: ${entry.name} | ` : ''}${entry.concept ?? entry.description ?? ''}${entry.role ? ` | role: ${entry.role}` : ''}\``,
       `**Donor:** ${(lines.find((l) => l.includes('[reskin] donor:')) ?? '—').replace(/.*donor: /, '')}`,
       // toLegacyModel drops `generation`, so on a 2014 block the signature
       // survives only on the cached 2024 printing

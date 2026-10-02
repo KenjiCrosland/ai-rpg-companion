@@ -176,6 +176,10 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   // budget its nova carries); the card decides the total. Solve per-hit
   // damage so summedDPR hits the card's dpr, holding the donor's attack
   // count and nova-to-sustained ratio.
+  // below CR 1/2 print makes ONE attack (corpus 2026-10-01: 2 of 79 blocks at CR <= 1/4 carry Multiattack — Pseudodragon, Violet Fungus; 5 of 27 at CR 1/2): the row leaves before the per-hit solver prices the budget into one swing (a CR 1/4 kobold made two, critic form-ten)
+  if (cr < 0.5) for (const es of Object.values(scaled.sections)) { const mi = es.findIndex((e) => e.name === 'Multiattack'); if (mi >= 0) es.splice(mi, 1); }
+  // below CR 5 print makes at most TWO attacks (corpus 2026-10-01: of 216 blocks under CR 5 only the Manticore makes three) — a CR 2 hedge-witch made three
+  if (cr < 5) for (const es of Object.values(scaled.sections)) for (const e of es) if (e.name === 'Multiattack' && /makes three\b/.test(e.text ?? '')) e.text = e.text.replace(/makes three\b/, 'makes two');
   const rows = Object.entries(scaled.sections).flatMap(([sec, es]) => es.map((e) => ({ sec, e })));
   const multi = rows.find((r) => r.e.name === 'Multiattack');
   const attacks = multi ? Number(/makes (\w+)/.exec(multi.e.text)[1].replace('two', 2).replace('three', 3).replace('four', 4)) : 1;
@@ -299,7 +303,10 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
       const main = /(\d+) \(\d+d\d+(?:\s*\+\s*\d+)?\)/.exec(e.text);
       if (!main) continue;
       const half = saveDamageDiceFor(Math.max(1, Math.floor(Number(main[1]) / 2)));
-      e.text = e.text.replace(/, or \d+ \(\d+d\d+(?:\s*\+\s*\d+)?\)( \{damage_type\} damage)? if /, (m0, tok) => `, or ${half.avg} (${half.dice})${tok ?? ''} if `);
+      // the plus-rider rides the Bloodied half too, halved — print's split carries one type, but a rider the model added is not dropped on the half (the plague swarm's Poison vanished when Bloodied, critic form-ten 2026-10-01)
+      const plus = /(?<=\{damage_type\} damage) plus (\d+) \((\d+d\d+)\) \{damage_type_2\} damage(?=, or )/.exec(e.text);
+      const halfPlus = plus ? saveDamageDiceFor(Math.max(1, Math.floor(Number(plus[1]) / 2))) : null;
+      e.text = e.text.replace(/, or \d+ \(\d+d\d+(?:\s*\+\s*\d+)?\)( \{damage_type\} damage)? if /, (m0, tok) => `, or ${half.avg} (${half.dice})${tok ?? ''}${halfPlus && tok ? ` plus ${halfPlus.avg} (${halfPlus.dice}) {damage_type_2} damage` : ''} if `);
     }
   }
   // escape DCs re-derive from the FINAL stats (2024 rule: 8 + Str mod

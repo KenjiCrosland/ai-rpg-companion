@@ -25,6 +25,7 @@ import { HIT_DIE_BY_SIZE, hpFormulaFor, attackDamageDiceFor, saveDamageDiceFor }
 import { slotPlanFor } from '../chassis/slot-plan.mjs';
 import { lintStatblock, avgDice, CONDITIONS, DEFENSE_WEIGHTS, SELF_REF_STOP } from './lint.mjs';
 import { logger } from '@/util/logger.mjs';
+import { languageCodeFor, labelsFor } from '@/components/statblock-labels.mjs';
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditNameGrade, auditTypeCorrection } from './audit.mjs';
 import { buildNamingBrief, rollNamingConvention } from '../skeleton/name-registers.mjs';
 
@@ -1310,9 +1311,8 @@ export function validateConversionResponse(jsonString, model) {
   for (const [section, entries] of Object.entries(model.sections ?? {})) {
     const out = parsed[section];
     if (!Array.isArray(out) || out.length !== entries.length) return false;
-    if (!entries.every((e, i) =>
-      out[i] && out[i].name === e.name
-      && typeof out[i].text === 'string' && out[i].text.trim() !== '')) return false;
+    // rows match by POSITION; a drifted name ("Notched Saber" -> "Notched Saber Strike") is not a reason to reject the whole conversion — the English name is kept at splice (the duelist failed three tries and the user saw "try again", release smoke 2026-10-02)
+    if (!entries.every((e, i) => out[i] && typeof out[i].text === 'string' && out[i].text.trim() !== '')) return false;
   }
   return true;
 }
@@ -1349,6 +1349,70 @@ const CONVERSION_LINT_RULES = new Set([
  * edition's phrasing; the edition's phrasing lint then gates the result via
  * the usual ladder (deterministic fixes → one targeted entry-rewrite call).
  */
+// THE TRANSLATION PASS (owner, 2026-10-01: "a translation flag and just pass
+// a completed statblock as an extra call"). The engine builds, lints and audits
+// in English; this one call rewrites the PROSE of the finished block into the
+// requested language with every number, die expression, DC and distance held
+// — the same contract as convertEdition. Shape is validated before splicing;
+// a row whose digits change keeps its English text (per-row fallback); the
+// English block rides along as `english` the way `other_edition` does. The
+// card's fixed labels come from statblock-labels.mjs by `language` code.
+const HEADER_FIELDS = ['name', 'size', 'type', 'alignment', 'languages', 'senses', 'skills', 'immunities', 'resistances', 'vulnerabilities', 'gear'];
+const numbersOf = (t) => (String(t ?? '').match(/\d+(?:[.,]\d+)?/g) ?? []).map((n) => n.replace(',', '.'));
+// a DISTANCE in the English row may come back in metres — the German, French and
+// Italian rules print 1,5 m for 5 ft. (the steel tithe's Thrown Blade fell back on
+// "range 30/90 ft." -> "9/27 m", 2026-10-02): each foot number also accepts its
+// 0.3 m equivalent (5 -> 1.5, 10 -> 3, 30 -> 9, 60 -> 18, 90 -> 27, 120 -> 36)
+const metricOf = (n) => { const m = Math.round(Number(n) * 0.3 * 10) / 10; return String(m); };
+const distanceNumbers = (t) => new Set((String(t ?? '').match(/\d+(?:\/\d+)?(?=[ -]?(?:ft\.?|feet|foot)\b)/g) ?? []).flatMap((x) => x.split('/')));
+// every number in the English row must survive in the translation; the translation may ADD digits where English spelled a number out ("three attacks" -> "3回", "one creature" -> "1体" — the knife ball's Multiattack fell back, 2026-10-01)
+const numbersKept = (src, dst) => {
+  const pool = numbersOf(dst); const dist = distanceNumbers(src);
+  const take = (n) => { const i = pool.indexOf(n); if (i < 0) return false; pool.splice(i, 1); return true; };
+  return numbersOf(src).every((n) => take(n) || (dist.has(n) && take(metricOf(n))));
+};
+export function validateTranslationResponse(jsonString, model) {
+  const parsed = tryParse(jsonString);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
+  if (!parsed.header || typeof parsed.header !== 'object') return false;
+  for (const [section, entries] of Object.entries(model.sections ?? {})) {
+    if (!entries.length) continue;
+    const out = parsed.sections?.[section];
+    if (!Array.isArray(out) || out.length !== entries.length) return false;
+    if (!out.every((o) => o && typeof o.name === 'string' && o.name.trim() && typeof o.text === 'string' && o.text.trim())) return false;
+  }
+  return true;
+}
+export async function translateStatblock(monster, language, callLLM) {
+  const code = languageCodeFor(language);
+  const header = Object.fromEntries(HEADER_FIELDS.filter((k) => monster[k]).map((k) => [k, String(monster[k])]));
+  const sections = Object.fromEntries(Object.entries(monster.sections ?? {}).filter(([, es]) => es.length).map(([s, es]) => [s, es.map((e) => ({ name: e.name, text: e.text }))]));
+  const prompt = `Translate this D&D 2024 stat block into ${language}. Use the official ${language} D&D terms for conditions, damage types, abilities and spells where they exist.
+HOLD EXACTLY: every number, every die expression (2d8 + 5), every DC, every *asterisk* markdown marker, the "- " bullets, and the entry COUNT and ORDER. Keep every distance in FEET with the same number — do not convert to metres (write the unit as "ft." or the ${language} word for feet: Fuß, pieds, piedi, pies, フィート). Number words may become digits ("three attacks" -> "3"). Translate entry names too, including "Multiattack". Do not add, drop or rebalance anything.
+
+${JSON.stringify({ header, sections }, null, 2)}
+
+Return ONLY a JSON object of the same shape — {"header": {...same keys...}, "sections": {"Traits": [{"name": "...", "text": "..."}], ...}} — no markdown fences, no commentary.`;
+  const raw = await callLLM(prompt, (sIn) => validateTranslationResponse(sIn, monster));
+  if (!raw) throw new Error('Empty translation response');
+  const parsed = tryParse(raw);
+  const english = JSON.parse(JSON.stringify(monster));
+  const kept = [];
+  const out = { ...monster, sections: Object.fromEntries(Object.entries(monster.sections ?? {}).map(([sName, es]) => [sName, es.map((e, i) => {
+    const t = parsed.sections?.[sName]?.[i];
+    if (!t || !numbersKept(e.text, t.text)) { kept.push(e.name); return { ...e }; } // a number went missing — this row keeps its English
+    // the model keeps "Multiattack" as a proper noun about one run in three — the label table knows the term (Multiangriff, Attaques multiples, マルチアタック)
+    const name = e.name === 'Multiattack' && t.name === 'Multiattack' && code && labelsFor(code).multiattack !== 'Multiattack' ? labelsFor(code).multiattack : t.name;
+    return { ...e, name, text: t.text };
+  })])) };
+  for (const k of HEADER_FIELDS) if (typeof parsed.header?.[k] === 'string' && parsed.header[k].trim() && numbersKept(monster[k], parsed.header[k])) out[k] = parsed.header[k];
+  out.language = code ?? String(language).toLowerCase().slice(0, 2);
+  out.language_name = String(language);
+  out.english = english;
+  if (kept.length) out._translationNotes = `kept in English (numbers moved): ${kept.join(', ')}`;
+  return out;
+}
+
 export async function convertEdition(monster, callLLM, { degraded = false } = {}) {
   const target = monster.format === '2024' ? '2014' : '2024';
   const model = target === '2014' ? monster : fromLegacyModel(monster);

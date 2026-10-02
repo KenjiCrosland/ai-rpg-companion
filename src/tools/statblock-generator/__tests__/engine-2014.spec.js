@@ -477,13 +477,13 @@ describe('edition conversion (⇄ footer action)', () => {
     expect(converted.sections.Actions[1].text).toContain('*Melee Attack Roll:*');
   });
 
-  test('validateConversionResponse enforces section shape and entry names', () => {
+  test('validateConversionResponse enforces section shape; a drifted entry name is tolerated (rows match by position, the English name is kept)', () => {
     const model = fromLegacyModel(legacyOf());
     const good = response2024(model);
     expect(validateConversionResponse(JSON.stringify(good), model)).toBe(true);
     const renamed = JSON.parse(JSON.stringify(good));
     renamed.Actions[1].name = 'Umbra Claw';
-    expect(validateConversionResponse(JSON.stringify(renamed), model)).toBe(false);
+    expect(validateConversionResponse(JSON.stringify(renamed), model)).toBe(true); // a renamed row no longer fails three tries and a "try again" toast (release smoke 2026-10-02)
     const short = JSON.parse(JSON.stringify(good));
     short.Actions.pop();
     expect(validateConversionResponse(JSON.stringify(short), model)).toBe(false);

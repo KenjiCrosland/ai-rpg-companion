@@ -11,7 +11,8 @@ import path from 'node:path';
 const args = process.argv.slice(2);
 const dir = args.find((a) => !a.startsWith('--'));
 const out = args.includes('--out') ? args[args.indexOf('--out') + 1] : `scripts/smoke-evidence/SOLO-${path.basename(dir)}.md`;
-const hasActions = (b) => /\bActions\b/.test(b) && /Attack Roll|Saving Throw/.test(b);
+// a captured block has an Actions section in EITHER edition's grammar — 2014 prints "Melee Weapon Attack:" and "must succeed on a … saving throw" (a 2014 swarm with a single weapon row was refused as "no Actions section captured", release smoke 2026-10-02)
+const hasActions = (b) => /\bActions\b/.test(b) && /Attack Roll|Saving Throw|(?:Weapon|Spell) Attack:|saving throw/.test(b);
 let doc = `# Signature-slot review — single run, no comparison\n\nRun: \`${path.basename(dir)}\`. Each block is followed by the engine's own value-check lines (expected value vs floor, what the ladder did) and the signature trace, so the balance rules can be checked against the numbers rather than by eye. Blocks are unedited captures.\n`;
 const problems = [];
 for (const f of fs.readdirSync(dir).filter((x) => /^\d+-.*\.md$/.test(x)).sort()) {
@@ -21,7 +22,7 @@ for (const f of fs.readdirSync(dir).filter((x) => /^\d+-.*\.md$/.test(x)).sort()
   const trace = (/### Trace\n```\n([\s\S]*?)\n```/.exec(md) ?? [])[1] ?? '';
   if (!block) { doc += `\n\n---\n\n## ${f.replace(/^\d+-|\.md$/g, '')}\n\n**Concept:** ${input}\n\n_(no block — the generation did not complete; see the run's trace)_\n`; continue; } // a missing capture is noted, a truncated one refuses
   if (!hasActions(block)) { problems.push(`${f}: no Actions section captured`); continue; }
-  const lines = trace.split('\n').filter((l) => /value check|signature template|signature rider|library seed drawn|signature miss|^\[route\]|row superseded|trait renamed|chassis nova|nova geometry|nova capped|nova declined|print canon|trait bound|trait declined|energy withheld|movement owed|rename reverted|trait stripped|removal clauses|pi alias|pi guard|floating-orb overlay|imposed nova|fit declined|rider declined|fallback stands down/.test(l)).map((l) => l.replace(/^\[reskin\] /, ''));
+  const lines = trace.split('\n').filter((l) => /value check|signature template|signature rider|library seed drawn|signature miss|^\[route\]|row superseded|trait renamed|chassis nova|nova geometry|nova capped|nova declined|print canon|trait bound|trait declined|energy withheld|movement owed|rename reverted|trait stripped|removal clauses|pi alias|pi guard|floating-orb overlay|imposed nova|fit declined|rider declined|fallback stands down|cr from|edition directive|output-language/.test(l)).map((l) => l.replace(/^\[reskin\] /, ''));
   doc += `\n\n---\n\n## ${f.replace(/^\d+-|\.md$/g, '')}\n\n**Concept:** ${input}\n\n\`\`\`\n${block.trim()}\n\`\`\`\n\n**Engine trace**\n\n\`\`\`\n${lines.join('\n')}\n\`\`\`\n`;
 }
 if (problems.length) { console.error('REFUSING TO WRITE:\n  ' + problems.join('\n  ')); process.exit(1); }

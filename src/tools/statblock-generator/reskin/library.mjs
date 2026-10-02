@@ -154,6 +154,12 @@ export const LIBRARY_SEEDS = [
     text: "*Dexterity Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* Until the end of the creature's next turn, the target sheds dim light in a 10-foot radius, it can't benefit from the Invisible condition, and attack rolls against it have Advantage.",
   },
   {
+    key: 'self-invisibility', keys: ['invisible', 'invisibility', 'vanish', 'vanishes', 'unseen', 'turn invisible'], // "can turn invisible once per day" (form-ten 2026-10-01); print: the Imp's "casts Invisibility on itself"
+    section: 'Bonus Actions', archetypes: ['skirmisher', 'lurker', 'caster', 'defender', 'brute'],
+    name: 'Vanish (1/Day)',
+    text: 'The creature casts *Invisibility* on itself, requiring no spell components and using Charisma as the spellcasting ability.',
+  },
+  {
     key: 'rally', keys: ['rally', 'bolster', 'ward', 'blessing'],
     section: 'Bonus Actions', archetypes: ['defender', 'caster', 'brute'],
     name: 'Bolstering Cry (2/Day)', dpr_frac: 0.5, // the commander THP class
