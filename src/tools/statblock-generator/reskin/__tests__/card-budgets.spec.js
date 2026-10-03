@@ -7,7 +7,7 @@ describe('the 2024 business card, transcribed', () => {
 
   test('the card anchors: CR 1/2, CR 20, CR 26', () => {
     expect(cardBudget(0.5)).toEqual({ hp: 24, dpr: 8, atk: 4, ac: 14, dc: 11 });
-    expect(cardBudget(20)).toMatchObject({ hp: 315, dpr: 150 });
+    expect(cardBudget(20)).toMatchObject({ hp: 330, dpr: 150 }); // 315 + 5/CR above 17 — print's CR 20 floor is 332 (checker 2026-10-02)
     expect(cardBudget(26)).toMatchObject({ hp: 615, dpr: 225 });
   });
 

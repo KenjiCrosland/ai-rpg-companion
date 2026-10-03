@@ -324,7 +324,7 @@ import {
   generateMonster2024, buildIdentityPrompt, validateIdentityResponse,
   buildSeedSynthesisPrompt, validateSeedSynthesisResponse,
   parseGenerationResponse, pickRandomArchetype, rollEnergy, rollDamageMix, rollNamingConvention, crNumberFor, crKeyFor, ENERGY_TYPES,
-  convertEdition, translateStatblock, toLegacyModel, fromLegacyModel,
+  convertEdition, translateStatblock, to2014Grammar, toLegacyModel, fromLegacyModel,
 } from './format-2024/generate.mjs';
 import { readRecent, recordShipped } from './skeleton/frequency-ledger.mjs';
 import { buildRandomConceptSeed, buildSynthesizedConcept, rollRandomCR } from './format-2024/concept-seeds.mjs';
@@ -1379,11 +1379,12 @@ async function generateStatblockEngine(edition) {
           rejectedCanon: conceptRejectedCanon,
           userConcept: baseConcept, // the user's own words — the verb the signature must serve (the identity prose is the model's)
           material: conceptHouse, // the body's material — fire defenses derive from it (wax is vulnerable, never resistant)
-          // THE 2014 DAMAGE LINE (owner ruling 2026-09-14): 2014's
-          // table runs ~5 damage/CR vs 2024's ~7.5 — direct-2014
-          // generations price at 0.7, uniform across archetypes. Tab
-          // conversions stay format-only (numbers never rebalance).
-          dprScale: reskin2014 ? 0.7 : 1,
+          // THE 2014 LINE is the DMG table itself (2026-10-02): `edition`
+          // above makes the card read challengeRatings.json for HP, AC,
+          // attack, DC and damage. The flat 0.7 it replaces undershot the
+          // table (a CR 10 horseman at 38 sustained vs the DMG's 63-68).
+          // Tab conversions stay format-only (numbers never rebalance).
+          dprScale: 1,
           takenNames: Object.values(monsters.value ?? {})
             .filter(Array.isArray).flat().map((m) => m?.name).filter(Boolean),
         },
@@ -1405,7 +1406,9 @@ async function generateStatblockEngine(edition) {
           logger.warn('[reskin] 2014 conversion failed — the deterministic shape ships with 2024 phrasing:', e2?.message ?? e2);
           const shaped = toLegacyModel(source);
           // the classic card renders inline markdown (owner 2026-09-14)
-          // — the 2024 markers display as italic labels, no strip needed
+          // — the 2024 markers display as italic labels, no strip needed;
+          // the deterministic 2014 grammar pass still runs so no 2024 token ships (checker 2026-10-02)
+          for (const k of ['abilities', 'actions', 'bonus_actions', 'reactions', 'legendary_actions']) if (Array.isArray(shaped[k])) shaped[k] = shaped[k].map((e) => ({ ...e, name: String(e.name ?? '').replace(/\bBloodied\b/g, 'Wounded'), description: to2014Grammar(e.description) }));
           shaped.other_edition = finalMonster;
           finalMonster = shaped;
         }

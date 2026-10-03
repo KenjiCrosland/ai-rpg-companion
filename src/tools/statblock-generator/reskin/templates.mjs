@@ -21,7 +21,7 @@
  */
 import { SHAPES, bandFor } from './shapes.mjs';
 import { LIBRARY_SEEDS, drawLibraryRow } from './library.mjs';
-import { saveDamageDiceFor } from '../format-2024/dice.mjs';
+import { attackDamageDiceFor, saveDamageDiceFor } from '../format-2024/dice.mjs';
 import { readPhrases } from './lexicon.mjs';
 import { AREA_TARGETS } from './card-budgets.mjs';
 
@@ -452,7 +452,7 @@ const BLIND_FILLS = { douse: 'tear the brand away', projectile: 'a hurled object
 // shelf; the names are the engine's own. A band of 3-5 rolls a d4 over the first four.
 const RAY_SOURCES = [
   { name: 'Numbing Ray', seed: 'slow-bolt' }, { name: 'Binding Ray', seed: 'snare-bolt' }, { name: 'Blinding Ray', seed: 'sensory-strike' },
-  { name: 'Dread Ray', shape: 'gaze-single' }, { name: 'Shoving Ray', seed: 'push-prone' }, { name: 'Withering Ray', seed: 'drain', damage: 'Necrotic' },
+  { name: 'Dread Ray', shape: 'gaze-single' }, { name: 'Shoving Ray', seed: 'push-prone', damage: 'Force' } /* two of six rays deal damage — print's Beholder has three of ten (rerun 2026-10-03) */, { name: 'Withering Ray', seed: 'drain', damage: 'Necrotic' },
 ];
 export function composeRayTable(band) {
   const n = band === '3-5' ? 4 : 6;
@@ -463,6 +463,7 @@ export function composeRayTable(band) {
     clause = clause.replace(/, and the creature regains Hit Points[^.]*\./, '.').replace(/\{burst\}/g, '{avg_half} ({dice_half})').replace(/\{damage_type\}/g, r.damage ?? '{damage_type}');
     // a random table wants rows of roughly equal worth: a CONDITION ray carries no damage clause (Dread Ray was 45 + Paralyzed beside four bare conditions, critic 2026-10-01)
     if (!r.damage) clause = clause.replace(/\{avg[a-z_0-9]*\} \(\{dice[a-z_0-9]*\}\) \{?[A-Za-z_]+\}? damage(?:,? and )?/g, '').replace(/^\s*[,.]\s*/, '').replace(/^the target/i, 'The target');
+    if (r.damage && !/\{avg/.test(clause)) clause = `{avg_half} ({dice_half}) ${r.damage} damage, and ${clause.charAt(0).toLowerCase()}${clause.slice(1)}`; // a damaging ray whose card carries no damage clause (the Shoving Ray's push-prone) leads with the damage
     if (!/[.!?]$/.test(clause)) clause = `${clause}.`;
     return `${i + 1} — ${r.name}: *${stat} Saving Throw*: DC {dc}. *Failure:* ${clause}`;
   }).join(' ');
@@ -495,7 +496,11 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   let text = t.frames[bandFor(ctx.cr)];
   if (!text) return null;
   const per = Math.max(3, Math.round(scaled.per_hit ?? 6));
-  const full = saveDamageDiceFor(per);
+  // an ATTACK-ROLL frame prices like the chassis's attack rows — dice plus the striker's mod (print's Hill
+  // Giant hurls a boulder for 20 (3d10 + 4); the hollow lancer's lance flew for 18 (4d8), goldens 2026-10-03);
+  // a save frame stays dice-only
+  const atkMod = Math.floor(((scaled.stats?.[scaled.striker_stat ?? 'STR'] ?? 10) - 10) / 2); // the same striker the chassis's rows and the reader's recompute follow (scale.mjs)
+  const full = /\{atk\}/.test(text) && atkMod > 0 ? attackDamageDiceFor(per, Math.min(atkMod, per - 1)) : saveDamageDiceFor(per);
   const half = saveDamageDiceFor(Math.max(2, Math.round(per / 2)));
   const dbl = saveDamageDiceFor(per * 2); // condition-payoff's {avg_x2} — unrendered on the blind read's drowned knight
   // a SOLID breath is physical whatever the body's energy: glass shards cut, bone

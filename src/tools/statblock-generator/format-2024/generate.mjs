@@ -1101,7 +1101,7 @@ export function toLegacyModel(m) {
   // the classic card renders INLINE MARKDOWN now (owner 2026-09-14) —
   // italics survive the gate; only the bullets and the 2024 Multiattack
   // idiom scrub
-  const plain = (t) => String(t ?? '').replace(/^- /gm, '').replace(/ in any combination\b/, '');
+  const plain = (t) => String(t ?? '').replace(/^- /gm, '').replace(/ in any combination\b/, '').replace(/\*?Hit or Miss:\*?\s*/g, ''); // exports keep 2024 wording; the 2014 grammar pass runs on the CONVERSION path alone (checker 2026-10-02)
   const entryList = (name) => (m.sections?.[name] ?? []).map((e) => ({ name: e.name, description: plain(e.text) }));
   // Split merged 2024-style defense lines into 2014's damage vs condition
   // fields. Classification is by token against the known condition
@@ -1142,6 +1142,7 @@ export function toLegacyModel(m) {
   );
   const legacy = {
     name: m.name,
+    ...(m.inline ? { inline: m.inline } : {}), // the rows' short form, for the legendary header
     type_and_alignment: `${m.size} ${typeLower}${m.subtype ? ` (${m.subtype.toLowerCase()})` : ''}, ${m.alignment.toLowerCase()}`,
     armor_class: (() => {
       // 2014 prints the armor source (critic 2026-09-14: "19 (splint,
@@ -1413,6 +1414,63 @@ Return ONLY a JSON object of the same shape — {"header": {...same keys...}, "s
   return out;
 }
 
+// THE 2014 GRAMMAR PASS (checker sweep 2026-10-02: five 2024 tokens leaked into one
+// converted block): a deterministic transform for the structural idioms the
+// conversion model leaves behind — attack rolls, saving throws with Failure/
+// Success, Bloodied, capitalized damage types. Applied after the model's rows are
+// spliced, and in the never-fail legacy fallback.
+const LOWER_TYPES = /\b(Bludgeoning|Piercing|Slashing|Fire|Cold|Lightning|Thunder|Acid|Poison|Necrotic|Radiant|Psychic|Force) damage\b/g;
+// ONE 2014 SAVE IDIOM (critic's release audit 2026-10-03: three idioms shipped, two malformed — "On a failed save, 72 (16d8) fire
+// damage," with no verb; a condition save with a dangling clause). Print's: "<Targets> must make a DC n <Stat> saving throw,
+// taking N (dice) type damage on a failed save, or half as much damage on a successful one. On a failed save, the target is also …"
+// A save with no damage: "<Targets> must make a DC n <Stat> saving throw. On a failed save, <effect>. On a successful save, <effect>."
+// The 2024 lead-in "is targeted once by the following effect." folds into the subject.
+const SAVE_HEAD = /\*?(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) Saving Throw\*?:\s*DC (\d+)(?:, ([^.]+?))?\.\s*\*?Failure:\*?\s*/g;
+export function canonSave2014(text) {
+  let t = String(text ?? '');
+  const heads = [...t.matchAll(SAVE_HEAD)];
+  if (!heads.length) return t;
+  let out = ''; let cursor = 0;
+  heads.forEach((h, i) => {
+    const before = t.slice(cursor, h.index); const tail = t.slice(h.index + h[0].length, heads[i + 1]?.index ?? t.length);
+    const [failRaw, succRaw = ''] = tail.split(/\s*\*?Success:\*?\s*/);
+    const low = (s) => s.replace(/^The target\b/, 'the target').replace(/^It\b/, 'it');
+    const end = (s) => (s && !/[.!?]$/.test(s.trim()) ? `${s.trim()}.` : s.trim());
+    const lead = /(.*?)(\S[^.]*?) is targeted once by the following effect\.\s*$/s.exec(before);
+    const subject = lead ? lead[2].trim() : h[3] ? `${h[3].charAt(0).toUpperCase()}${h[3].slice(1)}` : 'The target';
+    const pre = lead ? lead[1] : before;
+    const dmg = /^(\d+ \(\d+d\d+(?: [+-] \d+)?\) \w+ damage)[.,]?\s*(?:and\s+)?([^]*)$/.exec(failRaw.trim());
+    const half = /half(?: as much)? damage/i.test(succRaw);
+    let s;
+    if (dmg) {
+      s = `${subject} must make a DC ${h[2]} ${h[1]} saving throw, taking ${dmg[1]} on a failed save${half ? ', or half as much damage on a successful one' : ''}.`;
+      if (dmg[2].trim()) s += ` On a failed save, ${low(end(dmg[2]))}`;
+      if (succRaw.trim() && !half) s += ` On a successful save, ${low(end(succRaw))}`;
+    } else {
+      s = `${subject} must make a DC ${h[2]} ${h[1]} saving throw. On a failed save, ${low(end(failRaw))}`;
+      if (succRaw.trim()) s += ` On a successful save, ${low(end(succRaw))}`;
+    }
+    out += pre + s + ' '; cursor = h.index + h[0].length + tail.length;
+  });
+  return (out + t.slice(cursor)).replace(/\s{2,}/g, ' ').trim();
+}
+export function to2014Grammar(text) {
+  let t = String(text ?? '');
+  t = t.replace(/\*?Melee or Ranged Attack Roll:\*?\s*\+(\d+)[^.]*?reach (\d+) ft\. or range ([\d/]+) ft\.\s*/g, 'Melee or Ranged Weapon Attack: +$1 to hit, reach $2 ft. or range $3 ft., one target. Hit: ');
+  t = t.replace(/\*?Melee Attack Roll:\*?\s*\+(\d+)(?: \([^)]*\))?, reach (\d+) ft\.\s*/g, 'Melee Weapon Attack: +$1 to hit, reach $2 ft., one target. Hit: ');
+  t = t.replace(/\*?Ranged Attack Roll:\*?\s*\+(\d+)(?: \([^)]*\))?, range ([\d/]+) ft\.\s*/g, 'Ranged Weapon Attack: +$1 to hit, range $2 ft., one target. Hit: ');
+  // "*Dexterity Saving Throw*: DC 15, each creature in a 60-foot Cone. *Failure:* 28 (8d6) Fire damage. *Success:* Half damage."
+  t = canonSave2014(t);
+  t = t.replace(/\*?Success:\*?\s*Half damage(?: only)?\.?/g, 'On a successful save, half as much damage.');
+  t = t.replace(/\*?Success:\*?\s*/g, 'On a successful save, ');
+  t = t.replace(/\*?Failure:\*?\s*/g, 'On a failed save, ');
+  t = t.replace(/\*?Hit or Miss:\*?\s*/g, '');
+  t = t.replace(/\bis Bloodied\b/g, 'has half its hit points or fewer').replace(/\bBloodied\b/g, 'below half its hit point maximum');
+  t = t.replace(/(\d+)-foot (Cone|Sphere|Line|Cube|Cylinder)\b/g, (m0, n, shape) => `${n}-foot ${shape.toLowerCase()}`).replace(/(\d+)-foot Emanation/g, '$1-foot radius');
+  t = t.replace(LOWER_TYPES, (m0, ty) => `${ty.toLowerCase()} damage`);
+  t = t.replace(/\bHit Points\b/g, 'hit points').replace(/\bTemporary Hit Points\b/g, 'temporary hit points');
+  return t.replace(/\s{2,}/g, ' ').trim();
+}
 export async function convertEdition(monster, callLLM, { degraded = false } = {}) {
   const target = monster.format === '2024' ? '2014' : '2024';
   const model = target === '2014' ? monster : fromLegacyModel(monster);
@@ -1452,7 +1510,7 @@ Return ONLY a JSON object with the SAME sections, SAME entry order, SAME entry n
   let converted = {
     ...model,
     sections: Object.fromEntries(Object.entries(model.sections).map(([s, es]) =>
-      [s, es.map((e, i) => ({ ...e, text: parsed[s]?.[i]?.text ?? e.text }))])),
+      [s, es.map((e, i) => ({ ...e, name: target === '2014' ? String(e.name).replace(/\bBloodied\b/g, 'Wounded') : e.name, text: target === '2014' ? to2014Grammar(parsed[s]?.[i]?.text ?? e.text) : (parsed[s]?.[i]?.text ?? e.text) }))])), // a 2024 term in a row NAME goes too ("Bloodied Burst" → "Wounded Burst")
   };
 
   let ctx2;

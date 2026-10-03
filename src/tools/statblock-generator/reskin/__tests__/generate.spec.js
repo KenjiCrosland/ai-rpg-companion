@@ -2312,7 +2312,7 @@ describe('the spell-attack pairing + blaster-first tiers (owner catch, 2026-09-0
     expect(sc.text).toMatch(/At Will:\*\*[^\n]*\*Scorching Ray\*/);
     expect(sc.text).toMatch(/1\/Day Each:\*\*[^\n]*\*Fireball\*/);
     // and the attack-roll spell brings its pairing: DC 17 -> +9
-    expect(sc.text).toMatch(/spell save DC 17, \+9 to hit with spell attacks/);
+    expect(sc.text).toMatch(/spell save DC 18, \+10 to hit with spell attacks/); // both derive from the named stat now (INT 22, PB 4), not the card's 17 / +9 (checker 2026-10-02)
   });
 });
 
@@ -5073,20 +5073,20 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     const vault = scaleDonor(pickDonor(13, null, 'defender'), 13, { mechanics: [] });
     const b = await run({ archetype: 'defender', style: null, cr: 13, concept: 'a floating orb with one great central eye and a crown of eyestalks that each fire a different ray that guards a vault', userConcept: 'a floating orb with one great central eye and a crown of eyestalks that each fire a different ray that guards a vault', resolvedType: 'Aberration', mind: 'sapient' },
       Object.assign(fullAnswer(vault, 'Vaultkeeper Crown', { 'Melee Attack': 'Crushing Jaw' }), { type: 'Aberration' }));
-    expect(b.trace).toMatch(/floating-orb overlay: speed 0 \/ Fly 20 \(hover\), Prone immunity, one Bite row, darkvision 120; the rays are the nova$/m); // nothing announced that the sheet doesn't carry
+    expect(b.trace).toMatch(/floating-orb overlay: speed 0 \/ Fly 20 \(hover\), Prone immunity, one Bite row, darkvision 120; the rays fire every turn$/m); // nothing announced that the sheet doesn't carry
     expect(b.m.speed).toBe('0 ft., Fly 20 ft. (hover)'); expect(b.m.immunities).toMatch(/Prone/); expect(b.m.senses).toMatch(/^darkvision 120 ft\./);
     const attacks = b.rows.filter((e) => /Attack Roll/.test(e.text ?? '')); expect(attacks.length).toBe(1); expect(attacks[0].name).toBe('Bite');
     expect(b.m.stats.STR).toBe(10); expect(b.m.stats.INT).toBeGreaterThanOrEqual(16); expect(String(b.m.skills ?? '')).not.toMatch(/Athletics/); // the overlay's array is mental, whatever the seat
     expect(attacks[0].text).toMatch(new RegExp(`Attack Roll:\\*? \\+${b.m.pb},`)); expect(attacks[0].text).toMatch(/Piercing damage/); // a natural bite rolls Str (10) and bites
     expect(b.trace).not.toMatch(/legendary row/); // no legendary rows at CR 13: the overlay announces none
-    expect(b.rows.some((e) => /^Eye Rays \(Recharge 5-6\)$/.test(e.name) && e.template === 'random-ray')).toBe(true);
+    expect(b.rows.some((e) => e.name === 'Eye Rays' && e.template === 'random-ray')).toBe(true); // at will, print's shape
     // legendary rows live on the 17-rung: an orb there fires one ray per legendary turn
     const vault17 = scaleDonor(pickDonor(17, null, 'defender'), 17, { mechanics: [] });
     const b17 = await run({ archetype: 'defender', style: null, cr: 17, concept: 'a floating orb with a crown of eyestalks that each fire a different ray', userConcept: 'a floating orb with a crown of eyestalks that each fire a different ray', resolvedType: 'Aberration', mind: 'sapient' },
       Object.assign(fullAnswer(vault17, 'Tyrant Orb', { 'Melee Attack': 'Crushing Jaw' }), { type: 'Aberration' }));
     expect(b17.rows.filter((e) => e.name === 'Legendary Ray').length).toBeGreaterThanOrEqual(1);
     expect(b17.rows.some((e) => /^Legendary/.test(e.name) && /Attack Roll/.test(e.text ?? ''))).toBe(false); // no limb rows in the legendary trio either
-    expect(b.rows.find((e) => e.name === 'Multiattack').text).toMatch(/makes one Bite attack and uses Eye Rays if available/);
+    expect(b.rows.find((e) => e.name === 'Multiattack').text).toMatch(/makes one Bite attack and uses Eye Rays\.$/);
     // a net is a thrown 5/15 weapon; a yuan-ti's alias text names the shifter seat
     const sk = scaleDonor(pickDonor(2, null, 'skirmisher'), 2, { mechanics: [] });
     const kt = await run({ archetype: 'skirmisher', style: null, cr: 2, concept: 'a fish-headed humanoid cultist of the deep who fights with net and spear', userConcept: 'a fish-headed humanoid cultist of the deep who fights with net and spear', resolvedType: 'Humanoid', mind: 'sapient' },
@@ -5405,6 +5405,9 @@ describe('form-ten (2026-10-01): the form\'s own words ride over print', () => {
     const { printHeadCr } = require('../generate.mjs');
     expect(printHeadCr('a swarm of rats that carries plague')).toBe(0.25); // a whole print name at the head is the CR source (the route read 10)
     expect(printHeadCr('Stone Golem — Output statblock in German')).toBe(10); expect(printHeadCr('kobold')).toBe(0.125); expect(printHeadCr('a hedge-witch who curses thieves')).toBeNull();
+    const { printCanonFor: pcf } = require('../generate.mjs');
+    expect(pcf('a death knight who leads a cavalry of the damned', 17)?.name).not.toBe('Knight'); // a head-word borrow stays near print's CR (the CR 3 Knight)
+    expect(pcf('a canal ghost that drowns bargemen', 7)?.name).toBe('Ghost'); // CR 4 print within reach of 7 still lends its rows
   });
   test('"Stone Golem" at CR 10 is print\'s array end to end: +10 to hit, a +6 damage bonus, and a Force Bolt that deals Force', async () => {
     const concept = 'Stone Golem';

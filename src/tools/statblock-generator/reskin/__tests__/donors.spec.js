@@ -496,3 +496,18 @@ describe('lurker scaling machinery (2026-09-04): ambush grammar survives the sca
     expect(w.hp).toBe(Math.round(cbl(8, {}).hp * 0.9));
   });
 });
+
+describe('the legendary tier picks a legendary rung (high-cr batch 2026-10-02)', () => {
+  const { pickDonor: pd } = require('../scale.mjs');
+  test('from CR 17 the nearest legendary rung wins, a rung above the CR included; below 17 the highest rung at or under the CR', () => {
+    expect(pd(17, 'mounted', 'skirmisher').id).toBe('skirmisher-18-mounted'); // the 13 rung carries no kit
+    expect(pd(16, 'mounted', 'skirmisher').id).toBe('skirmisher-13-mounted');
+    expect(pd(17, null, 'caster').id).toBe('caster-21');
+    expect(pd(12, null, 'caster').id).toBe('caster-12');
+    expect(pd(17, null, 'brute').id).toBe('brute-17');
+    expect(pd(19, null, 'skirmisher').id).toBe('skirmisher-18');
+    for (const [arch, style] of [['skirmisher', 'mounted'], ['skirmisher', 'skulker'], ['skirmisher', 'winged'], ['caster', null], ['caster', 'warpriest'], ['lurker', 'phantom'], ['defender', 'leader'], ['brute', 'charger']]) {
+      expect([`${arch}-${style} @ 17`, !!pd(17, style, arch).legendary]).toEqual([`${arch}-${style} @ 17`, true]);
+    }
+  });
+});

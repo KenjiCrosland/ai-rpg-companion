@@ -109,7 +109,7 @@ const FLAMMABLE = ['wax', 'tallow', 'straw', 'paper', 'parchment', 'oil', 'pitch
 export const MATERIAL_VULN = { glass: 'Thunder', crystal: 'Thunder', porcelain: 'Bludgeoning', ice: 'Fire', frost: 'Fire', snow: 'Fire', wax: 'Fire', tallow: 'Fire', straw: 'Fire', hay: 'Fire', paper: 'Fire', parchment: 'Fire', oil: 'Fire', 'lamp-oil': 'Fire', pitch: 'Fire', cloth: 'Fire', rags: 'Fire', tinder: 'Fire', kindling: 'Fire' };
 export function materialVulnerability(conceptText, material) {
   const words = `${conceptText ?? ''} ${material ?? ''}`.toLowerCase();
-  for (const [m, v] of Object.entries(MATERIAL_VULN)) if (new RegExp(`\\b${m}\\b`).test(words)) return { material: m, vulnerability: v };
+  for (const [m, v] of Object.entries(MATERIAL_VULN)) if (new RegExp(`\\b${m}\\b(?!-)`).test(words)) return { material: m, vulnerability: v }; // "glass-eyed" describes an eye, not a body (the lamplighter's Thunder vulnerability — critic's audit 2026-10-02)
   return null;
 }
 /** A body of a flammable material is vulnerable to Fire and never resistant to it. */

@@ -1,3 +1,5 @@
+import DMG_TABLE from '@/data/challengeRatings.json';
+import { hpAim2014 } from './print-2014.mjs';
 /**
  * THE 2024 MONSTER MANUAL ON A BUSINESS CARD (Blog of Holding v2, CC BY 4.0,
  * blogofholding.com/?p=8469) — the reskin pilot's single numeric authority,
@@ -31,9 +33,40 @@ export const AREA_TARGETS = 2;
 const FRACTIONAL = { 0: { hp: 3, dpr: 2 }, 0.125: { hp: 9, dpr: 4 }, 0.25: { hp: 15, dpr: 6 }, 0.5: { hp: 24, dpr: 8 } };
 const roundUp5 = (n) => Math.ceil(n / 5) * 5;
 
-export function cardBudget(cr, { legendary = false, dragon = false } = {}) {
+// THE 2014 CARD is the DMG's own table (src/data/challengeRatings.json): a 2014
+// sheet budgets HP, AC, attack bonus, save DC and damage per round against the
+// band the 2014 rules print. The flat 0.7 damage discount it replaces (owner
+// ruling 2026-09-14, "~5 damage/CR") undershot the table — a CR 10 horseman
+// sustained 38 against the DMG's 63-68 (owner, 2026-10-02).
+const CR_KEY = (cr) => ({ 0.125: '1/8', 0.25: '1/4', 0.5: '1/2' }[cr] ?? String(cr));
+export function dmgRow(cr) { return DMG_TABLE[CR_KEY(cr)] ?? null; }
+const DMG_CRS = [0, 0.125, 0.25, 0.5, ...Array.from({ length: 30 }, (_, i) => i + 1)];
+// the DMG's defensive trade, inverted: a sheet whose AC sits 2 over the table
+// may carry the HP of one CR lower and still read as its CR (and the reverse),
+// so a 2014 sheet's HP is the band mid at cr - trunc((ac - tableAC) / 2)
+export function dmgHpForAc(cr, ac) {
+  const row = dmgRow(cr); if (!row) return null;
+  const i = DMG_CRS.indexOf(cr); if (i < 0) return null;
+  const adj = Math.trunc((ac - row.armor_class) / 2);
+  const at = DMG_CRS[Math.max(0, Math.min(DMG_CRS.length - 1, i - adj))];
+  const r = dmgRow(at); return Math.round((r.min_hit_points + r.max_hit_points) / 2);
+}
+export function cardBudget(cr, { legendary = false, dragon = false, edition = null } = {}) {
+  if (edition === '2014') {
+    const row = dmgRow(cr);
+    if (row) {
+      // HP is PRINT's median at the CR, not the table's band: the table says 71–85 at CR 1 where print 2014 sits at 19–37 (critic's release audit 2026-10-03); damage, attack, AC and DC stay the table's
+      const hp = hpAim2014(cr) ?? Math.round((row.min_hit_points + row.max_hit_points) / 2);
+      let dpr = Math.round((row.min_damage_per_round + row.max_damage_per_round) / 2);
+      const boosted = legendary || dragon;
+      if (boosted && cr >= 13 && cr <= 17) dpr = roundUp5(dpr * 1.45);
+      else if (boosted) dpr = roundUp5(dpr * 1.25);
+      return { hp, dpr, atk: Number(String(row.attack_bonus).replace('+', '')), ac: row.armor_class, dc: row.save_dc, edition: '2014' };
+    }
+  }
   const frac = FRACTIONAL[cr];
-  let hp = frac ? frac.hp : (cr <= 20 ? 15 + 15 * cr : 315 + 50 * (cr - 20));
+  // CR 18–20: the 15/CR line sits under print (Balor 287 at 19, Pit Fiend 337 and Ancient White 333 at 20) — +5/CR above 17 tracks the corpus (a CR 20 hurler at 312 failed print's 332 floor, checker 2026-10-02)
+  let hp = frac ? frac.hp : (cr <= 20 ? 15 + 15 * cr + (cr > 17 ? 5 * (cr - 17) : 0) : 315 + 50 * (cr - 20));
   let dpr = frac ? frac.dpr : (cr <= 20 ? roundUp5(7.5 * cr) : roundUp5(150 + 12.5 * (cr - 20)));
   const boosted = legendary || dragon;
   if (boosted && cr >= 13 && cr <= 17) { hp = Math.round(hp * 0.8); dpr = roundUp5(dpr * 1.45); }

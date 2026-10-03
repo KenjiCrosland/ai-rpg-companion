@@ -561,6 +561,12 @@ const legendaryOwnerName = computed(() => {
     // Strip any leading article so a saved "The Hanging Shroud" doesn't
     // render as "The the hanging shroud".
     const name = props.monster?.name?.trim().replace(/^the\s+/i, '');
+    // a person's name stays a name ("Aurex the Deathless" → "Aurex"); a creature's reads as the creature (critic's audit 2026-10-02: "The aurex the deathless can take 3 legendary actions")
+    const epithet = /^([A-Z][\w'-]+)\s+(?:the|of)\s+/.exec(name ?? '');
+    if (epithet) return epithet[1];
+    // the rows' own short form when the block carries one ("the marshal", not "the ashen marshal" — critic's release audit 2026-10-03)
+    const inline = String(props.monster?.inline ?? '').trim();
+    if (inline) return inline.charAt(0).toUpperCase() + inline.slice(1);
     return name ? `The ${name.toLowerCase()}` : 'The monster';
 });
 

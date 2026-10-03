@@ -735,7 +735,7 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     const names = [...b13.text.matchAll(/\d — ([A-Z][a-z]+ Ray):/g)].map((m) => m[1]);
     expect(names.length).toBe(6); expect(names.filter((n) => MM_RAYS.includes(n)).length).toBeLessThanOrEqual(2);
     expect(b13.text).toMatch(/Binding Ray: \*Dexterity Saving Throw\*: DC \d+\. \*Failure:\* The target has the Restrained condition/); // snare-bolt's own clause
-    expect((b13.text.match(/\d+ \(\d+d\d+\)/g) ?? []).length).toBe(1); // equal worth: only the Withering Ray deals damage; the rest are bare conditions
+    expect((b13.text.match(/\d+ \(\d+d\d+\)/g) ?? []).length).toBe(2); // two of six rays deal damage (Shoving, Withering) — print's Beholder has three of ten; the rest are bare conditions
     expect(TEMPLATES.find((t) => t.id === 'adhesive').keys).not.toContain('vault');
     expect(templatesFor({ archetype: 'skirmisher', style: 'hurler', cr: 5, sections: sheet(5, 'hurler', 'skirmisher').sections, section: 'action', text: 'fights with net and spear' }).map((t) => t.id)).not.toContain('throw-retrieve'); // a net is never a returning throw
     expect(rankByVerb([rr], 'a floating orb with one great central eye and a crown of eyestalks that each fire a different ray')[0].concept.length).toBeGreaterThanOrEqual(2);
@@ -771,5 +771,18 @@ describe('form-ten template reads (2026-10-01)', () => {
     const ranked = rankByVerb(templatesFor({ archetype: 'brute', cr: 6, sections: {}, section: 'rider' }), 'a swarm of rats that carries plague');
     expect(ranked[0].t.id).toBe('contagion');
     expect(rankByVerb(templatesFor({ archetype: 'brute', cr: 1, sections: {}, section: 'rider' }), 'a swarm of rats that carries plague')[0].t.id).toBe('contagion'); // at the rat swarm's own CR too
+  });
+});
+
+describe('attack-roll frames price like attack rows (goldens 2026-10-03: the hollow lancer\'s 18 (4d8) lance)', () => {
+  test('throw-retrieve carries the striker\'s mod inside the dice; a save frame stays dice-only', () => {
+    const scaled = sheet(7, 'hurler', 'skirmisher'); const mod = Math.floor((scaled.stats[scaled.striker_stat ?? 'STR'] - 10) / 2);
+    const ctx = { scaled, archetype: 'skirmisher', cr: 7, energy: null, mix: 'physical', meleeName: 'Lance', imposed: [], name: 'lancer', mechanics: [], concept: 'a lancer who hurls its lance' };
+    const thrown = renderTemplate(TEMPLATES.find((x) => x.id === 'throw-retrieve'), ctx, { projectile: 'its lance' });
+    expect(mod).toBeGreaterThan(0);
+    const dm = /(\d+) \((\d+)d(\d+) \+ (\d+)\) \w+ damage/.exec(thrown.text); expect(dm).not.toBeNull();
+    expect(Number(dm[4])).toBe(mod); expect(Number(dm[1])).toBe(Math.floor(Number(dm[2]) * (Number(dm[3]) + 1) / 2) + mod);
+    const spew = renderTemplate(TEMPLATES.find((x) => x.id === 'spew'), { ...ctx, energy: 'Poison', mix: 'energy' }, {});
+    expect(spew.text).toMatch(/\d+ \(\d+d\d+\) \w+ damage/);
   });
 });

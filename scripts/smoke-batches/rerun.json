@@ -1,0 +1,17 @@
+[
+ {
+  "cr": "5",
+  "concept": "a brass gate-golem that crushes anyone who forces the lock",
+  "rules": "2024"
+ },
+ {
+  "cr": "8",
+  "concept": "a hydra",
+  "rules": "2024"
+ },
+ {
+  "cr": "13",
+  "concept": "a beholder that guards a vault",
+  "expect": {}
+ }
+]

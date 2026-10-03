@@ -17,7 +17,17 @@ export function pickDonor(cr, style = null, archetype) {
   const pool = mine.filter((d) => (style ? d.style === style : !d.style));
   const fallback = mine.filter((d) => !d.style);
   const from = (list) => list.filter((d) => d.cr <= cr).sort((a, b) => b.cr - a.cr)[0] ?? list[0];
-  return (pool.length ? from(pool) : from(fallback)) ?? from(fallback);
+  // THE LEGENDARY TIER (high-cr batch 2026-10-02): from CR 17 a sheet carries the
+  // kit, so the pick prefers a legendary rung — the nearest one, a rung above the
+  // CR included (a CR 17 mounted skirmisher scaled the kit-less 13 rung up while
+  // the 18 rung sat one step away; its 2014 sheet shipped with no legendary actions)
+  const fromTier = (list) => {
+    if (cr < 17) return from(list);
+    const kit = list.filter((d) => d.legendary);
+    if (!kit.length) return from(list);
+    return kit.slice().sort((a, b) => Math.abs(a.cr - cr) - Math.abs(b.cr - cr) || b.cr - a.cr)[0];
+  };
+  return (pool.length ? fromTier(pool) : fromTier(fallback)) ?? from(fallback);
 }
 
 // group 2's first alternative is the caster family's HYBRID row (2024's
@@ -33,8 +43,8 @@ export function pickDonor(cr, style = null, archetype) {
 // damage never parses, same surgery the hybrid row needed.
 const ATTACK_RE = /(\+\d+)(?: \(with Advantage[^)]*\))?(, reach \d+ ft\. or range [\d/]+ ft\.|, reach [^.]+|, range [^.]+)? ?\.? (\d+) \((\d+d\d+(?:\s*\+\s*\d+)?)\) ([\w{}]+) damage/;
 
-export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null, dprScale = 1 } = {}) {
-  const card = cardBudget(cr, { legendary: !!legendary });
+export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null, dprScale = 1, edition = null } = {}) {
+  const card = cardBudget(cr, { legendary: !!legendary, edition }); // a 2014 sheet prices against the DMG table (2026-10-02)
   const scaled = JSON.parse(JSON.stringify(donor));
   // THE 2014 DAMAGE LINE (owner + critic 2026-09-14): 2014's table runs
   // ~5 damage/CR vs 2024's ~7.5 — direct-2014 generations pass 0.7
@@ -104,8 +114,11 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   // Ghost runs 0.6x of card — Incorporeal + hover ARE the armor; the
   // winged 0.98 path below is untouched, its tax still charges once)
   const deepScale = donor.hp_scale && donor.hp_scale < 0.9 && /Fly/i.test(donor.speed ?? '');
-  scaled.hp = (donor.hp_scale && (deepScale || !/Fly/i.test(donor.speed ?? '')))
-    ? Math.round(card.hp * donor.hp_scale) : card.hp;
+  // a deep discount eases at the legendary tier: print's incorporeals stop at CR 4 (the Ghost's 0.6), and a CR 24 phantom at 0.69 of card sat 25% under print's floor (checker sweep 2026-10-02) — 0.85 is the Lich's own ratio
+  // print's own deep discounts end at CR 6 (Ghost 4, Wraith 5, Invisible Stalker 6): from CR 7 a discount keeps at least 0.85 of the card (goldens gate table 2026-10-02: a CR 7 lurker at 82 HP, a CR 13 warden at 161, both under print's floor)
+  const hpScale = donor.hp_scale ? (cr >= 7 ? Math.max(donor.hp_scale, 0.85) : donor.hp_scale) : null;
+  scaled.hp = (hpScale && (deepScale || !/Fly/i.test(donor.speed ?? '')))
+    ? Math.round(card.hp * hpScale) : card.hp;
   scaled.atk = card.atk; scaled.dc = card.dc;
   // full print ladder: the old ceiling of 6 shipped wrong PB/saves/skills
   // on every CR 21+ block (Stormfall +6 at CR 22, lint-caught 2026-08-20)
@@ -131,7 +144,15 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   // whose final speed carries Fly pays the measured 10% (flyers 0.98 of
   // card HP vs grounded 1.08, corpus sweep). Winged donors, movement
   // grants, and any future wings all price identically.
-  if (/Fly/.test(scaled.speed) && !deepScale) scaled.hp = Math.round(scaled.hp * 0.9);
+  // the flight tax stops at the legendary tier: print's CR 17+ fliers are not lighter (Balor 287 at 19, Pit Fiend 337 at 20, Solar 363 at 21) and a taxed skirmisher-18 sat under print's lowest HP (checker 2026-10-02)
+  // and never on top of the legendary HP trade (dragon-15 at CR 15: 240 × 0.8 × 0.9 = 173 against the Adult Green's 207)
+  if (/Fly/.test(scaled.speed) && !deepScale && cr < 17 && !(legendary && cr >= 13)) scaled.hp = Math.round(scaled.hp * 0.9);
+  // discounts never STACK below 0.85 of the card from CR 7 (a hovering CR 13 warden paid the ward tax and the flight tax to 0.77 and sat under print's floor — goldens gate table 2026-10-02)
+  if (cr >= 7) scaled.hp = Math.max(scaled.hp, Math.round(card.hp * 0.85));
+  // a 2014 sheet's HP is the DMG band after the AC trade — the donors' hp_scale
+  // and the flight tax are 2024-card calibrations that left four of five 2014
+  // sheets under the band (owner's numbers check, 2026-10-02)
+  if (edition === '2014') scaled.hp = card.hp; // print's 2014 median at the CR (the SRD 5.1), not the table's band after an AC trade — a CR 1 goblin sat at 77 HP where print 2014 is 19–37 (critic's release audit 2026-10-03)
   // STAT COHERENCE (raise-only, the skeleton path's idiom): a reader
   // recomputes attack = striker mod + PB, so the striker stat rises to
   // pay the card's attack bonus. The DC stays at card — print lets DCs
@@ -190,7 +211,8 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   // fists on a CR 7). A gated support row is budget-neutral.
   const novaRows = rows.filter((r) => r.e.gate && /\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) [\w{}]+ damage/.test(r.e.text));
   // iterate per-hit until in band (coarse then fine — the dice snap anyway)
-  let perHit = Math.max(4, Math.round(card.dpr / (attacks + legendaryStrikes + 1)));
+  const legendaryHits = legendaryStrikes * 3; // the DMG counts every legendary use: a cost-1 strike row fires three times a round (critic's release audit 2026-10-03 — 2014 legendaries ran 1.5–2.3× the band with Multiattack solved to the band and three strikes on top; a 2024 lurker at 18 read +8 on offense, past print's +7 ceiling). Receipt: print 2024 legendaries sit at ~1.0× the legendary card by this count (Adult Brass 126 vs 125 at CR 13)
+  let perHit = Math.max(4, Math.round(card.dpr / (attacks + legendaryHits + 1)));
   // PER-USE nova ceiling, measured against ALL printed single-entry
   // maxima (2026-08-18, the reviewer's non-dragon rider — which was
   // earned: 5.5xCR ran 75% over print at the top). Print's biggest
@@ -209,7 +231,7 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   for (let i = 0; i < 40; i += 1) {
     const sustained = perHit * (attacks + legendaryStrikes);
     const novas = novaRows.map((r) => ({ avg: novaAvgFor(perHit), gate: r.e.gate }));
-    const { ok, actual, target } = withinBudget(cr, sustained, novas, { legendary: !!legendary, dprScale: scaled.dpr_scale ?? 1 });
+    const { ok, actual, target } = withinBudget(cr, sustained, novas, { legendary: !!legendary, dprScale: scaled.dpr_scale ?? 1, edition });
     // a scaled-down block (dprScale < 1) descends from the donor's
     // numbers — first-in-band from above is the band CEILING, ~20%
     // over the 2014 line (live 2026-09-14); keep descending to within

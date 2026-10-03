@@ -663,7 +663,7 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // carries the name (a legendary "Scatter" may use the ACTION Scatter).
     {
       const allEntries = entriesOf(monster);
-      const OK_REFS = new Set(['spellcasting', 'multiattack', 'dash', 'disengage', 'dodge', 'hide', 'help', 'ready', 'search', 'attack']);
+      const OK_REFS = new Set(['spellcasting', 'multiattack', 'dash', 'disengage', 'dodge', 'hide', 'help', 'ready', 'search', 'attack', 'reaction', 'bonus action', 'action', 'legendary action']); // "use its Reaction to…" is the leader's print idiom, not a row reference (high-cr batch 2026-10-02)
       const ownBase = entry.name.split(' (')[0].toLowerCase();
       for (const m of entry.text.matchAll(/\buses? (?:its |the )?([A-Z][\w' -]+?)(?:\s+(?:action|reaction))?(?=[.,;]|\s+(?:if|to|again|twice|three|or|while|on|against|and|as|instead)\b)/g)) {
         for (const refRaw of m[1].split(/\s+or\s+/)) {
@@ -1149,7 +1149,7 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       if (/^\s+stat(?:istics|\s+block)\b/i.test(entry.text.slice(ref.index + ref[0].length))) continue;
       for (const part of ref[1].split(/ or /)) {
         const name = part.replace(/^\([A-C]\)\s*/, '').replace(/'s\b.*$/, '').replace(/\s+(?:action|attack|twice|once)$/, '').trim();
-        if (!name || !/^[A-Z]/.test(name) || /^(?:Spellcasting|Multiattack)$/i.test(name)) continue;
+        if (!name || !/^[A-Z]/.test(name) || /^(?:Spellcasting|Multiattack|Reaction|Bonus Action|Legendary Action|Action)$/i.test(name)) continue; // "use its Reaction to…" is the leader's print idiom (checker 2026-10-02)
         if (!entryNames.some((n) => n === name || n.startsWith(name))) {
           push('undefined-attack-ref', 'reject', `${where} references a use of "${name}", which is not defined anywhere in the statblock — rewrite the reference to name a real entry`, undefined, loc);
         }

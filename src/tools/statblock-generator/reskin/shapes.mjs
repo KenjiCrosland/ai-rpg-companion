@@ -195,7 +195,7 @@ export const SHAPES = [
   {
     id: 'shell-withdraw', name: 'Shell Defense', cite: 'Tortle/Shell Defense (Monsters of the Multiverse)',
     roles: ['brute', 'defender', 'lurker'], styles: [], cr_range: [0, 30], replaces: 'bonus-alt',
-    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature withdraws into {shell}. Until it emerges, it gains a +4 bonus to Armor Class and has the Prone condition; its Speed is 0 and can\'t increase, it has Disadvantage on Dexterity saving throws, it can\'t take Reactions, and the only action it can take is a Bonus Action to emerge.'])),
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature withdraws into {shell}. Until it emerges, it gains a +4 bonus to Armor Class and has the Prone condition; its Speed is 0 and can\'t increase, it has Disadvantage on Dexterity saving throws, it can\'t take Actions or Reactions, and it can emerge only as a Bonus Action.' /* "the only action it can take" read as an action reference to the lint (goldens gate table 2026-10-02) */])),
   },
   // BACKLOG PASS THREE (2026-09-21, the keys-and-templates pass): four cards
   // the miss log and the critic's v2 read asked for by name.

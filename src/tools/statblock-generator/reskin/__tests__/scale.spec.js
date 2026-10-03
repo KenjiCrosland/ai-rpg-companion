@@ -25,12 +25,12 @@ describe('the flight tax (corpus sweep 2026-08-19: flyers 0.98 vs grounded 1.08)
   const { pickDonor: pdw, scaleDonor: sdw } = require('../scale.mjs');
   const { cardBudget: cbw } = require('../card-budgets.mjs');
 
-  test('winged donors ship ~90% of card HP; grounded lines ship full card', () => {
+  test('winged donors ship ~90% of card HP below the legendary tier; grounded lines ship full card; at 17+ the tax stops (print fliers are not lighter there — checker 2026-10-02)', () => {
     for (const cr of [3, 8, 13, 18]) {
       const winged = sdw(pdw(cr, 'winged', 'skirmisher'), cr);
       const plain = sdw(pdw(cr, null, 'skirmisher'), cr);
       const card = cbw(cr, { legendary: !!pdw(cr, 'winged', 'skirmisher').legendary });
-      expect(winged.hp).toBe(Math.round(card.hp * 0.9));
+      expect(winged.hp).toBe(cr >= 17 ? card.hp : Math.round(card.hp * 0.9));
       expect(plain.hp).toBe(cbw(cr, { legendary: !!pdw(cr, null, 'skirmisher').legendary }).hp);
     }
   });
