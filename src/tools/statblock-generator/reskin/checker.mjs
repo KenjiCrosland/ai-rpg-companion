@@ -228,6 +228,12 @@ function gateStructure(m, ctx, F) {
     const n = /makes (\w+)/i.exec(multi.text)?.[1]; const count = WORDS[n?.toLowerCase()] ?? Number(n);
     const named = [...String(multi.text).matchAll(/\b([A-Z][\w'-]+(?: [A-Z][\w'-]+)*)\b/g)].map((x) => x[1]).filter((x) => names.includes(x));
     if (count && /makes \w+ ([A-Z][\w' -]+?) attacks\b/.test(multi.text) && !named.length) F('multiattack-row', 'fail', `Multiattack names a row that does not exist: "${multi.text}"`, multi.text);
+    // EVERY name in the "using A or B in any combination" list must be a row: "Slam or Mirror Slam" passed because "Slam"
+    // exists and the nested "Mirror Slam" was never checked (critic's blockers audit 2026-10-03)
+    const combo = /using ([^.]*?) in any combination/.exec(multi.text ?? '');
+    if (combo) for (const nm of combo[1].split(/,|\bor\b/).map((x) => x.trim().replace(/^\([A-Z]\)\s*/, '')).filter(Boolean)) {
+      if (!names.includes(nm)) F('multiattack-row', 'fail', `Multiattack names "${nm}", which is not a row`, nm);
+    }
     if (count && count > 1 && named.length === 0) F('multiattack-count', 'soft', `Multiattack says ${count} but names no rows`, count);
   }
   for (const { sec, e } of allRows(m)) {
@@ -235,6 +241,7 @@ function gateStructure(m, ctx, F) {
     for (const ref of String(e.text ?? '').matchAll(/(?:use of|uses|cast) ([A-Z][\w' -]+?)(?=[.,;]| if| to| or| in any| instead|$)/g)) {
       const target = ref[1].trim(); if (/^(Spellcasting|Multiattack|Dash|Disengage|Dodge|Hide|Help|Ready|Search|Attack|Reaction|Bonus Action)$/.test(target)) continue;
       if (/\bcast\b/.test(ref[0])) continue;
+      if (/stat block$/i.test(target)) continue; // print's own idiom: the Treant's Animate Trees points at another creature's stat block (critic's blockers audit 2026-10-03)
       if (!names.includes(target)) F('dangling-ref', 'fail', `${sec}/${bare(e.name)} references "${target}", which is not a row`, target);
     }
     for (const mk of String(e.text ?? '').matchAll(/makes (?:one|two|three|\d+) ([A-Z][\w' -]+?) attacks?\b/g)) if (!names.includes(mk[1].trim()) && !/^Multiattack/.test(e.name ?? '')) F('dangling-ref', 'fail', `${sec}/${bare(e.name)} makes a "${mk[1].trim()}" attack, which is not a row`, mk[1].trim());
@@ -242,7 +249,10 @@ function gateStructure(m, ctx, F) {
     if (payoff) { const producer = allRows(m).some(({ e: o }) => o !== e && new RegExp(`has the ${payoff[1]} condition`).test(o.text ?? '')); if (!producer) F('payoff-producer', 'soft', `${sec}/${bare(e.name)} pays off the ${payoff[1]} condition but nothing on the sheet imposes it`, payoff[1]); }
     const eng = /(?:swallows|engulfs) one (Tiny|Small|Medium|Large|Huge|Gargantuan) or smaller creature/.exec(e.text ?? '');
     if (eng && SIZES.indexOf(eng[1]) > SIZES.indexOf(m.size)) F('engulf-size', 'fail', `${sec}/${bare(e.name)} engulfs ${eng[1]} on a ${m.size} body (print: the Gelatinous Cube takes its own size or smaller)`, eng[1]);
-    if (/\. ,|,\s*,|\.\.(?!\.)|\s,/.test(e.text ?? '')) F('punctuation', 'fail', `${sec}/${bare(e.name)}: a ". ," or ", ," sequence in the text`, bare(e.name));
+    if (/\bMelee or Melee or\b|\bRanged or Ranged\b/.test(e.text ?? '') || (ctx.legacyDoubled ?? []).includes(bare(e.name))) F('punctuation', 'fail', `${sec}/${bare(e.name)}: a doubled attack label${(ctx.legacyDoubled ?? []).includes(bare(e.name)) ? ' on the 2014 sheet' : ''}`, bare(e.name)); // "Melee or Melee or Ranged Spell Attack" on five 2014 sheets (critic's regressions brief 2026-10-04)
+    if (/half as much damage|Half damage/i.test(e.text ?? '') && !/\d+ \(\d+d\d+/.test(e.text ?? '')) F('half-no-referent', 'fail', `${sec}/${bare(e.name)}: "half as much damage" with no damage on the row`, bare(e.name));
+    if (sec === 'Legendary Actions' && !/^Legendary Action Uses/.test(e.name ?? '') && /^(?:The \w+|It) can['’]t (?:take|use) this action again[^.]*\.?$/i.test(String(e.text ?? '').trim())) F('legendary-no-effect', 'fail', `${sec}/${bare(e.name)}: a legendary action with no effect, only its recharge clause`, bare(e.name));
+    if (/\. ,|,\s*,|\.\.(?!\.)|\s,|(?<!ft)\.\s+(?:and|plus)\b/.test(e.text ?? '')) F('punctuation', 'fail', `${sec}/${bare(e.name)}: a ". ,", ", ," or ". and" sequence in the text`, bare(e.name)); // ". and the target has the Paralyzed condition" on the lich's touch (critic's blockers audit 2026-10-03)
     const reach = /reach (\d+) ft\./.exec(e.text ?? '');
     if (reach && Number(reach[1]) > (SIZE_REACH[m.size] ?? 5) && !TETHER.test(`${e.name} ${e.text}`)) F('reach', Number(reach[1]) > (SIZE_REACH[m.size] ?? 5) + 10 ? 'fail' : 'soft', `${sec}/${bare(e.name)}: reach ${reach[1]} on a ${m.size} body with no tether word`, Number(reach[1]));
   }
@@ -265,7 +275,17 @@ function gateGates(m, ctx, F) {
     }
     const noGrapple = /escape DC/.test(e.text ?? '') ? String(e.text ?? '').replace(/(?:While Grappled, the target has|,? and (?:it|the target) has) the Restrained condition(?: until the grapple ends)?\.?/g, '') : String(e.text ?? ''); // only a row that grapples (an escape DC) gets the exemption // print's grapple shapes: the Giant Toad's "While Grappled…" and the Kraken's "and it has the Restrained condition until the grapple ends" // print's grapple shape (the Giant Toad, the Mimic): the escape DC is the save
     if (!e.print && /Attack Roll/.test(e.text ?? '') && !/Saving Throw/.test(e.text ?? '') && /has the (Frightened|Poisoned|Blinded|Deafened|Charmed|Stunned|Paralyzed|Restrained) condition/.test(noGrapple)) F('rider-no-save', 'soft', `${sec}/${bare(e.name)}: a ${/has the (?!Grappled\b)(\w+) condition/.exec(noGrapple)[1]} rider on every hit with no save`, bare(e.name)); // print's hit riders without a save are Grappled and Prone (critic's audit: Frightened on every hit, three times a round)
-    if (!gated && sec !== 'Traits' && /each creature/i.test(e.text ?? '') && /has the \w+ condition/.test(e.text ?? '') && !/\d+ \(\d+d\d+/.test(e.text ?? '')) F('control-aoe-ungated', 'soft', `${sec}/${bare(e.name)}: at-will multi-target control with no damage and no gate`, bare(e.name));
+    if (!gated && sec !== 'Traits' && /each creature/i.test(e.text ?? '') && /has the \w+ condition/.test(e.text ?? '') && !/\d+ \(\d+d\d+/.test(e.text ?? '')) {
+      // print has 15 rows of this shape and NOT ONE is wide and free: the 13 dragon breaths (Sleep, Repulsion, Paralyzing)
+      // are named in Multiattack's replacement clause, so they cost an attack, and the rest are narrow emanations. A wide
+      // one taken for free is the row a GM house-rules mid-fight (the Lake That Thinks: 120 feet, every creature of its
+      // choice, Charmed and walking in) — fail (critic's blockers audit 2026-10-03)
+      const maText = (m.sections?.Actions ?? []).find((x) => /^Multiattack/.test(x.name ?? ''))?.text ?? '';
+      const traded = new RegExp(`\\b${esc(bare(e.name))}\\b`).test(maText);
+      const wide = /of (?:its|his|her|their) choice/i.test(e.text ?? '') || Number(/within (\d+) feet/.exec(e.text ?? '')?.[1] ?? 0) > 60;
+      if (wide && !traded) F('control-aoe-ungated', 'fail', `${sec}/${bare(e.name)}: at-will multi-target control, no damage, no gate, and nothing traded for it — print's 13 breaths of this shape all cost an attack`, bare(e.name));
+      else F('control-aoe-ungated', 'soft', `${sec}/${bare(e.name)}: at-will multi-target control with no damage and no gate${traded ? ' (traded for an attack in Multiattack, print\'s shape)' : ''}`, bare(e.name));
+    }
     const atWill = /At Will:\*?\*?\s*([^\n]+)/.exec(e.text ?? '');
     if (atWill) for (const sp of atWill[1].split(',').map((x) => x.replace(/[*]/g, '').trim())) {
       const lvl = CONTROL_SPELL_LEVEL[sp]; if (lvl && ctx.cr < CONTROL_AT_WILL_CR) F('control-at-will', 'fail', `${sp} (level ${lvl} hard control) at will at CR ${ctx.cr} (print: CR ${CONTROL_AT_WILL_CR}+)`, sp);
@@ -350,6 +370,9 @@ export function checkBlock(raw, ctx = {}) {
   const labels2014 = {};
   if (edition === '2014') for (const e of [...(raw.actions ?? []), ...(raw.legendary_actions ?? []), ...(raw.reactions ?? [])]) { const t = String(e.description ?? e.text ?? ''); labels2014[bare(e.name)] = /Spell Attack:/.test(t) ? 'spell' : /Weapon Attack:/.test(t) ? 'weapon' : null; }
   const context = { ...ctx, edition, cr, userConcept, print, labels2014, donorId: ctx.donorId ?? raw.generation?.donor ?? m.generation?.donor ?? null };
+  // the 2014 SHEET's own text (the legacy render) is what a GM reads: a doubled label there is a structure fail even though the saved 2024 rows are clean (five 2014 sheets read "Melee or Melee or Ranged", critic's regressions brief 2026-10-04)
+  const legacyDoubled = edition === '2014' ? [...(raw.abilities ?? []), ...(raw.actions ?? []), ...(raw.legendary_actions ?? []), ...(raw.reactions ?? [])].filter((e) => /\bMelee or Melee or\b|\bRanged or Ranged\b/.test(String(e.description ?? e.text ?? ''))).map((e) => bare(e.name)) : [];
+  context.legacyDoubled = legacyDoubled;
   const gates = Object.fromEntries(GATES.map((g) => [g, { status: 'ok', findings: [] }]));
   const F = (gate) => (rule, severity, message, value) => {
     const g = gates[gate]; g.findings.push({ rule, severity, message, value });

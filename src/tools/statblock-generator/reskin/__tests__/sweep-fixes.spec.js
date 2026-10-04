@@ -88,7 +88,7 @@ describe('row names are unique across sections', () => {
 });
 
 describe('the final derivations: the checker\'s own derivation gate on generated blocks', () => {
-  const rows = (cr, style, arch) => { const { renameKeysOf: rk } = require('../generate.mjs'); const scaled = scaleDonor(pickDonor(cr, style, arch), cr, { mechanics: [] }); const renames = { Teleport: 'Blink Step', 'Ranged Attack': 'Hurl' }; rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; }); const typed = [...Object.values(scaled.sections).flat().filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name), 'Hurl']; return { scaled, renames, typed }; };
+  const rows = (cr, style, arch) => { const { renameKeysOf: rk } = require('../generate.mjs'); const scaled = scaleDonor(pickDonor(cr, style, arch), cr, { mechanics: [] }); const renames = { Teleport: 'Blink Step', 'Ranged Attack': 'Hurl', 'Hybrid Attack': 'Hybrid Strike' }; rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; }); const typed = [...Object.values(scaled.sections).flat().filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name), 'Hurl', 'Hybrid Strike']; return { scaled, renames, typed }; };
   for (const [cr, style, arch, type] of [[5, 'grappler', 'brute', 'Monstrosity'], [8, 'binder', 'caster', 'Humanoid'], [13, null, 'lurker', 'Undead'], [18, 'mounted', 'skirmisher', 'Fiend']]) {
     test(`${arch}${style ? '-' + style : ''} at CR ${cr}: no derivation finding past the chassis DC float`, async () => {
       const { scaled, renames, typed } = rows(cr, style, arch);
@@ -101,7 +101,7 @@ describe('the final derivations: the checker\'s own derivation gate on generated
 });
 
 describe('the critic\'s audit, engine side (2026-10-02)', () => {
-  const mk = (cr, style, arch, extraRenames = {}) => { const { renameKeysOf: rk } = require('../generate.mjs'); const scaled = scaleDonor(pickDonor(cr, style, arch), cr, { mechanics: [] }); const renames = { Teleport: 'Blink Step', 'Ranged Attack': 'Hurl' }; rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; }); for (const e of scaled.sections['Legendary Actions'] ?? []) if (!renames[e.name] && !/^Legendary Action Uses/.test(e.name)) renames[e.name] = `Grave ${e.name.replace(/^Legendary /, '')}`; Object.assign(renames, extraRenames); const typed = [...Object.values(scaled.sections).flat().filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name), 'Hurl']; return { scaled, renames, typed }; };
+  const mk = (cr, style, arch, extraRenames = {}) => { const { renameKeysOf: rk } = require('../generate.mjs'); const scaled = scaleDonor(pickDonor(cr, style, arch), cr, { mechanics: [] }); const renames = { Teleport: 'Blink Step', 'Ranged Attack': 'Hurl', 'Hybrid Attack': 'Hybrid Strike' }; rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; }); for (const e of scaled.sections['Legendary Actions'] ?? []) if (!renames[e.name] && !/^Legendary Action Uses/.test(e.name)) renames[e.name] = `Grave ${e.name.replace(/^Legendary /, '')}`; Object.assign(renames, extraRenames); const typed = [...Object.values(scaled.sections).flat().filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name), 'Hurl', 'Hybrid Strike']; return { scaled, renames, typed }; };
   const json = (name, type, cr, style, arch, over = {}) => { const { scaled, renames, typed } = mk(cr, style, arch, over.renames ?? {}); return JSON.stringify({ name, type, size: over.size ?? 'Medium', alignment: 'Neutral', senses: 'darkvision 60 ft.', languages: over.languages ?? 'Common', renames, damage_types: Object.fromEntries(typed.map((n) => [n, over.dtype ?? 'Slashing'])), conditions: { condition_minor: 'Prone' }, melee_rider: 'none', wildcard: `*Strength Saving Throw*: DC ${scaled.dc}, one creature within 10 feet. *Failure:* The target has the Prone condition.`, ...(over.extra ?? {}) }); };
   test('print\'s own legendary rows stand where the chassis\'s stood: the Adult Green Dragon pounces', async () => {
     const m = await generateReskin({ archetype: 'brute', bodyType: 'dragon', concept: 'an adult green dragon', userConcept: 'an adult green dragon', cr: 15, mechanics: ['breath'] }, async () => json('Adult Green Dragon', 'Dragon', 15, null, 'dragon', { size: 'Huge' }));
@@ -176,7 +176,7 @@ describe('the critic\'s audit, engine side (2026-10-02)', () => {
     });
     test('"an archlich enthroned…" borrows the Lich and casts', async () => {
       const c = 'an archlich enthroned on a sun of bone';
-      const m = await generateReskin({ archetype: 'lurker', style: 'phantom', concept: c, userConcept: c, cr: 24, mechanics: [] }, async () => json('Sun-Crowned Archlich', 'Undead', 24, null, 'lurker', { size: 'Medium' })); // the print route stands the phantom seat down: the plain lurker chassis
+      const m = await generateReskin({ archetype: 'lurker', style: 'phantom', concept: c, userConcept: c, cr: 24, mechanics: [] }, async () => json('Sun-Crowned Archlich', 'Undead', 24, null, 'caster', { size: 'Medium' })); // the print route stands the phantom seat down: the plain lurker chassis
       expect(JSON.stringify({ names: Object.values(m.sections).flat().map((e) => e.name), trace: (m.trace ?? []).filter((x) => /Spellcasting|rules row|print canon/.test(x)).map((x) => x.slice(0, 160)) })).toMatch(/"Spellcasting/);
     });
   });
@@ -189,5 +189,97 @@ describe('the critic\'s audit, engine side (2026-10-02)', () => {
       .toBe('One creature within 60 feet must make a DC 16 Wisdom saving throw. On a failed save, the target has the Paralyzed condition until the end of its next turn.');
     expect(canonSave2014('*Constitution Saving Throw*: DC 14, each creature in a 20-foot Sphere. *Failure:* 21 (6d6) Poison damage. *Success:* The target is Poisoned until the end of its next turn.'))
       .toMatch(/taking 21 \(6d6\) Poison damage on a failed save\. On a successful save, the target is Poisoned/);
+  });
+
+  describe("the critic's blockers audit, engine side (2026-10-03)", () => {
+    test("print's self-reference becomes the inline in one pass: no \"the vampire lord lord's\", no \"this pit the pit fiend general's\"", async () => {
+      const c = 'a vampire lord who commands bats and wolves';
+      const m = await generateReskin({ archetype: 'lurker', concept: c, userConcept: c, cr: 15, mechanics: [] }, async () => json('Count Vel', 'Undead', 15, null, 'lurker', { size: 'Medium' }));
+      const all = JSON.stringify(m.sections);
+      expect(all).not.toMatch(/lord lord|the the |this the /i);
+      const p = 'a pit fiend general';
+      const pf = await generateReskin({ archetype: 'brute', concept: p, userConcept: p, cr: 20, mechanics: [] }, async () => json('General Vhorzak', 'Fiend', 20, null, 'brute', { size: 'Large' }));
+      const aura = (pf.sections.Traits ?? []).find((e) => /^Fear Aura/.test(e.name));
+      expect(aura.text).toMatch(/aura for 24 hours/); expect(aura.text).not.toMatch(/this (?:the|pit the)/);
+    });
+    test("the inline follows the print name even when the model coined one with \"the\" (Green Dragon rows read \"the dragon\", not \"the blackroot wyrm\")", async () => {
+      const c = 'an adult green dragon';
+      const m = await generateReskin({ archetype: 'brute', bodyType: 'dragon', concept: c, userConcept: c, cr: 15, mechanics: ['breath'] }, async () => json('Blackroot Wyrm', 'Dragon', 15, null, 'dragon', { size: 'Huge' }));
+      expect(m.name).toBe('Adult Green Dragon');
+      expect(m.inline).toBe('the dragon');
+      expect(JSON.stringify(m.sections)).not.toMatch(/blackroot/i);
+    });
+    test('a print caster body takes the caster line so one stat carries the attack and the DC (the Lich on a Dex chassis)', async () => {
+      const c = 'an archlich enthroned on a sun of bone';
+      const m = await generateReskin({ archetype: 'lurker', style: 'phantom', concept: c, userConcept: c, cr: 24, mechanics: [] }, async () => json('Sun-Crowned Archlich', 'Undead', 24, null, 'caster', { size: 'Medium', extra: { slot_save: 'Intelligence', spells: { at_will: ['Detect Magic', 'Minor Illusion'], daily: ['Hold Person', 'Darkness'] } } }));
+      expect(Object.values(m.sections).flat().some((e) => /^Spellcasting/.test(e.name))).toBe(true);
+      const cast = Object.values(m.sections).flat().find((e) => /^Spellcasting/.test(e.name));
+      const stat = /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability/.exec(cast?.text ?? '')?.[1];
+      const KEY = { Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON', Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' };
+      const want = m.pb + Math.floor((m.stats[KEY[stat]] - 10) / 2);
+      for (const e of Object.values(m.sections).flat()) { const atk = /Attack Roll:\*? \+(\d+)/.exec(e.text ?? ''); if (atk) expect([e.name, Number(atk[1])]).toEqual([e.name, want]); }
+    });
+    test("a print block that prints \"Medium or Small\" is Medium, not Small (the vampire lord came out Small)", () => {
+      const corpus = require('@/data/srd52-monsters.json');
+      for (const n of ['Vampire', 'Archmage', 'Mummy Lord', 'Wraith', 'Mage', 'Assassin', 'Gladiator', 'Werebear', 'Vampire Spawn', 'Pirate Captain']) expect([n, corpus.find((x) => x.name === n).size]).toEqual([n, 'Medium']);
+    });
+  });
+
+  describe("the 2014 sheet's render repairs (critic's blockers audit 2026-10-03)", () => {
+    test('the 2024 lead-in folds into an already-2014 save; a bullet list becomes sentences; a hybrid row\'s label matches its range', () => {
+      expect(to2014Grammar('The creature moves up to its Speed. Each creature whose space it enters is targeted once by the following effect. The target must make a DC 19 Strength saving throw, taking 72 (16d8) fire damage on a failed save.'))
+        .toBe('The creature moves up to its Speed. Each creature whose space it enters must make a DC 19 Strength saving throw, taking 72 (16d8) fire damage on a failed save.');
+      expect(to2014Grammar("The vampire has these weaknesses:\n\n\n- **Forbiddance**: The vampire can't enter a residence.\n- **Running Water**: The vampire takes 20 Acid damage."))
+        .toBe("The vampire has these weaknesses: Forbiddance: The vampire can't enter a residence.\nRunning Water: The vampire takes 20 acid damage.");
+      expect(to2014Grammar('Melee Spell Attack: +10 to hit, reach 5 ft. or range 120 ft., one target. Hit: 40 (8d8 + 4) necrotic damage.'))
+        .toMatch(/^Melee or Ranged Spell Attack: \+10 to hit, reach 5 ft\. or range 120 ft\./);
+      expect(to2014Grammar('*Melee Attack Roll:* +7, reach 10 ft. 20 (3d10 + 4) Slashing damage.'))
+        .toBe('Melee Weapon Attack: +7 to hit, reach 10 ft., one target. Hit: 20 (3d10 + 4) slashing damage.');
+    });
+  });
+
+  test("the sheet's save DC derives from a stat the sheet has: the 2014 table's DC 21 on a caster's INT 18 comes down to 19 (sweep 2026-10-04)", async () => {
+    const c = 'a bone-crowned necromancer who binds the dead';
+    const m = await generateReskin({ archetype: 'caster', style: 'binder', concept: c, userConcept: c, cr: 24, edition: '2014', mechanics: [] }, async () => json('Ossuar Rex', 'Undead', 24, 'binder', 'caster', { size: 'Medium', extra: { slot_save: 'Intelligence', spells: { at_will: ['Detect Magic', 'Minor Illusion'], daily: ['Hold Person', 'Darkness'] } } }));
+    const mods = Object.fromEntries(Object.entries(m.stats).map(([k, v]) => [k, Math.floor((v - 10) / 2)]));
+    for (const d of [...new Set([...JSON.stringify(m.sections).matchAll(/DC (\d+)/g)].map((x) => Number(x[1])))]) {
+      if (/escape DC/.test(JSON.stringify(m.sections)) && d === 8 + m.pb + mods.STR) continue;
+      expect([d, Object.values(mods).some((v) => Math.abs(8 + m.pb + v - d) <= 1)]).toEqual([d, true]);
+    }
+  });
+
+  test("the final price: one row serving Multiattack AND a legendary strike after a supersede is re-solved to the card (the death knight at 18 read CR 27 on offense, print-heads 2026-10-04)", async () => {
+    const c = 'a death knight who hurls his greatsword and calls it back';
+    const m = await generateReskin({ archetype: 'caster', style: 'warpriest', concept: c, userConcept: c, cr: 18, mechanics: [] }, async () => json('Mortis Anselm', 'Undead', 18, 'warpriest', 'caster', { size: 'Medium', renames: { 'Ranged Attack': 'Graveblade' }, extra: { projectile: 'his greatsword', slot_save: 'Constitution' } }));
+    const { cardBudget: cb } = require('../card-budgets.mjs');
+    const rows = Object.values(m.sections).flat();
+    const avgOf = (t) => [...String(t).split(/\bIf\b|\bWhen\b/)[0].matchAll(/(\d+) \(\d+d\d+(?: [+-] \d+)?\)/g)].reduce((a, x) => a + Number(x[1]), 0);
+    const atk = rows.filter((e) => /Attack Roll/.test(e.text ?? ''));
+    const best = Math.max(...atk.map((e) => avgOf(e.text)));
+    const n = ({ one: 1, two: 2, three: 3 }[(/makes (\w+)/i.exec(rows.find((e) => /^Multiattack/.test(e.name))?.text ?? '') ?? [])[1]?.toLowerCase()] ?? 1);
+    const legStrikes = (m.sections['Legendary Actions'] ?? []).filter((e) => /makes one [A-Z][\w' -]*? attack/.test(e.text ?? '') && !/can['’]t take this action again/.test(e.text ?? '')).length;
+    const round = best * n + best * (legStrikes ? 3 : 0);
+    expect(round).toBeLessThanOrEqual(cb(18, { legendary: true }).dpr * 1.25);
+  });
+
+  describe("the critic's regressions brief (2026-10-04)", () => {
+    test('the vampire\'s common noun stays print\'s: "Vampire Spawn", "vampire form", and "the vampire lord\'s" all intact', async () => {
+      const c = 'a vampire lord who commands bats and wolves';
+      const m = await generateReskin({ archetype: 'lurker', concept: c, userConcept: c, cr: 15, mechanics: [] }, async () => json('Count Vel', 'Undead', 15, null, 'lurker', { size: 'Medium' }));
+      const all = JSON.stringify(m.sections);
+      expect(all).toMatch(/Vampire Spawn/); expect(all).toMatch(/vampire form/i); expect(all).not.toMatch(/Count Vel Spawn|lord Spawn|lord form|lord lord/i);
+    });
+    test('the Lich on the caster chassis keeps print\'s slots: its spell list, a Paralyzing Touch that paralyzes, an Eldritch Burst with no rider', async () => {
+      const c = 'an archlich enthroned on a sun of bone';
+      const m = await generateReskin({ archetype: 'lurker', style: 'phantom', concept: c, userConcept: c, cr: 24, mechanics: [] }, async () => json('Sun-Crowned Archlich', 'Undead', 24, null, 'caster', { size: 'Medium', extra: { slot_save: 'Intelligence', spells: { at_will: ['Detect Magic', 'Minor Illusion'], daily: ['Hold Person', 'Darkness'] } } }));
+      const rows = Object.values(m.sections).flat();
+      const cast = rows.find((e) => /^Spellcasting/.test(e.name)); expect(cast?.text).toMatch(/Power Word Kill|Finger of Death/);
+      const touch = rows.find((e) => e.name === 'Paralyzing Touch'); expect(touch?.text).toMatch(/has the Paralyzed condition/); expect(touch?.text).not.toMatch(/Poisoned|Frightened|Deafened/);
+      const burst = rows.find((e) => e.name === 'Eldritch Burst'); expect(burst?.text).not.toMatch(/has the \w+ condition/);
+    });
+    test('the 2014 hybrid label is built once; the lead-in folds for "That creature" too', () => {
+      expect(to2014Grammar('Melee or Ranged Spell Attack: +11 to hit, reach 5 ft. or range 120 ft., one target. Hit: 71 (15d8 + 4) slashing damage.')).not.toMatch(/Melee or Melee/);
+      expect(to2014Grammar('Each creature whose space it enters is targeted once by the following effect. That creature must make a DC 19 Strength saving throw, taking 72 (16d8) fire damage on a failed save.')).toMatch(/^Each creature whose space it enters must make a DC 19/);
+    });
   });
 });

@@ -1101,7 +1101,7 @@ export function toLegacyModel(m) {
   // the classic card renders INLINE MARKDOWN now (owner 2026-09-14) —
   // italics survive the gate; only the bullets and the 2024 Multiattack
   // idiom scrub
-  const plain = (t) => String(t ?? '').replace(/^- /gm, '').replace(/ in any combination\b/, '').replace(/\*?Hit or Miss:\*?\s*/g, ''); // exports keep 2024 wording; the 2014 grammar pass runs on the CONVERSION path alone (checker 2026-10-02)
+  const plain = (t) => String(t ?? '').replace(/^[ \t]*-[ \t]*$\n?/gm, '') /* a bullet marker with nothing on it printed a stray "-" line in the 2014 spell block (critic's blockers audit 2026-10-03) */.replace(/^- /gm, '').replace(/ in any combination\b/, '').replace(/\*?Hit or Miss:\*?\s*/g, ''); // exports keep 2024 wording; the 2014 grammar pass runs on the CONVERSION path alone (checker 2026-10-02)
   const entryList = (name) => (m.sections?.[name] ?? []).map((e) => ({ name: e.name, description: plain(e.text) }));
   // Split merged 2024-style defense lines into 2014's damage vs condition
   // fields. Classification is by token against the known condition
@@ -1456,8 +1456,14 @@ export function canonSave2014(text) {
 }
 export function to2014Grammar(text) {
   let t = String(text ?? '');
+  // 2014 RENDER REPAIRS (critic's blockers audit 2026-10-03 — "sheets that look broken"): the classic card renders an
+  // ability as one paragraph, so a bullet list has to become sentences before the whitespace collapse below flattens
+  // the line starts; an empty bullet is a stray "-" on the sheet; and a hybrid row's label has to match its range.
+  t = t.replace(/^[ \t]*-[ \t]*\*\*(?!At Will|\d+\/Day)([^*]+?)\*\*:?[ \t]*/gm, (m0, label) => `${label.trim()}: `);
+  // a hybrid row's LABEL matches its range, repaired before the conversions below (the conversion path shipped "Melee Spell Attack: … reach 5 ft. or range 120 ft.")
+  t = t.replace(/(?<!Melee or )\b(?:Melee|Ranged) (Weapon|Spell) Attack: (\+\d+ to hit, )?reach (\d+) ft\. or range/g, (m0, kind, hit, reach) => `Melee or Ranged ${kind} Attack: ${hit ?? ''}reach ${reach} ft. or range`); // never prefix a label that already carries it — five 2014 sheets read "Melee or Melee or Ranged" (critic's regressions brief 2026-10-04)
   t = t.replace(/\*?Melee or Ranged Attack Roll:\*?\s*\+(\d+)[^.]*?reach (\d+) ft\. or range ([\d/]+) ft\.\s*/g, 'Melee or Ranged Weapon Attack: +$1 to hit, reach $2 ft. or range $3 ft., one target. Hit: ');
-  t = t.replace(/\*?Melee Attack Roll:\*?\s*\+(\d+)(?: \([^)]*\))?, reach (\d+) ft\.\s*/g, 'Melee Weapon Attack: +$1 to hit, reach $2 ft., one target. Hit: ');
+  t = t.replace(/\*?Melee Attack Roll:\*?\s*\+(\d+)(?: \([^)]*\))?, reach (\d+) ft\.(?! or range)\s*/g, 'Melee Weapon Attack: +$1 to hit, reach $2 ft., one target. Hit: '); // a hybrid row keeps its "or range" tail for the Melee-or-Ranged branch above
   t = t.replace(/\*?Ranged Attack Roll:\*?\s*\+(\d+)(?: \([^)]*\))?, range ([\d/]+) ft\.\s*/g, 'Ranged Weapon Attack: +$1 to hit, range $2 ft., one target. Hit: ');
   // "*Dexterity Saving Throw*: DC 15, each creature in a 60-foot Cone. *Failure:* 28 (8d6) Fire damage. *Success:* Half damage."
   t = canonSave2014(t);
@@ -1465,6 +1471,10 @@ export function to2014Grammar(text) {
   t = t.replace(/\*?Success:\*?\s*/g, 'On a successful save, ');
   t = t.replace(/\*?Failure:\*?\s*/g, 'On a failed save, ');
   t = t.replace(/\*?Hit or Miss:\*?\s*/g, '');
+  // a row that reaches AND throws is "Melee or Ranged": one warpriest sword printed "Melee Spell Attack: … reach 5 ft. or range 120 ft."
+  // the 2024 lead-in folds into the save's subject even when the save already reads 2014 (the mounted nova on the conversion path)
+  t = t.replace(/(^|[.!?]\s+)([^.!?]*?) is targeted once by the following effect\.\s*(?:The target|That creature|It) must make a DC (\d+) (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) saving throw/g,
+    (m0, pre, subj, dc, stat) => `${pre}${subj.trim().charAt(0).toUpperCase()}${subj.trim().slice(1)} must make a DC ${dc} ${stat} saving throw`);
   t = t.replace(/\bis Bloodied\b/g, 'has half its hit points or fewer').replace(/\bBloodied\b/g, 'below half its hit point maximum');
   t = t.replace(/(\d+)-foot (Cone|Sphere|Line|Cube|Cylinder)\b/g, (m0, n, shape) => `${n}-foot ${shape.toLowerCase()}`).replace(/(\d+)-foot Emanation/g, '$1-foot radius');
   t = t.replace(LOWER_TYPES, (m0, ty) => `${ty.toLowerCase()} damage`);

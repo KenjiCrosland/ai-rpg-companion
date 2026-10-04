@@ -227,3 +227,57 @@ describe('an at-will ray table is sustained damage (the orb at 13, rerun 2026-10
     expect(sustainedOf(gated).sustained).toBe(r0.sustained); // a recharge table is a nova, not the round
   });
 });
+
+describe("the critic's blockers audit (2026-10-03)", () => {
+  test('Multiattack naming a row nested in another row\'s name is caught: "Slam or Mirror Slam" where the rows are Slam and Mirror Shard', () => {
+    const b = withRow('Actions', { name: 'Mirror Shard', text: '*Ranged Attack Roll:* +7, range 80/320 ft. 22 (4d8 + 4) Piercing damage.' });
+    b.sections.Actions[0].text = 'The stalker makes three attacks, using Slam or Mirror Slam in any combination.';
+    b.sections.Actions[1].name = 'Slam';
+    expect(has(checkBlock(b), 'structure', 'multiattack-row', 'fail')).toBe(true);
+  });
+  test('at-will mass control is fail when it is wide and nothing is traded for it, soft when Multiattack trades an attack (print\'s 13 breaths)', () => {
+    const row = { name: 'Tether Call', text: "*Wisdom Saving Throw*: DC 15, each creature of its choice within 120 feet that can see it. *Failure:* The target has the Charmed condition until the start of the stalker's next turn." };
+    const free = withRow('Actions', row);
+    expect(has(checkBlock(free), 'gates', 'control-aoe-ungated', 'fail')).toBe(true);
+    const traded = withRow('Actions', row);
+    traded.sections.Actions[0].text = 'The stalker makes two Claw attacks. It can replace one attack with a use of Tether Call.';
+    expect(has(checkBlock(traded), 'gates', 'control-aoe-ungated', 'soft')).toBe(true);
+    expect(has(checkBlock(traded), 'gates', 'control-aoe-ungated', 'fail')).toBe(false);
+    const narrow = withRow('Actions', { name: 'Dread Pulse', text: '*Wisdom Saving Throw*: DC 15, each creature in a 20-foot Emanation. *Failure:* The target has the Frightened condition until the end of its next turn.' });
+    expect(has(checkBlock(narrow), 'gates', 'control-aoe-ungated', 'fail')).toBe(false);
+  });
+  test('a ". and" join fails the punctuation rule', () => {
+    const b = base(); b.sections.Actions[1].text = '*Melee Attack Roll:* +7, reach 5 ft. 20 (3d10 + 4) Cold damage. and the target has the Paralyzed condition until the start of its next turn.';
+    expect(has(checkBlock(b), 'structure', 'punctuation', 'fail')).toBe(true);
+  });
+});
+
+describe('the ". and" rule does not fire on a hybrid row\'s range (sweep 2026-10-04)', () => {
+  test('"reach 5 ft. or range 30/120 ft." is clean; ". and" and ". plus" still fail', () => {
+    const ok = base(); ok.sections.Actions[1].text = '*Melee or Ranged Attack Roll:* +10, reach 5 ft. or range 30/120 ft. 29 (7d6 + 5) Thunder damage.';
+    expect(has(checkBlock(ok), 'structure', 'punctuation')).toBe(false);
+    const bad = base(); bad.sections.Actions[1].text = '*Melee Attack Roll:* +7, reach 10 ft. 20 (3d10 + 4) Cold damage. and the target has the Paralyzed condition.';
+    expect(has(checkBlock(bad), 'structure', 'punctuation', 'fail')).toBe(true);
+  });
+});
+
+describe("print's stat-block reference is not a dangling row (the Treant's Animate Trees, 2026-10-04)", () => {
+  test('a reference ending in "stat block" points at another creature, not a row', () => {
+    const b = withRow('Actions', { name: 'Animate Trees', text: 'The stalker animates two trees it can see within 60 feet. They use the Awakened Tree stat block and act on their own initiative.' });
+    expect(has(checkBlock(b), 'structure', 'dangling-ref')).toBe(false);
+    const bad = withRow('Actions', { name: 'Signal', text: 'The stalker uses Thunder Call, if available.' });
+    expect(has(checkBlock(bad), 'structure', 'dangling-ref', 'fail')).toBe(true);
+  });
+});
+
+describe("the critic's regressions brief (2026-10-04)", () => {
+  test('a doubled attack label fails; "half as much damage" with no damage on the row fails; a legendary action that is only its recharge clause fails', () => {
+    const l = legacy(); l.actions[1].description = 'Melee or Melee or Ranged Spell Attack: +7 to hit, reach 5 ft. or range 120 ft., one target. Hit: 17 (3d8 + 4) slashing damage.';
+    expect(has(checkBlock(l), 'structure', 'punctuation', 'fail')).toBe(true);
+    expect(checkBlock(l).gates.structure.findings.some((f) => f.rule === 'punctuation' && /on the 2014 sheet/.test(f.message))).toBe(true); // read from the legacy render, not the saved 2024 rows
+    const h = withRow('Actions', { name: 'Judgment', text: 'One creature within 60 feet must make a DC 15 Charisma saving throw. On a failed save, the target is cursed. On a successful save, the target takes half as much damage.' });
+    expect(has(checkBlock(h), 'structure', 'half-no-referent', 'fail')).toBe(true);
+    const g = withRow('Legendary Actions', { name: 'Storm Volley', text: "The stalker can't take this action again until the start of its next turn." }, { legendary_uses: 3 });
+    expect(has(checkBlock(g), 'structure', 'legendary-no-effect', 'fail')).toBe(true);
+  });
+});
