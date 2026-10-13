@@ -82,7 +82,7 @@ export const LINE_VERBS = {
   'caster-warpriest': ['blesses', 'prays', 'smites', 'consecrates', 'psalms', 'sermons', 'crusades', 'priest', 'priestess', 'cleric', 'acolyte'], /* job nouns: never an override on their own (the title rule) */
   caster: ['casts', 'conjures', 'calls down', 'hurls bolts', 'blasts', 'spells'],
   'defender-warden': ['guards', 'protects', 'sworn to', 'stands between', 'shields', 'bound to protect', 'wards'],
-  dragon: ['dragon', 'dragons', 'wyrm', 'wyrms', 'drake', 'drakes', 'dragonborn'], /* BODY nouns: a dragon is a dragon whatever the route model quotes (the storm dragon lost its body to a paraphrased quote, 2026-10-01) */
+  dragon: ['dragon', 'dragons', 'wyrm', 'wyrms', 'drake', 'drakes'], // not 'dragonborn': a dragonborn is a Humanoid species, not a dragon body (a blue dragonborn knight was built on dragon-2 with a breath weapon and Fly 60 — species landing 2026-10-13) /* BODY nouns: a dragon is a dragon whatever the route model quotes (the storm dragon lost its body to a paraphrased quote, 2026-10-01) */
   defender: ['holds the line', 'keeps the line', 'shield wall', 'bodyguard', 'blocks', 'interposes', 'guards the', 'guards a', 'guards its', 'guards his', 'guards her', 'stands guard', 'guarding the'],
   // bodily-emission verbs are a SIGNATURE (a cloud, a spit), not a thrower's chassis — the plain skirmisher line
   skirmisher: ['vomits', 'spits', 'spews', 'belches', 'sprays', 'darts', 'harries', 'flits', 'nips'],
@@ -103,7 +103,7 @@ const NOUN_WHEN_OWNED = new Set(['hide', 'charge', 'archer', 'archers']); // "he
 const OF_PHRASE = /\b(?:of|from|by|for|to|with|under|beneath|over|against)\s+(?:a|an|the|his|her|its|their|some|that)?\s*(?:\w+\s+)?$/i;
 const OWNED_BY = /\b(?:its|his|her|their|our|my|your|whose|the|a|an|this|that|each|every|one|two|three|four|several|many)\s+$/;
 // "Mimic with voice, call, or song is the Harpy's lure, not the Mimic" (critic)
-const VERB_DENY = { mimics: /\b(?:voices?|sounds?|songs?|calls?|speech|words?|cries|tongues?)\b/ }; // "holds the line" and its kin are FIXED PHRASES now (lexicon.mjs readPhrases), rewritten before this table reads them
+const VERB_DENY = { dragon: /\bhalf-dragons?\b/, dragons: /\bhalf-dragons?\b/, /* a half-dragon is its base creature's body (species landing 2026-10-13) */ mimics: /\b(?:voices?|sounds?|songs?|calls?|speech|words?|cries|tongues?)\b/ }; // "holds the line" and its kin are FIXED PHRASES now (lexicon.mjs readPhrases), rewritten before this table reads them
 // SUBJECT INVERSION (critic, blind A/B 2026-09-28): "runs anyone who BLOCKS it
 // off the cliff" — the verb after an indefinite head belongs to the ENEMY, and
 // it routed a courier's ghost to the defender line. A verb inside a clause

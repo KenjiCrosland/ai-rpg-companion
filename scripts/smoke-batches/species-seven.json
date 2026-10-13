@@ -1,0 +1,9 @@
+[
+  { "name": "", "description": "a lizardfolk hunter who stalks the marsh with a spear", "cr": "2", "rules": "2024", "mode": "band", "feature": "lizardfolk: Hold Breath (SRD, 15 minutes), Swim 30; the marsh stride yields under the cap" },
+  { "name": "", "description": "an orc warchief with a greataxe", "cr": "5", "rules": "2014", "mode": "band", "feature": "orc: darkvision 120, a bonus-action dash in the Nimble Escape idiom; the greataxe part + GWM" },
+  { "name": "", "description": "a tortle hermit who withdraws into his shell", "cr": "3", "rules": "2024", "mode": "band", "feature": "tortle: Hold Breath (1 hour), Shell Defense from the shell-withdraw shape" },
+  { "name": "", "description": "a blue dragonborn knight", "cr": "6", "rules": "2024", "mode": "band", "feature": "dragonborn on a print alias body (Knight): Lightning resistance by color, darkvision; print's rows ride" },
+  { "name": "", "description": "a troglodyte raider who reeks", "cr": "1", "rules": "2014", "mode": "band", "feature": "troglodyte: Stench at the sheet's DC, Sunlight Sensitivity, 2014 grammar" },
+  { "name": "", "description": "a tiefling duelist who hates fire and takes extra damage from it", "cr": "4", "rules": "2024", "mode": "band", "feature": "tiefling: the user's vulnerability outranks the species' Fire resistance; darkvision" },
+  { "name": "", "description": "a kenku mimic who copies voices and steals", "cr": "2", "rules": "2024", "mode": "band", "feature": "kenku: Mimicry lifted from the Green Hag" }
+]

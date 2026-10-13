@@ -2183,7 +2183,7 @@ describe('the Shre Swarm: type-named entries deal their named type', () => {
     const findings = lintStatblock(monster, { edition: '2024' }).findings;
     const hit = findings.find((f) => f.rule === 'entry-name-type-mismatch');
     expect(hit).toBeDefined();
-    expect(hit.expected).toBe('Furnace Thunder');
+    expect(hit.expected).toBe('Furnace'); // a name is never a type field: the wrong word leaves, the dealt type is never written in (the critic's second species read, 2026-10-13)
   });
 
   test('the engine harmonizes unrenamed placeholders before lint ever sees them', () => {

@@ -38,8 +38,9 @@ export function honestSpeed(speed, { movement = [], style = null, bodyType = nul
 
 const PRINT_LANGUAGES = ['Common', 'Elvish', 'Dwarvish', 'Giant', 'Draconic', 'Infernal', 'Abyssal', 'Celestial', 'Sylvan', 'Undercommon', 'Deep Speech', 'Primordial', 'Aquan', 'Auran', 'Ignan', 'Terran', 'Goblin', 'Orc', 'Gnomish', 'Halfling', 'Druidic', 'Thieves\' Cant'];
 /** Languages by mind, from the print set. */
-export function honestLanguages(line, { mind = null, type = '' } = {}) {
+export function honestLanguages(line, { mind = null, type = '', int = null, speaks = false } = {}) {
   const raw = String(line ?? '').trim();
+  if (Number.isFinite(int) && int <= 5 && !speaks && !/^Humanoid\b/i.test(String(type))) return 'None'; // an INT 4 body speaks nothing unless the GM says it does (the Frostmaw Leviathan spoke Common — the critic's second species read)
   if (mind === 'mindless') return /construct/i.test(type) ? "Understands the languages of its creator but can't speak" : 'None';
   if (/^Humanoid\b/i.test(String(type)) && (!raw || /^none$/i.test(raw) || mind === 'bestial')) return raw && !/^none$/i.test(raw) ? raw : 'Common'; // every print Humanoid speaks — a boar-shifter miller read as bestial printed None (critic, new lines 2026-09-28)
   if (mind === 'bestial') return 'None';
@@ -56,7 +57,7 @@ export function honestLanguages(line, { mind = null, type = '' } = {}) {
     else if (/languages it knew in life/i.test(t)) kept.push('the languages it knew in life');
     else if (/^understands? .*can't speak/i.test(t)) kept.push(t);
   }
-  if (/^Humanoid\b/i.test(String(type)) && !kept.includes('Common')) kept.unshift('Common'); // a print Humanoid speaks Common (Elvish + Sylvan on an elf who shoots for sport, critic 2026-09-29)
+  if (/^Humanoid\b/i.test(String(type)) && !kept.includes('Common') && !kept.some((k) => /can't speak/i.test(k))) kept.unshift('Common'); // a line that says it can't speak never gets a spoken tongue in front (the kenku read "Common, Understands Common and Auran but can't speak" — the critic's species read) // a print Humanoid speaks Common (Elvish + Sylvan on an elf who shoots for sport, critic 2026-09-29)
   if (!kept.length) return /undead/i.test(type) ? 'Common plus the languages it knew in life' : 'Common';
   return kept.length > 1 && kept.includes('the languages it knew in life') ? `${kept.filter((k) => k !== 'the languages it knew in life').join(', ')} plus the languages it knew in life` : kept.join(', ');
 }

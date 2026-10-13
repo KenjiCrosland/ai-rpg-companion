@@ -18,7 +18,8 @@ const numbersOf = (m) => {
   const dcs = [...new Set(rows.flatMap(({ e }) => [...String(e.text ?? '').matchAll(/(?<!escape )DC (\d+)/g)].map((x) => Number(x[1]))))].sort((a, b) => a - b);
   const ma = rows.find(({ e }) => /^Multiattack/.test(e.name ?? ''))?.e.text ?? '';
   const count = ({ one: 1, two: 2, three: 3, four: 4 }[(/makes (\w+)/.exec(ma) ?? [])[1]] ?? (ma ? null : 0));
-  return { name: m.name ?? m.monsterName, cr: o.cr ?? o.cr_str, ac: Number(o.ac), hp: Number(o.hp), attacks: atk, dcs, multiattack: count, donor: o.generation?.donor ?? null };
+  const untranslated = o0.english?.sections ? Object.values(o0.sections ?? {}).flat().filter((e, i) => String(e.text ?? '').trim() === String(Object.values(o0.english.sections ?? {}).flat()[i]?.text ?? '').trim()).length : null; // a translated block whose rows equal the twin's was echoed, not translated (the Steingolem shipped print's English — the critic's second species read)
+  return { name: m.name ?? m.monsterName, cr: o.cr ?? o.cr_str, ac: Number(o.ac), hp: Number(o.hp), attacks: atk, dcs, multiattack: count, donor: o.generation?.donor ?? null, untranslated };
 };
 const files = fs.readdirSync(runDir).filter((f) => f.endsWith('.json')).sort((a, b) => Number(a.split('-')[0]) - Number(b.split('-')[0]));
 const now = Object.fromEntries(files.map((f) => [Number(f.split('-')[0]), numbersOf(JSON.parse(fs.readFileSync(path.join(runDir, f), 'utf8')))]));
@@ -33,6 +34,7 @@ batch.forEach((c, i) => {
   if (!r) { console.log(`| ${k} | ${c.canary} | ${c.mode} | ${n.ac} | ${n.hp} | ${n.attacks.map((a) => `${a.name} +${a.bonus}/${a.avg}`).join(', ')} | ${n.dcs.join(',')} | ${n.multiattack} | no reference |`); return; }
   const cmp = (a, b, tol, pct) => (exact ? a === b : within(a, b, tol, pct));
   const problems = [];
+  if (n.untranslated) problems.push(`${n.untranslated} row(s) untranslated (echo of the English twin)`);
   if (!cmp(n.ac, r.ac, 1)) problems.push(`AC ${r.ac}→${n.ac}`);
   if (!cmp(n.hp, r.hp, 0.15, true)) problems.push(`HP ${r.hp}→${n.hp}`);
   if (exact ? n.multiattack !== r.multiattack : !within(n.multiattack, r.multiattack, 1)) problems.push(`Multiattack ${r.multiattack}→${n.multiattack}`);

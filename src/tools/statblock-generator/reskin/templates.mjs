@@ -289,12 +289,21 @@ const wordsOf = (t) => [...new Set(String(t ?? '').toLowerCase().split(/[^a-z]+/
 // a HOMOGRAPH binds once, in the sense its phrase carries: "roots up the graves"
 // is digging (the Burrow the route gave), not the hold-fast sense three templates
 // key on — the miller was Burrowing AND restraining from 60 feet (critic, new lines 2026-09-28)
-const SENSE_DENY = { root: /\broots? (?:up|through|around|about|in|out|for)\b/i, roots: /\broots? (?:up|through|around|about|in|out|for)\b/i };
+const SENSE_DENY = { root: /\broots? (?:up|through|around|about|in|out|for)\b/i, roots: /\broots? (?:up|through|around|about|in|out|for)\b/i, mimic: /\b(?:voices?|sounds?|speech|words?|calls?|songs?|cries|tongues?|talks?|accents?)\b/i, mimics: /\b(?:voices?|sounds?|speech|words?|calls?|songs?|cries|tongues?|talks?|accents?)\b/i, mimicry: /\b(?:voices?|sounds?|speech|words?|calls?|songs?|cries|tongues?|talks?|accents?)\b/i }; // "mimic" in a voice-copying context is not a false-appearance word (the kenku — the critic's species read)
+// A DENIED CLAUSE never keys a template: "hates fire and takes extra damage from it", "cannot cast any spells" name what the creature SUFFERS or LACKS, and a heated body force-bound on them (Grandmother Ash — the critic's species read)
+// Narrow on purpose: "cannot leave the tower" keys bound, "thoughts can't be read" keys shielded-mind, "hates being looked at" keys gaze-aura — a
+// negation that IS the cue stays. What leaves is a vulnerability clause (damage taken, weakness, hatred of a damage type or material) and a lack of an ability.
+const ENERGY_WORD = '(?:fire|flames?|heat|burning|cold|ice|frost|lightning|thunder|acid|poison|necrotic|radiant|psychic|force|sunlight|daylight|silver|silvered|iron|cold iron|holy water|running water|salt)';
+const DENIED_CLAUSE = new RegExp(`\\b(?:takes? (?:extra|double|additional) damage|extra damage from|vulnerable|weak to|weakness(?:es)? to|susceptible to|(?:hates?|hated|loathes?|despises?|fears?|dreads?)\\s+(?:the\\s+)?${ENERGY_WORD}|(?:cannot|can't|can not|doesn't|does not|unable to|lacks?|has no|have no)\\s+(?:cast|use|wield|speak|fly|swim|climb|burrow|regenerate|heal|see|hear|smell|breathe|spells?|magic))\\b`, 'i');
+export function scrubDeniedClauses(text) { return String(text ?? '').split(/([,;.]|\s+(?:and|but|or)\s+)/).map((seg, i) => (i % 2 === 1 ? seg : seg.replace(new RegExp(`${DENIED_CLAUSE.source}.*$`, 'i'), ''))).join('').replace(/\s{2,}/g, ' ').trim(); } // the phrase leaves, the words before it stay ("a tiefling duelist who hates fire" keeps the duelist — the critic's second species read)
+// A TEMPLATE DENIED BY THE CONCEPT: a heated body or fire aura never lands on a creature the words make vulnerable to fire, whatever word matched ("lives in the burned forest" bound Ash a Heated Body)
+const TEMPLATE_DENY = { 'heated-body': new RegExp(`(?:hates?|loathes?|fears?|vulnerable to|weak to|extra damage from|takes? extra damage from)\\s+(?:the\\s+)?(?:fire|flames?|heat|burning)`, 'i'), 'fire-aura': new RegExp(`(?:hates?|loathes?|fears?|vulnerable to|weak to|extra damage from|takes? extra damage from)\\s+(?:the\\s+)?(?:fire|flames?|heat|burning)`, 'i') };
 export function rankByVerb(menu, conceptText0, ideaText0 = '') {
-  const conceptText = readPhrases(conceptText0); const ideaText = readPhrases(ideaText0); // fixed phrases carry one sense
+  const conceptText = readPhrases(scrubDeniedClauses(conceptText0)); const ideaText = readPhrases(ideaText0); // fixed phrases carry one sense; a denied clause's words never key a template
   const c = wordsOf(conceptText); const d = wordsOf(ideaText);
   const hit = (t, words, raw) => (t.keys ?? []).filter((k) => !(SENSE_DENY[k] && SENSE_DENY[k].test(String(raw ?? ''))) && (k.includes(' ') ? String(raw ?? '').toLowerCase().includes(k) : words.some((w) => sameStem(w, stem(k)))));
-  return menu.map((t, i) => { const concept = hit(t, c, conceptText); const idea = hit(t, d, ideaText).filter((k) => !concept.includes(k)); return { t, i, concept, idea, matched: [...concept, ...idea], score: concept.length * 2 + idea.length }; })
+  const rawAll = String(conceptText0 ?? '');
+  return menu.map((t, i) => { const denied = TEMPLATE_DENY[t.id]?.test(rawAll); const concept = denied ? [] : hit(t, c, conceptText); const idea = denied ? [] : hit(t, d, ideaText).filter((k) => !concept.includes(k)); return { t, i, concept, idea, matched: [...concept, ...idea], score: concept.length * 2 + idea.length }; })
     .sort((a, b) => b.score - a.score || a.i - b.i);
 }
 
@@ -495,8 +504,10 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     if (/\{[a-z_]+\}/.test(text)) return null;
     return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate };
   }
+  const projWeaponRange = (() => { const fr = t.frames?.[bandFor(ctx.cr)] ?? ''; if (!/\{projectile\}/.test(fr)) return null; const pj = String(fills.projectile ?? ''); const row = [[/\bjavelins?\b/i, '30/120'], [/\bspears?\b/i, '20/60'], [/\b(?:daggers?|knives|knife)\b/i, '20/60'], [/\btridents?\b/i, '20/60'], [/\bdarts?\b/i, '20/60'], [/\b(?:hand)?axes?\b/i, '20/60'], [/\b(?:light )?hammers?\b/i, '20/60']].find(([re]) => re.test(pj)); return row ? row[1] : null; })();
   let text = t.frames[bandFor(ctx.cr)];
   if (!text) return null;
+  if (projWeaponRange) text = text.replace(/range \d+\/\d+ ft\./, `range ${projWeaponRange} ft.`);
   const per = Math.max(3, Math.round(scaled.per_hit ?? 6));
   // an ATTACK-ROLL frame prices like the chassis's attack rows — dice plus the striker's mod (print's Hill
   // Giant hurls a boulder for 20 (3d10 + 4); the hollow lancer's lance flew for 18 (4d8), goldens 2026-10-03);
@@ -509,11 +520,15 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // splinters pierce, salt and stone bruise (the slagmaw breathed shards as Fire, 2026-09-28)
   const SOLID_BREATH = [[/\b(?:glass|shards?|blades?|razors?)\b/i, 'Slashing'], [/\b(?:bones?|nails?|needles?|splinters?|spines?|thorns?|quills?)\b/i, 'Piercing'], [/\b(?:salt|stones?|gravel|rubble|sand)\b/i, 'Bludgeoning']];
   const EARTH = /\b(?:earth|grave earth|grave-earth|soil|dirt|stones?|rock|rocks|gravel|rubble|sand|mud|clay|ground)\b/i; // a shockwave of grave earth bruises, whatever the body's energy (the barrow-wight's Necrotic burst, critic 2026-09-29)
-  const solid = t.id === 'spew' ? (SOLID_BREATH.find(([re]) => re.test(String(ctx.concept ?? ''))) ?? [])[1]
+  const breathClauses = String(ctx.concept ?? '').split(/[.;,]|\s+(?:and|but)\s+/).filter((c) => /\b(?:breath|breathes?|breathing|exhales?|spews?|spits?|clouds?|cone|spray|belch(?:es)?|vomits?)\b/i.test(c)).join(' ') || String(ctx.concept ?? ''); // a SOLID breath is read from the breath's own clause — "Her nails are long and black" made a cloud of ash deal Piercing (Grandmother Ash, the critic's species read)
+  const solid = t.id === 'spew' ? (SOLID_BREATH.find(([re]) => re.test(breathClauses)) ?? [])[1]
     : t.id === 'ground-burst' && EARTH.test(String(ctx.concept ?? '')) ? 'Bludgeoning' : null;
   const stomping = t.id === 'ground-burst' && /\b(?:stomps?|stamps?|slams? the ground|quake|tremor|earthquake)\b/i.test(String(ctx.concept ?? '')); // print's ground slam knocks Prone
   const obscuring = t.id === 'spew' && /\b(?:ash|ashes|smoke|dust|sand|soot|cinders|spores|chaff)\b/i.test(String(ctx.concept ?? '')); // an OBSCURING breath blinds — the pyre's ash cone poisoned (critic, fresh six)
-  const dtype = solid ?? (ctx.mix === 'physical' || !ctx.energy ? (PHYSICAL.includes(fills.damage_type) ? fills.damage_type : 'Bludgeoning') : ctx.energy);
+  const dtype0 = solid ?? (ctx.mix === 'physical' || !ctx.energy ? (PHYSICAL.includes(fills.damage_type) ? fills.damage_type : 'Bludgeoning') : ctx.energy);
+  const PROJECTILE_WEAPON = [[/\bjavelins?\b/i, 'Piercing', '30/120'], [/\bspears?\b/i, 'Piercing', '20/60'], [/\b(?:daggers?|knives|knife)\b/i, 'Piercing', '20/60'], [/\btridents?\b/i, 'Piercing', '20/60'], [/\bdarts?\b/i, 'Piercing', '20/60'], [/\b(?:hand)?axes?\b/i, 'Slashing', '20/60'], [/\b(?:light )?hammers?\b/i, 'Bludgeoning', '20/60']];
+  const projWeapon = /\{projectile\}/.test(t.frames?.[bandFor(ctx.cr)] ?? '') ? PROJECTILE_WEAPON.find(([re]) => re.test(String(fills.projectile ?? ''))) : null; // a thrown NAMED weapon keeps its own type and range (a spear hurled for Bludgeoning at 30/120 — the critic's second species read)
+  const dtype = projWeapon ? projWeapon[1] : t.id === 'spew' && !solid && PHYSICAL.includes(dtype0) ? (ctx.energy && !PHYSICAL.includes(ctx.energy) ? ctx.energy : 'Poison') : dtype0; // a spewed cloud is never a weapon type: it takes the concept's energy or Poison (Noxious Spew dealt Piercing from a cloud of ash — the critic's species read)
   const engine = { ray_table: t.id === 'random-ray' ? composeRayTable(bandFor(ctx.cr)) : '', /* first: the composed table carries {dc} and damage slots the keys below fill */ dc: String(scaled.dc), atk: `+${scaled.atk}`, avg: String(full.avg), dice: full.dice, avg_half: String(half.avg), dice_half: half.dice, avg_x2: String(dbl.avg), dice_x2: dbl.dice, damage_type: dtype, melee_name: ctx.meleeName ?? 'Slam', ranged_name: ctx.rangedName ?? 'Longbow' };
   for (const [k, v] of Object.entries(engine)) text = text.split(`{${k}}`).join(v);
   if (obscuring) text = text.replace('has the Poisoned condition', 'has the Blinded condition'); // the Poison-breath frame's own rider, retyped for what ash does

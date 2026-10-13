@@ -16,6 +16,7 @@ import { HIT_DIE_BY_SIZE } from '../format-2024/dice.mjs';
 import { cardBudget, dmgRow } from './card-budgets.mjs';
 import { NOVA_CAP } from './templates.mjs';
 import { CONTROL_SPELL_LEVEL, CONTROL_AT_WILL_CR, SPELL_DAMAGE_AVG, printCanonFor, nearPrintCr } from './generate.mjs';
+import { speciesFor } from './species.mjs';
 import { DONORS } from './donors.mjs';
 import { piGuard, readPhrases } from './lexicon.mjs';
 
@@ -156,7 +157,8 @@ function gateDerivation(m, ctx, F) {
       else if (diff > 1) F('dc', 'fail', `${sec}/${bare(e.name)}: DC ${dc} is no stat's 8 + PB ${pb} + mod`, dc);
     }
     for (const em of String(e.text ?? '').matchAll(/escape DC (\d+)/g)) {
-      const want = 8 + pb + (mods.STR ?? 0); if (Number(em[1]) !== want) F('escape-dc', 'fail', `${sec}/${bare(e.name)}: escape DC ${em[1]}, derived ${want}`, Number(em[1]));
+      const want = 8 + pb + (mods.STR ?? 0); const dcMax = Math.max(0, ...[...JSON.stringify(m.sections ?? {}).matchAll(/(?<!escape )DC (\d+)/g)].map((x) => Number(x[1]))); const okWeak = (mods.STR ?? 0) < 0 && Number(em[1]) === dcMax; // a weak-armed grappler keys its escape off the save DC (the critic's second species read)
+      if (Number(em[1]) !== want && !okWeak) F('escape-dc', 'fail', `${sec}/${bare(e.name)}: escape DC ${em[1]}, derived ${want}`, Number(em[1]));
     }
   }
   for (const [k, v] of Object.entries(m.saves ?? {})) { const n = Number(String(v).replace('+', '')); if (n !== mods[k] && n !== mods[k] + pb) F('save', 'fail', `${k} save ${v}: neither mod ${mods[k]} nor mod + PB ${mods[k] + pb}`, v); }
@@ -341,7 +343,7 @@ function gateDonor(raw, m, ctx, F) {
   if (hits.length) F('pi-denylist', 'fail', `Product Identity on the sheet: ${hits.join(', ')}`, hits.join(', '));
   const text = JSON.stringify(m.sections ?? {});
   const rays = RAYS_2014.filter((r) => text.includes(r)); if (rays.length >= 3) F('ray-overlap', 'fail', `${rays.length} of the 2014 beholder's rays by name: ${rays.join(', ')}`, rays.length);
-  const pc = ctx.print ?? (ctx.userConcept ? printCanonFor(readPhrases(ctx.userConcept), ctx.cr) : null);
+  const pc = ctx.print ?? null; // checkBlock resolves the print pick once, with the species guard; a second lookup here read the kenku as the Mimic (species landing 2026-10-13)
   if (!pc || !(pc.exact || pc.borrowOnly)) return;
   const donor = DONORS.find((d) => d.id === ctx.donorId) ?? null;
   const printNames = new Set([...(pc.meleeRows ?? []), ...(pc.rangedRows ?? []), ...(pc.rulesRows ?? [])].map((r) => bare(r.name)).concat((pc.traits ?? []).map((t) => bare(t.name ?? t))));
@@ -351,7 +353,7 @@ function gateDonor(raw, m, ctx, F) {
     const n = bare(e.name);
     let why = null;
     if (/^(Multiattack|Spellcasting|Legendary Resistance)$/.test(n) || printNames.has(n)) continue;
-    else if (e.part || e.feature) why = 'the user\'s own part or feature';
+    else if (e.part || e.feature || e.kit) why = 'the user\'s own part, feature or species';
     else if (e.print) why = 'print rules row';
     else if (e.library) why = 'seed the user\'s words keyed';
     else if (e.template) why = 'template bound on the user\'s verb';
@@ -473,6 +475,7 @@ export function checkBlock(raw, ctx = {}) {
   const cr = Number(ctx.cr ?? m.cr ?? crNum(m.cr_str ?? '0'));
   const userConcept = ctx.userConcept ?? (raw.other_edition ?? raw).generation?.userConcept ?? raw.generation?.userConcept ?? [raw.monsterName, raw.monsterDescription].filter(Boolean).join(' — '); // the block carries the user's words from step 4 on
   let print = ctx.print ?? null; if (!print && userConcept) { try { print = printCanonFor(readPhrases(userConcept), cr); } catch { print = null; } }
+  if (print && userConcept) { const sh = speciesFor([userConcept], userConcept); if (sh && print.type && sh.species.type && print.type.toLowerCase() !== sh.species.type.toLowerCase()) print = null; } // the engine's rule: a species word outranks a monster alias of another type (a kenku mimic is not the Mimic — species landing 2026-10-13)
   const labels2014 = {};
   if (edition === '2014') for (const e of [...(raw.actions ?? []), ...(raw.legendary_actions ?? []), ...(raw.reactions ?? [])]) { const t = String(e.description ?? e.text ?? ''); labels2014[bare(e.name)] = /Spell Attack:/.test(t) ? 'spell' : /Weapon Attack:/.test(t) ? 'weapon' : null; }
   const context = { ...ctx, edition, cr, userConcept, print, labels2014, donorId: ctx.donorId ?? raw.generation?.donor ?? m.generation?.donor ?? null };

@@ -1,5 +1,5 @@
 {
-  "engine": "canaries-2026-10-12T16-43-57",
+  "engine": "canaries-2026-10-13T14-14-20",
   "blocks": {
     "1": {
       "name": "Owlbear",
@@ -15,7 +15,8 @@
       ],
       "dcs": [],
       "multiattack": 2,
-      "donor": "brute-2"
+      "donor": "brute-2",
+      "untranslated": null
     },
     "2": {
       "name": "Headless Horseman",
@@ -26,14 +27,15 @@
         {
           "name": "Saber",
           "bonus": 6,
-          "avg": 8
+          "avg": 7
         }
       ],
       "dcs": [
         14
       ],
       "multiattack": 2,
-      "donor": "skirmisher-3-mounted"
+      "donor": "skirmisher-3-mounted",
+      "untranslated": null
     },
     "3": {
       "name": "Wolf",
@@ -49,7 +51,8 @@
       ],
       "dcs": [],
       "multiattack": 2,
-      "donor": "skirmisher-3"
+      "donor": "skirmisher-3",
+      "untranslated": null
     },
     "4": {
       "name": "Steingolem",
@@ -72,7 +75,8 @@
         17
       ],
       "multiattack": 2,
-      "donor": "brute-9"
+      "donor": "brute-9",
+      "untranslated": 0
     },
     "5": {
       "name": "Kobold",
@@ -93,7 +97,8 @@
       ],
       "dcs": [],
       "multiattack": 0,
-      "donor": "skirmisher-1"
+      "donor": "skirmisher-1",
+      "untranslated": null
     },
     "6": {
       "name": "Goblin Boss",
@@ -116,10 +121,11 @@
         12
       ],
       "multiattack": 2,
-      "donor": "skirmisher-3-mounted"
+      "donor": "skirmisher-3-mounted",
+      "untranslated": null
     },
     "7": {
-      "name": "Bridge Toll",
+      "name": "Bridge Toll Troll",
       "cr": 5,
       "ac": 15,
       "hp": 94,
@@ -132,10 +138,11 @@
       ],
       "dcs": [],
       "multiattack": 2,
-      "donor": "defender-5"
+      "donor": "defender-5",
+      "untranslated": null
     },
     "8": {
-      "name": "Hollowstone Ogre",
+      "name": "Old Hammerfist",
       "cr": 5,
       "ac": 14,
       "hp": 102,
@@ -151,14 +158,15 @@
           "avg": 22
         },
         {
-          "name": "Hurlstone",
+          "name": "Thrown Boulder",
           "bonus": 7,
           "avg": 17
         }
       ],
       "dcs": [],
       "multiattack": 2,
-      "donor": "brute-5"
+      "donor": "brute-5",
+      "untranslated": null
     },
     "9": {
       "name": "Vampire Spawn",
@@ -176,25 +184,27 @@
         14
       ],
       "multiattack": 2,
-      "donor": "lurker-5"
+      "donor": "skirmisher-3",
+      "untranslated": null
     },
     "10": {
-      "name": "Drowned Reflection",
+      "name": "Well Drowned",
       "cr": 5,
       "ac": 20,
-      "hp": 93,
+      "hp": 90,
       "attacks": [
         {
-          "name": "Spur",
+          "name": "Barbed Coil",
           "bonus": 6,
-          "avg": 12
+          "avg": 17
         }
       ],
       "dcs": [
         14
       ],
       "multiattack": 2,
-      "donor": "lurker-5-trap"
+      "donor": "lurker-5-trap",
+      "untranslated": null
     }
   }
 }

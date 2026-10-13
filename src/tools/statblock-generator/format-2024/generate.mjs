@@ -1153,7 +1153,8 @@ export function toLegacyModel(m) {
       const dex = modOf(m.stats.DEX);
       if (/humanoid/i.test(m.type)) {
         const KITS = [['plate', 18, 0], ['splint', 17, 0], ['chain mail', 16, 0], ['half plate', 15, 2], ['breastplate', 14, 2], ['scale mail', 14, 2], ['chain shirt', 13, 2], ['studded leather', 12, 99], ['leather', 11, 99]];
-        for (const withShield of [false, true]) {
+        const twoHanded = Object.values(m.sections ?? {}).flat().some((e) => /\b(?:greatsword|greataxe|maul|pike|halberd|glaive|longbow|shortbow|heavy crossbow|light crossbow)\b/i.test(String(e.name ?? ''))); // no shield hand beside a two-handed weapon (Meshrin's "splint, shield" beside a greatsword — the critic's species read)
+        for (const withShield of (twoHanded ? [false] : [false, true])) {
           for (const [kit, base, cap] of KITS) {
             if (base + Math.min(dex, cap) + (withShield ? 2 : 0) === m.ac) return `${m.ac} (${kit}${withShield ? ', shield' : ''})`;
           }
@@ -1389,6 +1390,7 @@ export function validateTranslationResponse(jsonString, model) {
     const out = parsed.sections?.[section];
     if (!Array.isArray(out) || out.length !== entries.length) return false;
     if (!out.every((o) => o && typeof o.name === 'string' && o.name.trim() && typeof o.text === 'string' && o.text.trim())) return false;
+    const echoed = out.filter((o, i) => String(o.text).trim() === String(entries[i]?.text ?? '').trim()).length; if (echoed > entries.length / 2) return false; // an ECHO is not a translation: the provider returned the English rows under a translated header and the Steingolem shipped print's English (the critic's second species read, 2026-10-13)
   }
   return true;
 }

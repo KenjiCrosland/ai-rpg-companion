@@ -149,6 +149,11 @@ describe('the sprint run\'s fix round (2026-10-12)', () => {
     expect(staff.text).toMatch(new RegExp(`Attack Roll:\\*? \\+${pb + best},`));
     expect(checkBlock(m).fails).toEqual([]);
   });
+  test('within one step of print\'s CR the sheet keeps its own PB and print\'s bonuses re-derive — a CR 4 "duelist" is the Gladiator at +6 on PB +2, 2d6 + 4', async () => {
+    const m = await gen({ archetype: 'skirmisher', concept: 'a duelist', userConcept: 'a duelist', cr: 4 }, json('Ash Duelist', 'Humanoid', 4, null, 'skirmisher'));
+    expect(m.pb).toBe(2); expect(rows(m).find((e) => e.name === 'Spear').text).toMatch(/\+6, reach 5 ft\. 11 \(2d6 \+ 4\) Piercing/); // the sheet keeps its own PB (+2 at CR 4); print's +7 on PB +3 reads +6 (the critic's species read)
+    expect(checkBlock(m).fails).toEqual([]);
+  });
   test('the checker: print\'s Evasion idiom is not a half-no-referent; "that creature" after a named point is one target', () => {
     const base = { format: '2024', name: 'T', cr: 5, size: 'Medium', type: 'Humanoid', ac: 15, hp: 60, pb: 3, stats: { STR: 14, DEX: 16, CON: 12, INT: 10, WIS: 10, CHA: 10 }, speed: '30 ft.', generation: { clauses: [], userConcept: 'a test' } };
     const r1 = checkBlock({ ...base, sections: { Traits: [{ name: 'Evasion', text: 'If T is subjected to an effect that allows it to make a Dexterity saving throw to take only half damage, T instead takes no damage if it succeeds on the save and only half damage if it fails.' }], Actions: [{ name: 'Dagger', text: '*Melee Attack Roll:* +6, reach 5 ft. 8 (1d4 + 6) Piercing damage.' }] } });

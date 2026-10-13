@@ -1307,12 +1307,10 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
         .filter((t) => ALL_TYPES.includes(t));
       if (dealt.length) {
         for (const ty of TYPE_WORDS) {
-          if (new RegExp(`\\b${ty}\\b`, 'i').test(entry.name) && !dealt.includes(ty)) {
-            // if the name already carries the dealt type, DROP the wrong word
-            // rather than doubling it ("Lance of Radiant Radiant", blind read 2026-09-21)
-            const fixed = new RegExp(`\\b${dealt[0]}\\b`, 'i').test(entry.name)
-              ? entry.name.replace(new RegExp(`\\s*\\b${ty}\\b`, 'i'), '').replace(/\s+(?:of|the)\s*$/i, '').trim()
-              : entry.name.replace(new RegExp(`\\b${ty}\\b`, 'i'), dealt[0]);
+          if (new RegExp(`(?:^|\\s)${ty}(?:\\s|$)`, 'i').test(entry.name) && !dealt.includes(ty)) { // a word inside a hyphenated compound is a name, not a type claim ("Thunder-Elk Stampede" — the critic's second species read)
+            // A NAME IS NEVER A TYPE FIELD: the wrong word leaves; the dealt type is never written in ("Bludgeoning-Elk Stampede", "Bludgeoning Touch", "Reaper Bludgeon" — the critic's second species read)
+            const fixed = entry.name.replace(new RegExp(`\\s*(?:^|\\s)${ty}(?=\\s|$)`, 'i'), ' ').replace(/\s+(?:of|the)\s*$/i, '').replace(/^\s*(?:of|the)\s+/i, '').replace(/\s{2,}/g, ' ').trim();
+            if (!/[A-Za-z]/.test(fixed) || fixed === entry.name) break; // nothing honest to rename to: the mismatch stands unrenamed
             push('entry-name-type-mismatch', 'correctable',
               `${where}: the name says ${ty} but the entry deals ${dealt.join('/')} — a type-named ability must deal its named type (0/329 officials mismatch). Renamed to "${fixed}"`,
               fixed, loc);
