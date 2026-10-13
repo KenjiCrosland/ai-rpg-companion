@@ -4267,44 +4267,33 @@ describe('the claim gate (owner go 2026-09-15): low-CR blocks are short blocks',
       if (prompt.startsWith('You are repairing')) return JSON.stringify({});
       if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
       const base = JSON.parse(answer());
-      base.type = resolvedType;
-      delete base.wildcard; delete base.trait_wildcard; delete base.fallback_shape; delete base.fallback_name;
-      for (const k of Object.keys(base.renames)) { if (/Signature/.test(k)) delete base.renames[k]; }
+      base.type = resolvedType; // the gates are open at CR <= 2 now: the slot is asked for and answered (fidelity pipeline step 2)
       return JSON.stringify(base);
     });
     } finally { console.log = orig; }
     return lines.join('\n');
   };
 
-  test('the CR<=2 trait gate reads the BODY: an Undead keeps its trait seat, a Beast does not', async () => {
+  test('the CR<=2 trait seat is OPEN for every body (the austerity closure was opened — fidelity pipeline step 2): an Undead and a Beast both keep it', async () => {
     expect(await gateTrace('Undead')).toMatch(/the trait seat stays open/);
-    expect(await gateTrace('Beast')).toMatch(/the trait wildcard is closed at CR <= 2/);
-    expect(await gateTrace('Beast')).not.toMatch(/the trait seat stays open/);
-    // and the open TRAIT seat never reopens the ACTION seat's fallback: no seed drawn at CR 2
-    expect(await gateTrace('Undead')).not.toMatch(/library seed drawn|signature template:/);
+    expect(await gateTrace('Beast')).toMatch(/the trait seat stays open/);
+    expect(await gateTrace('Beast')).not.toMatch(/the trait wildcard is closed at CR <= 2/);
     // NO CALL IS AN ISLAND: the main call sees the chassis header (the array), the idea call sees the whole sheet so far
     const main = seenPrompts.find((q) => /THE CHASSIS \(CR/.test(q)); expect(main).toMatch(/\| STR \| \d+ \|/); expect(main).toMatch(/\*\*AC\*\* \d+/);
     const idea = seenPrompts.find((q) => q.startsWith('You are inventing the SIGNATURE ability')); expect(idea).toMatch(/THE SHEET SO FAR[\s\S]*\*\*HP\*\*[\s\S]*\| STR \| \d+ \|/); // the renderer prints AC/HP/Speed, then the ability table
     expect(idea).toMatch(/### Actions/);
   });
 
-  test('CR 2 with no claimed mechanics: no wildcard slot, no trait field, no informed call — attacks and renames only', async () => {
-    let informedCalled = false;
+  test('CR 2 with no claimed mechanics: the wildcard slot STAYS (the claim gate was opened — fidelity pipeline step 2): the main call asks for it and the block ships', async () => {
+    let askedWildcard = false;
     const m = await generateReskin({ archetype: 'skirmisher', concept: 'a river otter', cr: 2, mechanics: [] }, async (prompt) => {
-      if (prompt.startsWith('You are writing the signature action')) { informedCalled = true; return JSON.stringify({}); }
+      if (/THE CHASSIS \(CR/.test(prompt) && /Signature/.test(prompt)) askedWildcard = true; // the chassis's slot row is in the main prompt — the closed gate used to strip it first
       if (prompt.startsWith('You are repairing')) return JSON.stringify({});
       if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
-      // the model answers WITHOUT wildcard/trait fields — the gated
-      // prompt never asked; the validator must accept
-      const base = JSON.parse(answer());
-      delete base.wildcard; delete base.trait_wildcard; delete base.fallback_shape; delete base.fallback_name;
-      // the slot key is gone, so its rename is not required
-      for (const k of Object.keys(base.renames)) { if (/Signature/.test(k)) delete base.renames[k]; }
-      return JSON.stringify(base);
+      return answer();
     });
-    expect(informedCalled).toBe(false);
-    expect(Object.values(m.sections).flat().some((e) => (e.name ?? '').startsWith('Waylay'))).toBe(false);
-    expect(Object.values(m.sections).flat().some((e) => e.library)).toBe(false);
+    expect(askedWildcard).toBe(true);
+    expect(Object.values(m.sections).flat().length).toBeGreaterThan(0); // a seed may now stand in at CR 2 — that is the opened gate working, not a defect
   });
 
 
@@ -5419,13 +5408,13 @@ describe('form-ten (2026-10-01): the form\'s own words ride over print', () => {
     const m = await generateReskin({ archetype: 'brute', style: 'juggernaut', concept, userConcept: concept, cr: 10 }, async () => golem);
     const rows = Object.values(m.sections).flat().filter((e) => /Attack Roll/.test(e.text ?? ''));
     expect(rows.length).toBeGreaterThan(0);
-    for (const r of rows) { expect(r.text).toMatch(/Attack Roll:\*? \+10/); if (/\+ \d+\)/.test(r.text)) expect(r.text).toMatch(/\+ 6\)/); }
-    expect(rows.some((e) => /Force Bolt/.test(e.name) && /Force damage/.test(e.text))).toBe(true);
+    for (const r of rows) { if (/Force Bolt/.test(r.name)) continue; expect(r.text).toMatch(/Attack Roll:\*? \+10/); if (/\+ \d+\)/.test(r.text)) expect(r.text).toMatch(/\+ 6\)/); }
+    expect(rows.some((e) => /Force Bolt/.test(e.name) && /^\*Ranged Attack Roll:\* \+9, range 120 ft\. 22 \(4d10\) Force damage/.test(e.text))).toBe(true); // print's OWN ranged row, verbatim: +9 and a flat 4d10, not the sheet's +10 with +6 (the critic's canaries read, 2026-10-12)
     // the model names the ranged row a launcher ("Stone Bolt"): the weapon table rolls it off DEX 9, then print's row takes its numbers back
     const g2 = JSON.parse(golem); g2.renames['Ranged Attack'] = 'Stone Bolt'; g2.damage_types['Stone Bolt'] = 'Bludgeoning'; delete g2.damage_types['Hurl Boulder'];
     const m2 = await generateReskin({ archetype: 'brute', style: 'juggernaut', concept, userConcept: concept, cr: 10 }, async () => JSON.stringify(g2));
     const bolt = Object.values(m2.sections).flat().find((e) => /Force Bolt/.test(e.name));
-    expect(bolt.text).toMatch(/Attack Roll:\*? \+10/); expect(bolt.text).toMatch(/\+ 6\) Force damage/);
+    expect(bolt.text).toMatch(/^\*Ranged Attack Roll:\* \+9, range 120 ft\. 22 \(4d10\) Force damage/); // print's row verbatim on an exact body at print's CR (canaries 2026-10-12)
   });
   test('below CR 1/2 a chassis makes one attack: the CR 1/4 kobold is the Kobold Warrior by alias and carries no Multiattack', () => {
     const { printCanonFor } = require('../generate.mjs');

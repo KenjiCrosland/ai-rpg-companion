@@ -448,12 +448,13 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     const seen = new Map();
     for (const e of dupList ?? []) {
       const key = (e.text ?? '').trim().toLowerCase();
+      if (key && seen.has(key) && e.part && seen.get(key)?.part) continue; // two body parts the user named with the same numbers are two rows (Greatsword and Razor Sharp Claws, step 7)
       if (key && seen.has(key)) {
         push('duplicate-entry', 'reject',
-          `${dupSection}/${e.name}: identical text to "${seen.get(key)}" — two names, one ability; rewrite this entry into something distinct`,
+          `${dupSection}/${e.name}: identical text to "${seen.get(key)?.name ?? seen.get(key)}" — two names, one ability; rewrite this entry into something distinct`,
           undefined, { section: dupSection, entry: e.name });
       } else if (key) {
-        seen.set(key, e.name);
+        seen.set(key, e);
       }
     }
   }
@@ -1415,6 +1416,7 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // poisoned condition" — live 2014 finding, "Glimborg"), which the
     // original capitalized two-branch regex sailed past.
     if (section === 'Traits'
+      && !/\b(?:adamantine|silvered)\b/i.test(entry.text) // a qualifier the header lines cannot carry ("immune to damage from non-adamantine weapons" — the Iron Bull, step 6) is a mechanic, not a restatement; "nonmagical" IS a header idiom (the Bone Shroud pin)
       && (/^The [\w' -]+ (?:has|is) (?:resistance|resistant|immunity|immune)[^.]*(?:damage|conditions?)\.$/i.test(entry.text.trim())
         || /^The [\w' -]+(?:'s [\w' -]+)? is [^.]*grants? (?:it|the [\w' -]+) (?:resistance|immunity)[^.]*\.$/i.test(entry.text.trim()))) {
       push('defense-restated', 'reject', `${where}: this trait only restates the Resistances/Immunities lines — the lines already carry it; replace it with a real mechanic or drop it`, undefined, loc);

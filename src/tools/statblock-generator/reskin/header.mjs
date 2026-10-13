@@ -91,6 +91,10 @@ export function honestAttackNames(sections, { projectile = null } = {}) {
         const to = kind === 'ranged' ? proj : 'Slam';
         changes.push({ from: e.name, to, why: `${head} is a ${a[0]} noun on a ${kind} row` });
         e.name = to;
+        if (kind === 'melee') { // the renamed row deals the slam's type (print's Javelin became a Piercing Slam on the Ogre — canaries 2026-10-12)
+          const m = /\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) (Bludgeoning|Piercing|Slashing) damage/.exec(text);
+          if (m && m[1] !== 'Bludgeoning') { e.text = text.replace(m[0], m[0].replace(m[1], 'Bludgeoning')); changes.push({ from: to, to, why: `a slam deals Bludgeoning, not ${m[1]}` }); }
+        }
         continue;
       }
       if (kind === 'melee' && a[1]) {

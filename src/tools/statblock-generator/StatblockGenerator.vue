@@ -1170,6 +1170,8 @@ async function generateStatblockEngine(edition) {
         if (pn && nameShaped && hit && properCase) conceptProvidedName = asWritten;
         else if (pn && hit && !properCase) logger.log('[concept] name:', `provided_name rejected — "${pn.slice(0, 40)}" is written in lowercase inside a description; the generator names it`);
         else if (pn && !nameShaped) logger.log('[concept] name:', `provided_name rejected — "${pn.slice(0, 40)}…" is the description, not a name`);
+        // the model returned no provided_name at all ("Meshrin" shipped as Meshrin Pit Champion, step 8 nine): a short Name field with no article IS the name, whatever the model read
+        if (!conceptProvidedName && !pn && inputWords <= 4 && monsterName.value.trim() && !/^(?:a|an|the|some)\s/i.test(monsterName.value.trim())) { conceptProvidedName = monsterName.value.trim(); logger.log('[concept] name:', `the Name field "${conceptProvidedName}" is the name — the model named none`); }
       }
       if (['both', 'physical', 'energy'].includes(parsed?.damage_mix)) conceptMix = parsed.damage_mix;
       // contradiction belt: a declared element outranks a 'physical' mix

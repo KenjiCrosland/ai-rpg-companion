@@ -1093,7 +1093,7 @@ export function normalizeNonmagicalClause(value) {
   const rest = [...tokens.slice(0, start), ...tokens.slice(clauseIdx + 1)];
   const clauseStr = (clauseTypes.length > 1
     ? `${clauseTypes.slice(0, -1).join(', ')}, and ${clauseTypes[clauseTypes.length - 1]}`
-    : clauseTypes[0]) + ' from nonmagical attacks';
+    : clauseTypes[0]) + ' from nonmagical attacks' + (/adamantine/i.test(tokens[clauseIdx]) ? " that aren't adamantine" : ''); // the Iron Golem's line (step 8)
   return rest.length ? `${rest.join(', ')}; ${clauseStr}` : clauseStr;
 }
 
@@ -1102,7 +1102,7 @@ export function toLegacyModel(m) {
   // italics survive the gate; only the bullets and the 2024 Multiattack
   // idiom scrub
   const plain = (t) => String(t ?? '').replace(/^[ \t]*-[ \t]*$\n?/gm, '') /* a bullet marker with nothing on it printed a stray "-" line in the 2014 spell block (critic's blockers audit 2026-10-03) */.replace(/^- /gm, '').replace(/ in any combination\b/, '').replace(/\*?Hit or Miss:\*?\s*/g, ''); // exports keep 2024 wording; the 2014 grammar pass runs on the CONVERSION path alone (checker 2026-10-02)
-  const entryList = (name) => (m.sections?.[name] ?? []).map((e) => ({ name: e.name, description: plain(e.text) }));
+  const entryList = (name) => (m.sections?.[name] ?? []).map((e) => ({ name: e.name, description: plain(e.text) })); // a row's `flavor` field is a holding slot for the pipeline, never printed inside a row (owner 2026-10-04: it routes to Languages or the description)
   // Split merged 2024-style defense lines into 2014's damage vs condition
   // fields. Classification is by token against the known condition
   // vocabulary, NOT by the semicolon — the LLM doesn't always emit the
@@ -1149,6 +1149,7 @@ export function toLegacyModel(m) {
       // shield)"). Humanoid-shaped wearers solve a real kit; everything
       // else over its Dex line is natural armor.
       if (m.ac_note) return `${m.ac} (${m.ac_note})`;
+      if (m.ac_gear) return `${m.ac} (${m.ac_gear})`; // print's Gear line named the armor (the Goblin Boss is chain shirt and shield, not the kit table's "splint" — canaries 2026-10-12)
       const dex = modOf(m.stats.DEX);
       if (/humanoid/i.test(m.type)) {
         const KITS = [['plate', 18, 0], ['splint', 17, 0], ['chain mail', 16, 0], ['half plate', 15, 2], ['breastplate', 14, 2], ['scale mail', 14, 2], ['chain shirt', 13, 2], ['studded leather', 12, 99], ['leather', 11, 99]];
@@ -1184,12 +1185,18 @@ export function toLegacyModel(m) {
   if (res.damage) legacy.damage_resistances = normalizeNonmagicalClause(res.damage).toLowerCase();
   if (imm.damage) legacy.damage_immunities = normalizeNonmagicalClause(imm.damage).toLowerCase();
   if (imm.conditions) legacy.condition_immunities = imm.conditions.toLowerCase();
+  if (m.vulnerabilities) legacy.damage_vulnerabilities = String(m.vulnerabilities).toLowerCase(); // a typed vulnerability reaches the 2014 sheet (the hag's Fire, step 6)
   const legendary = entryList('Legendary Actions')
     // the 2024 Uses row duplicates the classic card's own boilerplate
     // paragraph (double header, live 2026-09-14)
     .filter((e) => !/^Legendary Action Uses/i.test(e.name))
     .map((e) => ({ ...e, name: normalizeLegendaryCost(e.name) }));
   if (legendary.length) legacy.legendary_actions = legendary;
+  { // the 2014 label follows the stat, whatever the conversion model wrote (fidelity pipeline step 4 forty: a Dex rope labelled Spell)
+    const castName = /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability/.exec(JSON.stringify(m.sections ?? {}))?.[1];
+    const castStat = castName ? { Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON', Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' }[castName] : null;
+    for (const list of [legacy.actions, legacy.legendary_actions, legacy.reactions, legacy.abilities]) if (Array.isArray(list)) relabel2014Attacks(list, m.stats, Number(m.pb ?? 0), castStat);
+  }
   return legacy;
 }
 
@@ -1274,6 +1281,7 @@ export function fromLegacyModel(legacy) {
   if (legacy.archetype_source) model.archetype_source = legacy.archetype_source;
   if (legacy.skills && legacy.skills !== 'None') model.skills = legacy.skills;
   if (legacy.damage_resistances) model.resistances = capDefense(legacy.damage_resistances);
+  if (legacy.damage_vulnerabilities) model.vulnerabilities = capDefense(legacy.damage_vulnerabilities);
   if (immunities) model.immunities = immunities;
   if (legacy.languages && legacy.languages !== '—') model.languages = legacy.languages;
   if ((sections['Legendary Actions'] ?? []).length) model.legendary_uses = 3;
@@ -1425,7 +1433,7 @@ const LOWER_TYPES = /\b(Bludgeoning|Piercing|Slashing|Fire|Cold|Lightning|Thunde
 // taking N (dice) type damage on a failed save, or half as much damage on a successful one. On a failed save, the target is also …"
 // A save with no damage: "<Targets> must make a DC n <Stat> saving throw. On a failed save, <effect>. On a successful save, <effect>."
 // The 2024 lead-in "is targeted once by the following effect." folds into the subject.
-const SAVE_HEAD = /\*?(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) Saving Throw\*?:\s*DC (\d+)(?:, ([^.]+?))?\.\s*\*?Failure:\*?\s*/g;
+const SAVE_HEAD = /\*?(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) Saving Throw\*?:\*?\s*DC (\d+)(?:, ([^.]+?))?\.\s*\*?Failure:\*?\s*/g; // both asterisk orders: the engine's `Throw*:` and the model's `Throw:*`
 export function canonSave2014(text) {
   let t = String(text ?? '');
   const heads = [...t.matchAll(SAVE_HEAD)];
@@ -1454,12 +1462,45 @@ export function canonSave2014(text) {
   });
   return (out + t.slice(cursor)).replace(/\s{2,}/g, ' ').trim();
 }
+// THE 2014 LABEL FOLLOWS THE STAT (fidelity pipeline step 4 forty): the conversion model wrote "Melee Spell Attack" on a
+// ghost's rope that rolls Dex 16 + PB on a sheet with no Spellcasting. A row's label is Weapon when its bonus derives from
+// STR or DEX and Spell when it derives only from the casting stat; the model's label is overruled by the arithmetic.
+export function relabel2014Attacks(legacyRows, stats, pb, castStat) {
+  const mod = (k) => Math.floor(((stats?.[k] ?? 10) - 10) / 2);
+  for (const r of legacyRows ?? []) {
+    const t = String(r.description ?? r.text ?? ''); const m = /\b(Melee or Ranged|Melee|Ranged) (Weapon|Spell) Attack: \+(\d+) to hit/.exec(t); if (!m) continue;
+    const n = Number(m[3]); const physical = n === pb + mod('STR') || n === pb + mod('DEX'); const magical = !!castStat && n === pb + mod(castStat);
+    const want = physical && !(magical && !physical) ? 'Weapon' : magical ? 'Spell' : null;
+    if (want && want !== m[2]) { const fixed = t.replace(m[0], `${m[1]} ${want} Attack: +${n} to hit`); if (r.description != null) r.description = fixed; else r.text = fixed; }
+  }
+  return legacyRows;
+}
+/** The 2014 Multiattack from the 2024 row, deterministic: the model enumerated "one with X, one with Y, or one with X and one
+ *  with Y" for three attacks over two names (Grandmother Ash, critic's step-5 read). One row: "makes N X attacks"; as many
+ *  names as attacks: "one with its X and one with its Y"; a mixed set: "makes N attacks, using X or Y". */
+export function multiattack2014(text) {
+  const t = String(text ?? '');
+  const combo = /makes (\w+) attacks, using (.+?) in any combination/.exec(t);
+  if (!combo) return to2014Grammar(t);
+  const WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
+  const names = combo[2].split(/,\s*|\s+or\s+/).map((x) => x.trim().replace(/^or\s+/i, '')).filter(Boolean); // an Oxford comma left "or Fiery Mace" as a name → "or or" (check-in 2026-10-11)
+  const n = WORDS[combo[1].toLowerCase()] ?? Number(combo[1]);
+  const its = /^(?:The|the) /.test(t) ? 'its ' : ''; // a named person's Multiattack does not say "its"
+  const list = (xs, joiner) => (xs.length === 2 ? xs.join(` ${joiner} `) : `${xs.slice(0, -1).join(', ')}, ${joiner} ${xs.at(-1)}`);
+  const rep = names.length === 1 ? `makes ${combo[1]} ${names[0]} attacks`
+    : names.length === n ? `makes ${combo[1]} attacks: ${list(names.map((x) => `one with ${its}${x}`), 'and')}`
+      : `makes ${combo[1]} attacks, using ${list(names, 'or')}`;
+  return to2014Grammar(t.replace(combo[0], rep));
+}
 export function to2014Grammar(text) {
   let t = String(text ?? '');
+  // a damage-plus-condition save converted as "taking X on a failed save, and is poisoned … on a failed save" (Grandmother Ash's Ash Choke, step 6): the condition is its own sentence
+  t = t.replace(/(on a failed save), and (is|has|becomes|can't|cannot) ([^.]*?) on a failed save\./gi, (m0, a, verb, rest) => `${a}. On a failed save, the target ${verb === 'is' ? 'is also' : verb === 'has' ? 'also has' : `also ${verb}`} ${rest}.`);
   // 2014 RENDER REPAIRS (critic's blockers audit 2026-10-03 — "sheets that look broken"): the classic card renders an
   // ability as one paragraph, so a bullet list has to become sentences before the whitespace collapse below flattens
   // the line starts; an empty bullet is a stray "-" on the sheet; and a hybrid row's label has to match its range.
   t = t.replace(/^[ \t]*-[ \t]*\*\*(?!At Will|\d+\/Day)([^*]+?)\*\*:?[ \t]*/gm, (m0, label) => `${label.trim()}: `);
+  t = t.replace(/:[ \t]*-[ \t]*(?=\n|$)/g, ':'); // "(spell save DC 17): -" — the model's bullet on the header line (the Adult Green Dragon 2014, check-in 2026-10-11)
   // a hybrid row's LABEL matches its range, repaired before the conversions below (the conversion path shipped "Melee Spell Attack: … reach 5 ft. or range 120 ft.")
   t = t.replace(/(?<!Melee or )\b(?:Melee|Ranged) (Weapon|Spell) Attack: (\+\d+ to hit, )?reach (\d+) ft\. or range/g, (m0, kind, hit, reach) => `Melee or Ranged ${kind} Attack: ${hit ?? ''}reach ${reach} ft. or range`); // never prefix a label that already carries it — five 2014 sheets read "Melee or Melee or Ranged" (critic's regressions brief 2026-10-04)
   t = t.replace(/\*?Melee or Ranged Attack Roll:\*?\s*\+(\d+)[^.]*?reach (\d+) ft\. or range ([\d/]+) ft\.\s*/g, 'Melee or Ranged Weapon Attack: +$1 to hit, reach $2 ft. or range $3 ft., one target. Hit: ');
@@ -1520,7 +1561,7 @@ Return ONLY a JSON object with the SAME sections, SAME entry order, SAME entry n
   let converted = {
     ...model,
     sections: Object.fromEntries(Object.entries(model.sections).map(([s, es]) =>
-      [s, es.map((e, i) => ({ ...e, name: target === '2014' ? String(e.name).replace(/\bBloodied\b/g, 'Wounded') : e.name, text: target === '2014' ? to2014Grammar(parsed[s]?.[i]?.text ?? e.text) : (parsed[s]?.[i]?.text ?? e.text) }))])), // a 2024 term in a row NAME goes too ("Bloodied Burst" → "Wounded Burst")
+      [s, es.map((e, i) => ({ ...e, name: target === '2014' ? String(e.name).replace(/\bBloodied\b/g, 'Wounded') : e.name, text: target === '2014' ? (/^Multiattack/.test(e.name ?? '') ? multiattack2014(e.text) : to2014Grammar(parsed[s]?.[i]?.text ?? e.text)) : (parsed[s]?.[i]?.text ?? e.text) }))])), /* the Multiattack is rendered from the 2024 row; every other row, print's included, is the conversion model's — the by-rule print conversion left 2024 idiom on the Kraken and the dragon (critic's step-8 read); the conversion-dropped-half gate watches the model */ // a 2024 term in a row NAME goes too ("Bloodied Burst" → "Wounded Burst")
   };
 
   let ctx2;

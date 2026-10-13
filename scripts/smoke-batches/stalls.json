@@ -1,0 +1,43 @@
+[
+ {
+  "cr": "20",
+  "concept": "a pit fiend",
+  "rules": "2014"
+ },
+ {
+  "name": "",
+  "description": "a bog witch",
+  "cr": "auto",
+  "rules": "2024",
+  "shape": "short",
+  "clauses": [
+   "witch (casts)",
+   "bog"
+  ]
+ },
+ {
+  "name": "",
+  "description": "a wizard but he cannot cast any spells, he just hits people with his staff",
+  "cr": "3",
+  "rules": "2014",
+  "shape": "removal-clause",
+  "clauses": [
+   "wizard",
+   "no spells (removal)",
+   "staff melee"
+  ]
+ },
+ {
+  "name": "",
+  "description": "a sentient pile of laundry that smothers people and smells like old socks, it speaks only in the language of socks",
+  "cr": "3",
+  "rules": "2024",
+  "shape": "joke",
+  "clauses": [
+   "laundry/cloth body",
+   "smothers (engulf/grapple)",
+   "smell (stench? trait)",
+   "speaks sock language (flavor)"
+  ]
+ }
+]

@@ -2,18 +2,18 @@
 
 ## Gate table
 
-| block | CR | ed | donor | derivation | bands | structure | gates | headerBody | edition | donor | verdict |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| Varcolac the Undying | 15 | 2024 | skirmisher-13 | ok | SOFT: aim-dpr, band | ok | ok | ok | ok | ok | soft (1) |
-| Sanguine Sovereign | 15 (2014) | 2014 | skirmisher-13 | ok | SOFT: band | ok | ok | ok | ok | ok | soft (1) |
-| Kraken | 24 | 2024 | brute-21 | ok | ok | ok | ok | ok | ok | ok | clean |
-| Kraken | 24 (2014) | 2014 | brute-21 | ok | ok | ok | ok | ok | ok | ok | clean |
-| Pit Fiend | 20 | 2024 | defender-17 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | soft (1) |
-| Pit Fiend | 20 (2014) | 2014 | defender-17 | ok | ok | ok | ok | ok | ok | ok | clean |
-| Oathsworn Thanegrast | 18 | 2024 | caster-21-warpriest | ok | SOFT: hot-offense | ok | ok | ok | ok | ok | soft (1) |
-| Morgrave the Muster | 18 (2014) | 2014 | caster-21-warpriest | ok | ok | FAIL: punctuation | ok | ok | ok | ok | FAIL (1) |
-| Ossuar the Thronebound | 24 | 2024 | caster-21 | ok | SOFT: aim-dpr, under | ok | SOFT: rider-no-save | ok | ok | ok | soft (2) |
-| Sunreaper Osswald | 24 (2014) | 2014 | caster-21 | ok | SOFT: aim-dpr, band | FAIL: punctuation | SOFT: rider-no-save | ok | ok | ok | FAIL (1) |
+| block | CR | ed | donor | derivation | bands | structure | gates | headerBody | edition | donor | adjudicability | verdict |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Varcolac the Undying | 15 | 2024 | skirmisher-13 | ok | SOFT: aim-dpr, band | ok | ok | ok | ok | ok | ok | soft (1) |
+| Sanguine Sovereign | 15 (2014) | 2014 | skirmisher-13 | ok | SOFT: band | ok | ok | ok | ok | ok | ok | soft (1) |
+| Kraken | 24 | 2024 | brute-21 | ok | ok | ok | ok | ok | ok | ok | ok | clean |
+| Kraken | 24 (2014) | 2014 | brute-21 | ok | ok | ok | ok | ok | ok | ok | ok | clean |
+| Pit Fiend | 20 | 2024 | defender-17 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | soft (1) |
+| Pit Fiend | 20 (2014) | 2014 | defender-17 | ok | ok | ok | ok | ok | ok | ok | ok | clean |
+| Oathsworn Thanegrast | 18 | 2024 | caster-21-warpriest | ok | SOFT: hot-offense | ok | ok | ok | ok | ok | ok | soft (1) |
+| Morgrave the Muster | 18 (2014) | 2014 | caster-21-warpriest | ok | ok | FAIL: punctuation | ok | ok | ok | ok | ok | FAIL (1) |
+| Ossuar the Thronebound | 24 | 2024 | caster-21 | ok | SOFT: aim-dpr, under | ok | SOFT: rider-no-save | ok | ok | ok | ok | soft (2) |
+| Sunreaper Osswald | 24 (2014) | 2014 | caster-21 | ok | SOFT: aim-dpr, band | FAIL: punctuation | SOFT: rider-no-save | ok | ok | ok | ok | FAIL (1) |
 
 **Fails by seat and gate:**
 - caster-21-warpriest / structure: 1

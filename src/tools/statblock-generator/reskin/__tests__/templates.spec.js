@@ -39,7 +39,7 @@ describe('the catalog', () => {
     expect(renderTemplate(TEMPLATES.find((t) => t.id === 'false-appearance'), { scaled, archetype: 'brute', cr: 6, energy: null, mix: 'physical', meleeName: 'Slam', imposed: [], name: 'X' }, {}).text).toMatch(/indistinguishable from an ordinary object/);
     expect(renderTemplate(TEMPLATES.find((t) => t.id === 'throw-retrieve'), { scaled, archetype: 'brute', cr: 6, energy: null, mix: 'physical', meleeName: 'Slam', imposed: [], name: 'X', projectile: 'its iron lance' }, {}).text).toMatch(/hurls its iron lance/);
     // a hurler sheet excludes the named-weapon retrieve
-    const hurler = { Actions: [{ name: 'Slab', text: '*Ranged Attack Roll:* +7, range 60/240 ft. 20 (3d10 + 4) Bludgeoning damage.' }] };
+    const hurler = { Actions: [{ name: 'Slab', text: '*Ranged Attack Roll:* +7, range 60/240 ft. 20 (3d10 + 4) Bludgeoning damage.', library: true }] }; // a throw the SHEET owns (a seed, a template, print's) excludes the retrieve; a chassis throw yields its slot instead (fidelity pipeline step 2)
     expect(templatesFor({ archetype: 'skirmisher', style: 'hurler', cr: 6, sections: hurler, section: 'action' }).map((t) => t.id)).not.toContain('throw-retrieve');
     const gatedBonus = valueCheck({ name: 'Bedrock Grasp (2/Day)', text: `*Strength Saving Throw*: DC 15, one creature within 30 feet. *Failure:* ${Math.round(per / 4)} (1d8) Bludgeoning damage, and the target has the Grappled condition (escape DC 15).` }, { scaled, sections, section: 'Bonus Actions' });
     expect(gatedBonus.steps).toEqual([]); // a gated bonus action is not a nova
@@ -223,10 +223,10 @@ describe('the catalog', () => {
     const caged = { Actions: [{ name: 'Reel', text: 'The creature pulls each creature Grappled by it up to 25 feet straight toward it.' }] };
     expect(templatesFor({ archetype: 'skirmisher', cr: 7, sections: caged, section: 'rider' }).map((t) => t.id)).not.toContain('hook-rider');
   });
-  test('a template that supersedes a sheet row is offered despite that row\'s engine family; a plain thrown row still excludes it', () => {
+  test('a template that supersedes a sheet row is offered despite that row\'s engine family; a thrown row the sheet OWNS still excludes it (a chassis throw yields its slot instead — fidelity pipeline step 2)', () => {
     const returning = { Actions: [{ name: 'Thrown Lance', text: 'The creature throws its lance. *Ranged Attack Roll:* +8, range 30/90 ft. 13 (2d8 + 4) Piercing damage. *Hit or Miss:* Immediately after the attack, the lance returns to its hand.' }] };
     expect(templatesFor({ archetype: 'skirmisher', style: 'hurler', cr: 9, sections: returning, section: 'action' }).map((t) => t.id)).toContain('throw-retrieve');
-    const boulder = { Actions: [{ name: 'Boulder', text: 'The creature hurls a boulder. *Ranged Attack Roll:* +8, range 60/240 ft. 22 (4d10) Bludgeoning damage.' }] };
+    const boulder = { Actions: [{ name: 'Boulder', text: 'The creature hurls a boulder. *Ranged Attack Roll:* +8, range 60/240 ft. 22 (4d10) Bludgeoning damage.', library: true }] };
     expect(templatesFor({ archetype: 'skirmisher', style: 'hurler', cr: 9, sections: boulder, section: 'action' }).map((t) => t.id)).not.toContain('throw-retrieve');
   });
   test('the miss fallback draws from the SAME filtered menu — a caged or reeling sheet never gets a containment seed', () => {

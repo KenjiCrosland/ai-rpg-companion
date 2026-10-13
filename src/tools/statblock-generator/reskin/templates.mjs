@@ -38,7 +38,7 @@ const PHYSICAL = ['Bludgeoning', 'Piercing', 'Slashing'];
 // closed-vocabulary slots: the model may propose, the engine only accepts a listed value
 const VOCAB = { save_stat: SAVE_STATS, consumed_condition: CONDITIONS, condition_minor: MINOR, restraint: RESTRAINTS, r_vuln: DAMAGE };
 // flavor slots: the model's words, bounded (no digits, no rules grammar, short)
-export const FLAVOR_SLOTS = ['restraint', 'projectile', 'wound_noun', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
+export const FLAVOR_SLOTS = ['phobia', 'restraint', 'projectile', 'wound_noun', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
 // engine slots: never the model's
 const ENGINE_SLOTS = ['dc', 'atk', 'avg', 'dice', 'avg_half', 'dice_half', 'damage_type', 'melee_name', 'ranged_name', 'ray_table'];
 
@@ -46,11 +46,11 @@ const ENGINE_SLOTS = ['dc', 'atk', 'avg', 'dice', 'avg_half', 'dice_half', 'dama
 // replacements weld INTO an existing row and are not a standalone template
 const SHAPE_TAGS = {
   trample: ['save', 'damage'], leap: ['save', 'damage'], 'thrown-burst': ['save', 'damage'],
-  'gaze-single': ['save', 'condition'], snare: ['save', 'condition'], reel: ['save', 'movement'],
+  'gaze-single': ['save', 'condition'], snare: ['save', 'condition'], swallow: ['save', 'condition'], reel: ['save', 'movement'],
   'condition-payoff': ['save', 'damage'], rampage: ['once_per_fight', 'damage'], blink: ['always', 'movement'],
   zone: ['once_per_fight', 'condition'], execute: ['save', 'damage'], 'death-burst': ['always', 'damage'],
   'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], contagion: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], spew: ['save', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'hook-rider': ['on_hit', 'movement'], riposte: ['on_being_hit', 'damage'], 'snap-shot': ['on_being_hit', 'damage'], 'ground-burst': ['save', 'damage'], 'volley-order': ['always', 'resource'], 'random-ray': ['save', 'condition'], 'blurred-form': ['always', 'defense'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
-  'spider-climb': ['always', 'movement'], 'terrain-walk': ['always', 'movement'], 'aberrant-ground': ['always', 'movement'], 'faultless-tracker': ['always', 'condition'], 'web-walker': ['always', 'movement'],
+  'spider-climb': ['always', 'movement'], phobia: ['always', 'condition'], 'terrain-walk': ['always', 'movement'], 'aberrant-ground': ['always', 'movement'], 'faultless-tracker': ['always', 'condition'], 'web-walker': ['always', 'movement'],
   'fire-aura': ['start_of_turn', 'damage'], 'noxious-aura': ['save', 'condition'], 'bloodied-fury': ['always', 'defense'], 'uncanny-sense': ['always', 'defense'], 'earth-glide': ['always', 'movement'], tunneler: ['always', 'movement'], berserk: ['always', 'condition'], 'shielded-mind': ['always', 'defense'], evasion: ['always', 'defense'],
   'relentless-pursuit': ['always', 'movement'], bound: ['always', 'movement'], 'marking-light': ['always', 'condition'], 'sealed-body': ['always', 'defense'], 'warded-mending': ['start_of_turn', 'resource'], 'guarded-stance': ['always', 'defense'], 'undead-fortitude': ['always', 'defense'], mimicry: ['always', 'defense'], wail: ['once_per_fight', 'damage'], 'truth-aura': ['save', 'condition'], 'gaze-aura': ['save', 'condition'], 'charge-push': ['on_hit', 'movement'],
 };
@@ -81,7 +81,7 @@ export function sheetEngines(sections = {}) {
     if (/indistinguishable from|resemble an? (?:\w+ ){0,3}object|shape-shifts? to resemble/i.test(e.text ?? '')) out.add('disguise'); // the trap line's own False Form (two disguise traits on one gargoyle)
     if (e.engine) out.add(e.engine);
     if (/moved (?:at least )?\d+\+? feet straight toward/i.test(e.text ?? '')) out.add('charge-rider');
-    if (/Ranged Attack Roll/.test(e.text ?? '') && /hurl|throw|\{projectile\}|boulder|rock|slab/i.test(`${e.name ?? ''} ${e.text ?? ''}`)) out.add('thrown-weapon');
+    if (/Ranged Attack Roll/.test(e.text ?? '') && /hurl|throw|\{projectile\}|boulder|rock|slab/i.test(`${e.name ?? ''} ${e.text ?? ''}`) && (e.template || e.library || e.print)) out.add('thrown-weapon'); // a CHASSIS throw does not own the engine: the slot-yield rule evicts it when the user's thrown weapon lands (fidelity pipeline step 2 — the chassis's "Hurled Debris" kept throw-retrieve off the menu)
     if (/adheres to anything that touches/i.test(e.text ?? '')) out.add('adhesive');
     if (/hits it with a melee attack while within 5 feet of it takes/i.test(e.text ?? '')) out.add('contact-damage');
     if (/(?:At the end of each of|starts its turn in a \d+-foot Emanation).{0,80}Emanation originating from/i.test(e.text ?? '') || /starts its turn in a \d+-foot Emanation/i.test(e.text ?? '')) out.add('aura');
@@ -125,6 +125,8 @@ export function coveredBySheet(sections = {}) {
 // expresses it"). Every template carries verb keys; the fit menu is RANKED by
 // overlap with the concept + idea and the matches are named to the model.
 const SHAPE_KEYS = {
+  phobia: ['afraid of', 'afraid', 'fear of', 'fears', 'terrified of', 'terrified', 'phobia', 'flees from', 'flee from', 'panics at', 'dread of', 'scared of'],
+  swallow: ['swallow', 'swallows', 'swallowed', 'devour', 'devours', 'gulp', 'gulps', 'eats whole', 'whole'],
   'random-ray': ['eyestalks', 'eyestalk', 'eye rays', 'rays', 'ray', 'many-eyed', 'beams'],
   'blurred-form': ['blurred', 'blur', 'displaced', 'image appears', 'a few feet from where it stands', 'afterimage', 'shimmers', 'mirage', 'where it stands'],
   'volley-order': ['volley', 'orders a volley', 'looses at will', 'loose', 'on my mark', 'archers', 'crossbowmen'],
@@ -148,7 +150,7 @@ export const VERB_KEYS = {
   'gaze-single': ['gaze', 'stare', 'glare', 'eye', 'look', 'behold', 'petrify', 'transfix', 'eyes', 'sight'],
   snare: ['snare', 'web', 'bind', 'net', 'tangle', 'silk', 'strand', 'thread', 'entangle', 'rope', 'lasso', 'wrap', 'cocoon', 'chain'],
   reel: ['reel', 'pull', 'drag', 'haul', 'yank', 'tow', 'wrench', 'draw in', 'hook', 'line', 'tongue'],
-  'condition-payoff': ['exploit', 'punish', 'finish', 'helpless', 'prone', 'fallen', 'trapped', 'caught', 'grind', 'crush'], // "downed" stemmed to "down" and matched every "down"
+  'condition-payoff': ['exploit', 'punish', 'finish', 'helpless', 'prone', 'fallen', 'trapped', 'caught', 'grind', 'crush'], // "downed" stemmed to "down" and matched every "down"; a style clause is the feature table's (step 8)
   affliction: ['wound', 'bleed', 'fester', 'gash', 'lingering', 'sludge', 'venom', 'poison', 'rot', 'alchemical', 'lasting', 'scar', 'sepsis'],
   contagion: ['plague', 'plagued', 'disease', 'diseased', 'contagion', 'contagious', 'pestilence', 'pestilent', 'sickness', 'sickening', 'infect', 'infects', 'infected', 'infection', 'infectious', 'fever', 'leprous', 'pox'], // a plague is a disease, not a wound (critic form-ten 2026-10-01)
   charge: ['charge', 'gore', 'momentum', 'straight line', 'ram', 'lance', 'joust', 'impale', 'run down', 'spur', 'gallop'],
@@ -310,7 +312,7 @@ const slotsOf = (text) => [...new Set([...String(text).matchAll(/\{([a-z_]+)\}/g
 export const TEMPLATES = [
   ...SHAPES.filter((s) => SECTION_BY_REPLACES[s.replaces] && SHAPE_TAGS[s.id]).map((s) => ({
     id: s.id, name: s.name, kind: 'shape', cite: s.cite,
-    section: SECTION_BY_REPLACES[s.replaces], roles: s.roles, styles: s.styles, cr_range: s.cr_range,
+    section: SECTION_BY_REPLACES[s.replaces], replaces: s.replaces, roles: s.roles, styles: s.styles, cr_range: s.cr_range, /* `replaces` names the SLOT the template claims — the slot-yield rule reads it (fidelity pipeline step 2) */
     gate: s.gate ?? null, nova: s.replaces === 'nova', requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null, requires_row: s.requires_row ?? null,
     host: s.host ?? HOST_BY_REPLACES[s.replaces] ?? null, // a reaction that fires a ranged row needs one on the sheet (snap-shot)
     trigger: SHAPE_TAGS[s.id][0], effect: SHAPE_TAGS[s.id][1],
@@ -446,7 +448,7 @@ const shortFlavor = (s) => typeof s === 'string' && s.trim().split(/\s+/).length
  * ctx: { scaled, energy, mix, meleeName, conditionMinor, projectile, archetype, imposed, mechanics, cr, name }
  */
 // generic fills for a BLIND render (the fallback): the fiction is plain, never wrong
-const BLIND_FILLS = { restraint: 'the binding', /* the snare's object noun: an empty slot printed "Restrained until the Restrained is destroyed" (critic's blockers audit 2026-10-03) */ douse: 'tear the brand away', projectile: 'a hurled object', wound_noun: 'wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'its whole frame tensing', lure_source: 'the creature', hook: 'its grip', terrain: 'mud', sense_target: 'moving creatures', anchor: 'its resting place', ward: 'its ward' }; // sense_target is the neutral sense: a rejected fill on a hound printed "precious metal" (the fourteen, 2026-09-28)
+const BLIND_FILLS = { phobia: 'the thing it fears', restraint: 'the binding', /* the snare's object noun: an empty slot printed "Restrained until the Restrained is destroyed" (critic's blockers audit 2026-10-03) */ douse: 'tear the brand away', projectile: 'a hurled object', wound_noun: 'wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'its whole frame tensing', lure_source: 'the creature', hook: 'its grip', terrain: 'mud', sense_target: 'moving creatures', anchor: 'its resting place', ward: 'its ward' }; // sense_target is the neutral sense: a rejected fill on a hound printed "precious metal" (the fourteen, 2026-09-28)
 // THE RAY TABLE is composed from library cards, never authored (critic 2026-10-01): each
 // ray takes its save and its failure clause from a bolt or pulse card already on the
 // shelf; the names are the engine's own. A band of 3-5 rolls a d4 over the first four.
@@ -693,7 +695,7 @@ export function rowValue(text, perHit, { area = false } = {}) {
 // (38-54 at CR 6-10), adults ~4x (54-66 at 13-17), ancients ~3.8x (77-91 at
 // 20-24). No nova's dice climb past this line, gate or no gate.
 export const NOVA_CAP = (cr) => Math.round(cr <= 10 ? 5.5 * cr : 4 * cr + 15);
-export function valueCheck(row, { scaled, sections, section, cr = null }) {
+export function valueCheck(row, { scaled, sections, section, cr = null, noGate = false }) {
   const perHit = Math.max(3, Math.round(scaled.per_hit ?? 6));
   const attackEV = P_HIT * perHit;
   const gated = /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(row.name ?? '');
@@ -744,7 +746,18 @@ export function valueCheck(row, { scaled, sections, section, cr = null }) {
     const full = saveDamageDiceFor(budget);
     text = text.replace(DMG, `${full.avg} (${full.dice})`); steps.push(`dice ${v.avg} → ${full.avg}${gated ? ' (nova budget)' : ''}`); v = value(text);
   }
-  if (v.ev < floor) steps.push(bonus ? 'a free row that does nothing (logged)' : 'still under — needs a condition from the worth-an-attack list (logged)');
+  // FLOOR-AS-PRICER (step 6 opening; the austerity gate dropped a seed that could not be lifted — "Disarming Twist", "Driving Bellow"):
+  // a DAMAGE row still under the floor is priced AT the floor, its die stepped past the per-hit budget as far as the ceiling and the
+  // nova cap allow; a seed drawn into the slot is lifted the same way (seed-lift). A row with no damage keeps its logged step.
+  let priced = false;
+  if (v.ev < floor && v.hasDamage && !kill && !recurring && v.ev > 0) {
+    const need = Math.ceil(v.avg * floor / v.ev); const limit = gated && cr != null ? Math.max(perHit, NOVA_CAP(cr)) : Math.floor(v.avg * ceiling / v.ev);
+    const d = saveDamageDiceFor(Math.min(need, Math.max(limit, v.avg)));
+    if (d.avg > v.avg) { const was = v.avg; text = text.replace(DMG, `${d.avg} (${d.dice})`); v = value(text); steps.push(`priced at the floor: dice ${was} → ${d.avg}${v.ev < floor ? ' (the cap binds; the cap is the price)' : ''}`); }
+    else if (gated) steps.push('priced at the cap — the floor sits above the nova cap, so the cap is the price');
+    priced = true;
+  }
+  if (v.ev < floor && !priced) steps.push(bonus ? 'a free row that does nothing (logged)' : 'still under — needs a condition from the worth-an-attack list (logged)');
   // a CONTROL row with no damage and no KO condition is print's ungated shape
   // (the dragons' Sleep/Slowing breaths) — the dead-control pass strips such a
   // gate anyway, so the value check never adds one (the rimehorn's Horrid
@@ -767,7 +780,10 @@ export function valueCheck(row, { scaled, sections, section, cr = null }) {
     }
     if (cur < startAvg) steps.push(`dice ${startAvg} → ${cur} (scaled down to the ceiling)`);
   }
-  if (v.ev > ceiling && !gated && section !== 'Traits' && !controlOnly) { name = `${name} (Recharge 5-6)`; steps.push('over the ceiling — gated Recharge 5-6'); }
+  if (v.ev > ceiling && !gated && section !== 'Traits' && !controlOnly && noGate && v.hasDamage && !kill && !recurring) { // a nova already stands on the sheet: this row stays ungated and scales to the ceiling instead (the wyrm's Frozen Maw beside Freezing Breath, step 7 twelve)
+    let cur = v.avg; for (let i = 0; i < 8 && v.ev > ceiling && cur > perHit; i += 1) { const d = saveDamageDiceFor(Math.max(perHit, Math.floor(cur * ceiling / v.ev))); if (d.avg >= cur) break; text = text.replace(DMG, `${d.avg} (${d.dice})`); v = value(text); cur = v.avg; }
+    steps.push(`a nova already stands — kept ungated, dice to ${v.avg} at the ceiling`);
+  } else if (v.ev > ceiling && !gated && section !== 'Traits' && !controlOnly) { name = `${name} (Recharge 5-6)`; steps.push('over the ceiling — gated Recharge 5-6'); }
   else if (v.ev > ceiling && !gated && section !== 'Traits' && controlOnly) steps.push('over the ceiling but a control row (no damage, no KO) — print leaves these ungated');
   return { text, name, ev: Math.round(v.ev * 10) / 10, floor: Math.round(floor * 10) / 10, replaced: label, steps };
 }

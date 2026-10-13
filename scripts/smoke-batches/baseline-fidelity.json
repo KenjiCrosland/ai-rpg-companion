@@ -1,0 +1,226 @@
+[
+ {
+  "name": "Meshrin",
+  "description": "Large lizard folk, 30 feet of movement,  Wields a greatsword, long tail for swipe attacks, is trained in fighting styles, has razor sharp claws, and large teeth for a vicious bite.",
+  "cr": "8",
+  "role": "auto",
+  "rules": "2014",
+  "shape": "meshrin-verbatim",
+  "clauses": [
+   "Large",
+   "lizard folk",
+   "speed 30",
+   "greatsword",
+   "tail swipe",
+   "fighting styles",
+   "claws",
+   "bite"
+  ]
+ },
+ {
+  "name": "",
+  "description": "knife ball",
+  "cr": "2",
+  "rules": "2014",
+  "shape": "short",
+  "clauses": [
+   "knives (slashing/piercing)",
+   "ball body"
+  ]
+ },
+ {
+  "name": "",
+  "description": "a bog witch",
+  "cr": "auto",
+  "rules": "2024",
+  "shape": "short",
+  "clauses": [
+   "witch (casts)",
+   "bog"
+  ]
+ },
+ {
+  "name": "",
+  "description": "a troll",
+  "cr": "",
+  "rules": "2014",
+  "shape": "blank-cr-print-name",
+  "clauses": [
+   "troll (print: regeneration, claw, bite)"
+  ]
+ },
+ {
+  "name": "",
+  "description": "a vampire lord who keeps a court of thralls",
+  "cr": "",
+  "rules": "2024",
+  "shape": "blank-cr-head-noun",
+  "clauses": [
+   "vampire (print rows)",
+   "lord",
+   "thralls (minions/command)"
+  ]
+ },
+ {
+  "name": "",
+  "description": "a goblin that rides a giant frog and throws nets",
+  "cr": "1",
+  "rules": "2014",
+  "shape": "one-liner",
+  "clauses": [
+   "goblin",
+   "rides a frog (mount)",
+   "throws nets (ranged, restrain)"
+  ]
+ },
+ {
+  "name": "",
+  "description": "a stone gargoyle that only moves when no one is looking",
+  "cr": "4",
+  "rules": "2024",
+  "shape": "one-liner",
+  "clauses": [
+   "stone (construct, resist)",
+   "gargoyle",
+   "moves when unobserved (trait)"
+  ]
+ },
+ {
+  "name": "",
+  "description": "a wizard but he cannot cast any spells, he just hits people with his staff",
+  "cr": "3",
+  "rules": "2014",
+  "shape": "removal-clause",
+  "clauses": [
+   "wizard",
+   "no spells (removal)",
+   "staff melee"
+  ]
+ },
+ {
+  "name": "",
+  "description": "a giant snapping turtle with AC 22 that bites for 50 damage",
+  "cr": "9",
+  "rules": "2024",
+  "shape": "user-number",
+  "clauses": [
+   "giant snapping turtle",
+   "AC 22 (user)",
+   "bite 50 (user)",
+   "shell/withdraw"
+  ]
+ },
+ {
+  "name": "Pikachu",
+  "description": "",
+  "cr": "2",
+  "rules": "2024",
+  "shape": "ip-name",
+  "clauses": [
+   "lightning (electric)",
+   "small/quick"
+  ]
+ },
+ {
+  "name": "Sir Reginald Pemberton-Hughes",
+  "description": "a knight who is deathly afraid of chickens and will flee from any bird",
+  "cr": "5",
+  "rules": "2014",
+  "shape": "named-individual",
+  "clauses": [
+   "knight (armor, sword)",
+   "fear of birds (trait)",
+   "flees (reaction/condition)"
+  ]
+ },
+ {
+  "name": "",
+  "description": "a sentient pile of laundry that smothers people and smells like old socks, it speaks only in the language of socks",
+  "cr": "3",
+  "rules": "2024",
+  "shape": "joke",
+  "clauses": [
+   "laundry/cloth body",
+   "smothers (engulf/grapple)",
+   "smell (stench? trait)",
+   "speaks sock language (flavor)"
+  ]
+ },
+ {
+  "name": "Grandmother Ash",
+  "description": "An old hag who lives in the burned forest. She can turn into a cloud of ash and choke anyone who breathes her in. She hates fire and takes extra damage from it. Her nails are long and black and carry rot. She keeps three crows that warn her of intruders.",
+  "cr": "7",
+  "rules": "2014",
+  "shape": "paragraph",
+  "clauses": [
+   "hag (print)",
+   "ash cloud form",
+   "choke on inhale (save, damage/condition)",
+   "fire vulnerability (user)",
+   "rot nails (claw, necrotic/disease)",
+   "three crows (minions/alert trait)"
+  ]
+ },
+ {
+  "name": "",
+  "description": "A huge iron golem shaped like a bull. It charges and gores, its hooves shake the ground when it stomps, it breathes scalding steam from its nostrils, and it is immune to anything but adamantine weapons.",
+  "cr": "12",
+  "rules": "2024",
+  "shape": "paragraph",
+  "clauses": [
+   "Huge",
+   "iron golem (construct)",
+   "bull shape",
+   "charge + gore",
+   "stomp (ground shake)",
+   "steam breath",
+   "adamantine-only immunity (user)"
+  ]
+ },
+ {
+  "name": "The Lantern Drowned",
+  "description": "a drowned sailor who still carries his lantern, which lures the living into the water; anyone who looks at the light wants to walk into the sea; he is cold and dripping and his touch numbs; he cannot leave the shoreline",
+  "cr": "6",
+  "rules": "2014",
+  "shape": "paragraph",
+  "clauses": [
+   "drowned sailor (undead)",
+   "lantern lure (charm/compel)",
+   "numbing touch (cold, condition)",
+   "bound to shoreline (restriction)"
+  ]
+ },
+ {
+  "name": "",
+  "description": "owlbear",
+  "cr": "3",
+  "rules": "2024",
+  "shape": "short-print",
+  "clauses": [
+   "owlbear (print rows)"
+  ]
+ },
+ {
+  "name": "",
+  "description": "a kobold trapmaker with a bag of caltrops and a hand crossbow",
+  "cr": "1/2",
+  "rules": "2014",
+  "shape": "one-liner",
+  "clauses": [
+   "kobold",
+   "traps/caltrops (area/difficult terrain)",
+   "hand crossbow (ranged)"
+  ]
+ },
+ {
+  "name": "",
+  "description": "a dragon made entirely of bees",
+  "cr": "10",
+  "rules": "2024",
+  "shape": "joke-body",
+  "clauses": [
+   "dragon shape (breath, fly)",
+   "bees (swarm body, piercing/poison)"
+  ]
+ }
+]

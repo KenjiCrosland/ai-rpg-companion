@@ -281,3 +281,39 @@ describe("the critic's regressions brief (2026-10-04)", () => {
     expect(has(checkBlock(g), 'structure', 'legendary-no-effect', 'fail')).toBe(true);
   });
 });
+
+describe('the flavor clause has no rules weight (fidelity pipeline step 2)', () => {
+  test('a row\'s flavor can say anything — numbers, conditions, "half as much damage" — and no gate reads it', () => {
+    const b = base(); b.sections.Actions[1].flavor = 'It hums a DC 99 lullaby, and the target has the Paralyzed condition in spirit; half as much damage if the sock is unwashed.';
+    const r = checkBlock(b); expect(r.status).toBe(checkBlock(base()).status);
+    expect(JSON.stringify(r.gates)).not.toMatch(/half-no-referent|DC 99|lullaby/);
+  });
+});
+
+describe('coverage and concept share (fidelity pipeline step 4): string-work against the clause list', () => {
+  test('header clauses match size and speed; mechanical clauses match by stem; descriptive clauses are not counted; rows trace by a clause word', () => {
+    const b = base(); b.generation = { clauses: [{ text: 'Large', kind: 'header' }, { text: '30 feet of movement', kind: 'header' }, { text: 'razor sharp claws', kind: 'mechanical' }, { text: 'a vicious bite', kind: 'mechanical' }, { text: 'trained in fighting styles', kind: 'mechanical' }, { text: 'scaly and green', kind: 'descriptive' }] };
+    b.speed = '30 ft.'; b.sections.Actions[1].name = 'Claw'; b.sections.Actions[1].clause = 'razor sharp claws'; // provenance (step 8): the row's own clause, not its words
+    const f = checkBlock(b).fidelity; expect([f.total, f.covered]).toEqual([5, 3]);
+    expect(f.dropped).toEqual(['a vicious bite', 'trained in fighting styles']);
+    expect([f.rows, f.conceptRows]).toEqual([1, 1]);
+  });
+});
+
+describe('fidelity on a print body (fidelity pipeline step 4)', () => {
+  test('a bare print name is one clause, present when the block is the print body; rows named for print\'s rows trace to the user', () => {
+    const { printCanonFor } = require('../generate.mjs');
+    const b = base(); b.name = 'Owlbear'; b.type = 'Monstrosity'; b.sections.Actions = [{ name: 'Multiattack', text: 'The owlbear makes two Rend attacks.' }, { name: 'Rend', text: '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.' }];
+    const r = checkBlock(b, { userConcept: 'owlbear', print: printCanonFor('owlbear', 3) });
+    expect([r.fidelity.covered, r.fidelity.total]).toEqual([1, 1]); expect([r.fidelity.conceptRows, r.fidelity.rows]).toEqual([1, 1]);
+  });
+});
+
+describe('a creature-only prompt (fidelity pipeline step 4)', () => {
+  test('when the record holds only descriptive clauses, the creature itself is the denominator', () => {
+    const b = base(); b.name = 'Knellwheel'; b.generation = { clauses: [{ text: 'knife ball', kind: 'descriptive', head: true }] }; b.sections.Actions[1].name = 'Knife Cage';
+    const f = checkBlock(b).fidelity; expect([f.covered, f.total]).toEqual([1, 1]); // the creature itself is covered by the composition (provenance, step 8)
+    const miss = base(); miss.generation = { clauses: [{ text: 'a bog witch', kind: 'descriptive', head: true }] }; miss.sections = { Traits: [], Actions: [] };
+    expect(checkBlock(miss).fidelity.total).toBe(1); expect(checkBlock(miss).fidelity.covered).toBe(0); // no rows at all: nothing composed it
+  });
+});

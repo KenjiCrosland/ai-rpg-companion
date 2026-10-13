@@ -9,6 +9,14 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
+    // RELATIVE BASE (live bug, 2026-10-12): WordPress serves the build from {theme}/rpg-companion/dist/, and the manifest-driven
+    // enqueue in functions.php handles the entry chunks' own CSS. But a DYNAMIC import (the statblock generator's
+    // `import('./reskin/generate.mjs')`, the enrichment module, …) goes through Vite's runtime preload helper, which with the
+    // default base '/' requested every lazy chunk's CSS at the site root ("/assets/cdr-tooltip-….css" → 404 → "Unable to
+    // preload CSS" → the import rejected and the FIRST generation after a page load failed; Vite marks the dep as seen, so
+    // the retry skipped the preload and succeeded). With './' the helper resolves each dependency against the importing
+    // chunk's own URL, so the build works at any mount path. The manifest's file names are unchanged.
+    base: './',
     plugins: [vue()],
     resolve: {
       alias: {

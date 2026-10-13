@@ -282,4 +282,152 @@ describe('the critic\'s audit, engine side (2026-10-02)', () => {
       expect(to2014Grammar('Each creature whose space it enters is targeted once by the following effect. That creature must make a DC 19 Strength saving throw, taking 72 (16d8) fire damage on a failed save.')).toMatch(/^Each creature whose space it enters must make a DC 19/);
     });
   });
+
+  describe('the flavor field (fidelity pipeline step 2)', () => {
+    test('a row\'s flavor is a held field, never printed inside the row; the PI guard still scrubs a franchise token hiding in it', async () => {
+      const { toLegacyModel } = require('../../format-2024/generate.mjs'); const { piGuard } = require('../lexicon.mjs');
+      const c = 'a sentient pile of laundry that smothers people';
+      const m = await generateReskin({ archetype: 'brute', style: 'grappler', concept: c, userConcept: c, cr: 3, mechanics: [] }, async () => json('Sock Pile', 'Monstrosity', 3, 'grappler', 'brute', { size: 'Medium' }));
+      const row = m.sections.Actions.find((e) => /Attack Roll/.test(e.text)); row.flavor = 'It speaks only in the language of socks.';
+      const L = toLegacyModel(m); expect(L.actions.find((a) => a.name === row.name).description).not.toMatch(/language of socks/); expect(row.flavor).toMatch(/socks/); // the field is kept; no card prints it inside a row (owner 2026-10-04)
+      const g = { name: 'Pile', sections: { Actions: [{ name: 'Wrappings', text: 'Hits.', flavor: 'It once met a beholder.' }] } }; piGuard(g);
+      expect(g.sections.Actions[0].flavor).not.toMatch(/beholder/);
+    });
+  });
+
+  describe('two sweep defects the flavor forty surfaced (2026-10-04)', () => {
+    test('a print rename does not reach into a row whose name STARTS with the old name: Scepter -> Eldritch Burst leaves "Scepter Blast" alone', async () => {
+      const c = 'an archlich enthroned on a sun of bone';
+      const m = await generateReskin({ archetype: 'lurker', style: 'phantom', concept: c, userConcept: c, cr: 24, mechanics: [] }, async () => json('Sun-Crowned Archlich', 'Undead', 24, null, 'caster', { size: 'Medium', renames: { 'Hybrid Attack': 'Scepter Blast' }, extra: { slot_save: 'Intelligence', spells: { at_will: ['Detect Magic', 'Minor Illusion'], daily: ['Hold Person', 'Darkness'] } } }));
+      const names = Object.values(m.sections).flat().map((e) => e.name.replace(/ \(.*\)$/, ''));
+      const ma = Object.values(m.sections).flat().find((e) => /^Multiattack/.test(e.name))?.text ?? '';
+      for (const nm of [...ma.matchAll(/using ([^.]*?) in any combination/g)].flatMap((x) => x[1].split(/,|\bor\b/)).map((x) => x.trim()).filter(Boolean)) expect([nm, names.includes(nm)]).toEqual([nm, true]);
+      expect(ma).not.toMatch(/Eldritch Burst Blast/);
+    });
+    test('two rows with identical text collapse to one before the audit can rename the second', async () => {
+      const c = 'a mirror assassin who strikes from the reflections and blinks between them';
+      const m = await generateReskin({ archetype: 'lurker', concept: c, userConcept: c, cr: 18, mechanics: [] }, async () => json('Glass Widow', 'Monstrosity', 18, null, 'lurker', { size: 'Medium' }));
+      const texts = Object.values(m.sections).flat().map((e) => String(e.text).replace(/\s+/g, ' ').trim().toLowerCase());
+      expect(new Set(texts).size).toBe(texts.length);
+    });
+  });
+
+  describe('the slot-yield rule (fidelity pipeline step 2)', () => {
+    test('a fitted thrown weapon takes the ranged slot: the chassis\'s Hurled Debris leaves and Multiattack names the keeper', async () => {
+      const c = 'a hermit who hurls her javelin at thieves and calls it back';
+      const main = json('Lamplighter', 'Humanoid', 3, null, 'skirmisher', { dtype: 'Fire', renames: { 'Ranged Attack': 'Hurled Debris' }, extra: { projectile: 'her javelin' } }); // a plain skirmisher: its chassis ranged row is not the throw
+      const m = await generateReskin({ archetype: 'skirmisher', style: null, concept: c, userConcept: c, cr: 3, energy: 'Fire', resolvedType: 'Humanoid' },
+        async (prompt) => (prompt.startsWith('You are inventing the SIGNATURE ability') ? JSON.stringify({ action: { idea: 'She hurls her javelin at a thief and it flies back to her hand.', section: 'action', trigger: 'attack', effect: 'damage' }, trait: null })
+          : prompt.startsWith('You are auditing') ? JSON.stringify({ findings: [] })
+            : prompt.startsWith("A monster's signature ability") ? JSON.stringify({ template: 'throw-retrieve', because: 'hurls her javelin and calls it back', name: 'Javelin Toss', fills: { projectile: 'her javelin' } }) : main));
+      const rows = Object.values(m.sections).flat();
+      const ranged = rows.filter((e) => /Ranged Attack Roll/.test(e.text ?? '') && !/Melee or Ranged/.test(e.text ?? ''));
+      expect(rows.some((e) => e.name === 'Hurled Debris')).toBe(false); // the chassis's ranged row yielded the slot
+      expect(ranged.length).toBe(1); expect(ranged[0].template ?? ranged[0].library).toBeTruthy();
+      const ma = rows.find((e) => /^Multiattack/.test(e.name))?.text ?? '';
+      if (/using/.test(ma)) expect(ma).toMatch(new RegExp(ranged[0].name.replace(/ \(.*\)$/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    });
+  });
+
+  describe('extraction and the proper noun (fidelity pipeline step 4)', () => {
+    test('the clause list rides on the main call and is saved with the block; a Name field that is no print creature and carries no article is a proper noun on every row', async () => {
+      const desc = 'Large lizard folk, 30 feet of movement, wields a greatsword, long tail for swipe attacks';
+      const main = json('Meshrin', 'Humanoid', 8, null, 'defender', { size: 'Large', extra: { clauses: [{ text: 'Large', kind: 'header' }, { text: '30 feet of movement', kind: 'header' }, { text: 'greatsword', kind: 'mechanical' }, { text: 'long tail for swipe attacks', kind: 'mechanical' }, { text: 'lizard folk', kind: 'descriptive' }] } });
+      const m = await generateReskin({ archetype: 'defender', concept: desc, userConcept: desc, cr: 8, fixedName: 'Meshrin', mechanics: [] }, async () => main);
+      expect(m.generation.clauses.map((c) => c.text)).toEqual(['Large lizard folk', '30 feet of movement', 'wields a greatsword', 'long tail for swipe attacks']); expect(m.generation.userConcept).toBe(desc);
+      expect(m.inline).toBe('Meshrin'); expect(JSON.stringify(m.sections)).not.toMatch(/the meshrin/i);
+      const m2 = await generateReskin({ archetype: 'defender', concept: `a meshrin: ${desc}`, userConcept: `a meshrin: ${desc}`, cr: 8, fixedName: 'Meshrin', mechanics: [] }, async () => main);
+      expect(m2.inline).toBe('the meshrin');
+    });
+  });
+
+  describe('the extraction is grounded; the 2014 label follows the stat (fidelity pipeline step 4)', () => {
+    test('clauses not in the user\'s words leave the record; a user-set CR survives', () => {
+      const { groundedClauses } = require('../generate.mjs');
+      const kept = groundedClauses([{ text: 'hooked beak to seize and crush', kind: 'mechanical' }, { text: 'razor sharp claws', kind: 'mechanical' }, { text: 'CR 5', kind: 'header' }, { text: 'owlbear', kind: 'descriptive' }], 'an owlbear with razor sharp claws, CR 5');
+      expect(kept).toEqual([{ text: 'an owlbear with razor sharp claws', kind: 'mechanical' }, { text: 'CR 5', kind: 'header' }]); // the user's phrases are the record; the model's invented beak is gone
+      expect(groundedClauses([], 'knife ball')).toEqual([{ text: 'knife ball', kind: 'descriptive', head: true }]); // the head phrase: the creature itself, the one clause of a creature-only prompt (step 6) // no verb, two words: the template composes the whole sheet
+      expect(groundedClauses([{ text: 'lizard folk', kind: 'descriptive' }], 'Large lizard folk, 30 feet of movement, wields a greatsword and a long tail').map((c) => `${c.kind[0]}:${c.text}`)).toEqual(['h:Large lizard folk', 'h:30 feet of movement', 'm:wields a greatsword', 'm:a long tail']);
+    });
+    test('a Spell label on a bonus that derives from Dex with no caster becomes Weapon; a Spell label that derives only from the casting stat stays', () => {
+      const { relabel2014Attacks } = require('../../format-2024/generate.mjs');
+      const rows = [{ name: 'Spectral Rope', description: 'Melee Spell Attack: +7 to hit, reach 5 ft., one target. Hit: 30 (6d8 + 3) necrotic damage.' }];
+      relabel2014Attacks(rows, { STR: 6, DEX: 16, CON: 17, INT: 12, WIS: 14, CHA: 15 }, 4, null);
+      expect(rows[0].description).toMatch(/^Melee Weapon Attack: \+7 to hit/);
+      const spell = [{ name: 'Eldritch Touch', description: 'Melee Spell Attack: +9 to hit, reach 5 ft., one target. Hit: 10 (3d6) cold damage.' }];
+      relabel2014Attacks(spell, { STR: 10, DEX: 10, CON: 16, INT: 20, WIS: 14, CHA: 16 }, 4, 'INT');
+      expect(spell[0].description).toMatch(/^Melee Spell Attack: \+9/);
+    });
+  });
+
+  describe('authoring (fidelity pipeline step 5): Meshrin, the regression case', () => {
+    test('every typed weapon and body part is an attack row, Multiattack names them, fighting styles is a trait, Meshrin on every row, coverage 7 of 8 or better', async () => {
+      const desc = 'Large lizard folk, 30 feet of movement,  Wields a greatsword, long tail for swipe attacks, is trained in fighting styles, has razor sharp claws, and large teeth for a vicious bite.';
+      const main = json('Meshrin', 'Humanoid', 8, null, 'defender', { size: 'Large', extra: { clauses: [{ text: 'Large lizard folk', kind: 'header' }, { text: '30 feet of movement', kind: 'header' }, { text: 'Wields a greatsword', kind: 'mechanical' }, { text: 'long tail for swipe attacks', kind: 'mechanical' }, { text: 'is trained in fighting styles', kind: 'mechanical' }, { text: 'has razor sharp claws', kind: 'mechanical' }, { text: 'large teeth for a vicious bite', kind: 'mechanical' }] } });
+      const author = JSON.stringify({ attacks: [{ key: 'Melee Attack', clause: 'Wields a greatsword', name: 'Greatsword', mode: 'melee', type: 'Slashing', rider: null }, { key: 'Hybrid Attack', clause: 'long tail for swipe attacks', name: 'Tail Swipe', mode: 'melee', type: 'Bludgeoning', rider: 'Prone' }, { key: null, clause: 'has razor sharp claws', name: 'Claw', mode: 'melee', type: 'Slashing', rider: null }, { key: null, clause: 'large teeth for a vicious bite', name: 'Bite', mode: 'melee', type: 'Piercing', rider: null }],
+        traits: [{ clause: 'is trained in fighting styles', name: 'Fighting Styles', trigger: 'When Meshrin hits a creature that has the Prone condition with a melee attack', effect: 'the attack deals an extra {dmg} damage' }], saves: [], reactions: [], crossRef: { riderRow: 'Tail Swipe', payoffRow: 'Bite', condition: 'Prone' }, unplaced: [] });
+      const m = await generateReskin({ archetype: 'defender', concept: desc, userConcept: desc, cr: 8, fixedName: 'Meshrin', mechanics: [] }, async (prompt) => (prompt.startsWith('You are authoring the ABILITIES') ? author : main));
+      const rows = Object.values(m.sections).flat(); const names = rows.map((e) => e.name.replace(/ \(.*\)$/, ''));
+      expect(names).toEqual(expect.arrayContaining(['Greatsword', 'Tail Swipe', 'Razor Sharp Claws', 'Vicious Bite'])); // step 7: the parts are engine rows named from the user's phrases; the fighting style is the template path's (the live twelve carries that check)
+      expect(rows.find((e) => /^Multiattack/.test(e.name)).text).toMatch(/Greatsword, Tail Swipe, Razor Sharp Claws or Vicious Bite in any combination/);
+      expect(rows.filter((e) => e.part).length).toBe(4);
+      expect(m.size).toBe('Large'); expect(m.speed).toMatch(/^30 ft\./); expect(m.inline).toBe('Meshrin'); expect(JSON.stringify(m.sections)).not.toMatch(/the meshrin/i);
+      for (const e of rows) if (/Attack Roll/.test(e.text)) expect(e.text).toMatch(/\+\d+(?: \([^)]*\))?, reach \d+ ft\. \d+ \(\d+d\d+(?: \+ \d+)?\) \w+ damage/); // a roll parenthetical (the cross-row Advantage) is print's shape
+      const { checkBlock } = require('../checker.mjs'); const f = checkBlock(m, { userConcept: desc }).fidelity; expect(f.dropped.filter((d) => !/fighting styles/.test(d))).toEqual([]); // the fighting style needs the idea call, which this mock does not answer
+    });
+  });
+  describe('step 6: repair, same-form yield, the escape DC, lacks, header directives, declared numbers', () => {
+    const wyrmDesc = 'a glacier wyrm that swallows ships whole and breathes a freezing wind';
+    const wyrmMain = () => json('Glacier Wyrm', 'Dragon', 20, null, 'dragon', { size: 'Gargantuan', extra: { clauses: [{ text: 'swallows ships whole', kind: 'mechanical' }, { text: 'breathes a freezing wind', kind: 'mechanical' }] } });
+    test('an authored Recharge save is the nova: one Recharge row on the sheet; a Grappled rider carries its escape DC; one attack row is "makes N X attacks"', async () => {
+      const author = JSON.stringify({ attacks: [{ key: null, clause: 'swallows ships whole', name: 'Devouring Maw', mode: 'melee', type: 'Piercing', rider: 'Grappled' }], saves: [{ clause: 'breathes a freezing wind', name: 'Glacial Breath', stat: 'Constitution', target: 'each creature in a 60-foot Cone', damage: true, condition: 'Restrained', movement: null, success: 'half', recharge: true }], traits: [], reactions: [], crossRef: null, unplaced: [] });
+      let repairCalled = 0;
+      const m = await generateReskin({ archetype: 'brute', bodyType: 'dragon', concept: wyrmDesc, userConcept: wyrmDesc, cr: 20, mechanics: ['breath'] }, async (prompt) => (prompt.startsWith('You are repairing') ? ((repairCalled += 1), author) : wyrmMain())); // step 7: the forms arrive through the repair call, after the template path
+      expect(repairCalled).toBe(1);
+      const acts = m.sections.Actions;
+      expect(acts.filter((e) => /\(Recharge/.test(e.name)).map((e) => e.name)).toEqual(['Glacial Breath (Recharge 5-6)']);
+      expect(acts.find((e) => e.name === 'Devouring Maw').text).toMatch(/has the Grappled condition \(escape DC \d+\)/);
+      expect(acts.find((e) => /^Multiattack/.test(e.name)).text).toMatch(/using Named Row0 or Devouring Maw in any combination/); // step 7: a repaired row joins the Multiattack; the chassis row it cited stays
+      const { checkBlock } = require('../checker.mjs'); const r = checkBlock(m, { userConcept: wyrmDesc }); expect(r.fails.filter((g) => /two-novas|grapple-no-escape|multiattack-combination/.test(g))).toEqual([]);
+    });
+    test('an authored sheet with attacks only: the unfilled Signature Slot leaves and nothing cites it', async () => {
+      const desc = 'a lizard that wields a greatsword and has razor claws';
+      const main = json('Scalebrand', 'Humanoid', 8, null, 'defender', { extra: { clauses: [{ text: 'wields a greatsword', kind: 'mechanical' }, { text: 'has razor claws', kind: 'mechanical' }] } });
+      const author = JSON.stringify({ attacks: [{ key: 'Melee Attack', clause: 'wields a greatsword', name: 'Greatsword', mode: 'melee', type: 'Slashing', rider: null }, { key: null, clause: 'has razor claws', name: 'Razor Claws', mode: 'melee', type: 'Slashing', rider: null }], saves: [], traits: [], reactions: [], crossRef: null, unplaced: [] });
+      const m = await generateReskin({ archetype: 'defender', concept: desc, userConcept: desc, cr: 8, mechanics: [] }, async (prompt) => (prompt.startsWith('You are authoring the ABILITIES') ? author : prompt.startsWith('You are repairing') ? JSON.stringify({ attacks: [], saves: [], traits: [], reactions: [], unplaced: [] }) : main));
+      expect(JSON.stringify(m.sections)).not.toMatch(/Disadvantage on its next attack roll before the start/);
+      const { checkBlock } = require('../checker.mjs'); expect(checkBlock(m, { userConcept: desc }).fails.filter((g) => /dangling-ref|multiattack-row/.test(g))).toEqual([]);
+    });
+    test('the feature table (step 8): a greatsword earns Great Weapon Master; a style clause earns Trip Attack on the weapon and Riposte; the repair call does not fire for them', async () => {
+      const desc = 'Large lizard folk, 30 feet of movement, wields a greatsword, is trained in fighting styles';
+      const main = json('Meshrin', 'Humanoid', 8, null, 'defender', { size: 'Large', extra: { clauses: [{ text: 'wields a greatsword', kind: 'mechanical' }, { text: 'is trained in fighting styles', kind: 'mechanical' }] } });
+      let repairCalled = 0;
+      const m = await generateReskin({ archetype: 'defender', concept: desc, userConcept: desc, cr: 8, fixedName: 'Meshrin', mechanics: [] }, async (prompt) => (prompt.startsWith('You are repairing') ? ((repairCalled += 1), JSON.stringify({ attacks: [], saves: [], traits: [], reactions: [], unplaced: [] })) : main));
+      expect(repairCalled).toBe(0);
+      const rows = Object.values(m.sections).flat();
+      expect((m.sections.Traits ?? []).map((e) => e.name)).toContain('Great Weapon Master');
+      expect((m.sections.Reactions ?? []).map((e) => e.name)).toContain('Riposte');
+      const gs = rows.find((e) => e.name === 'Greatsword'); expect(gs.text).toMatch(/\*Strength Saving Throw\*: DC \d+\. \*Failure:\* The target has the Prone condition\./); expect(gs.feature).toBe('Trip Attack');
+      const { checkBlock } = require('../checker.mjs'); const r = checkBlock(m, { userConcept: desc }); expect(r.fidelity.dropped).toEqual([]); expect(r.fails).toEqual([]);
+    });
+    test('a lacks clause strips what it names: the spell-less wizard keeps his staff and loses the Mage\'s spells; the router does not key on the negated noun', async () => {
+      const desc = 'a wizard but he cannot cast any spells, he just hits people with his staff';
+      const m = await generateReskin({ archetype: 'brute', concept: desc, userConcept: desc, cr: 3, mechanics: [] }, async (prompt) => (prompt.startsWith('You are authoring the ABILITIES') ? JSON.stringify({ attacks: [{ key: null, clause: 'he just hits people with his staff', name: 'Staff', mode: 'melee', type: 'Bludgeoning', rider: null }], saves: [], traits: [], reactions: [], crossRef: null, unplaced: [] }) : prompt.startsWith('You are repairing') ? JSON.stringify({ attacks: [], saves: [], traits: [], reactions: [], unplaced: [] }) : json('Staffbound Caster', 'Humanoid', 3, null, 'brute', { extra: { clauses: [{ text: 'he cannot cast any spells', kind: 'mechanical' }, { text: 'hits people with his staff', kind: 'mechanical' }] } })));
+      const all = Object.values(m.sections).flat();
+      expect(all.some((e) => /^Spellcasting/.test(e.name) || /\bcasts?\b/i.test(e.text))).toBe(false);
+      expect(all.find((e) => /^Multiattack/.test(e.name))?.text ?? '').not.toMatch(/Spellcasting/);
+      const { checkBlock } = require('../checker.mjs'); const f = checkBlock(m, { userConcept: desc }).fidelity; expect(f.dropped).not.toContain('he cannot cast any spells');
+    });
+    test('header directives: a vulnerability typed in prose is a Vulnerabilities line; a typed AC is a declared field the bands stand down for', async () => {
+      const hag = 'a thing that fights and hates fire and takes extra damage from it';
+      const m = await generateReskin({ archetype: 'brute', concept: hag, userConcept: hag, cr: 7, mechanics: [] }, async (prompt) => (prompt.startsWith('You are authoring the ABILITIES') ? JSON.stringify({ attacks: [{ key: null, clause: 'fights', name: 'Fist', mode: 'melee', type: 'Bludgeoning', rider: null }], saves: [], traits: [], reactions: [], crossRef: null, unplaced: [] }) : prompt.startsWith('You are repairing') ? JSON.stringify({ attacks: [], saves: [], traits: [], reactions: [], unplaced: [] }) : json('Ember Brute', 'Fey', 7, null, 'brute', { extra: { clauses: [{ text: 'takes extra damage from it', kind: 'header' }] } })));
+      expect(m.vulnerabilities).toMatch(/\bFire\b/);
+      const turtle = 'a giant snapping turtle with AC 22 that bites for 50 damage';
+      const t = await generateReskin({ archetype: 'brute', concept: turtle, userConcept: turtle, cr: 9, mechanics: [] }, async (prompt) => (prompt.startsWith('You are authoring the ABILITIES') ? JSON.stringify({ attacks: [{ key: null, clause: 'bites for 50 damage', name: 'Bite', mode: 'melee', type: 'Piercing', rider: null }], saves: [], traits: [], reactions: [], crossRef: null, unplaced: [] }) : prompt.startsWith('You are repairing') ? JSON.stringify({ attacks: [], saves: [], traits: [], reactions: [], unplaced: [] }) : json('Snapping Maw', 'Beast', 9, null, 'brute', { extra: { clauses: [{ text: 'AC 22', kind: 'header' }, { text: 'bites for 50 damage', kind: 'mechanical' }] } })));
+      expect(t.ac).toBe(22); expect(t.generation.declared.ac).toBe(22);
+      const bite = Object.values(t.sections).flat().find((e) => e.name === 'Bite'); expect(Number(/(\d+) \(/.exec(bite.text)[1])).toBeGreaterThanOrEqual(47); expect(t.generation.declared.rows.Bite).toBe(50);
+      const { checkBlock, checkTable } = require('../checker.mjs'); const r = checkBlock(t, { userConcept: turtle }); expect(checkTable([r])).toMatch(/user-set: AC 22 · reads CR/);
+    });
+  });
+
 });

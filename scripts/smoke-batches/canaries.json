@@ -1,0 +1,82 @@
+[
+  {
+    "name": "Owlbear",
+    "description": "",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "single Name, print, 2024",
+    "mode": "exact"
+  },
+  {
+    "name": "Headless Horseman",
+    "description": "",
+    "cr": "auto",
+    "rules": "2024",
+    "canary": "single Name, not print, CR from the words",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a wolf",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "description only, print head scaled above its CR",
+    "mode": "band"
+  },
+  {
+    "name": "Stone Golem",
+    "description": "Output statblock in German",
+    "cr": "auto",
+    "rules": "2024",
+    "canary": "print Name + a language addition",
+    "mode": "exact"
+  },
+  {
+    "name": "Kobold",
+    "description": "Can turn invisible once per day",
+    "cr": "1/4",
+    "rules": "2024",
+    "canary": "print Name + a claim (the Vanish seed) (a borrow: the chassis prices it)",
+    "mode": "band"
+  },
+  {
+    "name": "Goblin Boss",
+    "description": "riding a worg",
+    "cr": "auto",
+    "rules": "2014",
+    "canary": "print Name + a seat verb, 2014 (a borrow: the chassis prices it)",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a troll that guards the bridge and collects a toll",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "print head in a one-liner (a borrow: the chassis prices it)",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "big ogre with a club, cr 5",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "description with a CR in the words",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a vampire spawn",
+    "cr": "5",
+    "rules": "2014",
+    "canary": "print, 2014",
+    "mode": "exact"
+  },
+  {
+    "name": "the thing in the well",
+    "description": "",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "single Name, lowercase, not print",
+    "mode": "band"
+  }
+]

@@ -76,6 +76,12 @@
                     <p v-if="!isEditing">{{ monster.saving_throws }}</p>
                     <input v-else v-model="editedMonster.saving_throws" />
                 </div>
+                <div v-if="monster.damage_vulnerabilities && monster.damage_vulnerabilities.length > 0 && monster.damage_vulnerabilities !== 'None'"
+                    :class="propertyLineClass">
+                    <h4>Damage Vulnerabilities: </h4>
+                    <p v-if="!isEditing">{{ monster.damage_vulnerabilities }}</p>
+                    <input v-else v-model="editedMonster.damage_vulnerabilities" />
+                </div>
                 <div v-if="monster.damage_resistances && monster.damage_resistances.length > 0 && monster.damage_resistances !== 'None'"
                     :class="propertyLineClass">
                     <h4>Damage Resistances: </h4>

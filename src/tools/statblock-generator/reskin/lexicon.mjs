@@ -202,7 +202,7 @@ export function piGuard(monster) {
   const hits = [];
   const fix = (v) => { const r = piScrub(v); if (r.hits.length) hits.push(...r.hits); return r.text; };
   if (monster?.name) monster.name = fix(monster.name);
-  for (const es of Object.values(monster?.sections ?? {})) for (const e of es) { if (e?.name) e.name = fix(e.name); if (e?.text) e.text = fix(e.text); }
+  for (const es of Object.values(monster?.sections ?? {})) for (const e of es) { if (e?.name) e.name = fix(e.name); if (e?.text) e.text = fix(e.text); if (e?.flavor) e.flavor = fix(e.flavor); } // flavor is the one field a gate reads besides text: a franchise name hides there as easily (fidelity pipeline step 2)
   for (const k of ['description', 'lore', 'flavor']) if (typeof monster?.[k] === 'string') monster[k] = fix(monster[k]);
   return [...new Set(hits)];
 }

@@ -119,6 +119,7 @@ const JOB_NOUNS = new Set(['archer', 'archers', 'bowman', 'bowmen', 'longbow', '
   'captain', 'warlord', 'chieftain', 'sergeant', 'lieutenant', 'commander', 'his troops', 'her troops', 'its troops', 'the troops', 'the warband', 'the company', 'two forms', 'priest', 'priestess', 'cleric', 'acolyte']);
 export const keyClass = (k) => (BODY_NOUNS.has(k) ? 'body' : JOB_NOUNS.has(k) ? 'noun' : 'verb');
 /** Every line whose keys the text reads, with the first key that read and its class. */
+const NEGATED_KEY = /\b(?:cannot|can't|can not|never|no longer|without|doesn't|does not|don't|do not|unable to|isn't|is not|not|lacks?|has no|have no|no)\s+(?:[a-z'-]+\s+){0,3}$/i;
 export function verbHits(text) {
   const raw = readPhrases(String(text ?? '')).toLowerCase(); // fixed phrases first: "holds the line", "fire at will"
   const reads = (k) => {
@@ -128,6 +129,7 @@ export function verbHits(text) {
       if (NOUN_WHEN_OWNED.has(k) && OWNED_BY.test(raw.slice(0, m.index))) continue;
       if (keyClass(k) !== 'verb' && OF_PHRASE.test(raw.slice(0, m.index))) continue; // "priest of a drowned god": the attribute inside an of-phrase modifies that noun, not the creature (critic 2026-10-01)
       if (ENEMY_SUBJECT.test(raw.slice(0, m.index))) continue;
+      if (NEGATED_KEY.test(raw.slice(0, m.index))) continue; // "a wizard but he cannot cast any spells" routed to caster on "spells" (critic's step-5 read): a key inside a negation names what the creature LACKS
       return true;
     }
     return false;
@@ -142,7 +144,8 @@ export function verbLines(text) {
     for (let m = re.exec(raw); m; m = re.exec(raw)) {
       if (NOUN_WHEN_OWNED.has(k) && OWNED_BY.test(raw.slice(0, m.index))) continue;
       if (keyClass(k) !== 'verb' && OF_PHRASE.test(raw.slice(0, m.index))) continue; // "priest of a drowned god": the attribute inside an of-phrase modifies that noun, not the creature (critic 2026-10-01) // "its charge", "whose hide"
-      if (ENEMY_SUBJECT.test(raw.slice(0, m.index))) continue; // "anyone who blocks it" — the enemy's verb
+      if (ENEMY_SUBJECT.test(raw.slice(0, m.index))) continue;
+      if (NEGATED_KEY.test(raw.slice(0, m.index))) continue; // "a wizard but he cannot cast any spells" routed to caster on "spells" (critic's step-5 read): a key inside a negation names what the creature LACKS // "anyone who blocks it" — the enemy's verb
       return true;
     }
     return false;

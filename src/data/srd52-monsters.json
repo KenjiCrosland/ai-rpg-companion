@@ -5385,7 +5385,7 @@
         },
         {
           "name": "Read Thoughts",
-          "text": "The doppelganger casts *Detect Thoughts*, requiring no spell components and using Charisma as the spellcasting ability (spell save DC 12).\n\n- **At Will:** *Detect Thoughts*"
+          "text": "The doppelganger casts *Detect Thoughts*, requiring no spell components and using Charisma as the spellcasting ability (spell save DC 12)."
         }
       ],
       "Bonus Actions": [
@@ -5848,7 +5848,7 @@
         },
         {
           "name": "Sleep (1/Day)",
-          "text": "The mephit casts the *Sleep* spell, requiring no spell components and using Charisma as the spellcasting ability (spell save DC 10).\n\n- **At Will:** \n- **1/Day Each:** *Sleep*"
+          "text": "The mephit casts the *Sleep* spell, requiring no spell components and using Charisma as the spellcasting ability (spell save DC 10)."
         }
       ]
     },
@@ -6845,7 +6845,7 @@
         },
         {
           "name": "Etherealness",
-          "text": "The ghost casts the *Etherealness* spell, requiring no spell components and using Charisma as the spellcasting ability. The ghost is visible on the Material Plane while on the Border Ethereal and vice versa, but it can't affect or be affected by anything on the other plane.\n\n- **At Will:** *Etherealness*"
+          "text": "The ghost casts the *Etherealness* spell, requiring no spell components and using Charisma as the spellcasting ability. The ghost is visible on the Material Plane while on the Border Ethereal and vice versa, but it can't affect or be affected by anything on the other plane."
         }
       ]
     },
@@ -9037,7 +9037,7 @@
         },
         {
           "name": "Ice Wall (Recharge 6)",
-          "text": "The devil casts *Wall of Ice* (level 8 version), requiring no spell components and using Intelligence as the spellcasting ability (spell save DC 17).\n\n- **At Will:**"
+          "text": "The devil casts *Wall of Ice* (level 8 version), requiring no spell components and using Intelligence as the spellcasting ability (spell save DC 17)."
         }
       ]
     },
@@ -9111,7 +9111,7 @@
         },
         {
           "name": "Fog Cloud (1/Day)",
-          "text": "The mephit casts *Fog Cloud*, requiring no spell components and using Charisma as the spellcasting ability.\n\n- **At Will:** \n- **1/Day Each:** *Fog Cloud*"
+          "text": "The mephit casts *Fog Cloud*, requiring no spell components and using Charisma as the spellcasting ability."
         }
       ]
     },
@@ -9186,7 +9186,7 @@
         },
         {
           "name": "Invisibility",
-          "text": "The imp casts *Invisibility* on itself, requiring no spell components and using Charisma as the spellcasting ability.\n\n- **At Will:** *Invisibility*"
+          "text": "The imp casts *Invisibility* on itself, requiring no spell components and using Charisma as the spellcasting ability."
         }
       ]
     },
@@ -10565,7 +10565,7 @@
       "Actions": [
         {
           "name": "Bite",
-          "text": "*Melee Attack Roll:* +5 (with Advantage if the target is Grappled by the mimic), reach 5 ft. 7 (1d8 + 3) Piercing damage\u2014or 12 (2d8 + 3) Piercing damage if the target is Grappled by the mimic\u2014plus 4 (1d8) Acid damage."
+          "text": "*Melee Attack Roll:* +5 (with Advantage if the target is Grappled by the mimic), reach 5 ft. 7 (1d8 + 3) Piercing damage—or 12 (2d8 + 3) Piercing damage if the target is Grappled by the mimic—plus 4 (1d8) Acid damage."
         },
         {
           "name": "Pseudopod",
@@ -11039,7 +11039,7 @@
         },
         {
           "name": "Nightmare Haunting (1/Day; Requires Soul Bag)",
-          "text": "While on the Ethereal Plane, the hag casts *Dream*, using the same spellcasting ability as Spellcasting. Only the hag can serve as the spell's messenger, and the target must be a creature the hag can see on the Material Plane. The spell fails and is wasted if the target is under the effect of the *Protection from Evil and Good* spell or within a *Magic Circle* spell.\nIf the target takes damage from the *Dream* spell, the target's Hit Point maximum decreases by an amount equal to that damage. If the spell kills the target, its soul is trapped in the hag's soul bag, and the target can't be raised from the dead until its soul is released.\n\n- **At Will:** \n- **1/Day Each:** *Dream*, *Protection from Evil and Good*, *Magic Circle*"
+          "text": "While on the Ethereal Plane, the hag casts *Dream*, using the same spellcasting ability as Spellcasting. Only the hag can serve as the spell's messenger, and the target must be a creature the hag can see on the Material Plane. The spell fails and is wasted if the target is under the effect of the *Protection from Evil and Good* spell or within a *Magic Circle* spell.\nIf the target takes damage from the *Dream* spell, the target's Hit Point maximum decreases by an amount equal to that damage. If the spell kills the target, its soul is trapped in the hag's soul bag, and the target can't be raised from the dead until its soul is released."
         }
       ],
       "Bonus Actions": [
@@ -11960,7 +11960,7 @@
         },
         {
           "name": "Hellfire Spellcasting (Recharge 4-6)",
-          "text": "The pit fiend casts *Fireball* (level 5 version) twice, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21). It can replace one *Fireball* with *Hold Monster* (level 7 version) or *Wall of Fire*.\n\n- **At Will:**"
+          "text": "The pit fiend casts *Fireball* (level 5 version) twice, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21). It can replace one *Fireball* with *Hold Monster* (level 7 version) or *Wall of Fire*."
         }
       ]
     },
@@ -12430,7 +12430,7 @@
         },
         {
           "name": "Invisibility",
-          "text": "The quasit casts *Invisibility* on itself, requiring no spell components and using Charisma as the spellcasting ability.\n\n- **At Will:** *Invisibility*"
+          "text": "The quasit casts *Invisibility* on itself, requiring no spell components and using Charisma as the spellcasting ability."
         }
       ]
     },
@@ -12865,7 +12865,7 @@
         },
         {
           "name": "Antennae",
-          "text": "The rust monster targets one nonmagical metal object\u2014armor or a weapon\u2014worn or carried by a creature within 5 feet of itself. *Dexterity Saving Throw*: DC 11, the creature with the object. *Failure:*  The object takes a -1 penalty to the AC it offers (armor) or to its attack rolls (weapon). Armor is destroyed if the penalty reduces its AC to 10, and a weapon is destroyed if its penalty reaches -5. The penalty can be removed by casting the *Mending* spell on the armor or weapon."
+          "text": "The rust monster targets one nonmagical metal object—armor or a weapon—worn or carried by a creature within 5 feet of itself. *Dexterity Saving Throw*: DC 11, the creature with the object. *Failure:*  The object takes a -1 penalty to the AC it offers (armor) or to its attack rolls (weapon). Armor is destroyed if the penalty reduces its AC to 10, and a weapon is destroyed if its penalty reaches -5. The penalty can be removed by casting the *Mending* spell on the armor or weapon."
         },
         {
           "name": "Destroy Metal",
@@ -13235,7 +13235,7 @@
         },
         {
           "name": "Illusory Appearance",
-          "text": "The hag casts *Disguise Self*, using Constitution as the spellcasting ability (spell save DC 13). The spell's duration is 24 hours.\n\n- **At Will:** *Disguise Self*"
+          "text": "The hag casts *Disguise Self*, using Constitution as the spellcasting ability (spell save DC 13). The spell's duration is 24 hours."
         }
       ]
     },
@@ -14223,7 +14223,7 @@
         },
         {
           "name": "Invisibility",
-          "text": "The sprite casts *Invisibility* on itself, requiring no spell components and using Charisma as the spellcasting ability.\n\n- **At Will:** *Invisibility*"
+          "text": "The sprite casts *Invisibility* on itself, requiring no spell components and using Charisma as the spellcasting ability."
         }
       ]
     },
@@ -23261,7 +23261,7 @@
       "Actions": [
         {
           "name": "Bites",
-          "text": "*Melee Attack Roll:* +6, reach 5 ft. 8 (1d8 + 4) Piercing damage\u2014or 6 (1d4 + 4) Piercing damage if the swarm is Bloodied\u2014plus 10 (3d6) Poison damage."
+          "text": "*Melee Attack Roll:* +6, reach 5 ft. 8 (1d8 + 4) Piercing damage—or 6 (1d4 + 4) Piercing damage if the swarm is Bloodied—plus 10 (3d6) Poison damage."
         }
       ]
     },

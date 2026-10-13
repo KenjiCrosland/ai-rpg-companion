@@ -22,7 +22,8 @@ import { piGuard, readPhrases } from './lexicon.mjs';
 import CORPUS from '@/data/srd52-monsters.json';
 import TABLE from '@/data/challengeRatings.json';
 import { PRINT_2014 } from './print-2014.mjs';
-export const GATES = ['derivation', 'bands', 'structure', 'gates', 'headerBody', 'edition', 'donor'];
+import { resolutionOf, TARGET_CLAUSE, SAVE_OUTCOME } from './forms.mjs';
+export const GATES = ['derivation', 'bands', 'structure', 'gates', 'headerBody', 'edition', 'donor', 'adjudicability'];
 const crNum = (k) => (String(k).includes('/') ? Number(String(k).split('/')[0]) / Number(String(k).split('/')[1]) : Number(k));
 const CRS = Object.keys(TABLE).filter((k) => /^\d+$|^1\/[248]$|^0$/.test(k)).sort((a, b) => crNum(a) - crNum(b));
 const modOf = (v) => Math.floor((Number(v) - 10) / 2);
@@ -134,6 +135,7 @@ export function corpusAt(cr, edition = null) {
 const SKILL_STAT = { Athletics: 'STR', Acrobatics: 'DEX', 'Sleight of Hand': 'DEX', Stealth: 'DEX', Arcana: 'INT', History: 'INT', Investigation: 'INT', Nature: 'INT', Religion: 'INT', 'Animal Handling': 'WIS', Insight: 'WIS', Medicine: 'WIS', Perception: 'WIS', Survival: 'WIS', Deception: 'CHA', Intimidation: 'CHA', Performance: 'CHA', Persuasion: 'CHA' };
 function gateDerivation(m, ctx, F) {
   const pb = Number(m.pb ?? pbFor(ctx.cr)); const mods = Object.fromEntries(Object.entries(m.stats ?? {}).map(([k, v]) => [k, modOf(v)]));
+  const declared = m.generation?.declared ?? {}; // user-set numbers are declared fields, not derivations (Resolution 3)
   const modsOf = (keys) => keys.map((k) => mods[k]).filter(Number.isFinite);
   const castStat = (() => { const sp = allRows(m).map(({ e }) => /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability/.exec(e.text ?? '')?.[1]).find(Boolean); return sp ? { Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON', Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' }[sp] : null; })();
   const label2014 = ctx.labels2014 ?? {};
@@ -148,7 +150,7 @@ function gateDerivation(m, ctx, F) {
     else if (r.bonus !== null && r.bonus !== mods[stat] && !(r.ranged && r.bonus === mods.DEX)) F('damage-mod', 'fail', `${r.name}: damage bonus ${r.bonus >= 0 ? '+' : ''}${r.bonus} is not ${stat}'s ${mods[stat]}`, r.bonus);
   }
   for (const { sec, e } of allRows(m)) {
-    for (const dm of String(e.text ?? '').matchAll(/(?<!escape )DC (\d+)/g)) {
+    for (const dm of String(e.text ?? '').matchAll(/(?<!escape )DC (\d+)(?! plus the damage taken)/g)) { // print's Zombie: "Constitution saving throw (DC 5 plus the damage taken)" is its own derivation
       const dc = Number(dm[1]); const diff = Math.min(...modsOf(['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']).map((x) => Math.abs(8 + pb + x - dc)));
       if (diff === 1) F('dc-float', 'ok', `${sec}/${bare(e.name)}: DC ${dc} sits one off the derived DC (the chassis ±1 float)`, dc);
       else if (diff > 1) F('dc', 'fail', `${sec}/${bare(e.name)}: DC ${dc} is no stat's 8 + PB ${pb} + mod`, dc);
@@ -170,8 +172,8 @@ function gateDerivation(m, ctx, F) {
   if (hf) {
     const n = Number(hf[1]); const d = Number(hf[2]); const b = (hf[3] === '-' ? -1 : 1) * Number(hf[4] ?? 0);
     const avg = Math.floor(n * (d + 1) / 2) + b;
-    if (avg !== Number(m.hp)) F('hp-formula', 'fail', `HP ${m.hp} but ${m.hp_formula} averages ${avg}`, m.hp);
-    if (Number.isFinite(mods.CON) && b !== n * mods.CON) F('hp-con', 'fail', `${m.hp_formula}: the bonus is not ${n} × CON ${mods.CON} = ${n * mods.CON}`, b);
+    if (declared.hp == null && avg !== Number(m.hp)) F('hp-formula', 'fail', `HP ${m.hp} but ${m.hp_formula} averages ${avg}`, m.hp);
+    if (declared.hp == null && Number.isFinite(mods.CON) && b !== n * mods.CON) F('hp-con', 'fail', `${m.hp_formula}: the bonus is not ${n} × CON ${mods.CON} = ${n * mods.CON}`, b);
     if (m.size && HIT_DIE_BY_SIZE[m.size] && d !== HIT_DIE_BY_SIZE[m.size]) F('hit-die', 'soft', `d${d} on a ${m.size} body (d${HIT_DIE_BY_SIZE[m.size]})`, d);
   }
 }
@@ -184,6 +186,9 @@ function gateBands(m, ctx, F) {
   // on budget is soft here, not ok — enough to get him read.
   const cr = ctx.cr; const r = dmgRead(m); const legendary = !!(m.sections?.['Legendary Actions'] ?? []).length;
   const pcB = ctx.print;
+  const declaredB = m.generation?.declared ?? {};
+  if (declaredB.ac != null || declaredB.hp != null) { F('user-set', 'ok', `user-set: ${[declaredB.ac != null ? `AC ${declaredB.ac}` : '', declaredB.hp != null ? `HP ${declaredB.hp}` : ''].filter(Boolean).join(', ')} · reads CR ${r.read}`, r.read); return; } // the user set the number; the band reports the read and stands down (Resolution 3)
+  if (Object.keys(declaredB.rows ?? {}).length) F('user-set', 'ok', `user-set: ${Object.entries(declaredB.rows).map(([k, v]) => `${k} ${v}`).join(', ')}`, declaredB.rows);
   if (pcB && (pcB.exact || pcB.borrowOnly) && nearPrintCr(cr, pcB.cr)) { F('print-numbers', 'ok', `${pcB.name}'s own numbers at its own CR — the donor gate verifies them; the band is print's by definition`, pcB.name); return; }
   const aim = cardBudget(cr, { legendary, edition: ctx.edition === '2014' ? '2014' : null });
   const drift = (v, a) => (a ? (v - a) / a : 0);
@@ -205,14 +210,14 @@ function gateBands(m, ctx, F) {
     else if (c.read && over < -1 && r.read < c.read[0]) F('under', 'fail', `reads CR ${r.read} by the DMG method, under print's own reads at ${cr} (${c.read.join('–')}, n=${c.n})`, r.read);
     else if (over < -1 || over > 1) F('band', 'soft', `reads CR ${r.read} (print at ${cr} reads ${c.read?.join('–')}, n=${c.n})`, r.read);
   }
-  if (over > 3) F('hot', 'fail', `reads CR ${r.read}, more than three over`, r.read);
+  if (over > 3) F('hot', declaredB.immunities ? 'soft' : 'fail', `reads CR ${r.read}, more than three over${declaredB.immunities ? ' — the user\'s own immunity line drives the defensive read (user-set)' : ''}`, r.read);
   // the OFFENSIVE AXIS alone: print's adult dragons read +4 to +7 on offense at their own CR (Adult Brass +7), the corpus median is +2 — so over three is soft and over print's own ceiling is fail (the critic's mirror of the one-axis under rule, 2026-10-03)
   const offOver = crNum(r.off) - cr;
   if (offOver > 7) F('hot-offense', 'fail', `offense alone reads CR ${r.off}, ${offOver} over — past print's own ceiling (the Adult Brass Dragon at +7)`, r.off);
   else if (offOver > 3) F('hot-offense', 'soft', `offense alone reads CR ${r.off}, ${offOver} over; the HP axis pulls the read to ${r.read}`, r.off);
   else if (over > 1 && ctx.edition === '2014') F('hot', 'soft', `reads CR ${r.read} (hot, within three)`, r.read);
   for (const n of novasOf(m)) if (n.avg > NOVA_CAP(cr)) F('nova-cap', n.avg > NOVA_CAP(cr) * 1.15 ? 'fail' : 'soft', `${n.name}: ${n.avg} over the ${NOVA_CAP(cr)} cap`, n.avg);
-  for (const a of attackRowsOf(m)) if (a.avg > aim.dpr * 0.9 && r.attacks > 1) F('per-attack-ceiling', 'fail', `${a.name}: ${a.avg} a hit is the whole budget (${aim.dpr})`, a.avg);
+  for (const a of attackRowsOf(m)) if (!a.e?.userSet && a.avg > aim.dpr * 0.9 && r.attacks > 1) F('per-attack-ceiling', 'fail', `${a.name}: ${a.avg} a hit is the whole budget (${aim.dpr})`, a.avg);
   if (r.used && r.attacks >= 1 && r.used.avg < aim.dpr / (r.attacks * 4)) F('per-attack-floor', 'soft', `${r.used.name}: ${r.used.avg} a hit is under a quarter share of ${aim.dpr} across ${r.attacks}`, r.used.avg);
   if (!legendary && cr >= 13 && cr <= 17 && Number(m.hp) <= Math.round(aim.hp * 0.8) + 2 && ctx.edition !== '2014') F('legendary-hp-trade', 'soft', `HP ${m.hp} looks like the legendary HP trade (${Math.round(aim.hp * 0.8)}) with no Legendary Actions section`, m.hp);
 }
@@ -235,7 +240,11 @@ function gateStructure(m, ctx, F) {
       if (!names.includes(nm)) F('multiattack-row', 'fail', `Multiattack names "${nm}", which is not a row`, nm);
     }
     if (count && count > 1 && named.length === 0) F('multiattack-count', 'soft', `Multiattack says ${count} but names no rows`, count);
+    if (combo && combo[1].split(/,|\bor\b/).map((x) => x.trim()).filter(Boolean).length < 2) F('multiattack-combination', 'fail', `"in any combination" with one row: "${multi.text}"`, multi.text); // Wearwretch, Bog Hound (critic's step-5 read)
   }
+  // ONE RECHARGE NOVA PER SHEET: 0 of 2 corpora carry two (the Duergar's two Recharges are short-rest utilities, no damage) — the Glacier Wyrm shipped Freezing Breath beside Glacial Breath (critic's step-5 read)
+  const novaRows = novasOf(m).filter((n) => n.sec === 'Actions');
+  if (novaRows.length > 1) F('two-novas', 'fail', `two Recharge novas on one sheet: ${novaRows.map((n) => `"${n.name}"`).join(' and ')}`, novaRows.length);
   for (const { sec, e } of allRows(m)) {
     if (!e.print && /\d+ \(\d+d\d+/.test(e.text ?? '') === false && /\bdamage\b/.test(e.text ?? '') && /\d+ (?:Bludgeoning|Piercing|Slashing|Fire|Cold|Lightning|Thunder|Acid|Poison|Necrotic|Radiant|Psychic|Force) damage/.test(e.text ?? '')) F('diceless-damage', 'fail', `${sec}/${bare(e.name)}: a damage number with no dice`, bare(e.name));
     for (const ref of String(e.text ?? '').matchAll(/(?:use of|uses|cast) ([A-Z][\w' -]+?)(?=[.,;]| if| to| or| in any| instead|$)/g)) {
@@ -250,7 +259,7 @@ function gateStructure(m, ctx, F) {
     const eng = /(?:swallows|engulfs) one (Tiny|Small|Medium|Large|Huge|Gargantuan) or smaller creature/.exec(e.text ?? '');
     if (eng && SIZES.indexOf(eng[1]) > SIZES.indexOf(m.size)) F('engulf-size', 'fail', `${sec}/${bare(e.name)} engulfs ${eng[1]} on a ${m.size} body (print: the Gelatinous Cube takes its own size or smaller)`, eng[1]);
     if (/\bMelee or Melee or\b|\bRanged or Ranged\b/.test(e.text ?? '') || (ctx.legacyDoubled ?? []).includes(bare(e.name))) F('punctuation', 'fail', `${sec}/${bare(e.name)}: a doubled attack label${(ctx.legacyDoubled ?? []).includes(bare(e.name)) ? ' on the 2014 sheet' : ''}`, bare(e.name)); // "Melee or Melee or Ranged Spell Attack" on five 2014 sheets (critic's regressions brief 2026-10-04)
-    if (/half as much damage|Half damage/i.test(e.text ?? '') && !/\d+ \(\d+d\d+/.test(e.text ?? '')) F('half-no-referent', 'fail', `${sec}/${bare(e.name)}: "half as much damage" with no damage on the row`, bare(e.name));
+    if (/half as much damage|Half damage/i.test(e.text ?? '') && !/\d+ \(\d+d\d+/.test(e.text ?? '') && !/take only half damage|instead takes no damage/i.test(e.text ?? '')) F('half-no-referent', 'fail', `${sec}/${bare(e.name)}: "half as much damage" with no damage on the row`, bare(e.name));
     if (sec === 'Legendary Actions' && !/^Legendary Action Uses/.test(e.name ?? '') && /^(?:The \w+|It) can['’]t (?:take|use) this action again[^.]*\.?$/i.test(String(e.text ?? '').trim())) F('legendary-no-effect', 'fail', `${sec}/${bare(e.name)}: a legendary action with no effect, only its recharge clause`, bare(e.name));
     if (/\. ,|,\s*,|\.\.(?!\.)|\s,|(?<!ft)\.\s+(?:and|plus)\b/.test(e.text ?? '')) F('punctuation', 'fail', `${sec}/${bare(e.name)}: a ". ,", ", ," or ". and" sequence in the text`, bare(e.name)); // ". and the target has the Paralyzed condition" on the lich's touch (critic's blockers audit 2026-10-03)
     const reach = /reach (\d+) ft\./.exec(e.text ?? '');
@@ -297,7 +306,8 @@ const TYPE_IMMUNITY = { Undead: ['Poison'], Construct: ['Poison'], Elemental: ['
 function gateHeaderBody(m, ctx, F) {
   const texts = allRows(m).map(({ e }) => `${e.name}. ${e.text}`).join('\n');
   if (/earth glide|move through nonmagical, unworked earth/i.test(texts) && !/Burrow/i.test(m.speed ?? '')) F('earth-glide-burrow', 'fail', 'Earth Glide with no Burrow speed', m.speed);
-  if (/spider climb|climb difficult surfaces, including along ceilings/i.test(texts) && !/Climb/i.test(m.speed ?? '')) F('spider-climb-climb', 'fail', 'Spider Climb with no Climb speed', m.speed);
+  const printSpiderClimb = allRows(m).some(({ e }) => e.print && /spider climb|climb difficult surfaces, including along ceilings/i.test(`${e.name}. ${e.text}`)); // print's own Vampire Spawn carries Spider Climb at 30 ft. with no Climb line — print overrules the predicate (canaries 2026-10-12)
+  if (!printSpiderClimb && /spider climb|climb difficult surfaces, including along ceilings/i.test(texts) && !/Climb/i.test(m.speed ?? '')) F('spider-climb-climb', 'fail', 'Spider Climb with no Climb speed', m.speed);
   if (/blind beyond this radius/i.test(m.senses ?? '') && /darkvision/i.test(m.senses ?? '')) F('blind-beyond-darkvision', 'fail', 'blind beyond its blindsight yet it has darkvision', m.senses);
   const type = String(m.type ?? '').split(/[\s(]/)[0];
   const want = TYPE_IMMUNITY[type]; const imm = String(m.immunities ?? '');
@@ -313,13 +323,16 @@ function gateEdition(raw, m, ctx, F) {
     : allRows(m).filter(({ e }) => !e.print).map(({ e }) => `${e.name}. ${e.text}`).join('\n'); // print's own 2024 text is print (the Kraken's "must succeed on a DC 25")
   if (ctx.edition === '2014') {
     for (const w of ['Attack Roll:', 'Saving Throw*:', '*Failure:*', 'Failure:', 'Bloodied', 'Emanation', 'Hit or Miss', 'Success: Half']) if (texts.includes(w)) F('vocab-2024-in-2014', 'fail', `2024 wording in a 2014 block: "${w}"`, w);
+    // a 2024 row with a half-damage success whose 2014 row lost the clause (the dragon's Noxious Miasma, check-in 2026-10-11)
+    const legacyByName = new Map([...(raw.abilities ?? []), ...(raw.actions ?? []), ...(raw.reactions ?? []), ...(raw.legendary_actions ?? []), ...(raw.bonus_actions ?? [])].map((e) => [bare(e.name).toLowerCase(), String(e.description ?? e.text ?? '')]));
+    for (const { sec, e } of allRows(m)) { if (!/\*Success:\*\s*Half damage/i.test(e.text ?? '')) continue; const l = legacyByName.get(bare(e.name).toLowerCase()); if (l != null && !/half (?:as much )?damage/i.test(l)) F('conversion-dropped-half', 'fail', `${sec}/${bare(e.name)}: the 2024 row halves on a success; the 2014 sheet dropped the clause`, bare(e.name)); }
     const acm = /^(\d+) \(([^)]+)\)/.exec(String(raw.armor_class ?? ''));
     if (acm && !/natural|mage armor|unarmored/i.test(acm[2])) {
       const parts = acm[2].toLowerCase().split(/,\s*/); const base = ARMOR[parts[0]]; const dexMod = modOf(m.stats?.DEX ?? 10);
-      if (base) { const want = base[0] + (base[1] === 'dex' ? dexMod : base[1] === 'dex2' ? Math.min(2, dexMod) : 0) + (parts.includes('shield') ? 2 : 0); if (want !== Number(acm[1])) F('armor-parenthetical', 'fail', `AC ${acm[1]} (${acm[2]}) — ${parts[0]} with DEX ${dexMod} gives ${want}`, acm[0]); }
+      if (base && (m.generation?.declared?.ac == null)) { const want = base[0] + (base[1] === 'dex' ? dexMod : base[1] === 'dex2' ? Math.min(2, dexMod) : 0) + (parts.includes('shield') ? 2 : 0); if (want !== Number(acm[1])) F('armor-parenthetical', 'fail', `AC ${acm[1]} (${acm[2]}) — ${parts[0]} with DEX ${dexMod} gives ${want}`, acm[0]); }
     }
   } else {
-    for (const w of ['Weapon Attack:', 'to hit', 'must succeed on a DC', 'knocked prone', 'half as much damage']) if (texts.replace(/to hit with spell attacks/g, '').includes(w)) F('vocab-2014-in-2024', 'fail', `2014 wording in a 2024 block: "${w}"`, w);
+    for (const w of ['Weapon Attack:', 'to hit', 'must succeed on a DC', 'knocked prone', 'half as much damage']) if (texts.replace(/to hit with spell attacks/g, '').replace(/must succeed on a DC \d+ Constitution saving throw at the end of that turn/g, '') /* print's own 2024 Swallow idiom (the Kraken) */ .includes(w)) F('vocab-2014-in-2024', 'fail', `2014 wording in a 2024 block: "${w}"`, w);
   }
 }
 const RAYS_2014 = ['Charm Ray', 'Paralyzing Ray', 'Fear Ray', 'Slowing Ray', 'Enervation Ray', 'Telekinetic Ray', 'Sleep Ray', 'Petrification Ray', 'Disintegration Ray', 'Death Ray'];
@@ -338,6 +351,7 @@ function gateDonor(raw, m, ctx, F) {
     const n = bare(e.name);
     let why = null;
     if (/^(Multiattack|Spellcasting|Legendary Resistance)$/.test(n) || printNames.has(n)) continue;
+    else if (e.part || e.feature) why = 'the user\'s own part or feature';
     else if (e.print) why = 'print rules row';
     else if (e.library) why = 'seed the user\'s words keyed';
     else if (e.template) why = 'template bound on the user\'s verb';
@@ -361,11 +375,103 @@ const LINT_GATE = [
   [/^(identity-immunity|defense-|beast-intelligence|bps-|resistance-|immune-|self-condition)/, 'headerBody'],
   [/^(attack-mod-coherence|saves|pb|initiative|xp|escape-dc|spell-dc-ability|attack-band|dc-band|ac-band|hp-band|attack-damage-band)/, 'derivation'],
 ];
+// THE ADJUDICABILITY GATE (fidelity pipeline step 3): every mechanical row resolves by an attack roll, a saving throw,
+// or a stated trigger-and-effect; damage is always dice (the structure gate's diceless-damage); a save's targets are a
+// count or an area; a save always has an outcome. A passive rule statement ("can breathe air and water") resolves by
+// itself. The row's `flavor` field is exempt — no parser reads it. Calibrated so everything shipping passes.
+function gateAdjudicability(m, ctx, F) {
+  for (const { sec, e } of allRows(m)) {
+    if (/^(?:Multiattack|Legendary Action Uses|Spellcasting)\b/.test(e.name ?? '') || e.print) continue;
+    const t = String(e.text ?? ''); const how = resolutionOf(t);
+    const dealsOrTargets = /\d+ \(\d+d\d+/.test(t) || /\bhas the [A-Z]\w+ condition\b|\bis (?:knocked|pushed|pulled|grappled|restrained|frightened|charmed|paralyzed|stunned|blinded|poisoned|prone)\b/i.test(t);
+    // an ACTION resolves by being taken; a TRAIT or REACTION that deals damage or imposes a condition needs a stated trigger or a save
+    // a row that APPLIES Grappled states the escape DC (print: 0 of 2 corpora without it; "that has the Grappled condition" and "While Grappled" are prerequisites, not applications)
+    if (/(?<!\b(?:that|which|who|already|while|if the target|if it|unless it|while the target|target that|creature that)\s)has the Grappled condition(?!\s*\(escape DC)/.test(t) || /\bis grappled\b(?!\s*\(escape DC)(?!\s+by\b)/i.test(t)) F('grapple-no-escape', 'fail', `${sec}/${bare(e.name)}: applies the Grappled condition with no escape DC`, bare(e.name));
+    if (sec === 'Traits' && !/\d|\{dc\}|\{dmg\}|\b(?:Advantage|Disadvantage|Resistan\w*|Immun\w*|Vulnerab\w*|condition|saving throw|attack roll|Hit Points?|Temporary|Speed|reach|range|can't|cannot|can |ignores?|regains?|moves?|takes? (?:no|half|extra|double|additional)|deals? (?:extra|double|additional)|Blinded|Charmed|Deafened|Frightened|Grappled|Paralyzed|Poisoned|Prone|Restrained|Stunned|Incapacitated|Invisible|Difficult Terrain|breathe|climb|swim|fly|burrow|speak|understand|see|hear|sense|detect|doesn't|does not|isn't|is not|must|dies|die|succeeds|automatically|unless|only|indistinguishable|motionless|while|when|whenever|if|rather than|counts as|determined|damage types?)\b/i.test(t)) F('adjudicable-mechanic', 'fail', `${sec}/${bare(e.name)}: a trait with no rule in it — flavor on a rules row`, bare(e.name)); // the archlich's "Bound Dead of the Kingdom" (check-in 2026-10-11)
+    if (/^(?:Traits|Reactions)$/.test(sec) && how === 'passive' && dealsOrTargets) F('adjudicable-resolution', 'fail', `${sec}/${bare(e.name)}: deals damage or imposes a condition but states no trigger, attack roll, or save`, bare(e.name));
+    if (how === 'save') {
+      const head = /(?:Saving Throw\*?:\*?\s*DC \d+,\s*([^.*]+?)\.)|((?:[^.]*?)\bmust (?:make|succeed on) a DC \d+ \w+ saving throw)/.exec(t);
+      const targetText = head ? (head[1] ?? head[2]) : t;
+      if (!TARGET_CLAUSE.test(targetText) && !/\bthis (?:aura|emanation|area)\b|starts its turn|enters the (?:aura|area|emanation)|whose space it enters|can see (?:it|the)/i.test(t)) F('adjudicable-target', 'fail', `${sec}/${bare(e.name)}: a save whose targets are neither a count nor an area`, bare(e.name));
+      if (!SAVE_OUTCOME.test(t)) F('adjudicable-outcome', 'fail', `${sec}/${bare(e.name)}: a save with no stated outcome`, bare(e.name));
+    }
+  }
+}
+// COVERAGE AND CONCEPT SHARE (fidelity pipeline step 4): string-work against the extraction's clause list, never a model
+// call. Coverage: of the header and mechanical clauses the user typed, the share whose words appear on the sheet.
+// Concept share: of the rows (Multiattack and the legendary-uses line aside), the share that trace to the user's words
+// — a clause word in the name or text, or a print row when the user named the print creature.
+const STOP = new Set(['a', 'an', 'the', 'of', 'and', 'or', 'with', 'for', 'that', 'who', 'its', 'it', 'is', 'has', 'to', 'in', 'on', 'at', 'by', 'from', 'into', 'as', 'be', 'can', 'very', 'her', 'his', 'she', 'he', 'they', 'them', 'their', 'him', 'you', 'your', 'whom', 'whose', 'this', 'these', 'those', 'any', 'all', 'every', 'each', 'some', 'when', 'while', 'if', 'then', 'but', 'not', 'no', 'are', 'was', 'were', 'does', 'did', 'will', 'would', 'just', 'also', 'only', /* a pronoun shared by two clauses is not provenance (the hag's crows, step 8) */ 'large', 'huge', 'medium', 'small', 'tiny', 'feet', 'ft', 'movement', 'speed', 'attack', 'attacks', 'damage', 'creature', 'monster', 'one', 'two', 'three']);
+const stem = (w) => w.toLowerCase().replace(/[^a-z]/g, '').replace(/ies$/, 'y').replace(/(?<=s|x|z|ch|sh)es$/, '').replace(/(?:ing|ed|s)$/, ''); // "bites" → "bite", not "bit" (the Fenmaw's Bite row traced to nothing, step 6 baseline)
+const words = (t) => [...new Set(String(t ?? '').split(/[^A-Za-z]+/).map(stem).filter((w) => w.length > 2 && !STOP.has(w)))];
+const SIZE_WORDS = /\b(Tiny|Small|Medium|Large|Huge|Gargantuan)\b/i;
+const SIZE_HEADER = /\b(?:Tiny|Small|Medium|Large|Huge|Gargantuan)\b(?!\s+(?:teeth|tooth|claws?|jaws?|fangs?|horns?|wings?|tail|eyes?|hands?|arms?|fists?|sword|axe|shield|hammer|mouth|maw))/i; // "large teeth" is a body part, not the size
+export const NEG_CUE = /\b(?:cannot|can't|can not|never|no longer|without|doesn't|does not|don't|do not|unable to|isn't|is not|not|lacks?|has no|have no|no(?! one\b))\b/i;
+const LACKS_STOP = new Set(['any', 'all', 'ever', 'longer', 'able', 'just', 'anything', 'anyone', 'people', 'person', 'thing']);
+const DMG_TYPE_WORD = /\b(fire|cold|lightning|thunder|acid|poison|necrotic|radiant|psychic|force|bludgeoning|piercing|slashing)\b/i;
+const COND_WORD = /\b(charmed|frightened|poisoned|paralyzed|stunned|blinded|deafened|grappled|restrained|prone|exhaustion|petrified|incapacitated)\b/i;
+export const VULN_CUE = /\b(?:vulnerab\w*|weak(?:ness)? (?:to|against)|takes (?:extra|double|more|additional) damage|hurt (?:badly )?by)\b/i;
+export const IMM_CUE = /\b(?:immune|immunity|immunities|can't be|cannot be|unaffected by|impervious to)\b/i;
+export const RES_CUE = /\b(?:resists?|resistant|resistance|shrugs off)\b/i;
+export const SPEECH_CUE = /\b(?:speaks?|spoke|languages?|talks?)\b/i;
+const SPEECH_STOP = new Set(['speak', 'spoke', 'language', 'talk', 'only', 'understand']);
+export function fidelityOf(m, raw, ctx) {
+  const printNamed = !!ctx?.print && (ctx.print.exact || ctx.print.borrowOnly);
+  const recorded = raw?.generation?.clauses ?? m?.generation?.clauses ?? [];
+  // THE READER'S DENOMINATOR (critic's step-5 read: 38 automated against 61 by hand): every phrase counts except the identity
+  // phrase (the creature itself); a record without head marks (blocks saved before step 6) keeps the step-4 rule. A prompt that
+  // is ONLY a creature ("knife ball", "a bog witch", "Pikachu") has the creature as its one clause
+  const marked = recorded.some((c) => c.head);
+  const listed = marked ? (recorded.some((c) => !c.head) ? recorded.filter((c) => !c.head) : recorded) : (recorded.some((c) => c.kind !== 'descriptive') ? recorded.filter((c) => c.kind !== 'descriptive') : recorded);
+  const clauses = printNamed && !listed.length ? [{ text: ctx.print.name, kind: 'header', _print: true }] : listed; // a bare print name is one clause: the print body itself
+  const rows = allRows(m).filter(({ e }) => !/^(?:Multiattack|Legendary Action Uses)\b/.test(e.name ?? ''));
+  const sheet = `${m.name} ${m.size} ${m.type} ${m.speed} ${m.languages} ${m.immunities ?? ''} ${m.resistances ?? ''} ${m.vulnerabilities ?? ''} ${rows.map(({ e }) => `${e.name} ${e.text} ${e.flavor ?? ''}`).join(' ')}`;
+  const sheetWords = new Set(words(sheet));
+  const present = (c) => {
+    const crAsk = /\bcr\s*(\d+(?:\/\d+)?|\d*\.\d+)\b/i.exec(c.text ?? ''); if (crAsk && !/\b(?:damage|feet|ft)\b/i.test(c.text ?? '')) return Number.isFinite(Number(ctx?.cr)) && crNum(crAsk[1]) === Number(ctx.cr); // "cr 5" is a header directive the sheet honors or not — two letters and a digit, nothing a row could carry (the big ogre read 1/2, canaries 2026-10-12)
+    if (c._print) return true;
+    // a LACKS clause ("cannot cast any spells") is covered only when the lacked thing is absent — the Staffbound Caster scored 2/2 with the Mage's full spell list (critic's step-5 read)
+    if (c.polarity === 'lacks') { const neg = NEG_CUE.exec(c.text); const after = words(neg ? c.text.slice(neg.index + neg[0].length) : c.text).filter((w) => !LACKS_STOP.has(w)); if (!after.length) return false; if (!after.some((w) => sheetWords.has(w))) return true; return rows.some(({ e }) => /\b(?:can't|cannot|can not|never|unable|must not|only)\b/i.test(e.text ?? '') && words(`${e.name} ${e.text}`).some((w) => after.includes(w))); } // absent, or restated as a restriction ("Bound to the Shore" for "he cannot leave the shoreline")
+    if (c.kind === 'header') {
+      // a HEADER-VALUE clause is covered only when the header line carries it — the hag's "takes extra damage from fire" scored covered with no Vulnerabilities line (critic's step-5 read)
+      const sz = SIZE_WORDS.exec(c.text); if (sz && SIZE_HEADER.test(c.text)) return new RegExp(`^${sz[1]}$`, 'i').test(String(m.size ?? ''));
+      const sp = /(\d+)\s*(?:feet|ft)/i.exec(c.text); if (sp) return new RegExp(`\\b${sp[1]} ft`).test(String(m.speed ?? ''));
+      const ac = /\bAC\s*(\d+)|armor class (?:of )?(\d+)/i.exec(c.text); if (ac) return Number(m.ac) === Number(ac[1] ?? ac[2]);
+      const hp = /\bHP\s*(\d+)|(\d+) hit points/i.exec(c.text); if (hp) return Number(m.hp) === Number(hp[1] ?? hp[2]);
+      const prevText = recorded[recorded.indexOf(c) - 1]?.text ?? ''; // "takes extra damage from it" after "She hates fire": the pronoun resolves to the previous phrase's type, as the engine's directive does
+      const ty = DMG_TYPE_WORD.exec(c.text)?.[1] ?? (/\b(?:it|that|them)\b/i.test(c.text) ? DMG_TYPE_WORD.exec(prevText)?.[1] : null) ?? COND_WORD.exec(c.text)?.[1] ?? /\b(adamantine|silvered|magical|nonmagical)\b/i.exec(c.text)?.[1];
+      const line = (field) => (ty ? new RegExp(`\\b${ty}\\b`, 'i').test(String(m[field] ?? '')) : false);
+      if (VULN_CUE.test(c.text)) return line('vulnerabilities');
+      if (IMM_CUE.test(c.text)) return line('immunities') || (!!ty && (m.sections?.Traits ?? []).some((e) => new RegExp(`\\b${ty}\\b`, 'i').test(e.name ?? ''))); // the adamantine clause has no 2024 header idiom; a trait named for it is the sheet's way
+      if (RES_CUE.test(c.text)) return line('resistances');
+      if (SPEECH_CUE.test(c.text)) { const lw = words(String(m.languages ?? '')); return words(c.text).filter((w) => !SPEECH_STOP.has(w)).some((w) => lw.includes(w)); }
+      const hw = words(`${m.name} ${m.size} ${m.type} ${m.speed} ${m.languages} ${m.senses ?? ''}`); return words(c.text).some((w) => hw.includes(w));
+    }
+    // COVERAGE BY PROVENANCE (step 8): a clause is covered when a row's trace binds to it — a part, feature or repaired row's own
+    // `clause`, a template row's concept keys (`boundKeys`), or an unplaced entry that carried it to the description — never when a
+    // row's text happens to contain its words
+    if (c.head) return rows.length > 0; // a creature-only prompt: the sheet IS the creature
+    const ws = words(c.text); if (!ws.length) return false;
+    const overlaps = (t) => words(t).some((w) => ws.includes(w));
+    if (rows.some(({ e }) => (e.clause && overlaps(e.clause)) || (Array.isArray(e.boundKeys) && e.boundKeys.some((k) => overlaps(k))))) return true;
+    const unplaced = (raw?.generation ?? m?.generation)?.unplaced ?? [];
+    if (unplaced.some((u) => u?.clause && overlaps(u.clause))) return true;
+    const styleWord = String(ctx?.donorId ?? '').replace(/-\d+/, '').split('-').slice(1).join(' '); // the chassis IS the clause when the donor's style is its verb (brute-11-charger for "It charges")
+    if (styleWord && words(styleWord).some((k) => ws.some((w) => w.startsWith(k.slice(0, 4)) || k.startsWith(w.slice(0, 4))))) return true;
+    return false;
+  };
+  const covered = clauses.filter(present); const dropped = clauses.filter((c) => !present(c)).map((c) => c.text);
+  const clauseWords = new Set([...clauses.flatMap((c) => words(c.text)), ...words(ctx?.userConcept ?? '')]); // a row traces to the user's WORDS, not only to the clause list
+  const printRowNames = new Set(printNamed ? [...(ctx.print.meleeRows ?? []), ...(ctx.print.rangedRows ?? []), ...(ctx.print.traits ?? []), ...(ctx.print.rulesRows ?? []), ...(ctx.print.legendaryRows ?? [])].map((r) => String(r.name ?? '').replace(/ \(.*\)$/, '').toLowerCase()) : []);
+  const traced = rows.filter(({ e }) => (printNamed && (e.print || printRowNames.has(String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase()))) || words(`${e.name} ${e.text}`).some((w) => clauseWords.has(w)));
+  return { covered: covered.length, total: clauses.length, dropped, conceptRows: traced.length, rows: rows.length };
+}
 export function checkBlock(raw, ctx = {}) {
   const edition = ctx.edition ?? (raw.format === '2014' || raw.type_and_alignment ? '2014' : '2024');
-  const m = edition === '2014' ? (raw.other_edition?.format === '2024' ? raw.other_edition : fromLegacyModel(raw)) : raw;
+  const m0 = edition === '2014' ? (raw.other_edition?.format === '2024' ? raw.other_edition : fromLegacyModel(raw)) : raw;
+  const m = m0.english?.sections ? m0.english : m0; // a translated block carries its English twin: the engine built and checked it in English and the translation holds the numbers — the checker reads the twin (the Steingolem read "sustained 0 (1 × ?)", canaries 2026-10-12)
   const cr = Number(ctx.cr ?? m.cr ?? crNum(m.cr_str ?? '0'));
-  const userConcept = ctx.userConcept ?? [raw.monsterName, raw.monsterDescription].filter(Boolean).join(' — ');
+  const userConcept = ctx.userConcept ?? (raw.other_edition ?? raw).generation?.userConcept ?? raw.generation?.userConcept ?? [raw.monsterName, raw.monsterDescription].filter(Boolean).join(' — '); // the block carries the user's words from step 4 on
   let print = ctx.print ?? null; if (!print && userConcept) { try { print = printCanonFor(readPhrases(userConcept), cr); } catch { print = null; } }
   const labels2014 = {};
   if (edition === '2014') for (const e of [...(raw.actions ?? []), ...(raw.legendary_actions ?? []), ...(raw.reactions ?? [])]) { const t = String(e.description ?? e.text ?? ''); labels2014[bare(e.name)] = /Spell Attack:/.test(t) ? 'spell' : /Weapon Attack:/.test(t) ? 'weapon' : null; }
@@ -384,6 +490,7 @@ export function checkBlock(raw, ctx = {}) {
   safe('structure', (f) => gateStructure(m, context, f));
   safe('gates', (f) => gateGates(m, context, f));
   safe('headerBody', (f) => gateHeaderBody(m, context, f));
+  safe('adjudicability', (f) => gateAdjudicability(m, context, f));
   safe('edition', (f) => gateEdition(raw, m, context, f));
   safe('donor', (f) => gateDonor(raw, m, context, f));
   // the lint's own predicates ride in by rule id — one fix, one place
@@ -396,14 +503,18 @@ export function checkBlock(raw, ctx = {}) {
     }
   } catch (e) { F('structure')('lint-error', 'soft', `the lint threw: ${e?.message ?? e}`, String(e)); }
   const fails = GATES.filter((g) => gates[g].status === 'fail'); const softs = GATES.filter((g) => gates[g].status === 'soft');
-  return { name: m.name, cr, edition, donor: context.donorId, gates, fails, softs, read: dmgRead(m) };
+  return { name: m.name, cr, edition, donor: context.donorId, gates, fails, softs, read: dmgRead(m), fidelity: fidelityOf(m, raw, context) };
 }
 export function checkTable(results, { title = 'Mechanics check' } = {}) {
-  const head = `## ${title}\n\n| block | CR | ed | donor | ${GATES.join(' | ')} | verdict |\n|---|---|---|---|${GATES.map(() => '---').join('|')}|---|\n`;
-  const cell = (g) => (g.status === 'ok' ? 'ok' : `${g.status.toUpperCase()}: ${g.findings.filter((f) => f.severity === g.status).map((f) => f.rule).join(', ')}`);
-  const rows = results.map((r) => `| ${r.name} | ${r.cr}${r.edition === '2014' ? ' (2014)' : ''} | ${r.edition} | ${r.donor ?? '—'} | ${GATES.map((g) => cell(r.gates[g])).join(' | ')} | ${r.fails.length ? `FAIL (${r.fails.length})` : r.softs.length ? `soft (${r.softs.length})` : 'clean'} |`).join('\n');
+  const head = `## ${title}\n\n| block | CR | ed | donor | ${GATES.join(' | ')} | verdict | coverage | concept |\n|---|---|---|---|${GATES.map(() => '---').join('|')}|---|---|---|\n`;
+  const cell = (g) => (g.status === 'ok' ? (g.findings.find((f) => f.rule === 'user-set')?.message ?? 'ok') : `${g.status.toUpperCase()}: ${g.findings.filter((f) => f.severity === g.status).map((f) => f.rule).join(', ')}`);
+  const rows = results.map((r) => `| ${r.name} | ${r.cr}${r.edition === '2014' ? ' (2014)' : ''} | ${r.edition} | ${r.donor ?? '—'} | ${GATES.map((g) => cell(r.gates[g])).join(' | ')} | ${r.fails.length ? `FAIL (${r.fails.length})` : r.softs.length ? `soft (${r.softs.length})` : 'clean'} | ${r.fidelity ? `${r.fidelity.covered}/${r.fidelity.total}` : '—'} | ${r.fidelity ? `${r.fidelity.conceptRows}/${r.fidelity.rows}` : '—'} |`).join('\n');
   const bySeat = {};
   for (const r of results) for (const g of r.fails) { const k = `${r.donor ?? '?'} / ${g}`; bySeat[k] = (bySeat[k] ?? 0) + 1; }
   const sorted = Object.entries(bySeat).sort((a, b) => b[1] - a[1]).map(([k, v]) => `- ${k}: ${v}`).join('\n');
-  return `${head}${rows}\n\n**Fails by seat and gate:**\n${sorted || '- none'}\n`;
+  const fid = results.filter((r) => r.fidelity && r.fidelity.total > 0);
+  const cov = fid.reduce((a, r) => a + r.fidelity.covered, 0); const tot = fid.reduce((a, r) => a + r.fidelity.total, 0);
+  const con = fid.reduce((a, r) => a + r.fidelity.conceptRows, 0); const all = fid.reduce((a, r) => a + r.fidelity.rows, 0);
+  const droppedLine = tot ? `**Dropped ${tot - cov} of ${tot} user clauses** (coverage ${Math.round((cov / tot) * 100)}%); concept share ${all ? Math.round((con / all) * 100) : 0}% (${con}/${all} rows). A run with zero fails and 60% coverage is a failing run.\n` : '';
+  return `${head}${rows}\n\n${droppedLine}**Fails by seat and gate:**\n${sorted || '- none'}\n`;
 }
