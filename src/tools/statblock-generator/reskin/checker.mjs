@@ -24,7 +24,7 @@ import CORPUS from '@/data/srd52-monsters.json';
 import TABLE from '@/data/challengeRatings.json';
 import { PRINT_2014 } from './print-2014.mjs';
 import { resolutionOf, TARGET_CLAUSE, SAVE_OUTCOME } from './forms.mjs';
-export const GATES = ['derivation', 'bands', 'structure', 'gates', 'headerBody', 'edition', 'donor', 'adjudicability'];
+export const GATES = ['derivation', 'bands', 'structure', 'gates', 'headerBody', 'edition', 'donor', 'adjudicability', 'reader'];
 const crNum = (k) => (String(k).includes('/') ? Number(String(k).split('/')[0]) / Number(String(k).split('/')[1]) : Number(k));
 const CRS = Object.keys(TABLE).filter((k) => /^\d+$|^1\/[248]$|^0$/.test(k)).sort((a, b) => crNum(a) - crNum(b));
 const modOf = (v) => Math.floor((Number(v) - 10) / 2);
@@ -465,9 +465,131 @@ export function fidelityOf(m, raw, ctx) {
   const covered = clauses.filter(present); const dropped = clauses.filter((c) => !present(c)).map((c) => c.text);
   const clauseWords = new Set([...clauses.flatMap((c) => words(c.text)), ...words(ctx?.userConcept ?? '')]); // a row traces to the user's WORDS, not only to the clause list
   const printRowNames = new Set(printNamed ? [...(ctx.print.meleeRows ?? []), ...(ctx.print.rangedRows ?? []), ...(ctx.print.traits ?? []), ...(ctx.print.rulesRows ?? []), ...(ctx.print.legendaryRows ?? [])].map((r) => String(r.name ?? '').replace(/ \(.*\)$/, '').toLowerCase()) : []);
-  const traced = rows.filter(({ e }) => (printNamed && (e.print || printRowNames.has(String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase()))) || words(`${e.name} ${e.text}`).some((w) => clauseWords.has(w)));
+  const traced = rows.filter(({ e }) => e.kit || e.feature || e.part || (printNamed && (e.print || printRowNames.has(String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase()))) || words(`${e.name} ${e.text}`).some((w) => clauseWords.has(w))); // a kit, feature or part row IS the user's (the seven's concept share fell as the rows' wording changed — the critic's third species read)
   return { covered: covered.length, total: clauses.length, dropped, conceptRows: traced.length, rows: rows.length };
 }
+
+// THE READER GATE (the critic's third species read, 2026-10-13): behaviour checks over the output sheet for the defect classes a reader
+// kept finding after the mechanical gates passed — each class fails the gate instead of waiting for a reader.
+const PRINT_DUAL_RANGES = new Set(['20/60', '30/120', '60/240', '80/320', '100/400', '150/600', '5/15']);
+const RANGE_OF = [[/\bheavy crossbow\b/i, '100/400'], [/\blight crossbow\b/i, '80/320'], [/\bhand crossbow\b/i, '30/120'], [/\bcrossbow\b/i, '80/320'], [/\blongbow\b/i, '150/600'], [/\bshortbow\b/i, '80/320'], [/\bsling\b/i, '30/120'], [/\bjavelins?\b/i, '30/120'], [/\b(?:spears?|daggers?|knives|knife|hand ?axes?|tridents?|darts?|light hammers?)\b/i, '20/60'], [/\bnets?\b/i, '5/15'], [/\b(?:pistols?|flintlocks?|revolvers?)\b/i, '30/90'], [/\b(?:muskets?|rifles?)\b/i, '40/120']];
+const LAUNCHER = /\b(?:crossbow|longbow|shortbow|bow|sling|pistol|musket|rifle)\b/i; const NEVER_RANGED = /\b(?:greatsword|greataxe|maul|pike|halberd|glaive|lance|longsword|battleaxe|warhammer|flail|morningstar|rapier|scimitar|shortsword|mace|club|greatclub|quarterstaff|staff)\b/i;
+const TYPE_NAME_WORD = /(?:^|\s)(Acid|Cold|Fire|Force|Lightning|Necrotic|Poison|Psychic|Radiant|Thunder|Bludgeoning|Piercing|Slashing)(?=\s|$)/i;
+const NAME_MECHANIC = [[/\b(?:charge|rush|stampede|dash|stride|gallop|sprint)\b/i, /\b(?:moves?|move up to|movement|Speed|straight toward|feet in a straight line|Dash|Disengage|Difficult Terrain|Opportunity Attacks?)\b/, 'movement'], [/\b(?:fear|dread|terror|fright|horror|scare)\w*/i, /\bFrightened\b|Disadvantage on (?:attack rolls and ability checks|ability checks and attack rolls)/, 'the Frightened condition'] /* print writes the Frightened effect longhand where the creature fears a thing (the phobia shape: Sir Reginald's Avian Terror) */, [/\bstun\w*/i, /\bStunned\b/, 'the Stunned condition'], [/\bblind\w*/i, /\bBlinded\b/, 'the Blinded condition'], [/\b(?:grapple|grasp|grip|clutch|seize)\w*/i, /\bGrappled\b|\bescape DC\b/, 'the Grappled condition'], [/\b(?:trip|topple|sweep)\b/i, /\bProne\b/, 'the Prone condition'], [/\b(?:push|shove|repel|hurl back)\b/i, /\bpushed\b/, 'a push'], [/\bparaly\w*/i, /\bParalyzed\b/, 'the Paralyzed condition'], [/\bpoison\w*/i, /\bPoison(?:ed)?\b/, 'Poison'], [/\bhobbl\w*|\bcripple\w*|\bslow\w*/i, /\bSpeed\b|\bProne\b|\bRestrained\b/, 'a Speed, Prone or Restrained effect']];
+const THROWN_NOUN = /^(?:javelin|spear|trident|dagger|handaxe|hand ?axe|dart|hammer|net|knife|boulder|rock|stone|spike|spine|quill|shard|bolt|bolts|arrow|bomb|flask|jar|harpoon|chain|hook|volley|spit|spray|glob|gob|blast|bola|bolas|sling|stinger|needle|barb|thorn|pellet|shot)s?$/i; // print's hybrid rows are thrown weapons
+function gateReader(raw, m, ctx, F) {
+  const inl = String(m.inline ?? '').trim(); const name = String(m.name ?? '').trim(); const rows = allRows(m);
+  const isPrint = !!ctx.print && String(ctx.print.name ?? '').toLowerCase() === name.toLowerCase(); const humanoid = /^Humanoid/i.test(String(m.type ?? '')); // the sheet's NAME is print's, not merely an alias in the words (a tiefling duelist is not the Gladiator by name)
+  // inline-consistency
+  const gmTyped = !!name && new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(String(ctx.userConcept ?? '')); // a name the GM typed is a Name-field name; one the call minted may be a kind ("Eaveswatcher" from "an owlin night-watcher")
+  if (/^[A-Z][a-z'-]+$/.test(name) && humanoid && !isPrint && gmTyped && !/\b(?:a|an|the)\s+$/i.test(String(ctx.userConcept ?? '').split(new RegExp(name, 'i'))[0] ?? '') && inl.toLowerCase() === `the ${name.toLowerCase()}`) F('inline-consistency', 'fail', `a one-word Name takes the person form: "${name}", never "${inl}"`, inl);
+  if (inl && !/^the /i.test(inl)) { const re = new RegExp(`\\bthe ${name.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:'s)?\\b`, 'i'); for (const { sec, e } of rows) if (re.test(String(e.text ?? ''))) F('inline-consistency', 'fail', `${sec}/${bare(e.name)} says "the ${name.toLowerCase()}" beside the sheet's inline "${inl}"`, bare(e.name)); }
+  else if (inl) { const last = inl.replace(/^the /i, ''); const parts = last.split(' '); if (parts.length > 1) { const re = new RegExp(`\\bthe ${parts.at(-1).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'); for (const { sec, e } of rows) if (re.test(String(e.text ?? '')) && !new RegExp(`\\b${inl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(String(e.text ?? ''))) F('inline-consistency', 'soft', `${sec}/${bare(e.name)} says "the ${parts.at(-1)}" beside the sheet's inline "${inl}"`, bare(e.name)); } }
+  // print-range
+  for (const { sec, e } of rows) {
+    const t = String(e.text ?? ''); const n = bare(e.name);
+    for (const rm of t.matchAll(/range (\d+\/\d+) ft\./g)) {
+      const want = RANGE_OF.find(([re]) => re.test(n))?.[1]; const ok = want ? rm[1] === want : (PRINT_DUAL_RANGES.has(rm[1]) || (/\b(?:pistol|musket|rifle|firearm|gun)\b/i.test(n) && /^(?:30\/90|40\/120)$/.test(rm[1])));
+      if (!ok) F('print-range', 'fail', `${sec}/${n}: range ${rm[1]} is not ${want ? `the ${n}'s ${want}` : 'a print range'}`, rm[1]);
+    }
+    if (LAUNCHER.test(n) && /reach \d+ ft\. or range/.test(t)) F('print-range', 'fail', `${sec}/${n}: a launcher is ranged-only, never "reach … or range"`, n);
+    if (NEVER_RANGED.test(n) && !/\b(?:hurl|hurled|throw|thrown)\b/i.test(n) && /Ranged Attack Roll/.test(t) && !/Melee or Ranged/.test(t)) F('print-range', 'fail', `${sec}/${n}: a melee weapon on a ranged-only row`, n);
+  }
+  // exact-body-identity
+  if (ctx.print?.exact && nearPrintCr(ctx.cr, ctx.print.cr)) {
+    const pcb = ctx.print;
+    if (pcb.alignment && String(m.alignment ?? '') !== pcb.alignment) F('exact-body-identity', 'fail', `alignment ${m.alignment} — the ${pcb.name}'s is ${pcb.alignment}`, m.alignment);
+    if (pcb.type && String(m.type ?? '').toLowerCase() !== pcb.type.toLowerCase() && !/\b(?:aberration|beast|celestial|construct|dragon|elemental|fey|fiend|giant|humanoid|monstrosity|ooze|plant|undead)\b/i.test(String(ctx.userConcept ?? ''))) F('exact-body-identity', 'fail', `type ${m.type} — the ${pcb.name}'s is ${pcb.type}`, m.type);
+    if (pcb.size && String(m.size ?? '') !== pcb.size && !/\b(?:tiny|small|medium|large|huge|gargantuan)\b/i.test(String(ctx.userConcept ?? ''))) F('exact-body-identity', 'fail', `size ${m.size} — the ${pcb.name}'s is ${pcb.size}`, m.size);
+    const dice = (t) => (/\d+ \(\d+d\d+(?: [+-] \d+)?\)/.exec(String(t ?? '')) ?? [''])[0]; // the attack's own expression; print's riders ride separately
+    for (const r of [...(pcb.meleeRows ?? []), ...(pcb.rangedRows ?? []), ...(pcb.rulesRows ?? [])]) { const row = rows.find(({ e }) => bare(e.name).toLowerCase() === String(r.name ?? '').toLowerCase())?.e; if (!row) continue; const want = dice(r.text ?? r.dmg ?? ''); const have = dice(row.text); if (want && have && want !== have) F('exact-body-identity', 'fail', `${bare(row.name)}: ${have} — the ${pcb.name}'s is ${want}`, have); }
+  }
+  // engine-needs-key
+  const ENGINE_KEY = /\b(?:grapple|grapples|grappled|grab|grabs|seize|seizes|hold|holds|clutch|wrestle|constrict|crush|crushes|squeeze|drag|drags|pull|pulls|swallow|swallows|engulf|engulfs|devour|gulp|smother|entomb|envelop|absorb|coil|coils|wrap|wraps|snare|net|tentacle|tentacles|jaws|maw|hug|cage|lasso|hook|hooks)\b/i;
+  const printGrapples = !!ctx.print && [...(ctx.print.meleeRows ?? []), ...(ctx.print.rulesRows ?? [])].some((r) => /Grappled|swallow|engulf/i.test(r.text ?? r.rider ?? ''));
+  const creatureOnly = !!((raw?.generation ?? m?.generation ?? raw?.other_edition?.generation)?.creatureOnly);
+  if (!creatureOnly && !ENGINE_KEY.test(String(ctx.userConcept ?? '')) && !printGrapples) for (const { sec, e } of rows) { const t = String(e.text ?? ''); if (e.part || e.print) continue; if (/has the Grappled condition \(escape DC/.test(t) || (e.rules && /^(?:Swallow|Engulf|Smother|Whelm|Cage|Entomb|Cocoon)\b/.test(e.name ?? ''))) F('engine-needs-key', 'fail', `${sec}/${bare(e.name)}: a grapple or engulf engine with no key in the words`, bare(e.name)); }
+  // provenance-integrity
+  for (const { sec, e } of rows) if ((e.kit || e.feature || e.part) && !e.clause && !(Array.isArray(e.boundKeys) && e.boundKeys.length)) F('provenance-integrity', 'fail', `${sec}/${bare(e.name)}: a ${e.kit ? 'kit' : e.feature ? 'feature' : 'part'} row with no clause on the saved block`, bare(e.name));
+  // multiattack-integrity: a print body keeps print's Multiattack, and a Multiattack names only rows that are present
+  {
+    const ma = rows.find(({ e }) => /^Multiattack/.test(e.name ?? ''))?.e;
+    const atk = rows.filter(({ e }) => /Attack Roll/.test(e.text ?? '')).map(({ e }) => bare(e.name));
+    if (!ma && ctx.print?.multiattack && atk.length) F('multiattack-integrity', 'fail', `no Multiattack — the ${ctx.print.name} has one and this sheet has ${atk.length} attack row(s)`, atk.length);
+    if (!ma && atk.length > 1 && !ctx.print) F('multiattack-integrity', 'soft', `${atk.length} attack rows and no Multiattack`, atk.length);
+    if (ma) { // the ATTACK slots must be attack rows; a name after "uses" or "a use of" is an action print legitimately names (the Kraken uses Fling, Lightning Strike, or Swallow)
+      const t0 = String(ma.text); const all = rows.map(({ e }) => bare(e.name).toLowerCase());
+      const slot = [...t0.matchAll(/makes \w+ ([A-Z][\w'-]*(?: [A-Z][\w'-]*)*) attacks/g)].map((x) => x[1])
+        .concat([...t0.matchAll(/using ([^.]*?) in any combination/g)].flatMap((x) => x[1].split(/,| or | and /).map((y) => y.trim()).filter(Boolean)));
+      for (const n of slot) { if (!n || !/^[A-Z]/.test(n)) continue; if (!atk.some((a) => a.toLowerCase() === n.toLowerCase())) { F('multiattack-integrity', 'fail', `Multiattack's attack slot names "${n}", which is not an attack row on this sheet`, n); break; } }
+      const used = [...t0.matchAll(/(?:a use of|uses) ([^.]*?)(?:\.|$)/g)].flatMap((x) => x[1].split(/,| or | and /).map((y) => y.trim().replace(/^its /, '').replace(/\s+to cast\b.*$/i, '')).filter(Boolean)); // "Spellcasting to cast Hold Person" is the Spellcasting row plus the spell it casts (the critic's fifth read)
+      for (const n of used) { if (!n || !/^[A-Z]/.test(n)) continue; if (!all.some((a) => a === n.toLowerCase() || a.startsWith(`${n.toLowerCase()} (`))) { F('multiattack-integrity', 'soft', `Multiattack uses "${n}", which is not a row on this sheet`, n); break; } } }
+  }
+  // attack-in-multiattack (the critic's fifth read): on a sheet with a
+  // Multiattack, every Action attack row is named in it — as a slot or as a use
+  // it can replace an attack with. Print composes its own card, so print's rows
+  // are exempt; a gated row is a nova, not a slot; reactions, bonus actions and
+  // legendary actions are their own economy.
+  {
+    const ma = rows.find(({ e }) => /^Multiattack/.test(e.name ?? ''))?.e;
+    if (ma) {
+      const cited = String(ma.text ?? '').toLowerCase();
+      for (const { sec, e } of rows) {
+        if (sec !== 'Actions' || !/Attack Roll/.test(e.text ?? '') || e.print || /^Multiattack/.test(e.name ?? '')) continue;
+        if (/\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '')) continue;
+        const n = bare(e.name).toLowerCase(); if (!n) continue;
+        if (!cited.includes(n)) F('attack-in-multiattack', 'fail', `Actions/${bare(e.name)} is an attack row the Multiattack never names — a GM who reads the Multiattack never uses it`, bare(e.name));
+      }
+    }
+  }
+  // hybrid-needs-thrown (the critic's fifth read): "Melee or Ranged" is print's
+  // grammar for a THROWN weapon — a Spear, a Javelin, a Trident, a Handaxe. A row
+  // that names nothing which can fly reads as an elk thrown 120 feet.
+  for (const { sec, e } of rows) {
+    if (!/Melee or Ranged Attack Roll/.test(e.text ?? '') || e.print) continue;
+    const n = bare(e.name); const head = n.toLowerCase().split(/[\s-]+/).pop() ?? '';
+    if (THROWN_NOUN.test(head) || /\b(?:thrown|throws?|hurl|hurled|hurls|lob|lobs|lobbed|fling|flings|flung|tosse?s?|spit|spits|launch(?:es|ed)?)\b/i.test(n)) continue;
+    if (!/\) (?:Bludgeoning|Piercing|Slashing) damage/.test(e.text ?? '')) continue; // the Mage's Arcane Burst reaches both ways: an energy row is a spell attack, not a thrown weapon
+    if (/\b(?:bow|crossbow|sling|musket|pistol|rifle|firearm|gun|blowgun)\b/i.test(n)) continue; // a launcher is the weapon table's to retable, and print-range already owns it
+    F('hybrid-needs-thrown', 'fail', `${sec}/${n}: a "Melee or Ranged" row that names nothing a creature can throw`, n);
+  }
+  // inline-correctness: the inline follows the name rule, not merely itself
+  if (inl && name.split(/\s+/).length > 1 && /^the /i.test(inl)) {
+    const rest = inl.replace(/^the /i, '').toLowerCase(); const words = name.toLowerCase().split(/\s+/);
+    const suffixes = words.map((_, i) => words.slice(i).join(' ')); // any contiguous tail of the name is a kind form ("the turtle elder", "the headless horseman", "the warden")
+    const ok = suffixes.includes(rest);
+    const isRankish = /^(?:sergeant|captain|commander|lieutenant|general|admiral|marshal|warlord|chieftain|lord|lady|baron|baroness|count|countess|duke|duchess|king|queen|prince|princess|abbot|abbess|bishop|brother|sister|mother|father|constable|sheriff|grandmother|grandfather|granny|elder|mistress|master|warden|knight|hunter|pilgrim|marauder|rider|horseman|keeper|witch|hermit|seer|reaver|raider)$/.test(rest);
+    if (!ok && !isRankish) F('inline-correctness', 'fail', `the inline "${inl}" is neither this creature's whole name nor its head noun nor a rank — a kind speaks whole, a person by its given name`, inl);
+  }
+  // gate-fit: a row that shed its use limit must have a Multiattack to join
+  {
+    const hasMa = rows.some(({ e }) => /^Multiattack/.test(e.name ?? ''));
+    if (!hasMa) for (const { sec, e } of rows) { const t = String(e.text ?? ''); if (sec !== 'Actions' || e.print || / \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(e.name ?? '')) continue;
+      if (/Saving Throw/.test(t) && /\bhas the [A-Z]\w+ condition\b/.test(t) && !/\d+ \(\d+d\d+/.test(t)) F('gate-fit', 'fail', `${sec}/${bare(e.name)}: an at-will condition action with no Multiattack to join — a shed use limit needs one`, bare(e.name)); }
+  }
+  // type-fit and save-fit
+  for (const { sec, e } of rows) {
+    const t = String(e.text ?? ''); const n = bare(e.name); if (e.print) continue;
+    const anat = /Attack Roll/.test(t) ? /\b(claws?|bite|fangs?|talons?|tusks?|horns?|hooves|hoof|tail|slam|fists?|gore|sting|stinger|maw|jaws|pincers?|beak)\b/i.exec(n) : null; // an anatomy word on a row that makes no attack is flavour ("Answering Sting" is a riposte)
+    const dealt = /\d+ \(\d+d\d+(?: [+-] \d+)?\) ([A-Z][a-z]+) damage/.exec(t)?.[1];
+    if (anat && dealt) { const want = { claw: 'Slashing', claws: 'Slashing', bite: 'Piercing', fang: 'Piercing', fangs: 'Piercing', talon: 'Slashing', talons: 'Slashing', tusk: 'Piercing', tusks: 'Piercing', horn: 'Piercing', horns: 'Piercing', hooves: 'Bludgeoning', hoof: 'Bludgeoning', tail: 'Bludgeoning', slam: 'Bludgeoning', fist: 'Bludgeoning', fists: 'Bludgeoning', gore: 'Piercing', sting: 'Piercing', stinger: 'Piercing', maw: 'Piercing', jaws: 'Piercing', pincer: 'Bludgeoning', pincers: 'Bludgeoning', beak: 'Piercing' }[anat[1].toLowerCase()];
+      if (want && ['Bludgeoning', 'Piercing', 'Slashing', 'Force'].includes(dealt) && dealt !== want) F('type-fit', 'fail', `${sec}/${n}: a ${anat[1].toLowerCase()} deals ${want}, not ${dealt}`, dealt); }
+    if (dealt && ['Bludgeoning', 'Piercing', 'Slashing'].includes(dealt) && /\b(?:drains?|siphons?|leech(?:es)?)\b/i.test(`${n} ${t}`) && /regains? (?:\d+ )?Hit Points|\bdrain/i.test(t)) F('type-fit', 'fail', `${sec}/${n}: a drain deals ${dealt} — a weapon type for an effect that takes no weapon`, dealt);
+    const sv = /\*?(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) Saving Throw/.exec(t);
+    // a condition named as a PREREQUISITE is not an imposed effect (a condition-payoff row exploits Prone; it does not cause it)
+    if (sv && !e.print) { const eff = t.replace(/that (?:has|have|is|are) the \w+ condition/gi, '').replace(/that (?:is|are) (?:the )?(?:Blinded|Charmed|Deafened|Frightened|Grappled|Incapacitated|Invisible|Paralyzed|Petrified|Poisoned|Prone|Restrained|Stunned|Unconscious)\b/gi, '').replace(/already \w+/gi, ''); const want = /\b(?:Prone\b|pushed\b|Grappled\b|Restrained\b|knocked prone)/.test(eff) ? (/Attack Roll/.test(t) ? ['Strength', 'Dexterity', 'Constitution'] : ['Strength', 'Dexterity']) /* print's weapon mastery topples on a Constitution save */ : /\b(?:Poisoned|poison|disease|breath|spores?|choking|suffocat)/i.test(eff) ? ['Constitution'] : /\b(?:Frightened|Charmed)\b/.test(eff) ? ['Wisdom', 'Charisma'] : null;
+      if (want && !want.includes(sv[1])) F('save-fit', 'fail', `${sec}/${n}: a ${sv[1]} save for an effect that calls for ${want.join(' or ')}`, sv[1]); }
+  }
+  // alignment-fit: Unaligned is for a creature with no capacity for ethics
+  if (/^unaligned$/i.test(String(m.alignment ?? '').trim()) && !/^(?:Beast|Ooze|Plant|Construct)\b/i.test(String(m.type ?? '')) && (Number(m.stats?.INT ?? 10) >= 6 || !/^none$/i.test(String(m.languages ?? 'None').trim()))) F('alignment-fit', 'fail', `Unaligned on a ${m.type} with INT ${m.stats?.INT ?? '?'} that speaks ${m.languages} — Unaligned is for a creature with no capacity for ethics`, m.alignment);
+  // name-mechanic + no-type-in-name
+  for (const { sec, e } of rows) {
+    const n = bare(e.name); const t = String(e.text ?? ''); if (/^(?:Multiattack|Spellcasting|Legendary Resistance|Legendary Action Uses)/.test(n) || e.print) continue;
+    for (const [nameRe, textRe, what] of NAME_MECHANIC) if (nameRe.test(n) && !textRe.test(t)) { F('name-mechanic', 'fail', `${sec}/${n}: the name promises ${what} the text lacks`, n); break; }
+    const tw = TYPE_NAME_WORD.exec(n); if (tw && !new RegExp(`\\b${tw[1]} damage\\b`, 'i').test(t) && !new RegExp(`\\b${tw[1]}\\b`).test(t.replace(/damage/g, ''))) F('no-type-in-name', 'fail', `${sec}/${n}: the name carries ${tw[1]} the text does not deal`, tw[1]);
+  }
+}
+
 export function checkBlock(raw, ctx = {}) {
   const edition = ctx.edition ?? (raw.format === '2014' || raw.type_and_alignment ? '2014' : '2024');
   const m0 = edition === '2014' ? (raw.other_edition?.format === '2024' ? raw.other_edition : fromLegacyModel(raw)) : raw;
@@ -496,6 +618,7 @@ export function checkBlock(raw, ctx = {}) {
   safe('adjudicability', (f) => gateAdjudicability(m, context, f));
   safe('edition', (f) => gateEdition(raw, m, context, f));
   safe('donor', (f) => gateDonor(raw, m, context, f));
+  safe('reader', (f) => gateReader(raw, m, context, f));
   // the lint's own predicates ride in by rule id — one fix, one place
   try {
     const { findings } = lintStatblock(JSON.parse(JSON.stringify(m)), { edition: '2024' });

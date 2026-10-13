@@ -67,6 +67,12 @@ export const ANATOMY = {
   bite: ['melee', 'Piercing'], fang: ['melee', 'Piercing'], fangs: ['melee', 'Piercing'], maw: ['melee', 'Piercing'], jaws: ['melee', 'Piercing'], beak: ['melee', 'Piercing'],
   claw: ['melee', 'Slashing'], claws: ['melee', 'Slashing'], talon: ['melee', 'Slashing'], talons: ['melee', 'Slashing'], rake: ['melee', 'Slashing'],
   slam: ['melee', 'Bludgeoning'], fist: ['melee', 'Bludgeoning'], fists: ['melee', 'Bludgeoning'], hoof: ['melee', 'Bludgeoning'], hooves: ['melee', 'Bludgeoning'], tail: ['melee', 'Bludgeoning'], tentacle: ['melee', 'Bludgeoning'], tentacles: ['melee', 'Bludgeoning'], pseudopod: ['melee', 'Bludgeoning'], trample: ['melee', 'Bludgeoning'],
+  // TYPE-ONLY nouns (the third field): they fix a physical damage type that the
+  // noun contradicts and never move a row between melee and ranged — a hurled
+  // hammer or a thrown axe is honestly a ranged row (the critic's fifth read:
+  // "Curb Stomp" dealt Piercing, "Fangblade" dealt Bludgeoning)
+  stomp: ['melee', 'Bludgeoning', 'type'], stamp: ['melee', 'Bludgeoning', 'type'], kick: ['melee', 'Bludgeoning', 'type'], crush: ['melee', 'Bludgeoning', 'type'], pound: ['melee', 'Bludgeoning', 'type'], headbutt: ['melee', 'Bludgeoning', 'type'], club: ['melee', 'Bludgeoning', 'type'], mace: ['melee', 'Bludgeoning', 'type'], hammer: ['melee', 'Bludgeoning', 'type'], staff: ['melee', 'Bludgeoning', 'type'],
+  blade: ['melee', 'Slashing', 'type'], sword: ['melee', 'Slashing', 'type'], axe: ['melee', 'Slashing', 'type'], scimitar: ['melee', 'Slashing', 'type'], saber: ['melee', 'Slashing', 'type'], sabre: ['melee', 'Slashing', 'type'],
   gore: ['melee', 'Piercing'], horn: ['melee', 'Piercing'], horns: ['melee', 'Piercing'], tusk: ['melee', 'Piercing'], tusks: ['melee', 'Piercing'], sting: ['melee', 'Piercing'], stinger: ['melee', 'Piercing'], lance: ['melee', 'Piercing'], spear: ['melee', 'Piercing'], pike: ['melee', 'Piercing'],
   rock: ['ranged', null], boulder: ['ranged', null], slab: ['ranged', null], javelin: ['ranged', 'Piercing'], bolt: ['ranged', 'Piercing'], arrow: ['ranged', 'Piercing'], dart: ['ranged', 'Piercing'], net: ['ranged', null], bomb: ['ranged', null], flask: ['ranged', null], shard: ['ranged', 'Piercing'],
 };
@@ -82,12 +88,27 @@ export function honestAttackNames(sections, { projectile = null } = {}) {
   for (const es of Object.values(sections ?? {})) {
     for (const e of es) {
       const text = e.text ?? '';
+      if (/Melee or Ranged Attack Roll/.test(text)) continue; // a hybrid row carries a thrown melee weapon by design (Grik's Spear was renamed "Sling Stone" as a melee noun on a ranged row — the critic's third species read)
       const kind = /Ranged Attack Roll/.test(text) ? 'ranged' : /Melee Attack Roll/.test(text) ? 'melee' : null;
       if (!kind) continue;
       const bare = String(e.name ?? '').replace(/ \(.*\)$/, '');
       const head = bare.toLowerCase().split(/[\s-]+/).pop();
-      const a = ANATOMY[head];
-      if (!a) continue;
+      const words = bare.toLowerCase().split(/[\s-]+/);
+      let a = ANATOMY[head];
+      // A CLOSED COMPOUND IS STILL ITS NOUN ("Fangblade" dealt Bludgeoning —
+      // the critic's fifth read). The head word is read for an anatomy noun at
+      // either end, and the LAST one wins, as it does across a spaced name.
+      if (!a && head && head.length > 5) { const parts = Object.keys(ANATOMY).filter((k) => k.length >= 4 && (head.startsWith(k) || head.endsWith(k))); const pick = parts.find((k) => head.endsWith(k)) ?? parts[0]; if (pick) a = ANATOMY[pick]; }
+      if (!a) { // a generic strike noun last ("Stooping Talon Strike"): the anatomy word inside the name still owns the TYPE, never the rename (the critic's fourth read, rerun)
+        const inner = words.find((w) => ANATOMY[w] && ANATOMY[w][0] === 'melee');
+        if (inner && /^(?:strike|swipe|slash|blow|rake|lash|smash|swing|snap|rend|chop|cut)$/.test(head) && kind === 'melee') {
+          const want = ANATOMY[inner][1];
+          const m2 = /\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) (Bludgeoning|Piercing|Slashing) damage/.exec(text);
+          if (want && m2 && m2[1] !== want) { e.text = text.replace(m2[0], m2[0].replace(m2[1], want)); changes.push({ from: e.name, to: e.name, why: `${inner} deals ${want}, not ${m2[1]}` }); }
+        }
+        continue;
+      }
+      if (a[0] !== kind && a[2] === 'type') continue; // a type-only noun says nothing about the row's mode
       if (a[0] !== kind) {
         const to = kind === 'ranged' ? proj : 'Slam';
         changes.push({ from: e.name, to, why: `${head} is a ${a[0]} noun on a ${kind} row` });
@@ -99,7 +120,7 @@ export function honestAttackNames(sections, { projectile = null } = {}) {
         continue;
       }
       if (kind === 'melee' && a[1]) {
-        const m = /\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) (Bludgeoning|Piercing|Slashing) damage/.exec(text);
+        const m = /\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) (Bludgeoning|Piercing|Slashing) damage/.exec(text); // a PHYSICAL type the anatomy contradicts; a deliberate energy (the wisp queen's Necrotic claw, the Unicorn's Radiant Horn, the Pit Fiend's Necrotic Devilish Claw) stands — an unwarranted energy is the withhold's job
         if (m && m[1] !== a[1]) { e.text = text.replace(m[0], m[0].replace(m[1], a[1])); changes.push({ from: e.name, to: e.name, why: `${head} deals ${a[1]}, not ${m[1]}` }); }
       }
     }

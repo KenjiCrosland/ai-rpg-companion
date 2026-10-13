@@ -122,6 +122,7 @@ export const SHAPES = [
   },
   {
     id: 'blink', name: 'Blink Step', cite: 'Blink Dog/Teleport (40 ft, CR 1/4); Marilith/Teleport (120 ft, CR 16); Solar/Radiant Teleport (CR 21)',
+    requires_claim: /\b(?:teleport\w*|blink\w*|phase[sd]?|phasing|flicker\w*|wink\w*|steps? through|through walls|planeshift|plane shift)\b/i, // a teleport is concept-gated tech, like the phase-slip seed: "lurks in shadow" is not a claim on it (the critic's fifth read — a troglodyte blinked 40 feet)
     roles: ['skirmisher', 'lurker'], styles: ['skulker'], cr_range: [0.25, 30], replaces: 'bonus-alt', gate: 'Recharge 4-6',
     frames: {
       '0-2': 'The creature teleports up to 40 feet to an unoccupied space it can see.',
@@ -206,6 +207,7 @@ export const SHAPES = [
   },
   {
     id: 'shell-withdraw', name: 'Shell Defense', cite: 'Tortle/Shell Defense (Monsters of the Multiverse)',
+    requires_claim: /\b(?:shell\w*|carapace|scutes?|tortle|turtle|terrapin|crab|snail|beetle|armou?r plates?|plating|shields? itself)\b/i, // a shell is anatomy: the GM's words or the species kit must give it one (an orc withdrew into its shell — the critic's fifth read)
     roles: ['brute', 'defender', 'lurker'], styles: [], cr_range: [0, 30], replaces: 'bonus-alt',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature withdraws into {shell}. Until it emerges, it gains a +4 bonus to Armor Class and has the Prone condition; its Speed is 0 and can\'t increase, it has Disadvantage on Dexterity saving throws, it can\'t take Actions or Reactions, and it can emerge only as a Bonus Action.' /* "the only action it can take" read as an action reference to the lint (goldens gate table 2026-10-02) */])),
   },

@@ -14,27 +14,28 @@ import { TEMPLATES, renderTemplate } from './templates.mjs';
 
 const DRAGON_COLOR = [[/\b(?:red|gold|brass)\b/i, 'Fire'], [/\b(?:blue|bronze)\b/i, 'Lightning'], [/\b(?:white|silver)\b/i, 'Cold'], [/\bgreen\b/i, 'Poison'], [/\b(?:black|copper)\b/i, 'Acid']];
 
-/** `type`: the creature type the species carries (2024: centaurs and satyrs are Fey, minotaurs and yuan-ti Monstrosities, the player species Humanoid); the aarakocra's is left to the words. */
+/** `size`: the species' own size — absent means Medium, which is every entry but the grung (Small), the centaur and the minotaur (Large). A size word in the GM's own text outranks it (the critic's fifth read: a Huge Humanoid goliath on 16d12 with reach 10).
+ *  `type`: the creature type the species carries (2024: centaurs and satyrs are Fey, minotaurs and yuan-ti Monstrosities, the player species Humanoid); the aarakocra's is left to the words. */
 export const SPECIES = [
-  { key: 'lizardfolk', naturalWeapons: ['bite','claw','tail','jaws'], type: 'Humanoid', keys: ['lizardfolk', 'lizard folk', 'lizard-folk'], modes: { Swim: 30 }, traits: [{ srd: ['Hydra', 'Hold Breath'], edits: [[/1 hour/, '15 minutes']] }], flavor: [{ shape: 'terrain-walk', name: 'Marsh Stride', fills: { terrain: 'mud' } }] },
-  { key: 'tortle', naturalWeapons: ['bite'], type: 'Humanoid', keys: ['tortle', 'tortles', 'turtlefolk', 'turtle folk'], traits: [{ srd: ['Hydra', 'Hold Breath'] }], flavor: [{ shape: 'shell-withdraw', name: 'Shell Defense' }] },
-  { key: 'triton', type: 'Humanoid', keys: ['triton', 'tritons'], modes: { Swim: 30 }, senses: 'darkvision 60 ft.', traits: [{ srd: ['Aboleth', 'Amphibious'] }] },
-  { key: 'grung', type: 'Humanoid', keys: ['grung', 'grungs', 'frogfolk', 'frog folk'], modes: { Climb: 25 }, traits: [{ srd: ['Aboleth', 'Amphibious'] }] },
-  { key: 'kenku', naturalWeapons: ['talon','beak','claw'], type: 'Humanoid', keys: ['kenku', 'kenkus'], traits: [{ srd: ['Green Hag', 'Mimicry'] }] },
-  { key: 'yuan-ti', naturalWeapons: ['bite','fang'], type: 'Monstrosity', keys: ['yuan-ti', 'yuan ti', 'yuanti', 'snakefolk', 'snake folk', 'serpentfolk'], senses: 'darkvision 60 ft.', traits: [{ srd: ['Archmage', 'Magic Resistance'] }] },
-  { key: 'satyr', naturalWeapons: ['horn','headbutt'], type: 'Fey', keys: ['satyr', 'satyrs', 'faun', 'fauns'], traits: [{ srd: ['Archmage', 'Magic Resistance'] }] },
-  { key: 'troglodyte', naturalWeapons: ['claw','bite'], type: 'Humanoid', keys: ['troglodyte', 'troglodytes'], senses: 'darkvision 60 ft.', traits: [{ srd: ['Ghast', 'Stench'] }, { srd: ['Drider', 'Sunlight Sensitivity'] }] },
-  { key: 'aarakocra', naturalWeapons: ['talon','beak','claw'], keys: ['aarakocra', 'birdfolk', 'bird folk'], modes: { Fly: 50 }, traits: [{ srd: ['Gargoyle', 'Flyby'] }] },
-  { key: 'owlin', naturalWeapons: ['talon','beak','claw'], type: 'Humanoid', keys: ['owlin', 'owlins', 'owlfolk', 'owl folk'], modes: { Fly: 30 }, senses: 'darkvision 120 ft.', traits: [{ srd: ['Gargoyle', 'Flyby'] }] },
-  { key: 'harengon', naturalWeapons: ['kick'], type: 'Humanoid', keys: ['harengon', 'harengons', 'rabbitfolk', 'rabbit folk', 'harefolk'], traits: [{ srd: ['Frog', 'Standing Leap'], edits: [[/10 feet/, '20 feet'], [/5 feet/, '10 feet']] }] },
+  { key: 'lizardfolk', naturalWeapons: ['bite','claw','tail','jaws'], type: 'Humanoid', keys: ['lizardfolk', 'lizard folk', 'lizard-folk'], modes: { Swim: 30 }, traits: [{ srd: ['Hydra', 'Hold Breath'], keys: ['breath', 'breathe', 'breathes', 'underwater', 'submerge', 'submerges', 'dives', 'dive', 'holds its breath'], edits: [[/1 hour/, '15 minutes']] }], flavor: [{ shape: 'terrain-walk', name: 'Marsh Stride', fills: { terrain: 'mud' } }] },
+  { key: 'tortle', naturalWeapons: ['bite'], type: 'Humanoid', ac_floor: 17, keys: ['tortle', 'tortles', 'turtlefolk', 'turtle folk'], traits: [{ srd: ['Hydra', 'Hold Breath'] }], flavor: [{ shape: 'shell-withdraw', name: 'Shell Defense' }] },
+  { key: 'triton', type: 'Humanoid', keys: ['triton', 'tritons'], modes: { Swim: 30 }, senses: 'darkvision 60 ft.', traits: [{ srd: ['Aboleth', 'Amphibious'], keys: ['swim', 'swims', 'water', 'underwater', 'reef', 'river', 'sea', 'tide', 'marsh', 'amphibious'] }] },
+  { key: 'grung', naturalWeapons: ['bite'], type: 'Humanoid', size: 'Small', keys: ['grung', 'grungs', 'frogfolk', 'frog folk'], modes: { Climb: 25 }, traits: [{ srd: ['Aboleth', 'Amphibious'], keys: ['swim', 'swims', 'water', 'underwater', 'reef', 'river', 'sea', 'tide', 'marsh', 'amphibious'] }, { srd: ['Frog', 'Standing Leap'], keys: ['leap', 'leaps', 'bound', 'bounds', 'jump', 'jumps', 'hop', 'hops', 'spring', 'springs', 'branch', 'branches'] }] }, /* a frogfolk leaps as print's Frog does (the critic's fourth read, rerun) */
+  { key: 'kenku', naturalWeapons: ['talon','beak','claw'], type: 'Humanoid', keys: ['kenku', 'kenkus'], traits: [{ srd: ['Green Hag', 'Mimicry'], keys: ['mimic', 'mimics', 'copies voices', 'imitate', 'imitates', 'voices', 'mockingbird', 'echo', 'echoes'] }] },
+  { key: 'serpentfolk', naturalWeapons: ['bite','fang'], type: 'Monstrosity', keys: ['snakefolk', 'snake folk', 'serpentfolk', 'serpent folk', 'serpent-blooded', 'scales and fangs'], /* the PI name is paraphrased by the lexicon before the engine sees it, so the table keys on the words that arrive (the critic's fourth read, rerun) */ senses: 'darkvision 60 ft.', traits: [{ srd: ['Archmage', 'Magic Resistance'], keys: ['magic', 'magical', 'spell', 'spells', 'resist', 'resists', 'warded', 'blessed'] }] },
+  { key: 'satyr', naturalWeapons: ['horn','headbutt'], type: 'Fey', keys: ['satyr', 'satyrs', 'faun', 'fauns'], traits: [{ srd: ['Archmage', 'Magic Resistance'], keys: ['magic', 'magical', 'spell', 'spells', 'resist', 'resists', 'warded', 'blessed'] }] },
+  { key: 'troglodyte', naturalWeapons: ['claw','bite'], type: 'Humanoid', keys: ['troglodyte', 'troglodytes'], senses: 'darkvision 60 ft.', traits: [{ srd: ['Ghast', 'Stench'], keys: ['reek', 'reeks', 'stink', 'stinks', 'stench', 'smell', 'smells', 'foul', 'rancid'] }, { srd: ['Drider', 'Sunlight Sensitivity'] }] },
+  { key: 'aarakocra', naturalWeapons: ['talon','beak','claw'], keys: ['aarakocra', 'birdfolk', 'bird folk'], modes: { Fly: 50 }, traits: [{ srd: ['Gargoyle', 'Flyby'], keys: ['fly', 'flies', 'flying', 'swoop', 'swoops', 'dive', 'dives', 'wheels', 'circles', 'wing', 'wings'] }] },
+  { key: 'owlin', naturalWeapons: ['talon','beak','claw'], type: 'Humanoid', keys: ['owlin', 'owlins', 'owlfolk', 'owl folk'], modes: { Fly: 30 }, senses: 'darkvision 120 ft.', traits: [{ srd: ['Gargoyle', 'Flyby'], keys: ['fly', 'flies', 'flying', 'swoop', 'swoops', 'dive', 'dives', 'wheels', 'circles', 'wing', 'wings'] }] },
+  { key: 'harengon', naturalWeapons: ['kick'], type: 'Humanoid', keys: ['harengon', 'harengons', 'rabbitfolk', 'rabbit folk', 'harefolk'], traits: [{ srd: ['Frog', 'Standing Leap'], keys: ['leap', 'leaps', 'bound', 'bounds', 'bounding', 'jump', 'jumps', 'hop', 'hops', 'spring', 'springs', 'vault', 'vaults'], edits: [[/10 feet/, '20 feet'], [/5 feet/, '10 feet']] }] },
   { key: 'tiefling', type: 'Humanoid', keys: ['tiefling', 'tieflings'], senses: 'darkvision 60 ft.', resist: ['Fire'] },
   { key: 'aasimar', type: 'Humanoid', keys: ['aasimar'], senses: 'darkvision 60 ft.', resist: ['Necrotic', 'Radiant'] },
   { key: 'dragonborn', type: 'Humanoid', keys: ['dragonborn', 'dragon-born', 'half-dragon', 'half dragon'], senses: 'darkvision 60 ft.', resist: (concept) => [(DRAGON_COLOR.find(([re]) => re.test(concept)) ?? [null, 'Fire'])[1]] },
   { key: 'orc', type: 'Humanoid', keys: ['orc', 'orcs', 'half-orc', 'half orc'], senses: 'darkvision 120 ft.', traits: [{ srd: ['Goblin Boss', 'Nimble Escape'], name: 'Relentless Rush', edits: [[/the Disengage or Hide action/, 'the Dash action']] }] },
   { key: 'tabaxi', naturalWeapons: ['claw','bite'], type: 'Humanoid', keys: ['tabaxi', 'catfolk', 'cat folk', 'cat-folk'], modes: { Climb: 30 }, senses: 'darkvision 60 ft.', traits: [{ srd: ['Goblin Boss', 'Nimble Escape'], name: "Cat's Dash", edits: [[/the Disengage or Hide action/, 'the Dash action']] }] },
   { key: 'goliath', type: 'Humanoid', keys: ['goliath', 'goliaths'], flavor: [{ shape: 'terrain-walk', name: 'Mountain Stride', fills: { terrain: 'ice or snow' } }] },
-  { key: 'centaur', naturalWeapons: ['hoof','hooves'], type: 'Fey', keys: ['centaur', 'centaurs'], traits: [{ srd: ['Troll', 'Charge'] }] },
-  { key: 'minotaur', naturalWeapons: ['horn','gore','hoof','hooves'], type: 'Monstrosity', keys: ['minotaur', 'minotaurs'], senses: 'darkvision 60 ft.', traits: [{ srd: ['Troll', 'Charge'] }] },
+  { key: 'centaur', naturalWeapons: ['hoof','hooves'], type: 'Fey', size: 'Large', keys: ['centaur', 'centaurs'], traits: [{ srd: ['Troll', 'Charge'], keys: ['charge', 'charges', 'charging', 'ram', 'rams', 'gallop', 'gallops', 'trample', 'tramples', 'outrider'] }] },
+  { key: 'minotaur', naturalWeapons: ['horn','gore','hoof','hooves'], type: 'Monstrosity', size: 'Large', keys: ['minotaur', 'minotaurs'], senses: 'darkvision 60 ft.', traits: [{ srd: ['Troll', 'Charge'], keys: ['charge', 'charges', 'charging', 'ram', 'rams', 'gallop', 'gallops', 'trample', 'tramples', 'outrider'] }] },
 ];
 
 /** The first species whose key appears as a whole word or phrase in the GM's words (the clause record and the Name). */
@@ -68,7 +69,7 @@ export function speciesRows(species, { inline = 'the creature', dc = 12 } = {}) 
   for (const t of species.traits ?? []) {
     const lifted = liftSrdRow(t.srd[0], t.srd[1]); if (!lifted) continue;
     let text = lifted.text; for (const [re, to] of t.edits ?? []) text = text.replace(re, to);
-    out.push({ name: t.name ?? t.srd[1], text: stampInline(text, inline, dc), section: lifted.section, source: lifted.source });
+    out.push({ name: t.name ?? t.srd[1], text: stampInline(text, inline, dc), section: lifted.section, source: lifted.source, keys: t.keys ?? null });
   }
   return out;
 }

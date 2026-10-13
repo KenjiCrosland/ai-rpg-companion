@@ -1662,7 +1662,7 @@ describe('the brute plumbing (2026-08-26): archetype flows loudly end to end', (
 
   test('alignment is a closed vocabulary — lore commentary is stripped, case is canonical', async () => {
     const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quiet2(() => answer({
-      alignment: "Unaligned (Feral, Driven By Its Prison'S Grief)",
+      type: 'Beast', alignment: "Unaligned (Feral, Driven By Its Prison'S Grief)", // a Beast has no capacity for ethics, so Unaligned stands and the pin keeps testing the vocabulary strip (the critic's fourth read)
     })));
     expect(m.alignment).toBe('Unaligned');
     const m2 = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, quiet2(() => answer({
@@ -4972,7 +4972,7 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     const dexMod = Math.floor(((xbow.m.stats.DEX ?? 10) - 10) / 2);
     const dm = /\d+ \(\d+d\d+(?: ([+-]) (\d+))?\)/.exec(hx.text);
     expect(dm[1] ? (dm[1] === '-' ? -Number(dm[2]) : Number(dm[2])) : 0).toBe(dexMod);
-    const gun = await run({ archetype: 'defender', style: 'leader', concept: 'a pirate queen who commands from the quarterdeck', userConcept: 'a pirate queen who commands from the quarterdeck', resolvedType: 'Humanoid', mind: 'sapient' },
+    const gun = await run({ archetype: 'defender', style: 'leader', concept: 'a buccaneer queen who commands from the quarterdeck', userConcept: 'a buccaneer queen who commands from the quarterdeck', resolvedType: 'Humanoid', mind: 'sapient' }, // "pirate" is a print alias: the Pirate carries no pure ranged row, so a model-named Flintlock leaves on that body (the critic's third species read) — this pin tests the weapon table, not the print body
       fullAnswer(leader, 'Salt-Crowned Admiral', { 'Melee Attack': 'Cutlass', 'Hybrid Attack': 'Flintlock' }));
     const fl = gun.rows.find((e) => /^Flintlock/.test(e.name));
     expect(fl.text).toMatch(/^\*?Ranged Attack Roll:\*? \+\d+, range 30\/90 ft\./);
@@ -5307,7 +5307,7 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(reskinDefects(scaled, p, {}).join('\n')).not.toMatch(/natural weapon/);
     const shark = await run({ archetype: 'skirmisher', style: 'shifter', cr: 8, concept: "a sea-hag's daughter who becomes a shark", userConcept: "a sea-hag's daughter who becomes a shark", resolvedType: 'Humanoid', mind: 'sapient' },
       fullAnswer(scaleDonor(pickDonor(8, 'shifter', 'skirmisher'), 8, { mechanics: [] }), 'Brineveil', { 'Melee Attack': 'Scratch' }));
-    expect((shark.m.sections.Traits ?? []).find((e) => e.name === 'Amphibious')?.text).toBe('The brineveil can breathe air and water.');
+    expect((shark.m.sections.Traits ?? []).find((e) => e.name === 'Amphibious')?.text).toBe('Brineveil can breathe air and water.'); // a one-word Humanoid name the model minted is a person (the critic's third species read, 2026-10-13)
     expect(shark.rows.some((e) => /\(Shark or Hybrid Form Only\)/.test(e.name))).toBe(true);
     expect(shark.m.languages).not.toBe('None'); // a Humanoid speaks (the miller printed None)
   });

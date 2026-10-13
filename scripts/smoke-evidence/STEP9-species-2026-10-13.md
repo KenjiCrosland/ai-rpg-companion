@@ -96,3 +96,221 @@ Pins: `species.spec.js` ("the critic's second read", 6 tests) and the echo valid
 **The canary that kept moving, settled.** The thing in the well read 17 on its one attack in five consecutive runs of the current engine (12 in the reference from October 12, which drew a condition-payoff seed beside it — a seed the imposed-condition guard has since gated). The number is the engine's, not the roll's; the reference is rewritten from this run. Every other block holds to the digit or inside its band.
 
 **One more defect the rerun found under the orc.** The hybrid chassis row the model named "Hand Axe" was narrowed to melee (the narrowing rule saw "axe"), became a word-for-word twin of the Greataxe, and the identical-text dedupe dropped the Greataxe — the GM's own part. Two rules fixed and pinned: a thrown weapon by name (hand axe, dagger, spear, javelin, trident, dart, light hammer, net) keeps its range, and print's rows and the GM's own — parts, species rows, features — never leave in a dedupe; the chassis copy does. The orc was rerun alone.
+
+## The critic's third read (2026-10-13) — five holds, seven reader predicates, route variance
+
+**Holds**
+1. **A mechanic engine needs a key in the GM's words.** The route's line choice now refuses a grappler or charger line that rests on the model's read of its own quote: a grapple verb (grabs, drags, folds, swallows, coils…) or a charge verb (charges, rams, stampedes, tramples…) must appear in the GM's words, or the plain family line stands. "A tortle hermit who withdraws into his shell" no longer routes to brute-grappler; "a tar-mouthed toad that drags cattle into the bog" still does. The tortle kit also carries its shell as natural armor — an AC 17 floor, so no chassis hands a tortle AC 13.
+2. **Alignment.** The SRD 5.2 lines are: Kobold Warrior **Neutral**, Stone Golem **Unaligned**, Owlbear Unaligned, Vampire Spawn Neutral Evil, Gladiator Neutral. The stamp was gated on `exact` and a print *name* with a claim ("Kobold — can turn invisible") is a borrow, so it never ran; it now runs on any print head unless the GM named an alignment. Pinned for both.
+3. **Kit provenance is the metric, not the engine.** The concept-share counter credited a row only when its words overlapped the user's, so renaming the same rows changed the number. A kit, feature or part row *is* the user's row and now counts as traced on sight — and the reader gate fails any such row that reaches the saved block without its clause.
+4. **One-word Names.** A one-word Humanoid name the model minted is a person whatever it declares, so Cinderbent speaks as Cinderbent; an article in the GM's own words still makes it a kind ("a cinderbent that hunts at dusk" → "the cinderbent").
+5. **Thrown weapons.** Three rules landed: 30/90 and 60/180 are not print ranges on a weapon row (an unlisted thrown thing is 20/60, a hurled mass 60/240); a named thrown-capable weapon (spear, javelin, dagger, handaxe, trident, dart, light hammer) *is* the ranged row in print's hybrid grammar and the chassis's pure ranged row leaves, so no second weapon is invented beside Sarn's spear; and print's own hybrid row keeps its hybrid frame — the Gladiator's Spear reads "Melee or Ranged Attack Roll: +6, reach 5 ft. or range 20/60 ft." A print body that carries no pure ranged row sheds the chassis's unless the GM named a ranged weapon, so the Gladiator grows no Crossbow. The anatomy renamer also stops reading a hybrid row as a ranged one (Grik's Spear had become "Sling Stone").
+
+**The reader gate** (`checker.mjs`, a ninth gate beside the eight): seven predicates over the saved sheet, on every block of every run — `inline-consistency`, `print-range`, `exact-body-identity`, `engine-needs-key`, `provenance-integrity`, `name-mechanic`, `no-type-in-name`. Each is a behaviour check, not a string test on a prompt, and each fails the gate rather than waiting for a reader. A hand-built sheet carrying one of each defect trips all seven in a pin.
+
+**Route variance** is now measurable: `node scripts/route-variance.mjs <batch> [n]` replays the route call n times per prompt through the app's own client and tabulates the line chosen, reporting how many prompts settle on one line.
+
+Pins: `species.spec.js` ("the critic's third read", 7 tests). Gate: 183 suites, 5,234 tests, build clean.
+
+### The line the reader gate drew on its first run
+
+The `engine-needs-key` predicate flagged three sheets, and reading them settled where the rule belongs. Print's own grapple was already exempt (the Vampire Spawn's Claw passed). The other two were **verbless prompts** — "knife ball" and "the thing in the well" — where the GM typed no words to read and the catalog composes the whole sheet by design, exactly as the head-clause rule says. The tortle was different: the GM *did* type words ("withdraws into his shell") and the model read a grappler out of them.
+
+So the rule is: **with words to read, the words decide; with nothing to read, the model may choose the body.** A prompt of three significant words or fewer is creature-only, stamped on the block as `generation.creatureOnly`, and both the route's refusal and the reader predicate stand down for it. `trap` joins `grappler` and `charger` as a mechanic engine with its own key list (adheres, sticky, lies in wait, disguised, poses as, snaps shut, mimics…), so "a stone idol that sits in the corridor and watches" no longer lands an adhesive trap, while the knife ball keeps the one it has.
+
+Two more from the same run: the `name-mechanic` predicate called "Marsh Stride" a false promise because its movement vocabulary did not include print's own "ignores Difficult Terrain" or "Opportunity Attacks" (widened), and "Old Sargeant Rootback" spoke as "the old" because a weak rank word ("Old", "Young", "Great", "Grand", "Big", "Little") was read as a rank — it now falls to the given name, so the rows say Rootback.
+
+## Measurement after the third read (2026-10-13 evening, the provider fast again — 20s a block)
+
+| set | run | saved | fails | coverage | concept |
+|---|---|---|---|---|---|
+| the canaries | `canaries-2026-10-13T16-46-19` | 10/10 | **0** | 12/12 (100%) | 90% |
+| the twelve | `step7-twelve-2026-10-13T17-01-00` (+ the bog hound rerun) | 12/12 | **0** | 31/32 (97%) | **83%** |
+| species seven | `species-seven-2026-10-13T17-21-18` | 7/7 | **0** | 6/7 (86%) | 51% |
+
+The canaries are 10 of 10 intact against this afternoon's reference. **Concept share rose from 66–73% to 83% on the twelve** because the counter now credits a kit, feature or part row on sight rather than by word overlap — the metric fix from hold 3, not an engine change.
+
+**The reader gate earned its keep on its first three runs.** It failed four sheets, and reading them produced three engine fixes and two predicate corrections:
+
+| the gate said | the truth | what landed |
+|---|---|---|
+| `engine-needs-key` on the ogre's Slam, the well-thing's Hooked Lash, the knife ball's Adhesive Hide | two were verbless prompts; print's own grapple was already exempt | the creature-only rule above; `trap` joined the mechanic engines |
+| `engine-needs-key` on Meshrin's row and the tortle's Tidebound Driftwood | true: the `hook-drag` shape imposes a grapple, and neither GM asked for one | a grapple-imposing shape (swallow, hook-drag, snatch, reel, pull-through) needs an engine key in the words or a creature-only prompt — pruned at menu time, so the gate never has to fail |
+| a row literally named **"none"** on Meshrin | true, and worse than the gate knew: the fit answered "none" meaning *no fit* and the parser took it as the row's name | "none", "n/a", "null", "no fit" are never a row name |
+| `name-mechanic` on "Marsh Stride" | false: print's movement vocabulary includes "ignores Difficult Terrain" and "Opportunity Attacks" | the predicate reads them |
+| `name-mechanic` on Sir Reginald's "Avian Terror" | false: the phobia shape writes print's Frightened effect longhand because the creature fears a *thing* | the predicate reads the longhand idiom |
+
+## Route variance (`node scripts/route-variance.mjs species-seven 5`)
+
+| prompt | lines chosen across 5 replays | settled |
+|---|---|---|
+| a lizardfolk hunter who stalks the marsh with a spear | skirmisher-skulker ×5 | yes |
+| an orc warchief with a greataxe | defender-leader ×5 | yes |
+| a tortle hermit who withdraws into his shell | defender ×5 | yes (the grappler is refused now) |
+| a blue dragonborn knight | defender ×2, defender-leader ×1, caster-warpriest ×2 | **no** |
+| a troglodyte raider who reeks | skirmisher ×5 | yes |
+| a tiefling duelist who hates fire… | skirmisher ×4, caster-warpriest ×1 | **no** |
+| a kenku mimic who copies voices and steals | skirmisher-skulker ×5 | yes |
+
+**5 of 7 settle.** Both unsettled prompts drift the same way — to `caster-warpriest` — on words with no casting in them ("knight", "duelist"). That is one shelf line reading a martial title as a holy one, and it is the AC 18 / AC 13 class the critic named. Worth its own fix: either a deny on the warpriest line for a martial noun with no magic word, or the tortle treatment (a line whose engine the words never asked for stands down). Measured, not fixed, in this landing.
+
+## The critic's fourth read (2026-10-13) — seven holds, seven predicates, the route asks
+
+**Holds**
+1. **A Multiattack is never swept away.** Shedding the Gladiator's chassis Crossbow took the Multiattack with it, because the dead-name sweep saw a row "only about" the dead weapon and dropped it — so a CR 4 duelist attacked once a turn. The sweep now re-reads a Multiattack over the rows that remain ("using Spear or Hand Crossbow" → "makes two Spear attacks") and never deletes one, with a trace line.
+2. **Inline names.** A role noun left after a stripped weak rank is still a kind ("Old Road Warden" → the warden, not Warden). An epithet-first person speaks by the given name ("Ashvowed Brannor" → Brannor) while an epithet plus a role noun stays a whole-phrase kind ("the headless horseman").
+3. **A use limit sheds only when there is a Multiattack to join.** With none, the limit stays, so no at-will 30-foot Frightened pulse on a CR 3 hermit.
+4. **Types and saves fit their rows.** A save follows its effect at render time (Prone, push or grapple → Strength, or Dexterity for an area; poison, disease or breath → Constitution; fear or charm → Wisdom), so the Iron Bull's Shockwave no longer topples on a Wisdom save. A drain is never a weapon type (the concept's energy, else Necrotic). An on-hit extra-damage rider takes the hit's own type, so Assassinate stops adding Bludgeoning to spear hits. A Humanoid's natural weapon needs a species or the GM's words: where the repair exhausted, the engine used to stamp the type magical (Mosu's Claw dealt Force) and now renames the row to a weapon it can swing.
+5. **Alignment.** The translator rendered print's **Unaligned** as "Neutral"; it is a closed term and now has a glossary entry per language (German *Gesinnungslos*), so the Steingolem prints it. Separately, Unaligned no longer lands on a creature with the capacity for ethics: a Dragon with Intelligence 18 who speaks and casts reads Neutral, while a Beast, ooze, plant or mindless construct keeps Unaligned.
+6. **A kit row binds the clause it implements.** The tortle read 0/1 with Shell Defense on the sheet because the kit stamped "a tortle hermit"; a kit row now binds the clause whose words its shape matches ("withdraws into his shell"), in the landed and the yielded-then-credited path alike.
+7. **The GM's fear outranks print's immunity.** "Deathly afraid of chickens" beside "Immune to … Frightened" was a contradiction in the header; the fear clause strips Frightened, as a vulnerability strips a resistance.
+
+**Seven predicates in the reader gate**, each a behaviour check over the saved sheet: `multiattack-integrity` (a print body keeps print's Multiattack; a Multiattack names only rows present), `inline-correctness` (the inline follows the name rule, not merely itself), `gate-fit`, `type-fit`, `save-fit`, `alignment-fit`, and `no-type-in-name` as a gate rather than only an actuator. Two of them caught my own over-reach on the first run and were narrowed: an anatomy word on a row that makes no attack is flavour ("Answering Sting" is a riposte), and print's weapon mastery topples on a Constitution save.
+
+**The route asks.** Casting is a mechanic engine now: a caster line needs a magic word in the GM's own words, in the pick loop and in the rank fallback both, so "knight" and "duelist" no longer drift to the warpriest. A trained martial style keys the martial line (fighting style, swordmaster, duelist, knight, paladin, sentinel…), which is what flipped Meshrin between a defender and a brute. The variance script now reports the line **after** a refusal beside the model's own pick, so a rescued prompt cannot read as settled.
+
+**The species batch is nineteen** (`species-nineteen.json`), one block per table entry, six of them 2014, CR 1 to 9 — every lift, every flavour row, every header line and the AC floor render at least once per landing. The seven retires.
+
+## Measurement after the fourth read (2026-10-13 evening)
+
+| set | run | saved | fails | coverage |
+|---|---|---|---|---|
+| species nineteen | `species-nineteen-2026-10-13T18-35-30` (+ four blocks rerun alone) | 19/19 | **0** | **19/19 (100%)** |
+| the twelve | `step7-twelve-2026-10-13T18-19-35` | 12/12 | **0** | 29/32 (91%) |
+
+Every table entry renders: the lifts (Hold Breath, Stench, Sunlight Sensitivity, Mimicry, Amphibious, Flyby ×2, Standing Leap ×2, Charge ×2, Magic Resistance ×2, Relentless Rush, Cat's Dash), the flavour rows (Shell Defense, Mountain Stride), the header lines (Swim, Climb, Fly, darkvision, two resistances), the AC floor (the tortle at 18 with its shell), and the types (Fey ×2, Monstrosity ×2). The kit rows bind their own clauses now — Standing Leap reads "leaps between the branches", Shell Defense "withdraws into his shell", Amphibious "guards the reef".
+
+**The reader gate failed five sheets across these runs and every one was real:**
+
+| the gate said | the truth | what landed |
+|---|---|---|
+| `multiattack-integrity` on the Kraken, a wyrm and a rotwife | false: print's Multiattack legitimately *uses* non-attack actions (Fling, Lightning Strike, Swallow) | the attack slots must be attack rows; a named action it uses must merely exist |
+| `inline-correctness` on "the turtle elder" | false: any contiguous tail of the name is a kind form | the predicate reads suffixes |
+| `inline-correctness` on "the stalker" for "Silent Rooststalker" | **true**: the model's declared form was not made of the name's words | a declared inline must be built from the name's own words |
+| `type-fit` on "Stooping Talon Strike" dealing Piercing | **true**: a talon cuts | a body part inside a multi-word name owns the type when the last word is a generic strike noun, in the late pass as well as the early one |
+| `save-fit` on two condition-payoff rows | false: the condition was a *prerequisite*, not an imposed effect | prerequisites are excluded from the save test |
+| the harengon's and grung's dropped leap | **true** | a lifted trait carries the clause words it answers; the frogfolk leaps as print's Frog does |
+
+**One species was keyed on a name the engine never sees.** "Yuan-ti" is not in the SRD and the lexicon paraphrases it before the engine reads the words, so the table now keys that entry on what actually arrives — serpentfolk, snakefolk, serpent-blooded — and the entry is named `serpentfolk`.
+
+The canaries ran clean beside both sets (10 of 10 intact, zero fails) and are not reported here: by the owner's rule they are a per-landing numbers check, raised only when a number moves.
+
+## Route variance over the twelve (`node scripts/route-variance.mjs step7-twelve 3`)
+
+**9 of 12 settle**, and refusals are now visible in the table (`pick→final`). Meshrin settles on the defender line in three of three, which is the martial-key fix; the snapping turtle shows `brute-grappler→brute` and Sir Reginald `skirmisher-mounted→defender`, both rescues the old table would have hidden. The three that do not settle are Grandmother Ash (the binder line against the skulker), the storm-herder (leader against mounted), and the knife ball — which is creature-only, where the catalog is allowed to choose.
+
+## The inline inversion (owner, 2026-10-13) — the call answers, the rules verify
+
+The owner's read of the name rules: "if we had a call return 'inline epithet' with a prompt change we wouldn't need the deterministic cruft, or at least it's a light secondary layer." That is now how it works.
+
+**The call answers two fields.** `inline_kind` is `person` or `kind`, and `inline` is the exact phrase the rows will use, with print's idiom and six worked examples in the prompt (a given name, an honorific plus its name, the name's own last one or two words lowercased). **The engine validates rather than guesses:** a person's form must be one capitalized word of the name or an honorific plus a word of the name; a kind's form must be "the" plus a contiguous tail of the name, lowercased. A phrase carrying a word the name never had is refused.
+
+**Two rules outrank the call, both the owner's own:** print's idiom where the name is a print creature, and the GM's article — "a meshrin" makes a kind however the call answers, while a one-word Name field with no article is a person.
+
+**What that replaces.** The rank list, the kinship-title list, the ninety-word role-noun list, the forty-word epithet-adjective list, the coined-surname rule, the weak-rank rule and the epithet-first rule all stay in the file, but only as the fallback when the call's answer fails validation. Every case we patched one at a time this week now comes from the call and passes: Brannor, the warden, the turtle elder, the knife ball, Sir Reginald, the headless horseman. And the case the rules got wrong last round — "the stalker" on Silent Rooststalker — is refused on sight, because "stalker" is not a word of that name.
+
+**The same class, one row over.** Sir Reginald's Phobia shipped "while Sir Reginald can see **the thing it fears**" because the engine force-bound the phobia shape after the fit call declined it, and nobody filled its flavour slot. A template the engine binds itself now carries its fill, quoted from the GM's own words: "while Sir Reginald can see **chickens** within 30 feet". That is the deterministic half doing what it is good at — quoting the user — rather than guessing a noun.
+
+Pins: `species.spec.js` ("the inline is the call's answer, validated", 4 tests), with the assertions on the *class* where the call legitimately has a choice and on the exact string only where one answer validates.
+
+---
+
+## Round six — the critic's fifth read, and the judgement moves to the call (2026-10-13)
+
+The owner's direction with this read: ignore the epithet proposal (the inline is
+already the call's answer, round five), and "engineer less deterministic gating
+when the llm can make a lot of these judgements — consider reworking that
+architecture where it fits the most, because I have a feeling it may solve some
+of the recurring issues". No block run this landing; it rolls into the next.
+
+### The rework: the engine finds the word, the call says what it means
+
+The force-bind was the engine deciding a question of meaning. `rankByVerb` finds
+a template's key word in the GM's text; two keys, or the creature's head noun,
+and the engine bound the template **over the call's own "none"**. Every
+word-collision defect in the critic's five reads came from that one place:
+
+| the GM typed | the engine bound | why it was wrong |
+| --- | --- | --- |
+| a blood-priest | Uncanny Sense | "blood" is the modifier, not a sense |
+| a stone-herder | False Appearance | a goliath is not indistinguishable from a rock |
+| the knife ball | Assassinate | a ball of knives is not an assassin |
+| guards the reef | Bound | "bound to its resting place" is undead language on a living triton |
+| climbs the temple wall | Spider Climb | the species kit already gave it a climb Speed |
+
+The fit call now answers two more fields, in the same call, at no extra cost:
+
+- **`wrong`** — the ids whose word match does not mean the mechanic here. The
+  prompt names the three classes above (modifier slot, already answered,
+  another fiction). The engine's own force-bind reads it and stands down.
+- **`fills`** — asked for whichever answer the call gives, because a
+  concept-matched template may be used even on a "none". A fill must carry one
+  significant word of the text the call was shown, so it is the GM's noun quoted
+  back, not invented. The engine's regex stays behind it as the fallback.
+
+Those answers are kept for the whole generation (`wrongT`, `fillsT`) and read by
+the three paths that bind **without** asking: the force-bind, the concept-first
+trait, and the seat's owed row. No new call, no new mechanism — the deterministic
+layer is demoted from decider to proposer and validator, the shape the inline
+inversion already took.
+
+### Holds 1-6
+
+**1. Chassis rows beside the named weapon** (six sheets). Two rules, both print's:
+a named weapon takes the chassis's attack slots **in its mode** and the chassis
+row of that mode leaves; and the hybrid frame dresses only something that can
+fly — a row whose head noun is not a thrown weapon, and which deals a physical
+type, loses its range. Print's other hybrid row is the Mage's Arcane Burst, so an
+energy row keeps the frame; a launcher is the weapon table's to retable.
+The evicted row's **swings** ride with the keeper: the Multiattack re-reads, and
+where it is a list ("one Haft Swing attack and one Greataxe attack") the counts
+merge ("two Greataxe attacks"), so sustained damage does not fall with the row.
+Two new predicates: `hybrid-needs-thrown`, `attack-in-multiattack`.
+
+Found by the new predicate, not by a reader: `sweepDeadName` erased a name that a
+**surviving** row still carried (the model named both the hybrid and the ranged
+chassis row "Hand Axe"; evicting one swept the other out of the Multiattack).
+A shared name is not a dead name.
+
+Also from `attack-in-multiattack`: a row the Multiattack never names now joins it
+in print's own grammar — "makes two attacks, using Greataxe or Hand Axe in any
+combination". The count does not change, only the choice.
+
+**2. Fallback seeds bypass the gates.** Not a new gate: two shapes whose fiction
+is anatomy or arcane tech now carry a `requires_claim`, checked in `templatesFor`
+beside the engine-key gate. A shell needs a shell in the GM's words or on the
+sheet; a teleport needs a teleport. Their *match* keys stay deliberately loose
+("retreat", "armor", "shadow", "step") — the claim is narrower than the keys, by
+design. An orc who "retreats behind iron armor" buys no shell; a troglodyte who
+"lurks in shadow and steps away" does not blink 40 feet.
+
+**3. Inline names.** Ignored per the owner. The call already answers it.
+
+**4. Damage types.** Two layers, no new mechanism. The rename call is now told
+the type is the engine's and will not move to suit a name ("a row dealing
+Piercing is not a Stomp, a Glare or a Surge"), which is where the mismatch is
+born. Behind it, the anatomy table gained type-only nouns (stomp, kick, crush,
+blade, axe, hammer…) and reads a closed compound at either end, so "Fangblade"
+dealing Bludgeoning is corrected to Slashing and "Curb Stomp" dealing Piercing to
+Bludgeoning. Type-only nouns never move a row between melee and ranged, so a
+hurled handaxe keeps its name.
+
+**5. Sir Reginald's Phobia.** Fixed in round five and now fed by the call's own
+`fills` as well as the engine's regex.
+
+**6. The species carries its size.** `size` on the table — absent means Medium,
+the grung is Small, the centaur and minotaur are Large. A size word in the GM's
+own words outranks it; a swarm's size line is its own. The hit die follows the
+size and so does the reach, as they do for a print body. A Huge Humanoid goliath
+on 16d12 with reach 10 is now a Medium one on d8s at reach 5.
+
+**Also:** the multiattack-integrity false positive the critic reported — a
+Spellcasting row named as "Spellcasting to cast Hold Person" is the row plus the
+spell it casts.
+
+### Measures
+
+Pins: ten new tests in `species.spec.js` under "the critic's fifth read, and the
+judgements the call now owns". Reskin suites 22/22, 1,108 tests. Full suite 183
+suites, 5,260 tests, 26 skipped. `npm run build` clean. No block run this
+landing, per the owner.

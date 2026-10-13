@@ -263,7 +263,7 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(verbHits("a lighthouse keeper's drowned wife").some((h) => h.id === 'lurker-phantom')).toBe(true);
     // a dragon is a body: a paraphrased quote on the dragon pick does not cost it the body seat
     const sd = chooseLine({ picks: [{ line: 'dragon', because: 'a true dragon — breath weapon, flight' }, { line: 'caster', because: 'breath is a rolling wall of thunder' }], creature_type: 'Dragon' }, { text: 'an adult storm dragon whose breath is a rolling wall of thunder' });
-    expect(sd.line).toBe('dragon'); expect(sd.notes.join(' | ')).toMatch(/BODY outranks the noun \(key "dragon", class body\)/);
+    expect(sd.line).toBe('dragon'); expect(sd.notes.join(' | ')).toMatch(/dragon: key "dragon" \(class body\)/); // the caster pick is now vetoed for carrying no magic word, so the dragon body stands without needing the override (the critic's fourth read)
     // the user's own noun outranks a pick quoted from the alias text: "kuo-toa priest" is a priest
     const pr = chooseLine({ picks: [{ line: 'skirmisher-hurler', because: 'fights with net and spear' }], creature_type: 'Humanoid' }, { text: readPhrasesFor('kuo-toa priest of a drowned god'), rawText: 'kuo-toa priest of a drowned god' });
     expect(pr.line).toBe('caster-warpriest'); expect(pr.notes.join(' | ')).toMatch(/the user's own word "priest" \(class noun\) outranks a pick quoted from the alias text/);

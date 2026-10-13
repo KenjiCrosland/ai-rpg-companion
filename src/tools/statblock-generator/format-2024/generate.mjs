@@ -1417,6 +1417,7 @@ Return ONLY a JSON object of the same shape — {"header": {...same keys...}, "s
     return { ...e, name, text: t.text };
   })])) };
   for (const k of HEADER_FIELDS) if (typeof parsed.header?.[k] === 'string' && parsed.header[k].trim() && numbersKept(monster[k], parsed.header[k])) out[k] = parsed.header[k];
+  if (/^unaligned$/i.test(String(monster.alignment ?? '').trim()) && code) { const want = labelsFor(code).unaligned; if (want && String(out.alignment ?? '').trim().toLowerCase() !== want.toLowerCase()) { out.alignment = want; } } // Unaligned is a closed term: the translator rendered the Stone Golem's as "Neutral" (the critic's fourth read)
   out.language = code ?? String(language).toLowerCase().slice(0, 2);
   out.language_name = String(language);
   out.english = english;

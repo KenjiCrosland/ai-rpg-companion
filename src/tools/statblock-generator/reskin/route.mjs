@@ -82,8 +82,8 @@ export const LINE_VERBS = {
   'caster-warpriest': ['blesses', 'prays', 'smites', 'consecrates', 'psalms', 'sermons', 'crusades', 'priest', 'priestess', 'cleric', 'acolyte'], /* job nouns: never an override on their own (the title rule) */
   caster: ['casts', 'conjures', 'calls down', 'hurls bolts', 'blasts', 'spells'],
   'defender-warden': ['guards', 'protects', 'sworn to', 'stands between', 'shields', 'bound to protect', 'wards'],
+  defender: ['holds the line', 'keeps the line', 'shield wall', 'bodyguard', 'blocks', 'interposes', 'guards the', 'guards a', 'guards its', 'guards his', 'guards her', 'stands guard', 'guarding the', 'fighting style', 'fighting styles', 'trained in fighting', 'swordmaster', 'weapon master', 'blademaster', 'duelist', 'fencer', 'man-at-arms', 'knight', 'knights', 'paladin', 'cavalier', 'sentinel', 'legionary', 'hoplite'], // a trained martial style keys the martial line (Meshrin flipped defender → brute between runs — the critic's fourth read)
   dragon: ['dragon', 'dragons', 'wyrm', 'wyrms', 'drake', 'drakes'], // not 'dragonborn': a dragonborn is a Humanoid species, not a dragon body (a blue dragonborn knight was built on dragon-2 with a breath weapon and Fly 60 — species landing 2026-10-13) /* BODY nouns: a dragon is a dragon whatever the route model quotes (the storm dragon lost its body to a paraphrased quote, 2026-10-01) */
-  defender: ['holds the line', 'keeps the line', 'shield wall', 'bodyguard', 'blocks', 'interposes', 'guards the', 'guards a', 'guards its', 'guards his', 'guards her', 'stands guard', 'guarding the'],
   // bodily-emission verbs are a SIGNATURE (a cloud, a spit), not a thrower's chassis — the plain skirmisher line
   skirmisher: ['vomits', 'spits', 'spews', 'belches', 'sprays', 'darts', 'harries', 'flits', 'nips'],
 };
@@ -176,6 +176,7 @@ const NOT_PHANTOM_TYPES = ['Humanoid', 'Beast', 'Giant', 'Plant', 'Construct', '
 // an ARCHER shoots a named weapon: a lantern-mage whose "bolts find them in the
 // dark" was picked for the archer line by the route model (golden 2026-09-29) —
 // no bow, arrow, crossbow, sling or shot in the words, no archer seat ('bolts' is a caster's too)
+const MAGIC_WORD = /\b(?:spell|spells|spellcast\w*|cast|casts|casting|magic|magical|arcane|sorcer\w*|wizard|witch|warlock|mage|magus|priest|priestess|cleric|acolyte|prays?|prayer|holy|divine|blessed|hex|hexes|hexed|curse|curses|cursed|ritual|incant\w*|enchant\w*|summon\w*|conjur\w*|necroman\w*|shaman|druid|oracle|seer|psychic|telepath\w*|eldritch|rune|runes|sigil|glyph|ward|wards|warding|miracle|channel|invoke|invokes|scroll|grimoire|tome|staff of|wand)\b/i; // a caster line needs one of these in the GM's words (the critic's fourth read)
 const ARCHER_NOUN = /\b(?:bows?|longbows?|shortbows?|crossbows?|arrows?|quivers?|slings?|archers?|bowman|bowmen|marksman|markswoman|marksmen|sniper|sharpshooter|shoots?|shooting|nocks?|volley)\b/i;
 export const EXTRA_MECHANICS = ['gaze', 'teleport', 'aura', 'breath', 'snare', 'thrown-weapon', 'grapple']; // 'summon' retired with the group templates (owner 2026-09-28): the tag opened the CR<=2 wildcard slot for a mechanic nothing renders
 const TYPES = ['Aberration', 'Beast', 'Celestial', 'Construct', 'Dragon', 'Elemental', 'Fey', 'Fiend', 'Giant', 'Humanoid', 'Monstrosity', 'Ooze', 'Plant', 'Undead'];
@@ -265,6 +266,8 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
     if (line.id === 'lurker-phantom' && resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} has a body; a phantom has none`); continue; }
     if (line.id === 'skirmisher-shifter' && !verbHits(text).some((h) => h.id === 'skirmisher-shifter')) { notes.push(`${id}: a shifter is named by its words (shape-shifts, turns into, a were-) — none here`); continue; } // a mind flayer with a sword drew a Beast Bite (critic-ten 2026-10-01)
     if (line.id === 'skirmisher-archer' && !ARCHER_NOUN.test(String(text ?? ''))) { notes.push(`${id}: no bow, arrow or shot in the words`); continue; }
+    // CASTING IS A MECHANIC ENGINE (the critic's fourth read): a caster line needs a magic word in the GM's own words. "Knight" and "duelist" carried none and drifted to the warpriest on two prompts in five.
+    if (!family && line.family === 'caster' && !MAGIC_WORD.test(String(text ?? ''))) { notes.push(`${id}: a caster line needs a magic word in the words — none here`); continue; }
     chosen = line;
     notes.push(`${id}: ✓ ("${String(k.because).slice(0, 40)}")`);
     break;
@@ -284,6 +287,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
       if (line.id === 'swarm' && !SWARM_WORDS.test(String(text ?? ''))) continue;
       if (line.id === 'skirmisher-shifter' && !verbHits(text).some((h) => h.id === 'skirmisher-shifter')) continue;
       if (line.id === 'skirmisher-archer' && !ARCHER_NOUN.test(String(text ?? ''))) continue;
+      if (!family && line.family === 'caster' && !MAGIC_WORD.test(String(text ?? ''))) continue; // casting is a mechanic engine: it never comes back on rank either (the critic's fourth read)
       chosen = line; notes.push(`${line.id}: taken on rank — its quote was not found, no hard veto`); break;
     }
   }
@@ -345,7 +349,21 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
   // word or the model's read of the quote chose the seat)
   if (chosen) {
     const own = verbHits(text).find((h) => h.id === chosen.id);
+    // eslint-disable-next-line no-unused-vars
     notes.push(own ? `${chosen.id}: key "${own.key}" (class ${own.cls})` : `${chosen.id}: no line key in the words — the model's read of its quote`);
+    // A MECHANIC ENGINE NEEDS A KEY IN THE GM's WORDS (the critic's third species read, 2026-10-13): a grappler, a trap, a charger
+    // carries rows that act — a grapple rider, an engulf, a charge — and the model's read of its own quote cannot land them ("a tortle
+    // hermit who withdraws into his shell" routed to brute-5-grappler and got grappling Claws and an Engulf). The plain family line stands.
+    // A CREATURE-ONLY PROMPT gives nothing to read, and the catalog composes the whole sheet by design ("knife ball", "the thing in the
+    // well"): the model's read of its own quote may choose the body there. With words to read, the WORDS decide.
+    const SIGNIFICANT = (t) => String(t ?? '').toLowerCase().split(/[^a-z']+/).filter((w) => w.length > 2 && !/^(?:the|a|an|and|or|but|with|who|that|which|its|his|her|their|into|onto|from|for|out|off|over|under|this|than|then|them|they|was|were|has|have|had|are|is|be|been|being|it|in|on|at|to|of|by|up|as|so|if|no|not|one|two|too|very|own|new|old)$/.test(w));
+    const creatureOnly = SIGNIFICANT(text).length <= 3;
+    const MECHANIC_STYLE = new Set(['grappler', 'charger', 'trap']);
+    const GRAPPLE_WORD = /\b(?:grab|grabs|seize|seizes|hold|holds|swallow|swallows|engulf|engulfs|crush|crushes|hug|hugs|squeeze|squeezes|constrict|constricts|drag|drags|fold|folds|cage|cages|wrap|wraps|coil|coils|clamp|clamps|snap|snaps|pull|pulls|pin|pins|smother|smothers|entomb|entombs|envelop|envelops|latch|latches|clutch|clutches)\b/i;
+    const CHARGE_WORD = /\b(?:charge|charges|charging|ram|rams|rush|rushes|stampede|stampedes|gallop|gallops|barrel|barrels|trample|tramples|bull-?rush)\b/i;
+    const TRAP_WORD = /\b(?:adhere|adheres|adhesive|sticky|sticks|lies in wait|disguise[sd]?|looks like|poses as|pretend|pretends|snap|snaps|trap|traps|lure|lures|bait|baits|motionless|mimic|mimics|camouflage[sd]?)\b/i;
+    const looseKey = chosen.style === 'grappler' ? GRAPPLE_WORD.test(text) : chosen.style === 'charger' ? CHARGE_WORD.test(text) : chosen.style === 'trap' ? TRAP_WORD.test(text) : false; // a grapple or charge VERB anywhere in the GM's words ("drags cattle into the bog", "folds shut around") is the key; "withdraws into his shell" has none
+    if (!own && !looseKey && !creatureOnly && chosen.style && MECHANIC_STYLE.has(chosen.style)) { const plain = BY_ID.get(chosen.family); if (plain) { notes.push(`${chosen.id} -> ${plain.id}: a ${chosen.style} is a mechanic engine and needs a key in the words — the model's read of its quote cannot land it`); chosen = plain; } }
   }
   const extras = [];
   for (const x of Array.isArray(parsed?.extras) ? parsed.extras : []) {

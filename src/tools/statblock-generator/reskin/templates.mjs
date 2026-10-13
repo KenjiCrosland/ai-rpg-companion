@@ -81,6 +81,7 @@ export function sheetEngines(sections = {}) {
     if (/indistinguishable from|resemble an? (?:\w+ ){0,3}object|shape-shifts? to resemble/i.test(e.text ?? '')) out.add('disguise'); // the trap line's own False Form (two disguise traits on one gargoyle)
     if (e.engine) out.add(e.engine);
     if (/moved (?:at least )?\d+\+? feet straight toward/i.test(e.text ?? '')) out.add('charge-rider');
+    if (e.part && /Melee or Ranged Attack Roll/.test(e.text ?? '')) out.add('thrown-weapon'); // a thrown part IS the throw: no throw-retrieve seed beside Sarn's spear (the critic's third species read)
     if (/Ranged Attack Roll/.test(e.text ?? '') && /hurl|throw|\{projectile\}|boulder|rock|slab/i.test(`${e.name ?? ''} ${e.text ?? ''}`) && (e.template || e.library || e.print)) out.add('thrown-weapon'); // a CHASSIS throw does not own the engine: the slot-yield rule evicts it when the user's thrown weapon lands (fidelity pipeline step 2 — the chassis's "Hurled Debris" kept throw-retrieve off the menu)
     if (/adheres to anything that touches/i.test(e.text ?? '')) out.add('adhesive');
     if (/hits it with a melee attack while within 5 feet of it takes/i.test(e.text ?? '')) out.add('contact-damage');
@@ -311,6 +312,12 @@ export function rankByVerb(menu, conceptText0, ideaText0 = '') {
 // Hill's 84-damage execute keyed on Grappled with nothing on the sheet that
 // grapples, critic run three) — off the menu when the sheet imposes nothing
 const REQUIRES_IMPOSED = new Set(['condition-payoff', 'exploiter']);
+// A MECHANIC ENGINE NEEDS A KEY IN THE GM's WORDS (the critic's third species read): a shape whose frame imposes Grappled or swallows
+// never lands on words that never asked for it. A creature-only prompt (three significant words or fewer) gives nothing to read and the
+// catalog composes freely, as the head-clause rule says.
+const NEEDS_ENGINE_KEY = new Set(['swallow', 'hook-drag', 'snatch', 'reel', 'pull-through']);
+const ENGINE_KEY_WORD = /\b(?:grapple|grapples|grappled|grab|grabs|grabbing|seize|seizes|hold|holds|clutch|clutches|wrestle|constrict|constricts|crush|crushes|squeeze|squeezes|drag|drags|dragging|pull|pulls|pulling|haul|hauls|yank|yanks|hook|hooks|swallow|swallows|engulf|engulfs|devour|devours|gulp|smother|smothers|entomb|envelop|coil|coils|wrap|wraps|snare|snares|net|nets|tentacle|tentacles|jaws|maw|bite|bites|lash|lashes|whip|whips|chain|chains|rope|tongue|trunk|pin|pins|under|beneath|inside)\b/i;
+export const engineKeyOk = (concept) => { const sig = String(concept ?? '').toLowerCase().split(/[^a-z']+/).filter((w) => w.length > 2 && !/^(?:the|and|but|with|who|that|which|its|his|her|their|into|onto|from|for|out|off|over|under|this|than|then|them|they|was|were|has|have|had|are|been|being|not|one|two|too|very|own|new|old)$/.test(w)); return sig.length <= 3 || ENGINE_KEY_WORD.test(String(concept ?? '')); };
 
 const SECTION_BY_REPLACES = { signature: 'action', nova: 'action', 'bonus-alt': 'bonus_action', trait: 'trait', 'melee-rider': 'rider', 'ranged-rider': 'rider', reaction: 'reaction' };
 const HOST_BY_REPLACES = { 'melee-rider': 'melee', 'ranged-rider': 'ranged' }; // which attack row a rider appends to
@@ -322,7 +329,7 @@ export const TEMPLATES = [
   ...SHAPES.filter((s) => SECTION_BY_REPLACES[s.replaces] && SHAPE_TAGS[s.id]).map((s) => ({
     id: s.id, name: s.name, kind: 'shape', cite: s.cite,
     section: SECTION_BY_REPLACES[s.replaces], replaces: s.replaces, roles: s.roles, styles: s.styles, cr_range: s.cr_range, /* `replaces` names the SLOT the template claims — the slot-yield rule reads it (fidelity pipeline step 2) */
-    gate: s.gate ?? null, nova: s.replaces === 'nova', requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null, requires_row: s.requires_row ?? null,
+    gate: s.gate ?? null, nova: s.replaces === 'nova', requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null, requires_row: s.requires_row ?? null, requires_claim: s.requires_claim ?? null,
     host: s.host ?? HOST_BY_REPLACES[s.replaces] ?? null, // a reaction that fires a ranged row needs one on the sheet (snap-shot)
     trigger: SHAPE_TAGS[s.id][0], effect: SHAPE_TAGS[s.id][1],
     keys: [...new Set([...(VERB_KEYS[s.id] ?? []), ...(SHAPE_KEYS[s.id] ?? [])])],
@@ -390,6 +397,13 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     && triggerCompatible(trigger, t.trigger)
     && !(text && deniedBy(t, text).length)
     && !(REQUIRES_IMPOSED.has(t.id) && Array.isArray(imposed) && !imposed.length)
+    && !(NEEDS_ENGINE_KEY.has(t.id) && !engineKeyOk(concept))
+    // A CLAIM FOR A BODY OR A TECH (the critic's fifth read: an orc "withdraws
+    // into its shell"; a troglodyte teleports 40 feet). A shape whose fiction is
+    // anatomy or arcane tech needs that claim in the GM's words or on the sheet
+    // — the match keys are deliberately loose ("retreat", "shadow", "step") and
+    // an idea-level verb must not buy a shell. Narrower than keys, by design.
+    && !(t.requires_claim instanceof RegExp && !t.requires_claim.test(String(concept ?? '')) && !rows.some((e) => t.requires_claim.test(`${e.name ?? ''} ${e.text ?? ''}`)))
     // a rider needs its host row on the sheet (a ranged rider was offered to a phantom with no ranged row)
     && !(t.host && rows.length && !rows.some((e) => (t.host === 'ranged' ? /Ranged Attack Roll/ : /Melee Attack Roll/).test(e.text ?? '')))
     && !(t.nova && hasNova)
@@ -528,7 +542,14 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   const dtype0 = solid ?? (ctx.mix === 'physical' || !ctx.energy ? (PHYSICAL.includes(fills.damage_type) ? fills.damage_type : 'Bludgeoning') : ctx.energy);
   const PROJECTILE_WEAPON = [[/\bjavelins?\b/i, 'Piercing', '30/120'], [/\bspears?\b/i, 'Piercing', '20/60'], [/\b(?:daggers?|knives|knife)\b/i, 'Piercing', '20/60'], [/\btridents?\b/i, 'Piercing', '20/60'], [/\bdarts?\b/i, 'Piercing', '20/60'], [/\b(?:hand)?axes?\b/i, 'Slashing', '20/60'], [/\b(?:light )?hammers?\b/i, 'Bludgeoning', '20/60']];
   const projWeapon = /\{projectile\}/.test(t.frames?.[bandFor(ctx.cr)] ?? '') ? PROJECTILE_WEAPON.find(([re]) => re.test(String(fills.projectile ?? ''))) : null; // a thrown NAMED weapon keeps its own type and range (a spear hurled for Bludgeoning at 30/120 — the critic's second species read)
-  const dtype = projWeapon ? projWeapon[1] : t.id === 'spew' && !solid && PHYSICAL.includes(dtype0) ? (ctx.energy && !PHYSICAL.includes(ctx.energy) ? ctx.energy : 'Poison') : dtype0; // a spewed cloud is never a weapon type: it takes the concept's energy or Poison (Noxious Spew dealt Piercing from a cloud of ash — the critic's species read)
+  const frameText = t.frames?.[bandFor(ctx.cr)] ?? '';
+  const drains = /regains? (?:\d+ )?Hit Points|drains?|siphon/i.test(frameText); // a DRAIN is never a weapon type (Plague Siphon dealt Piercing — the critic's fourth read)
+  const onHitRider = /takes an extra \{(?:avg|burst)/.test(frameText) && !/\{atk\}/.test(frameText); // an on-hit extra takes the HIT's type (Assassinate added Bludgeoning to spear hits)
+  const dtype = projWeapon ? projWeapon[1]
+    : t.id === 'spew' && !solid && PHYSICAL.includes(dtype0) ? (ctx.energy && !PHYSICAL.includes(ctx.energy) ? ctx.energy : 'Poison')
+    : drains && PHYSICAL.includes(dtype0) ? (ctx.energy && !PHYSICAL.includes(ctx.energy) ? ctx.energy : 'Necrotic')
+    : onHitRider && PHYSICAL.includes(dtype0) ? (ctx.energy && !PHYSICAL.includes(ctx.energy) ? ctx.energy : (ctx.meleeType && PHYSICAL.includes(ctx.meleeType) ? ctx.meleeType : dtype0))
+    : dtype0; // a spewed cloud is never a weapon type: it takes the concept's energy or Poison (Noxious Spew dealt Piercing from a cloud of ash — the critic's species read)
   const engine = { ray_table: t.id === 'random-ray' ? composeRayTable(bandFor(ctx.cr)) : '', /* first: the composed table carries {dc} and damage slots the keys below fill */ dc: String(scaled.dc), atk: `+${scaled.atk}`, avg: String(full.avg), dice: full.dice, avg_half: String(half.avg), dice_half: half.dice, avg_x2: String(dbl.avg), dice_x2: dbl.dice, damage_type: dtype, melee_name: ctx.meleeName ?? 'Slam', ranged_name: ctx.rangedName ?? 'Longbow' };
   for (const [k, v] of Object.entries(engine)) text = text.split(`{${k}}`).join(v);
   if (obscuring) text = text.replace('has the Poisoned condition', 'has the Blinded condition'); // the Poison-breath frame's own rider, retyped for what ash does
@@ -542,6 +563,14 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     const proposedC = String(fills.condition_minor ?? '').trim();
     const condPick = MINOR.find((x) => x.toLowerCase() === proposedC.toLowerCase()) ?? (MINOR.includes(ctx.conditionMinor) ? ctx.conditionMinor : 'Frightened');
     fills = { ...fills, condition_minor: condPick, save_stat: CONDITION_SAVE[condPick] };
+  }
+  if (text.includes('{save_stat}')) { // SAVE BY EFFECT (the critic's fourth read): Prone, push or grapple → Strength; Dexterity for an area a creature dodges; poison, disease or a breath → Constitution; fear or charm → Wisdom. The Iron Bull knocked Prone on a Wisdom save.
+    const eff = text.replace(/\{save_stat\}/g, '');
+    const byEffect = /\b(?:Prone\b|pushed\b|shoved?\b|Grappled\b|Restrained\b|knocked)/.test(eff) ? (/\b(?:Cone|Emanation|Sphere|Line|Cube|each creature)\b/.test(eff) ? 'Dexterity' : 'Strength')
+      : /\b(?:Poisoned|poison|disease|diseased|breath|spores?|gas|fumes|choke|choking|suffocat)/i.test(eff) ? 'Constitution'
+      : /\b(?:Frightened|Charmed|fear|terror|dread|command|compel)/i.test(eff) ? 'Wisdom'
+      : /\b(?:Blinded|Deafened|Stunned|Paralyzed|Incapacitated)\b/.test(eff) ? 'Constitution' : null;
+    if (byEffect) fills = { ...fills, save_stat: byEffect };
   }
   for (const [k, list] of Object.entries(VOCAB)) {
     if (!text.includes(`{${k}}`)) continue;
@@ -637,7 +666,9 @@ THE IDEA (${idea.section} / ${idea.trigger} / ${idea.effect}): ${idea.idea}
 TEMPLATES:
 ${lines}
 THE VERB DECIDES. The concept has a central verb — seal, lure, stick, toll, drown, drag. Templates are listed best-match first; a VERB MATCH marked (concept) means the template's own verb is in the user's words and outranks everything; (idea) means only your invented description used it. Never pick a template with no verb match over one that has a (concept) match. Pick the template whose rules genuinely CARRY the idea — the same verb, the same target, the same kind of effect, the same moment. If the idea is one of these templates PLUS an extra clause, take the template — the extra is fiction the name can carry. A template that merely resembles it does not fit; answer "none" then, honestly — a miss is logged and a template gets written. Name the ability in Monster Manual register: two words, three at most, never a description, and never the creature's own name ("Wax Preacher's Sermon" is a label, "Sealing Sermon" is a name).
-Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "name": "<2-3 words>", "fills": {"<slot>": "<value>"}}`;
+A VERB MATCH is a WORD match, not a judgement — the engine found the template's key word in the user's words and is asking you whether it MEANS that mechanic for this creature. It does not mean it when the word sits in the modifier slot of a compound (a blood-priest has no blood sense; a stone-herder is not made of stone; a knife ball is not an assassin), when the sheet or the creature's own kind already answers it (a climb Speed answers "climbs the wall"), or when it belongs to another fiction (a living warden who guards a reef is not bound to a resting place). Name every such template in "wrong" — the engine will not use one you list there. Leave "wrong" empty when each match genuinely means its mechanic.
+A template whose match is marked (concept) may be used even if you answer none, so fill its "you fill" slots in "fills" whichever answer you give, quoting the user's own words (a phobia of chickens fills {phobia} with "chickens"; a warden of the reef fills {place} with "the reef").
+Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "name": "<2-3 words>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
 }
 
 export function validateFitResponse(jsonString) {
@@ -653,8 +684,14 @@ export function parseFit(raw, menu, creatureName = '') {
   return {
     template: t,
     because: String(p.because ?? '').trim().slice(0, 80),
-    name: nm && nm.split(/\s+/).length <= 3 && noDigits(nm) && !(creatureName && nm.toLowerCase().includes(creatureName.toLowerCase().split(/\s+/).pop())) ? nm : null,
+    name: nm && !/^(?:none|n\/a|null|no fit|nothing)$/i.test(nm) && nm.split(/\s+/).length <= 3 && noDigits(nm) && !(creatureName && nm.toLowerCase().includes(creatureName.toLowerCase().split(/\s+/).pop())) ? nm : null, // "none" is the model saying no fit, never a row name (a row named "none" shipped on Meshrin — the critic's third species read, rerun)
     fills: p.fills && typeof p.fills === 'object' ? p.fills : {},
+    // THE WORD MATCH IS THE ENGINE'S, THE MEANING IS THE CALL'S (owner, 2026-10-13:
+    // "engineer less deterministic gating when the llm can make these judgements"):
+    // a key word in the modifier slot of a compound, or one the sheet already
+    // answers, is a collision — the call names it and the engine drops its own
+    // force-bind. Only ids actually offered count (a model may invent one).
+    wrong: Array.isArray(p.wrong) ? [...new Set(p.wrong.map((w) => String(w ?? '').trim().toLowerCase()).filter((w) => menu.some((m) => m.id === w)))] : [],
   };
 }
 

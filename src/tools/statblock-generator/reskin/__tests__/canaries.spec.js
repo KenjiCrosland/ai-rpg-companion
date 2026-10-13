@@ -151,7 +151,7 @@ describe('the sprint run\'s fix round (2026-10-12)', () => {
   });
   test('within one step of print\'s CR the sheet keeps its own PB and print\'s bonuses re-derive — a CR 4 "duelist" is the Gladiator at +6 on PB +2, 2d6 + 4', async () => {
     const m = await gen({ archetype: 'skirmisher', concept: 'a duelist', userConcept: 'a duelist', cr: 4 }, json('Ash Duelist', 'Humanoid', 4, null, 'skirmisher'));
-    expect(m.pb).toBe(2); expect(rows(m).find((e) => e.name === 'Spear').text).toMatch(/\+6, reach 5 ft\. 11 \(2d6 \+ 4\) Piercing/); // the sheet keeps its own PB (+2 at CR 4); print's +7 on PB +3 reads +6 (the critic's species read)
+    expect(m.pb).toBe(2); expect(rows(m).find((e) => e.name === 'Spear').text).toMatch(/^\*Melee or Ranged Attack Roll:\* \+6, reach 5 ft\. or range 20\/60 ft\. \d+ \(\d+d\d+ \+ 4\) Piercing/); // a BORROW re-solves its dice to this sheet's card; print's exact dice belong to an exact body at print's CR // the sheet keeps its own PB (+2 at CR 4) and print's Spear is thrown, so the row is hybrid (the critic's third species read)
     expect(checkBlock(m).fails).toEqual([]);
   });
   test('the checker: print\'s Evasion idiom is not a half-no-referent; "that creature" after a named point is one target', () => {

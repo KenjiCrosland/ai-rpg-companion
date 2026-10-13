@@ -12,6 +12,7 @@ export const languageCodeFor = (name) => LANGUAGE_CODES[String(name ?? '').trim(
 
 const EN = {
   multiattack: 'Multiattack',
+  unaligned: 'Unaligned', // the alignment of a creature with no capacity for ethics — a closed term the translator must not render as Neutral (the critic's fourth read, 2026-10-13)
   ac: 'AC', initiative: 'Initiative', hp: 'HP', speed: 'Speed', mod: 'MOD', save: 'SAVE', cr: 'CR', xp: 'XP', pb: 'PB', none: 'None',
   skills: 'Skills', vulnerabilities: 'Vulnerabilities', resistances: 'Resistances', immunities: 'Immunities', gear: 'Gear', senses: 'Senses', languages: 'Languages',
   sections: { Traits: 'Traits', Actions: 'Actions', 'Bonus Actions': 'Bonus Actions', Reactions: 'Reactions', 'Legendary Actions': 'Legendary Actions' },
@@ -21,6 +22,7 @@ const EN = {
 export const CARD_LABELS = {
   en: EN,
   de: {
+    unaligned: 'Gesinnungslos',
     multiattack: 'Multiangriff',
     ac: 'RK', initiative: 'Initiative', hp: 'TP', speed: 'Bewegungsrate', mod: 'MOD', save: 'RW', cr: 'HG', xp: 'EP', pb: 'ÜB', none: 'Keine',
     skills: 'Fertigkeiten', vulnerabilities: 'Verwundbarkeiten', resistances: 'Resistenzen', immunities: 'Immunitäten', gear: 'Ausrüstung', senses: 'Sinne', languages: 'Sprachen',
@@ -29,6 +31,7 @@ export const CARD_LABELS = {
     legendaryUses: 'Legendäre Aktionen: {n} Einsätze. Unmittelbar nach dem Zug einer anderen Kreatur kann es einen Einsatz verbrauchen, um eine der folgenden Aktionen auszuführen. Zu Beginn jedes seiner Züge erhält es alle verbrauchten Einsätze zurück.',
   },
   fr: {
+    unaligned: 'Non alignée',
     multiattack: 'Attaques multiples',
     ac: 'CA', initiative: 'Initiative', hp: 'PV', speed: 'Vitesse', mod: 'MOD', save: 'JS', cr: 'FP', xp: 'PX', pb: 'BM', none: 'Aucune',
     skills: 'Compétences', vulnerabilities: 'Vulnérabilités', resistances: 'Résistances', immunities: 'Immunités', gear: 'Équipement', senses: 'Sens', languages: 'Langues',
@@ -37,6 +40,7 @@ export const CARD_LABELS = {
     legendaryUses: "Utilisations d'actions légendaires : {n}. Immédiatement après le tour d'une autre créature, elle peut dépenser une utilisation pour effectuer l'une des actions suivantes. Elle récupère toutes les utilisations dépensées au début de chacun de ses tours.",
   },
   es: {
+    unaligned: 'Sin alineamiento',
     multiattack: 'Ataque múltiple',
     ac: 'CA', initiative: 'Iniciativa', hp: 'PG', speed: 'Velocidad', mod: 'MOD', save: 'SALV', cr: 'VD', xp: 'PX', pb: 'BC', none: 'Ninguno',
     skills: 'Habilidades', vulnerabilities: 'Vulnerabilidades', resistances: 'Resistencias', immunities: 'Inmunidades', gear: 'Equipo', senses: 'Sentidos', languages: 'Idiomas',
@@ -45,6 +49,7 @@ export const CARD_LABELS = {
     legendaryUses: 'Usos de acciones legendarias: {n}. Inmediatamente después del turno de otra criatura, puede gastar un uso para realizar una de las siguientes acciones. Recupera todos los usos gastados al comienzo de cada uno de sus turnos.',
   },
   it: {
+    unaligned: 'Senza allineamento',
     multiattack: 'Multiattacco',
     ac: 'CA', initiative: 'Iniziativa', hp: 'PF', speed: 'Velocità', mod: 'MOD', save: 'TS', cr: 'GS', xp: 'PE', pb: 'BC', none: 'Nessuno',
     skills: 'Abilità', vulnerabilities: 'Vulnerabilità', resistances: 'Resistenze', immunities: 'Immunità', gear: 'Equipaggiamento', senses: 'Sensi', languages: 'Linguaggi',
@@ -53,6 +58,7 @@ export const CARD_LABELS = {
     legendaryUses: "Usi delle azioni leggendarie: {n}. Immediatamente dopo il turno di un'altra creatura, può spendere un uso per compiere una delle azioni seguenti. Recupera tutti gli usi spesi all'inizio di ciascuno dei suoi turni.",
   },
   ja: {
+    unaligned: '無属性',
     multiattack: 'マルチアタック',
     ac: 'AC', initiative: 'イニシアチブ', hp: 'HP', speed: '移動速度', mod: '修正', save: 'セーヴ', cr: '脅威度', xp: 'XP', pb: '習熟', none: 'なし',
     skills: '技能', vulnerabilities: '脆弱性', resistances: '抵抗', immunities: '完全耐性', gear: '装備', senses: '感覚', languages: '言語',
@@ -61,6 +67,7 @@ export const CARD_LABELS = {
     legendaryUses: '伝説的アクションの使用回数：{n}。他のクリーチャーのターンの直後に、使用回数を1回消費して以下のアクションのいずれかを行える。使用回数は自身の各ターンの開始時にすべて回復する。',
   },
   pt: {
+    unaligned: 'Sem alinhamento',
     multiattack: 'Ataques múltiplos',
     ac: 'CA', initiative: 'Iniciativa', hp: 'PV', speed: 'Deslocamento', mod: 'MOD', save: 'RES', cr: 'ND', xp: 'XP', pb: 'BP', none: 'Nenhum',
     skills: 'Perícias', vulnerabilities: 'Vulnerabilidades', resistances: 'Resistências', immunities: 'Imunidades', gear: 'Equipamento', senses: 'Sentidos', languages: 'Idiomas',
