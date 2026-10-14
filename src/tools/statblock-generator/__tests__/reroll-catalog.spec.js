@@ -124,3 +124,40 @@ describe('the re-roll takes the whole creature (step 9b)', () => {
     expect(prompt).toContain('IT IS CALLED "the reef-warden" IN RULES TEXT');
   });
 });
+
+// FROM THE LIVE BLOCKS (2026-10-14): the first critic run of the re-roll found
+// three defects that no unit test had reached.
+describe('what the live blocks found', () => {
+  const m0 = () => warden();
+  test('a rewrite keeps the row\'s own numbers — the skeleton\'s budget is for a NEW row', async () => {
+    const m = m0();
+    // the Multiattack names Kelp Lash, so the name is load-bearing and this is a REWRITE
+    const out = await rerollEntry(m, { kind: 'action', current: { name: 'Kelp Lash', description: m.sections.Actions[1].text }, degraded: true },
+      async () => JSON.stringify({ template: 'none', name: 'Kelp Lash', text: '*Melee Attack Roll:* +9, reach 10 ft. 25 (6d6 + 4) Bludgeoning damage.' }));
+    expect(out.name).toBe('Kelp Lash');
+    expect(out.description).toContain('+6');          // the row's own bonus, not the model's +9
+    expect(out.description).toContain('12 (2d8 + 3)'); // and the row's own dice
+    expect(out.description).not.toContain('6d6');
+  });
+
+  test('a re-roll never re-picks the template it is replacing', async () => {
+    const m = m0();
+    m.sections.Actions[2].template = 'reel';          // the row came from the catalog
+    let prompt = '';
+    const out = await rerollEntry(m, { kind: 'action', current: { name: 'Tidal Surge', description: m.sections.Actions[2].text }, degraded: true },
+      async (p) => { prompt = p; return JSON.stringify({ template: 'none', name: 'Undertow Grasp', text: '*Strength Saving Throw*: DC 14, one creature within 15 feet. *Failure:* 24 (7d6) Cold damage.' }); });
+    expect(prompt).toMatch(/FIRST CHOICE — THE CATALOG/);
+    expect(prompt).not.toMatch(/^- reel \[/m); // the row's own template is off the menu
+    expect(out.name).toBe('Undertow Grasp');
+  });
+
+  test('a trait never climbs the value ladder, so no "Success: Half" fragment lands on one', async () => {
+    const m = m0();
+    m.archetype = 'lurker'; // evasion's own roles are lurker and skirmisher
+    m.sections.Traits.push({ name: 'Marsh Sense', text: 'The reef-warden has Advantage on Perception checks in water.' });
+    const out = await rerollEntry(m, { kind: 'ability', current: { name: 'Marsh Sense', description: 'The reef-warden has Advantage on Perception checks in water.' }, degraded: true },
+      async () => JSON.stringify({ template: 'evasion', name: 'Reef Slip', fills: {}, wrong: [] }));
+    expect(out.description).not.toMatch(/\*Success:\*/);
+    expect(out.description).not.toMatch(/Half damage/);
+  });
+});

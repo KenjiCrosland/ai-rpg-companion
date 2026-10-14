@@ -26,6 +26,7 @@ import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
 import { buildRepairPrompt, parseAuthorResponse, validateAuthorResponse } from './author.mjs';
 import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap } from './species.mjs';
+import { classFor, classRows } from './classes.mjs';
 import { renderForm, resolutionOf } from './forms.mjs';
 
 const trace = (l, d) => logger.log(`[reskin] ${l}`, d ?? '');
@@ -215,7 +216,7 @@ const PRINT_BOILER = /^(?:Magic Resistance|Legendary Resistance|Amphibious|Water
 export const hagFor = (text) => (/\b(?:sea|coast|coastal|tide|tidal|salt|shore|ocean|reef|harbou?r)\b/i.test(String(text ?? '')) ? 'Sea Hag' : /\b(?:night|dreams?|nightmares?|ethereal|sleep|sleeping)\b/i.test(String(text ?? '')) ? 'Night Hag' : 'Green Hag'); // a hag is a print hag by context: forest and bog are the Green Hag's (critic's step-8 read)
 const printExprWithSheetMod = (expr, rowText, pb) => { const m = /^(\d+) \((\d+)d(\d+)(?: ([+-]) (\d+))?\)$/.exec(String(expr)); const atk = Number(/Attack Roll:\*? \+(\d+)/.exec(String(rowText))?.[1]); if (!m || !Number.isFinite(atk)) return expr; const flat = atk - Number(pb); const n = Number(m[2]); const d = Number(m[3]); const avg = Math.floor(n * (d + 1) / 2) + flat; return `${avg} (${n}d${d}${flat ? ` ${flat < 0 ? '-' : '+'} ${Math.abs(flat)}` : ''})`; }; // print's dice, the sheet's modifier
 const aliasOf = (w, text) => (/^(?:hag|hags|crone)$/.test(String(w ?? '')) ? hagFor(text) : PRINT_ALIAS[w]);
-export const PRINT_ALIAS = { /* hag, hags, crone resolve by context through hagFor */ archlich: 'Lich', demilich: 'Lich', /* the Lich's own kin by prefix (critic's release audit 2026-10-03: an archlich routed as a ghost) */ kobold: 'Kobold Warrior', kobolds: 'Kobold Warrior', goblin: 'Goblin Warrior', goblins: 'Goblin Warrior', hobgoblin: 'Hobgoblin Warrior', hobgoblins: 'Hobgoblin Warrior', bugbear: 'Bugbear Warrior', bugbears: 'Bugbear Warrior', gnoll: 'Gnoll Warrior', gnolls: 'Gnoll Warrior', sahuagin: 'Sahuagin Warrior', /* the renamed 2024 commons (a kobold got no Pack Tactics, critic form-ten 2026-10-01) */ archer: 'Scout', archers: 'Scout', bowman: 'Scout', bowmen: 'Scout', huntsman: 'Scout', ranger: 'Scout', crossbowman: 'Bandit', brigand: 'Bandit', footpad: 'Bandit', outlaw: 'Bandit', highwayman: 'Bandit', soldier: 'Warrior Infantry', 'foot soldier': 'Warrior Infantry', infantryman: 'Warrior Infantry', veteran: 'Warrior Veteran', mercenary: 'Warrior Veteran', 'sellsword': 'Warrior Veteran', wizard: 'Mage', sorcerer: 'Mage', warlock: 'Mage', cleric: 'Priest', monk: 'Priest', thief: 'Spy', rogue: 'Spy', burglar: 'Spy', guardsman: 'Guard', sentry: 'Guard', watchman: 'Guard', paladin: 'Knight', cavalier: 'Knight', peasant: 'Commoner', villager: 'Commoner', farmer: 'Commoner', zealot: 'Cultist', brawler: 'Tough', bruiser: 'Tough', thug: 'Tough', duelist: 'Gladiator', champion: 'Gladiator' };
+export const PRINT_ALIAS = { /* hag, hags, crone resolve by context through hagFor */ archlich: 'Lich', demilich: 'Lich', /* the Lich's own kin by prefix (critic's release audit 2026-10-03: an archlich routed as a ghost) */ kobold: 'Kobold Warrior', kobolds: 'Kobold Warrior', goblin: 'Goblin Warrior', goblins: 'Goblin Warrior', hobgoblin: 'Hobgoblin Warrior', hobgoblins: 'Hobgoblin Warrior', bugbear: 'Bugbear Warrior', bugbears: 'Bugbear Warrior', gnoll: 'Gnoll Warrior', gnolls: 'Gnoll Warrior', sahuagin: 'Sahuagin Warrior', /* the renamed 2024 commons (a kobold got no Pack Tactics, critic form-ten 2026-10-01) */ archer: 'Scout', archers: 'Scout', bowman: 'Scout', bowmen: 'Scout', huntsman: 'Scout', ranger: 'Scout', crossbowman: 'Bandit', brigand: 'Bandit', footpad: 'Bandit', outlaw: 'Bandit', highwayman: 'Bandit', soldier: 'Warrior Infantry', 'foot soldier': 'Warrior Infantry', infantryman: 'Warrior Infantry', veteran: 'Warrior Veteran', mercenary: 'Warrior Veteran', 'sellsword': 'Warrior Veteran', wizard: 'Mage', sorcerer: 'Mage', warlock: 'Mage', cleric: 'Priest', /* monk: no longer an alias — the class table owns the word, and print's Priest is a cleric-shaped NPC, not a martial artist (landing two, 2026-10-14) */ thief: 'Spy', rogue: 'Spy', burglar: 'Spy', guardsman: 'Guard', sentry: 'Guard', watchman: 'Guard', paladin: 'Knight', cavalier: 'Knight', peasant: 'Commoner', villager: 'Commoner', farmer: 'Commoner', zealot: 'Cultist', brawler: 'Tough', bruiser: 'Tough', thug: 'Tough', duelist: 'Gladiator', champion: 'Gladiator' };
 // the CR a print name at the head of the words carries — for the form's blank-CR
 // read alone (printCanonFor refuses a Beast head in a long concept on purpose:
 // "a wolf that eats the stars" keeps its seats; "a swarm of rats that carries
@@ -390,6 +391,11 @@ export function permanentSpeedZero(text) {
   const BOUNDED = /\b(?:until|while|for \d+ (?:minute|hour|round)s?|emerges?|ends?|this turn|its next turn)\b/i;
   return [...String(text ?? '').matchAll(/[^.!?]*\b(?:its|it's|'s) speed is 0\b[^.!?]*[.!?]?/gi)].map((m) => m[0]).filter((s) => !BOUNDED.test(s));
 }
+
+// ONE ROUTE TO AN ACTION (the critic's fifth read: "Cunning Action and Cat's
+// Dash both grant Dash. Dedupe by effect"). A kit row whose whole grant a row on
+// the sheet already covers is a second name for one mechanic. Both kits read it.
+const grantsOf = (t) => new Set([...String(t ?? '').matchAll(/\btakes? the ([^.]*?) action/g)].flatMap((mm) => [...String(mm[1]).matchAll(/\b(Dash|Disengage|Hide)\b/g)].map((x) => x[1])));
 
 const sweepDeadName = (sectionsMap, deadName, keepRow, traceFn) => {
   const bare = String(deadName ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '').trim();
@@ -1887,10 +1893,6 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // A KIT ROW THAT IMPLEMENTS A CLAUSE BINDS IT (the critic's fourth read): the tortle read 0/1 with Shell Defense on the sheet because the kit stamped "a tortle hermit", not "withdraws into his shell"
       const clauseForShape = (shapeId) => { const tpl = shapeId ? TEMPLATES.find((x) => x.id === shapeId) : null; if (!tpl) return null; let best = null; for (const c of clauseRecord) { if (c.head || c.polarity) continue; const hits = rankByVerb([tpl], readPhrases(c.text), '')[0]?.concept?.length ?? 0; if (hits && (!best || hits > best.hits)) best = { text: c.text, hits }; } return best?.text ?? null; };
       const clauseForKeys = (ks) => { if (!ks?.length) return null; for (const c of clauseRecord) { if (c.head || c.polarity) continue; const w = readPhrases(c.text).toLowerCase(); if (ks.some((k) => new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i').test(w))) return c.text; } return null; }; // a LIFTED trait binds the GM's own verb when it names one (the harengon's Standing Leap answers "bounds over the hedgerows" — the critic's fourth read, rerun)
-      // ONE ROUTE TO AN ACTION (the critic's fifth read: "Cunning Action and Cat's
-      // Dash both grant Dash. Dedupe by effect"). A kit row whose whole grant a
-      // row on the sheet already covers is a second name for one mechanic.
-      const grantsOf = (t) => new Set([...String(t ?? '').matchAll(/\btakes? the ([^.]*?) action/g)].flatMap((mm) => [...String(mm[1]).matchAll(/\b(Dash|Disengage|Hide)\b/g)].map((x) => x[1])));
       for (const r of speciesRows(sk.species, { inline: inl, dc: scaled.dc })) { if (names().has(r.name.toLowerCase())) { trace('species kit:', `${r.name} — the sheet already carries it`); continue; }
         { const g = grantsOf(r.text); const covered = g.size && Object.values(sections).flat().find((e2) => { const h = grantsOf(e2.text); return h.size && [...g].every((x) => h.has(x)); });
           if (covered) { trace('species kit:', `${r.name} — "${covered.name}" already grants ${[...g].join(', ')}; one mechanic, one row`); continue; } } const ownC = clauseForKeys(r.keys) ?? sk.clause; const sec = sections[r.section] = sections[r.section] ?? []; const row = { name: r.name, text: r.text, kit: sk.species.key, clause: ownC, free: true }; if (r.section === 'Traits') sec.unshift(row); else sec.push(row); landed.push(`${r.name} (${r.source}${ownC !== sk.clause ? `, binds "${String(ownC).slice(0, 28)}"` : ''})`); }
@@ -1903,6 +1905,88 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         (sections[row.section] = sections[row.section] ?? []).push({ name: row.name, text: row.text, kit: sk.species.key, clause: ownClause, free: true, shape: row.shape }); landed.push(`${row.name} (${row.shape}, authored${ownClause !== sk.clause ? `, binds "${String(ownClause).slice(0, 30)}"` : ''})`);
       }
       trace('species kit:', `${sk.species.key} — "${sk.clause}": ${landed.join(', ') || 'header lines only'}${Object.keys(sk.species.modes ?? {}).length ? `; ${Object.entries(sk.species.modes).map(([m, n]) => `${m} ${n} ft.`).join(', ')}` : ''}${sk.species.senses ? `; ${sk.species.senses}` : ''}${sk.resist ? `; resistance ${sk.resist.join(', ')}` : ''}`);
+    }
+  }
+  { // THE CLASS KIT (landing two): a class the GM NAMED owes its rows — the same
+    // non-competitive landing the seat's owed trait gets. A class the words only
+    // IMPLY lands nothing here: the catalog already offers every one of these
+    // templates and ranks them by the GM's own verbs, so the implied tier is the
+    // fit call's (owner: "trigger is not eligibility"). Nothing on a print body.
+    const ck = printExact ? null : classFor([...clauseRecord.map((c) => c.text), String(options.userConcept ?? concept ?? '')], { mind: options.mind ?? null, int: Number(scaled.stats?.INT ?? NaN) });
+    if (ck) {
+      const inl = inlineGuessRef();
+      const srcText = readPhrases(String(options.userConcept ?? concept ?? ''));
+      const names = () => new Set(Object.values(sections).flat().map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase()));
+      const rowCount = () => Object.values(sections).flat().filter((e) => !/^(?:Multiattack|Legendary Action Uses)/.test(e.name ?? '')).length;
+      // the row names a frame needs come from the sheet, exactly as the signature's
+      // own context builds them — a Riposte with no melee name made a "Slam" attack
+      const meleeK = Object.values(sections).flat().find((e2) => /Melee(?: or Ranged)? Attack Roll/.test(e2.text ?? ''));
+      const ctxK = {
+        scaled, sections, archetype, style: scaled.style ?? null, cr, concept: srcText, name: p.name,
+        type: options.resolvedType ?? '', movement: (options.movement ?? []).join(' '),
+        energy: options.energy ?? null, mix: options.mix ?? null, imposed: [], mechanics: options.mechanics ?? null,
+        meleeName: meleeK?.name?.replace(/ \(.*\)$/, '') ?? 'Slam',
+        rangedName: Object.values(sections).flat().find((e2) => /Ranged Attack Roll/.test(e2.text ?? '') && !/Melee or Ranged/.test(e2.text ?? ''))?.name?.replace(/ \(.*\)$/, '') ?? null,
+        meleeType: (/\) ([A-Z][a-z]+) damage/.exec(meleeK?.text ?? '') ?? [])[1] ?? null,
+        conditionMinor: p.conditions?.condition_minor ?? null, projectile: p.projectile ?? null,
+      };
+      const landed = []; const yielded = [];
+      for (const r of classRows(ck.cls, { text: srcText, inline: inl, dc: scaled.dc })) {
+        // print's caster features refer to the Spellcasting row by name; without
+        // it they refer to nothing (a dangling reference the gates would catch)
+        if (r.requiresRow && !Object.values(sections).flat().some((e2) => r.requiresRow.test(String(e2.name ?? '').replace(/ \(.*\)$/, '')))) { trace('class kit:', `${r.kind === 'row' ? r.name : r.template} — the sheet carries no row it could refer to (${r.requiresRow})`); continue; }
+        let row = null;
+        if (r.kind === 'row') row = { name: r.name, text: r.text, section: r.section, gate: r.gate ?? null, why: r.source };
+        else {
+          const tpl = TEMPLATE_BY_ID.get(r.template);
+          if (!tpl) continue;
+          if (Object.values(sections).flat().some((e2) => e2.template === r.template)) { trace('class kit:', `${r.template} — the sheet already carries it`); continue; }
+          if (!templatesFor({ ...ctxK, section: tpl.section, trigger: null }).some((x) => x.id === r.template)) { trace('class kit:', `${r.template} — the sheet cannot carry it here (role, CR band, movement or a denial)`); continue; }
+          const rr = renderTemplate(tpl, ctxK, {}, { blind: true });
+          if (!rr || /\{[a-z_]+\}/.test(rr.text)) { trace('class kit:', `${r.template} — it cannot render blind on this sheet`); continue; }
+          // the TABLE names the row when it means something to the class: a
+          // paladin's smite is not "Venomed Edge", whatever the seed is called
+          row = { name: r.name ?? rr.name, text: String(rr.text).split('The creature').join(inl.charAt(0).toUpperCase() + inl.slice(1)).split('the creature').join(inl), section: rr.section ?? 'Traits', gate: rr.gate ?? null, template: r.template, why: r.name ? `${r.template} as ${r.name}` : r.template };
+        }
+        if (!row) continue;
+        if (/\{[a-z_]+\}/.test(row.text)) { trace('class kit:', `${row.name} — a slot went unfilled (${/\{[a-z_]+\}/.exec(row.text)[0]}); the row does not ship`); continue; }
+        // A RIDER RIDES ITS HOST ROW — it is a clause on an attack, never a row
+        // of its own (the signature path's own rule; "Rider" is not a section a
+        // GM reads). The host carries the provenance, as it does there.
+        if (row.section === 'Rider') {
+          // the host must be a row of OURS: print's own row is print's, and a
+          // print swap would carry the rider away with the row it rode (the
+          // monk-to-Priest alias did exactly that before it was removed)
+          const host = Object.values(sections).flat().find((e2) => /Melee(?: or Ranged)? Attack Roll/.test(e2.text ?? '') && !e2.print);
+          if (!host) { trace('class kit:', `${row.name} — a rider with no melee row to ride`); continue; }
+          if (String(host.text).includes(row.text.trim())) { trace('class kit:', `${row.name} — "${host.name}" already carries it`); continue; }
+          host.text = `${String(host.text).trim()} ${row.text.trim()}`;
+          host.kitRider = row.text.trim(); // the row's own rebuild must not drop it (the restore at the rider weld)
+          host.clause = host.clause ?? ck.clause;
+          host.feature = host.feature ?? row.name;
+          if (row.template) host.boundKeys = [...new Set([...(host.boundKeys ?? []), ...(row.keys ?? [])])].slice(0, 6);
+          landed.push(`${row.name} (${row.why}, rides ${host.name})`);
+          continue;
+        }
+        const bare = String(row.name).replace(/ \(.*\)$/, '');
+        if (names().has(bare.toLowerCase())) { trace('class kit:', `${bare} — the sheet already carries a row of that name`); continue; }
+        const g = grantsOf(row.text);
+        const covered = g.size && Object.values(sections).flat().find((e2) => { const h = grantsOf(e2.text); return h.size && [...g].every((x) => h.has(x)); });
+        if (covered) { trace('class kit:', `${bare} — "${covered.name}" already grants ${[...g].join(', ')}; one mechanic, one row`); continue; }
+        // THE SAME TWO TIERS AS THE SPECIES TABLE: what the words OWE is free — a
+        // print lift the named class carries, or a row the GM's own words asked for
+        // by name ("loses control" asks for Berserk). What the class merely implies
+        // waits for room under print's density at this CR.
+        const owed = r.kind === 'row' || !!r.keys;
+        if (!owed && rowCount() >= rowCap(cr)) { yielded.push(bare); continue; }
+        const full = `${bare}${row.gate ? ` (${row.gate})` : ''}`;
+        const sec = sections[row.section] = sections[row.section] ?? [];
+        const entry = { name: full, text: row.text, kit: ck.cls.key, clause: ck.clause, free: true, ...(row.template ? { template: row.template } : {}) };
+        if (row.section === 'Traits') sec.unshift(entry); else sec.push(entry);
+        landed.push(`${full} (${row.why})`);
+      }
+      scaled.classKit = { key: ck.cls.key, clause: ck.clause, landed: landed.length };
+      trace('class kit:', `${ck.cls.key} — "${ck.clause}": ${landed.join(', ') || (yielded.length ? 'nothing landed' : 'nothing to add — the sheet already answers it')}${yielded.length ? `; ${yielded.join(', ')} yielded to print's row cap ${rowCap(cr)}` : ''}`);
     }
   }
   function inlineGuessRef() { const g = String(options.fixedName ?? '').trim() && !printCanonFor(String(options.fixedName).trim(), cr) ? properInline(String(options.fixedName).trim()) : (personalName(p.name) ?? declaredInline ?? `the ${shortForm(p.name)}`); inlineGuessUsed = g; return g; } // the same chain the rows use, the model's declaration included ("the grestle vane" beside "Grestle" — the critic's species read) // the same short form the rows will use ("Dame Oriel", "the marauder"), not the Name's first word
@@ -2018,9 +2102,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           e.text = e.text_noRider;
           for (const [old, fresh] of renamed) e.text = e.text.replace(new RegExp(`${old}(?! Roll)`, 'g'), fresh);
           e.text = e.text.split('The creature').join(inline.charAt(0).toUpperCase() + inline.slice(1)).split('the creature').join(inline);
+          // THE KIT'S OWN CLAUSE SURVIVES THE REBUILD: the pristine capture
+          // predates the class kit, so restoring it dropped a monk's Stunning
+          // Strike off the row it rode (landing two, 2026-10-14)
+          if (e.kitRider && !e.text.includes(e.kitRider)) e.text = `${e.text.trim()} ${e.kitRider}`;
         }
       }
       delete e.text_noRider;
+      delete e.kitRider;
       // the withhold covers BASE types too, not riders alone (Choking Pollen dealt Poison on a hedge-witch whose words never said poison — fourth sighting, critic form-ten 2026-10-01): a weapon noun takes its own type, a cloud noun keeps the element it names, anything else takes the body's physical type
       if (energyWithheld && wanted === energyWithheld) {
         const nounT = Object.entries(TYPE_BY_NOUN).find(([n]) => new RegExp(`\\b${n}\\b`, 'i').test(String(e.name ?? '')))?.[1];

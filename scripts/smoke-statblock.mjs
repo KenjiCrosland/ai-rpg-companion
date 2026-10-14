@@ -241,6 +241,41 @@ const run = async () => {
       lines.push(`[golden] ${verdict} — route ${routeGot ?? 'none'} (want ${(entry.expect.route ?? ['any']).join('|')}); templates ${tmplGot.join(',') || 'none'} (want ${(entry.expect.template ?? ['any']).join('|')})`);
       console.log(`  [golden] ${verdict}`);
     }
+    // RE-ROLL ONE ENTRY (step 9b, 2026-10-14): the per-entry re-roll is a UI
+    // path — the card's own button — so nothing but this harness can show a
+    // critic what a re-rolled row looks like beside the block it came from.
+    // Batch entry: "reroll": { "section": "Traits", "match": "Hold Breath" }
+    // (2024 cards only; the classic card is a different component).
+    let rerolled = null;
+    if (entry.reroll && monster && (entry.rules ?? '2024') === '2024') {
+      const want = entry.reroll;
+      try {
+        const sec = want.section ?? 'Actions';
+        const list = (monster.sections ?? {})[sec] ?? [];
+        const idx = want.match ? list.findIndex((e) => new RegExp(want.match, 'i').test(String(e?.name ?? ''))) : Number(want.index ?? 0);
+        if (idx < 0) throw new Error(`no ${sec} row matching /${want.match}/`);
+        const before = { name: list[idx].name, text: list[idx].text };
+        const sel = `[data-testid="reroll-${sec}-${idx}"]`;
+        await page.locator('[data-testid="edit-statblock"]').click({ timeout: 15_000 });
+        await page.locator(sel).click({ timeout: 15_000 });
+        // the button is disabled while the call is in flight and re-enabled
+        // after: wait for it to go, then to come back
+        await page.waitForFunction((s) => { const b = document.querySelector(s); return !!b && b.disabled; }, sel, { timeout: 15_000 }).catch(() => {});
+        await page.waitForFunction((s) => { const b = document.querySelector(s); return !!b && !b.disabled; }, sel, { timeout: GEN_TIMEOUT_MS, polling: 500 });
+        await page.locator('[data-testid="save-edit"]').click({ timeout: 15_000 });
+        const after = await page.evaluate(({ s, i, nm }) => {
+          const m = JSON.parse(localStorage.getItem('monsters') || '{}');
+          const mine = Object.values(m).filter(Array.isArray).flat().find((x) => x?.name === nm);
+          const e = mine?.sections?.[s]?.[i] ?? null;
+          return e ? { name: e.name, text: e.text, template: e.template ?? null, boundKeys: e.boundKeys ?? null } : null;
+        }, { s: sec, i: idx, nm: monster.name });
+        rerolled = { sec, before, after };
+        lines.push(`[harness] re-rolled ${sec}/"${before.name}" -> "${after?.name ?? '(unchanged)'}"${after?.template ? ` [catalog: ${after.template}]` : ' [the call\'s own text]'}`);
+      } catch (e2) {
+        rerolled = { error: String(e2?.message ?? e2).slice(0, 160) };
+        lines.push(`!! [harness] re-roll failed: ${rerolled.error}`);
+      }
+    }
     const secs = ((Date.now() - t0) / 1000).toFixed(0);
     console.log(`${status === 'ok' ? '✓' : '✗ ' + status} ${secs}s`);
 
@@ -255,6 +290,13 @@ const run = async () => {
       '',
       '### Block', '```', card, '```', '',
       ...(converted ? ['### Converted', '```', converted, '```', ''] : []),
+      ...(rerolled ? (rerolled.error
+        ? ['### Re-roll', '```', `(re-roll did not complete: ${rerolled.error})`, '```', '']
+        : ['### Re-roll — one entry, replaced', '```',
+          `${rerolled.sec} / BEFORE  ${rerolled.before.name}: ${rerolled.before.text}`,
+          `${rerolled.sec} / AFTER   ${rerolled.after?.name ?? '—'}: ${rerolled.after?.text ?? '—'}`,
+          `provenance: ${rerolled.after?.template ? `catalog template "${rerolled.after.template}"${rerolled.after.boundKeys?.length ? `, binds ${rerolled.after.boundKeys.join(', ')}` : ''}` : 'none — the call wrote the text itself'}`,
+          '```', ''] ) : []),
       '### Trace', '```', lines.join('\n') || '(no trace captured)', '```', '',
     ].join('\n');
 

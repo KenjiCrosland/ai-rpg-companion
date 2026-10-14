@@ -2381,7 +2381,7 @@ function parseLegacyAttributes(attributes) {
 function entryRows(monster) {
   if (monster.sections) {
     return Object.entries(monster.sections).flatMap(([section, list]) =>
-      (list ?? []).map((e) => ({ section, name: e.name, text: e.text })));
+      (list ?? []).map((e) => ({ section, name: e.name, text: e.text, template: e.template ?? null })));
   }
   const rows = [];
   for (const [field, section] of [['abilities', 'Traits'], ['actions', 'Actions'], ['legendary_actions', 'Legendary Actions']]) {
@@ -2468,7 +2468,7 @@ const ALL_ROLES = ['brute', 'skirmisher', 'controller', 'lurker', 'defender', 'a
  * the chassis here: its rows, its stats, its DCs. Returns null when no shelf
  * applies (a legendary action, a sheet with no ability scores).
  */
-function rerollCatalog(monster, { section, cr, chassis, numbers, stats, pb, exclude = null }) {
+function rerollCatalog(monster, { section, cr, chassis, numbers, stats, pb, exclude = null, excludeTemplate = null }) {
   const key = SECTION_KEY_OF[section];
   if (!key || !stats) return null;
   const sections = {};
@@ -2496,7 +2496,10 @@ function rerollCatalog(monster, { section, cr, chassis, numbers, stats, pb, excl
   // engine does not guess a role it was never told (pre-engine monsters)
   const shelf = (archetype ? [archetype] : ALL_ROLES)
     .flatMap((a) => templatesFor({ ...ctx, archetype: a, section: key, trigger: null, text: concept }));
-  const menu = [...new Map(shelf.map((t) => [t.id, t])).values()];
+  // THE ROW BEING REPLACED TAKES ITS TEMPLATE WITH IT (live block, 2026-10-14:
+  // re-rolling Assassinate returned assassinate again under a new name — the
+  // same-name check catches a repeated NAME, never a repeated mechanic)
+  const menu = [...new Map(shelf.map((t) => [t.id, t])).values()].filter((t) => t.id !== excludeTemplate);
   if (!menu.length) return null;
   return { ctx, scaled, sections, concept, menu: rankByVerb(menu, concept).map((r) => r.t).slice(0, 14) };
 }
@@ -2539,7 +2542,7 @@ export async function rerollEntry(monster, { kind, current, degraded = false }, 
 
   const skeletons = editionSkeletons(edition, chassis, numbers);
   const view = creatureInView(monster, { exclude: current.name, cr });
-  const catalog = rerollCatalog(monster, { section, cr, chassis, numbers, stats, pb, exclude: current.name });
+  const catalog = rerollCatalog(monster, { section, cr, chassis, numbers, stats, pb, exclude: current.name, excludeTemplate: keepName ? null : (current.template ?? entryRows(monster).find((r) => r.name === current.name)?.template ?? null) });
 
   const prompt = `You are re-rolling ONE entry of an existing D&D ${edition === '2014' ? '5th edition (2014 rules)' : '2024 (5.5e)'} statblock. The numbers are fixed — never invent different ones.
 
@@ -2584,7 +2587,11 @@ Return ONLY JSON, no markdown fences: ${catalog
         if (!rendered) catalogRejects.push({ message: `the template "${fit.template.id}" could not be filled from this sheet — answer "template": "none" and write the text yourself` });
         else {
           const row = { name: `${fit.name ?? rendered.name}${rendered.gate ? ` (${rendered.gate})` : ''}`, text: stampInline(rendered.text, view.inline) };
-          const vc = valueCheck(row, { scaled: catalog.scaled, sections: catalog.sections, cr, section: rendered.section });
+          // a TRAIT and a RIDER never climb the ladder (the signature path's own
+          // rule): the ladder's "Success: Half damage only" belongs to a save row,
+          // and on a trait it shipped as a dangling "*Success:* H" (live block)
+          const priced = !['Traits', 'Rider'].includes(rendered.section);
+          const vc = priced ? valueCheck(row, { scaled: catalog.scaled, sections: catalog.sections, cr, section: rendered.section }) : { steps: [], ev: null, floor: null, replaced: 'a trait (no trade)' };
           if (vc.steps.length) { row.text = vc.text; row.name = vc.name; }
           if (vc.steps.some((st) => /still under|does nothing/.test(st))) catalogRejects.push({ message: `"${row.name}" does too little for a CR ${crKeyFor(cr)} ${REROLL_ENTRY_LABEL[section].toLowerCase()} — pick another template or answer "none" and write it yourself` });
           else {
@@ -2653,7 +2660,19 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`);
   const entryName = edition === '2014' && section === 'Legendary Actions'
     ? normalizeLegendaryCost(outcome.entry.name)
     : outcome.entry.name;
-  return { name: entryName, description: outcome.entry.text, ...(outcome.entry.template ? { template: outcome.entry.template, boundKeys: outcome.entry.boundKeys ?? [] } : {}) };
+  // A REWRITE KEEPS THE ROW'S OWN NUMBERS (live block, 2026-10-14: an Oathblade
+  // rewrite came back 25 (6d6 + 4) where the row read 26 (5d8 + 4)). The
+  // skeletons hand the model the budget for a NEW row; a row the engine is only
+  // rewording already has its numbers, and the engine owns them.
+  let text = outcome.entry.text;
+  if (keepName && /Attack Roll/.test(currentText)) {
+    const wasAtk = /Attack Roll:\*? (\+\d+)/.exec(currentText)?.[1] ?? null;
+    const wasDmg = /\d+ \(\d+d\d+(?: [+-] \d+)?\)/.exec(currentText)?.[0] ?? null;
+    if (wasAtk) text = text.replace(/(Attack Roll:\*? )\+\d+/, `$1${wasAtk}`);
+    if (wasDmg) text = text.replace(/\d+ \(\d+d\d+(?: [+-] \d+)?\)/, wasDmg);
+    if (text !== outcome.entry.text) logger.log('[reroll] numbers kept:', `"${entryName}" is a rewrite — the row's own ${wasAtk ?? ''} ${wasDmg ?? ''} stand over the skeleton's`);
+  }
+  return { name: entryName, description: text, ...(outcome.entry.template ? { template: outcome.entry.template, boundKeys: outcome.entry.boundKeys ?? [] } : {}) };
 }
 
 const SECTION_KINDS = { abilities: 'Traits', actions: 'Actions', legendary: 'Legendary Actions' };

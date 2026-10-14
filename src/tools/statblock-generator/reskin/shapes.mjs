@@ -321,6 +321,40 @@ export const SHAPES = [
     roles: ['lurker', 'skirmisher'], styles: [], cr_range: [2, 30], replaces: 'trait',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the creature is subjected to an effect that allows it to make a Dexterity saving throw to take only half damage, the creature instead takes no damage if it succeeds on the save and only half damage if it fails. It can\'t use this trait if it has the Incapacitated condition.'])),
   },
+  // ----- THE CLASS ROWS (landing two, 2026-10-14) -----
+  // Print carries almost no class features: its 26 people-blocks hold thirteen
+  // distinct traits between them (see CLASSES-inventory-2026-10-13.md). These are
+  // the five a GM names that print has no row for, authored in print's own
+  // grammar with the engine's numbers. Each cites the printed row its frame
+  // copies. Four more were refused and the inventory says why: Martial Arts is
+  // the unarmed row's own die, which the engine owns; Deflect Attacks and Uncanny
+  // Dodge reduce incoming damage, which this engine forbids outright; Action
+  // Surge is an extra Attack action no band can price.
+  {
+    id: 'stunning-strike', name: 'Stunning Strike', invented: true, // Contagion's on-hit save frame (Giant Scorpion, Ghast) with print's Stunned idiom; print stuns on a save, never on every hit, so the clause is once a turn
+    roles: ['skirmisher', 'lurker', 'brute', 'defender'], styles: [], cr_range: [5, 30], replaces: 'melee-rider',
+    frames: Object.fromEntries(['3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'Once on each of the creature\'s turns when it hits with this attack, the target is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Stunned condition until the end of the creature\'s next turn.'])),
+  },
+  {
+    id: 'patient-defense', name: 'Patient Defense', invented: true, // Cunning Action's grammar (Assassin, Spy) on print's Dodge action
+    roles: ['defender', 'skirmisher', 'lurker'], styles: [], cr_range: [0, 30], replaces: 'bonus-alt',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature takes the Dodge action.'])),
+  },
+  {
+    id: 'lay-on-hands', name: 'Lay on Hands', invented: true, // Warded Mending's healing frame (Shield Guardian) as a touch, print's Divine Aid seat
+    roles: ['defender', 'controller', 'artillery'], styles: [], cr_range: [1, 30], replaces: 'bonus-alt', gate: '2/Day',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature touches a creature within 5 feet of itself and restores {avg} ({dice}) Hit Points to it.'])),
+  },
+  {
+    id: 'second-wind', name: 'Second Wind', invented: true, // the same healing frame, turned on the creature itself
+    roles: ['defender', 'brute', 'skirmisher'], styles: [], cr_range: [1, 30], replaces: 'bonus-alt', gate: '2/Day',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature regains {avg} ({dice}) Hit Points.'])),
+  },
+  {
+    id: 'shield-bash', name: 'Shield Bash', cite: 'Gladiator/Shield Bash (CR 5)', // print's own row, with the engine's dice in place of print's CR 5 numbers
+    roles: ['defender', 'brute', 'skirmisher'], styles: [], cr_range: [1, 30], replaces: 'signature',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Strength Saving Throw*: DC {dc}, one creature within 5 feet that the creature can see. *Failure:* {avg_half} ({dice_half}) Bludgeoning damage, and if the target is Medium or smaller, it has the Prone condition.'])),
+  },
   // ----- the six inventions (kin in the comment; grammar is print's) -----
   {
     id: 'relentless-pursuit', name: 'Relentless Pursuit', invented: true, // Ice Walk's clause + Faultless Tracker's quarry; the ox, the gallows, the causeway knight, the ashwalker (4 sightings)

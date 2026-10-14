@@ -1,0 +1,76 @@
+[
+  {
+    "name": "",
+    "description": "a bloodmaw orc berserker with a greataxe who retreats behind iron armor",
+    "cr": "8",
+    "rules": "2024",
+    "mech": "round 6 hold 1: the named weapon takes the chassis melee slot and the chassis row leaves, the count riding with it; hold 2: 'retreats behind armor' buys NO shell"
+  },
+  {
+    "name": "",
+    "description": "a herdmaster who commands a stampede of thunder-elk",
+    "cr": "5",
+    "rules": "2024",
+    "mech": "round 6 hold 1: a physical hybrid row that names nothing thrown loses its 30/120 range"
+  },
+  {
+    "name": "Sir Reginald Pemberton-Hughes",
+    "description": "a duelist with a greatsword and a heavy crossbow who is deathly afraid of chickens",
+    "cr": "6",
+    "rules": "2014",
+    "mech": "round 7: the 2014 Multiattack must not force a crossbow shot beside a greatsword; round 5: the phobia's fill is the GM's noun; Frightened immunity stripped"
+  },
+  {
+    "name": "",
+    "description": "a triton reef-warden who topples raiders with a trident",
+    "cr": "5",
+    "rules": "2024",
+    "mech": "round 7: a mastery save is 8 + the weapon's mod + PB, and the derivation gate now reads it; the triton kit"
+  },
+  {
+    "name": "",
+    "description": "a rime-scaled wyrm that swallows sailors whole",
+    "cr": "9",
+    "rules": "2024",
+    "mech": "round 7 repeat offender: the swallow interior takes the concept's Cold, never the default Acid"
+  },
+  {
+    "name": "",
+    "description": "a tortle hermit who withdraws into his shell",
+    "cr": "3",
+    "rules": "2024",
+    "mech": "round 7 repeat offender: the speed-discord lint must stay quiet on Shell Defense; the AC 17 floor"
+  },
+  {
+    "name": "",
+    "description": "a satyr piper who dances travellers into the hills",
+    "cr": "4",
+    "rules": "2024",
+    "mech": "round 7: a Fey species gets its language (Sylvan), where the Humanoid-only list never fired"
+  },
+  {
+    "name": "",
+    "description": "a troglodyte that lurks in shadow and steps away from its kill",
+    "cr": "2",
+    "rules": "2014",
+    "mech": "round 6 hold 2: 'shadow'/'steps' is no claim on a teleport; two lifts; 2014"
+  },
+  {
+    "name": "Stormwrought Oathkeeper",
+    "description": "a storm-marked warden who stomps the ground and spits venom",
+    "cr": "7",
+    "rules": "2024",
+    "reroll": {
+      "section": "Actions",
+      "match": "^(?!Multiattack|Spellcasting)."
+    },
+    "mech": "round 5: the call declares the inline for a two-word name; round 6 hold 4: a stomp is Bludgeoning and venom is Poison, never the weapon type; step 9b: an ACTION re-rolled through the catalog"
+  },
+  {
+    "name": "Meshrin",
+    "description": "a chain-hooked thing that drags its prey into the dark",
+    "cr": "6",
+    "rules": "2024",
+    "mech": "round 5: a Name-field proper noun speaks as Meshrin, never 'the meshrin'; the drag engine keeps its key"
+  }
+]

@@ -1,0 +1,122 @@
+[
+  {
+    "name": "",
+    "description": "a lizardfolk monk who strikes pressure points with an open hand",
+    "cr": "5",
+    "rules": "2024",
+    "mech": "monk: Stunning Strike rides the melee row (once a turn), Patient Defense under the cap; the lizardfolk kit beside it; 'monk' is no longer print's Priest"
+  },
+  {
+    "name": "",
+    "description": "a tiefling rogue who stalks the rooftops of the old quarter",
+    "cr": "5",
+    "rules": "2024",
+    "reroll": {
+      "section": "Traits",
+      "match": "Evasion|Assassinate|Sneak"
+    },
+    "mech": "rogue: print's Cunning Action lift, Assassinate asked for by 'stalks', Sneak Attack from the feature table; then ONE entry re-rolled through the catalog"
+  },
+  {
+    "name": "Dame Oriel",
+    "description": "a knight who holds the line with a shield and a longsword",
+    "cr": "5",
+    "rules": "2024",
+    "mech": "fighter: Riposte names the sheet's own Longsword, Guarded Stance by 'holds the line'; a shield LINE must not draw Shield Bash"
+  },
+  {
+    "name": "",
+    "description": "a veteran soldier with a longsword who bashes with a buckler",
+    "cr": "6",
+    "rules": "2014",
+    "mech": "fighter: Shield Bash asked for by 'bashes'/'buckler' with the engine's dice, Second Wind by 'veteran'; 2014 phrasing"
+  },
+  {
+    "name": "",
+    "description": "a goliath berserker who loses control when wounded",
+    "cr": "8",
+    "rules": "2024",
+    "mech": "barbarian: print's Bloodied Frenzy lift, Berserk asked for by 'loses control'; the goliath's Medium size and d8 hit die"
+  },
+  {
+    "name": "Vareth Solmane",
+    "description": "a templar priest of the dawn who blesses her soldiers",
+    "cr": "6",
+    "rules": "2024",
+    "reroll": {
+      "section": "Actions",
+      "match": "^(?!Multiattack|Spellcasting)."
+    },
+    "mech": "cleric: Divine Aid (3/Day) lifted with print's own use limit, and it must refer to a Spellcasting row that exists; an ACTION re-rolled"
+  },
+  {
+    "name": "",
+    "description": "a templar priest with a mace and no magic at all",
+    "cr": "4",
+    "rules": "2024",
+    "mech": "cleric NEGATIVE: no Spellcasting row, so no caster lift may land"
+  },
+  {
+    "name": "",
+    "description": "a court wizard who is never where you struck and steps away",
+    "cr": "6",
+    "rules": "2024",
+    "mech": "mage: Misty Step (3/Day) asked for by 'steps away'; Protective Magic dedupes against the caster chassis's own row"
+  },
+  {
+    "name": "Thurivald",
+    "description": "a skald who sings his warband into a fury",
+    "cr": "6",
+    "rules": "2014",
+    "mech": "bard: Captain's Charm lifted from the Pirate Captain, the self-reference rewritten; Bolstering Cry under the cap; 2014"
+  },
+  {
+    "name": "",
+    "description": "an oathsworn crusader who smites the unclean and mends her soldiers",
+    "cr": "8",
+    "rules": "2024",
+    "mech": "paladin: print's Aura of Authority lifted, Divine Smite under the table's own name (never the seed's 'Venomed Edge'), Lay on Hands by 'mends'"
+  },
+  {
+    "name": "",
+    "description": "a ninja who moves through the shadows and strikes unseen",
+    "cr": "5",
+    "rules": "2024",
+    "mech": "IMPLIED class: the kit must land nothing; the catalog's own ranking may still offer the rogue's shapes to the fit call"
+  },
+  {
+    "name": "",
+    "description": "a dire wolf that hunts in a pack",
+    "cr": "3",
+    "rules": "2024",
+    "mech": "ELIGIBILITY: a bestial mind learns no class, whatever words follow"
+  },
+  {
+    "name": "",
+    "description": "an imp rogue who picks locks for a devil",
+    "cr": "4",
+    "rules": "2024",
+    "mech": "ELIGIBILITY by mind, not type: a Fiend may be a rogue"
+  },
+  {
+    "name": "",
+    "description": "a minotaur reaver who herds prey into the maze",
+    "cr": "6",
+    "rules": "2024",
+    "mech": "barbarian keys on 'reaver'; the minotaur's Large size, Gore for the chassis strike, Common alone"
+  },
+  {
+    "name": "",
+    "description": "a knight-errant of the fallen order who shields the weak",
+    "cr": "7",
+    "rules": "2024",
+    "mech": "the most specific word wins: 'knight-errant' is a paladin, not the fighter's 'knight'"
+  },
+  {
+    "name": "",
+    "description": "a tabaxi cutpurse who slips through the market crowd",
+    "cr": "3",
+    "rules": "2024",
+    "mech": "rogue + tabaxi: one route to Dash (Cunning Action or Cat's Dash, never both)"
+  }
+]

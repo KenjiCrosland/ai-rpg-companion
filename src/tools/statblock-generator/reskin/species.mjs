@@ -55,12 +55,16 @@ export function speciesFor(texts, concept = '') {
 export function liftSrdRow(monsterName, rowName) {
   const block = printBlocks.find((m) => m.name === monsterName); if (!block) return null;
   let found = null;
-  for (const [sec, es] of Object.entries(block.sections ?? {})) for (const e of es) if (e.name === rowName && !found) found = { section: sec, text: String(e.text ?? '') };
+  // print writes the use limit INTO the row name ("Divine Aid (3/Day)", "Misty
+  // Step (3/Day)") — match the bare name and hand the gate back, so a lifted row
+  // keeps print's own limit (landing two: the caster lifts are all gated)
+  const bareName = (n) => String(n ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '').trim();
+  for (const [sec, es] of Object.entries(block.sections ?? {})) for (const e of es) if (bareName(e.name) === rowName && !found) found = { section: sec, text: String(e.text ?? ''), gate: /\((Recharge [\d–-]+|\d\/Day)\)/.exec(String(e.name))?.[1] ?? null };
   if (!found) return null;
   const words = monsterName.toLowerCase().split(/\s+/);
   const selfRe = new RegExp(`\\b(?:[Tt]he|[Tt]his) (${words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})('s)?\\b`, 'g'); // "the hydra", "this ghast's Stench"
   const text = found.text.replace(selfRe, (m0, w, pos) => `{inline}${pos ?? ''}`).replace(/\bDC \d+\b/g, 'DC {dc}').replace(/\s{2,}/g, ' ');
-  return { section: found.section, text, source: `${monsterName}/${rowName}` };
+  return { section: found.section, text, gate: found.gate ?? null, source: `${monsterName}/${rowName}` };
 }
 
 const stampInline = (text, inline, dc) => String(text).split('{dc}').join(String(dc)).split('{inline}').join(inline).replace(/(^|[.!?*]\s+|^\*[^*]*\*\s*)the /g, '$1The ').replace(/^the /, 'The ');
