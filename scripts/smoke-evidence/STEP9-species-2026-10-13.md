@@ -314,3 +314,74 @@ Pins: ten new tests in `species.spec.js` under "the critic's fifth read, and the
 judgements the call now owns". Reskin suites 22/22, 1,108 tests. Full suite 183
 suites, 5,260 tests, 26 skipped. `npm run build` clean. No block run this
 landing, per the owner.
+
+---
+
+## Round seven — landing one closed, and the repeat offenders (2026-10-13)
+
+The owner: "lets keep going." This round closes the species table's last facts
+and the three items the critic has now flagged three or four times. No block run;
+it rolls into the next landing with rounds five and six.
+
+### The species table's last two facts
+
+**Languages.** The generator's species-language list was Humanoid-gated, so a
+satyr, a centaur and a minotaur never got one, and a grung read "can't speak"
+where grung speak. All nineteen entries now declare their tongues and the kit
+owns the line: it replaces an empty, None or can't-speak line, and otherwise adds
+only what is missing. The GM still outranks it — the header clause and the speech
+clause both land after the kit. A GM who asks for a mute grung still gets one.
+
+**Natural weapons.** The table's `naturalWeapons` was only ever a warrant for a
+part the GM named, so a minotaur struck with a chassis Slam. Where no row names
+one of the species' own weapons and the GM named no weapon, a **generic** chassis
+strike (Slam, Fist, Strike, Blow, Punch) becomes the species' own, with its own
+damage type and every citation following the rename: a minotaur Gores for
+Piercing, a centaur strikes with Hooves, a satyr Rams. A weapon the GM typed, a
+part, print's row and a name the model chose all stand untouched.
+
+### The three the critic flagged three times
+
+**The speed-discord lint on Shell Defense.** The rule looked 40 characters
+forward for a duration, and Shell Defense states its duration first: "Until it
+emerges, … its Speed is 0 and can't increase." The rule now reads the whole
+sentence, and it is a named, exported predicate (`permanentSpeedZero`) rather
+than an inline regex, so it is pinned on its own text. A genuinely permanent
+Speed 0 beside a walking Speed still reports.
+
+**The swallow interior on a cold wyrm.** The interior already honoured a declared
+energy; it just never read the creature's own words. Where the form declares no
+energy, the concept's own energy word now names the interior, and only a gullet
+the words never colour falls back to Acid. A rime-scaled wyrm digests in Cold.
+
+**The 2014 Multiattack forcing a crossbow shot.** `multiattack2014` wrote the
+enumerated form — "one with its Greatsword and one with its Heavy Crossbow" —
+whenever the name count matched the attack count, which commits the creature to
+every name. That is only honest when one body can use them all in a turn. A
+launcher beside a melee weapon now takes the choice form; print's own enumerated
+idiom still stands for a Chimera's bite and horns.
+
+### Three smaller items from the same read
+
+- **Great Weapon Master on a Longbow.** The feat is now melee-heavy only, which
+  is also the 2024 weapon list minus the two heavy ranged weapons. A longbow
+  takes Slow and a heavy crossbow Push, their own mastery properties.
+- **Othyn's Topple at DC 13.** A mastery save derives from the weapon's stat:
+  8 + mod + PB, not the sheet's best save DC, which may belong to a mental stat.
+  The derivation gate gained `mastery-dc` so the drift cannot return quietly —
+  the general DC rule accepted DC 13 because WIS +2 derives it.
+- **Cunning Action and Cat's Dash both granting Dash.** A kit row whose whole
+  grant a row on the sheet already covers is a second name for one mechanic, and
+  it is dropped with a trace. Pinned both ways: dropped beside the skulker
+  chassis's Cunning Action, landing where the chassis grants only Hide.
+
+### Measures
+
+Pins: five more in `species.spec.js` (languages, the Fey case, the mute case, the
+species' teeth, the GM's weapon outranking them), five more for the small items
+and the mastery gate, two in `engine-2014.spec.js`, two in `generate.spec.js`.
+
+```
+full suite      184 suites, 5,284 passed, 26 skipped
+npm run build   clean
+```

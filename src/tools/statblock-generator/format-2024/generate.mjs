@@ -12,7 +12,8 @@
  * injected ((prompt, validate) => Promise<string>) so the pipeline is testable
  * without the AI client; the component passes generateGptResponse.
  */
-import { hintsBlock, HINT_VERDICTS_FIELD } from '../reskin/lexicon.mjs';
+import { hintsBlock, HINT_VERDICTS_FIELD, readPhrases } from '../reskin/lexicon.mjs';
+import { templatesFor, renderTemplate, rankByVerb, valueCheck, templateMenuLines, parseFit } from '../reskin/templates.mjs';
 import { LINES } from '../reskin/route.mjs';
 import { seedLeakTokens, rollNameBans, TYPE_ESSENCES } from './concept-seeds.mjs';
 import spec from '@/data/archetype-chassis-spec.json';
@@ -1490,8 +1491,15 @@ export function multiattack2014(text) {
   const n = WORDS[combo[1].toLowerCase()] ?? Number(combo[1]);
   const its = /^(?:The|the) /.test(t) ? 'its ' : ''; // a named person's Multiattack does not say "its"
   const list = (xs, joiner) => (xs.length === 2 ? xs.join(` ${joiner} `) : `${xs.slice(0, -1).join(', ')}, ${joiner} ${xs.at(-1)}`);
+  // THE ENUMERATED FORM COMMITS TO EVERY NAME, so it is only honest when one
+  // creature can use them all in a turn. A launcher beside a melee weapon cannot
+  // be (flagged three times: Sir Reginald's "one with Greatsword and one with
+  // Heavy Crossbow" forced a crossbow shot every round) — print writes those as
+  // a choice. The combination form carries the choice.
+  const LAUNCHER = /\b(?:bow|longbow|shortbow|crossbow|sling|musket|pistol|rifle|blowgun|firearm|gun|cannon)\b/i;
+  const mixedReach = names.some((x) => LAUNCHER.test(x)) && names.some((x) => !LAUNCHER.test(x));
   const rep = names.length === 1 ? `makes ${combo[1]} ${names[0]} attacks`
-    : names.length === n ? `makes ${combo[1]} attacks: ${list(names.map((x) => `one with ${its}${x}`), 'and')}`
+    : names.length === n && !mixedReach ? `makes ${combo[1]} attacks: ${list(names.map((x) => `one with ${its}${x}`), 'and')}`
       : `makes ${combo[1]} attacks, using ${list(names, 'or')}`;
   return to2014Grammar(t.replace(combo[0], rep));
 }
@@ -2384,8 +2392,113 @@ function entryRows(monster) {
 
 export function validateEntryResponse(jsonString) {
   const parsed = tryParse(jsonString);
-  return !!parsed && typeof parsed.name === 'string' && parsed.name.trim() !== ''
-    && typeof parsed.text === 'string' && parsed.text.trim() !== '';
+  if (!parsed || typeof parsed.name !== 'string' || parsed.name.trim() === '') return false;
+  // A RE-ROLL ANSWERS ONE OF TWO WAYS (step 9b): a template from the catalog,
+  // whose rules and numbers the engine renders, or — only when none fits — the
+  // text written out. A named template needs no text; free text needs text.
+  const picked = typeof parsed.template === 'string' && parsed.template.trim() !== '' && !/^(?:none|n\/a|null)$/i.test(parsed.template.trim());
+  return picked || (typeof parsed.text === 'string' && parsed.text.trim() !== '');
+}
+
+/** The GM's own words for this creature, wherever the saved shape keeps them. */
+function conceptOf(monster) {
+  for (const v of [monster.generation?.userConcept, monster.concept, monster.description, monster.flavor_description]) {
+    if (typeof v === 'string' && v.trim()) return v.trim();
+  }
+  return '';
+}
+
+const stampInline = (text, inline) => (inline
+  ? String(text).split('The creature').join(inline.charAt(0).toUpperCase() + inline.slice(1)).split('the creature').join(inline)
+  : String(text));
+
+/**
+ * THE WHOLE CREATURE, FOR A CALL THAT ONLY EVER SAW A NAME (step 9b; users:
+ * a re-roll "seems incredibly random as though it doesn't take the whole
+ * creature into consideration"). The old prompt showed the monster's name, its
+ * CR, and the NAMES of its other entries. It never showed what the GM asked
+ * for, the header, the phrase the rows use for the creature, or one word of any
+ * other entry's rules — so the model invented from a name.
+ */
+function creatureInView(monster, { exclude = null, cr } = {}) {
+  const concept = conceptOf(monster);
+  const inline = String(monster.inline ?? '').trim();
+  const header = [
+    [monster.size, monster.type].filter(Boolean).join(' '),
+    monster.alignment, monster.ac != null ? `AC ${monster.ac}` : null, monster.hp != null ? `HP ${monster.hp}` : null,
+    monster.speed ? `Speed ${monster.speed}` : null, monster.senses ? `Senses ${monster.senses}` : null,
+    monster.languages ? `Languages ${monster.languages}` : null,
+  ].filter(Boolean).join('; ');
+  // a row the GM named — a part, a species row, a feature, anything carrying a
+  // clause — is the creature's own; the re-roll must not contradict or repeat it
+  const rows = entryRows(monster).filter((r) => r.name !== exclude);
+  const ownedBy = new Map(Object.entries(monster.sections ?? {}).flatMap(([, list]) => (list ?? []).map((e) => [e.name, !!(e.part || e.kit || e.feature || e.clause)])));
+  const lines = rows.map((r) => `- [${r.section}]${ownedBy.get(r.name) ? ' *' : ''} ${r.name}: ${String(r.text ?? '').replace(/\s+/g, ' ').slice(0, 220)}`);
+  return { concept, inline, text: `THE CREATURE — read all of it before you answer:
+${monster.name}${header ? `, ${header}` : ''}. CR ${crKeyFor(cr)}${monster.archetype && monster.archetype !== 'balanced' ? `, combat role: ${monster.archetype}` : ''}.
+${concept ? `WHAT THE GM ASKED FOR, in their words: "${concept.replace(/"/g, "'").slice(0, 400)}"\n` : ''}${inline ? `IT IS CALLED "${inline}" IN RULES TEXT — use that exact phrase, never "the creature".\n` : ''}ITS OTHER ENTRIES — the new one stands beside these; never repeat, replace or contradict one${lines.some((l) => l.includes('] *')) ? '. A * marks a row the GM asked for by name' : ''}:
+${lines.join('\n') || '- none'}` };
+}
+
+/**
+ * THE SHEET'S OWN DC AND ATTACK BONUS (step 9b). A re-roll showed the model the
+ * CARD's numbers for the CR while the creature's other rows carried its own
+ * derived ones — the reef-warden's rows read DC 14 and +6 and the skeleton said
+ * DC 15 and +7, so a re-rolled row landed a point off its siblings every time.
+ * The sheet wins where it is plausibly the engine's (within 2 of the card); a
+ * hand-edited outlier does not drag the budget with it.
+ */
+function sheetNumbersOf(monster, chassis) {
+  const rowsAll = entryRows(monster);
+  const maxOf = (re) => { const hits = rowsAll.map((e) => Number(re.exec(String(e.text ?? ''))?.[1] ?? 0)).filter(Boolean); return hits.length ? Math.max(...hits) : null; };
+  const near = (v, card) => (v != null && Math.abs(v - card) <= 2 ? v : card);
+  return {
+    save_dc: near(maxOf(/(?:Saving Throw\*?:?\*? DC|DC) (\d+)/), chassis.save_dc),
+    attack_bonus: near(maxOf(/Attack Roll:\*? \+(\d+)/), chassis.attack_bonus),
+  };
+}
+
+const SECTION_KEY_OF = { Traits: 'trait', Actions: 'action', 'Bonus Actions': 'bonus_action', Reactions: 'reaction' };
+const ALL_ROLES = ['brute', 'skirmisher', 'controller', 'lurker', 'defender', 'artillery', 'caster'];
+
+/**
+ * THE CATALOG, FOR A SAVED SHEET (step 9b). The signature path's rule is that
+ * rules text is never free — a shape or a seed from the catalog holds it and the
+ * engine fills every number. A re-roll had no catalog at all. The saved sheet IS
+ * the chassis here: its rows, its stats, its DCs. Returns null when no shelf
+ * applies (a legendary action, a sheet with no ability scores).
+ */
+function rerollCatalog(monster, { section, cr, chassis, numbers, stats, pb, exclude = null }) {
+  const key = SECTION_KEY_OF[section];
+  if (!key || !stats) return null;
+  const sections = {};
+  for (const r of entryRows(monster)) { if (r.name === exclude) continue; (sections[r.section] ??= []).push({ name: r.name, text: r.text }); }
+  const rowsAll = Object.values(sections).flat();
+  const num = (re) => { const hits = rowsAll.map((e) => Number(re.exec(String(e.text ?? ''))?.[1] ?? 0)).filter(Boolean); return hits.length ? Math.max(...hits) : 0; };
+  const concept = readPhrases(conceptOf(monster));
+  const archetype = monster.archetype && monster.archetype !== 'balanced' ? monster.archetype : (monster.generation?.archetype ?? null);
+  const scaled = {
+    cr, pb, stats, striker_stat: attackStatFor(stats), per_hit: numbers.perAttack,
+    dc: num(/DC (\d+)/) || chassis.save_dc, atk: num(/Attack Roll:\*? \+(\d+)/) || chassis.attack_bonus, sections,
+  };
+  const melee = rowsAll.find((e) => /Melee(?: or Ranged)? Attack Roll/.test(e.text ?? ''));
+  const ctx = {
+    scaled, sections, archetype: archetype ?? 'brute', style: null, cr,
+    movement: String(monster.speed ?? ''), type: String(monster.type ?? ''), concept,
+    name: monster.name, energy: null, mix: null, projectile: null, mechanics: null,
+    meleeName: melee?.name?.replace(/ \(.*\)$/, '') ?? 'Slam',
+    rangedName: rowsAll.find((e) => /Ranged Attack Roll/.test(e.text ?? '') && !/Melee or Ranged/.test(e.text ?? ''))?.name?.replace(/ \(.*\)$/, '') ?? null,
+    meleeType: (/\) ([A-Z][a-z]+) damage/.exec(melee?.text ?? '') ?? [])[1] ?? null,
+    conditionMinor: 'Prone',
+    imposed: [],
+  };
+  // a saved sheet with no recorded role draws from every role's shelf: the
+  // engine does not guess a role it was never told (pre-engine monsters)
+  const shelf = (archetype ? [archetype] : ALL_ROLES)
+    .flatMap((a) => templatesFor({ ...ctx, archetype: a, section: key, trigger: null, text: concept }));
+  const menu = [...new Map(shelf.map((t) => [t.id, t])).values()];
+  if (!menu.length) return null;
+  return { ctx, scaled, sections, concept, menu: rankByVerb(menu, concept).map((r) => r.t).slice(0, 14) };
 }
 
 /**
@@ -2405,8 +2518,9 @@ export async function rerollEntry(monster, { kind, current, degraded = false }, 
   // First numeric token, tolerant of "CR 5 (1,800 XP)" style prefixes.
   const crToken = String(monster.challenge_rating ?? '').match(/\d+\/\d+|\d+(\.\d+)?/)?.[0];
   const cr = monster.cr ?? crNumberFor(crToken ?? '');
-  const { chassis, plan } = buildContext(cr, monster.archetype ?? 'balanced');
-  const numbers = damageBudgetFor(cr, chassis, plan);
+  const { chassis: card, plan } = buildContext(cr, monster.archetype ?? 'balanced');
+  const numbers = damageBudgetFor(cr, card, plan); // the DAMAGE budget is the card's; the DC and the attack bonus are stat-derived, so the sheet's own stand
+  const chassis = { ...card, ...sheetNumbersOf(monster, card) };
   const stats = monster.stats ?? parseLegacyAttributes(monster.attributes);
   const pb = typeof monster.pb === 'number' ? monster.pb : chassis.pb;
 
@@ -2424,18 +2538,23 @@ export async function rerollEntry(monster, { kind, current, degraded = false }, 
   const keepName = referenced || PROTECTED_ENTRY_NAME_RE.test(current.name ?? '');
 
   const skeletons = editionSkeletons(edition, chassis, numbers);
+  const view = creatureInView(monster, { exclude: current.name, cr });
+  const catalog = rerollCatalog(monster, { section, cr, chassis, numbers, stats, pb, exclude: current.name });
 
   const prompt = `You are re-rolling ONE entry of an existing D&D ${edition === '2014' ? '5th edition (2014 rules)' : '2024 (5.5e)'} statblock. The numbers are fixed — never invent different ones.
 
-THE MONSTER: ${monster.name}, CR ${crKeyFor(cr)}${monster.archetype ? `, combat role: ${monster.archetype}` : ''}.
-Its other entries (do not duplicate their mechanics or names): ${otherNames.join('; ') || 'none'}.
+${view.text}
 
 ${keepName
     ? `REWRITE THIS ${REROLL_ENTRY_LABEL[section]} — KEEP the name "${current.name}" EXACTLY (${referenced ? 'other entries reference it by name' : 'the name is structural'}) and write a fresh take on its text:`
     : `REPLACE THIS ${REROLL_ENTRY_LABEL[section]} with a brand-new ability filling the same role — invent a NEW name (never "${current.name}" or a variation of it) and a fresh idea, not a rewording of this one:`}
 "${current.name}": ${currentText}
 
-FIXED NUMBER SKELETONS (use EXACTLY these if the new entry attacks or forces a save):
+${catalog ? `FIRST CHOICE — THE CATALOG. These are printed rules frames, each legal for this creature's role, CR, movement and section. The engine fills every number and every closed slot; you fill only the {slots} marked "you fill". Pick the ONE whose rules genuinely carry an ability THIS creature would have — read what the GM asked for. A template that merely resembles it does not fit.
+${templateMenuLines(catalog.menu, { cr, concept: catalog.concept, idea: currentText })}
+A VERB MATCH is a WORD match, not a judgement: name in "wrong" any template whose key word does not mean its mechanic here (the word sits in the modifier slot of a compound, the sheet already answers it, or it belongs to another fiction). Name the ability in Monster Manual register: two words, three at most, never the creature's own name.
+
+SECOND CHOICE — answer "template": "none" ONLY if nothing above carries it, and then write the text yourself with these skeletons:` : `FIXED NUMBER SKELETONS (use EXACTLY these if the new entry attacks or forces a save):`}
 ${skeletons}
 
 RULES:
@@ -2444,26 +2563,60 @@ RULES:
     : `\n- This entry is a REACTION — not a free action. It must use EXACTLY this form: *Trigger:* <the specific event that lets the creature respond>. *Response:* <what it does>.`) : ''}
 - Any attack you reference by name must be one of the other entries listed above${referenced ? '' : ', or omit attack references'}.
 
-Return ONLY JSON, no markdown fences: {"name": "...", "text": "..."}`;
+Return ONLY JSON, no markdown fences: ${catalog
+    ? '{"template": "<id from the catalog, or none>", "name": "<2-3 words>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic>"], "text": "<ONLY when template is none: the full rules text>"}'
+    : '{"name": "...", "text": "..."}'}`;
 
   const attempt = async (p) => {
     const raw = await callLLM(p, validateEntryResponse);
     if (!raw) return null;
     const parsed = tryParse(raw);
     if (!parsed) return null;
+    // THE CATALOG FIRST, THE MODEL'S OWN TEXT AS THE FLOOR (step 9b). One call,
+    // two possible answers — a re-roll stays one call. A template that renders
+    // and clears the value floor IS the entry, with its numbers from the engine
+    // and its provenance on the row; anything else falls through to the text.
+    let proposed = null; let provenance = null; const catalogRejects = [];
+    if (catalog && typeof parsed.template === 'string') {
+      const fit = parseFit(raw, catalog.menu, monster.name);
+      if (fit.template) {
+        const rendered = renderTemplate(fit.template, catalog.ctx, fit.fills);
+        if (!rendered) catalogRejects.push({ message: `the template "${fit.template.id}" could not be filled from this sheet — answer "template": "none" and write the text yourself` });
+        else {
+          const row = { name: `${fit.name ?? rendered.name}${rendered.gate ? ` (${rendered.gate})` : ''}`, text: stampInline(rendered.text, view.inline) };
+          const vc = valueCheck(row, { scaled: catalog.scaled, sections: catalog.sections, cr, section: rendered.section });
+          if (vc.steps.length) { row.text = vc.text; row.name = vc.name; }
+          if (vc.steps.some((st) => /still under|does nothing/.test(st))) catalogRejects.push({ message: `"${row.name}" does too little for a CR ${crKeyFor(cr)} ${REROLL_ENTRY_LABEL[section].toLowerCase()} — pick another template or answer "none" and write it yourself` });
+          else {
+            proposed = row; provenance = { template: fit.template.id, boundKeys: rankByVerb([fit.template], catalog.concept)[0]?.concept ?? [] };
+            logger.log('[reroll] value check:', `"${row.name}" EV ${vc.ev} vs floor ${vc.floor} (${vc.replaced})${vc.steps.length ? ` — ${vc.steps.join('; ')}` : ' — worth the trade'}`);
+          }
+        }
+      }
+    }
+    if (!proposed) {
+      if (typeof parsed.text !== 'string' || !parsed.text.trim()) {
+        const steer = catalogRejects.length ? catalogRejects : [{ message: 'no text was returned — answer "template": "none" and write the rules text' }];
+        logger.log('[reroll] nothing to ship:', `${steer[0].message} — the retry carries the reason`);
+        return { entry: null, rejects: steer };
+      }
+      proposed = { name: parsed.name, text: stampInline(parsed.text, view.inline) };
+      logger.log('[reroll] catalog miss:', catalogRejects.length ? catalogRejects[0].message : `no template held it (offered ${catalog?.menu.length ?? 0}); the model's own text stands, linted`);
+    } else logger.log('[reroll] catalog fit:', `${provenance.template} -> "${proposed.name}"${provenance.boundKeys.length ? ` [binds ${provenance.boundKeys.join(', ')}]` : ''}`);
     // Pseudo-block: full text only for the new entry; the rest are name stubs.
     const sections = {};
     for (const r of rows) {
       if (r.name === current.name && r.section === section) continue;
       (sections[r.section] ??= []).push({ name: r.name, text: '', _stub: true });
     }
-    (sections[section] ??= []).push({ name: parsed.name, text: parsed.text });
+    (sections[section] ??= []).push({ name: proposed.name, text: proposed.text });
     let pseudo = { name: monster.name, stats: stats ?? undefined, pb, sections };
     pseudo = applyCorrections(pseudo, lintStatblock(pseudo, { chassis, edition, perAttack: attackDamageDiceFor(numbers.perAttack, requiredAttackModFor(chassis)).avg, totalDamage: numbers.total }).findings, { chassis });
     const result = lintStatblock(pseudo, { chassis, edition, perAttack: attackDamageDiceFor(numbers.perAttack, requiredAttackModFor(chassis)).avg, totalDamage: numbers.total });
-    const entry = pseudo.sections[section].find((e) => e.name === parsed.name && e.text);
+    const entry0 = pseudo.sections[section].find((e) => e.name === proposed.name && e.text);
+    const entry = entry0 && provenance ? { ...entry0, ...provenance } : entry0;
     let rejects = result.findings.filter((f) => f.severity === 'reject');
-    const sameName = parsed.name.trim().toLowerCase() === (current.name ?? '').trim().toLowerCase();
+    const sameName = proposed.name.trim().toLowerCase() === (current.name ?? '').trim().toLowerCase();
     if (keepName && !sameName && entry) {
       // Keep-mode rename is deterministically repairable: stamp the
       // load-bearing name back over the fresh text (cheaper than a retry;
@@ -2500,7 +2653,7 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`);
   const entryName = edition === '2014' && section === 'Legendary Actions'
     ? normalizeLegendaryCost(outcome.entry.name)
     : outcome.entry.name;
-  return { name: entryName, description: outcome.entry.text };
+  return { name: entryName, description: outcome.entry.text, ...(outcome.entry.template ? { template: outcome.entry.template, boundKeys: outcome.entry.boundKeys ?? [] } : {}) };
 }
 
 const SECTION_KINDS = { abilities: 'Traits', actions: 'Actions', legendary: 'Legendary Actions' };
@@ -2531,8 +2684,9 @@ export async function rerollSection(monster, { kind, suggestion = '', degraded =
 
   const crToken = String(monster.challenge_rating ?? '').match(/\d+\/\d+|\d+(\.\d+)?/)?.[0];
   const cr = monster.cr ?? crNumberFor(crToken ?? '');
-  const { chassis, plan } = buildContext(cr, monster.archetype ?? 'balanced');
-  const numbers = damageBudgetFor(cr, chassis, plan);
+  const { chassis: card, plan } = buildContext(cr, monster.archetype ?? 'balanced');
+  const numbers = damageBudgetFor(cr, card, plan);
+  const chassis = { ...card, ...sheetNumbersOf({ ...monster, sections: Object.fromEntries(Object.entries(monster.sections ?? {}).filter(([k]) => k !== section)) }, card) }; // the section being replaced is not its own reference
   const stats = monster.stats ?? parseLegacyAttributes(monster.attributes);
   const pb = typeof monster.pb === 'number' ? monster.pb : chassis.pb;
 
@@ -2542,6 +2696,8 @@ export async function rerollSection(monster, { kind, suggestion = '', degraded =
   const actionNames = (section === 'Actions' ? otherRows : rows)
     .filter((r) => r.section === 'Actions')
     .map((r) => r.name);
+
+  const sectionView = creatureInView({ ...monster, sections: Object.fromEntries(Object.entries(monster.sections ?? {}).filter(([k]) => k !== section)), abilities: section === 'Traits' ? [] : monster.abilities, actions: section === 'Actions' ? [] : monster.actions, legendary_actions: section === 'Legendary Actions' ? [] : monster.legendary_actions }, { cr });
 
   const range = section === 'Traits' ? plan.traits
     : section === 'Actions' ? plan.actions
@@ -2561,8 +2717,7 @@ export async function rerollSection(monster, { kind, suggestion = '', degraded =
 
   const prompt = `You are rewriting the ENTIRE ${section} section of an existing D&D ${edition === '2014' ? '5th edition (2014 rules)' : '2024 (5.5e)'} statblock with fresh flavor. The numbers are fixed — never invent different ones.
 
-THE MONSTER: ${monster.name}, CR ${crKeyFor(cr)}${monster.archetype ? `, combat role: ${monster.archetype}` : ''}.
-Its entries in OTHER sections (do not duplicate their mechanics): ${otherRows.map((r) => r.name).join('; ') || 'none'}.
+${sectionView.text}
 
 PREVIOUS VERSION of this section (write a fresh take on the same creature — do not copy):
 ${currentSection.map((r) => `- ${r.name}: ${r.text}`).join('\n') || '(empty)'}

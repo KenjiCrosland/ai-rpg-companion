@@ -1566,3 +1566,30 @@ describe('the 2014 gate polish (smoke 2026-09-14)', () => {
     expect(legacy.legendary_actions.map((e) => e.name)).toEqual(['Frozen Talon']);
   });
 });
+
+// THE REPEAT OFFENDERS (the critic's fifth read, 2026-10-13: "third or fourth
+// time flagged, still open"). Each of these had been reported across several
+// reads and each is a one-rule fix in the layer that owns it.
+describe('the three the critic flagged three times (2026-10-13)', () => {
+  test('a 2014 Multiattack never forces a launcher shot beside a melee swing', () => {
+    const { multiattack2014 } = require('../format-2024/generate.mjs');
+    // Sir Reginald read "one with Greatsword and one with Heavy Crossbow" — a crossbow shot every turn
+    expect(multiattack2014('Sir Reginald makes two attacks, using Greatsword or Heavy Crossbow in any combination.'))
+      .toBe('Sir Reginald makes two attacks, using Greatsword or Heavy Crossbow.');
+    expect(multiattack2014('The guard makes two attacks, using Spear or Shortbow in any combination.'))
+      .toMatch(/using Spear or Shortbow\.$/);
+    // print's own enumerated form stands where one body can use them all in a turn (the Chimera)
+    expect(multiattack2014('The chimera makes two attacks, using Bite or Horns in any combination.'))
+      .toBe('The chimera makes two attacks: one with its Bite and one with its Horns.');
+    expect(multiattack2014('The ogre makes two attacks, using Greatclub in any combination.'))
+      .toBe('The ogre makes two Greatclub attacks.');
+  });
+
+  test('the speed-discord lint reads the whole sentence, so a bounded Speed 0 is not a permanent one', () => {
+    const { permanentSpeedZero: permanent } = require('../reskin/generate.mjs');
+    // Shell Defense states its duration FIRST; the old lookahead read only 40 characters forward
+    expect(permanent("The tortle withdraws into its shell. Until it emerges, it gains a +4 bonus to Armor Class and has the Prone condition; its Speed is 0 and can't increase.")).toHaveLength(0);
+    expect(permanent('The target has the Restrained condition and its Speed is 0 until the grapple ends.')).toHaveLength(0);
+    expect(permanent('The statue is rooted in place. Its Speed is 0 and it cannot move.')).toHaveLength(1);
+  });
+});

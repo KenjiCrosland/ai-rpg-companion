@@ -72,6 +72,7 @@ export const ANATOMY = {
   // hammer or a thrown axe is honestly a ranged row (the critic's fifth read:
   // "Curb Stomp" dealt Piercing, "Fangblade" dealt Bludgeoning)
   stomp: ['melee', 'Bludgeoning', 'type'], stamp: ['melee', 'Bludgeoning', 'type'], kick: ['melee', 'Bludgeoning', 'type'], crush: ['melee', 'Bludgeoning', 'type'], pound: ['melee', 'Bludgeoning', 'type'], headbutt: ['melee', 'Bludgeoning', 'type'], club: ['melee', 'Bludgeoning', 'type'], mace: ['melee', 'Bludgeoning', 'type'], hammer: ['melee', 'Bludgeoning', 'type'], staff: ['melee', 'Bludgeoning', 'type'],
+  ram: ['melee', 'Bludgeoning', 'type'], butt: ['melee', 'Bludgeoning', 'type'],
   blade: ['melee', 'Slashing', 'type'], sword: ['melee', 'Slashing', 'type'], axe: ['melee', 'Slashing', 'type'], scimitar: ['melee', 'Slashing', 'type'], saber: ['melee', 'Slashing', 'type'], sabre: ['melee', 'Slashing', 'type'],
   gore: ['melee', 'Piercing'], horn: ['melee', 'Piercing'], horns: ['melee', 'Piercing'], tusk: ['melee', 'Piercing'], tusks: ['melee', 'Piercing'], sting: ['melee', 'Piercing'], stinger: ['melee', 'Piercing'], lance: ['melee', 'Piercing'], spear: ['melee', 'Piercing'], pike: ['melee', 'Piercing'],
   rock: ['ranged', null], boulder: ['ranged', null], slab: ['ranged', null], javelin: ['ranged', 'Piercing'], bolt: ['ranged', 'Piercing'], arrow: ['ranged', 'Piercing'], dart: ['ranged', 'Piercing'], net: ['ranged', null], bomb: ['ranged', null], flask: ['ranged', null], shard: ['ranged', 'Piercing'],

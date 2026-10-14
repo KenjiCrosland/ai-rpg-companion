@@ -78,6 +78,19 @@ touching anything under `chassis/` or `format-2024/`.
   names survive only when load-bearing (referenced by another entry, or
   Multiattack/Spellcasting), where a model rename is deterministically
   stamped back instead of retried.
+  **The re-roll is CATALOG-FIRST** (step 9b, 2026-10-13): one call, two
+  possible answers — a template id from the shelf `templatesFor` allows for
+  this saved sheet (the engine renders print's frame, fills every number from
+  the sheet, stamps `monster.inline`, prices the row with `valueCheck`, and
+  records `template`/`boundKeys` on it), or `"template": "none"` plus the
+  text, which still goes through the pseudo-block lint and one retry. The
+  call sees the whole creature: `generation.userConcept`, the header, the
+  inline, and every sibling entry's rules text, with the GM's own rows
+  marked. Skeletons, lint and catalog all use the SHEET's derived save DC and
+  attack bonus (the card's only when the sheet is more than 2 off, i.e.
+  hand-edited). Legendary Actions have no shelf and keep the old prompt; the
+  whole-section re-roll gets the creature in view but not the catalog.
+  Evidence: `scripts/smoke-evidence/REROLL-case-2026-10-13.md`.
 - **Edition switching (cache-and-swap)**: `ParTabToggle` tabs on the card's
   top edge (`data-testid="edition-switch"`) flip the selected monster
   between its 2014/2024 printings — burgundy document tabs, not lapis

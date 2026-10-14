@@ -134,6 +134,7 @@ export function corpusAt(cr, edition = null) {
 
 // ---------------------------------------------------------------- gates
 const SKILL_STAT = { Athletics: 'STR', Acrobatics: 'DEX', 'Sleight of Hand': 'DEX', Stealth: 'DEX', Arcana: 'INT', History: 'INT', Investigation: 'INT', Nature: 'INT', Religion: 'INT', 'Animal Handling': 'WIS', Insight: 'WIS', Medicine: 'WIS', Perception: 'WIS', Survival: 'WIS', Deception: 'CHA', Intimidation: 'CHA', Performance: 'CHA', Persuasion: 'CHA' };
+const MASTERY_FEATURE = /^(?:Topple|Push|Sap|Slow|Vex|Nick|Graze|Cleave)$/i; // the 2024 weapon mastery properties, as the feature table names them
 function gateDerivation(m, ctx, F) {
   const pb = Number(m.pb ?? pbFor(ctx.cr)); const mods = Object.fromEntries(Object.entries(m.stats ?? {}).map(([k, v]) => [k, modOf(v)]));
   const declared = m.generation?.declared ?? {}; // user-set numbers are declared fields, not derivations (Resolution 3)
@@ -155,6 +156,17 @@ function gateDerivation(m, ctx, F) {
       const dc = Number(dm[1]); const diff = Math.min(...modsOf(['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']).map((x) => Math.abs(8 + pb + x - dc)));
       if (diff === 1) F('dc-float', 'ok', `${sec}/${bare(e.name)}: DC ${dc} sits one off the derived DC (the chassis ±1 float)`, dc);
       else if (diff > 1) F('dc', 'fail', `${sec}/${bare(e.name)}: DC ${dc} is no stat's 8 + PB ${pb} + mod`, dc);
+    }
+    // A MASTERY SAVE IS THE WEAPON'S OWN DERIVATION (the critic's fifth read:
+    // Othyn's Topple read DC 13 where 8 + STR 3 + PB 3 = 14). The general DC
+    // rule accepts any stat's 8 + PB + mod, so a mental stat's DC passed it on a
+    // weapon rider. A weapon rolls Strength or Dexterity, and so does its save.
+    if (MASTERY_FEATURE.test(String(e.feature ?? '')) && /Attack Roll/.test(e.text ?? '')) {
+      const want = ['STR', 'DEX'].map((k) => 8 + pb + (mods[k] ?? 0));
+      for (const dm of String(e.text ?? '').matchAll(/Saving Throw\*?:?\*? DC (\d+)/g)) {
+        const dc = Number(dm[1]);
+        if (!want.includes(dc)) F('mastery-dc', 'fail', `${sec}/${bare(e.name)}: the ${e.feature} save is DC ${dc}; a weapon's save derives from Strength or Dexterity (${want.join(' or ')})`, dc);
+      }
     }
     for (const em of String(e.text ?? '').matchAll(/escape DC (\d+)/g)) {
       const want = 8 + pb + (mods.STR ?? 0); const dcMax = Math.max(0, ...[...JSON.stringify(m.sections ?? {}).matchAll(/(?<!escape )DC (\d+)/g)].map((x) => Number(x[1]))); const okWeak = (mods.STR ?? 0) < 0 && Number(em[1]) === dcMax; // a weak-armed grappler keys its escape off the save DC (the critic's second species read)

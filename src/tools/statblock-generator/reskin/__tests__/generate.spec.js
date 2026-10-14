@@ -5444,3 +5444,47 @@ describe('form-ten (2026-10-01): the form\'s own words ride over print', () => {
     expect(text).toMatch(/\bthe grandmother\b/i); // print's rank idiom: the sergeant, the priest, the grandmother
   });
 });
+
+// THE COLD WYRM'S GUT (the critic's fifth read, flagged three times): print's
+// interiors match the body they are inside. Where the form declares no energy,
+// the creature's own words name one, and only an unnamed gut digests in acid.
+describe('the engulf interior takes the concept\'s energy (2026-10-13)', () => {
+  const quiet2 = (respond) => async (prompt) => {
+    if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+    if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+    return respond(prompt);
+  };
+  const bruteAnswer = (cr, style = null) => {
+    const { renameKeysOf: rk } = require('../generate.mjs');
+    const scaled = scaleDonor(pickDonor(cr, style, 'brute'), cr, { mechanics: [] });
+    const renames = {};
+    rk(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; });
+    const typed = Object.values(scaled.sections).flat().filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name]);
+    return JSON.stringify({
+      name: 'Gullet Wyrm', type: 'Monstrosity', size: 'Large', alignment: 'Chaotic Neutral',
+      senses: 'darkvision 60 ft.', languages: 'Draconic',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Bludgeoning'])),
+      conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Strength',
+      wildcard: "*Strength Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has the Prone condition until the start of the creature's next turn.",
+    });
+  };
+  const withStyle = (style) => (cr) => bruteAnswer(cr, 'grappler').replace(/}$/, `,"engulf_style":${JSON.stringify(style)}}`);
+  const interior = (m) => Object.values(m.sections).flat().find((e) => e.rules && /^(?:Swallow|Engulf|Smother|Whelm|Cage|Entomb|Cocoon)\b/.test(e.name ?? ''))?.text ?? '';
+
+  test('a rime-scaled wyrm swallows for Cold, not Acid', async () => {
+    const desc = 'a rime-scaled wyrm that swallows sailors whole';
+    const m = await generateReskin({ archetype: 'brute', concept: desc, userConcept: desc, cr: 5, style: 'grappler', mechanics: [] },
+      quiet2(() => withStyle('swallow')(5)));
+    const t = interior(m);
+    expect(t).toBeTruthy();
+    expect(t).toMatch(/Cold damage/);
+    expect(t).not.toMatch(/Acid damage/);
+  });
+
+  test('a gullet the words never colour still digests in acid', async () => {
+    const desc = 'a gutter-wyrm that swallows sailors whole';
+    const m = await generateReskin({ archetype: 'brute', concept: desc, userConcept: desc, cr: 5, style: 'grappler', mechanics: [] },
+      quiet2(() => withStyle('swallow')(5)));
+    expect(interior(m)).toMatch(/Acid damage/);
+  });
+});

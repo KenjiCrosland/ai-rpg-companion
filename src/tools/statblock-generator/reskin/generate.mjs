@@ -380,6 +380,17 @@ ${needsSpells ? ` "spells": { "at_will": ["<exactly 2 spells this concept would 
 }`;
 }
 
+/**
+ * SPEED 0 IS PERMANENT ONLY WHEN ITS SENTENCE SETS NO DURATION. Returns the
+ * offending sentences. Shell Defense states its duration first — "Until it
+ * emerges, … its Speed is 0 and can't increase" — and the old rule looked only
+ * 40 characters forward, so it reported the tortle three reads running.
+ */
+export function permanentSpeedZero(text) {
+  const BOUNDED = /\b(?:until|while|for \d+ (?:minute|hour|round)s?|emerges?|ends?|this turn|its next turn)\b/i;
+  return [...String(text ?? '').matchAll(/[^.!?]*\b(?:its|it's|'s) speed is 0\b[^.!?]*[.!?]?/gi)].map((m) => m[0]).filter((s) => !BOUNDED.test(s));
+}
+
 const sweepDeadName = (sectionsMap, deadName, keepRow, traceFn) => {
   const bare = String(deadName ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '').trim();
   if (bare.length < 4) return;
@@ -1613,7 +1624,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // energy — a furnace gullet burns (the Crucible Hulk swallowed
       // with Acid inside a Fire body, 2026-09-10); every other
       // containment crushes — print's Rug and Whelm deal Bludgeoning
-      const interior = options.energy ?? (['Swallow', 'Engulf'].includes(row.name) ? 'Acid' : 'Bludgeoning');
+      // a COLD wyrm does not digest in acid (flagged three times). Where the
+      // form declared no energy, the creature's own words name one: print's
+      // interiors match the body they are inside, and only an undeclared,
+      // unnamed gut falls back to Acid.
+      const namedEnergy = (NAME_CLAIMS.find(([re, ty]) => ty && re.test(readPhrases(String(options.userConcept ?? concept ?? '')))) ?? [])[1] ?? null;
+      const interior = options.energy ?? namedEnergy ?? (['Swallow', 'Engulf'].includes(row.name) ? 'Acid' : 'Bludgeoning');
+      if (!options.energy && namedEnergy) trace('engulf interior:', `${namedEnergy} — the concept's own energy, not the default ${['Swallow', 'Engulf'].includes(row.name) ? 'Acid' : 'Bludgeoning'} (a cold wyrm's gut is not acid)`);
       row.text = row.text.split('{damage_type}').join(interior);
       // interiors scale BELOW the seat floor (the Murgor: a CR 1/2 ooze
       // carrying the brute-5 seat's 2d6 against an 8-DPR budget,
@@ -1865,12 +1882,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     const sk = printExact ? null : speciesFor([...clauseRecord.map((c) => c.text), String(options.fixedName ?? '').trim()], String(options.userConcept ?? concept ?? ''));
     if (sk) {
       const inl = inlineGuessRef(); const names = () => new Set(Object.values(sections).flat().map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase()));
-      scaled.species = { key: sk.species.key, type: sk.species.type ?? null, size: sk.species.size ?? 'Medium', ac_floor: sk.species.ac_floor ?? null, modes: sk.species.modes ?? {}, senses: sk.species.senses ?? null, resist: sk.resist ?? null, clause: sk.clause };
+      scaled.species = { key: sk.species.key, type: sk.species.type ?? null, size: sk.species.size ?? 'Medium', languages: sk.species.languages ?? null, naturalWeapons: sk.species.naturalWeapons ?? null, ac_floor: sk.species.ac_floor ?? null, modes: sk.species.modes ?? {}, senses: sk.species.senses ?? null, resist: sk.resist ?? null, clause: sk.clause };
       const landed = [];
       // A KIT ROW THAT IMPLEMENTS A CLAUSE BINDS IT (the critic's fourth read): the tortle read 0/1 with Shell Defense on the sheet because the kit stamped "a tortle hermit", not "withdraws into his shell"
       const clauseForShape = (shapeId) => { const tpl = shapeId ? TEMPLATES.find((x) => x.id === shapeId) : null; if (!tpl) return null; let best = null; for (const c of clauseRecord) { if (c.head || c.polarity) continue; const hits = rankByVerb([tpl], readPhrases(c.text), '')[0]?.concept?.length ?? 0; if (hits && (!best || hits > best.hits)) best = { text: c.text, hits }; } return best?.text ?? null; };
       const clauseForKeys = (ks) => { if (!ks?.length) return null; for (const c of clauseRecord) { if (c.head || c.polarity) continue; const w = readPhrases(c.text).toLowerCase(); if (ks.some((k) => new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i').test(w))) return c.text; } return null; }; // a LIFTED trait binds the GM's own verb when it names one (the harengon's Standing Leap answers "bounds over the hedgerows" — the critic's fourth read, rerun)
-      for (const r of speciesRows(sk.species, { inline: inl, dc: scaled.dc })) { if (names().has(r.name.toLowerCase())) { trace('species kit:', `${r.name} — the sheet already carries it`); continue; } const ownC = clauseForKeys(r.keys) ?? sk.clause; const sec = sections[r.section] = sections[r.section] ?? []; const row = { name: r.name, text: r.text, kit: sk.species.key, clause: ownC, free: true }; if (r.section === 'Traits') sec.unshift(row); else sec.push(row); landed.push(`${r.name} (${r.source}${ownC !== sk.clause ? `, binds "${String(ownC).slice(0, 28)}"` : ''})`); }
+      // ONE ROUTE TO AN ACTION (the critic's fifth read: "Cunning Action and Cat's
+      // Dash both grant Dash. Dedupe by effect"). A kit row whose whole grant a
+      // row on the sheet already covers is a second name for one mechanic.
+      const grantsOf = (t) => new Set([...String(t ?? '').matchAll(/\btakes? the ([^.]*?) action/g)].flatMap((mm) => [...String(mm[1]).matchAll(/\b(Dash|Disengage|Hide)\b/g)].map((x) => x[1])));
+      for (const r of speciesRows(sk.species, { inline: inl, dc: scaled.dc })) { if (names().has(r.name.toLowerCase())) { trace('species kit:', `${r.name} — the sheet already carries it`); continue; }
+        { const g = grantsOf(r.text); const covered = g.size && Object.values(sections).flat().find((e2) => { const h = grantsOf(e2.text); return h.size && [...g].every((x) => h.has(x)); });
+          if (covered) { trace('species kit:', `${r.name} — "${covered.name}" already grants ${[...g].join(', ')}; one mechanic, one row`); continue; } } const ownC = clauseForKeys(r.keys) ?? sk.clause; const sec = sections[r.section] = sections[r.section] ?? []; const row = { name: r.name, text: r.text, kit: sk.species.key, clause: ownC, free: true }; if (r.section === 'Traits') sec.unshift(row); else sec.push(row); landed.push(`${r.name} (${r.source}${ownC !== sk.clause ? `, binds "${String(ownC).slice(0, 28)}"` : ''})`); }
       const rowCount = () => Object.values(sections).flat().filter((e) => !/^(?:Multiattack|Legendary Action Uses)/.test(e.name ?? '')).length;
       for (const f of sk.species.flavor ?? []) { // the implied tier lands only under print's density at this CR; the GM's own rows stand
         if (rowCount() >= rowCap(cr)) { trace('species kit yields:', `${f.name} — the sheet is full (${rowCount()} rows at CR ${cr}, print's cap ${rowCap(cr)}); the user's own rows stand`); (scaled.speciesYielded = scaled.speciesYielded ?? []).push({ shape: f.shape, name: f.name, kit: sk.species.key, clause: clauseForShape(f.shape) ?? sk.clause }); continue; }
@@ -3795,8 +3818,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (/blind beyond this radius/.test(monster.senses ?? '') && /darkvision/.test(monster.senses ?? '')) {
       lint.findings.push({ rule: 'senses-contradiction', severity: 'audit', message: 'blindsight "(blind beyond this radius)" beside darkvision contradicts itself — drop one' });
     }
-    if (/(?:its|'s) [Ss]peed is 0\b(?![^.]{0,40}until)/.test(allTexts) && !/^0 ft\./.test(monster.speed ?? '')) {
-      lint.findings.push({ rule: 'speed-discord', severity: 'audit', message: `a trait sets Speed 0 permanently while the header says "${monster.speed}" — print puts immobility in the header (Speed 0 ft. or 5 ft.) and deletes the trait clause` });
+    {
+      const permanent = permanentSpeedZero(allTexts);
+      if (permanent.length && !/^0 ft\./.test(monster.speed ?? '')) {
+        lint.findings.push({ rule: 'speed-discord', severity: 'audit', message: `a trait sets Speed 0 permanently while the header says "${monster.speed}" — print puts immobility in the header (Speed 0 ft. or 5 ft.) and deletes the trait clause` });
+      }
     }
     for (const es of Object.values(sections)) {
       for (const e of es) {
@@ -4023,6 +4049,40 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (sp.ac_floor && Number(monster.ac) < sp.ac_floor && !monster.generation?.declared?.ac) { trace('species kit:', `AC ${monster.ac} -> ${sp.ac_floor} — the ${sp.key}'s shell is natural armor (no chassis hands a tortle AC 13 — the critic's third species read)`); monster.ac = sp.ac_floor; }
       for (const [mode, n] of Object.entries(sp.modes ?? {})) if (!new RegExp(`\\b${mode} \\d+ ft`, 'i').test(monster.speed ?? '')) { monster.speed = `${String(monster.speed ?? '30 ft.').replace(/,\s*$/, '')}, ${mode} ${n} ft.`; trace('species kit:', `${mode} ${n} ft. — the ${sp.key}'s`); }
       if (sp.senses) { const want = /(\w+) (\d+) ft/.exec(sp.senses); const have = want ? new RegExp(`${want[1]} (\\d+) ft`, 'i').exec(monster.senses ?? '') : null; if (want && !have) { monster.senses = `${sp.senses}${monster.senses ? `, ${monster.senses}` : ''}`.replace(/, (Passive Perception)/, '; $1'); trace('species kit:', `${sp.senses} — the ${sp.key}'s`); } else if (want && have && Number(have[1]) < Number(want[2])) { monster.senses = monster.senses.replace(have[0], `${want[1]} ${want[2]} ft`); trace('species kit:', `${want[1]} ${have[1]} -> ${want[2]} ft. — the ${sp.key}'s`); } }
+      // THE SPECIES' OWN TONGUE (the critic's fifth read). The generator's
+      // species-language list only ever fired on a Humanoid, so a satyr, a
+      // centaur and a minotaur never got one, and a grung read "can't speak"
+      // where grung speak. A language the GM typed still wins: the header
+      // clause and the speech clause both land after this.
+      if (sp.languages?.length) {
+        const line = String(monster.languages ?? '').trim();
+        const mute = /can'?t speak|cannot speak|does ?n[o']t speak/i.test(line);
+        const gmMute = /\b(?:can'?t speak|cannot speak|mute|voiceless|speechless|wordless|silent)\b/i.test(readPhrases(String(options.userConcept ?? concept ?? '')));
+        if (!line || /^(?:none|—|-)$/i.test(line) || (mute && !gmMute)) { trace('species kit:', `Languages "${line || 'unset'}" -> "${sp.languages.join(', ')}" — a ${sp.key} speaks${mute ? ' (the sheet said it could not, and the words never said so)' : ''}`); monster.languages = sp.languages.join(', '); }
+        else if (!mute) for (const lg of sp.languages) { if (new RegExp(`\\b${lg}\\b`, 'i').test(monster.languages ?? '')) continue; monster.languages = `${monster.languages}, ${lg}`; trace('species kit:', `${lg} — the ${sp.key}'s own`); }
+      }
+      // THE SPECIES' OWN TEETH (the critic's fifth read: "minotaur Gore,
+      // centaur Hooves and satyr Ram"). Only where the sheet's melee row is a
+      // generic chassis strike and nothing already names one of them: a weapon
+      // the GM typed, a part, print's row and a name the model chose all stand.
+      if (sp.naturalWeapons?.length) {
+        const rowsAll = Object.values(monster.sections ?? {}).flat();
+        const named = (e) => sp.naturalWeapons.some((w) => new RegExp(`\\b${w}s?\\b`, 'i').test(String(e.name ?? '')));
+        const GENERIC_STRIKE = /^(?:Slam|Fist|Fists|Strike|Blow|Smash|Hit|Punch|Unarmed Strike|Melee Attack)$/i;
+        if (!rowsAll.some((e) => e.part || e.weapon) && !rowsAll.some(named)) {
+          const target = rowsAll.find((e) => /Melee(?: or Ranged)? Attack Roll/.test(e.text ?? '') && !e.print && !e.rules && !e.kit && GENERIC_STRIKE.test(String(e.name ?? '').replace(/ \(.*\)$/, '')));
+          if (target) {
+            const was = String(target.name).replace(/ \(.*\)$/, '');
+            const to = sp.naturalWeapons[0].replace(/\b\w/g, (c) => c.toUpperCase());
+            target.name = String(target.name).replace(was, to);
+            const want = ANATOMY[sp.naturalWeapons[0]]?.[1];
+            const dm = want ? /\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) (Bludgeoning|Piercing|Slashing) damage/.exec(target.text ?? '') : null;
+            if (dm && dm[1] !== want) target.text = target.text.replace(dm[0], dm[0].replace(dm[1], want));
+            for (const es of Object.values(monster.sections ?? {})) for (const e of es) if (e !== target) e.text = String(e.text ?? '').split(was).join(to);
+            trace('species kit:', `"${was}" -> "${to}"${dm && dm[1] !== want ? ` (${want}, not ${dm[1]})` : ''} — a ${sp.key} strikes with its own${was === 'Slam' ? ', not a chassis Slam' : ''}`);
+          }
+        }
+      }
       for (const ty of sp.resist ?? []) { if (new RegExp(`\\b${ty}\\b`, 'i').test(monster.vulnerabilities ?? '') || new RegExp(`\\b${ty}\\b`, 'i').test(monster.immunities ?? '')) continue; if (!new RegExp(`\\b${ty}\\b`, 'i').test(monster.resistances ?? '')) { monster.resistances = [...String(monster.resistances ?? '').split(/,\s*/).filter(Boolean), ty].sort().join(', '); trace('species kit:', `resistance ${ty} — the ${sp.key}'s`); } }
     }
     { // THE GM's FEAR OUTRANKS PRINT's IMMUNITY (the critic's fourth read): "deathly afraid of chickens" beside "Immune to … Frightened" is a contradiction a GM reads in the header; the fear clause strips it, as a vulnerability strips a resistance

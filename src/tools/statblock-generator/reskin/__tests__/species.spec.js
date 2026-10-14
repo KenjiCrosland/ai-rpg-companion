@@ -472,3 +472,121 @@ describe('the critic\'s fifth read, and the judgements the call now owns (2026-1
     expect(p).toMatch(/is not a Stomp/);
   });
 });
+
+
+// LANDING ONE'S LAST TABLE FACTS (2026-10-13): the critic's fifth read asked for
+// species languages and the species' own natural weapons. Both were facts the
+// table did not carry — the languages lived in a Humanoid-only list in the
+// generator, and the natural weapons were only ever a warrant for a part the GM
+// named, so a minotaur struck with a chassis Slam.
+describe('the species carries its tongue and its teeth (2026-10-13)', () => {
+  test('every table entry declares its languages, and the Fey and Monstrosity species are included', () => {
+    const { SPECIES } = require('../species.mjs');
+    for (const sp of SPECIES) expect(Array.isArray(sp.languages) && sp.languages.length).toBeTruthy();
+    const by = (k) => SPECIES.find((s) => s.key === k);
+    expect(by('satyr').languages).toEqual(['Sylvan']);
+    expect(by('minotaur').languages).toEqual(['Common']);
+    expect(by('centaur').languages).toEqual(['Common']);
+    expect(by('grung').languages).toEqual(['Common', 'Grung']);
+    expect(by('tiefling').languages).toEqual(['Common', 'Infernal']);
+  });
+
+  test('a Fey species gets its language, where the generator\'s Humanoid-only list never fired', async () => {
+    const desc = 'a satyr piper who dances travellers into the hills';
+    const m = await gen({ archetype: 'skirmisher', concept: desc, userConcept: desc, cr: 5 }, json('Hollow Piper', 'Fey', 5, null, 'skirmisher', { extra: { clauses: [{ text: desc, kind: 'mechanical' }] } }));
+    expect(m.type).toMatch(/^Fey/);
+    expect(m.languages).toMatch(/Sylvan/);
+  });
+
+  test('a species that speaks is never printed as mute — unless the GM said so', async () => {
+    const desc = 'a grung poisoner who croaks from the canopy';
+    const mk2 = (langs) => { const j = JSON.parse(json('Voxmaw', 'Humanoid', 3, null, 'skirmisher', { extra: { clauses: [{ text: desc, kind: 'mechanical' }] } })); j.languages = langs; return JSON.stringify(j); };
+    const m = await gen({ archetype: 'skirmisher', concept: desc, userConcept: desc, cr: 3 }, mk2("Understands Common but can't speak"));
+    expect(m.languages).toBe('Common, Grung');
+    const mute = 'a mute grung poisoner who cannot speak';
+    const m2 = await gen({ archetype: 'skirmisher', concept: mute, userConcept: mute, cr: 3 }, mk2("Understands Common but can't speak"));
+    expect(m2.languages).toMatch(/can't speak/);
+  });
+
+  test('a generic chassis strike becomes the species\' own weapon, with its own damage type', async () => {
+    const desc = 'a minotaur reaver who herds prey into the maze';
+    const m = await gen({ archetype: 'brute', concept: desc, userConcept: desc, cr: 6 }, (() => { const j = JSON.parse(json('Mazewarden Grik', 'Monstrosity', 6, null, 'brute', { dtype: 'Bludgeoning', extra: { clauses: [{ text: desc, kind: 'mechanical' }] } })); for (const k of Object.keys(j.renames)) if (j.renames[k] === 'Named Row0') { j.renames[k] = 'Slam'; j.damage_types.Slam = 'Bludgeoning'; } return JSON.stringify(j); })());
+    const all = Object.values(m.sections).flat();
+    const gore = all.find((e) => /^Gore/.test(e.name ?? ''));
+    if (all.some((e) => /Melee Attack Roll/.test(e.text ?? '') && /^(?:Slam|Fist|Strike)$/.test(String(e.name).replace(/ \(.*\)$/, '')))) throw new Error('a generic strike survived beside the species');
+    expect(gore).toBeDefined();
+    expect(gore.text).toMatch(/Piercing damage/); // a gore is Piercing, whatever the chassis typed
+    const ma = all.find((e) => /^Multiattack/.test(e.name ?? ''));
+    if (ma) expect(ma.text).not.toMatch(/\bSlam\b/); // the citation followed the rename
+    expect(checkBlock(m).fails).toEqual([]);
+  });
+
+  test('the GM\'s own weapon outranks the species\' teeth', async () => {
+    const desc = 'a minotaur reaver with a greataxe';
+    const m = await gen({ archetype: 'brute', concept: desc, userConcept: desc, cr: 6 }, json('Mazewarden Grik', 'Monstrosity', 6, null, 'brute', { extra: { clauses: [{ text: desc, kind: 'mechanical' }] } }));
+    const all = Object.values(m.sections).flat();
+    expect(all.map((e) => e.name)).toContain('Greataxe');
+    expect(all.find((e) => /^Gore/.test(e.name ?? ''))).toBeUndefined();
+  });
+});
+
+
+// THREE SMALL CRITIC ITEMS (fifth read, 2026-10-13): a feat on the wrong weapon,
+// a mastery DC off by one, and two rows granting one action.
+describe('the feature table and the kit, corrected (2026-10-13)', () => {
+  const { featureRows } = require('../features.mjs');
+  const clause = (text) => [{ text, kind: 'mechanical' }];
+
+  test('Great Weapon Master stays on a melee heavy weapon; a heavy bow takes its mastery property', () => {
+    const bow = featureRows(clause('a ranger with a longbow'), { parts: [{ part: true, weapon: 'longbow', name: 'Longbow', mode: 'ranged', clause: 'a longbow' }], inline: 'the ranger', pb: 3, dc: 14, mod: 3 });
+    expect(bow.find((f) => f.name === 'Great Weapon Master')).toBeUndefined();
+    expect(bow.find((f) => f.name === 'Slow')).toBeDefined();
+    const axe = featureRows(clause('a reaver with a greataxe'), { parts: [{ part: true, weapon: 'greataxe', name: 'Greataxe', mode: 'melee', clause: 'a greataxe' }], inline: 'the reaver', pb: 3, dc: 14, mod: 3 });
+    expect(axe.find((f) => f.name === 'Great Weapon Master')).toBeDefined();
+  });
+
+  test('a mastery save is 8 + the weapon mod + PB, not the sheet\'s best DC', () => {
+    // Othyn: STR 16 (+3), PB +3 → DC 14. The sheet's own best save DC was 13.
+    const rows = featureRows(clause('a warden with a trident'), { parts: [{ part: true, weapon: 'trident', name: 'Trident', mode: 'melee', clause: 'a trident' }], inline: 'Othyn', pb: 3, dc: 13, mod: 3 });
+    const topple = rows.find((f) => f.name === 'Topple');
+    expect(topple).toBeDefined();
+    expect(topple.text).toContain('DC 14');
+    expect(topple.text).not.toContain('DC 13');
+  });
+
+  test('the derivation gate reads a mastery save against the weapon\'s own stat', () => {
+    const sheet = (dc) => ({
+      format: '2024', name: 'Coralmarshal Othyn', inline: 'Othyn', type: 'Humanoid', size: 'Medium', cr: 5, ac: 16, hp: 75,
+      hp_formula: '10d8 + 30', pb: 3, speed: '30 ft.', alignment: 'Neutral', languages: 'Common',
+      stats: { STR: 16, DEX: 12, CON: 16, INT: 10, WIS: 14, CHA: 10 }, generation: { clauses: [], userConcept: 'a triton warden with a trident' },
+      sections: { Actions: [
+        { name: 'Multiattack', text: 'Othyn makes two Trident attacks.' },
+        { name: 'Trident', text: `*Melee Attack Roll:* +6, reach 5 ft. 10 (2d6 + 3) Piercing damage, and the target is subjected to the following effect. *Constitution Saving Throw*: DC ${dc}. *Failure:* The target has the Prone condition.`, part: true, weapon: 'trident', feature: 'Topple', clause: 'a trident' },
+      ] },
+    });
+    // 8 + STR 3 + PB 3 = 14. DC 13 derives from WIS +2 and passed the general DC rule.
+    const bad = checkBlock(sheet(13)).gates.derivation.findings.filter((f) => f.rule === 'mastery-dc');
+    expect(bad).toHaveLength(1);
+    expect(bad[0].value).toBe(13);
+    expect(checkBlock(sheet(14)).gates.derivation.findings.filter((f) => f.rule === 'mastery-dc')).toHaveLength(0);
+  });
+
+  test('a kit row is dropped when a row on the sheet already grants its action', async () => {
+    // the skulker chassis carries print's Cunning Action (Dash, Disengage, or
+    // Hide) as a protected row; the tabaxi kit's Cat's Dash grants Dash alone
+    const desc = 'a tabaxi cutpurse who slips through the market crowd';
+    const m = await gen({ archetype: 'skirmisher', concept: desc, userConcept: desc, cr: 3, style: 'skulker' }, json('Sable Nefret', 'Humanoid', 3, 'skulker', 'skirmisher', { extra: { clauses: [{ text: desc, kind: 'mechanical' }] } }));
+    const all = Object.values(m.sections).flat();
+    expect(all.map((e) => e.name)).toContain('Cunning Action');
+    expect(all.find((e) => /Cat's Dash/.test(e.name ?? ''))).toBeUndefined();
+    expect(all.filter((e) => /\btakes? the [^.]*\bDash\b[^.]*action/.test(e.text ?? '')).length).toBe(1);
+    expect(m.languages).toMatch(/Common/); // and the tabaxi still speaks
+  });
+
+  test('the same kit row lands where nothing else grants it', async () => {
+    const desc = 'a tabaxi cutpurse who slips through the market crowd';
+    const m = await gen({ archetype: 'lurker', concept: desc, userConcept: desc, cr: 5 }, json('Sable Nefret', 'Humanoid', 5, null, 'lurker', { extra: { clauses: [{ text: desc, kind: 'mechanical' }] } }));
+    const all = Object.values(m.sections).flat();
+    expect(all.find((e) => /Cat's Dash/.test(e.name ?? ''))).toBeDefined(); // the lurker chassis grants Hide, never Dash
+  });
+});

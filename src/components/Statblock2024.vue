@@ -387,7 +387,9 @@ async function rerollEntryAt(section, index) {
       { kind: REROLL_KIND[section], current: edited.value.sections[section][index], degraded: isDegradedMode() },
       (p, v) => generateGptResponse(p, v, 3),
     );
-    edited.value.sections[section][index] = { name: result.name, text: result.description };
+    // a re-rolled row keeps its provenance when the catalog held it (step 9b):
+    // the template it came from and the words of the concept it binds
+    edited.value.sections[section][index] = { name: result.name, text: result.description, ...(result.template ? { template: result.template, boundKeys: result.boundKeys ?? [] } : {}) };
   } catch (e) {
     logger.error('Error re-rolling entry:', e);
     alert('Failed to re-roll this entry. Please try again.');

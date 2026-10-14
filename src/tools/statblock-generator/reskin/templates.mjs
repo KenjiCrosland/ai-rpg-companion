@@ -652,14 +652,19 @@ export function parseIdeas(raw) {
 
 const frameOf = (t, cr) => (t.kind === 'seed' ? t.text : t.frames[bandFor(cr)]);
 
-export function buildFitPrompt({ name, idea, menu, cr, concept = '', sheet = null }) {
-  const ranked = rankByVerb(menu, concept, idea.idea);
-  const lines = ranked.map(({ t, concept: cv, idea: iv }) => {
+/** The catalog as the model reads it: one line per template, best match first.
+ *  One owner for the format — the fit call and the re-roll call show the same shelf. */
+export function templateMenuLines(menu, { cr, concept = '', idea = '' } = {}) {
+  return rankByVerb(menu, concept, idea).map(({ t, concept: cv, idea: iv }) => {
     const matched = [...cv.map((k) => `${k} (concept)`), ...iv.map((k) => `${k} (idea)`)];
     const flav = t.flavor.length ? ` — you fill: ${t.flavor.map((f) => `{${f}}`).join(', ')}` : '';
     const vocab = slotsOf(frameOf(t, cr)).filter((s) => VOCAB[s]).map((s) => `{${s}} ∈ ${VOCAB[s].join('/')}`);
     return `- ${t.id} [${SECTION_OF[t.section]}${t.gate ? `, ${t.gate}` : ''}]${matched.length ? ` VERB MATCH: ${matched.join(', ')}` : ''}: ${frameOf(t, cr).replace(/\*/g, '')}${flav}${vocab.length ? ` — choose: ${vocab.join('; ')}` : ''}`;
   }).join('\n');
+}
+
+export function buildFitPrompt({ name, idea, menu, cr, concept = '', sheet = null }) {
+  const lines = templateMenuLines(menu, { cr, concept, idea: idea.idea });
   return `A monster's signature ability has been described in plain words. Pour it into ONE of the printed rules templates below, or say none fits. The template's rules are FIXED; the engine fills every {slot} shown in braces except the ones marked "you fill". Do not rewrite the template.
 MONSTER: ${name} (CR ${cr})${sheet ? `\nTHE SHEET SO FAR — read it before you pick; a save stat, a damage type, a reach all come from here:\n${sheet}` : ''}
 THE IDEA (${idea.section} / ${idea.trigger} / ${idea.effect}): ${idea.idea}

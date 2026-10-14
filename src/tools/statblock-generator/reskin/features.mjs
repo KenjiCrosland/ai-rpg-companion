@@ -5,8 +5,11 @@
  * "trained", "disciplined", "veteran", "martial", "technique") earns Trip Attack (a rider with a save, at will) and Riposte (a
  * reaction). The feature's real name is the row's name. The remaining feats and class signatures belong to the character project.
  */
-const HEAVY = /^(?:greatsword|greataxe|glaive|halberd|maul|pike|lance|heavy crossbow|longbow)$/i;
-const MASTERY = { battleaxe: 'Topple', lance: 'Topple', maul: 'Topple', quarterstaff: 'Topple', staff: 'Topple', trident: 'Topple', warhammer: 'Topple', greataxe: 'Cleave', halberd: 'Cleave', glaive: 'Graze', greatsword: 'Graze', greatclub: 'Push', pike: 'Push', mace: 'Sap', spear: 'Sap', flail: 'Sap', longsword: 'Sap', morningstar: 'Sap', club: 'Slow', javelin: 'Slow', sling: 'Slow', whip: 'Slow', longbow: 'Slow', dagger: 'Vex', dart: 'Vex', rapier: 'Vex', scimitar: 'Vex', shortsword: 'Vex', handaxe: 'Vex', shortbow: 'Vex', crossbow: 'Vex', sickle: 'Vex' };
+// MELEE heavy only (the critic's fifth read: "Great Weapon Master on a Longbow.
+// Even if the 2024 feat's Heavy wording covers a bow, a GM reads it as a
+// mistake"). A heavy ranged weapon takes its mastery property instead.
+const HEAVY = /^(?:greatsword|greataxe|glaive|halberd|maul|pike|lance)$/i;
+const MASTERY = { battleaxe: 'Topple', lance: 'Topple', maul: 'Topple', quarterstaff: 'Topple', staff: 'Topple', trident: 'Topple', warhammer: 'Topple', greataxe: 'Cleave', halberd: 'Cleave', glaive: 'Graze', greatsword: 'Graze', greatclub: 'Push', pike: 'Push', mace: 'Sap', spear: 'Sap', flail: 'Sap', longsword: 'Sap', morningstar: 'Sap', club: 'Slow', javelin: 'Slow', sling: 'Slow', whip: 'Slow', longbow: 'Slow', 'heavy crossbow': 'Push', dagger: 'Vex', dart: 'Vex', rapier: 'Vex', scimitar: 'Vex', shortsword: 'Vex', handaxe: 'Vex', shortbow: 'Vex', crossbow: 'Vex', sickle: 'Vex' };
 const STYLE_CUE = /\b(?:fighting styles?|trained|disciplined|veteran|martial|technique|drilled|well-trained)\b/i;
 const STYLES = [
   [/\barchery\b|\barcher\b/i, 'Archery', (c) => `${c.Inline} has a +2 bonus to attack rolls made with ranged weapons.`],
@@ -33,7 +36,10 @@ export function featureRows(record, { parts = [], meleeRows = [], inline = 'the 
     if (HEAVY.test(w)) { if (!used.has('gwm')) { used.add('gwm'); out.push({ kind: 'trait', name: 'Great Weapon Master', text: `When ${c.inline} hits a creature with its ${p.name}, the attack deals an extra ${pb} damage.`, clause: p.clause }); } continue; }
     const prop = MASTERY[w]; if (!prop || used.has(`mastery:${p.name}`)) continue; used.add(`mastery:${p.name}`);
     const rider = {
-      Topple: saveRider('Constitution', dc, 'The target has the Prone condition.'),
+      // 2024 mastery: the save is against 8 + the attacker's weapon mod + PB —
+      // never the sheet's best DC, which may be a mental stat's (the critic's
+      // fifth read: Othyn's Topple read DC 13 where 8 + STR 3 + PB 3 = 14)
+      Topple: saveRider('Constitution', 8 + mod + pb, 'The target has the Prone condition.'),
       Sap: `, and the target has Disadvantage on its next attack roll before the start of ${c.inline}'s next turn.`,
       Slow: `, and the target's Speed is reduced by 10 feet until the start of ${c.inline}'s next turn.`,
       Push: `, and if the target is Large or smaller, it is pushed up to 10 feet straight away from ${c.inline}.`,
