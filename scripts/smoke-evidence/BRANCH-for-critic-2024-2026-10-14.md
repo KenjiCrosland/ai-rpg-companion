@@ -117,6 +117,81 @@ release's feature, and re-running it is the waste the owner named.
 
 ---
 
+# Addendum — answering the branch read (2026-10-14)
+
+## The two send items
+
+**The 2014 file** is `BRANCH-for-critic-2014-2026-10-14.md`, built in the same
+pass and never sent. It carries Sir Reginald, Gloamripper, Sergeant Aldric Vane
+and Thurivald, so the two unconfirmed branch behaviours and Aldric Vane's 0/1
+clause can be read.
+
+**The re-roll output** was written per block by the runner but `review-batch.mjs`
+carried only the card and the gate table, so it never reached the doc. Fixed: the
+review now carries the re-roll block and the class-kit and species-kit trace
+lines. Both files are rebuilt with it.
+
+## Your question on hold 6: the rules landed; the exemptions swallowed every case
+
+Not one of the five is the rule failing to fire. Each falls in a different place:
+
+| sheet | why nothing fired |
+| --- | --- |
+| Crookbound Herdmaster "Thunderbolt" | **two** exemptions: its head noun "bolt" is thrown-capable, and it deals Thunder, which `hybrid-needs-thrown` exempts as print's Arcane Burst idiom |
+| Bloodmaw Orc "Hurlaxe" at 60/240 | a **pure ranged** row, so the hybrid rule never applies. The defect is the range: the weapon table keys on exact weapon names and "Hurlaxe" is not one |
+| Yewshrine Warden "Shell Spikes" 30/120 | also pure ranged. The defect is that a tortle has a ranged row at all, which is the ranged-row shed, not this rule |
+| Iron Templar Radiant Flame orphaned | `attack-in-multiattack` **exempts print's own rows** ("print composes its own card"). On a sheet where we removed Spellcasting, print's composition is already broken, so that exemption is wrong there |
+| Oathbroken Vigil "Shield" as an attack | a part extracted from the **verb** in "shields the weak". Part extraction, not composition |
+
+So three belong to other rules and two exemptions are too broad. The energy
+exemption should require a caster (print's hybrid energy row is the Mage's), and
+print's exemption should not apply once a lack has removed one of print's rows.
+
+## Fixed from this read, each verified
+
+1. **Hold 2, the rider printed twice.** Mine. The class kit welds a rider to its
+   host row, where it has no row name, so the signature's own fit picked the same
+   template off the menu and welded it again. A **feature on a row now counts as
+   owned**. Rruzhk re-run: one copy.
+2. **Hold 1, the creature noun.** A creature word that names a print monster now
+   outranks a class alias, and the class kit layers onto that body. "An imp rogue
+   who picks locks for a devil" is now a Small Fiend, Fly 40 ft. (hover), Magic
+   Resistance, print's Sting with Poison, Shape-Shift, Invisibility, Common and
+   Infernal — **with Cunning Action layered on**. A bare class word still names
+   print's NPC block (rogue → Spy, cleric → Priest).
+3. **Hold 1, multi-word print names.** "A dire wolf that hunts in a pack" now
+   resolves to the Dire Wolf. A Beast *head noun* in a long concept still keeps
+   its seats, so "a wolf that eats the stars" is unchanged.
+4. **Hold 7, the swallow interior.** You were right that it was exercised and I
+   was wrong to say it wasn't. The chassis fix from round seven never touched the
+   `swallow` **shape**, whose frame hardcodes Acid. A gullet now takes the
+   creature's energy, and print's Acid stands only where no energy is declared.
+5. **"Gorge" was a predicate bug**, as you said. The Multiattack predicate split
+   its list on "and". It now consumes the longest known row name first, so a row
+   named "Gorge and Glut" reads as one row.
+
+New predicates: `interior-energy` (a gullet that digests in a type the creature
+does not deal) and the owned-by-feature rule above. Pins for all five.
+
+## Still open from this read
+
+Holds 3, 4, 5 and 6's two exemption narrowings; Meshrin's rider landing as a
+trait as well as a weld; the three fidelity items (the stampede, the satyr's
+lure, the Vigil's missing paladin rows); and predicates for the remaining
+reopened holds (an INT 4 Monstrosity speaking Common, shape damage defaults,
+Assassinate adding Bludgeoning to a blade).
+
+**Your naming question needs your call, not mine:** for a one-word minted
+Humanoid name, the third read made it a person and the inline inversion lets the
+call's own answer through. Those conflict by design now. Say which wins and I
+will make the other a validator.
+
+```
+full suite      185 suites, 5,314 passed, 26 skipped; build clean
+```
+
+---
+
 # 2024 blocks
 
 ## Review batch — classes-eight-2026-10-14T14-11-05
@@ -374,6 +449,8 @@ Delete
 ```
 [route] caster-warpriest (artillery) type=Humanoid mechanics=none — caster-warpriest: a caster line needs a magic word in the words — none here | defender-leader: ✓ ("mends her soldiers") | defender-leader -> caster-warpriest: the concept's VERB outranks the noun (key "smites", class verb) | caster-warpriest: key "smites" (class verb)
 [concept] signature elements: divine smite against the unclean [behavior] | healing prayers for soldiers [behavior] | consecrated iron armor and blade [object]
+[reskin] class kit: coating — the sheet cannot carry it here (role, CR band, movement or a denial)
+[reskin] class kit: paladin — "an oathsworn crusader": Aura of Authority (Hobgoblin Captain/Aura of Authority), Lay on Hands (2/Day) (lay-on-hands)
 [reskin] signature idea (action): "When Lady Merivane strikes a deeply corrupted or unholy creature with her greatsword, she can immediately call down a flash of consecrated judgment upon it. This is an attack that adds a searing burst of radiant damage to the strike, and the force of the blow also staggers the foe, making it less able to defend itself until the end of its next turn." [rider/on_hit/damage] — menu: bolt-restrain, bolt-drag, bolt-mark (+ shelf: seal, wail, lure, active-toll, random-ray, ground-burst, spew, obstacle-pull, pacify, escalating-dread, snare-bolt, slow-bolt, sensory-strike, herd, thrown-burst-seed, drain, delayed-brand, curse-debt, zone-seed, reveal, wind-up, blighted-ground, aggro-curse, self-invisibility, rally, snap-shot)
 [reskin] signature bound to the concept's verb: action — rally (mend)
 [reskin] signature re-poured: action — the idea left the concept's verb; the concept itself is poured into rally
@@ -489,12 +566,16 @@ Delete
 ```
 [route] skirmisher type=Humanoid mechanics=none — skirmisher: ✓ ("strikes pressure points with an open han") | skirmisher: no line key in the words — the model's read of its quote
 [concept] signature elements: pressure-point strikes that disable limbs and joints [behavior] | open-hand martial arts [behavior] | lizardfolk scale-hide [body]
+[reskin] species kit yields: Marsh Stride — the sheet is full (6 rows at CR 5, print's cap 4); the user's own rows stand
+[reskin] species kit: lizardfolk — "a lizardfolk monk": Hold Breath (Hydra/Hold Breath); Swim 30 ft.
+[reskin] class kit: monk — "strikes pressure points with an open hand": Stunning Strike (stunning-strike, rides Open Hand); Patient Defense yielded to print's row cap 4
 [reskin] signature idea (action): "Rruzhk studies the flow of life in its foes. By striking a precise nerve cluster with an open hand, it can invert the target's senses: for a short while the victim's own allies look like enemies and its own limbs feel foreign. The confusion lasts until the victim shakes it off, and Rruzhk cannot use this again until it has landed a few ordinary pressure-point strikes to re-map the body's lines." [rider/on_hit/condition] — menu: stunning-strike, charge-push, hook-rider, pounce, isolation, bolt-mark, charge (+ shelf: trample, leap, gaze-single, snare, condition-payoff, throw-retrieve, shield-bash, lure, random-ray, ground-burst, spew, snare-bolt, sensory-strike, disarm, thrown-burst-seed, delayed-brand, exploiter, rampage, patient-defense, second-wind, aggro-curse, self-invisibility, focus, feint-slip, coating, snap-shot, riposte)
 [reskin] signature bound to the concept's verb: action — stunning-strike (pressure point, open hand, monk)
 [reskin] signature re-poured: action — the idea left the concept's verb; the concept itself is poured into stunning-strike
 [reskin] signature rider: stunning-strike -> Open Hand (appended; The idea is an open-hand monk strike that hits pressure points to stun, which is [verb: pressure point:concept, open hand:concept, monk:concept, nerve:idea])
 [reskin] signature idea (trait): "Rruzhk's scales are tattooed with a living nerve-map that tingles when violence is near. When a creature it can see makes an attack against it, Rruzhk instinctively shifts along the map, gaining a brief edge in evasion that fades if the same foe presses the attack." [trait/on_being_hit/defense] — menu: absorption, bloodied-burst, resonant-body (+ shelf: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, evasion, relentless-pursuit, bound, marking-light, warded-mending, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura, assassinate, blurred-form, death-burst)
 [reskin] signature miss: trait — "Rruzhk's scales are tattooed with a living nerve-map that tingles when violence is near. When a creature it can see makes an attack against it, Rruzhk instinctively shifts along the map, gaining a brief edge in evasion that fades if the same foe presses the attack." [trait/on_being_hit/defense] — the model found no template that holds it (offered: absorption, bloodied-burst, resonant-body, evasion)
+[reskin] species kit: Swim 30 ft. — the lizardfolk's
 ```
 
 
@@ -608,6 +689,9 @@ Delete
 [concept] signature elements: rooftop stalking and ambush [behavior] | fiendish tiefling bloodline [body] | poisoned blades and bolts [object]
 [reskin] print canon array: STR 10, DEX 16, CON 10, INT 12, WIS 14, CHA 16 — the Spy's, DEX fitted to +6
 [reskin] print canon: "a tiefling rogue who stalks the rooftops of the old quarter" heads on the Spy — print's rows ride along; the seat stays
+[reskin] species kit: tiefling — "a tiefling rogue": header lines only; darkvision 60 ft.; resistance Fire
+[reskin] class kit: Cunning Action — the sheet already carries a row of that name
+[reskin] class kit: rogue — "a tiefling rogue": Assassinate (assassinate); Evasion yielded to print's row cap 4
 [reskin] signature idea (action): "Vespera whispers a gutter curse at one enemy who can see or hear it within a short span, planting a seed of doubt in their mind. The next time Vespera damages that enemy, the wound refuses to close and they grow weaker until they spend precious time patching themselves up or call on magic to purge the hex." [rider/on_hit/condition] — menu: affliction, contagion, stunning-strike, charge-push, hook-rider, pounce, isolation, bolt-mark (+ shelf: leap, gaze-single, snare, throw-retrieve, shield-bash, random-ray, ground-burst, spew, snare-bolt, sensory-strike, disarm, thrown-burst-seed, delayed-brand, rampage, patient-defense, second-wind, aggro-curse, self-invisibility, focus, feint-slip, coating, snap-shot, riposte)
 [reskin] signature bound to the concept's verb: action — focus (stalk)
 [reskin] signature re-poured: action — the idea left the concept's verb; the concept itself is poured into focus
@@ -618,6 +702,16 @@ Delete
 [reskin] signature miss: trait — "Vespera's blades and bolts carry a slow rooftop toxin distilled from gutter herbs. Whenever a poisoned blade or bolt harms a creature, the poison keeps working, weakening their movements and dulling their reflexes until someone shakes off the creeping numbness." [trait/always/condition] — the model found no template that holds it (offered: faultless-tracker)
 [reskin] print canon languages: "Common, Infernal" -> "Common plus one other language, Infernal" — the Spy's plus the concept's Infernal
 [reskin] print canon attack: "Horns" -> "Shortsword" — the Spy's own row
+[reskin] species kit: resistance Fire — the tiefling's
+[harness] re-rolled Traits/"Assassinate" -> "Bloodhound Pursuit" [catalog: faultless-tracker]
+```
+
+**Re-roll — one entry, replaced**
+
+```
+Traits / BEFORE  Assassinate: During the first round of each combat, Vespera has Advantage on attack rolls against any creature that hasn't taken a turn. If Vespera hits a creature during that round, the target takes an extra 9 (2d8) Bludgeoning damage.
+Traits / AFTER   Bloodhound Pursuit: Vespera knows the direction and distance to any creature it has damaged within the last 24 hours, as long as the two of them are on the same plane of existence.
+provenance: catalog template "faultless-tracker", binds stalks, stalk
 ```
 
 
@@ -722,6 +816,7 @@ Delete
 [reskin] print canon route: the Spy's body outranks the skulker seat — no verb in the words names it; the plain skirmisher line
 [reskin] print canon array: STR 10, DEX 18, CON 10, INT 12, WIS 14, CHA 16 — the Spy's, DEX fitted to +6
 [reskin] print canon: "an imp rogue who picks locks for a devil" heads on the Spy — print's rows ride along; the seat stays
+[reskin] class kit: rogue — "an imp rogue": Cunning Action (Assassin/Cunning Action); Evasion yielded to print's row cap 4
 [reskin] signature idea (action): "The Skelkey Imp jams its infernal lockpicks into a lock, mechanism, or similar device and wrenches it open or shut. Any creature that was relying on that device to stay safe, contained, or trapped is caught off guard and left badly exposed." [action/always/condition] — menu: trample, leap, gaze-single, snare, throw-retrieve, shield-bash, lure, random-ray, ground-burst, spew, snare-bolt, sensory-strike, disarm, thrown-burst-seed (+ shelf: delayed-brand, rampage, patient-defense, second-wind, aggro-curse, self-invisibility, focus, feint-slip, coating, snap-shot, riposte, affliction, contagion, charge-push, hook-rider, pounce, isolation, bolt-mark, charge)
 [reskin] signature miss: action — "The Skelkey Imp jams its infernal lockpicks into a lock, mechanism, or similar device and wrenches it open or shut. Any creature that was relying on that device to stay safe, contained, or trapped is caught off guard and left badly exposed." [action/always/condition] — the model found no template that holds it (offered: trample, leap, gaze-single, snare, throw-retrieve, shield-bash, lure, random-ray, ground-burst, spew, snare-bolt, sensory-strike, disarm, thrown-burst-seed, riposte)
 [reskin] value check: "Driving Bellow (2/Day)" EV 5.5 vs floor 23.7 (the whole Multiattack (2 attacks)) — still under — needs a condition from the worth-an-attack list (logged)
@@ -847,6 +942,7 @@ Delete
 ```
 [route] defender type=Humanoid mechanics=none — defender: ✓ ("keeps the line with a shield and a longs") | defender: key "keeps the line" (class verb)
 [concept] signature elements: shield wall that punishes those who move past [behavior] | longsword and shield [object] | unbreakable iron oath [aura]
+[reskin] class kit: fighter — "Dame Oriel — a knight": Riposte (riposte), Guarded Stance (guarded-stance)
 [reskin] signature idea (action): "Dame Oriel slams her shield forward in a shove that forces nearby foes back a step and makes the ground before her a wall they cannot cross except at their peril. Until the start of her next turn, any enemy that tries to move through or past her is punished with a longsword thrust, as though her discipline itself strikes them down." [action/always/movement] — menu: seal, shield-bash, active-toll, random-ray, ground-burst, obstacle-pull, terror-pulse, slow-bolt, disarm, push-prone, herd, curse-debt, reveal, wind-up (+ shelf: patient-defense, lay-on-hands, second-wind, aggro-curse, own-turn-punisher, self-invisibility, rally, stunning-strike, charge-push, hook-rider)
 [reskin] signature bound to the concept's verb: action — rally (shield)
 [reskin] signature re-poured: action — the idea left the concept's verb; the concept itself is poured into rally
@@ -963,6 +1059,8 @@ Delete
 ```
 [route] brute type=Giant mechanics=none — brute: ✓ ("a goliath berserker who loses control wh") | brute: no line key in the words — the model's read of its quote
 [concept] signature elements: wounded fury [behavior] | reckless greataxe attacks [behavior] | stone-skinned hide [body]
+[reskin] species kit: goliath — "a goliath berserker": Mountain Stride (terrain-walk, authored)
+[reskin] class kit: barbarian — "a goliath berserker": Bloodied Frenzy (Berserker/Bloodied Frenzy), Berserk (berserk); Rampage yielded to print's row cap 5
 [reskin] signature idea (action): "Korvath slams his open hand against a fresh wound, then roars — the sight of his own blood sends a wave of fury through allies who share his pain. Any ally who can see or hear him is swept up in the rage, fighting harder for a moment. Korvath himself can do this only when he is already wounded." [action/once_per_fight/damage] — menu: trample, leap, thrown-burst, throw-retrieve, shield-bash, active-toll, random-ray, ground-burst, spew, escalating-dread, terror-pulse, push-prone, herd, thrown-burst-seed, drain, wind-up (+ shelf: rampage, second-wind, aggro-curse, own-turn-punisher, self-invisibility, rally, focus, coating, affliction, contagion, stunning-strike, charge-push, hook-rider, pounce, charge)
 [reskin] signature bound to the concept's verb: action — rampage, affliction (wound)
 [reskin] signature re-poured: action — the idea left the concept's verb; the concept itself is poured into rampage, affliction
@@ -972,6 +1070,9 @@ Delete
 [reskin] signature idea (trait): "Korvath's rock-veined hide makes him impossible to ignore in a brawl: any enemy who tries to slip past him feels the weight of his presence and must choose between facing him or being crushed. His sheer bulk and stone skin turn every near miss into a hard shove." [trait/always/movement] — menu: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, noxious-aura, bloodied-fury, uncanny-sense, shielded-mind, relentless-pursuit, bound, marking-light, sealed-body, undead-fortitude, mimicry, truth-aura, gaze-aura, death-burst (+ shelf: heated-body, absorption, bloodied-burst, resonant-body, fire-aura, warded-mending, weapon-lodge)
 [reskin] signature bound to the concept's verb: trait — bloodied-fury, bloodied-burst (wounded)
 [reskin] signature miss: trait — "Korvath's rock-veined hide makes him impossible to ignore in a brawl: any enemy who tries to slip past him feels the weight of his presence and must choose between facing him or being crushed. His sheer bulk and stone skin turn every near miss into a hard shove." [trait/always/movement] — the model found no template that holds it (offered: bloodied-fury, bloodied-burst)
+[reskin] species kit: Giant -> Humanoid — the goliath's type (the words name no other)
+[reskin] species kit: Large -> Medium — a goliath is Medium (the words name no other size)
+[reskin] species kit: "Greataxe" reach 10 -> 5 ft. — reach follows the goliath's size
 ```
 
 
@@ -1081,6 +1182,8 @@ Delete
 [reskin] print canon route: the Priest is not a caster first (its own Spellcasting rides as print's row) — the caster family stands down for the plain skirmisher line
 [reskin] print canon array: STR 16, DEX 18, CON 12, INT 13, WIS 16, CHA 13 — the Priest's, DEX fitted to +7
 [reskin] print canon: "Vareth Solmane — a templar priest of the dawn who blesses her soldiers" heads on the Priest — print's rows ride along; the seat stays
+[reskin] class kit: Divine Aid — the sheet carries no row it could refer to (/^Spellcasting$/)
+[reskin] class kit: cleric — "Vareth Solmane — a templar priest of the dawn": nothing to add — the sheet already answers it
 [reskin] signature idea (action): "She plants her banner in the ground. The banner radiates a daylight-hued glow that marks the spot as holy ground. While she holds concentration, her blessed soldiers within the glow of the banner fight with renewed certainty: their attacks chip away at foes more surely, and when a blessed soldier falls, the banner flares and steadies the nearest standing faithful, letting them shrug off a moment o" [action/once_per_fight/resource] — menu: trample, leap, thrown-burst, gaze-single, snare, throw-retrieve, shield-bash, lure, random-ray, ground-burst, spew, snare-bolt, sensory-strike, disarm, thrown-burst-seed (+ shelf: delayed-brand, rampage, patient-defense, second-wind, aggro-curse, self-invisibility, focus, feint-slip, coating, snap-shot, riposte, stunning-strike, charge-push, hook-rider, pounce, isolation, bolt-mark, charge)
 [reskin] signature miss: action — "She plants her banner in the ground. The banner radiates a daylight-hued glow that marks the spot as holy ground. While she holds concentration, her blessed soldiers within the glow of the banner fight with renewed certainty: their attacks chip away at foes more surely, and when a blessed soldier falls, the banner flares and steadies the nearest standing faithful, letting them shrug off a moment o" [action/once_per_fight/resource] — the model found no template that holds it (offered: trample, leap, thrown-burst, gaze-single, snare, throw-retrieve, shield-bash, lure, random-ray, ground-burst, spew, snare-bolt, sensory-strike, disarm, thrown-burst-seed, delayed-brand, aggro-curse, bolt-mark)
 [reskin] value check: "Sundering Shove" EV 2.9 vs floor 10.9 (one attack of 2) — still under — needs a condition from the worth-an-attack list (logged)
@@ -1095,6 +1198,15 @@ Delete
 [reskin] print canon row: Actions/Spellcasting — the Priest's own
 [reskin] print canon row: Bonus Actions/Divine Aid (3/Day) — the Priest's own
 [reskin] print canon: chassis row leaves — Bonus Actions/"Fleet Agility" yields to the Priest's Divine Aid (3/Day)
+[harness] re-rolled Actions/"Multiattack" -> "Multiattack" [the call's own text]
+```
+
+**Re-roll — one entry, replaced**
+
+```
+Actions / BEFORE  Multiattack: Vareth makes two attacks, using Mace or Radiant Flame in any combination.
+Actions / AFTER   Multiattack: Vareth makes two attacks, using Mace or Radiant Flame in any combination.
+provenance: none — the call wrote the text itself
 ```
 
 
@@ -1196,6 +1308,8 @@ Delete
 [concept] signature elements: grinding attrition warfare [behavior] | unyielding shield-lock defense [object] | hollow consecrated iron plate [body]
 [reskin] print canon array: STR 18, DEX 10, CON 12, INT 13, WIS 16, CHA 13 — the Priest's, STR fitted to +6
 [reskin] print canon: "a templar priest with a mace and no magic at all" heads on the Priest — print's rows ride along; the seat stays
+[reskin] class kit: Divine Aid — the sheet carries no row it could refer to (/^Spellcasting$/)
+[reskin] class kit: cleric — "a templar priest with a mace": nothing to add — the sheet already answers it
 [reskin] signature idea (action): "The Iron Templar drives its mace down in a slow, crushing overhead blow that rings through armor and bone. A foe struck this way has its wind and footing knocked loose, so until it can collect itself every step it takes is a struggle that leaves it open to the templar's next swing. The templar simply grinds such foes down, one concussive blow at a time." [rider/on_hit/condition] — menu: charge-push, hook-rider (+ shelf: throw-retrieve, seal, shield-bash, active-toll, random-ray, ground-burst, obstacle-pull, terror-pulse, slow-bolt, disarm, push-prone, herd, curse-debt, reveal, wind-up, patient-defense, lay-on-hands, second-wind, aggro-curse, own-turn-punisher, self-invisibility, rally, snap-shot, riposte)
 [reskin] signature miss: action — "The Iron Templar drives its mace down in a slow, crushing overhead blow that rings through armor and bone. A foe struck this way has its wind and footing knocked loose, so until it can collect itself every step it takes is a struggle that leaves it open to the templar's next swing. The templar simply grinds such foes down, one concussive blow at a time." [rider/on_hit/condition] — the model found no template that holds it (offered: charge-push, hook-rider, slow-bolt, disarm, push-prone, herd, wind-up, riposte)
 [reskin] value check: "Creeping Dread" EV 9.6 vs floor 7.3 (one attack of 2) — dice 7 → 14
@@ -1319,6 +1433,8 @@ Delete
 [reskin] print canon defenses: HP 84 -> 81, AC 15 -> 15 — the Mage's at its own CR (a kobold sat at 21 HP where print is 7, critic form-ten 2026-10-01)
 [reskin] print canon array: STR 9, DEX 14, CON 11, INT 17, WIS 12, CHA 11 — the Mage's at its own CR; attack +7 -> +6, DC 14 (print's)
 [reskin] print canon: "a court wizard who is never where you struck and steps away" heads on the Mage — print's rows ride along; the seat stays
+[reskin] class kit: Protective Magic — the sheet already carries a row of that name
+[reskin] class kit: mage — "a court wizard": Misty Step (3/Day) (Mage/Misty Step)
 [reskin] signature idea (action): "As a parting courtesy, the echo bows to a chosen enemy it can see and then steps through the Weave a short distance." [action/always/movement] — menu: thrown-burst, gaze-single, snare, zone, execute, seal, wail, lure, active-toll, random-ray, ground-burst, spew, obstacle-pull, pacify, escalating-dread, snare-bolt, slow-bolt, sensory-strike, herd, thrown-burst-seed, drain, curse-debt, zone-seed, reveal, wind-up, blighted-ground (+ shelf: delayed-brand, lay-on-hands, aggro-curse, self-invisibility, rally, phase-slip, snap-shot, bolt-restrain, bolt-drag, bolt-mark)
 [reskin] signature bound to the concept's verb: action — phase-slip (step)
 [reskin] value check: "Courteous Step (2/Day)" EV 2.7 vs floor 2.3 (a bonus action (free)) — worth the trade
@@ -1558,6 +1674,8 @@ Delete
 ```
 [route] brute type=Monstrosity mechanics=none — brute-charger: ✓ ("herds prey") | brute-charger: no line key in the words — the model's read of its quote | brute-charger -> brute: a charger is a mechanic engine and needs a key in the words — the model's read of its quote cannot land it
 [concept] signature elements: herding prey into the maze [behavior] | labyrinthine cunning [behavior] | massive horns and axe [body]
+[reskin] species kit: minotaur — "a minotaur reaver": Charge (Troll/Charge); darkvision 60 ft.
+[reskin] class kit: barbarian — "a minotaur reaver": Bloodied Frenzy (Berserker/Bloodied Frenzy), Rampage (1/Day) (rampage)
 [reskin] signature idea (action): "The minotaur sweeps its horns in a brutal arc, forcing caught prey to stumble away in a direction it chooses. Instead of harming them, it drives them along the path it wants, tightening the noose of the maze." [bonus_action/save/movement] — menu: second-wind, aggro-curse, own-turn-punisher, self-invisibility, rally, focus, coating (+ shelf: trample, leap, thrown-burst, throw-retrieve, shield-bash, active-toll, random-ray, ground-burst, spew, escalating-dread, terror-pulse, push-prone, herd, thrown-burst-seed, drain, wind-up, affliction, contagion, stunning-strike, charge-push, hook-rider, pounce)
 [reskin] signature bound to the concept's verb: action — herd (herd)
 [reskin] signature re-poured: action — the idea left the concept's verb; the concept itself is poured into herd
@@ -1671,6 +1789,7 @@ Delete
 ```
 [route] defender type=Humanoid mechanics=none — defender: ✓ ("shields the weak") | defender: key "knight" (class verb)
 [concept] signature elements: shielding the weak with iron bulwark [behavior] | fall of a knightly order [aura] | broken longsword and shield [object]
+[reskin] class kit: paladin — "a knight-errant of the fallen order": Aura of Authority (Hobgoblin Captain/Aura of Authority)
 [reskin] signature idea (action): "The Vigil plants its shield and calls out a formal challenge to every enemy that can see or hear it, demanding they face it or be broken for turning away. Any foe that ignores the challenge and tries to move past the Vigil toward its allies instead eats a punishing shield-first charge that slams them to a halt and leaves them reeling." [action/once_per_fight/condition] — menu: throw-retrieve, seal, shield-bash, active-toll, random-ray, ground-burst, obstacle-pull, terror-pulse, slow-bolt, disarm, push-prone, herd, curse-debt, reveal, wind-up (+ shelf: patient-defense, lay-on-hands, second-wind, aggro-curse, own-turn-punisher, self-invisibility, rally, snap-shot, riposte, stunning-strike, charge-push, hook-rider)
 [reskin] signature bound to the concept's verb: action — rally (shield, orders)
 [reskin] signature bound by force: action — "rally" matches shield+orders in the user's words; the model's none is overruled
@@ -1785,6 +1904,10 @@ Delete
 ```
 [route] skirmisher-skulker type=Humanoid mechanics=none — skirmisher-skulker: ✓ ("slips through the market crowd") | skirmisher-skulker: no line key in the words — the model's read of its quote
 [concept] signature elements: slips through the market crowd [behavior] | cutpurse's blade [object] | shadow-wrapped escape [aura]
+[reskin] species kit: Cat's Dash — "Cunning Action" already grants Dash; one mechanic, one row
+[reskin] species kit: tabaxi — "a tabaxi cutpurse": header lines only; Climb 30 ft.; darkvision 60 ft.
+[reskin] class kit: Cunning Action — the sheet already carries a row of that name
+[reskin] class kit: rogue — "a tabaxi cutpurse": nothing landed; Evasion yielded to print's row cap 4
 [reskin] signature idea (action): "Sable Whisker makes a knifing attack aimed at an exposed place—a purse string, a belt pouch, a shield strap—cutting it loose rather than drawing blood. The target must be carrying something vulnerable in that moment, and if the cut lands, the thing falls away clattering across the cobbles. In a packed market crowd, that can spill coins, rip a weapon from a loosened sheath, or send a potion rolling" [rider/on_hit/condition] — menu: affliction, contagion, charge-push, hook-rider, pounce, isolation, bolt-mark (+ shelf: leap, gaze-single, snare, throw-retrieve, shield-bash, lure, random-ray, ground-burst, spew, snare-bolt, sensory-strike, disarm, thrown-burst-seed, delayed-brand, rampage, patient-defense, second-wind, aggro-curse, self-invisibility, focus, feint-slip, coating, snap-shot, riposte)
 [reskin] signature bound to the concept's verb: action — feint-slip (slip)
 [reskin] signature re-poured: action — the idea left the concept's verb; the concept itself is poured into feint-slip
@@ -2044,12 +2167,15 @@ Delete
 ```
 [route] brute type=Humanoid mechanics=none — brute: ✓ ("bloodmaw orc berserker with a greataxe") | brute: no line key in the words — the model's read of its quote
 [concept] signature elements: greataxe berserker charge [behavior] | retreats behind scavenged iron armor [behavior] | bloodmaw orc physiology [body]
+[reskin] species kit: orc — "a bloodmaw orc berserker with a greataxe": Relentless Rush (Goblin Boss/Nimble Escape); darkvision 120 ft.
+[reskin] class kit: barbarian — "a bloodmaw orc berserker with a greataxe": Bloodied Frenzy (Berserker/Bloodied Frenzy); Rampage yielded to print's row cap 5
 [reskin] signature idea (action): "The orc makes a lunging, two-handed chop that only works if it has room to wind up and commit — so it can only use this right after moving a good distance toward its target, representing the full-blooded opening charge. On a hit the greataxe bites deep enough that the wound keeps bleeding, and the orc visibly pries a strip of iron off the victim to feed its shell. The chop is exhausting and leaves" [rider/on_hit/damage] — menu: affliction, contagion, stunning-strike, charge-push, hook-rider, pounce, charge (+ shelf: trample, leap, thrown-burst, throw-retrieve, shield-bash, active-toll, random-ray, ground-burst, spew, escalating-dread, terror-pulse, push-prone, herd, thrown-burst-seed, drain, wind-up, rampage, second-wind, aggro-curse, own-turn-punisher, self-invisibility, rally, focus, coating)
 [reskin] value check: "Creeping Dread" EV 18.6 vs floor 14 (one attack of 2) — dice 14 → 27
 [reskin] library seed drawn: escalating-dread -> Actions/"Creeping Dread" (no template held the idea; a proven shape stands in)
 [reskin] signature idea (trait): "Every time the orc is hit by a melee attack, it tears a strip of iron off the attacker's weapon, shield, or armor and bolts it onto its own hide, thickening its scrap shell; each piece makes the next blows against it glance away, but the shell is brittle — a solid enough hit or a shove can shake several plates loose at once. The shell only grows while the orc stays on the defensive and retreats be" [trait/on_being_hit/defense] — menu: absorption, bloodied-burst, resonant-body, weapon-lodge (+ shelf: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, relentless-pursuit, bound, marking-light, sealed-body, warded-mending, undead-fortitude, mimicry, truth-aura, gaze-aura, death-burst)
 [reskin] signature bound to the concept's verb: trait — resonant-body (iron)
 [reskin] signature template (trait): resonant-body -> Traits/"Scrapwrought Hide" ("Every time the orc is hit by a melee attack while within reach, it tears a strip [verb: iron:concept]")
+[reskin] species kit: darkvision 60 -> 120 ft. — the orc's
 ```
 
 
@@ -2160,12 +2286,14 @@ Delete
 [route] skirmisher-hurler type=Humanoid mechanics=thrown-weapon — defender-warden: a Humanoid is not a made or risen guardian | skirmisher-hurler: ✓ ("topples raiders with a trident") | skirmisher-hurler: no line key in the words — the model's read of its quote
 [concept] signature elements: hurled trident that topples raiders [behavior] | living brine body [body] | coral-reef territory [aura]
 [reskin] nova capped: "Hurled Burst" 31 → 28 (the chassis nova obeys the cap: 28 at CR 5)
+[reskin] species kit: triton — "a triton reef-warden": Amphibious (Aboleth/Amphibious); Swim 30 ft.; darkvision 60 ft.
 [reskin] signature idea (action): "Great hooked spines line the warden's forearms; it drives them into a foe it has just knocked down and drags itself atop the body, pinning the prey in place and keeping it within the warden's reach while the trident is hauled back to hand. The hold lasts only as long as the warden chooses to stay crouched on top of its catch, a patient ambush hunter riding its prize in the shallows." [action/save/condition] — menu: snare, condition-payoff, shield-bash, lure, snare-bolt, sensory-strike, disarm, exploiter (+ shelf: delayed-brand, patient-defense, second-wind, aggro-curse, self-invisibility, focus, feint-slip, coating, snap-shot, riposte, bolt-mark)
 [reskin] value check: "Spine Pin" EV 7.8 vs floor 5.2 (one attack of 3) — dice 21 → 10 (scaled down to the ceiling)
 [reskin] signature template: condition-payoff -> Actions/"Spine Pin" ("the idea drives spines into a foe it has just knocked down; the payoff triggers  [shape fit, no verb match]")
 [reskin] signature idea (trait): "The warden swims in the brine held within its own flesh and gear, sloughing off the steady pressure of deep water; its barbed trident and clinging coral armplates weigh it no more than dry land does, so it never suffers the usual drag of water or slippery footing." [trait/always/movement] — menu: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, evasion, relentless-pursuit, bound, marking-light, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura, assassinate, blurred-form, death-burst (+ shelf: absorption, bloodied-burst, resonant-body, warded-mending)
 [reskin] signature miss: trait — "The warden swims in the brine held within its own flesh and gear, sloughing off the steady pressure of deep water; its barbed trident and clinging coral armplates weigh it no more than dry land does, so it never suffers the usual drag of water or slippery footing." [trait/always/movement] — the model found no template that holds it (offered: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, evasion, relentless-pursuit, bound, marking-light, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura, assassinate, blurred-form, death-burst)
 [reskin] chassis nova: "Tide Burst (Recharge 5-6)" — the skirmisher-8-hurler's own nova row (its "Hurled Burst", renamed by the model); geometry, cap and rider lines below are its edits
+[reskin] species kit: Primordial — the triton's own
 ```
 
 
@@ -2384,6 +2512,8 @@ Delete
 ```
 [route] defender type=Humanoid mechanics=none — defender-warden: a Humanoid is not a made or risen guardian | defender: ✓ ("a tortle hermit who withdraws into his s") | defender: no line key in the words — the model's read of its quote
 [concept] signature elements: withdrawing into an iron-reinforced shell [behavior] | iron-banded shell that turns aside blows [body] | punishing those who try to move past [behavior]
+[reskin] species kit yields: Shell Defense — the sheet is full (4 rows at CR 3, print's cap 4); the user's own rows stand
+[reskin] species kit: tortle — "a tortle hermit": Hold Breath (Hydra/Hold Breath)
 [reskin] signature idea (action): "The warden locks himself inside his iron-banded shell, hunkering down so that blows glance off the iron and he cannot be moved against his will. While withdrawn, he cannot attack, but at the start of each of his turns he can peek out just enough to lash at any enemy who has come within reach, punishing those who think him helpless. He chooses to withdraw; no one can force him into it." [trait/start_of_turn/defense] — menu: warded-mending (+ shelf: throw-retrieve, seal, shield-bash, active-toll, random-ray, ground-burst, obstacle-pull, terror-pulse, slow-bolt, disarm, push-prone, curse-debt, reveal, wind-up, shell-withdraw, patient-defense, lay-on-hands, second-wind, aggro-curse, own-turn-punisher, self-invisibility, rally, snap-shot, riposte, charge-push, hook-rider)
 [reskin] signature bound to the concept's verb: action — shell-withdraw (withdraw, shell)
 [reskin] value check: "Iron Shell Retreat" EV 3.6 vs floor 2 (a bonus action (free)) — worth the trade
@@ -2391,6 +2521,8 @@ Delete
 [reskin] signature template: shell-withdraw -> Bonus Actions/"Shell Defense" ("the warden chooses to withdraw into his shell, becoming harder to hit and immobi [verb: withdraw:concept, shell:concept]")
 [reskin] signature idea (trait): "The warden's shell is thick with iron bands, and its weight settles him like a rooted stone; when he braces, the shell turns aside blows that would stagger a softer creature, and attempts to shove or trip him find only immovable iron." [trait/always/defense] — menu: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, relentless-pursuit, bound, marking-light, sealed-body, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura (+ shelf: absorption, bloodied-burst, resonant-body, warded-mending, weapon-lodge)
 [reskin] signature miss: trait — "The warden's shell is thick with iron bands, and its weight settles him like a rooted stone; when he braces, the shell turns aside blows that would stagger a softer creature, and attempts to shove or trip him find only immovable iron." [trait/always/defense] — the model found no template that holds it (offered: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, relentless-pursuit, bound, marking-light, sealed-body, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura, resonant-body)
+[reskin] species kit: Aquan — the tortle's own
+[reskin] species kit: "Fist" -> "Bite" (Piercing, not Bludgeoning) — a tortle strikes with its own
 ```
 
 
@@ -2500,6 +2632,7 @@ Delete
 ```
 [route] skirmisher type=Fey mechanics=none — caster-binder: a caster line needs a magic word in the words — none here | skirmisher: ✓ ("a satyr piper who dances") | skirmisher: no line key in the words — the model's read of its quote
 [concept] signature elements: compelling dance-aura [aura] | thorn-pipe instrument [object] | skirmishing hit-and-run dance [behavior]
+[reskin] species kit: satyr — "a satyr piper": Magic Resistance (Archmage/Magic Resistance)
 [reskin] signature idea (action): "The reveler lifts its thornpipe and plays a shrill, skipping reel aimed at one creature it can see, compelling that creature to spend its movement dancing directly toward the reveler along the shortest safe path. The reel does not root the target; it makes the dance irresistible if the target fails to withstand it, and the reveler can keep playing round after round to drag the same victim ever dee" [action/save/movement] — menu: trample, leap, gaze-single, snare, throw-retrieve, shield-bash, lure, random-ray, ground-burst, spew, snare-bolt, sensory-strike, disarm, thrown-burst-seed (+ shelf: delayed-brand, rampage, patient-defense, second-wind, aggro-curse, self-invisibility, focus, feint-slip, coating, snap-shot, riposte, affliction, contagion, charge-push, hook-rider, pounce, isolation, bolt-mark, charge)
 [reskin] signature bound to the concept's verb: action — feint-slip (dance)
 [reskin] signature re-poured: action — the idea left the concept's verb; the concept itself is poured into feint-slip
@@ -2507,6 +2640,7 @@ Delete
 [reskin] signature template: feint-slip -> Bonus Actions/"Whirling Sidestep" ("the creature is a dancer whose dance is evasive — it slips away in motion, and f [verb: dance:concept]")
 [reskin] signature idea (trait): "The reveler moves in an ever-shifting … that cannot be pinned down; whenever a creature ends its turn having moved less than it could have, the reveler's thornpipe gives off a mocking psychic echo that punishes the creature for standing still. Any creature that chooses not to move during its turn while within earshot suffers a stab of psychic pain that leaves it reeling." [trait/always/condition] — menu: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, noxious-aura, bloodied-fury, uncanny-sense, berserk, shielded-mind, evasion, relentless-pursuit, bound, marking-light, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura, assassinate, blurred-form, death-burst (+ shelf: heated-body, absorption, bloodied-burst, resonant-body, fire-aura, warded-mending)
 [reskin] signature miss: trait — "The reveler moves in an ever-shifting … that cannot be pinned down; whenever a creature ends its turn having moved less than it could have, the reveler's thornpipe gives off a mocking psychic echo that punishes the creature for standing still. Any creature that chooses not to move during its turn while within earshot suffers a stab of psychic pain that leaves it reeling." [trait/always/condition] — the model found no template that holds it (offered: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, noxious-aura, bloodied-fury, uncanny-sense, berserk, shielded-mind, evasion, relentless-pursuit, bound, marking-light, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura, assassinate, blurred-form, death-burst, fire-aura)
+[reskin] species kit: Sylvan — the satyr's own
 ```
 
 
@@ -2625,6 +2759,15 @@ Delete
 [reskin] signature idea (trait): "The oathkeeper's storm-scarred hide crackles with restless static, and when a foe lands a hit, the charge leaps back along the weapon or claw. The attacker is jolted and left staggering, their muscles twitching with lingering lightning." [trait/on_being_hit/condition] — menu: heated-body, absorption, bloodied-burst, resonant-body (+ shelf: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, fire-aura, noxious-aura, bloodied-fury, uncanny-sense, berserk, shielded-mind, evasion, relentless-pursuit, bound, marking-light, warded-mending, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura, assassinate, blurred-form, death-burst)
 [reskin] signature bound to the concept's verb: trait — heated-body, faultless-tracker (storm, marked)
 [reskin] signature template (trait): heated-body -> Traits/"Stormclap Retort" ("a foe lands a hit, the charge leaps back along the weapon or claw [verb: storm:concept, lightning:idea]")
+[harness] re-rolled Actions/"Multiattack" -> "Multiattack" [the call's own text]
+```
+
+**Re-roll — one entry, replaced**
+
+```
+Actions / BEFORE  Multiattack: The oathkeeper makes two attacks, using Claw or Venom Spit in any combination.
+Actions / AFTER   Multiattack: The oathkeeper makes two attacks, using Claw or Venom Spit in any combination. It can replace one attack with a use of Storm Stomp if Storm Stomp is available.
+provenance: none — the call wrote the text itself
 ```
 
 

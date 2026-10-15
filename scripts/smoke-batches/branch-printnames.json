@@ -1,0 +1,10 @@
+[
+  { "name": "", "description": "a bulwark-sworn sentinel with a broken greatsword and a battered shield", "cr": 7, "rules": "2024",
+    "mech": "a POST tail draws no block: a sentinel is not an Azer — the regression this rule exists for, now a per-name label" },
+  { "name": "", "description": "a reef-born skirmisher who harries the shallows with a barbed spear", "cr": 4, "rules": "2024",
+    "mech": "correction 1: a skirmisher is no kind of merfolk — the label the regexes could not state (would have been patch 20)" },
+  { "name": "", "description": "a dire wolf that hunts in a pack", "cr": 3, "rules": "2024",
+    "mech": "a KIND tail still draws its block: the Dire Wolf and its Pack Tactics — print's own answer" },
+  { "name": "", "description": "a hardened veteran of the border wars", "cr": 3, "rules": "2024",
+    "mech": "print's own NPC family keeps its tail: the Warrior Veteran, head is the role" }
+]

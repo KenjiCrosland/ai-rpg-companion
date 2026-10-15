@@ -288,3 +288,48 @@ describe('form-ten route reads (2026-10-01)', () => {
     expect(r.line).toBe('skirmisher-mounted');
   });
 });
+
+// THE CASTER GATE HOLDS ON THE OVERRIDE TOO (critic, 2026-10-14: "the caster gate
+// refused the warpriest line, then the verb override ('smites') put her back on
+// it. The gate should hold."). Casting is a mechanic engine; a verb cannot
+// conjure it, on the pick or on the override.
+describe('the caster gate holds on the verb override', () => {
+  const { chooseLine } = require('../route.mjs');
+  const run = (text, quote) => chooseLine({ picks: [{ line: 'defender-leader', quote }], creature_type: 'Humanoid' }, { text });
+
+  test('a smite with no magic word in the words does not reach the warpriest line', () => {
+    const r = run('an oathsworn crusader who smites the unclean and mends her soldiers', 'oathsworn crusader');
+    expect((r.notes ?? []).join(' ')).not.toMatch(/-> caster-warpriest/);
+  });
+
+  test('a magic word still lets the verb override through', () => {
+    const r = run('a battle-cleric who prays over her blade and casts blessings', 'battle-cleric');
+    expect((r.notes ?? []).join(' ')).toMatch(/-> caster-warpriest/);
+  });
+});
+
+// THE CASTER GATE HAS NO BACK DOOR (critic, 2026-10-14): the override was the
+// first way around it, the family fallback the second. Llibran's trace read
+// "caster-binder: a caster line needs a magic word — none here … fell to
+// caster's plain line", and a satyr piper came out a wizard.
+describe('the caster family fallback leaves the family', () => {
+  const { chooseLine } = require('../route.mjs');
+  const run = (text, line, type) => chooseLine({ picks: [{ line, quote: '' }], creature_type: type }, { text });
+
+  test('a refusal for want of a magic word falls OUT of the caster family', () => {
+    const r = run('a satyr piper who dances travellers into the hills', 'caster-binder', 'Fey');
+    expect(r.line).toBeTruthy();                 // never nothing: the rule is never-fail
+    expect(String(r.line)).not.toMatch(/^caster/);
+    expect((r.notes ?? []).join(' ')).toMatch(/the family itself needs a magic word/);
+  });
+
+  test('a magic word keeps the caster line', () => {
+    const r = run('a satyr sorcerer who casts charms and hexes', 'caster-binder', 'Fey');
+    expect(String(r.line)).toMatch(/^caster/);
+  });
+
+  test('a Fey falls to the skirmisher line, not the brute one — print has no Fey brutes', () => {
+    const r = run('a satyr piper who dances travellers into the hills', 'caster-binder', 'Fey');
+    expect(r.line).toBe('skirmisher');
+  });
+});

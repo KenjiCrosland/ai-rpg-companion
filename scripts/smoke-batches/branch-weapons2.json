@@ -1,0 +1,6 @@
+[
+  { "name": "", "description": "a soldier who clubs with a crossbow stock and shoots a heavy crossbow", "cr": 6, "rules": "2024",
+    "mech": "the engine validates: a melee butt-strike row whose NAME reads crossbow is refused the weapon (no range on the row); the shooting row keeps 100/400" },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": 5, "rules": "2024",
+    "mech": "re-read: the shortsword must deal Piercing and the thrown axe 20/60; the trace must show the call ANSWERED the weapon question" }
+]

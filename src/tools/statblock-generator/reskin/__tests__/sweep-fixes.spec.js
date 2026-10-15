@@ -184,7 +184,9 @@ describe('the critic\'s audit, engine side (2026-10-02)', () => {
   test('one 2014 save idiom: damage leads with "taking … on a failed save"; a bare condition save keeps its own clause; the lead-in folds (the Ashen Marshal and Lysandra, critic 2026-10-03)', () => {
     const { canonSave2014 } = require('../../format-2024/generate.mjs');
     expect(to2014Grammar('Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC 19. *Failure:* 72 (16d8) Fire damage, and the target has the Prone condition. *Success:* Half damage only.'))
-      .toBe('Each creature whose space it enters must make a DC 19 Strength saving throw, taking 72 (16d8) fire damage on a failed save, or half as much damage on a successful one. On a failed save, the target has the Prone condition.');
+      // 2014 writes a condition in prose (critic, 2026-10-14): "is knocked prone",
+      // never "has the Prone condition". The structure this pin is about is unchanged.
+      .toBe('Each creature whose space it enters must make a DC 19 Strength saving throw, taking 72 (16d8) fire damage on a failed save, or half as much damage on a successful one. On a failed save, the target is knocked prone.');
     expect(canonSave2014('*Wisdom Saving Throw*: DC 16, one creature within 60 feet. *Failure:* The target has the Paralyzed condition until the end of its next turn.'))
       .toBe('One creature within 60 feet must make a DC 16 Wisdom saving throw. On a failed save, the target has the Paralyzed condition until the end of its next turn.');
     expect(canonSave2014('*Constitution Saving Throw*: DC 14, each creature in a 20-foot Sphere. *Failure:* 21 (6d6) Poison damage. *Success:* The target is Poisoned until the end of its next turn.'))

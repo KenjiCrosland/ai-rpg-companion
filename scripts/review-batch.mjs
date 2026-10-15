@@ -28,10 +28,14 @@ for (const f of fs.readdirSync(dir).filter((x) => /^\d+-.*\.json$/.test(x)).sort
   const wrongEdition = block.type_and_alignment ? /Attack Roll:|\bAC \d+\n/.test(captured) : /Weapon Attack:|^Armor Class/m.test(captured);
   const text = captured.trim() && !wrongEdition ? captured : renderFromJson(block);
   const trace = (/### Trace\n```\n([\s\S]*?)\n```/.exec(md) ?? [])[1] ?? '';
+  // THE RE-ROLL GOES IN THE DOC (critic, 2026-10-14: "§2 says the runner prints
+  // before, after and provenance, but none of it is in the blocks"). The runner
+  // writes it per block; the review carried only the card and the gates.
+  const reroll = (/### Re-roll[^\n]*\n```\n([\s\S]*?)\n```/.exec(md) ?? [])[1] ?? '';
   const input = (/\*\*Input:\*\* `(.*?)`/.exec(md) ?? [])[1] ?? '';
   const r = checkBlock(block);
   const m = r.edition === '2014' && block.other_edition ? block.other_edition : block;
-  entries.push({ f, input, text, trace, r, print: /print canon: ".*" (?:heads on|is) the/.test(trace) || /print canon route/.test(trace), nova: (m.sections?.Actions ?? []).some((e) => /\((?:Recharge|\d\/Day)/.test(e.name ?? '') && /Saving Throw/.test(e.text ?? '')), legendary: !!(m.sections?.['Legendary Actions'] ?? []).length });
+  entries.push({ f, input, text, trace, reroll, r, print: /print canon: ".*" (?:heads on|is) the/.test(trace) || /print canon route/.test(trace), nova: (m.sections?.Actions ?? []).some((e) => /\((?:Recharge|\d\/Day)/.test(e.name ?? '') && /Saving Throw/.test(e.text ?? '')), legendary: !!(m.sections?.['Legendary Actions'] ?? []).length });
 }
 const results = entries.map((e) => e.r);
 const pick = []; const take = (label, fn) => { const e = entries.find((x) => fn(x) && !pick.some((p) => p.e === x)); if (e) pick.push({ label, e }); };
@@ -49,6 +53,10 @@ let md = `# Review batch — ${path.basename(dir)}\n\nThe checker ran first. The
 for (const { label, e } of pick) {
   const notes = GATES.flatMap((g) => e.r.gates[g].findings.filter((x) => x.severity !== 'ok').map((x) => `- ${g} · ${x.severity} · ${x.rule}: ${x.message}`));
   const read = e.r.read ? `- read: def ${e.r.read.def} / off ${e.r.read.off} → ${e.r.read.read}; sustained ${e.r.read.sustained} (${e.r.read.attacks} × ${e.r.read.used?.name ?? '?'}${e.r.read.legendary?.avg ? ` + legendary ${e.r.read.legendary.name}` : ''}); nova ${e.r.read.nova ? `${e.r.read.nova.name} ${e.r.read.nova.avg}` : 'none'}; dmg ${e.r.read.dmg.toFixed(0)}` : '';
-  md += `\n\n---\n\n## ${e.r.name} — ${label}\n\n**Concept:** ${e.input}\n\n| block | CR | donor | ${GATES.join(' | ')} |\n|---|---|---|${GATES.map(() => '---').join('|')}|\n${rowFor(e.r)}\n\n${notes.join('\n') || '- clean'}\n${read}\n\n\`\`\`\n${e.text.trim()}\n\`\`\`\n\n**Engine trace**\n\n\`\`\`\n${e.trace.split('\n').filter((l) => /value check|signature|library seed|chassis nova|nova capped|print canon|^\[route\]|hp restored|removal|claim gate|cr from/.test(l)).join('\n')}\n\`\`\`\n`;
+  // THE DROPPED CLAUSE'S TEXT, not just its count (critic's process ask,
+  // 2026-10-14: "Vaelrix 1/2, Karrow 1/2 and Hollow Warden 1/2 can't be read
+  // from the sheets. A clause list removes the guessing.")
+  const dropped = (e.r.fidelity?.dropped ?? []).map((t) => `- **dropped clause:** "${String(t).trim()}"`).join('\n');
+  md += `\n\n---\n\n## ${e.r.name} — ${label}\n\n**Concept:** ${e.input}\n\n| block | CR | donor | ${GATES.join(' | ')} |\n|---|---|---|${GATES.map(() => '---').join('|')}|\n${rowFor(e.r)}\n\n${notes.join('\n') || '- clean'}\n${dropped ? `${dropped}\n` : ''}${read}\n\n\`\`\`\n${e.text.trim()}\n\`\`\`\n\n**Engine trace**\n\n\`\`\`\n${e.trace.split('\n').filter((l) => /value check|signature|library seed|chassis nova|nova capped|print canon|^\[route\]|hp restored|removal|claim gate|cr from|class kit|species kit|re-rolled/.test(l)).join('\n')}\n\`\`\`\n${e.reroll ? `\n**Re-roll — one entry, replaced**\n\n\`\`\`\n${e.reroll}\n\`\`\`\n` : ''}`;
 }
 fs.mkdirSync(path.dirname(out), { recursive: true }); fs.writeFileSync(out, md); console.log(`wrote ${out} (${pick.length} blocks)`);

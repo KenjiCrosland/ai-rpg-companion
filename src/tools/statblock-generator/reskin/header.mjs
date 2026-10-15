@@ -40,7 +40,10 @@ const PRINT_LANGUAGES = ['Common', 'Elvish', 'Dwarvish', 'Giant', 'Draconic', 'I
 /** Languages by mind, from the print set. */
 export function honestLanguages(line, { mind = null, type = '', int = null, speaks = false } = {}) {
   const raw = String(line ?? '').trim();
-  if (Number.isFinite(int) && int <= 5 && !speaks && !/^Humanoid\b/i.test(String(type))) return 'None'; // an INT 4 body speaks nothing unless the GM says it does (the Frostmaw Leviathan spoke Common — the critic's second species read)
+  // TYPE-AWARE, off print's own 139 blocks at INT 5 or less: no Beast,
+  // Monstrosity, Ooze, Plant, Undead or Aberration speaks, while a Giant, Fiend,
+  // Elemental, Dragon or Construct often does (the Ogre speaks Common and Giant)
+  if (Number.isFinite(int) && int <= 5 && !speaks && /^(?:Beast|Monstrosity|Ooze|Plant|Undead|Aberration)\b/i.test(String(type))) return 'None'; // an INT 4 body speaks nothing unless the GM says it does (the Frostmaw Leviathan spoke Common — the critic's second species read)
   if (mind === 'mindless') return /construct/i.test(type) ? "Understands the languages of its creator but can't speak" : 'None';
   if (/^Humanoid\b/i.test(String(type)) && (!raw || /^none$/i.test(raw) || mind === 'bestial')) return raw && !/^none$/i.test(raw) ? raw : 'Common'; // every print Humanoid speaks — a boar-shifter miller read as bestial printed None (critic, new lines 2026-09-28)
   if (mind === 'bestial') return 'None';
@@ -62,6 +65,8 @@ export function honestLanguages(line, { mind = null, type = '', int = null, spea
   return kept.length > 1 && kept.includes('the languages it knew in life') ? `${kept.filter((k) => k !== 'the languages it knew in life').join(', ')} plus the languages it knew in life` : kept.join(', ');
 }
 
+import { weaponProp, weaponNouns } from './weapons.mjs';
+
 // anatomy and weapon nouns bind to a row kind and a physical damage type (print: 330/422 attack rows are one bare word)
 export const ANATOMY = {
   bite: ['melee', 'Piercing'], fang: ['melee', 'Piercing'], fangs: ['melee', 'Piercing'], maw: ['melee', 'Piercing'], jaws: ['melee', 'Piercing'], beak: ['melee', 'Piercing'],
@@ -73,10 +78,29 @@ export const ANATOMY = {
   // "Curb Stomp" dealt Piercing, "Fangblade" dealt Bludgeoning)
   stomp: ['melee', 'Bludgeoning', 'type'], stamp: ['melee', 'Bludgeoning', 'type'], kick: ['melee', 'Bludgeoning', 'type'], crush: ['melee', 'Bludgeoning', 'type'], pound: ['melee', 'Bludgeoning', 'type'], headbutt: ['melee', 'Bludgeoning', 'type'], club: ['melee', 'Bludgeoning', 'type'], mace: ['melee', 'Bludgeoning', 'type'], hammer: ['melee', 'Bludgeoning', 'type'], staff: ['melee', 'Bludgeoning', 'type'],
   ram: ['melee', 'Bludgeoning', 'type'], butt: ['melee', 'Bludgeoning', 'type'],
-  blade: ['melee', 'Slashing', 'type'], sword: ['melee', 'Slashing', 'type'], axe: ['melee', 'Slashing', 'type'], scimitar: ['melee', 'Slashing', 'type'], saber: ['melee', 'Slashing', 'type'], sabre: ['melee', 'Slashing', 'type'],
-  gore: ['melee', 'Piercing'], horn: ['melee', 'Piercing'], horns: ['melee', 'Piercing'], tusk: ['melee', 'Piercing'], tusks: ['melee', 'Piercing'], sting: ['melee', 'Piercing'], stinger: ['melee', 'Piercing'], lance: ['melee', 'Piercing'], spear: ['melee', 'Piercing'], pike: ['melee', 'Piercing'],
-  rock: ['ranged', null], boulder: ['ranged', null], slab: ['ranged', null], javelin: ['ranged', 'Piercing'], bolt: ['ranged', 'Piercing'], arrow: ['ranged', 'Piercing'], dart: ['ranged', 'Piercing'], net: ['ranged', null], bomb: ['ranged', null], flask: ['ranged', null], shard: ['ranged', 'Piercing'],
+  gore: ['melee', 'Piercing'], horn: ['melee', 'Piercing'], horns: ['melee', 'Piercing'], tusk: ['melee', 'Piercing'], tusks: ['melee', 'Piercing'], sting: ['melee', 'Piercing'], stinger: ['melee', 'Piercing'],
+  rock: ['ranged', null], boulder: ['ranged', null], slab: ['ranged', null], bomb: ['ranged', null], flask: ['ranged', null], shard: ['ranged', 'Piercing'],
+  // THE WEAPON NOUNS COME FROM THE WEAPON TABLE. They used to be written out
+  // here too, and the copies drifted: a Shortsword dealt Slashing because this
+  // list only knew "sword" (critic, 2026-10-14). A weapon noun fixes the
+  // physical type and never moves a row between melee and ranged ('type').
+  ...weaponAnatomy(),
 };
+
+/**
+ * Every weapon name and alias as an anatomy noun, typed from the one table. The
+ * four print tuned by hand stay tuned: a hurled javelin is honestly a ranged
+ * row, and a polearm's noun may move a row to melee because nobody throws one.
+ */
+function weaponAnatomy() {
+  const TUNED = { javelin: ['ranged', 'Piercing'], lance: ['melee', 'Piercing'], spear: ['melee', 'Piercing'], pike: ['melee', 'Piercing'] };
+  const out = {};
+  for (const n of weaponNouns()) {
+    const w = weaponProp(n); if (!w) continue;
+    out[n] = TUNED[n] ?? (w.reach ? ['melee', w.type, 'type'] : ['ranged', w.type]);
+  }
+  return out;
+}
 const cap = (s) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 /**
  * Attack renames obey anatomy: a melee noun never names a ranged row (it takes

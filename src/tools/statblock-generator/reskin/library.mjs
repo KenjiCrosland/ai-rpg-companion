@@ -97,7 +97,7 @@ export const LIBRARY_SEEDS = [
     text: '*Strength Saving Throw:* DC {dc}, one creature within 5 feet. *Failure:* The target is pushed up to 15 feet away from the creature and has the Prone condition.',
   },
   {
-    key: 'herd', keys: ['herd', 'drive', 'command', 'stampede'],
+    key: 'herd', keys: ['herd', 'drive', 'command'],
     section: 'Actions', archetypes: ['defender', 'brute', 'caster'],
     name: 'Driving Bellow (2/Day)', // area forced-move, gated
     text: "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice within 30 feet. *Failure:* The target immediately moves up to half its Speed in a direction of the creature's choice, using the safest available route.",
@@ -248,7 +248,7 @@ export const LIBRARY_KEYS = LIBRARY_SEEDS.map((s) => s.key);
 // seed; different blocks rotate through their eligible shelf
 export const nameHash = (s) => [...String(s)].reduce((h, c) => ((h * 31) + c.charCodeAt(0)) >>> 0, 7);
 
-export function drawLibraryRow(scaled, { archetype = null, energy = null, mix = null, name = '', shapeKey = null, imposed = [], mechanics = null, cr = null } = {}) {
+export function drawLibraryRow(scaled, { archetype = null, energy = null, mix = null, name = '', shapeKey = null, imposed = [], mechanics = null, cr = null, meleeName = null, rangedName = null } = {}) {
   const hasNova = Object.values(scaled.sections ?? {}).flat()
     .some((e) => (/^Recharge/.test(e.gate ?? '') || /\(Recharge [\d–-]+\)/.test(e.name ?? '')) && /\d+ \(\d+d\d+/.test(e.text ?? ''));
   const chassisTeleports = Object.values(scaled.sections ?? {}).flat().some((e) => /teleports? up to/.test(e.text ?? ''));
@@ -285,7 +285,15 @@ export function drawLibraryRow(scaled, { archetype = null, energy = null, mix = 
   if (seed.dpr_frac) {
     const { avg, dice } = saveDamageDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * seed.dpr_frac)));
     text = text.split('{burst}').join(`${avg} (${dice})`);
-    const dtype = mix === 'physical' || !energy ? (seed.section === 'Bonus Actions' ? 'Bludgeoning' : 'Piercing') : energy;
+    // A SEED'S OWN FICTION BEATS THE SLOT'S DEFAULT (critic, 2026-10-14:
+    // Bloodcurdling Howl and Creeping Dread both dealt Piercing — the seed path
+    // defaults an action to Piercing and a bonus action to Bludgeoning, which is
+    // a weapon's type on a thing that is not a weapon). A dread or a wail hurts
+    // the mind; a drain is Necrotic; a spew or a venom is Poison.
+    const BY_FICTION = { 'escalating-dread': 'Psychic', 'terror-pulse': 'Psychic', 'sensory-strike': 'Psychic', drain: 'Necrotic', 'curse-debt': 'Necrotic', 'delayed-brand': 'Necrotic', 'blighted-ground': 'Poison' };
+    const dtype = mix === 'physical' || !energy
+      ? (BY_FICTION[seed.key] ?? (seed.section === 'Bonus Actions' ? 'Bludgeoning' : 'Piercing'))
+      : energy;
     text = text.split('{damage_type}').join(dtype);
   }
   return { seed: seed.key, section: seed.section, row: { name: seed.name, text, library: true } };

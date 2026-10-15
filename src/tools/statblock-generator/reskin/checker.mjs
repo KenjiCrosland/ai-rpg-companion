@@ -13,6 +13,7 @@
 import { fromLegacyModel } from '../format-2024/generate.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
 import { HIT_DIE_BY_SIZE } from '../format-2024/dice.mjs';
+import { WEAPONS, weaponFor, weaponProp, namesWeapon } from './weapons.mjs';
 import { cardBudget, dmgRow } from './card-budgets.mjs';
 import { NOVA_CAP } from './templates.mjs';
 import { CONTROL_SPELL_LEVEL, CONTROL_AT_WILL_CR, SPELL_DAMAGE_AVG, printCanonFor, nearPrintCr } from './generate.mjs';
@@ -145,7 +146,12 @@ function gateDerivation(m, ctx, F) {
     if (r.e.print || r.e.overlay_bite) continue; // print's row carries print's numbers; the orb's bite adds PB off a STR 10 (print's Beholder)
     if (!Number.isFinite(r.atk)) continue;
     // a WEAPON row rolls Strength or Dexterity; a SPELL row rolls the casting stat — the 2014 label says which, a 2024 row may be either (the critic's audit 2026-10-02: a scepter rolling Int under "Melee Weapon Attack")
-    const label = label2014[r.name]; const allowed = label === 'weapon' ? ['STR', 'DEX'] : label === 'spell' ? [castStat].filter(Boolean) : ['STR', 'DEX', ...(castStat ? [castStat] : [])];
+    // A MUNDANE WEAPON BY NAME ROLLS STR OR DEX, whatever the chassis keys to
+    // (critic, 2026-10-14: Lady Merivane swung a greatsword at +8 off WIS 20
+    // because the caster chassis keys every attack to one stat). Without a 2014
+    // label the gate allowed the casting stat on any row, so nothing flagged it.
+    const label = label2014[r.name]; const mundane = namesWeapon(r.name) && !/\b(?:arcane|eldritch|spectral|radiant|shadow|flame|frost|storm|spirit|astral|phantom)\b/i.test(String(r.name ?? ''));
+    const allowed = label === 'weapon' || mundane ? ['STR', 'DEX'] : label === 'spell' ? [castStat].filter(Boolean) : ['STR', 'DEX', ...(castStat ? [castStat] : [])];
     const any = Object.keys(mods).find((k) => mods[k] + pb === r.atk); const stat = allowed.find((k) => mods[k] + pb === r.atk) ?? any;
     if (!any) F('attack-bonus', 'fail', `${r.name}: +${r.atk} is not ${label ? `a ${label} row's` : 'STR/DEX or the casting stat\'s'} mod + PB ${pb} (mods ${Object.entries(mods).map(([k, v]) => `${k} ${v}`).join(', ')})`, `+${r.atk}`);
     else if (!allowed.includes(stat)) F('attack-stat', 'fail', `${r.name}: +${r.atk} derives from ${stat}, but ${label ? `a ${label} row` : 'an attack row'} rolls ${allowed.join('/')}`, stat);
@@ -484,28 +490,37 @@ export function fidelityOf(m, raw, ctx) {
 // THE READER GATE (the critic's third species read, 2026-10-13): behaviour checks over the output sheet for the defect classes a reader
 // kept finding after the mechanical gates passed — each class fails the gate instead of waiting for a reader.
 const PRINT_DUAL_RANGES = new Set(['20/60', '30/120', '60/240', '80/320', '100/400', '150/600', '5/15']);
-const RANGE_OF = [[/\bheavy crossbow\b/i, '100/400'], [/\blight crossbow\b/i, '80/320'], [/\bhand crossbow\b/i, '30/120'], [/\bcrossbow\b/i, '80/320'], [/\blongbow\b/i, '150/600'], [/\bshortbow\b/i, '80/320'], [/\bsling\b/i, '30/120'], [/\bjavelins?\b/i, '30/120'], [/\b(?:spears?|daggers?|knives|knife|hand ?axes?|tridents?|darts?|light hammers?)\b/i, '20/60'], [/\bnets?\b/i, '5/15'], [/\b(?:pistols?|flintlocks?|revolvers?)\b/i, '30/90'], [/\b(?:muskets?|rifles?)\b/i, '40/120']];
-const LAUNCHER = /\b(?:crossbow|longbow|shortbow|bow|sling|pistol|musket|rifle)\b/i; const NEVER_RANGED = /\b(?:greatsword|greataxe|maul|pike|halberd|glaive|lance|longsword|battleaxe|warhammer|flail|morningstar|rapier|scimitar|shortsword|mace|club|greatclub|quarterstaff|staff)\b/i;
+// the three questions this gate asks a row name, all answered by the one table:
+// what print's range for that weapon is, whether it is shot rather than thrown,
+// and whether it is a weapon print never gives a range at all
+const rangeOf = (n) => weaponProp(n)?.range ?? null;
+const isLauncher = (n) => !!weaponProp(n)?.launcher;
+const neverRanged = (n) => { const w = weaponProp(n); return !!(w && w.reach && !w.thrown && !w.launcher); };
 const TYPE_NAME_WORD = /(?:^|\s)(Acid|Cold|Fire|Force|Lightning|Necrotic|Poison|Psychic|Radiant|Thunder|Bludgeoning|Piercing|Slashing)(?=\s|$)/i;
 const NAME_MECHANIC = [[/\b(?:charge|rush|stampede|dash|stride|gallop|sprint)\b/i, /\b(?:moves?|move up to|movement|Speed|straight toward|feet in a straight line|Dash|Disengage|Difficult Terrain|Opportunity Attacks?)\b/, 'movement'], [/\b(?:fear|dread|terror|fright|horror|scare)\w*/i, /\bFrightened\b|Disadvantage on (?:attack rolls and ability checks|ability checks and attack rolls)/, 'the Frightened condition'] /* print writes the Frightened effect longhand where the creature fears a thing (the phobia shape: Sir Reginald's Avian Terror) */, [/\bstun\w*/i, /\bStunned\b/, 'the Stunned condition'], [/\bblind\w*/i, /\bBlinded\b/, 'the Blinded condition'], [/\b(?:grapple|grasp|grip|clutch|seize)\w*/i, /\bGrappled\b|\bescape DC\b/, 'the Grappled condition'], [/\b(?:trip|topple|sweep)\b/i, /\bProne\b/, 'the Prone condition'], [/\b(?:push|shove|repel|hurl back)\b/i, /\bpushed\b/, 'a push'], [/\bparaly\w*/i, /\bParalyzed\b/, 'the Paralyzed condition'], [/\bpoison\w*/i, /\bPoison(?:ed)?\b/, 'Poison'], [/\bhobbl\w*|\bcripple\w*|\bslow\w*/i, /\bSpeed\b|\bProne\b|\bRestrained\b/, 'a Speed, Prone or Restrained effect']];
-const THROWN_NOUN = /^(?:javelin|spear|trident|dagger|handaxe|hand ?axe|dart|hammer|net|knife|boulder|rock|stone|spike|spine|quill|shard|bolt|bolts|arrow|bomb|flask|jar|harpoon|chain|hook|volley|spit|spray|glob|gob|blast|bola|bolas|sling|stinger|needle|barb|thorn|pellet|shot)s?$/i; // print's hybrid rows are thrown weapons
+// print's hybrid rows are thrown weapons: the table says which, and a thing that
+// flies but no shop sells covers the rest (one weapon table, 2026-10-15)
+const FLIES_NOUN = /^(?:boulder|rock|stone|spike|spine|quill|shard|bomb|flask|jar|harpoon|chain|hook|volley|spit|spray|glob|gob|blast|bola|bolas|stinger|needle|barb|thorn|pellet|shot)s?$/i;
+const thrownName = (n) => { const k = weaponFor(n); const w = k ? WEAPONS[k] : null; return !!(w && (w.thrown || w.launcher)); };
 function gateReader(raw, m, ctx, F) {
   const inl = String(m.inline ?? '').trim(); const name = String(m.name ?? '').trim(); const rows = allRows(m);
   const isPrint = !!ctx.print && String(ctx.print.name ?? '').toLowerCase() === name.toLowerCase(); const humanoid = /^Humanoid/i.test(String(m.type ?? '')); // the sheet's NAME is print's, not merely an alias in the words (a tiefling duelist is not the Gladiator by name)
   // inline-consistency
-  const gmTyped = !!name && new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(String(ctx.userConcept ?? '')); // a name the GM typed is a Name-field name; one the call minted may be a kind ("Eaveswatcher" from "an owlin night-watcher")
-  if (/^[A-Z][a-z'-]+$/.test(name) && humanoid && !isPrint && gmTyped && !/\b(?:a|an|the)\s+$/i.test(String(ctx.userConcept ?? '').split(new RegExp(name, 'i'))[0] ?? '') && inl.toLowerCase() === `the ${name.toLowerCase()}`) F('inline-consistency', 'fail', `a one-word Name takes the person form: "${name}", never "${inl}"`, inl);
+  // A ONE-WORD NAME ON A HUMANOID IS THAT PERSON'S NAME, whoever minted it
+  // (owner, 2026-10-14): "the smokeveil" reads like a species the GM never
+  // created. The GM's own article is still the exception ("a meshrin").
+  if (/^[A-Z][a-z'-]+$/.test(name) && humanoid && !isPrint && !/\b(?:a|an|the)\s+$/i.test(String(ctx.userConcept ?? '').split(new RegExp(name, 'i'))[0] ?? '') && inl.toLowerCase() === `the ${name.toLowerCase()}`) F('inline-consistency', 'fail', `a one-word Name takes the person form: "${name}", never "${inl}"`, inl);
   if (inl && !/^the /i.test(inl)) { const re = new RegExp(`\\bthe ${name.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:'s)?\\b`, 'i'); for (const { sec, e } of rows) if (re.test(String(e.text ?? ''))) F('inline-consistency', 'fail', `${sec}/${bare(e.name)} says "the ${name.toLowerCase()}" beside the sheet's inline "${inl}"`, bare(e.name)); }
   else if (inl) { const last = inl.replace(/^the /i, ''); const parts = last.split(' '); if (parts.length > 1) { const re = new RegExp(`\\bthe ${parts.at(-1).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'); for (const { sec, e } of rows) if (re.test(String(e.text ?? '')) && !new RegExp(`\\b${inl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(String(e.text ?? ''))) F('inline-consistency', 'soft', `${sec}/${bare(e.name)} says "the ${parts.at(-1)}" beside the sheet's inline "${inl}"`, bare(e.name)); } }
   // print-range
   for (const { sec, e } of rows) {
     const t = String(e.text ?? ''); const n = bare(e.name);
     for (const rm of t.matchAll(/range (\d+\/\d+) ft\./g)) {
-      const want = RANGE_OF.find(([re]) => re.test(n))?.[1]; const ok = want ? rm[1] === want : (PRINT_DUAL_RANGES.has(rm[1]) || (/\b(?:pistol|musket|rifle|firearm|gun)\b/i.test(n) && /^(?:30\/90|40\/120)$/.test(rm[1])));
+      const want = rangeOf(n); const ok = want ? rm[1] === want : (PRINT_DUAL_RANGES.has(rm[1]) || (/\b(?:pistol|musket|rifle|firearm|gun)\b/i.test(n) && /^(?:30\/90|40\/120)$/.test(rm[1])));
       if (!ok) F('print-range', 'fail', `${sec}/${n}: range ${rm[1]} is not ${want ? `the ${n}'s ${want}` : 'a print range'}`, rm[1]);
     }
-    if (LAUNCHER.test(n) && /reach \d+ ft\. or range/.test(t)) F('print-range', 'fail', `${sec}/${n}: a launcher is ranged-only, never "reach … or range"`, n);
-    if (NEVER_RANGED.test(n) && !/\b(?:hurl|hurled|throw|thrown)\b/i.test(n) && /Ranged Attack Roll/.test(t) && !/Melee or Ranged/.test(t)) F('print-range', 'fail', `${sec}/${n}: a melee weapon on a ranged-only row`, n);
+    if (isLauncher(n) && /reach \d+ ft\. or range/.test(t)) F('print-range', 'fail', `${sec}/${n}: a launcher is ranged-only, never "reach … or range"`, n);
+    if (neverRanged(n) && !/\b(?:hurl|hurled|throw|thrown)\b/i.test(n) && /Ranged Attack Roll/.test(t) && !/Melee or Ranged/.test(t)) F('print-range', 'fail', `${sec}/${n}: a melee weapon on a ranged-only row`, n);
   }
   // exact-body-identity
   if (ctx.print?.exact && nearPrintCr(ctx.cr, ctx.print.cr)) {
@@ -531,11 +546,61 @@ function gateReader(raw, m, ctx, F) {
     if (!ma && atk.length > 1 && !ctx.print) F('multiattack-integrity', 'soft', `${atk.length} attack rows and no Multiattack`, atk.length);
     if (ma) { // the ATTACK slots must be attack rows; a name after "uses" or "a use of" is an action print legitimately names (the Kraken uses Fling, Lightning Strike, or Swallow)
       const t0 = String(ma.text); const all = rows.map(({ e }) => bare(e.name).toLowerCase());
+      // A ROW NAME MAY CONTAIN "and" (critic, 2026-10-14: "Gorge and Glut" is one
+      // row, and splitting the list on "and" reported a dangling "Gorge"). Consume
+      // the longest known row name first, and only then fall back to separators.
+      const resolveNames = (phrase) => {
+        const out = []; let rest = String(phrase ?? '').trim();
+        while (rest) {
+          const lower = rest.toLowerCase();
+          const hit = all.filter((k) => k && lower.startsWith(k)).sort((a, b) => b.length - a.length)[0];
+          if (hit) { out.push(rest.slice(0, hit.length)); rest = rest.slice(hit.length).replace(/^(?:,\s*|\s+or\s+|\s+and\s+)/, '').trim(); continue; }
+          const cut = /^(.*?)(?:,\s*|\s+or\s+|\s+and\s+)/.exec(rest);
+          if (!cut) { out.push(rest); break; }
+          out.push(cut[1]); rest = rest.slice(cut[0].length).trim();
+        }
+        return out.filter(Boolean);
+      };
       const slot = [...t0.matchAll(/makes \w+ ([A-Z][\w'-]*(?: [A-Z][\w'-]*)*) attacks/g)].map((x) => x[1])
-        .concat([...t0.matchAll(/using ([^.]*?) in any combination/g)].flatMap((x) => x[1].split(/,| or | and /).map((y) => y.trim()).filter(Boolean)));
+        .concat([...t0.matchAll(/using ([^.]*?) in any combination/g)].flatMap((x) => resolveNames(x[1])));
       for (const n of slot) { if (!n || !/^[A-Z]/.test(n)) continue; if (!atk.some((a) => a.toLowerCase() === n.toLowerCase())) { F('multiattack-integrity', 'fail', `Multiattack's attack slot names "${n}", which is not an attack row on this sheet`, n); break; } }
-      const used = [...t0.matchAll(/(?:a use of|uses) ([^.]*?)(?:\.|$)/g)].flatMap((x) => x[1].split(/,| or | and /).map((y) => y.trim().replace(/^its /, '').replace(/\s+to cast\b.*$/i, '')).filter(Boolean)); // "Spellcasting to cast Hold Person" is the Spellcasting row plus the spell it casts (the critic's fifth read)
+      const used = [...t0.matchAll(/(?:a use of|uses) ([^.]*?)(?:\.|$)/g)].flatMap((x) => resolveNames(x[1]).map((y) => y.trim().replace(/^its /, '').replace(/\s+to cast\b.*$/i, ''))).filter(Boolean); // "Spellcasting to cast Hold Person" is the Spellcasting row plus the spell it casts (the critic's fifth read)
       for (const n of used) { if (!n || !/^[A-Z]/.test(n)) continue; if (!all.some((a) => a === n.toLowerCase() || a.startsWith(`${n.toLowerCase()} (`))) { F('multiattack-integrity', 'soft', `Multiattack uses "${n}", which is not a row on this sheet`, n); break; } } }
+  }
+  // row-parse (critic, 2026-10-14): a row with no name, or whose text opens
+  // mid-sentence because a sweep cut its first clause away, is a parse failure.
+  for (const { sec, e } of rows) {
+    const nm = String(e.name ?? '').trim();
+    const txt = String(e.text ?? '').trim();
+    if (!nm) F('row-parse', 'fail', `${sec}: a row with no name`, null);
+    else if (/^[a-z]/.test(txt) && !/^\*/.test(txt)) F('row-parse', 'fail', `${sec}/${bare(e.name)}: its text begins mid-sentence ("${txt.slice(0, 40)}…")`, bare(e.name));
+  }
+  // on-hit-type (critic, 2026-10-14, reopened from the fifth read): an on-hit
+  // extra rides the hit, so it deals the hit's own type. Assassinate added
+  // Bludgeoning to a Shortsword because the rider renders in the trait seat,
+  // before the weapon rows have their final types. A deliberate energy stands.
+  {
+    const PHYS2 = ['Bludgeoning', 'Piercing', 'Slashing'];
+    const melee2 = rows.find(({ e }) => /Melee(?: or Ranged)? Attack Roll/.test(e.text ?? '') && !/^Multiattack/.test(e.name ?? ''))?.e;
+    const hit2 = (/\) ([A-Z][a-z]+) damage/.exec(melee2?.text ?? '') ?? [])[1] ?? null;
+    if (hit2 && PHYS2.includes(hit2)) for (const { sec, e } of rows) {
+      if (/Attack Roll/.test(e.text ?? '') || e.print) continue;
+      const x = /takes an extra \d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) ([A-Z][a-z]+) damage/.exec(e.text ?? '');
+      if (x && PHYS2.includes(x[1]) && x[1] !== hit2) F('on-hit-type', 'fail', `${sec}/${bare(e.name)}: it adds ${x[1]} to a hit that deals ${hit2} (${bare(melee2.name)})`, x[1]);
+    }
+  }
+  // speaks-by-int (critic, 2026-10-14, reopened from the second read: Meshrin is
+  // an INT 4 Monstrosity and spoke Common). The rule is TYPE-aware, measured off
+  // print's own 139 non-Humanoid blocks at INT 5 or less: Beast 0 of 88,
+  // Monstrosity 0 of 19, Ooze 0 of 4, Plant 0 of 3, Undead 0 of 4, Aberration
+  // 0 of 4 — none speaks. A Giant, Fiend, Elemental, Dragon or Construct at the
+  // same INT often does (the Ogre speaks Common and Giant), so they are exempt.
+  {
+    const MUTE_AT_LOW_INT = /^(?:Beast|Monstrosity|Ooze|Plant|Undead|Aberration)\b/i;
+    const int = Number(m.stats?.INT); const lang = String(m.languages ?? '').trim();
+    const says = lang && !/^(?:none|—|-)$/i.test(lang) && !/can'?t speak/i.test(lang);
+    const gmSays = /\b(?:speaks?|talks?|whispers?|says|tongue|language|multilingual)\b/i.test(String(ctx.userConcept ?? ''));
+    if (Number.isFinite(int) && int <= 5 && MUTE_AT_LOW_INT.test(String(m.type ?? '')) && !isPrint && says && !gmSays) F('speaks-by-int', 'fail', `INT ${int} on a ${String(m.type ?? '').split(' ')[0]} speaks "${lang}" — print has none of 19 Monstrosities, 88 Beasts or 4 Oozes at INT 5 or less speaking a tongue`, lang);
   }
   // attack-in-multiattack (the critic's fifth read): on a sheet with a
   // Multiattack, every Action attack row is named in it — as a slot or as a use
@@ -547,12 +612,28 @@ function gateReader(raw, m, ctx, F) {
     if (ma) {
       const cited = String(ma.text ?? '').toLowerCase();
       for (const { sec, e } of rows) {
-        if (sec !== 'Actions' || !/Attack Roll/.test(e.text ?? '') || e.print || /^Multiattack/.test(e.name ?? '')) continue;
+        // print composes its own card only while the card is still print's: once a
+        // lack has removed one of print's rows, the composition is ours (critic,
+        // 2026-10-14: the Iron Templar lost Spellcasting to "no magic at all" and
+        // kept Radiant Flame orphaned outside the Multiattack)
+        const printWhole = !!ctx.print?.exact && nearPrintCr(ctx.cr, ctx.print.cr);
+        if (sec !== 'Actions' || !/Attack Roll/.test(e.text ?? '') || (e.print && printWhole) || /^Multiattack/.test(e.name ?? '')) continue;
         if (/\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '')) continue;
         const n = bare(e.name).toLowerCase(); if (!n) continue;
         if (!cited.includes(n)) F('attack-in-multiattack', 'fail', `Actions/${bare(e.name)} is an attack row the Multiattack never names — a GM who reads the Multiattack never uses it`, bare(e.name));
       }
     }
+  }
+  // interior-energy (critic, 2026-10-14, the fourth flag): a gullet matches the
+  // body it is in. Where a containment row deals one non-physical type on the
+  // save and digests in another, the interior is the frame's default, not this
+  // creature's. Print's Acid stands only where the creature declares no energy.
+  for (const { sec, e } of rows) {
+    const t = String(e.text ?? ''); if (!/damage at the start of each of/.test(t)) continue;
+    const inside = /(\w+) damage at the start of each of/.exec(t)?.[1] ?? null;
+    const onSave = [...t.matchAll(/\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) (\w+) damage/g)].map((x) => x[1]).find((x) => x !== inside) ?? null;
+    const energyish = (x) => x && !['Bludgeoning', 'Piercing', 'Slashing'].includes(x);
+    if (energyish(inside) && energyish(onSave) && inside !== onSave) F('interior-energy', 'fail', `${sec}/${bare(e.name)}: it deals ${onSave} and digests in ${inside} — a gullet matches the body it is in`, inside);
   }
   // hybrid-needs-thrown (the critic's fifth read): "Melee or Ranged" is print's
   // grammar for a THROWN weapon — a Spear, a Javelin, a Trident, a Handaxe. A row
@@ -560,8 +641,10 @@ function gateReader(raw, m, ctx, F) {
   for (const { sec, e } of rows) {
     if (!/Melee or Ranged Attack Roll/.test(e.text ?? '') || e.print) continue;
     const n = bare(e.name); const head = n.toLowerCase().split(/[\s-]+/).pop() ?? '';
-    if (THROWN_NOUN.test(head) || /\b(?:thrown|throws?|hurl|hurled|hurls|lob|lobs|lobbed|fling|flings|flung|tosse?s?|spit|spits|launch(?:es|ed)?)\b/i.test(n)) continue;
-    if (!/\) (?:Bludgeoning|Piercing|Slashing) damage/.test(e.text ?? '')) continue; // the Mage's Arcane Burst reaches both ways: an energy row is a spell attack, not a thrown weapon
+    if (thrownName(n) || FLIES_NOUN.test(head) || /\b(?:thrown|throws?|hurl|hurled|hurls|lob|lobs|lobbed|fling|flings|flung|tosse?s?|spit|spits|launch(?:es|ed)?)\b/i.test(n)) continue;
+    // the Mage's Arcane Burst reaches both ways because it is a SPELL attack, so
+    // the exemption needs a caster (critic, 2026-10-14)
+    if (!/\) (?:Bludgeoning|Piercing|Slashing) damage/.test(e.text ?? '') && rows.some(({ e: e2 }) => /^Spellcasting/.test(e2.name ?? ''))) continue;
     if (/\b(?:bow|crossbow|sling|musket|pistol|rifle|firearm|gun|blowgun)\b/i.test(n)) continue; // a launcher is the weapon table's to retable, and print-range already owns it
     F('hybrid-needs-thrown', 'fail', `${sec}/${n}: a "Melee or Ranged" row that names nothing a creature can throw`, n);
   }

@@ -293,14 +293,26 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
   }
   let fellToFamily = false;
   if (!chosen) {
-    const fam = family ?? firstKnown?.family ?? null;
+    let fam = family ?? firstKnown?.family ?? null;
+    // THE CASTER GATE HAS NO BACK DOOR (critic, 2026-10-14: Llibran's trace read
+    // "caster-binder: a caster line needs a magic word — none here … fell to
+    // caster's plain line", and a satyr piper came out a wizard with Shield and
+    // Misty Step at will). A refusal for want of a magic word falls OUT of the
+    // caster family, not into its own default. The menu's own role still rules.
+    if (fam === 'caster' && !family && !MAGIC_WORD.test(String(text ?? ''))) {
+      notes.push('caster: the family itself needs a magic word in the words — the fallback leaves it');
+      // out of the family, never into nothing: the plain line by type, which is
+      // what a body veto already falls to (print's Humanoid NPCs are skirmishers)
+      fam = firstKnown && firstKnown.family !== 'caster' ? firstKnown.family
+        : (/^(?:Humanoid|Fey)\b/i.test(String(resolvedType ?? '')) ? 'skirmisher' : 'brute');
+    }
     if (fam) {
       chosen = BY_ID.get(fam) ?? null;
       if (chosen) { notes.push(`fell to ${fam}'s plain line`); fellToFamily = true; }
     }
   }
   if (!chosen && bodyVetoed) { // a body veto left no pick: the plain line by type (print's Humanoid NPCs are skirmishers first)
-    const byType = /^Humanoid\b/i.test(String(resolvedType ?? '')) ? 'skirmisher' : 'brute';
+    const byType = /^(?:Humanoid|Fey)\b/i.test(String(resolvedType ?? '')) ? 'skirmisher' : 'brute'; // print's Fey are skirmishers and controllers, never brutes (the satyr piper, 2026-10-14)
     chosen = BY_ID.get(byType) ?? null; if (chosen) { notes.push(`${byType}: the plain line by type — a body veto left no pick`); fellToFamily = true; }
   }
   // the verb outranks the noun: if the user's words name a line's VERB and the
@@ -312,7 +324,11 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
       && !(l.id === 'defender-leader' && resolvedType && NO_LEADER_TYPES.includes(resolvedType))
       && !(l.id === 'lurker-phantom' && resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType)) // the override obeys the body vetoes too (the kuo-toa went phantom on a verb, 2026-10-01)
       && !(l.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType))
-      && !(l.id === 'skirmisher-archer' && !ARCHER_NOUN.test(String(text ?? ''))));
+      && !(l.id === 'skirmisher-archer' && !ARCHER_NOUN.test(String(text ?? '')))
+      // THE CASTER GATE HOLDS ON THE OVERRIDE TOO (critic, 2026-10-14: the gate
+      // refused the warpriest line for want of a magic word, and then "smites"
+      // put it back). Casting is a mechanic engine; a verb cannot conjure it.
+      && !(l.family === 'caster' && !family && !MAGIC_WORD.test(String(text ?? ''))));
     // a JOB noun cannot win an override whose rule is that verbs outrank nouns
     // — unless the family FELL to its plain line with no pick to override: a
     // title then names the style (a SERGEANT sworn to guard the gate, warden vetoed)

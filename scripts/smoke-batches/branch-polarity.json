@@ -1,0 +1,10 @@
+[
+  { "name": "", "description": "an eyeless hunter that tracks prey by scent alone", "cr": 5, "rules": "2024",
+    "mech": "an adjective lack: NEG_CUE reads 'eyeless' as HAS; the call must say lacks, and no Blindsight-less sheet may claim sight" },
+  { "name": "", "description": "a born-mute bodyguard, sightless but never surprised", "cr": 6, "rules": "2024",
+    "mech": "two adjective lacks in one line (mute, sightless) — the regex sees neither" },
+  { "name": "", "description": "a wyvern that lost its wings in the fall and now hunts on foot", "cr": 6, "rules": "2024",
+    "mech": "a VERB lack: 'lost its wings' reads HAS to the regex; the sheet must not fly" },
+  { "name": "", "description": "a watcher that has not one but three eyes and misses nothing", "cr": 4, "rules": "2024",
+    "mech": "the other direction: 'has not' reads LACKS to the regex; the call must say has, and the eyes must stay" }
+]

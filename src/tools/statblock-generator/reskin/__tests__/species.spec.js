@@ -394,11 +394,15 @@ describe('the critic\'s fifth read, and the judgements the call now owns (2026-1
     expect(elk).toBeDefined();
     expect(elk.text).not.toMatch(/Melee or Ranged/);
     expect(elk.text).not.toMatch(/range \d+\/\d+ ft/);
-    // print's OTHER hybrid row is the Mage's Arcane Burst: an energy row reaches both ways
+    // print's OTHER hybrid row is the Mage's Arcane Burst — a SPELL attack, so the
+    // energy exemption needs a caster (the critic's branch read, 2026-10-14): on a
+    // sheet that casts nothing, an energy row loses the range like any other
     const m2 = await sheet('Thunder', 'Storm Call');
     const burst = Object.values(m2.sections).flat().find((e) => /^Storm Call/.test(e.name ?? ''));
     expect(burst).toBeDefined();
-    expect(burst.text).toMatch(/Melee or Ranged Attack Roll/);
+    const casts = Object.values(m2.sections).flat().some((e) => /^Spellcasting/.test(e.name ?? ''));
+    if (casts) expect(burst.text).toMatch(/Melee or Ranged Attack Roll/);
+    else expect(burst.text).not.toMatch(/Melee or Ranged Attack Roll/);
   });
 
   test('the named weapon takes the chassis slot in its mode, and the keeper absorbs its swings', async () => {

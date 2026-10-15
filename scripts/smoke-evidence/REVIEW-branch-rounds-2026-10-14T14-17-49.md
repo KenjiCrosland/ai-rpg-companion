@@ -118,6 +118,7 @@ Merciless Strike: One creature within 30 feet that is poisoned must make a DC 11
 [route] skirmisher-skulker type=Humanoid mechanics=none — skirmisher-skulker: ✓ ("lurks in shadow") | skirmisher-skulker: no line key in the words — the model's read of its quote
 [concept] signature elements: strike from hiding and vanish [behavior] | stench of the warrens [aura] | shadow-step through darkness [body]
 [reskin] claim gate: CR 2 but a Humanoid body — the trait seat stays open (print: a material body carries a trait at every tier)
+[reskin] species kit: troglodyte — "a troglodyte": Stench (Ghast/Stench), Sunlight Sensitivity (Drider/Sunlight Sensitivity); darkvision 60 ft.
 [reskin] signature idea (action): "The gloamripper strikes from concealment, its blade coated in a toxin that deadens the mind. A target wounded by this attack cannot see the gloamripper for a short while, leaving them blind to its next strike. This affliction is purely its own; the gloamripper can never suffer it." [rider/on_hit/condition] — menu: contagion, charge-push, hook-rider, pounce, isolation, bolt-mark (+ shelf: gaze-single, snare, condition-payoff, throw-retrieve, shield-bash, lure, spew, snare-bolt, sensory-strike, disarm, thrown-burst-seed, delayed-brand, exploiter, rampage, patient-defense, second-wind, aggro-curse, self-invisibility, focus, feint-slip, coating, snap-shot, riposte)
 [reskin] value check: "Merciless Strike" EV 8.5 vs floor 4.7 (one attack of 2) — dice 18 → 11 (scaled down to the ceiling)
 [reskin] library seed drawn: condition-payoff -> Actions/"Merciless Strike" (no template held the idea; a proven shape stands in)
@@ -334,6 +335,7 @@ Shield Bash: One creature within 5 feet that Sir Reginald can see must make a DC
 [reskin] print canon armor: 16 (studded leather, shield) — print's Gear line; the 2014 sheet prints it (the Goblin Boss wore "splint", canaries 2026-10-12)
 [reskin] print canon array: STR 18, DEX 15, CON 16, INT 10, WIS 12, CHA 15 — the Gladiator's at its own CR; attack +6 -> +7, DC 15 (print's)
 [reskin] print canon: "Sir Reginald Pemberton-Hughes — a duelist with a greatsword and a heavy crossbow who is deathly afraid of chickens" heads on the Gladiator — print's rows ride along; the seat stays
+[reskin] class kit: fighter — "Sir Reginald Pemberton-Hughes — a duelist with a greatsword": Riposte (riposte)
 [reskin] signature idea (action): "When Sir Reginald would be frightened or forced to flee by a chicken, he can instead master himself and issue a formal challenge to the bird's keeper: the nearest foe must face him in single combat or he simply leaves. If the foe accepts, Sir Reginald becomes the center of the duel, punishing anyone else who interferes with a swift crossbow bolt." [action/once_per_fight/condition] — menu: throw-retrieve, seal, shield-bash, active-toll, random-ray, ground-burst, obstacle-pull, terror-pulse, slow-bolt, disarm, push-prone, herd, curse-debt, reveal, wind-up (+ shelf: patient-defense, lay-on-hands, second-wind, aggro-curse, own-turn-punisher, self-invisibility, rally, snap-shot, stunning-strike, charge-push, hook-rider)
 [reskin] signature dropped — no template held the idea and no seed is legal on this sheet
 [reskin] signature idea (trait): "Sir Reginald is deathly afraid of live chickens, and the presence of one within thirty feet shatters his discipline: he will disengage, retreat, or parley absurdly to avoid the bird, even abandoning an otherwise winning duel." [trait/always/movement] — menu: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, relentless-pursuit, bound, marking-light, sealed-body, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura (+ shelf: absorption, bloodied-burst, resonant-body, warded-mending, weapon-lodge)
@@ -453,12 +455,15 @@ Delete
 ```
 [route] brute type=Humanoid mechanics=none — brute: ✓ ("bloodmaw orc berserker with a greataxe") | brute: no line key in the words — the model's read of its quote
 [concept] signature elements: greataxe berserker charge [behavior] | retreats behind scavenged iron armor [behavior] | bloodmaw orc physiology [body]
+[reskin] species kit: orc — "a bloodmaw orc berserker with a greataxe": Relentless Rush (Goblin Boss/Nimble Escape); darkvision 120 ft.
+[reskin] class kit: barbarian — "a bloodmaw orc berserker with a greataxe": Bloodied Frenzy (Berserker/Bloodied Frenzy); Rampage yielded to print's row cap 5
 [reskin] signature idea (action): "The orc makes a lunging, two-handed chop that only works if it has room to wind up and commit — so it can only use this right after moving a good distance toward its target, representing the full-blooded opening charge. On a hit the greataxe bites deep enough that the wound keeps bleeding, and the orc visibly pries a strip of iron off the victim to feed its shell. The chop is exhausting and leaves" [rider/on_hit/damage] — menu: affliction, contagion, stunning-strike, charge-push, hook-rider, pounce, charge (+ shelf: trample, leap, thrown-burst, throw-retrieve, shield-bash, active-toll, random-ray, ground-burst, spew, escalating-dread, terror-pulse, push-prone, herd, thrown-burst-seed, drain, wind-up, rampage, second-wind, aggro-curse, own-turn-punisher, self-invisibility, rally, focus, coating)
 [reskin] value check: "Creeping Dread" EV 18.6 vs floor 14 (one attack of 2) — dice 14 → 27
 [reskin] library seed drawn: escalating-dread -> Actions/"Creeping Dread" (no template held the idea; a proven shape stands in)
 [reskin] signature idea (trait): "Every time the orc is hit by a melee attack, it tears a strip of iron off the attacker's weapon, shield, or armor and bolts it onto its own hide, thickening its scrap shell; each piece makes the next blows against it glance away, but the shell is brittle — a solid enough hit or a shove can shake several plates loose at once. The shell only grows while the orc stays on the defensive and retreats be" [trait/on_being_hit/defense] — menu: absorption, bloodied-burst, resonant-body, weapon-lodge (+ shelf: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, relentless-pursuit, bound, marking-light, sealed-body, warded-mending, undead-fortitude, mimicry, truth-aura, gaze-aura, death-burst)
 [reskin] signature bound to the concept's verb: trait — resonant-body (iron)
 [reskin] signature template (trait): resonant-body -> Traits/"Scrapwrought Hide" ("Every time the orc is hit by a melee attack while within reach, it tears a strip [verb: iron:concept]")
+[reskin] species kit: darkvision 60 -> 120 ft. — the orc's
 ```
 
 
@@ -568,12 +573,14 @@ Delete
 [route] skirmisher-hurler type=Humanoid mechanics=thrown-weapon — defender-warden: a Humanoid is not a made or risen guardian | skirmisher-hurler: ✓ ("topples raiders with a trident") | skirmisher-hurler: no line key in the words — the model's read of its quote
 [concept] signature elements: hurled trident that topples raiders [behavior] | living brine body [body] | coral-reef territory [aura]
 [reskin] nova capped: "Hurled Burst" 31 → 28 (the chassis nova obeys the cap: 28 at CR 5)
+[reskin] species kit: triton — "a triton reef-warden": Amphibious (Aboleth/Amphibious); Swim 30 ft.; darkvision 60 ft.
 [reskin] signature idea (action): "Great hooked spines line the warden's forearms; it drives them into a foe it has just knocked down and drags itself atop the body, pinning the prey in place and keeping it within the warden's reach while the trident is hauled back to hand. The hold lasts only as long as the warden chooses to stay crouched on top of its catch, a patient ambush hunter riding its prize in the shallows." [action/save/condition] — menu: snare, condition-payoff, shield-bash, lure, snare-bolt, sensory-strike, disarm, exploiter (+ shelf: delayed-brand, patient-defense, second-wind, aggro-curse, self-invisibility, focus, feint-slip, coating, snap-shot, riposte, bolt-mark)
 [reskin] value check: "Spine Pin" EV 7.8 vs floor 5.2 (one attack of 3) — dice 21 → 10 (scaled down to the ceiling)
 [reskin] signature template: condition-payoff -> Actions/"Spine Pin" ("the idea drives spines into a foe it has just knocked down; the payoff triggers  [shape fit, no verb match]")
 [reskin] signature idea (trait): "The warden swims in the brine held within its own flesh and gear, sloughing off the steady pressure of deep water; its barbed trident and clinging coral armplates weigh it no more than dry land does, so it never suffers the usual drag of water or slippery footing." [trait/always/movement] — menu: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, evasion, relentless-pursuit, bound, marking-light, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura, assassinate, blurred-form, death-burst (+ shelf: absorption, bloodied-burst, resonant-body, warded-mending)
 [reskin] signature miss: trait — "The warden swims in the brine held within its own flesh and gear, sloughing off the steady pressure of deep water; its barbed trident and clinging coral armplates weigh it no more than dry land does, so it never suffers the usual drag of water or slippery footing." [trait/always/movement] — the model found no template that holds it (offered: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, evasion, relentless-pursuit, bound, marking-light, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura, assassinate, blurred-form, death-burst)
 [reskin] chassis nova: "Tide Burst (Recharge 5-6)" — the skirmisher-8-hurler's own nova row (its "Hurled Burst", renamed by the model); geometry, cap and rider lines below are its edits
+[reskin] species kit: Primordial — the triton's own
 ```
 
 
@@ -790,6 +797,8 @@ Delete
 ```
 [route] defender type=Humanoid mechanics=none — defender-warden: a Humanoid is not a made or risen guardian | defender: ✓ ("a tortle hermit who withdraws into his s") | defender: no line key in the words — the model's read of its quote
 [concept] signature elements: withdrawing into an iron-reinforced shell [behavior] | iron-banded shell that turns aside blows [body] | punishing those who try to move past [behavior]
+[reskin] species kit yields: Shell Defense — the sheet is full (4 rows at CR 3, print's cap 4); the user's own rows stand
+[reskin] species kit: tortle — "a tortle hermit": Hold Breath (Hydra/Hold Breath)
 [reskin] signature idea (action): "The warden locks himself inside his iron-banded shell, hunkering down so that blows glance off the iron and he cannot be moved against his will. While withdrawn, he cannot attack, but at the start of each of his turns he can peek out just enough to lash at any enemy who has come within reach, punishing those who think him helpless. He chooses to withdraw; no one can force him into it." [trait/start_of_turn/defense] — menu: warded-mending (+ shelf: throw-retrieve, seal, shield-bash, active-toll, random-ray, ground-burst, obstacle-pull, terror-pulse, slow-bolt, disarm, push-prone, curse-debt, reveal, wind-up, shell-withdraw, patient-defense, lay-on-hands, second-wind, aggro-curse, own-turn-punisher, self-invisibility, rally, snap-shot, riposte, charge-push, hook-rider)
 [reskin] signature bound to the concept's verb: action — shell-withdraw (withdraw, shell)
 [reskin] value check: "Iron Shell Retreat" EV 3.6 vs floor 2 (a bonus action (free)) — worth the trade
@@ -797,6 +806,8 @@ Delete
 [reskin] signature template: shell-withdraw -> Bonus Actions/"Shell Defense" ("the warden chooses to withdraw into his shell, becoming harder to hit and immobi [verb: withdraw:concept, shell:concept]")
 [reskin] signature idea (trait): "The warden's shell is thick with iron bands, and its weight settles him like a rooted stone; when he braces, the shell turns aside blows that would stagger a softer creature, and attempts to shove or trip him find only immovable iron." [trait/always/defense] — menu: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, relentless-pursuit, bound, marking-light, sealed-body, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura (+ shelf: absorption, bloodied-burst, resonant-body, warded-mending, weapon-lodge)
 [reskin] signature miss: trait — "The warden's shell is thick with iron bands, and its weight settles him like a rooted stone; when he braces, the shell turns aside blows that would stagger a softer creature, and attempts to shove or trip him find only immovable iron." [trait/always/defense] — the model found no template that holds it (offered: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, relentless-pursuit, bound, marking-light, sealed-body, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura, resonant-body)
+[reskin] species kit: Aquan — the tortle's own
+[reskin] species kit: "Fist" -> "Bite" (Piercing, not Bludgeoning) — a tortle strikes with its own
 ```
 
 
@@ -905,6 +916,7 @@ Delete
 ```
 [route] skirmisher type=Fey mechanics=none — caster-binder: a caster line needs a magic word in the words — none here | skirmisher: ✓ ("a satyr piper who dances") | skirmisher: no line key in the words — the model's read of its quote
 [concept] signature elements: compelling dance-aura [aura] | thorn-pipe instrument [object] | skirmishing hit-and-run dance [behavior]
+[reskin] species kit: satyr — "a satyr piper": Magic Resistance (Archmage/Magic Resistance)
 [reskin] signature idea (action): "The reveler lifts its thornpipe and plays a shrill, skipping reel aimed at one creature it can see, compelling that creature to spend its movement dancing directly toward the reveler along the shortest safe path. The reel does not root the target; it makes the dance irresistible if the target fails to withstand it, and the reveler can keep playing round after round to drag the same victim ever dee" [action/save/movement] — menu: trample, leap, gaze-single, snare, throw-retrieve, shield-bash, lure, random-ray, ground-burst, spew, snare-bolt, sensory-strike, disarm, thrown-burst-seed (+ shelf: delayed-brand, rampage, patient-defense, second-wind, aggro-curse, self-invisibility, focus, feint-slip, coating, snap-shot, riposte, affliction, contagion, charge-push, hook-rider, pounce, isolation, bolt-mark, charge)
 [reskin] signature bound to the concept's verb: action — feint-slip (dance)
 [reskin] signature re-poured: action — the idea left the concept's verb; the concept itself is poured into feint-slip
@@ -912,6 +924,7 @@ Delete
 [reskin] signature template: feint-slip -> Bonus Actions/"Whirling Sidestep" ("the creature is a dancer whose dance is evasive — it slips away in motion, and f [verb: dance:concept]")
 [reskin] signature idea (trait): "The reveler moves in an ever-shifting … that cannot be pinned down; whenever a creature ends its turn having moved less than it could have, the reveler's thornpipe gives off a mocking psychic echo that punishes the creature for standing still. Any creature that chooses not to move during its turn while within earshot suffers a stab of psychic pain that leaves it reeling." [trait/always/condition] — menu: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, noxious-aura, bloodied-fury, uncanny-sense, berserk, shielded-mind, evasion, relentless-pursuit, bound, marking-light, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura, assassinate, blurred-form, death-burst (+ shelf: heated-body, absorption, bloodied-burst, resonant-body, fire-aura, warded-mending)
 [reskin] signature miss: trait — "The reveler moves in an ever-shifting … that cannot be pinned down; whenever a creature ends its turn having moved less than it could have, the reveler's thornpipe gives off a mocking psychic echo that punishes the creature for standing still. Any creature that chooses not to move during its turn while within earshot suffers a stab of psychic pain that leaves it reeling." [trait/always/condition] — the model found no template that holds it (offered: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, noxious-aura, bloodied-fury, uncanny-sense, berserk, shielded-mind, evasion, relentless-pursuit, bound, marking-light, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura, assassinate, blurred-form, death-burst, fire-aura)
+[reskin] species kit: Sylvan — the satyr's own
 ```
 
 
@@ -1029,6 +1042,15 @@ Delete
 [reskin] signature idea (trait): "The oathkeeper's storm-scarred hide crackles with restless static, and when a foe lands a hit, the charge leaps back along the weapon or claw. The attacker is jolted and left staggering, their muscles twitching with lingering lightning." [trait/on_being_hit/condition] — menu: heated-body, absorption, bloodied-burst, resonant-body (+ shelf: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, fire-aura, noxious-aura, bloodied-fury, uncanny-sense, berserk, shielded-mind, evasion, relentless-pursuit, bound, marking-light, warded-mending, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura, assassinate, blurred-form, death-burst)
 [reskin] signature bound to the concept's verb: trait — heated-body, faultless-tracker (storm, marked)
 [reskin] signature template (trait): heated-body -> Traits/"Stormclap Retort" ("a foe lands a hit, the charge leaps back along the weapon or claw [verb: storm:concept, lightning:idea]")
+[harness] re-rolled Actions/"Multiattack" -> "Multiattack" [the call's own text]
+```
+
+**Re-roll — one entry, replaced**
+
+```
+Actions / BEFORE  Multiattack: The oathkeeper makes two attacks, using Claw or Venom Spit in any combination.
+Actions / AFTER   Multiattack: The oathkeeper makes two attacks, using Claw or Venom Spit in any combination. It can replace one attack with a use of Storm Stomp if Storm Stomp is available.
+provenance: none — the call wrote the text itself
 ```
 
 

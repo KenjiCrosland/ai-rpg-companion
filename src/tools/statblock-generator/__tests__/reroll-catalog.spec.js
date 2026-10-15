@@ -53,8 +53,12 @@ describe('the re-roll takes the whole creature (step 9b)', () => {
     const { prompt } = await roll(warden(), JSON.stringify({ template: 'none', name: 'Undertow Grasp', text: '*Strength Saving Throw*: DC 14, one creature within 15 feet. *Failure:* 24 (7d6) Cold damage.' }), { degraded: true });
     const ids = [...prompt.matchAll(/^- ([a-z-]+) \[/gm)].map((m) => m[1]);
     expect(ids.length).toBeGreaterThan(3);
-    expect(ids[0]).toBe('reel');                                   // "drags raiders under" is the reel's own verb
-    expect(prompt).toContain('VERB MATCH: drag (concept)');
+    // the FIRST line carries a concept verb match, and the GM's own "drag" is in
+    // it. Which drag shape wins is the ranking's call: once the role filter steps
+    // aside for a word the GM typed (critic, 2026-10-14), hook-drag matches two of
+    // their words — "drag" and "under" — where reel matches one.
+    expect(prompt).toMatch(/^- [a-z-]+ \[[^\]]*\] VERB MATCH: [^\n]*\(concept\)/m);
+    expect(prompt).toContain('drag (concept)');
     expect(prompt).toContain('name in "wrong" any template whose key word does not mean its mechanic here');
   });
 

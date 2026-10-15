@@ -1519,6 +1519,12 @@ export function to2014Grammar(text) {
   t = t.replace(/\*?Ranged Attack Roll:\*?\s*\+(\d+)(?: \([^)]*\))?, range ([\d/]+) ft\.\s*/g, 'Ranged Weapon Attack: +$1 to hit, range $2 ft., one target. Hit: ');
   // "*Dexterity Saving Throw*: DC 15, each creature in a 60-foot Cone. *Failure:* 28 (8d6) Fire damage. *Success:* Half damage."
   t = canonSave2014(t);
+  // 2014 WRITES A CONDITION IN PROSE (critic, 2026-10-14: Karrow's 2014 sheet
+  // said "it has the Prone condition", which is 2024 idiom). Print 2014: "is
+  // knocked prone", "is poisoned", "is restrained" — lowercase, no "condition".
+  t = t.replace(/\b(?:it |the target |that creature |the creature )?(?:has|gains) the Prone condition\b/g, (m0) => `${/^(?:it|the target|that creature|the creature) /.exec(m0)?.[0] ?? ''}is knocked prone`);
+  t = t.replace(/\b(has|gains) the (Blinded|Charmed|Deafened|Frightened|Grappled|Incapacitated|Paralyzed|Petrified|Poisoned|Restrained|Stunned|Unconscious|Invisible) condition\b/g, (m0, v, c) => `is ${c.toLowerCase()}`);
+  t = t.replace(/\bhas the (Blinded|Charmed|Deafened|Frightened|Grappled|Paralyzed|Petrified|Poisoned|Restrained|Stunned) and (Blinded|Charmed|Deafened|Frightened|Grappled|Paralyzed|Petrified|Poisoned|Restrained|Stunned) conditions\b/g, (m0, a, b) => `is ${a.toLowerCase()} and ${b.toLowerCase()}`);
   t = t.replace(/\*?Success:\*?\s*Half damage(?: only)?\.?/g, 'On a successful save, half as much damage.');
   t = t.replace(/\*?Success:\*?\s*/g, 'On a successful save, ');
   t = t.replace(/\*?Failure:\*?\s*/g, 'On a failed save, ');

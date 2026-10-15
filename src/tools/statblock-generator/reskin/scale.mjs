@@ -6,6 +6,7 @@
 import { cardBudget, withinBudget } from './card-budgets.mjs';
 import { attackDamageDiceFor, saveDamageDiceFor, hpFormulaFor } from '../format-2024/dice.mjs';
 import { DONORS } from './donors.mjs';
+import { namesMelee, weaponProp } from './weapons.mjs';
 
 export function pickDonor(cr, style = null, archetype) {
   // archetype is REQUIRED (owner, 2026-08-26: "kill the default") — a
@@ -43,7 +44,7 @@ export function pickDonor(cr, style = null, archetype) {
 // damage never parses, same surgery the hybrid row needed.
 const ATTACK_RE = /(\+\d+)(?: \(with Advantage[^)]*\))?(, reach \d+ ft\. or range [\d/]+ ft\.|, reach [^.]+|, range [^.]+)? ?\.? (\d+) \((\d+d\d+(?:\s*\+\s*\d+)?)\) ([\w{}]+) damage/;
 
-export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null, dprScale = 1, edition = null } = {}) {
+export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null, dprScale = 1, edition = null, concept = '' } = {}) {
   const card = cardBudget(cr, { legendary: !!legendary, edition }); // a 2014 sheet prices against the DMG table (2026-10-02)
   const scaled = JSON.parse(JSON.stringify(donor));
   // THE 2014 DAMAGE LINE (owner + critic 2026-09-14): 2014's table runs
@@ -162,9 +163,21 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
     // casters strike with the MIND (corpus sweep 2026-09-02: Archmage +9
     // = INT 5 + PB 4; raising DEX instead ships a DEX-20 wizard)
     const isCaster = (donor.archetypes ?? []).includes('caster');
-    const striker = isCaster
-      ? ['INT', 'WIS', 'CHA'].sort((a, b) => scaled.stats[b] - scaled.stats[a])[0]
-      : (scaled.stats.DEX >= scaled.stats.STR ? 'DEX' : 'STR');
+    // A CASTER WHO CARRIES A WEAPON NEEDS THE ARM FOR IT (critic, 2026-10-14:
+    // Lady Merivane swung a greatsword at +8 off WIS 20 with STR 12, because a
+    // caster line keys every attack to the mind). Print's own warpriest, the
+    // Priest, swings its Mace off STR 16. When the GM's words name a mundane
+    // melee weapon, the striker is physical and the mind keeps the DC.
+    const armed = namesMelee(concept);
+    // THE WARPRIEST LINE IS A WEAPON LINE: its chassis carries a melee row the
+    // model will name a mace or a sword, so the arm has to be fitted before that
+    // name exists. Print's Priest is STR 16 and WIS 16 — it swings off one and
+    // casts off the other (critic, 2026-10-14: Vareth's Mace rolled +7 off WIS).
+    const weaponLine = String(donor.style ?? '') === 'warpriest';
+    const byStats = scaled.stats.DEX >= scaled.stats.STR ? 'DEX' : 'STR';
+    const striker = armed
+      ? (weaponProp(concept)?.finesse ? byStats : 'STR')
+      : (isCaster && !weaponLine ? ['INT', 'WIS', 'CHA'].sort((a, b) => scaled.stats[b] - scaled.stats[a])[0] : byStats);
     // EXACT-fit, both directions (2026-09-11: the Cistern Lurker's
     // authored Str 18 derived +7 beside a +6 card stamp at CR 5 — donor
     // stats are ours to move; raise-only was the slot path's rule for

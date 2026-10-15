@@ -1,3 +1,5 @@
+import { weaponProp } from './weapons.mjs';
+
 /**
  * THE FEATURE TABLE (step 8, owner's brief 2026-10-12): about fifteen closed entries, keyed by what the user typed, rendered as
  * form data — a rider on the weapon's row, a trait, or a reaction. A named weapon earns ONE feature tied to it: a heavy weapon
@@ -8,8 +10,8 @@
 // MELEE heavy only (the critic's fifth read: "Great Weapon Master on a Longbow.
 // Even if the 2024 feat's Heavy wording covers a bow, a GM reads it as a
 // mistake"). A heavy ranged weapon takes its mastery property instead.
-const HEAVY = /^(?:greatsword|greataxe|glaive|halberd|maul|pike|lance)$/i;
-const MASTERY = { battleaxe: 'Topple', lance: 'Topple', maul: 'Topple', quarterstaff: 'Topple', staff: 'Topple', trident: 'Topple', warhammer: 'Topple', greataxe: 'Cleave', halberd: 'Cleave', glaive: 'Graze', greatsword: 'Graze', greatclub: 'Push', pike: 'Push', mace: 'Sap', spear: 'Sap', flail: 'Sap', longsword: 'Sap', morningstar: 'Sap', club: 'Slow', javelin: 'Slow', sling: 'Slow', whip: 'Slow', longbow: 'Slow', 'heavy crossbow': 'Push', dagger: 'Vex', dart: 'Vex', rapier: 'Vex', scimitar: 'Vex', shortsword: 'Vex', handaxe: 'Vex', shortbow: 'Vex', crossbow: 'Vex', sickle: 'Vex' };
+const HEAVY = (w) => { const p = weaponProp(w); return !!(p?.heavy && p.reach && !p.launcher); };
+const MASTERY = (w) => weaponProp(w)?.mastery ?? null;
 const STYLE_CUE = /\b(?:fighting styles?|trained|disciplined|veteran|martial|technique|drilled|well-trained)\b/i;
 const STYLES = [
   [/\barchery\b|\barcher\b/i, 'Archery', (c) => `${c.Inline} has a +2 bonus to attack rolls made with ranged weapons.`],
@@ -26,20 +28,25 @@ const saveRider = (stat, dc, effect) => `, and the target is subjected to the fo
  * @param record the clause record; @param parts the part rows landed (name, clause, type, mode, rider)
  * @returns rows: { kind: 'rider', row, text, clause, name } | { kind: 'trait'|'reaction', name, text, clause }
  */
-export function featureRows(record, { parts = [], meleeRows = [], inline = 'the creature', pb = 2, dc = 12, mod = 0, cap: capN = 3 } = {}) {
+export function featureRows(record, { parts = [], meleeRows = [], inline = 'the creature', pb = 2, dc = 12, mod = 0, dexMod = null, cap: capN = 3 } = {}) {
+  // A MASTERY SAVE USES THE ABILITY ITS ATTACK USES (critic, 2026-10-14: Coral
+  // Vurthax's trident attacked off DEX and its Topple DC keyed off STR). Finesse
+  // weapons roll Dexterity; everything else melee rolls Strength.
+  const FINESSE = /\b(?:dagger|dart|rapier|scimitar|shortsword|whip|sickle)s?\b/i;
+  const masteryMod = (w) => (dexMod != null && FINESSE.test(String(w ?? '')) ? dexMod : mod);
   const c = { inline, Inline: cap(inline) }; const out = []; const used = new Set();
   const weaponParts = parts.filter((p) => p.part && p.weapon);
   // one feature per named weapon
   for (const p of weaponParts) {
     if (out.length >= capN) break;
     const w = p.weapon.toLowerCase();
-    if (HEAVY.test(w)) { if (!used.has('gwm')) { used.add('gwm'); out.push({ kind: 'trait', name: 'Great Weapon Master', text: `When ${c.inline} hits a creature with its ${p.name}, the attack deals an extra ${pb} damage.`, clause: p.clause }); } continue; }
-    const prop = MASTERY[w]; if (!prop || used.has(`mastery:${p.name}`)) continue; used.add(`mastery:${p.name}`);
+    if (HEAVY(w)) { if (!used.has('gwm')) { used.add('gwm'); out.push({ kind: 'trait', name: 'Great Weapon Master', text: `When ${c.inline} hits a creature with its ${p.name}, the attack deals an extra ${pb} damage.`, clause: p.clause }); } continue; }
+    const prop = MASTERY(w); if (!prop || used.has(`mastery:${p.name}`)) continue; used.add(`mastery:${p.name}`);
     const rider = {
       // 2024 mastery: the save is against 8 + the attacker's weapon mod + PB —
       // never the sheet's best DC, which may be a mental stat's (the critic's
       // fifth read: Othyn's Topple read DC 13 where 8 + STR 3 + PB 3 = 14)
-      Topple: saveRider('Constitution', 8 + mod + pb, 'The target has the Prone condition.'),
+      Topple: saveRider('Constitution', 8 + masteryMod(w) + pb, 'The target has the Prone condition.'),
       Sap: `, and the target has Disadvantage on its next attack roll before the start of ${c.inline}'s next turn.`,
       Slow: `, and the target's Speed is reduced by 10 feet until the start of ${c.inline}'s next turn.`,
       Push: `, and if the target is Large or smaller, it is pushed up to 10 feet straight away from ${c.inline}.`,

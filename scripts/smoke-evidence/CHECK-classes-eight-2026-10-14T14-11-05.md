@@ -5,25 +5,27 @@
 | block | CR | ed | donor | derivation | bands | structure | gates | headerBody | edition | donor | adjudicability | reader | verdict | coverage | concept |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Rruzhk of the Nerve-Map | 5 | 2024 | skirmisher-3 | ok | ok | ok | SOFT: ko-at-will | ok | ok | ok | ok | ok | soft (1) | 1/1 | 2/5 |
-| Vespera Vaunt | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 6/6 |
+| Vespera Vaunt | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: on-hit-type | FAIL (1) | 1/1 | 6/6 |
 | Dame Oriel | 5 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/4 |
 | Sergeant Aldric Vane | 6 (2014) | 2014 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 3/4 |
 | Korvath the Ragebound | 8 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/6 |
 | Vareth Solmane | 6 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/4 |
-| Iron Templar | 4 | 2024 | defender-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 3/3 |
+| Iron Templar | 4 | 2024 | defender-3 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: attack-in-multiattack | FAIL (1) | 2/2 | 3/3 |
 | Crown's Echo | 6 | 2024 | caster-6 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/3 |
 | Thurivald | 6 (2014) | 2014 | defender-3-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/5 |
-| Lady Merivane | 8 | 2024 | caster-2-warpriest | ok | SOFT: band | ok | ok | ok | ok | ok | ok | ok | soft (1) | 3/3 | 4/7 |
-| Smokeveil | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 0/7 |
-| Timberline Pack | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/4 |
-| Skelkey Imp | 4 | 2024 | skirmisher-3 | ok | SOFT: band | ok | ok | ok | ok | ok | ok | ok | soft (1) | 0/1 | 3/3 |
+| Lady Merivane | 8 | 2024 | caster-2-warpriest | FAIL: attack-stat | SOFT: band | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 3/3 | 4/7 |
+| Smokeveil | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: inline-consistency | FAIL (1) | 2/2 | 0/7 |
+| Timberline Pack | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | ok | soft (1) | 1/1 | 4/4 |
+| Skelkey Imp | 4 | 2024 | skirmisher-3 | ok | SOFT: band | ok | ok | ok | ok | SOFT: print-rows | ok | ok | soft (2) | 0/1 | 2/3 |
 | Maze-Hunger Minotaur | 6 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/5 |
 | Oathbroken Vigil | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 2/4 |
 | Sable Whisker | 3 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 1/5 |
 
 **Dropped 2 of 20 user clauses** (coverage 90%); concept share 64% (48/75 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
-- none
+- skirmisher-3-skulker / reader: 2
+- defender-3 / reader: 1
+- caster-2-warpriest / derivation: 1
 
 
 ## Rruzhk of the Nerve-Map (CR 5)
@@ -31,7 +33,7 @@
 - read: def 3 / off 5 → 4; sustained 34 (2 × Open Hand); nova none; dmg 34
 
 ## Vespera Vaunt (CR 5)
-- clean
+- reader · FAIL · on-hit-type: Traits/Assassinate: it adds Bludgeoning to a hit that deals Slashing (Shortsword)
 - donor · note · print-row-exception: Traits/Assassinate rides on: the user's own part, feature or species
 - donor · note · print-row-exception: Traits/Rooftop Stalker rides on: the seat the user's words named
 - donor · note · print-row-exception: Bonus Actions/Rooftop Stalk rides on: seed the user's words keyed
@@ -57,7 +59,7 @@
 - read: def 4 / off 8 → 6; sustained 54 (2 × Mace); nova none; dmg 54
 
 ## Iron Templar (CR 4)
-- clean
+- reader · FAIL · attack-in-multiattack: Actions/Radiant Flame is an attack row the Multiattack never names — a GM who reads the Multiattack never uses it
 - donor · note · print-row-exception: Actions/Creeping Dread rides on: seed the user's words keyed
 - read: def 3 / off 4 → 3.5; sustained 26 (2 × Mace); nova none; dmg 26
 
@@ -72,19 +74,24 @@
 - read: def 4 / off 6 → 5; sustained 42 (2 × Bone-Horn); nova none; dmg 42
 
 ## Lady Merivane (CR 8)
+- derivation · FAIL · attack-stat: Greatsword: +8 derives from WIS, but an attack row rolls STR/DEX
 - bands · SOFT · band: reads CR 6 (print at 8 reads 2–10.5, n=24)
 - read: def 4 / off 8 → 6; sustained 54 (2 × Greatsword); nova none; dmg 54
 
 ## Smokeveil (CR 5)
-- clean
+- reader · FAIL · inline-consistency: a one-word Name takes the person form: "Smokeveil", never "the smokeveil"
 - read: def 3 / off 5 → 4; sustained 34 (2 × Tanto); nova none; dmg 34
 
 ## Timberline Pack (CR 3)
-- clean
+- donor · SOFT · print-rows: rows outside print, the named seat and the keyed seeds: Traits/Wolfpack Cunning, Bonus Actions/Fleet Agility
+- donor · note · print-row-exception: Bonus Actions/Pack Ambush rides on: seed the user's words keyed
 - read: def 1 / off 3 → 2; sustained 24 (2 × Bite); nova none; dmg 24
 
 ## Skelkey Imp (CR 4)
 - bands · SOFT · band: reads CR 2.5 (print at 4 reads 0.75–6, n=66)
+- donor · SOFT · print-rows: rows outside print, the named seat and the keyed seeds: Actions/Shortsword
+- donor · note · print-row-exception: Actions/Hand Crossbow rides on: print rules row
+- donor · note · print-row-exception: Bonus Actions/Cunning Action rides on: print rules row
 - read: def 1 / off 4 → 2.5; sustained 30 (2 × Shortsword); nova none; dmg 30
 
 ## Maze-Hunger Minotaur (CR 6)

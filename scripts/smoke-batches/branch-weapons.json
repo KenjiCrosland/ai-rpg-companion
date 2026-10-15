@@ -1,0 +1,10 @@
+[
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": 5, "rules": "2024",
+    "mech": "the weapon question, both halves: a coined thrown-axe row must print 20/60 (not a bow's 60/240) and the shortsword must deal Piercing, not its family's Slashing" },
+  { "name": "", "description": "a knight on a warhorse with a barbed lance", "cr": 7, "rules": "2024",
+    "mech": "the table's reach column: print's lance has Reach, so the row reads 10 ft. — derived now, not a REACH_10 regex" },
+  { "name": "", "description": "a dwarf marksman with a heavy crossbow who never draws a blade", "cr": 6, "rules": "2024",
+    "mech": "a launcher is ranged-only: 100/400, no \"reach … or range\", and its mastery is Push" },
+  { "name": "", "description": "a temple guardian with no weapons at all who strikes with open palms", "cr": 5, "rules": "2024",
+    "mech": "\"none\" is an answer: a body-part row takes no weapon facts, and the anatomy nouns still type it" }
+]

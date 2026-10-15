@@ -23,6 +23,7 @@ import { SHAPES, bandFor } from './shapes.mjs';
 import { LIBRARY_SEEDS, drawLibraryRow } from './library.mjs';
 import { attackDamageDiceFor, saveDamageDiceFor } from '../format-2024/dice.mjs';
 import { readPhrases } from './lexicon.mjs';
+import { weaponProp } from './weapons.mjs';
 import { AREA_TARGETS } from './card-budgets.mjs';
 
 export const SECTION_OF = { trait: 'Traits', action: 'Actions', bonus_action: 'Bonus Actions', reaction: 'Reactions', rider: 'Rider' }; // Rider = a clause appended to the melee attack row
@@ -197,7 +198,7 @@ export const VERB_KEYS = {
   adhesive: ['stick', 'sticky', 'tar', 'glue', 'adhere', 'cling', 'gum', 'pitch', 'resin', 'slime', 'sap', 'grip', 'held fast', 'stuck', 'mimic', 'chest', 'coffer'], // 'vault'/'strongroom' left: a floating orb that guards a vault stuck to whatever touched it (critic 2026-10-01) // a mimic is adhesive by print (the Hollow Trust had none though offered)
   'aggro-curse': ['mark', 'taunt', 'oath', 'challenge', 'goad', 'provoke', 'duel', 'single out', 'chosen', 'brand', 'sworn'], // "bless" is rally's — a mark is not a blessing (the bishop, v4 read)
   'obstacle-pull': ['pull', 'yank', 'reel', 'beckon', 'drag', 'draw', 'summon closer', 'tug', 'haul', 'tether', 'chain', 'tongue', 'tide', 'undertow'],
-  lure: ['lure', 'beguile', 'song', 'call', 'beckon', 'lamp', 'light', 'invite', 'follow it', 'follow him', 'follow her', 'follow the', 'made to follow', 'drawn to follow', 'entice', 'draw', 'tempt', 'siren', 'lantern', 'glow', 'whisper', 'hymn'], // bare 'follow' read the wrong direction: a highwayman who FOLLOWS the coach got a Luring Presence (fresh four); the target follows a lure, the creature follows a quarry
+  lure: ['lure', 'beguile', 'song', 'call', 'beckon', 'lamp', 'light', 'invite', 'follow it', 'follow him', 'follow her', 'follow the', 'made to follow', 'drawn to follow', 'entice', 'draw', 'tempt', 'siren', 'lantern', 'glow', 'whisper', 'hymn', 'dances'], // bare 'follow' read the wrong direction: a highwayman who FOLLOWS the coach got a Luring Presence (fresh four); the target follows a lure, the creature follows a quarry
   pacify: ['pacify', 'transfix', 'hold', 'stillness', 'trance', 'freeze', 'root', 'stun', 'mesmerize', 'stare', 'calm', 'lull', 'stop'],
   'escalating-dread': ['dread', 'fear', 'wither', 'doom', 'terror', 'horror', 'haunt', 'nightmare', 'despair', 'grief'],
   'terror-pulse': ['terror', 'roar', 'shriek', 'presence', 'howl', 'scream', 'bellow', 'wail', 'fright', 'scatter', 'panic'],
@@ -206,7 +207,7 @@ export const VERB_KEYS = {
   'sensory-strike': ['blind', 'dazzle', 'flash', 'deafen', 'glare', 'light', 'spit', 'ink', 'sand', 'dust', 'clang', 'scream', 'toll', 'ring', 'bell', 'peal', 'chime'], // a bell's ACTION seat: the Deafened row (the crab's Dread Toll had no Thunder and no Deafened)
   disarm: ['disarm', 'twist', 'strip', 'weapon', 'snatch', 'steal', 'pluck', 'wrench', 'knock away', 'take'],
   'push-prone': ['shove', 'topple', 'slam', 'bowl', 'knock', 'push', 'fling', 'throw down', 'trip', 'batter', 'bull', 'ram', 'sweep'],
-  herd: ['herd', 'drive', 'command', 'stampede', 'scatter', 'chase', 'flush', 'corral', 'compel', 'sermon', 'order', 'call'],
+  herd: ['herd', 'drive', 'command', 'scatter', 'chase', 'flush', 'corral', 'compel', 'sermon', 'order', 'call'],
   'hook-drag': ['hook', 'chain', 'harpoon', 'drag', 'grapple', 'reel', 'pull', 'haul', 'tether', 'anchor', 'claw', 'tongue', 'into the surf', 'under'],
   'thrown-burst-seed': ['hurl', 'bomb', 'burst', 'volley', 'throw', 'lob', 'toss', 'shatter', 'explode', 'grenade', 'flask'],
   drain: ['drain', 'leech', 'feed', 'siphon', 'suck', 'drink', 'sap', 'wither', 'devour', 'life', 'vampire', 'hunger'],
@@ -217,9 +218,9 @@ export const VERB_KEYS = {
   reveal: ['reveal', 'light', 'outline', 'expose', 'illuminate', 'lamp', 'lantern', 'faerie fire', 'glow', 'mark', 'shine'],
   rally: ['rally', 'bolster', 'ward', 'blessing', 'bless', 'shield', 'protect', 'inspire', 'hymn', 'prayer', 'heal', 'mend', 'flock', 'command', 'orders', 'troops', 'battle cry', 'war cry', 'frenzy', 'bellows'], // a leader's command IS the rally shape (print: bonus-action Leadership / the commander's THP) — three leaders' commands seated as 2/Day standalones and floored (critic, new lines 2026-09-28)
   focus: ['focus', 'aim', 'stalk', 'poise', 'sight', 'lock on', 'hunt', 'track', 'study', 'patience'],
-  'feint-slip': ['feint', 'slip', 'blur', 'weave', 'dodge', 'dart', 'sidestep', 'evade', 'dance', 'trick'],
+  'feint-slip': ['feint', 'slip', 'blur', 'weave', 'dodge', 'dart', 'sidestep', 'evade', 'dances away', 'dances aside', 'trick'],
   'wind-up': ['gather', 'charge-up', 'telegraph', 'brew', 'build', 'swell', 'ratchet', 'wind', 'coil', 'inhale', 'gathering', 'storm'],
-  coating: ['coat', 'venom', 'anoint', 'charge-weapon', 'poison', 'oil', 'ignite', 'bless the blade', 'dip', 'smear', 'envenom'],
+  coating: ['coat', 'venom', 'anoint', 'charge-weapon', 'poison', 'oil', 'ignite', 'bless the blade', 'dip', 'smear', 'envenom', 'smite', 'smites', 'smiting'],
   exploiter: ['exploit', 'opportunist', 'predator', 'finish', 'prone', 'grappled', 'helpless', 'downed', 'trapped', 'held', 'pinned', 'caught', 'inside', 'caged'],
   'blighted-ground': ['blight', 'scorch', 'corrupt', 'floor', 'ground', 'earth', 'soil', 'rot', 'poison the land', 'wither', 'salt', 'ash', 'slick', 'ooze'],
   'phase-slip': ['slip', 'phase', 'blink', 'vanish', 'teleport', 'step', 'shadow', 'flicker', 'fade', 'through walls'],
@@ -295,13 +296,20 @@ const wordsOf = (t) => [...new Set(String(t ?? '').toLowerCase().split(/[^a-z]+/
 // a HOMOGRAPH binds once, in the sense its phrase carries: "roots up the graves"
 // is digging (the Burrow the route gave), not the hold-fast sense three templates
 // key on — the miller was Burrowing AND restraining from 60 feet (critic, new lines 2026-09-28)
-const SENSE_DENY = { root: /\broots? (?:up|through|around|about|in|out|for)\b/i, roots: /\broots? (?:up|through|around|about|in|out|for)\b/i, mimic: /\b(?:voices?|sounds?|speech|words?|calls?|songs?|cries|tongues?|talks?|accents?)\b/i, mimics: /\b(?:voices?|sounds?|speech|words?|calls?|songs?|cries|tongues?|talks?|accents?)\b/i, mimicry: /\b(?:voices?|sounds?|speech|words?|calls?|songs?|cries|tongues?|talks?|accents?)\b/i }; // "mimic" in a voice-copying context is not a false-appearance word (the kenku — the critic's species read)
+// A TRANSITIVE DANCE ACTS ON OTHERS, an intransitive one moves the creature
+// (critic, 2026-10-14): "dances travellers into the hills" is the lure, "dances
+// away from every blade" is the piper's own footwork. The lure's key is denied
+// when the dance is intransitive, which leaves feint-slip's phrase to win.
+const SENSE_DENY = { dances: /\bdance[sd]?\s+(?:away|aside|back|backward|backwards|off|clear|free|out|round|around)\b/i, root: /\broots? (?:up|through|around|about|in|out|for)\b/i, roots: /\broots? (?:up|through|around|about|in|out|for)\b/i, mimic: /\b(?:voices?|sounds?|speech|words?|calls?|songs?|cries|tongues?|talks?|accents?)\b/i, mimics: /\b(?:voices?|sounds?|speech|words?|calls?|songs?|cries|tongues?|talks?|accents?)\b/i, mimicry: /\b(?:voices?|sounds?|speech|words?|calls?|songs?|cries|tongues?|talks?|accents?)\b/i }; // "mimic" in a voice-copying context is not a false-appearance word (the kenku — the critic's species read)
 // A DENIED CLAUSE never keys a template: "hates fire and takes extra damage from it", "cannot cast any spells" name what the creature SUFFERS or LACKS, and a heated body force-bound on them (Grandmother Ash — the critic's species read)
 // Narrow on purpose: "cannot leave the tower" keys bound, "thoughts can't be read" keys shielded-mind, "hates being looked at" keys gaze-aura — a
 // negation that IS the cue stays. What leaves is a vulnerability clause (damage taken, weakness, hatred of a damage type or material) and a lack of an ability.
 const ENERGY_WORD = '(?:fire|flames?|heat|burning|cold|ice|frost|lightning|thunder|acid|poison|necrotic|radiant|psychic|force|sunlight|daylight|silver|silvered|iron|cold iron|holy water|running water|salt)';
+// "no magic at all" is a LACK: its words must not key a template (critic's note,
+// 2026-10-14 — it still offered uncanny-sense on the word "magic")
+const LACK_PHRASE = /\b(?:no|without|never|cannot|can't|lacks?|has no|bereft of)\s+(?:any\s+|all\s+)?(?:magic\w*|spell\w*|arcane|sorcery|casting)\b(?:\s+(?:at all|whatsoever|of any kind))?/i;
 const DENIED_CLAUSE = new RegExp(`\\b(?:takes? (?:extra|double|additional) damage|extra damage from|vulnerable|weak to|weakness(?:es)? to|susceptible to|(?:hates?|hated|loathes?|despises?|fears?|dreads?)\\s+(?:the\\s+)?${ENERGY_WORD}|(?:cannot|can't|can not|doesn't|does not|unable to|lacks?|has no|have no)\\s+(?:cast|use|wield|speak|fly|swim|climb|burrow|regenerate|heal|see|hear|smell|breathe|spells?|magic))\\b`, 'i');
-export function scrubDeniedClauses(text) { return String(text ?? '').split(/([,;.]|\s+(?:and|but|or)\s+)/).map((seg, i) => (i % 2 === 1 ? seg : seg.replace(new RegExp(`${DENIED_CLAUSE.source}.*$`, 'i'), ''))).join('').replace(/\s{2,}/g, ' ').trim(); } // the phrase leaves, the words before it stay ("a tiefling duelist who hates fire" keeps the duelist — the critic's second species read)
+export function scrubDeniedClauses(text) { return String(text ?? '').split(/([,;.]|\s+(?:and|but|or)\s+)/).map((seg, i) => (i % 2 === 1 ? seg : seg.replace(new RegExp(`${DENIED_CLAUSE.source}.*$`, 'i'), '').replace(LACK_PHRASE, ''))).join('').replace(/\s{2,}/g, ' ').trim(); } // the phrase leaves, the words before it stay ("a tiefling duelist who hates fire" keeps the duelist — the critic's second species read)
 // A TEMPLATE DENIED BY THE CONCEPT: a heated body or fire aura never lands on a creature the words make vulnerable to fire, whatever word matched ("lives in the burned forest" bound Ash a Heated Body)
 const TEMPLATE_DENY = { 'heated-body': new RegExp(`(?:hates?|loathes?|fears?|vulnerable to|weak to|extra damage from|takes? extra damage from)\\s+(?:the\\s+)?(?:fire|flames?|heat|burning)`, 'i'), 'fire-aura': new RegExp(`(?:hates?|loathes?|fears?|vulnerable to|weak to|extra damage from|takes? extra damage from)\\s+(?:the\\s+)?(?:fire|flames?|heat|burning)`, 'i') };
 export function rankByVerb(menu, conceptText0, ideaText0 = '') {
@@ -380,7 +388,11 @@ export function triggerCompatible(want, have) {
 export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '', concept = '' } = {}) {
   const band = bandFor(cr);
   const rows = Object.values(sections).flat();
-  const owned = new Set(rows.map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase()));
+  // A FEATURE ALREADY ON A ROW IS OWNED (critic, 2026-10-14: Rruzhk's Open Hand
+  // printed its Stunning Strike rider twice — the class kit welded the rider to
+  // the row, where it has no row name of its own, so the signature's own fit
+  // picked the same template off the menu and welded it again).
+  const owned = new Set(rows.flatMap((e) => [e.name, e.feature]).filter(Boolean).map((n) => String(n).replace(/ \(.*\)$/, '').toLowerCase()));
   const hasNova = rows.some((e) => (/^Recharge/.test(e.gate ?? '') || /\(Recharge [\d–-]+\)/.test(e.name ?? '')) && /\d+ \(\d+d\d+/.test(e.text ?? ''));
   const roles = rolesFor(archetype);
   const engines = sheetEngines(sections);
@@ -389,7 +401,25 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
   // rewrites, so the family it constitutes cannot exclude it (the lancer's
   // donor row said "throws", goldens 2026-09-22)
   const supersedesRow = (t) => t.supersedes instanceof RegExp && rows.some((e) => t.supersedes.test(e.text ?? ''));
-  return TEMPLATES.filter((t) => t.roles.some((r) => roles.includes(r))
+  // THE SHELF IS A DEFAULT FOR WHAT THE GM DID NOT SAY, NOT A VETO ON WHAT THEY
+  // DID (critic's call, 2026-10-14: "a shape the GM's own words key exactly may
+  // come from off the role's shelf. CR band, nova cap, structure and pricing
+  // still apply; only the role filter steps aside"). It closes Roan's stampede,
+  // which no defender shelf carried, and Seraphine's smite in one rule. The key
+  // must be DISTINCTIVE — five letters or a phrase — so a loose word does not
+  // open the catalog.
+  const askedFor = (t) => {
+    const src = readPhrases(scrubDeniedClauses(String(concept ?? '')));
+    if (!src) return false;
+    const words = wordsOf(src);
+    return (t.keys ?? []).some((k) => (k.length >= 5 || k.includes(' '))
+      && !(SENSE_DENY[k] && SENSE_DENY[k].test(src))
+      && (k.includes(' ') ? src.toLowerCase().includes(k) : words.some((w) => sameStem(w, stem(k)))));
+  };
+  const onShelf = (t) => t.roles.some((r) => roles.includes(r));
+  // the off-shelf ones are APPENDED, never mixed in: a longer menu must not
+  // reorder a pick the shelf already had (the re-roll's own reel pin)
+  const rest = (t) => (true
     && (!(EXCLUDE_ON[t.id] ?? []).some((fam) => engines.has(fam)) || supersedesRow(t))
     && (!style || t.styles.length === 0 || t.styles.includes(style))
     && cr >= t.cr_range[0] && cr <= t.cr_range[1]
@@ -413,6 +443,7 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     && !(t.host && rows.length && !rows.some((e) => (t.host === 'ranged' ? /Ranged Attack Roll/ : /Melee Attack Roll/).test(e.text ?? '')))
     && !(t.nova && hasNova)
     && !owned.has(t.name.toLowerCase()));
+  return [...TEMPLATES.filter((t) => onShelf(t) && rest(t)), ...TEMPLATES.filter((t) => !onShelf(t) && askedFor(t) && rest(t))];
 }
 
 /**
@@ -523,7 +554,11 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     if (/\{[a-z_]+\}/.test(text)) return null;
     return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate };
   }
-  const projWeaponRange = (() => { const fr = t.frames?.[bandFor(ctx.cr)] ?? ''; if (!/\{projectile\}/.test(fr)) return null; const pj = String(fills.projectile ?? ''); const row = [[/\bjavelins?\b/i, '30/120'], [/\bspears?\b/i, '20/60'], [/\b(?:daggers?|knives|knife)\b/i, '20/60'], [/\btridents?\b/i, '20/60'], [/\bdarts?\b/i, '20/60'], [/\b(?:hand)?axes?\b/i, '20/60'], [/\b(?:light )?hammers?\b/i, '20/60']].find(([re]) => re.test(pj)); return row ? row[1] : null; })();
+  // A THROWN NAMED WEAPON KEEPS ITS OWN TYPE AND RANGE (the critic's second
+  // species read: a spear hurled for Bludgeoning at 30/120). One table.
+  const projW = /\{projectile\}/.test(t.frames?.[bandFor(ctx.cr)] ?? '') ? weaponProp(fills.projectile) : null;
+  const projWeapon = projW?.thrown ? [null, projW.type, projW.range] : null;
+  const projWeaponRange = projWeapon ? projWeapon[2] : null;
   let text = t.frames[bandFor(ctx.cr)];
   if (!text) return null;
   if (projWeaponRange) text = text.replace(/range \d+\/\d+ ft\./, `range ${projWeaponRange} ft.`);
@@ -545,12 +580,16 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   const stomping = t.id === 'ground-burst' && /\b(?:stomps?|stamps?|slams? the ground|quake|tremor|earthquake)\b/i.test(String(ctx.concept ?? '')); // print's ground slam knocks Prone
   const obscuring = t.id === 'spew' && /\b(?:ash|ashes|smoke|dust|sand|soot|cinders|spores|chaff)\b/i.test(String(ctx.concept ?? '')); // an OBSCURING breath blinds — the pyre's ash cone poisoned (critic, fresh six)
   const dtype0 = solid ?? (ctx.mix === 'physical' || !ctx.energy ? (PHYSICAL.includes(fills.damage_type) ? fills.damage_type : 'Bludgeoning') : ctx.energy);
-  const PROJECTILE_WEAPON = [[/\bjavelins?\b/i, 'Piercing', '30/120'], [/\bspears?\b/i, 'Piercing', '20/60'], [/\b(?:daggers?|knives|knife)\b/i, 'Piercing', '20/60'], [/\btridents?\b/i, 'Piercing', '20/60'], [/\bdarts?\b/i, 'Piercing', '20/60'], [/\b(?:hand)?axes?\b/i, 'Slashing', '20/60'], [/\b(?:light )?hammers?\b/i, 'Bludgeoning', '20/60']];
-  const projWeapon = /\{projectile\}/.test(t.frames?.[bandFor(ctx.cr)] ?? '') ? PROJECTILE_WEAPON.find(([re]) => re.test(String(fills.projectile ?? ''))) : null; // a thrown NAMED weapon keeps its own type and range (a spear hurled for Bludgeoning at 30/120 — the critic's second species read)
+
   const frameText = t.frames?.[bandFor(ctx.cr)] ?? '';
   const drains = /regains? (?:\d+ )?Hit Points|drains?|siphon/i.test(frameText); // a DRAIN is never a weapon type (Plague Siphon dealt Piercing — the critic's fourth read)
   const onHitRider = /takes an extra \{(?:avg|burst)/.test(frameText) && !/\{atk\}/.test(frameText); // an on-hit extra takes the HIT's type (Assassinate added Bludgeoning to spear hits)
+  // A FEAR IS NEVER A WEAPON TYPE (critic, 2026-10-14: Bloodcurdling Howl and
+  // Creeping Dread both dealt Piercing). Print's Banshee wails for Psychic; a
+  // dread that hurts takes the concept's energy or Psychic, never a blade's type.
+  const MENTAL = new Set(['escalating-dread', 'terror-pulse', 'wail']);
   const dtype = projWeapon ? projWeapon[1]
+    : MENTAL.has(t.id) && PHYSICAL.includes(dtype0) ? (ctx.energy && !PHYSICAL.includes(ctx.energy) ? ctx.energy : 'Psychic')
     : t.id === 'spew' && !solid && PHYSICAL.includes(dtype0) ? (ctx.energy && !PHYSICAL.includes(ctx.energy) ? ctx.energy : 'Poison')
     : drains && PHYSICAL.includes(dtype0) ? (ctx.energy && !PHYSICAL.includes(ctx.energy) ? ctx.energy : 'Necrotic')
     : onHitRider && PHYSICAL.includes(dtype0) ? (ctx.energy && !PHYSICAL.includes(ctx.energy) ? ctx.energy : (ctx.meleeType && PHYSICAL.includes(ctx.meleeType) ? ctx.meleeType : dtype0))
@@ -558,6 +597,12 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   const engine = { ray_table: t.id === 'random-ray' ? composeRayTable(bandFor(ctx.cr)) : '', /* first: the composed table carries {dc} and damage slots the keys below fill */ dc: String(scaled.dc), atk: `+${scaled.atk}`, avg: String(full.avg), dice: full.dice, avg_half: String(half.avg), dice_half: half.dice, avg_x2: String(dbl.avg), dice_x2: dbl.dice, damage_type: dtype, melee_name: ctx.meleeName ?? 'Slam', ranged_name: ctx.rangedName ?? 'Longbow' };
   for (const [k, v] of Object.entries(engine)) text = text.split(`{${k}}`).join(v);
   if (obscuring) text = text.replace('has the Poisoned condition', 'has the Blinded condition'); // the Poison-breath frame's own rider, retyped for what ash does
+  // A GULLET MATCHES THE BODY IT IS IN (flagged four times, 2026-10-14: a
+  // rime-scaled wyrm swallowed for 18 (4d8) Cold and digested in Acid). Print's
+  // swallows digest in Acid and the frame says so, but a creature whose own
+  // words name an energy digests in that energy. A physical type never applies —
+  // nothing is digested in Bludgeoning.
+  if (t.id === 'swallow' && dtype && !['Bludgeoning', 'Piercing', 'Slashing'].includes(dtype)) text = text.replace(/Acid damage at the start/, `${dtype} damage at the start`);
   if (stomping) text = text.replace(/ damage\. \*Success:\* Half damage\.$/, ' damage, and the target has the Prone condition. *Success:* Half damage only.');
   // THE SAVE FOLLOWS THE CONDITION on a condition aura (critic fresh four: Stench
   // is Con on the toad and became Wis on the kilnblight — the stat drifted to the
