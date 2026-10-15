@@ -322,7 +322,12 @@ function gateGates(m, ctx, F) {
     }
   }
 }
-const TYPE_IMMUNITY = { Undead: ['Poison'], Construct: ['Poison'], Elemental: ['Poison'], Ooze: ['Poison'] };
+// MEASURED, 2026-10-15 (bodies run flagged an Ooze for missing Poison immunity
+// that print's own oozes do not have): Undead 17/19 Poison-immune, Construct
+// 9/10, Elemental 12/17 — but Ooze 0/4. Print's oozes are immune to Acid
+// (2/4) and to conditions, never to Poison, and generate.mjs's own body table
+// already had it right. The gate was asking for a thing print never prints.
+const TYPE_IMMUNITY = { Undead: ['Poison'], Construct: ['Poison'], Elemental: ['Poison'] };
 function gateHeaderBody(m, ctx, F) {
   const texts = allRows(m).map(({ e }) => `${e.name}. ${e.text}`).join('\n');
   if (/earth glide|move through nonmagical, unworked earth/i.test(texts) && !/Burrow/i.test(m.speed ?? '')) F('earth-glide-burrow', 'fail', 'Earth Glide with no Burrow speed', m.speed);
@@ -650,9 +655,17 @@ function gateReader(raw, m, ctx, F) {
   }
   // inline-correctness: the inline follows the name rule, not merely itself
   if (inl && name.split(/\s+/).length > 1 && /^the /i.test(inl)) {
-    const rest = inl.replace(/^the /i, '').toLowerCase(); const words = name.toLowerCase().split(/\s+/);
-    const suffixes = words.map((_, i) => words.slice(i).join(' ')); // any contiguous tail of the name is a kind form ("the turtle elder", "the headless horseman", "the warden")
-    const ok = suffixes.includes(rest);
+    // A HEAD IS AS GOOD AS A TAIL — print's own blocks said so (2026-10-15).
+    // This accepted only a contiguous TAIL, and failed 7 of 7 printed swarms:
+    // print names one "Swarm of Bats" and its own rules text says "the swarm",
+    // where "swarm" is the HEAD. Every "X of Y" name heads the same way
+    // ("Herdmaster of the Storm-Plains" speaks as "the herdmaster"), which is
+    // the false positive this gate has been throwing all sprint.
+    // Hyphens split too, the way this file's row-name read two dozen lines up
+    // already does — "Marrow-Herd Reaver" speaks as "the herd reaver".
+    const rest = inl.replace(/^the /i, '').toLowerCase(); const words = name.toLowerCase().split(/[\s-]+/);
+    const runs = words.flatMap((_, i) => words.map((__, j) => (j >= i ? words.slice(i, j + 1).join(' ') : null)).filter(Boolean)); // every contiguous run: head, tail, and the middles print uses
+    const ok = runs.includes(rest);
     const isRankish = /^(?:sergeant|captain|commander|lieutenant|general|admiral|marshal|warlord|chieftain|lord|lady|baron|baroness|count|countess|duke|duchess|king|queen|prince|princess|abbot|abbess|bishop|brother|sister|mother|father|constable|sheriff|grandmother|grandfather|granny|elder|mistress|master|warden|knight|hunter|pilgrim|marauder|rider|horseman|keeper|witch|hermit|seer|reaver|raider)$/.test(rest);
     if (!ok && !isRankish) F('inline-correctness', 'fail', `the inline "${inl}" is neither this creature's whole name nor its head noun nor a rank — a kind speaks whole, a person by its given name`, inl);
   }

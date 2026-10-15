@@ -348,7 +348,7 @@ export function sheetSoFar(monster, { exclude = null } = {}) {
     return renderStatblock2024({ ...monster, sections });
   } catch { return ''; }
 }
-export function buildReskinPrompt(scaled, { userTyped = null, concept = '', removed = [], takenNames = [], energy = null, mix = null, mind = null, resolvedType = null, fixedName = null, } = {}) {
+export function buildReskinPrompt(scaled, { userTyped = null, concept = '', removed = [], takenNames = [], energy = null, mix = null, mind = null, resolvedType = null, fixedName = null, bodyType = null, } = {}) {
   const needsProjectile = Object.values(scaled.sections).flat().some((e) => e.text.includes('{projectile}'));
   // the main call renames only — the signature is created and fitted in
   // two later calls (templates.mjs); nothing here asks for rules text
@@ -396,7 +396,7 @@ THE NAME MUST MATCH WHAT THE ROW DEALS. Every damage type above is the engine's 
 
 Return ONLY JSON:
 {
- "name": ${fixedName ? `"<the user named it \"${fixedName}\" — keep this name, correcting ONLY an obvious misspelling or casing; never reword or replace it>",` : '"<the creature\'s proper name, 1-3 plain words>",'}
+ "name": ${fixedName ? `"<the user named it \"${fixedName}\" — keep this name, correcting ONLY an obvious misspelling or casing; never reword or replace it>",` : (String(bodyType ?? '').toLowerCase() === 'swarm' ? '"<name it the way print names EVERY swarm — \'Swarm of \' then the plural thing it is made of: Swarm of Funeral Bells, Swarm of Grasping Hands. The rules text calls it \'the swarm\', so the name must carry that word>",' : '"<the creature\'s proper name, 1-3 plain words>",')}
  "inline_kind": "<is this creature's NAME a person's name or a kind of thing? Answer exactly: person | kind. A person has a given name (Meshrin; Gormak Skullsunder; Ashvowed Brannor; Sir Reginald Pemberton-Hughes; Dame Oriel Vance). A kind is a noun phrase, however invented (knife ball; headless horseman; gutter king; thornback marauder; old road warden; snapping turtle elder)>",
  "inline": "<the exact phrase every row uses for this creature mid-sentence, built ONLY from words of the name. If inline_kind is person: the given name alone (Meshrin; Gormak Skullsunder -> Gormak; Ashvowed Brannor -> Brannor) or an honorific plus the name it titles (Sir Reginald Pemberton-Hughes -> Sir Reginald; Dame Oriel Vance -> Dame Oriel). If inline_kind is kind: 'the' plus the name's own last one or two words, lowercased (knife ball -> the knife ball; Headless Horseman -> the headless horseman; Thornback Marauder -> the marauder; Old Road Warden -> the warden; Snapping Turtle Elder -> the turtle elder). Never invent a word the name does not contain; never give a person's name an article; never lowercase a person's name>",
  "type": ${resolvedType ? `"${resolvedType}",   <- FIXED by the concept resolve — echo it exactly` : '"<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>",'}
@@ -1594,6 +1594,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   if (options.resolvedType && p.type !== options.resolvedType) {
     trace('type stamped:', `the resolve said ${options.resolvedType} — the model answered ${p.type ?? 'nothing'}`);
     p.type = options.resolvedType;
+  }
+  // A SWARM'S NAME CARRIES THE WORD (canaries baseline, 2026-10-15). print names
+  // every one of its seven swarms "Swarm of X", and its rules text then says
+  // "the swarm" — the inline works BECAUSE the name carries it. Our namer coined
+  // "Grave Toll" for a swarm and the engine still forced "the swarm", which its
+  // own inline gate then failed. The call is asked for print's shape; this is the
+  // receipt. A name that already says swarm anywhere is left alone.
+  if (body === 'swarm' && p.name && !/\bswarm\b/i.test(String(p.name))) {
+    const bare = String(p.name).replace(/^(?:a|an|the)\s+/i, '').trim();
+    const plural = /(?:s|es)$/i.test(bare) ? bare : (/(?:[^aeiou]y)$/i.test(bare) ? `${bare.slice(0, -1)}ies` : `${bare}s`);
+    trace('swarm name stamped:', `"${p.name}" -> "Swarm of ${plural}" — print names all seven of its swarms "Swarm of X", and the rules text says "the swarm"`);
+    p.name = `Swarm of ${plural}`;
   }
   // SWARM TYPE STAMP (critic 2026-09-11; MOVED below the resolvedType stamp 2026-09-11 — the Sewer Choir was stamped and then reverted by it): print swarms are
   // "Swarm of Tiny X" — the Swarm trait references a designation the
@@ -3428,7 +3440,30 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           if (pr.hybrid && pr.range && !/Melee or Ranged/.test(e.text)) { e.text = e.text.replace(/\*?Melee Attack Roll:\*? (\+\d+(?: \([^)]*\))?), reach (\d+) ft\./, `*Melee or Ranged Attack Roll:* $1, reach $2 ft. or range ${pr.range} ft.`); trace('print canon attack:', `"${to}" keeps print's hybrid frame — reach ${pr.reach ?? 5} ft. or range ${pr.range} ft. (the ${pc.name}'s weapon is thrown)`); } // print's own thrown weapon is a hybrid row (the critic's third species read)
           if (pr.note && !e.text.includes(pr.note)) e.text = e.text.replace(/(Melee Attack Roll:\*? \+\d+)/, `$1 ${pr.note}`); // print's roll parenthetical rides along (the Doppelganger's first-round Advantage)
           if (printBody && pr.reach && !new RegExp(`reach ${pr.reach} ft`).test(e.text)) e.text = e.text.replace(/reach \d+ ft\./, `reach ${pr.reach} ft.`); // print's reach on a print body (the Wight's sword at reach 10)
-          e.text = e.text.replace(/ plus \d+ \(\d+d\d+(?: \+ \d+)?\) [A-Z][a-z]+ damage/, '');
+          // THE RIDER'S HALF IS NOT A GIFT (canaries + printnames, 2026-10-15).
+          // The solver splits a melee row 60/40 — base physical plus a rider —
+          // and the sum IS the row's budget. Dropping the rider clause outright
+          // left the row at 60%: "a dire wolf" at CR 3 shipped a 7-point bite
+          // where the solver had priced 12, 44% under its card, and the gate
+          // could only call it soft because print's own CR 3 spread is 0.375-5.
+          // Fold it back, the way the authored-row strip 1500 lines up does.
+          // print's OWN rider still replaces the chassis's, and a row print has
+          // already re-diced keeps print's numbers untouched.
+          {
+            let foldedR = 0;
+            e.text = e.text.replace(/ plus (\d+) \(\d+d\d+(?: \+ \d+)?\) [A-Z][a-z]+ damage/, (m0, avg) => { foldedR += Number(avg); return ''; });
+            // only a DAMAGE rider of print's own replaces the chassis's half.
+            // print's Dire Wolf rider is the Prone condition, which pays no
+            // damage — guarding on `pr.rider` alone left the row at 60% and is
+            // why the first cut of this fold never fired (verified by
+            // reproducing the live sheet: 7 x 2 = 14 against a card of 25).
+            const printPaysRider = pr.rider && /^plus \d+ \(/.test(pr.rider);
+            const printDiced = pc.exact && nearPrintCr(cr, pc.cr) && pr.dmg;
+            if (foldedR && !printPaysRider && !printDiced) {
+              e.text = e.text.replace(/(\d+) \((\d+)d(\d+)(?: \+ (\d+))?\)/, (m0, avg, n0, d0, mod) => { const r = attackDamageDiceFor(Number(avg) + foldedR, Number(mod ?? 0)); return `${r.avg} (${r.dice})`; });
+              trace('rider folded:', `"${from}" keeps its budget — the chassis's rider half (${foldedR}) folds into the base; the ${pc.name} pays no damage rider of its own${pr.rider ? ` (its "${String(pr.rider).slice(0, 28)}…" costs no damage)` : ''}`);
+            }
+          }
           // print's row carries print's rider and no other: the chassis's condition clause leaves (the Lich's Paralyzing Touch poisoned and its Eldritch Burst grew a rider on the caster chassis — critic's regressions brief 2026-10-04)
           e.text = e.text.replace(/,? and (?:the target|it) has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '.').replace(/\s*If the target [^.]*has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '').replace(/\.\.$/, '.').replace(/\s+$/, ''); // the chassis rider may still carry its {condition_minor} token here
           if (pr.rider && /^plus \d+ \(/.test(pr.rider) && !/ plus \d+ \(/.test(e.text)) e.text = e.text.replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\) (?:Bludgeoning|Piercing|Slashing) damage)/, `$1 ${pr.rider.replace(/\.$/, '')}`); // a "plus N (XdY) T damage" clause is the damage line's own, no period before it (the Wight's Necrotic Sword)

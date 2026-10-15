@@ -238,6 +238,23 @@ three places. The freeze is pinned by re-deriving the old rules — which caught
 own table silently dropping two names. A new print name now fails the coverage
 pin and gets labelled in data instead of patched in code.
 
+### Not metadata: two arithmetic bugs the measurement turned up
+
+Recorded here because both were found by the same discipline (measure, then read
+print) and both are the opposite of this plan's subject — pure deterministic
+arithmetic that no call should ever be asked about:
+
+- **The legendary budget** (`LEGENDARY-BUDGET-case-2026-10-15.md`): the solver's
+  convergence loop counted a cost-1 legendary strike once where its own seed, its
+  own comment, and the checker count three; and its filter ignored print's
+  "can't take this action again" brake that the checker honours. High-CR
+  `hot-offense` went 5 of 12 → 1.
+- **The rider fold** (`RIDER-FOLD-case-2026-10-15.md`): the print-canon melee
+  pass deleted the chassis's rider clause instead of folding it into the base,
+  leaving every affected row at 60% of its budget. Two wrong diagnoses first, and
+  a first fix that was dead code because print's Dire Wolf rider is a *condition*,
+  not damage.
+
 ### Recommended order
 
 1. ~~`polarity` on the extraction call~~ — **landed 2026-10-15**

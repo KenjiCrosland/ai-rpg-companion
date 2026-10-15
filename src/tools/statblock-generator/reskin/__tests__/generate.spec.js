@@ -2344,14 +2344,26 @@ describe('the upcast law (owner + 33 print notations, 2026-09-02): at-will stays
     expect(sc.text).toMatch(/1\/Day Each:\*\*[^\n]*\*Fireball\*(?! \(level)/);
   });
 
-  test('CR 21: at-will Fireball is the Lich shape, base level; the overflow daily rises to parity', async () => {
+  // THE LAW, NOT A LEVEL (2026-10-15). This asserted "Cone of Cold (level 6-9)",
+  // which only held while the CR 21 row was inflated: the legendary-budget fix
+  // put caster-21's per-hit at 32, and print's own CR 21 Lich deals 31. Cone of
+  // Cold's base is 36 — already past row parity, so upcasting it would overshoot
+  // print. The law is "a daily damage spell rises TO row parity", which means it
+  // rises when it is under the row and stays put when it is already over; the
+  // pin now reads it in both directions so a per-hit change cannot fake a pass.
+  test('CR 21: at-will stays base; a daily rises to row parity, and no further', async () => {
     const m = await roll(21, { at_will: ['Scorching Ray', 'Fireball'], daily: ['Cone of Cold', 'Misty Step'] });
     const sc = Object.values(m.sections).flat().find((e) => e.name === 'Spellcasting');
     // blaster-first fills at-will with the signature damage spells; the
     // Lich law admits base Fireball (28 <= per-hit ceiling) — unnoted
     expect(sc.text).toMatch(/At Will:\*\*[^\n]*\*Fireball\*(?! \(level)/);
-    // the daily overflow upcasts to row parity — the Pit Fiend shape
-    expect(sc.text).toMatch(/\*Cone of Cold\* \(level [6-9] version\)/);
+    // OVER the row STAYS: Cone of Cold's base 36 already clears a 32 row, and
+    // print's CR 21 Lich deals 31 — upcasting here would overshoot print
+    expect(sc.text).toMatch(/\*Cone of Cold\*(?! \(level)/);
+    // UNDER the row RISES: the same spell at CR 25, where the row is 41
+    const m2 = await roll(25, { at_will: ['Scorching Ray', 'Fireball'], daily: ['Cone of Cold', 'Misty Step'] });
+    const sc2 = Object.values(m2.sections).flat().find((e) => e.name === 'Spellcasting');
+    expect(sc2.text).toMatch(/\*Cone of Cold\* \(level [6-9] version\)/);
   });
 });
 

@@ -1374,7 +1374,7 @@ export const DONORS = [
     id: 'lurker-5',
     cite: 'composition after Phase Spider (CR 3) — the rider-heavy bite and the phase-cycle bonus action, scaled into the band',
     cr: 5, archetypes: ['lurker'],
-    ac: 15, ac_offset: -1, hp: 65, hp_scale: 0.72, hp_formula: '10d8 + 20', atk: 6, dc: 13, pb: 3,
+    ac: 15, ac_offset: -1, hp: 65, hp_scale: 0.75, hp_formula: '10d8 + 20', atk: 6, dc: 13, pb: 3,
     speed: '30 ft., Climb 30 ft.',
     stats: { STR: 12, DEX: 18, CON: 14, INT: 12, WIS: 13, CHA: 10 },
     saves: ['DEX'], skills: 'Perception +4, Stealth +10',
@@ -1471,7 +1471,7 @@ export const DONORS = [
     cr: 5, archetypes: ['lurker'],
     defense_suite: { damage: ['Poison'], conditions: ['Charmed', 'Exhaustion', 'Grappled', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained'], resist: ['Bludgeoning', 'Piercing', 'Slashing'] }, // print's incorporeal suite (Specter/Wraith/Ghost) — the tech that pays the 0.7x HP
 
-    ac: 13, ac_offset: -3, hp: 63, hp_scale: 0.7, hp_formula: '14d8', atk: 6, dc: 13, pb: 3,
+    ac: 13, ac_offset: -3, hp: 63, hp_scale: 0.75, hp_formula: '14d8', atk: 6, dc: 13, pb: 3,
     speed: '5 ft., Fly 60 ft. (hover)',
     stats: { STR: 6, DEX: 16, CON: 16, INT: 12, WIS: 14, CHA: 15 },
     saves: ['DEX'], skills: 'Stealth +6',

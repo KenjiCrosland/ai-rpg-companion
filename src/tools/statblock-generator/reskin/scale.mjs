@@ -217,14 +217,21 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   const rows = Object.entries(scaled.sections).flatMap(([sec, es]) => es.map((e) => ({ sec, e })));
   const multi = rows.find((r) => r.e.name === 'Multiattack');
   const attacks = multi ? Number(/makes (\w+)/.exec(multi.e.text)[1].replace('two', 2).replace('three', 3).replace('four', 4)) : 1;
-  const legendaryStrikes = rows.filter((r) => r.sec === 'Legendary Actions' && /makes one (Melee Attack|Ranged Attack|Hybrid Attack)/.test(r.e.text)).length;
+  // A ONCE-PER-ROUND LEGENDARY FIRES ONCE (bodies + high-cr, 2026-10-15). The
+  // donors already carry print's own brake — "The creature can't take this
+  // action again" — and the checker honours it (`once ? 1 : uses/cost`). This
+  // filter did not, so a donor with one free repeat row and one braked row was
+  // priced as two free ones: six extra attacks where the checker counts four.
+  const legendaryRepeat = rows.filter((r) => r.sec === 'Legendary Actions' && /makes one (Melee Attack|Ranged Attack|Hybrid Attack)/.test(r.e.text));
+  const onceOnly = (t) => /can['’]t (?:take|use) this action again|once per round|only once/i.test(String(t ?? ''));
+  const legendaryStrikes = legendaryRepeat.length;
   // DAMAGE-bearing gated rows only (the Aegis bug, 2026-09-09: the
   // per-hit solver priced the warden's 2/Day temp-HP blessing as a
   // damage nova and crushed every warden ~50% under budget — 8 (1d8+4)
   // fists on a CR 7). A gated support row is budget-neutral.
   const novaRows = rows.filter((r) => r.e.gate && /\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) [\w{}]+ damage/.test(r.e.text));
   // iterate per-hit until in band (coarse then fine — the dice snap anyway)
-  const legendaryHits = legendaryStrikes * 3; // the DMG counts every legendary use: a cost-1 strike row fires three times a round (critic's release audit 2026-10-03 — 2014 legendaries ran 1.5–2.3× the band with Multiattack solved to the band and three strikes on top; a 2024 lurker at 18 read +8 on offense, past print's +7 ceiling). Receipt: print 2024 legendaries sit at ~1.0× the legendary card by this count (Adult Brass 126 vs 125 at CR 13)
+  const legendaryHits = legendaryRepeat.reduce((n, r) => n + (onceOnly(r.e.text) ? 1 : 3), 0); // the DMG counts every legendary use: a cost-1 strike row fires three times a round (critic's release audit 2026-10-03 — 2014 legendaries ran 1.5–2.3× the band with Multiattack solved to the band and three strikes on top; a 2024 lurker at 18 read +8 on offense, past print's +7 ceiling). Receipt: print 2024 legendaries sit at ~1.0× the legendary card by this count (Adult Brass 126 vs 125 at CR 13)
   let perHit = Math.max(4, Math.round(card.dpr / (attacks + legendaryHits + 1)));
   // PER-USE nova ceiling, measured against ALL printed single-entry
   // maxima (2026-08-18, the reviewer's non-dragon rider — which was
@@ -242,7 +249,14 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   const novaCeil = Math.min(Math.round(6 * cr), 55 + Math.round(cr));
   const novaAvgFor = (ph) => Math.min(Math.round(ph * attacks * 1.5), novaCeil);
   for (let i = 0; i < 40; i += 1) {
-    const sustained = perHit * (attacks + legendaryStrikes);
+    // THE LOOP MUST COUNT WHAT THE SEED COUNTS (bodies, 2026-10-15). The seed
+    // two blocks up divides the card by `attacks + legendaryHits + 1`, where
+    // legendaryHits is the strike row times three — the DMG's own reading, and
+    // the checker's. This line counted the row ONCE, so the loop drove per-hit
+    // back up until the sheet was hot: the CR 15 storm dragon shipped a 32-point
+    // bite where print's adult dragons at CR 13-16 deal 17-21, and its offense
+    // read CR 23.
+    const sustained = perHit * (attacks + legendaryHits);
     const novas = novaRows.map((r) => ({ avg: novaAvgFor(perHit), gate: r.e.gate }));
     const { ok, actual, target } = withinBudget(cr, sustained, novas, { legendary: !!legendary, dprScale: scaled.dpr_scale ?? 1, edition });
     // a scaled-down block (dprScale < 1) descends from the donor's

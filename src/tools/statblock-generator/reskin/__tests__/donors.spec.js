@@ -488,9 +488,16 @@ describe('lurker scaling machinery (2026-09-04): ambush grammar survives the sca
     expect(limb.text).toMatch(/Attack Roll:\* \+10/); // card atk at 13 (4+6), not the authored +6
   });
 
+  // THE LAW, NOT THE NUMBER (2026-10-15): this hardcoded 0.7, so raising
+  // lurker-5-phantom to clear print's CR 5 floor (the Wraith at 67) broke a pin
+  // about machinery. What it is actually asserting is that hp_scale is applied
+  // ONCE and flat — not multiplied by the flight tax — so it now reads the
+  // donor's own declared scale.
   test('the phantom deep-scale: hp_scale IS the total, the flight tax never double-charges', () => {
-    const s = sdl(pdl(5, 'phantom', 'lurker'), 5, { mechanics: [] });
-    expect(s.hp).toBe(Math.round(cbl(5, {}).hp * 0.7)); // 0.7x flat — not 0.7 x 0.9
+    const donor = pdl(5, 'phantom', 'lurker');
+    const s = sdl(donor, 5, { mechanics: [] });
+    expect(s.hp).toBe(Math.round(cbl(5, {}).hp * donor.hp_scale)); // flat — not hp_scale x 0.9
+    expect(donor.hp_scale).toBeLessThan(0.9); // and it IS a discount, not a no-op
     // and the winged skirmisher path is untouched (its tax still charges once)
     const w = sdl(pdl(8, 'winged', 'skirmisher'), 8, { mechanics: [] });
     expect(w.hp).toBe(Math.round(cbl(8, {}).hp * 0.9));

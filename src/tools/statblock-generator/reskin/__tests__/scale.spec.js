@@ -10,7 +10,12 @@ describe('stage 3: scaling to the card', () => {
       const avgOf = (t) => [...t.matchAll(/(\d+) \(\d+d\d+(?:\s*\+\s*\d+)?\)/g)].reduce((n, m) => n + Number(m[1]), 0);
       const attacks = Number(/makes (\w+)/.exec(rows.find((r) => r.e.name === 'Multiattack').e.text)[1].replace('two', 2).replace('three', 3));
       let sustained = attacks * avgOf(rows.find((r) => r.e.name === 'Melee Attack').e.text);
-      for (const r of rows.filter((x) => x.sec === 'Legendary Actions' && /makes one/.test(x.e.text))) sustained += avgOf(rows.find((x) => x.e.name === (/Melee/.test(r.e.text) ? 'Melee Attack' : 'Ranged Attack')).e.text);
+      // A COST-1 LEGENDARY STRIKE FIRES THREE TIMES A ROUND — the DMG's reading,
+      // the checker's `sustainedOf`, and scale.mjs's own seed. This line counted
+      // it once, which is the arithmetic the solver's loop also used; the CR 15
+      // storm dragon shipped a 32-point bite against print's 17-21 (bodies,
+      // 2026-10-15). Both now count three.
+      for (const r of rows.filter((x) => x.sec === 'Legendary Actions' && /makes one/.test(x.e.text))) sustained += 3 * avgOf(rows.find((x) => x.e.name === (/Melee/.test(r.e.text) ? 'Melee Attack' : 'Ranged Attack')).e.text);
       const novas = rows.filter((r) => r.e.gate).map((r) => ({ avg: avgOf(r.e.text), gate: r.e.gate }));
       const { ok, actual, target } = withinBudget(cr, sustained, novas, { legendary: !!s.legendary });
       expect(`CR ${cr} (donor ${donor.id}): ${actual} vs ${target} ${ok ? 'in band' : 'OUT'}`)
