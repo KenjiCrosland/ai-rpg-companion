@@ -4,9 +4,9 @@
 
 | block | CR | ed | donor | derivation | bands | structure | gates | headerBody | edition | donor | adjudicability | reader | verdict | coverage | concept |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Moon-Hound Pack | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/3 |
+| Moon-Hound Pack | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 3/3 |
 
-**Dropped 0 of 1 user clauses** (coverage 100%); concept share 100% (3/3 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 1 of 1 user clauses** (coverage 0%); concept share 100% (3/3 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - none
 

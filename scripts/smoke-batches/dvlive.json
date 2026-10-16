@@ -1,0 +1,8 @@
+[
+  { "name": "", "description": "a veteran soldier with a longsword who bashes with a buckler", "cr": "6", "rules": "2024",
+    "canary": "DARKVISION withhold, live: a plain Humanoid gets no sense line and the trace carries a receipt", "mode": "band" },
+  { "name": "", "description": "a ninja who moves through the shadows and strikes unseen", "cr": "5", "rules": "2024",
+    "canary": "DARKVISION, tightened: 'through the shadows' is scene-setting, not a warrant — it must lose darkvision now", "mode": "band" },
+  { "name": "", "description": "an eyeless hunter that tracks prey by scent alone", "cr": "5", "rules": "2024",
+    "canary": "DARKVISION warrant control: a sight word in the GM's own text still earns it (and the polarity canary holds)", "mode": "band" }
+]

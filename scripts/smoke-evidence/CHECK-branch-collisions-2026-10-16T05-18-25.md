@@ -4,17 +4,16 @@
 
 | block | CR | ed | donor | derivation | bands | structure | gates | headerBody | edition | donor | adjudicability | reader | verdict | coverage | concept |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Sir Aldric | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity | FAIL (1) | 1/1 | 2/4 |
+| Sir Aldric | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity | FAIL (1) | 0/1 | 2/4 |
 | Wall Remembers | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 3/4 |
-| Gorehowl the Unchained | 8 | 2024 | brute-5 | ok | ok | SOFT: reach | ok | ok | ok | ok | ok | ok | soft (1) | 1/1 | 3/6 |
-| Palm of Still Water | 5 | 2024 | skirmisher-3 | ok | ok | ok | FAIL: ko-ungated | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 2/6 |
-| Voidblade Shade | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 1/7 |
+| Gorehowl the Unchained | 8 | 2024 | brute-5 | ok | ok | SOFT: reach | ok | ok | ok | ok | ok | ok | soft (1) | 0/1 | 3/6 |
+| Palm of Still Water | 5 | 2024 | skirmisher-3 | ok | ok | ok | SOFT: ko-at-will | ok | ok | ok | ok | ok | soft (1) | 1/1 | 2/6 |
+| Voidblade Shade | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 1/7 |
 | Gilded Crypt-Bloom | 9 | 2024 | ooze-9 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | ok | soft (1) | 0/1 | 3/5 |
 
-**Dropped 1 of 8 user clauses** (coverage 88%); concept share 44% (14/32 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 4 of 8 user clauses** (coverage 50%); concept share 44% (14/32 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - defender-5 / reader: 1
-- skirmisher-3 / gates: 1
 
 
 ## Sir Aldric (CR 7)
@@ -31,7 +30,6 @@
 
 ## Palm of Still Water (CR 5)
 - gates · SOFT · ko-at-will: Actions/Open Palm: Stunned at will, single target with a repeat save or a one-turn cap (the Ghoul's shape)
-- gates · FAIL · ko-ungated: Actions/Still Water Rebuke: Stunned at will with neither a repeat save nor a one-turn cap
 - read: def 3 / off 5 → 4; sustained 34 (2 × Open Palm); nova none; dmg 34
 
 ## Voidblade Shade (CR 5)

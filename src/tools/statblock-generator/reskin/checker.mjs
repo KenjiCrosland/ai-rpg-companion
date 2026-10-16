@@ -38,6 +38,41 @@ const avgOf = (s) => Number(/(\d+) \(\d+d\d+/.exec(s)?.[1] ?? 0);
 const allRows = (m) => Object.entries(m.sections ?? {}).flatMap(([sec, es]) => (es ?? []).filter((e) => !/^Legendary Action Uses/.test(e?.name ?? '')).map((e) => ({ sec, e }))); // the 2024 preamble is not a row
 const esc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const bare = (n) => String(n ?? '').replace(/ \(.*\)$/, '');
+// ONE DEFINITION, EVERY READER (2026-10-16). This scan used to live only here,
+// so the checker could FAIL a sheet for citing a row that does not exist while
+// generation happily built it: the Court Step-Wizard shipped a "Missed Step
+// Riposte" reaction citing a Longbow it never had. Generation now refuses a
+// rendered row this would fail, so the defect cannot reach a sheet at all.
+const REF_SKIP = /^(Spellcasting|Multiattack|Dash|Disengage|Dodge|Hide|Help|Ready|Search|Attack|Reaction|Bonus Action)$/;
+export const rowNamesOf = (m) => allRows(m).map(({ e }) => bare(e.name));
+export function danglingRefIn(text, names, rowName = '') {
+  // THE SECOND DOOR. The checker scans two shapes and this function first
+  // carried only one, so the guard built for the Court Step-Wizard's Longbow
+  // missed it: "snap-shot" renders "makes one {ranged_name} attack", which is
+  // this shape, not "uses X". Both live here now — the whole point of the
+  // function is that no reader is left holding half the predicate.
+  if (!/^Multiattack/.test(String(rowName ?? ''))) {
+    for (const mk of String(text ?? '').matchAll(/makes (?:one|two|three|\d+) ([A-Z][\w' -]+?) attacks?\b/g)) {
+      const t = mk[1].trim();
+      if (!names.includes(t)) return t;
+    }
+  }
+  // A row name is a TITLE-CASE RUN, so the capture ends at the first lowercase
+  // word. The old lazy capture leaned on a lookahead list of following words
+  // ([.,;], " if", " to", " or", " in any", " instead") and swallowed anything
+  // the list missed: "uses Slam against the attacker" captured the whole tail
+  // and read as dangling even though Slam is a row. Harmless while only the
+  // checker read this (it reported after the fact); a false refusal once
+  // generation reads it too, which is why it is bounded here.
+  for (const ref of String(text ?? '').matchAll(/(?:use of|uses|cast) ((?:[A-Z][\w'-]*)(?: [A-Z][\w'-]*){0,3})/g)) {
+    const target = ref[1].trim();
+    if (REF_SKIP.test(target)) continue;
+    if (/\bcast\b/.test(ref[0])) continue;
+    if (/stat block$/i.test(target)) continue; // print's own idiom: the Treant's Animate Trees points at another creature's stat block (critic's blockers audit 2026-10-03)
+    if (!names.includes(target)) return target;
+  }
+  return null;
+}
 
 // ---------------------------------------------------------------- arithmetic
 export function attackRowsOf(m) {
@@ -286,13 +321,11 @@ function gateStructure(m, ctx, F) {
   if (novaRows.length > 1) F('two-novas', 'fail', `two Recharge novas on one sheet: ${novaRows.map((n) => `"${n.name}"`).join(' and ')}`, novaRows.length);
   for (const { sec, e } of allRows(m)) {
     if (!e.print && /\d+ \(\d+d\d+/.test(e.text ?? '') === false && /\bdamage\b/.test(e.text ?? '') && /\d+ (?:Bludgeoning|Piercing|Slashing|Fire|Cold|Lightning|Thunder|Acid|Poison|Necrotic|Radiant|Psychic|Force) damage/.test(e.text ?? '')) F('diceless-damage', 'fail', `${sec}/${bare(e.name)}: a damage number with no dice`, bare(e.name));
-    for (const ref of String(e.text ?? '').matchAll(/(?:use of|uses|cast) ([A-Z][\w' -]+?)(?=[.,;]| if| to| or| in any| instead|$)/g)) {
-      const target = ref[1].trim(); if (/^(Spellcasting|Multiattack|Dash|Disengage|Dodge|Hide|Help|Ready|Search|Attack|Reaction|Bonus Action)$/.test(target)) continue;
-      if (/\bcast\b/.test(ref[0])) continue;
-      if (/stat block$/i.test(target)) continue; // print's own idiom: the Treant's Animate Trees points at another creature's stat block (critic's blockers audit 2026-10-03)
-      if (!names.includes(target)) F('dangling-ref', 'fail', `${sec}/${bare(e.name)} references "${target}", which is not a row`, target);
+    {
+      const dangling = danglingRefIn(e.text, names, e.name ?? '');
+      if (dangling) F('dangling-ref', 'fail', `${sec}/${bare(e.name)} references "${dangling}", which is not a row`, dangling);
     }
-    for (const mk of String(e.text ?? '').matchAll(/makes (?:one|two|three|\d+) ([A-Z][\w' -]+?) attacks?\b/g)) if (!names.includes(mk[1].trim()) && !/^Multiattack/.test(e.name ?? '')) F('dangling-ref', 'fail', `${sec}/${bare(e.name)} makes a "${mk[1].trim()}" attack, which is not a row`, mk[1].trim());
+    // (the "makes one X attack" scan moved into danglingRefIn, called just above)
     const payoff = /(?:that|who) has the (\w+) condition/.exec(e.text ?? '');
     if (payoff) { const producer = allRows(m).some(({ e: o }) => o !== e && new RegExp(`has the ${payoff[1]} condition`).test(o.text ?? '')); if (!producer) F('payoff-producer', 'soft', `${sec}/${bare(e.name)} pays off the ${payoff[1]} condition but nothing on the sheet imposes it`, payoff[1]); }
     const eng = /(?:swallows|engulfs) one (Tiny|Small|Medium|Large|Huge|Gargantuan) or smaller creature/.exec(e.text ?? '');
@@ -512,7 +545,13 @@ export function fidelityOf(m, raw, ctx) {
     if (c.head) return rows.length > 0; // a creature-only prompt: the sheet IS the creature
     const ws = words(c.text); if (!ws.length) return false;
     const overlaps = (t) => words(t).some((w) => ws.includes(w));
-    if (rows.some(({ e }) => (e.clause && overlaps(e.clause)) || (Array.isArray(e.boundKeys) && e.boundKeys.some((k) => overlaps(k))))) return true;
+    // A RECEIPT, NOT A WORD MATCH (owner's stage 3 item 4, 2026-10-16). A row's
+    // `boundKeys` are template key words, and `words()` stems — so "wound"
+    // credited "cracks open when wounded" to Rampage, a row that moves and
+    // attacks and answers nothing of the sort. Only an explicit clause binding
+    // counts now: the row says which clause it answers, or it does not count.
+    // boundKeys still ride for provenance; they just no longer buy credit.
+    if (rows.some(({ e }) => e.clause && overlaps(e.clause))) return true;
     const unplaced = (raw?.generation ?? m?.generation)?.unplaced ?? [];
     if (unplaced.some((u) => u?.clause && overlaps(u.clause))) return true;
     const styleWord = String(ctx?.donorId ?? '').replace(/-\d+/, '').split('-').slice(1).join(' '); // the chassis IS the clause when the donor's style is its verb (brute-11-charger for "It charges")

@@ -4,9 +4,9 @@
 
 | block | CR | ed | donor | derivation | bands | structure | gates | headerBody | edition | donor | adjudicability | reader | verdict | coverage | concept |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Coran Vex | 5 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 2/3 |
+| Coran Vex | 5 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 2/3 |
 
-**Dropped 0 of 2 user clauses** (coverage 100%); concept share 67% (2/3 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 1 of 2 user clauses** (coverage 50%); concept share 67% (2/3 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - none
 

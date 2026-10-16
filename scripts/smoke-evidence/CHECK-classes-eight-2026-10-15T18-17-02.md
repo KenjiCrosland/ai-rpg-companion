@@ -5,25 +5,25 @@
 | block | CR | ed | donor | derivation | bands | structure | gates | headerBody | edition | donor | adjudicability | reader | verdict | coverage | concept |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Ssejak the Open Hand | 5 | 2024 | skirmisher-3 | ok | ok | ok | SOFT: ko-at-will | ok | ok | ok | ok | ok | soft (1) | 1/1 | 4/6 |
-| Vexis Copperhand | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/6 |
+| Vexis Copperhand | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 5/6 |
 | Dame Oriel | 5 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/4 |
 | Last Sentinel | 6 (2014) | 2014 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 5/6 |
-| Brukhal Stonefury | 8 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/6 |
-| Vareth Solmane | 6 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/5 |
+| Brukhal Stonefury | 8 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 3/6 |
+| Vareth Solmane | 6 | 2024 | skirmisher-3 | FAIL: attack-stat | ok | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 0/1 | 5/5 |
 | Brother Calden | 4 | 2024 | defender-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/5 |
-| Woundless Arcanist | 6 | 2024 | caster-6 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/5 |
+| Woundless Arcanist | 6 | 2024 | caster-6 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 4/5 |
 | Thurivald | 6 (2014) | 2014 | defender-3-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/5 |
-| Oathsworn Justicar | 8 | 2024 | defender-8-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 4/7 |
-| Umbral Shinobi | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 2/7 |
-| Taiga Packfang | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/3 |
+| Oathsworn Justicar | 8 | 2024 | defender-8-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/2 | 4/7 |
+| Umbral Shinobi | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/2 | 2/7 |
+| Taiga Packfang | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 3/3 |
 | Hinge-Rust Imp | 4 | 2024 | skirmisher-3 | ok | SOFT: band | ok | ok | ok | ok | ok | ok | ok | soft (1) | 1/1 | 5/5 |
-| Marrow-Herd Reaver | 6 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: inline-correctness | FAIL (1) | 1/1 | 4/5 |
-| Sir Aldric Vane | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity | FAIL (1) | 1/1 | 1/4 |
-| Mivvi Quickhand | 3 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 0/5 |
+| Marrow-Herd Reaver | 6 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 4/5 |
+| Sir Aldric Vane | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity | FAIL (1) | 0/1 | 1/4 |
+| Mivvi Quickhand | 3 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 0/5 |
 
-**Dropped 3 of 18 user clauses** (coverage 83%); concept share 67% (56/84 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 13 of 18 user clauses** (coverage 28%); concept share 67% (56/84 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
-- brute-5 / reader: 1
+- skirmisher-3 / derivation: 1
 - defender-5 / reader: 1
 
 
@@ -56,7 +56,7 @@
 - read: def 6 / off 8 → 7; sustained 54 (2 × Stone Maul); nova none; dmg 54
 
 ## Vareth Solmane (CR 6)
-- clean
+- derivation · FAIL · attack-stat: Mace: +7 derives from DEX, but an attack row rolls STR
 - donor · note · print-row-exception: Bonus Actions/Dawn's Blessing rides on: seed the user's words keyed
 - read: def 4 / off 8 → 6; sustained 54 (2 × Mace); nova none; dmg 54
 
@@ -96,7 +96,7 @@
 - read: def 1 / off 4 → 2.5; sustained 30 (2 × Sting); nova none; dmg 30
 
 ## Marrow-Herd Reaver (CR 6)
-- reader · FAIL · inline-correctness: the inline "the herd reaver" is neither this creature's whole name nor its head noun nor a rank — a kind speaks whole, a person by its given name
+- clean
 - read: def 4 / off 6 → 5; sustained 40 (2 × Bone Cleaver); nova none; dmg 40
 
 ## Sir Aldric Vane (CR 7)

@@ -6,14 +6,14 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Iron Broken Priest | 6 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 1/1 |
 | Scent-Stalker of the Deep | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 1/5 |
-| Lamed Fellwing | 6 | 2024 | dragon-2 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity, alignment-fit | FAIL (1) | 2/2 | 3/3 |
+| Lamed Fellwing | 6 | 2024 | dragon-2 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity, alignment-fit | FAIL (1) | 1/2 | 3/3 |
 | Tongueless Bulwark | 6 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity | FAIL (1) | 2/2 | 0/3 |
 | Steadfast Lamplighter | 6 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 1/1 |
 | Marrow-Hound | 5 | 2024 | lurker-5 | ok | FAIL: under | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 0/4 |
 | Grounded Wyrm | 6 | 2024 | dragon-2 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity, alignment-fit | FAIL (1) | 2/2 | 2/2 |
 | Tongueless Ironwall | 6 | 2024 | defender-5 | ok | ok | FAIL: lint:duplicate-entry | ok | ok | ok | ok | ok | ok | FAIL (1) | 2/2 | 0/3 |
 
-**Dropped 0 of 14 user clauses** (coverage 100%); concept share 36% (8/22 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 1 of 14 user clauses** (coverage 93%); concept share 36% (8/22 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - dragon-2 / reader: 2
 - defender-5 / reader: 1

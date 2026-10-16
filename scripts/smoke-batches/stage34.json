@@ -1,0 +1,22 @@
+[
+  { "name": "", "description": "a lizardfolk ninja who strikes from the reeds", "cr": "5", "rules": "2024",
+    "canary": "IMPLIED CLASS: the key table has no 'ninja' — the call must name rogue on the GM's own word, with a receipt", "mode": "band" },
+  { "name": "", "description": "a samurai retainer sworn to a dead house", "cr": "6", "rules": "2024",
+    "canary": "IMPLIED CLASS: 'samurai' trains as a fighter; the quote must be verbatim", "mode": "band" },
+  { "name": "", "description": "a gladiator of the pit who plays to the crowd", "cr": "7", "rules": "2024",
+    "canary": "IMPLIED CLASS: 'gladiator' trains as a fighter, and the crowd-work is not a class claim", "mode": "band" },
+  { "name": "", "description": "a druid of the standing stones who calls the briars", "cr": "6", "rules": "2024",
+    "canary": "IMPLIED CLASS, the refusal: there is no druid kit — an off-list answer must be DROPPED, not coerced to cleric", "mode": "band" },
+  { "name": "", "description": "a dire wolf that hunts in a pack", "cr": "3", "rules": "2024",
+    "canary": "IMPLIED CLASS, bestial refusal: a Beast takes no class kit however the call answers", "mode": "band" },
+  { "name": "", "description": "a tiefling rogue who stalks the rooftops of the old quarter", "cr": "5", "rules": "2024",
+    "canary": "IMPLIED CLASS control: the key table fires on 'rogue' and must WIN — the call only speaks into a silence", "mode": "band" },
+  { "name": "", "description": "a berserker who flies into an unstoppable rage once per day when wounded", "cr": "8", "rules": "2024",
+    "canary": "ASKED TRIGGER/LIMIT: 'once per day' + 'when wounded' must be checked against the row that answers the clause", "mode": "band" },
+  { "name": "", "description": "a temple guardian that slams the ground at the start of each of its turns", "cr": "9", "rules": "2024",
+    "canary": "ASKED TRIGGER: a start-of-turn ask, checked against the landed row's own trigger", "mode": "band" },
+  { "name": "", "description": "a court wizard who is never where you struck and steps away", "cr": "6", "rules": "2024",
+    "canary": "NOTHING INVENTED: no ranged row, so a ranged-host template must DECLINE rather than render a Longbow", "mode": "band" },
+  { "name": "", "description": "an oathsworn crusader who smites the unclean and mends her own wounds", "cr": "8", "rules": "2024",
+    "canary": "REGRESSION: the paladin kit still keyed by the table, and the asked fields do not disturb it", "mode": "band" }
+]

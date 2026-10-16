@@ -6,14 +6,14 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Iron Synod Templar | 6 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 1/1 |
 | Scentless Stalker | 5 | 2024 | lurker-5 | ok | FAIL: under | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 2/2 | 0/4 |
-| Hollow Rookery Wyvern | 6 | 2024 | dragon-2 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity, alignment-fit | FAIL (1) | 2/2 | 3/3 |
+| Hollow Rookery Wyvern | 6 | 2024 | dragon-2 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity, alignment-fit | FAIL (1) | 1/2 | 3/3 |
 | Hushed Vow | 6 | 2024 | defender-5 | ok | ok | FAIL: lint:duplicate-entry | ok | ok | ok | ok | ok | ok | FAIL (1) | 2/2 | 0/3 |
 | Threshal Vowguard | 6 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 1/1 |
 | Spoorstalker | 5 | 2024 | lurker-5 | ok | FAIL: under | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 0/4 |
-| Eyriebroken Wyvern | 6 | 2024 | dragon-2 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity, alignment-fit | FAIL (1) | 2/2 | 4/4 |
+| Eyriebroken Wyvern | 6 | 2024 | dragon-2 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity, alignment-fit | FAIL (1) | 1/2 | 4/4 |
 | Broken Vow | 6 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 0/3 |
 
-**Dropped 0 of 15 user clauses** (coverage 100%); concept share 39% (9/23 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 2 of 15 user clauses** (coverage 87%); concept share 39% (9/23 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - lurker-5 / bands: 2
 - dragon-2 / reader: 2

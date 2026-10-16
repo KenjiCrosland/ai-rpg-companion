@@ -14,14 +14,14 @@
 | Last Court Magician | 6 | 2024 | caster-6 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/5 |
 | Thurivald | 6 (2014) | 2014 | defender-3-leader | ok | ok | FAIL: lint:duplicate-entry | ok | ok | ok | ok | ok | ok | FAIL (1) | 0/1 | 3/5 |
 | Oathsworn Crusader | 8 | 2024 | defender-8-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 5/6 |
-| Unseen Blade | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 5/7 |
-| Ravine Packstalker | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 2/3 |
+| Unseen Blade | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 5/7 |
+| Ravine Packstalker | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 2/3 |
 | Skeinfang Imp | 4 | 2024 | skirmisher-3 | ok | SOFT: band | ok | ok | ok | ok | ok | ok | ok | soft (1) | 1/1 | 5/5 |
-| Bone-Labyrinth Reaver | 6 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/5 |
+| Bone-Labyrinth Reaver | 6 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 4/5 |
 | Broken Wall Sentinel | 7 | 2024 | defender-5 | ok | ok | FAIL: lint:duplicate-entry | ok | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 1/4 |
 | Bellcount Cutpurse | 3 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 3/5 |
 
-**Dropped 2 of 19 user clauses** (coverage 89%); concept share 76% (59/78 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 5 of 19 user clauses** (coverage 74%); concept share 76% (59/78 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - skirmisher-3 / derivation: 1
 - defender-3-leader / structure: 1

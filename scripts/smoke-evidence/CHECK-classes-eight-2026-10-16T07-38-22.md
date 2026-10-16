@@ -4,34 +4,34 @@
 
 | block | CR | ed | donor | derivation | bands | structure | gates | headerBody | edition | donor | adjudicability | reader | verdict | coverage | concept |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Venomthorn Adept | 5 | 2024 | skirmisher-3 | ok | ok | ok | FAIL: ko-ungated | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 3/6 |
+| Venomthorn Adept | 5 | 2024 | skirmisher-3 | ok | ok | ok | SOFT: ko-at-will | ok | ok | ok | ok | ok | soft (1) | 1/1 | 3/6 |
 | Sable Rooftop Stalker | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/6 |
 | Dame Oriel | 5 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/4 |
 | Last Rearguard | 6 (2014) | 2014 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/6 |
 | Ravening Blood-Wrack | 8 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/6 |
 | Vareth Solmane | 6 | 2024 | skirmisher-3 | FAIL: attack-stat | ok | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 0/1 | 5/5 |
 | Ossian the Wall | 4 | 2024 | defender-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 1/1 |
-| Salon Evanescent | 6 | 2024 | caster-6 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/6 |
-| Thurivald | 6 (2014) | 2014 | defender-3-leader | ok | ok | FAIL: lint:duplicate-entry | ok | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 3/5 |
+| Salon Evanescent | 6 | 2024 | caster-6 | ok | ok | FAIL: dangling-ref | ok | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 4/6 |
+| Thurivald | 6 (2014) | 2014 | defender-3-leader | ok | ok | FAIL: lint:duplicate-entry | ok | ok | ok | ok | ok | FAIL: save-fit | FAIL (2) | 1/1 | 3/5 |
 | Dame Marisel Vane | 8 | 2024 | defender-8-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 3/7 |
-| Nychta Vale | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: name-mechanic | FAIL (1) | 2/2 | 1/7 |
-| Broken Fang | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 2/4 |
+| Nychta Vale | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: name-mechanic | FAIL (1) | 1/2 | 1/7 |
+| Broken Fang | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 2/4 |
 | Shadowpick Imp | 4 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 6/6 |
 | Coilwarden | 6 | 2024 | lurker-5 | ok | SOFT: aim-hp, band | ok | ok | ok | ok | ok | ok | ok | soft (1) | 1/1 | 2/6 |
 | Oathbound Sentinel | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 1/4 |
 | Market Ghost | 3 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 2/4 |
 
-**Dropped 2 of 19 user clauses** (coverage 89%); concept share 59% (49/83 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 4 of 19 user clauses** (coverage 79%); concept share 59% (49/83 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
-- skirmisher-3 / gates: 1
 - skirmisher-3 / derivation: 1
+- caster-6 / structure: 1
 - defender-3-leader / structure: 1
+- defender-3-leader / reader: 1
 - skirmisher-3-skulker / reader: 1
 
 
 ## Venomthorn Adept (CR 5)
 - gates · SOFT · ko-at-will: Actions/Pressure Strike: Stunned at will, single target with a repeat save or a one-turn cap (the Ghoul's shape)
-- gates · FAIL · ko-ungated: Actions/Merciless Strike: Stunned at will with neither a repeat save nor a one-turn cap
 - read: def 3 / off 5 → 4; sustained 34 (2 × Pressure Strike); nova none; dmg 34
 
 ## Sable Rooftop Stalker (CR 5)
@@ -68,7 +68,7 @@
 - read: def 3 / off 4 → 3.5; sustained 26 (2 × Mace); nova none; dmg 26
 
 ## Salon Evanescent (CR 6)
-- clean
+- structure · FAIL · dangling-ref: Actions/Multiattack references "Debt", which is not a row
 - bands · note · print-numbers: Mage's own numbers at its own CR — the donor gate verifies them; the band is print's by definition
 - donor · note · print-row-exception: Actions/Debt of Ruin rides on: seed the user's words keyed
 - donor · note · print-row-exception: Traits/Evasion rides on: seed the user's words keyed
@@ -76,6 +76,7 @@
 
 ## Thurivald (CR 6, 2014)
 - structure · FAIL · lint:duplicate-entry: Actions/War-Roar: identical text to "Spear" — two names, one ability; rewrite this entry into something distinct
+- reader · FAIL · save-fit: Actions/Traitor's Recoil: a Strength save for an effect that calls for Wisdom or Charisma
 - read: def 4 / off 6 → 5; sustained 42 (2 × Spear); nova none; dmg 42
 
 ## Dame Marisel Vane (CR 8)

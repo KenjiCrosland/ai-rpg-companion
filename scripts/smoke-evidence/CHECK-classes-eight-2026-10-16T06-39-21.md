@@ -9,21 +9,23 @@
 | Dame Oriel | 5 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/4 |
 | Garrick the Wall | 6 (2014) | 2014 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/5 |
 | Grendh Skarn-Blood | 8 | 2024 | brute-5 | ok | ok | SOFT: reach | ok | ok | ok | ok | ok | ok | soft (1) | 1/1 | 3/6 |
-| Vareth Solmane | 6 | 2024 | skirmisher-3 | FAIL: attack-stat | ok | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 5/5 |
+| Vareth Solmane | 6 | 2024 | skirmisher-3 | FAIL: attack-stat | ok | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 0/1 | 5/5 |
 | Brother Halric | 4 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 2/2 |
-| Unmet Strike | 6 | 2024 | caster-6 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/5 |
-| Thurivald | 6 (2014) | 2014 | defender-3-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/5 |
+| Unmet Strike | 6 | 2024 | caster-6 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity | FAIL (1) | 1/1 | 3/5 |
+| Thurivald | 6 (2014) | 2014 | defender-3-leader | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: save-fit | FAIL (1) | 1/1 | 3/5 |
 | Serelda Vane | 8 | 2024 | defender-8-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 3/7 |
-| Silent Kage | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: inline-form | FAIL (1) | 1/2 | 2/7 |
+| Silent Kage | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: inline-form | FAIL (1) | 0/2 | 2/7 |
 | Greyfell Packlord | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 2/2 |
 | Kilkil the Locksmith's Finger | 4 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/6 |
 | Vault Marauder | 6 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/5 |
 | Iron Vigil | 7 | 2024 | defender-5 | ok | ok | FAIL: lint:duplicate-entry | ok | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 1/4 |
-| Bone-Ledger Whisker | 3 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 1/5 |
+| Bone-Ledger Whisker | 3 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 1/5 |
 
-**Dropped 2 of 19 user clauses** (coverage 89%); concept share 63% (50/79 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 5 of 19 user clauses** (coverage 74%); concept share 63% (50/79 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - skirmisher-3 / derivation: 1
+- caster-6 / reader: 1
+- defender-3-leader / reader: 1
 - skirmisher-3-skulker / reader: 1
 - defender-5 / structure: 1
 
@@ -65,14 +67,14 @@
 - read: def 2 / off 4 → 3; sustained 26 (2 × Mace); nova none; dmg 26
 
 ## Unmet Strike (CR 6)
-- clean
+- reader · FAIL · multiattack-integrity: "The unmet strike makes three attacks. It can replace one att" on a sheet with no attack row at all
 - bands · note · print-numbers: Mage's own numbers at its own CR — the donor gate verifies them; the band is print's by definition
 - donor · note · print-row-exception: Actions/Sealing Touch rides on: seed the user's words keyed
 - donor · note · print-row-exception: Traits/Evasion rides on: seed the user's words keyed
 - read: def 2 / off 0 → 1; sustained 0 (3 × ?); nova none; dmg 0
 
 ## Thurivald (CR 6, 2014)
-- clean
+- reader · FAIL · save-fit: Actions/Disciplinarian's Rebuke: a Strength save for an effect that calls for Wisdom or Charisma
 - read: def 4 / off 6 → 5; sustained 42 (2 × Spear); nova none; dmg 42
 
 ## Serelda Vane (CR 8)

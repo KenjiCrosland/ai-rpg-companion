@@ -6,14 +6,14 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Iron Templar | 6 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 2/2 |
 | Scentstalker | 5 | 2024 | lurker-5 | ok | FAIL: under | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 2/5 |
-| Fallen Tyrant | 6 | 2024 | dragon-2 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | FAIL: multiattack-integrity, alignment-fit | FAIL (1) | 2/2 | 3/4 |
+| Fallen Tyrant | 6 | 2024 | dragon-2 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | FAIL: multiattack-integrity, alignment-fit | FAIL (1) | 1/2 | 3/4 |
 | Iron Door | 6 | 2024 | defender-5 | ok | ok | FAIL: lint:duplicate-entry | ok | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 0/3 |
 | Macebearer Penitent | 6 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/3 |
 | Vaultborn Hunter | 5 | 2024 | lurker-5 | ok | FAIL: under | ok | ok | ok | ok | ok | ok | FAIL: lack-honored | FAIL (2) | 0/1 | 4/5 |
 | Ravine Wyrm | 6 | 2024 | dragon-2 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity, alignment-fit | FAIL (1) | 2/2 | 2/2 |
 | Silent Wall | 6 | 2024 | defender-5 | ok | ok | FAIL: lint:duplicate-entry | ok | ok | ok | ok | ok | ok | FAIL (1) | 2/2 | 0/3 |
 
-**Dropped 1 of 12 user clauses** (coverage 92%); concept share 59% (16/27 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 2 of 12 user clauses** (coverage 83%); concept share 59% (16/27 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - lurker-5 / bands: 2
 - dragon-2 / reader: 2

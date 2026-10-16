@@ -5,13 +5,13 @@
 | block | CR | ed | donor | derivation | bands | structure | gates | headerBody | edition | donor | adjudicability | reader | verdict | coverage | concept |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Swarm of Dolorous Peals | 13 | 2024 | swarm-9 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 2/2 |
-| Reliquary Golem | 11 | 2024 | brute-9 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | ok | soft (1) | 1/2 | 6/6 |
-| Rot Cloud Carrier | 8 | 2024 | skirmisher-8-winged | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 6/7 |
+| Reliquary Golem | 11 | 2024 | brute-9 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | ok | soft (1) | 0/2 | 6/6 |
+| Rot Cloud Carrier | 8 | 2024 | skirmisher-8-winged | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 6/7 |
 | Thunderstone Colossus | 15 | 2024 | brute-13 | ok | FAIL: hot | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 0/1 | 5/5 |
-| Thornfold Warden | 7 | 2024 | defender-3-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 4/4 |
+| Thornfold Warden | 7 | 2024 | defender-3-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/2 | 4/4 |
 | Cauldron That Waits | 9 | 2024 | brute-8-grappler | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 3/3 |
 
-**Dropped 5 of 8 user clauses** (coverage 38%); concept share 96% (26/27 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 8 of 8 user clauses** (coverage 0%); concept share 96% (26/27 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - brute-13 / bands: 1
 

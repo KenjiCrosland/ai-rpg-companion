@@ -4,12 +4,12 @@
 
 | block | CR | ed | donor | derivation | bands | structure | gates | headerBody | edition | donor | adjudicability | reader | verdict | coverage | concept |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Border Sellsword | 5 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: attack-in-multiattack | FAIL (1) | 2/2 | 3/3 |
+| Border Sellsword | 5 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: attack-in-multiattack | FAIL (1) | 1/2 | 3/3 |
 | Highway Tollsman | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/3 |
 | Deepforge Exile | 6 | 2024 | skirmisher-3-archer | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 2/5 |
-| Quarry Palm | 5 | 2024 | defender-5 | ok | ok | ok | SOFT: ko-at-will | ok | ok | ok | ok | ok | soft (1) | 2/2 | 5/5 |
+| Quarry Palm | 5 | 2024 | defender-5 | ok | ok | ok | SOFT: ko-at-will | ok | ok | ok | ok | ok | soft (1) | 1/2 | 5/5 |
 
-**Dropped 0 of 7 user clauses** (coverage 100%); concept share 81% (13/16 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 2 of 7 user clauses** (coverage 71%); concept share 81% (13/16 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - skirmisher-3 / reader: 1
 

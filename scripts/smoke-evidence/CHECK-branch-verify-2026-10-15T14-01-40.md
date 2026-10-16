@@ -6,13 +6,13 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Vespera Vaunt | 5 | 2024 | lurker-5 | ok | FAIL: under | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 5/5 |
 | Keypicked Imp | 4 | 2024 | skirmisher-3 | ok | SOFT: band | ok | ok | ok | ok | ok | ok | ok | soft (1) | 1/1 | 5/5 |
-| Herdmaster of the Storm-Plains | 5 | 2024 | defender-3-leader | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: inline-correctness | FAIL (1) | 1/1 | 3/4 |
-| Thundertide Oathsworn | 8 | 2024 | caster-2-warpriest | ok | SOFT: band | ok | ok | ok | ok | ok | ok | ok | soft (1) | 1/2 | 4/6 |
+| Herdmaster of the Storm-Plains | 5 | 2024 | defender-3-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 3/4 |
+| Thundertide Oathsworn | 8 | 2024 | caster-2-warpriest | FAIL: attack-stat | SOFT: band | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 1/2 | 4/6 |
 
-**Dropped 1 of 5 user clauses** (coverage 80%); concept share 85% (17/20 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 2 of 5 user clauses** (coverage 60%); concept share 85% (17/20 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - lurker-5 / bands: 1
-- defender-3-leader / reader: 1
+- caster-2-warpriest / derivation: 1
 
 
 ## Vespera Vaunt (CR 5)
@@ -26,9 +26,10 @@
 - read: def 1 / off 4 → 2.5; sustained 30 (2 × Sting); nova none; dmg 30
 
 ## Herdmaster of the Storm-Plains (CR 5)
-- reader · FAIL · inline-correctness: the inline "the herdmaster" is neither this creature's whole name nor its head noun nor a rank — a kind speaks whole, a person by its given name
+- clean
 - read: def 3 / off 5 → 4; sustained 34 (2 × Staff); nova none; dmg 34
 
 ## Thundertide Oathsworn (CR 8)
+- derivation · FAIL · attack-stat: Lightning Bolt: +8 derives from STR, but an attack row rolls DEX
 - bands · SOFT · band: reads CR 6 (print at 8 reads 2–10.5, n=24)
 - read: def 4 / off 8 → 6; sustained 52 (2 × Greatsword); nova none; dmg 52

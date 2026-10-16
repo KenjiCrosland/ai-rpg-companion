@@ -6,16 +6,16 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Sable Nefret | 5 | 2024 | skirmisher-3 | ok | SOFT: band, hot-offense | ok | SOFT: rider-no-save | ok | ok | SOFT: print-rows | ok | ok | soft (3) | 1/1 | 6/6 |
 | Coral Vurthax | 5 | 2024 | defender-3-leader | ok | ok | FAIL: lint:duplicate-entry | ok | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 3/4 |
-| Blackreed Stalker | 5 | 2024 | lurker-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/5 |
+| Blackreed Stalker | 5 | 2024 | lurker-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 5/5 |
 | Coinbound Sellsword | 5 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/3 |
 | Old Road Warden | 5 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/4 |
 | Sable Nefret | 5 | 2024 | skirmisher-3 | ok | SOFT: band, hot-offense | ok | SOFT: rider-no-save | ok | ok | SOFT: print-rows | ok | ok | soft (3) | 1/1 | 7/7 |
 | Coral Vurthax | 5 | 2024 | defender-3-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 2/4 |
-| Blackreed Stalker | 5 | 2024 | lurker-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 6/6 |
+| Blackreed Stalker | 5 | 2024 | lurker-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 6/6 |
 | Coinbound Sellsword | 5 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/3 |
 | Old Road Warden | 5 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/5 |
 
-**Dropped 0 of 10 user clauses** (coverage 100%); concept share 94% (44/47 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 2 of 10 user clauses** (coverage 80%); concept share 94% (44/47 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - defender-3-leader / structure: 1
 

@@ -4,7 +4,7 @@
 
 | block | CR | ed | donor | derivation | bands | structure | gates | headerBody | edition | donor | adjudicability | reader | verdict | coverage | concept |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Mire Sifu | 5 | 2024 | skirmisher-3 | ok | ok | ok | FAIL: ko-ungated | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 2/6 |
+| Mire Sifu | 5 | 2024 | skirmisher-3 | ok | ok | ok | SOFT: ko-at-will | ok | ok | ok | ok | ok | soft (1) | 1/1 | 2/6 |
 | Ichorveil | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: inline-form | FAIL (1) | 1/1 | 5/7 |
 | Dame Oriel | 5 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/4 |
 | Hollowaught | 6 (2014) | 2014 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: inline-form | FAIL (1) | 1/1 | 5/5 |
@@ -12,27 +12,26 @@
 | Vareth Solmane | 6 | 2024 | skirmisher-3 | FAIL: attack-stat | ok | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 5/5 |
 | Ordained Wall | 4 | 2024 | defender-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 1/1 |
 | Warden of the Fold | 6 | 2024 | caster-6 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/5 |
-| Thurivald | 6 (2014) | 2014 | defender-3-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/5 |
+| Thurivald | 6 (2014) | 2014 | defender-3-leader | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: save-fit | FAIL (1) | 1/1 | 3/5 |
 | Ashvowed Meridane | 8 | 2024 | defender-8-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 2/6 |
-| Shadow-Veil Shinobi | 5 | 2024 | skirmisher-3-skulker | FAIL: attack-stat | ok | ok | ok | ok | ok | ok | ok | FAIL: name-mechanic | FAIL (2) | 1/2 | 3/7 |
+| Shadow-Veil Shinobi | 5 | 2024 | skirmisher-3-skulker | FAIL: attack-stat | ok | ok | ok | ok | ok | ok | ok | FAIL: name-mechanic | FAIL (2) | 0/2 | 3/7 |
 | Scarhide Pack-Leader | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 3/3 |
 | Skeleton Key Imp | 4 | 2024 | skirmisher-3 | ok | SOFT: band | ok | ok | ok | ok | ok | ok | ok | soft (1) | 1/1 | 5/5 |
 | Mazehorn Reaver | 6 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/5 |
 | Ashen Vow of the Rampart | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 2/4 |
 | Whisker Veil | 3 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 1/5 |
 
-**Dropped 4 of 19 user clauses** (coverage 79%); concept share 66% (52/79 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 5 of 19 user clauses** (coverage 74%); concept share 66% (52/79 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - skirmisher-3-skulker / reader: 2
-- skirmisher-3 / gates: 1
 - defender-5 / reader: 1
 - skirmisher-3 / derivation: 1
+- defender-3-leader / reader: 1
 - skirmisher-3-skulker / derivation: 1
 
 
 ## Mire Sifu (CR 5)
 - gates · SOFT · ko-at-will: Actions/Open Palm: Stunned at will, single target with a repeat save or a one-turn cap (the Ghoul's shape)
-- gates · FAIL · ko-ungated: Actions/Sealing Breath Palm: Stunned at will with neither a repeat save nor a one-turn cap
 - read: def 3 / off 5 → 4; sustained 34 (2 × Open Palm); nova none; dmg 34
 
 ## Ichorveil (CR 5)
@@ -75,7 +74,7 @@
 - read: def 2 / off 5 → 3.5; sustained 36 (3 × Arcane Burst); nova none; dmg 36
 
 ## Thurivald (CR 6, 2014)
-- clean
+- reader · FAIL · save-fit: Actions/Traitor's Lash: a Strength save for an effect that calls for Wisdom or Charisma
 - read: def 4 / off 6 → 5; sustained 42 (2 × Sword); nova none; dmg 42
 
 ## Ashvowed Meridane (CR 8)

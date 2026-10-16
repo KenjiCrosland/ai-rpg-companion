@@ -6,10 +6,10 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Last Gate Warden | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 3/4 |
 | Sunken Reef Sniper | 4 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/4 |
-| Pine Barrens Dire Wolf | 3 | 2024 | skirmisher-3 | ok | SOFT: aim-dpr, band | ok | ok | ok | ok | ok | ok | ok | soft (1) | 1/1 | 3/3 |
+| Pine Barrens Dire Wolf | 3 | 2024 | skirmisher-3 | ok | SOFT: aim-dpr, band | ok | ok | ok | ok | ok | ok | ok | soft (1) | 0/1 | 3/3 |
 | Border War Veteran | 3 | 2024 | defender-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 2/2 |
 
-**Dropped 0 of 5 user clauses** (coverage 100%); concept share 85% (11/13 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 1 of 5 user clauses** (coverage 80%); concept share 85% (11/13 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - none
 

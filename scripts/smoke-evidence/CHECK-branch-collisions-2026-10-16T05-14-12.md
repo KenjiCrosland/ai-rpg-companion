@@ -4,16 +4,16 @@
 
 | block | CR | ed | donor | derivation | bands | structure | gates | headerBody | edition | donor | adjudicability | reader | verdict | coverage | concept |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Oath-Sworn Knight | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/5 |
+| Oath-Sworn Knight | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 5/5 |
 | Gateworn Bulwark | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 3/3 |
 | Blood-Exile Goliath | 8 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/6 |
 | Marsh Pressure Adept | 5 | 2024 | skirmisher-3 | ok | ok | ok | SOFT: ko-at-will | ok | ok | ok | ok | ok | soft (1) | 1/1 | 4/6 |
-| Hollow Shinobi | 5 | 2024 | skirmisher-3-skulker | FAIL: attack-stat | ok | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 2/2 | 1/7 |
+| Hollow Shinobi | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 1/7 |
 | Gilded Reliquary Ooze | 9 | 2024 | ooze-9 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | ok | soft (1) | 1/1 | 4/4 |
 
-**Dropped 1 of 8 user clauses** (coverage 88%); concept share 68% (21/31 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 3 of 8 user clauses** (coverage 63%); concept share 68% (21/31 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
-- skirmisher-3-skulker / derivation: 1
+- none
 
 
 ## Oath-Sworn Knight (CR 7)
@@ -33,7 +33,7 @@
 - read: def 3 / off 5 → 4; sustained 34 (2 × Open Palm); nova none; dmg 34
 
 ## Hollow Shinobi (CR 5)
-- derivation · FAIL · attack-stat: Blade: +6 derives from DEX, but an attack row rolls STR
+- clean
 - read: def 3 / off 5 → 4; sustained 34 (2 × Blade); nova none; dmg 34
 
 ## Gilded Reliquary Ooze (CR 9)

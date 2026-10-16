@@ -12,18 +12,19 @@
 | Vareth Solmane | 6 | 2024 | skirmisher-3 | FAIL: attack-stat | ok | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 5/5 |
 | Iron Chapter Templar | 4 | 2024 | defender-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 1/1 |
 | Reflected Advisor | 6 | 2024 | caster-6 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/6 |
-| Thurivald | 6 (2014) | 2014 | defender-3-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/6 |
+| Thurivald | 6 (2014) | 2014 | defender-3-leader | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: save-fit | FAIL (1) | 0/1 | 4/6 |
 | Ashvowed Sera | 8 | 2024 | defender-8-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 2/6 |
-| Shadow-Blade | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 5/7 |
+| Shadow-Blade | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/2 | 5/7 |
 | Cliff Herder | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 2/2 |
 | Lockspring Imp | 4 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/5 |
 | Marrow Maze | 6 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/5 |
-| Wall of the Broken Oath | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/4 |
+| Wall of the Broken Oath | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 3/4 |
 | Sable Whisker | 3 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 1/5 |
 
-**Dropped 3 of 19 user clauses** (coverage 84%); concept share 72% (56/78 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 6 of 19 user clauses** (coverage 68%); concept share 72% (56/78 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - skirmisher-3 / derivation: 1
+- defender-3-leader / reader: 1
 
 
 ## Kasksa the Slow Bone (CR 5)
@@ -70,7 +71,7 @@
 - read: def 2 / off 5 → 3.5; sustained 36 (3 × Arcane Burst); nova none; dmg 36
 
 ## Thurivald (CR 6, 2014)
-- clean
+- reader · FAIL · save-fit: Actions/Opportunist's Lash: a Strength save for an effect that calls for Wisdom or Charisma
 - read: def 4 / off 6 → 5; sustained 42 (2 × Notched Blade); nova none; dmg 42
 
 ## Ashvowed Sera (CR 8)

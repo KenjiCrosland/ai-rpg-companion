@@ -654,3 +654,107 @@ out of whatever comes back; a span must be two significant words, or one
 distinctive word of six letters or more, so a lone shared "iron" or "flies" is
 not a receipt. Pinned against all five live cases plus the forged quote the
 hold-1 pin turns on.
+
+## Darkvision: the fallback was never the cause (2026-10-16)
+
+The owner's call was to stop granting darkvision where print does not. Print's
+rate by type, from the 329-row frozen corpus:
+
+| default right | | default wrong |
+|---|---|---|
+| Dragon 100%, Elemental 88%, Undead 84%, Fey 80% | | Humanoid 4% (1 of 26) |
+| Aberration 78%, Monstrosity 73%, Construct 70% | | Plant 0%, Ooze 0% (0 of 4) |
+| Fiend 69%, Giant 60% | | Beast 43% — plurality only, left alone |
+
+**My first fix did nothing, and the verification run is what caught it.** I changed
+the senses *fallback* to be type-aware and shipped it on a green suite. The
+stage4 smoke then returned all four Humanoids still carrying `darkvision 60 ft.`
+
+The fallback was never reached. The prompt's own schema line read:
+
+```
+"senses": "<a senses line, e.g. 'darkvision 60 ft.'>",
+```
+
+The call echoed the example on every sheet — the HINT_ECHO shape we have already
+fixed twice elsewhere. `kept` was non-empty, so the fallback branch never ran.
+
+The landed fix is both halves, because they protect different things:
+1. **The example is neutral now** — it no longer teaches one answer. That changes a rate.
+2. **The engine validates the answer whatever supplied it** — a Humanoid/Plant/Ooze
+   darkvision needs one of three warrants that already exist: a species kit that
+   grants it (10 do), a word for it in the GM's own text, or a print body that has
+   it. That is a rule, and a rule is what survives the next prompt edit.
+
+**The law, which cost me two wrong reports today:** before fixing a default,
+prove the code path you are about to change is the one executing. A green suite
+after a dead edit looks exactly like a green suite after a live one — only the
+live run tells them apart. The same error shape produced the Claim C 56× miss
+(a summary line read as a cause) and the stage-3 item-2 misattribution.
+
+## The `asked` receipt: the call was told to quote text it was never shown (2026-10-16)
+
+The critic's hold 5 read the receipt refusals as the call *declining* to quote,
+and proposed re-asking it. The evidence says otherwise, and the real cause was
+free to fix.
+
+`buildFitPrompt`'s labeled blocks were MONSTER, THE SHEET SO FAR, THE IDEA and
+TEMPLATES. **The GM's typed words were not among them** — `concept` was passed in,
+but only to rank the template menu's verb matches. The instruction read "quoted
+verbatim from the description", and the only description in front of the call was
+THE IDEA: the engine's own generated prose. So the call quoted the idea, and
+`vetAsked` correctly found none of it in the GM's text.
+
+The rejected quotes read exactly like that: *"vomit a roaring fan of scalding
+steam in a broad cone ahead of it"*, *"the shockwave rolls outward like a
+thunderclap"*. No GM typed those.
+
+This is the same law as `clauses` (generate.mjs:415), which had already solved the
+identical ambiguity in the identical prompt family — *"quote from THE USER TYPED
+line here … never from the description above it"*. The `asked` field never got
+the treatment. **One definition, every reader.**
+
+### Measured
+
+| | blocks | non-verbatim | no quote | **quote kept** |
+|---|---|---|---|---|
+| pre-fix (3 runs) | 48 | 5 | 3 | 0 |
+| post-fix (2 runs) | 32 | **0** | 5 | **2** |
+
+Runs: pre `classes-eight-2026-10-16T{15-39-15,15-53-29,18-43-46}`; post
+`classes-eight-2026-10-16T{19-28-28,19-45-25}`. Counted over `[0-9]*.md` only —
+`all.md` duplicates every block's trace and inflated my first table 2×.
+
+Both accepted receipts hand-check as verbatim: "stalks the rooftops" ⊂ *"a
+tiefling rogue who stalks the rooftops of the old quarter"*; "never where you
+struck and steps away" ⊂ *"a court wizard who is never where you struck and steps
+away"*. The non-verbatim elimination is the solid half (0 in 32 against 5 in 48,
+the mechanism's own prediction). The "more receipts accepted" half is 2 against 0
+and is too thin to carry a rate.
+
+## A cited row must exist — the hole the receipt fix opened (2026-10-16)
+
+Accepting more receipts lands more library rows, and one shipped broken: the
+Court Step-Wizard's `Missed Step Riposte` (template `snap-shot`) cited a
+**Longbow** on a sheet whose attacks are Slam and Spellcasting. The checker
+failed it as `dangling-ref`; generation had built it without complaint.
+
+The predicate lived in the checker alone, so the two readers could disagree. It
+is now `danglingRefIn(text, names)` + `rowNamesOf(m)`, exported from checker.mjs
+and called by both — generation refuses a render the checker would fail.
+
+**Writing the pin found a latent bug in that predicate.** The capture
+`([A-Z][\w' -]+?)` leaned on a lookahead list of following words and over-ran
+anything the list missed: `uses Slam against the attacker` captured the whole
+tail, so a legitimate row read as dangling. Harmless while only the checker read
+it (it reported after the fact); a silent false refusal once generation reads it
+too. Bounded to a title-case run, which is what a row name is.
+
+Old regex vs new, same session, 12 runs / ~117 blocks: **identical verdicts** —
+no FP and no FN introduced.
+
+**What is NOT yet proven:** the generation-side refusal has no live or pinned
+exercise. `classes-eight-2026-10-16T19-45-25` came back 0 FAIL of 16 with zero
+dangling refs, but the guard's trace never fired — the condition did not recur,
+so the clean run is not evidence the guard stopped it. The predicate has 4 pins;
+the wiring has none.
