@@ -145,14 +145,23 @@ export const SHAPES = [
   },
   {
     id: 'execute', name: 'Threshold Execute', cite: 'Sea Hag/Death Glare (CR 2, <=20 -> 0 HP); Incubus/Nightmare (CR 4, <=20 -> Unconscious); Solar/Slaying Bow (CR 21, <=100 -> dies)',
+    // THE TARGET MUST ALREADY BE NEARING DEATH (owner's stage 1, 2026-10-16). A
+    // CR 13 swarm shipped a 1/Day row that dropped any target with 75 HP or fewer
+    // to 0 — from full health, against a capped damage branch of 67, so the kill
+    // was strictly better than the damage and a caster died from full HP. PRINT
+    // gates its execute on a condition the target is already in: the Sea Hag's
+    // Death Glare takes "one Frightened creature", and only the 0-2 frame here
+    // kept that. Bloodied is the engine's own "nearing death", which is what the
+    // live idea asked for. The threshold is also re-capped against the row's own
+    // damage in generate.mjs, after the nova cap moves it.
     roles: ['lurker', 'controller'], styles: ['skulker'], cr_range: [2, 30], replaces: 'signature', gate: '1/Day',
     frames: {
       '0-2': '*{save_stat} Saving Throw*: DC {dc}, one Frightened creature the creature can see within 30 feet. *Failure:* If the target has 20 Hit Points or fewer, it drops to 0 Hit Points. Otherwise, it takes {avg} ({dice}) {damage_type} damage.',
       '3-5': '*{save_stat} Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* If the target has 20 Hit Points or fewer, it has the Unconscious condition for 1 hour, until it takes damage, or until a creature within 5 feet of it takes an action to wake it. Otherwise, it takes {avg} ({dice}) {damage_type} damage.',
-      '6-9': '*{save_stat} Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* If the target has 30 Hit Points or fewer, it drops to 0 Hit Points. Otherwise, it takes {avg} ({dice}) {damage_type} damage.',
-      '10-12': '*{save_stat} Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* If the target has 50 Hit Points or fewer, it drops to 0 Hit Points. Otherwise, it takes {avg} ({dice}) {damage_type} damage.',
-      '13-20': '*{save_stat} Saving Throw*: DC {dc}, one creature the creature can see within 90 feet. *Failure:* If the target has 75 Hit Points or fewer, it drops to 0 Hit Points. Otherwise, it takes {avg} ({dice}) {damage_type} damage.',
-      '21+': '*{save_stat} Saving Throw*: DC {dc}, one creature the creature can see within 120 feet. *Failure:* If the target has 100 Hit Points or fewer, it dies. Otherwise, it takes {avg} ({dice}) {damage_type} damage.',
+      '6-9': '*{save_stat} Saving Throw*: DC {dc}, one Bloodied creature the creature can see within 60 feet. *Failure:* If the target has 30 Hit Points or fewer, it drops to 0 Hit Points. Otherwise, it takes {avg} ({dice}) {damage_type} damage.',
+      '10-12': '*{save_stat} Saving Throw*: DC {dc}, one Bloodied creature the creature can see within 60 feet. *Failure:* If the target has 50 Hit Points or fewer, it drops to 0 Hit Points. Otherwise, it takes {avg} ({dice}) {damage_type} damage.',
+      '13-20': '*{save_stat} Saving Throw*: DC {dc}, one Bloodied creature the creature can see within 90 feet. *Failure:* If the target has 75 Hit Points or fewer, it drops to 0 Hit Points. Otherwise, it takes {avg} ({dice}) {damage_type} damage.',
+      '21+': '*{save_stat} Saving Throw*: DC {dc}, one Bloodied creature the creature can see within 120 feet. *Failure:* If the target has 100 Hit Points or fewer, it dies. Otherwise, it takes {avg} ({dice}) {damage_type} damage.',
     },
   },
   {
@@ -165,9 +174,23 @@ export const SHAPES = [
     },
   },
   {
+    // A SAVE THE TARGET RE-ROLLS EVERY HIT IS NOT PRINT'S SHAPE (owner's stage 1,
+    // 2026-10-16). The Plaguecarrion Mote makes THREE Talon attacks, each
+    // offering a fresh save against Poisoned-with-no-healing until a Long Rest —
+    // three chances a turn at a rest-long debuff. The owner asked for the
+    // once-per-turn "Stunning Strike" gate; PRINT DOES NOT USE IT: 0 of 329 SRD
+    // 5.2 rows say "Once on each of its turns". Print's three real answers are
+    // immunity on a successful save (Werewolf/Bite: "immune to this werewolf's
+    // curse for 24 hours"), a prerequisite (Phase Spider/Bite, only on a drop to
+    // 0), or no save at all (this template's own cite, Mummy/Rotting Fist, which
+    // the Mummy applies twice a turn because re-applying is a no-op). The
+    // Werewolf's clause is taken: it keeps the save our version added, which is
+    // kinder than the Mummy's, and one save per target per day replaces three a
+    // turn. Print also never puts a rest-long rider on a THREE-attack row — its
+    // ceiling is two, in 8 of 9 such rows.
     id: 'contagion', name: 'Contagion', cite: 'Mummy/Rotting Fist (CR 3) — the can\'t-regain-Hit-Points clause; the Poisoned-until-cured shape', requires_row: /(?:Slashing|Piercing) damage/, // a plague rides a bite or a claw, never a slam
     roles: ['skirmisher', 'brute', 'lurker'], styles: [], cr_range: [0, 20], replaces: 'melee-rider', // a plague is a disease, not a wound: no Medicine check stanches it (the rat swarm's plague bound to the bleed card, critic form-ten 2026-10-01)
-    frames: { '0-2': 'If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic.', '3-5': 'If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic.', '6-9': 'If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic.', '10-12': 'If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic.', '13-20': 'If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic.' },
+    frames: { '0-2': 'If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic. *Success:* The target is immune to this creature\'s contagion for 24 hours.', '3-5': 'If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic. *Success:* The target is immune to this creature\'s contagion for 24 hours.', '6-9': 'If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic. *Success:* The target is immune to this creature\'s contagion for 24 hours.', '10-12': 'If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic. *Success:* The target is immune to this creature\'s contagion for 24 hours.', '13-20': 'If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic. *Success:* The target is immune to this creature\'s contagion for 24 hours.' },
   },
   // THE FIRST TEMPLATE-BACKLOG PASS (2026-09-21): the template signature's
   // miss log asked for these on 6 of its first 17 blocks. Both are print-

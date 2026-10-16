@@ -1,0 +1,12 @@
+[
+  { "name": "Templar of the Unmoved Stone", "description": "a templar who guards a standing stone and never yields ground", "cr": "4", "rules": "2024",
+    "canary": "ITEM 1b-5 retry: a five-word name typed in the Name field is the GM's name, not a description", "mode": "band" },
+  { "name": "", "description": "a bell-shrouded reaper that finishes the dying with a final toll", "cr": "13", "rules": "2024",
+    "canary": "ITEM 2 live: draw the execute shape — it must take one Bloodied creature and its threshold must not exceed its own damage", "mode": "band" },
+  { "name": "", "description": "a plague-rat swarmlord whose bite rots the wound so it will not close", "cr": "8", "rules": "2024",
+    "canary": "ITEM 3 live: draw the contagion rider — it must carry print's immunity-on-success clause", "mode": "band" },
+  { "name": "Thing in the Well", "description": "", "cr": "5", "rules": "2024",
+    "canary": "ITEM 5 live: the head is the thing, and \"the well\" is the place it is in — a run past any preposition is refused", "mode": "band" },
+  { "name": "", "description": "a gravecrawler that drags the living into its pit and will not let go", "cr": "6", "rules": "2024",
+    "canary": "REGRESSION on item 1b-1: a grapple engine the router's own keys route must satisfy engine-needs-key", "mode": "band" }
+]

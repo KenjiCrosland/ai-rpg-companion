@@ -242,7 +242,7 @@ describe('the species kit — the critic\'s third read (2026-10-13)', () => {
     expect(r.gates.reader.findings.filter((f) => f.rule === 'name-mechanic')).toEqual([]);
   });
   test('the reader gate: each predicate fails its class on a hand-built sheet', () => {
-    const base = { format: '2024', name: 'Cinderbent', inline: 'the cinderbent', cr: 4, size: 'Medium', type: 'Humanoid', ac: 15, hp: 60, pb: 2, stats: { STR: 14, DEX: 16, CON: 12, INT: 10, WIS: 10, CHA: 10 }, speed: '30 ft.', alignment: 'Neutral', generation: { clauses: [], userConcept: 'Cinderbent — a tiefling duelist' } }; // the GM typed the name, so the one-word person rule applies (a name the call minted may be a kind)
+    const base = { format: '2024', name: 'Cinderbent', inline: 'Cinderbent', cr: 4, size: 'Medium', type: 'Humanoid', ac: 15, hp: 60, pb: 2, stats: { STR: 14, DEX: 16, CON: 12, INT: 10, WIS: 10, CHA: 10 }, speed: '30 ft.', alignment: 'Neutral', generation: { clauses: [], userConcept: 'Cinderbent — a tiefling duelist' } }; // the GM typed the name, so the one-word person rule applies (a name the call minted may be a kind)
     const r = checkBlock({ ...base, sections: { Actions: [
       { name: 'Thunder Blade', text: '*Melee Attack Roll:* +6, reach 5 ft. 8 (1d4 + 6) Slashing damage.' },
       { name: 'Hand Crossbow', text: '*Melee or Ranged Attack Roll:* +6, reach 5 ft. or range 30/90 ft. 8 (1d4 + 6) Piercing damage.' },

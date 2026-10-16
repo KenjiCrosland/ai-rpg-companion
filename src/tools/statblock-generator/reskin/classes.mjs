@@ -60,7 +60,12 @@ export const CLASSES = [
     rows: [
       { srd: ['Hobgoblin Captain', 'Aura of Authority'] },
       { template: 'lay-on-hands', keys: ['heal', 'heals', 'healing', 'mends', 'lays hands', 'tends', 'blessing', 'restores', 'succour', 'succor'] },
-      { template: 'coating', name: 'Divine Smite', keys: ['smite', 'smites', 'radiant', 'holy', 'sacred', 'blazing', 'searing light', 'divine'] },
+      // A SMITE IS RADIANT (critic's hold 4, 2026-10-15). The on-hit-extra rule
+      // retypes a rider to the hit's own physical type, which is right for a
+      // chassis rider and wrong for a row whose FICTION names its damage — it
+      // shipped Divine Smite dealing Slashing. `energy` is catalog data here, the
+      // same way library.mjs's BY_FICTION gives a seed its own type, and it wins.
+      { template: 'coating', name: 'Divine Smite', energy: 'Radiant', keys: ['smite', 'smites', 'radiant', 'holy', 'sacred', 'blazing', 'searing light', 'divine'] },
     ],
   },
   {
@@ -133,7 +138,7 @@ export function classFor(texts, { mind = null, int = null } = {}) {
 export function classRows(cls, { text = '', inline = 'the creature', dc = 12 } = {}) {
   const src = String(text ?? '');
   return (cls.rows ?? []).filter((r) => !r.keys || reOf(r.keys).test(src)).map((r) => {
-    if (r.template) return { kind: 'template', template: r.template, name: r.name ?? null, keys: r.keys ?? null, requiresRow: r.requiresRow ?? null };
+    if (r.template) return { kind: 'template', template: r.template, name: r.name ?? null, energy: r.energy ?? null, keys: r.keys ?? null, requiresRow: r.requiresRow ?? null };
     const lift = liftSrdRow(r.srd[0], r.srd[1]);
     if (!lift) return null;
     return {

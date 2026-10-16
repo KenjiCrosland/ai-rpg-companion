@@ -1,0 +1,50 @@
+[
+  {
+    "name": "",
+    "description": "a swarm of funeral bells that ring themselves over the dying",
+    "cr": "13",
+    "rules": "2024",
+    "canary": "HOLD 4: the concept that shipped a 91 (14d12) Bloodied Burst against a CR 13 cap of 67 — the burst must now be read as a nova and capped",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a reliquary golem that cracks open when wounded and floods the vault with holy fire",
+    "cr": "11",
+    "rules": "2024",
+    "canary": "HOLD 4: a bloodied-burst asked for in plain words — the gate is in the row's text, not its name",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a plague-bloated corpse-carrier that bursts in a cloud of flies when it dies",
+    "cr": "8",
+    "rules": "2024",
+    "canary": "HOLD 4: a death-burst — once per fight by definition, and its damage must sit under the CR ceiling",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a thunder elemental that detonates once per fight in a ring of concussive force",
+    "cr": "15",
+    "rules": "2024",
+    "canary": "HOLD 4 + the cap at the legendary tier: an explicit once-per-fight area nova",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a warden of the fold who shields the flock and never leaves the gate",
+    "cr": "7",
+    "rules": "2024",
+    "canary": "HOLD 2: the kind form comes from the call and the head is the warden, never \"the fold\"",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a bog witch's iron cauldron that vents scalding steam over whatever climbs in",
+    "cr": "9",
+    "rules": "2024",
+    "canary": "HOLD 1 door 5: the call's pick survives when it can quote the GM's own words, even where the key table knows neither verb",
+    "mode": "band"
+  }
+]

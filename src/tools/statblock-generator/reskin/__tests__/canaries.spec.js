@@ -33,9 +33,21 @@ describe('the canaries\' first read (2026-10-12)', () => {
     const desc = 'big ogre with a club, cr 5';
     const m = await gen({ archetype: 'brute', concept: desc, userConcept: desc, cr: 5 }, json('Clubtooth Marrowbelly', 'Giant', 5, null, 'brute', { size: 'Large', extra: { clauses: [{ text: 'big ogre with a club', kind: 'mechanical' }, { text: 'cr 5', kind: 'header' }] } }));
     expect(m.stats.STR).toBe(19); // print's 19, not fitted down to 16
-    const club = rows(m).find((e) => e.name === 'Club'); const slam = rows(m).find((e) => e.name === 'Slam');
+    const club = rows(m).find((e) => e.name === 'Club');
     expect(club.text).toMatch(/\+7, reach/); expect(avgOf(club)).toBeGreaterThanOrEqual(19); // the brute's 12 + 7 a hit, not 12
-    expect(slam.text).toMatch(/Bludgeoning damage/); expect(slam.text).not.toMatch(/Piercing/);
+    // PRINT'S SECOND ROW IS A THROWN JAVELIN, NOT A SLAM (critic's hold 2, case 3,
+    // 2026-10-15). This asserted a "Slam" row, which only ever existed because the
+    // cloned print row copied the MELEE text and dropped print's thrown frame: the
+    // anatomy pass then honestly renamed the melee "Javelin" to "Slam", that read
+    // word-for-word like the Greatclub beside it, and the Greatclub was deleted as
+    // a duplicate — leaving the Multiattack pointing at a row that was gone. The
+    // law the pin protected (a slam deals Bludgeoning, never Piercing) is unchanged
+    // and still held by honestAttackNames; print's Ogre simply has no slam.
+    const javelin = rows(m).find((e) => e.name === 'Javelin');
+    expect(javelin).toBeTruthy();
+    expect(javelin.text).toMatch(/Melee or Ranged Attack Roll/); // print's thrown frame
+    expect(javelin.text).toMatch(/range 30\/120 ft\./);
+    expect(rows(m).find((e) => e.name === 'Slam')).toBeUndefined();
     const r = checkBlock(m); expect(r.fails).toEqual([]); expect(r.fidelity.dropped).toEqual([]); // "cr 5" is honored: the sheet IS CR 5
   });
   test('the Name field\'s short form: a person by the given name, an honorific by its name, an epithet by its noun', async () => {

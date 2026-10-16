@@ -243,7 +243,11 @@ export const VERB_KEYS = {
   bound: ['bound to', 'cannot leave', "can't leave", 'never leaves', 'never strays', 'tethered to', 'chained to', 'haunts', 'confined to', 'trapped in', 'cannot stray', 'its tower', 'the tower', 'tower', 'belfry', 'its post', 'its grave', 'its bell', 'guards the', 'warden of', 'keeps its vigil'],
   'marking-light': ['lit by', 'glow', 'glowing', 'lantern', 'beacon', 'sheds light', 'light clings', 'burning mark', 'starlight', 'shard of light', 'faerie fire', 'luminous', 'cannot hide from', 'lit up', 'shines on', 'outlines', 'limned'],
   'sealed-body': ['sealed', 'reliquary', 'closed cell', 'cannot be opened', 'iron body', 'clockwork', 'no way in', 'cannot be swayed', 'cannot be read', 'grinds on', 'talked down', 'made to flee', 'locked'],
-  'warded-mending': ['mend', 'mends', 'mending', 'knits', 'knits itself', 'repairs itself', 'heals near', 'consecrated', 'litany', 'litanies', 'prayer', 'prayers', 'its ward', 'while near', 'shrine', 'altar', 'regrows', 'seeps into', 'restored by'],
+  // "MEND" IS AN ALLY HEAL, NOT A SELF-REGENERATION (critic, 2026-10-16). A
+  // crusader who "mends her soldiers" keyed this template — which heals the
+  // CREATURE — and it outranked lay-on-hands, which already owns mend/heals and
+  // is what the GM asked for. The self-repair words stay; the transitive ones go.
+  'warded-mending': ['knits', 'knits itself', 'repairs itself', 'heals near', 'consecrated', 'litany', 'litanies', 'prayer', 'prayers', 'its ward', 'while near', 'shrine', 'altar', 'regrows', 'seeps into', 'restored by'],
   'guarded-stance': ['guard', 'seamless guard', 'keeps the line', 'keeps the shield line', 'shield line', 'shield wall', 'parry', 'parries', 'turns aside', 'turn aside', 'turns every blade', 'blade aside', 'blades aside', 'deflects', 'deflect', 'blade and shield', 'shield and blade', 'stance', 'hard to hit', 'blows glance', 'glance off', 'slips every blow', 'weaves between', 'nothing lands', 'footwork', 'duelist', 'light bends', 'reads only as', 'hard to track'],
   'undead-fortitude': ['keeps him standing', 'keeps her standing', 'keeps it standing', 'should have quit', 'refuses to die', "won't stay down", 'gets back up', 'oath keeps', 'will not fall', 'undying', 'zombie', 'shambling', 'body should have', 'not yet dead', 'keeps fighting', 'dead on its feet', 'corpse', 'after death', 'too stubborn to die'],
   mimicry: ['mimic', 'mimics', 'mimicry', 'imitates', 'imitation', 'steals voices', 'stolen voice', 'stolen voices', 'ventriloquist', 'parrot', 'magpie', 'throws its voice', 'speaks in', 'borrowed voice', 'sounds like', 'voices'],
@@ -723,7 +727,9 @@ ${lines}
 THE VERB DECIDES. The concept has a central verb — seal, lure, stick, toll, drown, drag. Templates are listed best-match first; a VERB MATCH marked (concept) means the template's own verb is in the user's words and outranks everything; (idea) means only your invented description used it. Never pick a template with no verb match over one that has a (concept) match. Pick the template whose rules genuinely CARRY the idea — the same verb, the same target, the same kind of effect, the same moment. If the idea is one of these templates PLUS an extra clause, take the template — the extra is fiction the name can carry. A template that merely resembles it does not fit; answer "none" then, honestly — a miss is logged and a template gets written. Name the ability in Monster Manual register: two words, three at most, never a description, and never the creature's own name ("Wax Preacher's Sermon" is a label, "Sealing Sermon" is a name).
 A VERB MATCH is a WORD match, not a judgement — the engine found the template's key word in the user's words and is asking you whether it MEANS that mechanic for this creature. It does not mean it when the word sits in the modifier slot of a compound (a blood-priest has no blood sense; a stone-herder is not made of stone; a knife ball is not an assassin), when the sheet or the creature's own kind already answers it (a climb Speed answers "climbs the wall"), or when it belongs to another fiction (a living warden who guards a reef is not bound to a resting place). Name every such template in "wrong" — the engine will not use one you list there. Leave "wrong" empty when each match genuinely means its mechanic.
 A template whose match is marked (concept) may be used even if you answer none, so fill its "you fill" slots in "fills" whichever answer you give, quoting the user's own words (a phobia of chickens fills {phobia} with "chickens"; a warden of the reef fills {place} with "the reef").
-Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "name": "<2-3 words>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
+WHY NONE FITS. When you answer "none", answer "declined_because" with exactly one of: collision (a template's key word is here but does not mean that mechanic for this creature), already_answered (the sheet or the creature's own kind already does this), no_fit (nothing offered carries the idea). Answer "" when you did pick a template.
+DID THE USER ASK FOR IT? Answer "asked" with the user's OWN WORDS that ask for this template's mechanic, quoted verbatim from the description — the few words, not a sentence. Leave it "" when the user's words never ask for it and your pick rests on the idea you were given or on the template's shape. Answering "" is not a failure and does not withdraw your pick; it tells the engine the pick is yours, not the GM's, and some seats take only what the GM asked for.
+Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", "name": "<2-3 words>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
 }
 
 export function validateFitResponse(jsonString) {
@@ -741,6 +747,32 @@ export function parseFit(raw, menu, creatureName = '') {
     because: String(p.because ?? '').trim().slice(0, 80),
     name: nm && !/^(?:none|n\/a|null|no fit|nothing)$/i.test(nm) && nm.split(/\s+/).length <= 3 && noDigits(nm) && !(creatureName && nm.toLowerCase().includes(creatureName.toLowerCase().split(/\s+/).pop())) ? nm : null, // "none" is the model saying no fit, never a row name (a row named "none" shipped on Meshrin — the critic's third species read, rerun)
     fills: p.fills && typeof p.fills === 'object' ? p.fills : {},
+    // DID THE USER ASK FOR IT — the call's answer, not the engine's keyword
+    // table (critic's hold 1 door 5, 2026-10-16). Three seats refuse a
+    // template the GM never asked for; they used to decide that by running
+    // rankByVerb over the pick and reading its own [verb:] tally back out of a
+    // trace string. rankByVerb still RANKS the menu — ranking is cheap and
+    // judges nothing — but whether the GM asked is a question about meaning,
+    // so the call answers it with a receipt and generate.mjs checks the quote
+    // against the words the GM actually typed.
+    asked: String(p.asked ?? '').trim().slice(0, 80),
+    // STAGE 2 ITEM 1 (owner's fix order, 2026-10-16): on 31% of blocks the GM's
+    // words key a template, the call is shown it, and the call says no fit —
+    // then 71% fall to a generic seed and 22% ship nothing. Which fix that needs
+    // depends on WHY: a collision means the call is working, already_answered
+    // means the held-rate metric is wrong rather than the engine, and no_fit is
+    // the only one that calls for a successor. The first collection run came back
+    // 27 of 27 unanswered, which an exact-token whitelist could not distinguish
+    // from a differently-phrased answer — so normalise, and keep the raw value
+    // so the trace says which it was.
+    declined_because: (() => {
+      const k = String(p.declined_because ?? '').trim().toLowerCase().replace(/[^a-z]+/g, '_').replace(/^_|_$/g, '');
+      if (/^collision/.test(k)) return 'collision';
+      if (/already|answered|on_the_sheet/.test(k)) return 'already_answered';
+      if (/no_?fit|none|nothing/.test(k)) return 'no_fit';
+      return null;
+    })(),
+    declined_raw: String(p.declined_because ?? '').trim().slice(0, 40),
     // THE WORD MATCH IS THE ENGINE'S, THE MEANING IS THE CALL'S (owner, 2026-10-13:
     // "engineer less deterministic gating when the llm can make these judgements"):
     // a key word in the modifier slot of a compound, or one the sheet already

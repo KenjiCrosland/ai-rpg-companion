@@ -296,5 +296,10 @@ export function drawLibraryRow(scaled, { archetype = null, energy = null, mix = 
       : energy;
     text = text.split('{damage_type}').join(dtype);
   }
-  return { seed: seed.key, section: seed.section, row: { name: seed.name, text, library: true } };
+  // THE ROW CARRIES ITS SEED (critic's hold 5, 2026-10-16). A drawn row said only
+  // `library: true`, so nothing downstream could tell WHICH shape it was: the
+  // draw had no way to skip a seed the sheet already carried, and Meridane
+  // shipped two bonus actions that both charge its next strike. The id is also
+  // the row's provenance, which the review doc wants anyway (hold 3).
+  return { seed: seed.key, section: seed.section, row: { name: seed.name, text, library: true, seed: seed.key } };
 }

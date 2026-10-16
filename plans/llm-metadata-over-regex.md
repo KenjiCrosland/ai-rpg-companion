@@ -296,3 +296,143 @@ and a pin proving a missing answer still works.
 - every arithmetic path: CR bands, DPR, hit dice, DCs, attack bonuses
 - print's own facts: donor stats, the weapon table, the condition list
 - the never-fail fallbacks — a call that fails must still ship a sheet
+
+---
+
+## Landed 2026-10-16, working the critic's second read
+
+Each of these replaced a deterministic judgment with a call's answer the engine
+validates, or consolidated duplicate deterministic readings into one.
+
+### `asked` — did the GM ask for this template? (the critic's hold 1, door 5)
+
+Three seats refuse a template the GM never asked for. They used to decide that by
+running `rankByVerb` — the engine's keyword table — over the call's pick and
+reading its own `[verb: …]` tally back out of a **trace string**. A template whose
+verb the table did not know lost its seat however plainly the GM had asked.
+
+The fit call now answers `asked` with the GM's own words quoted verbatim, and
+`vetAsked` in `generate.mjs` checks the quote against what the GM typed. Four
+read sites, one of which was a **fifth door** nobody had counted: the table
+discarding the call's pick outright whenever *it* preferred a different template.
+
+Two things learned building it, both worth carrying to the next field:
+
+1. **A receipt that opens a door needs a stricter check than one that fills a
+   slot.** `vetFills` requires one significant word of the quote to appear in the
+   concept — right for a fill, which is a noun quoted back. For `asked`, a clause,
+   that let "hurls molten iron" through against a concept reading "iron
+   cauldron" on the shared word "iron". Every significant word must be present.
+   The pin covers the forged quote as well as the honest one.
+2. **Pin the accept path, not only the refusal.** The three existing pins all
+   asserted a *decline*; every one of them still passed with the new field
+   unanswered. Only a pin for "the call quoted the GM, so the seat is kept"
+   actually exercises the new behaviour.
+
+### `declinedT` on the concept-first trait path (hold 1, door 4)
+
+The fourth door: this path honoured the call's collision read (`wrongT`) but could
+still re-land a template the call had been offered **against the GM's own words**
+and declined — the same third door already closed on the library draw.
+
+### `inline_kind` wins over the type rule (hold 2)
+
+A one-word name on a Humanoid body was read as a person's name by **type**, over
+the call's own person/kind answer. Print overruled the rule: 17 of 17 one-word
+Humanoid names in SRD 5.2 are kinds, and print's rows write "the mage", "the
+assassin", "the priest". Retired at both sites (engine and checker).
+
+**This reverses the owner's pin of 2026-10-14** — flagged for the owner, since
+that reading was about coined names, which is exactly what `inline_kind` asks.
+
+### One `kindPhraseOk`, two readers (hold 2, the "X of Y" half)
+
+Only a contiguous **tail** of the name was a legal kind phrase, so "Warden of the
+Fold" could be called "the fold" and could not be called "the warden". Any
+contiguous run is legal now; a run lying wholly past an "of" is refused.
+
+**The first fix only closed one of two acceptance paths**, and a live run caught
+it: `acceptDeclared` refused "the unmoved stone" and `byRule` then read
+`declaredInline`, which had no such rule, and shipped it anyway. There is now one
+validator with both readers pointed at it.
+
+### `TEXT_GATE` — one definition of "once per fight" (hold 4)
+
+The reader and the nova cap both looked for a gate in a row's **name**, so a
+bloodied-burst or death-burst — which writes its limit in its **text** — was
+invisible to both. One exported definition, imported by the checker.
+
+The cap also had to **move**: it ran at scale time, about a thousand lines before
+the draws that produce these rows. Third instance this sprint of *a normalisation
+must run after everything that can change its input*. Worth noting the text gate
+was the smaller half — the row that shipped 91 over a 67 ceiling carried
+`(Recharge 5-6)` in its name and escaped purely on ordering.
+
+### `effectOnly` — one prerequisite stripper, two readers (hold 7c)
+
+`save-fit` read effects through a stripper (a condition named as a *prerequisite*
+is not an imposed effect); `ko-ungated` read the raw text, so a row that
+**exploits** Stunned was counted as one handing it out at will.
+
+### `finesseLike` — print names the weapon (hold 7b)
+
+The alias table answered "blade" with *longsword*, a Strength weapon, on a DEX
+skirmisher. The swap belongs to the weapon table, and **print** ranks the
+choices: across SRD 5.2's DEX-over-STR creatures the finesse melee rows are
+Shortsword 4, Scimitar 4, Dagger 3, Rapier 2, Sickle 0, Whip 0. Table order had
+first answered "sickle" for a longsword.
+
+### A row's own name is an ask (hold 7b)
+
+The energy-rider rule read only the GM's words, so a row **named** "Poisoned
+Blade" shipped plain Slashing — the namer promised poison and this rule withheld
+it. It now also warrants the rider when `name_element` says the row's name claims
+that element. *A gate may shape what was asked for; it may not remove what the
+sheet's own name promises.*
+
+### Print's own array picks the stand-down line (hold 7a)
+
+When a concept heads on a print body that is not a caster first, the caster family
+stands down — and the replacement line was chosen by **size alone**, so every
+Medium print body got the skirmisher line. That made DEX the striker stat, and
+the Priest shipped with DEX 18 where print says 10. Print's arrays separate its
+own roster cleanly (Priest 16/10, Knight 16/11, Gladiator 18/15 … vs Assassin
+11/18, Scout 11/14, Spy 10/15).
+
+### Row provenance, and a seed id (holds 3 and 5)
+
+A drawn library row carried only `library: true` — no id — so no draw site could
+tell which shape the sheet already had, and Meridane shipped two bonus actions
+that both charge its next strike. The row now carries its seed; both draw sites
+exclude what is on the sheet; and the id doubles as the provenance the review doc
+prints.
+
+---
+
+## The next queue item, named by three gates at once
+
+`name-mechanic`, `no-type-in-name` and `type-fit` are three gates reporting one
+defect from three angles: **the namer and the row-builders disagree about what a
+row contains**. Live sightings in one day's batches:
+
+- `Poisoned Blade` dealing plain Slashing (hold 7b — fixed, one seat only)
+- `Thunder Roar` naming Thunder the row does not deal (a legendary row)
+- `Trampling Charge` promising movement the text lacks
+- `Carrion Hive Rupture` promising a hive the text does not mention
+- `Swoop Snatch` promising a grab the text lacks
+
+The fix is the same shape as `asked`: the name is minted by a call that already
+knows what the row does, so the claim and the content should be settled **in one
+place** rather than reconciled afterwards by three gates. `name_element` already
+does this for elements; the general question is `name_claims: <mechanic|element|
+movement|none>` on the rename, validated against the row's own text.
+
+## Also open, and not a metadata question
+
+`lint:duplicate-entry` — two rows shipping byte-identical text under two names,
+4 of 16 blocks in one run, 0–4 across nine runs since 2026-10-14. Three rules in
+sequence, each defensible: the call names a shield for the hybrid row; a repair
+rejects "Shield Bash" because a template might want that name and renames the row
+"Sword Strike"; the narrowing rule reads "Sword Strike" as a melee weapon by name
+and strips the hybrid's range — the one thing telling it apart from the Longsword
+row. Nothing afterwards compares two rows' text.

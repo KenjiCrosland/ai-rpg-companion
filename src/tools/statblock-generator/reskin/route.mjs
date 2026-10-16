@@ -162,9 +162,22 @@ export function lineIdOf(raw) {
 }
 export const MADE_TYPES = ['Construct', 'Elemental', 'Undead', 'Plant', 'Ooze'];
 const WARDEN_TYPES = [...MADE_TYPES, 'Celestial', 'Fiend'];
-// a LEADER is print's Humanoid class (Hobgoblin Captain, Bandit Captain) — a crab that
-// "rules the wreck-fields" took the leader line and an Aura of Authority (golden 2026-09-28)
-const NO_LEADER_TYPES = ['Beast', ...MADE_TYPES];
+// THE TYPE VETO ON A LEADER IS RETIRED (critic's hold 5, 2026-10-15; the owner's
+// ruling: a deterministic judgement about MEANING goes to a call).
+//
+// It read `['Beast', ...MADE_TYPES]` and dropped the GM's own clause: "a death
+// knight who leads a cavalry of the damned" lost its leader line to "a Undead
+// commands no troops". The route call had already read "leads a cavalry"; the
+// list overruled it.
+//
+// print also contradicts it. Measured 2026-10-16: NINE print Beasts carry an
+// ally-affecting row — Dire Wolf, Blood Hawk, Baboon, Giant Rat and the rest,
+// because Pack Tactics IS an ally row. The veto was wrong on its own terms for
+// the one type it most confidently excluded.
+//
+// print has no commanding Undead, Construct, Ooze or Plant — but that is print
+// never happening to stat a death knight's cavalry, not a law. The call reads
+// the words; the trace records what it read; the rate is measurable.
 // a SWARM is a mass of many: the words must say so (a hermit who talks to crows came
 // out as a Swarm of Tiny Humanoids with Beaks — day-one 2026-09-30)
 const SWARM_WORDS = /\b(?:swarms?|swarming|flocks?|murder of|clouds? of|mass of|masses|hosts? of|plague of|shoals?|colony|colonies|hive|nest of|hordes?|hundreds|thousands|countless|myriad|legion of|carpet of|tide of|teeming)\b/i;
@@ -261,7 +274,6 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
     if (!evidenceIn(k?.because, text)) { notes.push(`${id}: quote not found in the input ("${String(k?.because ?? '').slice(0, 40)}")`); continue; }
     if (line.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} is not a made thing`); continue; }
     if (line.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} is not a made or risen guardian`); continue; }
-    if (line.id === 'defender-leader' && resolvedType && NO_LEADER_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} commands no troops`); continue; }
     if (line.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} sets traps; it is not one`); continue; }
     if (line.id === 'lurker-phantom' && resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} has a body; a phantom has none`); continue; }
     if (line.id === 'skirmisher-shifter' && !verbHits(text).some((h) => h.id === 'skirmisher-shifter')) { notes.push(`${id}: a shifter is named by its words (shape-shifts, turns into, a were-) — none here`); continue; } // a mind flayer with a sword drew a Beast Bite (critic-ten 2026-10-01)
@@ -281,7 +293,6 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
       if (!line || (family && line.family !== family)) continue;
       if (line.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType)) continue;
       if (line.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)) continue;
-      if (line.id === 'defender-leader' && resolvedType && NO_LEADER_TYPES.includes(resolvedType)) continue;
       if (line.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType)) continue;
       if (line.id === 'lurker-phantom' && resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType)) continue;
       if (line.id === 'swarm' && !SWARM_WORDS.test(String(text ?? ''))) continue;
@@ -321,7 +332,6 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
     const hits = verbHits(text).map((h) => ({ ...h, line: BY_ID.get(h.id) })).filter(({ line: l }) => l && (!family || l.family === family)
       && !(l.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType))
       && !(l.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType))
-      && !(l.id === 'defender-leader' && resolvedType && NO_LEADER_TYPES.includes(resolvedType))
       && !(l.id === 'lurker-phantom' && resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType)) // the override obeys the body vetoes too (the kuo-toa went phantom on a verb, 2026-10-01)
       && !(l.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType))
       && !(l.id === 'skirmisher-archer' && !ARCHER_NOUN.test(String(text ?? '')))

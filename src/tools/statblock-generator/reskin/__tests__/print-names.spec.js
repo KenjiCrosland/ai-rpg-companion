@@ -202,7 +202,7 @@ describe('a print borrow keeps the row\'s whole budget', () => {
 // an "of"-tail or a hyphen.
 describe('the inline may be any run of the name, as print writes it', () => {
   const runsOf = (name) => { const w = name.toLowerCase().split(/[\s-]+/); return w.flatMap((_, i) => w.map((__, j) => (j >= i ? w.slice(i, j + 1).join(' ') : null)).filter(Boolean)); };
-  const ok = (name, inl) => runsOf(name).includes(inl.replace(/^the /i, '').toLowerCase());
+  const ok = (name, inl) => runsOf(name).includes(inl.replace(/^the /i, '').toLowerCase().split(/[\s-]+/).join(' '));
 
   test("print's own swarms pass — the head is as good as the tail", () => {
     const swarms = ALL.filter((m) => /^Swarm of /.test(m.name ?? ''));
@@ -223,6 +223,14 @@ describe('the inline may be any run of the name, as print writes it', () => {
     expect(ok('Gutter King', 'the king')).toBe(true);
   });
 
+  test('the hyphen normalizes on BOTH sides — found live, missed by the pins', () => {
+    // every hand-written case put the hyphen on the name side, so this slipped:
+    // "Iron Line-Crasher" said "the line-crasher" and the gate failed it.
+    expect(ok('Iron Line-Crasher', 'the line-crasher')).toBe(true);
+    expect(ok('Iron Line-Crasher', 'the line crasher')).toBe(true);
+    expect(ok('Marrow-Herd Reaver', 'the herd-reaver')).toBe(true);
+  });
+
   test('a word from nowhere is still refused', () => {
     expect(ok('Dire Wolf', 'the bear')).toBe(false);
     expect(ok('Grave Toll', 'the sentinel')).toBe(false);
@@ -240,5 +248,60 @@ describe("a swarm's name carries the word print puts in it", () => {
     const ans = JSON.stringify({ name: 'Grave Toll', type: 'Undead', size: 'Medium', alignment: 'Neutral', senses: 'darkvision 60 ft.', languages: 'None', renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Thunder'])), conditions: { condition_minor: 'Prone' }, melee_rider: 'none' });
     const m = await generateReskin({ cr: 13, concept: 'a swarm of funeral bells that ring themselves', bodyType: 'swarm', archetype: 'swarm', mechanics: [] }, async () => ans);
     expect(m.name).toMatch(/swarm/i); // the inline "the swarm" now has something to refer to
+  });
+});
+
+// HOLDS 5 AND 6 OF THE CRITIC'S READ, 2026-10-15/16.
+describe("hold 5: no type vetoes a leader", () => {
+  const { chooseLine } = require('../route.mjs');
+
+  test('a death knight who leads keeps the leader line', () => {
+    // the veto read ['Beast', ...MADE_TYPES] and dropped the GM's own clause:
+    // "a Undead commands no troops". print contradicts it too — NINE print Beasts
+    // carry an ally-affecting row, because Pack Tactics is one.
+    const r = chooseLine({ picks: [{ line: 'defender-leader', because: 'leads a cavalry of the damned' }], creature_type: 'Undead' },
+      { text: 'a death knight who leads a cavalry of the damned and burns the living' });
+    expect(r.line).toBe('defender-leader');
+    expect(r.notes.join(' ')).not.toMatch(/commands no troops/);
+  });
+
+  test('and the crab golden still lands, held by the rule that owns it', () => {
+    const r = chooseLine({ picks: [{ line: 'defender-leader', because: 'wears it and rules the wreck-fields' }, { line: 'brute-grappler', because: 'a crab the size of a longboat' }], creature_type: 'Beast' },
+      { text: "the drowned king's crown, a crab the size of a longboat that wears it and rules the wreck-fields" });
+    expect(r.line).toBe('brute-grappler'); // its BODY outranks the noun — not a type veto
+  });
+});
+
+describe("hold 6: the call's person|kind answer is honoured", () => {
+  const { printCanonFor } = require('../generate.mjs');
+
+  test('a BORROWED print body is not a print name', () => {
+    // the guard asked whether printCanonFor matched ANYTHING, so these two lost
+    // their declared inline and shipped bare: "Coinbound Sellsword" matches the
+    // Warrior Veteran by tail and "Blackreed Stalker" the Invisible Stalker.
+    for (const n of ['Coinbound Sellsword', 'Blackreed Stalker']) {
+      const pc = printCanonFor(n, 5);
+      expect(pc).toBeTruthy();          // it DOES match a print body
+      expect(pc.nameIsPrint).toBe(false); // and it is NOT print's own name
+    }
+  });
+
+  test("print's own names still are", () => {
+    for (const n of ['Owlbear', 'Dire Wolf']) expect(printCanonFor(n, 5)?.nameIsPrint).toBe(true);
+  });
+
+  test('inline-form fails a kind the engine speaks without "the"', async () => {
+    const { checkBlock } = await import('../checker.mjs');
+    const base = { name: 'Coinbound Sellsword', type: 'Humanoid', cr: 5, ac: 15, hp: 90, speed: '30 ft.', stats: { STR: 16, DEX: 13, CON: 14, INT: 10, WIS: 11, CHA: 10 }, pb: 3, senses: '', languages: 'Common', sections: { Actions: [{ name: 'Greatsword', text: '*Melee Attack Roll:* +6, reach 5 ft. 12 (2d8 + 3) Slashing damage.' }] } };
+    const bad = checkBlock({ ...base, inline_kind: 'kind', inline: 'Sellsword' });
+    expect(JSON.stringify(bad)).toMatch(/inline-form/);
+    const good = checkBlock({ ...base, inline_kind: 'kind', inline: 'the sellsword' });
+    expect(JSON.stringify(good)).not.toMatch(/inline-form/);
+  });
+
+  test('and a person spoken as a kind fails the other way', async () => {
+    const { checkBlock } = await import('../checker.mjs');
+    const m = { name: 'Sable Nefret', type: 'Humanoid', cr: 5, ac: 15, hp: 90, speed: '30 ft.', stats: { STR: 16, DEX: 13, CON: 14, INT: 10, WIS: 11, CHA: 10 }, pb: 3, senses: '', languages: 'Common', inline_kind: 'person', inline: 'the nefret', sections: { Actions: [{ name: 'Dagger', text: '*Melee Attack Roll:* +6, reach 5 ft. 8 (1d8 + 3) Piercing damage.' }] } };
+    expect(JSON.stringify(checkBlock(m))).toMatch(/inline-form/);
   });
 });

@@ -1,0 +1,3805 @@
+{
+ "Aboleth": {
+  "cr": 10,
+  "type": "Aberration",
+  "patterns": [
+   "durability with a key",
+   "zone",
+   "force multiplier",
+   "grab and hold",
+   "rider control",
+   "setup → payoff",
+   "save control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Amphibious",
+   "Traits/Eldritch Restoration",
+   "Legendary Actions/Lash",
+   "Legendary Actions/Psychic Drain"
+  ]
+ },
+ "Adult Black Dragon": {
+  "cr": 14,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious",
+   "Legendary Actions/Cloud of Insects",
+   "Legendary Actions/Frightful Presence",
+   "Legendary Actions/Pounce"
+  ]
+ },
+ "Adult Blue Dragon": {
+  "cr": 16,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Legendary Actions/Cloaked Flight",
+   "Legendary Actions/Sonic Boom",
+   "Legendary Actions/Tail Swipe"
+  ]
+ },
+ "Adult Brass Dragon": {
+  "cr": 13,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "save control",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Legendary Actions/Blazing Light",
+   "Legendary Actions/Pounce",
+   "Legendary Actions/Scorching Sands"
+  ]
+ },
+ "Adult Bronze Dragon": {
+  "cr": 15,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "save control",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious",
+   "Legendary Actions/Guiding Light",
+   "Legendary Actions/Pounce"
+  ]
+ },
+ "Adult Copper Dragon": {
+  "cr": 14,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Actions/Slowing Breath",
+   "Legendary Actions/Giggling Magic",
+   "Legendary Actions/Mind Jolt",
+   "Legendary Actions/Pounce"
+  ]
+ },
+ "Adult Gold Dragon": {
+  "cr": 17,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "force multiplier",
+   "menu",
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious",
+   "Legendary Actions/Guiding Light",
+   "Legendary Actions/Pounce"
+  ]
+ },
+ "Adult Green Dragon": {
+  "cr": 15,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious",
+   "Legendary Actions/Mind Invasion",
+   "Legendary Actions/Noxious Miasma",
+   "Legendary Actions/Pounce"
+  ]
+ },
+ "Adult Red Dragon": {
+  "cr": 17,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Legendary Actions/Commanding Presence",
+   "Legendary Actions/Fiery Rays",
+   "Legendary Actions/Pounce"
+  ]
+ },
+ "Adult Silver Dragon": {
+  "cr": 16,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "save control",
+   "clock",
+   "force multiplier",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Legendary Actions/Chill",
+   "Legendary Actions/Cold Gale",
+   "Legendary Actions/Pounce"
+  ]
+ },
+ "Adult White Dragon": {
+  "cr": 13,
+  "type": "Dragon",
+  "patterns": [
+   "force multiplier",
+   "durability with a key",
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Legendary Actions/Freezing Burst",
+   "Legendary Actions/Pounce",
+   "Legendary Actions/Frightful Presence"
+  ]
+ },
+ "Air Elemental": {
+  "cr": 5,
+  "type": "Elemental",
+  "patterns": [
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Air Form"
+  ]
+ },
+ "Ancient Black Dragon": {
+  "cr": 21,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious",
+   "Legendary Actions/Cloud of Insects",
+   "Legendary Actions/Frightful Presence",
+   "Legendary Actions/Pounce"
+  ]
+ },
+ "Ancient Blue Dragon": {
+  "cr": 23,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Legendary Actions/Cloaked Flight",
+   "Legendary Actions/Sonic Boom",
+   "Legendary Actions/Tail Swipe"
+  ]
+ },
+ "Ancient Brass Dragon": {
+  "cr": 20,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "save control",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Legendary Actions/Blazing Light",
+   "Legendary Actions/Pounce",
+   "Legendary Actions/Scorching Sands"
+  ]
+ },
+ "Ancient Bronze Dragon": {
+  "cr": 22,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "save control",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious",
+   "Legendary Actions/Guiding Light",
+   "Legendary Actions/Pounce"
+  ]
+ },
+ "Ancient Copper Dragon": {
+  "cr": 21,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Actions/Slowing Breath",
+   "Legendary Actions/Giggling Magic",
+   "Legendary Actions/Mind Jolt",
+   "Legendary Actions/Pounce"
+  ]
+ },
+ "Ancient Gold Dragon": {
+  "cr": 24,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "force multiplier",
+   "menu",
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious",
+   "Legendary Actions/Guiding Light",
+   "Legendary Actions/Pounce"
+  ]
+ },
+ "Ancient Green Dragon": {
+  "cr": 22,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious",
+   "Legendary Actions/Mind Invasion",
+   "Legendary Actions/Noxious Miasma",
+   "Legendary Actions/Pounce"
+  ]
+ },
+ "Ancient Red Dragon": {
+  "cr": 24,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Legendary Actions/Commanding Presence",
+   "Legendary Actions/Fiery Rays",
+   "Legendary Actions/Pounce"
+  ]
+ },
+ "Ancient Silver Dragon": {
+  "cr": 23,
+  "type": "Dragon",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "save control",
+   "clock",
+   "force multiplier",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Legendary Actions/Chill",
+   "Legendary Actions/Cold Gale",
+   "Legendary Actions/Pounce"
+  ]
+ },
+ "Ancient White Dragon": {
+  "cr": 20,
+  "type": "Dragon",
+  "patterns": [
+   "force multiplier",
+   "durability with a key",
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Legendary Actions/Freezing Burst",
+   "Legendary Actions/Pounce",
+   "Legendary Actions/Frightful Presence"
+  ]
+ },
+ "Animated Armor": {
+  "cr": 1,
+  "type": "Construct",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Animated Flying Sword": {
+  "cr": 0.25,
+  "type": "Construct",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Animated Rug of Smothering": {
+  "cr": 2,
+  "type": "Construct",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Ankheg": {
+  "cr": 2,
+  "type": "Monstrosity",
+  "patterns": [
+   "grab and hold",
+   "setup → payoff",
+   "rider control",
+   "nova"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Tunneler"
+  ]
+ },
+ "Archmage": {
+  "cr": 12,
+  "type": "Humanoid",
+  "patterns": [
+   "menu",
+   "reaction tax"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Magic Resistance",
+   "Bonus Actions/Misty Step (3/Day)"
+  ]
+ },
+ "Assassin": {
+  "cr": 8,
+  "type": "Humanoid",
+  "patterns": [
+   "rider control",
+   "hit-and-run"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Evasion"
+  ]
+ },
+ "Awakened Shrub": {
+  "cr": 0,
+  "type": "Plant",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Awakened Tree": {
+  "cr": 2,
+  "type": "Plant",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Axe Beak": {
+  "cr": 0.25,
+  "type": "Monstrosity",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Azer Sentinel": {
+  "cr": 2,
+  "type": "Elemental",
+  "patterns": [
+   "zone"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Illumination"
+  ]
+ },
+ "Balor": {
+  "cr": 19,
+  "type": "Fiend",
+  "patterns": [
+   "zone",
+   "durability with a key",
+   "rider control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Magic Resistance",
+   "Bonus Actions/Teleport"
+  ]
+ },
+ "Bandit Captain": {
+  "cr": 2,
+  "type": "Humanoid",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Bandit": {
+  "cr": 0.125,
+  "type": "Humanoid",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Barbed Devil": {
+  "cr": 5,
+  "type": "Fiend",
+  "patterns": [
+   "grab and hold",
+   "rider control"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Traits/Barbed Hide",
+   "Traits/Diabolical Restoration",
+   "Traits/Magic Resistance"
+  ]
+ },
+ "Basilisk": {
+  "cr": 3,
+  "type": "Monstrosity",
+  "patterns": [
+   "nova",
+   "save control",
+   "clock"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Bearded Devil": {
+  "cr": 3,
+  "type": "Fiend",
+  "patterns": [
+   "rider control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Magic Resistance"
+  ]
+ },
+ "Behir": {
+  "cr": 11,
+  "type": "Monstrosity",
+  "patterns": [
+   "save control",
+   "grab and hold",
+   "nova",
+   "durability with a key"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Berserker": {
+  "cr": 2,
+  "type": "Humanoid",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Bloodied Frenzy"
+  ]
+ },
+ "Black Dragon Wyrmling": {
+  "cr": 2,
+  "type": "Dragon",
+  "patterns": [
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious"
+  ]
+ },
+ "Black Pudding": {
+  "cr": 4,
+  "type": "Ooze",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amorphous",
+   "Traits/Corrosive Form",
+   "Traits/Spider Climb"
+  ]
+ },
+ "Blink Dog": {
+  "cr": 0.25,
+  "type": "Fey",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Bonus Actions/Teleport (Recharge 4-6)"
+  ]
+ },
+ "Blue Dragon Wyrmling": {
+  "cr": 3,
+  "type": "Dragon",
+  "patterns": [
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Bone Devil": {
+  "cr": 9,
+  "type": "Fiend",
+  "patterns": [
+   "rider control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Diabolical Restoration",
+   "Traits/Magic Resistance"
+  ]
+ },
+ "Brass Dragon Wyrmling": {
+  "cr": 1,
+  "type": "Dragon",
+  "patterns": [
+   "nova",
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Bronze Dragon Wyrmling": {
+  "cr": 2,
+  "type": "Dragon",
+  "patterns": [
+   "nova",
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious"
+  ]
+ },
+ "Bugbear Stalker": {
+  "cr": 3,
+  "type": "Fey",
+  "patterns": [
+   "grab and hold",
+   "setup → payoff",
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Abduct"
+  ]
+ },
+ "Bugbear Warrior": {
+  "cr": 1,
+  "type": "Fey",
+  "patterns": [
+   "grab and hold",
+   "rider control",
+   "setup → payoff"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Abduct"
+  ]
+ },
+ "Bulette": {
+  "cr": 5,
+  "type": "Monstrosity",
+  "patterns": [
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Bonus Actions/Leap"
+  ]
+ },
+ "Centaur Trooper": {
+  "cr": 2,
+  "type": "Fey",
+  "patterns": [
+   "nova",
+   "save control",
+   "hit-and-run"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Chain Devil": {
+  "cr": 8,
+  "type": "Fiend",
+  "patterns": [
+   "grab and hold",
+   "rider control",
+   "save control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Diabolical Restoration",
+   "Traits/Magic Resistance"
+  ]
+ },
+ "Chimera": {
+  "cr": 6,
+  "type": "Monstrosity",
+  "patterns": [
+   "rider control",
+   "nova"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Chuul": {
+  "cr": 4,
+  "type": "Aberration",
+  "patterns": [
+   "grab and hold",
+   "rider control",
+   "save control",
+   "force multiplier"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Amphibious",
+   "Traits/Sense Magic"
+  ]
+ },
+ "Clay Golem": {
+  "cr": 9,
+  "type": "Construct",
+  "patterns": [
+   "hit-and-run"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Acid Absorption",
+   "Traits/Berserk",
+   "Traits/Immutable Form",
+   "Traits/Magic Resistance"
+  ]
+ },
+ "Cloaker": {
+  "cr": 8,
+  "type": "Aberration",
+  "patterns": [
+   "rider control",
+   "save control",
+   "zone"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Light Sensitivity",
+   "Bonus Actions/Phantasms (Recharge after a Short or Long Rest)"
+  ]
+ },
+ "Cloud Giant": {
+  "cr": 9,
+  "type": "Giant",
+  "patterns": [
+   "rider control",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Bonus Actions/Misty Step"
+  ]
+ },
+ "Cockatrice": {
+  "cr": 0.5,
+  "type": "Monstrosity",
+  "patterns": [
+   "save control",
+   "rider control",
+   "clock"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Commoner": {
+  "cr": 0,
+  "type": "Humanoid",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Training"
+  ]
+ },
+ "Copper Dragon Wyrmling": {
+  "cr": 1,
+  "type": "Dragon",
+  "patterns": [
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Actions/Slowing Breath"
+  ]
+ },
+ "Couatl": {
+  "cr": 4,
+  "type": "Celestial",
+  "patterns": [
+   "force multiplier",
+   "rider control",
+   "save control",
+   "grab and hold",
+   "menu"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Bonus Actions/Divine Aid (2/Day)"
+  ]
+ },
+ "Cultist Fanatic": {
+  "cr": 2,
+  "type": "Humanoid",
+  "patterns": [
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Bonus Actions/Spiritual Weapon (2/Day)"
+  ]
+ },
+ "Cultist": {
+  "cr": 0.125,
+  "type": "Humanoid",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Darkmantle": {
+  "cr": 0.5,
+  "type": "Aberration",
+  "patterns": [
+   "rider control",
+   "nova"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Death Dog": {
+  "cr": 1,
+  "type": "Monstrosity",
+  "patterns": [
+   "save control",
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Deva": {
+  "cr": 10,
+  "type": "Celestial",
+  "patterns": [
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Exalted Restoration",
+   "Traits/Magic Resistance",
+   "Bonus Actions/Divine Aid (2/Day)"
+  ]
+ },
+ "Djinni": {
+  "cr": 11,
+  "type": "Elemental",
+  "patterns": [
+   "rider control",
+   "save control",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Elemental Restoration",
+   "Traits/Magic Resistance",
+   "Traits/Wishes"
+  ]
+ },
+ "Doppelganger": {
+  "cr": 3,
+  "type": "Monstrosity",
+  "patterns": [
+   "ambush",
+   "nova",
+   "save control",
+   "force multiplier"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Actions/Read Thoughts",
+   "Bonus Actions/Shape-Shift"
+  ]
+ },
+ "Dragon Turtle": {
+  "cr": 17,
+  "type": "Dragon",
+  "patterns": [
+   "rider control",
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious"
+  ]
+ },
+ "Dretch": {
+  "cr": 0.25,
+  "type": "Fiend",
+  "patterns": [
+   "nova",
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Drider": {
+  "cr": 6,
+  "type": "Monstrosity",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Traits/Spider Climb",
+   "Traits/Sunlight Sensitivity",
+   "Traits/Web Walker",
+   "Bonus Actions/Magic of the Spider Queen (Recharge 5-6)"
+  ]
+ },
+ "Druid": {
+  "cr": 2,
+  "type": "Humanoid",
+  "patterns": [
+   "menu"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Dryad": {
+  "cr": 1,
+  "type": "Fey",
+  "patterns": [
+   "menu"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Traits/Magic Resistance",
+   "Traits/Speak with Beasts and Plants",
+   "Bonus Actions/Tree Stride"
+  ]
+ },
+ "Dust Mephit": {
+  "cr": 0.5,
+  "type": "Elemental",
+  "patterns": [
+   "zone",
+   "nova",
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Actions/Sleep (1/Day)"
+  ]
+ },
+ "Earth Elemental": {
+  "cr": 5,
+  "type": "Elemental",
+  "patterns": [
+   "rider control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Earth Glide",
+   "Traits/Siege Monster"
+  ]
+ },
+ "Efreeti": {
+  "cr": 11,
+  "type": "Elemental",
+  "patterns": [
+   "menu"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Traits/Elemental Restoration",
+   "Traits/Magic Resistance",
+   "Traits/Wishes"
+  ]
+ },
+ "Erinyes": {
+  "cr": 12,
+  "type": "Fiend",
+  "patterns": [
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Diabolical Restoration",
+   "Traits/Magic Resistance",
+   "Traits/Magic Rope"
+  ]
+ },
+ "Ettercap": {
+  "cr": 2,
+  "type": "Monstrosity",
+  "patterns": [
+   "rider control",
+   "save control",
+   "setup → payoff"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Spider Climb",
+   "Traits/Web Walker"
+  ]
+ },
+ "Ettin": {
+  "cr": 4,
+  "type": "Giant",
+  "patterns": [
+   "rider control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Fire Elemental": {
+  "cr": 5,
+  "type": "Elemental",
+  "patterns": [
+   "zone"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Fire Form",
+   "Traits/Illumination",
+   "Traits/Water Susceptibility"
+  ]
+ },
+ "Fire Giant": {
+  "cr": 9,
+  "type": "Giant",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Flesh Golem": {
+  "cr": 5,
+  "type": "Construct",
+  "patterns": [
+   "zone"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Aversion to Fire",
+   "Traits/Immutable Form",
+   "Traits/Lightning Absorption",
+   "Traits/Magic Resistance"
+  ]
+ },
+ "Frost Giant": {
+  "cr": 8,
+  "type": "Giant",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Bonus Actions/War Cry (Recharge 5-6)"
+  ]
+ },
+ "Gargoyle": {
+  "cr": 2,
+  "type": "Elemental",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Flyby"
+  ]
+ },
+ "Gelatinous Cube": {
+  "cr": 2,
+  "type": "Ooze",
+  "patterns": [
+   "grab and hold",
+   "ambush",
+   "save control",
+   "hit-and-run"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Ghast": {
+  "cr": 2,
+  "type": "Undead",
+  "patterns": [
+   "save control",
+   "zone",
+   "rider control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Ghost": {
+  "cr": 4,
+  "type": "Undead",
+  "patterns": [
+   "save control",
+   "force multiplier"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Ethereal Sight",
+   "Traits/Incorporeal Movement",
+   "Actions/Etherealness"
+  ]
+ },
+ "Ghoul": {
+  "cr": 1,
+  "type": "Undead",
+  "patterns": [
+   "save control",
+   "rider control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Gibbering Mouther": {
+  "cr": 2,
+  "type": "Aberration",
+  "patterns": [
+   "zone",
+   "rider control",
+   "nova",
+   "save control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Gibbering"
+  ]
+ },
+ "Glabrezu": {
+  "cr": 9,
+  "type": "Fiend",
+  "patterns": [
+   "grab and hold",
+   "rider control",
+   "menu"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Demonic Restoration",
+   "Traits/Magic Resistance",
+   "Actions/Pummel"
+  ]
+ },
+ "Gladiator": {
+  "cr": 5,
+  "type": "Humanoid",
+  "patterns": [
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Gnoll Warrior": {
+  "cr": 0.5,
+  "type": "Fiend",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Bonus Actions/Rampage (1/Day)"
+  ]
+ },
+ "Goblin Boss": {
+  "cr": 1,
+  "type": "Fey",
+  "patterns": [
+   "hit-and-run"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Goblin Minion": {
+  "cr": 0.125,
+  "type": "Fey",
+  "patterns": [
+   "hit-and-run"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Goblin Warrior": {
+  "cr": 0.25,
+  "type": "Fey",
+  "patterns": [
+   "hit-and-run"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Gold Dragon Wyrmling": {
+  "cr": 3,
+  "type": "Dragon",
+  "patterns": [
+   "nova",
+   "force multiplier"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious"
+  ]
+ },
+ "Gorgon": {
+  "cr": 5,
+  "type": "Construct",
+  "patterns": [
+   "rider control",
+   "approach",
+   "nova",
+   "save control",
+   "clock",
+   "setup → payoff"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Gray Ooze": {
+  "cr": 0.5,
+  "type": "Ooze",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amorphous",
+   "Traits/Corrosive Form"
+  ]
+ },
+ "Green Dragon Wyrmling": {
+  "cr": 2,
+  "type": "Dragon",
+  "patterns": [
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious"
+  ]
+ },
+ "Green Hag": {
+  "cr": 3,
+  "type": "Fey",
+  "patterns": [
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious",
+   "Traits/Mimicry"
+  ]
+ },
+ "Grick": {
+  "cr": 2,
+  "type": "Aberration",
+  "patterns": [
+   "grab and hold",
+   "rider control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Griffon": {
+  "cr": 2,
+  "type": "Monstrosity",
+  "patterns": [
+   "grab and hold",
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Grimlock": {
+  "cr": 0.25,
+  "type": "Aberration",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Guard Captain": {
+  "cr": 4,
+  "type": "Humanoid",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Guardian Naga": {
+  "cr": 10,
+  "type": "Celestial",
+  "patterns": [
+   "zone",
+   "save control",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Guard": {
+  "cr": 0.125,
+  "type": "Humanoid",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Half-Dragon": {
+  "cr": 5,
+  "type": "Dragon",
+  "patterns": [
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Draconic Origin",
+   "Bonus Actions/Leap"
+  ]
+ },
+ "Harpy": {
+  "cr": 1,
+  "type": "Monstrosity",
+  "patterns": [
+   "save control",
+   "zone"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Hell Hound": {
+  "cr": 3,
+  "type": "Fiend",
+  "patterns": [
+   "force multiplier",
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Hezrou": {
+  "cr": 8,
+  "type": "Fiend",
+  "patterns": [
+   "save control",
+   "zone"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Demonic Restoration",
+   "Traits/Magic Resistance",
+   "Bonus Actions/Leap"
+  ]
+ },
+ "Hill Giant": {
+  "cr": 5,
+  "type": "Giant",
+  "patterns": [
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Hippogriff": {
+  "cr": 1,
+  "type": "Monstrosity",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Flyby"
+  ]
+ },
+ "Hobgoblin Captain": {
+  "cr": 3,
+  "type": "Fey",
+  "patterns": [
+   "zone",
+   "force multiplier"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Hobgoblin Warrior": {
+  "cr": 0.5,
+  "type": "Fey",
+  "patterns": [
+   "force multiplier"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Homunculus": {
+  "cr": 0,
+  "type": "Construct",
+  "patterns": [
+   "force multiplier",
+   "save control",
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Horned Devil": {
+  "cr": 11,
+  "type": "Fiend",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Traits/Diabolical Restoration",
+   "Traits/Magic Resistance",
+   "Actions/Infernal Tail"
+  ]
+ },
+ "Hydra": {
+  "cr": 8,
+  "type": "Monstrosity",
+  "patterns": [
+   "durability with a key"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Hold Breath",
+   "Traits/Reactive Heads"
+  ]
+ },
+ "Ice Devil": {
+  "cr": 14,
+  "type": "Fiend",
+  "patterns": [
+   "force multiplier"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Diabolical Restoration",
+   "Traits/Magic Resistance",
+   "Actions/Ice Wall (Recharge 6)"
+  ]
+ },
+ "Ice Mephit": {
+  "cr": 0.5,
+  "type": "Elemental",
+  "patterns": [
+   "zone",
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Actions/Fog Cloud (1/Day)"
+  ]
+ },
+ "Imp": {
+  "cr": 1,
+  "type": "Fiend",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Magic Resistance",
+   "Actions/Shape-Shift",
+   "Actions/Invisibility"
+  ]
+ },
+ "Incubus": {
+  "cr": 4,
+  "type": "Fiend",
+  "patterns": [
+   "menu",
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Succubus Form"
+  ]
+ },
+ "Invisible Stalker": {
+  "cr": 6,
+  "type": "Elemental",
+  "patterns": [
+   "save control",
+   "grab and hold"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Air Form",
+   "Traits/Invisibility"
+  ]
+ },
+ "Iron Golem": {
+  "cr": 16,
+  "type": "Construct",
+  "patterns": [
+   "nova"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Traits/Fire Absorption",
+   "Traits/Immutable Form",
+   "Traits/Magic Resistance"
+  ]
+ },
+ "Knight": {
+  "cr": 3,
+  "type": "Humanoid",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Kobold Warrior": {
+  "cr": 0.125,
+  "type": "Dragon",
+  "patterns": [
+   "force multiplier"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Sunlight Sensitivity"
+  ]
+ },
+ "Kraken": {
+  "cr": 23,
+  "type": "Monstrosity",
+  "patterns": [
+   "durability with a key",
+   "grab and hold",
+   "rider control",
+   "save control",
+   "zone"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Amphibious",
+   "Traits/Siege Monster",
+   "Actions/Lightning Strike",
+   "Legendary Actions/Storm Bolt"
+  ]
+ },
+ "Lamia": {
+  "cr": 4,
+  "type": "Fiend",
+  "patterns": [
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Actions/Corrupting Touch",
+   "Bonus Actions/Leap"
+  ]
+ },
+ "Lemure": {
+  "cr": 0,
+  "type": "Fiend",
+  "patterns": [
+   "zone"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Lich": {
+  "cr": 21,
+  "type": "Undead",
+  "patterns": [
+   "durability with a key",
+   "rider control",
+   "menu",
+   "reaction tax",
+   "zone"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Legendary Actions/Deathly Teleport",
+   "Legendary Actions/Frightening Gaze"
+  ]
+ },
+ "Mage": {
+  "cr": 6,
+  "type": "Humanoid",
+  "patterns": [
+   "menu",
+   "reaction tax"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Bonus Actions/Misty Step (3/Day)"
+  ]
+ },
+ "Magma Mephit": {
+  "cr": 0.5,
+  "type": "Elemental",
+  "patterns": [
+   "zone",
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Magmin": {
+  "cr": 0.5,
+  "type": "Elemental",
+  "patterns": [
+   "zone"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Bonus Actions/Ignited Illumination"
+  ]
+ },
+ "Manticore": {
+  "cr": 3,
+  "type": "Monstrosity",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Marilith": {
+  "cr": 16,
+  "type": "Fiend",
+  "patterns": [
+   "save control",
+   "grab and hold"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Demonic Restoration",
+   "Traits/Magic Resistance",
+   "Traits/Reactive",
+   "Bonus Actions/Teleport (Recharge 5-6)"
+  ]
+ },
+ "Medusa": {
+  "cr": 6,
+  "type": "Monstrosity",
+  "patterns": [
+   "nova",
+   "save control",
+   "clock"
+  ],
+  "plainAttacks": 3,
+  "unlabelled": []
+ },
+ "Merfolk Skirmisher": {
+  "cr": 0.125,
+  "type": "Elemental",
+  "patterns": [
+   "force multiplier"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Amphibious"
+  ]
+ },
+ "Merrow": {
+  "cr": 2,
+  "type": "Monstrosity",
+  "patterns": [
+   "rider control"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Traits/Amphibious"
+  ]
+ },
+ "Mimic": {
+  "cr": 2,
+  "type": "Monstrosity",
+  "patterns": [
+   "grab and hold",
+   "setup → payoff",
+   "rider control",
+   "ambush"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Minotaur of Baphomet": {
+  "cr": 3,
+  "type": "Monstrosity",
+  "patterns": [
+   "rider control",
+   "approach"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Minotaur Skeleton": {
+  "cr": 2,
+  "type": "Undead",
+  "patterns": [
+   "rider control",
+   "approach"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Mummy Lord": {
+  "cr": 15,
+  "type": "Undead",
+  "patterns": [
+   "durability with a key",
+   "save control",
+   "menu"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Traits/Magic Resistance",
+   "Traits/Undead Restoration",
+   "Legendary Actions/Glare",
+   "Legendary Actions/Necrotic Strike",
+   "Legendary Actions/Dread Command"
+  ]
+ },
+ "Mummy": {
+  "cr": 3,
+  "type": "Undead",
+  "patterns": [
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Nalfeshnee": {
+  "cr": 13,
+  "type": "Fiend",
+  "patterns": [
+   "nova",
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Demonic Restoration",
+   "Traits/Magic Resistance",
+   "Actions/Teleport"
+  ]
+ },
+ "Night Hag": {
+  "cr": 5,
+  "type": "Fiend",
+  "patterns": [
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Magic Resistance",
+   "Traits/Soul Bag",
+   "Actions/Nightmare Haunting (1/Day; Requires Soul Bag)",
+   "Bonus Actions/Shape-Shift"
+  ]
+ },
+ "Nightmare": {
+  "cr": 3,
+  "type": "Fiend",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Confer Fire Resistance",
+   "Traits/Illumination",
+   "Actions/Ethereal Stride"
+  ]
+ },
+ "Noble": {
+  "cr": 0.125,
+  "type": "Humanoid",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Ochre Jelly": {
+  "cr": 2,
+  "type": "Ooze",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amorphous",
+   "Traits/Spider Climb"
+  ]
+ },
+ "Ogre": {
+  "cr": 2,
+  "type": "Giant",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Ogre Zombie": {
+  "cr": 2,
+  "type": "Undead",
+  "patterns": [
+   "durability with a key"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Oni": {
+  "cr": 7,
+  "type": "Fiend",
+  "patterns": [
+   "durability with a key",
+   "rider control",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Actions/Shape-Shift",
+   "Bonus Actions/Invisibility"
+  ]
+ },
+ "Otyugh": {
+  "cr": 5,
+  "type": "Aberration",
+  "patterns": [
+   "save control",
+   "rider control",
+   "grab and hold"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Owlbear": {
+  "cr": 3,
+  "type": "Monstrosity",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Pegasus": {
+  "cr": 2,
+  "type": "Celestial",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Phase Spider": {
+  "cr": 3,
+  "type": "Monstrosity",
+  "patterns": [
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Ethereal Sight",
+   "Traits/Spider Climb",
+   "Traits/Web Walker",
+   "Bonus Actions/Ethereal Jaunt"
+  ]
+ },
+ "Pirate Captain": {
+  "cr": 6,
+  "type": "Humanoid",
+  "patterns": [
+   "save control"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Pirate": {
+  "cr": 1,
+  "type": "Humanoid",
+  "patterns": [
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Pit Fiend": {
+  "cr": 20,
+  "type": "Fiend",
+  "patterns": [
+   "save control",
+   "zone",
+   "durability with a key",
+   "rider control",
+   "force multiplier"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Traits/Diabolical Restoration",
+   "Traits/Magic Resistance",
+   "Actions/Hellfire Spellcasting (Recharge 4-6)"
+  ]
+ },
+ "Planetar": {
+  "cr": 16,
+  "type": "Celestial",
+  "patterns": [
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Divine Awareness",
+   "Traits/Exalted Restoration",
+   "Traits/Magic Resistance",
+   "Actions/Holy Burst",
+   "Bonus Actions/Divine Aid (2/Day)"
+  ]
+ },
+ "Priest Acolyte": {
+  "cr": 0.25,
+  "type": "Humanoid",
+  "patterns": [
+   "menu"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Bonus Actions/Divine Aid (1/Day)"
+  ]
+ },
+ "Priest": {
+  "cr": 2,
+  "type": "Humanoid",
+  "patterns": [
+   "menu"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Bonus Actions/Divine Aid (3/Day)"
+  ]
+ },
+ "Pseudodragon": {
+  "cr": 0.25,
+  "type": "Dragon",
+  "patterns": [
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Magic Resistance"
+  ]
+ },
+ "Purple Worm": {
+  "cr": 15,
+  "type": "Monstrosity",
+  "patterns": [
+   "grab and hold",
+   "rider control",
+   "save control",
+   "durability with a key"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Tunneler"
+  ]
+ },
+ "Quasit": {
+  "cr": 1,
+  "type": "Fiend",
+  "patterns": [
+   "rider control",
+   "save control",
+   "force multiplier"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Magic Resistance",
+   "Actions/Shape-Shift",
+   "Actions/Invisibility"
+  ]
+ },
+ "Rakshasa": {
+  "cr": 13,
+  "type": "Fiend",
+  "patterns": [
+   "force multiplier",
+   "nova",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Fiendish Restoration"
+  ]
+ },
+ "Red Dragon Wyrmling": {
+  "cr": 4,
+  "type": "Dragon",
+  "patterns": [
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Remorhaz": {
+  "cr": 11,
+  "type": "Monstrosity",
+  "patterns": [
+   "zone",
+   "grab and hold",
+   "rider control",
+   "save control",
+   "durability with a key"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Roc": {
+  "cr": 11,
+  "type": "Monstrosity",
+  "patterns": [
+   "grab and hold",
+   "rider control",
+   "hit-and-run"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Roper": {
+  "cr": 5,
+  "type": "Aberration",
+  "patterns": [
+   "grab and hold",
+   "rider control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Spider Climb",
+   "Actions/Reel"
+  ]
+ },
+ "Rust Monster": {
+  "cr": 0.5,
+  "type": "Monstrosity",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Iron Scent",
+   "Actions/Antennae",
+   "Actions/Destroy Metal"
+  ]
+ },
+ "Sahuagin Warrior": {
+  "cr": 0.5,
+  "type": "Fiend",
+  "patterns": [
+   "force multiplier"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Blood Frenzy",
+   "Traits/Limited Amphibiousness",
+   "Bonus Actions/Aquatic Charge"
+  ]
+ },
+ "Salamander": {
+  "cr": 5,
+  "type": "Elemental",
+  "patterns": [
+   "zone",
+   "force multiplier",
+   "save control",
+   "grab and hold"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Satyr": {
+  "cr": 0.5,
+  "type": "Fey",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Magic Resistance",
+   "Actions/Mockery"
+  ]
+ },
+ "Scout": {
+  "cr": 0.5,
+  "type": "Humanoid",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Sea Hag": {
+  "cr": 2,
+  "type": "Fey",
+  "patterns": [
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious",
+   "Actions/Death Glare (Recharge 5-6)",
+   "Actions/Illusory Appearance"
+  ]
+ },
+ "Shadow": {
+  "cr": 0.5,
+  "type": "Undead",
+  "patterns": [
+   "clock",
+   "hit-and-run"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Amorphous",
+   "Traits/Sunlight Weakness"
+  ]
+ },
+ "Shambling Mound": {
+  "cr": 5,
+  "type": "Plant",
+  "patterns": [
+   "save control",
+   "grab and hold"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Lightning Absorption"
+  ]
+ },
+ "Shield Guardian": {
+  "cr": 7,
+  "type": "Construct",
+  "patterns": [
+   "force multiplier",
+   "durability with a key"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Spell Storing"
+  ]
+ },
+ "Shrieker Fungus": {
+  "cr": 0,
+  "type": "Plant",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Silver Dragon Wyrmling": {
+  "cr": 2,
+  "type": "Dragon",
+  "patterns": [
+   "nova",
+   "save control",
+   "clock",
+   "force multiplier"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Skeleton": {
+  "cr": 0.25,
+  "type": "Undead",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Solar": {
+  "cr": 21,
+  "type": "Celestial",
+  "patterns": [
+   "durability with a key",
+   "force multiplier",
+   "menu",
+   "save control",
+   "zone"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Divine Awareness",
+   "Traits/Exalted Restoration",
+   "Traits/Magic Resistance",
+   "Actions/Slaying Bow",
+   "Bonus Actions/Divine Aid (3/Day)"
+  ]
+ },
+ "Specter": {
+  "cr": 1,
+  "type": "Undead",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Incorporeal Movement",
+   "Traits/Sunlight Sensitivity"
+  ]
+ },
+ "Sphinx of Lore": {
+  "cr": 11,
+  "type": "Celestial",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "save control",
+   "menu",
+   "clock"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Inscrutable",
+   "Legendary Actions/Arcane Prowl"
+  ]
+ },
+ "Sphinx of Valor": {
+  "cr": 17,
+  "type": "Celestial",
+  "patterns": [
+   "durability with a key",
+   "nova",
+   "save control",
+   "clock",
+   "force multiplier",
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Inscrutable",
+   "Legendary Actions/Arcane Prowl"
+  ]
+ },
+ "Sphinx of Wonder": {
+  "cr": 1,
+  "type": "Celestial",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Magic Resistance"
+  ]
+ },
+ "Spirit Naga": {
+  "cr": 8,
+  "type": "Fiend",
+  "patterns": [
+   "menu"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Traits/Fiendish Restoration"
+  ]
+ },
+ "Sprite": {
+  "cr": 0.25,
+  "type": "Fey",
+  "patterns": [
+   "rider control",
+   "force multiplier"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Actions/Invisibility"
+  ]
+ },
+ "Spy": {
+  "cr": 1,
+  "type": "Humanoid",
+  "patterns": [
+   "hit-and-run"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Steam Mephit": {
+  "cr": 0.25,
+  "type": "Elemental",
+  "patterns": [
+   "zone",
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Blurred Form"
+  ]
+ },
+ "Stirge": {
+  "cr": 0.125,
+  "type": "Monstrosity",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Stone Giant": {
+  "cr": 7,
+  "type": "Giant",
+  "patterns": [
+   "rider control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Stone Golem": {
+  "cr": 10,
+  "type": "Construct",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Traits/Immutable Form",
+   "Traits/Magic Resistance",
+   "Bonus Actions/Slow (Recharge 5-6)"
+  ]
+ },
+ "Storm Giant": {
+  "cr": 13,
+  "type": "Giant",
+  "patterns": [
+   "nova",
+   "menu"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Traits/Amphibious"
+  ]
+ },
+ "Succubus": {
+  "cr": 4,
+  "type": "Fiend",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Incubus Form",
+   "Actions/Charm",
+   "Actions/Draining Kiss",
+   "Bonus Actions/Shape-Shift"
+  ]
+ },
+ "Tarrasque": {
+  "cr": 30,
+  "type": "Monstrosity",
+  "patterns": [
+   "durability with a key",
+   "grab and hold",
+   "rider control",
+   "nova",
+   "save control",
+   "zone"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Magic Resistance",
+   "Traits/Reflective Carapace",
+   "Traits/Siege Monster",
+   "Legendary Actions/Onslaught"
+  ]
+ },
+ "Tough Boss": {
+  "cr": 4,
+  "type": "Humanoid",
+  "patterns": [
+   "force multiplier"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Tough": {
+  "cr": 0.5,
+  "type": "Humanoid",
+  "patterns": [
+   "force multiplier"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Treant": {
+  "cr": 9,
+  "type": "Plant",
+  "patterns": [
+   "force multiplier"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Traits/Siege Monster"
+  ]
+ },
+ "Troll Limb": {
+  "cr": 0.5,
+  "type": "Giant",
+  "patterns": [
+   "durability with a key"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Troll Spawn"
+  ]
+ },
+ "Troll": {
+  "cr": 5,
+  "type": "Giant",
+  "patterns": [
+   "clock",
+   "durability with a key",
+   "approach"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Unicorn": {
+  "cr": 5,
+  "type": "Celestial",
+  "patterns": [
+   "durability with a key",
+   "menu",
+   "hit-and-run"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Traits/Magic Resistance",
+   "Bonus Actions/Unicorn's Blessing (3/Day)",
+   "Legendary Actions/Shimmering Shield"
+  ]
+ },
+ "Vampire Familiar": {
+  "cr": 3,
+  "type": "Humanoid",
+  "patterns": [
+   "force multiplier",
+   "rider control",
+   "hit-and-run"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Vampire": {
+  "cr": 13,
+  "type": "Undead",
+  "patterns": [
+   "durability with a key",
+   "grab and hold",
+   "rider control",
+   "setup → payoff"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Misty Escape",
+   "Traits/Spider Climb",
+   "Traits/Vampire Weakness",
+   "Bonus Actions/Shape-Shift",
+   "Bonus Actions/Charm (Recharge 5-6)",
+   "Legendary Actions/Deathless Strike",
+   "Legendary Actions/Beguile"
+  ]
+ },
+ "Vampire Spawn": {
+  "cr": 5,
+  "type": "Undead",
+  "patterns": [
+   "grab and hold",
+   "rider control",
+   "setup → payoff",
+   "hit-and-run"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Spider Climb",
+   "Traits/Vampire Weakness"
+  ]
+ },
+ "Violet Fungus": {
+  "cr": 0.25,
+  "type": "Plant",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Vrock": {
+  "cr": 6,
+  "type": "Fiend",
+  "patterns": [
+   "nova",
+   "save control",
+   "force multiplier"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Demonic Restoration",
+   "Traits/Magic Resistance"
+  ]
+ },
+ "Warhorse Skeleton": {
+  "cr": 0.5,
+  "type": "Undead",
+  "patterns": [
+   "rider control",
+   "approach"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Warrior Infantry": {
+  "cr": 0.125,
+  "type": "Humanoid",
+  "patterns": [
+   "force multiplier"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Warrior Veteran": {
+  "cr": 3,
+  "type": "Humanoid",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Water Elemental": {
+  "cr": 5,
+  "type": "Elemental",
+  "patterns": [
+   "rider control",
+   "nova",
+   "save control",
+   "grab and hold"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Freeze",
+   "Traits/Water Form"
+  ]
+ },
+ "Werebear": {
+  "cr": 5,
+  "type": "Monstrosity",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 3,
+  "unlabelled": [
+   "Bonus Actions/Shape-Shift"
+  ]
+ },
+ "Wereboar": {
+  "cr": 4,
+  "type": "Monstrosity",
+  "patterns": [
+   "rider control",
+   "approach"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Bonus Actions/Shape-Shift"
+  ]
+ },
+ "Wererat": {
+  "cr": 2,
+  "type": "Monstrosity",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 3,
+  "unlabelled": [
+   "Bonus Actions/Shape-Shift"
+  ]
+ },
+ "Weretiger": {
+  "cr": 4,
+  "type": "Monstrosity",
+  "patterns": [
+   "hit-and-run"
+  ],
+  "plainAttacks": 3,
+  "unlabelled": [
+   "Bonus Actions/Shape-Shift"
+  ]
+ },
+ "Werewolf": {
+  "cr": 3,
+  "type": "Monstrosity",
+  "patterns": [
+   "force multiplier"
+  ],
+  "plainAttacks": 3,
+  "unlabelled": [
+   "Bonus Actions/Shape-Shift"
+  ]
+ },
+ "White Dragon Wyrmling": {
+  "cr": 2,
+  "type": "Dragon",
+  "patterns": [
+   "force multiplier",
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Wight": {
+  "cr": 3,
+  "type": "Undead",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Traits/Sunlight Sensitivity",
+   "Actions/Life Drain"
+  ]
+ },
+ "Will-o'-Wisp": {
+  "cr": 2,
+  "type": "Undead",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Ephemeral",
+   "Traits/Illumination",
+   "Traits/Incorporeal Movement",
+   "Bonus Actions/Consume Life",
+   "Bonus Actions/Vanish"
+  ]
+ },
+ "Winter Wolf": {
+  "cr": 3,
+  "type": "Monstrosity",
+  "patterns": [
+   "force multiplier",
+   "rider control",
+   "nova"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Worg": {
+  "cr": 0.5,
+  "type": "Fey",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Wraith": {
+  "cr": 5,
+  "type": "Undead",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Incorporeal Movement",
+   "Traits/Sunlight Sensitivity",
+   "Actions/Create Specter"
+  ]
+ },
+ "Wyvern": {
+  "cr": 6,
+  "type": "Dragon",
+  "patterns": [
+   "rider control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Xorn": {
+  "cr": 5,
+  "type": "Elemental",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": [
+   "Traits/Earth Glide",
+   "Traits/Treasure Sense",
+   "Bonus Actions/Charge"
+  ]
+ },
+ "Young Black Dragon": {
+  "cr": 7,
+  "type": "Dragon",
+  "patterns": [
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious"
+  ]
+ },
+ "Young Blue Dragon": {
+  "cr": 9,
+  "type": "Dragon",
+  "patterns": [
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Young Brass Dragon": {
+  "cr": 6,
+  "type": "Dragon",
+  "patterns": [
+   "nova",
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Young Bronze Dragon": {
+  "cr": 8,
+  "type": "Dragon",
+  "patterns": [
+   "nova",
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious"
+  ]
+ },
+ "Young Copper Dragon": {
+  "cr": 7,
+  "type": "Dragon",
+  "patterns": [
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Actions/Slowing Breath"
+  ]
+ },
+ "Young Gold Dragon": {
+  "cr": 10,
+  "type": "Dragon",
+  "patterns": [
+   "nova",
+   "force multiplier"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious"
+  ]
+ },
+ "Young Green Dragon": {
+  "cr": 8,
+  "type": "Dragon",
+  "patterns": [
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious"
+  ]
+ },
+ "Young Red Dragon": {
+  "cr": 10,
+  "type": "Dragon",
+  "patterns": [
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Young Silver Dragon": {
+  "cr": 9,
+  "type": "Dragon",
+  "patterns": [
+   "nova",
+   "save control",
+   "clock",
+   "force multiplier"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Young White Dragon": {
+  "cr": 6,
+  "type": "Dragon",
+  "patterns": [
+   "force multiplier",
+   "nova"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Zombie": {
+  "cr": 0.25,
+  "type": "Undead",
+  "patterns": [
+   "durability with a key"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Swarm of Crawling Claws": {
+  "cr": 3,
+  "type": "Undead",
+  "patterns": [
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Swarm"
+  ]
+ },
+ "Allosaurus": {
+  "cr": 2,
+  "type": "Beast",
+  "patterns": [
+   "rider control",
+   "approach"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Ankylosaurus": {
+  "cr": 3,
+  "type": "Beast",
+  "patterns": [
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Ape": {
+  "cr": 0.5,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 2,
+  "unlabelled": []
+ },
+ "Archelon": {
+  "cr": 4,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious"
+  ]
+ },
+ "Baboon": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "force multiplier"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Bat": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Black Bear": {
+  "cr": 0.5,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Badger": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Blood Hawk": {
+  "cr": 0.125,
+  "type": "Beast",
+  "patterns": [
+   "force multiplier",
+   "setup → payoff"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Boar": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "rider control",
+   "approach"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Bloodied Fury"
+  ]
+ },
+ "Brown Bear": {
+  "cr": 1,
+  "type": "Beast",
+  "patterns": [
+   "rider control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Camel": {
+  "cr": 0.125,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Cat": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Jumper"
+  ]
+ },
+ "Constrictor Snake": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "save control",
+   "grab and hold"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Crab": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious"
+  ]
+ },
+ "Crocodile": {
+  "cr": 0.5,
+  "type": "Beast",
+  "patterns": [
+   "grab and hold",
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Hold Breath"
+  ]
+ },
+ "Deer": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Agile"
+  ]
+ },
+ "Dire Wolf": {
+  "cr": 1,
+  "type": "Beast",
+  "patterns": [
+   "force multiplier",
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Draft Horse": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Eagle": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Elephant": {
+  "cr": 4,
+  "type": "Beast",
+  "patterns": [
+   "rider control",
+   "approach",
+   "save control",
+   "setup → payoff"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Elk": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "rider control",
+   "approach"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Flying Snake": {
+  "cr": 0.125,
+  "type": "Monstrosity",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Flyby"
+  ]
+ },
+ "Frog": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Amphibious",
+   "Traits/Standing Leap"
+  ]
+ },
+ "Giant Ape": {
+  "cr": 7,
+  "type": "Beast",
+  "patterns": [
+   "nova",
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Bonus Actions/Leap"
+  ]
+ },
+ "Giant Badger": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Giant Bat": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Giant Boar": {
+  "cr": 2,
+  "type": "Beast",
+  "patterns": [
+   "rider control",
+   "approach"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Bloodied Fury"
+  ]
+ },
+ "Giant Centipede": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Giant Constrictor Snake": {
+  "cr": 2,
+  "type": "Beast",
+  "patterns": [
+   "save control",
+   "grab and hold"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Giant Crab": {
+  "cr": 0.125,
+  "type": "Beast",
+  "patterns": [
+   "grab and hold",
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Amphibious"
+  ]
+ },
+ "Giant Crocodile": {
+  "cr": 5,
+  "type": "Beast",
+  "patterns": [
+   "grab and hold",
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Hold Breath"
+  ]
+ },
+ "Giant Eagle": {
+  "cr": 1,
+  "type": "Celestial",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Giant Elk": {
+  "cr": 2,
+  "type": "Celestial",
+  "patterns": [
+   "rider control",
+   "approach"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Giant Fire Beetle": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Illumination"
+  ]
+ },
+ "Giant Frog": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "grab and hold",
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Amphibious",
+   "Traits/Standing Leap"
+  ]
+ },
+ "Giant Goat": {
+  "cr": 0.5,
+  "type": "Beast",
+  "patterns": [
+   "rider control",
+   "approach"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Giant Hyena": {
+  "cr": 1,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Bonus Actions/Rampage (1/Day)"
+  ]
+ },
+ "Giant Lizard": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Spider Climb"
+  ]
+ },
+ "Giant Octopus": {
+  "cr": 1,
+  "type": "Beast",
+  "patterns": [
+   "grab and hold",
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Water Breathing"
+  ]
+ },
+ "Giant Owl": {
+  "cr": 0.25,
+  "type": "Celestial",
+  "patterns": [
+   "menu"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Flyby"
+  ]
+ },
+ "Giant Rat": {
+  "cr": 0.125,
+  "type": "Beast",
+  "patterns": [
+   "force multiplier"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Giant Scorpion": {
+  "cr": 3,
+  "type": "Beast",
+  "patterns": [
+   "grab and hold",
+   "rider control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Giant Seahorse": {
+  "cr": 0.5,
+  "type": "Beast",
+  "patterns": [
+   "approach",
+   "hit-and-run"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Water Breathing"
+  ]
+ },
+ "Giant Shark": {
+  "cr": 5,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Water Breathing"
+  ]
+ },
+ "Giant Spider": {
+  "cr": 1,
+  "type": "Beast",
+  "patterns": [
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Spider Climb",
+   "Traits/Web Walker"
+  ]
+ },
+ "Giant Toad": {
+  "cr": 1,
+  "type": "Beast",
+  "patterns": [
+   "grab and hold",
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Amphibious",
+   "Traits/Standing Leap"
+  ]
+ },
+ "Giant Venomous Snake": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Giant Vulture": {
+  "cr": 1,
+  "type": "Monstrosity",
+  "patterns": [
+   "force multiplier",
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Giant Wasp": {
+  "cr": 0.5,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Flyby"
+  ]
+ },
+ "Giant Weasel": {
+  "cr": 0.125,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Giant Wolf Spider": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Spider Climb"
+  ]
+ },
+ "Goat": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "approach"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Hawk": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Hippopotamus": {
+  "cr": 4,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Hold Breath"
+  ]
+ },
+ "Hunter Shark": {
+  "cr": 2,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Water Breathing"
+  ]
+ },
+ "Hyena": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "force multiplier"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Jackal": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Killer Whale": {
+  "cr": 3,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Hold Breath"
+  ]
+ },
+ "Lion": {
+  "cr": 1,
+  "type": "Beast",
+  "patterns": [
+   "force multiplier",
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Running Leap"
+  ]
+ },
+ "Lizard": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Spider Climb"
+  ]
+ },
+ "Mammoth": {
+  "cr": 6,
+  "type": "Beast",
+  "patterns": [
+   "rider control",
+   "approach",
+   "save control",
+   "setup → payoff"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Mastiff": {
+  "cr": 0.125,
+  "type": "Beast",
+  "patterns": [
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Mule": {
+  "cr": 0.125,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Beast of Burden"
+  ]
+ },
+ "Owl": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "hit-and-run"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Panther": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "hit-and-run"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Piranha": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Water Breathing"
+  ]
+ },
+ "Plesiosaurus": {
+  "cr": 2,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Hold Breath"
+  ]
+ },
+ "Polar Bear": {
+  "cr": 2,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Pony": {
+  "cr": 0.125,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Pteranodon": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Flyby"
+  ]
+ },
+ "Rat": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "hit-and-run"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Raven": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Mimicry"
+  ]
+ },
+ "Reef Shark": {
+  "cr": 0.5,
+  "type": "Beast",
+  "patterns": [
+   "force multiplier"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Water Breathing"
+  ]
+ },
+ "Rhinoceros": {
+  "cr": 2,
+  "type": "Beast",
+  "patterns": [
+   "rider control",
+   "approach"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Riding Horse": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Saber-Toothed Tiger": {
+  "cr": 2,
+  "type": "Beast",
+  "patterns": [
+   "hit-and-run"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Running Leap"
+  ]
+ },
+ "Scorpion": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Seahorse": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "hit-and-run"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": [
+   "Traits/Water Breathing"
+  ]
+ },
+ "Spider": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Spider Climb",
+   "Traits/Web Walker"
+  ]
+ },
+ "Swarm of Bats": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Swarm"
+  ]
+ },
+ "Swarm of Insects": {
+  "cr": 0.5,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Spider Climb",
+   "Traits/Swarm"
+  ]
+ },
+ "Swarm of Piranhas": {
+  "cr": 1,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Swarm",
+   "Traits/Water Breathing"
+  ]
+ },
+ "Swarm of Rats": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Swarm"
+  ]
+ },
+ "Swarm of Ravens": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "save control"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Swarm"
+  ]
+ },
+ "Swarm of Venomous Snakes": {
+  "cr": 2,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": [
+   "Traits/Swarm"
+  ]
+ },
+ "Tiger": {
+  "cr": 1,
+  "type": "Beast",
+  "patterns": [
+   "rider control",
+   "hit-and-run"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Triceratops": {
+  "cr": 5,
+  "type": "Beast",
+  "patterns": [
+   "rider control",
+   "approach"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Tyrannosaurus Rex": {
+  "cr": 8,
+  "type": "Beast",
+  "patterns": [
+   "grab and hold",
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Venomous Snake": {
+  "cr": 0.125,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Vulture": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "force multiplier"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Warhorse": {
+  "cr": 0.5,
+  "type": "Beast",
+  "patterns": [
+   "rider control",
+   "approach"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ },
+ "Weasel": {
+  "cr": 0,
+  "type": "Beast",
+  "patterns": [
+   "meat"
+  ],
+  "plainAttacks": 1,
+  "unlabelled": []
+ },
+ "Wolf": {
+  "cr": 0.25,
+  "type": "Beast",
+  "patterns": [
+   "force multiplier",
+   "rider control"
+  ],
+  "plainAttacks": 0,
+  "unlabelled": []
+ }
+}

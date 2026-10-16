@@ -44,9 +44,20 @@ export function pickDonor(cr, style = null, archetype) {
 // damage never parses, same surgery the hybrid row needed.
 const ATTACK_RE = /(\+\d+)(?: \(with Advantage[^)]*\))?(, reach \d+ ft\. or range [\d/]+ ft\.|, reach [^.]+|, range [^.]+)? ?\.? (\d+) \((\d+d\d+(?:\s*\+\s*\d+)?)\) ([\w{}]+) damage/;
 
-export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null, dprScale = 1, edition = null, concept = '' } = {}) {
+export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null, dprScale = 1, edition = null, concept = '', oneAttack = false } = {}) {
   const card = cardBudget(cr, { legendary: !!legendary, edition }); // a 2014 sheet prices against the DMG table (2026-10-02)
   const scaled = JSON.parse(JSON.stringify(donor));
+  // ONE ATTACK MEANS ONE ATTACK'S WORTH OF DAMAGE (2026-10-16). print's seven
+  // swarms each make a single attack, so the swarm body drops the donor's
+  // inherited Multiattack — but it has to drop BEFORE the per-hit solve, or the
+  // dice are priced for two attacks and the round lands at half budget (a CR 13
+  // swarm shipped 45 a round against print's 72–126). Stripping it here lets the
+  // solver put the whole round into the one row.
+  if (oneAttack) {
+    for (const es of Object.values(scaled.sections ?? {})) {
+      for (let i = es.length - 1; i >= 0; i -= 1) if (/^Multiattack/.test(String(es[i]?.name ?? ''))) es.splice(i, 1);
+    }
+  }
   // THE 2014 DAMAGE LINE (owner + critic 2026-09-14): 2014's table runs
   // ~5 damage/CR vs 2024's ~7.5 — direct-2014 generations pass 0.7
   // (5/7.5 = 0.667; the band's upper half). Uniform across archetypes:

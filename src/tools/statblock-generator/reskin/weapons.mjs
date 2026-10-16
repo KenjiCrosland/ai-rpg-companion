@@ -112,6 +112,29 @@ export function weaponNamed(answer) {
  * nothing. Longest name first, and a closed compound counts ("Hurlaxe" is an
  * axe), which is what the ten scattered regexes were each approximating.
  */
+// THE FINESSE EQUIVALENT (critic's hold 7, 2026-10-16). A DEX-primary
+// skirmisher's blade row read "blade" and the alias table answered longsword —
+// a Strength weapon — so the Shadow-Veil Shinobi rolled +6 off DEX 16 on a
+// weapon that rolls STR, and the derivation gate failed the sheet. The weapon
+// table owns weapon facts, so the swap lives here: the finesse weapon of the
+// same damage type, at the same reach where one exists. Returns null when the
+// weapon is already finesse or nothing in the table matches.
+// Table order answered "sickle" for a longsword — a farm tool for a ninja's
+// blade. PRINT names the weapon instead: across SRD 5.2's creatures with DEX
+// above STR, the finesse melee rows are Shortsword 4, Scimitar 4, Dagger 3,
+// Rapier 2, and Sickle and Whip never. So Piercing takes the shortsword and
+// Slashing the scimitar, and the rest rank behind them. Bludgeoning has no
+// finesse weapon in the rules at all, so a Bludgeoning row is left alone and
+// the derivation gate reports the array instead of a swap being invented.
+const FINESSE_RANK = ['shortsword', 'scimitar', 'rapier', 'dagger', 'sickle', 'whip'];
+export function finesseLike(name) {
+  const w = WEAPONS[name ?? ''];
+  if (!w || w.finesse || w.launcher || w.type === 'none') return null;
+  const same = FINESSE_RANK.filter((n) => WEAPONS[n]?.type === w.type && !WEAPONS[n].launcher);
+  if (!same.length) return null;
+  return same.find((n) => WEAPONS[n].reach === w.reach && !WEAPONS[n].thrown) ?? same.find((n) => !WEAPONS[n].thrown) ?? same[0];
+}
+
 export function weaponFor(rowName) {
   const t = norm(rowName);
   if (!t) return null;

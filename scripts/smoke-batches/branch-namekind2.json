@@ -1,0 +1,82 @@
+[
+  {
+    "name": "Sable Nefret",
+    "description": "a tiefling assassin who was raised in the temple of knives",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "hold 6 with a concept: expect person (run 1)",
+    "mode": "band"
+  },
+  {
+    "name": "Coral Vurthax",
+    "description": "a sahuagin warlord who rules a drowned reef",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "hold 6 with a concept: expect person (run 1)",
+    "mode": "band"
+  },
+  {
+    "name": "Blackreed Stalker",
+    "description": "a marsh predator that hunts through the reeds",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "hold 6 with a concept: expect kind (run 1)",
+    "mode": "band"
+  },
+  {
+    "name": "Coinbound Sellsword",
+    "description": "a mercenary who fights only for coin",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "hold 6 with a concept: expect kind (run 1)",
+    "mode": "band"
+  },
+  {
+    "name": "Old Road Warden",
+    "description": "a weathered guardian of the king's highway",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "hold 6 with a concept: expect kind (run 1)",
+    "mode": "band"
+  },
+  {
+    "name": "Sable Nefret",
+    "description": "a tiefling assassin who was raised in the temple of knives",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "hold 6 with a concept: expect person (run 2)",
+    "mode": "band"
+  },
+  {
+    "name": "Coral Vurthax",
+    "description": "a sahuagin warlord who rules a drowned reef",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "hold 6 with a concept: expect person (run 2)",
+    "mode": "band"
+  },
+  {
+    "name": "Blackreed Stalker",
+    "description": "a marsh predator that hunts through the reeds",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "hold 6 with a concept: expect kind (run 2)",
+    "mode": "band"
+  },
+  {
+    "name": "Coinbound Sellsword",
+    "description": "a mercenary who fights only for coin",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "hold 6 with a concept: expect kind (run 2)",
+    "mode": "band"
+  },
+  {
+    "name": "Old Road Warden",
+    "description": "a weathered guardian of the king's highway",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "hold 6 with a concept: expect kind (run 2)",
+    "mode": "band"
+  }
+]

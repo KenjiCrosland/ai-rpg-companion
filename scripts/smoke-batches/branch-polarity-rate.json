@@ -1,0 +1,10 @@
+[
+  { "name": "", "description": "a templar priest with a mace and no magic at all", "cr": 6, "rules": "2024", "mech": "ability lack" },
+  { "name": "", "description": "an eyeless hunter that tracks prey by scent alone", "cr": 5, "rules": "2024", "mech": "body lack, adjective" },
+  { "name": "", "description": "a wyvern that lost its wings in the fall and now hunts on foot", "cr": 6, "rules": "2024", "mech": "body lack, verb" },
+  { "name": "", "description": "a born-mute bodyguard who carries no weapons at all", "cr": 6, "rules": "2024", "mech": "two lacks, one body one gear" },
+  { "name": "", "description": "a templar priest with a mace and no magic at all", "cr": 6, "rules": "2024", "mech": "ability lack, run 2" },
+  { "name": "", "description": "an eyeless hunter that tracks prey by scent alone", "cr": 5, "rules": "2024", "mech": "body lack, run 2" },
+  { "name": "", "description": "a wyvern that lost its wings in the fall and now hunts on foot", "cr": 6, "rules": "2024", "mech": "body lack verb, run 2" },
+  { "name": "", "description": "a born-mute bodyguard who carries no weapons at all", "cr": 6, "rules": "2024", "mech": "two lacks, run 2" }
+]

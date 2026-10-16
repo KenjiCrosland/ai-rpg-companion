@@ -18,6 +18,7 @@ import { cardBudget, dmgRow } from './card-budgets.mjs';
 import { NOVA_CAP } from './templates.mjs';
 import { CONTROL_SPELL_LEVEL, CONTROL_AT_WILL_CR, SPELL_DAMAGE_AVG, printCanonFor, nearPrintCr } from './generate.mjs';
 import { speciesFor } from './species.mjs';
+import { LINE_VERBS } from './route.mjs'; // the router's own key tables — one definition for what keys an engine (stage 1b)
 import { DONORS } from './donors.mjs';
 import { piGuard, readPhrases } from './lexicon.mjs';
 
@@ -25,6 +26,8 @@ import CORPUS from '@/data/srd52-monsters.json';
 import TABLE from '@/data/challengeRatings.json';
 import { PRINT_2014 } from './print-2014.mjs';
 import { resolutionOf, TARGET_CLAUSE, SAVE_OUTCOME } from './forms.mjs';
+import { NAME_CLAIMS_MECHANIC, mechanicUnkept } from './name-claims.mjs';
+import { LACKS_STOP, TEXT_GATE } from './generate.mjs';
 export const GATES = ['derivation', 'bands', 'structure', 'gates', 'headerBody', 'edition', 'donor', 'adjudicability', 'reader'];
 const crNum = (k) => (String(k).includes('/') ? Number(String(k).split('/')[0]) / Number(String(k).split('/')[1]) : Number(k));
 const CRS = Object.keys(TABLE).filter((k) => /^\d+$|^1\/[248]$|^0$/.test(k)).sort((a, b) => crNum(a) - crNum(b));
@@ -43,18 +46,25 @@ export function attackRowsOf(m) {
     const main = String(e.text).replace(/,?\s*plus \d+ \(\d+d\d+(?: [+-] \d+)?\) \w+ damage if [^.]*\.?/g, '').split(/\bIf\b|\bWhen\b|, or \d+ \(/)[0]; // a rider that needs a condition ("if the attack roll had Advantage") is not always-on (critic's audit 2026-10-02)
     const parts = main.match(/\d+ \(\d+d\d+(?: [+-] \d+)?\)/g) ?? [];
     const first = /(\d+) \((\d+)d(\d+)(?: ([+-]) (\d+))?\)/.exec(main);
-    return { sec, e, name: bare(e.name), atk, avg: parts.reduce((a, p) => a + avgOf(p), 0), ranged: /Ranged Attack Roll/.test(e.text) && !/Melee or Ranged/.test(e.text), bonus: first ? (first[4] === '-' ? -1 : 1) * Number(first[5] ?? 0) : null, dice: first ? `${first[2]}d${first[3]}` : null };
+    return { sec, e, weapon: e.weapon ?? null, name: bare(e.name), atk, avg: parts.reduce((a, p) => a + avgOf(p), 0), ranged: /Ranged Attack Roll/.test(e.text) && !/Melee or Ranged/.test(e.text), bonus: first ? (first[4] === '-' ? -1 : 1) * Number(first[5] ?? 0) : null, dice: first ? `${first[2]}d${first[3]}` : null };
   });
 }
+// A ONCE-PER-FIGHT TRIGGER IS A GATE, WHEREVER IT IS WRITTEN (critic's hold 4,
+// 2026-10-16). novasOf only ever read a gate off the NAME — "(Recharge 5-6)",
+// "(1/Day)". A bloodied-burst or a death-burst carries its limit in its TEXT
+// ("The first time the swarm is Bloodied in a fight"), so a CR 13 swarm shipped
+// a 91 (14d12) Necrotic burst in a 30-foot emanation and the read said "nova
+// none" — the reader could not see it and the cap never priced it.
 export function novasOf(m) {
   const all = allRows(m);
   return all.map(({ sec, e }, i) => {
-    if (!/\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '')) return null;
+    const nameGate = /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '');
+    if (!nameGate && !TEXT_GATE.test(e.text ?? '')) return null;
     // the 2014 two-row breath: "Breath Weapons (Recharge 5–6). The dragon uses one of the following" and the damage sits in the rows beneath
     const subs = /one of the following/i.test(e.text ?? '') && !/\d+ \(\d+d\d+/.test(e.text ?? '') ? all.slice(i + 1, i + 4).map((x) => x.e).filter((x) => /saving throw/i.test(x.text ?? '') && /\d+ \(\d+d\d+/.test(x.text ?? '')) : [];
     const src = subs.length ? subs.sort((a, b) => avgOf(b.text) - avgOf(a.text))[0] : e;
     if (!/Saving Throw/i.test(src.text ?? '') || !/\d+ \(\d+d\d+/.test(src.text ?? '')) return null;
-    return { sec, e, name: bare(e.name), gate: /\((Recharge [\d–-]+|\d\/Day)\)/.exec(e.name)[1], avg: avgOf(src.text), area: /each creature|Cone|Sphere|radius|Line|Emanation|Cube/i.test(src.text) };
+    return { sec, e, name: bare(e.name), gate: nameGate ? /\((Recharge [\d–-]+|\d\/Day)\)/.exec(e.name)[1] : '1/Day' /* a once-per-fight trigger prices as a daily */, avg: avgOf(src.text), area: /each creature|Cone|Sphere|radius|Line|Emanation|Cube/i.test(src.text) };
   }).filter(Boolean);
 }
 export function sustainedOf(m) {
@@ -151,7 +161,16 @@ function gateDerivation(m, ctx, F) {
     // because the caster chassis keys every attack to one stat). Without a 2014
     // label the gate allowed the casting stat on any row, so nothing flagged it.
     const label = label2014[r.name]; const mundane = namesWeapon(r.name) && !/\b(?:arcane|eldritch|spectral|radiant|shadow|flame|frost|storm|spirit|astral|phantom)\b/i.test(String(r.name ?? ''));
-    const allowed = label === 'weapon' || mundane ? ['STR', 'DEX'] : label === 'spell' ? [castStat].filter(Boolean) : ['STR', 'DEX', ...(castStat ? [castStat] : [])];
+    // AND FINESSE SAYS WHICH OF THE TWO (critic's notes, 2026-10-15: "Vareth's
+    // Mace rolls off DEX 18; a mace isn't finesse, and the weapon table knows
+    // it"). A melee weapon with no finesse property rolls Strength; a finesse one
+    // may roll either; a launcher rolls Dexterity. All three are columns of the
+    // one weapon table, so this adds no list.
+    // the ROW'S OWN declared weapon first — the call answered "which weapon is
+    // this" and the engine stamped it; re-reading the name is the fallback
+    const wp = WEAPONS[r.weapon ?? ''] ?? weaponProp(r.name);
+    const weaponStats = wp && !label ? (wp.launcher ? ['DEX'] : (wp.finesse || wp.thrown ? ['STR', 'DEX'] : (wp.reach ? ['STR'] : ['STR', 'DEX']))) : null;
+    const allowed = label === 'weapon' || mundane ? (weaponStats ?? ['STR', 'DEX']) : label === 'spell' ? [castStat].filter(Boolean) : ['STR', 'DEX', ...(castStat ? [castStat] : [])];
     const any = Object.keys(mods).find((k) => mods[k] + pb === r.atk); const stat = allowed.find((k) => mods[k] + pb === r.atk) ?? any;
     if (!any) F('attack-bonus', 'fail', `${r.name}: +${r.atk} is not ${label ? `a ${label} row's` : 'STR/DEX or the casting stat\'s'} mod + PB ${pb} (mods ${Object.entries(mods).map(([k, v]) => `${k} ${v}`).join(', ')})`, `+${r.atk}`);
     else if (!allowed.includes(stat)) F('attack-stat', 'fail', `${r.name}: +${r.atk} derives from ${stat}, but ${label ? `a ${label} row` : 'an attack row'} rolls ${allowed.join('/')}`, stat);
@@ -288,17 +307,32 @@ function gateStructure(m, ctx, F) {
   if (/\bSwarm\b/i.test(m.type ?? '') || /\bSwarm of\b/i.test(m.size ?? '')) {
     const large = /\b(?:large|huge|vast|massive|enormous|great)\b/i.test(readPhrases(ctx.userConcept ?? ''));
     if (!/Medium/i.test(m.size ?? '') && !large) F('swarm-size', 'fail', `a swarm sized ${m.size} (print: Medium, Bats alone Large)`, m.size);
-    if (multi) F('swarm-multiattack', 'soft', 'a swarm with a Multiattack (print swarms make one attack)', multi.text);
+    // a hard fail now the engine strips it (critic: "should be structural, not
+    // soft"); print's seven swarms all make exactly one attack
+    if (multi) F('swarm-multiattack', 'fail', 'a swarm with a Multiattack (all seven print swarms make one attack)', multi.text);
   }
 }
+// A CONDITION NAMED AS A PREREQUISITE IS NOT AN IMPOSED EFFECT — a
+// condition-payoff row exploits Prone, it does not cause it. save-fit has read
+// effects through this strip since it was written; ko-ungated read the raw text
+// and so counted an exploited Stunned as a Stunned it hands out at will (the
+// Mire Sifu, critic's hold 7, 2026-10-16). One stripper, both readers.
+const CONDITIONS = 'Blinded|Charmed|Deafened|Frightened|Grappled|Incapacitated|Invisible|Paralyzed|Petrified|Poisoned|Prone|Restrained|Stunned|Unconscious';
+export const effectOnly = (t) => String(t ?? '')
+  .replace(/that (?:has|have|is|are) the \w+ condition/gi, '')
+  .replace(new RegExp(`that (?:is|are) (?:the )?(?:${CONDITIONS})\\\\b`, 'gi'), '')
+  .replace(new RegExp(`(?:if|while|when|provided) (?:it|they|the target|the creature)(?: is| are| has| have)?(?: the)? (?:${CONDITIONS})(?: condition)?`, 'gi'), '')
+  .replace(/already \w+/gi, '');
+
 function gateGates(m, ctx, F) {
   for (const { sec, e } of allRows(m)) {
     if (sec === 'Legendary Actions' || e.print) continue;
     const gated = /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '');
-    const ko = KO.exec(e.text ?? '');
+    const koText = effectOnly(e.text ?? ''); // a condition this row EXPLOITS is not one it imposes (hold 7)
+    const ko = KO.exec(koText);
     // a KO is IMPOSED when a target or each creature gets it on a failure — "It can't use this trait if it has the Incapacitated condition" is a guard on itself (Evasion, goldens 2026-10-02)
-    if (ko && !gated && /(?:Failure:\*?|the target|each creature|one creature)[^.]*\bhas the (?:Paralyzed|Stunned|Unconscious|Petrified|Incapacitated) condition/.test(e.text)) { // "provided it doesn't have the Incapacitated condition" is a guard, not a KO (Evasion)
-      const multi = /each creature/i.test(e.text); const repeat = /repeat(?:s|ing)? the sav|at the end of each of its turns|until the (?:end|start) of (?:its|the \w+'s|[A-Z][\w' -]+'s) next turn/i.test(e.text);
+    if (ko && !gated && /(?:Failure:\*?|the target|each creature|one creature)[^.]*\bhas the (?:Paralyzed|Stunned|Unconscious|Petrified|Incapacitated) condition/.test(koText)) { // "provided it doesn't have the Incapacitated condition" is a guard, not a KO (Evasion)
+      const multi = /each creature/i.test(koText); const repeat = /repeat(?:s|ing)? the sav|at the end of each of its turns|until the (?:end|start) of (?:its|the \w+'s|[A-Z][\w' -]+'s) next turn/i.test(e.text);
       if (multi || !repeat) F('ko-ungated', 'fail', `${sec}/${bare(e.name)}: ${ko[1]} at will ${multi ? 'on each creature' : 'with neither a repeat save nor a one-turn cap'}`, ko[1]);
       else F('ko-at-will', 'soft', `${sec}/${bare(e.name)}: ${ko[1]} at will, single target with a repeat save or a one-turn cap (the Ghoul's shape)`, ko[1]);
     }
@@ -432,7 +466,7 @@ const words = (t) => [...new Set(String(t ?? '').split(/[^A-Za-z]+/).map(stem).f
 const SIZE_WORDS = /\b(Tiny|Small|Medium|Large|Huge|Gargantuan)\b/i;
 const SIZE_HEADER = /\b(?:Tiny|Small|Medium|Large|Huge|Gargantuan)\b(?!\s+(?:teeth|tooth|claws?|jaws?|fangs?|horns?|wings?|tail|eyes?|hands?|arms?|fists?|sword|axe|shield|hammer|mouth|maw))/i; // "large teeth" is a body part, not the size
 export const NEG_CUE = /\b(?:cannot|can't|can not|never|no longer|without|doesn't|does not|don't|do not|unable to|isn't|is not|not|lacks?|has no|have no|no(?! one\b))\b/i;
-const LACKS_STOP = new Set(['any', 'all', 'ever', 'longer', 'able', 'just', 'anything', 'anyone', 'people', 'person', 'thing']);
+
 const DMG_TYPE_WORD = /\b(fire|cold|lightning|thunder|acid|poison|necrotic|radiant|psychic|force|bludgeoning|piercing|slashing)\b/i;
 const COND_WORD = /\b(charmed|frightened|poisoned|paralyzed|stunned|blinded|deafened|grappled|restrained|prone|exhaustion|petrified|incapacitated)\b/i;
 export const VULN_CUE = /\b(?:vulnerab\w*|weak(?:ness)? (?:to|against)|takes (?:extra|double|more|additional) damage|hurt (?:badly )?by)\b/i;
@@ -489,7 +523,12 @@ export function fidelityOf(m, raw, ctx) {
   const clauseWords = new Set([...clauses.flatMap((c) => words(c.text)), ...words(ctx?.userConcept ?? '')]); // a row traces to the user's WORDS, not only to the clause list
   const printRowNames = new Set(printNamed ? [...(ctx.print.meleeRows ?? []), ...(ctx.print.rangedRows ?? []), ...(ctx.print.traits ?? []), ...(ctx.print.rulesRows ?? []), ...(ctx.print.legendaryRows ?? [])].map((r) => String(r.name ?? '').replace(/ \(.*\)$/, '').toLowerCase()) : []);
   const traced = rows.filter(({ e }) => e.kit || e.feature || e.part || (printNamed && (e.print || printRowNames.has(String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase()))) || words(`${e.name} ${e.text}`).some((w) => clauseWords.has(w))); // a kit, feature or part row IS the user's (the seven's concept share fell as the rows' wording changed — the critic's third species read)
-  return { covered: covered.length, total: clauses.length, dropped, conceptRows: traced.length, rows: rows.length };
+  // A LACK THE SHEET BREAKS IS A DEFECT, NOT A LOW SCORE (critic's hold 1,
+  // 2026-10-15): "no magic at all" shipped on a priest carrying Spellcasting and
+  // Divine Aid, and it passed every gate because an unhonored lack only ever
+  // lowered coverage. `present()` above already computes it — now it is reported.
+  const brokenLacks = clauses.filter((c) => c.polarity === 'lacks' && !present(c)).map((c) => c.text);
+  return { covered: covered.length, total: clauses.length, dropped, conceptRows: traced.length, rows: rows.length, brokenLacks };
 }
 
 // THE READER GATE (the critic's third species read, 2026-10-13): behaviour checks over the output sheet for the defect classes a reader
@@ -502,7 +541,6 @@ const rangeOf = (n) => weaponProp(n)?.range ?? null;
 const isLauncher = (n) => !!weaponProp(n)?.launcher;
 const neverRanged = (n) => { const w = weaponProp(n); return !!(w && w.reach && !w.thrown && !w.launcher); };
 const TYPE_NAME_WORD = /(?:^|\s)(Acid|Cold|Fire|Force|Lightning|Necrotic|Poison|Psychic|Radiant|Thunder|Bludgeoning|Piercing|Slashing)(?=\s|$)/i;
-const NAME_MECHANIC = [[/\b(?:charge|rush|stampede|dash|stride|gallop|sprint)\b/i, /\b(?:moves?|move up to|movement|Speed|straight toward|feet in a straight line|Dash|Disengage|Difficult Terrain|Opportunity Attacks?)\b/, 'movement'], [/\b(?:fear|dread|terror|fright|horror|scare)\w*/i, /\bFrightened\b|Disadvantage on (?:attack rolls and ability checks|ability checks and attack rolls)/, 'the Frightened condition'] /* print writes the Frightened effect longhand where the creature fears a thing (the phobia shape: Sir Reginald's Avian Terror) */, [/\bstun\w*/i, /\bStunned\b/, 'the Stunned condition'], [/\bblind\w*/i, /\bBlinded\b/, 'the Blinded condition'], [/\b(?:grapple|grasp|grip|clutch|seize)\w*/i, /\bGrappled\b|\bescape DC\b/, 'the Grappled condition'], [/\b(?:trip|topple|sweep)\b/i, /\bProne\b/, 'the Prone condition'], [/\b(?:push|shove|repel|hurl back)\b/i, /\bpushed\b/, 'a push'], [/\bparaly\w*/i, /\bParalyzed\b/, 'the Paralyzed condition'], [/\bpoison\w*/i, /\bPoison(?:ed)?\b/, 'Poison'], [/\bhobbl\w*|\bcripple\w*|\bslow\w*/i, /\bSpeed\b|\bProne\b|\bRestrained\b/, 'a Speed, Prone or Restrained effect']];
 // print's hybrid rows are thrown weapons: the table says which, and a thing that
 // flies but no shop sells covers the rest (one weapon table, 2026-10-15)
 const FLIES_NOUN = /^(?:boulder|rock|stone|spike|spine|quill|shard|bomb|flask|jar|harpoon|chain|hook|volley|spit|spray|glob|gob|blast|bola|bolas|stinger|needle|barb|thorn|pellet|shot)s?$/i;
@@ -511,10 +549,17 @@ function gateReader(raw, m, ctx, F) {
   const inl = String(m.inline ?? '').trim(); const name = String(m.name ?? '').trim(); const rows = allRows(m);
   const isPrint = !!ctx.print && String(ctx.print.name ?? '').toLowerCase() === name.toLowerCase(); const humanoid = /^Humanoid/i.test(String(m.type ?? '')); // the sheet's NAME is print's, not merely an alias in the words (a tiefling duelist is not the Gladiator by name)
   // inline-consistency
-  // A ONE-WORD NAME ON A HUMANOID IS THAT PERSON'S NAME, whoever minted it
-  // (owner, 2026-10-14): "the smokeveil" reads like a species the GM never
-  // created. The GM's own article is still the exception ("a meshrin").
-  if (/^[A-Z][a-z'-]+$/.test(name) && humanoid && !isPrint && !/\b(?:a|an|the)\s+$/i.test(String(ctx.userConcept ?? '').split(new RegExp(name, 'i'))[0] ?? '') && inl.toLowerCase() === `the ${name.toLowerCase()}`) F('inline-consistency', 'fail', `a one-word Name takes the person form: "${name}", never "${inl}"`, inl);
+  // THE TYPE DOES NOT ANSWER THIS QUESTION (critic's hold 2, 2026-10-16). The
+  // rule here read a one-word Humanoid name as a person's name, over the top of
+  // the call's own person/kind answer. PRINT SAYS OTHERWISE: every one-word
+  // Humanoid name in SRD 5.2 is a kind — Archmage, Assassin, Bandit, Berserker,
+  // Commoner, Cultist, Druid, Gladiator, Guard, Knight, Mage, Noble, Pirate,
+  // Priest, Scout, Spy, Tough (17 of 17) — and print's own rows write "the
+  // mage", "the assassin", "the priest". The owner's 2026-10-14 reading ("the
+  // smokeveil reads like a species the GM never created") is about COINED
+  // names, which is what inline_kind asks the call and what inline-form below
+  // validates. So the question goes to the call, and what stays deterministic
+  // is that the sheet says one thing throughout.
   if (inl && !/^the /i.test(inl)) { const re = new RegExp(`\\bthe ${name.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:'s)?\\b`, 'i'); for (const { sec, e } of rows) if (re.test(String(e.text ?? ''))) F('inline-consistency', 'fail', `${sec}/${bare(e.name)} says "the ${name.toLowerCase()}" beside the sheet's inline "${inl}"`, bare(e.name)); }
   else if (inl) { const last = inl.replace(/^the /i, ''); const parts = last.split(' '); if (parts.length > 1) { const re = new RegExp(`\\bthe ${parts.at(-1).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'); for (const { sec, e } of rows) if (re.test(String(e.text ?? '')) && !new RegExp(`\\b${inl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(String(e.text ?? ''))) F('inline-consistency', 'soft', `${sec}/${bare(e.name)} says "the ${parts.at(-1)}" beside the sheet's inline "${inl}"`, bare(e.name)); } }
   // print-range
@@ -536,17 +581,35 @@ function gateReader(raw, m, ctx, F) {
     const dice = (t) => (/\d+ \(\d+d\d+(?: [+-] \d+)?\)/.exec(String(t ?? '')) ?? [''])[0]; // the attack's own expression; print's riders ride separately
     for (const r of [...(pcb.meleeRows ?? []), ...(pcb.rangedRows ?? []), ...(pcb.rulesRows ?? [])]) { const row = rows.find(({ e }) => bare(e.name).toLowerCase() === String(r.name ?? '').toLowerCase())?.e; if (!row) continue; const want = dice(r.text ?? r.dmg ?? ''); const have = dice(row.text); if (want && have && want !== have) F('exact-body-identity', 'fail', `${bare(row.name)}: ${have} — the ${pcb.name}'s is ${want}`, have); }
   }
+  // ONE KEY DEFINITION, READ BY BOTH THE ROUTER AND THIS GATE (owner's stage 1b,
+  // 2026-10-16). The Bog Cauldron was ROUTED to brute-grappler by the router's
+  // own key "climbs in" — the GM typed "whatever climbs in" — and then failed
+  // this gate twice for having "a grapple or engulf engine with no key in the
+  // words". Two tables disagreeing about the same question. The router's
+  // brute-grappler verb list is the authority on what keys a grapple engine, so
+  // this gate reads it and keeps its own list only as an additional spelling set.
+  const ROUTER_GRAPPLE_KEYS = (LINE_VERBS['brute-grappler'] ?? []).concat(LINE_VERBS['lurker-trap'] ?? []);
+  const routerKeyed = (txt) => ROUTER_GRAPPLE_KEYS.some((k) => new RegExp(`\\b${String(k).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(txt));
   // engine-needs-key
   const ENGINE_KEY = /\b(?:grapple|grapples|grappled|grab|grabs|seize|seizes|hold|holds|clutch|wrestle|constrict|crush|crushes|squeeze|drag|drags|pull|pulls|swallow|swallows|engulf|engulfs|devour|gulp|smother|entomb|envelop|absorb|coil|coils|wrap|wraps|snare|net|tentacle|tentacles|jaws|maw|hug|cage|lasso|hook|hooks)\b/i;
   const printGrapples = !!ctx.print && [...(ctx.print.meleeRows ?? []), ...(ctx.print.rulesRows ?? [])].some((r) => /Grappled|swallow|engulf/i.test(r.text ?? r.rider ?? ''));
   const creatureOnly = !!((raw?.generation ?? m?.generation ?? raw?.other_edition?.generation)?.creatureOnly);
-  if (!creatureOnly && !ENGINE_KEY.test(String(ctx.userConcept ?? '')) && !printGrapples) for (const { sec, e } of rows) { const t = String(e.text ?? ''); if (e.part || e.print) continue; if (/has the Grappled condition \(escape DC/.test(t) || (e.rules && /^(?:Swallow|Engulf|Smother|Whelm|Cage|Entomb|Cocoon)\b/.test(e.name ?? ''))) F('engine-needs-key', 'fail', `${sec}/${bare(e.name)}: a grapple or engulf engine with no key in the words`, bare(e.name)); }
+  if (!creatureOnly && !ENGINE_KEY.test(String(ctx.userConcept ?? '')) && !routerKeyed(String(ctx.userConcept ?? '')) && !printGrapples) for (const { sec, e } of rows) { const t = String(e.text ?? ''); if (e.part || e.print) continue; if (/has the Grappled condition \(escape DC/.test(t) || (e.rules && /^(?:Swallow|Engulf|Smother|Whelm|Cage|Entomb|Cocoon)\b/.test(e.name ?? ''))) F('engine-needs-key', 'fail', `${sec}/${bare(e.name)}: a grapple or engulf engine with no key in the words`, bare(e.name)); }
   // provenance-integrity
   for (const { sec, e } of rows) if ((e.kit || e.feature || e.part) && !e.clause && !(Array.isArray(e.boundKeys) && e.boundKeys.length)) F('provenance-integrity', 'fail', `${sec}/${bare(e.name)}: a ${e.kit ? 'kit' : e.feature ? 'feature' : 'part'} row with no clause on the saved block`, bare(e.name));
   // multiattack-integrity: a print body keeps print's Multiattack, and a Multiattack names only rows that are present
   {
     const ma = rows.find(({ e }) => /^Multiattack/.test(e.name ?? ''))?.e;
     const atk = rows.filter(({ e }) => /Attack Roll/.test(e.text ?? '')).map(({ e }) => bare(e.name));
+    // A MULTIATTACK ON A SHEET WITH NOTHING TO ATTACK WITH (owner's stage 1,
+    // 2026-10-16). The Courtier Unseen shipped "makes three attacks" over zero
+    // attack rows and every gate passed it, because each gate checked a
+    // different half: the slot-name check below only reads names the Multiattack
+    // lists, and "makes three attacks" lists none. The reader printed off 0.
+    if (!atk.length) {
+      if (ma) F('multiattack-integrity', 'fail', `"${String(ma.text).slice(0, 60)}" on a sheet with no attack row at all`, 0);
+      else F('multiattack-integrity', 'fail', 'the sheet carries no attack row at all', 0);
+    }
     if (!ma && ctx.print?.multiattack && atk.length) F('multiattack-integrity', 'fail', `no Multiattack — the ${ctx.print.name} has one and this sheet has ${atk.length} attack row(s)`, atk.length);
     if (!ma && atk.length > 1 && !ctx.print) F('multiattack-integrity', 'soft', `${atk.length} attack rows and no Multiattack`, atk.length);
     if (ma) { // the ATTACK slots must be attack rows; a name after "uses" or "a use of" is an action print legitimately names (the Kraken uses Fling, Lightning Strike, or Swallow)
@@ -653,6 +716,21 @@ function gateReader(raw, m, ctx, F) {
     if (/\b(?:bow|crossbow|sling|musket|pistol|rifle|firearm|gun|blowgun)\b/i.test(n)) continue; // a launcher is the weapon table's to retable, and print-range already owns it
     F('hybrid-needs-thrown', 'fail', `${sec}/${n}: a "Melee or Ranged" row that names nothing a creature can throw`, n);
   }
+  // THE FORM MUST AGREE WITH THE FIELD (critic's hold 6, 2026-10-15). The call
+  // answers person|kind; a person speaks as the bare name, a kind starts with
+  // "the". NOTE this sits OUTSIDE the inline-correctness block below, which is
+  // guarded on the inline already starting with "the" — the defect this is for is
+  // a KIND rendered WITHOUT it ("Coinbound Sellsword" speaking as "Sellsword"),
+  // which that guard excludes. Measured 2026-10-16: the call answered person|kind
+  // correctly on 10 of 10 names-with-concepts, and the ENGINE discarded two of
+  // its correct answers — so this gate is aimed at the engine, which is where the
+  // defect lives. A misread field stays a trace-and-rate matter.
+  // an HONEST OVERRIDE is not a mis-stamp: the engine refused the call's phrase
+  // and produced the form itself, and `inline_overridden` says which form it
+  // produced. The gate fails a field that disagrees with the form it SHIPPED.
+  const kindClaim = String(m.inline_overridden ?? m.inline_kind ?? '').trim().toLowerCase();
+  if (inl && kindClaim === 'kind' && !/^the /i.test(inl)) F('inline-form', 'fail', `the call called "${name}" a kind and the sheet speaks it as "${inl}" — a kind starts with "the"`, inl);
+  if (inl && kindClaim === 'person' && /^the /i.test(inl)) F('inline-form', 'fail', `the call called "${name}" a person and the sheet speaks it as "${inl}" — a person speaks by its given name`, inl);
   // inline-correctness: the inline follows the name rule, not merely itself
   if (inl && name.split(/\s+/).length > 1 && /^the /i.test(inl)) {
     // A HEAD IS AS GOOD AS A TAIL — print's own blocks said so (2026-10-15).
@@ -663,7 +741,11 @@ function gateReader(raw, m, ctx, F) {
     // the false positive this gate has been throwing all sprint.
     // Hyphens split too, the way this file's row-name read two dozen lines up
     // already does — "Marrow-Herd Reaver" speaks as "the herd reaver".
-    const rest = inl.replace(/^the /i, '').toLowerCase(); const words = name.toLowerCase().split(/[\s-]+/);
+    // BOTH SIDES NORMALIZE (live, 2026-10-15): the first cut split the NAME on
+    // hyphens and left the INLINE alone, so "Iron Line-Crasher" + "the
+    // line-crasher" failed on the hyphen the name had already lost. The pins
+    // missed it because every hand-written case put the hyphen on the name side.
+    const rest = inl.replace(/^the /i, '').toLowerCase().split(/[\s-]+/).join(' '); const words = name.toLowerCase().split(/[\s-]+/);
     const runs = words.flatMap((_, i) => words.map((__, j) => (j >= i ? words.slice(i, j + 1).join(' ') : null)).filter(Boolean)); // every contiguous run: head, tail, and the middles print uses
     const ok = runs.includes(rest);
     const isRankish = /^(?:sergeant|captain|commander|lieutenant|general|admiral|marshal|warlord|chieftain|lord|lady|baron|baroness|count|countess|duke|duchess|king|queen|prince|princess|abbot|abbess|bishop|brother|sister|mother|father|constable|sheriff|grandmother|grandfather|granny|elder|mistress|master|warden|knight|hunter|pilgrim|marauder|rider|horseman|keeper|witch|hermit|seer|reaver|raider)$/.test(rest);
@@ -685,15 +767,23 @@ function gateReader(raw, m, ctx, F) {
     if (dealt && ['Bludgeoning', 'Piercing', 'Slashing'].includes(dealt) && /\b(?:drains?|siphons?|leech(?:es)?)\b/i.test(`${n} ${t}`) && /regains? (?:\d+ )?Hit Points|\bdrain/i.test(t)) F('type-fit', 'fail', `${sec}/${n}: a drain deals ${dealt} — a weapon type for an effect that takes no weapon`, dealt);
     const sv = /\*?(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) Saving Throw/.exec(t);
     // a condition named as a PREREQUISITE is not an imposed effect (a condition-payoff row exploits Prone; it does not cause it)
-    if (sv && !e.print) { const eff = t.replace(/that (?:has|have|is|are) the \w+ condition/gi, '').replace(/that (?:is|are) (?:the )?(?:Blinded|Charmed|Deafened|Frightened|Grappled|Incapacitated|Invisible|Paralyzed|Petrified|Poisoned|Prone|Restrained|Stunned|Unconscious)\b/gi, '').replace(/already \w+/gi, ''); const want = /\b(?:Prone\b|pushed\b|Grappled\b|Restrained\b|knocked prone)/.test(eff) ? (/Attack Roll/.test(t) ? ['Strength', 'Dexterity', 'Constitution'] : ['Strength', 'Dexterity']) /* print's weapon mastery topples on a Constitution save */ : /\b(?:Poisoned|poison|disease|breath|spores?|choking|suffocat)/i.test(eff) ? ['Constitution'] : /\b(?:Frightened|Charmed)\b/.test(eff) ? ['Wisdom', 'Charisma'] : null;
+    if (sv && !e.print) { const eff = effectOnly(t); const want = /\b(?:Prone\b|pushed\b|Grappled\b|Restrained\b|knocked prone)/.test(eff) ? (/Attack Roll/.test(t) ? ['Strength', 'Dexterity', 'Constitution'] : ['Strength', 'Dexterity']) /* print's weapon mastery topples on a Constitution save */ : /\b(?:Poisoned|poison|disease|breath|spores?|choking|suffocat)/i.test(eff) ? ['Constitution'] : /\b(?:Frightened|Charmed)\b/.test(eff) ? ['Wisdom', 'Charisma'] : null;
       if (want && !want.includes(sv[1])) F('save-fit', 'fail', `${sec}/${n}: a ${sv[1]} save for an effect that calls for ${want.join(' or ')}`, sv[1]); }
   }
-  // alignment-fit: Unaligned is for a creature with no capacity for ethics
-  if (/^unaligned$/i.test(String(m.alignment ?? '').trim()) && !/^(?:Beast|Ooze|Plant|Construct)\b/i.test(String(m.type ?? '')) && (Number(m.stats?.INT ?? 10) >= 6 || !/^none$/i.test(String(m.languages ?? 'None').trim()))) F('alignment-fit', 'fail', `Unaligned on a ${m.type} with INT ${m.stats?.INT ?? '?'} that speaks ${m.languages} — Unaligned is for a creature with no capacity for ethics`, m.alignment);
+  // alignment-fit: Unaligned is for a creature with no capacity for ethics.
+  // "UNDERSTANDS … BUT CAN'T SPEAK" IS NOT SPEECH (owner's stage 1b, 2026-10-16).
+  // The line is not "None", so this gate read it as speech and would have failed
+  // PRINT'S OWN Stone Golem — Unaligned, INT 3, "Understands Common plus two
+  // other languages but can't speak". It fired on the Dirge Swarm at INT 4 while
+  // the Altarstone Warden passed at INT 3 on the identical line. The type list
+  // also missed the Swarm-of wrapper, which is how a Construct swarm reached it.
+  const mute = /^none$/i.test(String(m.languages ?? 'None').trim()) || /can't speak|cannot speak/i.test(String(m.languages ?? ''));
+  const noEthicsType = /^(?:Beast|Ooze|Plant|Construct)\b/i.test(String(m.type ?? '')) || /\bSwarm of \w+ (?:Beast|Ooze|Plant|Construct)/i.test(String(m.type ?? ''));
+  if (/^unaligned$/i.test(String(m.alignment ?? '').trim()) && !noEthicsType && (Number(m.stats?.INT ?? 10) >= 6 || !mute)) F('alignment-fit', 'fail', `Unaligned on a ${m.type} with INT ${m.stats?.INT ?? '?'} that speaks ${m.languages} — Unaligned is for a creature with no capacity for ethics`, m.alignment);
   // name-mechanic + no-type-in-name
   for (const { sec, e } of rows) {
     const n = bare(e.name); const t = String(e.text ?? ''); if (/^(?:Multiattack|Spellcasting|Legendary Resistance|Legendary Action Uses)/.test(n) || e.print) continue;
-    for (const [nameRe, textRe, what] of NAME_MECHANIC) if (nameRe.test(n) && !textRe.test(t)) { F('name-mechanic', 'fail', `${sec}/${n}: the name promises ${what} the text lacks`, n); break; }
+    { const unkept = mechanicUnkept(n, t); if (unkept) F('name-mechanic', 'fail', `${sec}/${n}: the name promises ${unkept} the text lacks`, n); }
     const tw = TYPE_NAME_WORD.exec(n); if (tw && !new RegExp(`\\b${tw[1]} damage\\b`, 'i').test(t) && !new RegExp(`\\b${tw[1]}\\b`).test(t.replace(/damage/g, ''))) F('no-type-in-name', 'fail', `${sec}/${n}: the name carries ${tw[1]} the text does not deal`, tw[1]);
   }
 }
@@ -736,8 +826,10 @@ export function checkBlock(raw, ctx = {}) {
       F(gate)(`lint:${f.rule}`, f.severity === 'reject' ? 'fail' : 'soft', f.message, f.expected ?? null);
     }
   } catch (e) { F('structure')('lint-error', 'soft', `the lint threw: ${e?.message ?? e}`, String(e)); }
+  const fid = fidelityOf(m, raw, context);
+  for (const t of fid.brokenLacks ?? []) F('reader')('lack-honored', 'fail', `the GM asked for an absence — "${t}" — and the sheet still carries it`, t);
   const fails = GATES.filter((g) => gates[g].status === 'fail'); const softs = GATES.filter((g) => gates[g].status === 'soft');
-  return { name: m.name, cr, edition, donor: context.donorId, gates, fails, softs, read: dmgRead(m), fidelity: fidelityOf(m, raw, context) };
+  return { name: m.name, cr, edition, donor: context.donorId, gates, fails, softs, read: dmgRead(m), fidelity: fid };
 }
 export function checkTable(results, { title = 'Mechanics check' } = {}) {
   const head = `## ${title}\n\n| block | CR | ed | donor | ${GATES.join(' | ')} | verdict | coverage | concept |\n|---|---|---|---|${GATES.map(() => '---').join('|')}|---|---|---|\n`;

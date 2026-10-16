@@ -2904,7 +2904,10 @@ describe('the close-out coda (2026-09-08): the short-form system, four word-form
       name: 'Test Shade', renames, damage_types: {}, conditions: { condition_minor: 'Prone' },
       wildcard: `*Wisdom Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
     };
-    expect(rd(scaled, answer, {}).join(' ')).toMatch(/"Petrifying Stare" promises Petrified but the row never applies it/);
+    // the wording moved with the table into name-claims.mjs (2026-10-15); the
+    // claim this pin holds — a rename promising a condition its row never
+    // applies is a defect the REPAIR call is told about — is unchanged
+    expect(rd(scaled, answer, {}).join(' ')).toMatch(/"Petrifying Stare" promises the Petrified condition but the row never delivers it/);
   });
 
   test('the prompt cues: ghosts are ALWAYS phantom; engulf covers digestion', () => {
@@ -3893,8 +3896,14 @@ describe('batch-two critic round (2026-09-14): the replacement clause, priced da
         conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Dexterity',
         wildcard: `*Dexterity Saving Throw*: DC ${scaled.dc}, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature's next turn.`,
       })));
-    const multi = (m.sections.Actions ?? []).find((e) => e.name.startsWith('Multiattack'));
-    expect(multi.text).toMatch(/^The swarm makes/);
+    // THE VOICE, NOT THE MULTIATTACK (2026-10-16). This read the Multiattack's
+    // text, and a swarm no longer has one — print's seven swarms all make exactly
+    // one attack. The law here is the VOICE: a swarm's rows say "the swarm", never
+    // "the cathedral gargoyles makes", which is a plural subject on a singular
+    // verb. Asserted on the row that exists.
+    expect((m.sections.Actions ?? []).some((e) => /^Multiattack/.test(e.name ?? ''))).toBe(false);
+    const swarmRows = Object.values(m.sections).flat().filter((e) => /\bthe swarm\b/i.test(e.text ?? ''));
+    expect(swarmRows.length).toBeGreaterThan(0); // it speaks as "the swarm"
     expect(JSON.stringify(m.sections)).not.toMatch(/the cathedral gargoyles makes/);
   });
 
@@ -4926,7 +4935,11 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
   test('a print name as the head noun outranks the verb router: the doppelganger is not a caster, and the seat style stands down', async () => {
     const r = await run({ archetype: 'caster', style: 'skulker', concept: 'a doppelganger who reads what the living are thinking', userConcept: 'a doppelganger who reads what the living are thinking', cr: 3, resolvedType: 'Monstrosity', mind: 'sapient' },
       fullAnswer(scaleDonor(pickDonor(3, null, 'skirmisher'), 3, { mechanics: [] }), 'Mourning Mask', { 'Melee Attack': 'Claw' }));
-    expect(r.trace).toMatch(/is not a caster first — it casts no spells — the caster family stands down for the plain skirmisher line/);
+    // the receipt now names the array that chose the line (critic's hold 7,
+    // 2026-10-16): the Doppelganger keys DEX 18 over STR 11, so the skirmisher
+    // line is right here and stays — what changed is that a STR-keyed print body
+    // (the Priest) no longer gets it by virtue of being Medium.
+    expect(r.trace).toMatch(/is not a caster first and keys DEX 18 over STR 11 — it casts no spells — the caster family stands down for the plain skirmisher line/);
     expect(r.trace).toMatch(/the Doppelganger's body outranks the skulker seat — no verb in the words names it; the plain (?:caster|skirmisher) line/); // the seat stands down first; the caster demotion line follows it
     expect(r.rows.some((e) => /^Spellcasting$/.test(e.name))).toBe(false);
     expect((r.m.sections['Bonus Actions'] ?? []).some((e) => e.name === 'Shape-Shift')).toBe(true);
@@ -5007,6 +5020,15 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(axe.trace).toMatch(/library seed drawn: rally -> Bonus Actions/); // the command words rank rally first; the style default heads it when they don't
     expect(axe.trace).not.toMatch(/own-turn-punisher/);
     expect((axe.m.sections['Bonus Actions'] ?? []).some((e) => /Temporary Hit Points/.test(e.text))).toBe(true);
+    // A DRAWN ROW CARRIES ITS SEED, AND THE SHEET IS NOT OFFERED IT TWICE
+    // (critic's hold 5, 2026-10-16). The row used to say only `library: true`,
+    // so no draw site could tell which shape the sheet already had — Meridane
+    // shipped two bonus actions that both charge its next strike. The id is the
+    // row's provenance too, which is what the review doc asks for.
+    const rallyRow = (axe.m.sections['Bonus Actions'] ?? []).find((e) => /Temporary Hit Points/.test(e.text));
+    expect(rallyRow.seed).toBe('rally');
+    const ids = axe.rows.flatMap((e) => [e.template, e.seed]).filter(Boolean);
+    expect(ids.length).toBe(new Set(ids).size); // no shape lands twice under two names
   });
   test('a chassis nova that sends a tremor in all directions is an Emanation; a golem\'s Immutable Form leaves a non-Construct', async () => {
     const jug = scaleDonor(pickDonor(9, 'juggernaut', 'brute'), 9, { mechanics: [] });
@@ -5157,7 +5179,7 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
         return answer(Object.assign(fullAnswer(jug, 'Iron Chime', {}), { type: 'Construct' }));
       });
     } finally { console.log = orig; }
-    expect(lines.join('\n')).toMatch(/rider declined: "Bone-Rattling Note" — bound on shape or on the idea's own words alone/);
+    expect(lines.join('\n')).toMatch(/rider declined: "Bone-Rattling Note" — a rider rides the user's own attack, so it needs the user's own ask/);
     expect(Object.values(m.sections).flat().some((e) => e.template === 'hook-rider' || /pulled|dragged/.test(e.text ?? '') && /Slam/.test(e.name ?? ''))).toBe(false);
     // signature elements are rewritten before the naming pass; a Humanoid swings a weapon; the seat owes only when earned
     const leader = scaleDonor(pickDonor(3, 'leader', 'defender'), 3, { mechanics: [] });
@@ -5291,7 +5313,10 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
       });
     } finally { console.log = orig; }
     const trace = lines.join('\n');
-    expect(trace).toMatch(/nova declined: "Scalding Vent \(Recharge 5-6\)" — a whole-round ability taken on shape alone/);
+    // the receipt distinguishes "the call offered no quote" from "it quoted
+    // something the GM never typed" (stage 2 item 2, 2026-10-16): the two have
+    // opposite fixes, and this stub offers none.
+    expect(trace).toMatch(/nova declined: "Scalding Vent \(Recharge 5-6\)" — a whole-round ability the GM never asked for: the call offered no quote, and the key table finds no verb either/);
     expect(Object.values(m.sections).flat().some((e) => /Emanation originating from/.test(e.text ?? '') && /Recharge/.test(e.name))).toBe(false);
     // and a nova bound only on the IDEA's words ("around it" in the proposal, not the concept) is declined too
     const lines2 = []; console.log = (...a) => { lines2.push(a.join(' ')); };
@@ -5305,8 +5330,48 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
         return answer(Object.assign(fullAnswer(brute, 'Kettlewright', {}), { type: 'Construct' }));
       });
     } finally { console.log = orig; }
-    expect(lines2.join('\n')).toMatch(/nova declined: "Scalding Spill \(Recharge 5-6\)" — a whole-round ability bound only on the idea's own words/);
+    expect(lines2.join('\n')).toMatch(/nova declined: "Scalding Spill \(Recharge 5-6\)" — a whole-round ability the GM never asked for.*the idea's own words:/);
     expect(Object.values(m2.sections).flat().some((e) => e.template === 'ground-burst')).toBe(false);
+  });
+  // THE GM'S ASK IS THE CALL'S ANSWER, AND THE QUOTE IS CHECKED (critic's hold 1
+  // door 5, 2026-10-16). The three seats that take only what the GM asked for
+  // used to decide that by running the engine's key table over the call's pick:
+  // a template whose verb the table did not know lost the seat however plainly
+  // the GM had asked. Now the call quotes the GM's own words, and the engine
+  // validates the quote against what the GM typed — a receipt it can check,
+  // not a judgement it makes. Both halves are pinned: an honest quote opens the
+  // seat the key table would have closed, and a quote of words the GM never
+  // typed is not a receipt.
+  test('a nova the GM plainly asked for is kept on the call\'s quote, and a forged quote is not (hold 1 door 5, 2026-10-16)', async () => {
+    const brute = scaleDonor(pickDonor(9, 'grappler', 'brute'), 9, { mechanics: [] });
+    const run = async (asked) => {
+      const lines = []; const orig = console.log; console.log = (...a) => { lines.push(a.join(' ')); };
+      // "vents scalding steam" is the GM's own clause; ground-burst's key table
+      // knows neither "vent" nor "scald", so the old veto dropped it.
+      const concept = "a bog witch's iron cauldron that vents scalding steam over whatever climbs in";
+      let m;
+      try {
+        m = await generateReskin({ cr: 9, mechanics: [], archetype: 'brute', style: 'grappler', concept, userConcept: concept, onProgress: () => {} }, async (prompt) => {
+          if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ action: { idea: 'The kettlewright vents scalding steam from its seams in a wide hissing wave.', trigger: 'always', effect: 'damage' } });
+          if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify({ template: 'ground-burst', because: 'a wave of steam', asked, name: 'Scalding Vent' });
+          if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+          if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+          return answer(Object.assign(fullAnswer(brute, 'Kettlewright', {}), { type: 'Construct' }));
+        });
+      } finally { console.log = orig; }
+      return { m, trace: lines.join('\n') };
+    };
+    // the call quotes the GM: the seat is kept, and the receipt names the quote
+    const kept = await run('vents scalding steam');
+    expect(kept.trace).toMatch(/pick kept on the GM's own words: action — "ground-burst" has no key-table verb, but the call quotes "vents scalding steam"/);
+    expect(kept.trace).not.toMatch(/nova declined/);
+    expect(Object.values(kept.m.sections).flat().some((e) => e.template === 'ground-burst')).toBe(true);
+    // "hurls molten iron" shares only "iron" with a concept that says "iron
+    // cauldron": no receipt, so the key table's preference stands and the pick
+    // is dropped at the earlier door, before the nova check ever sees it.
+    const forged = await run('hurls molten iron');
+    expect(forged.trace).toMatch(/signature miss: action — .* the model picked "ground-burst" \(no verb, and it quotes nothing the GM typed\)/);
+    expect(Object.values(forged.m.sections).flat().some((e) => e.template === 'ground-burst')).toBe(false);
   });
   test('a shifter\'s all-forms row is a weapon or unarmed strike, never the beast\'s natural weapon; a water beast\'s shifter is Amphibious', async () => {
     const scaled = scaleDonor(pickDonor(3, 'shifter', 'skirmisher'), 3, { mechanics: [] });

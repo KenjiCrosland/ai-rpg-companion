@@ -371,7 +371,12 @@ describe('the critic\'s audit, engine side (2026-10-02)', () => {
       const m = await generateReskin({ archetype: 'defender', concept: desc, userConcept: desc, cr: 8, fixedName: 'Meshrin', mechanics: [] }, async (prompt) => (prompt.startsWith('You are authoring the ABILITIES') ? author : main));
       const rows = Object.values(m.sections).flat(); const names = rows.map((e) => e.name.replace(/ \(.*\)$/, ''));
       expect(names).toEqual(expect.arrayContaining(['Greatsword', 'Tail Swipe', 'Razor Sharp Claws', 'Vicious Bite'])); // step 7: the parts are engine rows named from the user's phrases; the fighting style is the template path's (the live twelve carries that check)
-      expect(rows.find((e) => /^Multiattack/.test(e.name)).text).toMatch(/Greatsword, Tail Swipe, Razor Sharp Claws or Vicious Bite in any combination/);
+      // print's serial comma (2026-10-16): its one 3-item combination is the
+      // Merrow's "using Bite, Claw, or Harpoon" — comma before the "or". The
+      // list grammar landed with the one-row collapse, which had been producing
+      // "using A in any combination" for a single row where print writes
+      // "makes two A attacks" — two of our own rules disagreeing.
+      expect(rows.find((e) => /^Multiattack/.test(e.name)).text).toMatch(/Greatsword, Tail Swipe, Razor Sharp Claws, or Vicious Bite in any combination/);
       expect(rows.filter((e) => e.part).length).toBe(4);
       expect(m.size).toBe('Large'); expect(m.speed).toMatch(/^30 ft\./); expect(m.inline).toBe('Meshrin'); expect(JSON.stringify(m.sections)).not.toMatch(/the meshrin/i);
       for (const e of rows) if (/Attack Roll/.test(e.text)) expect(e.text).toMatch(/\+\d+(?: \([^)]*\))?, reach \d+ ft\. \d+ \(\d+d\d+(?: \+ \d+)?\) \w+ damage/); // a roll parenthetical (the cross-row Advantage) is print's shape

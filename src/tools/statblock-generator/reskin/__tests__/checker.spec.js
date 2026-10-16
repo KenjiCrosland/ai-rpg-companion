@@ -89,8 +89,11 @@ describe('structure', () => {
   test('a damage number with no dice', () => { expect(has(checkBlock(withRow('Actions', { name: 'Spit', text: '*Dexterity Saving Throw*: DC 15, one creature within 30 feet. *Failure:* 12 Acid damage.' })), 'structure', 'diceless-damage', 'fail')).toBe(true); });
   test('a condition payoff nothing on the sheet produces', () => { expect(has(checkBlock(withRow('Actions', { name: 'Finish', text: '*Strength Saving Throw*: DC 15, one creature within 30 feet that has the Prone condition. *Failure:* 10 (3d6) Bludgeoning damage.' })), 'structure', 'payoff-producer', 'soft')).toBe(true); });
   test('an engulfer taking a creature larger than itself', () => { expect(has(checkBlock(withRow('Bonus Actions', { name: 'Swallow', text: 'The stalker swallows one Huge or smaller creature it is grappling.' })), 'structure', 'engulf-size', 'fail')).toBe(true); expect(has(checkBlock(withRow('Bonus Actions', { name: 'Swallow', text: 'The stalker swallows one Large or smaller creature it is grappling.' })), 'structure', 'engulf-size')).toBe(false); });
-  test('a swarm that is not Medium fails; a swarm with a Multiattack is soft', () => {
-    const r = checkBlock(base({ type: 'Swarm of Tiny Beasts', size: 'Large' })); expect(has(r, 'structure', 'swarm-size', 'fail')).toBe(true); expect(has(r, 'structure', 'swarm-multiattack', 'soft')).toBe(true);
+  // the Multiattack is a FAIL now, not a soft (critic's notes, 2026-10-15,
+  // flagged soft twice): print's seven swarms all make exactly one attack, and
+  // the engine strips the donor's inherited "makes two Melee Attack attacks"
+  test('a swarm that is not Medium fails; a swarm with a Multiattack fails', () => {
+    const r = checkBlock(base({ type: 'Swarm of Tiny Beasts', size: 'Large' })); expect(has(r, 'structure', 'swarm-size', 'fail')).toBe(true); expect(has(r, 'structure', 'swarm-multiattack', 'fail')).toBe(true);
     expect(has(checkBlock(base({ type: 'Swarm of Tiny Beasts', size: 'Large', monsterDescription: 'a vast swarm of rats' })), 'structure', 'swarm-size')).toBe(false);
   });
   test('reach beyond the size with no tether word: soft within ten feet, fail beyond', () => {
@@ -315,5 +318,63 @@ describe('a creature-only prompt (fidelity pipeline step 4)', () => {
     const f = checkBlock(b).fidelity; expect([f.covered, f.total]).toEqual([1, 1]); // the creature itself is covered by the composition (provenance, step 8)
     const miss = base(); miss.generation = { clauses: [{ text: 'a bog witch', kind: 'descriptive', head: true }] }; miss.sections = { Traits: [], Actions: [] };
     expect(checkBlock(miss).fidelity.total).toBe(1); expect(checkBlock(miss).fidelity.covered).toBe(0); // no rows at all: nothing composed it
+  });
+});
+
+// STAGE 1 AND 1b, THE SHIP BLOCKERS (owner's fix order, 2026-10-16). Each sheet
+// below shipped at the table with every gate passing it, or with a gate that
+// could not see it. Categories confirmed by the owner before these were written:
+// data integrity, routing, integration — never a prompt string.
+describe('stage 1: a sheet that breaks at the table', () => {
+  // (1) DATA INTEGRITY — the Courtier Unseen, canaries-2026-10-16T09-26-32: the
+  // call named the Mage's hybrid "Force Bolt", the launcher narrowing stripped
+  // its melee half, the ranged-off rule deleted what was left (print's ONLY
+  // attack), and the Multiattack kept "makes three attacks". The reader printed
+  // off 0 and every gate passed. Each gate was checking a different half: the
+  // slot-name check only reads names the Multiattack lists, and "makes three
+  // attacks" lists none.
+  test('a Multiattack over zero attack rows fails, and so does a sheet with no attack at all', () => {
+    const noAttack = base({ sections: { Actions: [
+      { name: 'Multiattack', text: 'The stalker makes three attacks.' },
+      { name: 'Spellcasting', text: 'The stalker casts one of the following spells.\n\n- At Will: *Light*' },
+    ] } });
+    expect(has(checkBlock(noAttack), 'reader', 'multiattack-integrity')).toBe(true);
+    const noAttackNoMa = base({ sections: { Actions: [{ name: 'Spellcasting', text: 'The stalker casts *Light*.' }] } });
+    expect(has(checkBlock(noAttackNoMa), 'reader', 'multiattack-integrity')).toBe(true);
+    // the control: one attack row and a Multiattack naming it is clean
+    const ok = base({ sections: { Actions: [
+      { name: 'Multiattack', text: 'The stalker makes two Claw attacks.' },
+      { name: 'Claw', text: '*Melee Attack Roll:* +7, reach 10 ft. 20 (3d10 + 4) Slashing damage.' },
+    ] } });
+    expect(has(checkBlock(ok), 'reader', 'multiattack-integrity')).toBe(false);
+  });
+
+  // (7) ROUTING + DATA INTEGRITY — the Dirge Swarm vs the Altarstone Warden,
+  // canaries/branch-nova 2026-10-16: the same print line, "Understands … but
+  // can't speak", failed at INT 4 and passed at INT 3. The line is not "None",
+  // so the gate read it as speech. It would have failed PRINT'S OWN Stone Golem
+  // (Unaligned, INT 3, that exact line), and the type list missed the Swarm-of
+  // wrapper, which is how a Construct swarm reached the gate at all.
+  test('alignment-fit reads "understands but can\'t speak" as no speech, through the Swarm-of wrapper', () => {
+    const golemShape = { type: 'Construct', alignment: 'Unaligned', stats: { STR: 22, DEX: 9, CON: 20, INT: 3, WIS: 11, CHA: 1 }, languages: "Understands Common plus two other languages but can't speak" };
+    expect(has(checkBlock(base(golemShape)), 'reader', 'alignment-fit')).toBe(false);
+    expect(has(checkBlock(base({ ...golemShape, type: 'Swarm of Tiny Constructs', stats: { ...golemShape.stats, INT: 4 } })), 'reader', 'alignment-fit')).toBe(false);
+    // what the gate still catches: a speaking creature claiming Unaligned
+    expect(has(checkBlock(base({ type: 'Humanoid', alignment: 'Unaligned', stats: { STR: 12, DEX: 12, CON: 12, INT: 12, WIS: 12, CHA: 12 }, languages: 'Common' })), 'reader', 'alignment-fit')).toBe(true);
+  });
+
+  // (6) ROUTING — ONE KEY DEFINITION. The Bog Cauldron (branch-nova
+  // 2026-10-16T09-17-50) was ROUTED to brute-grappler by the router's own key
+  // "climbs in" and then failed this gate twice for having "a grapple engine
+  // with no key in the words". Two tables disagreeing about one question.
+  test('the router\'s own grapple keys satisfy engine-needs-key', () => {
+    const grappler = base({ sections: { Actions: [
+      { name: 'Multiattack', text: 'The stalker makes two Ladle attacks.' },
+      { name: 'Ladle', text: '*Melee Attack Roll:* +7, reach 10 ft. 20 (3d10 + 4) Bludgeoning damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 16).' },
+    ] } });
+    // "climbs in" is a brute-grappler key in route.mjs's own LINE_VERBS
+    expect(has(checkBlock(grappler, { userConcept: "a bog witch's iron cauldron that vents scalding steam over whatever climbs in" }), 'reader', 'engine-needs-key')).toBe(false);
+    // the control: a grapple engine the words never ask for is still caught
+    expect(has(checkBlock(grappler, { userConcept: 'a templar priest with a mace' }), 'reader', 'engine-needs-key')).toBe(true);
   });
 });

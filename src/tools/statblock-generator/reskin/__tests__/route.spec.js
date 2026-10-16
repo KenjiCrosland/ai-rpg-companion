@@ -199,7 +199,14 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
   test('a leader is print\'s Humanoid class: a Beast that "rules" is vetoed off the leader line (the crab golden)', () => {
     const r = chooseLine({ picks: [{ line: 'defender-leader', because: 'wears it and rules the wreck-fields' }, { line: 'brute-grappler', because: 'a crab the size of a longboat' }], creature_type: 'Beast' }, { text: "the drowned king's crown, a crab the size of a longboat that wears it and rules the wreck-fields" });
     expect(r.line).not.toBe('defender-leader');
-    expect(r.notes.join(' ')).toMatch(/a Beast commands no troops/);
+    // THE VETO IS GONE AND THE CRAB STILL LANDS RIGHT (critic's hold 5,
+    // 2026-10-15). A type list that read "a Beast commands no troops" dropped the
+    // GM's own clause on "a death knight who leads a cavalry of the damned" — and
+    // print contradicts it anyway: nine print Beasts carry an ally-affecting row,
+    // because Pack Tactics is one. The crab is held by the rule that actually owns
+    // this decision — its BODY outranks the noun — so the veto was redundant here
+    // and wrong there. The outcome is pinned; the retired message is not.
+    expect(r.notes.join(' ')).toMatch(/BODY outranks the noun/);
     expect(r.line).toBe('brute-grappler'); // a crab is print's grappling body (Giant Crab's Claw grapples)
     const h = chooseLine({ picks: [{ line: 'defender-leader', because: 'commands from the quarterdeck' }], creature_type: 'Humanoid' }, { text: 'a pirate queen who commands from the quarterdeck' });
     expect(h.line).toBe('defender-leader');

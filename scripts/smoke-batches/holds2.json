@@ -1,0 +1,18 @@
+[
+  { "name": "", "description": "a plague-rat swarmlord whose bite rots the wound so it will not close", "cr": "8", "rules": "2024",
+    "canary": "HOLD 3: the part is named \"Bite\", not \"Swarmlord Whose Bite\" — and the wound-that-won't-close should land", "mode": "band" },
+  { "name": "", "description": "an imp rogue who picks locks for a devil", "cr": "4", "rules": "2024",
+    "canary": "HOLD 2: a negation is not a receipt — \"picks locks\" must not flip to a lack", "mode": "band" },
+  { "name": "", "description": "a gravecrawler that drags the living into its pit and will not let go", "cr": "6", "rules": "2024",
+    "canary": "HOLD 2: \"will not let go\" is a grip, not an absence; no invented lack may ride on its \"not\"", "mode": "band" },
+  { "name": "", "description": "an oathsworn crusader who smites the unclean and mends her soldiers with a censer", "cr": "8", "rules": "2024",
+    "canary": "HOLD 4: a declared censer/flail deals Bludgeoning, never Piercing by body default", "mode": "band" },
+  { "name": "", "description": "a swarm of funeral bells that ring themselves over the dying", "cr": "13", "rules": "2024",
+    "canary": "ALIGNMENT: a mute INT-low construct swarm is Unaligned (print: Oozes 4/4, Constructs at INT<=3 7/7)", "mode": "band" },
+  { "name": "Thing in the Well", "description": "", "cr": "5", "rules": "2024",
+    "canary": "HOLD 1 regression: a refused kind answer must stay a kind — \"the thing\", never \"Thing\"", "mode": "band" },
+  { "name": "", "description": "a templar priest with a mace and no magic at all", "cr": "6", "rules": "2024",
+    "canary": "REGRESSION: a real lack must still remove the casting after the stop-list change", "mode": "band" },
+  { "name": "", "description": "an eyeless hunter that tracks prey by scent alone", "cr": "5", "rules": "2024",
+    "canary": "REGRESSION: the adjective lack must still land on the senses line", "mode": "band" }
+]

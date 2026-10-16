@@ -1158,7 +1158,14 @@ async function generateStatblockEngine(edition) {
         // names run longer), and never be the whole input — that is the
         // description, which the generator names
         const inputWords = monsterName.value.trim().split(/\s+/).length;
-        const nameShaped = pn.split(/\s+/).length <= 4 && !(inputWords > 4 && pn.length >= monsterName.value.trim().length - 2);
+        // A NAME THE GM TYPED IN THE NAME FIELD IS THE NAME, HOWEVER LONG
+        // (owner's stage 1b, 2026-10-16). The four-word cap exists to stop the
+        // model lifting a long DESCRIPTION as a name; it also rejected "Templar
+        // of the Unmoved Stone", five words the GM had typed in the Name field
+        // itself, as "the description, not a name". When the model's answer is
+        // the Name field whole, there is nothing to lift and nothing to guess.
+        const typedWhole = monsterName.value.trim() && pn.trim().toLowerCase().replace(/^(?:a|an|the)\s+/i, '') === monsterName.value.trim().toLowerCase().replace(/^(?:a|an|the)\s+/i, '');
+        const nameShaped = typedWhole || (pn.split(/\s+/).length <= 4 && !(inputWords > 4 && pn.length >= monsterName.value.trim().length - 2));
         // and CASE (two-call smoke 2026-09-21: "grave beetles", "Brass bull",
         // "Drowned Knight" were lifted out of lowercase descriptions 5/15 and
         // locked the generator out of naming): inside a longer input a name is
@@ -1166,7 +1173,14 @@ async function generateStatblockEngine(edition) {
         // input (≤4 words) is the name however it is cased ("brazen bull").
         const hit = pn && new RegExp(pn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').exec(monsterName.value);
         const asWritten = hit ? hit[0].replace(/^(?:a|an|the)\s+/i, '') : '';
-        const properCase = inputWords <= 4 || (asWritten && asWritten.split(/\s+/).every((w) => /^[A-Z]/.test(w)));
+        // TITLE CASE IS HOW A NAME IS WRITTEN (owner's stage 1b, 2026-10-16).
+        // This required EVERY word capitalized, so "Templar of the Unmoved Stone"
+        // was rejected as "written in lowercase inside a description" over its
+        // two title-case particles, and the GM lost the name they typed. A
+        // connective is lowercase in correct title case; the test is that every
+        // word that is NOT a connective is capitalized.
+        const CONNECTIVE = /^(?:of|the|a|an|and|in|at|on|to|for|from|with|de|du|von|van|le|la|el|bin|ibn)$/i;
+        const properCase = inputWords <= 4 || (asWritten && asWritten.split(/\s+/).filter((w) => !CONNECTIVE.test(w)).every((w) => /^[A-Z]/.test(w)) && /^[A-Z]/.test(asWritten));
         if (pn && nameShaped && hit && properCase) conceptProvidedName = asWritten;
         else if (pn && hit && !properCase) logger.log('[concept] name:', `provided_name rejected — "${pn.slice(0, 40)}" is written in lowercase inside a description; the generator names it`);
         else if (pn && !nameShaped) logger.log('[concept] name:', `provided_name rejected — "${pn.slice(0, 40)}…" is the description, not a name`);

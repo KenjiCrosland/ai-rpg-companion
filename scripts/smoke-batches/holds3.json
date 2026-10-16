@@ -1,0 +1,14 @@
+[
+  { "name": "", "description": "an oathsworn crusader who smites the unclean and mends her soldiers with a censer", "cr": "8", "rules": "2024",
+    "canary": "HOLDS 1+4: no twin censer rows after the narrowing; \"mends her soldiers\" takes Lay on Hands, not a self-regeneration warded by a carried censer", "mode": "band" },
+  { "name": "Hell's Locksmith", "description": "an imp rogue who picks locks for a devil", "cr": "4", "rules": "2024",
+    "canary": "HOLDS 2+3: a possessive is never the short form, and a retyped fear row's save follows the condition it imposes", "mode": "band" },
+  { "name": "", "description": "a plague-rat swarmlord whose bite rots the wound so it will not close", "cr": "8", "rules": "2024",
+    "canary": "HOLD 2: a Poisoned rider takes a Constitution save, never Strength", "mode": "band" },
+  { "name": "", "description": "a veteran soldier with a longsword who bashes with a buckler", "cr": "6", "rules": "2024",
+    "canary": "HOLD 1 regression: the shield path must still work — one shield row, no twin", "mode": "band" },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2024",
+    "canary": "HOLD 1 regression: a GENUINE thrown weapon keeps its hybrid range and must not be removed as a twin", "mode": "band" },
+  { "name": "name: Dame Oriel", "description": "a knight who holds the line with a shield and a longsword", "cr": "5", "rules": "2024",
+    "canary": "REGRESSION: an honorific name keeps its person form after the possessive change", "mode": "band" }
+]

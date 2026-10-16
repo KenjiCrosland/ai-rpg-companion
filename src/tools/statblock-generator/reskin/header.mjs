@@ -43,6 +43,15 @@ export function honestLanguages(line, { mind = null, type = '', int = null, spea
   // TYPE-AWARE, off print's own 139 blocks at INT 5 or less: no Beast,
   // Monstrosity, Ooze, Plant, Undead or Aberration speaks, while a Giant, Fiend,
   // Elemental, Dragon or Construct often does (the Ogre speaks Common and Giant)
+  // A LOW-INT CONSTRUCT DOES NOT SPEAK COMMON (owner's stage 1b, 2026-10-16). An
+  // INT 4 swarm of bells shipped "Common". PRINT at INT 5 or less: Construct
+  // speaks in 1 of 7 blocks (the Clay Golem, a named print creature that routes
+  // through print canon anyway) and is otherwise mute or understands-only, so a
+  // Construct joins the list — with print's own understands-only line, since
+  // that is what its 2 non-mute low-INT Constructs carry. Beast, Monstrosity,
+  // Ooze, Plant and Aberration speak in 0 of 118. Giant, Fiend, Elemental and
+  // Dragon DO speak at low INT and stay out of the list.
+  if (Number.isFinite(int) && int <= 5 && !speaks && /^(?:Construct|Swarm of \w+ Constructs?)\b/i.test(String(type))) return "Understands the languages of its creator but can't speak";
   if (Number.isFinite(int) && int <= 5 && !speaks && /^(?:Beast|Monstrosity|Ooze|Plant|Undead|Aberration)\b/i.test(String(type))) return 'None'; // an INT 4 body speaks nothing unless the GM says it does (the Frostmaw Leviathan spoke Common — the critic's second species read)
   if (mind === 'mindless') return /construct/i.test(type) ? "Understands the languages of its creator but can't speak" : 'None';
   if (/^Humanoid\b/i.test(String(type)) && (!raw || /^none$/i.test(raw) || mind === 'bestial')) return raw && !/^none$/i.test(raw) ? raw : 'Common'; // every print Humanoid speaks — a boar-shifter miller read as bestial printed None (critic, new lines 2026-09-28)
@@ -65,7 +74,7 @@ export function honestLanguages(line, { mind = null, type = '', int = null, spea
   return kept.length > 1 && kept.includes('the languages it knew in life') ? `${kept.filter((k) => k !== 'the languages it knew in life').join(', ')} plus the languages it knew in life` : kept.join(', ');
 }
 
-import { weaponProp, weaponNouns } from './weapons.mjs';
+import { weaponProp, weaponNouns, weaponFor } from './weapons.mjs';
 
 // anatomy and weapon nouns bind to a row kind and a physical damage type (print: 330/422 attack rows are one bare word)
 export const ANATOMY = {
@@ -78,7 +87,8 @@ export const ANATOMY = {
   // "Curb Stomp" dealt Piercing, "Fangblade" dealt Bludgeoning)
   stomp: ['melee', 'Bludgeoning', 'type'], stamp: ['melee', 'Bludgeoning', 'type'], kick: ['melee', 'Bludgeoning', 'type'], crush: ['melee', 'Bludgeoning', 'type'], pound: ['melee', 'Bludgeoning', 'type'], headbutt: ['melee', 'Bludgeoning', 'type'], club: ['melee', 'Bludgeoning', 'type'], mace: ['melee', 'Bludgeoning', 'type'], hammer: ['melee', 'Bludgeoning', 'type'], staff: ['melee', 'Bludgeoning', 'type'],
   ram: ['melee', 'Bludgeoning', 'type'], butt: ['melee', 'Bludgeoning', 'type'],
-  gore: ['melee', 'Piercing'], horn: ['melee', 'Piercing'], horns: ['melee', 'Piercing'], tusk: ['melee', 'Piercing'], tusks: ['melee', 'Piercing'], sting: ['melee', 'Piercing'], stinger: ['melee', 'Piercing'],
+  gore: ['melee', 'Piercing'], horn: ['melee', 'Piercing'], horns: ['melee', 'Piercing'], tusk: ['melee', 'Piercing'], tusks: ['melee', 'Piercing'], sting: ['melee', 'Piercing'], stinger: ['melee', 'Piercing'], stingers: ['melee', 'Piercing'],
+  pincer: ['melee', 'Slashing'], pincers: ['melee', 'Slashing'],
   rock: ['ranged', null], boulder: ['ranged', null], slab: ['ranged', null], bomb: ['ranged', null], flask: ['ranged', null], shard: ['ranged', 'Piercing'],
   // THE WEAPON NOUNS COME FROM THE WEAPON TABLE. They used to be written out
   // here too, and the copies drifted: a Shortsword dealt Slashing because this
@@ -101,6 +111,23 @@ function weaponAnatomy() {
   }
   return out;
 }
+/**
+ * The BODY PART a name carries, or null — "Crushing Tail" is a tail. Longest
+ * first, so "stinger" wins over "sting". This is the question a scattered
+ * `ANAT_STAMP` regex was asking in generate.mjs with its own copy of the list
+ * (consolidation, 2026-10-15).
+ *
+ * The weapon nouns are excluded here even though they live in the same table: a
+ * Staff is in ANATOMY because it TYPES a row, not because anyone grows one, and
+ * the caller asking this question wants a limb. The one weapon table decides
+ * which is which, so neither list has to be written out again.
+ */
+const ANATOMY_WORDS = Object.keys(ANATOMY).sort((a, b) => b.length - a.length);
+export function anatomyIn(text) {
+  const t = String(text ?? '').toLowerCase();
+  return ANATOMY_WORDS.find((w) => !weaponFor(w) && new RegExp(`\\b${w}\\b`).test(t)) ?? null;
+}
+
 const cap = (s) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 /**
  * Attack renames obey anatomy: a melee noun never names a ranged row (it takes

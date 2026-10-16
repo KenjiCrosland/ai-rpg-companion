@@ -323,9 +323,23 @@ describe('a one-word name on a person', () => {
   });
   const rules = (m) => checkBlock(m).gates.reader.findings.map((f) => f.rule);
 
-  test('the kind form is refused on a minted one-word name — the live Smokeveil case', () => {
-    expect(rules(sheet('Smokeveil', 'the smokeveil'))).toContain('inline-consistency');
+  // RETIRED, AND PRINT SAYS WHY (critic's hold 2, 2026-10-16). This block
+  // pinned a type-based rule: a one-word name on a Humanoid body could not take
+  // the kind form, whatever the call answered. SRD 5.2 has 17 one-word Humanoid
+  // names and all 17 are kinds — Archmage, Assassin, Bandit, Berserker,
+  // Commoner, Cultist, Druid, Gladiator, Guard, Knight, Mage, Noble, Pirate,
+  // Priest, Scout, Spy, Tough — and print's rows write "the mage", "the
+  // assassin", "the priest". The owner's 2026-10-14 reading was about COINED
+  // names; that is what inline_kind asks the call, and what inline-form
+  // validates. Both forms are legal now; what the gates still hold is that the
+  // sheet says ONE of them throughout.
+  test('a one-word name takes either form — the call answers, and the sheet must then be consistent', () => {
+    expect(rules(sheet('Smokeveil', 'the smokeveil'))).not.toContain('inline-consistency');
     expect(rules(sheet('Smokeveil', 'Smokeveil'))).not.toContain('inline-consistency');
+    // what is still refused: a sheet whose rows contradict its own inline
+    const split = sheet('Smokeveil', 'Smokeveil');
+    split.sections.Traits[0].text = 'If the smokeveil is subjected to an effect that allows a Dexterity saving throw, it takes no damage instead.';
+    expect(rules(split)).toContain('inline-consistency');
   });
 
   test('the GM\'s own article still makes a kind', () => {
@@ -336,13 +350,27 @@ describe('a one-word name on a person', () => {
     expect(rules(sheet('Gloamripper', 'the gloamripper', 'Monstrosity'))).not.toContain('inline-consistency');
   });
 
-  test('the engine refuses the call\'s own kind answer, end to end', async () => {
+  // THE HEAD IS X IN "X OF Y" (critic's hold 2, 2026-10-16: "Warden of the Fold →
+  // 'the fold' is wrong; the head is X in 'X of Y'"). Only a contiguous TAIL of
+  // the name was legal, so the one phrase this creature could not be called was
+  // "the warden" — and the place it wardens could. PRINT heads the same way: it
+  // names a "Swarm of Bats" and its own rules text says "the swarm".
+  test('an "X of Y" name speaks as the X, and the Y is refused (hold 2, 2026-10-16)', async () => {
+    const desc = 'a warden of the fold who shields the flock and never leaves the gate';
+    const run = (inline) => gen({ archetype: 'defender', concept: desc, userConcept: desc, cr: 7 },
+      json('Warden of the Fold', 'Humanoid', 7, null, 'defender', { extra: { inline_kind: 'kind', inline, clauses: [{ text: desc, kind: 'mechanical' }] } }));
+    expect((await run('the warden')).inline).toBe('the warden');     // the head, which the tail-only rule refused
+    expect((await run('the fold')).inline).not.toBe('the fold');     // the place it wardens is not the creature
+  });
+  test('the call\'s own kind answer stands, end to end (hold 2, 2026-10-16)', async () => {
     const desc = 'a ninja who moves through the shadows and strikes unseen';
     const m = await gen({ archetype: 'lurker', concept: desc, userConcept: desc, cr: 5 },
       json('Smokeveil', 'Humanoid', 5, null, 'lurker', { extra: { inline_kind: 'kind', inline: 'the smokeveil', clauses: [{ text: desc, kind: 'mechanical' }] } }));
     expect(m.name).toBe('Smokeveil');
-    expect(m.inline).toBe('Smokeveil');                 // the call said "the smokeveil"; the engine refused it
-    for (const e of rows(m)) expect(String(e.text)).not.toMatch(/the smokeveil/i);
+    expect(m.inline).toBe('the smokeveil');             // the call said "kind"; the engine no longer overrules it on type
+    // and the rows speak the form the call chose, with no mixed sheet
+    expect(rows(m).some((e) => /the smokeveil/i.test(String(e.text)))).toBe(true);
+    expect(checkBlock(m).gates.reader.findings.map((f) => f.rule)).not.toContain('inline-consistency');
   });
 });
 
@@ -698,5 +726,82 @@ describe('a shield is not a second weapon', () => {
     expect(src).toMatch(/A SHIELD IS NOT A SECOND WEAPON/);
     expect(src).toMatch(/\/\^\(\?:shield\|buckler\|tower shield\|kite shield\)\$\/i/);
     expect(src).toMatch(/shieldRow && otherMelee/);
+  });
+});
+
+// HOLDS 3 AND 4 OF THE CRITIC'S READ, 2026-10-15.
+describe('a kit row carries the clause that fired it, and its own fiction', () => {
+  const paladin = async () => {
+    const desc = 'an oathsworn crusader who smites the unclean and mends her soldiers';
+    const scaled = scaleDonor(pickDonor(8, null, 'defender'), 8, { mechanics: [] });
+    const renames = {}; renameKeysOf(scaled).forEach((k, i) => { renames[k] = `Row${i}`; });
+    const typed = Object.values(scaled.sections).flat().filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name);
+    const ans = JSON.stringify({ name: 'Oathmender Marisel', type: 'Humanoid', size: 'Medium', alignment: 'Lawful Good', senses: 'darkvision 60 ft.', languages: 'Common',
+      renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Slashing'])), conditions: { condition_minor: 'Prone' }, melee_rider: 'none' });
+    const m = await generateReskin({ cr: 8, concept: desc, userConcept: desc, resolvedType: 'Humanoid', archetype: 'defender', mechanics: [] }, async () => ans);
+    return Object.values(m.sections).flat();
+  };
+
+  test('HOLD 3: the clause that fired the row, not the one that named the class', async () => {
+    // `ck.clause` alone credited "a paladin", so "smites the unclean" and "mends
+    // her soldiers" read as DROPPED while Divine Smite and Lay on Hands sat on
+    // the sheet. Provenance is stamped when the row fires, never re-matched.
+    const rows = await paladin();
+    expect(rows.find((e) => /Divine Smite/.test(e.name ?? ''))?.clause).toMatch(/smites the unclean/);
+    expect(rows.find((e) => /Lay on Hands/.test(e.name ?? ''))?.clause).toMatch(/mends her soldiers/);
+  });
+
+  test('a row with no keys of its own still credits the class clause', async () => {
+    const rows = await paladin();
+    expect(rows.find((e) => /Aura of Authority/.test(e.name ?? ''))?.clause).toMatch(/crusader/);
+  });
+
+  test('HOLD 4: a smite is Radiant — the shape\'s fiction beats the hit\'s type', async () => {
+    // the on-hit-extra rule retypes a rider to the melee hit's own physical type,
+    // which is right for a chassis rider and wrong for a row whose fiction names
+    // its damage: Divine Smite shipped Slashing. `energy` is catalog data now.
+    const rows = await paladin();
+    const smite = rows.find((e) => /Divine Smite/.test(e.name ?? ''));
+    expect(smite.text).toMatch(/extra \d+ \(\d+d\d+\) Radiant damage/);
+    expect(smite.text).not.toMatch(/Slashing|Bludgeoning|Piercing/);
+  });
+
+  test('and a chassis rider with no fiction still takes the hit\'s type', async () => {
+    const rows = await paladin();
+    const rider = rows.find((e) => !e.kit && /takes an extra \d+ \(\d+d\d+\) (?:Bludgeoning|Piercing|Slashing) damage/.test(e.text ?? ''));
+    if (rider) expect(rider.text).toMatch(/Slashing/); // the melee row's own type
+  });
+});
+
+// STAGE 1 ITEM 5 — the inline validator's accept and refuse decisions (owner's
+// fix order, 2026-10-16; category confirmed before writing). "Thing in the Well"
+// spoke as "the well" (canaries-2026-10-16T09-26-32) — the place, not the
+// creature — because the "of" rule covered only "of"; and "the thing in the
+// well" and "the unmoved stone" were refused for being longer than two words,
+// though a contiguous run of the name's own words is exactly what is legal.
+// Print heads the same way: it names a "Swarm of Bats" and says "the swarm".
+describe('stage 1 item 5: the inline validator', () => {
+  const desc = 'a thing in a well that drags the living down';
+  const run = (name, inline, kind) => gen({ archetype: 'lurker', concept: desc, userConcept: desc, cr: 5 },
+    json(name, 'Monstrosity', 5, null, 'lurker', { extra: { inline, inline_kind: kind, clauses: [{ text: desc, kind: 'mechanical' }] } }));
+
+  test('a run past any preposition is refused — the place is not the creature', async () => {
+    const m = await run('Thing in the Well', 'the well', 'kind');
+    expect(m.inline).not.toBe('the well');
+    expect(m.inline).toMatch(/^the /);               // the call said kind; it still speaks as one
+    expect(m.inline).toBe('the thing');              // the head, with its article
+  });
+  test('the head run and the whole name are both legal', async () => {
+    expect((await run('Thing in the Well', 'the thing', 'kind')).inline).toBe('the thing');
+    expect((await run('Thing in the Well', 'the thing in the well', 'kind')).inline).toBe('the thing in the well');
+  });
+  test('a refused person form falls back to a person, never to a kind', async () => {
+    // the call answered person with a title the Name carries; the honorific list
+    // had five words and this one was outside it, so the rules produced a KIND
+    // form — the one thing the call had ruled out (Brother Aldren Vosch,
+    // branch-holds-2026-10-16T09-38-31)
+    const m = await run('Brother Aldren Vosch', 'Brother Aldren', 'person');
+    expect(m.inline).toBe('Brother Aldren');
+    expect(m.inline).not.toMatch(/^the /);
   });
 });
