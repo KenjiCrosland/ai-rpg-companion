@@ -16,7 +16,7 @@
 | Oathsworn Crusader | 8 | 2024 | defender-8-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 5/6 |
 | Unseen Blade | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 5/7 |
 | Ravine Packstalker | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 2/3 |
-| Skeinfang Imp | 4 | 2024 | skirmisher-3 | ok | SOFT: band | ok | ok | ok | ok | ok | ok | ok | soft (1) | 1/1 | 5/5 |
+| Skeinfang Imp | 4 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/5 |
 | Bone-Labyrinth Reaver | 6 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 4/5 |
 | Broken Wall Sentinel | 7 | 2024 | defender-5 | ok | ok | FAIL: lint:duplicate-entry | ok | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 1/4 |
 | Bellcount Cutpurse | 3 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 3/5 |
@@ -88,9 +88,9 @@
 - read: def 1 / off 3 → 2; sustained 24 (2 × Bite); nova none; dmg 24
 
 ## Skeinfang Imp (CR 4)
-- bands · SOFT · band: reads CR 2.5 (print at 4 reads 0.75–6, n=66)
+- clean
 - donor · note · print-row-exception: Bonus Actions/Nimble Escape rides on: the user's own part, feature or species
-- read: def 1 / off 4 → 2.5; sustained 30 (2 × Sting); nova none; dmg 30
+- read: def 2 / off 4 → 3; sustained 30 (2 × Sting); nova none; dmg 30
 
 ## Bone-Labyrinth Reaver (CR 6)
 - clean

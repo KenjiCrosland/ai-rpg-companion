@@ -34,5 +34,5 @@
 
 ## Trineye (CR 4)
 - bands · SOFT · aim-hp: HP 52 is 31% under the card's 75
-- bands · SOFT · band: reads CR 2.5 (print at 4 reads 0.75–6, n=66)
+- bands · SOFT · band: reads CR 2.5 (print at 4 reads 1–6, n=66)
 - read: def 1 / off 4 → 2.5; sustained 28 (2 × Claws); nova none; dmg 28

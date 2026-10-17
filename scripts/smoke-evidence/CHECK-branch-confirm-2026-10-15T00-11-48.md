@@ -12,5 +12,5 @@
 
 
 ## Vareth Solmane (CR 6)
-- bands · SOFT · band: reads CR 4 (print at 6 reads 3–8, n=42)
+- bands · SOFT · band: reads CR 4 (print at 6 reads 3–8.5, n=42)
 - read: def 2 / off 6 → 4; sustained 44 (2 × Mace); nova none; dmg 44

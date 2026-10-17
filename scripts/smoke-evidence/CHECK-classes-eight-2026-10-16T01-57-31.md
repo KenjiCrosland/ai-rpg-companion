@@ -76,7 +76,7 @@
 
 ## Serah Vaelor (CR 8)
 - clean
-- read: def 6 / off 8 → 7; sustained 54 (3 × Longsword); nova none; dmg 54
+- read: def 7 / off 8 → 7.5; sustained 54 (3 × Longsword); nova none; dmg 54
 
 ## Sorrowblade (CR 5)
 - clean
@@ -90,7 +90,7 @@
 ## Lockvault Imp (CR 4)
 - clean
 - donor · note · print-row-exception: Bonus Actions/Nimble Escape rides on: the user's own part, feature or species
-- read: def 1 / off 6 → 3.5; sustained 40 (2 × Sting); nova none; dmg 40
+- read: def 2 / off 6 → 4; sustained 40 (2 × Sting); nova none; dmg 40
 
 ## Mazeherd Warden (CR 6)
 - clean

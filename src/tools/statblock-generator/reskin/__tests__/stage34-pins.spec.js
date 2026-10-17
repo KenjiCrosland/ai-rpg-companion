@@ -318,3 +318,79 @@ describe('an asked field needs a receipt in the clause', () => {
     expect(log).toMatch(/ask vs row (ok|MISMATCH):|asked but unanswered:/);
   });
 });
+
+// ROUTING — hold 2, worked from the critic's read of
+// classes-eight-2026-10-16T22-10-02, where Patient Defense yielded to the cap
+// while Fleet Agility (a rules-only chassis row) stood.
+describe('the cap and the trait ceiling evict in the same order (critic hold 2)', () => {
+  const { checkBlock } = require('../checker.mjs');
+
+  test("a rules-only chassis row is filler, so a kit row lands instead of yielding", async () => {
+    const c = 'a lizardfolk monk who strikes pressure points with an open hand';
+    const lines = []; const orig = console.log;
+    console.log = (...a) => { lines.push(a.map(String).join(' ')); };
+    let m;
+    try { m = await run(c, 5, 'skirmisher', 'skirmisher', { type: 'Humanoid' }); } finally { console.log = orig; }
+    const log = lines.join('\n');
+    // whatever the cap does, it may no longer turn a kit row away while a
+    // rules-only donor row stands: either nothing yielded, or an eviction ran
+    const yielded = /yielded to print's row cap/.test(log);
+    const evicted = /row evicted for the cap/.test(log);
+    expect(yielded && !evicted).toBe(false);
+    expect(checkBlock(m).fails).toEqual([]);
+  });
+
+  // The owed-kit-row-vs-signature case is already pinned, and it is what caught
+  // this regression: classes.spec.js "a named rogue carries print's Cunning
+  // Action, with the clause that asked for it" asserts Assassinate survives.
+  // Not duplicated here — a second copy with a different stub shape tests the
+  // stub, not the engine.
+
+  test('a print row is still never evicted, even carrying the rules flag', () => {
+    // Spellcasting and Pack Tactics ship as `rules + print`; `print` is the guard
+    const { rowNamesOf } = require('../checker.mjs');
+    const sheet = { sections: { Traits: [{ name: 'Pack Tactics', rules: true, print: true }], Actions: [{ name: 'Spellcasting', rules: true, print: true }] } };
+    expect(rowNamesOf(sheet)).toEqual(['Pack Tactics', 'Spellcasting']);
+  });
+});
+
+// DATA INTEGRITY — the defensive half prices defensive traits (owner, 2026-10-16:
+// "that's half of the equation when calculating cr"). Sized from print: each
+// shape read ~0.5 CR below the reader's own baseline without it.
+describe('defensive traits move the defensive half', () => {
+  const { dmgRead } = require('../checker.mjs');
+  const base = {
+    name: 'T', cr: 5, ac: 15, hp: 100,
+    sections: { Actions: [{ name: 'Slam', text: '*Melee Attack Roll:* +7, reach 5 ft. 12 (2d6 + 4) Bludgeoning damage.' }] },
+  };
+  const withTrait = (name, text) => ({ ...base, sections: { ...base.sections, Traits: [{ name, text }] } });
+  const crN = (c) => { const s = String(c); return s.includes('/') ? Number(s.split('/')[0]) / Number(s.split('/')[1]) : Number(s); };
+
+  test('Magic Resistance is worth a rung', () => {
+    const a = crN(dmgRead(base).def);
+    const b = crN(dmgRead(withTrait('Magic Resistance', 'The creature has Advantage on saving throws against spells.')).def);
+    expect(b).toBeGreaterThan(a);
+  });
+
+  test('Legendary Resistance is worth a rung', () => {
+    const a = crN(dmgRead(base).def);
+    const b = crN(dmgRead(withTrait('Legendary Resistance (3/Day)', 'If the creature fails a saving throw, it can choose to succeed instead.')).def);
+    expect(b).toBeGreaterThan(a);
+  });
+
+  test('the rungs stack, and a sheet with none is unchanged', () => {
+    const none = crN(dmgRead(base).def);
+    const one = crN(dmgRead(withTrait('Magic Resistance', 'Advantage on saving throws against spells.')).def);
+    const two = crN(dmgRead({ ...base, sections: { ...base.sections, Traits: [
+      { name: 'Magic Resistance', text: 'Advantage on saving throws against spells.' },
+      { name: 'Legendary Resistance (3/Day)', text: 'Legendary Resistance: it succeeds instead.' },
+    ] } }).def);
+    expect(two).toBeGreaterThan(one);
+    expect(one).toBeGreaterThan(none);
+  });
+
+  test('the offensive half is untouched', () => {
+    expect(dmgRead(withTrait('Magic Resistance', 'Advantage on saving throws against spells.')).off)
+      .toBe(dmgRead(base).off);
+  });
+});

@@ -94,7 +94,7 @@
 - clean
 - donor · note · print-row-exception: Traits/Evasion rides on: the user's own part, feature or species
 - donor · note · print-row-exception: Bonus Actions/Nimble Escape rides on: the user's own part, feature or species
-- read: def 1 / off 6 → 3.5; sustained 40 (2 × Sting); nova none; dmg 40
+- read: def 2 / off 6 → 4; sustained 40 (2 × Sting); nova none; dmg 40
 
 ## Asterion Herdmaster (CR 6)
 - clean

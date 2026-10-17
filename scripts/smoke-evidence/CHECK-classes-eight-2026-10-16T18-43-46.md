@@ -16,7 +16,7 @@
 | Grave Oath | 8 | 2024 | defender-8-leader | ok | ok | FAIL: dangling-ref | ok | ok | ok | ok | ok | ok | FAIL (1) | 2/2 | 2/6 |
 | Duskveil Whisperblade | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 2/7 |
 | Taiga Pack Wolf | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 3/3 |
-| Sootkey Imp | 4 | 2024 | skirmisher-3 | ok | SOFT: band | ok | ok | ok | ok | ok | ok | ok | soft (1) | 1/1 | 5/5 |
+| Sootkey Imp | 4 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/5 |
 | Mazeherd Reaver | 6 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/5 |
 | Last Shield | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/4 |
 | Verren Duskwhisk | 3 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 0/5 |
@@ -89,9 +89,9 @@
 - read: def 1 / off 3 → 2; sustained 24 (2 × Bite); nova none; dmg 24
 
 ## Sootkey Imp (CR 4)
-- bands · SOFT · band: reads CR 2.5 (print at 4 reads 0.75–6, n=66)
+- clean
 - donor · note · print-row-exception: Bonus Actions/Nimble Escape rides on: the user's own part, feature or species
-- read: def 1 / off 4 → 2.5; sustained 30 (2 × Sting); nova none; dmg 30
+- read: def 2 / off 4 → 3; sustained 30 (2 × Sting); nova none; dmg 30
 
 ## Mazeherd Reaver (CR 6)
 - clean

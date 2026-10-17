@@ -156,7 +156,27 @@ export function dmgRead(m) {
   const dcBest = Math.max(0, ...[...JSON.stringify(m.sections ?? {}).matchAll(/DC (\d+)/g)].map((x) => Number(x[1])));
   const effHp = effectiveHp(m, Number(m.cr ?? crNum(m.cr_str ?? '0')));
   const defBase = crByBand(effHp, 'min_hit_points', 'max_hit_points');
-  const def = stepCR(defBase, Math.trunc((Number(m.ac) - TABLE[defBase].armor_class) / 2));
+  // DEFENSIVE TRAITS ARE HALF THE EQUATION (owner, 2026-10-16). The defensive
+  // half priced HP, AC and wide resistances only, so a trait that makes a
+  // creature harder to put down was free. Measured over the 329-block frozen
+  // corpus, by full read against print's own CR:
+  //   no defensive trait   n=159  -0.60   <- the reader's baseline bias
+  //   Magic Resistance     n=33   -1.07
+  //   Legendary Resistance n=32   -1.09
+  //   Regeneration         n=3    -1.50
+  // Carrying one costs about half a CR on the full read, which is one rung on
+  // the defensive half. +1 rung brings each shape back to the baseline gap — it
+  // does NOT try to correct the baseline itself, which is the parked DPR
+  // question. The DMG prices Magic Resistance at +2 effective AC, and a rung is
+  // 2 AC, so print and the book agree on the size.
+  // Regeneration's -1.50 suggests two rungs; n=3 is too thin to spend, so it
+  // takes one with the rest.
+  const defText = allRows(m).map(({ e }) => `${e.name ?? ''} ${e.text ?? ''}`).join(' ');
+  const defTraitRungs = (/Magic Resistance|Advantage on saving throws against spells/i.test(defText) ? 1 : 0)
+    + (/Legendary Resistance/i.test(defText) ? 1 : 0)
+    + (/\bRegeneration\b|regains \d+ Hit Points at the start of/i.test(defText) ? 1 : 0)
+    + (/Undead Fortitude|drops to 1 Hit Point instead/i.test(defText) ? 1 : 0);
+  const def = stepCR(defBase, Math.trunc((Number(m.ac) - TABLE[defBase].armor_class) / 2) + defTraitRungs);
   const offBase = crByBand(Math.round(s.dmg), 'min_damage_per_round', 'max_damage_per_round');
   const offRow = TABLE[offBase];
   const offAdj = Math.trunc(((atkBest ? atkBest - Number(String(offRow.attack_bonus).replace('+', '')) : dcBest ? dcBest - offRow.save_dc : 0)) / 2);

@@ -92,7 +92,7 @@
 ## Lockpick Imp (CR 4)
 - clean
 - donor · note · print-row-exception: Bonus Actions/Nimble Escape rides on: the user's own part, feature or species
-- read: def 2 / off 6 → 4; sustained 40 (2 × Sting); nova none; dmg 40
+- read: def 3 / off 6 → 4.5; sustained 40 (2 × Sting); nova none; dmg 40
 
 ## Maze Warden (CR 6)
 - clean

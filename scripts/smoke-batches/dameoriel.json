@@ -1,0 +1,8 @@
+[
+  { "name": "Dame Oriel", "description": "a knight who fights with a measured, unbreakable guard", "cr": "5", "rules": "2024",
+    "canary": "GATE: a high-AC knight must NOT also get Guarded Stance — print ships no persistent Disadvantage-to-be-hit (0 of 329)", "mode": "band" },
+  { "name": "", "description": "a lightly armoured duelist who slips every blow by a hair", "cr": "5", "rules": "2024",
+    "canary": "CONTROL: at or below print's AC for its CR, the trait may still land — the gate is AC, not the trait", "mode": "band" },
+  { "name": "", "description": "a knight-errant of the fallen order who shields the weak", "cr": "7", "rules": "2024",
+    "canary": "REGRESSION: a defender still gets its kit and signature with the trait gated", "mode": "band" }
+]

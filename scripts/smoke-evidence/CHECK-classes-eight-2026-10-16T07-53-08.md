@@ -16,7 +16,7 @@
 | Ashvowed Meridane | 8 | 2024 | defender-8-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 2/6 |
 | Shadow-Veil Shinobi | 5 | 2024 | skirmisher-3-skulker | FAIL: attack-stat | ok | ok | ok | ok | ok | ok | ok | FAIL: name-mechanic | FAIL (2) | 0/2 | 3/7 |
 | Scarhide Pack-Leader | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 3/3 |
-| Skeleton Key Imp | 4 | 2024 | skirmisher-3 | ok | SOFT: band | ok | ok | ok | ok | ok | ok | ok | soft (1) | 1/1 | 5/5 |
+| Skeleton Key Imp | 4 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/5 |
 | Mazehorn Reaver | 6 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/5 |
 | Ashen Vow of the Rampart | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 2/4 |
 | Whisker Veil | 3 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 1/5 |
@@ -92,9 +92,9 @@
 - read: def 1 / off 3 → 2; sustained 24 (2 × Bite); nova none; dmg 24
 
 ## Skeleton Key Imp (CR 4)
-- bands · SOFT · band: reads CR 2.5 (print at 4 reads 0.75–6, n=66)
+- clean
 - donor · note · print-row-exception: Bonus Actions/Nimble Escape rides on: the user's own part, feature or species
-- read: def 1 / off 4 → 2.5; sustained 30 (2 × Sting); nova none; dmg 30
+- read: def 2 / off 4 → 3; sustained 30 (2 × Sting); nova none; dmg 30
 
 ## Mazehorn Reaver (CR 6)
 - clean

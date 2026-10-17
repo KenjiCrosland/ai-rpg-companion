@@ -24,14 +24,14 @@
 - donor · SOFT · print-rows: rows outside print, the named seat and the keyed seeds: Traits/Magic Resistance
 - bands · note · print-numbers: Stone Golem's own numbers at its own CR — the donor gate verifies them; the band is print's by definition
 - donor · note · print-row-exception: Traits/Cinder Revenge rides on: seed the user's words keyed
-- read: def 10 / off 11 → 10.5; sustained 66 (2 × Slam); nova none; dmg 66
+- read: def 11 / off 11 → 11; sustained 66 (2 × Slam); nova none; dmg 66
 
 ## Gravebloat Carrion (CR 8)
 - clean
-- read: def 5 / off 9 → 7; sustained 45 (3 × Claw); nova Plummeting Snatch 44; dmg 59
+- read: def 6 / off 9 → 7.5; sustained 45 (3 × Claw); nova Plummeting Snatch 44; dmg 59
 
 ## Thundercrash Juggernaut (CR 15)
-- bands · SOFT · band: reads CR 18.5 (print at 15 reads 6.5–17.5, n=12)
+- bands · SOFT · band: reads CR 18.5 (print at 15 reads 7.5–18, n=12)
 - bands · FAIL · hot: reads CR 18.5, more than three over
 - bands · SOFT · hot-offense: offense alone reads CR 20, 5 over; the HP axis pulls the read to 18.5
 - read: def 17 / off 20 → 18.5; sustained 88 (2 × Thunderous Slam); nova Whirlwind 71; dmg 124

@@ -21,7 +21,7 @@
 
 
 ## Sable Nefret (CR 5)
-- bands · SOFT · band: reads CR 7 (print at 5 reads 2–8, n=52)
+- bands · SOFT · band: reads CR 7 (print at 5 reads 2–8.5, n=52)
 - bands · SOFT · hot-offense: offense alone reads CR 11, 6 over; the HP axis pulls the read to 7
 - gates · SOFT · rider-no-save: Actions/Shortsword: a Poisoned rider on every hit with no save
 - donor · SOFT · print-rows: rows outside print, the named seat and the keyed seeds: Bonus Actions/Fleet Agility
@@ -46,10 +46,10 @@
 
 ## Old Road Warden (CR 5)
 - clean
-- read: def 4 / off 6 → 5; sustained 40 (2 × Fist); nova none; dmg 40
+- read: def 5 / off 6 → 5.5; sustained 40 (2 × Fist); nova none; dmg 40
 
 ## Sable Nefret (CR 5)
-- bands · SOFT · band: reads CR 7 (print at 5 reads 2–8, n=52)
+- bands · SOFT · band: reads CR 7 (print at 5 reads 2–8.5, n=52)
 - bands · SOFT · hot-offense: offense alone reads CR 11, 6 over; the HP axis pulls the read to 7
 - gates · SOFT · rider-no-save: Actions/Shortsword: a Poisoned rider on every hit with no save
 - donor · SOFT · print-rows: rows outside print, the named seat and the keyed seeds: Bonus Actions/Fleet Agility
@@ -77,4 +77,4 @@
 ## Old Road Warden (CR 5)
 - clean
 - donor · note · print-row-exception: Traits/Toll Snare rides on: seed the user's words keyed
-- read: def 4 / off 6 → 5; sustained 40 (2 × Fist); nova none; dmg 40
+- read: def 5 / off 6 → 5.5; sustained 40 (2 × Fist); nova none; dmg 40

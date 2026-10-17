@@ -12,6 +12,30 @@ Before implementing anything substantive, **scan `plans/README.md`** and read an
 
 When you finish work that resolved a plan's trigger, delete the plan file and remove its entry from `plans/README.md` — don't leave stale ones around.
 
+## Meaning is a call field, never a word list
+
+**Do not add, extend or rely on keyword tables, regexes or word lists to decide
+what the GM meant** — class, archetype, mechanic, polarity, trigger, energy, or
+whether a row answers a clause.
+
+Code may:
+- **validate** a call's answer (enum membership, a quote exists, numbers in bounds)
+- keep **closed facts** (print names, the weapon table, CR math, print's own rates)
+- act as a **fallback** only when the call fails or errors — never as a tiebreaker
+  against it
+
+**If a fix seems to need a new word rule, stop and propose it to the owner
+instead of writing it.**
+
+Why: prompts are short, and keyword tables fail exactly where they are. Two words
+like "lizardfolk ninja" or "fire monk" carry no verb to match, and an idiom fools
+them outright — "flies into an unstoppable rage" routed a berserker to the winged
+seat and shipped it with Fly 70 ft. The classification call already names the
+archetype, type, style, energy and mechanics on every trace's resolve line; the
+tables overrule it.
+
+Owner's ruling, 2026-10-16 ("Fix Order: Holds and Move Sets", stage 4b).
+
 ## Security Notes
 
 **IMPORTANT - API Key Protection**:

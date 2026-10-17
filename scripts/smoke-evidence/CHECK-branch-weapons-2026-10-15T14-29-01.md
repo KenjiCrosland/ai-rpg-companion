@@ -31,4 +31,4 @@
 ## Quarry Palm (CR 5)
 - gates · SOFT · ko-at-will: Actions/Fist: Stunned at will, single target with a repeat save or a one-turn cap (the Ghoul's shape)
 - donor · note · print-row-exception: Traits/Clinging Grip rides on: seed the user's words keyed
-- read: def 4 / off 7 → 5.5; sustained 50 (2 × Fist); nova none; dmg 50
+- read: def 5 / off 7 → 6; sustained 50 (2 × Fist); nova none; dmg 50

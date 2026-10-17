@@ -1415,6 +1415,14 @@ async function generateStatblockEngine(edition) {
         try {
           const converted = await convertEdition(source, (p, v) => generateGptResponse(p, v, 3), { degraded: isDegradedMode() });
           delete converted._conversionNotes;
+          // PROVENANCE SURVIVES THE EDITION (critic's gate-4 read, 2026-10-16).
+          // The conversion rewrites PHRASING and returns a fresh object, so
+          // `generation` — the clause record, the donor, the trace's provenance —
+          // was dropped on every 2014 sheet. Coverage reads generation.clauses,
+          // so it scored every 2014 block against an empty clause list: Kaelen
+          // and Thurivald were the only two 2014 blocks in
+          // classes-eight-2026-10-16T22-10-02 and the only two with none.
+          if (source.generation && !converted.generation) converted.generation = source.generation;
           converted.other_edition = finalMonster;
           finalMonster = converted;
           logger.log('[reskin] 2014 conversion:', 'one lint-gated call — both printings saved');
@@ -1425,6 +1433,7 @@ async function generateStatblockEngine(edition) {
           // — the 2024 markers display as italic labels, no strip needed;
           // the deterministic 2014 grammar pass still runs so no 2024 token ships (checker 2026-10-02)
           for (const k of ['abilities', 'actions', 'bonus_actions', 'reactions', 'legendary_actions']) if (Array.isArray(shaped[k])) shaped[k] = shaped[k].map((e) => ({ ...e, name: String(e.name ?? '').replace(/\bBloodied\b/g, 'Wounded'), description: to2014Grammar(e.description) }));
+          if (source.generation && !shaped.generation) shaped.generation = source.generation; // the degraded path loses it too
           shaped.other_edition = finalMonster;
           finalMonster = shaped;
         }

@@ -81,7 +81,7 @@
 
 ## Dame Marisel Vane (CR 8)
 - clean
-- read: def 6 / off 8 → 7; sustained 54 (3 × Longsword); nova none; dmg 54
+- read: def 7 / off 8 → 7.5; sustained 54 (3 × Longsword); nova none; dmg 54
 
 ## Nychta Vale (CR 5)
 - reader · FAIL · name-mechanic: Actions/Poisoned Dart: the name promises Poison the text lacks
@@ -97,11 +97,11 @@
 - clean
 - donor · note · print-row-exception: Bonus Actions/Nimble Escape rides on: the user's own part, feature or species
 - donor · note · print-row-exception: Bonus Actions/Shadow's Rebuke rides on: seed the user's words keyed
-- read: def 1 / off 6 → 3.5; sustained 40 (2 × Sting); nova none; dmg 40
+- read: def 2 / off 6 → 4; sustained 40 (2 × Sting); nova none; dmg 40
 
 ## Coilwarden (CR 6)
 - bands · SOFT · aim-hp: HP 82 is 22% under the card's 105
-- bands · SOFT · band: reads CR 4 (print at 6 reads 3–8, n=42)
+- bands · SOFT · band: reads CR 4 (print at 6 reads 3–8.5, n=42)
 - read: def 2 / off 6 → 4; sustained 44 (2 × Horn); nova none; dmg 44
 
 ## Oathbound Sentinel (CR 7)

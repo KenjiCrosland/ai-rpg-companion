@@ -2327,12 +2327,34 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   const evictForCap = (wanting, trace2) => {
     const EVICTABLE = ['Traits', 'Bonus Actions', 'Reactions'];
     const gmBound = (e) => !!(e.part || e.feature || e.authored || e.clause || (e.boundKeys ?? []).length);
+    // A CHASSIS "rules" ROW IS FILLER (critic's hold 2, still live in
+    // classes-eight-2026-10-16T22-10-02). `e.rules` was in the never-evict list,
+    // so Patient Defense yielded to print's row cap 4 on the Steam-Marsh monk
+    // while Fleet Agility — a rules-only chassis row that grants Dash/Disengage,
+    // and the brief's own example of chassis filler — stood. Rampage and
+    // Bolstering Cry yielded the same way on other sheets.
+    // `rules` is not provenance: scale.mjs stamps it on the donor's own agility
+    // and cunning rows, and print rows carry `print` beside it, so print stays
+    // protected while the chassis's filler becomes evictable.
+    // A row is protected only if another row CITES it — the shapes danglingRefIn
+    // scans, so eviction can never manufacture the dangling reference that
+    // predicate exists to catch. (A first version protected any row whose name
+    // appeared anywhere in another row's text; that blocked evictions that used
+    // to succeed and an OWED Assassinate yielded instead — classes.spec.js
+    // caught it.)
+    const referenced = (e) => {
+      const n = String(e.name ?? '').replace(/ \(.*\)$/, '');
+      if (!n) return false;
+      const others = Object.values(sections).flat().filter((x) => x !== e);
+      const names = others.map((x) => String(x.name ?? '').replace(/ \(.*\)$/, ''));
+      return others.some((x) => danglingRefIn(x.text, names, x.name ?? '') === n);
+    };
     const tier = (e) => {
-      if (e.print || e.printNamed || e.rules || gmBound(e)) return null;      // never
-      if (!e.kit && !e.template && !e.seed && !e.library) return 0;           // chassis filler
-      if (e.template || e.seed || e.library) return 1;                        // the signature
+      if (e.print || e.printNamed || gmBound(e)) return null;                 // never
+      if (referenced(e)) return null;                                         // another row points at it (a Multiattack's "use of Spellcasting")
       if (e.kit) return 2;                                                    // a kit row
-      return null;
+      if (e.template || e.seed || e.library) return 1;                        // the signature
+      return 0;                                                               // chassis filler, a rules-only donor row included
     };
     let best = null;
     for (const sec of EVICTABLE) for (const e of sections[sec] ?? []) {
@@ -3209,6 +3231,25 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const spent = pool.filter((t) => rankByVerb([t], rawConceptText, rawIdeaText)[0].matched.length && !rankByVerb([t], verbText, idea.idea)[0].matched.length);
         if (spent.length) { trace('trait cards excluded — verb spent by the action:', spent.map((t) => t.id).join(', ')); pool = pool.filter((t) => !spent.includes(t)); }
       }
+      // A TRAIT PRINT NEVER SHIPS MAY NOT STACK WITH HIGH AC (owner's call,
+      // 2026-10-16, on the critic's Dame Oriel: Guarded Stance beside AC 19 at
+      // CR 5 takes a +7 attacker from ~45% to ~20%, and the defensive read
+      // scored her a rung LOW because the trait was free).
+      // `disadv-to-hit` appears in 0 of the 329 frozen print blocks — the
+      // template's own note concedes its only instance is an unpriced CR 1/4
+      // mephit — so there is nothing to calibrate a price against. The owner's
+      // answer is to gate it rather than price it: a creature already harder to
+      // hit than print's own AC for its CR does not also get Disadvantage.
+      // The bar is print's table, a closed fact, not a judgement.
+      {
+        const acNow = Number(monster.ac ?? scaled.ac ?? 0);
+        const acPar = Number(challengeRatings?.[crKey(cr)]?.armor_class ?? 0);
+        if (acNow && acPar && acNow > acPar) {
+          const before = pool.length;
+          pool = pool.filter((t) => t.id !== 'guarded-stance');
+          if (pool.length < before) { pruned.push('guarded-stance'); trace('trait gated by AC:', `"guarded-stance" is off the menu — AC ${acNow} already beats print's AC ${acPar} at CR ${cr}, and print ships no persistent Disadvantage-to-be-hit trait (0 of 329)`); }
+        }
+      }
       if (pruned.length) trace('menu pruned:', `${seat} — ${[...new Set(pruned)].join(', ')} (the sheet cannot render them)`);
       trace(`signature idea (${seat}):`, `"${idea.idea}" ${tagOf(idea)} — menu: ${menu.map((t) => t.id).join(', ') || 'EMPTY'}${pool.length > menu.length ? ` (+ shelf: ${pool.filter((t) => !menu.includes(t)).map((t) => t.id).join(', ')})` : ''}`);
       if (!pool.length && idea.section === 'reaction') {
@@ -3578,7 +3619,19 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         if (secT === 'Traits' && traitRows().length >= ceiling) {
           // a concept-bound trait is what the user asked for: it evicts a shelf
           // trait no verb of theirs named, rather than losing to a full sheet
-          const weak = traitRows().find((e2) => e2.template && !e2.bound);
+          // THE SAME PRIORITY AS THE ROW CAP (critic's hold 2, 2026-10-16). This
+          // took the first template row that was not concept-bound, and a KIT
+          // row carries a template id too — so a rogue's owed Assassinate left
+          // for a signature, which inverts the order (chassis filler, then the
+          // signature, then a kit row, and a kit row last). Prefer a non-kit
+          // row; fall back to the old reading only when nothing else is there.
+          // A KIT ROW NEVER YIELDS TO A SIGNATURE, and an owed row never yields
+          // at all. When the only candidate is one of those, the NEWCOMER stands
+          // down instead — the same answer the cap gives. (A first attempt kept a
+          // final `e2.template && !e2.bound` fallback, which picked the kit row
+          // regardless and left the rogue's owed Assassinate leaving for a
+          // signature.)
+          const weak = traitRows().find((e2) => e2.template && !e2.bound && !e2.kit && e2.owed !== true);
           if (!bound || !weak) { trace('trait ceiling:', `"${tt.row.name}" does not ship — ${traitRows().length} traits already, and print's ceiling for a ${materialBody ? 'material' : 'meat'} body is ${ceiling}`); return; }
           traitRows().splice(traitRows().indexOf(weak), 1);
           trace('trait ceiling:', `"${weak.name}" leaves for the concept-bound "${tt.row.name}" — ${ceiling} traits is print's ceiling for this body`);
@@ -4757,6 +4810,38 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (thresh <= dealt) continue;
     e.text = e.text.replace(th[0], `has ${dealt} Hit Points or fewer`);
     trace('threshold re-derived after the cap:', `${sec}/${String(e.name)} — ${thresh} over the row's own ${dealt} damage, so the kill branch beat the damage branch; threshold to ${dealt}`);
+  }
+  // DISADVANTAGE-TO-BE-HIT MAY NOT STACK WITH HIGH AC (owner's call, 2026-10-16,
+  // on the critic's Dame Oriel: Guarded Stance beside AC 19 at CR 5 takes a +7
+  // attacker from ~45% to ~20%). `disadv-to-hit` is in 0 of the 329 frozen print
+  // blocks, so there is no price to calibrate — the answer is to stop the stack.
+  //
+  // The menu prune alone did not do it: this trait is also a FIGHTER KIT row
+  // (classes.mjs, keyed on "guard"/"stance"/"defensive"), so Dame Oriel got it
+  // from the kit without the signature menu ever being consulted. One definition,
+  // every reader — so the rule lands here, over the finished sheet, whatever door
+  // the row came through.
+  //
+  // And it SHAPES rather than removes: a gate may shape what the GM asked for,
+  // never take it away. The GM asked for a guarded knight, so the guard stays and
+  // the AC comes down to print's own number for the CR — the trait is then priced
+  // by the defensive rung added the same day, instead of being free on top of
+  // armour print never gives.
+  {
+    const DISADV = /attack rolls? against (?:it|the \w+|[A-Z][\w' -]*) (?:are|is) made with Disadvantage|attack rolls? against (?:it|the \w+) have Disadvantage/i;
+    const hit = Object.values(sections).flat().find((e) => DISADV.test(e.text ?? ''));
+    const acPar = Number(challengeRatings?.[crKey(cr)]?.armor_class ?? 0);
+    // PRINT OVERRULES. A print body's AC is print's own number, and a print row
+    // that grants Disadvantage was priced by print when it shipped — the CR 4
+    // duelist borrows the Gladiator at AC 16 and lowering it broke the donor
+    // gate (classes-era pin, caught 2026-10-16). The trap this guards against is
+    // an INVENTED trait on armour the engine chose.
+    const printBodyAC = printExact || !!pcRoute || !!hit?.print || !!hit?.printNamed;
+    if (hit && acPar && !printBodyAC && Number(monster.ac) > acPar) {
+      const was = monster.ac;
+      monster.ac = acPar;
+      trace('AC lowered for a disadvantage trait:', `"${String(hit.name).replace(/ \(.*\)$/, '')}" makes this creature harder to hit, so its AC comes down to print's ${acPar} at CR ${cr} (was ${was}) — print ships no persistent Disadvantage-to-be-hit trait (0 of 329), and the two together read as a trap`);
+    }
   }
   // A HUMANOID'S DARKVISION NEEDS A WARRANT (owner's call, 2026-10-16, with
   // class/body). 98% of our Humanoids shipped darkvision against print's 1 of 26.

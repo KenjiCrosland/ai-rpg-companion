@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "a berserker who flies into an unstoppable rage once per day when wounded", "cr": "8", "rules": "2024",
+    "canary": "IDIOM: 'flies into a rage' is anger, not flight — themes must be bestial, NOT aerial, and no Fly speed", "mode": "band" },
+  { "name": "", "description": "a troll that grows back unless the blade was silvered", "cr": "6", "rules": "2024",
+    "canary": "IDIOM: 'grows back' is regeneration, not a plant — the regenerator style must stand and themes must not read verdant", "mode": "band" },
+  { "name": "", "description": "a knight-errant cut off from his fallen order who shields the weak", "cr": "7", "rules": "2024",
+    "canary": "IDIOM: 'cut off' is isolation, not dismemberment — no missing-limb reading", "mode": "band" },
+  { "name": "", "description": "an iron-willed inquisitor who never yields ground", "cr": "6", "rules": "2024",
+    "canary": "IDIOM: 'iron-willed' is resolve, not metal — themes must not read forged", "mode": "band" },
+  { "name": "", "description": "a storm roc that dives on fishing boats from the clouds", "cr": "9", "rules": "2024",
+    "canary": "CONTROL: a creature that LITERALLY flies must still read aerial and keep its Fly speed", "mode": "band" }
+]

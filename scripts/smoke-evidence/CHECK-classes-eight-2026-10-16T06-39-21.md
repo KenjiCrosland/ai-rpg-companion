@@ -79,7 +79,7 @@
 
 ## Serelda Vane (CR 8)
 - clean
-- read: def 6 / off 8 → 7; sustained 54 (3 × Longsword); nova none; dmg 54
+- read: def 7 / off 8 → 7.5; sustained 54 (3 × Longsword); nova none; dmg 54
 
 ## Silent Kage (CR 5)
 - reader · FAIL · inline-form: the call called "Silent Kage" a person and the sheet speaks it as "the silent kage" — a person speaks by its given name
@@ -93,7 +93,7 @@
 - clean
 - donor · note · print-row-exception: Actions/Locksmith's Burst rides on: seed the user's words keyed
 - donor · note · print-row-exception: Bonus Actions/Nimble Escape rides on: the user's own part, feature or species
-- read: def 1 / off 5 → 3; sustained 30 (2 × Sting); nova Locksmith's Burst 22; dmg 35
+- read: def 2 / off 5 → 3.5; sustained 30 (2 × Sting); nova Locksmith's Burst 22; dmg 35
 
 ## Vault Marauder (CR 6)
 - clean

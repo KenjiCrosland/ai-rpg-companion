@@ -16,7 +16,7 @@
 | Oathsworn Crusader | 8 | 2024 | defender-8-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 5/6 |
 | Corvyn Duskshade | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 2/7 |
 | Timber Pack Wolf | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/3 |
-| Lockspinner Imp | 4 | 2024 | skirmisher-3 | ok | SOFT: band | ok | ok | ok | ok | ok | ok | ok | soft (1) | 1/1 | 6/6 |
+| Lockspinner Imp | 4 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 6/6 |
 | Maze-Warden Gorehoof | 6 | 2024 | defender-3-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 2/6 |
 | Vigil Broken-Knight | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 3/4 |
 | Whiskerfingers | 3 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 1/5 |
@@ -86,10 +86,10 @@
 - read: def 1 / off 3 → 2; sustained 24 (2 × Bite); nova none; dmg 24
 
 ## Lockspinner Imp (CR 4)
-- bands · SOFT · band: reads CR 2.5 (print at 4 reads 0.75–6, n=66)
+- clean
 - donor · note · print-row-exception: Traits/Evasion rides on: the user's own part, feature or species
 - donor · note · print-row-exception: Bonus Actions/Nimble Escape rides on: the user's own part, feature or species
-- read: def 1 / off 4 → 2.5; sustained 30 (2 × Sting); nova none; dmg 30
+- read: def 2 / off 4 → 3; sustained 30 (2 × Sting); nova none; dmg 30
 
 ## Maze-Warden Gorehoof (CR 6)
 - clean

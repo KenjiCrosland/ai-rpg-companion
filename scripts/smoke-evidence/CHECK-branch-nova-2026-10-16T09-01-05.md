@@ -21,4 +21,4 @@
 - bands · note · print-numbers: Stone Golem's own numbers at its own CR — the donor gate verifies them; the band is print's by definition
 - donor · note · print-row-exception: Bonus Actions/Retributive Radiance rides on: seed the user's words keyed
 - donor · note · print-row-exception: Traits/Sealbreak Burst rides on: seed the user's words keyed
-- read: def 10 / off 12 → 11; sustained 66 (2 × Slam); nova Sealbreak Burst 39; dmg 70
+- read: def 11 / off 12 → 11.5; sustained 66 (2 × Slam); nova Sealbreak Burst 39; dmg 70

@@ -16,7 +16,7 @@
 
 ## Drowned Witch-Light (CR 6)
 - bands · SOFT · aim-hp: HP 75 is 29% under the card's 105
-- bands · SOFT · band: reads CR 4.5 (print at 6 reads 3–8, n=42)
+- bands · SOFT · band: reads CR 4.5 (print at 6 reads 3–8.5, n=42)
 - read: def 3 / off 6 → 4.5; sustained 44 (2 × Chill); nova none; dmg 44
 
 ## Gravefire Revenant (CR 7)
