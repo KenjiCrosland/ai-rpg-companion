@@ -1139,7 +1139,12 @@ export const DONORS = [
     id: 'caster-6',
     cite: 'composition after Mage (CR 6) — three Arcane Bursts and the utility list',
     cr: 6, archetypes: ['caster'],
-    ac: 15, ac_offset: -1, hp: 84, hp_scale: 0.8, hp_formula: '13d8 + 26', atk: 7, dc: 14, pb: 3,
+    // hp_scale 0.8 -> 0.85 (druid smoke 2026-10-18). This seat is the floor caster
+    // from CR 3 up, and at CR 5 the card's 90 x 0.8 scaled to 71 — under print's
+    // effective floor of 75 (n=52), the lurker-5 defect one donor over. Print's
+    // Mage at its own CR 6 is 0.77 of card (81, print's own floor there); 0.85
+    // gives 89 at CR 6 and 77 at CR 5, over the floor at every CR this seat serves.
+    ac: 15, ac_offset: -1, hp: 89, hp_scale: 0.85, hp_formula: '14d8 + 26', atk: 7, dc: 14, pb: 3,
     speed: '30 ft.',
     stats: { STR: 9, DEX: 14, CON: 12, INT: 17, WIS: 12, CHA: 11 },
     saves: ['INT', 'WIS'], skills: 'Arcana +6, Perception +4',
@@ -1374,7 +1379,20 @@ export const DONORS = [
     id: 'lurker-5',
     cite: 'composition after Phase Spider (CR 3) — the rider-heavy bite and the phase-cycle bonus action, scaled into the band',
     cr: 5, archetypes: ['lurker'],
-    ac: 15, ac_offset: -1, hp: 65, hp_scale: 0.75, hp_formula: '10d8 + 20', atk: 6, dc: 13, pb: 3,
+    // hp_scale 0.75 -> 0.90 (owner's lurker work, 2026-10-18). At 0.75 the sheet
+    // shipped 65 HP at CR 5 (10d8 + 20), under print's effective floor of 75
+    // (n=52) and under every print CR 5 creature: the thinnest unmitigated is
+    // the Xorn at 84 (AC 19), the thinnest of all the Wraith at 67 raw — which
+    // resists six damage types and is immune to two. This donor carried the
+    // lurker's thin HP and none of the lurker's payment: the phantom line pays
+    // with its defense_suite resistances (lurker-5-phantom at 0.75 reads 102
+    // effective), this line pays only with Umbral Step, which the reader now
+    // prices at +4 effective AC (the DMG's Shadow Stealth). 0.90 -> 78 on the
+    // sheet (12d8 + 24): over the floor, under the Crocodile, and the sheet reads
+    // CR 4.5 by the DMG method where 65 read 4. Print pays a trade with HP, never
+    // with the attack bonus: of 223 print blocks at CR 1+, 211 sit under the DMG
+    // table's HP and 2 under its attack bonus — so this is the lever.
+    ac: 15, ac_offset: -1, hp: 78, hp_scale: 0.90, hp_formula: '12d8 + 24', atk: 6, dc: 13, pb: 3,
     speed: '30 ft., Climb 30 ft.',
     stats: { STR: 12, DEX: 18, CON: 14, INT: 12, WIS: 13, CHA: 10 },
     saves: ['DEX'], skills: 'Perception +4, Stealth +10',

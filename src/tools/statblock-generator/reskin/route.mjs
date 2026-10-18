@@ -217,6 +217,13 @@ export function evidenceIn(because, text) {
   return hit / q.length >= 0.6;
 }
 
+// RAISES THE QUESTION, DOES NOT ANSWER IT (owner, 2026-10-17: "we can use the
+// keyword to modify the prompt so the llm can pay attention to the word unless
+// and what it actually means"). A troll that "grows back unless the blade was
+// silvered" kept print's Acid-or-Fire key and lost the GM's silver, because the
+// bane reader only matched an "only X scours it" frame. Growing that frame is
+// the word rule the ruling forbids; this only decides whether to ASK.
+const WEAKNESS_FRAME = /\b(?:unless|except|only)\b/i;
 export function buildRoutePrompt(text, { cr = null, menuRole = null } = {}) {
   const family = familyFor(menuRole);
   const shelf = LINES.filter((l) => !family || l.family === family)
@@ -226,18 +233,38 @@ export function buildRoutePrompt(text, { cr = null, menuRole = null } = {}) {
 Concept: ${text}
 ${cr != null ? `Challenge Rating: ${cr}\n` : ''}${family ? `The combat role is FIXED by the user (${menuRole}) — the shelf below is already limited to it; choose among these only.\n` : ''}
 THE SHELF (id — what it plays like — printed exemplars):
-${shelf}
+${shelf}${WEAKNESS_FRAME.test(readPhrases(String(text ?? ''))) ? `
+
+A WEAKNESS CLAUSE — the words say this creature's healing or wholeness FAILS under some condition ("unless", "only", "except"). Answer "bane" with what actually stops it, and quote the user's words that say so. A bane is a damage type (Acid, Fire, Cold, Lightning, Thunder, Poison, Necrotic, Radiant, Psychic, Force) or a weapon material the rules know (silver, adamantine, cold iron). Read what the words MEAN: "unless the blade was silvered" is silver, not slashing; "only holy light closes the wounds" is Radiant. Leave "bane" out if the words name no such thing.` : ''}${(() => {
+    const hits = verbHits(text).filter((h) => h.cls !== 'noun');
+    if (!hits.length) return '';
+    return `${false ? `
+
+A WEAKNESS CLAUSE — the words say this creature's healing or wholeness FAILS under some condition ("unless", "only", "except"). Answer "bane" with what actually stops it, and quote the user's words that say so. A bane is a damage type (Acid, Fire, Cold, Lightning, Thunder, Poison, Necrotic, Radiant, Psychic, Force) or a weapon material the rules know (silver, adamantine, cold iron). Read what the words MEAN: "unless the blade was silvered" is silver, not slashing; "only holy light closes the wounds" is Radiant. Leave "bane" out if the words name no such thing.` : ''}
+
+KEY WORDS THE ENGINE FOUND — say what each MEANS here ("cue_verdicts"). For each, answer "means": true if the word really names that chassis's mechanic for THIS creature, false if it is a figure of speech, a thing it carries or wears, or something done TO it. English hides these: "flies into a rage" is anger, not flight; a winged HELMET is not wings; "charges a fee" is not a charge; "grows back" is healing, not a plant.
+A key marked (body) decides WHAT THE CREATURE IS MADE OF — a swarm of many, an amorphous mass, a true dragon, an incorporeal spirit. Answer false unless the body really is that thing: a waterlogged corpse that DRAGS people down by the ankles has hands and weight, so "drowned" does not make it an incorporeal spirit; a man with a crab's temperament is not a crab.
+A key naming a mechanic the rules work on CREATURES is false when the user's words aim it at OBJECTS: a thief who swallows what she STEALS swallows loot, not people.
+${hits.map((h) => `- "${h.key}" (${h.cls}) -> ${h.id} (${BY_ID.get(h.id)?.blurb ?? h.id})`).join('\n')}`;
+  })()}
 
 RULES
 - Rank up to THREE picks, best first. For EACH pick, quote the phrase of the concept that earns it ("because") — copy the words as written. A pick you cannot quote for is a pick you should not make: the engine checks every quote against the input and discards picks it cannot find there.
 - What the creature IS outranks what it DOES to its victims, and what it uses, hunts, wears, rides, or is compared to. An incorporeal or drowned dead thing that pulls, drags, or drowns the living is lurker-phantom, never brute-grappler: the grappler is a BODY that holds prey in its grip or inside itself. A troll-hunter is not a troll; a knight who rides a horse is mounted but not a beast; a sword forged by a golem is not a golem; a thing with a tar-slick mouth is not an ooze.
 - brute-juggernaut and defender-warden are MADE or risen things (construct, elemental, undead, plant, ooze). Living flesh, however armored, takes another chassis.
-- swarm, ooze, and dragon only when the BODY is that thing — a mass of many, an amorphous mass, a true dragon.
+- swarm, ooze, and dragon only when the BODY is that thing — a mass of many, an amorphous mass, a true dragon. lurker-phantom too: only when the body is INCORPOREAL. The drowned, the buried and the hanged are usually corpses that walk, and a corpse that drags people down by the ankles has hands and weight — pick it a body that can hold someone. A phantom drifts through a wall and cannot.
 - A concept that holds, seizes, swallows, entombs, or folds shut around prey is brute-grappler however it is built — that chassis alone carries the containment engine. A thing that traps by LOOKING harmless is lurker-trap.
 - creature_type from the concept's SUBSTANCE — what it physically is: animated objects and machines are Construct; remains or spirits of the dead are Undead; natural animals are Beast; fungus and vegetation are Plant; giants are Giant. Humanoid is the NPC type — a remade, fused, grown, or woven thing is a Monstrosity however upright it stands. Never type by vibe.
 - extras: gated add-on mechanics the concept ITSELF shows, from: ${EXTRA_MECHANICS.join(', ')} — each with its own quote. Most concepts have none. Never list what would merely be cool.
 
-Return ONLY JSON, no markdown: {"picks": [{"line": "<id from the shelf>", "because": "<phrase copied from the concept>"}], "cr": "<the Challenge Rating this creature reads as, 0 to 30 (e.g. 5, or 1/2) — print's own CR for a print creature; otherwise the tier a table meets it at — village and folklore threats read 1 to 8, only world-enders read 17 or more>", "creature_type": "<one of: ${TYPES.join(', ')}>", "extras": [{"mechanic": "<one of the list>", "because": "<phrase copied from the concept>"}]}`;
+WHAT ELSE DO THE WORDS NAME? Three more, each with the user's own words quoted in "because" (leave a field out if the words do not settle it):
+- "shoots": true only when this creature's own attack is a BOW, CROSSBOW, SLING or a thrown shot at range — a sniper, an archer. False for one that merely watches from a distance, and false when its ranged power is magic or a breath.
+- "is_a_swarm": true only when the creature IS a mass of many small things acting as one body. False for a creature that COMMANDS or is accompanied by animals, and false for one that merely resembles a crowd.
+- "holds": true only when it HOLDS, seizes, swallows, entombs or folds shut around prey — a containment engine that keeps hold of a creature. Crushing someone against stones is impact, not holding; a creature that withdraws into its own shell holds nobody.
+
+DOES THIS CREATURE WORK MAGIC? ("casts") True when the words name magic outright ("casts", "spells", "hexes") and ALSO when the KIND implies it: a cleric, a crusader who smites, a chaplain who blesses, a druid, a warlock. False for a plain warrior however armoured, false for a title alone, and false for a creature whose uncanny power is its BODY rather than a worked art — a fey piper's music, a gaze, a breath weapon. Quote the user's words that settle it in "because"; set "implied_by_kind" when nothing in the words says magic but the kind does.
+
+Return ONLY JSON, no markdown: {"shoots": {"yes": false, "because": ""}, "is_a_swarm": {"yes": false, "because": ""}, "holds": {"yes": false, "because": ""}, "casts": {"yes": true, "because": "<the user's own words>", "implied_by_kind": false}, "bane": {"what": "<a damage type or a weapon material, or omit>", "because": "<the user's own words that say so>"}, "cue_verdicts": [{"key": "<a key word listed above, copied exactly>", "means": true, "because": "<the words that settle it>"}], "picks": [{"line": "<id from the shelf>", "because": "<phrase copied from the concept>"}], "cr": "<the Challenge Rating this creature reads as, 0 to 30 (e.g. 5, or 1/2) — print's own CR for a print creature; otherwise the tier a table meets it at — village and folklore threats read 1 to 8, only world-enders read 17 or more>", "creature_type": "<one of: ${TYPES.join(', ')}>", "extras": [{"mechanic": "<one of the list>", "because": "<phrase copied from the concept>"}]}`;
 }
 
 function tryParse(raw) {
@@ -262,13 +289,70 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
   const resolvedType = TYPES.includes(parsed?.creature_type) ? parsed.creature_type : null;
   const picks = Array.isArray(parsed?.picks) ? parsed.picks.slice(0, 3) : [];
   let chosen = null;
+  let quotedPick = false; // the call picked it AND its quote was found in the GM's words
+  // The call's verdict on each key the engine found. Validated against the real
+  // hits — a key the engine never saw cannot be voted on, and anything but an
+  // explicit `means: false` leaves the key live.
+  // DOES IT CAST — THE CALL ANSWERS, THE TABLE FALLS BACK (owner's ruling,
+  // 2026-10-17). MAGIC_WORD asked "is there a magic word", a proxy for "does this
+  // creature work magic", and the proxy failed on the two cases that matter: a
+  // crusader who SMITES and a chaplain who BLESSES carry no listed word, so they
+  // were refused the divine line and landed on martial chassis — Sister Elowen
+  // on brute-regenerator with INT 6 and troll Regeneration.
+  // Measured before the change, 5 samples on each of the five pins that defend
+  // the gate: 35/35 correct. The call lets the crusader and the chaplain through
+  // and still keeps out a dragonborn knight and a satyr piper, which is what the
+  // gate was built for.
+  // `null` means the call did not answer, and then MAGIC_WORD still decides.
+  let castsAnswer = null;
+  {
+    const c = parsed?.casts;
+    if (c && typeof c.yes === 'boolean') {
+      const why = String(c.because ?? '').trim();
+      if (!c.yes) { castsAnswer = false; notes.push('casts: the call reads no worked magic here'); }
+      else if (c.implied_by_kind === true && why) { castsAnswer = true; notes.push(`casts: implied by the kind — "${why.slice(0, 40)}"`); }
+      else if (why && evidenceIn(why, rawText ?? text)) { castsAnswer = true; notes.push(`casts: on the GM's own words "${why.slice(0, 40)}"`); }
+      else notes.push(`casts refused: the call answered yes but ${why ? `quoted "${why.slice(0, 30)}", which is not in the GM's words` : 'offered no quote'} — the word table decides`);
+    }
+  }
+  const noMagic = (t) => (castsAnswer === null ? !MAGIC_WORD.test(String(t ?? '')) : !castsAnswer);
+  // THE LAST THREE DOORS (owner's ruling, 2026-10-17). ARCHER_NOUN, SWARM_WORDS
+  // and "a mechanic engine needs a key" each asked whether a WORD is present as a
+  // proxy for what the words mean. Measured on their own pin prompts, 5 samples
+  // each: 55/55 once my own expectation was corrected — I had written the Bog
+  // Troll's "crushes against the stones" as containment because the engine routed
+  // it that way, and the critic's read shows that sheet shipped a Grappled rider
+  // with nothing to grab. The call said false five times out of five.
+  // Same contract as `casts`: an answer needs the GM's own words, and a `null`
+  // leaves the word table deciding.
+  const vet = (k) => {
+    const a = parsed?.[k];
+    if (!a || typeof a.yes !== 'boolean') return null;
+    const why = String(a.because ?? '').trim();
+    if (!a.yes) { notes.push(`${k}: the call reads none in these words`); return false; }
+    if (why && evidenceIn(why, rawText ?? text)) { notes.push(`${k}: on the GM's own words "${why.slice(0, 40)}"`); return true; }
+    notes.push(`${k} refused: the call answered yes but ${why ? `quoted "${why.slice(0, 30)}", which is not in the GM's words` : 'offered no quote'} — the word table decides`);
+    return null;
+  };
+  const shootsA = vet('shoots'); const swarmA = vet('is_a_swarm'); const holdsA = vet('holds');
+  const noBow = (t) => (shootsA === null ? !ARCHER_NOUN.test(String(t ?? '')) : !shootsA);
+  const noMass = (t) => (swarmA === null ? !SWARM_WORDS.test(String(t ?? '')) : !swarmA);
+  const rejectedCues = new Map();
+  {
+    const real = new Set(verbHits(text).map((h) => h.key));
+    for (const v of Array.isArray(parsed?.cue_verdicts) ? parsed.cue_verdicts : []) {
+      const k = String(v?.key ?? '').toLowerCase().trim();
+      if (!real.has(k)) continue;
+      if (v?.means === false) rejectedCues.set(k, true);
+    }
+  }
   let firstKnown = null;
   let bodyVetoed = false;
   for (const k of picks) {
     const id = lineIdOf(k?.line);
     const line = id ? BY_ID.get(id) : null;
     if (!line) { notes.push(`${String(k?.line ?? '?').slice(0, 30)}: not on the shelf`); continue; }
-    if (line.id === 'swarm' && !SWARM_WORDS.test(String(text ?? ''))) { notes.push(`${id}: a swarm is a mass of many — no mass in the words`); bodyVetoed = true; continue; } // before the family seed: a vetoed swarm must not seed itself
+    if (line.id === 'swarm' && noMass(text)) { notes.push(`${id}: a swarm is a mass of many — ${swarmA === null ? 'no mass in the words' : 'the call reads one creature, not a mass'}`); bodyVetoed = true; continue; } // before the family seed: a vetoed swarm must not seed itself
     firstKnown = firstKnown ?? line;
     if (family && line.family !== family) { notes.push(`${id}: outside the user's ${menuRole} role`); continue; }
     if (!evidenceIn(k?.because, text)) { notes.push(`${id}: quote not found in the input ("${String(k?.because ?? '').slice(0, 40)}")`); continue; }
@@ -277,10 +361,10 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
     if (line.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} sets traps; it is not one`); continue; }
     if (line.id === 'lurker-phantom' && resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} has a body; a phantom has none`); continue; }
     if (line.id === 'skirmisher-shifter' && !verbHits(text).some((h) => h.id === 'skirmisher-shifter')) { notes.push(`${id}: a shifter is named by its words (shape-shifts, turns into, a were-) — none here`); continue; } // a mind flayer with a sword drew a Beast Bite (critic-ten 2026-10-01)
-    if (line.id === 'skirmisher-archer' && !ARCHER_NOUN.test(String(text ?? ''))) { notes.push(`${id}: no bow, arrow or shot in the words`); continue; }
+    if (line.id === 'skirmisher-archer' && noBow(text)) { notes.push(`${id}: ${shootsA === null ? 'no bow, arrow or shot in the words' : 'the call reads no shot of its own'}`); continue; }
     // CASTING IS A MECHANIC ENGINE (the critic's fourth read): a caster line needs a magic word in the GM's own words. "Knight" and "duelist" carried none and drifted to the warpriest on two prompts in five.
-    if (!family && line.family === 'caster' && !MAGIC_WORD.test(String(text ?? ''))) { notes.push(`${id}: a caster line needs a magic word in the words — none here`); continue; }
-    chosen = line;
+    if (!family && line.family === 'caster' && noMagic(text)) { notes.push(`${id}: ${castsAnswer === null ? 'a caster line needs a magic word in the words — none here' : 'the call reads no worked magic in these words'}`); continue; }
+    chosen = line; quotedPick = true; // the call's pick, with its quote found in the GM's words — 4b step 3 reads this
     notes.push(`${id}: ✓ ("${String(k.because).slice(0, 40)}")`);
     break;
   }
@@ -295,10 +379,10 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
       if (line.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)) continue;
       if (line.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType)) continue;
       if (line.id === 'lurker-phantom' && resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType)) continue;
-      if (line.id === 'swarm' && !SWARM_WORDS.test(String(text ?? ''))) continue;
+      if (line.id === 'swarm' && noMass(text)) continue;
       if (line.id === 'skirmisher-shifter' && !verbHits(text).some((h) => h.id === 'skirmisher-shifter')) continue;
-      if (line.id === 'skirmisher-archer' && !ARCHER_NOUN.test(String(text ?? ''))) continue;
-      if (!family && line.family === 'caster' && !MAGIC_WORD.test(String(text ?? ''))) continue; // casting is a mechanic engine: it never comes back on rank either (the critic's fourth read)
+      if (line.id === 'skirmisher-archer' && noBow(text)) continue;
+      if (!family && line.family === 'caster' && noMagic(text)) continue; // casting is a mechanic engine: it never comes back on rank either (the critic's fourth read)
       chosen = line; notes.push(`${line.id}: taken on rank — its quote was not found, no hard veto`); break;
     }
   }
@@ -310,7 +394,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
     // caster's plain line", and a satyr piper came out a wizard with Shield and
     // Misty Step at will). A refusal for want of a magic word falls OUT of the
     // caster family, not into its own default. The menu's own role still rules.
-    if (fam === 'caster' && !family && !MAGIC_WORD.test(String(text ?? ''))) {
+    if (fam === 'caster' && !family && noMagic(text)) {
       notes.push('caster: the family itself needs a magic word in the words — the fallback leaves it');
       // out of the family, never into nothing: the plain line by type, which is
       // what a body veto already falls to (print's Humanoid NPCs are skirmishers)
@@ -334,11 +418,11 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
       && !(l.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType))
       && !(l.id === 'lurker-phantom' && resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType)) // the override obeys the body vetoes too (the kuo-toa went phantom on a verb, 2026-10-01)
       && !(l.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType))
-      && !(l.id === 'skirmisher-archer' && !ARCHER_NOUN.test(String(text ?? '')))
+      && !(l.id === 'skirmisher-archer' && noBow(text))
       // THE CASTER GATE HOLDS ON THE OVERRIDE TOO (critic, 2026-10-14: the gate
       // refused the warpriest line for want of a magic word, and then "smites"
       // put it back). Casting is a mechanic engine; a verb cannot conjure it.
-      && !(l.family === 'caster' && !family && !MAGIC_WORD.test(String(text ?? ''))));
+      && !(l.family === 'caster' && !family && noMagic(text)));
     // a JOB noun cannot win an override whose rule is that verbs outrank nouns
     // — unless the family FELL to its plain line with no pick to override: a
     // title then names the style (a SERGEANT sworn to guard the gate, warden vetoed)
@@ -349,8 +433,44 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
     } else for (const h of nounOnly) notes.push(`${h.id}: "${h.key}" is a noun (a title), not a verb — no override`);
     const byVerb = hits.filter((h) => h.cls !== 'noun');
     if (byVerb.length && chosen && !byVerb.some((h) => h.id === chosen.id)) {
-      notes.push(`${chosen.id} -> ${byVerb[0].id}: the concept's ${byVerb[0].cls === 'body' ? 'BODY' : 'VERB'} outranks the noun (key "${byVerb[0].key}", class ${byVerb[0].cls})`);
-      chosen = byVerb[0].line;
+      // STAGE 4b STEP 3, ATTEMPTED AND REVERTED (2026-10-16). Refusing this
+      // override whenever the call's pick carried a verified quote fixed the
+      // flying berserker and broke SIX pins that encode earlier critic reads:
+      // a glass ox that charges IS a charger, a BODY noun (crab) may win where a
+      // job noun may not, the Headless Horseman reaches the mounted seat, and the
+      // caster/martial key gates hold. Measured first: 497 overrides in 5097
+      // saved blocks (9.8%), mostly corrections.
+      // The conflict is real and it is not a precedence question. The route call
+      // is asked WHICH LINE, never WHETHER THIS KEY MEANS ITS MECHANIC — and that
+      // second question is the one "flies into a rage" needs. The cue verdicts
+      // that answer it (hint_verdicts: winged -> style ✗) are produced by the
+      // identity call, AFTER routing, and are read only by the name-canon stamp.
+      // So step 3 is ask-before-routing in the strict sense: put the cue question
+      // to a call first, and let this override consult the verdict instead of the
+      // key. That preserves every pin above — a charging ox confirms its cue —
+      // and is a larger change than a flip. Owner's call.
+      // STAGE 4b STEP 3 (owner's ruling, 2026-10-16): A KEY GATE BECOMES A
+      // RECEIPT GATE. The override used to read the KEY; it now reads the call's
+      // VERDICT on that key, asked in the same route call that ranks the picks —
+      // no new call, so no new cost.
+      // This is what a precedence flip could not do. Refusing the override on a
+      // quoted pick fixed the flying berserker and broke six pins that encode
+      // earlier critic reads (a glass ox that charges IS a charger; a BODY noun
+      // may win where a job noun may not; the Headless Horseman's mounted seat).
+      // The route call was being asked WHICH LINE and never WHETHER THIS KEY
+      // MEANS ITS MECHANIC, and that second question is the one "flies into an
+      // unstoppable rage" needs. A charging ox confirms its cue and keeps its
+      // override; an idiom does not.
+      // A key with NO verdict keeps the old behaviour, so a silent or failed call
+      // degrades to the table rather than losing the correction.
+      const live = byVerb.filter((h) => rejectedCues.get(h.key) !== true);
+      for (const h of byVerb) if (rejectedCues.get(h.key) === true) notes.push(`${h.id}: the call read "${h.key}" as not meaning that mechanic here — no override`);
+      if (!live.length) {
+        notes.push(`${chosen.id} stands: every key that would override it was read as a figure of speech`);
+      } else {
+        notes.push(`${chosen.id} -> ${live[0].id}: the concept's ${live[0].cls === 'body' ? 'BODY' : 'VERB'} outranks the noun (key "${live[0].key}", class ${live[0].cls})`);
+        chosen = live[0].line;
+      }
     }
   }
   /* THE USER'S OWN NOUN OUTRANKS THE ALIAS'S DEFAULT VERBS (critic 2026-10-01): the alias
@@ -389,7 +509,13 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
     const CHARGE_WORD = /\b(?:charge|charges|charging|ram|rams|rush|rushes|stampede|stampedes|gallop|gallops|barrel|barrels|trample|tramples|bull-?rush)\b/i;
     const TRAP_WORD = /\b(?:adhere|adheres|adhesive|sticky|sticks|lies in wait|disguise[sd]?|looks like|poses as|pretend|pretends|snap|snaps|trap|traps|lure|lures|bait|baits|motionless|mimic|mimics|camouflage[sd]?)\b/i;
     const looseKey = chosen.style === 'grappler' ? GRAPPLE_WORD.test(text) : chosen.style === 'charger' ? CHARGE_WORD.test(text) : chosen.style === 'trap' ? TRAP_WORD.test(text) : false; // a grapple or charge VERB anywhere in the GM's words ("drags cattle into the bog", "folds shut around") is the key; "withdraws into his shell" has none
-    if (!own && !looseKey && !creatureOnly && chosen.style && MECHANIC_STYLE.has(chosen.style)) { const plain = BY_ID.get(chosen.family); if (plain) { notes.push(`${chosen.id} -> ${plain.id}: a ${chosen.style} is a mechanic engine and needs a key in the words — the model's read of its quote cannot land it`); chosen = plain; } }
+    // THE CONTAINMENT ENGINE ASKS TOO (owner, 2026-10-17). `own`/`looseKey` are
+    // word presence; `holds` is the call's read of whether this creature keeps
+    // hold of a creature at all. It only ever ADDS a way through — a call that
+    // says yes satisfies the gate, and a null leaves the words deciding — so the
+    // tortoise-knight who withdraws into his shell is refused exactly as before.
+    const heldByCall = holdsA === true && chosen?.style === 'grappler';
+    if (!own && !looseKey && !creatureOnly && !heldByCall && chosen.style && MECHANIC_STYLE.has(chosen.style)) { const plain = BY_ID.get(chosen.family); if (plain) { notes.push(`${chosen.id} -> ${plain.id}: a ${chosen.style} is a mechanic engine and needs a key in the words — the model's read of its quote cannot land it`); chosen = plain; } }
   }
   const extras = [];
   for (const x of Array.isArray(parsed?.extras) ? parsed.extras : []) {
@@ -399,7 +525,30 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
     if (!extras.includes(m)) extras.push(m);
   }
   const mechanics = [...new Set([...(chosen?.implies ?? []), ...extras])];
+  // the call's bane, validated: a closed list, and a quote that is really in the
+  // GM's words. Anything else is dropped rather than coerced.
+  const BANE_OK = /^(?:Acid|Fire|Cold|Lightning|Thunder|Poison|Necrotic|Radiant|Psychic|Force|silver|adamantine|cold iron)$/i;
+  let bane = null;
+  {
+    // ONLY WHEN THE QUESTION WAS ASKED. The call volunteers a bane on prompts
+    // with no weakness clause at all and quotes something verbatim to back it —
+    // "Fire" on the words "bog troll", and "Fire" on "briars"
+    // (bane-2026-10-17T14-16-54). A verbatim quote is not a weakness clause, so
+    // the same frame that decides whether to ask decides whether to listen.
+    const asked = WEAKNESS_FRAME.test(readPhrases(String(rawText ?? text ?? '')));
+    const what = asked ? String(parsed?.bane?.what ?? '').trim() : '';
+    if (!asked && parsed?.bane?.what) notes.push(`bane refused: the words carry no weakness clause, so "${String(parsed.bane.what).slice(0, 20)}" answers a question nobody asked`);
+    const why = String(parsed?.bane?.because ?? '').trim();
+    if (what && BANE_OK.test(what)) {
+      if (why && evidenceIn(why, rawText ?? text)) {
+        bane = { what: /^(?:silver|adamantine|cold iron)$/i.test(what) ? what.toLowerCase() : `${what[0].toUpperCase()}${what.slice(1).toLowerCase()}`, because: why };
+        notes.push(`bane: "${bane.what}" on the GM's own words "${why.slice(0, 40)}"`);
+      } else notes.push(`bane refused: the call answered "${what}" but ${why ? `quoted "${why.slice(0, 30)}", which is not in the GM's words` : 'offered no quote'}`);
+    } else if (what) notes.push(`bane refused: "${what}" is not a damage type or a material the rules know`);
+  }
   return {
+    bane,
+    holds: holdsA, // the call's read of whether this creature keeps hold of a creature — the checker asks the same question (2026-10-17)
     line: chosen?.id ?? null,
     cr: /^\d{1,2}(?:\/[248])?$/.test(String(parsed?.cr ?? '').trim()) ? String(parsed.cr).trim() : null, // the route's CR read, used only when the user set none (form-ten 2026-10-01: a placeholder Horseman rolled CR 24)
     archetype: chosen?.family ?? null,

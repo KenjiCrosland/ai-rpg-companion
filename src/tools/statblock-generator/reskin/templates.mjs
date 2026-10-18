@@ -389,7 +389,7 @@ export function triggerCompatible(want, have) {
   return true;
 }
 
-export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '', concept = '' } = {}) {
+export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '', concept = '', holds = null } = {}) {
   const band = bandFor(cr);
   const rows = Object.values(sections).flat();
   // A FEATURE ALREADY ON A ROW IS OWNED (critic, 2026-10-14: Rruzhk's Open Hand
@@ -436,7 +436,15 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     && triggerCompatible(trigger, t.trigger)
     && !(text && deniedBy(t, text).length)
     && !(REQUIRES_IMPOSED.has(t.id) && Array.isArray(imposed) && !imposed.length)
-    && !(NEEDS_ENGINE_KEY.has(t.id) && !engineKeyOk(concept))
+    // THE CALL DECIDES WHETHER THIS CREATURE HOLDS (owner's preference, 2026-10-17:
+    // calls and keywords returned from the LLM over deterministic gates). The
+    // route call answers `holds` with the GM's own words as its receipt, and
+    // `engineKeyOk` is the word list asking the same question. A thieves'-guild
+    // bookkeeper answered holds=false and the engine landed an "Accountant's
+    // Ledger Hook" anyway, which the checker then failed for having no key
+    // (gate-2026-10-17T19-30-16). The answer decides where the row LANDS, not
+    // only where it is reported. A null answer leaves the word list deciding.
+    && !(NEEDS_ENGINE_KEY.has(t.id) && (holds === null ? !engineKeyOk(concept) : !holds))
     // A CLAIM FOR A BODY OR A TECH (the critic's fifth read: an orc "withdraws
     // into its shell"; a troglodyte teleports 40 feet). A shape whose fiction is
     // anatomy or arcane tech needs that claim in the GM's words or on the sheet

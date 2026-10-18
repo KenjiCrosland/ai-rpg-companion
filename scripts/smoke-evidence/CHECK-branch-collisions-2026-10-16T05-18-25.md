@@ -6,7 +6,7 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Sir Aldric | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity | FAIL (1) | 0/1 | 2/4 |
 | Wall Remembers | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 3/4 |
-| Gorehowl the Unchained | 8 | 2024 | brute-5 | ok | ok | SOFT: reach | ok | ok | ok | ok | ok | ok | soft (1) | 0/1 | 3/6 |
+| Gorehowl the Unchained | 8 | 2024 | brute-5 | SOFT: duplicate-mechanic | ok | SOFT: reach | ok | ok | ok | ok | ok | ok | soft (2) | 0/1 | 3/6 |
 | Palm of Still Water | 5 | 2024 | skirmisher-3 | ok | ok | ok | SOFT: ko-at-will | ok | ok | ok | ok | ok | soft (1) | 1/1 | 2/6 |
 | Voidblade Shade | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 1/7 |
 | Gilded Crypt-Bloom | 9 | 2024 | ooze-9 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | ok | soft (1) | 0/1 | 3/5 |
@@ -25,6 +25,7 @@
 - read: def 6 / off 6 → 6; sustained 44 (2 × Broken Greatsword); nova none; dmg 44
 
 ## Gorehowl the Unchained (CR 8)
+- derivation · SOFT · duplicate-mechanic: Traits/Wounded Fury: every part of this row is already in "Bloodied Frenzy" — two rows, one mechanic
 - structure · SOFT · reach: Actions/Greataxe: reach 10 on a Medium body with no tether word
 - read: def 6 / off 8 → 7; sustained 54 (2 × Greataxe); nova none; dmg 54
 

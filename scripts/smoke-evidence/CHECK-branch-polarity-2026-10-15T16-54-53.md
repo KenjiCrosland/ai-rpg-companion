@@ -4,7 +4,7 @@
 
 | block | CR | ed | donor | derivation | bands | structure | gates | headerBody | edition | donor | adjudicability | reader | verdict | coverage | concept |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Scent-Hunter | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: alignment-fit, lack-honored, lack-honored | FAIL (1) | 0/2 | 3/4 |
+| Scent-Hunter | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: lack-honored, lack-honored | FAIL (1) | 0/2 | 3/4 |
 | Quietus Shield | 6 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/3 | 0/3 |
 | Grounded Wyrm | 6 | 2024 | dragon-2 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity, alignment-fit | FAIL (1) | 3/3 | 2/3 |
 | Trineye | 4 | 2024 | lurker-2 | ok | SOFT: aim-hp, band | ok | ok | ok | ok | ok | ok | ok | soft (1) | 0/2 | 1/6 |
@@ -16,7 +16,6 @@
 
 
 ## Scent-Hunter (CR 5)
-- reader · FAIL · alignment-fit: Unaligned on a Monstrosity with INT 8 that speaks None — Unaligned is for a creature with no capacity for ethics
 - reader · FAIL · lack-honored: the GM asked for an absence — "an eyeless hunter" — and the sheet still carries it
 - reader · FAIL · lack-honored: the GM asked for an absence — "tracks prey by scent alone" — and the sheet still carries it
 - read: def 3 / off 5 → 4; sustained 38 (2 × Bite); nova none; dmg 38

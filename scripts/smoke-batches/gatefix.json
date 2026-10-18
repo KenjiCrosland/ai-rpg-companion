@@ -1,0 +1,34 @@
+[
+  {
+    "name": "",
+    "description": "a lamplighter's widow who still walks her round, trailing cold",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "WEAPON NONE: the call answers none for a coined row (Snuffer-Pole); the engine must not read a quarterstaff off the name \u2014 no attack-stat fail",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a lamplighter's widow who still walks her round, trailing cold",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "WEAPON NONE (second draw)",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a mountain that has begun to walk and does not know why",
+    "cr": "17",
+    "rules": "2024",
+    "canary": "MOVEMENT HONEST NOUN: a legendary row that only moves may not keep a Shove name \u2014 Stride/Rush/Surge",
+    "mode": "band"
+  },
+  {
+    "name": "",
+    "description": "a sellsword who hurls a handaxe and closes with a shortsword",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "CONTROL: the call names real weapons; the table still stamps them and the attack stat still reads",
+    "mode": "band"
+  }
+]

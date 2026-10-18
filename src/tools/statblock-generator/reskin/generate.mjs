@@ -27,7 +27,8 @@ import { buildRepairPrompt, parseAuthorResponse, validateAuthorResponse } from '
 import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap } from './species.mjs';
 import { WEAPONS, weaponFor, weaponNamed, namesWeapon, weaponsIn, finesseLike } from './weapons.mjs';
-import { effectOnly, danglingRefIn, rowNamesOf } from './checker.mjs'; // one prerequisite stripper, shared with save-fit (stage 1b); one dangling-reference scan, shared with the checker (2026-10-16)
+import { effectOnly, danglingRefIn, rowNamesOf } from './checker.mjs';
+import { capsFix2024 } from '../format-2024/generate.mjs'; // the 2024 caps pass, shared with the lint's fixer (2026-10-17) // one prerequisite stripper, shared with save-fit (stage 1b); one dangling-reference scan, shared with the checker (2026-10-16)
 import { tailNamesKind } from './print-names.mjs';
 import { anatomyIn } from './header.mjs';
 import { mechanicUnkept, honestNouns, claimWordIn } from './name-claims.mjs';
@@ -336,7 +337,20 @@ export function printCanonFor(conceptText, cr) {
   // the user's ADDITION outranks print's stand-down the way it outranks an alias: a print name plus a seat verb ("Goblin Boss — riding a worg") keeps the seat — print's rows ride along (the worg left with the seat, critic form-ten 2026-10-01)
   const addsSeat = !!pick && verbLines(String(conceptText ?? '').toLowerCase().replace(lower(pick), ' ')).length > 0; // any print pick: "an ancient treant … crushes" names the grappler seat on a head-word borrow too (checker 2026-10-02)
   const multiattack = (pick.sections?.Actions ?? []).find((a) => /^Multiattack$/i.test(a?.name ?? ''))?.text ?? null; // print's own Multiattack: on an exact body its count and names stand (the Pit Fiend made two, print makes four — critic's step-8 read)
-  return { multiattack, name: pick.name, last, traits, immunities: pick.immunities ?? null, resistances: pick.resistances ?? null, vulnerabilities: pick.vulnerabilities ?? null, melee, meleeRows, ranged, rangedRows, modes, senses, rulesRows, legendaryRows: (pick.sections?.['Legendary Actions'] ?? []).map((a) => ({ name: a.name, text: String(a.text ?? '') })), stats: pick.stats ?? null, exact: !!exactPhrase && !npcHead && !addsSeat, addsSeat, headIsPrint: !!exactPhrase, /* a whole print name heads the concept ("a swarm of rats that carries plague" is the Swarm of Rats at CR 1/4, not the route's 10) */ borrowOnly: (!!exactPhrase && !npcHead && addsSeat) || (headOnly && !exactPhrase) || npcHead, speedBase: /^(\d+) ft/.exec(String(pick.speed ?? ''))?.[1] ?? null, modeSpeeds: [...String(pick.speed ?? '').matchAll(/\b(Fly|Swim|Climb|Burrow) (\d+) ft\./g)].map((m) => [m[1], Number(m[2])]), type: String(pick.type ?? ''), languages: String(pick.languages ?? 'None').replace(/, And /g, ', and '), /* the corpus parser dropped "Languages None" lines — an absent field IS print's None (the Owlbear spoke Common, critic form-ten 2026-10-01) */ nameIsPrint: !!exactPhrase && !headOnly, shootsAtRange: (pick.sections?.Actions ?? []).some((a) => /Ranged Attack Roll/.test(a?.text ?? '')), cr: Number(pick.cr), hp: Number(pick.hp), ac: Number(pick.ac), atk: Number(pick.derived?.max_attack_bonus ?? NaN), dc: Number(pick.derived?.max_dc ?? NaN), castsMagicOnly: ((!!pick.derived?.has_spellcasting || [...(pick.sections?.Actions ?? []), ...(pick.sections?.Traits ?? [])].some((a) => /^Spellcasting$/i.test(a?.name ?? ''))) && melee.length > 0 && meleeRows.every((r) => r.type && !['Bludgeoning', 'Piercing', 'Slashing'].includes(r.type))), /* print CASTS and strikes only with magic: the Lich's Eldritch Burst is Force and its Paralyzing Touch is Cold, so one stat must carry both the attack and the DC — `casts` says no because a melee row exists at all, which is the dragons' guard (critic's blockers audit 2026-10-03) */ casts: (!!pick.derived?.has_spellcasting || (pick.sections?.Actions ?? []).some((a) => /^Spellcasting$/i.test(a?.name ?? ''))) && !(pick.sections?.Actions ?? []).some((a) => /Melee Attack Roll/.test(a?.text ?? '') && !/Melee or Ranged/.test(a?.text ?? '')), size: String(pick.size ?? ''), gear: String(pick.gear ?? ''), pb: Number(pick.pb ?? NaN), alignment: String(pick.alignment ?? '') }; // print's Gear line names the armor the 2014 sheet prints (the Goblin Boss wore "splint" where print says chain shirt and shield — canaries 2026-10-12)
+  return { multiattack, name: pick.name, last, traits, immunities: pick.immunities ?? null, resistances: pick.resistances ?? null, vulnerabilities: pick.vulnerabilities ?? null, melee, meleeRows, ranged, rangedRows, modes, senses, rulesRows, legendaryRows: (pick.sections?.['Legendary Actions'] ?? []).map((a) => ({ name: a.name, text: String(a.text ?? '') })), stats: pick.stats ?? null, exact: !!exactPhrase && !npcHead && !addsSeat, addsSeat, headIsPrint: !!exactPhrase, /* a whole print name heads the concept ("a swarm of rats that carries plague" is the Swarm of Rats at CR 1/4, not the route's 10) */ borrowOnly: (!!exactPhrase && !npcHead && addsSeat) || (headOnly && !exactPhrase) || npcHead, speedBase: /^(\d+) ft/.exec(String(pick.speed ?? ''))?.[1] ?? null, modeSpeeds: [...String(pick.speed ?? '').matchAll(/\b(Fly|Swim|Climb|Burrow) (\d+) ft\./g)].map((m) => [m[1], Number(m[2])]), type: String(pick.type ?? ''), languages: String(pick.languages ?? 'None').replace(/, And /g, ', and '), /* the corpus parser dropped "Languages None" lines — an absent field IS print's None (the Owlbear spoke Common, critic form-ten 2026-10-01) */ nameIsPrint: !!exactPhrase && !headOnly, shootsAtRange: (pick.sections?.Actions ?? []).some((a) => /Ranged Attack Roll/.test(a?.text ?? '')), cr: Number(pick.cr), hp: Number(pick.hp), ac: Number(pick.ac), atk: Number(pick.derived?.max_attack_bonus ?? NaN), dc: Number(pick.derived?.max_dc ?? NaN), /* SPELLCASTING AT ALL, wherever print keeps it (owner, 2026-10-17). `casts`
+    means casting-PRIMARY and is pinned false for the unicorn and the hag, which
+    cast in print and fight in melee — so it cannot answer "does this body cast".
+    Print keeps Spellcasting in `rulesRows`, which neither `casts` nor
+    `castsMagicOnly` reads, so print's DRUID looked like a body with no magic and
+    the plain-line forcing sent it to the skirmisher line on DEX 12 over STR 10. */
+    spellcasts: (!!pick.derived?.has_spellcasting
+      || (pick.sections?.Actions ?? []).some((a) => /^Spellcasting$/i.test(a?.name ?? ''))
+      || (pick.rulesRows ?? []).some((a) => /^Spellcasting$/i.test(a?.name ?? ''))),
+    // the body's CASTING STAT, read off print's own Spellcasting row ("using
+    // Wisdom as the spellcasting ability") — a closed fact, so a print Druid
+    // keys its spells on WIS wherever the caster line's default is INT
+    castStat: ({ Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' })[(/using (Intelligence|Wisdom|Charisma) as the spellcasting ability/.exec([...(pick.sections?.Actions ?? []), ...(pick.sections?.Traits ?? []), ...(pick.rulesRows ?? [])].filter((a) => /^Spellcasting$/i.test(a?.name ?? '')).map((a) => a.text ?? '').join(' ')) ?? [])[1]] ?? null,
+    castsMagicOnly: ((!!pick.derived?.has_spellcasting || [...(pick.sections?.Actions ?? []), ...(pick.sections?.Traits ?? [])].some((a) => /^Spellcasting$/i.test(a?.name ?? ''))) && melee.length > 0 && meleeRows.every((r) => r.type && !['Bludgeoning', 'Piercing', 'Slashing'].includes(r.type))), /* print CASTS and strikes only with magic: the Lich's Eldritch Burst is Force and its Paralyzing Touch is Cold, so one stat must carry both the attack and the DC — `casts` says no because a melee row exists at all, which is the dragons' guard (critic's blockers audit 2026-10-03) */ casts: (!!pick.derived?.has_spellcasting || (pick.sections?.Actions ?? []).some((a) => /^Spellcasting$/i.test(a?.name ?? ''))) && !(pick.sections?.Actions ?? []).some((a) => /Melee Attack Roll/.test(a?.text ?? '') && !/Melee or Ranged/.test(a?.text ?? '')), size: String(pick.size ?? ''), gear: String(pick.gear ?? ''), pb: Number(pick.pb ?? NaN), alignment: String(pick.alignment ?? '') }; // print's Gear line names the armor the 2014 sheet prints (the Goblin Boss wore "splint" where print says chain shirt and shield — canaries 2026-10-12)
 }
 export function chassisSheet(scaled, { name = 'the chassis', type = '', size = '', headerOnly = false } = {}) {
   try {
@@ -415,7 +429,7 @@ ${needsSpells ? ` "spells": { "at_will": ["<exactly 2 spells this concept would 
  "lacks": [<EVERY thing the user said the creature does NOT have. Quote the user's OWN WORDS for each one, as a SHORT PHRASE of one to five words — never a sentence you build yourself. EVERY entry must contain a word that takes something away: "no", "not", "cannot", "never", "without", "lost", "stripped", or a word that means the absence itself — "eyeless", "mute", "blind", "deaf", "wingless", "sightless". Examples of entries: "no magic at all", "eyeless", "lost its wings", "born mute", "carries no weapons". A lack is of ANY kind: a body part, a sense, a voice, a spell list, a weapon, armour. If a phrase has none of those words it is something the creature HAS, so leave it out. Use [] when the user took nothing away>],
  "implied_class": "<the ONE class this creature trains as, if the user's words imply one: rogue|fighter|monk|paladin|cleric|mage|bard|barbarian|none. A ninja trains as a rogue, a kung fu master as a monk, a samurai or a gladiator as a fighter. Answer none for a beast, a construct, an ooze, or a person whose words name no training at all — none is the right answer more often than not>",
  "implied_class_quote": "<the user's OWN WORDS that imply it, quoted verbatim from the THE USER TYPED line above, or \"\" if you answered none>",
- "clauses": [<EVERY distinct thing the USER typed — quote from THE USER TYPED line here: "${String(userTyped ?? concept ?? '').replace(/"/g, "'")}" — never from the description above it — one object each — {"text": "<the user's words for it>", "kind": "header|descriptive|mechanical", "when": "<for a mechanical clause ONLY, the trigger the USER's words name: start_of_turn|on_being_hit|on_hit|when_bloodied|on_death|at_will|unsaid>", "how_often": "<for a mechanical clause ONLY, the limit the USER's words name: at_will|once_per_turn|once_per_fight|per_day|recharge|unsaid>. \"once per day\" and \"twice a day\" are per_day; \"once per fight/battle/encounter\" is once_per_fight>", "shape": "<for a mechanical clause ONLY, what the user's words make it DO: attack|save_area|save_single|condition|heal|buff_self|buff_ally|movement|resist|unsaid>"}. Answer "unsaid" for any of the three the user did not name — guessing is worse than silence, because the engine checks the landed row against these; header = size, speed, type, a number the user set; descriptive = looks, lore, voice, name; mechanical = anything that acts in combat (a weapon, a body part that attacks, a style, a curse, an aura, a resource). Purely descriptive words are still listed, as descriptive. This list is the record of what the user asked for>],
+ "clauses": [<EVERY distinct thing the USER typed — quote from THE USER TYPED line here: "${String(userTyped ?? concept ?? '').replace(/"/g, "'")}" — never from the description above it — one object each — {"text": "<the user's words for it>", "kind": "header|descriptive|mechanical", "when": "<for a mechanical clause ONLY, the trigger the USER's words name: start_of_turn|on_being_hit|on_hit|when_bloodied|on_death|at_will|unsaid>", "when_quote": "<the user's own words that name that trigger, copied verbatim — leave empty when you answered unsaid>", "how_often": "<for a mechanical clause ONLY, the limit the USER's words name: at_will|once_per_turn|once_per_fight|per_day|recharge|unsaid>. \"once per day\" and \"twice a day\" are per_day; \"once per fight/battle/encounter\" is once_per_fight>", "how_often_quote": "<the user's own words that name that limit, copied verbatim — leave empty when you answered unsaid>", "shape": "<for a mechanical clause ONLY, what the user's words make it DO: attack|save_area|save_single|condition|heal|buff_self|buff_ally|movement|resist|unsaid>"}. Answer "unsaid" for any of the three the user did not name — guessing is worse than silence, because the engine checks the landed row against these; header = size, speed, type, a number the user set; descriptive = looks, lore, voice, name; mechanical = anything that acts in combat (a weapon, a body part that attacks, a style, a curse, an aura, a resource). Purely descriptive words are still listed, as descriptive. This list is the record of what the user asked for>],
  "slot_save": "<the Saving Throw stat the Signature Slot should use — the stat the concept threatens: Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma>",
  "melee_rider": "<the ENERGY type the melee attack deals as a rider — or \"none\" if this creature's damage is purely physical (a fifth of printed monsters are)>",
  "speed_shape": "<\"climber\" keeps the Climb speed; \"runner\" trades it for +10 ft. walk (a charger, a rider, a sprinter has no business on walls)>",
@@ -936,6 +950,10 @@ const ASK_OFTEN = /^(?:at_will|once_per_turn|once_per_fight|per_day|recharge)$/;
 const ASK_SHAPE = /^(?:attack|save_area|save_single|condition|heal|buff_self|buff_ally|movement|resist)$/;
 // What a LANDED ROW actually says, read off its own name and text. These are the
 // engine's half of the comparison: closed facts, no judgement.
+// GENERIC MOBILITY AND NOTHING ELSE: the Dash/Disengage/Hide grant every
+// creature already has as an action, and a terrain walk. Named by what the row
+// DOES, so an aura, Pack Tactics or Magic Resistance is never caught.
+const FILLER_ROW = /\btakes the (?:Dash|Disengage|Hide)\b|\bDifficult Terrain doesn't cost\b|\bignores Difficult Terrain\b|\bmoves? (?:across|through) [^.]{0,40}without (?:being slowed|spending)\b/i;
 export const rowOften = (e) => (/\(Recharge [\d–-]+\)/.test(e.name ?? '') ? 'recharge'
   : /\(\d+\/Day\)/.test(e.name ?? '') ? 'per_day' // a daily budget is NOT a per-fight gate; conflating them read Lay on Hands (2/Day) as once_per_fight
   : /\bthe first time\b[^.]*\bin a fight\b/i.test(e.text ?? '') ? 'once_per_fight'
@@ -993,7 +1011,7 @@ export function groundedClauses(list, userText, trace = () => {}, lacksAnswer = 
     }
   });
   const cleaned = phrases.map((p) => p.trim().replace(/^(?:and|or|then|which|who|that)\s+/i, '').replace(/[.!?,;]$/, '').trim()).filter((p) => p && (clauseWords(p).length || /\d/.test(p))); // a bare "CR 5" or "AC 22" is a phrase too
-  const model = (Array.isArray(list) ? list : []).filter((c) => c && typeof c.text === 'string' && c.text.trim()).map((c) => ({ text: c.text.trim(), kind: /^(?:header|descriptive|mechanical)$/.test(c.kind) ? c.kind : null, polarity: /^(?:has|lacks)$/.test(c.polarity) ? c.polarity : null, when: ASK_WHEN.test(c.when) ? c.when : null, how_often: ASK_OFTEN.test(c.how_often) ? c.how_often : null, shape: ASK_SHAPE.test(c.shape) ? c.shape : null }));
+  const model = (Array.isArray(list) ? list : []).filter((c) => c && typeof c.text === 'string' && c.text.trim()).map((c) => ({ text: c.text.trim(), kind: /^(?:header|descriptive|mechanical)$/.test(c.kind) ? c.kind : null, polarity: /^(?:has|lacks)$/.test(c.polarity) ? c.polarity : null, when: ASK_WHEN.test(c.when) ? c.when : null, when_quote: String(c.when_quote ?? '').trim(), how_often: ASK_OFTEN.test(c.how_often) ? c.how_often : null, how_often_quote: String(c.how_often_quote ?? '').trim(), shape: ASK_SHAPE.test(c.shape) ? c.shape : null }));
   // THE CALL JUDGES WHETHER THE GM IS TAKING SOMETHING AWAY (audit, 2026-10-15).
   // NEG_CUE reads the GRAMMAR of negation, and English says "lacks" with
   // adjectives and verbs far more often than with "no" or "cannot": of seventeen
@@ -1093,7 +1111,17 @@ export function groundedClauses(list, userText, trace = () => {}, lacksAnswer = 
     const ws = new Set(clauseWords(p));
     // best overlap, not first: "a berserker" shares "a" with everything, and the
     // asked trigger for "flies into a rage once per day when wounded" landed on it
-    const saysWhen = SAYS_WHEN.test(p); const saysOften = SAYS_OFTEN.test(p);
+    // A RECEIPT, NOT A VOCABULARY (owner, 2026-10-17: calls and keywords returned
+    // from the LLM over deterministic gates; and if the call does not return the
+    // right data, tweak the prompt rather than give up).
+    // SAYS_WHEN/SAYS_OFTEN were word lists asking "does this clause contain a
+    // trigger word" as a proxy for "did the GM name a trigger". Measured over the
+    // gate runs they DROPPED 24-38 of the call's answers per run while keeping
+    // one or two — the call did the work and the vocabulary threw it away, which
+    // is why this field needed four corrections before it read true.
+    // The call now quotes the GM's words that name the trigger or the limit, and
+    // the engine checks the quote is really there — the same contract as `casts`,
+    // `shoots`, `holds` and `bane`, each of which answers on ~100% of blocks.
     let hit = null; let bestN = 0;
     for (const c of model) {
       if (!c.when && !c.how_often && !c.shape) continue;
@@ -1101,11 +1129,14 @@ export function groundedClauses(list, userText, trace = () => {}, lacksAnswer = 
       if (n > bestN) { bestN = n; hit = c; }
     }
     if (!hit) return {};
-    if (hit.when && !saysWhen) trace('asked field dropped:', `"${p}" carries no trigger word, so the call's "${hit.when}" has no receipt in the GM's own clause`);
-    if (hit.how_often && !saysOften) trace('asked field dropped:', `"${p}" carries no frequency word, so the call's "${hit.how_often}" has no receipt in the GM's own clause`);
+    const vouched = (q) => { const v = vetQuote(q, `${p} ${text}`, { soloLen: 4 }); return v || null; };
+    const wq = hit.when ? vouched(hit.when_quote) : null;
+    const oq = hit.how_often ? vouched(hit.how_often_quote) : null;
+    if (hit.when && !wq) trace('asked field dropped:', `the call answered trigger "${hit.when}" for "${p}" but ${hit.when_quote ? `quoted "${hit.when_quote}", which is not the GM's own words` : 'offered no quote'}`);
+    if (hit.how_often && !oq) trace('asked field dropped:', `the call answered limit "${hit.how_often}" for "${p}" but ${hit.how_often_quote ? `quoted "${hit.how_often_quote}", which is not the GM's own words` : 'offered no quote'}`);
     return {
-      ...(hit.when && saysWhen ? { askWhen: hit.when } : {}),
-      ...(hit.how_often && saysOften ? { askOften: hit.how_often } : {}),
+      ...(wq ? { askWhen: hit.when, askWhenWhy: wq } : {}),
+      ...(oq ? { askOften: hit.how_often, askOftenWhy: oq } : {}),
       ...(hit.shape ? { askShape: hit.shape } : {}),
     };
   };
@@ -1265,8 +1296,42 @@ export async function generateReskin(options, callLLM) {
   const speciesOutranks = (pc) => !!(pc && speciesHead && pc.type && speciesHead.species.type && pc.type.toLowerCase() !== speciesHead.species.type.toLowerCase()); // the species' own type decides: a kenku (Humanoid) is not the Mimic (Monstrosity)
   const pcRoute0 = printCanonFor(options.userConcept ?? concept, cr);
   if (speciesOutranks(pcRoute0)) trace('species outranks the alias:', `the ${pcRoute0.name} (${pcRoute0.type}) stands down — the words name a ${speciesHead.species.key}, a Humanoid`);
-  const pcRoute = speciesOutranks(pcRoute0) ? null : pcRoute0;
-  const printCanonHere = (text, c) => { const pc = printCanonFor(text, c); return speciesOutranks(pc) ? null : pc; }; // every later print-canon read goes through the species guard (the Mimic's Adhesive and Shape-Shift rode in behind the kenku's back)
+  // THE CALL'S OWN TYPE OUTRANKS A NOUN MATCH (critic, 2026-10-17). The alias
+  // match keys on a noun and never asks whether this creature IS that print
+  // creature: "a mushroom-choked hound whose spores make you see your dead"
+  // matched the HELL HOUND and shipped a Fiend, immune to fire, with Fire Breath
+  // and Infernal; "a canal-lock elemental that drowns a street" matched the AIR
+  // Elemental (varied-2026-10-17T14-24-55). Four of twelve fresh sheets shipped
+  // as the wrong creature, and the gates called them clean.
+  // No new judgement is needed: the concept call already answers the creature's
+  // TYPE from its substance. When that answer contradicts print's type, the match
+  // is a resemblance, not an identity — the same shape as speciesOutranks above,
+  // which already stands an alias down when the words name a species.
+  // A bare print NAME is exempt: "Owlbear" IS the Owlbear, and `exact` says so.
+  const typeOutranks = (pc) => {
+    if (!pc || pc.exact) return false;
+    const want = String(options.resolvedType ?? '').trim();
+    const head = (t) => String(t).replace(/^Swarm of \w+ /, '').split(/[ ,(]/)[0].toLowerCase();
+    if (want && pc.type && head(want) !== head(pc.type)) return `a ${pc.type} and the concept reads ${want}`;
+    // THE ELEMENT, WHERE THE TYPE AGREES (critic, 2026-10-17; owner: these facts
+    // belong early, not in the audit). Print has four Elementals of one type, so
+    // a type comparison cannot separate them: "a canal-lock elemental that opens
+    // and DROWNS a street" matched the AIR Elemental and shipped Fly 90, its air
+    // body and Whirlwind (varied-2026-10-17T14-24-55).
+    // Both sides are closed facts already in hand before the match — print's own
+    // creature names, and the concept call's own themes/energy vocabulary. No new
+    // question, and nothing read out of the GM's raw text.
+    const ELEMENT_OF = { aquatic: 'water', subterranean: 'earth' };
+    const BY_ENERGY = { Fire: 'fire', Cold: 'water', Lightning: 'air', Thunder: 'air', Acid: 'earth' };
+    const printEl = (/\b(Air|Water|Fire|Earth)\b/i.exec(String(pc.name ?? '')) ?? [, null])[1]?.toLowerCase() ?? null;
+    if (!printEl) return false;
+    const themeEl = (options.themes ?? []).map((t) => ELEMENT_OF[String(t).toLowerCase()]).find(Boolean) ?? null;
+    const wantEl = themeEl ?? BY_ENERGY[String(options.energy ?? '')] ?? null;
+    return (wantEl && wantEl !== printEl) ? `the ${printEl} one and the concept reads ${wantEl}${themeEl ? ` (theme ${(options.themes ?? []).join('/')})` : ` (energy ${options.energy})`}` : false;
+  };
+  { const why = typeOutranks(pcRoute0); if (why) trace('the concept outranks the alias:', `the ${pcRoute0.name} is ${why} — the words RESEMBLE it, they do not name it, so the print body stands down`); }
+  const pcRoute = (speciesOutranks(pcRoute0) || typeOutranks(pcRoute0)) ? null : pcRoute0;
+  const printCanonHere = (text, c) => { const pc = printCanonFor(text, c); return (speciesOutranks(pc) || typeOutranks(pc)) ? null : pc; }; // every later print-canon read goes through the species guard (the Mimic's Adhesive and Shape-Shift rode in behind the kenku's back)
   const shootsABow = !!pcRoute && pcRoute.ranged.some((n) => /\b(?:long|short)?bow\b|crossbow/i.test(n));
   if (shootsABow && style === 'hurler') trace('print canon route:', `"${options.userConcept ?? concept}" is the ${pcRoute.name}, a bow-user — the hurler seat stands down for the plain line`);
   // A PRINT NAME AS THE HEAD NOUN OUTRANKS THE VERB ROUTER (critic, new lines
@@ -1296,7 +1361,19 @@ export async function generateReskin(options, callLLM) {
       trace('print canon route:', `the ${pcRoute.name} casts and strikes only with magic (${pcRoute.meleeRows.map((r) => r.type).join(', ')}) — the caster family takes the line from ${archetype}${style ? `-${style}` : ''}, so the attack bonus and the spell DC key to one stat`);
       archetype = 'caster'; style = null;
     }
-    if (archetype === 'caster' && !pcRoute.casts && !pcRoute.castsMagicOnly) { // a print caster that also has a magical melee row (the Lich) keeps the caster line
+    // A BODY THAT CASTS KEEPS THE CASTER FAMILY (owner, 2026-10-17: "it doesn't
+    // make sense that fixing the one would break the other — this is not
+    // mutually exclusive"). The rule's job is to stop a print body taking the
+    // wrong STRIKER STAT — the Priest shipped DEX 18 where print says 10, because
+    // the skirmisher line keys DEX. It did that job by overwriting the archetype,
+    // which also threw away the caster family, so print's Druid (STR 10, DEX 12,
+    // WIS 16, Spellcasting in rulesRows) became a lightly-armed scout and the
+    // GM's briars had nowhere to go.
+    // The two are separable: force the plain martial line only for a body with no
+    // spellcasting at all. The Doppelganger (STR 11, DEX 18, no magic) still goes
+    // skirmisher, which is its pin; the unicorn and hag keep `casts === false`,
+    // which is theirs.
+    if (archetype === 'caster' && !pcRoute.casts && !pcRoute.castsMagicOnly && !pcRoute.spellcasts) { // a print caster that also has a magical melee row (the Lich) keeps the caster line
       // PRINT'S OWN ARRAY PICKS THE LINE (critic's hold 7, 2026-10-16 — the third
       // sighting, and a fourth in classes-eight-2026-10-16T09-20-14). Size was
       // the only discriminator, so every MEDIUM print body that is not a caster
@@ -1389,6 +1466,31 @@ export async function generateReskin(options, callLLM) {
       }
       trace('print canon array:', `${['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'].map((k) => `${k} ${scaled.stats[k]}`).join(', ')} — the ${pcRoute.name}'s at its own CR; attack +${fromAtk} -> +${scaled.atk}, DC ${scaled.dc} (print's${pbDiff ? `, on this sheet's PB` : ''})`);
     } else {
+      // HOLD 3, THE REMAINING HALF (critic, 2026-10-17): "the caster line keys
+      // the body's casting stat". Keeping the caster family fixed the ROUTING —
+      // print's Druid lands caster-6 with its array — but the caster line's
+      // striker is INT, so the Druid had INT fitted from 12 to 18, keyed its
+      // attacks on INT and took Arcana +7, while its Spellcasting still read
+      // Wisdom (DC 14 against a traced DC 15).
+      // NOT fixed by moving `striker_stat`: that drives WEAPON attacks, and
+      // canaries.spec.js "a wizard but he cannot cast any spells, he just hits
+      // people with his staff" requires the staff to roll STR or DEX. The defect
+      // is the SPELL DC and the casting stat disagreeing with the body, which is
+      // a separate seat from the weapon striker. Left for that narrower fix
+      // rather than papered over here.
+      // HOLD 3, THE STAT HALF (owner, 2026-10-18: "the druid thing"). A caster
+      // seated on a print body takes the body's own casting stat as its striker
+      // BEFORE the fit below raises anything — so the Druid's WIS 16 is what gets
+      // fitted to the card, its attack rows, Spellcasting organ and DC all key
+      // Wisdom, and INT stays print's 12. Only an UNARMED caster — one the
+      // striker rule in scale.mjs already seated on a mental stat off the donor's
+      // array (caster-6 is INT 17, so INT; print's Druid is WIS 16 over INT 12).
+      // An armed caster strikes with its weapon's stat and keeps it: "a wizard who
+      // cannot cast, he just hits people with his staff" rolls STR (canaries pin).
+      if (archetype === 'caster' && pcRoute.castStat && pcRoute.spellcasts && ['INT', 'WIS', 'CHA'].includes(scaled.striker_stat) && scaled.striker_stat !== pcRoute.castStat) {
+        trace('print canon casting stat:', `the ${pcRoute.name} casts with ${pcRoute.castStat}; the caster line's ${scaled.striker_stat ?? 'DEX'} striker reseats there`);
+        scaled.striker_stat = pcRoute.castStat;
+      }
       const targetMod = scaled.atk - scaled.pb; const striker = scaled.striker_stat ?? 'DEX'; const printMod = Math.floor((scaled.stats[striker] - 10) / 2);
       if (printMod > targetMod) { // RAISE-ONLY: print's STR 19 stands over the card's +6, and the attack bonus and every flat follow it (the Ogre at CR 5 read STR 16 fitted down — canaries 2026-10-12)
         const fromAtk = scaled.atk; scaled.atk = scaled.pb + printMod;
@@ -1467,8 +1569,15 @@ export async function generateReskin(options, callLLM) {
     // its own undoing, and the machinery derived Cold from Fire instead).
     // Frame-anchored so a fire-thing's own fire never reads as its bane.
     let bane = null;
+    // THE CALL'S BANE OUTRANKS THE FRAME (owner, 2026-10-17). The route call is
+    // asked what the GM's weakness clause MEANS, with a quote, whenever the words
+    // carry "unless"/"only"/"except" — so "grows back unless the blade was
+    // silvered" answers silver, which the "only X scours it" frame below could
+    // never read. The frame stays as the fallback for when the call says nothing.
+    let baneWhy = null;
+    if (options.bane?.what) { bane = options.bane.what; baneWhy = `the call read the GM's weakness clause as ${bane} ("${String(options.bane.because ?? '').slice(0, 40)}")`; }
     const frame = /\bonly ([^.]{0,60}?)(?:scours|destroys|harms|undoes|unmakes|banishes|slays|stops|kills|shatters?|breaks?|fells?|parts?|severs?|sunders?|pierces?|ends?|wounds?|brings? (?:it|him|her|them) down|can (?:stop|kill|slay|harm|destroy|shatter|break|wound|end|fell|pierce|part|sever)|can truly)/i.exec(concept);
-    if (frame) {
+    if (frame && !bane) {
       for (const [re, type] of NAME_CLAIMS) {
         if (!re.test(frame[1])) continue;
         // the storm family's type is null (Lightning OR Thunder) — for a
@@ -1484,7 +1593,7 @@ export async function generateReskin(options, callLLM) {
     // header uses to stamp the vulnerability
     const materialBane = materialVulnerability(options.userConcept ?? concept, options.material ?? null)?.vulnerability ?? null;
     const off = bane ?? materialBane ?? typeKey ?? REGEN_FOIL[options.energy ?? ''];
-    const offWhy = bane ? 'the concept names its own undoing' : materialBane ? `its ${materialVulnerability(options.userConcept ?? concept, options.material ?? null).material} body is the weakness` : typeKey ? "the type names it: Undead regeneration dies to Radiant — the Vampire's key" : `foil of ${options.energy}`;
+    const offWhy = baneWhy ?? ((bane ? 'the concept names its own undoing' : materialBane ? `its ${materialVulnerability(options.userConcept ?? concept, options.material ?? null).material} body is the weakness` : typeKey ? "the type names it: Undead regeneration dies to Radiant — the Vampire's key" : `foil of ${options.energy}`));
     if (regen && off) {
       if (regen.text.includes('Acid or Fire damage')) regen.text = regen.text.replace('Acid or Fire damage', `${off} damage`);
       // a keyless chassis Regeneration (the defender rows) gains the
@@ -1553,7 +1662,10 @@ export async function generateReskin(options, callLLM) {
   // a PLAIN PRINT-CREATURE prompt ("a wolf", "a bear") is the print block: no
   // invented signature action, no seed, no fitted trait — the print traits and
   // the owed traits are its composition (a bear took a Dread Visage seed, 2026-09-28)
-  const pcPlain0 = printCanonFor(options.userConcept ?? concept, cr); const pcPlain = speciesOutranks(pcPlain0) ? null : pcPlain0;
+  // the SAME guards as the routing read: the Hell Hound stood down for routing
+  // and then stamped its own Fire immunity from here, so a mushroom hound shipped
+  // immune to fire (identity-2026-10-17T16-51-13). Three reads, one rule.
+  const pcPlain0 = printCanonFor(options.userConcept ?? concept, cr); const pcPlain = (speciesOutranks(pcPlain0) || typeOutranks(pcPlain0)) ? null : pcPlain0;
   const printExact = !!pcPlain?.exact; // only a whole print name closes the row set; a borrow takes the user's parts, features and repair (step 8: the Night Hag with rotting nails, the Knight afraid of chickens)
   const printBody = !!pcPlain && (pcPlain.exact || pcPlain.borrowOnly); // a whole name or a hyphenated head IS the print body; a head-word borrow ("a canal ghost") only lends rows
   const printPlain = !!pcPlain && !pcPlain.borrowOnly; // a hyphenated head in a long concept BORROWS print's rows and keeps its seat ("a barrow-wight that erupts…" stood its seats down, 2026-09-29)
@@ -2352,9 +2464,30 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     const tier = (e) => {
       if (e.print || e.printNamed || gmBound(e)) return null;                 // never
       if (referenced(e)) return null;                                         // another row points at it (a Multiattack's "use of Spellcasting")
+      // SPECIES TERRAIN-WALK GOES BEFORE CLASS KIT ROWS (critic, 2026-10-16).
+      // Protecting auras was right and it cost the kit rows: with the leader's
+      // aura no longer evictable, Bolstering Cry and Riposte yielded to the cap
+      // instead (holds2-2026-10-17T02-20-01). A species terrain walk — Marsh
+      // Stride, Reed Glide — is the same generic mobility the brief calls filler,
+      // so it leaves before a class kit row does, and after the signature.
+      // 1.5 is for a SPECIES terrain walk, never a class feature. Species rows
+      // carry their species in `kit` ("lizardfolk"); class rows carry the class
+      // key ("rogue"), and a class feature whose text happens to grant Dash or
+      // Disengage — Cunning Action — is not filler (critic, 2026-10-17).
+      if (e.kit && !CLASSES.some((c) => c.key === e.kit) && FILLER_ROW.test(e.text ?? '')) return 1.5; // a species terrain walk
       if (e.kit) return 2;                                                    // a kit row
       if (e.template || e.seed || e.library) return 1;                        // the signature
-      return 0;                                                               // chassis filler, a rules-only donor row included
+      // FILLER IS WHAT THE BRIEF SAYS IT IS (critic's step-3 read, 2026-10-16).
+      // Treating every rules-only donor row as filler evicted "Aura of
+      // Authority" — the leader line's defining row — twice, once for Bolstering
+      // Cry and once for Riposte. The brief's filler is weapon twins, GENERIC
+      // mobility traits, and rows duplicating a mechanic already on the sheet.
+      // So a rules-only row has to read as one of those; its own text says
+      // whether it does, which is a closed fact about the row, not a judgement
+      // about the GM. Anything else is the chassis's substance and keeps the
+      // protection it had before.
+      if (e.rules && !FILLER_ROW.test(e.text ?? '')) return null;
+      return 0;                                                               // chassis filler
     };
     let best = null;
     for (const sec of EVICTABLE) for (const e of sections[sec] ?? []) {
@@ -2431,6 +2564,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // own context builds them — a Riposte with no melee name made a "Slam" attack
       const meleeK = Object.values(sections).flat().find((e2) => /Melee(?: or Ranged)? Attack Roll/.test(e2.text ?? ''));
       const ctxK = {
+        holds: (typeof options.holds === 'boolean' ? options.holds : null), // the route call's read of a containment engine — one definition, every templatesFor reader (2026-10-17)
         scaled, sections, archetype, style: scaled.style ?? null, cr, concept: srcText, name: p.name,
         type: options.resolvedType ?? '', movement: (options.movement ?? []).join(' '),
         energy: options.energy ?? null, mix: options.mix ?? null, imposed: [], mechanics: options.mechanics ?? null,
@@ -2490,7 +2624,19 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           continue;
         }
         const bare = String(row.name).replace(/ \(.*\)$/, '');
-        if (names().has(bare.toLowerCase())) { trace('class kit:', `${bare} — the sheet already carries a row of that name`); continue; }
+        if (names().has(bare.toLowerCase())) {
+          // THE KIT ADOPTS THE ROW IT DECLINED TO DUPLICATE (critic, 2026-10-17).
+          // The kit skips a row the sheet already has — and the cap then evicted
+          // that copy as chassis filler, so Reedmarch Stalker lost Cunning Action
+          // altogether: the chassis's copy left to fit Evasion and the kit had
+          // already stood down. A row a kit is relying on is kit-owned, whatever
+          // put it there, so eviction must price it as one.
+          for (const es2 of Object.values(sections)) for (const e2 of es2) {
+            if (String(e2.name ?? '').replace(/\s*\(.*\)$/, '').toLowerCase() !== bare.toLowerCase()) continue;
+            if (!e2.kit) { e2.kit = ck.cls.key; e2.clause = e2.clause ?? row.clause ?? ck.clause; trace('class kit:', `${bare} — the sheet already carries it, so the ${ck.cls.key} kit adopts that row: the cap may no longer read it as filler`); } // the clause rides with the adoption: a kit row without one fails provenance-integrity
+          }
+          continue;
+        }
         const g = grantsOf(row.text);
         const covered = g.size && Object.values(sections).flat().find((e2) => { const h = grantsOf(e2.text); return h.size && [...g].every((x) => h.has(x)); });
         if (covered) { trace('class kit:', `${bare} — "${covered.name}" already grants ${[...g].join(', ')}; one mechanic, one row`); continue; }
@@ -3017,7 +3163,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // rules produced the kind form correctly.)
     inline_kind: String(p.inline_kind ?? '').trim().toLowerCase() || null,
     ...(declaredOk ? {} : { inline_overridden: /^the /i.test(String(inline ?? '')) ? 'kind' : 'person' }),
-    generation: { path: 'reskin', donor: donor.id, archetype, creatureOnly: String(options.userConcept ?? concept ?? '').toLowerCase().split(/[^a-z']+/).filter((w) => w.length > 2 && !/^(?:the|a|an|and|or|but|with|who|that|which|its|his|her|their|into|onto|from|for|out|off|over|under|this|than|then|them|they|was|were|has|have|had|are|is|be|been|being|it|in|on|at|to|of|by|up|as|so|if|no|not|one|two|too|very|own|new|old)$/.test(w)).length <= 3, /* a creature-only prompt gives nothing to read: the catalog composes the sheet and the reader gate's engine-needs-key stands down (the critic's third species read) */ unplaced: authored?.unplaced ?? [], userConcept: String(options.userConcept ?? concept ?? '').slice(0, 600), clauses: groundedClauses(p.clauses, options.userConcept ?? concept, trace, p.lacks), /* the extraction (fidelity pipeline step 4): the record of what the user asked for, the coverage denominator */ ...(body ? { body } : {}), ...(options.menuRole ? { menu_role: options.menuRole } : {}), ...(donor.invented ? { invented: true } : donor.cite ? { cite: donor.cite } : {}) },
+    generation: { path: 'reskin', donor: donor.id, archetype, ...(typeof options.holds === 'boolean' ? { holds: options.holds } : {}), creatureOnly: String(options.userConcept ?? concept ?? '').toLowerCase().split(/[^a-z']+/).filter((w) => w.length > 2 && !/^(?:the|a|an|and|or|but|with|who|that|which|its|his|her|their|into|onto|from|for|out|off|over|under|this|than|then|them|they|was|were|has|have|had|are|is|be|been|being|it|in|on|at|to|of|by|up|as|so|if|no|not|one|two|too|very|own|new|old)$/.test(w)).length <= 3, /* a creature-only prompt gives nothing to read: the catalog composes the sheet and the reader gate's engine-needs-key stands down (the critic's third species read) */ unplaced: authored?.unplaced ?? [], userConcept: String(options.userConcept ?? concept ?? '').slice(0, 600), clauses: groundedClauses(p.clauses, options.userConcept ?? concept, trace, p.lacks), /* the extraction (fidelity pipeline step 4): the record of what the user asked for, the coverage denominator */ ...(body ? { body } : {}), ...(options.menuRole ? { menu_role: options.menuRole } : {}), ...(donor.invented ? { invented: true } : donor.cite ? { cite: donor.cite } : {}) },
     archetype: options.menuRole ?? archetype, archetype_source: 'user',
   };
   // Cunning Action is HUMANOID-coded (owner, 2026-08-26: "too assassin
@@ -3103,6 +3249,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       return out;
     };
     const ctxT = {
+      holds: (typeof options.holds === 'boolean' ? options.holds : null), // the route call's read of a containment engine — one definition, every templatesFor reader (2026-10-17)
       scaled, sections, archetype, style: scaled.style ?? null, cr, movement: (options.movement ?? []).join(' '),
       energy: options.energy ?? null, mix: options.mix ?? null, meleeName: meleeRowT?.name?.replace(/ \(.*\)$/, '') ?? 'Slam',
       rangedName: Object.values(sections).flat().find((e2) => e2 !== pendingWildcard && /Ranged Attack Roll/.test(e2.text ?? '') && !/Melee or Ranged/.test(e2.text ?? ''))?.name?.replace(/ \(.*\)$/, '') ?? null,
@@ -3835,9 +3982,21 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         if (!/Attack Roll/.test(e.text ?? '')) continue;
         const bareW = String(e.name ?? '').replace(/ \(.*\)$/, '');
         const read = weaponFor(bareW);
-        const declared = weaponNamed(p.weapons?.[bareW] ?? p.weapons?.[String(e.name ?? '')]);
+        const answer = p.weapons?.[bareW] ?? p.weapons?.[String(e.name ?? '')];
+        const declared = weaponNamed(answer);
         if (declared && declared !== read) trace('weapon declared:', `"${bareW}" is a ${declared} — the call's own answer${read ? ` (the name alone read ${read})` : ''}`);
-        const resolved = declared ?? read;
+        // "NONE" IS AN ANSWER, NOT AN ABSENCE (gate 2026-10-17). The prompt asks
+        // for "none" on a body part, a spell, or anything no shop sells; the
+        // engine read that as no answer and fell back to the name, so a widow's
+        // coined "Snuffer-Pole" was stamped a quarterstaff off the word "pole"
+        // and the checker then demanded Strength of a DEX row. The call's none
+        // resolves the row to no weapon — unless the GM's own words name the
+        // weapon the name reads, because then the weapon is the ask.
+        const saidNone = String(answer ?? '').trim().toLowerCase() === 'none';
+        const gmTyped = !!(read && weaponsIn(readPhrases(String(options.userConcept ?? concept ?? ''))).includes(read));
+        if (saidNone && read && !gmTyped) trace('weapon declined:', `"${bareW}" reads ${read} from its name, but the call answered none — the row carries no weapon`);
+        if (saidNone && read && gmTyped) trace('weapon kept:', `"${bareW}": the call answered none, but the GM typed ${read} — the weapon is the ask`);
+        const resolved = saidNone && !gmTyped ? null : (declared ?? read);
         // THE ENGINE VALIDATES: a launcher cannot be the weapon on a row with no
         // range at all. "Crossbow Butt" is a melee row whose NAME reads crossbow
         // (branch-weapons 03, 2026-10-15) — taking that would hand it a bow's
@@ -3863,6 +4022,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           }
         }
         if (fit && !e.part) e.weapon = fit;
+        else if (resolved === null && saidNone && !e.part) e.weapon = null; // resolved: no weapon — the checker reads null as the call's answer, not as unresolved
       }
       for (const es of Object.values(monster.sections ?? {})) for (const e of es) {
         const bare = String(e.name ?? '').replace(/ \(.*\)$/, '');
@@ -4077,6 +4237,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               for (const esI of Object.values(monster.sections ?? {})) for (const eI of esI) if (eI.text) eI.text = eI.text.replace(reI, (m0) => (m0.endsWith("'s") ? `${inlineNew}'s` : inlineNew)).replace(/(^|[.!?]\s+)the /g, '$1The ');
               trace('inline follows the print name:', `"${inline}" -> "${inlineNew}"`);
               inline = inlineNew; monster.inline = inlineNew; // print's own rows are stamped further down and read this; the card's legendary header reads monster.inline
+              // the engine produced this form, so it says so: the call may have named
+              // a person ("Gorsam", person) that print's name then replaced — without
+              // this stamp the inline-form gate read person against "the druid" and
+              // failed print's own phrasing (druid smoke 2026-10-18)
+              monster.inline_overridden = 'kind';
             }
           }
           if (pc.languages && (!/^none$/i.test(pc.languages) || !/^(?:Humanoid|Fey|Giant|Celestial|Fiend)\b/i.test(pc.type ?? '')) && String(monster.languages ?? '') !== pc.languages) { /* print's "None" stands on a beast body (an Owlbear spoke Common, critic form-ten 2026-10-01) */
@@ -4240,6 +4405,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           if (prr && !gmArmed && /Melee or Ranged Attack Roll/.test(e.text)) e.text = e.text.replace(/\*?Melee or Ranged Attack Roll:\*?/, '*Ranged Attack Roll:*').replace(/reach \d+ ft\. or range/, 'range'); // print's ranged row is ranged-only: the chassis's hybrid frame dressed the Knight's Heavy Crossbow with "reach 5 ft. or" (the critic's species read)
           e.print = true;
           if (!to || from === to || gmArmed) return;
+          // A NAME ALREADY ON THE SHEET IS NOT TAKEN TWICE (druid smoke 2026-10-18):
+          // the Priest's second ranged row was renamed onto its first and two
+          // "Radiant Flame" rows shipped. Print's numbers above still ride; the
+          // model's own name stays.
+          if (to !== from && Object.values(monster.sections).flat().some((e3) => e3 !== e && String(e3.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === String(to).toLowerCase())) { trace('print canon attack kept:', `"${from}" stays — "${to}" is already a row on this sheet`); return; }
           const re = new RegExp(`\\b${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
           e.name = to; e.printNamed = true;
           for (const es3 of Object.values(monster.sections)) for (const e3 of es3) if (e3 !== e && re.test(e3.text ?? '')) e3.text = e3.text.replace(re, to);
@@ -4843,6 +5013,70 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       trace('AC lowered for a disadvantage trait:', `"${String(hit.name).replace(/ \(.*\)$/, '')}" makes this creature harder to hit, so its AC comes down to print's ${acPar} at CR ${cr} (was ${was}) — print ships no persistent Disadvantage-to-be-hit trait (0 of 329), and the two together read as a trap`);
     }
   }
+  // THE GM'S BANE OUTLIVES PRINT'S OWN ROW (critic, 2026-10-16; owner,
+  // 2026-10-17). The bane is derived early, and print canon then installs print's
+  // Regeneration verbatim over it: the Silverbane Troll shipped "If the troll
+  // takes Acid or Fire damage" with the call's answer of SILVER sitting in the
+  // trace, unused. A normalisation must run after everything that can change its
+  // input, so the key is stamped here, over the finished sheet.
+  // This SHAPES print's row rather than removing it — the regeneration, its
+  // amount and its death clause are all print's; only the key is the GM's, which
+  // is what they asked for.
+  // A MATERIAL takes print's own grammar: the Werewolf keys "damage from silvered
+  // weapons", not "silver damage".
+  if (options.bane?.what) {
+    const b = String(options.bane.what);
+    const material = /^(?:silver|adamantine|cold iron)$/i.test(b);
+    const clause = material ? `damage from ${/^cold iron$/i.test(b) ? 'a cold iron' : `a ${b.toLowerCase()}ed`} weapon` : `${b} damage`;
+    for (const es of Object.values(sections)) for (const e of es) {
+      if (!/^Regeneration/i.test(e.name ?? '') && !/regains \d+ Hit Points at the start of/i.test(e.text ?? '')) continue;
+      const was = /If [^.]*?takes ([^,]*?), this trait/i.exec(e.text ?? '');
+      if (!was || new RegExp(`\\b${b}\\b`, 'i').test(was[1])) continue;
+      e.text = e.text.replace(was[1], clause);
+      trace('regeneration keyed to the GM\'s own bane:', `"${String(e.name).replace(/ \(.*\)$/, '')}" keyed "${was[1]}" and the GM named ${b} ("${String(options.bane.because ?? '').slice(0, 36)}") — print's row keeps everything else`);
+    }
+  }
+  // 2024 CAPITALISATION, AFTER EVERY ROW HAS LANDED (gate, 2026-10-17). The
+  // lint's own fixer only runs on rules it found at repair time, and this path
+  // adds rows after that — the Sallow Reedsman's free-text "Patient Assailant"
+  // shipped "a grappled or smothered foe" and lowercase "advantage". Closed
+  // facts: the 2024 condition names and game terms, nothing read from the GM.
+  for (const es of Object.values(sections)) for (const e of es) {
+    for (const k of ['text', 'text_noRider']) {
+      if (typeof e[k] !== 'string') continue;
+      const fixed = capsFix2024(e[k]);
+      if (fixed !== e[k]) { if (k === 'text') trace('2024 caps:', `"${String(e.name).replace(/ \(.*\)$/, '')}" — a condition or game term shipped lowercase`); e[k] = fixed; }
+    }
+  }
+  // A MULTIATTACK MAY ONLY NAME ROWS THE SHEET HAS (owner, 2026-10-17: "metadata
+  // call fixes seem to be a good way to focus on if we've been doing too many
+  // text cues"). The Silted Assizer shipped "using Scale-Pan or Weighing Pan in
+  // any combination" with no Weighing Pan on the sheet.
+  // The engine WRITES this text from row names, so the honest check reads it back
+  // with the SAME grammar it was written with — not the general-purpose name
+  // scanner in the checker, which has now been wrong four ways in one day
+  // (over-capture, under-capture, two-particle names like "Toll of the Crossing",
+  // and bare "use" vs "uses"). A normalisation must run after everything that can
+  // change its input, so this is the last word on the combination: every other
+  // pass may add, rename or evict rows, and then the list is filtered to what is
+  // actually here.
+  {
+    const live = () => Object.values(sections).flat().map((e) => String(e.name ?? '').replace(/\s*\(.*\)$/, '')).filter(Boolean);
+    for (const es of Object.values(sections)) for (const ma of es) {
+      if (!/^Multiattack/i.test(ma.name ?? '')) continue;
+      const combo = /makes (\w+) attacks, using ([^.]*?) in any combination/.exec(ma.text ?? '');
+      if (!combo) continue;
+      const names = live();
+      const cited = combo[2].split(/,| or | and /).map((x) => x.trim()).filter(Boolean);
+      const kept = cited.filter((c) => names.some((n) => n.toLowerCase() === c.toLowerCase()));
+      if (kept.length === cited.length || !kept.length) continue;
+      const gone = cited.filter((c) => !kept.includes(c));
+      ma.text = ma.text.replace(combo[0], kept.length === 1
+        ? `makes ${combo[1]} ${kept[0]} attacks`
+        : `makes ${combo[1]} attacks, using ${kept.join(' or ')} in any combination`);
+      trace('multiattack re-read:', `${gone.map((g) => `"${g}"`).join(', ')} ${gone.length === 1 ? 'is' : 'are'} not on this sheet, so the combination now reads "${ma.text.slice(0, 80)}"`);
+    }
+  }
   // A HUMANOID'S DARKVISION NEEDS A WARRANT (owner's call, 2026-10-16, with
   // class/body). 98% of our Humanoids shipped darkvision against print's 1 of 26.
   // My first fix changed the senses FALLBACK and did nothing, because the
@@ -5253,6 +5487,25 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // Strike" and Guarded Stance as "Unbroken Guard", so the sheet no longer
         // named the rule a GM could look up.
         if (Object.values(monster.sections ?? {}).flat().some((e) => (e.part || e.feature || e.print || e.kit) && String(e.name ?? '').replace(/\s*\(.*\)$/, '') === bare)) { trace('audit rename blocked —', `"${old}" is the user's own part name, a kit feature's real name, or print's own row`); continue; } // the audit renamed the Pit Fiend's Hellfire Spellcasting to "Spellcasting" (step 8 fix round) // Great Weapon Master shipped as "Heavy Blow" once (step 8 twelve) // the user named it; the audit does not rename it (Razor Sharp Claws → Rending Claws, step 7 twelve)
+        // A RENAME MAY NOT CHANGE THE WEAPON (critic's gate-4 read, 2026-10-16).
+        // The weapon stamp is resolved ONCE, before this pass, and stage 1 ruled
+        // it is never re-derived from a later name. So a rename that reads as a
+        // DIFFERENT weapon leaves the row's numbers describing one weapon and its
+        // name promising another: `audit rename: "Lance" -> "Oathspear"` shipped
+        // "Oathspear ... reach 10 ft. or range 30/120 ft." — a lance's reach and
+        // a range that is no spear's, on a row a GM reads as a spear.
+        // The weapon table is a closed fact, so this is a validator, not a word
+        // rule: a rename is refused only when both names name REAL weapons and
+        // they disagree. An invented name (weaponFor returns nothing) is free.
+        {
+          const stamped = Object.values(monster.sections ?? {}).flat().find((e) => String(e.name ?? '').replace(/\s*\(.*\)$/, '') === bare);
+          const wasW = stamped?.weapon ?? weaponFor(bare);
+          const nowW = weaponFor(String(f.rename ?? ''));
+          if (wasW && nowW && wasW !== nowW) {
+            trace('audit rename blocked —', `"${f.rename}" is a ${nowW} and "${bare}" is a ${wasW}; the row's numbers are the ${wasW}'s and a rename may not re-weapon it`);
+            continue;
+          }
+        }
         let fresh = `${f.rename}${gate}`;
         let applied = false;
         for (const es of Object.values(monster.sections ?? {})) {
@@ -5496,6 +5749,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (modeLack) {
         for (const [secL, esL] of Object.entries(monster.sections ?? {})) for (const e of esL.slice()) {
           const tL = e.text ?? ''; if (/Melee or Ranged/.test(tL) || !(modeLack === 'melee' ? /Melee Attack Roll/.test(tL) : /Ranged Attack Roll/.test(tL))) continue;
+          // THE LAST ATTACK NEVER LEAVES (owner, 2026-10-17). Stage 1 ruled that
+          // print's only attack never leaves and a rule may narrow it, never
+          // delete it — but that was wired on the ranged-off path, and this is
+          // the lacks path. A blank roll's false clause "It never brawls" read as
+          // a melee lack and deleted the sheet's only attack row: the Prismabound
+          // Warden shipped with nothing to attack with, and
+          // multiattack-integrity could not see it because there was no
+          // Multiattack to contradict.
+          // A sheet a GM cannot run is worse than a sheet carrying an attack the
+          // GM did not ask for, so the last one stays and the refusal is traced.
+          const attacksLeft = Object.values(monster.sections ?? {}).flat().filter((x) => /Attack Roll/.test(x.text ?? '')).length;
+          if (attacksLeft <= 1) { trace('lacks clause refused:', `${secL}/"${e.name}" is the only attack on the sheet, so "${c.text}" cannot take it away — a gate may shape what the GM asked for, never leave a creature unable to act`); continue; }
           esL.splice(esL.indexOf(e), 1); trace('lacks clause:', `${secL}/"${e.name}" leaves — "${c.text}" (no ${modeLack} attack)`);
           const bareE = String(e.name ?? '').replace(/ \(.*\)$/, ''); const escE = bareE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           for (const es2 of Object.values(monster.sections ?? {})) for (const ma of es2) if (/^Multiattack/.test(ma.name ?? '')) ma.text = ma.text.replace(new RegExp(`makes (\\w+) attacks, using ${escE} or ([A-Z][\\w' -]*?) in any combination`), 'makes $1 $2 attacks').replace(new RegExp(`makes (\\w+) attacks, using ([A-Z][\\w' -]*?) or ${escE} in any combination`), 'makes $1 $2 attacks'); // the surviving mode carries the count

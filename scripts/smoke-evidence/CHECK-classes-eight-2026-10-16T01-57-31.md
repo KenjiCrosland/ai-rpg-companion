@@ -8,7 +8,7 @@
 | Vitrix Ninthblade | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/6 |
 | Dame Oriel | 5 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/4 |
 | Hundred-Campaign Veteran | 6 (2014) | 2014 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 5/5 |
-| Scar-Marked Reaver | 8 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 4/6 |
+| Scar-Marked Reaver | 8 | 2024 | brute-5 | SOFT: duplicate-mechanic | ok | ok | ok | ok | ok | ok | ok | ok | soft (1) | 0/1 | 4/6 |
 | Vareth Solmane | 6 | 2024 | skirmisher-3 | FAIL: attack-stat | ok | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 0/1 | 5/5 |
 | Brother Mortain | 4 | 2024 | defender-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 1/1 |
 | Theus Vane | 6 | 2024 | caster-6 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/6 |
@@ -51,7 +51,7 @@
 - read: def 5 / off 6 → 5.5; sustained 42 (2 × Longsword); nova none; dmg 42
 
 ## Scar-Marked Reaver (CR 8)
-- clean
+- derivation · SOFT · duplicate-mechanic: Traits/Wounded Tempering: every part of this row is already in "Bloodied Frenzy" — two rows, one mechanic
 - read: def 6 / off 8 → 7; sustained 54 (2 × Maul); nova none; dmg 54
 
 ## Vareth Solmane (CR 6)

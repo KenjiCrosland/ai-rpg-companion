@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "a salt-crusted drowned sailor who drags shipmates down by the ankles", "cr": "3", "rules": "2024",
+    "canary": "BODY KEY: a waterlogged corpse that GRABS has hands — not an incorporeal phantom with STR 1 and Fly 50", "mode": "band" },
+  { "name": "", "description": "a reliquary thief who swallows what she steals", "cr": "6", "rules": "2024",
+    "canary": "OBJECT vs CREATURE: she swallows LOOT — no Swallow row, and no Grappled/Restrained riders with no grab source", "mode": "band" },
+  { "name": "", "description": "a drowned spirit that drifts through the hull and drains the crew", "cr": "5", "rules": "2024",
+    "canary": "BODY KEY control: a real incorporeal spirit must STILL take the phantom line", "mode": "band" },
+  { "name": "", "description": "a gargantuan worm that swallows horses whole", "cr": "16", "rules": "2024",
+    "canary": "CREATURE control: it swallows CREATURES — Swallow must still land, with its grapple source", "mode": "band" },
+  { "name": "", "description": "a canal-lock elemental that opens and drowns a street", "cr": "11", "rules": "2024",
+    "canary": "REGRESSION: the element guard still refuses the Air Elemental", "mode": "band" }
+]

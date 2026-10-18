@@ -8,7 +8,7 @@
 | Dross Ashvowed | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/6 |
 | Dame Oriel | 5 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/4 |
 | Sergeant Halloway | 6 (2014) | 2014 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/5 |
-| Sky-Splinter Kin-Slayer | 8 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 2/6 |
+| Sky-Splinter Kin-Slayer | 8 | 2024 | brute-5 | SOFT: duplicate-mechanic | ok | ok | ok | ok | ok | ok | ok | ok | soft (1) | 1/1 | 2/6 |
 | Vareth Solmane | 6 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 6/6 |
 | Brother Aldric | 4 | 2024 | defender-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 1/1 |
 | Marquess Eluine | 6 | 2024 | caster-6 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/4 |
@@ -50,7 +50,7 @@
 - read: def 5 / off 6 → 5.5; sustained 42 (2 × Longsword); nova none; dmg 42
 
 ## Sky-Splinter Kin-Slayer (CR 8)
-- clean
+- derivation · SOFT · duplicate-mechanic: Traits/Bloodied Fury: every part of this row is already in "Bloodied Frenzy" — two rows, one mechanic
 - read: def 6 / off 8 → 7; sustained 50 (2 × Greataxe); nova none; dmg 50
 
 ## Vareth Solmane (CR 6)

@@ -13,7 +13,7 @@
 | Ashen Vestal March | 4 | 2024 | defender-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 1/2 |
 | Sibyl Marrowgate | 6 | 2024 | caster-6 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | ok | soft (1) | 1/1 | 3/5 |
 | Thurivald | 6 (2014) | 2014 | defender-3-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/5 |
-| Grave Oath | 8 | 2024 | defender-8-leader | ok | ok | FAIL: dangling-ref | ok | ok | ok | ok | ok | ok | FAIL (1) | 2/2 | 2/6 |
+| Grave Oath | 8 | 2024 | defender-8-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 2/6 |
 | Duskveil Whisperblade | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 2/7 |
 | Taiga Pack Wolf | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 3/3 |
 | Sootkey Imp | 4 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/5 |
@@ -24,7 +24,6 @@
 **Dropped 2 of 19 user clauses** (coverage 89%); concept share 65% (51/79 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - skirmisher-3 / reader: 1
-- defender-8-leader / structure: 1
 
 
 ## Black Marsh Stalker (CR 5)
@@ -76,7 +75,7 @@
 - read: def 4 / off 6 → 5; sustained 42 (2 × Spear); nova none; dmg 42
 
 ## Grave Oath (CR 8)
-- structure · FAIL · dangling-ref: Actions/Multiattack references "Debt", which is not a row
+- clean
 - read: def 6 / off 8 → 7; sustained 54 (3 × Consecrated Blade); nova none; dmg 54
 
 ## Duskveil Whisperblade (CR 5)

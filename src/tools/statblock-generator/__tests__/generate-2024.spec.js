@@ -658,7 +658,13 @@ describe('archetype resolve helpers', () => {
     expect(validateSeedSynthesisResponse(JSON.stringify({ archetype: 'lurker', synthesis: 'short' }))).toBe(false);
   });
 
-  test('buildSynthesizedConcept carries the fused sentence, INT tier, and naming rules', () => {
+  // SPLIT 2026-10-17 (owner). The concept is what the creature IS; the naming
+  // rules are instructions ABOUT it. They used to be one string, and the caller
+  // passes that string as `userConcept` — the GM's own words — so a blank roll
+  // read "Never hyphenate names" as a mechanical clause and "It never brawls"
+  // deleted the sheet's only attack. Both halves are still pinned; they are just
+  // pinned to the function that owns each.
+  test('buildSynthesizedConcept carries the fused sentence and the INT tier — and NOT the naming rules', () => {
     const { buildSynthesizedConcept } = require('../format-2024/concept-seeds.mjs');
     const concept = buildSynthesizedConcept(
       { intelligence: 'mindless (INT 1-2)', naming: 'a single stark word: one short, heavy English word that names what it looks like or does' },
@@ -666,8 +672,15 @@ describe('archetype resolve helpers', () => {
     );
     expect(concept).toContain('A frozen coil of riverbed hunger.');
     expect(concept).toContain('mindless (INT 1-2)');
-    expect(concept).toContain('a single stark word');
-    expect(concept).toContain('banned as the name\'s HEAD noun');
+    expect(concept).not.toContain('a single stark word');
+    expect(concept).not.toContain('banned as the name\'s HEAD noun');
+  });
+
+  test('buildSynthesisGuidance carries the naming rules, for the prompt', () => {
+    const { buildSynthesisGuidance } = require('../format-2024/concept-seeds.mjs');
+    const g = buildSynthesisGuidance({ intelligence: 'mindless (INT 1-2)', naming: 'a single stark word: one short, heavy English word that names what it looks like or does' });
+    expect(g).toContain('a single stark word');
+    expect(g).toContain('banned as the name\'s HEAD noun');
   });
 
   test('validateArchetypeResponse (now the identity validator) needs an identity string, not a role', () => {

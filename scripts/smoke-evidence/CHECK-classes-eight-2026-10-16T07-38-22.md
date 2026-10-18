@@ -11,7 +11,7 @@
 | Ravening Blood-Wrack | 8 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/6 |
 | Vareth Solmane | 6 | 2024 | skirmisher-3 | FAIL: attack-stat | ok | ok | ok | ok | ok | ok | ok | ok | FAIL (1) | 0/1 | 5/5 |
 | Ossian the Wall | 4 | 2024 | defender-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 1/1 |
-| Salon Evanescent | 6 | 2024 | caster-6 | ok | ok | FAIL: dangling-ref | ok | ok | ok | ok | ok | ok | FAIL (1) | 1/1 | 4/6 |
+| Salon Evanescent | 6 | 2024 | caster-6 | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/6 |
 | Thurivald | 6 (2014) | 2014 | defender-3-leader | ok | ok | FAIL: lint:duplicate-entry | ok | ok | ok | ok | ok | FAIL: save-fit | FAIL (2) | 1/1 | 3/5 |
 | Dame Marisel Vane | 8 | 2024 | defender-8-leader | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 3/7 |
 | Nychta Vale | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: name-mechanic | FAIL (1) | 1/2 | 1/7 |
@@ -24,7 +24,6 @@
 **Dropped 4 of 19 user clauses** (coverage 79%); concept share 59% (49/83 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
 - skirmisher-3 / derivation: 1
-- caster-6 / structure: 1
 - defender-3-leader / structure: 1
 - defender-3-leader / reader: 1
 - skirmisher-3-skulker / reader: 1
@@ -68,7 +67,7 @@
 - read: def 3 / off 4 → 3.5; sustained 26 (2 × Mace); nova none; dmg 26
 
 ## Salon Evanescent (CR 6)
-- structure · FAIL · dangling-ref: Actions/Multiattack references "Debt", which is not a row
+- clean
 - bands · note · print-numbers: Mage's own numbers at its own CR — the donor gate verifies them; the band is print's by definition
 - donor · note · print-row-exception: Actions/Debt of Ruin rides on: seed the user's words keyed
 - donor · note · print-row-exception: Traits/Evasion rides on: seed the user's words keyed

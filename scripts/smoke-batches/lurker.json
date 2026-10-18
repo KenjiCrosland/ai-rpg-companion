@@ -1,0 +1,14 @@
+[
+  { "name": "", "description": "an eyeless hunter that tracks prey by scent alone", "cr": "5", "rules": "2024", "canary": "LURKER-5 AT ITS OWN CR: the sheet must ship 78 HP (12d8 + 24) and read CR 4.5-5, the under gate clear", "mode": "band" },
+  { "name": "", "description": "a ninja who moves through the shadows and strikes unseen", "cr": "5", "rules": "2024", "canary": "LURKER-5 + a class kit: the hide bonus action priced, HP on the new line", "mode": "band" },
+  { "name": "", "description": "a shadow-stalking assassin who kills from hiding", "cr": "8", "rules": "2024", "canary": "LURKER-8: unchanged donor, the stealth rung reads it hotter by one step at most", "mode": "band" },
+  { "name": "", "description": "a mournful ghost that drifts through the walls of the drowned chapel", "cr": "5", "rules": "2024", "canary": "LURKER-5-PHANTOM: 0.75 stays — the resistance package carries the effective HP over print's floor", "mode": "band" },
+  { "name": "", "description": "an unseen stalker of living wind that is invisible at all times", "cr": "6", "rules": "2024", "canary": "INVISIBILITY ON A LURKER: the +2 AC rung, the read within print's ±1", "mode": "band" },
+  { "name": "", "description": "a goblin captain who darts in and vanishes between the stalls", "cr": "2", "rules": "2024", "canary": "NIMBLE ESCAPE ON A SKIRMISHER: a non-lurker with the hide bonus action is priced the same way, once", "mode": "band" },
+  { "name": "", "description": "a halfling scout who ducks behind her allies and hides between shots", "cr": "3", "rules": "2024", "canary": "HIDE BONUS ACTION ON AN ARCHER: lurker-like ability on a non-lurker, one rung not two", "mode": "band" },
+  { "name": "", "description": "a haunted suit of plate armor that walks through walls", "cr": "6", "rules": "2024", "canary": "INCORPOREAL NON-LURKER: no stealth rung; the body's resistances are the payment", "mode": "band" },
+  { "name": "", "description": "a mage who turns invisible and hurls fire from nowhere", "cr": "7", "rules": "2024", "canary": "INVISIBILITY AS A SPELL-LIST ENTRY: the rung reads row text, not row names", "mode": "band" },
+  { "name": "", "description": "an ambush drake that lies in wait and strikes first", "cr": "4", "rules": "2024", "canary": "AMBUSHER: no defensive rung (DMG prices it on offense); the nova side must still land", "mode": "band" },
+  { "name": "", "description": "a shade-wrapped watcher of the deep vaults", "cr": "17", "rules": "2024", "canary": "LURKER-17: 184 HP under a n=9 floor of 199 — soft by the read, never a fail", "mode": "band" },
+  { "name": "", "description": "a brute troll with a club and a short temper", "cr": "5", "rules": "2024", "canary": "CONTROL: a brute at CR 5 with no stealth — no rung, no movement in its read", "mode": "band" }
+]

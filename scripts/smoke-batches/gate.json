@@ -1,0 +1,290 @@
+[
+ {
+  "name": "",
+  "description": "a lamplighter's widow who still walks her round, trailing cold",
+  "cr": "3",
+  "rules": "2024",
+  "canary": "IDENTITY: an undead walker, not a phantom unless the body is",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a quarry-pit ooze that has swallowed three seasons of tools",
+  "cr": "7",
+  "rules": "2024",
+  "canary": "IDENTITY: Ooze body, real containment",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a hound of brass gears that runs down debtors for a guild",
+  "cr": "5",
+  "rules": "2024",
+  "canary": "IDENTITY TRAP: 'hound' must not fetch the Hell Hound — a Construct",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a bridge-toll giant who has never once left his bridge",
+  "cr": "6",
+  "rules": "2024",
+  "canary": "IDENTITY: Giant, and 'never leaves' is not a lack of mobility",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a choir of drowned children that sings under the ice",
+  "cr": "9",
+  "rules": "2024",
+  "canary": "IDENTITY: a mass of many? the call decides, not the word 'choir'",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "an archivist of the dead who files bones by the year they fell",
+  "cr": "11",
+  "rules": "2024",
+  "canary": "CR 9-12 band, where the authored-pattern gap was -1.48",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a plague-doctor's automaton that bleeds the sick whether they ask or not",
+  "cr": "13",
+  "rules": "2024",
+  "canary": "CR 13-16 band, where the gap was -2.32",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a king of moths who holds court in a burned cathedral",
+  "cr": "15",
+  "rules": "2024",
+  "canary": "CR 13-16, a leader who is not a Humanoid",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "an old bear with a rusted trap still on its foot",
+  "cr": "4",
+  "rules": "2024",
+  "canary": "LACK the GM typed: the trap is a wound, not a weapon",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a dwarf sapper who brings the ceiling down on his own position",
+  "cr": "7",
+  "rules": "2024",
+  "canary": "SPECIES + a self-harming mechanic",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a tiefling tax-collector who never raises his voice",
+  "cr": "5",
+  "rules": "2024",
+  "canary": "SPECIES kit: darkvision from the kit, and no shouting mechanic invented",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a monk of the shuttered order who has taken a vow of stillness",
+  "cr": "8",
+  "rules": "2024",
+  "canary": "CLASS + a vow that LIMITS: stillness must not read as a speed lack",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a pit-fighter who has never been knocked down",
+  "cr": "6",
+  "rules": "2014",
+  "canary": "2014 + an idiom: 'never knocked down' is pride, not Prone immunity",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a reef-wraith that drowns divers in the shallows",
+  "cr": "10",
+  "rules": "2014",
+  "canary": "2014 IDENTITY: 'wraith' and 'drowns' — body and element both at issue",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a cartographer who has mapped a place that does not exist",
+  "cr": "12",
+  "rules": "2024",
+  "canary": "ABERRATION-ish: no combat verb at all, the never-fail path",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a goat-legged fiddler who plays until the dancers drop",
+  "cr": "6",
+  "rules": "2024",
+  "canary": "FEY: a body's own art, not casting — the piper pin's family",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a siege-wasp the size of a horse that lays its eggs in the wounded",
+  "cr": "8",
+  "rules": "2024",
+  "canary": "BEAST/MONSTROSITY, a real containment engine",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a knight whose armour is welded shut and has been for years",
+  "cr": "9",
+  "rules": "2024",
+  "canary": "IDENTITY: a Humanoid, not a Construct — welded armour is worn",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a saint's hand kept in a reliquary that still blesses the faithful",
+  "cr": "4",
+  "rules": "2024",
+  "canary": "CASTS: 'blesses' implied by the kind, on an object-bodied thing",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a mountain that has begun to walk and does not know why",
+  "cr": "17",
+  "rules": "2024",
+  "canary": "LEGENDARY tier, Elemental/Giant body, the legendary budget",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a thieves'-guild bookkeeper with a crossbow under the desk",
+  "cr": "3",
+  "rules": "2024",
+  "canary": "SHOOTS: a crossbow it actually uses reaches the archer line",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a shepherd whose dogs have all gone wrong",
+  "cr": "5",
+  "rules": "2024",
+  "canary": "SWARM control: he COMMANDS animals, he is not a mass of them",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a glassblower's apprentice who cannot stop burning",
+  "cr": "7",
+  "rules": "2024",
+  "canary": "ENERGY from the GM's own words, and a self-damaging shape",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a judge of the drowned court who weighs the dead and finds them wanting",
+  "cr": "16",
+  "rules": "2024",
+  "canary": "CR 13-16 + a condition payoff loop, the composition stage 5 wants",
+  "mode": "band"
+ },
+ {
+  "name": "Grathuun the Sunken",
+  "cr": "6",
+  "rules": "2024",
+  "canary": "NAME, NO DESCRIPTION: the synthesis fills in — and its authoring rules must NOT arrive as the GM's clauses",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "role": "brute",
+  "cr": "auto",
+  "rules": "2024",
+  "canary": "ARCHETYPE ONLY: a blank roll on a brute — every sheet must have an attack",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "cr": "9",
+  "rules": "2024",
+  "canary": "CR ONLY: the fully synthesized path at CR 9 — no clause may read 'Never hyphenate names'",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "role": "lurker",
+  "cr": "5",
+  "rules": "2024",
+  "canary": "CR + ARCHETYPE: the Prismabound Warden's own path — an attack row must survive any lacks clause",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "role": "defender",
+  "cr": "1",
+  "rules": "2024",
+  "canary": "CR + ARCHETYPE at the floor: CR 1 defender, the exact shape that shipped with no attack",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "cr": "auto",
+  "rules": "2024",
+  "canary": "FULLY BLANK: nothing typed at all, the path no batch today exercised",
+  "mode": "band"
+ },
+ {
+  "name": "Vess Alder",
+  "role": "controller",
+  "cr": "8",
+  "rules": "2024",
+  "canary": "NAME + ARCHETYPE, no description: a named synthesis keeps its name and still gets an attack",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "role": "artillery",
+  "cr": "4",
+  "rules": "2014",
+  "canary": "BLANK + 2014: the synthesis path through the edition conversion",
+  "mode": "band"
+ },
+ {
+  "name": "",
+  "description": "a lizardfolk monk who holds her breath in the reeds, strikes pressure points with an open hand, and carries a shortsword she never draws",
+  "cr": "6",
+  "rules": "2024",
+  "canary": "MESHRIN: species rows (Hold Breath, Swim) + monk kit + a named weapon + a LACK on that weapon — all four on one sheet, coverage and cap both honest"
+ },
+ {
+  "name": "",
+  "description": "a goliath barbarian with a greataxe and a hide shield who flies into a rage once per day when wounded, and cannot be charmed",
+  "cr": "8",
+  "rules": "2024",
+  "canary": "MESHRIN+MATH: species + barbarian kit + two weapons + a per-day limit + an immunity — and the idiom must not grant flight"
+ },
+ {
+  "name": "",
+  "description": "a dwarf cleric in plate with a warhammer who mends her shield-bearers twice a day and turns the undead",
+  "cr": "7",
+  "rules": "2024",
+  "canary": "MESHRIN+CASTS: species + cleric kit + weapon + a twice-a-day heal + divine casting implied by the kind; DC and attack must key one stat"
+ },
+ {
+  "name": "",
+  "description": "a kenku rogue who speaks only in stolen voices, picks locks, and throws three daggers a round",
+  "cr": "5",
+  "rules": "2024",
+  "canary": "MESHRIN+COUNT: species speech line + rogue kit + a thrown weapon + THREE attacks a round — the Multiattack count and the dagger range must both be right"
+ },
+ {
+  "name": "",
+  "description": "an orc paladin on a dire boar who smites with a lance and takes no damage from poison",
+  "cr": "9",
+  "rules": "2024",
+  "canary": "MESHRIN+MOUNT: species + paladin kit + a mount + a lance (reach 10) + an immunity the GM typed"
+ }
+]

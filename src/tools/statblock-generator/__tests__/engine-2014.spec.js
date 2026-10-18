@@ -1287,8 +1287,12 @@ describe('type essences (anti-reskinning, owner call 2026-07-28)', () => {
 
   test('synthesized concepts carry the essence too', () => {
     const traits = { intelligence: 'scheming (INT 14-16)', disposition: 'a patient killer that strikes from extreme range', creature_type: 'Fiend', naming: 'a folk name: what frightened villagers would whisper — an <adjective> <noun> pair built from plain words that describe its body or behavior (store it WITHOUT a leading "the"; prose adds the article)' };
+    // the type essence is guidance ABOUT the creature, so it rides the prompt
+    // now rather than the GM's words (split 2026-10-17) — still pinned, here
+    const { buildSynthesisGuidance } = require('../format-2024/concept-seeds.mjs');
     const out = buildSynthesizedConcept(traits, 'A tar-black huntsman that watches from chimney smoke.');
-    expect(out).toContain('Fiend: a being of the lower planes');
+    expect(out).toContain('A tar-black huntsman');
+    expect(buildSynthesisGuidance(traits)).toContain('Fiend: a being of the lower planes');
   });
 });
 

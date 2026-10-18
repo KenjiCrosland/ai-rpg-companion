@@ -1675,6 +1675,18 @@ Return ONLY a JSON object with the SAME sections, SAME entry order, SAME entry n
 const LOWERCASE_CONDITIONS_G = new RegExp(
   `\\b(${CONDITIONS.map((c) => c.toLowerCase()).join('|')})\\b`, 'g'
 );
+/** The 2024 capitalisation pass, on its own: conditions and game terms. Exposed
+ * so a row added AFTER applyCorrections can still be normalised — the lint only
+ * fixes rules it found at repair time, and the reskin path adds rows later (the
+ * Sallow Reedsman's free-text "Patient Assailant" shipped "grappled" and
+ * "advantage" lowercase, gate-2026-10-17T18-34-19). One definition, two readers.
+ */
+export const capsFix2024 = (t) => String(t ?? '')
+  .replace(/\badvantage\b/g, 'Advantage').replace(/\bdisadvantage\b/g, 'Disadvantage')
+  .replace(/\blong rest\b/g, 'Long Rest').replace(/\bshort rest\b/g, 'Short Rest')
+  .replace(/\bhit points\b/g, 'Hit Points').replace(/\bopportunity attacks?\b/g, (x) => (x.endsWith('s') ? 'Opportunity Attacks' : 'Opportunity Attack'))
+  .replace(LOWERCASE_CONDITIONS_G, (m) => m[0].toUpperCase() + m.slice(1));
+
 const DETERMINISTIC_TEXT_FIXES = [
   ['term-caps', (t) => t
     .replace(/\bhit points\b/g, 'Hit Points').replace(/\bhit point\b/g, 'Hit Point')

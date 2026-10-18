@@ -1,0 +1,7 @@
+[
+  { "name": "Druid", "description": "", "cr": "2", "rules": "2024", "canary": "PRINT CASTER ON THE CASTER LINE: Spellcasting says Wisdom, WIS is the fitted stat, INT stays print's 12, DC agrees with the trace", "mode": "band" },
+  { "name": "", "description": "a druid of the old grove who calls lightning down on poachers", "cr": "5", "rules": "2024", "canary": "DRUID BY WORDS: the print head's casting stat seats the caster striker", "mode": "band" },
+  { "name": "", "description": "a priest who heals the faithful and burns the heretic with holy fire", "cr": "4", "rules": "2024", "canary": "PRIEST: Wisdom caster via print head, whichever line the call picks", "mode": "band" },
+  { "name": "", "description": "a wizard but he cannot cast any spells, he just hits people with his staff", "cr": "3", "rules": "2024", "canary": "CONTROL (canaries pin): no caster line, no Spellcasting, the staff rolls STR or DEX", "mode": "band" },
+  { "name": "", "description": "a court wizard who is never where you struck and steps away", "cr": "6", "rules": "2024", "canary": "CONTROL: an INT caster is unchanged", "mode": "band" }
+]

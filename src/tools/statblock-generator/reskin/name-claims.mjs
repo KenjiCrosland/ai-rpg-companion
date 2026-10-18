@@ -23,7 +23,7 @@ export const NAME_CLAIMS_MECHANIC = [
   [/\bdeafen\w*/i, /\bDeafened\b/, 'the Deafened condition'],
   [/\bcharm\w*/i, /\bCharmed\b/, 'the Charmed condition'],
   [/\brestrain\w*/i, /\bRestrained\b/, 'the Restrained condition'],
-  [/\b(?:charge|rush|stampede|dash|stride|gallop|sprint)\b/i, /\b(?:moves?|move up to|movement|Speed|straight toward|feet in a straight line|Dash|Disengage|Difficult Terrain|Opportunity Attacks?)\b/, 'movement'], [/\b(?:fear|dread|terror|fright|horror|scare)\w*/i, /\bFrightened\b|Disadvantage on (?:attack rolls and ability checks|ability checks and attack rolls)/, 'the Frightened condition'] /* print writes the Frightened effect longhand where the creature fears a thing (the phobia shape: Sir Reginald's Avian Terror) */, [/\bstun\w*/i, /\bStunned\b/, 'the Stunned condition'], [/\bblind\w*/i, /\bBlinded\b/, 'the Blinded condition'], [/\b(?:grapple|grasp|grip|clutch|seize)\w*/i, /\bGrappled\b|\bescape DC\b/, 'the Grappled condition'], [/\b(?:trip|topple|sweep)\b/i, /\bProne\b/, 'the Prone condition'], [/\b(?:push\w*|shov\w*|repel\w*|hurl back)\b/i, /\bpushed\b/, 'a push'] /* the -ing forms, as every other entry in this table already allows ("Shoving Slam" claimed a push nothing delivered, 2026-10-15) */, [/\bparaly\w*/i, /\bParalyzed\b/, 'the Paralyzed condition'], [/\bpoison\w*/i, /\bPoison(?:ed)?\b/, 'Poison'], [/\bhobbl\w*|\bcripple\w*|\bslow\w*/i, /\bSpeed\b|\bProne\b|\bRestrained\b/, 'a Speed, Prone or Restrained effect']];
+  [/\b(?:charge|rush|stampede|dash|stride|gallop|sprint)\b/i, /\b(?:moves?|move up to|movement|Speed|straight toward|feet in a straight line|Dash|Disengage|Difficult Terrain|Opportunity Attacks?)\b/, 'movement'], [/\b(?:fear|dread|terror|fright|horror|scare)\w*/i, /\bFrightened\b|Disadvantage on (?:attack rolls and ability checks|ability checks and attack rolls)/, 'the Frightened condition'] /* print writes the Frightened effect longhand where the creature fears a thing (the phobia shape: Sir Reginald's Avian Terror) */, [/\bstun\w*/i, /\bStunned\b/, 'the Stunned condition'], [/\bblind\w*/i, /\bBlinded\b/, 'the Blinded condition'], [/\b(?:grapple|grasp|grip|clutch|seize)\w*/i, /\bGrappled\b|\bescape DC\b/, 'the Grappled condition'], [/\b(?:trip|topple|sweep)\b/i, /\bProne\b/, 'the Prone condition'], [/\b(?:push\w*|repel\w*|hurl back)\b/i, /\bpushed\b/, 'a push'], [/\bshov\w*/i, /\bpushed\b|\bProne\b/, 'a push or a knockdown' /* 2024's Shove does either — the honest-noun table below offers Shove for a Prone row, and the two halves must agree (a renamed "Seismic Shove" over a Prone row was re-flagged, gatefix 2026-10-18) */] /* the -ing forms, as every other entry in this table already allows ("Shoving Slam" claimed a push nothing delivered, 2026-10-15) */, [/\bparaly\w*/i, /\bParalyzed\b/, 'the Paralyzed condition'], [/\bpoison\w*/i, /\bPoison(?:ed)?\b/, 'Poison'], [/\bhobbl\w*|\bcripple\w*|\bslow\w*/i, /\bSpeed\b|\bProne\b|\bRestrained\b/, 'a Speed, Prone or Restrained effect']];
 
 // QUESTION 4 (owner, 2026-10-16): may the engine overrule a row name the call
 // chose? Yes, for correctness. The repair call is offered the shape's honest
@@ -42,6 +42,10 @@ const HONEST_NOUN = [
   [/has the Deafened condition/i, ['Peal', 'Clangor']],
   [/has the Stunned condition/i, ['Stagger', 'Rattle']],
   [/\bpushed\b|pulled up to|moves? the target/i, ['Shove', 'Heave']],
+  // the movement claim (row 1 of NAME_CLAIMS_MECHANIC) had no honest noun to
+  // offer, so a legendary "Shove Through" that only moved the creature could
+  // not be renamed and shipped promising a push (gate 2026-10-17)
+  [/\bmoves? up to\b|\bits Speed\b|without provoking Opportunity Attacks/i, ['Stride', 'Rush', 'Surge']],
   [/regains? \d+ Hit Points/i, ['Mending', 'Succour']],
   [/Saving Throw[^.]*\d+ \(\d+d\d+/i, ['Burst', 'Wave', 'Surge']],
   [/\) (?:Slashing) damage/i, ['Slash', 'Rend', 'Cut']],

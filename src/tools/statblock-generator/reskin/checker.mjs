@@ -64,7 +64,18 @@ export function danglingRefIn(text, names, rowName = '') {
   // and read as dangling even though Slam is a row. Harmless while only the
   // checker read this (it reported after the fact); a false refusal once
   // generation reads it too, which is why it is bounded here.
-  for (const ref of String(text ?? '').matchAll(/(?:use of|uses|cast) ((?:[A-Z][\w'-]*)(?: [A-Z][\w'-]*){0,3})/g)) {
+  // A PRINT ROW NAME CARRIES LOWERCASE PARTICLES ("Vow of Silence", "Breath of
+  // the Grave"), so the title-case run has to step over them. Bounding the run
+  // to capitalised words alone fixed the over-capture ("uses Slam against the
+  // attacker" took the whole tail) and introduced the opposite fault: "a use of
+  // Vow of Silence" captured "Vow", which matches no row, and the checker failed
+  // a sheet whose citation was correct. A connective counts as part of the name
+  // only when a capitalised word follows it.
+  // Two more gaps, found on the 37-block gate (2026-10-17): a name with TWO
+  // consecutive particles ("Toll of the Crossing") captured only "Toll", and the
+  // bare verb "use" was not in the alternation at all ("It can use Weighing
+  // Pan"). Particles may now repeat inside the run, and "use" joins "uses".
+  for (const ref of String(text ?? '').matchAll(/(?:use of|uses?|cast) ((?:[A-Z][\w'-]*)(?:(?: (?:of|the|and|in|to|from|at|on|with|upon))* [A-Z][\w'-]*){0,3})/g)) {
     const target = ref[1].trim();
     if (REF_SKIP.test(target)) continue;
     if (/\bcast\b/.test(ref[0])) continue;
@@ -81,7 +92,7 @@ export function attackRowsOf(m) {
     const main = String(e.text).replace(/,?\s*plus \d+ \(\d+d\d+(?: [+-] \d+)?\) \w+ damage if [^.]*\.?/g, '').split(/\bIf\b|\bWhen\b|, or \d+ \(/)[0]; // a rider that needs a condition ("if the attack roll had Advantage") is not always-on (critic's audit 2026-10-02)
     const parts = main.match(/\d+ \(\d+d\d+(?: [+-] \d+)?\)/g) ?? [];
     const first = /(\d+) \((\d+)d(\d+)(?: ([+-]) (\d+))?\)/.exec(main);
-    return { sec, e, weapon: e.weapon ?? null, name: bare(e.name), atk, avg: parts.reduce((a, p) => a + avgOf(p), 0), ranged: /Ranged Attack Roll/.test(e.text) && !/Melee or Ranged/.test(e.text), bonus: first ? (first[4] === '-' ? -1 : 1) * Number(first[5] ?? 0) : null, dice: first ? `${first[2]}d${first[3]}` : null };
+    return { sec, e, weapon: e.weapon, name: bare(e.name), atk, avg: parts.reduce((a, p) => a + avgOf(p), 0), ranged: /Ranged Attack Roll/.test(e.text) && !/Melee or Ranged/.test(e.text), bonus: first ? (first[4] === '-' ? -1 : 1) * Number(first[5] ?? 0) : null, dice: first ? `${first[2]}d${first[3]}` : null };
   });
 }
 // A ONCE-PER-FIGHT TRIGGER IS A GATE, WHEREVER IT IS WRITTEN (critic's hold 4,
@@ -175,7 +186,31 @@ export function dmgRead(m) {
   const defTraitRungs = (/Magic Resistance|Advantage on saving throws against spells/i.test(defText) ? 1 : 0)
     + (/Legendary Resistance/i.test(defText) ? 1 : 0)
     + (/\bRegeneration\b|regains \d+ Hit Points at the start of/i.test(defText) ? 1 : 0)
-    + (/Undead Fortitude|drops to 1 Hit Point instead/i.test(defText) ? 1 : 0);
+    + (/Undead Fortitude|drops to 1 Hit Point instead/i.test(defText) ? 1 : 0)
+    // STEALTH IS EFFECTIVE AC (owner's lurker work, 2026-10-18). The DMG 2014
+    // Monster Features table (p.280-281, from memory — verify against the book)
+    // prices Nimble Escape at +4 effective AC, Shadow Stealth at +4, Invisibility
+    // and Superior Invisibility at +2, and Incorporeal Movement at no adjustment.
+    // A rung here is 2 AC. Tested against print's own stealth creatures before
+    // landing: Nimble Escape moved the defensive read from -0.96 to +0.17 at +4,
+    // and Invisibility from -1.27 to -0.39 at +2 — both inside the reader's own
+    // -0.60 baseline. The DMG also gives Nimble Escape +4 ATTACK (it assumes the
+    // creature hides every round); print's Nimble Escape creatures already read
+    // +1.00 OVER on offense without it, so the attack half is not applied.
+    // Incorporeal Movement takes nothing here because print's incorporeals pay
+    // their thin HP with resistances, which effectiveHp already prices.
+    // This is why a lurker reads under: it trades HP for stealth, and the reader
+    // saw the trade's cost and never its payment. It reads any sheet, so a
+    // non-lurker carrying a hide bonus action is priced the same way.
+    // One stealth rung, not one per phrasing: 2024's Nimble Escape IS the hide
+    // bonus action ("takes the Disengage or Hide action"), so a creature that
+    // has it must not be priced twice. Measured: both rungs firing read print's
+    // Nimble Escape creatures +2.00 over; one reads them +0.17.
+    + ((/\bNimble Escape\b|\bShadow Stealth\b/i.test(defText) || (m.sections?.['Bonus Actions'] ?? []).some((e) => /\bHide action\b/i.test(e.text ?? ''))) ? 2 : 0)
+    // Print's at-will invisibility is mostly a spell-list entry ("At Will: ...
+    // Invisibility"), so this reads every row's text, not row names; a recharge
+    // row is a nova, priced on the offense side.
+    + (allRows(m).some(({ e }) => /\bInvisibility\b|has the Invisible condition/i.test(e.text ?? '') && !/\(Recharge/i.test(e.name ?? '')) ? 1 : 0);
   const def = stepCR(defBase, Math.trunc((Number(m.ac) - TABLE[defBase].armor_class) / 2) + defTraitRungs);
   const offBase = crByBand(Math.round(s.dmg), 'min_damage_per_round', 'max_damage_per_round');
   const offRow = TABLE[offBase];
@@ -215,7 +250,12 @@ function gateDerivation(m, ctx, F) {
     // (critic, 2026-10-14: Lady Merivane swung a greatsword at +8 off WIS 20
     // because the caster chassis keys every attack to one stat). Without a 2014
     // label the gate allowed the casting stat on any row, so nothing flagged it.
-    const label = label2014[r.name]; const mundane = namesWeapon(r.name) && !/\b(?:arcane|eldritch|spectral|radiant|shadow|flame|frost|storm|spirit|astral|phantom)\b/i.test(String(r.name ?? ''));
+    // A NULL STAMP IS THE CALL'S ANSWER (gate 2026-10-17: "Snuffer-Pole = none").
+    // The engine resolves each row's weapon once: a name, or null when the call
+    // said the row is no weapon. Re-reading the name is the fallback for a row
+    // that was never resolved (undefined), not a second opinion on one that was.
+    const noWeapon = r.weapon === null;
+    const label = label2014[r.name]; const mundane = !noWeapon && namesWeapon(r.name) && !/\b(?:arcane|eldritch|spectral|radiant|shadow|flame|frost|storm|spirit|astral|phantom)\b/i.test(String(r.name ?? ''));
     // AND FINESSE SAYS WHICH OF THE TWO (critic's notes, 2026-10-15: "Vareth's
     // Mace rolls off DEX 18; a mace isn't finesse, and the weapon table knows
     // it"). A melee weapon with no finesse property rolls Strength; a finesse one
@@ -223,13 +263,33 @@ function gateDerivation(m, ctx, F) {
     // one weapon table, so this adds no list.
     // the ROW'S OWN declared weapon first — the call answered "which weapon is
     // this" and the engine stamped it; re-reading the name is the fallback
-    const wp = WEAPONS[r.weapon ?? ''] ?? weaponProp(r.name);
+    const wp = noWeapon ? null : (WEAPONS[r.weapon ?? ''] ?? weaponProp(r.name));
     const weaponStats = wp && !label ? (wp.launcher ? ['DEX'] : (wp.finesse || wp.thrown ? ['STR', 'DEX'] : (wp.reach ? ['STR'] : ['STR', 'DEX']))) : null;
     const allowed = label === 'weapon' || mundane ? (weaponStats ?? ['STR', 'DEX']) : label === 'spell' ? [castStat].filter(Boolean) : ['STR', 'DEX', ...(castStat ? [castStat] : [])];
     const any = Object.keys(mods).find((k) => mods[k] + pb === r.atk); const stat = allowed.find((k) => mods[k] + pb === r.atk) ?? any;
     if (!any) F('attack-bonus', 'fail', `${r.name}: +${r.atk} is not ${label ? `a ${label} row's` : 'STR/DEX or the casting stat\'s'} mod + PB ${pb} (mods ${Object.entries(mods).map(([k, v]) => `${k} ${v}`).join(', ')})`, `+${r.atk}`);
     else if (!allowed.includes(stat)) F('attack-stat', 'fail', `${r.name}: +${r.atk} derives from ${stat}, but ${label ? `a ${label} row` : 'an attack row'} rolls ${allowed.join('/')}`, stat);
     else if (r.bonus !== null && r.bonus !== mods[stat] && !(r.ranged && r.bonus === mods.DEX)) F('damage-mod', 'fail', `${r.name}: damage bonus ${r.bonus >= 0 ? '+' : ''}${r.bonus} is not ${stat}'s ${mods[stat]}`, r.bonus);
+  }
+  // TWO ROWS FOR ONE MECHANIC (critic, 2026-10-16). A berserker shipped
+  // "Wounded Rage. While Bloodied, the hull has Advantage on attack rolls."
+  // beside "Bloodied Frenzy. While Bloodied, the hull has Advantage on attack
+  // rolls and saving throws." — the same trigger and the same effect, extended,
+  // which the brief calls chassis filler.
+  // It REPORTS and does not repair. As a lint `correctable` it drove the repair
+  // path and rewrote unrelated rows; the checker is the reviewer and the lint is
+  // the fixer, so it belongs here. A PREFIX, not a subset: a shared vocabulary is
+  // not a shared mechanic (print's Swarm trait contains a second movement
+  // trait's words), and attack rows are exempt because they share their whole
+  // frame (print's Werebear has Rend beside Handaxe).
+  for (const [sec, rows] of Object.entries(m.sections ?? {})) {
+    const isAttack = (t) => /Attack Roll:|Weapon Attack:/i.test(String(t ?? ''));
+    const sig = (t) => String(t ?? '').toLowerCase().replace(/[^a-z ]+/g, ' ').split(/\s+/).filter((w) => w.length > 3).join(' ');
+    const cand = (rows ?? []).filter((e) => e?.text && !isAttack(e.text)).map((e) => ({ e, s: sig(e.text) })).filter((x) => x.s.split(' ').length >= 4);
+    for (const a of cand) {
+      const host = cand.find((b) => b !== a.e && b.s.length > a.s.length && b.s.startsWith(a.s));
+      if (host) { F('duplicate-mechanic', 'soft', `${sec}/${bare(a.e.name)}: every part of this row is already in "${bare(host.e.name)}" — two rows, one mechanic`, bare(a.e.name)); break; }
+    }
   }
   for (const { sec, e } of allRows(m)) {
     for (const dm of String(e.text ?? '').matchAll(/(?<!escape )DC (\d+)(?! plus the damage taken)/g)) { // print's Zombie: "Constitution saving throw (DC 5 plus the damage taken)" is its own derivation
@@ -636,7 +696,11 @@ function gateReader(raw, m, ctx, F) {
     const pcb = ctx.print;
     if (pcb.alignment && String(m.alignment ?? '') !== pcb.alignment) F('exact-body-identity', 'fail', `alignment ${m.alignment} — the ${pcb.name}'s is ${pcb.alignment}`, m.alignment);
     if (pcb.type && String(m.type ?? '').toLowerCase() !== pcb.type.toLowerCase() && !/\b(?:aberration|beast|celestial|construct|dragon|elemental|fey|fiend|giant|humanoid|monstrosity|ooze|plant|undead)\b/i.test(String(ctx.userConcept ?? ''))) F('exact-body-identity', 'fail', `type ${m.type} — the ${pcb.name}'s is ${pcb.type}`, m.type);
-    if (pcb.size && String(m.size ?? '') !== pcb.size && !/\b(?:tiny|small|medium|large|huge|gargantuan)\b/i.test(String(ctx.userConcept ?? ''))) F('exact-body-identity', 'fail', `size ${m.size} — the ${pcb.name}'s is ${pcb.size}`, m.size);
+    // a HUMANOID print body's size is not copied by the engine (print writes
+    // "Small or Medium Humanoid" and the corpus keeps the first word — the Druid
+    // reads Small), so this gate does not demand it either: one rule, both sides
+    // (druid smoke 2026-10-18)
+    if (pcb.size && String(m.size ?? '') !== pcb.size && !/^Humanoid\b/i.test(String(pcb.type ?? '')) && !/\b(?:tiny|small|medium|large|huge|gargantuan)\b/i.test(String(ctx.userConcept ?? ''))) F('exact-body-identity', 'fail', `size ${m.size} — the ${pcb.name}'s is ${pcb.size}`, m.size);
     const dice = (t) => (/\d+ \(\d+d\d+(?: [+-] \d+)?\)/.exec(String(t ?? '')) ?? [''])[0]; // the attack's own expression; print's riders ride separately
     for (const r of [...(pcb.meleeRows ?? []), ...(pcb.rangedRows ?? []), ...(pcb.rulesRows ?? [])]) { const row = rows.find(({ e }) => bare(e.name).toLowerCase() === String(r.name ?? '').toLowerCase())?.e; if (!row) continue; const want = dice(r.text ?? r.dmg ?? ''); const have = dice(row.text); if (want && have && want !== have) F('exact-body-identity', 'fail', `${bare(row.name)}: ${have} — the ${pcb.name}'s is ${want}`, have); }
   }
@@ -653,7 +717,16 @@ function gateReader(raw, m, ctx, F) {
   const ENGINE_KEY = /\b(?:grapple|grapples|grappled|grab|grabs|seize|seizes|hold|holds|clutch|wrestle|constrict|crush|crushes|squeeze|drag|drags|pull|pulls|swallow|swallows|engulf|engulfs|devour|gulp|smother|entomb|envelop|absorb|coil|coils|wrap|wraps|snare|net|tentacle|tentacles|jaws|maw|hug|cage|lasso|hook|hooks)\b/i;
   const printGrapples = !!ctx.print && [...(ctx.print.meleeRows ?? []), ...(ctx.print.rulesRows ?? [])].some((r) => /Grappled|swallow|engulf/i.test(r.text ?? r.rider ?? ''));
   const creatureOnly = !!((raw?.generation ?? m?.generation ?? raw?.other_edition?.generation)?.creatureOnly);
-  if (!creatureOnly && !ENGINE_KEY.test(String(ctx.userConcept ?? '')) && !routerKeyed(String(ctx.userConcept ?? '')) && !printGrapples) for (const { sec, e } of rows) { const t = String(e.text ?? ''); if (e.part || e.print) continue; if (/has the Grappled condition \(escape DC/.test(t) || (e.rules && /^(?:Swallow|Engulf|Smother|Whelm|Cage|Entomb|Cocoon)\b/.test(e.name ?? ''))) F('engine-needs-key', 'fail', `${sec}/${bare(e.name)}: a grapple or engulf engine with no key in the words`, bare(e.name)); }
+  // THE CALL ANSWERED THIS ALREADY (owner, 2026-10-17). `ENGINE_KEY` is a word
+  // list asking whether the GM's words name a containment engine — the same
+  // question the route call now answers as `holds`, with the GM's own words as
+  // its receipt. The checker was a FIFTH reader of that question and still read
+  // the words: a siege-wasp that "lays its eggs in the wounded" was failed for
+  // having no key, while the call had read it as holding. When the answer is
+  // recorded, it decides; when it is absent, the word list still does.
+  const holdsAnswer = (raw?.generation ?? m?.generation)?.holds;
+  if (holdsAnswer === true) { /* the call read a containment engine in the GM's own words */ }
+  else if (!creatureOnly && !ENGINE_KEY.test(String(ctx.userConcept ?? '')) && !routerKeyed(String(ctx.userConcept ?? '')) && !printGrapples) for (const { sec, e } of rows) { const t = String(e.text ?? ''); if (e.part || e.print) continue; if (/has the Grappled condition \(escape DC/.test(t) || (e.rules && /^(?:Swallow|Engulf|Smother|Whelm|Cage|Entomb|Cocoon)\b/.test(e.name ?? ''))) F('engine-needs-key', 'fail', `${sec}/${bare(e.name)}: a grapple or engulf engine with no key in the words`, bare(e.name)); }
   // provenance-integrity
   for (const { sec, e } of rows) if ((e.kit || e.feature || e.part) && !e.clause && !(Array.isArray(e.boundKeys) && e.boundKeys.length)) F('provenance-integrity', 'fail', `${sec}/${bare(e.name)}: a ${e.kit ? 'kit' : e.feature ? 'feature' : 'part'} row with no clause on the saved block`, bare(e.name));
   // multiattack-integrity: a print body keeps print's Multiattack, and a Multiattack names only rows that are present
@@ -838,7 +911,16 @@ function gateReader(raw, m, ctx, F) {
   // also missed the Swarm-of wrapper, which is how a Construct swarm reached it.
   const mute = /^none$/i.test(String(m.languages ?? 'None').trim()) || /can't speak|cannot speak/i.test(String(m.languages ?? ''));
   const noEthicsType = /^(?:Beast|Ooze|Plant|Construct)\b/i.test(String(m.type ?? '')) || /\bSwarm of \w+ (?:Beast|Ooze|Plant|Construct)/i.test(String(m.type ?? ''));
-  if (/^unaligned$/i.test(String(m.alignment ?? '').trim()) && !noEthicsType && (Number(m.stats?.INT ?? 10) >= 6 || !mute)) F('alignment-fit', 'fail', `Unaligned on a ${m.type} with INT ${m.stats?.INT ?? '?'} that speaks ${m.languages} — Unaligned is for a creature with no capacity for ethics`, m.alignment);
+  // PRINT'S OWN RATE SETS THE THRESHOLD (owner, 2026-10-18: "are these really
+  // FAILs or notes?"). The INT >= 6 bar failed a Monstrosity and an Elemental at
+  // INT 6 that speak nothing — and of print's 128 creatures with INT <= 8 and no
+  // language, 120 are Unaligned: 94%. The four exceptions are Death Dog,
+  // Ettercap, Gibbering Mouther and Mimic. So a mute creature at INT <= 8 being
+  // Unaligned is print's NORM, not a defect, whatever its type; the gate was
+  // contradicting print nine times in ten and spending the critic's attention on
+  // it. Above INT 8, or with real speech, the question stands.
+  const noEthicsInt = mute && Number(m.stats?.INT ?? 10) <= 8;
+  if (/^unaligned$/i.test(String(m.alignment ?? '').trim()) && !noEthicsType && !noEthicsInt && (Number(m.stats?.INT ?? 10) >= 6 || !mute)) F('alignment-fit', 'fail', `Unaligned on a ${m.type} with INT ${m.stats?.INT ?? '?'} that speaks ${String(m.languages ?? 'None').trim() || 'None'} — Unaligned is for a creature with no capacity for ethics`, String(m.alignment ?? ''));
   // name-mechanic + no-type-in-name
   for (const { sec, e } of rows) {
     const n = bare(e.name); const t = String(e.text ?? ''); if (/^(?:Multiattack|Spellcasting|Legendary Resistance|Legendary Action Uses)/.test(n) || e.print) continue;
@@ -853,7 +935,19 @@ export function checkBlock(raw, ctx = {}) {
   const m = m0.english?.sections ? m0.english : m0; // a translated block carries its English twin: the engine built and checked it in English and the translation holds the numbers — the checker reads the twin (the Steingolem read "sustained 0 (1 × ?)", canaries 2026-10-12)
   const cr = Number(ctx.cr ?? m.cr ?? crNum(m.cr_str ?? '0'));
   const userConcept = ctx.userConcept ?? (raw.other_edition ?? raw).generation?.userConcept ?? raw.generation?.userConcept ?? [raw.monsterName, raw.monsterDescription].filter(Boolean).join(' — '); // the block carries the user's words from step 4 on
+  // THE CHECKER IS A READER OF THE ALIAS TOO (2026-10-17). generate.mjs stands a
+  // print body down when the concept's own TYPE or ELEMENT contradicts it — the
+  // words RESEMBLE that creature, they do not name it. The checker matched the
+  // same alias and did not apply the same test, so a brass-gear hound that
+  // correctly refused the Hell Hound was then failed for not having the Hell
+  // Hound's Multiattack. Five readers of this alias now, one rule: if the shipped
+  // sheet's type contradicts print's, it is not that creature and its structure
+  // is not the standard.
   let print = ctx.print ?? null; if (!print && userConcept) { try { print = printCanonFor(readPhrases(userConcept), cr); } catch { print = null; } }
+  if (print && !print.exact && print.type && m.type) {
+    const head = (t) => String(t).replace(/^Swarm of \w+ /, '').split(/[ ,(]/)[0].toLowerCase();
+    if (head(print.type) !== head(m.type)) print = null;
+  }
   if (print && userConcept) { const sh = speciesFor([userConcept], userConcept); if (sh && print.type && sh.species.type && print.type.toLowerCase() !== sh.species.type.toLowerCase()) print = null; } // the engine's rule: a species word outranks a monster alias of another type (a kenku mimic is not the Mimic — species landing 2026-10-13)
   const labels2014 = {};
   if (edition === '2014') for (const e of [...(raw.actions ?? []), ...(raw.legendary_actions ?? []), ...(raw.reactions ?? [])]) { const t = String(e.description ?? e.text ?? ''); labels2014[bare(e.name)] = /Spell Attack:/.test(t) ? 'spell' : /Weapon Attack:/.test(t) ? 'weapon' : null; }

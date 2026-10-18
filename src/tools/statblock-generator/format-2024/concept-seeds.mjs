@@ -158,9 +158,23 @@ export function namingRules(traits) {
  * list of axes — the anti-discombobulation mechanism. The intelligence tier
  * rides along because the synthesis sentence may drop the INT guidance.
  */
+// THE CREATURE, AND THE INSTRUCTIONS ABOUT IT, ARE TWO THINGS (owner,
+// 2026-10-17). This returned both in one string, and the caller passes it as
+// `userConcept` — the GM's OWN WORDS, which drive clause splitting, lacks
+// detection, receipts and coverage. So on a blank roll the engine read its own
+// authoring guidance as the GM's request: "Never hyphenate names" and "The
+// rolled trait words are design guidance ONLY" arrived as mechanical clauses,
+// one blank roll produced ~70 of them, and "It never brawls" then deleted the
+// sheet's only attack. The Prismabound Warden shipped with no attack at all.
+// The description is the concept; the guidance rides the PROMPT, the way
+// conceptIdentity and conceptLore already do.
 export function buildSynthesizedConcept(traits, synthesis) {
-  return `${synthesis.trim()} It is ${traits.intelligence}, and it is ${traits.disposition ?? 'true to its nature'}. ` +
-    typeMandate(traits.creature_type) +
+  return `${synthesis.trim()} It is ${traits.intelligence}, and it is ${traits.disposition ?? 'true to its nature'}.`;
+}
+
+/** The authoring rules for a synthesized concept: prompt guidance, never the GM's words. */
+export function buildSynthesisGuidance(traits) {
+  return typeMandate(traits.creature_type) +
     'Its alignment must FOLLOW that disposition (guardians and wardens are not evil; tricksters are not brutes). ' +
     'Every ability should express that single identity — do not give each physical detail its own separate ability. ' +
     namingRules(traits);

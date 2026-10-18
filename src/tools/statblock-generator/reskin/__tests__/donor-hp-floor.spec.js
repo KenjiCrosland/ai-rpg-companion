@@ -15,14 +15,15 @@
 // hp_scale that dips below print fails here instead of on a GM's sheet.
 import { DONORS } from '../donors.mjs';
 import { cardBudget } from '../card-budgets.mjs';
-import printBlocks from '@/data/srd52-monsters.json';
+import { corpusAt, effectiveHp } from '../checker.mjs';
 
-const ALL = Array.isArray(printBlocks) ? printBlocks : Object.values(printBlocks).flat();
-const HP_BY_CR = ALL.reduce((acc, m) => {
-  const cr = Number(m.cr); const hp = Number(m.hp);
-  if (Number.isFinite(cr) && Number.isFinite(hp)) (acc[cr] = acc[cr] ?? []).push(hp);
-  return acc;
-}, {});
+// ONE FLOOR, THE CHECKER'S (2026-10-18). This pin used to measure a donor's RAW
+// HP against print's RAW minimum, while the checker's `under` gate measures
+// EFFECTIVE HP (resistances priced) against print's effective minimum. Two
+// floors: at CR 5 the raw floor is the Wraith at 67 — a creature that resists
+// six damage types — so lurker-5 at 68 passed here and every lurker-5 sheet
+// failed the gate. Now both read `corpusAt(cr).hp[0]`, and a donor's HP is
+// priced with its own defense_suite the way the sheet it ships will be.
 // A THIN SAMPLE BOUNDS NOTHING. print has FOUR blocks at CR 17 — all Celestial
 // and Dragon, the thinnest a Sphinx of Valor at 199 — and no lurker-shaped
 // creature at all, so a CR 17 lurker has no peer to be measured against. At
@@ -44,13 +45,15 @@ const HP_BY_CR = ALL.reduce((acc, m) => {
 // ceiling) — NOT a number to nudge, and passing this pin does not mean the
 // checker's gate passes.
 const MIN_SAMPLE = 10;
-const band = (cr) => { const v = HP_BY_CR[cr]; return v && v.length >= MIN_SAMPLE ? { min: Math.min(...v), max: Math.max(...v), n: v.length } : null; };
+const band = (cr) => { const c = corpusAt(cr, '2024'); return c?.hp && c.n >= MIN_SAMPLE ? { min: c.hp[0], max: c.hp[1], n: c.n } : null; };
 const scaledHp = (d) => Math.round(cardBudget(d.cr, { legendary: !!d.legendary }).hp * (d.hp_scale ?? 1));
+// the sheet's effective HP: raw scaled HP priced with the donor's own suite
+const effHp = (d) => effectiveHp({ hp: scaledHp(d), resistances: (d.defense_suite?.resist ?? []).join(', '), immunities: (d.defense_suite?.damage ?? []).join(', ') }, d.cr);
 
 describe("every donor's HP sits inside print's own range", () => {
   test('no donor is thinner than the thinnest block print prints at its CR', () => {
-    const under = DONORS.map((d) => ({ d, hp: scaledHp(d), b: band(d.cr) }))
-      .filter(({ hp, b }) => b && hp < b.min)
+    const under = DONORS.map((d) => ({ d, hp: effHp(d), b: band(d.cr) }))
+      .filter(({ hp, b }) => b && hp < b.min * 0.95) // the gate's own comparison (checker `under`: effHp < floor x 0.95)
       .map(({ d, hp, b }) => `${d.id} (cr ${d.cr}): ${hp} < print's ${b.min} (n=${b.n})`);
     expect(under).toEqual([]);
   });
@@ -63,7 +66,7 @@ describe("every donor's HP sits inside print's own range", () => {
   // print prints is wrong at any sample size, and the checker's `under` gate
   // agrees — it FAILED the CR 5 polarity canary at 65.
   test('and none is a runaway above print — 10% past the fattest at thin samples', () => {
-    const over = DONORS.map((d) => ({ d, hp: scaledHp(d), b: band(d.cr) }))
+    const over = DONORS.map((d) => ({ d, hp: effHp(d), b: band(d.cr) }))
       .filter(({ hp, b }) => b && hp > b.max * 1.1)
       .map(({ d, hp, b }) => `${d.id} (cr ${d.cr}): ${hp} > print's ${b.max} + 10% (n=${b.n})`);
     expect(over).toEqual([]);

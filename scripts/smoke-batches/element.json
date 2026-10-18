@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "a canal-lock elemental that opens and drowns a street", "cr": "11", "rules": "2024",
+    "canary": "ELEMENT: an elemental that DROWNS is not the Air Elemental — no Fly 90, no Whirlwind, no Auran", "mode": "band" },
+  { "name": "", "description": "a storm-wind elemental that scatters a market square", "cr": "11", "rules": "2024",
+    "canary": "ELEMENT control: a WIND elemental genuinely is the Air Elemental — print's body must still land", "mode": "band" },
+  { "name": "", "description": "a furnace elemental that walks out of a foundry", "cr": "10", "rules": "2024",
+    "canary": "ELEMENT control: fire agrees with the Fire Elemental — the guard must not refuse a true match", "mode": "band" },
+  { "name": "", "description": "a mushroom-choked hound whose spores make you see your dead", "cr": "6", "rules": "2024",
+    "canary": "REGRESSION: the type guard still refuses the Hell Hound, and no Fire immunity leaks from its header", "mode": "band" },
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024",
+    "canary": "REGRESSION: a bare print name is exempt from both guards", "mode": "exact" }
+]

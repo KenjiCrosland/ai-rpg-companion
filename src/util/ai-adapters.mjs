@@ -49,6 +49,16 @@ export class OpenAIAdapter {
       throw new Error('Invalid OpenAI API response structure');
     }
 
+    // A CALL THAT STOPS ON LENGTH IS A FAILED CALL (critic, 2026-10-16). The
+    // finish reason was discarded, so a response cut off at the token limit came
+    // back as if it were complete: a statblock shipped a trait reading
+    // "Frightened of him until the e." and no gate saw it, because the text was
+    // syntactically fine — just unfinished. Callers already handle a failed call
+    // (retry, or an honest degrade); none of them can handle a half-sentence.
+    if (responseData.choices[0].finish_reason === 'length') {
+      throw new Error('Response stopped on length — the model hit its token limit and the content is truncated');
+    }
+
     return responseData.choices[0].message.content;
   }
 

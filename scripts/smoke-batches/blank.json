@@ -1,0 +1,18 @@
+[
+  { "name": "Grathuun the Sunken", "cr": "6", "rules": "2024",
+    "canary": "NAME, NO DESCRIPTION: the synthesis fills in — and its authoring rules must NOT arrive as the GM's clauses", "mode": "band" },
+  { "name": "", "role": "brute", "cr": "auto", "rules": "2024",
+    "canary": "ARCHETYPE ONLY: a blank roll on a brute — every sheet must have an attack", "mode": "band" },
+  { "name": "", "cr": "9", "rules": "2024",
+    "canary": "CR ONLY: the fully synthesized path at CR 9 — no clause may read 'Never hyphenate names'", "mode": "band" },
+  { "name": "", "role": "lurker", "cr": "5", "rules": "2024",
+    "canary": "CR + ARCHETYPE: the Prismabound Warden's own path — an attack row must survive any lacks clause", "mode": "band" },
+  { "name": "", "role": "defender", "cr": "1", "rules": "2024",
+    "canary": "CR + ARCHETYPE at the floor: CR 1 defender, the exact shape that shipped with no attack", "mode": "band" },
+  { "name": "", "cr": "auto", "rules": "2024",
+    "canary": "FULLY BLANK: nothing typed at all, the path no batch today exercised", "mode": "band" },
+  { "name": "Vess Alder", "role": "controller", "cr": "8", "rules": "2024",
+    "canary": "NAME + ARCHETYPE, no description: a named synthesis keeps its name and still gets an attack", "mode": "band" },
+  { "name": "", "role": "artillery", "cr": "4", "rules": "2014",
+    "canary": "BLANK + 2014: the synthesis path through the edition conversion", "mode": "band" }
+]

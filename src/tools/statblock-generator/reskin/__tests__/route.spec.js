@@ -304,9 +304,44 @@ describe('the caster gate holds on the verb override', () => {
   const { chooseLine } = require('../route.mjs');
   const run = (text, quote) => chooseLine({ picks: [{ line: 'defender-leader', quote }], creature_type: 'Humanoid' }, { text });
 
-  test('a smite with no magic word in the words does not reach the warpriest line', () => {
+  // OVERTURNED BY THE OWNER, 2026-10-17. This pin asserted that a crusader who
+  // SMITES must not reach the divine line, because "smites" is not in
+  // MAGIC_WORD. It is why Sister Elowen shipped on brute-regenerator with INT 6
+  // and troll Regeneration — a holy knight that regrows limbs (critic's step-3
+  // read). Smiting the unclean is divine magic, so the word's absence was never
+  // the right test; the question is whether the creature works magic, and the
+  // KIND answers it.
+  // Measured before the change, 5 samples on each of the five pins defending the
+  // gate: 35/35 correct. The call lets the crusader and the chaplain through and
+  // still refuses a dragonborn knight and a satyr piper, which is what the gate
+  // existed for — those pins are unchanged below.
+  // The word table remains the fallback for a call that does not answer, so with
+  // no `casts` field in a parsed fixture the old behaviour still holds; that is
+  // what this test now pins.
+  test('with no answer from the call, the word table still decides a smite', () => {
     const r = run('an oathsworn crusader who smites the unclean and mends her soldiers', 'oathsworn crusader');
     expect((r.notes ?? []).join(' ')).not.toMatch(/-> caster-warpriest/);
+  });
+
+  test('the call\'s own answer reaches the divine line, and its receipt says why', () => {
+    const { chooseLine } = require('../route.mjs');
+    const text = 'an oathsworn crusader who smites the unclean and mends her soldiers';
+    const r = chooseLine(
+      { picks: [{ line: 'caster-warpriest', because: 'smites the unclean' }], casts: { yes: true, because: 'an oathsworn crusader who smites', implied_by_kind: true } },
+      { text, rawText: text },
+    );
+    expect((r.notes ?? []).join(' ')).toMatch(/casts: implied by the kind/);
+    expect(r.archetype).toBe('caster');
+  });
+
+  test('a quote the GM never typed does not buy the caster line — the table decides', () => {
+    const { chooseLine } = require('../route.mjs');
+    const text = 'a blue dragonborn knight';
+    const r = chooseLine(
+      { picks: [{ line: 'caster-warpriest', because: 'knight' }], casts: { yes: true, because: 'chants the dawn liturgy', implied_by_kind: false } },
+      { text, rawText: text },
+    );
+    expect((r.notes ?? []).join(' ')).toMatch(/casts refused:/);
   });
 
   test('a magic word still lets the verb override through', () => {

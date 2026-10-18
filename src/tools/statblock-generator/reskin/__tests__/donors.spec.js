@@ -124,9 +124,14 @@ describe('authored donors obey the card', () => {
           // the family signature: defenses UNDER the card, paid by tech
           // (Incorporeal, disguise, attach) — except the trap line's
           // armored stillness (the Roper runs AC +4 at near-card HP)
+          // THE LAW, NOT THE NUMBER (owner's ruling, 2026-10-18): this read
+          // hp_scale <= 0.8, the corpus sweep's figure. At CR 5, 0.8 of the card
+          // is 71 HP — under the thinnest block print ever made at CR 5 (75
+          // effective, n=52), so the number forced the lurker under print. The
+          // law is "defenses UNDER the card"; lurker-5 now sits at 0.9 (78 HP).
           if (d.style !== 'trap') {
             expect(d.ac_offset).toBeLessThanOrEqual(-1);
-            expect(d.hp_scale).toBeLessThanOrEqual(0.8);
+            expect(d.hp_scale).toBeLessThan(1);
           }
           // every lurker hides: Stealth on the sheet
           expect(d.skills).toMatch(/Stealth \+\d+/);

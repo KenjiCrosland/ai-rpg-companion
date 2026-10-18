@@ -121,6 +121,16 @@ describe('a cited row must exist (one definition, every reader)', () => {
     expect(danglingRefIn('It makes use of Slam against the attacker.', rowNamesOf(sheet))).toBeNull();
   });
 
+  test('a row name with lowercase particles is found whole', () => {
+    // bounding the capture to capitalised words alone broke this: "a use of Vow
+    // of Silence" captured "Vow" and the checker failed a correct citation
+    // (classes-eight-2026-10-17T00-24-00, Shadowvow Stalker)
+    expect(danglingRefIn('It can replace one attack with a use of Vow of Silence.', ['Vow of Silence'])).toBeNull();
+    expect(danglingRefIn('It can use Breath of the Grave.', ['Breath of the Grave'])).toBeNull();
+    // and the missing-weapon case still fails
+    expect(danglingRefIn('It makes use of Vow of Silence.', ['Tanto'])).toBe('Vow of Silence');
+  });
+
   test('a gate name on the row does not hide it from the scan', () => {
     expect(rowNamesOf({ sections: { Actions: [{ name: 'Fire Breath (Recharge 5-6)' }] } })).toContain('Fire Breath');
   });
@@ -226,7 +236,7 @@ describe('the GM\'s asked trigger and limit are checked against the landed row',
       await generateReskin({ archetype: 'brute', style: 'charger', concept: c, userConcept: c, cr: 6 },
         async () => stub(6, 'charger', 'brute', {
           type: 'Humanoid',
-          clauses: [{ text: 'explodes in rage once per day when wounded', kind: 'mechanical', when: 'when_bloodied', how_often: 'once_per_fight', shape: 'save_area' }],
+          clauses: [{ text: 'explodes in rage once per day when wounded', kind: 'mechanical', when: 'when_bloodied', when_quote: 'when wounded', how_often: 'per_day', how_often_quote: 'once per day', shape: 'save_area' }],
         }));
     } finally { console.log = orig; }
     const log = lines.join('\n');
@@ -292,26 +302,31 @@ describe('an asked field needs a receipt in the clause', () => {
     try { await fn(); return lines.join('\n'); } finally { console.log = orig; }
   };
 
-  test('a clause naming no trigger and no limit drops both', async () => {
+  // RECEIPT, NOT VOCABULARY (2026-10-17). These pinned the SAYS_WHEN/SAYS_OFTEN
+  // word lists, which dropped 24-38 of the call's answers per gate run while
+  // keeping one or two. The OUTCOME they protect is kept — an asked trigger or
+  // limit with no support in the GM's words is still dropped — but the support is
+  // now the call's own verbatim quote, the contract `casts`/`holds`/`bane` use.
+  test('an answer with no quote is dropped', async () => {
     const c = 'an oathsworn crusader who mends her own wounds';
     const log = await traced(() => generateReskin(
       { archetype: 'defender', style: 'rampart', concept: c, userConcept: c, cr: 8 },
       async () => stub(8, 'rampart', 'defender', {
         type: 'Humanoid',
-        clauses: [{ text: 'mends her own wounds', kind: 'mechanical', when: 'on_hit', how_often: 'at_will', shape: 'heal' }],
+        clauses: [{ text: 'mends her own wounds', kind: 'mechanical', when: 'on_hit', when_quote: '', how_often: 'at_will', how_often_quote: '', shape: 'heal' }],
       }),
     ));
-    expect(log).toMatch(/asked field dropped:.*mends her own wounds.*no trigger word/);
-    expect(log).toMatch(/asked field dropped:.*mends her own wounds.*no frequency word/);
+    expect(log).toMatch(/asked field dropped:.*trigger "on_hit".*offered no quote/);
+    expect(log).toMatch(/asked field dropped:.*limit "at_will".*offered no quote/);
   });
 
-  test('a clause that does name them keeps them', async () => {
+  test('an answer quoting the GM keeps them', async () => {
     const c = 'a temple guardian that slams the ground at the start of each of its turns';
     const log = await traced(() => generateReskin(
       { archetype: 'brute', style: 'charger', concept: c, userConcept: c, cr: 9 },
       async () => stub(9, 'charger', 'brute', {
         type: 'Construct',
-        clauses: [{ text: 'slams the ground at the start of each of its turns', kind: 'mechanical', when: 'start_of_turn', how_often: 'once_per_turn', shape: 'save_area' }],
+        clauses: [{ text: 'slams the ground at the start of each of its turns', kind: 'mechanical', when: 'start_of_turn', when_quote: 'at the start of each of its turns', how_often: 'once_per_turn', how_often_quote: 'each of its turns', shape: 'save_area' }],
       }),
     ));
     expect(log).not.toMatch(/asked field dropped:.*slams the ground/);
@@ -345,6 +360,17 @@ describe('the cap and the trait ceiling evict in the same order (critic hold 2)'
   // Action, with the clause that asked for it" asserts Assassinate survives.
   // Not duplicated here — a second copy with a different stub shape tests the
   // stub, not the engine.
+
+  test("an aura is not chassis filler (critic's step-3 read)", () => {
+    // treating every rules-only donor row as filler evicted "Aura of Authority",
+    // the leader line's defining row, twice in cues-2026-10-17T00-36-41
+    const { rowNamesOf } = require('../checker.mjs');
+    const leader = { sections: { Traits: [
+      { name: 'Aura of Authority', rules: true, text: 'While in a 10-foot-radius sphere originating from it, it and its allies have advantage on attack rolls.' },
+      { name: 'Fleet Agility', rules: true, text: 'It takes the Dash or Disengage action.' },
+    ] } };
+    expect(rowNamesOf(leader)).toEqual(['Aura of Authority', 'Fleet Agility']);
+  });
 
   test('a print row is still never evicted, even carrying the rules flag', () => {
     // Spellcasting and Pack Tactics ship as `rules + print`; `print` is the guard
@@ -392,5 +418,47 @@ describe('defensive traits move the defensive half', () => {
   test('the offensive half is untouched', () => {
     expect(dmgRead(withTrait('Magic Resistance', 'Advantage on saving throws against spells.')).off)
       .toBe(dmgRead(base).off);
+  });
+});
+
+// DATA INTEGRITY — two rows for one mechanic. Reports, never repairs: as a lint
+// `correctable` it drove the repair path and rewrote unrelated rows.
+describe('duplicate-mechanic notes a contained row (critic, 2026-10-16)', () => {
+  const { checkBlock } = require('../checker.mjs');
+  const sheet = (rows) => ({
+    name: 'T', type: 'Humanoid', ac: 15, hp: 80, cr: 5, cr_str: '5', speed: '30 ft.', pb: 3,
+    stats: { STR: 16, DEX: 12, CON: 14, INT: 10, WIS: 12, CHA: 10 },
+    sections: { Traits: rows, Actions: [{ name: 'Slam', text: '*Melee Attack Roll:* +6, reach 5 ft. 10 (2d6 + 3) Bludgeoning damage.' }] },
+  });
+  const hits = (rows) => (JSON.stringify(checkBlock(sheet(rows))).match(/two rows, one mechanic/g) ?? []).length;
+
+  test('a row whose text is the opening of another is noted', () => {
+    expect(hits([
+      { name: 'Wounded Rage', text: 'While Bloodied, the hull has Advantage on attack rolls.' },
+      { name: 'Bloodied Frenzy', text: 'While Bloodied, the hull has Advantage on attack rolls and saving throws.' },
+    ])).toBe(1);
+  });
+
+  test('a shared vocabulary is not a shared mechanic — print\'s Swarm trait', () => {
+    expect(hits([
+      { name: 'Swarm', text: 'The swarm can occupy another creature space and vice versa, and the swarm can move through any opening large enough for a Tiny beast.' },
+      { name: 'Grave Hunger', text: 'The swarm can move through any opening large enough for a Tiny beast.' },
+    ])).toBe(0);
+  });
+
+  test('two unrelated traits are not noted', () => {
+    expect(hits([
+      { name: 'Pack Tactics', text: 'It has Advantage on an attack roll against a creature if at least one ally is within 5 feet.' },
+      { name: 'Magic Resistance', text: 'It has Advantage on saving throws against spells.' },
+    ])).toBe(0);
+  });
+
+  test('attack rows are exempt — they share their whole frame (print\'s Werebear)', () => {
+    const m = sheet([]);
+    m.sections.Actions = [
+      { name: 'Handaxe', text: '*Melee Attack Roll:* +6, reach 5 ft. 10 (2d6 + 3) Slashing damage.' },
+      { name: 'Rend', text: '*Melee Attack Roll:* +6, reach 5 ft. 10 (2d6 + 3) Slashing damage, plus 2 (1d4) Piercing damage.' },
+    ];
+    expect((JSON.stringify(checkBlock(m)).match(/two rows, one mechanic/g) ?? []).length).toBe(0);
   });
 });

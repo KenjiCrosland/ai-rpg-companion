@@ -327,7 +327,7 @@ import {
   convertEdition, translateStatblock, to2014Grammar, toLegacyModel, fromLegacyModel,
 } from './format-2024/generate.mjs';
 import { readRecent, recordShipped } from './skeleton/frequency-ledger.mjs';
-import { buildRandomConceptSeed, buildSynthesizedConcept, rollRandomCR } from './format-2024/concept-seeds.mjs';
+import { buildRandomConceptSeed, buildSynthesizedConcept, buildSynthesisGuidance, rollRandomCR } from './format-2024/concept-seeds.mjs';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import SidebarFooter from '@/components/SidebarFooter.vue';
 import VersionBadge from '@/components/VersionBadge.vue';
@@ -1064,6 +1064,7 @@ async function generateStatblockEngine(edition) {
   let archetypeName = archetype.value;
   let archetypeSource = 'user';
   let synthesizedConcept = null;
+  let synthesisGuidance = null; // authoring rules for a blank roll: the PROMPT's, never the GM's words
   let conceptIdentity = null;
   let conceptLore = null;
   let conceptThemes = null;
@@ -1089,6 +1090,8 @@ async function generateStatblockEngine(edition) {
   // the monster's name and propagated into every row's self-reference).
   let conceptProvidedName = null;
   let conceptMechanics = null;
+  let conceptBane = null;
+  let conceptHolds = null; // the route call's read of a containment engine
   // Type-by-substance (owner call): the micro-calls decide creature type
   // from the concept's substance; the engine stamps it. Random path falls
   // back to the rolled type when the call fails or skips.
@@ -1125,7 +1128,7 @@ async function generateStatblockEngine(edition) {
   // synthesis call (blank path) return the same fields but for the lead
   const readProse = (parsed, { blank }) => {
     if (!blank && typeof parsed?.identity === 'string' && parsed.identity.trim().length > 20) conceptIdentity = parsed.identity.trim();
-    if (blank && parsed?.synthesis) synthesizedConcept = buildSynthesizedConcept(randomSeed, parsed.synthesis);
+    if (blank && parsed?.synthesis) { synthesizedConcept = buildSynthesizedConcept(randomSeed, parsed.synthesis); synthesisGuidance = buildSynthesisGuidance(randomSeed); }
     if (typeof parsed?.lore === 'string' && parsed.lore.trim().length > 15) conceptLore = parsed.lore.trim();
     // the route decides the type from substance; the prose only fills a gap
     if (!resolvedType && typeof parsed?.creature_type === 'string') resolvedType = parsed.creature_type;
@@ -1225,6 +1228,8 @@ async function generateStatblockEngine(edition) {
       conceptStyle = route.style;
       conceptBody = route.body;
       conceptMechanics = route.mechanics;
+      conceptBane = route.bane ?? null;
+      conceptHolds = route.holds ?? null; // the GM's own undoing, as the route call read it
       if (route.resolvedType) resolvedType = route.resolvedType;
       logger.log('[route]', `${route.line}${route.role && route.role !== route.archetype ? ` (${route.role})` : ''} type=${resolvedType ?? '?'} mechanics=${route.mechanics.join(', ') || 'none'} — ${route.notes.join(' | ')}`);
     } else {
@@ -1315,6 +1320,9 @@ async function generateStatblockEngine(edition) {
   // The lore line guides the ship (owner design, 2026-08-04): one sentence
   // of who-it-is-and-why that the generation designs toward and the naming
   // call reads for fit — the anti-hodgepodge anchor.
+  // a blank roll's authoring rules ride here, with identity and lore — never in
+  // baseConcept, which is what the engine reads as the GM's own words
+  if (synthesisGuidance) concept += `\nAUTHORING RULES (for this rolled concept; not the user's words): ${synthesisGuidance}`;
   if (conceptLore) concept += `\nLORE (the creature's story — every ability and its name should feel like they belong to it): ${conceptLore}`;
 
   // Two body derivations stay deterministic where print is certain: a
@@ -1392,6 +1400,9 @@ async function generateStatblockEngine(edition) {
           mix: userConcept ? conceptMix : rolledMix,
           caster: caster.value,
           mechanics: conceptMechanics ?? null,
+          bane: conceptBane ?? null,
+          holds: conceptHolds,
+          themes: conceptThemes ?? null, // the call's own read of the creature's substance, for the alias guard
           rejectedCanon: conceptRejectedCanon,
           userConcept: baseConcept, // the user's own words — the verb the signature must serve (the identity prose is the model's)
           material: conceptHouse, // the body's material — fire defenses derive from it (wax is vulnerable, never resistant)
