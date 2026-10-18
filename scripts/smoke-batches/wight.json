@@ -1,0 +1,7 @@
+[
+  { "name": "", "description": "a barrow wight who drifts between the standing stones at night", "cr": "4", "rules": "2024", "canary": "WIGHT + a phantom verb: print's Wight walks — no Fly (hover), no Incorporeal Movement, no B/P/S resistance package", "mode": "band" },
+  { "name": "", "description": "a barrow wight who drifts between the standing stones at night", "cr": "4", "rules": "2024", "canary": "WIGHT (second draw)", "mode": "band" },
+  { "name": "", "description": "a wight that haunts the barrow of its dead king", "cr": "4", "rules": "2024", "canary": "WIGHT + haunts: same", "mode": "band" },
+  { "name": "", "description": "a ghost of the drowned chapel who drifts through its walls", "cr": "4", "rules": "2024", "canary": "CONTROL: print's Ghost IS incorporeal — the phantom seat stays", "mode": "band" },
+  { "name": "", "description": "a mummy that haunts the tomb of a forgotten pharaoh", "cr": "3", "rules": "2024", "canary": "MUMMY + haunts: another corporeal print undead, same rule", "mode": "band" }
+]

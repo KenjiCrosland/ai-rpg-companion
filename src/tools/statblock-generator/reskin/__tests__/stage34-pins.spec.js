@@ -2,7 +2,7 @@
 // Categories are the ones proposed at the owner's stop point 2: routing (the
 // right source wins), data integrity (a landed row matches what justified it),
 // and integration (credit requires a receipt).
-import { generateReskin, renameKeysOf, TEXT_GATE, rowWhen, rowOften } from '../generate.mjs';
+import { generateReskin, renameKeysOf, TEXT_GATE, rowWhen, rowOften, printCanonFor } from '../generate.mjs';
 import { novasOf, danglingRefIn, rowNamesOf } from '../checker.mjs';
 import { pickDonor, scaleDonor } from '../scale.mjs';
 
@@ -460,5 +460,47 @@ describe('duplicate-mechanic notes a contained row (critic, 2026-10-16)', () => 
       { name: 'Rend', text: '*Melee Attack Roll:* +6, reach 5 ft. 10 (2d6 + 3) Slashing damage, plus 2 (1d4) Piercing damage.' },
     ];
     expect((JSON.stringify(checkBlock(m)).match(/two rows, one mechanic/g) ?? []).length).toBe(0);
+  });
+});
+
+// A VERB CANNOT MAKE A WALKING BODY INCORPOREAL (user feedback, 2026-10-18). "A
+// barrow wight who drifts" kept the phantom seat on the verb "drifts"; print's
+// Wight has no Incorporeal Movement. The body's own print block decides.
+describe('a corporeal print body stands the phantom seat down', () => {
+  test('print knows which of its Undead are incorporeal — a closed fact, not a word list', () => {
+    expect(printCanonFor('a wight', 4).incorporeal).toBe(false);
+    expect(printCanonFor('a mummy', 3).incorporeal).toBe(false);
+    expect(printCanonFor('a ghost', 4).incorporeal).toBe(true);
+    expect(printCanonFor('a wraith', 5).incorporeal).toBe(true);
+  });
+  test('a barrow wight who drifts: no phantom donor, no hover, no Incorporeal Movement', async () => {
+    // the route hands the engine the phantom seat; the engine stands it down, so
+    // the stub answers for the PLAIN lurker donor's slots (the one it will use)
+    const concept = 'a barrow wight who drifts between the standing stones at night';
+    const answer = JSON.parse(stub(4, null, 'lurker')); answer.renames.Teleport = 'Barrow Step'; // the plain lurker's gated slot, which renameKeysOf leaves to the mechanics
+    const m = await generateReskin({ archetype: 'lurker', style: 'phantom', concept, userConcept: concept, cr: 4 }, async () => JSON.stringify(answer));
+    expect(m.generation.donor).not.toMatch(/phantom/);
+    expect(String(m.speed)).not.toMatch(/hover/i);
+    expect(Object.values(m.sections).flat().some((e) => /Incorporeal Movement/i.test(e.name ?? ''))).toBe(false);
+  });
+  test('the ghost keeps its incorporeality — print carries the trait', async () => {
+    const m = await run('a ghost of the drowned chapel who drifts through its walls', 4, 'phantom', 'lurker');
+    expect(/hover/i.test(String(m.speed)) || Object.values(m.sections).flat().some((e) => /Incorporeal Movement/i.test(e.name ?? ''))).toBe(true);
+  });
+});
+
+// A PRINT NAME WITH A REMAINDER IS A BORROW (owner's spot check, 2026-10-18).
+// "skeleton with a greatsword" read as the bare Skeleton — exact — and an exact
+// body closes the row set, so the greatsword never arrived. Any word beyond the
+// print name is the GM's addition; a but/except/only tail is a lacks or type edit
+// the exact path already makes, and a bare name stays verbatim.
+describe('a print name with a remainder is a borrow, not an exact body', () => {
+  test('additions make a borrow', () => {
+    for (const [t, cr] of [['skeleton with a greatsword', 2], ['an ogre with a greataxe', 3], ['a wolf with two heads', 2], ['a skeleton archer', 1], ['a scout with a javelin', 3]]) {
+      const r = printCanonFor(t, cr); expect(r?.exact).toBe(false); expect(r?.borrowOnly).toBe(true);
+    }
+  });
+  test('a bare name, or a but/except/only tail, stays exact', () => {
+    for (const [t, cr] of [['Skeleton', 1], ['Owlbear', 3], ['Goblin Boss', 1], ['a pit fiend', 20], ['a dire wolf but undead', 1]]) expect(printCanonFor(t, cr)?.exact).toBe(true);
   });
 });

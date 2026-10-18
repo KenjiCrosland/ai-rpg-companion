@@ -186,3 +186,61 @@ print's own numbers; Mage stays INT.
 Final druid smoke (`druid-2026-10-18T14-12-30`): Druid CR 2 = print's own numbers
 (INT 12, WIS 16, Wisdom DC 13, +5); CR 5 druid 77 HP, no `under`; Priest one Radiant
 Flame; the uncasting wizard's staff rolls STR +5; the court wizard stays INT.
+
+## User feedback, same day: a wight is not a phantom
+
+The route call picks `lurker-phantom` for "a barrow wight who drifts between the
+standing stones" about 1 draw in 5 — "drifts" is fair English for a walking corpse —
+and the borrow rule yielded to the verb. Not a keyword: print's own block already
+says which Undead are incorporeal. `printCanonFor` now carries `incorporeal` (print's
+Incorporeal Movement trait: Ghost, Specter, Will-o'-Wisp, Wraith have it; Wight,
+Ghoul, Mummy, Zombie, Vampire, Lich do not), and the phantom seat stands down for a
+corporeal print body whatever the words around it do. Smoke (`wight` ×5): all five
+route calls picked phantom; the engine stood it down for three Wights and a Mummy
+(walk speed, no Incorporeal Movement, no B/P/S package); the Ghost control kept it.
+Pinned in `stage34-pins.spec.js`.
+
+Two print-fidelity gaps the controls exposed, closed the same hour:
+- a borrowed print body at print's CR took print's HP but a size-derived refit then
+  re-rolled the dice (the Mummy's 9d8 + 18 became 11d6 + 22 = 60) — print's own
+  formula now rides with print's HP;
+- print's Multiattack stood only on an EXACT body, while print's rows, HP and array
+  ride on a borrow at print's CR and the checker demanded the Multiattack there too —
+  engine and gate now read one condition (exact, or a borrow near print's CR).
+
+## Owner's spot check: "established creature that does something extra than the print version"
+
+"skeleton with a greatsword" shipped print's Skeleton with a Shortsword; "a skeleton
+who was a gladiator" lost the gladiator. Audit batch `printplus` (8 shapes: print
+name + weapon / class / former life / mechanic / role word / body addition).
+
+**Root cause — `exact` was overzealous.** `printCanonFor` reads the words BEFORE a
+split on with/wearing/carrying/holding/riding, so "skeleton with a greatsword" was
+`["skeleton"]` → `exact: true`, and an exact body closes the row set: no feature
+rows, no species/class kit, no author/repair call, no GM attack keys (9 sites).
+Now any word of the concept beyond the print name is a *remainder* and makes the
+read a **borrow** (print's body + the GM's additions). A but/except/only tail is not
+a remainder — it is the lacks/type edit the exact path already makes ("a dire wolf
+but undead" stays exact, pinned). A bare name stays verbatim ("Skeleton" is the
+Skeleton; the owner: "how useful is a verbatim owlbear anyway — we can look it up";
+bare-name verbatim kept pending a policy call).
+
+**Four seams the audit then exposed, closed in the same pass:**
+- the melee print-rename overwrote a weapon the GM typed (the ranged rows had the
+  `gmArmed` guard, the melee rows did not): "Greatsword" → "Shortsword", "Greataxe"
+  → "Greatclub"; guarded now, `gmWeapons` read once for both;
+- a chassis Multiattack never named print's own attack rows riding onto a borrow —
+  the last pass skipped `e.print` rows outright; now it skips them only outside
+  PRINT'S OWN Multiattack ("a scout with a javelin" keeps the javelin and names the
+  Scout's Longbow; the species pin that caught it is green);
+- the combination normalisation only filtered listed names; it now names every
+  Action attack row, listed first (print's grammar);
+- a print rename left the row's weapon stamp stale ("Rusted Blade"[longsword] →
+  Shortsword still [longsword] → attack-stat demanded STR of a finesse row; a
+  hurled-greataxe row renamed Javelin still [greataxe]); the stamp follows the
+  rename.
+
+Smoke after: Greatsword 2d8 + 3 Slashing on the Skeleton; Greataxe + Javelin on the
+Ogre; the two-headed wolf is a borrow (Twinmaw: Fang, Multiattack, Circling); the
+gladiator skeleton is Medium with Shield/Riposte. Pinned (`stage34-pins.spec.js`):
+additions → borrow; bare names and but-tails → exact.

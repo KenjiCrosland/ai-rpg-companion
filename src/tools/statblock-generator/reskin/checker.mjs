@@ -742,7 +742,7 @@ function gateReader(raw, m, ctx, F) {
       if (ma) F('multiattack-integrity', 'fail', `"${String(ma.text).slice(0, 60)}" on a sheet with no attack row at all`, 0);
       else F('multiattack-integrity', 'fail', 'the sheet carries no attack row at all', 0);
     }
-    if (!ma && ctx.print?.multiattack && atk.length) F('multiattack-integrity', 'fail', `no Multiattack — the ${ctx.print.name} has one and this sheet has ${atk.length} attack row(s)`, atk.length);
+    if (!ma && ctx.print?.multiattack && atk.length && (ctx.print.exact || nearPrintCr(ctx.cr, ctx.print.cr))) F('multiattack-integrity', 'fail', `no Multiattack — the ${ctx.print.name} has one and this sheet has ${atk.length} attack row(s)`, atk.length); // the engine stands print's Multiattack on an exact body or a borrow at print's CR — one condition, both sides (2026-10-18)
     if (!ma && atk.length > 1 && !ctx.print) F('multiattack-integrity', 'soft', `${atk.length} attack rows and no Multiattack`, atk.length);
     if (ma) { // the ATTACK slots must be attack rows; a name after "uses" or "a use of" is an action print legitimately names (the Kraken uses Fling, Lightning Strike, or Swallow)
       const t0 = String(ma.text); const all = rows.map(({ e }) => bare(e.name).toLowerCase());
