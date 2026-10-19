@@ -5135,7 +5135,7 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
       Object.assign(fullAnswer(scaleDonor(pickDonor(9, null, 'brute'), 9, { mechanics: [] }), 'Forge Giant', { 'Melee Attack': 'Forgehammer' }), { type: 'Giant' }));
     expect(fgRun.m.stats.STR).toBe(25); expect(fgRun.trace).toMatch(/print canon array: .* at its own CR; attack \+\d+ -> \+11/);
     expect(fgRun.rows.find((e) => e.name === 'Flame Sword').text).toMatch(/Melee Attack Roll:\*? \+11/);
-    const dw = await run({ archetype: 'skirmisher', style: null, cr: 1, concept: 'a dire wolf but undead', userConcept: 'a dire wolf but undead', resolvedType: 'Undead', mind: 'bestial' },
+    const dw = await run({ archetype: 'skirmisher', style: null, cr: 1, concept: 'a dire wolf but undead', userConcept: 'a dire wolf but undead', resolvedType: 'Undead', typeSource: 'user', mind: 'bestial' }, // typeSource: the identity call's own answer that the GM named the type (it replaced a regex over the words, 2026-10-18)
       Object.assign(fullAnswer(sk, 'Thawborn', { 'Melee Attack': 'Bite' }), { type: 'Undead' }));
     expect(dw.m.type).toBe('Undead'); expect(dw.m.name).toBe('Dire Wolf'); expect((dw.m.sections.Traits ?? []).some((e) => e.name === 'Pack Tactics')).toBe(true);
     expect(dw.trace).toMatch(/print canon type: Undead stays — the words say undead/);

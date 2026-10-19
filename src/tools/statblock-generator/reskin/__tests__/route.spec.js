@@ -375,3 +375,34 @@ describe('the caster family fallback leaves the family', () => {
     expect(r.line).toBe('skirmisher');
   });
 });
+
+// THE CRITIC'S A2 (2026-10-18): print prints no incorporeal creature above Medium
+// in either corpus — Will-o'-Wisp Small, Ghost/Specter/Wraith/Banshee Medium — so a
+// Gargantuan trench leviathan is not a phantom whatever the call picks. The route
+// call now answers `size`, and the veto sits beside the type veto it mirrors.
+describe('a big body is not incorporeal (print: nothing above Medium)', () => {
+  const pick = (size, creature_type) => chooseLine(
+    { picks: [{ line: 'lurker-phantom', because: 'drowns fleets' }], creature_type, size, cr: '24', shoots: { yes: false }, is_a_swarm: { yes: false }, holds: { yes: false }, casts: { yes: false } },
+    { text: 'a leviathan of the trench whose song drowns fleets', rawText: 'a leviathan of the trench whose song drowns fleets' },
+  );
+  const idOf = (c) => String(c.line?.id ?? c.line ?? ''); // chooseLine returns the id as a string on this path
+  test('Huge and Gargantuan stand the phantom seat down', () => {
+    for (const sz of ['Huge', 'Gargantuan']) {
+      const c = pick(sz, 'Monstrosity');
+      expect(idOf(c)).not.toBe('lurker-phantom');
+      expect(idOf(c)).toBe('lurker'); // it falls to the plain line of its own family
+      expect(c.style).toBeNull();
+      expect(c.notes.join(' ')).toMatch(/not incorporeal/);
+    }
+  });
+  test('Medium and Small keep it — print\'s own incorporeals', () => {
+    for (const sz of ['Small', 'Medium']) {
+      const c = pick(sz, 'Undead');
+      expect(idOf(c)).toBe('lurker-phantom');
+      expect(c.style).toBe('phantom');
+    }
+  });
+  test('the prompt asks for the size', () => {
+    expect(buildRoutePrompt('a trench leviathan', { cr: 24 })).toMatch(/"size":/);
+  });
+});

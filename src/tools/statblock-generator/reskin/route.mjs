@@ -186,6 +186,13 @@ const SWARM_WORDS = /\b(?:swarms?|swarming|flocks?|murder of|clouds? of|mass of|
 const NOT_TRAP_TYPES = ['Humanoid', 'Beast', 'Giant', 'Fey', 'Celestial', 'Dragon'];
 // a PHANTOM body is incorporeal: a living Humanoid cultist is not one (the kuo-toa drew Fly 60 (hover) and the ghost's immunities, 2026-10-01)
 const NOT_PHANTOM_TYPES = ['Humanoid', 'Beast', 'Giant', 'Plant', 'Construct', 'Dragon', 'Ooze'];
+// NOR IS A BIG BODY INCORPOREAL (critic A2, measured 2026-10-18): print prints no
+// incorporeal creature above Medium in either corpus — the Will-o'-Wisp is Small,
+// the Ghost, Specter, Wraith and 2014's Banshee are Medium. A Gargantuan trench
+// leviathan came back phantom ✓ and shipped Speed 5, Fly 60 (hover), Incorporeal
+// Movement and reach 5. (Cloud and Storm Giants hover without being incorporeal,
+// which is why the fact is Incorporeal Movement, never the hover.)
+const NOT_PHANTOM_SIZES = ['Huge', 'Gargantuan'];
 // an ARCHER shoots a named weapon: a lantern-mage whose "bolts find them in the
 // dark" was picked for the archer line by the route model (golden 2026-09-29) —
 // no bow, arrow, crossbow, sling or shot in the words, no archer seat ('bolts' is a caster's too)
@@ -264,7 +271,7 @@ WHAT ELSE DO THE WORDS NAME? Three more, each with the user's own words quoted i
 
 DOES THIS CREATURE WORK MAGIC? ("casts") True when the words name magic outright ("casts", "spells", "hexes") and ALSO when the KIND implies it: a cleric, a crusader who smites, a chaplain who blesses, a druid, a warlock. False for a plain warrior however armoured, false for a title alone, and false for a creature whose uncanny power is its BODY rather than a worked art — a fey piper's music, a gaze, a breath weapon. Quote the user's words that settle it in "because"; set "implied_by_kind" when nothing in the words says magic but the kind does.
 
-Return ONLY JSON, no markdown: {"shoots": {"yes": false, "because": ""}, "is_a_swarm": {"yes": false, "because": ""}, "holds": {"yes": false, "because": ""}, "casts": {"yes": true, "because": "<the user's own words>", "implied_by_kind": false}, "bane": {"what": "<a damage type or a weapon material, or omit>", "because": "<the user's own words that say so>"}, "cue_verdicts": [{"key": "<a key word listed above, copied exactly>", "means": true, "because": "<the words that settle it>"}], "picks": [{"line": "<id from the shelf>", "because": "<phrase copied from the concept>"}], "cr": "<the Challenge Rating this creature reads as, 0 to 30 (e.g. 5, or 1/2) — print's own CR for a print creature; otherwise the tier a table meets it at — village and folklore threats read 1 to 8, only world-enders read 17 or more>", "creature_type": "<one of: ${TYPES.join(', ')}>", "extras": [{"mechanic": "<one of the list>", "because": "<phrase copied from the concept>"}]}`;
+Return ONLY JSON, no markdown: {"shoots": {"yes": false, "because": ""}, "is_a_swarm": {"yes": false, "because": ""}, "holds": {"yes": false, "because": ""}, "casts": {"yes": true, "because": "<the user's own words>", "implied_by_kind": false}, "bane": {"what": "<a damage type or a weapon material, or omit>", "because": "<the user's own words that say so>"}, "cue_verdicts": [{"key": "<a key word listed above, copied exactly>", "means": true, "because": "<the words that settle it>"}], "picks": [{"line": "<id from the shelf>", "because": "<phrase copied from the concept>"}], "cr": "<the Challenge Rating this creature reads as, 0 to 30 (e.g. 5, or 1/2) — print's own CR for a print creature; otherwise the tier a table meets it at — village and folklore threats read 1 to 8, only world-enders read 17 or more>", "creature_type": "<one of: ${TYPES.join(', ')}>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan — the body these words describe>", "extras": [{"mechanic": "<one of the list>", "because": "<phrase copied from the concept>"}]}`;
 }
 
 function tryParse(raw) {
@@ -287,6 +294,9 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
   const notes = [];
   const family = familyFor(menuRole);
   const resolvedType = TYPES.includes(parsed?.creature_type) ? parsed.creature_type : null;
+  const resolvedSize = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'].find((z) => z.toLowerCase() === String(parsed?.size ?? '').trim().toLowerCase()) ?? null;
+  const noPhantom = () => (resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType)) || (resolvedSize && NOT_PHANTOM_SIZES.includes(resolvedSize));
+  const noPhantomWhy = () => (resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType) ? `a ${resolvedType} has a body; a phantom has none` : `a ${resolvedSize} body is not incorporeal — print's incorporeals are Medium and smaller`);
   const picks = Array.isArray(parsed?.picks) ? parsed.picks.slice(0, 3) : [];
   let chosen = null;
   let quotedPick = false; // the call picked it AND its quote was found in the GM's words
@@ -359,7 +369,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
     if (line.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} is not a made thing`); continue; }
     if (line.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} is not a made or risen guardian`); continue; }
     if (line.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} sets traps; it is not one`); continue; }
-    if (line.id === 'lurker-phantom' && resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} has a body; a phantom has none`); continue; }
+    if (line.id === 'lurker-phantom' && noPhantom()) { notes.push(`${id}: ${noPhantomWhy()}`); continue; }
     if (line.id === 'skirmisher-shifter' && !verbHits(text).some((h) => h.id === 'skirmisher-shifter')) { notes.push(`${id}: a shifter is named by its words (shape-shifts, turns into, a were-) — none here`); continue; } // a mind flayer with a sword drew a Beast Bite (critic-ten 2026-10-01)
     if (line.id === 'skirmisher-archer' && noBow(text)) { notes.push(`${id}: ${shootsA === null ? 'no bow, arrow or shot in the words' : 'the call reads no shot of its own'}`); continue; }
     // CASTING IS A MECHANIC ENGINE (the critic's fourth read): a caster line needs a magic word in the GM's own words. "Knight" and "duelist" carried none and drifted to the warpriest on two prompts in five.
@@ -378,7 +388,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
       if (line.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType)) continue;
       if (line.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)) continue;
       if (line.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType)) continue;
-      if (line.id === 'lurker-phantom' && resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType)) continue;
+      if (line.id === 'lurker-phantom' && noPhantom()) continue;
       if (line.id === 'swarm' && noMass(text)) continue;
       if (line.id === 'skirmisher-shifter' && !verbHits(text).some((h) => h.id === 'skirmisher-shifter')) continue;
       if (line.id === 'skirmisher-archer' && noBow(text)) continue;
@@ -416,7 +426,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
     const hits = verbHits(text).map((h) => ({ ...h, line: BY_ID.get(h.id) })).filter(({ line: l }) => l && (!family || l.family === family)
       && !(l.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType))
       && !(l.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType))
-      && !(l.id === 'lurker-phantom' && resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType)) // the override obeys the body vetoes too (the kuo-toa went phantom on a verb, 2026-10-01)
+      && !(l.id === 'lurker-phantom' && noPhantom()) // the override obeys the body vetoes too (the kuo-toa went phantom on a verb, 2026-10-01)
       && !(l.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType))
       && !(l.id === 'skirmisher-archer' && noBow(text))
       // THE CASTER GATE HOLDS ON THE OVERRIDE TOO (critic, 2026-10-14: the gate

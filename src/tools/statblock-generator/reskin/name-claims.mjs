@@ -48,6 +48,13 @@ const HONEST_NOUN = [
   [/\bmoves? up to\b|\bits Speed\b|without provoking Opportunity Attacks/i, ['Stride', 'Rush', 'Surge']],
   [/regains? \d+ Hit Points/i, ['Mending', 'Succour']],
   [/Saving Throw[^.]*\d+ \(\d+d\d+/i, ['Burst', 'Wave', 'Surge']],
+  // A BARE ATTACK ROW EARNS A STRIKE NOUN (the forty, 2026-10-18). "Drowned
+  // Grasp" delivered 30 (6d8 + 3) Necrotic and nothing else — no condition, no
+  // save, no push — so this table had nothing to offer and a name promising the
+  // Grappled condition shipped. Print names such a row for the blow itself
+  // (Withering Touch, Life Drain, Chilling Touch). Last in the table, so a row
+  // that DOES earn a specific noun is still named for the thing it does.
+  [/Attack Roll[\s\S]*?\d+ \(\d+d\d+/i, ['Strike', 'Blow', 'Lash']], // the damage sits past the "5 ft." period, so this one crosses sentences
   [/\) (?:Slashing) damage/i, ['Slash', 'Rend', 'Cut']],
   [/\) (?:Piercing) damage/i, ['Thrust', 'Stab', 'Pierce']],
   [/\) (?:Bludgeoning) damage/i, ['Blow', 'Strike', 'Smash']],

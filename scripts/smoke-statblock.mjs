@@ -64,8 +64,10 @@ const run = async () => {
   // [reskin] line through console.log, and warnings (resolve failures) through
   // console.warn
   let lines = [];
+  let genFailed = null; // a THROWN generation never saves — without this the run waited out the full timeout on it (the gmAsked ReferenceError read as six "timeouts", 2026-10-18)
   page.on('console', (msg) => {
     const t = msg.text();
+    if (/Statblock generation failed/.test(t)) genFailed = t.slice(0, 160);
     // every warning/error is captured (minus browser noise) — a "Statblock
     // generation failed: TypeError: Failed to fetch" was dropped by the old
     // allowlist and a dead run looked like a resolve hiccup (2026-09-20)
@@ -91,8 +93,10 @@ const run = async () => {
     const t0 = Date.now();
 
     // Google-Fonts <link>s keep `load` pending in headless — domcontentloaded
-    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#monsterName', { timeout: 30_000 });
+    // the page may not come up after a stalled block (the features run died on the entry
+    // after a 411 s stall, "waiting for locator('#monsterName')", 2026-10-19): one retry
+    const open = async () => { await page.goto(BASE, { waitUntil: 'domcontentloaded' }); await page.waitForSelector('#monsterName', { timeout: 30_000 }); };
+    try { await open(); } catch { lines.push('[harness] the page did not come up — retrying once'); await page.waitForTimeout(5_000); await open(); }
     const before = await savedCount(page);
     // identity, not name: five runs of one concept can all be named "Brass
     // Bull", and a name-set diff then reports the INPUT as the new monster
@@ -144,8 +148,9 @@ const run = async () => {
     await page.click('.generate-button');
 
     let status = 'ok';
+    genFailed = null;
     try {
-      await page.waitForFunction(
+      const saved = page.waitForFunction(
         (want) => {
           const m = JSON.parse(localStorage.getItem('monsters') || '{}');
           return Object.values(m).filter(Array.isArray).flat().length >= want;
@@ -153,8 +158,14 @@ const run = async () => {
         before + 1,
         { timeout: GEN_TIMEOUT_MS },
       );
-    } catch {
-      status = 'TIMED OUT / no save';
+      const thrown = new Promise((_, rej) => { const iv = setInterval(() => { if (genFailed) { clearInterval(iv); rej(new Error(genFailed)); } }, 500); saved.then(() => clearInterval(iv), () => clearInterval(iv)); }); // handled on both branches — a bare .finally() re-raised the timeout as an unhandled rejection and killed the run (forty, 2026-10-18)
+      await Promise.race([saved, thrown]);
+    } catch (e) {
+      status = genFailed ? `GENERATION THREW — ${genFailed}` : 'TIMED OUT / no save';
+      // WHAT THE PAGE WAS DOING when the clock ran out — a timeout with no trace at all
+      // is the harness or the page, not the engine (the scree block, forty 2026-10-18)
+      const diag = await page.evaluate(() => ({ ready: document.readyState, generating: !!document.querySelector('.generate-button[disabled]'), url: location.href })).catch((e3) => ({ error: String(e3?.message ?? e3).slice(0, 120) }));
+      lines.push(`[harness] at timeout: ${JSON.stringify(diag)}`);
     }
 
     // ENRICHMENT runs after the save and is not awaited by the app — moving
@@ -278,9 +289,17 @@ const run = async () => {
     }
     const secs = ((Date.now() - t0) / 1000).toFixed(0);
     console.log(`${status === 'ok' ? '✓' : '✗ ' + status} ${secs}s`);
+    // A TIMEOUT THAT LOGGED NOTHING never reached the engine: the page did not start
+    // generating. That is a harness-side miss, so the entry gets ONE more turn at the
+    // end of the batch (the iterator visits what is appended) — a real engine stall
+    // leaves [concept]/[reskin] lines and is not retried.
+    if (/^TIMED OUT/.test(status) && !lines.some((l) => /\[(?:concept|reskin|route)\]/.test(l)) && !entry._retryOf) {
+      entries.push({ ...entry, _retryOf: n });
+      lines.push(`[harness] no trace captured — re-queued once as a harness miss`);
+    }
 
     const md = [
-      `## ${n}. ${monster?.name ?? label} — CR ${entry.cr}${status === 'ok' ? '' : `  [${status}]`}`,
+      `## ${n}. ${monster?.name ?? label} — CR ${entry.cr}${status === 'ok' ? '' : `  [${status}]`}${entry._retryOf ? `  (retry of ${entry._retryOf})` : ''}`,
       '',
       `**Input:** \`${entry.name ? `name: ${entry.name} | ` : ''}${entry.concept ?? entry.description ?? ''}${entry.role ? ` | role: ${entry.role}` : ''}\``,
       `**Donor:** ${(lines.find((l) => l.includes('[reskin] donor:')) ?? '—').replace(/.*donor: /, '')}`,

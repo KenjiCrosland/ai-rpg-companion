@@ -489,6 +489,15 @@ describe('edition conversion (⇄ footer action)', () => {
     expect(validateConversionResponse(JSON.stringify(short), model)).toBe(false);
     expect(validateConversionResponse(JSON.stringify({}), model)).toBe(false);
   });
+  test('an EMPTY section is not sent, so its absence from the answer is not a reason to fail the conversion (five of five failed 2014 conversions carried one, 2026-10-18)', () => {
+    const model = fromLegacyModel(legacyOf());
+    model.sections.Reactions = [];
+    const good = response2024(model);
+    delete good.Reactions;
+    expect(validateConversionResponse(JSON.stringify(good), model)).toBe(true);
+    const short = JSON.parse(JSON.stringify(good)); short.Actions.pop();
+    expect(validateConversionResponse(JSON.stringify(short), model)).toBe(false);
+  });
 });
 
 describe('2024-vocabulary leaks in 2014 text (converted soak-3 live batch)', () => {

@@ -1,0 +1,8 @@
+[
+  { "name": "Druid", "description": "", "cr": "2", "rules": "2024", "canary": "MELEE ADD: Vine Staff lands verbatim (7 (1d8 + 3) Bludgeoning plus 2 (1d4) Poison); Multiattack cites it; Verdant Wisp intact" },
+  { "name": "Purple Worm", "description": "that swallowed a war-band's armoury", "cr": "15", "rules": "2024", "canary": "A5e: print's dice stand on the borrow at print's CR — Bite 22 (3d8 + 9) Piercing, Tail Stinger 16 (3d4 + 9) plus 35 (10d6) Poison" },
+  { "name": "Pit Fiend", "description": "who collects the oaths of dying knights", "cr": "20", "rules": "2024", "canary": "A5e: Bite 18 (3d6 + 8) Piercing plus poison, Devilish Claw 26 (4d8 + 8), Fiery Mace 22 (4d6 + 8) plus 21 (6d6) Fire; no chassis Legendary Actions" },
+  { "name": "", "description": "a huge glacier-hearted ogre brute that crushes shield walls flat", "cr": "8", "rules": "2024", "canary": "A2 FLOOR: Huge STR >= 18; attack = STR mod + PB; STR save and Athletics re-derived from the raised score" },
+  { "name": "", "description": "a gargantuan walking fell of stitched giant corpses", "cr": "14", "rules": "2014", "canary": "A2 FLOOR 2014: Gargantuan STR >= 25; saves/skills follow; no 2024 vocabulary leaks" },
+  { "name": "Sister Halamine", "description": "a plague-saint cleric whose blessings rot the unworthy", "cr": "6", "rules": "2014", "canary": "A9: 2014 conversion lands (no Trigger:/Response:/Advantage leaks); on failure the block carries conversion: failed" }
+]

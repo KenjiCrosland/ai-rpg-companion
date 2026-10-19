@@ -1,0 +1,38 @@
+[
+  {
+    "name": "",
+    "description": "an archer of the black fletching who never misses the eye",
+    "cr": "6",
+    "rules": "2014",
+    "canary": "ARCHER BY CALL FIELD: a bow, its own range, 2014"
+  },
+  {
+    "name": "",
+    "description": "",
+    "cr": "4",
+    "rules": "2024",
+    "role": "lurker",
+    "canary": "BLANK ROLL, archetype only: a legal sheet with an attack row"
+  },
+  {
+    "name": "Grik",
+    "description": "",
+    "cr": "1",
+    "rules": "2024",
+    "canary": "BLANK ROLL, name only: no description at all"
+  },
+  {
+    "name": "",
+    "description": "a cave troll that speaks only Giant and understands no Common",
+    "cr": "3",
+    "rules": "2014",
+    "canary": "LANGUAGE NEGATION on a print head, 2014"
+  },
+  {
+    "name": "Thurivald",
+    "description": "A Huge frost giant jarl. He throws boulders, swings a greataxe, and his roar freezes the blood. AC 17, 180 hit points, cr 9.",
+    "cr": "auto",
+    "rules": "2024",
+    "canary": "DENSE: body + parts + GM requests + math + CR in the words"
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "name": "",
+    "description": "a drowned cathedral choir that sings in one voice",
+    "cr": "10",
+    "rules": "2014",
+    "canary": "VERIFY: SPINE 10 · homebrew one-liner"
+  },
+  {
+    "name": "",
+    "description": "lizardfolk monk",
+    "cr": "5",
+    "rules": "2014",
+    "canary": "VERIFY: USE CASE · creature-only words, no verb: species + class, two words"
+  },
+  {
+    "name": "",
+    "description": "a tidal revenant whose arms coil like whips",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "NEIGHBOUR: a whip-named row, 2024 side"
+  }
+]

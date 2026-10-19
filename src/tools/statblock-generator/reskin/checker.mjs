@@ -118,7 +118,10 @@ export function sustainedOf(m) {
   const multi = (m.sections?.Actions ?? []).find((e) => /^Multiattack/.test(e.name ?? ''));
   let attacks = 1; let used = rows.slice().sort((a, b) => b.avg - a.avg)[0] ?? null;
   if (multi) {
-    const n = /makes (\w+)/i.exec(multi.text)?.[1]; attacks = WORDS[n?.toLowerCase()] ?? Number(n) ?? 1;
+    // `Number('five') ?? 1` is NaN: ?? only catches null/undefined, so a count word the
+    // table lacked read as NaN attacks and the Hydra's offense read 1/4 beside bands "ok"
+    // (critic A7, 2026-10-18). A count is a finite number or 1.
+    const n = /makes (\w+)/i.exec(multi.text)?.[1]; const nn = WORDS[n?.toLowerCase()] ?? Number(n); attacks = Number.isFinite(nn) ? nn : 1;
     const named = rows.filter((r) => new RegExp(`\\b${esc(r.name)}s?\\b`, 'i').test(multi.text)); // 2014 writes "one with its bite and two with its claws"
     if (named.length) used = named.slice().sort((a, b) => b.avg - a.avg)[0];
   }
@@ -126,14 +129,19 @@ export function sustainedOf(m) {
   const rayRow = allRows(m).find(({ e }) => /fires three rays/.test(e.text ?? '') && !/\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? ''));
   const rayEntries = rayRow ? String(rayRow.e.text).split(/\s\d — /).slice(1) : [];
   const rays = rayEntries.length ? 3 * rayEntries.reduce((a, t) => a + (t.match(/\d+ \(\d+d\d+(?: \+ \d+)?\)/g) ?? []).reduce((b, p) => b + avgOf(p), 0), 0) / rayEntries.length : 0;
-  const sustained = (used?.avg ?? 0) * attacks + rays;
+  // A PASSIVE DAMAGE AURA IS SUSTAINED DAMAGE (critic A8, 2026-10-18): Widow Alderkin's
+  // "Trailing Cold" dealt 13 (3d8) to anyone starting its turn adjacent, no save, at CR 3,
+  // and this read it as zero because it is not an attack row. It fires once a round.
+  const aura = allRows(m).filter(({ e }) => !/Attack Roll/.test(e.text ?? '') && !/\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '') && /\b(?:starts|ends) its turn within|enters (?:the|a) [^.]{0,40}for the first time|moves within \d+ feet/i.test(e.text ?? ''))
+    .map(({ e }) => (String(e.text).match(/\d+ \(\d+d\d+(?: \+ \d+)?\)/g) ?? []).reduce((a, p) => a + avgOf(p), 0)).reduce((a, b) => a + b, 0);
+  const sustained = (used?.avg ?? 0) * attacks + rays + aura;
   const legUses = Number(m.legendary_uses ?? 3);
   const legendary = (m.sections?.['Legendary Actions'] ?? []).filter((e) => !/^Legendary Action Uses/.test(e.name ?? '')).map((e) => {
     const ref = /makes (one|two|\d+) ([A-Z][\w' -]+?) attacks?/.exec(e.text ?? '');
     const cost = Number(/\(Costs (\d+) Actions?\)/i.exec(e.name ?? '')?.[1] ?? 1);
     const once = /can['’]t (?:take|use) this action again|once per round|only once/i.test(e.text ?? '');
     let per = 0;
-    if (ref) { const r = rows.find((a) => a.name === ref[2]); per = r ? r.avg * (WORDS[ref[1]] ?? Number(ref[1]) ?? 1) : 0; }
+    if (ref) { const r = rows.find((a) => a.name === ref[2]); const k = WORDS[ref[1]] ?? Number(ref[1]); per = r ? r.avg * (Number.isFinite(k) ? k : 1) : 0; }
     else per = (String(e.text ?? '').split(/\bIf\b/)[0].match(/\d+ \(\d+d\d+(?: \+ \d+)?\)/g) ?? []).reduce((a, p) => a + avgOf(p), 0);
     // the DMG counts every use: a cost-1 damaging option with no repeat clause fires Uses times between turns (the critic's audit 2026-10-02 — one Searing Ray was counted where three fire)
     const times = once ? 1 : Math.max(1, Math.floor(legUses / cost));
@@ -375,7 +383,7 @@ function gateBands(m, ctx, F) {
   if (r.used && r.attacks >= 1 && r.used.avg < aim.dpr / (r.attacks * 4)) F('per-attack-floor', 'soft', `${r.used.name}: ${r.used.avg} a hit is under a quarter share of ${aim.dpr} across ${r.attacks}`, r.used.avg);
   if (!legendary && cr >= 13 && cr <= 17 && Number(m.hp) <= Math.round(aim.hp * 0.8) + 2 && ctx.edition !== '2014') F('legendary-hp-trade', 'soft', `HP ${m.hp} looks like the legendary HP trade (${Math.round(aim.hp * 0.8)}) with no Legendary Actions section`, m.hp);
 }
-const KO = /\b(Paralyzed|Stunned|Unconscious|Petrified|Incapacitated)\b/;
+const KO = /\b(Paralyzed|Stunned|Unconscious|Petrified|Incapacitated)\b/i; // 2014 prose writes the condition lowercase
 const SIZE_REACH = { Tiny: 5, Small: 5, Medium: 5, Large: 10, Huge: 15, Gargantuan: 20 };
 const SIZES = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'];
 const TETHER = /\b(whip|chain|tentacle|lash|tether|hook|tongue|vine|cable|rope|lance|pike|arm|limb)\b/i;
@@ -444,8 +452,14 @@ function gateGates(m, ctx, F) {
     const koText = effectOnly(e.text ?? ''); // a condition this row EXPLOITS is not one it imposes (hold 7)
     const ko = KO.exec(koText);
     // a KO is IMPOSED when a target or each creature gets it on a failure — "It can't use this trait if it has the Incapacitated condition" is a guard on itself (Evasion, goldens 2026-10-02)
-    if (ko && !gated && /(?:Failure:\*?|the target|each creature|one creature)[^.]*\bhas the (?:Paralyzed|Stunned|Unconscious|Petrified|Incapacitated) condition/.test(koText)) { // "provided it doesn't have the Incapacitated condition" is a guard, not a KO (Evasion)
-      const multi = /each creature/i.test(koText); const repeat = /repeat(?:s|ing)? the sav|at the end of each of its turns|until the (?:end|start) of (?:its|the \w+'s|[A-Z][\w' -]+'s) next turn/i.test(e.text);
+    if (ko && !gated && /(?:Failure:\*?|the target|each creature|one creature)[^.]*\b(?:has the (?:Paralyzed|Stunned|Unconscious|Petrified|Incapacitated) condition|(?<!\bthat |\bwho |\bwhich )is (?:paralyzed|stunned|unconscious|petrified|incapacitated))\b/i.test(koText)) { // "the target is stunned" imposes; "one creature that is Stunned" exploits (the 74-run A/B caught eight exploiters, 2026-10-18) // both editions' idiom (Ilyn's "is stunned until the end of its next turn" at will in a Multiattack read soft — critic A8, 2026-10-18) // "provided it doesn't have the Incapacitated condition" is a guard, not a KO (Evasion)
+      // A KO RIDER THE MULTIATTACK REPEATS IS UNGATED (critic A8, 2026-10-18): Ilyn's Pressure
+      // Point Strike stunned "until the end of its next turn" — the Ghoul's one-turn cap — but
+      // in a Multiattack of two it lands twice a round with no save, so the cap caps nothing.
+      const maText = String((m.sections?.Actions ?? []).find((o) => /^Multiattack/.test(o.name ?? ''))?.text ?? '');
+      const bareK = bare(e.name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const repeatedByMulti = /Attack Roll/.test(e.text ?? '') && !/saving throw/i.test(e.text ?? '') && new RegExp(`\\b${bareK}\\b`, 'i').test(maText) && !/makes one\b/i.test(maText); // a save-gated stun repeated is the Ghoul's shape with a save; the no-save one is the defect
+      const multi = /each creature/i.test(koText) || repeatedByMulti; const repeat = /repeat(?:s|ing)? the sav|at the end of each of its turns|until the (?:end|start) of (?:its|the \w+'s|[A-Z][\w' -]+'s) next turn/i.test(e.text);
       if (multi || !repeat) F('ko-ungated', 'fail', `${sec}/${bare(e.name)}: ${ko[1]} at will ${multi ? 'on each creature' : 'with neither a repeat save nor a one-turn cap'}`, ko[1]);
       else F('ko-at-will', 'soft', `${sec}/${bare(e.name)}: ${ko[1]} at will, single target with a repeat save or a one-turn cap (the Ghoul's shape)`, ko[1]);
     }
@@ -494,7 +508,14 @@ function gateEdition(raw, m, ctx, F) {
     ? [...(raw.abilities ?? []), ...(raw.actions ?? []), ...(raw.reactions ?? []), ...(raw.legendary_actions ?? []), ...(raw.bonus_actions ?? [])].map((e) => `${e.name ?? ''}. ${e.description ?? e.text ?? ''}`).join('\n')
     : allRows(m).filter(({ e }) => !e.print).map(({ e }) => `${e.name}. ${e.text}`).join('\n'); // print's own 2024 text is print (the Kraken's "must succeed on a DC 25")
   if (ctx.edition === '2014') {
-    for (const w of ['Attack Roll:', 'Saving Throw*:', '*Failure:*', 'Failure:', 'Bloodied', 'Emanation', 'Hit or Miss', 'Success: Half']) if (texts.includes(w)) F('vocab-2024-in-2014', 'fail', `2024 wording in a 2014 block: "${w}"`, w);
+    // THE GATE READS THE MARK AND THE PROSE (critic A9, 2026-10-18). A conversion call
+    // that failed ships the deterministic shape with 2024 phrasing; the mark says so.
+    // the mark rides on the 2014 shape (`raw`); the 2024 model it was read into may not carry it
+    if ((m.generation ?? raw.generation)?.conversion === 'failed') F('conversion-failed', 'fail', 'the 2014 conversion call failed — the sheet ships 2024 phrasing in 2014 furniture', 'failed');
+    // and the vocabulary it leaked: reaction grammar, Advantage (2014 writes it lowercase), the spell-list labels, the condition idiom
+    for (const w of ['Trigger:', 'Response:', 'Advantage', 'Disadvantage', 'At Will:', '/Day Each']) if (texts.includes(w)) F('vocab-2024-in-2014', 'fail', `2024 "${w}" in a 2014 block`, w);
+    if (/\bhas the [A-Z]\w+ condition\b/.test(texts)) F('vocab-2024-in-2014', 'fail', '2024 "has the X condition" in a 2014 block (2014: "is stunned", "is prone")', 'condition');
+    for (const w of ['Attack Roll:', 'Saving Throw*:', '*Failure:*', 'Failure:', 'Bloodied', 'Emanation', 'Hit or Miss', 'Success: Half']) if (texts.includes(w)) F('vocab-2024-in-2014', 'fail', `2024 "wording in a 2014 block: "${w}"`, w);
     // a 2024 row with a half-damage success whose 2014 row lost the clause (the dragon's Noxious Miasma, check-in 2026-10-11)
     const legacyByName = new Map([...(raw.abilities ?? []), ...(raw.actions ?? []), ...(raw.reactions ?? []), ...(raw.legendary_actions ?? []), ...(raw.bonus_actions ?? [])].map((e) => [bare(e.name).toLowerCase(), String(e.description ?? e.text ?? '')]));
     for (const { sec, e } of allRows(m)) { if (!/\*Success:\*\s*Half damage/i.test(e.text ?? '')) continue; const l = legacyByName.get(bare(e.name).toLowerCase()); if (l != null && !/half (?:as much )?damage/i.test(l)) F('conversion-dropped-half', 'fail', `${sec}/${bare(e.name)}: the 2024 row halves on a success; the 2014 sheet dropped the clause`, bare(e.name)); }
@@ -603,6 +624,29 @@ export function fidelityOf(m, raw, ctx) {
     const crAsk = /\bcr\s*(\d+(?:\/\d+)?|\d*\.\d+)\b/i.exec(c.text ?? ''); if (crAsk && !/\b(?:damage|feet|ft)\b/i.test(c.text ?? '')) return Number.isFinite(Number(ctx?.cr)) && crNum(crAsk[1]) === Number(ctx.cr); // "cr 5" is a header directive the sheet honors or not — two letters and a digit, nothing a row could carry (the big ogre read 1/2, canaries 2026-10-12)
     if (c._print) return true;
     // a LACKS clause ("cannot cast any spells") is covered only when the lacked thing is absent — the Staffbound Caster scored 2/2 with the Mage's full spell list (critic's step-5 read)
+    // A KEYED LACK IS JUDGED BY ITS MECHANIC (2026-10-18). The engine's lacks call names
+    // what the clause takes ({quote, takes}); the sheet is then checked for THAT, not for
+    // the clause's words — "an eyeless hunter" read as broken because "eyeless" appears
+    // in its own trait text and "hunter" in its name, while its senses line said
+    // "blind beyond this radius". `takes` is the call's enum; the regexes below are the
+    // sheet's closed idiom for each mechanic, 2024 and 2014.
+    if (c.polarity === 'lacks' && c.takes && c.takes !== 'part' && c.takes !== 'other') {
+      const rowText = rows.map(({ e }) => `${e.name} ${e.text}`).join(' ');
+      const senses = String(m.senses ?? ''); const speed = String(m.speed ?? '');
+      switch (c.takes) {
+        case 'grapple': return !/\b(?:has the Grappled condition|is grappled|Grappled condition \(escape|grappled \(escape)/i.test(rowText);
+        case 'regeneration': return !/\bRegeneration\b|regains \d+ hit points at the start of/i.test(rowText);
+        case 'spellcasting': return !/\bSpellcasting\b|\bcasts?\b/i.test(rowText);
+        case 'flight': return !/\b(?:Fly|fly) \d+ ft/.test(speed);
+        case 'ranged': return !/Ranged (?:Attack Roll|Weapon Attack|Spell Attack)|Melee or Ranged/i.test(rowText);
+        case 'melee': return !/Melee (?:Attack Roll|Weapon Attack|Spell Attack)|Melee or Ranged/i.test(rowText);
+        case 'sight': return /blind beyond this radius/i.test(senses) || !/\b(?:darkvision|truesight|tremorsense)\b/i.test(senses) && !/\b(?:sees|can see|sight)\b/i.test(rowText);
+        // speech and hearing fall through to the word rule below: "understands no Common"
+        // beside Languages: Giant is honoured, and a whole-voice test called it broken
+        // (the Quarried Exile, forty 2026-10-18)
+        default: break;
+      }
+    }
     if (c.polarity === 'lacks') { const neg = NEG_CUE.exec(c.text); const after = words(neg ? c.text.slice(neg.index + neg[0].length) : c.text).filter((w) => !LACKS_STOP.has(w)); if (!after.length) return false; if (!after.some((w) => sheetWords.has(w))) return true; return rows.some(({ e }) => /\b(?:can't|cannot|can not|never|unable|must not|only)\b/i.test(e.text ?? '') && words(`${e.name} ${e.text}`).some((w) => after.includes(w))); } // absent, or restated as a restriction ("Bound to the Shore" for "he cannot leave the shoreline")
     if (c.kind === 'header') {
       // a HEADER-VALUE clause is covered only when the header line carries it — the hag's "takes extra damage from fire" scored covered with no Vulnerabilities line (critic's step-5 read)
@@ -695,7 +739,13 @@ function gateReader(raw, m, ctx, F) {
   if (ctx.print?.exact && nearPrintCr(ctx.cr, ctx.print.cr)) {
     const pcb = ctx.print;
     if (pcb.alignment && String(m.alignment ?? '') !== pcb.alignment) F('exact-body-identity', 'fail', `alignment ${m.alignment} — the ${pcb.name}'s is ${pcb.alignment}`, m.alignment);
-    if (pcb.type && String(m.type ?? '').toLowerCase() !== pcb.type.toLowerCase() && !/\b(?:aberration|beast|celestial|construct|dragon|elemental|fey|fiend|giant|humanoid|monstrosity|ooze|plant|undead)\b/i.test(String(ctx.userConcept ?? ''))) F('exact-body-identity', 'fail', `type ${m.type} — the ${pcb.name}'s is ${pcb.type}`, m.type);
+    // 2024 RECLASSED SOME BODIES AND 2014 DID NOT (the forty, 2026-10-18). The
+    // engine keeps print's 2014 type on a 2014 sheet — "goblins went Fey in 2024
+    // alone" (generate.mjs `reclass2024`) — and this gate read the 2024 corpus,
+    // so a 2014 Goblin Boss failed for being the Humanoid the engine meant it to
+    // be. One definition, both sides.
+    const reclassed2024 = ctx.edition === '2014' && /^Fey$/i.test(String(pcb.type ?? '')) && /^Humanoid/i.test(String(m.type ?? ''));
+    if (pcb.type && !reclassed2024 && String(m.type ?? '').toLowerCase() !== pcb.type.toLowerCase() && !/\b(?:aberration|beast|celestial|construct|dragon|elemental|fey|fiend|giant|humanoid|monstrosity|ooze|plant|undead)\b/i.test(String(ctx.userConcept ?? ''))) F('exact-body-identity', 'fail', `type ${m.type} — the ${pcb.name}'s is ${pcb.type}`, m.type);
     // a HUMANOID print body's size is not copied by the engine (print writes
     // "Small or Medium Humanoid" and the corpus keeps the first word — the Druid
     // reads Small), so this gate does not demand it either: one rule, both sides
@@ -892,10 +942,28 @@ function gateReader(raw, m, ctx, F) {
   // type-fit and save-fit
   for (const { sec, e } of rows) {
     const t = String(e.text ?? ''); const n = bare(e.name); if (e.print) continue;
-    const anat = /Attack Roll/.test(t) ? /\b(claws?|bite|fangs?|talons?|tusks?|horns?|hooves|hoof|tail|slam|fists?|gore|sting|stinger|maw|jaws|pincers?|beak)\b/i.exec(n) : null; // an anatomy word on a row that makes no attack is flavour ("Answering Sting" is a riposte)
+    // THE HEAD WORD OWNS THE TYPE, AS IT DOES IN THE ENGINE'S OWN NAMER (2026-10-18).
+    // This read the first anatomy word anywhere in the name, so "Tail Spines" was
+    // judged a tail and its Piercing failed — while print writes the Manticore's
+    // "Tail Spike" and the Purple Worm's "Tail Stinger" as Piercing, naming the row
+    // for the thing on the end of the tail. honestAttackNames already reads the head
+    // word "as it does across a spaced name"; this is one definition with it.
+    // Measured over print's 171 anatomy-named attack rows: the first-match read
+    // flags 11, the head-word read 9, and the two it clears are exactly those
+    // Manticore/Purple Worm rows. The 9 that remain are print's own bare-name
+    // oddities (the Camel's Bludgeoning bite, the Ankheg's Slashing one) — as found.
+    const anat = /Attack Roll/.test(t) ? /\b(claws?|bite|fangs?|talons?|tusks?|horns?|hooves|hoof|tail|slam|fists?|gore|sting|stinger|maw|jaws|pincers?|beak)\b/i.exec(String(n).split(/[\s-]+/).pop() ?? '') : null; // an anatomy word on a row that makes no attack is flavour ("Answering Sting" is a riposte)
     const dealt = /\d+ \(\d+d\d+(?: [+-] \d+)?\) ([A-Z][a-z]+) damage/.exec(t)?.[1];
     if (anat && dealt) { const want = { claw: 'Slashing', claws: 'Slashing', bite: 'Piercing', fang: 'Piercing', fangs: 'Piercing', talon: 'Slashing', talons: 'Slashing', tusk: 'Piercing', tusks: 'Piercing', horn: 'Piercing', horns: 'Piercing', hooves: 'Bludgeoning', hoof: 'Bludgeoning', tail: 'Bludgeoning', slam: 'Bludgeoning', fist: 'Bludgeoning', fists: 'Bludgeoning', gore: 'Piercing', sting: 'Piercing', stinger: 'Piercing', maw: 'Piercing', jaws: 'Piercing', pincer: 'Bludgeoning', pincers: 'Bludgeoning', beak: 'Piercing' }[anat[1].toLowerCase()];
-      if (want && ['Bludgeoning', 'Piercing', 'Slashing', 'Force'].includes(dealt) && dealt !== want) F('type-fit', 'fail', `${sec}/${n}: a ${anat[1].toLowerCase()} deals ${want}, not ${dealt}`, dealt); }
+      // PRINT QUALIFIES THE NOUN AND THE ENERGY FOLLOWS (measured 2026-10-18):
+      // the Air Elemental's "Thunderous Slam" deals Thunder, the Pit Fiend's
+      // "Devilish Claw" Necrotic, the Unicorn's "Radiant Horn" Radiant — 16 print
+      // rows put a non-anatomical type on an anatomy name, and every energy one
+      // carries a qualifier beside the noun. Force is the only energy in the
+      // comparison set, so a qualified name dealing Force is print's idiom, not a
+      // defect (the forty's "Arcane Slam"). A BARE noun still answers for it.
+      const qualified = n.toLowerCase().replace(/\b(?:attack|roll)\b/g, '').trim().split(/[\s-]+/).filter(Boolean).length > 1;
+      if (want && ['Bludgeoning', 'Piercing', 'Slashing', 'Force'].includes(dealt) && dealt !== want && !(qualified && dealt === 'Force')) F('type-fit', 'fail', `${sec}/${n}: a ${anat[1].toLowerCase()} deals ${want}, not ${dealt}`, dealt); }
     if (dealt && ['Bludgeoning', 'Piercing', 'Slashing'].includes(dealt) && /\b(?:drains?|siphons?|leech(?:es)?)\b/i.test(`${n} ${t}`) && /regains? (?:\d+ )?Hit Points|\bdrain/i.test(t)) F('type-fit', 'fail', `${sec}/${n}: a drain deals ${dealt} — a weapon type for an effect that takes no weapon`, dealt);
     const sv = /\*?(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) Saving Throw/.exec(t);
     // a condition named as a PREREQUISITE is not an imposed effect (a condition-payoff row exploits Prone; it does not cause it)
@@ -925,7 +993,12 @@ function gateReader(raw, m, ctx, F) {
   for (const { sec, e } of rows) {
     const n = bare(e.name); const t = String(e.text ?? ''); if (/^(?:Multiattack|Spellcasting|Legendary Resistance|Legendary Action Uses)/.test(n) || e.print) continue;
     { const unkept = mechanicUnkept(n, t); if (unkept) F('name-mechanic', 'fail', `${sec}/${n}: the name promises ${unkept} the text lacks`, n); }
-    const tw = TYPE_NAME_WORD.exec(n); if (tw && !new RegExp(`\\b${tw[1]} damage\\b`, 'i').test(t) && !new RegExp(`\\b${tw[1]}\\b`).test(t.replace(/damage/g, ''))) F('no-type-in-name', 'fail', `${sec}/${n}: the name carries ${tw[1]} the text does not deal`, tw[1]);
+    const tw = TYPE_NAME_WORD.exec(n);
+    // a type word that is part of the creature's OWN NAME is its name, not a damage claim:
+    // the Cold Lamp Widow's "Shroud of the Cold Lamp" deals Necrotic (feature thirty, 2026-10-19)
+    const twPair = tw ? new RegExp(`\\b(${tw[1]} \\w+)`, 'i').exec(n)?.[1] : null;
+    const ownName = !!(twPair && String(m.name ?? '').toLowerCase().includes(twPair.toLowerCase()));
+    if (tw && !ownName && !new RegExp(`\\b${tw[1]} damage\\b`, 'i').test(t) && !new RegExp(`\\b${tw[1]}\\b`).test(t.replace(/damage/g, ''))) F('no-type-in-name', 'fail', `${sec}/${n}: the name carries ${tw[1]} the text does not deal`, tw[1]);
   }
 }
 

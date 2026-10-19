@@ -681,6 +681,20 @@ describe('routing contradiction belt (2026-09-15): physical artillery is a throw
     wrapper.unmount();
   });
 
+  // THE CRITIC'S A3 (owner, 2026-10-18): with a Name in the Name box and a description
+  // in the textarea, the Name is a closed fact — the call's `provided_name` is not
+  // consulted. "Purple Worm" + "that swallowed a war-band's armoury" shipped as Gutforge.
+  test('a Name beside a description is the name, whatever the call says about it', async () => {
+    resolveWith({ archetype: 'brute' }); // no provided_name at all — the call "did not see a name"
+    const wrapper = mountGenerator();
+    await wrapper.find('input#monsterName').setValue('Purple Worm');
+    await wrapper.find('textarea').setValue("that swallowed a war-band's armoury");
+    await setCR(wrapper, '15');
+    await generate(wrapper);
+    expect(reskinMod.generateReskin.mock.calls[0][0].fixedName).toBe('Purple Worm');
+    wrapper.unmount();
+  });
+
   test('a short provided_name inside a longer input is still honoured, article stripped', async () => {
     resolveWith({ archetype: 'brute', provided_name: 'the Brazen Bull' });
     const wrapper = mountGenerator();

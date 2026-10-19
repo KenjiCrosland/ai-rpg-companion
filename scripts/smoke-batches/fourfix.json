@@ -1,0 +1,12 @@
+[
+  { "name": "Ilvareth Dusksong", "description": "An elf archmage who bends shadow and steps between places.", "cr": "12", "rules": "2014", "canary": "FIX 1: a qualified anatomy name may carry Force (print: Thunderous Slam/Thunder) — no type-fit fail, and the Multiattack cites live rows" },
+  { "name": "", "description": "a sorcerer whose fists land like thunderclaps", "cr": "7", "rules": "2024", "canary": "FIX 1 neighbour: a qualified anatomy row with an energy type stands" },
+  { "name": "", "description": "a bare-knuckle brawler who slams with both fists", "cr": "4", "rules": "2024", "canary": "FIX 1 CONTROL: a BARE anatomy name must still answer for its type" },
+  { "name": "", "description": "lizardfolk monk", "cr": "5", "rules": "2014", "canary": "FIX 2: a ranged row named after a body part is renamed to the projectile — no melee weapon on a ranged-only row" },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2024", "canary": "FIX 2 CONTROL: a handaxe IS thrown — the rename must NOT fire, the weapon stands" },
+  { "name": "", "description": "an eyeless hunter that tracks prey by scent alone", "cr": "5", "rules": "2024", "canary": "FIX 3: a bestial mind at INT 12 ships Neutral, not Unaligned" },
+  { "name": "", "description": "a dire wolf that hunts in a pack", "cr": "3", "rules": "2024", "canary": "FIX 3 CONTROL: a true beast at low INT stays Unaligned (print: 120 of 128)" },
+  { "name": "", "description": "a swarm of grave-pit beetles that strips a corpse to bone", "cr": "4", "rules": "2014", "canary": "FIX 4: the Bloodied half carries the main clause's own modifier, or none" },
+  { "name": "", "description": "a swarm of funeral bells that ring themselves over the dying", "cr": "13", "rules": "2024", "canary": "FIX 4 neighbour: a swarm's split at the high tier" },
+  { "name": "Brinecrone Magda", "description": "A sea hag who curses sailors and strikes with a gnarled staff.", "cr": "7", "rules": "2024", "canary": "PARKED (owner 2026-10-18): the caster's mundane staff keys CHA — expect the one attack-stat fail, and NO others" }
+]

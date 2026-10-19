@@ -1,0 +1,9 @@
+[
+  { "name": "", "description": "skeleton with a greatsword", "cr": "2", "rules": "2024", "canary": "A1: print's Skeleton + the greatsword and NOTHING else — no library seed, no trait seed" },
+  { "name": "", "description": "skeleton with a greatsword", "cr": "6", "rules": "2024", "canary": "A1: the same above print's CR — re-scaled, still no invented rows" },
+  { "name": "", "description": "an ogre with a greataxe", "cr": "3", "rules": "2024", "canary": "A1: print's Ogre + the greataxe — no barbarian kit (the receipt pointed at nothing), no seed" },
+  { "name": "", "description": "a skeleton who was a gladiator in a former life", "cr": "4", "rules": "2024", "canary": "A1 CONTROL: the class word IS in the words — the fighter kit must still arrive" },
+  { "name": "Goblin Boss", "description": "riding a worg", "cr": "auto", "rules": "2014", "canary": "A1 CONTROL: a seat verb the GM typed keeps the mounted seat and print's rows" },
+  { "name": "", "description": "lizardfolk monk", "cr": "5", "rules": "2024", "canary": "A1 CONTROL: a two-word concept — the whole concept IS the span, the monk kit stands" },
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "canary": "A1 CONTROL: a bare print name is still print's sheet verbatim" }
+]

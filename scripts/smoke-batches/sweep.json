@@ -1,202 +1,283 @@
 [
   {
+    "name": "Dire Wolf",
+    "description": "with a frost-rimed hide",
     "cr": "1",
-    "concept": "a goblin warrior",
-    "rules": "2024"
+    "rules": "2024",
+    "canary": "SPINE 1 · print head + addition: print's body, the GM's frost"
   },
   {
+    "name": "",
+    "description": "a mud-caked bog hound that drags fishermen under",
     "cr": "1",
-    "concept": "a mud-caked bog hound that drags fishermen under",
-    "rules": "2024"
+    "rules": "2014",
+    "canary": "SPINE 1 · homebrew one-liner"
   },
   {
-    "cr": "1",
-    "concept": "a goblin warrior",
-    "rules": "2014"
-  },
-  {
-    "cr": "1",
-    "concept": "a mud-caked bog hound that drags fishermen under",
-    "rules": "2014"
-  },
-  {
+    "name": "Owlbear",
+    "description": "that has learned to climb",
     "cr": "3",
-    "concept": "an owlbear",
-    "rules": "2024"
+    "rules": "2014",
+    "canary": "SPINE 3 · print head + addition, 2014 conversion"
   },
   {
+    "name": "",
+    "description": "a chapel bell-ringer's ghost that tolls for the dying",
     "cr": "3",
-    "concept": "a glass-eyed hermit who hurls her lantern at thieves",
-    "rules": "2024"
+    "rules": "2024",
+    "canary": "SPINE 3 · homebrew one-liner"
   },
   {
+    "name": "Air Elemental",
+    "description": "that carries stolen voices",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "SPINE 5 · print head + addition on an Elemental body"
+  },
+  {
+    "name": "",
+    "description": "a quarry-pit thing of living scree that buries what it catches",
+    "cr": "5",
+    "rules": "2014",
+    "canary": "SPINE 5 · homebrew one-liner"
+  },
+  {
+    "name": "Hydra",
+    "description": "whose stumps smoke instead of regrowing",
+    "cr": "8",
+    "rules": "2014",
+    "canary": "SPINE 8 · print head + a negating addition"
+  },
+  {
+    "name": "",
+    "description": "a siege-engine golem of lashed timber that shoulders through walls",
+    "cr": "8",
+    "rules": "2024",
+    "canary": "SPINE 8 · homebrew one-liner"
+  },
+  {
+    "name": "Stone Golem",
+    "description": "carved as a weeping saint",
+    "cr": "10",
+    "rules": "2024",
+    "canary": "SPINE 10 · print head + flavour only: numbers must stay print's"
+  },
+  {
+    "name": "",
+    "description": "a drowned cathedral choir that sings in one voice",
+    "cr": "10",
+    "rules": "2014",
+    "canary": "SPINE 10 · homebrew one-liner"
+  },
+  {
+    "name": "Vampire",
+    "description": "who keeps a garden of thorns",
+    "cr": "13",
+    "rules": "2014",
+    "canary": "SPINE 13 · print head + addition, legendary tier 2014"
+  },
+  {
+    "name": "",
+    "description": "a plague-bearing archon of flies that commands lesser swarms",
+    "cr": "13",
+    "rules": "2024",
+    "canary": "SPINE 13 · homebrew one-liner"
+  },
+  {
+    "name": "Purple Worm",
+    "description": "that swallowed a war-band's armoury",
+    "cr": "15",
+    "rules": "2024",
+    "canary": "SPINE 15 · print head + addition: the swallow engine"
+  },
+  {
+    "name": "",
+    "description": "a glacier's heart given legs, trailing a wake of killing cold",
+    "cr": "15",
+    "rules": "2014",
+    "canary": "SPINE 15 · homebrew one-liner"
+  },
+  {
+    "name": "Adult Red Dragon",
+    "description": "blind in one eye from an old lance",
+    "cr": "17",
+    "rules": "2014",
+    "canary": "SPINE 17 · print head + a lack, legendary 2014"
+  },
+  {
+    "name": "",
+    "description": "a tyrant of burning brass who rules a city of forges",
+    "cr": "17",
+    "rules": "2024",
+    "canary": "SPINE 17 · homebrew one-liner at the legendary tier"
+  },
+  {
+    "name": "Pit Fiend",
+    "description": "who collects the oaths of dying knights",
+    "cr": "20",
+    "rules": "2024",
+    "canary": "SPINE 20 · print head + addition: print's four attacks stand"
+  },
+  {
+    "name": "",
+    "description": "an archlich enthroned on a sun of bone",
+    "cr": "20",
+    "rules": "2014",
+    "canary": "SPINE 20 · homebrew one-liner, 2014 legendary"
+  },
+  {
+    "name": "Ancient Gold Dragon",
+    "description": "",
+    "cr": "24",
+    "rules": "2014",
+    "canary": "SPINE 24 · bare print head at the ceiling, 2014"
+  },
+  {
+    "name": "",
+    "description": "a leviathan of the trench whose song drowns fleets",
+    "cr": "24",
+    "rules": "2024",
+    "canary": "SPINE 24 · homebrew one-liner at the ceiling"
+  },
+  {
+    "name": "Owlbear",
+    "description": "",
     "cr": "3",
-    "concept": "an owlbear",
-    "rules": "2014"
+    "rules": "2024",
+    "canary": "USE CASE · a bare print Name alone: print's sheet verbatim"
   },
   {
+    "name": "Goblin Boss",
+    "description": "",
+    "cr": "auto",
+    "rules": "2014",
+    "canary": "USE CASE · bare print Name, 2014, CR from print"
+  },
+  {
+    "name": "Vashka the Red",
+    "description": "A hobgoblin warlord in lacquered plate who fights from a shield wall and never breaks ranks.",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "USE CASE · Name field + description, the commonest GM path"
+  },
+  {
+    "name": "",
+    "description": "A Large insectile horror. It has four scythe-arms, a spitting maw, and a shell that sheds acid. It fights by pinning prey with two arms and carving with the others.",
+    "cr": "9",
+    "rules": "2024",
+    "canary": "USE CASE · paragraph naming parts: the parts become attack rows"
+  },
+  {
+    "name": "",
+    "description": "a sentinel of black iron, AC 20, Huge, speed 20 feet",
+    "cr": "11",
+    "rules": "2014",
+    "canary": "USE CASE · header directives: the user's AC, size and speed stand"
+  },
+  {
+    "name": "",
+    "description": "a marsh witch who curses trespassers, cr 7",
+    "cr": "auto",
+    "rules": "2024",
+    "canary": "USE CASE · the CR is in the words, not the field"
+  },
+  {
+    "name": "",
+    "description": "a templar priest with a mace and no magic at all",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "USE CASE · negation: the lack removes the casting, the mace stays"
+  },
+  {
+    "name": "Ilvareth Dusksong",
+    "description": "An elf archmage who bends shadow and steps between places.",
+    "cr": "12",
+    "rules": "2014",
+    "canary": "USE CASE · named spellcaster: one stat keys the attack and the DC"
+  },
+  {
+    "name": "",
+    "description": "a swarm of funeral bells that ring themselves over the dying",
+    "cr": "13",
+    "rules": "2024",
+    "canary": "USE CASE · SWARM body: print's swarm shape and resistances"
+  },
+  {
+    "name": "",
+    "description": "a cathedral-vault ooze that digests reliquaries",
+    "cr": "9",
+    "rules": "2014",
+    "canary": "USE CASE · OOZE body: the type's own immunities and conditions"
+  },
+  {
+    "name": "",
+    "description": "a young storm drake whose breath is a rolling wall of thunder",
+    "cr": "7",
+    "rules": "2024",
+    "canary": "USE CASE · DRAGON body, homebrew: a breath nova inside the cap"
+  },
+  {
+    "name": "",
+    "description": "a stone giant exile who speaks only Giant and understands no Common",
+    "cr": "9",
+    "rules": "2014",
+    "canary": "USE CASE · a language addition lands on the languages line"
+  },
+  {
+    "name": "",
+    "description": "lizardfolk monk",
+    "cr": "5",
+    "rules": "2014",
+    "canary": "USE CASE · creature-only words, no verb: species + class, two words"
+  },
+  {
+    "name": "Krennik Skullstandard",
+    "description": "riding a worg",
+    "cr": "4",
+    "rules": "2014",
+    "canary": "USE CASE · Name + a seat verb: the mounted style"
+  },
+  {
+    "name": "the thing in the well",
+    "description": "",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "USE CASE · NEVER-FAIL: no information at all, a legal sheet still ships"
+  },
+  {
+    "name": "",
+    "description": "",
+    "cr": "4",
+    "rules": "2024",
+    "role": "brute",
+    "canary": "USE CASE · archetype only, nothing typed: the role drives it"
+  },
+  {
+    "name": "Meshrin",
+    "description": "Large lizard folk, 30 feet of movement, Wields a greataxe two-handed and a javelin for the throw. He is a barbarian who rages. Give him a frightening roar. AC 16, 120 hit points.",
+    "cr": "8",
+    "rules": "2014",
+    "canary": "USE CASE · DENSE: body + class + GM requests + math, all at once"
+  },
+  {
+    "name": "",
+    "description": "a skeleton with a greatsword",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "USE CASE · print name + addition ABOVE print's CR: the borrow re-scales and the weapon stands"
+  },
+  {
+    "name": "",
+    "description": "a sellsword who hurls a handaxe and closes with a shortsword",
+    "cr": "5",
+    "rules": "2014",
+    "canary": "USE CASE · the weapon table: a thrown weapon's range, a blade's type"
+  },
+  {
+    "name": "Brother Halric",
+    "description": "",
     "cr": "3",
-    "concept": "a glass-eyed hermit who hurls her lantern at thieves",
-    "rules": "2014"
-  },
-  {
-    "cr": "5",
-    "concept": "a troll",
-    "rules": "2024"
-  },
-  {
-    "cr": "5",
-    "concept": "a brass gate-golem that crushes anyone who forces the lock",
-    "rules": "2024"
-  },
-  {
-    "cr": "5",
-    "concept": "a troll",
-    "rules": "2014"
-  },
-  {
-    "cr": "5",
-    "concept": "a brass gate-golem that crushes anyone who forces the lock",
-    "rules": "2014"
-  },
-  {
-    "cr": "8",
-    "concept": "a hydra",
-    "rules": "2024"
-  },
-  {
-    "cr": "8",
-    "concept": "a plague-seer who curses the firstborn of every house",
-    "rules": "2024"
-  },
-  {
-    "cr": "8",
-    "concept": "a hydra",
-    "rules": "2014"
-  },
-  {
-    "cr": "8",
-    "concept": "a plague-seer who curses the firstborn of every house",
-    "rules": "2014"
-  },
-  {
-    "cr": "10",
-    "concept": "a stone golem",
-    "rules": "2024"
-  },
-  {
-    "cr": "10",
-    "concept": "a drowned bell-ringer that pulls climbers into the harbor",
-    "rules": "2024"
-  },
-  {
-    "cr": "10",
-    "concept": "a stone golem",
-    "rules": "2014"
-  },
-  {
-    "cr": "10",
-    "concept": "a drowned bell-ringer that pulls climbers into the harbor",
-    "rules": "2014"
-  },
-  {
-    "cr": "13",
-    "concept": "a vampire",
-    "rules": "2024"
-  },
-  {
-    "cr": "13",
-    "concept": "a storm-herder who commands a stampede of thunder-elk",
-    "rules": "2024"
-  },
-  {
-    "cr": "13",
-    "concept": "a vampire",
-    "rules": "2014"
-  },
-  {
-    "cr": "13",
-    "concept": "a storm-herder who commands a stampede of thunder-elk",
-    "rules": "2014"
-  },
-  {
-    "cr": "15",
-    "concept": "an adult green dragon",
-    "rules": "2024"
-  },
-  {
-    "cr": "15",
-    "concept": "a bone-wrought siege titan that stomps and shakes the walls",
-    "rules": "2024"
-  },
-  {
-    "cr": "15",
-    "concept": "an adult green dragon",
-    "rules": "2014"
-  },
-  {
-    "cr": "15",
-    "concept": "a bone-wrought siege titan that stomps and shakes the walls",
-    "rules": "2014"
-  },
-  {
-    "cr": "18",
-    "concept": "a dragon turtle",
-    "rules": "2024"
-  },
-  {
-    "cr": "18",
-    "concept": "a mirror assassin who strikes from the reflections of her victims",
-    "rules": "2024"
-  },
-  {
-    "cr": "18",
-    "concept": "a dragon turtle",
-    "rules": "2014"
-  },
-  {
-    "cr": "18",
-    "concept": "a mirror assassin who strikes from the reflections of her victims",
-    "rules": "2014"
-  },
-  {
-    "cr": "20",
-    "concept": "a pit fiend",
-    "rules": "2024"
-  },
-  {
-    "cr": "20",
-    "concept": "a glacier wyrm that swallows ships whole and freezes the sea",
-    "rules": "2024"
-  },
-  {
-    "cr": "20",
-    "concept": "a pit fiend",
-    "rules": "2014"
-  },
-  {
-    "cr": "20",
-    "concept": "a glacier wyrm that swallows ships whole and freezes the sea",
-    "rules": "2014"
-  },
-  {
-    "cr": "24",
-    "concept": "a kraken",
-    "rules": "2024"
-  },
-  {
-    "cr": "24",
-    "concept": "a sun-crowned archlich who binds the dead of a whole kingdom",
-    "rules": "2024"
-  },
-  {
-    "cr": "24",
-    "concept": "a kraken",
-    "rules": "2014"
-  },
-  {
-    "cr": "24",
-    "concept": "a sun-crowned archlich who binds the dead of a whole kingdom",
-    "rules": "2014"
+    "rules": "2014",
+    "canary": "USE CASE · a person's Name alone, no print match: the library stands in"
   }
 ]

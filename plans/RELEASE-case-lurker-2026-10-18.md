@@ -244,3 +244,120 @@ Smoke after: Greatsword 2d8 + 3 Slashing on the Skeleton; Greataxe + Javelin on 
 Ogre; the two-headed wolf is a borrow (Twinmaw: Fang, Multiattack, Circling); the
 gladiator skeleton is Medium with Shield/Riposte. Pinned (`stage34-pins.spec.js`):
 additions → borrow; bare names and but-tails → exact.
+
+## Close-out: the smoke redesigned, and what it caught
+
+The owner asked whether we were ready for a critic forty and whether the smoke
+needed redesigning for fuller coverage. Inspecting `sweep.json` answered the second
+question: all 40 entries were `{cr, concept, rules}`, and the runner's own comment
+says the concept-only shape types into `#monsterName` — the last sweep run proves it
+(`monsterDescription: ""`, the whole concept in `monsterName`). **The forty measured
+one input shape out of four.** The owner's own 2026-10-12 note already said to
+rebuild it at close-out; this is that rebuild (old file kept as
+`sweep-OLD-concept-only.json.bak`).
+
+**The new forty** (fixed prompts from here; 20/20 editions; every entry states its
+expected behaviour): 20 CR spine — ten tiers (1, 3, 5, 8, 10, 13, 15, 17, 20, 24;
+18 has no print block in either corpus) × print head + homebrew one-liner — and 20
+use-case shapes covering all four input shapes (bare Name ×3, Name + description,
+description-only, nothing at all), parts paragraph, header directives, CR in the
+words, negation, named spellcaster, swarm/ooze/dragon bodies, language addition,
+creature-only two-worder, seat verb, never-fail, archetype-only, the dense Meshrin
+shape, the weapon table. One deviation from the 10-12 outline: the spine's print half
+is print head + a small addition rather than bare verbatim — the owner's "how useful
+is a verbatim owlbear anyway" taken seriously, and the shape that had just broken.
+
+**Plus `features-2026-10-18.json`** — 30 blocks, frozen, to run beside the forty at
+every future close-out.
+
+### First run: 20 clean, 14 soft, 6 blocks / 10 FAILs — all on shapes the old forty never typed
+
+| class | cause | fix |
+|---|---|---|
+| dangling Multiattack (3 blocks, 6 FAILs) | the live-row filter ran ~450 lines BEFORE the audit rename, and that rename's citation sweep had no word boundary (`\bCoils\b` rewrote "Judgment Coils") | the filter is one named pass called after every rename and addition; the sweep uses the print-canon rename's guarded regex |
+| 2014 Goblin Boss type | engine keeps Humanoid on a 2014 sheet (goblins went Fey in 2024 only); the gate read the 2024 corpus | mirrored in the checker |
+| "Arcane Slam" type-fit | **the gate, not the engine**: print puts a non-anatomical type on an anatomy name 16 times, every energy case carrying a qualifier (Air Elemental "Thunderous Slam" = Thunder, Pit Fiend "Devilish Claw" = Necrotic, Unicorn "Radiant Horn" = Radiant) | a qualified name may carry Force; a bare noun still answers |
+| "Tail Whip" print-range | ANATOMY is eight nouns and has no tail or whip, and `whip` is a TYPE-ONLY noun whose mode guard let it through | the namer consults the weapon table — the checker's own — for a melee-only reading on a ranged row (owner's ruling: rename) |
+| "Drowned Grasp" name-mechanic | a bare damage row earned no honest noun, so a lying claim shipped | a bare attack row earns Strike/Blow/Lash, last in the table |
+| "Tail Spines" type-fit (found by the verify run) | the gate read the FIRST anatomy word; print writes the Manticore's "Tail Spike" and the Purple Worm's "Tail Stinger" as Piercing | the gate reads the HEAD word, as `honestAttackNames` already does — one definition. Print's 171 anatomy rows: first-match flags 11, head-word 9 |
+| feature batch: Unaligned at INT 12 | a bestial mind was an unconditional exemption from the Unaligned → Neutral conversion | it holds only inside print's norm (INT ≤ 8, where 120 of 128 are Unaligned) and takes Neutral above it (owner's ruling: "neutral") |
+| feature batch: swarm's unexplained +2 | the late Bloodied re-derive checked only the average, and ±2 of tolerance let a "+2" stand beside a "+3" main | print writes both halves with the same flat bonus or none (Crawling Claws 4d8+2 / 2d8+2, Insects 2d4+1 / 1d4+1, Snakes 1d8+4 / 1d4+4) — the form answers too |
+
+**Second run: 19 clean, 19 soft, 2 blocks / 2 FAILs**, both then fixed as above.
+
+### Pinned, not left to the dice
+Four of these are pinned in `stage34-pins.spec.js` ("the forty's findings, pinned"),
+because a smoke draw does not present the same shape twice: the bestial-mind
+alignment law (both branches, by donor INT), the qualified-vs-bare anatomy type, the
+melee-weapon-name-on-a-ranged-row rename with five controls, and the bare-attack-row
+noun with its precedence checks. Two verification mistakes made that necessary: a
+draw came out a Beast (where Unaligned is correct) and looked like a failed fix, and
+a draw named its own row "Dart" so the rename never fired though I had claimed it did.
+
+### Open, by the owner's ruling or by judgment
+- **Parked (owner):** a caster's mundane staff keys the casting stat (Magda, +7 from
+  CHA where a staff rolls STR). Touches attack derivation for every caster and the
+  wizard-staff canary constrains it; wants its own measured landing.
+- **One sighting, unfixed:** `save-fit` — a choking effect asking for a Wisdom save
+  where it calls for Constitution (focused batch, Breathstalker).
+- **Left as found:** 9 of print's 171 anatomy-named rows still contradict type-fit
+  (the Camel's Bludgeoning bite, the Ankheg's Slashing one) — print's own oddities.
+
+## Second package — the critic's A1–A9 landed, the forty re-run (2026-10-18 night)
+
+### Corrections to the first package (the critic's E list)
+- **Brine-Witch's attack-stat** is the parked item (a caster's mundane weapon keying the
+  casting stat), not a new class. The forty's Mire Hagsight is the same class; a narrow fix
+  was built, then reverted to honour the parking — see `critic-response-2026-10-18.md`.
+- **Chorus two-novas is NOT fixed.** On a print body at print's CR print's breath is now the
+  one breath; a HOMEBREW borrow whose addition earns a differently-named nova (Chorus, and
+  tonight's Air Elemental Shriek beside Whirlwind) still carries two and waits on the owner's
+  ruling: print's nova yields, or the addition's does.
+- **Concept share is empty on a print body.** Print's rows are print's; the share counts
+  only the rows the GM's words earned. The first package's share figures on print bodies
+  are withdrawn.
+- **Provenance credits only the GM's words.** A row bound on the idea's own words is not
+  coverage; the seats decline it now (A1), and the reader's receipt reads the same way.
+- **Enrichment errors log into the NEXT block's trace** in the smoke; a "Failed to enrich"
+  line at the top of a block belongs to the one before it.
+- **The 2014 printing is 2024 content in 2014 prose** — parked, on record. Tonight's one
+  2014 engine fix (the conversion validator demanded empty sections back) is about the
+  prose landing at all, not about 2014 content.
+
+### What the forty found this time (`smoke-out/sweep-2026-10-18T23-43-43`)
+39/40 in one pass; one harness miss (no trace, re-rolled clean). Checker 18 clean / 16
+soft / 5 FAIL. Hand score: zero wrong-creature headers; every Huge/Gargantuan corporeal
+body at or above print's floor; no incorporeal body above Medium; print's rows intact on
+every exact body and every borrow at print's CR.
+
+| FAIL | what it was | state |
+|---|---|---|
+| Quarried Exile — Boulder +7 off the old STR | the floor re-stamped melee rows only; a giant's rock is a STR-keyed ranged row | fixed, pinned |
+| Quarried Exile — "understands no Common" | my keyed `speech` test asked for no voice at all beside Languages: Giant | fixed, pinned |
+| Ossein Heliarch — Paralyzing Touch `ko-ungated` | print's Lich does this at CR 21; the melee rename never set `print: true` so the gate read it as ours | fixed (one flag, every reader), pinned |
+| Adult Red Dragon — "blind in one eye" keyed `sight` | the call's key; a partial loss is `part` — the lacks prompt now says so | prompt fixed, pinned |
+| Mire Hagsight — Rusted Blade +7 off CHA | the parked class | open, by the owner |
+| Air Elemental — Whirlwind + Shriek | two novas on a homebrew borrow | open, by the owner |
+
+### Two defects the forty's "timeouts" were hiding
+- Six live "timeouts" across two runs were one ReferenceError: the A1c trait-seat gate read
+  `gmAsked` from a block that had closed. Every print body whose signature call returned a
+  trait idea threw, nothing saved, and the smoke waited out its clock. Hoisted and pinned
+  with a live fit on a print body; the smoke now fails a block the moment the page logs a
+  thrown generation.
+- Every failed 2014 conversion carried an empty section: the prompt filtered them out and
+  the validator demanded them back. Five of five failures matched, none of fifteen
+  successes. Fixed and pinned; the five re-ran clean.
+
+### For the owner
+- Two novas on a homebrew borrow (Chorus, Air Elemental): print's yields or the addition's?
+- The parked caster-weapon class recurred (Hagsight); the fix is written up and reverted.
+- "Swarm of Knell of the Dyings": the swarm stamp pluralises the last word of the model's
+  name. Proposed as a call field (`swarm_of`, the plural noun phrase), the pluraliser as
+  fallback. Needs a go.
+
+### Feature thirty, re-run (2026-10-19)
+30/30 generated across two runs (one live stall mid-run; the block re-ran clean). Checker 18
+clean / 12 soft / 0 FAIL after one checker correction: a damage-type word that is part of the
+creature's own name ("Shroud of the Cold Lamp" on the Cold Lamp Widow) is its name, not a
+claim. Across all 70 blocks tonight: zero wrong-creature headers.

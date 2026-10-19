@@ -1096,6 +1096,7 @@ async function generateStatblockEngine(edition) {
   // from the concept's substance; the engine stamps it. Random path falls
   // back to the rolled type when the call fails or skips.
   let resolvedType = randomSeed?.creature_type ?? null;
+  let conceptTypeSource = null; // the identity call's own answer: did the GM's words name the type? (replaces a regex over the GM's words — owner, 2026-10-18)
   // The resolve/synthesis call runs for USER-PICKED archetypes too (owner
   // call, 2026-08-04): those generations previously skipped it entirely and
   // got no identity, no lore, and no type honesty. The picked role is
@@ -1132,6 +1133,7 @@ async function generateStatblockEngine(edition) {
     if (typeof parsed?.lore === 'string' && parsed.lore.trim().length > 15) conceptLore = parsed.lore.trim();
     // the route decides the type from substance; the prose only fills a gap
     if (!resolvedType && typeof parsed?.creature_type === 'string') resolvedType = parsed.creature_type;
+    if (/^(?:user|inferred)$/i.test(String(parsed?.type_source ?? ''))) conceptTypeSource = String(parsed.type_source).toLowerCase();
     if (Array.isArray(parsed?.themes)) {
       const t = parsed.themes.filter((x) => FACETS.includes(String(x).toLowerCase())).slice(0, 2);
       if (t.length) conceptThemes = t;
@@ -1154,7 +1156,19 @@ async function generateStatblockEngine(edition) {
         const hit = ENERGY_TYPES.find((t) => t.toLowerCase() === parsed.energy.trim().toLowerCase());
         if (hit) conceptEnergy = hit;
       }
-      if (typeof parsed?.provided_name === 'string') {
+      // THE NAME FIELD IS A CLOSED FACT (critic A3, owner 2026-10-18). With a name
+      // in the Name box AND a description in the textarea, the GM has already
+      // separated the two; nothing is left for the call to judge. It was asked
+      // anyway, and answered "not provided" for "Purple Worm" and "Air Elemental"
+      // with their descriptions beside them — the engine then minted Gutforge and
+      // Chorus of the Drowned. The call's `provided_name` still serves the ONE-BOX
+      // shape below (a concept, or a name followed by its description, typed into
+      // the Name field alone), which is what it was built to read.
+      const typedNameOnly = monsterName.value.trim();
+      if (typedNameOnly && monsterDescription.value.trim()) {
+        conceptProvidedName = typedNameOnly.replace(/^(?:a|an|the)\s+/i, '');
+        logger.log('[concept] name:', `"${conceptProvidedName}" — the Name field, beside a description; the field is the fact, the call is not asked`);
+      } else if (typeof parsed?.provided_name === 'string') {
         const pn = parsed.provided_name.trim();
         // provenance AND shape (2026-08-20 / 2026-09-20 item F): the name must
         // come from the name/concept field, be at most 4 words (0/329 print
@@ -1248,7 +1262,7 @@ async function generateStatblockEngine(edition) {
         const pinKey = JSON.stringify([userConcept, monsterDescription.value, cr, givenArchetype]);
         const pinned = conceptResolutionCache.get(pinKey);
         if (pinned) {
-          ({ archetypeName, conceptRole, conceptLine, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics, conceptBody, conceptRejectedCanon } = pinned);
+          ({ archetypeName, conceptRole, conceptLine, conceptIdentity, conceptLore, resolvedType, conceptTypeSource, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics, conceptBody, conceptRejectedCanon } = pinned);
           logger.log('[concept] pinned — reusing the resolution for an unchanged concept');
         } else {
           // CALL 1 — ROUTE
@@ -1282,7 +1296,7 @@ async function generateStatblockEngine(edition) {
           if (conceptElements) logger.log('[concept] signature elements:', conceptElements.map((e) => `${e.element}${e.kind ? ` [${e.kind}]` : ''}`).join(' | '));
           if (conceptIdentity) logger.log('[concept] identity:', conceptIdentity);
           if (conceptLore) logger.log('[concept] lore:', conceptLore);
-          conceptResolutionCache.set(pinKey, { archetypeName, conceptRole, conceptLine, conceptIdentity, conceptLore, resolvedType, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics, conceptBody, conceptRejectedCanon });
+          conceptResolutionCache.set(pinKey, { archetypeName, conceptRole, conceptLine, conceptIdentity, conceptLore, resolvedType, conceptTypeSource, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics, conceptBody, conceptRejectedCanon });
         }
       } else {
         // CALL 1 — SYNTHESIS: fuse the rolled axes into one creature
@@ -1404,6 +1418,7 @@ async function generateStatblockEngine(edition) {
           holds: conceptHolds,
           themes: conceptThemes ?? null, // the call's own read of the creature's substance, for the alias guard
           rejectedCanon: conceptRejectedCanon,
+          typeSource: conceptTypeSource, // 'user' | 'inferred' | null — the call's field, not a word read
           userConcept: baseConcept, // the user's own words — the verb the signature must serve (the identity prose is the model's)
           material: conceptHouse, // the body's material — fire defenses derive from it (wax is vulnerable, never resistant)
           // THE 2014 LINE is the DMG table itself (2026-10-02): `edition`
@@ -1445,6 +1460,10 @@ async function generateStatblockEngine(edition) {
           // the deterministic 2014 grammar pass still runs so no 2024 token ships (checker 2026-10-02)
           for (const k of ['abilities', 'actions', 'bonus_actions', 'reactions', 'legendary_actions']) if (Array.isArray(shaped[k])) shaped[k] = shaped[k].map((e) => ({ ...e, name: String(e.name ?? '').replace(/\bBloodied\b/g, 'Wounded'), description: to2014Grammar(e.description) }));
           if (source.generation && !shaped.generation) shaped.generation = source.generation; // the degraded path loses it too
+          // A FAILED CONVERSION SHIPS MARKED (critic A9, 2026-10-18): nine of 32 conversion
+          // calls failed in one run and every half-converted sheet read "edition: ok".
+          // The checker's edition gate reads this mark and fails the block.
+          shaped.generation = { ...(shaped.generation ?? {}), conversion: 'failed' };
           shaped.other_edition = finalMonster;
           finalMonster = shaped;
         }

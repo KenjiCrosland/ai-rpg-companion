@@ -151,6 +151,25 @@ export function honestAttackNames(sections, { projectile = null } = {}) {
       // the critic's fifth read). The head word is read for an anatomy noun at
       // either end, and the LAST one wins, as it does across a spaced name.
       if (!a && head && head.length > 5) { const parts = Object.keys(ANATOMY).filter((k) => k.length >= 4 && (head.startsWith(k) || head.endsWith(k))); const pick = parts.find((k) => head.endsWith(k)) ?? parts[0]; if (pick) a = ANATOMY[pick]; }
+      // A MELEE WEAPON'S NAME ON A RANGED-ONLY ROW (owner's ruling, 2026-10-18:
+      // "rename"). ANATOMY is eight nouns, so "Tail Whip" was invisible here —
+      // but the checker reads "whip" through the WEAPON table and failed the
+      // sheet for a tail that whips at 60 feet. The reader's own table decides,
+      // and the policy is this pass's existing one for a melee noun on a ranged
+      // row: the row takes the projectile's name.
+      // A type-only noun ("whip") says nothing about the row's mode BY ITSELF —
+      // but the weapon table does, and that is the table the checker reads, so
+      // where it says melee-only the mode is settled. ("Tail Whip" and the closed
+      // compound "Tailwhip" both sat behind the type-only guard below and shipped
+      // a tail that whips at 60 feet — the forty, twice.)
+      if ((!a || a[2] === 'type') && kind === 'ranged' && !/\b(?:hurl|hurled|throw|thrown|spit|spat|launch)\b/i.test(bare)) {
+        const wp = weaponProp(bare);
+        if (wp && wp.reach && !wp.thrown && !wp.launcher) {
+          changes.push({ from: e.name, to: proj, why: `${bare} names a melee weapon on a ranged row` });
+          e.name = proj;
+          continue;
+        }
+      }
       if (!a) { // a generic strike noun last ("Stooping Talon Strike"): the anatomy word inside the name still owns the TYPE, never the rename (the critic's fourth read, rerun)
         const inner = words.find((w) => ANATOMY[w] && ANATOMY[w][0] === 'melee');
         if (inner && /^(?:strike|swipe|slash|blow|rake|lash|smash|swing|snap|rend|chop|cut)$/.test(head) && kind === 'melee') {

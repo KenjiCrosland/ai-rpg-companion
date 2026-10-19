@@ -1,0 +1,12 @@
+[
+  { "name": "Adult Red Dragon", "description": "blind in one eye from an old lance", "cr": "17", "rules": "2024", "canary": "A5: print's Fire Breath 59 (17d6) is the one breath — the same-named chassis nova takes print's text" },
+  { "name": "Wight", "description": "", "cr": "3", "rules": "2024", "canary": "A5: Necrotic Bow keeps its name — the actuator never renames a print row" },
+  { "name": "", "description": "a vice-rock griever of living scree that squeezes prey but never holds it", "cr": "6", "rules": "2024", "canary": "A4: the lack takes GRAPPLE — no row imposes or exploits Grappled" },
+  { "name": "Hydra", "description": "whose stumps smoke instead of regrowing", "cr": "8", "rules": "2024", "canary": "A4: the lack takes REGENERATION — Multiple Heads keeps its deaths, loses its regrowth sentence" },
+  { "name": "", "description": "a priest who heals the faithful and burns the heretic with holy fire", "cr": "4", "rules": "2024", "canary": "A6: Spellcasting names Wisdom; INT stays print's; DC derives from WIS" },
+  { "name": "", "description": "a lamplighter's widow who still walks her round, trailing cold", "cr": "3", "rules": "2024", "canary": "A8: a passive cold aura is priced as sustained damage (the read is not 0 for it)" },
+  { "name": "", "description": "a sentinel of black iron, AC 20, Huge, speed 20 feet", "cr": "11", "rules": "2014", "canary": "A9: 2014 — any leaked 2024 vocabulary or a failed conversion is a FAIL, never 'edition: ok'" },
+  { "name": "Ilyn Surestrike", "description": "A lizardfolk monk who stuns with pressure-point strikes.", "cr": "5", "rules": "2014", "canary": "A8: an at-will no-save stun in a Multiattack is ko-ungated FAIL in 2014 prose too" },
+  { "name": "", "description": "a troll that grows back unless the blade was silvered", "cr": "6", "rules": "2024", "canary": "CONTROL: an off-switch is not a lack — Regeneration stays with its silver bane" },
+  { "name": "", "description": "a coil-bodied horror that seizes a victim and will not let go", "cr": "7", "rules": "2024", "canary": "CONTROL: a grappler the GM asked for keeps its grapple" }
+]
