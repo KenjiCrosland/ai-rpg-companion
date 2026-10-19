@@ -56,6 +56,11 @@ const CASES = [
   ['head', '', 'an owlbear that has learned to climb', 'twist', 'Owlbear'],
   ['head', '', 'a mummy that guards a flooded tomb', 'twist', 'Mummy'],
   ['head', '', 'a goblin who was a wizard\'s apprentice', 'twist', 'Goblin'],
+  // a monster beside a job word (owner 2026-10-19: probe and tune) — the body wins, the class rides as flavour
+  ['head', '', 'an imp rogue who picks locks for a devil', 'twist', 'Imp'],
+  ['head', '', 'a goblin assassin who hunts by night', 'class_npc', undefined, 'rogue'], // a class word beside a PEOPLE body is class NPC on that body (the brief's precedence)
+  ['head', '', 'a troll shaman who calls down hail', 'twist', 'Troll'],
+  ['head', '', 'an archlich enthroned on a sun of bone', 'twist', 'Lich'], // the forty 2026-10-19: homebrew by the call, the Lich by the matcher
   // traps — the label is the path a GM meant
   ['trap', '', 'an iron-willed inquisitor who never yields ground', 'class_npc', null],
   ['trap', '', 'a knight-errant cut off from his fallen order', 'class_npc', null, 'paladin'],

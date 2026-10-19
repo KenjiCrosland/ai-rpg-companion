@@ -28,6 +28,8 @@ import { liftSrdRow } from './species.mjs';
 export const CLASSES = [
   {
     key: 'rogue',
+    bodies: ['Spy', 'Scout', 'Bandit Captain', 'Assassin'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
+    primary: ['DEX'], casting: null, // the PHB's class stats — one of `primary` carries the attack, `casting` the spells; the gate asks ≥ 14 of each
     keys: ['rogue', 'rogues', 'thief', 'thieves', 'cutpurse', 'burglar', 'footpad', 'pickpocket', 'spy', 'assassin', 'cat burglar'],
     rows: [
       { srd: ['Assassin', 'Cunning Action'] },
@@ -37,6 +39,8 @@ export const CLASSES = [
   },
   {
     key: 'fighter',
+    bodies: ['Guard', 'Warrior Infantry', 'Warrior Veteran', 'Guard Captain', 'Gladiator'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
+    primary: ['STR', 'DEX'], casting: null, // the PHB's class stats — one of `primary` carries the attack, `casting` the spells; the gate asks ≥ 14 of each
     keys: ['fighter', 'warrior', 'soldier', 'swordsman', 'swordmaster', 'man-at-arms', 'legionary', 'sellsword', 'duelist', 'fencer', 'knight'],
     rows: [
       { template: 'riposte' },
@@ -47,6 +51,8 @@ export const CLASSES = [
   },
   {
     key: 'monk',
+    bodies: ['Scout', 'Spy', 'Assassin'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
+    primary: ['DEX'], casting: null, // the PHB's class stats — one of `primary` carries the attack, `casting` the spells; the gate asks ≥ 14 of each
     keys: ['monk', 'monks', 'martial artist', 'ascetic', 'open hand', 'open-hand', 'pugilist', 'brawler', 'fist of'],
     rows: [
       { template: 'stunning-strike' },
@@ -56,6 +62,8 @@ export const CLASSES = [
   },
   {
     key: 'paladin',
+    bodies: ['Knight', 'Guard Captain', 'Gladiator'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
+    primary: ['STR'], casting: 'CHA', // the PHB's class stats — one of `primary` carries the attack, `casting` the spells; the gate asks ≥ 14 of each
     keys: ['paladin', 'paladins', 'oathsworn', 'oath-sworn', 'knight-errant', 'crusader', 'cavalier', 'avenger', 'champion of'],
     rows: [
       { srd: ['Hobgoblin Captain', 'Aura of Authority'] },
@@ -70,6 +78,8 @@ export const CLASSES = [
   },
   {
     key: 'cleric',
+    bodies: ['Priest Acolyte', 'Priest', 'Cultist Fanatic'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
+    primary: ['WIS'], casting: 'WIS', // the PHB's class stats — one of `primary` carries the attack, `casting` the spells; the gate asks ≥ 14 of each
     keys: ['cleric', 'priest', 'priestess', 'acolyte', 'chaplain', 'templar', 'inquisitor', 'cultist', 'warpriest', 'war priest', 'hierophant'],
     rows: [
       { srd: ['Priest', 'Divine Aid'], requiresRow: /^Spellcasting$/ },
@@ -78,6 +88,8 @@ export const CLASSES = [
   },
   {
     key: 'mage',
+    bodies: ['Mage', 'Archmage'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
+    primary: ['INT'], casting: 'INT', // the PHB's class stats — one of `primary` carries the attack, `casting` the spells; the gate asks ≥ 14 of each
     keys: ['wizard', 'mage', 'archmage', 'magus', 'sorcerer', 'sorceress', 'evoker', 'conjurer', 'abjurer', 'diviner', 'illusionist', 'necromancer', 'court mage', 'spellslinger'],
     rows: [
       { srd: ['Mage', 'Protective Magic'], requiresRow: /^Spellcasting$/ },
@@ -86,6 +98,8 @@ export const CLASSES = [
   },
   {
     key: 'bard',
+    bodies: ['Noble', 'Spy', 'Bandit Captain', 'Pirate Captain'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
+    primary: ['CHA'], casting: 'CHA', // the PHB's class stats — one of `primary` carries the attack, `casting` the spells; the gate asks ≥ 14 of each
     keys: ['bard', 'minstrel', 'skald', 'troubadour', 'jongleur', 'balladeer', 'songweaver'],
     rows: [
       { srd: ['Pirate Captain', "Captain's Charm"] },
@@ -94,6 +108,8 @@ export const CLASSES = [
   },
   {
     key: 'barbarian',
+    bodies: ['Berserker', 'Gladiator'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
+    primary: ['STR'], casting: null, // the PHB's class stats — one of `primary` carries the attack, `casting` the spells; the gate asks ≥ 14 of each
     keys: ['barbarian', 'barbarians', 'berserker', 'berserkers', 'reaver', 'raider', 'marauder', 'warchief', 'wildling'],
     rows: [
       { srd: ['Berserker', 'Bloodied Frenzy'] },
@@ -148,3 +164,6 @@ export function classRows(cls, { text = '', inline = 'the creature', dc = 12 } =
     };
   }).filter(Boolean);
 }
+
+/** The class's primary (attack) and casting stats — closed PHB facts for the class-NPC gates. */
+export const classStats = (key) => { const c = CLASSES.find((x) => x.key === key); return c ? { primary: c.primary ?? [], casting: c.casting ?? null } : null; };

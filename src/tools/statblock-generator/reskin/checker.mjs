@@ -28,7 +28,7 @@ import { PRINT_2014 } from './print-2014.mjs';
 import { resolutionOf, TARGET_CLAUSE, SAVE_OUTCOME } from './forms.mjs';
 import { NAME_CLAIMS_MECHANIC, mechanicUnkept } from './name-claims.mjs';
 import { LACKS_STOP, TEXT_GATE } from './generate.mjs';
-export const GATES = ['derivation', 'bands', 'structure', 'gates', 'headerBody', 'edition', 'donor', 'adjudicability', 'reader'];
+export const GATES = ['derivation', 'bands', 'structure', 'gates', 'headerBody', 'edition', 'donor', 'adjudicability', 'reader', 'class'];
 const crNum = (k) => (String(k).includes('/') ? Number(String(k).split('/')[0]) / Number(String(k).split('/')[1]) : Number(k));
 const CRS = Object.keys(TABLE).filter((k) => /^\d+$|^1\/[248]$|^0$/.test(k)).sort((a, b) => crNum(a) - crNum(b));
 const modOf = (v) => Math.floor((Number(v) - 10) / 2);
@@ -449,6 +449,39 @@ export const effectOnly = (t) => String(t ?? '')
   .replace(new RegExp(`(?:if|while|when|provided) (?:it|they|the target|the creature)(?: is| are| has| have)?(?: the)? (?:${CONDITIONS})(?: condition)?`, 'gi'), '')
   .replace(/already \w+/gi, '');
 
+// THE CLASS-NPC GATES (Five Pipelines brief, pipeline 3, 2026-10-19): read from the block's own
+// path record — the kit lands, the class's stats carry it, the species header is right.
+import { classStats as classStatsOf, CLASSES as CLASSES_KITS } from './classes.mjs';
+import { SPECIES as SPECIES_KITS } from './species.mjs';
+function gateClass(raw, m, ctx, F) {
+  const pipe = (raw?.generation ?? m?.generation ?? raw?.other_edition?.generation)?.pipeline ?? null;
+  if (!pipe || pipe.path !== 'class_npc') return;
+  if (pipe.class) {
+    // print's OWN rows are the kit when the body is the class's own block: the Priest's Divine Aid and
+    // Spellcasting are the cleric kit (Brother Halric, forty 2026-10-19 — the kit pass ran before print's
+    // rows landed and could attach to nothing). The kit table's SRD lifts name them.
+    const kitSrd = new Set((CLASSES_KITS.find((k) => k.key === pipe.class)?.rows ?? []).filter((r) => r.srd).map((r) => String(r.srd[1]).toLowerCase()));
+    const kitRows = allRows(m).filter(({ e }) => e.kit === pipe.class || (e.print && kitSrd.has(String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase())));
+    // a kit whose rows are all magic cannot land on a sheet the GM stripped of magic — "a templar priest with a
+    // mace and no magic at all" (classes-eight 2026-10-19): the lack is honoured, the gate notes it
+    const clausesK = (raw?.generation ?? m?.generation ?? raw?.other_edition?.generation)?.clauses ?? [];
+    const magicTaken = clausesK.some((cl) => cl.polarity === 'lacks' && cl.takes === 'spellcasting');
+    const csK = classStatsOf(pipe.class);
+    if (!kitRows.length) F('kit-lands', magicTaken && csK?.casting ? 'soft' : 'fail', `the ${pipe.class} kit landed no row on a class-NPC sheet${magicTaken && csK?.casting ? ' — its rows are magic and the GM took magic away' : ''}`, pipe.class);
+    const cs = classStatsOf(pipe.class);
+    if (cs && m.stats) {
+      const best = (cs.primary ?? []).reduce((a, k) => Math.max(a, Number(m.stats[k] ?? 0)), 0);
+      if ((cs.primary ?? []).length && best < 14) F('class-stat', 'fail', `a ${pipe.class} with ${cs.primary.map((k) => `${k} ${m.stats[k]}`).join('/')} — the PHB's primary stat sits under 14`, best);
+      if (cs.casting && Number(m.stats[cs.casting] ?? 0) < 14) F('class-stat', 'fail', `a ${pipe.class} with ${cs.casting} ${m.stats[cs.casting]} — it casts off that stat`, m.stats[cs.casting]);
+    }
+  }
+  if (pipe.species) {
+    const sp = SPECIES_KITS.find((x) => x.key === pipe.species);
+    if (sp?.languages?.length && !new RegExp(`\\b${sp.languages[sp.languages.length - 1]}\\b`, 'i').test(String(m.languages ?? ''))) F('species-header', 'fail', `a ${sp.key} without ${sp.languages[sp.languages.length - 1]} in its languages ("${m.languages ?? ''}")`, m.languages);
+    if (sp?.type && !new RegExp(`^${sp.type}`, 'i').test(String(m.type ?? ''))) F('species-header', 'fail', `a ${sp.key} typed ${m.type} (the kit says ${sp.type})`, m.type);
+  }
+}
+
 function gateGates(m, ctx, F) {
   for (const { sec, e } of allRows(m)) {
     if (sec === 'Legendary Actions' || e.print) continue;
@@ -497,7 +530,9 @@ function gateHeaderBody(m, ctx, F) {
   const texts = allRows(m).map(({ e }) => `${e.name}. ${e.text}`).join('\n');
   if (/earth glide|move through nonmagical, unworked earth/i.test(texts) && !/Burrow/i.test(m.speed ?? '')) F('earth-glide-burrow', 'fail', 'Earth Glide with no Burrow speed', m.speed);
   const printSpiderClimb = allRows(m).some(({ e }) => e.print && /spider climb|climb difficult surfaces, including along ceilings/i.test(`${e.name}. ${e.text}`)); // print's own Vampire Spawn carries Spider Climb at 30 ft. with no Climb line — print overrules the predicate (canaries 2026-10-12)
-  if (!printSpiderClimb && /spider climb|climb difficult surfaces, including along ceilings/i.test(texts) && !/Climb/i.test(m.speed ?? '')) F('spider-climb-climb', 'fail', 'Spider Climb with no Climb speed', m.speed);
+  // the TRAIT, not the spell: a Spellcasting menu listing Spider Climb grants no climb (five pumpkin kings, 2026-10-19)
+  const spiderTrait = allRows(m).some(({ e }) => /^Spider Climb\b/i.test(e.name ?? '') || (/climb difficult surfaces, including along ceilings/i.test(e.text ?? '') && !/^Spellcasting/i.test(e.name ?? '')));
+  if (!printSpiderClimb && spiderTrait && !/Climb/i.test(m.speed ?? '')) F('spider-climb-climb', 'fail', 'Spider Climb with no Climb speed', m.speed);
   if (/blind beyond this radius/i.test(m.senses ?? '') && /darkvision/i.test(m.senses ?? '')) F('blind-beyond-darkvision', 'fail', 'blind beyond its blindsight yet it has darkvision', m.senses);
   const type = String(m.type ?? '').split(/[\s(]/)[0];
   const want = TYPE_IMMUNITY[type]; const imm = String(m.immunities ?? '');
@@ -560,7 +595,12 @@ function gateDonor(raw, m, ctx, F) {
   }
   if (stray.length) F('print-rows', stray.length > 2 ? 'fail' : 'soft', `rows outside print, the named seat and the keyed seeds: ${stray.join(', ')}`, stray.join(', '));
   if (nearPrintCr(ctx.cr, pc.cr)) {
-    if (pc.stats && Object.entries(pc.stats).some(([k, v]) => Number(m.stats?.[k]) !== Number(v))) F('print-array', 'fail', `array is not the ${pc.name}'s at its own CR`, JSON.stringify(m.stats));
+    // THE CLASS FLOOR IS NOT A DEVIATION (pipeline 3): on a class-NPC block a primary or casting stat raised
+    // to exactly 14 from print's lower value is the PHB's floor for a trained person, not a drifted array
+    const pipeA = (raw?.generation ?? m?.generation ?? raw?.other_edition?.generation)?.pipeline ?? null;
+    const csA = pipeA?.path === 'class_npc' && pipeA.class ? classStatsOf(pipeA.class) : null;
+    const classFloored = (k, v) => !!csA && ([...(csA.primary ?? []), csA.casting].filter(Boolean).includes(k)) && Number(m.stats?.[k]) === 14 && Number(v) < 14;
+    if (pc.stats && Object.entries(pc.stats).some(([k, v]) => Number(m.stats?.[k]) !== Number(v) && !classFloored(k, v))) F('print-array', 'fail', `array is not the ${pc.name}'s at its own CR`, JSON.stringify(m.stats));
     if (Number.isFinite(pc.hp) && pc.hp > 0 && Number(m.hp) !== pc.hp) F('print-hp', 'fail', `HP ${m.hp}, the ${pc.name}'s is ${pc.hp}`, m.hp);
     if (Number.isFinite(pc.ac) && pc.ac > 0 && Number(m.ac) !== pc.ac) F('print-ac', 'fail', `AC ${m.ac}, the ${pc.name}'s is ${pc.ac}`, m.ac);
   }
@@ -1058,6 +1098,7 @@ export function checkBlock(raw, ctx = {}) {
   safe('edition', (f) => gateEdition(raw, m, context, f));
   safe('donor', (f) => gateDonor(raw, m, context, f));
   safe('reader', (f) => gateReader(raw, m, context, f));
+  safe('class', (f) => gateClass(raw, m, context, f));
   // the lint's own predicates ride in by rule id — one fix, one place
   try {
     const { findings } = lintStatblock(JSON.parse(JSON.stringify(m)), { edition: '2024' });

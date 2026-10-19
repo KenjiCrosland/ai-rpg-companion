@@ -851,7 +851,7 @@ export function rowValue(text, perHit, { area = false } = {}) {
 // (38-54 at CR 6-10), adults ~4x (54-66 at 13-17), ancients ~3.8x (77-91 at
 // 20-24). No nova's dice climb past this line, gate or no gate.
 export const NOVA_CAP = (cr) => Math.round(cr <= 10 ? 5.5 * cr : 4 * cr + 15);
-export function valueCheck(row, { scaled, sections, section, cr = null, noGate = false }) {
+export function valueCheck(row, { scaled, sections, section, cr = null, noGate = false, template = null }) {
   const perHit = Math.max(3, Math.round(scaled.per_hit ?? 6));
   const attackEV = P_HIT * perHit;
   const gated = /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(row.name ?? '');
@@ -868,8 +868,13 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
   // a BONUS ACTION trades for nothing: no floor, no ladder, ceiling only (a gated
   // bonus action is not a nova — Bedrock Grasp 2/Day climbed to 45 dice, 2026-09-22)
   const bonus = section === 'Bonus Actions' || section === 'Reactions'; // a reaction's cost is the reaction, not an action: a free row too
-  const floor = bonus ? 0.25 * attackEV : gated ? 1.3 * maEV : 0.8 * replaced; // a free row still has to DO something
-  const ceiling = bonus ? 1.5 * attackEV : gated ? 2.5 * maEV : 1.5 * (replaced || attackEV);
+  // A PAYOFF PAYS FOR ITS PREREQUISITE (owner's spot check, 2026-10-19: Ripened Reaping dealt 27 for a
+  // Slam's 24 and only on a target already Poisoned — "not worth the trade"). Print's payoffs double
+  // (Assassinate); a row that needs a condition the sheet must first impose prices at 2× the attack
+  // it replaces, ceiling 3×, and the ladder below carries it there.
+  const payoff = !!template && REQUIRES_IMPOSED.has(String(template));
+  const floor = bonus ? 0.25 * attackEV : gated ? 1.3 * maEV : (payoff ? 2.0 : 0.8) * replaced; // a free row still has to DO something; a payoff doubles (Assassinate)
+  const ceiling = bonus ? 1.5 * attackEV : gated ? 2.5 * maEV : (payoff ? 3.0 : 1.5) * (replaced || attackEV);
   const area = /each creature/i.test(row.text);
   // an AREA nova earns its premium by TARGETS (the Adult Red's breath deals about
   // its Multiattack's damage to each creature in the cone) — its per-target

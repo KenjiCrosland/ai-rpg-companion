@@ -1142,9 +1142,9 @@ describe('spellcasting organ + ordering + metering completion (2026-08-25)', () 
     expect(sc).toBeTruthy();
     expect(sc.text).toMatch(/\*Darkness\*, \*Faerie Fire\*/);
     expect(sc.text).toMatch(/At Will:.*\*Misty Step\*/); // at-will lists grow (2026-09-04) — leveled utility sits at-will, print's Glabrezu shape
-    // DC caps at the stat-derivable float (8 + PB + mental mod + 1 = 14
-    // at CR 8) — the card's 15 was lint-illegal against WIS 14 all along
-    expect(sc.text).toMatch(/spell save DC 14/);
+    // the casting stat RISES to derive the card's DC, up to print's ceiling for the CR (owner's
+    // ruling 2026-10-19 on the CR 10 pumpkin king at DC 13): at CR 8 the card's 15 derives off WIS 18
+    expect(sc.text).toMatch(/spell save DC 15/);
   });
 
   test('no checkbox, no organ — and Spellcasting is never a rename key', async () => {
@@ -1933,9 +1933,9 @@ describe('probe-smoke pattern fixes (2026-08-26)', () => {
     });
     const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 22, caster: true }, quiet(() => casterAnswer2));
     const sc = (m.sections.Actions ?? []).find((e) => e.name === 'Spellcasting');
-    // card DC 22, best mental derives 20 — organ prints 21 (derived + 1,
-    // the lint's own float), never the card's unreachable 22
-    expect(sc.text).toMatch(/spell save DC 21/);
+    // card DC 22 at CR 22: the casting stat rises to print's ceiling (24, the Pit Fiend's CHA) and the
+    // card's DC derives (owner's ruling 2026-10-19 — the casting stat carries the card's DC, never an idle stat's)
+    expect(sc.text).toMatch(/spell save DC 22/);
   });
 });
 

@@ -361,3 +361,68 @@ every exact body and every borrow at print's CR.
 clean / 12 soft / 0 FAIL after one checker correction: a damage-type word that is part of the
 creature's own name ("Shroud of the Cold Lamp" on the Cold Lamp Widow) is its name, not a
 claim. Across all 70 blocks tonight: zero wrong-creature headers.
+
+## Third package — the dispatcher and the two decided pipelines (2026-10-19)
+
+The Five Pipelines brief, steps 1–5, on the critic's own order. Full executor's log in
+`plans/paths-step1-2026-10-19.md`; this is the case.
+
+### The count (step 1, confirmed by the owner)
+Three paths in the code as it stood (exact · borrow · homebrew; blank and body chassis as
+parameters), four as the target — class NPC split from borrow. The canon matcher alone misfiled
+7 of 30 probe prompts: five print bodies missed outright (stone giant, frost giant, cave troll,
+"a vampire who…", "a …ghost that…"), two borrowed with the wrong relation (a golem of lashed
+timber as the Clay Golem; a berserker who flies into a rage as the Berserker).
+
+### The path call and the dispatcher (steps 2–3)
+`reskin/path.mjs`. Code decides the closed cases with no call (an exact print name; a Name-field
+print name beside a description; a blank form); the call reads only free text and answers
+assembly, print body, relation, species, class and title with receipts; validators refuse what
+is not in the corpus, the eight, the kit list, or the GM's own words, and name the refusal; the
+dispatcher picks once, with the brief's precedence (a class word outranks a people, a monster
+named as itself outranks a title or a class word). The trace opens with `[path] …`; the block
+carries `generation.pipeline`; the checker reads it instead of its own matcher.
+Probe (40 prompts × 5, alone on the box): assembly 7/169 misread (4 %), print body 0 real
+misses, class 0; two title words flipped ("a tyrant of burning brass", "pumpkin king") and are
+now a `title` field by the owner's ruling (a title is a leadership signal, not a class). Shadow
+forty: the path and the matcher disagreed on 13 of 40; the path was right on 10.
+Owner's rulings: no vote; a title marks a leader; the Berserker label is lenient.
+
+### Print with a twist (step 4)
+Print's body, header and rows at any CR — print's numbers near its CR, the sheet's bonus far from
+it; the GM's weapon in its own row; one seat whose receipt must point at a mechanical twist clause
+no weapon row already answers; lacks sweep after repair; no class kit, no fallback shelf, no value
+floor, no chassis nova, no chassis filler. Nine leaks found on live blocks and pinned: the Shortbow
+lost at a far CR; a trait carried by quoting the creature itself; the barbarian kit on a troll; a
+second row for an answered clause; print's Multiattack with a form suffix; a chassis parenthetical
+on the Ghost's touch; the Hydra's dangling regrowth sentence; a duplicate Bite clause; the checker
+failing print's own Vampire as under its band. twist-five 5/5 and twist-ten 10/10, 0 FAIL, the
+four matcher-missed bodies (Vampire, Ghost, Wolf, Hobgoblin Warrior) standing by the path alone.
+
+### Class NPC (step 5)
+A class with no body named stands on its class's print NPC block nearest its CR (closed table in
+`classes.mjs`); the class kit and the species kit are the path's fields; the class shapes the array
+(primary and casting stats at 14 or better); the shelf, floor and chassis nova are off; the checker
+gained a `class` gate (kit lands, class stats, species header). classes-eight 16/16: 13 clean /
+2 soft / 1 FAIL on the second run, the FAIL being a chassis hybrid row that took print's Pistol
+numbers before its rename was refused — fixed (the duplicate check runs before any stamping; a
+row beyond print's count takes no print row) and pinned. Owner's rulings: fix the axe now; probe
+and tune the imp (now 5/5 twist on the Imp); templar either way.
+
+### The cross-path forty on the dispatcher (`sweep-2026-10-19T14-03-35`)
+40/40 in one pass; paths 13 twist · 6 class NPC · 3 exact · 1 blank · 17 homebrew; checker
+21 clean / 15 soft / 4 FAIL; zero wrong-creature headers by hand. The four FAILs: a repair row
+named like the seat's row and a chassis hybrid row riding beside print's two attacks (Vashka);
+the kit gate blind to print's own kit rows (Brother Halric); an archlich read homebrew where the
+Lich was meant (Ossuar); the far-CR dice ceiling (Reedjaw, A8-iv, deferred). The first three are
+fixed and pinned after the run — the repair call is told the names on the sheet, a closed path's
+Actions are closed to unclaimed chassis rows, the kit gate counts print's rows the kit table names,
+and "a greater or lesser variant of a published creature is that creature" is a prompt example
+(archlich 5/5 twist on the Lich in the probe). The feature-branch set beside the forty: twist-five
+5/5, twist-ten 10/10, classes-eight 13/13 generated, all at zero FAIL by the latest runs.
+
+### What the critic should read
+The `[path]` line against the prompt on every block; print's rows on every twist and class body;
+the two decided pipelines' lists against the matrix. Homebrew (steps 6–7) is unchanged and is
+where sameness is still measured. Open for the owner: Great Weapon Master (C6); the dice ceiling
+on far-CR renames (A8-iv); "a goblin who was a wizard's apprentice" (the one probe residual).
