@@ -1,4 +1,15 @@
-# Case: the lurker is underpowered — price the trade, not the gate (2026-10-18)
+# Case: one decision, five pipelines — the dispatcher and what it fixed (2026-10-19)
+
+Four packages in one file, oldest first. The case opened on the lurker's pricing (2026-10-18) and
+became the path work: the engine used to infer what it was building at six places with six word
+rules, and now decides once. Each package below is the critic's read and the answer to it.
+
+- **Package one** — the lurker's trade, print fidelity, the forty redesigned (2026-10-18).
+- **Package two** — the critic's A1–A9 on that forty (2026-10-18 night).
+- **Package three** — the dispatcher: the path call, print-with-a-twist, class NPC (2026-10-19).
+- **Package four** — the critic's read of the dispatcher forty, answered (2026-10-19). **0 FAIL of 40.**
+
+## Package one — the lurker is underpowered: price the trade, not the gate (2026-10-18)
 
 **Owner's ask.** "Reference print and determine just what multipliers are needed for
 incorporeality or big novas/ambushes, go online for suggestions, adapt the CR formula.
@@ -426,3 +437,68 @@ The `[path]` line against the prompt on every block; print's rows on every twist
 the two decided pipelines' lists against the matrix. Homebrew (steps 6–7) is unchanged and is
 where sameness is still measured. Open for the owner: Great Weapon Master (C6); the dice ceiling
 on far-CR renames (A8-iv); "a goblin who was a wizard's apprentice" (the one probe residual).
+
+## Fourth package — the critic's read of the dispatcher forty, answered (2026-10-19)
+
+Response plan: `plans/critic-response-2026-10-19.md`. The critic's verdict on the third package was
+"the dispatcher works, zero wrong-creature sheets at the body", with two faults: the twist pipeline
+refused most twists, and three class bodies carried the wrong weapons. Both were mine; both are fixed.
+
+### A — the twist seat tries every clause the GM typed
+My step-4 receipt gate accepted only a clause the identity call had tagged *mechanical*, and most
+twists are tagged descriptive, so "carries stolen voices" and "with a frost-rimed hide" were refused
+and print shipped under a new name. The gate now refuses exactly three things: the head's own BODY
+(the path holds it), a header directive, and the negative half of a lack. Three mechanisms behind it:
+the clause record carries the lack's own quote, so a clause that holds a lack AND a positive half
+keeps the positive one ("stumps smoke instead of regrowing"); the HEAD clause — which is often the
+whole prompt — gives up the body and keeps its remainder; and "answered by a part row" blocks only a
+receipt that names the weapon itself, so "keeps the line" survives beside a shield bash.
+
+### B — the class fights with its own weapon
+`classes.mjs` carries each class's weapon as a closed fact (owner confirmed): monk unarmed and dart,
+rogue shortsword and shortbow, fighter longsword and longbow, paladin longsword, cleric mace, mage
+quarterstaff, bard rapier and hand crossbow, barbarian greataxe and handaxe. The monk's bodies are
+the Scout and the Spy, never the Assassin. A re-arm pass renames the body's weapon rows to the
+class's unless the GM named one, keeps print's numbers, folds the body's weapon rider into the base
+(print's Assassin pays 5d6 Poison for its shortsword; a monk does not), and never touches a magic
+strike. A hybrid row yields too. The kit no longer loses to the row cap on a class body.
+
+### C — three systematic items
+A save row's stat follows its own effect, so a damage nova keys Dexterity or Constitution and a
+condition it hands out alongside never picks the stat. Print's SKILLS land on a print body by name
+and proficiency tier, each bonus derived from the sheet's stat and PB, with the Passive Perception
+following. The reskin now applies the lint's own deterministic text fixes, which it had been linting
+and tracing but never running — that was the forty's last FAIL.
+
+One item I planned and reverted: withholding a chassis Absorption organ whose energy the concept
+never gave. Print GIVES its golems that organ matched to their material, a pin encodes the
+juggernaut's Acid deliberately, and the withholding broke nineteen pins. The variance the critic saw
+across runs is donor variance — the sameness axis, measured at stage 5. On record.
+
+### Numbers
+| run | generated | checker |
+|---|---|---|
+| **the forty (`sweep-2026-10-19T18-35-07`)** | **40/40** | **26 clean / 14 soft / 0 FAIL** (the package the critic read: 21 / 15 / 4) |
+| classes-eight | 14 | 0 FAIL |
+| twist-ten | 10/10 | 0 FAIL |
+| twist-five | 5/5 | 0 FAIL |
+
+Three runs of the forty stand behind that number: 27/12/1 on the A+B+C engine, then 22/15/3 after
+the incidentals landed (two of those three FAILs were an hour-old mistake of mine — the lint
+pre-pass read a 2024-shaped sheet as 2014 — and the third was Spider Climb without the Climb speed
+print always pairs with it), then **0 FAIL of 40** with both fixed. Twist rows land on 11 of 13
+twist blocks, one to five each.
+
+Twist rows land on **12 of 13** twist blocks, one to three each; the critic counted 4 of ~20. Paths
+on the forty: 13 twist, 7 class NPC, 3 exact, 1 blank, 16 homebrew. Gate 109 suites / 3562 passed,
+build green.
+
+### Still open
+Great Weapon Master and the Name-field question are closed by the owner's rulings (ship it; Wellmouth
+is fine). The payoff escalation is parked. Three incidentals remain unfixed and are named in the
+response plan: all three incidentals are now
+done: the checker reads the weapon table for reach (a halberd is its own tether), print's name never
+lands on a template's body, and an object pronoun before a weapon noun makes it a verb (no "Watching
+Them Flail"). **The live stall was the dev server**: twenty days up, the engine finishing and the app
+stalling after it; the owner restarted it and the next forty ran 40/40 with no stalls. One stall
+returned on a later blank roll, so restart before a long batch and treat a lone stall as noise.

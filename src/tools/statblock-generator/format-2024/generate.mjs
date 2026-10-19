@@ -1696,6 +1696,8 @@ export const capsFix2024 = (t) => String(t ?? '')
   .replace(/\bhit points\b/g, 'Hit Points').replace(/\bopportunity attacks?\b/g, (x) => (x.endsWith('s') ? 'Opportunity Attacks' : 'Opportunity Attack'))
   .replace(LOWERCASE_CONDITIONS_G, (m) => m[0].toUpperCase() + m.slice(1));
 
+/** The rules whose fix is string surgery, never a judgement — the reskin applies these too (2026-10-19). */
+export const DETERMINISTIC_TEXT_RULES = () => DETERMINISTIC_TEXT_FIXES.map(([r]) => r);
 const DETERMINISTIC_TEXT_FIXES = [
   ['term-caps', (t) => t
     .replace(/\bhit points\b/g, 'Hit Points').replace(/\bhit point\b/g, 'Hit Point')

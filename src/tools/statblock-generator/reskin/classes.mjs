@@ -28,6 +28,7 @@ import { liftSrdRow } from './species.mjs';
 export const CLASSES = [
   {
     key: 'rogue',
+    weapon: { melee: 'shortsword', ranged: 'shortbow' }, // the weapon the class fights with when the GM named none (owner, 2026-10-19); the body's weapon rows yield to it
     bodies: ['Spy', 'Scout', 'Bandit Captain', 'Assassin'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
     primary: ['DEX'], casting: null, // the PHB's class stats — one of `primary` carries the attack, `casting` the spells; the gate asks ≥ 14 of each
     keys: ['rogue', 'rogues', 'thief', 'thieves', 'cutpurse', 'burglar', 'footpad', 'pickpocket', 'spy', 'assassin', 'cat burglar'],
@@ -39,6 +40,7 @@ export const CLASSES = [
   },
   {
     key: 'fighter',
+    weapon: { melee: 'longsword', ranged: 'longbow' }, // the weapon the class fights with when the GM named none (owner, 2026-10-19); the body's weapon rows yield to it
     bodies: ['Guard', 'Warrior Infantry', 'Warrior Veteran', 'Guard Captain', 'Gladiator'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
     primary: ['STR', 'DEX'], casting: null, // the PHB's class stats — one of `primary` carries the attack, `casting` the spells; the gate asks ≥ 14 of each
     keys: ['fighter', 'warrior', 'soldier', 'swordsman', 'swordmaster', 'man-at-arms', 'legionary', 'sellsword', 'duelist', 'fencer', 'knight'],
@@ -51,7 +53,8 @@ export const CLASSES = [
   },
   {
     key: 'monk',
-    bodies: ['Scout', 'Spy', 'Assassin'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
+    weapon: { melee: 'unarmed strike', ranged: 'dart' }, // the weapon the class fights with when the GM named none (owner, 2026-10-19); the body's weapon rows yield to it
+    bodies: ['Scout', 'Spy'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
     primary: ['DEX'], casting: null, // the PHB's class stats — one of `primary` carries the attack, `casting` the spells; the gate asks ≥ 14 of each
     keys: ['monk', 'monks', 'martial artist', 'ascetic', 'open hand', 'open-hand', 'pugilist', 'brawler', 'fist of'],
     rows: [
@@ -62,6 +65,7 @@ export const CLASSES = [
   },
   {
     key: 'paladin',
+    weapon: { melee: 'longsword', ranged: null }, // the weapon the class fights with when the GM named none (owner, 2026-10-19); the body's weapon rows yield to it
     bodies: ['Knight', 'Guard Captain', 'Gladiator'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
     primary: ['STR'], casting: 'CHA', // the PHB's class stats — one of `primary` carries the attack, `casting` the spells; the gate asks ≥ 14 of each
     keys: ['paladin', 'paladins', 'oathsworn', 'oath-sworn', 'knight-errant', 'crusader', 'cavalier', 'avenger', 'champion of'],
@@ -78,6 +82,7 @@ export const CLASSES = [
   },
   {
     key: 'cleric',
+    weapon: { melee: 'mace', ranged: null }, // the weapon the class fights with when the GM named none (owner, 2026-10-19); the body's weapon rows yield to it
     bodies: ['Priest Acolyte', 'Priest', 'Cultist Fanatic'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
     primary: ['WIS'], casting: 'WIS', // the PHB's class stats — one of `primary` carries the attack, `casting` the spells; the gate asks ≥ 14 of each
     keys: ['cleric', 'priest', 'priestess', 'acolyte', 'chaplain', 'templar', 'inquisitor', 'cultist', 'warpriest', 'war priest', 'hierophant'],
@@ -88,6 +93,7 @@ export const CLASSES = [
   },
   {
     key: 'mage',
+    weapon: { melee: 'quarterstaff', ranged: null }, // the weapon the class fights with when the GM named none (owner, 2026-10-19); the body's weapon rows yield to it
     bodies: ['Mage', 'Archmage'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
     primary: ['INT'], casting: 'INT', // the PHB's class stats — one of `primary` carries the attack, `casting` the spells; the gate asks ≥ 14 of each
     keys: ['wizard', 'mage', 'archmage', 'magus', 'sorcerer', 'sorceress', 'evoker', 'conjurer', 'abjurer', 'diviner', 'illusionist', 'necromancer', 'court mage', 'spellslinger'],
@@ -98,6 +104,7 @@ export const CLASSES = [
   },
   {
     key: 'bard',
+    weapon: { melee: 'rapier', ranged: 'hand crossbow' }, // the weapon the class fights with when the GM named none (owner, 2026-10-19); the body's weapon rows yield to it
     bodies: ['Noble', 'Spy', 'Bandit Captain', 'Pirate Captain'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
     primary: ['CHA'], casting: 'CHA', // the PHB's class stats — one of `primary` carries the attack, `casting` the spells; the gate asks ≥ 14 of each
     keys: ['bard', 'minstrel', 'skald', 'troubadour', 'jongleur', 'balladeer', 'songweaver'],
@@ -108,6 +115,7 @@ export const CLASSES = [
   },
   {
     key: 'barbarian',
+    weapon: { melee: 'greataxe', ranged: 'handaxe' }, // the weapon the class fights with when the GM named none (owner, 2026-10-19); the body's weapon rows yield to it
     bodies: ['Berserker', 'Gladiator'], // the print NPC blocks this class stands on (pipeline 3: the body is chosen by class, nearest CR)
     primary: ['STR'], casting: null, // the PHB's class stats — one of `primary` carries the attack, `casting` the spells; the gate asks ≥ 14 of each
     keys: ['barbarian', 'barbarians', 'berserker', 'berserkers', 'reaver', 'raider', 'marauder', 'warchief', 'wildling'],
@@ -167,3 +175,6 @@ export function classRows(cls, { text = '', inline = 'the creature', dc = 12 } =
 
 /** The class's primary (attack) and casting stats — closed PHB facts for the class-NPC gates. */
 export const classStats = (key) => { const c = CLASSES.find((x) => x.key === key); return c ? { primary: c.primary ?? [], casting: c.casting ?? null } : null; };
+
+/** The class's own weapon when the GM named none — monk fights unarmed; a magic strike is never re-armed. */
+export const classWeapon = (key) => CLASSES.find((x) => x.key === key)?.weapon ?? null;

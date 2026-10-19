@@ -427,7 +427,10 @@ function gateStructure(m, ctx, F) {
     if (sec === 'Legendary Actions' && !/^Legendary Action Uses/.test(e.name ?? '') && /^(?:The \w+|It) can['’]t (?:take|use) this action again[^.]*\.?$/i.test(String(e.text ?? '').trim())) F('legendary-no-effect', 'fail', `${sec}/${bare(e.name)}: a legendary action with no effect, only its recharge clause`, bare(e.name));
     if (/\. ,|,\s*,|\.\.(?!\.)|\s,|(?<!ft)\.\s+(?:and|plus)\b/.test(e.text ?? '')) F('punctuation', 'fail', `${sec}/${bare(e.name)}: a ". ,", ", ," or ". and" sequence in the text`, bare(e.name)); // ". and the target has the Paralyzed condition" on the lich's touch (critic's blockers audit 2026-10-03)
     const reach = /reach (\d+) ft\./.exec(e.text ?? '');
-    if (reach && Number(reach[1]) > (SIZE_REACH[m.size] ?? 5) && !TETHER.test(`${e.name} ${e.text}`)) F('reach', Number(reach[1]) > (SIZE_REACH[m.size] ?? 5) + 10 ? 'fail' : 'soft', `${sec}/${bare(e.name)}: reach ${reach[1]} on a ${m.size} body with no tether word`, Number(reach[1]));
+    // a REACH WEAPON is its own tether (the weapon table: halberd, glaive, pike, lance, whip all
+    // reach 10) — the Legion Halberdier's halberd was flagged for a word the list did not carry
+    const reachWeapon = (() => { const w = weaponFor(bare(e.name)) ?? e.weapon ?? null; return !!(w && Number(WEAPONS[w]?.reach ?? 0) >= 10); })();
+    if (reach && Number(reach[1]) > (SIZE_REACH[m.size] ?? 5) && !reachWeapon && !TETHER.test(`${e.name} ${e.text}`)) F('reach', Number(reach[1]) > (SIZE_REACH[m.size] ?? 5) + 10 ? 'fail' : 'soft', `${sec}/${bare(e.name)}: reach ${reach[1]} on a ${m.size} body with no tether word`, Number(reach[1]));
   }
   if (/\bSwarm\b/i.test(m.type ?? '') || /\bSwarm of\b/i.test(m.size ?? '')) {
     const large = /\b(?:large|huge|vast|massive|enormous|great)\b/i.test(readPhrases(ctx.userConcept ?? ''));
