@@ -72,7 +72,7 @@ const run = async () => {
     // generation failed: TypeError: Failed to fetch" was dropped by the old
     // allowlist and a dead run looked like a resolve hiccup (2026-09-20)
     const noise = /font-src|Content Security Policy|runtime\.lastError|Receiving end does not exist/.test(t);
-    if (!noise && (/\[concept\]|\[reskin\]|\[route\]|audit|resolve failed|generation failed|Failed to/.test(t) || msg.type() === 'warning' || msg.type() === 'error')) {
+    if (!noise && (/\[concept\]|\[reskin\]|\[route\]|\[path\]|audit|resolve failed|generation failed|Failed to/.test(t) || msg.type() === 'warning' || msg.type() === 'error')) {
       lines.push(`${msg.type() === 'warning' || msg.type() === 'error' ? '!! ' : ''}${t}`);
     }
   });

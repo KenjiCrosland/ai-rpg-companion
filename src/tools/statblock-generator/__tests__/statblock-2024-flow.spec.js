@@ -16,6 +16,7 @@ import {
   validateNamingResponse,
 } from '../format-2024/generate.mjs';
 import { validateRouteResponse } from '../reskin/route.mjs';
+import { validatePathResponse } from '../reskin/path.mjs';
 
 // ROUTE-CALL MOCKS (two calls since 2026-09-21): the route reply names a
 // shelf line and QUOTES the concept (chooseLine verifies the quote against
@@ -140,6 +141,10 @@ function mockLLM({ resolvedArchetype = 'lurker' } = {}) {
     if (validate === validateRouteResponse) {
       return Promise.resolve(JSON.stringify(routeReply(prompt, resolvedArchetype)));
     }
+    if (validate === validatePathResponse) {
+      // THE PATH CALL (Five Pipelines brief, step 2): runs beside the route call, in shadow
+      return Promise.resolve(JSON.stringify({ assembly: 'homebrew', assembly_receipt: null, print_body: null, relation: null, species: null, class: null }));
+    }
     if (validate === validateArchetypeResponse) {
       return Promise.resolve(JSON.stringify({ archetype: resolvedArchetype }));
     }
@@ -253,7 +258,7 @@ describe('StatblockGenerator 2024 flow', () => {
 
       // resolve (user role passes as GIVEN — owner call 2026-08-04) +
       // skeleton flavor + naming pass (audit CR-gated below eligibility here)
-      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(4); // route + identity + flavor + naming
+      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(4); // synthesis + route + flavor + naming — a blank roll's path is decided by code, no path call
       const saved = savedMonsters().Uncategorized[0];
       expect(saved.archetype).toBe('lurker');
       expect(saved.archetype_source).toBe('user');
@@ -267,10 +272,11 @@ describe('StatblockGenerator 2024 flow', () => {
       await setCR(wrapper, '4');
       await generate(wrapper);
 
-      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(4); // route + identity + flavor + naming
+      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(5); // route + path (beside it, shadow) + identity + flavor + naming
       expect(aiClient.generateGptResponse.mock.calls[0][1]).toBe(validateRouteResponse); // the route call runs first
-      expect(aiClient.generateGptResponse.mock.calls[1][1]).toBe(validateArchetypeResponse);
-      expect(aiClient.generateGptResponse.mock.calls[2][1]).toBe(validateFlavorResponse);
+      expect(aiClient.generateGptResponse.mock.calls[1][1]).toBe(validatePathResponse); // the path call rides beside it
+      expect(aiClient.generateGptResponse.mock.calls[2][1]).toBe(validateArchetypeResponse);
+      expect(aiClient.generateGptResponse.mock.calls[3][1]).toBe(validateFlavorResponse);
       const saved = savedMonsters().Uncategorized[0];
       expect(saved.archetype).toBe('lurker');
       expect(saved.archetype_source).toBe('auto');
@@ -742,9 +748,10 @@ describe('routing contradiction belt (2026-09-15): physical artillery is a throw
     const calls = aiClient.generateGptResponse.mock.calls;
     expect(calls[0][1]).toBe(validateRouteResponse);
     expect(calls[0][0]).toMatch(/THE SHELF/);
-    expect(calls[1][1]).toBe(validateArchetypeResponse);
-    expect(calls[1][0]).toMatch(/CHASSIS: this creature has been routed onto the "brute-charger"/);
-    expect(calls[1][0]).toMatch(/Creature type: Construct/);
+    expect(calls[1][1]).toBe(validatePathResponse); // the path call, beside the route (shadow)
+    expect(calls[2][1]).toBe(validateArchetypeResponse);
+    expect(calls[2][0]).toMatch(/CHASSIS: this creature has been routed onto the "brute-charger"/);
+    expect(calls[2][0]).toMatch(/Creature type: Construct/);
     expect(reskinMod.generateReskin.mock.calls[0][0]).toMatchObject({ archetype: 'brute', style: 'charger', resolvedType: 'Construct', mechanics: [] });
     wrapper.unmount();
   });

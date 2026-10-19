@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "a troll that grows back unless the blade was silvered", "cr": "6", "rules": "2024", "canary": "TWIST: Troll body; Regeneration edited by the lack — silver, not acid/fire" },
+  { "name": "", "description": "Hydra whose stumps smoke instead of regrowing", "cr": "8", "rules": "2024", "canary": "TWIST: Hydra body; Multiple Heads loses only its regrowth" },
+  { "name": "", "description": "a hobgoblin with a halberd", "cr": "2", "rules": "2024", "canary": "TWIST (owner: twist on the Hobgoblin Warrior): halberd replaces the Longsword in its own row" },
+  { "name": "Purple Worm", "description": "that swallowed a war-band's armoury", "cr": "15", "rules": "2024", "canary": "TWIST by code (Name field + description): print's rows and dice at print's CR" },
+  { "name": "Dire Wolf", "description": "with a frost-rimed hide", "cr": "1", "rules": "2024", "canary": "TWIST by code: Dire Wolf body, Pack Tactics, Bite knocks Prone; one receipted frost row at most" },
+  { "name": "", "description": "a Huge frost giant jarl who throws boulders", "cr": "9", "rules": "2024", "canary": "TWIST (a monster outranks a title): Frost Giant body, Huge, Boulder" },
+  { "name": "", "description": "a skeleton archer", "cr": "1", "rules": "2024", "canary": "TWIST: Skeleton body; the Shortbow stands" },
+  { "name": "", "description": "a wolf with two heads", "cr": "2", "rules": "2024", "canary": "TWIST: Wolf body (a Beast head in a short concept), one receipted two-heads row" },
+  { "name": "", "description": "a vampire who runs a bathhouse", "cr": "13", "rules": "2024", "canary": "TWIST (the matcher missed it): Vampire body, print's kit; no shelf" },
+  { "name": "", "description": "a chapel bell-ringer's ghost that tolls for the dying", "cr": "3", "rules": "2024", "canary": "TWIST (the matcher missed it): Ghost body, incorporeal; one receipted tolling row" }
+]

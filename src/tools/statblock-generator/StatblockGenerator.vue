@@ -344,6 +344,7 @@ import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { filterVerdicts, rejectedCanon } from './reskin/lexicon.mjs';
 import { buildRoutePrompt, validateRouteResponse, chooseLine } from './reskin/route.mjs';
+import { buildPathPrompt, validatePathResponse, readPath, dispatch as dispatchPath, pathLine } from './reskin/path.mjs';
 import { crFromPrompt, crFromWords, readPhrases, piAliasesIn } from './reskin/lexicon.mjs';
 import { ARCHETYPE_HELP, ARCHETYPE_OPTIONS } from "@/util/embedded-statblock.mjs";
 import { QUOTA_FIELDS, RESERVED_HOST_FIELDS } from "@/util/quota-storage.mjs";
@@ -1122,6 +1123,7 @@ async function generateStatblockEngine(edition) {
   // labels to translate.
   let conceptRole = null; // the menu label the saved monster records (artillery/controller for caster lines)
   let conceptLine = null;
+  let conceptPath = null; // THE PATH (critic's Five Pipelines brief, step 2): decided once, first; step 2 runs it in shadow beside the matcher
   const hintText = `${monsterName.value} ${monsterDescription.value}`;
   const FACETS = ['bestial','armed','amorphous','grave','fiendish','celestial','fey','draconic','elemental','verdant','forged','mind','venomous','terror','beguiling','grasping','devouring','aquatic','subterranean','aerial','uncanny','arcane','voice','gaze','breath'];
   const KINDS = ['behavior', 'body', 'object', 'aura'];
@@ -1265,8 +1267,27 @@ async function generateStatblockEngine(edition) {
           ({ archetypeName, conceptRole, conceptLine, conceptIdentity, conceptLore, resolvedType, conceptTypeSource, conceptThemes, conceptProposedName, conceptHouse, conceptMind, conceptSize, conceptMovement, conceptAttackMode, conceptSignature, conceptStyle, conceptEnergy, conceptMix, conceptElements, conceptProvidedName, conceptMechanics, conceptBody, conceptRejectedCanon } = pinned);
           logger.log('[concept] pinned — reusing the resolution for an unchanged concept');
         } else {
+          // CALL 0 — THE PATH, beside the route call (step 2, shadow): code decides the
+          // closed cases (an exact print name, a Name-field print name beside a description)
+          // with no call; the call reads only free text. Its answer is traced as the first
+          // [path] line and compared with the matcher inside the engine; it changes no sheet yet.
+          const pathFields = { name: monsterName.value.trim(), concept: monsterDescription.value.trim(), cr: crFromUser ? cr : null, role: givenArchetype, edition };
+          const pathOn = async () => {
+            const byCode = dispatchPath(pathFields, null);
+            if (byCode.path && byCode.by === 'code') return byCode;
+            try {
+              const rawP = await generateGptResponse(buildPathPrompt(pathFields), validatePathResponse, 2);
+              const read = readPath(rawP, { concept: `${pathFields.name} ${pathFields.concept}`.trim() });
+              for (const r of read.refused) logger.log('[path] refused:', r);
+              return dispatchPath(pathFields, read);
+            } catch (e) { logger.warn('[path] call failed:', e?.message ?? e); return dispatchPath(pathFields, null); }
+          };
           // CALL 1 — ROUTE
-          const routed = await routeOn(userConcept); // name — description, once (the route quoted "Flying speed of 60ft Flying speed of 60f" from the doubled text)
+          // a shadow decision may never delay the sheet: twenty seconds, then it is recorded as FAILED (timed out) and the route's own read stands
+          const routedP = routeOn(userConcept); // the route call is issued first; the path call rides beside it
+          const pathCapped = Promise.race([pathOn(), new Promise((res) => setTimeout(() => res({ path: null, by: 'call', failed: true, print_body: null, relation: null, class: null, species: null, receipt: 'the path call did not answer within 20 s' }), 20_000))]);
+          const [routed, pathDecided] = await Promise.all([routedP, pathCapped]); // name — description, once (the route quoted "Flying speed of 60ft Flying speed of 60f" from the doubled text)
+          conceptPath = pathDecided; logger.log(pathLine(conceptPath, userConcept));
           applyRoute(routed);
           if (!crFromUser) {
             // a print creature with no CR set is its own CR (the Goblin Boss read 4 from the route, print says 1); otherwise the route's read; only a blank form keeps the roll
@@ -1306,6 +1327,7 @@ async function generateStatblockEngine(edition) {
           2,
         );
         readProse(parseGenerationResponse(raw), { blank: true });
+        conceptPath = dispatchPath({ name: '', concept: '', role: givenArchetype }, null); logger.log(pathLine(conceptPath)); // blank, by code — no call
         // CALL 2 — ROUTE on the fused creature
         applyRoute(await routeOn(synthesizedConcept ?? randomSeed.concept));
         logger.log('[concept] synthesis (blank roll):', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
@@ -1397,6 +1419,7 @@ async function generateStatblockEngine(edition) {
           stylePrior: menuRole === 'controller' ? 'binder' : null,
           concept, cr, onProgress: onGenerationProgress,
           fixedName: conceptProvidedName,
+          path: conceptPath, // shadow: the engine traces agreement with its matcher and reads nothing else from it (step 2)
           style: conceptStyle,
           signatureElements: conceptElements ?? [],
           mind: conceptMind,

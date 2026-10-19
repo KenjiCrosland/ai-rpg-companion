@@ -366,7 +366,11 @@ function gateBands(m, ctx, F) {
     // the rule, the spread is its measure (the Sun-Crowned Archlich at 24: HP 437 under a spread that is five
     // Gargantuan dragons and the Kraken, 468–546, while the block reads 25.5 — sweep 2026-10-03)
     // print's own blocks read their CR ±1 by this method, so one axis under is a fail only when the read sits more than one under the CR (the Suncorpse King at 24 read 23 — print-heads 2026-10-03)
-    const axisSev = r.read < cr - 1 ? 'fail' : 'soft'; const carried = r.read < cr - 1 ? `; reads CR ${r.read}` : `; the read holds at ${r.read}, within print's own ±1`;
+    // PRINT'S OWN COMPOSITION IS NOT UNDER PRINT (twist-ten, 2026-10-19): the Vampire at CR 13 deals
+    // ~45 a round by print's own Multiattack and sits under the CR 13 band — print overrules the
+    // band for a print body at print's CR, so the finding is a note there, never a FAIL
+    const printOwn = !!(ctx?.print && (ctx.print.exact || ctx.print.borrowOnly) && Number.isFinite(Number(ctx.print.cr)) && Math.abs(cr - Number(ctx.print.cr)) <= 1);
+    const axisSev = r.read < cr - 1 && !printOwn ? 'fail' : 'soft'; const carried = `${r.read < cr - 1 ? `; reads CR ${r.read}` : `; the read holds at ${r.read}, within print's own ±1`}${printOwn ? ` — print's own ${ctx.print.name} at its CR, a note` : ''}`;
     if (c.dpr && r.dmg < c.dpr[0] * 0.95) F('under', axisSev, `damage ${r.dmg.toFixed(0)} a round sits under print at CR ${cr} (${c.dpr.map(Math.round).join('–')}, n=${c.n})${carried}`, r.dmg);
     else if (c.hp && r.effHp < c.hp[0] * 0.95) F('under', axisSev, `effective HP ${r.effHp}${r.effHp !== Number(m.hp) ? ` (${m.hp} with its resistances)` : ''} sits under print at CR ${cr} (${c.hp.join('–')}, n=${c.n})${carried}`, m.hp);
     else if (c.read && over < -1 && r.read < c.read[0]) F('under', 'fail', `reads CR ${r.read} by the DMG method, under print's own reads at ${cr} (${c.read.join('–')}, n=${c.n})`, r.read);
@@ -1016,12 +1020,23 @@ export function checkBlock(raw, ctx = {}) {
   // Hound's Multiattack. Five readers of this alias now, one rule: if the shipped
   // sheet's type contradicts print's, it is not that creature and its structure
   // is not the standard.
-  let print = ctx.print ?? null; if (!print && userConcept) { try { print = printCanonFor(readPhrases(userConcept), cr); } catch { print = null; } }
-  if (print && !print.exact && print.type && m.type) {
+  // THE CHECKER IS A READER OF THE PATH (Five Pipelines brief, step 4): a block generated on the
+  // dispatcher carries `generation.pipeline` — its path and print body — and the checker takes
+  // that record over its own matcher, which misses the shapes the path was built to catch
+  // ("a vampire who runs a bathhouse" read homebrew here and failed print's own Vampire as under
+  // band, twist-ten 2026-10-19). Blocks from before the dispatcher keep the matcher's read.
+  const pipe = (raw?.generation ?? m?.generation ?? raw?.other_edition?.generation)?.pipeline ?? null;
+  let print = ctx.print ?? null;
+  if (!print && pipe && pipe.path) {
+    if (pipe.print_body && (pipe.path === 'exact' || pipe.path === 'twist' || pipe.path === 'class_npc')) {
+      try { const rec = printCanonFor(pipe.print_body, cr); print = rec ? { ...rec, exact: pipe.path === 'exact', borrowOnly: pipe.path !== 'exact', fromPath: pipe.path } : null; } catch { print = null; }
+    } else print = null;
+  } else if (!print && userConcept) { try { print = printCanonFor(readPhrases(userConcept), cr); } catch { print = null; } }
+  if (print && !print.fromPath && !print.exact && print.type && m.type) { // the vetoes are the matcher's; a path decision needs none
     const head = (t) => String(t).replace(/^Swarm of \w+ /, '').split(/[ ,(]/)[0].toLowerCase();
     if (head(print.type) !== head(m.type)) print = null;
   }
-  if (print && userConcept) { const sh = speciesFor([userConcept], userConcept); if (sh && print.type && sh.species.type && print.type.toLowerCase() !== sh.species.type.toLowerCase()) print = null; } // the engine's rule: a species word outranks a monster alias of another type (a kenku mimic is not the Mimic — species landing 2026-10-13)
+  if (print && !print.fromPath && userConcept) { const sh = speciesFor([userConcept], userConcept); if (sh && print.type && sh.species.type && print.type.toLowerCase() !== sh.species.type.toLowerCase()) print = null; } // the engine's rule: a species word outranks a monster alias of another type (a kenku mimic is not the Mimic — species landing 2026-10-13)
   const labels2014 = {};
   if (edition === '2014') for (const e of [...(raw.actions ?? []), ...(raw.legendary_actions ?? []), ...(raw.reactions ?? [])]) { const t = String(e.description ?? e.text ?? ''); labels2014[bare(e.name)] = /Spell Attack:/.test(t) ? 'spell' : /Weapon Attack:/.test(t) ? 'weapon' : null; }
   const context = { ...ctx, edition, cr, userConcept, print, labels2014, donorId: ctx.donorId ?? raw.generation?.donor ?? m.generation?.donor ?? null };
