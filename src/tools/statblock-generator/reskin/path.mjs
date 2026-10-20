@@ -65,10 +65,10 @@ Answer with ONLY this JSON object, no commentary:
   "species": "<one of ${SPECIES_KEYS.join(' | ')} if the words name that people, else null>",
   "species_receipt": "<the species word, or null>",
   "class": "<one of ${CLASS_KEYS.join(' | ')} if the words name a trained person by class, title or trade (a ninja is a rogue, a warlord a fighter, a priest a cleric, a templar a paladin, a skald a bard, a witch a mage), else null>",
-  "class_receipt": "<the class word or title, taken from the FIRST clause of the description, or null>",
-  "title": "<a leadership or rank word in the GM's words — king, tyrant, jarl, warlord, chieftain, captain, boss, queen, lord — copied verbatim, or null>"
+  "class_receipt": "<the words that name the class: the class word itself wherever it sits (\"is a barbarian who rages\" → \"barbarian\"), or for an IMPLIED class the title or trade from the FIRST clause, or null>",
+  "title": "<a leadership, rank or honorific word in the GM's words — king, tyrant, jarl, warlord, chieftain, captain, boss, queen, lord, Brother, Sister, Dame, Ser, Father, Mother — copied verbatim, or null>"
 }
-Rules: "twist" = a published creature IS the body and the words add or remove something, however much the clause adds: a skeleton with a greatsword is a twist on the Skeleton; a cave troll that speaks only Giant on the Troll; "a vampire who runs a bathhouse" on the Vampire; "a chapel bell-ringer's ghost that tolls for the dying" on the Ghost; "a wolf with two heads" on the Wolf; "Hydra whose stumps smoke instead of regrowing" on the Hydra; "a hobgoblin with a halberd" on the Hobgoblin Warrior; "an archlich enthroned on a sun of bone" on the Lich (an archlich IS a lich; a greater or lesser variant of a published creature is that creature). A creature noun that is a published name is that body unless the words say it only resembles it — even beside a job word: "an imp rogue who picks locks for a devil" is a twist on the Imp (print_body Imp, relation is), "a goblin assassin" a twist on the Goblin, because a MONSTER named as itself outranks a class word; the class word then rides as flavour. A PEOPLE's name (hobgoblin, goblin, kobold, lizardfolk, orc) is never a class — class needs a trained role (ninja, warlord, priest, templar, skald, witch). "class_npc" = a person defined by a class, title, trade or personal name (a name alone — "Grik", "Dame Oriel" — is class_npc). "homebrew" = neither: an invented creature, or one that only resembles a published one. A class word outranks a people (a kuo-toa priest is class_npc); a published MONSTER named as itself outranks a title (a frost giant jarl is a twist on the Frost Giant). A TITLE on an invented creature (pumpkin king, a tyrant of burning brass) marks a LEADER and goes in "title" — the creature itself is homebrew, not a person with a class; a personal name alone (Grik, Dame Oriel) is class_npc. Every receipt must be copied from the fields verbatim.`;
+Rules: "twist" = a published creature IS the body and the words add or remove something, however much the clause adds: a skeleton with a greatsword is a twist on the Skeleton; a cave troll that speaks only Giant on the Troll; "a vampire who runs a bathhouse" on the Vampire; "a chapel bell-ringer's ghost that tolls for the dying" on the Ghost; "a wolf with two heads" on the Wolf; "Hydra whose stumps smoke instead of regrowing" on the Hydra; "a hobgoblin with a halberd" on the Hobgoblin Warrior; "an archlich enthroned on a sun of bone" on the Lich (an archlich IS a lich; a greater or lesser variant of a published creature is that creature). A creature noun that is a published name is that body unless the words say it only resembles it — even beside a job word: "an imp rogue who picks locks for a devil" is a twist on the Imp (print_body Imp, relation is), "a goblin assassin" a twist on the Goblin, because a MONSTER named as itself outranks a class word; the class word then rides as flavour. A PEOPLE's name (hobgoblin, goblin, kobold, lizardfolk, orc, tabaxi, goliath, tiefling) is never a class — class needs a trained role (ninja, warlord, priest, templar, skald, witch, monk, rogue). TWO WORDS, A PEOPLE AND A ROLE, IS ALWAYS class_npc with that role as the class and that people as the species: "lizardfolk monk" is class_npc (monk, lizardfolk), "lizardfolk ninja" (rogue, lizardfolk), "tabaxi cutpurse" (rogue, tabaxi), "goliath berserker" (barbarian, goliath) — never homebrew. "class_npc" = a person defined by a class, title, trade or personal name (a name alone — "Grik", "Dame Oriel" — is class_npc). "homebrew" = neither: an invented creature, or one that only resembles a published one. A class word outranks a people (a kuo-toa priest is class_npc); a published MONSTER named as itself outranks a title (a frost giant jarl is a twist on the Frost Giant). A TITLE on an invented creature (pumpkin king, a tyrant of burning brass) marks a LEADER and goes in "title" — the creature itself is homebrew, not a person with a class; a personal name alone (Grik, Dame Oriel) is class_npc. A RELIGIOUS or KNIGHTLY title on a PERSON names their class and both fields are answered: "Brother"/"Sister"/"Father"/"Mother" is a cleric, "Dame"/"Ser"/"Sir" a paladin, "Captain"/"Sergeant"/"Warlord"/"Marshal" a fighter, "Archmage"/"Magus" a mage — with that title as the class receipt. Every receipt must be copied from the fields verbatim.`;
 }
 
 export function validatePathResponse(raw) {
@@ -106,10 +106,17 @@ export function readPath(raw, { concept = '' } = {}) {
   if (p.class != null && !/^null$/i.test(String(p.class)) && String(p.class).trim()) {
     const c = String(p.class).toLowerCase().trim();
     const rc = p.class_receipt ? String(p.class_receipt).trim() : '';
+    // AN EXPLICIT CLASS NAME IS ITS OWN RECEIPT, ANYWHERE IN THE GM'S WORDS (the critic's correction
+    // of its own rule, 2026-10-19): "He is a barbarian who rages" names the class in a relative clause
+    // and was refused for it. The head-clause test exists for IMPLIED words — a title or a trade,
+    // where position carries the claim ("a kuo-toa priest" is a cleric; "priest" deep in a sentence
+    // about priests they hunt is not). So: the receipt names the class itself → accepted wherever it
+    // sits; the receipt is an implied word → it must sit in the head clause, as before.
+    const saysTheClassItself = !!rc && new RegExp(`\\b${c}s?\\b`, 'i').test(rc);
     if (!CLASS_KEYS.includes(c)) refused.push(`class "${p.class}" is not one of the eight`);
     else if (!rc || !isSpan(rc, concept)) refused.push(`class "${c}" offered no receipt from the GM's words`);
     else if (!shorter(rc, concept)) refused.push(`class receipt "${rc}" is the whole concept`);
-    else if (!isSpan(rc, headClause(concept))) refused.push(`class receipt "${rc}" is not in the head clause ("${headClause(concept)}")`);
+    else if (!saysTheClassItself && !isSpan(rc, headClause(concept))) refused.push(`class receipt "${rc}" names no class and is not in the head clause ("${headClause(concept)}")`);
     else { out.class = c; out.receipts.class = rc; }
   }
   return out;
@@ -153,6 +160,22 @@ export function pathLine(d, concept = '') {
   const body = d.print_body ? ` — ${d.print_body}${d.relation ? ` (${d.relation})` : ''}` : '';
   const cls = d.class ? ` — class ${d.class}` : ''; const sp = d.species ? ` — species ${d.species}` : ''; const ti = d.title ? ` — title ${d.title}` : '';
   return `[path] ${d.path}${body}${cls}${sp}${ti} — "${String(d.receipt ?? concept).slice(0, 80)}" (${d.by})`;
+}
+
+/**
+ * A PERSON WITH NO CLASS STILL STANDS ON A PERSON (critic B, 2026-10-19): "Brother Halric" answered
+ * class null, so `bodyForClass` had nothing, no kit landed, and he fell through to a monster chassis
+ * with a "Hurled Scripture" row. Print's own generic people are the fallback body, nearest CR —
+ * the Commoner through the Warrior Veteran ladder every NPC block is built on.
+ */
+const PERSON_LADDER = ['Commoner', 'Guard', 'Warrior Infantry', 'Scout', 'Spy', 'Priest Acolyte', 'Berserker', 'Warrior Veteran', 'Guard Captain', 'Gladiator', 'Mage', 'Assassin', 'Archmage'];
+export function bodyForPerson(cr) {
+  const crN = Number(cr);
+  const withCr = PERSON_LADDER.map((n) => corpusEntry(n)).filter(Boolean)
+    .map((e) => ({ name: e.name, cr: Number((printBlocks.find((b) => b.name === e.name) ?? {}).cr ?? NaN) })).filter((x) => Number.isFinite(x.cr));
+  if (!withCr.length) return null;
+  if (!Number.isFinite(crN)) return withCr[0].name;
+  return withCr.sort((a, b) => Math.abs(a.cr - crN) - Math.abs(b.cr - crN) || a.cr - b.cr)[0].name;
 }
 
 /** The print NPC body a class stands on when the GM named none: the class's own list, nearest CR (pipeline 3). */

@@ -256,6 +256,7 @@ ${hits.map((h) => `- "${h.key}" (${h.cls}) -> ${h.id} (${BY_ID.get(h.id)?.blurb 
   })()}
 
 RULES
+- A CUE YOU CONFIRM IS A PICK YOU MAKE. If you answer "means": true for a key word above, that key's chassis MUST appear among your picks. Confirming a cue and then ranking a different chassis is one answer contradicting itself; decide which it is and answer both fields the same way.
 - Rank up to THREE picks, best first. For EACH pick, quote the phrase of the concept that earns it ("because") — copy the words as written. A pick you cannot quote for is a pick you should not make: the engine checks every quote against the input and discards picks it cannot find there.
 - What the creature IS outranks what it DOES to its victims, and what it uses, hunts, wears, rides, or is compared to. An incorporeal or drowned dead thing that pulls, drags, or drowns the living is lurker-phantom, never brute-grappler: the grappler is a BODY that holds prey in its grip or inside itself. A troll-hunter is not a troll; a knight who rides a horse is mounted but not a beast; a sword forged by a golem is not a golem; a thing with a tar-slick mouth is not an ooze.
 - brute-juggernaut and defender-warden are MADE or risen things (construct, elemental, undead, plant, ooze). Living flesh, however armored, takes another chassis.
@@ -290,7 +291,7 @@ export function validateRouteResponse(jsonString) {
  *   lines); role is the menu label to record. line is null when nothing
  *   routed (the caller falls to its own default).
  */
-export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {}) {
+export function chooseLine(parsed, { text, menuRole = null, rawText = null, path = null } = {}) {
   const notes = [];
   const family = familyFor(menuRole);
   const resolvedType = TYPES.includes(parsed?.creature_type) ? parsed.creature_type : null;
@@ -477,6 +478,21 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null } = {
       for (const h of byVerb) if (rejectedCues.get(h.key) === true) notes.push(`${h.id}: the call read "${h.key}" as not meaning that mechanic here — no override`);
       if (!live.length) {
         notes.push(`${chosen.id} stands: every key that would override it was read as a figure of speech`);
+      } else if (path === 'homebrew' && quotedPick) {
+        // STEP 7 OF THE FIVE PIPELINES BRIEF — THE RETIREMENT. "The concept's
+        // VERB outranks the noun" retires as a ROUTE DECISION on the homebrew
+        // path: the style comes from the resolve call, which already ranked this
+        // line and quoted the GM's words for it. The keys stay as the MENU the
+        // call is shown and as the fallback when no pick verifies — they stop
+        // being the decision.
+        // This is the flip attempted and reverted on 2026-10-16, which broke six
+        // pins. What makes it safe now is the cue verdict landing in the SAME
+        // call: a glass ox that really charges has the charger line among its own
+        // picks, so the outcome survives without the engine overruling the call.
+        // The override still runs wherever the call gave nothing to stand on
+        // (no verified pick, or a fall to a plain family line), and on every
+        // other path it is unchanged.
+        notes.push(`${chosen.id} stands on the homebrew path: the call ranked it and quoted "${String((Array.isArray(parsed?.picks) ? parsed.picks : []).find((k) => lineIdOf(k?.line) === chosen.id)?.because ?? '').slice(0, 40)}" — the key "${live[0].key}" is the menu, not the decision (step 7)`);
       } else {
         notes.push(`${chosen.id} -> ${live[0].id}: the concept's ${live[0].cls === 'body' ? 'BODY' : 'VERB'} outranks the noun (key "${live[0].key}", class ${live[0].cls})`);
         chosen = live[0].line;

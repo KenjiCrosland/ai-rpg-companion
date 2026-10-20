@@ -58,6 +58,36 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
       for (let i = es.length - 1; i >= 0; i -= 1) if (/^Multiattack/.test(String(es[i]?.name ?? ''))) es.splice(i, 1);
     }
   }
+  // AND THE SAME LAW THE OTHER WAY (Five Pipelines step 7, 2026-10-20). A donor
+  // below CR 5 scaled UP keeps its low-CR shape: the CR 2 dragon-2 chassis at
+  // CR 7 shipped one Claw and no Multiattack (the Squallwing Drake, critic's read
+  // of the forty). Print is decisive — a Multiattack appears on 110 of its 113
+  // blocks at CR 5 and up, against 91 of 106 single-attack blocks below CR 1 —
+  // and 80 of the 90 donors already carry one, so this is the ten being brought
+  // to their scaled CR, not a new policy.
+  // Print's modal count: two at CR 5-10, three at CR 11+.
+  // ONE ATTACK ROW CITED N TIMES IS PRINT'S OWN IDIOM: 70 of its 110 CR 5+
+  // Multiattacks name a single row ("makes three Rend attacks").
+  // It lands HERE, beside the swarm strip and before the per-hit solve, so the
+  // round is priced for the attack count the sheet actually makes. A swarm is
+  // exempt by construction: oneAttack and this branch are exclusive.
+  else if (cr >= 5 && !(donor.archetypes ?? []).includes('swarm')) {
+    // the swarm exemption is STRUCTURAL, not a flag: print's seven swarms each
+    // make exactly one attack and the checker hard-fails a swarm that carries a
+    // Multiattack, so a swarm chassis must never gain one even when the caller
+    // forgets `oneAttack`.
+    const esA = scaled.sections?.Actions ?? [];
+    const hasMa = esA.some((e) => /^Multiattack/.test(String(e?.name ?? '')));
+    const atk = esA.filter((e) => /Attack Roll/.test(String(e?.text ?? ''))).map((e) => String(e.name));
+    if (!hasMa && atk.length) {
+      const count = cr >= 11 ? 'three' : 'two';
+      const text = atk.length === 1
+        ? `The creature makes ${count} ${atk[0]} attacks.`
+        : `The creature makes ${count} attacks, using ${atk.join(' or ')} in any combination.`;
+      esA.unshift({ name: 'Multiattack', text });
+      scaled.sections.Actions = esA;
+    }
+  }
   // THE 2014 DAMAGE LINE (owner + critic 2026-09-14): 2014's table runs
   // ~5 damage/CR vs 2024's ~7.5 — direct-2014 generations pass 0.7
   // (5/7.5 = 0.667; the band's upper half). Uniform across archetypes:

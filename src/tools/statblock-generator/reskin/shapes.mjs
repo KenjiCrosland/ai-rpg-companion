@@ -137,10 +137,10 @@ export const SHAPES = [
     id: 'zone', name: 'Sustained Zone', cite: 'Darkmantle/Darkness Aura (CR 1/2); Djinni/Create Whirlwind (CR 11); Harpy/Luring Song (CR 1)',
     roles: ['controller'], styles: ['skulker'], cr_range: [0.5, 12], replaces: 'signature', gate: '1/Day',
     frames: {
-      '0-2': 'The creature creates {zone_effect} in a 15-foot Emanation originating from itself. The effect lasts while the creature maintains Concentration on it, up to 10 minutes. {zone_rule}',
-      '3-5': 'The creature creates {zone_effect} in a 15-foot Emanation originating from itself. The effect lasts while the creature maintains Concentration on it, up to 10 minutes. {zone_rule}',
-      '6-9': 'The creature creates {zone_effect} in a 20-foot Emanation originating from itself. The effect lasts while the creature maintains Concentration on it, up to 10 minutes. {zone_rule}',
-      '10-12': 'The creature creates {zone_effect} filling a 20-foot-radius, 60-foot-high Cylinder centered on a point it can see within 120 feet. The effect lasts while the creature maintains Concentration on it, up to 10 minutes. As a Bonus Action, the creature can move the zone up to 20 feet. {zone_rule}',
+      '0-2': 'The creature creates {zone_effect} in a 15-foot Emanation originating from itself. The effect lasts while the creature maintains Concentration on it, up to 10 minutes. Each creature in the area {zone_rule}.',
+      '3-5': 'The creature creates {zone_effect} in a 15-foot Emanation originating from itself. The effect lasts while the creature maintains Concentration on it, up to 10 minutes. Each creature in the area {zone_rule}.',
+      '6-9': 'The creature creates {zone_effect} in a 20-foot Emanation originating from itself. The effect lasts while the creature maintains Concentration on it, up to 10 minutes. Each creature in the area {zone_rule}.',
+      '10-12': 'The creature creates {zone_effect} filling a 20-foot-radius, 60-foot-high Cylinder centered on a point it can see within 120 feet. The effect lasts while the creature maintains Concentration on it, up to 10 minutes. As a Bonus Action, the creature can move the zone up to 20 feet. Each creature in the area {zone_rule}.',
     },
   },
   {

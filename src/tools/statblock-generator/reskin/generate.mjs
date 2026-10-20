@@ -16,10 +16,21 @@ import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
 import { logger } from '@/util/logger.mjs';
+import { isDegradedMode } from '@/util/ai-client.mjs';
 import challengeRatings from '@/data/challengeRatings.json';
 
 // the table keys fractional CRs as '1/2', not '0.5' (Thornback shipped XP 0)
 const crKey = (cr) => (cr === 0.125 ? '1/8' : cr === 0.25 ? '1/4' : cr === 0.5 ? '1/2' : String(cr));
+// GUARDED STANCE HAS ONE GATE (critic A1, third read; owner 2026-10-19). Print ships no persistent
+// Disadvantage-to-be-hit trait (0 of 329) and no AC-raising reaction either (the 2024 SRD has no
+// Parry; 3 of 329 blocks carry any reaction at all), so the trait is illegal on a sheet whose AC
+// already beats print's at the CR. THREE doors could ship it — the signature seat's menu, the
+// class kit, and the concept-first ranking — and each asked its own question or none. One predicate.
+export const guardedStanceIllegalAt = (cr, ac) => {
+  const par = Number(challengeRatings?.[crKey(cr)]?.armor_class ?? 0);
+  return !!(Number(ac) && par && Number(ac) > par);
+};
+export const guardedStanceWhyAt = (cr, ac) => `AC ${ac} already beats print's ${Number(challengeRatings?.[crKey(cr)]?.armor_class ?? 0)} at CR ${cr}, and print ships no persistent Disadvantage-to-be-hit trait (0 of 329)`;
 import { hpFormulaFor as hpFormulaForSize, saveDamageDiceFor as engineDiceFor, attackDamageDiceFor } from '../format-2024/dice.mjs';
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
@@ -28,7 +39,7 @@ import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
 import { WEAPONS, weaponFor, weaponNamed, namesWeapon, weaponsIn, finesseLike } from './weapons.mjs';
 import { effectOnly, danglingRefIn, rowNamesOf } from './checker.mjs';
-import { matcherPath, bodyForClass } from './path.mjs';
+import { matcherPath, bodyForClass, bodyForPerson } from './path.mjs';
 import { classStats } from './classes.mjs';
 import { capsFix2024, applyCorrections as applyTextFixes, DETERMINISTIC_TEXT_RULES } from '../format-2024/generate.mjs'; // the 2024 caps pass, shared with the lint's fixer (2026-10-17) // one prerequisite stripper, shared with save-fit (stage 1b); one dangling-reference scan, shared with the checker (2026-10-16)
 import { tailNamesKind } from './print-names.mjs';
@@ -322,7 +333,7 @@ export function printCanonFor(conceptText, cr) {
   // every HEAD match is a borrow (rows + array ride, the seat stays, no blind fallback): a print monster as the head of a longer concept keeps the clause's seat too — the Doppelganger's block came out the same either way once print bodies stopped drawing the fallback (day-one two, 2026-10-01)
   const npcHead = headOnly || !!prefixName; // a prefix match is a borrow too // a rich concept on a print BEAST is reskin material ("a wolf that eats the stars" keeps its seats); a composed print character is its block
   const last = lower(pick).split(/\s+/).at(-1);
-  const traits = (pick.sections?.Traits ?? []).filter((t) => t?.name && (!!exactPhrase || !PRINT_BOILER.test(t.name))).map( /* a whole print name carries every print trait — the Kraken's Amphibious (critic's release audit 2026-10-03); a borrow skips the boiler */(t) => ({ name: t.name.replace(/ \(.*\)$/, ''), text: String(t.text ?? '') }));
+  const traits = (pick.sections?.Traits ?? []).filter((t) => t?.name && (!!exactPhrase || !PRINT_BOILER.test(t.name))).map( /* a whole print name carries every print trait — the Kraken's Amphibious (critic's release audit 2026-10-03); a borrow skips the boiler */(t) => ({ name: t.name, text: String(t.text ?? '') })); // print names its own trait, RATE AND ALL: "Legendary Resistance (3/Day, or 4/Day in Lair)" is the name print gives it, and a bare name reads as unlimited (critic, 2026-10-19). Comparison sites strip the parenthetical themselves.
   const rowOf = (a) => { const t = String(a.text ?? ''); const m = /\d+ \(\d+d\d+(?: \+ \d+)?\) ([A-Z][a-z]+)(?: damage)?\.?\s*([^]*)$/.exec(t); /* any damage word: the Unicorn's Radiant Horn deals Radiant outright */ const note = /Attack Roll:\*? \+\d+ (\([^)]*\)),/.exec(t)?.[1] ?? null; const reach = /reach (\d+) ft/.exec(t)?.[1] ?? null; const dmg = /\d+ \(\d+d\d+(?: [+-] \d+)?\)/.exec(t)?.[0] ?? null; const hybrid = /Melee or Ranged Attack Roll/.test(t); const range = /range ([\d/]+) ft/.exec(t)?.[1] ?? null; /* print's own hybrid frame: the Gladiator's Spear is thrown (the critic's third species read) */ return { hybrid, range, dmg, name: a.name.replace(/ \(.*\)$/, ''), type: m?.[1] ?? null, rider: m ? m[2].trim().replace(/^,\s*/, '') : '', note, reach, text: t, bonus: Number((/Attack Roll:\*? \+(\d+)/.exec(t) ?? [])[1] ?? NaN) }; }; // text + bonus: print's melee row lands verbatim when the chassis has none to rename (2026-10-18) // a rider that print writes ", plus 2 (1d4)…" is a plus-clause, not a sentence (the goblin's "damage. , plus", critic's audit 2026-10-02) // note: print's roll parenthetical (the Doppelganger's "(with Advantage during the first round of each combat)" is its 2024 Surprise Attack)
   const meleeRows = (pick.sections?.Actions ?? []).filter((a) => /Melee Attack Roll|Melee or Ranged Attack Roll/.test(a.text ?? '')).map(rowOf); // a Melee-or-Ranged print row (the Guard's Spear) names the melee row too
   const melee = meleeRows.map((r) => r.name);
@@ -1269,12 +1280,26 @@ export function partRows(record, { cap = 4 } = {}) {
   const out = []; const seen = new Set();
   const WEAPON_CUE = /\b(?:wields?|wielding|armed with|with (?:a|an|two|three|its|her|his|their|the)\b|carr(?:ies|ying)|holding|swing(?:s|ing)?|bearing)\b/i; // a header or descriptive clause yields a part only past a wield cue ("A Large ogre champion wielding a greataxe" was a header clause for its size and the greataxe never landed; "a bugbear brute with a flail" was typed descriptive — sprint run 2026-10-12)
   for (const c of record) {
-    if (c.polarity || PART_THROWN.test(c.text)) continue;
-    const gated = c.kind !== 'mechanical' || c.head; const cueM = gated ? WEAPON_CUE.exec(c.text) : null;
+    if (c.polarity) continue;
+    // A THROW IS ONE SEGMENT'S BUSINESS, NOT THE CLAUSE'S (critic A3, 2026-10-19). This skipped the
+    // whole clause on any "hurls", so "hurls a handaxe and closes with a shortsword" lost BOTH
+    // weapons and coverage still credited the clause. A hurled thing the weapon table knows is a
+    // THROWN WEAPON lands as its own part (mode 'both', print's Gladiator throws its Spear that way);
+    // a hurled thing it does not know — a boulder, a corpse — is still the throw-retrieve template's.
+    // the EARLIEST cue opens the scope: a throw verb says "a weapon follows" exactly as a wield verb
+    // does, and taking only the wield cue started the scope past the thrown weapon ("…hurls a handaxe
+    // and closes with a shortsword" kept the shortsword alone — critic A3, 2026-10-19)
+    const gated = c.kind !== 'mechanical' || c.head;
+    const cueM = gated ? [WEAPON_CUE.exec(c.text), PART_THROWN.exec(c.text)].filter(Boolean).sort((a, b) => a.index - b.index)[0] ?? null : null;
     if (gated && !cueM) continue;
     const scope = cueM ? c.text.slice(cueM.index) : c.text;
     for (const seg of scope.split(/,|\s+(?:and|or)\s+/i)) { // "a silvered rapier and a crossbow" is two parts, not the last noun of one clause (sprint run 2026-10-12)
     const text = seg.trim(); if (!text) continue;
+    if (PART_THROWN.test(text)) { // this segment throws: only a table weapon that is thrown survives it
+      const thrownHit = [...text.matchAll(PART_NOUN)].map((h) => PART_SINGULAR(h[1])).find((n) => WEAPONS[n]?.thrown);
+      PART_NOUN.lastIndex = 0;
+      if (!thrownHit) continue;
+    }
     const words = text.split(/\s+/); const hits = [...text.matchAll(PART_NOUN)];
     if (!hits.length) continue;
     // "…watching them flail" is not a flail: an OBJECT PRONOUN before the noun makes it a verb.
@@ -1423,8 +1448,12 @@ export async function generateReskin(options, callLLM) {
   // in only when the call failed (never-fail generation, owner's standing rule), and says so.
   const pathD = options.path && !options.path.failed && options.path.path ? options.path : null;
   // a class NPC with no body named stands on its class's print NPC block, nearest CR (pipeline 3)
-  const classBody = pathD?.path === 'class_npc' && !pathD.print_body && pathD.class ? bodyForClass(pathD.class, cr) : null;
-  if (classBody) trace('[path] class body:', `the ${pathD.class} stands on the ${classBody} — the class's own print block, nearest CR ${cr}`);
+  const classBody = pathD?.path === 'class_npc' && !pathD.print_body
+    ? (pathD.class ? bodyForClass(pathD.class, cr) : bodyForPerson(cr)) // a title with no class is still a person (critic B, 2026-10-19)
+    : null;
+  if (classBody) trace('[path] class body:', pathD.class
+    ? `the ${pathD.class} stands on the ${classBody} — the class's own print block, nearest CR ${cr}`
+    : `a person with no class stands on the ${classBody} — print's own people, nearest CR ${cr} (the title is "${pathD.title ?? pathD.receipt ?? 'a name'}")`);
   const pathBody = pathD && (pathD.path === 'exact' || pathD.path === 'twist' || (pathD.path === 'class_npc' && (pathD.print_body || classBody))) ? (pathD.print_body ?? classBody) : null;
   const isTwist = pathD?.path === 'twist';
   const isClassNpc = pathD?.path === 'class_npc';
@@ -1845,6 +1874,9 @@ export async function generateReskin(options, callLLM) {
       if (prim.length && best < floor) { const k = prim[0]; trace('class array:', `${k} ${scaled.stats[k]} -> ${floor} — a ${pathD.class} carries its primary stat`); scaled.stats[k] = floor; }
       if (cs.casting && Number(scaled.stats[cs.casting] ?? 0) < floor) { trace('class array:', `${cs.casting} ${scaled.stats[cs.casting]} -> ${floor} — a ${pathD.class} casts off it`); scaled.stats[cs.casting] = floor; } }
   }
+  // the AC is passed in: at the KIT pass `monster` is not initialized yet (its binding is below)
+  const guardedStanceIsIllegal = (ac = scaled.ac) => guardedStanceIllegalAt(cr, ac ?? 0);
+  const guardedStanceWhy = (ac = scaled.ac) => guardedStanceWhyAt(cr, ac ?? 0);
   const pcPlain0 = printCanonFor(options.userConcept ?? concept, cr); const pcPlainPath = canonFromPath(cr); const pcPlain = pcPlainPath !== undefined ? pcPlainPath : ((speciesOutranks(pcPlain0) || typeOutranks(pcPlain0) || canonRejected(pcPlain0)) ? null : pcPlain0);
   // THE PATH, IN SHADOW (step 2 of the Five Pipelines brief): the dispatcher's decision rides
   // in options.path; here it meets the matcher's. Agreement is traced, disagreement named —
@@ -2326,6 +2358,33 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // small noun table, the chassis's priced slot taken or cloned. No call. The template path composes everything else exactly as it
   // did at the October 4 release; authoring survives only as the repair call, after the template path, for a clause nothing claimed.
   let authored = null; let inlineGuessUsed = null; // the short form the kit and feature rows were stamped with, before the rows' form is settled
+  const priceTheRound = (when) => {
+    const rowsP = Object.entries(sections).flatMap(([sec, es]) => es.map((e) => ({ sec, e })));
+    const printCrNear = !!pcPlain && nearPrintCr(cr, pcPlain.cr);
+    const atkRows = rowsP.filter(({ e }) => /Attack Roll/.test(e.text ?? '') && !e.print && !(e.printNamed && printCrNear) && !/\bBloodied\b/.test(e.text ?? '')); // print's name keeps print's numbers at print's CR; a borrow asked for above it re-solves with the round (the Night Hag at CR 7, step 8) // a swarm's row carries a half-clause keyed to the main one; re-dicing each expression on its own breaks the half (generate.spec's swarm pin)
+    const avgOfRow = (t) => [...String(t).split(/\bIf\b|\bWhen\b/)[0].matchAll(/(\d+) \(\d+d\d+(?: [+-] \d+)?\)/g)].reduce((a, x) => a + Number(x[1]), 0);
+    const multiP = rowsP.find(({ e }) => /^Multiattack/.test(e.name ?? ''))?.e;
+    const nAtk = multiP ? ({ one: 1, two: 2, three: 3, four: 4 }[(/makes (\w+)/i.exec(multiP.text) ?? [])[1]?.toLowerCase()] ?? 1) : 1;
+    const best = atkRows.length ? Math.max(...atkRows.map(({ e }) => avgOfRow(e.text))) : 0;
+    const legStrike = rowsP.filter(({ sec, e }) => sec === 'Legendary Actions' && /makes one [A-Z][\w' -]*? attack/.test(e.text ?? '') && !/can['’]t (?:take|use) this action again|once per round/i.test(e.text ?? '')).length;
+    const legHits = legStrike ? Math.max(1, Math.floor(Number(scaled.legendary_uses ?? 3) / 1)) : 0;
+    const round = best * nAtk + best * legHits;
+    const target = cardBudget(cr, { legendary: !!(sections['Legendary Actions'] ?? []).length, dragon: body === 'dragon', edition: options.edition === '2014' ? '2014' : null }).dpr;
+    const underA = !!authored?.parts && best > 0 && round < target * 0.8; // an authored sheet whose rows replaced the chassis's composition can run UNDER the card too (the Drowned Ringer at 34 against 66, step 6 forty): the shared budget prices all rows, both ways
+    if (best > 0 && (round > target * 1.2 || underA)) {
+      const f = underA ? Math.min(2, target / round) : (target * 1.05) / round;
+      for (const { e } of atkRows) {
+        e.text = String(e.text).replace(/(\d+) \((\d+)d(\d+)(?: ([+-]) (\d+))?\)/g, (m0, avg, n0, d0, sign, mod) => {
+          const flat = sign === '-' ? -Number(mod ?? 0) : Number(mod ?? 0);
+          const wanted = Math.max(2 + flat, Math.round(Number(avg) * f));
+          const r = attackDamageDiceFor(wanted, Math.min(flat, Math.max(0, wanted - 1)));
+          return `${r.avg} (${r.dice})`;
+        });
+        if (e.text_noRider) e.text_noRider = e.text;
+      }
+      trace('final price:', `${when} Multiattack: the round ran ${round} against the card's ${target} — the attack rows re-solve at ${Math.round(f * 100)}% (${nAtk} attacks${legHits ? ` + ${legHits} legendary strikes` : ''}${underA ? ' on an authored sheet, under the card' : ' off one row after a supersede'})`);
+    }
+  };
   const clauseRecord = groundedClauses(p.clauses, options.userConcept ?? concept, () => {}, p.lacks);
   const authorAttackKeys = Object.values(scaled.sections).flat().filter((e) => !e.rules && /Attack Roll/.test(e.text ?? '') && !e.wildcard_slot).map((e) => e.name);
   if (!printExact && authorAttackKeys.length) {
@@ -2779,7 +2838,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         conditionMinor: p.conditions?.condition_minor ?? null, projectile: p.projectile ?? null,
       };
       const landed = []; const yielded = [];
+      // ONE GATE FOR GUARDED STANCE (critic A1, third read; owner 2026-10-19 took the recommendation,
+      // and print then overruled its premise — the 2024 SRD has no Parry and only 3 of 329 blocks carry
+      // any reaction, so the fallback stands). The signature seat prunes this template when AC already
+      // beats print's at the CR; the KIT asked nothing and added it anyway (Vashka AC 19, Oriel AC 16).
+      // The kit now asks the seat's question, and lands its next row instead.
+      const acBeatsPrint = guardedStanceIsIllegal();
       for (const r of classRows(ck.cls, { text: srcText, inline: inl, dc: scaled.dc })) {
+        if (r.template === 'guarded-stance' && acBeatsPrint) { trace('class kit:', `guarded-stance yields — ${guardedStanceWhy()}`); continue; }
         // print's caster features refer to the Spellcasting row by name; without
         // it they refer to nothing (a dangling reference the gates would catch)
         if (r.requiresRow && !Object.values(sections).flat().some((e2) => r.requiresRow.test(String(e2.name ?? '').replace(/ \(.*\)$/, '')))) { trace('class kit:', `${r.kind === 'row' ? r.name : r.template} — the sheet carries no row it could refer to (${r.requiresRow})`); continue; }
@@ -2966,7 +3032,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (!pcPlain) return String(txt ?? '');
     const bareIn = inline.replace(/^the\s+/i, '');
     const full = String(pcPlain.name ?? '').toLowerCase();
-    const alts = [...new Set([full, pcPlain.last])].filter(Boolean).sort((a, b) => b.length - a.length).map(escRx).join('|');
+    // PRINT NAMES ITSELF BY ONE WORD OF ITS NAME (critic B, 2026-10-19): the Hobgoblin Warrior's
+    // Pack Tactics says "The hobgoblin", the Guard Captain's rows "the guard", the Priest Acolyte's
+    // "the priest" — the FIRST word, not the last. Only the last was substituted, so print's own
+    // noun leaked onto sheets that are not that creature ("The hobgoblin has Advantage…").
+    const firstWord = full.split(/\s+/)[0] ?? '';
+    const alts = [...new Set([full, pcPlain.last, firstWord.length >= 4 ? firstWord : null])].filter(Boolean).sort((a, b) => b.length - a.length).map(escRx).join('|');
     void bareIn; // the determiner phrase only: a bare "vampire" is print's common noun ("rises as a Vampire Spawn", "its vampire form" — critic's regressions brief 2026-10-04); "this pit fiend's aura" stays print's
     return String(txt ?? '').replace(new RegExp(`\\bthe\\s+(?:${alts})('s)?\\b`, 'gi'), (m0, poss) => `${inline}${poss ?? ''}`);
   };
@@ -3253,33 +3324,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // sword owns both the melee and the ranged seat) leaves one row serving the Multiattack AND the legendary strike at
     // the old price — a death knight at CR 18 swung 52 twice and once more for free, reading CR 27 on offense against
     // print's hottest +7 (print-heads 2026-10-04). Re-solve the surviving attack rows when the round runs over the card.
-    {
-      const rowsP = Object.entries(sections).flatMap(([sec, es]) => es.map((e) => ({ sec, e })));
-      const printCrNear = !!pcPlain && nearPrintCr(cr, pcPlain.cr);
-      const atkRows = rowsP.filter(({ e }) => /Attack Roll/.test(e.text ?? '') && !e.print && !(e.printNamed && printCrNear) && !/\bBloodied\b/.test(e.text ?? '')); // print's name keeps print's numbers at print's CR; a borrow asked for above it re-solves with the round (the Night Hag at CR 7, step 8) // a swarm's row carries a half-clause keyed to the main one; re-dicing each expression on its own breaks the half (generate.spec's swarm pin)
-      const avgOfRow = (t) => [...String(t).split(/\bIf\b|\bWhen\b/)[0].matchAll(/(\d+) \(\d+d\d+(?: [+-] \d+)?\)/g)].reduce((a, x) => a + Number(x[1]), 0);
-      const multiP = rowsP.find(({ e }) => /^Multiattack/.test(e.name ?? ''))?.e;
-      const nAtk = multiP ? ({ one: 1, two: 2, three: 3, four: 4 }[(/makes (\w+)/i.exec(multiP.text) ?? [])[1]?.toLowerCase()] ?? 1) : 1;
-      const best = atkRows.length ? Math.max(...atkRows.map(({ e }) => avgOfRow(e.text))) : 0;
-      const legStrike = rowsP.filter(({ sec, e }) => sec === 'Legendary Actions' && /makes one [A-Z][\w' -]*? attack/.test(e.text ?? '') && !/can['’]t (?:take|use) this action again|once per round/i.test(e.text ?? '')).length;
-      const legHits = legStrike ? Math.max(1, Math.floor(Number(scaled.legendary_uses ?? 3) / 1)) : 0;
-      const round = best * nAtk + best * legHits;
-      const target = cardBudget(cr, { legendary: !!(sections['Legendary Actions'] ?? []).length, dragon: body === 'dragon', edition: options.edition === '2014' ? '2014' : null }).dpr;
-      const underA = !!authored?.parts && best > 0 && round < target * 0.8; // an authored sheet whose rows replaced the chassis's composition can run UNDER the card too (the Drowned Ringer at 34 against 66, step 6 forty): the shared budget prices all rows, both ways
-      if (best > 0 && (round > target * 1.2 || underA)) {
-        const f = underA ? Math.min(2, target / round) : (target * 1.05) / round;
-        for (const { e } of atkRows) {
-          e.text = String(e.text).replace(/(\d+) \((\d+)d(\d+)(?: ([+-]) (\d+))?\)/g, (m0, avg, n0, d0, sign, mod) => {
-            const flat = sign === '-' ? -Number(mod ?? 0) : Number(mod ?? 0);
-            const wanted = Math.max(2 + flat, Math.round(Number(avg) * f));
-            const r = attackDamageDiceFor(wanted, Math.min(flat, Math.max(0, wanted - 1)));
-            return `${r.avg} (${r.dice})`;
-          });
-          if (e.text_noRider) e.text_noRider = e.text;
-        }
-        trace('final price:', `the round ran ${round} against the card's ${target} — the attack rows re-solve at ${Math.round(f * 100)}% (${nAtk} attacks${legHits ? ` + ${legHits} legendary strikes` : ''}${underA ? ' on an authored sheet, under the card' : ' off one row after a supersede'})`);
-      }
-    }
+    // THE ROUND IS PRICED AGAINST THE MULTIATTACK THE SHEET SHIPS (critic A2, 2026-10-19). This pass
+    // read the sheet's own Multiattack already — but it ran HERE, before print's Multiattack lands,
+    // so a borrow whose print body attacks three times (the Gladiator) kept dice sized for the
+    // chassis's two and Oriel swung 66 a round at CR 5, reading CR 10. A normalisation runs after
+    // everything that can change its input, so it runs again once print's row set is in place. It is
+    // idempotent: it only moves the dice when the round is over the card by a fifth (or under on an
+    // authored sheet), and it never touches print's own rows.
+    priceTheRound('the chassis\'s');
     const escDC = Math.max(8 + scaled.pb + modNow('STR'), modNow('STR') < 0 ? scaled.dc : 0); // a STR 6 hook-drag printed escape DC 9: a grapple no commoner slips keys off the save DC when the arm is weak (the critic's second species read)
     for (const es of Object.values(sections)) for (const e of es) if (/escape DC \d+/.test(e.text ?? '')) e.text = e.text.replace(/escape DC \d+/g, `escape DC ${escDC}`);
     if (typeof scaled.senses === 'string' && /Passive Perception \d+/i.test(scaled.senses)) scaled.senses = scaled.senses.replace(/Passive Perception \d+/i, `Passive Perception ${10 + (perception ?? modNow('WIS'))}`);
@@ -3392,7 +3444,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // rules produced the kind form correctly.)
     inline_kind: String(p.inline_kind ?? '').trim().toLowerCase() || null,
     ...(declaredOk ? {} : { inline_overridden: /^the /i.test(String(inline ?? '')) ? 'kind' : 'person' }),
-    generation: { path: 'reskin', pipeline: pathD ? { path: pathD.path, print_body: pathBody ?? null, relation: pathD.relation ?? null, class: pathD.class ?? null, species: pathD.species ?? null, by: pathD.by } : null, donor: donor.id, archetype, ...(typeof options.holds === 'boolean' ? { holds: options.holds } : {}), creatureOnly: String(options.userConcept ?? concept ?? '').toLowerCase().split(/[^a-z']+/).filter((w) => w.length > 2 && !/^(?:the|a|an|and|or|but|with|who|that|which|its|his|her|their|into|onto|from|for|out|off|over|under|this|than|then|them|they|was|were|has|have|had|are|is|be|been|being|it|in|on|at|to|of|by|up|as|so|if|no|not|one|two|too|very|own|new|old)$/.test(w)).length <= 3, /* a creature-only prompt gives nothing to read: the catalog composes the sheet and the reader gate's engine-needs-key stands down (the critic's third species read) */ unplaced: authored?.unplaced ?? [], userConcept: String(options.userConcept ?? concept ?? '').slice(0, 600), clauses: groundedClauses(p.clauses, options.userConcept ?? concept, trace, p.lacks), /* the extraction (fidelity pipeline step 4): the record of what the user asked for, the coverage denominator */ ...(body ? { body } : {}), ...(options.menuRole ? { menu_role: options.menuRole } : {}), ...(donor.invented ? { invented: true } : donor.cite ? { cite: donor.cite } : {}) },
+    generation: { path: 'reskin', ...(isDegradedMode() ? { degraded: true } : {}), pipeline: pathD ? { path: pathD.path, print_body: pathBody ?? null, relation: pathD.relation ?? null, class: pathD.class ?? null, species: pathD.species ?? null, by: pathD.by } : null, donor: donor.id, archetype, ...(typeof options.holds === 'boolean' ? { holds: options.holds } : {}), creatureOnly: String(options.userConcept ?? concept ?? '').toLowerCase().split(/[^a-z']+/).filter((w) => w.length > 2 && !/^(?:the|a|an|and|or|but|with|who|that|which|its|his|her|their|into|onto|from|for|out|off|over|under|this|than|then|them|they|was|were|has|have|had|are|is|be|been|being|it|in|on|at|to|of|by|up|as|so|if|no|not|one|two|too|very|own|new|old)$/.test(w)).length <= 3, /* a creature-only prompt gives nothing to read: the catalog composes the sheet and the reader gate's engine-needs-key stands down (the critic's third species read) */ unplaced: authored?.unplaced ?? [], userConcept: String(options.userConcept ?? concept ?? '').slice(0, 600), clauses: groundedClauses(p.clauses, options.userConcept ?? concept, trace, p.lacks), /* the extraction (fidelity pipeline step 4): the record of what the user asked for, the coverage denominator */ ...(body ? { body } : {}), ...(options.menuRole ? { menu_role: options.menuRole } : {}), ...(donor.invented ? { invented: true } : donor.cite ? { cite: donor.cite } : {}) },
     archetype: options.menuRole ?? archetype, archetype_source: 'user',
   };
   // Cunning Action is HUMANOID-coded (owner, 2026-08-26: "too assassin
@@ -3618,12 +3670,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // hit than print's own AC for its CR does not also get Disadvantage.
       // The bar is print's table, a closed fact, not a judgement.
       {
-        const acNow = Number(monster.ac ?? scaled.ac ?? 0);
-        const acPar = Number(challengeRatings?.[crKey(cr)]?.armor_class ?? 0);
-        if (acNow && acPar && acNow > acPar) {
+        if (guardedStanceIsIllegal(monster.ac ?? scaled.ac)) {
           const before = pool.length;
           pool = pool.filter((t) => t.id !== 'guarded-stance');
-          if (pool.length < before) { pruned.push('guarded-stance'); trace('trait gated by AC:', `"guarded-stance" is off the menu — AC ${acNow} already beats print's AC ${acPar} at CR ${cr}, and print ships no persistent Disadvantage-to-be-hit trait (0 of 329)`); }
+          if (pool.length < before) { pruned.push('guarded-stance'); trace('trait gated by AC:', `"guarded-stance" is off the menu — ${guardedStanceWhy(monster.ac ?? scaled.ac)}`); }
         }
       }
       if (pruned.length) trace('menu pruned:', `${seat} — ${[...new Set(pruned)].join(', ')} (the sheet cannot render them)`);
@@ -3651,8 +3701,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           trace('signature re-seated:', `${seat} — no rider shares the verb; the idea "${idea.idea.slice(0, 60)}…" is tried as an action`);
           return fitSeat(seat, { ...idea, section: 'action', trigger: 'save' });
         }
-        trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — no template on the shelf shares a verb with the concept or the idea (offered: ${pool.map((t) => t.id).join(', ')})`);
-        return null;
+        // …UNLESS THE GM'S OWN CLAUSE IS THE WARRANT (the critic's prescription, 2026-10-19). This gate
+        // stops decoration on a body with no warrant, which is right when nothing was asked for. On a
+        // closed path with a twist clause no row answers, the warrant is the clause itself — the call's
+        // job is only to pick a template for it. The skeleton's "former life" died here for three
+        // packages because its idea shared no verb with the shelf.
+        const ownClause = closedPath ? unansweredTwistClause() : null;
+        if (!ownClause) { trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — no template on the shelf shares a verb with the concept or the idea (offered: ${pool.map((t) => t.id).join(', ')})`); return null; }
+        trace('verb gate stands down:', `${seat} — no template shares a verb, but "${ownClause}" is a clause the sheet has not answered; the GM's own words are the warrant`);
       }
       // BIND TO THE CONCEPT'S VERB (critic v3: "the lure goes to things that
       // beckon; the Bloodied burst to things with a bell"): when the user's
@@ -3683,7 +3739,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         : [...menu, ...ideaNamed];
       if (conceptBound.length) trace('signature bound to the concept\'s verb:', `${seat} — ${conceptBound.map((t) => t.id).join(', ')} (${[...new Set(rankByVerb(conceptBound, verbText).flatMap((r) => r.concept))].join(', ')})`);
       try {
-        const rawFit = await callLLM(buildFitPrompt({ name: p.name, sheet: sheetSoFarT, idea, menu: offered, cr, concept: verbText }), validateFitResponse);
+        const ownClauseForCall = closedPath ? unansweredTwistClause() : null; // the engine names the clause; the call picks a template FOR it (the critic's prescription, 2026-10-19)
+        const rawFit = await callLLM(buildFitPrompt({ name: p.name, sheet: sheetSoFarT, idea, menu: offered, cr, concept: verbText, clause: ownClauseForCall }), validateFitResponse);
         let fit = readFit(parseFit(rawFit, offered, p.name), offered, `${verbText} ${idea.idea}`);
         const hnF = headNoun(verbText); const topC = conceptBound.length ? rankByVerb([conceptBound[0]], verbText)[0].concept : [];
         if (!fit.template && conceptBound.length) for (const t of conceptBound) declinedT.add(t.id);
@@ -3781,7 +3838,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // hide" came back as ONE clause, marked head — so the twist lives INSIDE the head, and refusing
     // the head refused the twist. What the head gives up is the BODY (the path holds it); what remains
     // is the ask. `namesTheBodyOnly` already refuses a quote that is only the body, so the two compose.
-    const cut = (t, q) => { const s = String(t ?? ''); const needle = String(q ?? '').trim(); if (!needle) return s; const i = s.toLowerCase().indexOf(needle.toLowerCase()); return i < 0 ? s : `${s.slice(0, i)} ${s.slice(i + needle.length)}`; };
+    const cut = (t, q) => { const s = String(t ?? ''); const needle = String(q ?? '').trim(); if (!needle) return s; const i = s.toLowerCase().indexOf(needle.toLowerCase()); return (i < 0 ? s : `${s.slice(0, i)} ${s.slice(i + needle.length)}`).replace(/\s{2,}/g, ' ').replace(/^(?:a|an|the)\s+(?=with|that|who|whose)/i, '').trim(); };
     const positiveHalf = (c) => {
       let t = String(c.text ?? '');
       if (c.polarity === 'lacks') { const q = String(c.lackQuote ?? '').trim(); if (!q) return ''; t = cut(t, q); } // a whole-clause lack has no positive half
@@ -3803,7 +3860,36 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (answeredByAPart(sp)) return false;
       return (clauseRecord ?? []).some((c) => c.kind !== 'header' && flat(positiveHalf(c)).includes(sp)); // the HEAD is included: positiveHalf has already taken the body out of it
     };
-    const gmAsked = (f) => (!!f?.asked && !namesTheBodyOnly(f.asked) && asksATwistClause(f.asked)) || (/\[verb: [^\]]*\]/.test(f?.because ?? '') && /:concept\b/.test(f?.because ?? '') && asksATwistClause((/\[verb: ([^\]]*)\]/.exec(f.because) ?? [, ''])[1].split(',')[0].split(':')[0].trim()));
+    // THE SEAT RECEIVES ITS CLAUSE, AND THE CLAUSE IS THE RECEIPT (the critic's prescription,
+    // 2026-10-19). The call's job is to pick a TEMPLATE; whether the GM asked for a row is a fact the
+    // engine already holds — the clause record. So on a closed path, when the sheet still carries a
+    // twist clause no row answers, that clause IS the receipt, whatever the call quoted (or failed to
+    // quote): "carries stolen voices" was refused three packages running because the fit answered a
+    // template with no usable quote, and print shipped under a new name.
+    const unansweredTwistClause = () => {
+      if (!closedPath) return null;
+      const answered = new Set(Object.values(sections).flat().filter((e) => e.clause).map((e) => flat(String(e.clause))));
+      for (const c of clauseRecord ?? []) {
+        if (c.kind === 'header') continue;
+        const half = positiveHalf(c); if (!half) continue;
+        const f = flat(half); if (!f || f.length < 4) continue;
+        if (namesTheBodyOnly(half)) continue;
+        if (answeredByAPart(f)) continue;
+        if ([...answered].some((a) => a.includes(f) || f.includes(a))) continue;
+        return half.trim();
+      }
+      return null;
+    };
+    const gmAsked = (f) => {
+      if (!!f?.asked && !namesTheBodyOnly(f.asked) && asksATwistClause(f.asked)) return true;
+      if (/\[verb: [^\]]*\]/.test(f?.because ?? '') && /:concept\b/.test(f?.because ?? '') && asksATwistClause((/\[verb: ([^\]]*)\]/.exec(f.because) ?? [, ''])[1].split(',')[0].split(':')[0].trim())) return true;
+      if (!f) return false;
+      const own = unansweredTwistClause();
+      if (!own) return false;
+      f.asked = own; // the receipt by construction: the engine's clause, not the call's quote
+      trace('seat takes its clause:', `"${f.row?.name ?? f.template}" answers "${own}" — the engine hands the seat the clause it is for; the call only picked the template`);
+      return true;
+    };
     // WHY THE RECEIPT FAILED, not just that it did (stage 2 item 2, 2026-10-16).
     // Hand-judging all 20 refusals in the post-retirement runs found 6 false
     // refusals on asks the GM had plainly made — Altarstone's "cracks open when
@@ -4123,6 +4209,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // the key table winning after the call declined, the same third door
           // the library draw already had closed.
           if (declinedT.has(r.t.id)) { trace('concept-first trait skipped:', `${r.t.id} — the GM's words key it, but the call was offered it against those words and declined`); continue; }
+          if (r.t.id === 'guarded-stance' && guardedStanceIsIllegal(monster.ac ?? scaled.ac)) { trace('concept-first trait skipped:', `guarded-stance — ${guardedStanceWhy(monster.ac ?? scaled.ac)}; the same gate the seat's menu and the class kit use`); continue; }
           const rr = renderTemplate(r.t, ctxT, bindFills(r.t), { blind: true });
           if (!rr) { trace('concept-first trait skipped:', `${r.t.id} (the sheet cannot render it blind)`); continue; }
           trace('trait bound to the concept\'s verb (concept-first):', `${r.t.id} — ${r.concept.join('+')} in the user's words; the idea path had nothing`);
@@ -4847,6 +4934,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       monster.speed = `${String(monster.speed ?? '30 ft.').replace(/\s*$/, '').replace(/,\s*$/, '')}, Climb ${walk} ft.`;
       trace('climb speed:', `Climb ${walk} ft. — a creature that climbs difficult surfaces has a Climb Speed in print (the Vampire, the Giant Spider)`);
     }
+    // A ROW THAT SPENDS ITS REACTION IS A REACTION (b-rearm, 2026-10-19): the repair call answered
+    // "Vashka can use its reaction to resist the movement" in the TRAIT form, and the lint rightly
+    // refused a Trait written as a Reaction. The section is deterministic from the text — print puts
+    // every "uses its Reaction" row under Reactions — so the row moves rather than being rewritten.
+    for (const [secR, esR] of Object.entries(monster.sections ?? {})) {
+      if (secR === 'Reactions' || secR === 'Legendary Actions') continue;
+      for (let i = esR.length - 1; i >= 0; i -= 1) {
+        const e = esR[i]; if (e.print || e.rules) continue;
+        if (!/\b(?:can )?use[sd]? its [Rr]eaction\b/.test(e.text ?? '')) continue;
+        esR.splice(i, 1);
+        (monster.sections.Reactions = monster.sections.Reactions ?? []).push(e);
+        trace('section moved:', `${secR}/"${e.name}" spends its Reaction, so it sits under Reactions — print puts every such row there`);
+      }
+    }
     const vulBefore = monster.vulnerabilities; const fd = honestFireDefenses(monster, { material: options.material ?? null, concept: options.userConcept ?? concept });
     if (fd && !VULN_CUE.test(String(options.userConcept ?? concept ?? ''))) { monster.vulnerabilities = vulBefore; trace('defenses by material:', `${fd} — the resistance is withheld; the vulnerability is the GM's to type (the Frostmaw carried a Fire vulnerability nobody typed — the critic's second species read)`); }
     else if (fd) trace('defenses by material:', fd);
@@ -5197,7 +5298,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           }
         }
         for (const secC of printBody ? ['Bonus Actions', 'Reactions', ...(pc.addsSeat && scaled.style ? [] : ['Traits'])] : []) { // a named seat that stood down at the route is the plain chassis — its trait leaves too ("Winged Dive" on the Owlbear, third roll) // the seat's trait leaves with its bonus action ("Woodland Prowler" on the Owlbear, "Scuttle" on the kobold — critic form-ten 2026-10-01); a seat the user named keeps both
-          if ((pc.rulesRows ?? []).some((r) => r.section === secC)) continue;
+          if (!isClassNpc && (pc.rulesRows ?? []).some((r) => r.section === secC)) continue; // on a class body every section is read: print's own rows carry their flag
           const esC = sections[secC] ?? [];
           const seatTraitNames = ['Mobility Trait', 'Flyby Trait'].map((k) => renamed.get(k)).filter(Boolean); // `was` is gone by now (deleted after the rename pass); the rename map still knows the seat's trait
           // A GATE MAY SHAPE WHAT THE GM ASKED FOR, NEVER REMOVE IT (critic,
@@ -5207,6 +5308,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           for (let i = esC.length - 1; i >= 0; i -= 1) {
             const e = esC[i];
             if (e.library || e.print || e.kit || e.part || e.feature) continue;
+            // THE CLASS PATH IS CLOSED TO CHASSIS FILLER IN EVERY SECTION (critic B, 2026-10-19):
+            // the Traits branch below sweeps only a named seat's trait, so the leader chassis's
+            // `rules` aura rode on a class sheet beside the kit's own Aura of Authority — two auras,
+            // one creature. On a class body the kit owns the class's identity rows; a row with no
+            // provenance at all is the chassis's and leaves.
+            const noProvenance = !(e.template || e.authored || e.gmArmed || e.userSet || e.seed);
+            if (isClassNpc && noProvenance) { trace('print canon: chassis row leaves —', `${secC}/"${e.name}" is the chassis's filler — on a class body the kit owns the class's rows`); esC.splice(i, 1); sweepDeadName(sections, e.name, null, trace); continue; }
             if (secC === 'Traits' && !(seatTraitNames.includes(e.name) && !e.template)) continue;
             trace('print canon: chassis row leaves —', `${secC}/"${e.name}" is the seat's, not the ${pc.name}'s`);
             esC.splice(i, 1);
@@ -5292,11 +5400,37 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const gmNamedW = new Set(weaponsIn(readPhrases(String(options.userConcept ?? concept ?? ''))));
       const PHYS_W = ['Bludgeoning', 'Piercing', 'Slashing'];
       const titleOf = (k) => String(k).split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      // (a) THE GM'S WEAPON REPLACES PRINT'S, it does not ride beside it (the brief's pipeline 2/3;
+      //     Ser Aldous shipped the GM's Mace AND the Guard Captain's Longsword). A body melee weapon
+      //     row yields to a GM-armed melee part rather than being re-armed to the class's weapon.
+      const gmParts = Object.values(monster.sections ?? {}).flat().filter((e) => e.part && e.weapon && !e.print && /Melee(?: or Ranged)? Attack Roll/.test(e.text ?? ''));
+      const gmMeleePart = gmParts.length > 0;
+      const gmWeaponSet = new Set(gmParts.map((e) => e.weapon));
+      // (b) PRINT NEVER PAIRS A SHIELD WITH A HEAVY MELEE WEAPON — 0 of 329 gear lines (its
+      //     shield-carriers all hold a spear, scimitar or longsword; the Hobgoblin Warrior's heavy
+      //     weapon is its LONGBOW). So when the class re-arms to a heavy melee weapon, the body's
+      //     shield row goes with the shield (Radrik swung a greataxe and kept a Shield Bash that
+      //     outdamaged it — critic B, 2026-10-19).
+      const heavyMelee = !!(cw?.melee && WEAPONS[cw.melee]?.heavy && WEAPONS[cw.melee]?.reach);
+      if (heavyMelee) for (const [secS, esS] of Object.entries(monster.sections ?? {})) for (let i = esS.length - 1; i >= 0; i -= 1) {
+        const e = esS[i]; if (e.part || e.kit || e.gmArmed) continue;
+        if (!/\bshield\b/i.test(`${e.name} ${e.text}`)) continue;
+        esS.splice(i, 1);
+        trace('class weapon:', `${secS}/"${e.name}" leaves with the shield — a ${cw.melee} is two-handed and print pairs a shield with no heavy melee weapon (0 of 329 gear lines)`);
+        sweepDeadName(monster.sections, e.name, null, trace);
+      }
       if (cw) for (const [secW, esW] of Object.entries(monster.sections ?? {})) for (const e of esW) {
         const t = String(e.text ?? ''); const hybrid = /Melee or Ranged Attack Roll/.test(t);
         const isMelee = (/Melee Attack Roll/.test(t) && !hybrid) || hybrid; // a HYBRID is the body's weapon too (the Gladiator's thrown Spear on a goliath berserker, critic B)
         const isRanged = /Ranged Attack Roll/.test(t) && !hybrid;
         if (!isMelee && !isRanged) continue;
+        // THE GM'S WEAPON REPLACES PRINT'S: print's melee row yields to a GM-armed melee part, even
+        // when print's row was stamped onto a part slot (Ser Aldous carried the GM's Mace AND the
+        // Guard Captain's Longsword — critic B, 2026-10-19). Checked before the part guard below.
+        if (isMelee && e.print && gmMeleePart && !e.gmArmed && !(e.weapon && gmWeaponSet.has(e.weapon))) {
+          for (const [secY, esY] of Object.entries(monster.sections ?? {})) { const iy = esY.indexOf(e); if (iy >= 0) { esY.splice(iy, 1); trace('class weapon:', `${secY}/"${String(e.name ?? '').replace(/ \(.*\)$/, '')}" yields — the GM named a melee weapon, and the GM's weapon replaces print's rather than riding beside it`); sweepDeadName(monster.sections, e.name, null, trace); } }
+          continue;
+        }
         if (e.part || e.gmArmed || e.userSet) continue; // the GM's own weapon, already its row
         const dmgType = (/\d+ \(\d+d\d+(?: [+-] \d+)?\) ([A-Z][a-z]+) damage/.exec(t) ?? [])[1] ?? null;
         if (dmgType && !PHYS_W.includes(dmgType)) continue; // a magic strike is the class's weapon
@@ -5316,6 +5450,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         if (props?.range && !(hybrid && !props?.thrown)) text = text.replace(/range [\d/]+ ft\./, `range ${props.range} ft.`);
         if (props?.reach) text = text.replace(/reach \d+ ft\./, `reach ${props.reach} ft.`);
         else if (want === 'unarmed strike') text = text.replace(/reach \d+ ft\./, 'reach 5 ft.');
+        // A LAUNCHER ROLLS DEXTERITY (print: every bow, crossbow and firearm row) — the re-armed bow
+        // kept the body's STR bonus (Vashka's longbow at +7 off STR 18 where DEX 13 gives +4)
+        if (props?.launcher || (props?.finesse && !isMelee)) {
+          const pbL = Number(monster.pb ?? scaled.pb ?? 2); const dexL = Math.floor((Number(monster.stats?.DEX ?? 10) - 10) / 2);
+          const nowB = Number((/Attack Roll:\*? \+(\d+)/.exec(text) ?? [])[1]);
+          if (Number.isFinite(nowB) && nowB !== dexL + pbL) {
+            const wasMod = nowB - pbL;
+            text = text.replace(/(Attack Roll:\*? )\+\d+/, `$1+${dexL + pbL}`)
+              .replace(/(\d+) \((\d+d\d+) \+ (\d+)\)/, (m0, avg, dice, b) => (Number(b) === wasMod ? `${Math.max(1, Number(avg) + (dexL - wasMod))} (${dice}${dexL > 0 ? ` + ${dexL}` : ''})` : m0));
+            trace('class weapon:', `"${titleOf(want)}" rolls Dexterity — a launcher is DEX in print: +${nowB} -> +${dexL + pbL}`);
+          }
+        }
         e.text = text.replace(/\s{2,}/g, ' ').trim(); e.name = want === 'unarmed strike' ? 'Unarmed Strike' : titleOf(want); e.weapon = want === 'unarmed strike' ? null : want; e.classArmed = true;
         if (isMelee) { // the on-hit extras follow the new hit's type (Assassinate added Slashing to a Piercing shortsword)
           const hitT = (/\) ([A-Z][a-z]+) damage/.exec(e.text) ?? [])[1] ?? null;
@@ -5336,6 +5482,52 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           for (const es3 of Object.values(monster.sections ?? {})) for (const e3 of es3) if (e3 !== e && reC.test(e3.text ?? '')) e3.text = e3.text.replace(reC, e.name);
         }
         trace('class weapon:', `${secW}/"${from}" -> "${e.name}" — a ${pathD.class} fights with ${want === 'unarmed strike' ? 'its hands' : `a ${want}`}, not the ${pathBody ?? 'body'}'s${folded ? `; the body's rider folds in (+${folded})` : ''}`);
+      }
+    }
+    // THE MULTIATTACK CITES THE ROWS THE SHEET HAS (classes-eight, 2026-10-19). print's Multiattack
+    // lands whole ("using Javelin or Longsword"), but print's Javelin row may never have landed and
+    // the GM's weapon may have replaced print's Longsword — so the citation named two rows that do
+    // not exist while the GM's Mace went uncited. Each dangling name takes the next attack row the
+    // Multiattack does NOT yet cite, in order, so two dangling names never collapse onto one row.
+    {
+      const attackRowsM = Object.values(monster.sections ?? {}).flat().filter((e) => /Attack Roll/.test(e.text ?? ''));
+      const bareM = (e) => String(e.name ?? '').replace(/ \(.*\)$/, '');
+      const haveM = new Set(attackRowsM.map((e) => bareM(e).toLowerCase()));
+      for (const es of Object.values(monster.sections ?? {})) for (const e of es) {
+        if (!/^Multiattack/.test(e.name ?? '')) continue;
+        // print joins with "and" as often as "or" ("using Scimitar and Pistol in any combination"), and
+        // the first cut's lookahead stopped at neither, capturing both names and the tail as ONE name
+        const citedOf = (t) => [...new Set([...String(t).matchAll(/(?:using |makes (?:one|two|three|four|five) |use of |,\s*|\bor |\band )([A-Z][\w'-]*(?: [A-Z][\w'-]*)?)(?= attacks?\b| or\b| and\b| in any combination\b|,|\.|$)/g)].map((x) => x[1].trim()))].filter((n) => !/^attacks?$/i.test(n));
+        const dangling = citedOf(e.text).filter((n) => !haveM.has(n.toLowerCase()));
+        if (!dangling.length) continue;
+        const citedNow = new Set(citedOf(e.text).map((n) => n.toLowerCase()));
+        const spare = attackRowsM.filter((r) => !citedNow.has(bareM(r).toLowerCase()));
+        for (const nm of dangling) {
+          const keep = spare.shift();
+          if (keep) {
+            e.text = e.text.replace(new RegExp(`\\b${nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g'), bareM(keep));
+            trace('multiattack reconciled:', `"${nm}" is no row on this sheet — the Multiattack cites "${bareM(keep)}" instead`);
+          } else { sweepDeadName(monster.sections, nm, null, trace); }
+        }
+      }
+    }
+    priceTheRound("print's"); // print's Multiattack is in place now — the round is priced against the attacks the sheet actually makes (critic A2)
+    // REACH FOLLOWS THE BODY, at the two sizes where print agrees. Print's own
+    // 329 gear lines: Large is reach 5 in 84 of 126 rows, so there is NO floor
+    // at Large; Huge is 10 in 27 of 37 and Gargantuan 15 in 14 of 20. So the
+    // floor is print's modal reach at Huge and Gargantuan only, and print's own
+    // rows are exempt (the Roc's Talons and the Elephant's Gore ARE reach 5).
+    // Runs here because the class re-arm, the melee add and print's canon can
+    // all still change a reach above (the Trench Leviathan's Coil shipped
+    // reach 5 ft on a Gargantuan body — critic, the forty, 2026-10-19).
+    {
+      const floor = { Huge: 10, Gargantuan: 15 }[String(monster.size ?? '').trim()] ?? 0;
+      if (floor) for (const [sec, es] of Object.entries(monster.sections ?? {})) for (const e of (es ?? [])) {
+        if (e.print) continue;
+        const m = /reach (\d+) ft\./.exec(e.text ?? '');
+        if (!m || Number(m[1]) >= floor) continue;
+        e.text = e.text.replace(/reach \d+ ft\./, `reach ${floor} ft.`);
+        trace('reach follows the body:', `${sec}/"${e.name}" reach ${m[1]} → ${floor} ft. on a ${monster.size} body (print's modal reach at that size)`);
       }
     }
     // Layer 3 — vulnerability, concept-warranted and model-declared,
@@ -6270,7 +6462,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         }
       }
       if (sp.ac_floor && Number(monster.ac) < sp.ac_floor && !monster.generation?.declared?.ac) { trace('species kit:', `AC ${monster.ac} -> ${sp.ac_floor} — the ${sp.key}'s shell is natural armor (no chassis hands a tortle AC 13 — the critic's third species read)`); monster.ac = sp.ac_floor; }
-      for (const [mode, n] of Object.entries(sp.modes ?? {})) if (!new RegExp(`\\b${mode} \\d+ ft`, 'i').test(monster.speed ?? '')) { monster.speed = `${String(monster.speed ?? '30 ft.').replace(/,\s*$/, '')}, ${mode} ${n} ft.`; trace('species kit:', `${mode} ${n} ft. — the ${sp.key}'s`); }
+      // THE SPECIES' OWN MODE IS THE NUMBER (critic B, fifth read, 2026-10-19): a lizardfolk swims 30,
+      // and the chassis's 40 stood because the mode was only ADDED when absent. The kit's number is
+      // the species' own; a chassis speed above it stands only when the GM's words name a speed.
+      for (const [mode, n] of Object.entries(sp.modes ?? {})) {
+        const re = new RegExp(`\\b${mode} (\\d+) ft`, 'i'); const have = re.exec(monster.speed ?? '');
+        if (!have) { monster.speed = `${String(monster.speed ?? '30 ft.').replace(/,\s*$/, '')}, ${mode} ${n} ft.`; trace('species kit:', `${mode} ${n} ft. — a ${sp.key}'s own`); continue; }
+        if (Number(have[1]) === n) continue;
+        const gmSaidSpeed = new RegExp(`\\b(?:${mode}|swim|fly|climb|burrow)\\w*\\s+\\d+`, 'i').test(readPhrases(String(options.userConcept ?? concept ?? '')));
+        if (gmSaidSpeed) continue;
+        trace('species kit:', `${mode} ${have[1]} ft. -> ${n} ft. — the ${sp.key}'s own number; the chassis's stands only if the GM's words name a speed`);
+        monster.speed = String(monster.speed).replace(re, `${mode} ${n} ft`);
+      }
       if (sp.senses) { const want = /(\w+) (\d+) ft/.exec(sp.senses); const have = want ? new RegExp(`${want[1]} (\\d+) ft`, 'i').exec(monster.senses ?? '') : null; if (want && !have) { monster.senses = `${sp.senses}${monster.senses ? `, ${monster.senses}` : ''}`.replace(/, (Passive Perception)/, '; $1'); trace('species kit:', `${sp.senses} — the ${sp.key}'s`); } else if (want && have && Number(have[1]) < Number(want[2])) { monster.senses = monster.senses.replace(have[0], `${want[1]} ${want[2]} ft`); trace('species kit:', `${want[1]} ${have[1]} -> ${want[2]} ft. — the ${sp.key}'s`); } }
       // THE SPECIES' OWN TONGUE (the critic's fifth read). The generator's
       // species-language list only ever fired on a Humanoid, so a satyr, a

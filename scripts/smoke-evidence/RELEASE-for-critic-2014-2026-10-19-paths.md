@@ -3160,7 +3160,7 @@ Shield Bash: One creature within 5 feet of Bellard that it can see must make a D
 
 ---
 
-## Review batch — classes-eight-2026-10-19T15-34-38
+## Review batch — classes-eight-2026-10-19T19-07-00
 
 The checker ran first. The gate table covers every block in the run; every block of the run follows. Each block carries its checker row above and its engine trace below. Hand-derive against the row first; then read for what predicates can't see.
 
@@ -3168,43 +3168,45 @@ The checker ran first. The gate table covers every block in the run; every block
 
 | block | CR | ed | donor | derivation | bands | structure | gates | headerBody | edition | donor | adjudicability | reader | class | verdict | coverage | concept |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Open-Palmed Adept | 5 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 6/6 |
-| Vexia Emberhorn | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/5 |
+| Warren Nerve-Striker | 5 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 6/6 |
+| Sable Gutter | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/5 |
 | Dame Oriel | 5 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/4 |
-| Harrowic Vane | 6 (2014) | 2014 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/4 |
-| Rockscar Radrik | 8 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 6/6 |
+| Sergeant Bram Coldewe | 6 (2014) | 2014 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/4 |
+| Vaultbreaker Hildr | 8 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 6/6 |
 | Vareth Solmane | 6 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | ok | ok | soft (1) | 1/1 | 5/5 |
-| Ser Aldous Wrack | 4 | 2024 | defender-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 3/3 |
-| Halfstep Counselor | 6 | 2024 | caster-6 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/4 |
+| Aeldric Stonevow | 4 | 2024 | defender-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 3/3 |
+| Sorn Vaelith | 6 | 2024 | caster-6 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/4 |
 | Thurivald | 6 (2014) | 2014 | defender-5 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | ok | ok | soft (1) | 1/1 | 5/5 |
-| Oathbound Battlematron | 8 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | ok | ok | soft (1) | 2/2 | 5/6 |
-| Kageyama | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 2/2 | 5/5 |
-| Timberland Alpha | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 2/2 |
-| Under-Maze Herder | 6 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 2/3 |
-| Ser Bramwell Rook | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/3 |
+| Sister Halvane | 8 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | ok | ok | soft (1) | 2/2 | 6/7 |
+| Nameless Shade | 5 | 2024 | skirmisher-3-skulker | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 5/6 |
+| Deep Timber Dire Wolf | 3 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 2/2 |
+| Quill | 4 | 2024 | skirmisher-3 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | ok | ok | soft (1) | 1/1 | 5/5 |
+| Maze-herder | 6 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 2/4 |
+| Hollow Vow | 7 | 2024 | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/4 |
+| Whisperveil | 3 | 2024 | skirmisher-3 | ok | ok | SOFT: multiattack-count | ok | ok | ok | ok | ok | FAIL: attack-in-multiattack, attack-in-multiattack | ok | FAIL (1) | 0/1 | 4/4 |
 
-**Dropped 2 of 17 user clauses** (coverage 88%); concept share 97% (59/61 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 4 of 19 user clauses** (coverage 79%); concept share 93% (69/74 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
-- none
+- skirmisher-3 / reader: 1
 
 
 
 ---
 
 
-### Harrowic Vane — a 2014 sheet
+### Sergeant Bram Coldewe — a 2014 sheet
 
 **Concept:** a veteran soldier with a longsword who bashes with a buckler
 
 | block | CR | donor | derivation | bands | structure | gates | headerBody | edition | donor | adjudicability | reader | class |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Harrowic Vane | 6 (2014) | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok |
+| Sergeant Bram Coldewe | 6 (2014) | defender-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok |
 
 - clean
 - read: def 4 / off 10 → 7; sustained 66 (3 × Longsword); nova none; dmg 66
 
 ```
-Harrowic Vane
+Sergeant Bram Coldewe
 Medium humanoid, neutral
 Armor Class
 
@@ -3267,13 +3269,13 @@ Proficiency Bonus:
 
 +3
 
-Second Wind (2/Day). As a bonus action, Harrowic regains 19 (3d12) hit points.
-Riposte (Reaction). When a creature within 5 feet of Harrowic misses it with a melee attack roll, Harrowic makes one Longsword attack against that creature.
+Second Wind (2/Day). As a bonus action, Bram regains 19 (3d12) hit points.
+Riposte (Reaction). When a creature within 5 feet of Bram misses it with a melee attack roll, Bram makes one Longsword attack against that creature.
 
 Actions
-Multiattack: Harrowic makes three Longsword attacks. It can replace one attack with a use of Shield Bash.
-Longsword: Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 22 (4d8 + 4) slashing damage, and the target has disadvantage on its next attack roll before the start of Harrowic's next turn.
-Shield Bash: One creature within 5 feet that Harrowic can see must succeed on a DC 15 Strength saving throw or take 10 (3d6) bludgeoning damage, and if the target is Medium or smaller, it is knocked prone.
+Multiattack: Bram makes three Longsword attacks. It can replace one attack with a use of Shield Bash.
+Longsword: Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 22 (4d8 + 4) slashing damage, and the target has disadvantage on its next attack roll before the start of Bram's next turn.
+Shield Bash: One creature within 5 feet that Bram can see must succeed on a DC 15 Strength saving throw or take 10 (3d6) bludgeoning damage, and if the target is Medium or smaller, it is knocked prone.
 ```
 
 **Where each row came from**
@@ -3287,14 +3289,26 @@ Shield Bash: One creature within 5 feet that Harrowic can see must succeed on a 
 **Engine trace**
 
 ```
+!! Error generating response: TypeError: Failed to fetch
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
+    at enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:26)
+    at saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1792434810733:1436:30)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1792434810733:1275:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1792434810733:657:5)
+!! [ENRICHMENT] Failed to enrich Dame Oriel: TypeError: Failed to fetch
+    at generateGptResponse (http://localhost:5173/src/util/ai-client.mjs:246:26)
+    at enrichCustomStatblock (http://localhost:5173/src/util/statblock-enrichment.mjs:303:26)
+    at saveGeneratedMonster (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1792434810733:1436:30)
+    at async generateStatblockEngine (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1792434810733:1275:3)
+    at async generateStatblock (http://localhost:5173/src/tools/statblock-generator/StatblockGenerator.vue?t=1792434810733:657:5)
 [path] class_npc — class fighter — "soldier" (call)
-[route] defender type=Humanoid mechanics=none — casts: the call reads no worked magic here | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | holds: the call reads none in these words | defender: ✓ ("a veteran soldier") | defender: no line key in the words — the model's read of its quote
+[route] defender type=Humanoid mechanics=none — casts: the call reads no worked magic here | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | holds: the call reads none in these words | defender: ✓ ("a veteran soldier with a longsword who b") | defender: no line key in the words — the model's read of its quote
 [concept] resolve: archetype=defender type=Humanoid themes=armed/forged mind=sapient style=— energy=— mix=physical identity=✓ lore=✓
 [concept] name: not provided — the input describes, the generator names it
 [concept] mechanics: none claimed
-[concept] signature elements: buckler bash to stagger and shove [behavior] | longsword thrust into the opening [object] | rooted line-holding guard that punishes anyone slipping past [behavior]
-[concept] identity: A disciplined line-holder who opens by advancing shield-first, using the buckler to turn aside blows and shove attackers off balance before driving the longsword into the gap. Every round it fights as a patient duelist, bashing to stagger then thrusting to finish, and it anchors itself in place to punish anyone who tries to slip past its reach. Under pressure it does not flee — it tightens its guard, fights to the death, and stays rooted until the line breaks or it does.
-[concept] lore: A career soldier who outlived every banner he swore to and now sells his unbroken guard to whoever holds the wall, wanting only a steady wage and a fight he can win on his feet.
+[concept] signature elements: longsword cut and thrust [object] | buckler bash that shoves and pins [object] | holds the line, punishes movement past him [behavior]
+[concept] identity: A drilled line-fighter who opens by advancing behind his buckler to pin the nearest enemy in place, then works the longsword in short, economical cuts while keeping his shield between himself and the next blade. Every round he holds ground and punishes anyone who tries to slip past him, bashing the buckler into faces and knees to shove them back into the fight. He is a professional, not a fanatic: wounded badly he falls back in good order, cutting to cover his retreat rather than dying for a patch of dirt.
+[concept] lore: A career soldier who outlived three banners and every officer who ever gave him an order, he now fights for whoever pays in coin and lets him keep his old sword-and-buckler drill.
 [reskin] [path] class body: the fighter stands on the Gladiator — the class's own print block, nearest CR 6
 [reskin] print canon defenses: HP 114 -> 112, AC 18 -> 16 — the Gladiator's at its own CR (a kobold sat at 21 HP where print is 7, critic form-ten 2026-10-01)
 [reskin] print canon armor: 16 (studded leather, shield) — print's Gear line; the 2014 sheet prints it (the Goblin Boss wore "splint", canaries 2026-10-12)
@@ -3307,28 +3321,30 @@ Shield Bash: One creature within 5 feet that Harrowic can see must succeed on a 
 [reskin] named parts landed: 1 attack row(s), 0 save, 0 trait(s), 0 reaction(s); 0 clause(s) unplaced
 [reskin] chassis row off: Actions/"Buckler Bash" leaves — the GM named a melee weapon (Longsword); one weapon, one rule set
 [reskin] class kit: fighter — "soldier": Riposte (riposte), Shield Bash (shield-bash), Second Wind (2/Day) (second-wind)
-[reskin] inline declared: "Harrowic" — the call's own answer (person), built from the name
-[reskin] inline form: "Harrowic" — the model's own reading of the name
+[reskin] inline declared: "Bram" — the call's own answer (person), built from the name; the rules would have said "the sergeant"
+[reskin] inline on kit rows: "the sergeant" -> "Bram"
+[reskin] inline form: "Bram" — the model's own reading of the name
 [reskin] lacks asked: nothing taken away
-[reskin] asked field dropped: the call answered limit "at_will" for "bashes with a buckler" but offered no quote
 [reskin] clauses: "a veteran soldier with a longsword" -> has (descriptive), head | "bashes with a buckler" -> has (mechanical) [asked: attack]
 [reskin] menu pruned: action — push-prone (the sheet cannot render them)
-[reskin] signature idea (action): "When Harrowic hits a creature he has already knocked off balance with his buckler, he drives the longsword into that opening and the wound bleeds freely, leaving the target unable to recover its footing for a short while. The strike only lands this brutal way against someone he has just staggered, so it rewards following a bash with an immediate thrust." [rider/on_hit/damage] — menu: stunning-strike, charge-push, hook-rider (+ shelf: seal, active-toll, random-ray, ground-burst, obstacle-pull, terror-pulse, slow-bolt, disarm, herd, curse-debt, reveal, wind-up, exploiter, patient-defense, lay-on-hands, aggro-curse, own-turn-punisher, self-invisibility, rally)
+[reskin] signature idea (action): "When a foe tries to maneuver around or slip past Bram, he steps into its path and drives the buckler's rim into its knee or chest, dumping it to the ground and halting the move where it stands. It only works on someone he can see turning to leave his reach, and only when he has not already spent his moment punishing another's escape that round." [reaction/on_being_hit/condition] — menu: EMPTY (+ shelf: seal, active-toll, random-ray, ground-burst, obstacle-pull, terror-pulse, slow-bolt, disarm, herd, curse-debt, reveal, wind-up, exploiter, patient-defense, lay-on-hands, aggro-curse, own-turn-punisher, self-invisibility, rally, stunning-strike, charge-push, hook-rider)
+[reskin] word match declined by the call: herd, own-turn-punisher — the key word does not mean the mechanic here
 [reskin] decline reason: action — the call answered none and names it "no_fit"
-[reskin] signature miss: action — "When Harrowic hits a creature he has already knocked off balance with his buckler, he drives the longsword into that opening and the wound bleeds freely, leaving the target unable to recover its footing for a short while. The strike only lands this brutal way against someone he has just staggered, so it rewards following a bash with an immediate thrust." [rider/on_hit/damage] — the model found no template that holds it (offered: stunning-strike, charge-push, hook-rider, herd, own-turn-punisher)
+[reskin] signature miss: action — "When a foe tries to maneuver around or slip past Bram, he steps into its path and drives the buckler's rim into its knee or chest, dumping it to the ground and halting the move where it stands. It only works on someone he can see turning to leave his reach, and only when he has not already spent his moment punishing another's escape that round." [reaction/on_being_hit/condition] — the model found no template that holds it (offered: herd, own-turn-punisher)
+[reskin] fallback respects the call: own-turn-punisher, herd left the shelf — the call declined them for this sheet
 [reskin] fallback stands down: the class_npc path has no shelf — the Gladiator's rows plus the receipted seat are the composition
 [reskin] signature dropped — no template held the idea and no seed is legal on this sheet
 [reskin] trait gated by AC: "guarded-stance" is off the menu — AC 16 already beats print's AC 15 at CR 6, and print ships no persistent Disadvantage-to-be-hit trait (0 of 329)
 [reskin] menu pruned: trait — guarded-stance (the sheet cannot render them)
-[reskin] signature idea (trait): "Harrowic plants himself where he stands and dares the fight to move; anyone who turns their back on him to slip past his guard feels the longsword bite their flank as they go. He never chases — he simply makes leaving his reach cost blood." [trait/always/damage] — menu: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, relentless-pursuit, bound, marking-light, sealed-body, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura (+ shelf: absorption, bloodied-burst, resonant-body, warded-mending, weapon-lodge)
-[reskin] word match declined by the call: guarded-stance, relentless-pursuit, bound, faultless-tracker — the key word does not mean the mechanic here
+[reskin] signature idea (trait): "Bram never wastes his cuts: when a foe is knocked down or off balance by his own weapon work, his follow-up longsword strokes come faster and land where the guard is open, so a foe he has already staggered pays double for staying in his reach." [trait/always/damage] — menu: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, relentless-pursuit, bound, marking-light, sealed-body, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura (+ shelf: absorption, bloodied-burst, resonant-body, warded-mending, weapon-lodge)
+[reskin] word match declined by the call: guarded-stance, shielded-mind — the key word does not mean the mechanic here
 [reskin] decline reason: trait — the call answered none and names it "no_fit"
-[reskin] signature miss: trait — "Harrowic plants himself where he stands and dares the fight to move; anyone who turns their back on him to slip past his guard feels the longsword bite their flank as they go. He never chases — he simply makes leaving his reach cost blood." [trait/always/damage] — the model found no template that holds it (offered: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, relentless-pursuit, bound, marking-light, sealed-body, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura, bloodied-burst)
-[reskin] weapons answered: Longsword = longsword; Buckler Bash = buckler (shield)
-[reskin] print canon multiattack: "Harrowic makes three Spear attacks. It can replace one attack with a use of Shield Bash." — the Gladiator's own
+[reskin] signature miss: trait — "Bram never wastes his cuts: when a foe is knocked down or off balance by his own weapon work, his follow-up longsword strokes come faster and land where the guard is open, so a foe he has already staggered pays double for staying in his reach." [trait/always/damage] — the model found no template that holds it (offered: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, relentless-pursuit, bound, marking-light, sealed-body, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura)
+[reskin] weapons answered: Longsword = longsword; Buckler Bash = buckler
+[reskin] print canon multiattack: "Bram makes three Spear attacks. It can replace one attack with a use of Shield Bash." — the Gladiator's own
 [reskin] print canon skills: "Athletics +7, Perception +4" -> "Athletics +10, Performance +5" — the Gladiator's own skills, each derived from this sheet's stat and PB
-[reskin] multiattack re-read — "Longsword" joins the combination; "Harrowic makes three attacks, using Spear or Longsword in any combination. It can replace "
-[reskin] multiattack re-read: "Spear" is not on this sheet, so the combination now reads "Harrowic makes three Longsword attacks. It can replace one attack with a use of "
+[reskin] multiattack re-read — "Longsword" joins the combination; "Bram makes three attacks, using Spear or Longsword in any combination. It can replace one "
+[reskin] multiattack re-read: "Spear" is not on this sheet, so the combination now reads "Bram makes three Longsword attacks. It can replace one attack with a use of Shie"
 [reskin] 2014 conversion: one lint-gated call — both printings saved
 ```
 
@@ -3412,8 +3428,8 @@ Proficiency Bonus:
 +3
 
 Guard Aura. While in a 10-foot-radius sphere centered on Thurivald, Thurivald's allies have advantage on saving throws, provided Thurivald isn't incapacitated.
-Captain's Charm. As a bonus action, Thurivald targets one creature it can see within 30 feet of it. The target must succeed on a DC 14 Wisdom saving throw or be charmed by Thurivald until the start of Thurivald's next turn.
-Bolstering Cry (2/Day). As a bonus action, Thurivald grants each ally within 30 feet of it 10 (3d6) temporary hit points.
+Captain's Charm (Bonus Action). One creature Thurivald can see within 30 feet must succeed on a DC 14 Wisdom saving throw or be charmed until the start of Thurivald's next turn.
+Bolstering Cry (2/Day). As a bonus action, Thurivald lets out a bolstering cry. Each ally within 30 feet of Thurivald gains 10 (3d6) temporary hit points.
 
 Actions
 Multiattack: The thurivald makes three attacks, using Rapier or Hand Crossbow.
@@ -3434,14 +3450,14 @@ Hand Crossbow: Ranged Weapon Attack: +7 to hit, range 30/120 ft., one target. Hi
 
 ```
 [path] class_npc — class bard — "skald" (call)
-[route] defender-leader type=Humanoid mechanics=aura — casts: on the GM's own words "sings his warband into a fury" | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | holds: the call reads none in these words | defender-leader: ✓ ("sings his warband into a fury") | defender-leader: no line key in the words — the model's read of its quote
+[route] defender-leader type=Humanoid mechanics=aura — casts: the call reads no worked magic here | shoots: the call reads none in these words | is_a_swarm: the call reads none in these words | holds: the call reads none in these words | defender-leader: ✓ ("sings his warband into a fury") | defender-leader: no line key in the words — the model's read of its quote
 [concept] name: "Thurivald" — the Name field, beside a description; the field is the fact, the call is not asked
 [concept] resolve: archetype=defender type=Humanoid themes=voice/armed mind=sapient style=leader energy=Thunder mix=both identity=✓ lore=✓
 [concept] name: provided "Thurivald"
 [concept] mechanics: aura
-[concept] signature elements: a war-song that rallies and enrages the warband [behavior] | the iron-rimmed drum and skald's voice [object] | the commander at the center of his singers [aura]
-[concept] identity: Thurivald opens by planting himself at the center of his warband and throwing his voice into a skald's war-song, and every round after that he paces the line, keeping allies within his song and striking down anyone who pushes past it. He fights to the last verse — retreating only to reform the choir around new ground — because he is the rhythm the warband marches to.
-[concept] lore: Thurivald was a hired skald who learned that his verses could bind men past reason, and now he sells that fury to whatever warband buys his mead.
+[concept] signature elements: the war-chant that drives allies into fury [behavior] | a shield-wall fought from the center, never the rear [behavior] | a voice iron-hard and pitched to carry over steel [body]
+[concept] identity: Thurivald opens by planting himself beside his warband and splitting the air with a war-chant, and from then on he is a fixed center his allies orbit — the dirge drives them into a blood-fury while he parries and shoves, never leaving the knot of bodies he has welded into a choir. Under pressure he redoubles the song instead of retreating, dragging the wounded back into the rhythm, so killing him means cutting the voice out of a shield-wall that fights harder the longer he sings. He is a warlord of the throat and the shield, not a skirmisher.
+[concept] lore: Thurivald was a war-band's skald who learned that a song kept alive in the throat outlives the singer, and now he walks from battlefield to battlefield recruiting the grieving into a chorus that only knows how to march.
 [reskin] energy withheld: Thunder on a Humanoid with no Thunder in the concept's own words (fixed phrases read first)
 [reskin] [path] class body: the bard stands on the Pirate Captain — the class's own print block, nearest CR 6
 [reskin] print canon route: the Pirate Captain's body outranks the leader seat — no verb in the words names it; the plain defender line
@@ -3450,39 +3466,40 @@ Hand Crossbow: Ranged Weapon Attack: +7 to hit, range 30/120 ft., one target. Hi
 [reskin] donor: defender-5 -> CR 6
 [reskin] [path] decides: class_npc on the Pirate Captain · class bard (the matcher would have said homebrew)
 [reskin] print canon: "Thurivald — a skald who sings his warband into a fury" heads on the Pirate Captain — print's rows ride along; the seat stays
-[reskin] repair round 1: 1 defect(s) — "Warpipe" deals Thunder on a Humanoid whose concept names no Thunder — a name is not a warrant; use a physical type
+[reskin] repair round 1: 2 defect(s) — name "War Horn" is a natural weapon on a Humanoid whose concept gives it none — a Humanoid swings a weapon (Scimitar, Club, Spear) | "War Horn" deals Thunder on a Humanoid whose concept names no Thunder — a name is not a warrant; use a physical type
 [reskin] class kit: bard — "skald": Captain's Charm (Pirate Captain/Captain's Charm), Bolstering Cry (2/Day) (rally)
 [reskin] proper noun: "Thurivald" — the Name field is a person, not a kind (no print match, no article in the words)
 [reskin] inline declared: "Thurivald" — the call's own answer (person), built from the name
 [reskin] inline form: "Thurivald" — the model's own reading of the name
-[reskin] energy rider withheld: Thunder on a Humanoid with no Thunder in the concept's own words
-[reskin] energy withheld on a base row: "Warpipe" Thunder -> Piercing (the body's physical type; a Humanoid deals no Thunder its concept never gave it)
+[reskin] energy withheld on a base row: "War Horn" Thunder -> Piercing (the row's own noun; a Humanoid deals no Thunder its concept never gave it)
 [reskin] lacks asked: nothing taken away
 [reskin] clauses: "Thurivald — a skald" -> has (descriptive), head | "sings his warband into a fury" -> has (descriptive)
 [reskin] menu pruned: action — snap-shot (the sheet cannot render them)
-[reskin] signature idea (action): "Thurivald looses a rising war-song that only his enemies can truly hear the sting of: every foe near him feels the verse turn their own blood hot until they lose their footing and stumble into the warband's line. Allies under the song are untouched, but those who came to fight him find their nerves frayed and their guard broken for as long as the verse carries." [action/save/condition] — menu: throw-retrieve, seal, shield-bash, active-toll, random-ray, ground-burst, obstacle-pull, terror-pulse, slow-bolt, disarm, push-prone, herd, curse-debt, reveal, wind-up, exploiter (+ shelf: patient-defense, lay-on-hands, second-wind, aggro-curse, own-turn-punisher, self-invisibility, riposte, stunning-strike, charge-push, hook-rider)
-[reskin] word match declined by the call: own-turn-punisher, stunning-strike — the key word does not mean the mechanic here
-[reskin] fit declined: "Staggering Verse" — a print body takes only what the user's words ask; the call offered no quote, and the key table finds no verb either (the blacksmith's rally, critic-ten 2026-10-01)
-[reskin] fallback respects the call: own-turn-punisher left the shelf — the call declined it for this sheet
+[reskin] signature idea (action): "Thurivald pitches the war-chant up into a driving verse, and every ally who can hear him is swept into fury — their blows come faster and landing a hit only stokes the chant louder. It runs until the singing stops, so the warband fights hardest while he stands at their center, but each ally only catches the fury once per battle." [action/always/damage] — menu: throw-retrieve, seal, shield-bash, active-toll, random-ray, ground-burst, obstacle-pull, terror-pulse, slow-bolt, disarm, push-prone, herd, curse-debt, reveal, wind-up, exploiter (+ shelf: patient-defense, lay-on-hands, second-wind, aggro-curse, own-turn-punisher, self-invisibility, riposte, stunning-strike, charge-push, hook-rider)
+[reskin] word match declined by the call: terror-pulse, active-toll, herd — the key word does not mean the mechanic here
+[reskin] decline reason: action — the call answered none and names it "no_fit"
+[reskin] signature miss: action — "Thurivald pitches the war-chant up into a driving verse, and every ally who can hear him is swept into fury — their blows come faster and landing a hit only stokes the chant louder. It runs until the singing stops, so the warband fights hardest while he stands at their center, but each ally only catches the fury once per battle." [action/always/damage] — the model found no template that holds it (offered: throw-retrieve, seal, shield-bash, active-toll, random-ray, ground-burst, obstacle-pull, terror-pulse, slow-bolt, disarm, push-prone, herd, curse-debt, reveal, wind-up, exploiter)
+[reskin] fallback respects the call: herd, terror-pulse left the shelf — the call declined them for this sheet
 [reskin] fallback stands down: the class_npc path has no shelf — the Pirate Captain's rows plus the receipted seat are the composition
 [reskin] signature dropped — no template held the idea and no seed is legal on this sheet
 [reskin] trait gated by AC: "guarded-stance" is off the menu — AC 17 already beats print's AC 15 at CR 6, and print ships no persistent Disadvantage-to-be-hit trait (0 of 329)
 [reskin] menu pruned: trait — guarded-stance (the sheet cannot render them)
-[reskin] signature idea (trait): "The iron-rimmed drum at Thurivald's belt answers any blow struck against him with a resonant thunder that stirs nearby allies into a fresh surge of fury, so that harming him only sharpens the warband around him." [trait/on_being_hit/condition] — menu: absorption, bloodied-burst, resonant-body, weapon-lodge (+ shelf: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, relentless-pursuit, bound, marking-light, sealed-body, warded-mending, undead-fortitude, mimicry, truth-aura, gaze-aura)
+[reskin] signature idea (trait): "His voice is pitched to carry over steel: any ally who can hear the chant is goaded onward and presses the attack even when wounded, and an enemy who tries to shut him up finds the song outlasts the blow." [trait/always/movement] — menu: false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, bloodied-fury, uncanny-sense, berserk, shielded-mind, relentless-pursuit, bound, marking-light, sealed-body, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura (+ shelf: absorption, bloodied-burst, resonant-body, warded-mending, weapon-lodge)
 [reskin] signature bound to the concept's verb: trait — bloodied-fury (fury)
-[reskin] word match declined by the call: bloodied-fury — the key word does not mean the mechanic here
-[reskin] trait declined: "Drumbeat Rebuke" — bound only on the idea's own words (iron:idea) with no key in the concept; a meat body earns its trait by the user's verb (the sniper's tracker, critic 2026-09-29)
-[reskin] weapons answered: Handaxe = handaxe; Warpipe = none
+[reskin] word match declined by the call: bloodied-fury, resonant-body, mimicry — the key word does not mean the mechanic here
+[reskin] decline reason: trait — the call answered none and names it "no_fit" after being shown bloodied-fury, which the GM's words keyed
+[reskin] key match declined: trait — "bloodied-fury" was ranked first on the call's own menu for fury, and the call read it as a collision, not the mechanic; the words keep their claim and nothing is forced
+[reskin] signature miss: trait — "His voice is pitched to carry over steel: any ally who can hear the chant is goaded onward and presses the attack even when wounded, and an enemy who tries to shut him up finds the song outlasts the blow." [trait/always/movement] — the model found no template that holds it (offered: bloodied-fury, false-appearance, adhesive, phobia, terrain-walk, aberrant-ground, faultless-tracker, web-walker, uncanny-sense, berserk, shielded-mind, relentless-pursuit, bound, marking-light, sealed-body, guarded-stance, undead-fortitude, mimicry, truth-aura, gaze-aura, bloodied-burst, resonant-body)
+[reskin] weapons answered: Cudgel = club; War Horn = none
 [reskin] languages by mind: "None" -> "Common" (sapient)
 [reskin] print canon languages: "Common" -> "Common plus one other language" — the Pirate Captain's
 [reskin] print canon row: Actions/Pistol — the Pirate Captain's own ranged row, added (the chassis carried none to rename)
-[reskin] print canon attack: "Handaxe" -> "Rapier" — the Pirate Captain's own row
+[reskin] print canon attack: "Cudgel" -> "Rapier" — the Pirate Captain's own row
 [reskin] print canon multiattack: "The pirate makes three attacks, using Rapier or Pistol in any combination." — the Pirate Captain's own
 [reskin] print canon skills: "Athletics +3, Perception +5" -> "Acrobatics +7, Perception +5" — the Pirate Captain's own skills, each derived from this sheet's stat and PB
-[reskin] print canon: chassis row leaves — Actions/"Warpipe" — the Pirate Captain prints no row for it and no path stage claimed it
+[reskin] print canon: chassis row leaves — Actions/"War Horn" — the Pirate Captain prints no row for it and no path stage claimed it
 [reskin] multiattack re-read — "Pistol" left; "Multiattack" now reads "The pirate makes three Rapier attacks."
 [reskin] class weapon: Actions/"Pistol" -> "Hand Crossbow" — a bard fights with a hand crossbow, not the Pirate Captain's
-[reskin] audit rename blocked — "Captain's Charm" is the user's own part name, a kit feature's real name, or print's own row
 [reskin] multiattack re-read — "Hand Crossbow" joins the combination; "The pirate makes three attacks, using Rapier or Hand Crossbow in any combination."
 [reskin] 2014 conversion: one lint-gated call — both printings saved
 ```
@@ -3493,7 +3510,7 @@ Hand Crossbow: Ranged Weapon Attack: +7 to hit, range 30/120 ft., one target. Hi
 
 ---
 
-## Review batch — twist-ten-2026-10-19T15-11-36
+## Review batch — twist-ten-2026-10-19T15-22-58
 
 The checker ran first. The gate table covers every block in the run; every block of the run follows. Each block carries its checker row above and its engine trace below. Hand-derive against the row first; then read for what predicates can't see.
 
@@ -3501,22 +3518,20 @@ The checker ran first. The gate table covers every block in the run; every block
 
 | block | CR | ed | donor | derivation | bands | structure | gates | headerBody | edition | donor | adjudicability | reader | class | verdict | coverage | concept |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Silverwary Troll | 6 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 4/4 |
-| Fen-Burn Hydra | 8 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | FAIL: multiattack-integrity | ok | FAIL (1) | 1/1 | 4/4 |
-| Pass-Keeper Grath | 2 | 2024 | defender-1 | ok | ok | SOFT: reach | ok | ok | ok | ok | ok | ok | ok | soft (1) | 1/1 | 4/4 |
-| Purple Worm | 15 | 2024 | brute-13 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/3 |
-| Dire Wolf | 1 | 2024 | skirmisher-1 | ok | ok | SOFT: multiattack-count | ok | ok | ok | ok | ok | FAIL: multiattack-integrity | ok | FAIL (1) | 1/1 | 2/2 |
-| Jarl Hrimgar | 9 | 2024 | skirmisher-8 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 3/3 |
-| Forgotten Watchman | 1 | 2024 | skirmisher-1 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 2/2 |
-| Moonsplit Two-Head | 2 | 2024 | skirmisher-1 | ok | FAIL: under | SOFT: multiattack-count | ok | ok | ok | ok | ok | FAIL: multiattack-integrity | ok | FAIL (2) | 1/1 | 1/1 |
-| Steward of the Springs | 13 | 2024 | lurker-8 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 8/8 |
-| Last Ringer | 3 | 2024 | lurker-2 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 0/1 | 7/7 |
+| Silverbane Troll | 6 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | ok | ok | soft (1) | 1/1 | 5/5 |
+| Sumpcoil Hydra | 8 | 2024 | brute-5 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 5/5 |
+| Hobgoblin Halberdier | 2 | 2024 | skirmisher-1 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 4/4 |
+| Purple Worm | 15 | 2024 | brute-13 | ok | ok | ok | ok | ok | ok | SOFT: print-rows | ok | ok | ok | soft (1) | 1/1 | 4/4 |
+| Dire Wolf | 1 | 2024 | skirmisher-1 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 3/3 |
+| Hoarfrost Jarl | 9 | 2024 | skirmisher-8 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/2 | 3/3 |
+| Oathbound Quiver | 1 | 2024 | skirmisher-1 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 2/2 |
+| Bleed Den Twin | 2 | 2024 | skirmisher-1 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 2/2 |
+| Scaldwell | 13 | 2024 | lurker-8 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 8/8 |
+| Hollow Chime | 3 | 2024 | lurker-2 | ok | ok | ok | ok | ok | ok | ok | ok | ok | ok | clean | 1/1 | 6/7 |
 
-**Dropped 3 of 11 user clauses** (coverage 73%); concept share 100% (38/38 rows). A run with zero fails and 60% coverage is a failing run.
+**Dropped 1 of 11 user clauses** (coverage 91%); concept share 98% (42/43 rows). A run with zero fails and 60% coverage is a failing run.
 **Fails by seat and gate:**
-- skirmisher-1 / reader: 2
-- brute-5 / reader: 1
-- skirmisher-1 / bands: 1
+- none
 
 
 

@@ -1,6 +1,8 @@
-# Case: one decision, five pipelines — the dispatcher and what it fixed (2026-10-19)
+# Case: one decision, five pipelines — the brief, closed (2026-10-20)
 
-Four packages in one file, oldest first. The case opened on the lurker's pricing (2026-10-18) and
+Five packages in one file, oldest first. **This is the first read of the finished
+architecture.** Packages one to four showed a half-migrated engine: three paths had moved onto
+the dispatcher and the homebrew path had not. Steps 6 and 7 close it. The case opened on the lurker's pricing (2026-10-18) and
 became the path work: the engine used to infer what it was building at six places with six word
 rules, and now decides once. Each package below is the critic's read and the answer to it.
 
@@ -8,6 +10,8 @@ rules, and now decides once. Each package below is the critic's read and the ans
 - **Package two** — the critic's A1–A9 on that forty (2026-10-18 night).
 - **Package three** — the dispatcher: the path call, print-with-a-twist, class NPC (2026-10-19).
 - **Package four** — the critic's read of the dispatcher forty, answered (2026-10-19). **0 FAIL of 40.**
+- **Package five** — the forty's four residuals, then steps 6 and 7: the retirements and the
+  homebrew pipeline (2026-10-20). **29 clean / 11 soft / 0 FAIL of 40.**
 
 ## Package one — the lurker is underpowered: price the trade, not the gate (2026-10-18)
 
@@ -479,9 +483,22 @@ across runs is donor variance — the sameness axis, measured at stage 5. On rec
 | run | generated | checker |
 |---|---|---|
 | **the forty (`sweep-2026-10-19T18-35-07`)** | **40/40** | **26 clean / 14 soft / 0 FAIL** (the package the critic read: 21 / 15 / 4) |
-| classes-eight | 14 | 0 FAIL |
-| twist-ten | 10/10 | 0 FAIL |
-| twist-five | 5/5 | 0 FAIL |
+| classes-eight (`19-07-00`) | 16/16 | 11 clean / 4 soft / 1 FAIL |
+| twist-ten (`15-22-58`) | 10/10 | 7 clean / 3 soft / 0 FAIL |
+| twist-five (`15-14-56`) | 5/5 | 4 clean / 1 soft / 0 FAIL |
+
+Every number above is the run included in this package, and nothing else. The classes-eight FAIL is
+Whisperveil's emptied Multiattack citation: the class re-arm called the sweep helper for its old row
+name, and that helper strips a name that LEFT the sheet rather than rewriting one that was renamed.
+Fixed and pinned after that run (`a class re-arm REWRITES the Multiattack's citations…`), not yet
+re-read live — it is in the tree, uncommitted at packaging time.
+
+**Degraded mode, answered (the critic's second ask).** The breaker opened during block 37's
+post-save ENRICHMENT, not during a generation: `[ENRICHMENT] Failed to enrich Ozghar: TypeError:
+Failed to fetch` → `Circuit breaker opened for DeepSeek V4 Flash — degraded mode for 60 minutes`.
+So **blocks 38, 39 and 40 generated with the breaker open** (Unresting Boneblade, Bellard the
+Unsworn, Brother Halric); 1–37 did not. No block records this, which is why the question recurred:
+stamping it on the block is in the response plan.
 
 Three runs of the forty stand behind that number: 27/12/1 on the A+B+C engine, then 22/15/3 after
 the incidentals landed (two of those three FAILs were an hour-old mistake of mine — the lint
@@ -502,3 +519,141 @@ lands on a template's body, and an object pronoun before a weapon noun makes it 
 Them Flail"). **The live stall was the dev server**: twenty days up, the engine finishing and the app
 stalling after it; the owner restarted it and the next forty ran 40/40 with no stalls. One stall
 returned on a later blank roll, so restart before a long batch and treat a lone stall as noise.
+
+---
+
+## Package five — the four residuals, then the brief's last two steps (2026-10-20)
+
+The critic's read of the dispatcher forty named four residuals. All four landed, each at the
+mechanism print settles rather than at the block that showed it. **Print overruled me twice in
+the process**, and both corrections are below. Then steps 6 and 7 closed the brief.
+
+### The four residuals
+
+**1. Print names its own trait, rate and all.** The Vampire shipped `Legendary Resistance.`
+with no uses, which reads as unlimited — the critic's third report of it. The stripper was the
+print record builder itself: it cut ` (…)` off every print trait name. Print's own name is
+`Legendary Resistance (3/Day, or 4/Day in Lair)`. Only 7 distinct print trait names carry a
+parenthetical across 329 blocks, and the only other readers are two tests anchored on
+`^Regeneration$`, which carries none — so the strip bought nothing and cost the rate. Live on
+the current forty: seven blocks, every rate intact.
+
+**2. A predicate slot is not a sentence.** The Venting Haze sentence-join was **not** a call
+defect. The engine's own blind fill for `{zone_rule}` is `has Disadvantage on attack rolls`, a
+bare predicate, and the zone frame sat it after a full stop. The frame now owns the subject and
+the stop on all four bands (`Each creature in the area {zone_rule}.`), which is print's
+Darkmantle shape — the template's own cite. A new `PREDICATE_SLOTS` bound keeps the slot
+lowercase and stop-free at both fill sites, so a sentence-shaped answer falls to the engine's
+predicate rather than landing after a period. The fit prompt now says what the slot wants,
+which was the root cause: it said nothing.
+
+**3. Reach follows the body — at the two sizes print agrees. (Print overruled the critic.)**
+The rule as given overstates print. Print's 329 gear lines by size:
+
+| size | n | reach 5 | reach 10 | reach 15+ |
+|---|---|---|---|---|
+| Large | 126 | 84 | 40 | 2 |
+| Huge | 37 | 7 | 27 | 3 |
+| Gargantuan | 20 | 1 | 3 | 16 |
+
+There is **no floor at Large** — print puts reach 5 there two-thirds of the time. So the floor
+is print's modal reach at Huge (10) and Gargantuan (15) only, and print's own rows are exempt:
+the Roc is Gargantuan and print gives its Talons reach 5 (its Beak 10). It runs late, after
+print's price pass, because the class re-arm and print's canon can still change a reach above
+it. Live: the Trench Leviathan's Coils went 5 → 15 ft.
+
+**4. The attack floor by CR. (Print overruled me.)** On the missing Multiattack print is
+decisive: **110 of 113 blocks at CR 5+ carry one**, against 91 of 106 single-attack blocks
+below CR 1. Three print exceptions (Gorgon, Wraith, Remorhaz) make it a soft, not a fail.
+
+My first version of the gate also flagged a Multiattack with only one attack row to spend, and
+print killed it: **70 of print's 110 CR 5+ Multiattacks (64%) name a single row** — "the dragon
+makes three Rend attacks". That clause fired on 47% of 6,407 saved blocks, including print's
+own Adult Red Dragon and Hydra. Removed. Swarms are exempt, because `swarm-multiattack`
+hard-fails the only shape the rule would otherwise allow. The narrowed gate fires on 4.0% of
+saved blocks, bracketing print's own 2.6%.
+
+**The engine side, found by that gate.** The Squallwing Drake's cause was not what the trace
+first suggested. The `dragon-2` chassis is a **CR 2 donor with no Multiattack at all**, scaled
+to CR 7 — `scaleDonor` scales numbers, not shape. Ten of ninety donors carry none, eight of
+them correct at their own low CR. The floor now lands on the chassis, beside the swarm strip
+and **before the per-hit solve**, so the round is priced for the attacks the sheet makes.
+Modal count from print: two at CR 5–10, three at CR 11+. **15 of 15** CR 5+ non-swarm blocks on
+the current forty carry one, and the gate is silent.
+
+**Process (C4).** `generation.degraded` is stamped when the provider was degraded at generation
+time, and the review table marks the row `⚠︎degraded`. A block whose validation gates were
+relaxed has a weaker "clean"; the table now says so instead of leaving it a question.
+
+### Step 7 — the homebrew pipeline, and a retirement measured rather than assumed
+
+The brief retires *"the concept's VERB outranks the noun" as a route decision* on the homebrew
+path. That flip was **attempted and reverted on 2026-10-16**, when it broke six pins.
+
+What makes it safe now is that the cue verdicts landed in the same call afterwards. The route
+call already ranks three lines, quotes the GM's words for each, and the engine verifies every
+quote. The prompt now also demands one consistent answer: **a cue you confirm is a pick you
+make.** So on the homebrew path, when the call's pick carried a verified quote, the keyword
+override stands down and the trace says the key was the menu, not the decision.
+
+**Pins could not settle this**, because the six pins mock the model's answer: they show what
+the engine does with a fixed answer, never whether the call now ranks correctly. Three of them
+are cases where the mocked pick is the *wrong* line and the key corrects it. So the evidence is
+a probe (`scripts/probe-line.mjs`): one route call per sample, the same answer fed to both
+mechanisms, which removes call variance from the comparison. 13 prompts × 5 runs:
+
+| | on the label, no flip |
+|---|---|
+| today's mechanism | 8 / 13 |
+| step 7 | 8 / 13 |
+
+**The mechanism changed the answer on 0 of 13.** Both halves were checked, because "no change"
+could mean the stand-down never fired. It *does* fire on the crab pin's mocked answer. And live
+the call already ranks the line the key would have promoted: crab → `brute-grappler` 5/5,
+miller-who-turns-into-a-boar → `skirmisher-shifter` 5/5.
+
+**Worth the critic's attention:** the keyword safety net is now gone on homebrew by design, so a
+future route-prompt change could regress the line quietly. The probe is the regression test.
+
+**Five label misses, all pre-existing and identical under both mechanisms.** Two of my own
+labels were probably wrong (`pumpkin king` → `defender-leader`, which matches the owner's own
+ruling that "king" implies a leader; and the leviathan's drowning *song*, where the words name
+no magic and the caster gate exists to refuse exactly that). The real one: **`a plague-bearing
+archon of flies` does not settle** — `brute`×2, `defender-leader`, `caster-warpriest`, `swarm`
+across five runs. It no longer routes to wings, which was the brief's original complaint, but
+it has no stable answer.
+
+### Step 6 — the retirements, and what the guard found
+
+The retirement table, inventoried against the code: the canon matcher and the hint call are
+already **demoted to fallbacks** (`canonFromPath` is consulted first at all three body sites;
+the hint verdict applies to the matcher's record, not a path-named body), three rules are
+**gone**, and the rest retire with the override's last path.
+
+The guard test is **behavioural, not a grep**, because the retired rules legitimately remain as
+the never-fail fallback the brief itself requires. It asserts that with a successful path
+decision, no retired rule changes the body, the class or the line. It passes on three of four.
+
+**It found one still outstanding.** The **name-canon trait stamp** reads the WORD "golem" and
+stamps print's golem traits (Immutable Form, Magic Resistance) onto a sheet whose path call
+answered `print_body: null` with the receipt "lashed timber". Live it is usually suppressed,
+because the identity call answers `golem → canon ✗` — but **the suppression depends on that
+call, not on the path**, which is the shape the brief retires. Retiring it is a behaviour
+change with pins, so per the brief it goes to the owner for a ruling rather than a rewrite.
+Pinned both ways so the change is visible when it lands.
+
+### The gate and the runs in this package
+
+Gate: **109 suites, 3,618 passing, build green.**
+
+| run | result |
+|---|---|
+| the forty (`sweep`) | **29 clean / 11 soft / 0 FAIL**, 40 of 40, no stalls (was 26/14/0) |
+| `twist-ten` | **10 clean / 0 soft / 0 FAIL** |
+| `classes-eight` | **15 clean / 1 soft / 0 FAIL** of 16 |
+| `twist-five` | 2 clean / 3 soft / 0 FAIL |
+
+The soft tail on the forty is thin and unconcentrated: 5 band, 2 hot-offense, and six
+singletons. `attack-floor` is silent. The one `reach` soft is a Medium body carrying a
+Greatsword at reach 10 — **not** from the new floor, which only raises and only at Huge and
+Gargantuan; pre-existing at a 3.0% base rate across 6,454 saved blocks.

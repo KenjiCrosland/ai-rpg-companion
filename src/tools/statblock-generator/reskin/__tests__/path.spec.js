@@ -51,6 +51,24 @@ describe('ROUTING — the dispatcher picks once, from validated fields', () => {
     expect(dispatch({ name: 'Dame Oriel', concept: '' }, read({ assembly: 'class_npc', assembly_receipt: 'Dame Oriel', title: 'Dame' }, 'Dame Oriel')).path).toBe('class_npc');
     expect(pathLine(d)).toMatch(/title king/);
   });
+  test("an explicit class NAME is its own receipt anywhere in the GM's words (the critic's own correction, 2026-10-19)", () => {
+    const c = 'Meshrin, a Large lizard folk raider. He is a barbarian who rages when wounded.';
+    // the class word itself, deep in a relative clause: accepted
+    expect(read({ class: 'barbarian', class_receipt: 'barbarian' }, c).class).toBe('barbarian');
+    expect(read({ class: 'barbarian', class_receipt: 'is a barbarian who rages' }, c).class).toBe('barbarian');
+    // an IMPLIED word still needs the head clause, as before
+    const k = 'a kuo-toa priest who drags swimmers under the ice';
+    expect(read({ class: 'cleric', class_receipt: 'priest' }, k).class).toBe('cleric');
+    const far = 'a hunter who kills the priests of the deep';
+    const r = read({ class: 'cleric', class_receipt: 'priests' }, far);
+    expect(r.class).toBeNull(); expect(r.refused.join()).toMatch(/names no class and is not in the head clause/);
+  });
+  test('a person with a title but no class still stands on a print PERSON, nearest CR (Brother Halric)', () => {
+    const { bodyForPerson } = require('../path.mjs');
+    expect(bodyForPerson(3)).toBeTruthy();
+    expect(['Commoner', 'Guard', 'Warrior Infantry', 'Scout', 'Spy', 'Priest Acolyte', 'Berserker', 'Warrior Veteran', 'Guard Captain', 'Gladiator', 'Mage', 'Assassin', 'Archmage']).toContain(bodyForPerson(3));
+    expect(bodyForPerson(12)).toBe('Archmage'); // the ladder's top at a high CR
+  });
   test('nothing published and no class is homebrew', () => {
     const a = 'a plague-bearing archon of flies';
     expect(dispatch({ concept: a }, read({ assembly: 'homebrew', assembly_receipt: 'archon of flies' }, a)).path).toBe('homebrew');

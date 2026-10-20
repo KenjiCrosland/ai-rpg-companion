@@ -406,3 +406,49 @@ describe('a big body is not incorporeal (print: nothing above Medium)', () => {
     expect(buildRoutePrompt('a trench leviathan', { cr: 24 })).toMatch(/"size":/);
   });
 });
+
+// STEP 7 OF THE FIVE PIPELINES BRIEF — THE VERB OVERRIDE RETIRES AS A ROUTE
+// DECISION ON THE HOMEBREW PATH. The keys stay as the menu the call is shown and
+// as the fallback when the call gave nothing to stand on; they stop being the
+// decision when the call ranked a line and quoted the GM's words for it.
+//
+// MEASURED LIVE BEFORE LANDING (scripts/probe-line.mjs, 13 prompts x 5 runs,
+// 2026-10-20): the mechanism changed the answer on 0 of 13. The three cases the
+// mocked pins below encode — the giant crab, the miller who turns into a boar,
+// the drowned wife — all come back from the LIVE call already on the line the key
+// would have promoted (crab -> brute-grappler 5/5, miller -> skirmisher-shifter
+// 5/5). The route prompt now requires one consistent answer ("a cue you confirm
+// is a pick you make"), which is what makes the key unnecessary as a decision.
+// The mocks below therefore test the MECHANISM, and live behaviour no longer
+// reaches them — that divergence is deliberate and recorded.
+describe('step 7: the override stands down on the homebrew path', () => {
+  const crab = { picks: [{ line: 'brute', because: 'a crab the size of a longboat' }], creature_type: 'Beast' };
+  const crabText = "the drowned king's crown, a crab the size of a longboat that wears it and rules the wreck-fields";
+
+  test("a verified pick stands, and the trace says the key was the menu and not the decision", () => {
+    const r = chooseLine(crab, { text: crabText, rawText: crabText, path: 'homebrew' });
+    expect(r.line).toBe('brute');
+    expect(r.notes.join(' | ')).toMatch(/brute stands on the homebrew path: the call ranked it and quoted "a crab the size of a longboat" — the key "crab" is the menu, not the decision \(step 7\)/);
+  });
+
+  test('every other path keeps the override, because a print body or a class decides there anyway', () => {
+    for (const path of ['twist', 'class_npc', 'exact', 'blank', null]) {
+      const r = chooseLine(crab, { text: crabText, rawText: crabText, path });
+      expect(r.line).toBe('brute-grappler');
+    }
+  });
+
+  test('the override still runs on homebrew when no pick verified — the call gave nothing to stand on', () => {
+    // the quote is not in the GM's words, so the pick does not earn the stand-down
+    const unquoted = { picks: [{ line: 'brute', because: 'a big strong thing that hits hard' }], creature_type: 'Beast' };
+    const r = chooseLine(unquoted, { text: crabText, rawText: crabText, path: 'homebrew' });
+    expect(r.line).toBe('brute-grappler');
+    expect(r.notes.join(' | ')).not.toMatch(/stands on the homebrew path/);
+  });
+
+  test('a cue the call read as a figure of speech still blocks the override, on every path', () => {
+    const berserk = { picks: [{ line: 'brute', because: 'flies into an unstoppable rage' }], creature_type: 'Humanoid', cue_verdicts: [{ key: 'flies', means: false, because: 'flies into an unstoppable rage' }] };
+    const t = 'a berserker who flies into an unstoppable rage';
+    for (const path of ['homebrew', 'twist', null]) expect(chooseLine(berserk, { text: t, rawText: t, path }).line).toBe('brute');
+  });
+});

@@ -511,6 +511,13 @@ const doublesFrameVerb = (text, k, fill) => {
   const first = String(fill ?? '').trim().toLowerCase().split(/[^a-z]+/)[0] ?? '';
   return first.length >= 5 && before.some((w) => w.length >= 5 && w.slice(0, 5) === first.slice(0, 5));
 };
+// A PREDICATE SLOT is not a sentence. Its frame owns the subject ("Each
+// creature in the area {zone_rule}.") and the period, so the fill is a bare
+// predicate: lowercase, no terminal stop. The engine's own blind default used
+// to land after a period — "...up to 10 minutes. has Disadvantage on attack
+// rolls" (critic, the forty, 2026-10-19). Shape only; no meaning is read.
+const PREDICATE_SLOTS = new Set(['zone_rule']);
+const asPredicate = (s) => { const v = String(s ?? '').trim().replace(/[.;,]+$/, ''); return /^[a-z]/.test(v) ? v : null; };
 const shortFlavor = (s) => typeof s === 'string' && s.trim().split(/\s+/).length <= 8 && noDigits(s) && !/saving throw|damage|condition|DC\b/i.test(s);
 
 /**
@@ -561,7 +568,9 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
       // default, never to a miss (the ledger's Delayed Brand died on its douse, fresh two)
       const v = shortFlavor(fills[k]) && !doublesFrameVerb(text, k, fills[k]) ? fills[k] : BLIND_FILLS[k];
       if (!shortFlavor(v)) return null;
-      text = text.split(`{${k}}`).join(v.trim());
+      const w = PREDICATE_SLOTS.has(k) ? (asPredicate(v) ?? asPredicate(BLIND_FILLS[k])) : v.trim();
+      if (!w) return null;
+      text = text.split(`{${k}}`).join(w);
     }
     if (/\{[a-z_]+\}/.test(text)) return null;
     return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate };
@@ -654,7 +663,9 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     if (!text.includes(`{${k}}`)) continue;
     const v = shortFlavor(fills[k]) && !doublesFrameVerb(text, k, fills[k]) ? fills[k] : BLIND_FILLS[k];
     if (!shortFlavor(v)) return null;
-    text = text.split(`{${k}}`).join(v.trim());
+    const w = PREDICATE_SLOTS.has(k) ? (asPredicate(v) ?? asPredicate(BLIND_FILLS[k])) : v.trim();
+    if (!w) return null;
+    text = text.split(`{${k}}`).join(w);
   }
   if (/\{[a-z_]+\}/.test(text)) return null;
   return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate };
@@ -727,17 +738,18 @@ const frameOf = (t, cr) => (t.kind === 'seed' ? t.text : t.frames[bandFor(cr)]);
 export function templateMenuLines(menu, { cr, concept = '', idea = '' } = {}) {
   return rankByVerb(menu, concept, idea).map(({ t, concept: cv, idea: iv }) => {
     const matched = [...cv.map((k) => `${k} (concept)`), ...iv.map((k) => `${k} (idea)`)];
-    const flav = t.flavor.length ? ` — you fill: ${t.flavor.map((f) => `{${f}}`).join(', ')}` : '';
+    const flav = t.flavor.length ? ` — you fill: ${t.flavor.map((f) => (PREDICATE_SLOTS.has(f) ? `{${f}} (a PREDICATE, no subject and no full stop — the frame already says "Each creature in the area": answer like "has Disadvantage on attack rolls")` : `{${f}}`)).join(', ')}` : '';
     const vocab = slotsOf(frameOf(t, cr)).filter((s) => VOCAB[s]).map((s) => `{${s}} ∈ ${VOCAB[s].join('/')}`);
     return `- ${t.id} [${SECTION_OF[t.section]}${t.gate ? `, ${t.gate}` : ''}]${matched.length ? ` VERB MATCH: ${matched.join(', ')}` : ''}: ${frameOf(t, cr).replace(/\*/g, '')}${flav}${vocab.length ? ` — choose: ${vocab.join('; ')}` : ''}`;
   }).join('\n');
 }
 
-export function buildFitPrompt({ name, idea, menu, cr, concept = '', sheet = null }) {
+export function buildFitPrompt({ name, idea, menu, cr, concept = '', sheet = null, clause = null }) {
   const lines = templateMenuLines(menu, { cr, concept, idea: idea.idea });
   return `A monster's signature ability has been described in plain words. Pour it into ONE of the printed rules templates below, or say none fits. The template's rules are FIXED; the engine fills every {slot} shown in braces except the ones marked "you fill". Do not rewrite the template.
 MONSTER: ${name} (CR ${cr})${sheet ? `\nTHE SHEET SO FAR — read it before you pick; a save stat, a damage type, a reach all come from here:\n${sheet}` : ''}
-THE IDEA (${idea.section} / ${idea.trigger} / ${idea.effect}): ${idea.idea}
+THE IDEA (${idea.section} / ${idea.trigger} / ${idea.effect}): ${idea.idea}${clause ? `
+THE CLAUSE THIS ROW IS FOR — the GM wrote it and nothing on the sheet answers it yet; pick the template that answers THIS, and answer "asked" with it: "${String(clause).replace(/"/g, "'")}"` : ''}
 THE USER TYPED — the GM's own words, and the ONLY text "asked" may quote: ${concept ? `"${String(concept).replace(/"/g, "'")}"` : '(the user typed nothing — answer "asked" with "")'}
 TEMPLATES:
 ${lines}

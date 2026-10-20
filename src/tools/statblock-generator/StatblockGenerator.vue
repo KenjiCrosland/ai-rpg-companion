@@ -1230,7 +1230,10 @@ async function generateStatblockEngine(edition) {
     try {
       for (const h of piAliasesIn(text)) logger.log('[route] pi alias:', `"${h.matched}" → "${h.text}"`);
       const raw = await generateGptResponse(buildRoutePrompt(readPhrases(text), { cr, menuRole: givenArchetype }), validateRouteResponse, 2); // the rewritten concept is the only text the route reads (PI alias spec 2026-10-01)
-      return chooseLine(parseGenerationResponse(raw), { text: readPhrases(text), rawText: text, menuRole: givenArchetype }); // the quote check reads the same rewritten text the model saw
+      // STEP 7: the PARSE comes back here, the CHOICE is made after the path
+      // call resolves, so chooseLine knows which pipeline it is routing for.
+      // Both calls still race — the path is known with no added latency.
+      return { parsed: parseGenerationResponse(raw), text: readPhrases(text), rawText: text };
     } catch (e) {
       logger.warn('[route] call failed:', e?.message ?? e);
       return null;
@@ -1286,8 +1289,9 @@ async function generateStatblockEngine(edition) {
           // a shadow decision may never delay the sheet: twenty seconds, then it is recorded as FAILED (timed out) and the route's own read stands
           const routedP = routeOn(userConcept); // the route call is issued first; the path call rides beside it
           const pathCapped = Promise.race([pathOn(), new Promise((res) => setTimeout(() => res({ path: null, by: 'call', failed: true, print_body: null, relation: null, class: null, species: null, receipt: 'the path call did not answer within 20 s' }), 20_000))]);
-          const [routed, pathDecided] = await Promise.all([routedP, pathCapped]); // name — description, once (the route quoted "Flying speed of 60ft Flying speed of 60f" from the doubled text)
+          const [routedRaw, pathDecided] = await Promise.all([routedP, pathCapped]); // name — description, once (the route quoted "Flying speed of 60ft Flying speed of 60f" from the doubled text)
           conceptPath = pathDecided; logger.log(pathLine(conceptPath, userConcept));
+          const routed = routedRaw ? chooseLine(routedRaw.parsed, { text: routedRaw.text, rawText: routedRaw.rawText, menuRole: givenArchetype, path: conceptPath?.path ?? null }) : null; // the quote check reads the same rewritten text the model saw
           applyRoute(routed);
           if (!crFromUser) {
             // a print creature with no CR set is its own CR (the Goblin Boss read 4 from the route, print says 1); otherwise the route's read; only a blank form keeps the roll
@@ -1329,7 +1333,13 @@ async function generateStatblockEngine(edition) {
         readProse(parseGenerationResponse(raw), { blank: true });
         conceptPath = dispatchPath({ name: '', concept: '', role: givenArchetype }, null); logger.log(pathLine(conceptPath)); // blank, by code — no call
         // CALL 2 — ROUTE on the fused creature
-        applyRoute(await routeOn(synthesizedConcept ?? randomSeed.concept));
+        {
+          // THE BLANK ROLL keeps the override. The step-7 retirement rests on the
+          // call quoting THE GM'S OWN WORDS, and on a blank roll there are none —
+          // the text is the engine's own synthesis. Unmeasured there, so unchanged.
+          const rr = await routeOn(synthesizedConcept ?? randomSeed.concept);
+          applyRoute(rr ? chooseLine(rr.parsed, { text: rr.text, rawText: rr.rawText, menuRole: givenArchetype, path: 'blank' }) : null);
+        }
         logger.log('[concept] synthesis (blank roll):', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
           + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
           + ` style=${conceptStyle ?? '—'}${conceptLore ? ' lore=✓' : ''}`);

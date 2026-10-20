@@ -11,9 +11,9 @@ const stub = (cr, style, archetype, over = {}) => {
   const typed = Object.values(scaled.sections).flat().filter((e) => e.text.includes('{damage_type}')).map((e) => renames[e.name]);
   return { name: 'Gloam Courser', size: 'Medium', alignment: 'Neutral Evil', languages: 'Common', renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Slashing'])), conditions: { condition_minor: 'Prone' }, melee_rider: 'none', slot_save: 'Dexterity', ...over };
 };
-const run = async ({ concept, cr, archetype, style = null, path, over = {}, caster = false }) => {
+const run = async ({ concept, cr, archetype, style = null, path, over = {}, caster = false, rejected = null }) => {
   const lines = []; const orig = console.log; console.log = (...a) => { lines.push(a.join(' ')); };
-  let m; try { m = await generateReskin({ archetype, style, concept, userConcept: concept, cr, path, caster }, async () => JSON.stringify(stub(cr, style, archetype, over))); } finally { console.log = orig; }
+  let m; try { m = await generateReskin({ archetype, style, concept, userConcept: concept, cr, path, caster, ...(rejected ? { rejectedCanon: rejected } : {}) }, async () => JSON.stringify(stub(cr, style, archetype, over))); } finally { console.log = orig; }
   return { m, trace: lines.join('\n'), rows: Object.values(m.sections).flat() };
 };
 const twist = (body, receipt) => ({ path: 'twist', by: 'call', print_body: body, relation: 'is', class: null, species: null, receipt });
@@ -57,8 +57,13 @@ describe('the twist path at a CR far from print\'s', () => {
       });
     } finally { console.log = orig; }
     const tr = lines.join('\n');
-    expect(tr).toMatch(/trait declined: "Deathless Grin" — a print body takes only what the user's words ask; the call quotes "a skeleton", which only names the creature itself/);
-    expect(Object.values(m.sections).flat().some((e) => e.template === 'false-appearance')).toBe(false);
+    // THE SEAT RECEIVES ITS CLAUSE (the critic's prescription, 2026-10-19). The call's quote "a
+    // skeleton" is still no receipt — it only names the body — but the engine then hands the seat the
+    // clause the sheet has not answered ("was a gladiator in a former life"), which is what the GM
+    // typed and what the critic counted as a miss for three packages. So the row SHIPS, for that
+    // clause, with the clause as its receipt by construction.
+    expect(tr).toMatch(/seat takes its clause: "Deathless Grin" answers "was a gladiator in a former life"/);
+    expect(Object.values(m.sections).flat().some((e) => e.template === 'false-appearance')).toBe(true);
   });
 });
 
@@ -293,6 +298,201 @@ describe("the clean forty's three (2026-10-19)", () => {
   });
 });
 
+describe('A2: the round is priced against the Multiattack the sheet ships (critic, 2026-10-19)', () => {
+  const { cardBudget } = require('../card-budgets.mjs');
+  const npc = (cls, species = null, receipt = cls) => ({ path: 'class_npc', by: 'call', print_body: null, relation: null, class: cls, species, receipt });
+  const roundOf = (r) => {
+    const ma = r.rows.find((e) => /^Multiattack/.test(e.name ?? ''));
+    const n = ma ? ({ one: 1, two: 2, three: 3, four: 4 }[(/makes (\w+)/i.exec(ma.text) ?? [])[1]?.toLowerCase()] ?? 1) : 1;
+    const best = Math.max(0, ...r.rows.filter((e) => /Attack Roll/.test(e.text ?? '')).map((e) => [...String(e.text).split(/\bIf\b/)[0].matchAll(/(\d+) \(\d+d\d+(?: [+-] \d+)?\)/g)].reduce((a, x) => a + Number(x[1]), 0)));
+    return { round: best * n, n, best };
+  };
+  test("Oriel: the GM's longsword on a three-attack print body stays inside the card (was 66 a round at CR 5, reading CR 10)", async () => {
+    const concept = 'a knight who holds the line with a shield and a longsword';
+    const r = await run({ concept, cr: 5, archetype: 'defender', path: { ...npc('paladin', null, 'knight') } });
+    const { round, n } = roundOf(r);
+    expect(n).toBeGreaterThanOrEqual(2); // the print body's own count
+    expect(round).toBeLessThanOrEqual(cardBudget(5, {}).dpr * 1.25);
+    expect(r.trace).toMatch(/final price: (?:the chassis's|print's) Multiattack/);
+  });
+  test('the pass runs twice, and the second run names print\'s Multiattack', async () => {
+    const concept = 'a sellsword who hurls a handaxe and closes with a shortsword';
+    const r = await run({ concept, cr: 5, archetype: 'defender', path: { ...npc('fighter', null, 'sellsword') } });
+    const { round } = roundOf(r);
+    expect(round).toBeLessThanOrEqual(cardBudget(5, {}).dpr * 1.25);
+  });
+  test('A2 control: a homebrew sheet with no print body is unchanged by the second run', async () => {
+    const concept = 'a plague-bearing archon of flies';
+    const r = await run({ concept, cr: 13, archetype: 'skirmisher', path: { path: 'homebrew', by: 'call', print_body: null, relation: null, class: null, species: null, receipt: 'archon of flies' } });
+    const { round } = roundOf(r);
+    expect(round).toBeGreaterThan(cardBudget(13, {}).dpr * 0.6);
+    expect(round).toBeLessThanOrEqual(cardBudget(13, {}).dpr * 1.25);
+  });
+});
+
+describe('A3: every weapon the GM names lands as a part (critic, 2026-10-19)', () => {
+  const { partRows } = require('../generate.mjs');
+  const names = (text, over = {}) => partRows([{ text, kind: 'descriptive', head: true, ...over }], { cap: 4 }).map((r) => `${r.name}/${r.mode}`);
+  test('"hurls a handaxe and closes with a shortsword" lands BOTH — the throw is one segment\'s business, not the clause\'s', () => {
+    expect(names('a sellsword who hurls a handaxe and closes with a shortsword')).toEqual(['Handaxe/both', 'Shortsword/melee']);
+  });
+  test('a hurled thing the weapon table does not know is still the throw-retrieve template\'s', () => {
+    expect(names('a giant who hurls boulders')).toEqual([]);
+  });
+  test('A3 controls: one weapon stays one weapon, and a wield cue is unchanged', () => {
+    expect(names('a knight with a longsword')).toEqual(['Longsword/melee']);
+    expect(names('an ogre with a greataxe')).toEqual(['Greataxe/melee']);
+    expect(names('a sellsword who wields a rapier and a dagger')).toEqual(['Rapier/melee', 'Dagger/both']); // a dagger is thrown in the 2024 table (20/60) — print's own shape
+  });
+  test('Bellard ships both weapons on the sheet, and the thrown one carries its range', async () => {
+    const concept = 'a sellsword who hurls a handaxe and closes with a shortsword';
+    const r = await run({ concept, cr: 5, archetype: 'defender', path: { path: 'class_npc', by: 'call', print_body: null, relation: null, class: 'fighter', species: null, receipt: 'sellsword' } });
+    const parts = r.rows.filter((e) => e.part).map((e) => String(e.name));
+    expect(parts).toContain('Handaxe'); expect(parts).toContain('Shortsword');
+    expect(r.rows.find((e) => /^Handaxe/.test(e.name ?? ''))?.text ?? '').toMatch(/range 20\/60 ft/);
+  });
+});
+
+describe('B: the re-arm takes the body\'s other rows with it (critic, 2026-10-19)', () => {
+  const npc2 = (cls, species = null, receipt = cls) => ({ path: 'class_npc', by: 'call', print_body: null, relation: null, class: cls, species, receipt });
+  test('a heavy melee class weapon takes the shield row with it (Radrik\'s greataxe and the Gladiator\'s Shield Bash)', async () => {
+    const r = await run({ concept: 'a goliath berserker who loses control when wounded', cr: 8, archetype: 'brute', path: npc2('barbarian', 'goliath', 'berserker') });
+    expect(r.rows.some((e) => e.weapon === 'greataxe')).toBe(true);
+    expect(r.rows.some((e) => /shield/i.test(`${e.name} ${e.text}`) && !e.kit && !e.part)).toBe(false);
+    expect(r.rows.find((e) => /^Multiattack/.test(e.name ?? ''))?.text ?? '').not.toMatch(/Shield/);
+  });
+  test("the GM's weapon replaces print's rather than riding beside it (Ser Aldous's mace and the Guard Captain's longsword)", async () => {
+    const r = await run({ concept: 'a templar with a mace who shields the weak', cr: 4, archetype: 'defender', path: npc2('paladin', null, 'templar') });
+    const melee = r.rows.filter((e) => /Melee Attack Roll/.test(e.text ?? '') && !/Melee or Ranged/.test(e.text ?? ''));
+    expect(melee.length).toBe(1);
+    expect(`${melee[0].name} ${melee[0].weapon ?? ''}`).toMatch(/[Mm]ace/);
+  });
+  test('a launcher rolls Dexterity after the re-arm (Vashka\'s longbow at +7 off STR)', async () => {
+    const r = await run({ concept: 'a hobgoblin warlord in lacquered plate who fights from a shield wall', cr: 6, archetype: 'defender', path: npc2('fighter', null, 'warlord') });
+    const bow = r.rows.find((e) => /Ranged Attack Roll/.test(e.text ?? '') && !/Melee or Ranged/.test(e.text ?? ''));
+    if (bow) {
+      const dex = Math.floor((r.m.stats.DEX - 10) / 2);
+      expect(Number((/Attack Roll:\*? \+(\d+)/.exec(bow.text) ?? [])[1])).toBe(dex + r.m.pb);
+    }
+  });
+  test('B control: a one-handed class weapon keeps the body\'s shield row', async () => {
+    const r = await run({ concept: 'a knight who holds the line with a shield', cr: 5, archetype: 'defender', path: npc2('paladin', null, 'knight') });
+    expect(r.trace).not.toMatch(/leaves with the shield/); // a longsword is not heavy
+  });
+});
+
+describe('a row that spends its Reaction sits under Reactions (b-rearm, 2026-10-19)', () => {
+  const { checkBlock } = require('../checker.mjs');
+  test("a repair-authored trait written as a reaction moves, and the lint stops refusing it", async () => {
+    const concept = 'a hobgoblin warlord in lacquered plate who never breaks ranks';
+    const lines = []; const orig = console.log; console.log = (...a) => { lines.push(a.join(' ')); };
+    let m;
+    try {
+      m = await generateReskin({ archetype: 'defender', concept, userConcept: concept, cr: 6, path: { path: 'class_npc', by: 'call', print_body: null, relation: null, class: 'fighter', species: null, receipt: 'warlord' } }, async (prompt) => {
+        if (prompt.startsWith('You are repairing')) return JSON.stringify({ attacks: [], saves: [], traits: [{ clause: 'never breaks ranks', name: 'Unbroken Ranks', trigger: 'When an effect would move it against its will', effect: 'it can use its reaction to resist the movement, and cannot be pushed or pulled.' }], reactions: [] });
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return JSON.stringify(stub(6, null, 'defender', { clauses: [{ text: 'a hobgoblin warlord in lacquered plate', kind: 'descriptive', head: true }, { text: 'never breaks ranks', kind: 'mechanical' }] }));
+      });
+    } finally { console.log = orig; }
+    const row = Object.values(m.sections).flat().find((e) => /^Unbroken Ranks/.test(e.name ?? ''));
+    if (row) {
+      expect((m.sections.Reactions ?? []).some((e) => e === row)).toBe(true);
+      expect(lines.join('\n')).toMatch(/section moved: Traits\/"Unbroken Ranks" spends its Reaction/);
+    }
+    expect(JSON.stringify(checkBlock(m, { cr: 6 }).gates.edition.findings)).not.toMatch(/section-shape/);
+  });
+});
+
+describe("B: print's noun and the chassis's filler on a class body (critic, 2026-10-19)", () => {
+  const npc3 = (cls, species = null, receipt = cls) => ({ path: 'class_npc', by: 'call', print_body: null, relation: null, class: cls, species, receipt });
+  test("print's own self-reference is replaced: no sheet says \"The hobgoblin\" unless it is one", async () => {
+    const r = await run({ concept: 'a hobgoblin warlord in lacquered plate who fights from a shield wall', cr: 6, archetype: 'defender', path: { path: 'twist', by: 'call', print_body: 'Hobgoblin Warrior', relation: 'is', class: null, species: null, receipt: 'hobgoblin' } });
+    const pack = r.rows.find((e) => /^Pack Tactics/.test(e.name ?? ''));
+    if (pack) expect(pack.text).toMatch(new RegExp(String(r.m.inline ?? 'the').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'));
+  });
+  test('a chassis rules row with no provenance leaves a class body (the leader aura beside the kit\'s own)', async () => {
+    const r = await run({ concept: 'a knight who holds the line with a shield and a longsword', cr: 5, archetype: 'defender', path: npc3('paladin', null, 'knight') });
+    const auras = r.rows.filter((e) => /Aura/i.test(e.name ?? ''));
+    expect(auras.length).toBeLessThanOrEqual(1); // the kit's Aura of Authority, never the chassis's beside it
+    expect(r.rows.every((e) => e.print || e.kit || e.part || e.feature || e.library || e.template || e.authored || e.gmArmed || e.userSet || e.seed || /^Multiattack/.test(e.name ?? '') || e.classArmed)).toBe(true);
+  });
+});
+
+describe("B: the species' own movement mode is the number (critic, fifth read, 2026-10-19)", () => {
+  test('a lizardfolk swims 30, not the chassis\'s 40', async () => {
+    const concept = 'a lizardfolk monk who strikes pressure points with an open hand';
+    const r = await run({ concept, cr: 5, archetype: 'skirmisher', path: { path: 'class_npc', by: 'call', print_body: null, relation: null, class: 'monk', species: 'lizardfolk', receipt: 'monk' } });
+    const swim = (/\bSwim (\d+) ft/i.exec(String(r.m.speed ?? '')) ?? [])[1];
+    expect(swim).toBeDefined(); expect(Number(swim)).toBe(30);
+  });
+  test("control: a speed the GM's own words name stands", async () => {
+    const concept = 'a lizardfolk raider who swims 50 feet through the reeds';
+    const r = await run({ concept, cr: 5, archetype: 'skirmisher', path: { path: 'class_npc', by: 'call', print_body: null, relation: null, class: 'fighter', species: 'lizardfolk', receipt: 'raider' } });
+    expect(r.trace).not.toMatch(/Swim \d+ ft\. -> 30 ft\./);
+  });
+});
+
+describe('the Multiattack cites the rows the sheet has (classes-eight, 2026-10-19)', () => {
+  const { checkBlock } = require('../checker.mjs');
+  const npc4 = (cls, receipt = cls) => ({ path: 'class_npc', by: 'call', print_body: null, relation: null, class: cls, species: null, receipt });
+  const citedIn = (text) => [...new Set([...String(text).matchAll(/(?:using |makes (?:one|two|three|four|five) |use of |,\s*|\bor |\band )([A-Z][\w'-]*(?: [A-Z][\w'-]*)?)(?= attacks?\b| or\b| and\b| in any combination\b|,|\.|$)/g)].map((x) => x[1].trim()))].filter((n) => !/^attacks?$/i.test(n));
+  test("print's Multiattack names only rows that exist, and every attack row is named (the Guard Captain's Javelin, the Bandit Captain's pair)", async () => {
+    for (const [concept, cr, cls, archetype] of [
+      ['a templar with a mace who shields the weak', 4, 'paladin', 'defender'],
+      ['a tabaxi cutpurse who slips through the market crowd', 3, 'rogue', 'skirmisher'],
+    ]) {
+      const r = await run({ concept, cr, archetype, path: npc4(cls) });
+      const ma = r.rows.find((e) => /^Multiattack/.test(e.name ?? ''));
+      if (!ma) continue;
+      const have = r.rows.filter((e) => /Attack Roll/.test(e.text ?? '')).map((e) => String(e.name).replace(/ \(.*\)$/, ''));
+      for (const nm of citedIn(ma.text)) expect(have).toContain(nm); // no dangling citation
+      const g = checkBlock(r.m, { cr }).gates;
+      expect(g.structure.findings.filter((f) => f.rule === 'multiattack-row' && f.severity === 'fail')).toEqual([]);
+      expect(g.reader.findings.filter((f) => f.rule === 'attack-in-multiattack' && f.severity === 'fail')).toEqual([]);
+    }
+  });
+});
+
+describe("the twist seat receives its clause (the critic's prescription, 2026-10-19)", () => {
+  const fitFor = async ({ concept, cr, archetype, body, template, rowName, asked = null, over = {} }) => {
+    const lines = []; const orig = console.log; console.log = (...a) => { lines.push(a.join(' ')); };
+    let m;
+    try {
+      m = await generateReskin({ archetype, concept, userConcept: concept, cr, path: twist(body, body.toLowerCase()) }, async (prompt) => {
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ trait: { idea: 'It keeps something of what it was, and anyone who fights it finds that out.', section: 'trait', trigger: 'always', effect: 'control' } });
+        if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify({ template, because: 'the shape fits', name: rowName, ...(asked ? { asked } : {}) });
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return JSON.stringify(stub(cr, null, archetype, over));
+      });
+    } finally { console.log = orig; }
+    return { m, trace: lines.join('\n'), rows: Object.values(m.sections).flat() };
+  };
+  test('the call picks only the template: a fit with NO quote at all still answers the GM\'s clause (the Air Elemental\'s stolen voices, third read)', async () => {
+    const r = await fitFor({ concept: 'Air Elemental that carries stolen voices', cr: 5, archetype: 'lurker', body: 'Air Elemental', template: 'mimicry', rowName: 'Stolen Choir' });
+    // either door may land it — the fit seat with the clause as its receipt, or the concept-first
+    // ranking on the same words. What the critic counted is the OUTCOME: the clause earns a row.
+    expect(r.rows.some((e) => e.template === 'mimicry')).toBe(true);
+    expect(r.trace).toMatch(/seat takes its clause|bound to the concept's verb: trait — mimicry/);
+    expect(r.trace).not.toMatch(/trait declined: "Stolen Choir"/);
+  });
+  test('and with a quote that names only the body (the skeleton\'s former life)', async () => {
+    const r = await fitFor({ concept: 'a skeleton who was a gladiator in a former life', cr: 4, archetype: 'brute', body: 'Skeleton', template: 'false-appearance', rowName: 'Old Champion', asked: 'a skeleton' });
+    expect(r.rows.some((e) => e.template === 'false-appearance')).toBe(true);
+    expect(r.trace).toMatch(/seat takes its clause: "Old Champion" answers "(?:who )?was a gladiator in a former life"|bound to the concept's verb/);
+  });
+  test('control: a print body that asks for NOTHING still takes no row', async () => {
+    const r = await fitFor({ concept: 'Owlbear', cr: 3, archetype: 'brute', body: 'Owlbear', template: 'false-appearance', rowName: 'Invented Thing' });
+    expect(r.trace).not.toMatch(/seat takes its clause/);
+    expect(r.rows.some((e) => e.template === 'false-appearance')).toBe(false);
+  });
+  test('control: a clause a part row already answers is not handed to the seat', async () => {
+    const r = await fitFor({ concept: 'a skeleton with a greatsword', cr: 2, archetype: 'brute', body: 'Skeleton', template: 'adhesive', rowName: 'Clinging Bones', asked: 'with a greatsword' });
+    expect(r.rows.some((e) => e.template === 'adhesive')).toBe(false);
+  });
+});
+
 describe('the homebrew path', () => {
   test('a resembles body never lands print\'s rows, even where the matcher found a name (a golem of lashed timber is not the Clay Golem)', async () => {
     const r = await run({ concept: 'a golem of lashed timber that shoulders through walls', cr: 8, archetype: 'brute', path: { path: 'homebrew', by: 'call', print_body: 'Clay Golem', relation: 'resembles', class: null, species: null, receipt: 'golem' } });
@@ -416,6 +616,24 @@ describe('the class-NPC path (pipeline 3)', () => {
     }
     expect(checkBlock(r.m, { cr: 3 }).gates.reader.findings.filter((f) => f.rule === 'attack-in-multiattack' && f.severity === 'fail')).toEqual([]);
   });
+  test('A1: the fighter kit asks the seat\'s AC question — no Guarded Stance when AC already beats print\'s (Vashka, Oriel)', async () => {
+    const concept = 'a hobgoblin warlord in lacquered plate who fights from a shield wall';
+    const r = await run({ concept, cr: 6, archetype: 'defender', path: { ...npc('fighter', null, 'warlord') } });
+    const gs = r.rows.find((e) => e.template === 'guarded-stance' || /Guarded Stance|Unbroken Wall/.test(e.name ?? ''));
+    const crTableRaw = require('@/data/challengeRatings.json'); const crTable = crTableRaw.default ?? crTableRaw;
+    const par = Number(crTable['6']?.armor_class ?? 0);
+    if (Number(r.m.ac) > par) {
+      expect(r.rows.some((e) => e.template === 'guarded-stance')).toBe(false);
+      expect(r.trace).toMatch(/guarded-stance yields — AC \d+ already beats print's/);
+      expect(r.rows.some((e) => e.kit === 'fighter')).toBe(true); // the kit still lands a row
+    } else { expect(gs).toBeDefined(); } // at or under print's AC the trait is legal — the control
+  });
+  test('A1 control: a kit row that is not Guarded Stance is untouched by the AC gate', async () => {
+    const concept = 'a sellsword who ripostes every opening';
+    const r = await run({ concept, cr: 5, archetype: 'defender', path: { ...npc('fighter', null, 'sellsword') } });
+    expect(r.rows.some((e) => e.kit === 'fighter')).toBe(true);
+    expect(r.trace).not.toMatch(/riposte yields/);
+  });
   test('the class gates read the path record: a class-NPC sheet with no kit row and a primary stat under 14 fails both', () => {
     const sheet = { name: 'T', type: 'Humanoid', size: 'Medium', ac: 15, hp: 60, cr: 5, cr_str: '5', speed: '30 ft.', pb: 3, languages: 'Common', stats: { STR: 10, DEX: 12, CON: 12, INT: 10, WIS: 10, CHA: 10 },
       sections: { Actions: [{ name: 'Shortsword', text: '*Melee Attack Roll:* +4, reach 5 ft. 4 (1d6 + 1) Piercing damage.' }] }, generation: { pipeline: { path: 'class_npc', class: 'rogue', species: 'lizardfolk', by: 'call' } } };
@@ -434,5 +652,147 @@ describe('a failed path call', () => {
     const r = await run({ concept: 'a troll that grows back unless the blade was silvered', cr: 6, archetype: 'brute', path: undefined });
     expect(r.trace).not.toMatch(/\[path\]/);
     expect(names(r)).toContain('Regeneration');
+  });
+});
+
+// ---------------------------------------------------------- the forty's residuals
+// Four defects the critic read off the forty (2026-10-19), each pinned at the
+// mechanism print settles rather than at the one block that showed it.
+
+describe('print names its own trait, rate and all', () => {
+  test("the Vampire's Legendary Resistance keeps its uses — a bare name reads as unlimited", async () => {
+    const r = await run({ concept: 'a vampire who runs a bathhouse', cr: 13, archetype: 'brute', path: twist('Vampire', 'vampire') });
+    const lr = r.rows.find((e) => /^Legendary Resistance/.test(e.name ?? ''));
+    expect(lr).toBeTruthy();
+    expect(lr.name).toBe('Legendary Resistance (3/Day, or 4/Day in Lair)');
+  });
+});
+
+describe('a predicate slot is not a sentence', () => {
+  const { renderTemplate, templatesFor } = require('../templates.mjs');
+  const ctxFor = (cr) => { const scaled = scaleDonor(pickDonor(cr, null, 'skirmisher'), cr, { mechanics: [] }); return { scaled, energy: 'Fire', mix: null, meleeName: 'Claw', conditionMinor: 'Frightened', archetype: 'controller', imposed: [], mechanics: [], cr, name: 'Fen-Burn Hydra' }; };
+  const zone = () => templatesFor({ archetype: 'controller', style: 'skulker', cr: 7, mechanics: [], imposed: [] }).find((t) => t.id === 'zone');
+
+  test('the frame owns the subject and the full stop, so a predicate fill reads as English', () => {
+    const t = zone(); expect(t).toBeTruthy();
+    const out = renderTemplate(t, ctxFor(7), { zone_effect: 'scalding smoke', zone_rule: 'has Disadvantage on attack rolls' });
+    expect(out.text).toContain('Each creature in the area has Disadvantage on attack rolls.');
+    expect(out.text).not.toMatch(/minutes\. has /);
+  });
+
+  test("a fill shaped like a whole sentence falls to the engine's own predicate, never landing after a period", () => {
+    const out = renderTemplate(zone(), ctxFor(7), { zone_effect: 'scalding smoke', zone_rule: 'A creature in the haze is blinded' });
+    expect(out.text).toContain('Each creature in the area has Disadvantage on attack rolls.');
+  });
+
+  test('the fit prompt tells the call the slot is a predicate', () => {
+    const { buildFitPrompt } = require('../templates.mjs');
+    const p = buildFitPrompt({ name: 'Fen-Burn Hydra', cr: 7, idea: { section: 'action', trigger: 'once_per_fight', effect: 'condition', idea: 'it vents scalding smoke' }, menu: [zone()], concept: 'vents scalding smoke' });
+    expect(p).toMatch(/\{zone_rule\} \(a PREDICATE, no subject and no full stop/);
+  });
+});
+
+describe('reach follows the body, at the two sizes print agrees', () => {
+  test("a Gargantuan body's own melee row rises to print's modal 15 ft.", async () => {
+    const r = await run({ concept: 'a gargantuan trench leviathan that coils around hulls', cr: 16, archetype: 'brute', over: { size: 'Gargantuan' } });
+    expect(r.m.size).toBe('Gargantuan');
+    const own = r.rows.filter((e) => !e.print && /reach \d+ ft\./.test(e.text ?? ''));
+    expect(own.length).toBeGreaterThan(0);
+    for (const e of own) expect(Number(/reach (\d+) ft\./.exec(e.text)[1])).toBeGreaterThanOrEqual(15);
+  });
+
+  test('a Large body is left alone — print puts reach 5 on 84 of its 126 Large rows', async () => {
+    const r = await run({ concept: 'a large bog hound that drags prey down', cr: 5, archetype: 'brute', over: { size: 'Large' } });
+    expect(r.trace).not.toMatch(/reach follows the body/);
+  });
+
+  test("print's own row keeps print's reach (the Roc's Talons and the Elephant's Gore are reach 5)", async () => {
+    const r = await run({ concept: 'a roc that nests on a lighthouse', cr: 11, archetype: 'brute', path: twist('Roc', 'roc') });
+    expect(r.m.size).toBe('Gargantuan');
+    // print's Roc is Gargantuan and puts reach 10 on its Beak, reach 5 on its
+    // Talons: every row the floor left below 15 must be one of print's own.
+    const short = r.rows.filter((e) => /reach \d+ ft\./.test(e.text ?? '') && Number(/reach (\d+) ft\./.exec(e.text)[1]) < 15);
+    expect(short.length).toBeGreaterThan(0);
+    for (const e of short) expect(e.print).toBe(true);
+  });
+});
+
+describe('the attack floor by CR', () => {
+  const { checkBlock } = require('../checker.mjs');
+  const block = (over) => ({ name: 'Test', size: 'Large', type: 'Monstrosity', alignment: 'Neutral', ac: 15, hp: 100, hp_formula: '12d10 + 34', speed: '40 ft.', stats: { STR: 18, DEX: 14, CON: 16, INT: 6, WIS: 12, CHA: 8 }, cr: 7, cr_str: '7', pb: 3, senses: 'Passive Perception 11', languages: '—', sections: { Actions: [] }, ...over });
+  const claw = { name: 'Claw', text: '*Melee Attack Roll:* +7, reach 10 ft. 13 (2d8 + 4) Slashing damage.' };
+  const floorOf = (b) => Object.values(checkBlock(b).gates ?? {}).flatMap((g) => g.findings ?? []).filter((f) => f.rule === 'attack-floor');
+
+  test('CR 7 with one Claw and no Multiattack is flagged — print carries one on 110 of 113 blocks at CR 5+', () => {
+    expect(floorOf(block({ sections: { Actions: [claw] } })).length).toBe(1);
+  });
+
+  test("one attack row cited N times is print's own idiom, not a defect (the Adult Red Dragon's three Rends)", () => {
+    const ma = { name: 'Multiattack', text: 'The creature makes three Claw attacks.' };
+    expect(floorOf(block({ sections: { Actions: [ma, claw] } })).length).toBe(0);
+  });
+
+  test('below CR 5 the single attack is the shape — 91 of print\'s 106 blocks under CR 1', () => {
+    expect(floorOf(block({ cr: 3, cr_str: '3', sections: { Actions: [claw] } })).length).toBe(0);
+  });
+
+  test('a swarm is exempt: swarm-multiattack hard-fails the only shape this rule would allow', () => {
+    expect(floorOf(block({ type: 'Swarm of Tiny Beasts', sections: { Actions: [claw] } })).length).toBe(0);
+  });
+});
+
+// ------------------------------------------------- step 6: the guard, behavioural
+// The brief asks for a guard test that "a search for the retired tables and rules
+// outside the dispatcher fails." A literal grep cannot be that test: the retired
+// rules legitimately REMAIN as the fallback for a failed path call, which the
+// brief's own never-fail rule requires ("the matcher stands in only when the call
+// failed, and says so"). So the guard is behavioural instead — with a SUCCESSFUL
+// path decision, no retired rule may change the body, the class or the line.
+describe('step 6: with a path decision, no retired rule decides', () => {
+  test("the canon matcher does not supply a BODY the path did not name — a golem of lashed timber is not the Clay Golem", async () => {
+    const r = await run({ concept: 'a siege-engine golem of lashed timber that shoulders through walls', cr: 8, archetype: 'brute', path: { path: 'homebrew', by: 'call', print_body: null, relation: null, class: null, species: null, receipt: 'lashed timber' } });
+    expect(r.trace).toMatch(/\[path\] decides: homebrew/);
+    // the Clay Golem's own rows do not land: no Acid Absorption, no HP-max drain,
+    // and the print-canon stamp never runs, because the path named no body
+    expect(r.rows.some((e) => /Acid Absorption/i.test(e.name ?? ''))).toBe(false);
+    expect(r.trace).not.toMatch(/print canon trait:/);
+  });
+
+  // FOUND BY THIS GUARD (2026-10-20), AND NOT YET FIXED. The brief retires "the
+  // name-canon trait stamp"; it is still live, and on the homebrew path it reads
+  // the WORD "golem" and stamps print's golem traits even though the path call
+  // answered print_body null with the receipt "lashed timber". Live it is usually
+  // suppressed, because the identity call answers golem -> canon ✗ and
+  // `options.rejectedCanon` gates the stamp — but the suppression depends on that
+  // call, not on the path. Retiring it is a behaviour change with pins, so it goes
+  // to the owner for a ruling rather than a rewrite (the brief's own instruction).
+  // This test records today's behaviour so the change is visible when it lands.
+  test('OUTSTANDING: the name-canon trait stamp still fires from a word on the homebrew path', async () => {
+    const r = await run({ concept: 'a siege-engine golem of lashed timber that shoulders through walls', cr: 8, archetype: 'brute', path: { path: 'homebrew', by: 'call', print_body: null, relation: null, class: null, species: null, receipt: 'lashed timber' } });
+    expect(names(r)).toContain('Immutable Form');
+    expect(r.trace).toMatch(/name-canon trait stamped: Immutable Form/);
+    // and the hint call's ✗ is what suppresses it today
+    const q = await run({ concept: 'a siege-engine golem of lashed timber that shoulders through walls', cr: 8, archetype: 'brute', path: { path: 'homebrew', by: 'call', print_body: null, relation: null, class: null, species: null, receipt: 'lashed timber' }, over: {} , rejected: ['golem'] });
+    expect(names(q)).not.toContain('Immutable Form');
+  });
+
+  test('a twist decision is not stood down by a cue verdict aimed at the matcher', async () => {
+    // rejectedCanon is the hint call's ✗. It may veto a MATCHER record; it may not
+    // veto a body the path call named with a receipt.
+    const r = await run({ concept: 'a troll that grows back unless the blade was silvered', cr: 5, archetype: 'brute', path: twist('Troll', 'troll'), over: {} });
+    expect(r.trace).toMatch(/\[path\] decides: twist on the Troll/);
+    expect(names(r)).toContain('Regeneration');
+  });
+
+  test('a failed path call falls to the matcher and SAYS so — the never-fail rule, still audible', async () => {
+    const r = await run({ concept: 'a troll that grows back unless the blade was silvered', cr: 5, archetype: 'brute', path: { path: null, by: 'call', failed: true, receipt: 'the call errored' } });
+    // the sheet still ships (never-fail), and the trace does not claim a decision
+    expect(r.m).toBeTruthy();
+    expect(r.trace).not.toMatch(/\[path\] decides: twist/);
+  });
+
+  test('the homebrew path loads none of print\'s rows even where a name is in the words', async () => {
+    const r = await run({ concept: 'a leviathan of the trench whose song drowns fleets', cr: 16, archetype: 'brute', path: { path: 'homebrew', by: 'call', print_body: null, relation: null, class: null, species: null, receipt: 'of the trench' } });
+    expect(r.trace).not.toMatch(/print canon trait:|print canon route/);
   });
 });

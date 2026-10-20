@@ -1,0 +1,8 @@
+[
+  { "name": "", "description": "a gargantuan trench leviathan that coils around ship hulls and drags them under", "cr": 16, "rules": "2024", "canary": "REACH FOLLOWS THE BODY: a Gargantuan body's own melee rows reach 15 ft., print's modal reach at that size; no row at 5 ft. unless print put it there" },
+  { "name": "", "description": "a huge bog-wyrm that lashes with a barbed tail", "cr": 9, "rules": "2024", "canary": "REACH FLOOR at Huge: the body's own melee rows reach 10 ft. (print: 27 of 37 Huge rows)" },
+  { "name": "", "description": "a vampire who keeps a bathhouse and drowns guests in scalding water", "cr": 13, "rules": "2024", "canary": "PRINT NAMES ITS OWN TRAIT: Legendary Resistance carries its uses — '(3/Day, or 4/Day in Lair)', never a bare name" },
+  { "name": "", "description": "a fen-burn hydra that vents a wall of scalding smoke it must concentrate to hold", "cr": 7, "rules": "2024", "canary": "PREDICATE SLOT: the zone row reads 'Each creature in the area <predicate>.' — never '...up to 10 minutes. has Disadvantage'" },
+  { "name": "", "description": "a squallwing drake that rakes with one great claw", "cr": 7, "rules": "2024", "canary": "ATTACK FLOOR: at CR 7 a Multiattack lands (print: 110 of 113 at CR 5+); the gate flags it if not" },
+  { "name": "", "description": "a large bog hound that drags prey down into the mud", "cr": 5, "rules": "2024", "canary": "CONTROL at Large: print puts reach 5 on 84 of its 126 Large rows, so the floor must NOT fire here" }
+]

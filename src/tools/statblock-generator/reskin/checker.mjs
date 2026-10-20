@@ -408,6 +408,22 @@ function gateStructure(m, ctx, F) {
     if (count && count > 1 && named.length === 0) F('multiattack-count', 'soft', `Multiattack says ${count} but names no rows`, count);
     if (combo && combo[1].split(/,|\bor\b/).map((x) => x.trim()).filter(Boolean).length < 2) F('multiattack-combination', 'fail', `"in any combination" with one row: "${multi.text}"`, multi.text); // Wearwretch, Bog Hound (critic's step-5 read)
   }
+  // THE ATTACK FLOOR BY CR. Print's 329: a Multiattack appears on 40 of 42
+  // blocks at CR 5-7, 24 of 24 at 8-10, 21 of 22 at 11-15, and every block
+  // above — 110 of 113 at CR 5 and up. One attack and no Multiattack is a
+  // CR 0-2 shape (91 of 106 below CR 1). Soft, not fail: print's three
+  // exceptions (Gorgon, Wraith, Remorhaz) are real. (Critic, the forty:
+  // "Squallwing Drake one Claw at CR 7, Ozghar with no Multiattack".)
+  const crHere = Number(ctx?.cr ?? m.cr ?? crNum(m.cr_str ?? '0'));
+  // A SWARM IS EXEMPT: swarm-multiattack hard-fails a swarm that HAS one (all
+  // seven print swarms make exactly one attack), so the two rules would leave
+  // a swarm no legal shape.
+  if (crHere >= 5 && !/\bSwarm\b/i.test(m.type ?? '') && !/\bSwarm of\b/i.test(m.size ?? '')) {
+    // ONE attack row cited N times is print's OWN idiom, not a defect: 70 of
+    // print's 110 CR 5+ Multiattacks (64%) name a single row ("makes three
+    // Rend attacks"). Only the MISSING Multiattack is the floor.
+    if (!multi) F('attack-floor', 'soft', `CR ${crHere} with no Multiattack (print: 110 of 113 blocks at CR 5+ carry one)`, String(crHere));
+  }
   // ONE RECHARGE NOVA PER SHEET: 0 of 2 corpora carry two (the Duergar's two Recharges are short-rest utilities, no damage) — the Glacier Wyrm shipped Freezing Breath beside Glacial Breath (critic's step-5 read)
   const novaRows = novasOf(m).filter((n) => n.sec === 'Actions');
   if (novaRows.length > 1) F('two-novas', 'fail', `two Recharge novas on one sheet: ${novaRows.map((n) => `"${n.name}"`).join(' and ')}`, novaRows.length);

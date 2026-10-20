@@ -5242,8 +5242,12 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     const leader = scaleDonor(pickDonor(5, 'leader', 'defender'), 5, { mechanics: [] });
     const s = await run({ archetype: 'defender', style: 'leader', cr: 5, concept: 'a dwarven crossbow sergeant who orders a volley and holds the shield line', userConcept: 'a dwarven crossbow sergeant who orders a volley and holds the shield line', resolvedType: 'Humanoid', mind: 'sapient' },
       fullAnswer(leader, 'Shieldwall Sergeant', { 'Melee Attack': 'Warhammer', 'Hybrid Attack': 'Hand Crossbow' }));
-    expect(s.trace).toMatch(/trait bound to the concept's verb \(concept-first\): guarded-stance — .*shield line.* in the user's words; the idea path had nothing/);
-    expect((s.m.sections.Traits ?? []).some((e) => e.name === 'Guarded Stance')).toBe(true);
+    // GUARDED STANCE HAS ONE GATE NOW (critic A1 third read; owner 2026-10-19). The sergeant's AC 16
+    // beats print's 15 at CR 5, and print ships no persistent Disadvantage-to-be-hit trait (0 of 329)
+    // and no AC-raising reaction either — so the concept-first door asks the same question the seat's
+    // menu and the class kit ask, and refuses. The DOOR is still proven by the gong below.
+    expect(s.trace).toMatch(/concept-first trait skipped: guarded-stance — AC 16 already beats print's 15/);
+    expect((s.m.sections.Traits ?? []).some((e) => e.name === 'Guarded Stance')).toBe(false);
     expect(s.trace).toMatch(/volley-order/); // the concept's verb draws the volley card beside the stance
     // one key that is the creature's own head noun binds too (the cloister gong: resonant-body on "gong")
     const jug = scaleDonor(pickDonor(8, 'juggernaut', 'brute'), 8, { mechanics: [] });

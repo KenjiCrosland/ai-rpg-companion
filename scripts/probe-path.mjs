@@ -27,7 +27,10 @@ const CASES = [
   ['twist', 'Purple Worm', 'that swallowed an armoury', 'twist', 'Purple Worm'],
   // class NPC
   ['class_npc', '', 'lizardfolk ninja', 'class_npc', null, 'rogue'],
-  ['class_npc', '', 'a hobgoblin warlord who fights from a shield wall', 'class_npc', null, 'fighter'],
+  ['class_npc', '', 'lizardfolk monk', 'class_npc', undefined, 'monk'], // the forty's one live class misread (critic B, 2026-10-19)
+  ['class_npc', '', 'tabaxi cutpurse', 'class_npc', undefined, 'rogue'],
+  ['class_npc', '', 'goliath berserker', 'class_npc', undefined, 'barbarian'],
+  ['class_npc', '', 'a hobgoblin warlord who fights from a shield wall', 'class_npc', undefined, 'fighter'], // the body may be the Hobgoblin Warrior: a people body beside a class word is the brief's own precedence
   ['class_npc', '', 'a kuo-toa priest who drags swimmers under the ice', 'class_npc', undefined, 'cleric'],
   ['class_npc', '', 'a templar priest with a mace and no magic at all', 'class_npc', undefined, null],
   ['class_npc', 'Dame Oriel', '', 'class_npc', null, null],
