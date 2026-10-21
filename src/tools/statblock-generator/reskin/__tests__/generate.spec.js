@@ -1447,13 +1447,20 @@ describe('the brute plumbing (2026-08-26): archetype flows loudly end to end', (
   // is the one the rule existed for — a pick the GM's words never asked for does
   // not ship — and it now holds for material bodies too. OUTCOME CHANGED BY
   // DESIGN; reported to the owner with the landing.
+  // 2026-10-21: the OUTCOME here is unchanged — a receiptless row still does not
+  // ship. Only the trace wording moved. 1d now accepts THREE receipts: a quote of
+  // the GM (`asked`), a concept-key bind, or the call naming which of the
+  // creature's own signature elements the row expresses (`expresses`, validated by
+  // membership of the closed list the concept call produced). The trait seat cannot
+  // quote the GM, which is why the third route exists. These picks name no element,
+  // so they are decoration and still refused — on any body, as the title says.
   test('a receiptless shape fit is declined on ANY body — the receipt is the gate, not the substance', async () => {
     const noVerb = 'It is old stone and it does not like company.'; // the PICK (bloodied-fury) matches nothing in the GM's words
     const meat = await ceilingRun('Giant', noVerb);
-    expect(meat.trace).toMatch(/trait declined: .*no receipt: the call quoted none of the GM's words/);
+    expect(meat.trace).toMatch(/trait declined: .*no receipt of any kind: no quote, no concept key, and the call named none of this creature's own elements/);
     expect(meat.traits.join('|')).not.toMatch(/Iron Fury|Bloodied Fury/);
     const made = await ceilingRun('Construct', noVerb);
-    expect(made.trace).toMatch(/trait declined: .*no receipt/);
+    expect(made.trace).toMatch(/trait declined: .*no receipt of any kind: no quote, no concept key, and the call named none of this creature's own elements/);
     expect(made.traits.join('|')).not.toMatch(/Iron Fury|Bloodied Fury/);
     // (That a RECEIPTED trait still stands is pinned by the ceiling test above,
     // where the Construct run seats a fourth trait on a concept carrying
@@ -5319,7 +5326,7 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     // tracker is bound on the IDEA's words ("it tracks the marked quarry"), and
     // the GM typed none of them. This is the case the retired rule was written
     // for, and the critic's ruling promises it stays covered.
-    expect(lines.join('\n')).toMatch(/trait declined: "Marked Quarry" — no receipt: the call quoted none of the GM's words/);
+    expect(lines.join('\n')).toMatch(/trait declined: "Marked Quarry" — no receipt of any kind: no quote, no concept key, and the call named none of this creature's own elements/);
     expect((m.sections.Traits ?? []).some((e) => e.name === 'Marked Quarry')).toBe(false);
   });
   test('a nova taken on shape alone is declined: the cauldron\'s vent (library round 2026-09-29)', async () => {
@@ -5398,10 +5405,14 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(kept.trace).not.toMatch(/nova declined/);
     expect(Object.values(kept.m.sections).flat().some((e) => e.template === 'ground-burst')).toBe(true);
     // "hurls molten iron" shares only "iron" with a concept that says "iron
-    // cauldron": no receipt, so the key table's preference stands and the pick
+    // cauldron": no receipt, so the quote earns the row NO CREDIT.
+    //
+// no receipt, so the key table's preference stands and the pick
     // is dropped at the earlier door, before the nova check ever sees it.
+    // (2026-10-21: unchanged. The free-row allowance the owner granted covers
+    // TWIST and CLASS sheets only; this case is homebrew, so 1d still decides.)
     const forged = await run('hurls molten iron');
-    expect(forged.trace).toMatch(/signature miss: action — .* the model picked "ground-burst" \(no verb, and it quotes nothing the GM typed\)/);
+    expect(forged.trace).toMatch(/signature miss: action — "ground-burst" quotes nothing the GM typed, matches no key-table verb, and the call named none of this creature's own elements/);
     expect(Object.values(forged.m.sections).flat().some((e) => e.template === 'ground-burst')).toBe(false);
   });
   test('a shifter\'s all-forms row is a weapon or unarmed strike, never the beast\'s natural weapon; a water beast\'s shifter is Amphibious', async () => {

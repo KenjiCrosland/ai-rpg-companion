@@ -427,7 +427,7 @@ export function shapesForAsked(asked) {
 /** How many off-shelf shape matches a signature menu may gain (the critic's "3-6"). */
 export const SHAPE_MENU_CAP = 6;
 
-export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '', concept = '', holds = null, shapes = null, shapeCap = SHAPE_MENU_CAP } = {}) {
+export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '', concept = '', holds = null, shapes = null, shapeCap = SHAPE_MENU_CAP, diagnose = null } = {}) {
   const band = bandFor(cr);
   const rows = Object.values(sections).flat();
   // A FEATURE ALREADY ON A ROW IS OWNED (critic, 2026-10-14: Rruzhk's Open Hand
@@ -505,6 +505,18 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
   const wantShape = Array.isArray(shapes) && shapes.length
     ? new Set(shapes.filter((x) => x?.trigger && x?.effect).map((x) => `${x.trigger}/${x.effect}`))
     : null;
+  // WHY A SAME-SEAT TEMPLATE WAS NOT OFFERED (2026-10-21). The gap trace records
+  // the menu, but "no same-seat option was shown" has two very different causes —
+  // the shelf/legality filters correctly ruled them all out, or they were ruled out
+  // wrongly. Only this function holds the context needed to tell them apart, and an
+  // offline reconstruction cannot: three separate attempts to rebuild a live menu
+  // from the saved sheet disagreed with the run. So it reports, when asked.
+  if (diagnose && section && trigger) {
+    diagnose.sameSeatRejected = TEMPLATES
+      .filter((t) => t.section === section && t.trigger === trigger)
+      .filter((t) => !(onShelf(t) && onStyle(t) && rest(t)))
+      .map((t) => `${t.id}:${!onShelf(t) ? 'role' : !onStyle(t) ? 'style' : 'legality'}`);
+  }
   const onShelfList = TEMPLATES.filter((t) => onShelf(t) && onStyle(t) && rest(t));
   const askedList = TEMPLATES.filter((t) => !(onShelf(t) && onStyle(t)) && askedFor(t) && rest(t));
   if (!wantShape) return [...onShelfList, ...askedList];
@@ -881,7 +893,7 @@ export function templateMenuLines(menu, { cr, concept = '', idea = '' } = {}) {
   }).join('\n');
 }
 
-export function buildFitPrompt({ name, idea, menu, cr, concept = '', sheet = null, clause = null }) {
+export function buildFitPrompt({ name, idea, menu, cr, concept = '', sheet = null, clause = null, elements = [] }) {
   const lines = templateMenuLines(menu, { cr, concept, idea: idea.idea });
   return `A monster's signature ability has been described in plain words. Pour it into ONE of the printed rules templates below, or say none fits. The template's rules are FIXED; the engine fills every {slot} shown in braces except the ones marked "you fill". Do not rewrite the template.
 MONSTER: ${name} (CR ${cr})${sheet ? `\nTHE SHEET SO FAR — read it before you pick; a save stat, a damage type, a reach all come from here:\n${sheet}` : ''}
@@ -895,8 +907,9 @@ A VERB MATCH is a WORD match, not a judgement — the engine found the template'
 A template whose match is marked (concept) may be used even if you answer none, so fill its "you fill" slots in "fills" whichever answer you give, quoting the user's own words (a phobia of chickens fills {phobia} with "chickens"; a warden of the reef fills {place} with "the reef").
 WHY NONE FITS. When you answer "none", answer "declined_because" with exactly one of: collision (a template's key word is here but does not mean that mechanic for this creature), already_answered (the sheet or the creature's own kind already does this), no_fit (nothing offered carries the idea). Answer "" when you did pick a template.
 A REFUSAL NAMES ITS GAP. "no_fit" is not an answer on its own — say which of the offered templates comes CLOSEST ("closest"), what the rules would have to do that none of them does ("missing"), and WHICH KIND OF EFFECT that missing thing is ("missing_effect"), exactly one of: damage | condition | movement | resource | defense. Judge the effect by what the row DOES to its target, not by words that appear in passing: a row that only applies against an already-prone target is not a condition row, and a row that resists being pushed is defense, not movement. In a few plain words naming the MECHANIC, not the fiction: "pulls the creature back to where it started", "picks one target and holds the aim", "costs the creature something when it fails". Never "nothing fits" and never a restatement of the idea. These accumulate into a list of templates worth building, so a vague answer is a wasted one.
-DID THE USER ASK FOR IT? Answer "asked" with the user's OWN WORDS that ask for this template's mechanic, quoted verbatim from THE USER TYPED line above — never from THE IDEA, which is the engine's own prose and is not the user's words. The few words, not a sentence. Leave it "" when the user's words never ask for it and your pick rests on the idea you were given or on the template's shape. Answering "" is not a failure and does not withdraw your pick; it tells the engine the pick is yours, not the GM's, and some seats take only what the GM asked for.
-Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", "closest": "<on a refusal: the offered id that comes nearest, else \"\">", "missing": "<on a refusal: the mechanic none of them does, else \"\">", "missing_effect": "<on a refusal: damage | condition | movement | resource | defense, else \"\">", "name": "<2-3 words>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
+DID THE USER ASK FOR IT? Answer "asked" with the user's OWN WORDS that ask for this template's mechanic, quoted verbatim from THE USER TYPED line above — never from THE IDEA, which is the engine's own prose and is not the user
+${elements.length ? `WHICH OF THIS CREATURE'S OWN ELEMENTS DOES THE ROW EXPRESS? Answer "expresses" with ONE of these, copied exactly, or "" if the row expresses none of them. These were drawn from the GM's description, so naming one is a receipt even when you cannot quote the GM directly — a trait seat usually cannot. Answer "" honestly: a row that does not express any of them is decoration, and saying so is the right answer.\n${elements.map((e) => `  - ${String(e).replace(/"/g, "'")}`).join('\n')}` : ''}'s words. The few words, not a sentence. Leave it "" when the user's words never ask for it and your pick rests on the idea you were given or on the template's shape. Answering "" is not a failure and does not withdraw your pick; it tells the engine the pick is yours, not the GM's, and some seats take only what the GM asked for.
+Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "expresses": "<one of the creature's own elements listed above, copied exactly, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", "closest": "<on a refusal: the offered id that comes nearest, else \"\">", "missing": "<on a refusal: the mechanic none of them does, else \"\">", "missing_effect": "<on a refusal: damage | condition | movement | resource | defense, else \"\">", "name": "<2-3 words>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
 }
 
 export function validateFitResponse(jsonString) {
@@ -904,7 +917,7 @@ export function validateFitResponse(jsonString) {
   return p != null && typeof p.template === 'string';
 }
 
-export function parseFit(raw, menu, creatureName = '') {
+export function parseFit(raw, menu, creatureName = '', elements = []) {
   const p = tryParse(raw) ?? {};
   const id = String(p.template ?? '').trim().toLowerCase();
   const t = id && id !== 'none' ? (menu.find((m) => m.id === id) ?? menu.find((m) => id.includes(m.id)) ?? null) : null;
@@ -923,6 +936,14 @@ export function parseFit(raw, menu, creatureName = '') {
     // so the call answers it with a receipt and generate.mjs checks the quote
     // against the words the GM actually typed.
     asked: String(p.asked ?? '').trim().slice(0, 80),
+    // THE RECEIPT A TRAIT SEAT CAN ACTUALLY PRODUCE (owner's ruling, 2026-10-21).
+    // `asked` requires quoting the GM, and the trait seat is not shown text it can
+    // quote — which is why 1d killed six twists in one forty, each "quoting none of
+    // the GM's words" while being exactly what the GM asked for. The signature
+    // elements were themselves drawn from the GM's description by the concept call,
+    // so naming one is a receipt of the same kind. Validated by MEMBERSHIP of that
+    // closed list: the call may pick one or answer none, and cannot invent a third.
+    expresses: (() => { const v = String(p.expresses ?? '').trim(); return v && elements.some((e) => String(e).trim() === v) ? v : null; })(),
     // STAGE 2 ITEM 1 (owner's fix order, 2026-10-16): on 31% of blocks the GM's
     // words key a template, the call is shown it, and the call says no fit —
     // then 71% fall to a generic seed and 22% ship nothing. Which fix that needs

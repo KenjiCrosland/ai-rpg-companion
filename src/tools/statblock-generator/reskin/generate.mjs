@@ -2391,6 +2391,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // that names a body part or weapon becomes an attack row — the user's phrase as the name, the noun's type and mode, a rider from a
   // small noun table, the chassis's priced slot taken or cloned. No call. The template path composes everything else exactly as it
   // did at the October 4 release; authoring survives only as the repair call, after the template path, for a clause nothing claimed.
+  // DECLARED ABOVE FIRST USE, NOT BESIDE THE OTHER COLLECTORS. Both of these are
+  // read inside the signature fit block, which runs long before the repair block
+  // where `repairProse` lives — putting them there threw "Cannot access
+  // 'freeRowsUsed' before initialization" into the fit call's own catch, so the
+  // seat silently fell back to a seed. A TDZ error inside a try reads as a model
+  // failure, not a code one.
+  const gapRecords = []; // the [gap] lines, emitted once the sheet is final so the outcome is the SHIPPED one
+  let freeRowsUsed = 0;  // signature rows quoting none of the GM's words — the path sets the allowance (owner's ruling 2026-10-21)
   let authored = null; let inlineGuessUsed = null; // the short form the kit and feature rows were stamped with, before the rows' form is settled
   const priceTheRound = (when) => {
     const rowsP = Object.entries(sections).flatMap(([sec, es]) => es.map((e) => ({ sec, e })));
@@ -3749,7 +3757,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         for (const c of clauseRecord ?? []) if (c?.askShape) out.push(...shapesForAsked(c.askShape));
         return [...new Map(out.map((x) => [`${x.trigger}/${x.effect}`, x])).values()];
       })();
-      const menu = templatesFor({ ...ctxT, section: idea.section, trigger: idea.trigger, text: `${options.userConcept ?? concept} ${idea.idea}`, imposed: imposedT, shapes: shapesT }).filter(legalT);
+      // WHY A SAME-SEAT TEMPLATE WAS NOT OFFERED — only templatesFor knows. It is
+      // filled by the `menu` call alone, while the pool is menu + wide + idea-named,
+      // so a template this call rejected can still arrive by another route: the Dire
+      // Wolf line listed zone-seed as both offered AND rejected:role (critic,
+      // 2026-10-21). Anything that reached the menu is therefore filtered out below.
+      const menuDiag = {};
+      const menu = templatesFor({ ...ctxT, diagnose: menuDiag, section: idea.section, trigger: idea.trigger, text: `${options.userConcept ?? concept} ${idea.idea}`, imposed: imposedT, shapes: shapesT }).filter(legalT);
       // a CONCEPT verb must string-match the user's own words; the seat element is
       // the model's prose and counts as idea-level (the binder "rationalized"
       // wither/bloodied as concept verbs, critic run six)
@@ -3849,8 +3863,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (conceptBound.length) trace('signature bound to the concept\'s verb:', `${seat} — ${conceptBound.map((t) => t.id).join(', ')} (${[...new Set(rankByVerb(conceptBound, verbText).flatMap((r) => r.concept))].join(', ')})`);
       try {
         const ownClauseForCall = closedPath ? unansweredTwistClause() : null; // the engine names the clause; the call picks a template FOR it (the critic's prescription, 2026-10-19)
-        const rawFit = await callLLM(buildFitPrompt({ name: p.name, sheet: sheetSoFarT, idea, menu: offered, cr, concept: verbText, clause: ownClauseForCall }), validateFitResponse);
-        let fit = readFit(parseFit(rawFit, offered, p.name), offered, `${verbText} ${idea.idea}`);
+        // `element`, not `text` — assignSeats normalises these to { element, kind }.
+        // Reading the wrong key stringified every entry to "[object Object]", so the
+        // call was shown a list of those and could name none: the Hydra's "Smoking
+        // Stumps" was refused as decoration while its seat was bound to "smoking
+        // stumps instead of regrowth" (receipt-ten, 2026-10-21).
+        const sigElements = (options.signatureElements ?? []).map((e) => String(typeof e === 'string' ? e : (e?.element ?? e?.text ?? ''))).map((x) => x.trim()).filter(Boolean);
+        const rawFit = await callLLM(buildFitPrompt({ name: p.name, sheet: sheetSoFarT, idea, menu: offered, cr, concept: verbText, clause: ownClauseForCall, elements: sigElements }), validateFitResponse);
+        let fit = readFit(parseFit(rawFit, offered, p.name, sigElements), offered, `${verbText} ${idea.idea}`);
         // THE REFUSAL IS RECORDED BEFORE IT IS ANSWERED (2026-10-21). Accepting
         // the closest sets `fit.template`, and every decline trace below is
         // guarded on `!fit.template` — so the first run after acceptance landed
@@ -3876,7 +3896,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             const rend = renderTemplate(near, ctxT, bindFills(near));
             if (rend) {
               trace('closest accepted:', `${seat} — the call refused every template but named "${near.id}" as nearest; it lands rather than the row being dropped (what it wanted: ${String(fit.missing ?? 'unstated').slice(0, 80)})`);
-              fit = { ...fit, template: near, because: fit.missing ?? fit.because, name: fit.name, accepted_closest: true };
+              // THE RECEIPT IS WHAT THE ROW CARRIES, NOT WHAT IT LACKS (2026-10-21).
+              // This line used to set `because` to `fit.missing` — so an accepted
+              // row documented the mechanic it does NOT have. Meshrin's thorn trait
+              // shipped reading "a roar that forces creatures to save or be
+              // Frightened", which the ACTION seat had already built. `because` is
+              // read by the 1d receipt gate, so a wrong one is not cosmetic. The
+              // wanted-but-missing text keeps its own field for the gap list.
+              fit = { ...fit, template: near, because: fit.because || String(idea.idea ?? '').slice(0, 160), wanted: fit.missing ?? null, name: fit.name, accepted_closest: true };
             } else trace('closest refused:', `${seat} — "${near.id}" was named closest but will not render on this sheet`);
           } else trace('closest refused:', `${seat} — "${fit.closest}" was named closest but was never on this sheet's menu`);
         }
@@ -3894,7 +3921,31 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // list: if fifty declines name the same mechanic, that is a template to
         // build; if they name nothing in common, the call was timid.
         if (callRefused) {
-          if (fit.missing) trace('[gap]', `${fit.missing} — "${String(idea.idea ?? '').slice(0, 70)}" — ${p.name ?? 'this sheet'}${fit.closest ? ` (closest offered: ${fit.closest})` : ''}${fit.missing_effect ? ` [effect: ${fit.missing_effect}]` : ''}${fit.accepted_closest ? ' [nearest landed]' : ' [row dropped]'}`);
+          // THE GAP LINE MUST SAY WHAT THE CALL WAS SHOWN (2026-10-21). Read as a
+          // build list, this trace was misleading three ways: the idea was cut to 70
+          // characters (so a `missing` describing a DIFFERENT seat's idea could not be
+          // spotted — Meshrin's thorn trait recorded "a roar that frightens at range",
+          // which the action seat had already built), the seat and the idea's own tags
+          // were absent, and the MENU was absent. Without the menu, "nothing fits"
+          // cannot be told apart from three different situations: the right template
+          // was never offered (routing), it WAS offered and declined anyway (the call
+          // declines too readily — Meshrin's menu led with heated-body, an exact fit),
+          // or the catalog genuinely lacks it (build it). Only the third is a build
+          // signal, and the archive cannot distinguish them.
+          if (fit.missing) {
+            const ids = offered.map((t) => t.id);
+            // THE OUTCOME IS NOT KNOWN HERE (critic, 2026-10-21). This trace used to
+            // stamp [nearest landed] at ACCEPTANCE, ~100 lines before the receipt gate
+            // and the verb preference can veto the seat. It read 1 row in 41 shipping
+            // nothing; measured at ship it is 23 of 41. The record is collected now and
+            // the line is emitted after the sheet is final, where the truth is knowable.
+            const closestOnMenu = fit.closest ? ids.includes(fit.closest) : null;
+            // a template the catalog HAS for this idea's own cell, that this seat was not shown
+            const sameCellUnoffered = TEMPLATES
+              .filter((t) => t.trigger === idea.trigger && t.effect === idea.effect && !ids.includes(t.id))
+              .map((t) => t.id);
+            gapRecords.push({ line: `${fit.missing} — "${String(idea.idea ?? '')}" — ${p.name ?? 'this sheet'} [seat: ${seat} ${tagOf(idea)}]${fit.closest ? ` (closest offered: ${fit.closest}${closestOnMenu === false ? ' — NOT ON THE MENU' : ''})` : ''}${fit.missing_effect ? ` [effect: ${fit.missing_effect}]` : ''} [menu: ${ids.join(' ') || 'empty'}] [same-cell unoffered: ${sameCellUnoffered.join(' ') || 'none'}] [same-seat rejected: ${(menuDiag.sameSeatRejected ?? []).filter((r) => !ids.includes(r.split(':')[0])).join(' ') || 'none'}]`, template: fit.accepted_closest ? (fit.template?.id ?? null) : null, seat, name: p.name ?? 'this sheet' });
+          }
           else trace('[gap] UNNAMED', `${seat} declined with no missing mechanic named — the schema asks for one; "${String(idea.idea ?? '').slice(0, 70)}" — ${p.name ?? 'this sheet'}`);
         }
         if (!fit.template && conceptBound.length) trace('key match declined:', `${seat} — "${conceptBound[0].id}" was ranked first on the call's own menu for ${rankByVerb([conceptBound[0]], verbText)[0].concept.join('+')}, and the call read it as ${wrongT.has(conceptBound[0].id) ? 'a collision, not the mechanic' : 'no fit'}; the words keep their claim and nothing is forced`);
@@ -3945,9 +3996,39 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // chose. The table's preference still wins when the call has no
         // receipt — it keeps template fit honest where nothing better is known.
         const askedOk = vetAsked(fit.asked, rawConceptText);
+        // A RECEIPT DECIDES CREDIT, NOT EXISTENCE (critic's ruling + owner's ruling,
+        // 2026-10-21). 1d was written for a row that CLAIMS a GM clause: that row
+        // needs the quote to earn coverage. It was being applied to whether a
+        // signature row may exist at all, and it is structural — six of its kills on
+        // the forty were the TWIST ITSELF, each rejected for "quoting none of the GM's
+        // words": the Hydra's smoking stumps, the Vampire's thorn garden, Ossuar's bone
+        // sun, the red dragon's blind eye, the Reliquivore's relic rot, the Golem's
+        // weeping foundation. A FREE signature row (no quote, no keyed verb) is now
+        // judged only by the fit gates that follow — body legality, the value floor,
+        // dedup, adjudicability — within an allowance set by the path.
+        //
+        // Owner's ruling: exact gets none (print closes the row set); homebrew gets
+        // them always (it has both seats, the catalog and the shelf); twist and class
+        // get ONE per sheet, theme-bound on a twist — which it is by construction, the
+        // idea seat being bound to a signature element of the concept itself.
+        // HOMEBREW IS NOT CHANGED HERE. The critic recommended "homebrew gets them
+        // always"; the owner ruled only on twist and class, and all six of the
+        // critic's structural kills were twist sheets. Granting homebrew an unlimited
+        // allowance reverses three standing pins about unasked decoration (the
+        // sniper's tracker trait) with no evidence behind it, so it waits for a
+        // ruling of its own.
+        const freeAllowance = printExact ? 0 : 1;
         if (!verbs.length && !askedOk && verbRanked.some((r) => r.concept.length)) {
+          if (!fit.expresses) {
+            trace('signature miss:', `${seat} — "${fit.template.id}" quotes nothing the GM typed, matches no key-table verb, and the call named none of this creature's own elements for it: decoration, not a signature`);
+            return null;
+          }
+          if (freeRowsUsed >= freeAllowance) {
           trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — the model picked "${fit.template.id}" (no verb, and it quotes nothing the GM typed) over a concept-verb template (${verbRanked.filter((r) => r.concept.length).map((r) => r.t.id).join(', ')})`);
-          return null;
+            return null;
+          }
+          freeRowsUsed += 1;
+          trace('free signature row:', `${seat} — "${fit.template.id}" quotes nothing the GM typed and matches no key-table verb, but the call names the element it expresses: "${fit.expresses}" — a receipt the trait seat can produce. Earns no clause credit; the ${closedPath ? 'twist/class' : 'homebrew'} path allows ${freeAllowance} and this is number ${freeRowsUsed}`);
         }
         if (!verbs.length && askedOk) trace('pick kept on the GM\'s own words:', `${seat} — "${fit.template.id}" has no key-table verb, but the call quotes "${askedOk}" from the description`);
         // ITEM 5 (owner's stage 3, 2026-10-16): a row that ANSWERS a clause binds
@@ -3956,7 +4037,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // itself, not just the words. Coverage then credits a receipt rather than
         // a stem overlap ("wound" crediting "cracks open when wounded" to
         // Rampage, the critic's case).
-        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, text: stampT(rendered.text), library: true, template: fit.template.id, ...(rendered?.imposes ? { imposes: rendered.imposes } : fit.template?.imposes ? { imposes: fit.template.imposes } : {}), ...(fit.fills?.condition_minor && CONDITIONS_CLOSED.includes(fit.fills.condition_minor) ? { imposes: fit.fills.condition_minor } : {}), ...(fit.fills?.consumed_condition ? { requiresCondition: fit.fills.consumed_condition } : {}), boundKeys: [...String(fit.because ?? '').matchAll(/([a-z][a-z' -]*?):concept\b/g)].map((mm) => mm[1].trim()) /* provenance: the user's words this row binds to (step 8) */ }, templateName: rendered.name, section: rendered.section, template: fit.template.id, host: fit.template.host ?? 'melee', supersedes: fit.template.supersedes ?? null, asked: askedOk, askedRaw: String(fit.asked ?? '').trim(), because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
+        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, text: stampT(rendered.text), library: true, template: fit.template.id, ...(rendered?.imposes ? { imposes: rendered.imposes } : fit.template?.imposes ? { imposes: fit.template.imposes } : {}), ...(fit.fills?.condition_minor && CONDITIONS_CLOSED.includes(fit.fills.condition_minor) ? { imposes: fit.fills.condition_minor } : {}), ...(fit.fills?.consumed_condition ? { requiresCondition: fit.fills.consumed_condition } : {}), boundKeys: [...String(fit.because ?? '').matchAll(/([a-z][a-z' -]*?):concept\b/g)].map((mm) => mm[1].trim()) /* provenance: the user's words this row binds to (step 8) */ }, templateName: rendered.name, section: rendered.section, template: fit.template.id, host: fit.template.host ?? 'melee', supersedes: fit.template.supersedes ?? null, asked: askedOk, askedRaw: String(fit.asked ?? '').trim(), expresses: fit.expresses ?? null, elementsOffered: sigElements, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
       } catch (e8) {
         trace('signature fit call failed —', `${seat}: ${e8?.message ?? e8}`);
         return null;
@@ -4348,9 +4429,31 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // which is the GM's word by definition. A trait with neither is the model's
       // decoration. The sniper is still covered: a tracker with no quote fails
       // this same gate, on any body.
+      // A RECEIPT DECIDES CREDIT, NOT EXISTENCE (critic's ruling + owner's ruling,
+      // 2026-10-21). THIS is the 1d site that was doing the damage — 12 of the 20
+      // vetoes on that day's forty, and six of its kills were the twist itself:
+      // the Hydra's smoking stumps, the Vampire's thorn garden, Ossuar's bone sun,
+      // the red dragon's blind eye, the Reliquivore's relic rot, the Golem's
+      // weeping foundation. Each was rejected for "quoting none of the GM's words"
+      // while being exactly what the GM asked for — the trait seat does not
+      // produce a quote, so the gate could never be satisfied from here.
+      // The allowance is the path's (exact none, twist/class one, homebrew any);
+      // a row taken on it earns NO clause credit, which is the half of 1d that
+      // was always right.
       if (traitT && !traitT.asked && !/:concept\b/.test(traitT.because ?? '')) {
-        trace('trait declined:', `"${traitT.row.name}" — no receipt: the call quoted none of the GM's words for it and it bound on no concept key (1d: the receipt is the gate, not the body's substance)`);
-        traitT = null;
+        const freeAllowanceT = printExact ? 0 : 1;
+        if (!traitT.expresses) {
+          trace('trait declined:', `"${traitT.row.name}" — no receipt of any kind: no quote, no concept key, and the call named none of this creature's own elements for it (decoration, not a signature)`);
+          traitT = null;
+        } else
+        if (freeRowsUsed >= freeAllowanceT) {
+          trace('trait declined:', `"${traitT.row.name}" — no receipt, and this sheet's free-row allowance (${freeAllowanceT}) is spent (1d: a receipt decides credit, not existence)`);
+          traitT = null;
+        } else {
+          freeRowsUsed += 1;
+          traitT.freeRow = true; // the print-body gate below must not re-kill it
+          trace('free signature row:', `"${traitT.row.name}" — the trait seat cannot quote the GM, but the call names the element it expresses: "${traitT.expresses}". Earns no clause credit; the ${closedPath ? 'twist/class' : 'homebrew'} path allows ${freeAllowanceT} and this is number ${freeRowsUsed}`);
+        }
       }
       // CONCEPT-KEY FIRST (critic, library round 2026-09-29: guarded-stance 2/5 rolls
       // on "holds the shield line", resonant-body 1/3 on "gong" — the idea missed and
@@ -4388,7 +4491,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // fighting:idea]") where print's Skeleton has no trait and the GM asked for
       // none. Only the IDEA fit is gated: the owed trait above is print's own
       // composition for the seat, and the concept-matched one carries the GM's words.
-      if (traitT && printBody && !gmAsked(traitT)) {
+      // a row already taken on the sheet's free-row allowance is not re-killed here:
+      // on a twist the body IS a print body, so this gate would undo the ruling
+      if (traitT && printBody && !gmAsked(traitT) && !traitT.freeRow) {
         trace('trait declined:', `"${traitT.row.name}" — a print body takes only what the user's words ask; ${askWhy(traitT)}`);
       } else if (traitT) shipTrait(traitT);
     }
@@ -6623,6 +6728,21 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // 1e: AN OWED CLAUSE THAT NOTHING ANSWERED IS A DEFECT, NOT A TRACE LINE
   // (critic's ruling). A print body plus a clause the sheet never answers is the
   // stock monster, and the gate used to read it clean.
+  // THE GAP LINE'S OUTCOME, READ OFF THE FINISHED SHEET (critic, 2026-10-21).
+  // Every gate that can veto a signature seat has run by here, so "did the
+  // accepted pick actually ship" is answerable. Stamping it at acceptance made
+  // 23 vetoes of 41 look like 1.
+  if (gapRecords.length) {
+    const shipped = new Set(Object.values(monster.sections ?? {}).flat().map((e) => e.template).filter(Boolean));
+    let vetoed = 0;
+    for (const g of gapRecords) {
+      const landed = g.template ? shipped.has(g.template) : false;
+      if (!landed) vetoed += 1;
+      trace('[gap]', `${g.line}${g.template ? (landed ? ` [landed: ${g.template}]` : ` [VETOED AFTER ACCEPTANCE: ${g.template} never reached the sheet]`) : ' [row dropped]'}`);
+    }
+    if (monster.generation) monster.generation.gap_vetoed = `${vetoed} of ${gapRecords.length}`;
+    if (vetoed) trace('signature outcome:', `${vetoed} of ${gapRecords.length} accepted signature pick(s) never reached the sheet — the seat shipped a fallback or nothing`);
+  }
   if (repairProse.length && monster.generation) monster.generation.answered_in_prose = repairProse.map((u) => u.clause);
   if (repairCredited.length && monster.generation) monster.generation.answered_by_existing = repairCredited;
   if (owedUnanswered.length) {

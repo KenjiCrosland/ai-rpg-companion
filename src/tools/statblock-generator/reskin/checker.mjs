@@ -491,7 +491,13 @@ function gateStructure(m, ctx, F) {
 const CONDITIONS = 'Blinded|Charmed|Deafened|Frightened|Grappled|Incapacitated|Invisible|Paralyzed|Petrified|Poisoned|Prone|Restrained|Stunned|Unconscious';
 export const effectOnly = (t) => String(t ?? '')
   .replace(/that (?:has|have|is|are) the \w+ condition/gi, '')
-  .replace(new RegExp(`that (?:is|are) (?:the )?(?:${CONDITIONS})\\\\b`, 'gi'), '')
+  // `\\b` here, not `\\\\b`: in a template literal the latter collapses to a LITERAL
+  // backslash followed by "b", so this alternative matched nothing from the day it
+  // was written. "one creature within 30 feet that is Frightened of the X" kept its
+  // condition word, and save-fit then demanded a Wisdom save for what is a damage
+  // row targeting the already-frightened (the exploiter shape) — 2 of 5 FAILs on
+  // the 2026-10-21 forty were this.
+  .replace(new RegExp(`that (?:is|are) (?:the )?(?:${CONDITIONS})\\b`, 'gi'), '')
   .replace(new RegExp(`(?:if|while|when|provided) (?:it|they|the target|the creature)(?: is| are| has| have)?(?: the)? (?:${CONDITIONS})(?: condition)?`, 'gi'), '')
   .replace(/already \w+/gi, '');
 

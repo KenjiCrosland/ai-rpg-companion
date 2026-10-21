@@ -1,0 +1,66 @@
+[
+  {
+    "name": "Hydra",
+    "description": "whose stumps smoke instead of regrowing",
+    "cr": "8",
+    "rules": "2014",
+    "canary": "SPINE 8 · print head + a negating addition"
+  },
+  {
+    "name": "Stone Golem",
+    "description": "carved as a weeping saint",
+    "cr": "10",
+    "rules": "2024",
+    "canary": "SPINE 10 · print head + flavour only: numbers must stay print's"
+  },
+  {
+    "name": "Vampire",
+    "description": "who keeps a garden of thorns",
+    "cr": "13",
+    "rules": "2014",
+    "canary": "SPINE 13 · print head + addition, legendary tier 2014"
+  },
+  {
+    "name": "Adult Red Dragon",
+    "description": "blind in one eye from an old lance",
+    "cr": "17",
+    "rules": "2014",
+    "canary": "SPINE 17 · print head + a lack, legendary 2014"
+  },
+  {
+    "name": "Purple Worm",
+    "description": "that swallowed a war-band's armoury",
+    "cr": "15",
+    "rules": "2024",
+    "canary": "SPINE 15 · print head + addition: the swallow engine"
+  },
+  {
+    "name": "",
+    "description": "a cathedral-vault ooze that digests reliquaries",
+    "cr": "9",
+    "rules": "2014",
+    "canary": "USE CASE · OOZE body: the type's own immunities and conditions"
+  },
+  {
+    "name": "Ancient Gold Dragon",
+    "description": "",
+    "cr": "24",
+    "rules": "2014",
+    "canary": "SPINE 24 · bare print head at the ceiling, 2014"
+  },
+  {
+    "description": "a lich whose skull is a sun of bone that never sets",
+    "cr": "14",
+    "rules": "2024"
+  },
+  {
+    "description": "a bog widow that punishes what strikes it and heals from the wound",
+    "cr": "7",
+    "rules": "2024"
+  },
+  {
+    "description": "a templar reeve who parries with a tower shield and never yields ground",
+    "cr": "6",
+    "rules": "2024"
+  }
+]

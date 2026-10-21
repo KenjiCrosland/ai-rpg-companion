@@ -10,42 +10,61 @@ choose what to work on; each item says where its context lives.
 | `sweep-2026-10-21T15-19-47` | 3 of 40 | duplicate-mechanic (false positive), + 2 |
 | `sweep-2026-10-21T15-59-59` | 3 of 40 | owed-clause ×2, control-aoe-ungated |
 | `sweep-2026-10-21T16-48-01` | 3 of 40 | two-novas, save-fit, lack-honored |
+| `sweep-2026-10-21T17-45-29` | 3 of 40 | two-novas, lack-honored, save-fit (after the `effectOnly` fix; read 5 before it) |
+| `sweep-2026-10-21T18-15-11` | **2 of 40** | lint:dangling-use-ref + undefined-attack-ref (one block), speaks-by-int |
 
-Three runs, 3 FAIL each, and **no FAIL repeats across them**. That is the thing
-to understand before chasing any single one: the rate is ~7% and the population
-is a long tail of one-off defects, not a few recurring bugs. Two classes were
-genuinely closed today (duplicate-mechanic false positives, owed-clause) and the
-count did not move, because a different three surfaced. Expect that again.
+Five runs, 2-3 FAIL each, and **the population turns over almost completely
+between runs**. `two-novas` (Knell Swarm) and `lack-honored` (Adult Red Dragon)
+repeated twice and then vanished on the next run from the same fixed batch, so
+even an apparent repeat is variance, not a deterministic defect. The rate is
+~5-7% and it is a long tail. Three classes were genuinely closed on 2026-10-21
+(duplicate-mechanic false positives, owed-clause, the `effectOnly` save-fit false
+positives) and the count barely moved, because different ones surface each time.
+Do not read a single forty's FAIL list as a work queue.
 
 The 10-20 forty read 0 FAIL. That was NOT better — it predates the
 `owed-clause`, `control-aoe-ungated` and `duplicate-mechanic` gates, which
 surface defects that were shipping unseen.
 
-## P1 — Composition: one row carrying two templates' effects
+## RESOLVED — the catalog is not the problem (measured 2026-10-21)
 
-**Now the top item.** The owner asked for this during the gap-list work and it is
-still untouched. It is also what the remaining owed-clause pressure reduces to.
+Composition was written as P1 here. **It is not supported, and neither is any
+catalog build.** The engine now reports, on every `[gap]` line, which same-seat
+templates it rejected and at which stage (`role` / `style` / `legality`), because
+three separate offline attempts to rebuild a live menu disagreed with the run —
+only `templatesFor` holds the context to know. Over the forty
+(`sweep-2026-10-21T18-15-11`), 41 gap lines:
 
-Evidence it is the right next thing:
+| bucket | share | meaning |
+|---|---|---|
+| OVER-DECLINE | **71%** | a same-seat template WAS on the menu and the call said no |
+| ROLE SHELF | 17% | none offered; same-seat ones exist but the role filter cut them |
+| LEGALITY | 5% | correctly cut — wrong body type, no host row, wrong style |
+| GENUINE GAP | **7%** | the catalog has nothing for that seat |
 
-- **Purple Worm** (`sweep-...15-59-59`) formed a correct idea for "swallowed a
-  war-band's armoury" — "spearheads and mail fused into the hide gouge anything
-  that presses against it" — and hit `[gap]`: no template expresses damage on
-  MAINTAINED CONTACT (grappling, clinging, swallowed). `resonant-body` covers "a
-  creature that HITS it", a different trigger.
-- **The `on_being_hit/condition` family** — 17 of 185 recorded gaps, 0 templates.
-  The only gap claim that survived every revision of that analysis.
-- **Seat capacity.** Vashka the Red's concept produced THREE signature elements
-  and there are TWO seats (action, trait); "punishing anyone who breaks ranks
-  past the line" never got a seat. On a print body print's rows hold the sheet,
-  so the GM's third ask has nowhere to go. More seats would break print fidelity;
-  one row carrying two effects would not.
+**The catalog is ~93% complete for observed demand**, and the three genuine gaps
+are singletons in three different cells, not a family. The
+`on_being_hit/condition` family theory died here too: 4 of 5 genuine gaps one
+run, 1 of 3 the next — small-sample noise.
 
-Data to work from: the `closest` / `missing` / `missing_effect` fields the
-decline schema collects on every refusal (`templates.mjs`), and
-`plans/RELEASE-case-pipelines-2026-10-20.md`.
+Over-declining is real but largely self-healing: closest-acceptance lands the
+call's own named-nearest template, and **1 row in 41 shipped nothing** (it was
+22% of blocks at 2026-10-16). If anyone wants to work it, the lever is the FIT
+PROMPT — make `no_fit` rarer when the menu already matches the seat's shape —
+not the catalog.
 
-## P2 — The long tail of one-off reader/structure FAILs
+### Two measurement errors worth not repeating
+
+1. **The first classification read 79% ROUTING. It ignored `section`.**
+   `riposte`, `ward-retaliation` and `snap-shot` are `section=reaction` and were
+   being counted as withheld from a TRAIT seat. Match on
+   section+trigger+effect, never trigger+effect alone.
+2. **Offline reconstruction of a menu does not work.** `heated-body` and
+   `hook-drag` both appeared in rebuilt contexts and not in the live ones —
+   `owned`, engine families, style and the resolved type all feed the filters.
+   Ask the engine; do not re-derive.
+
+## P1 — The long tail of one-off reader/structure FAILs
 
 Not one bug. Current examples, each needing its own diagnosis:
 
@@ -63,7 +82,7 @@ Not one bug. Current examples, each needing its own diagnosis:
 Pick by frequency across runs, not by the most recent forty — each of these has
 appeared once.
 
-## P3 — A soft report on the repair call's own verdicts
+## P2 — A soft report on the repair call's own verdicts
 
 The repair call may now say a clause needs no new row, two ways (see
 `plans/owed-clause-2026-10-21.md`). Both are recorded on the sheet —
