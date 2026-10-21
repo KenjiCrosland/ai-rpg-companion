@@ -32,6 +32,7 @@ export const guardedStanceIllegalAt = (cr, ac) => {
 };
 export const guardedStanceWhyAt = (cr, ac) => `AC ${ac} already beats print's ${Number(challengeRatings?.[crKey(cr)]?.armor_class ?? 0)} at CR ${cr}, and print ships no persistent Disadvantage-to-be-hit trait (0 of 329)`;
 import { hpFormulaFor as hpFormulaForSize, saveDamageDiceFor as engineDiceFor, attackDamageDiceFor } from '../format-2024/dice.mjs';
+import { AFFLICTIONS, imposedConditions } from './author.mjs'; // one definition: the conditions a finished row imposes
 import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the validated condition list the authoring call answers against
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
@@ -1947,6 +1948,7 @@ export async function generateReskin(options, callLLM) {
           const rider = ` If the target is a ${cr >= 5 ? 'Large' : 'Medium'} or smaller creature, it has the Grappled condition (escape DC ${dc}).`;
           const cap = (t) => `${String(t).trim().replace(/[^.!?]$/, (c) => `${c}.`)}${rider}`;
           primary.text = cap(primary.text);
+          imposeOn(primary, 'Grappled'); // this weld writes the Grappled rider, so it records it
           if (primary.text_noRider) primary.text_noRider = cap(primary.text_noRider); // the rider weld rebuilds from this twin — the first cut lost the fold there
         }
         const esc = (x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -2686,8 +2688,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (s.recharge) slotYield(['nova'], saveRow);
     }
     const dmgTok = (eff) => String(eff).replace(/\s*\{dmg\}(?:\s+damage)?/g, (tok, off, whole) => (/\b(?:takes?|deals?|dealing|taking|extra|additional|plus|regains?|suffers?|an extra)\s*$/i.test(whole.slice(0, off)) ? tok : '')).replace(/\s{2,}/g, ' '); // "immune to anything {dmg}" — the token only stands where damage is dealt or taken (the Vault Bull, step 6 baseline)
-    for (const t of authored.traits) { const text = renderForm({ kind: 'trait', trigger: t.trigger, effect: dmgTok(t.effect).replace(/(?:DC )?\{dc\}/g, `DC ${scaled.dc}`) /* "a 15 Charisma saving throw" — the token always carries its DC (step 7 defect 5) */.replace(/\{dmg\}/g, (() => { const d = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * 0.5))); return `${d.avg} (${d.dice})`; })()) }, '2024'); (sections.Traits = sections.Traits ?? []).unshift({ name: t.name, text, authored: true, clause: t.clause, ...(t.flavor ? { flavor: t.flavor } : {}) }); }
-    for (const r of authored.reactions) { const text = renderForm({ kind: 'reaction', trigger: r.trigger, response: r.response.replace(/(?:DC )?\{dc\}/g, `DC ${scaled.dc}`).replace(/\{dmg\}/g, (() => { const d = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * 0.5))); return `${d.avg} (${d.dice})`; })()) }, '2024'); (sections.Reactions = sections.Reactions ?? []).push({ name: r.name, text, authored: true, clause: r.clause }); }
+    for (const t of authored.traits) { const text = renderForm({ kind: 'trait', trigger: t.trigger, effect: dmgTok(t.effect).replace(/(?:DC )?\{dc\}/g, `DC ${scaled.dc}`) /* "a 15 Charisma saving throw" — the token always carries its DC (step 7 defect 5) */.replace(/\{dmg\}/g, (() => { const d = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * 0.5))); return `${d.avg} (${d.dice})`; })()) }, '2024'); (sections.Traits = sections.Traits ?? []).unshift({ name: t.name, text, authored: true, clause: t.clause, ...(t.imposes ? { imposes: t.imposes } : {}), ...(t.flavor ? { flavor: t.flavor } : {}) }); }
+    for (const r of authored.reactions) { const text = renderForm({ kind: 'reaction', trigger: r.trigger, response: r.response.replace(/(?:DC )?\{dc\}/g, `DC ${scaled.dc}`).replace(/\{dmg\}/g, (() => { const d = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * 0.5))); return `${d.avg} (${d.dice})`; })()) }, '2024'); (sections.Reactions = sections.Reactions ?? []).push({ name: r.name, text, authored: true, clause: r.clause, ...(r.imposes ? { imposes: r.imposes } : {}) }); }
     if (authored.crossRef && authored.crossRef.payoffRow !== authored.crossRef.riderRow) { const pay = rowByName(authored.crossRef.payoffRow); const rid = rowByName(authored.crossRef.riderRow); if (pay && rid && new RegExp(`has the ${authored.crossRef.condition} condition`).test(rid.text) && /Attack Roll:\*? \+\d+/.test(pay.text) && !/with Advantage/.test(pay.text)) { pay.text = pay.text.replace(/(Attack Roll:\*? \+\d+)/, `$1 (with Advantage if the target has the ${authored.crossRef.condition} condition)`); requireOn(pay, authored.crossRef.condition); trace('cross-row reference:', `"${rid.name}" applies ${authored.crossRef.condition}; "${pay.name}" exploits it`); } }
     trace(repair ? 'repaired sheet:' : 'named parts landed:', `${attackNames.length} attack row(s), ${authored.saves.length} save, ${authored.traits.length} trait(s), ${authored.reactions.length} reaction(s); ${authored.unplaced.length} clause(s) unplaced`);
   };
@@ -3849,6 +3851,35 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const ownClauseForCall = closedPath ? unansweredTwistClause() : null; // the engine names the clause; the call picks a template FOR it (the critic's prescription, 2026-10-19)
         const rawFit = await callLLM(buildFitPrompt({ name: p.name, sheet: sheetSoFarT, idea, menu: offered, cr, concept: verbText, clause: ownClauseForCall }), validateFitResponse);
         let fit = readFit(parseFit(rawFit, offered, p.name), offered, `${verbText} ${idea.idea}`);
+        // THE REFUSAL IS RECORDED BEFORE IT IS ANSWERED (2026-10-21). Accepting
+        // the closest sets `fit.template`, and every decline trace below is
+        // guarded on `!fit.template` — so the first run after acceptance landed
+        // produced 40 acceptances and ZERO gap lines. The gap list is the
+        // engine's only record of what the catalog cannot hold; losing it to
+        // improve the probe is a bad trade made silently. The refusal is a fact
+        // about the call's answer and is captured here, before anything acts on it.
+        const callRefused = !fit.template;
+        // THE CLOSEST TEMPLATE IS ACCEPTED RATHER THAN THE ROW DROPPED (owner's
+        // call, 2026-10-21). Measured across 358 recorded refusals: in 167 the
+        // model NAMED a close template it had been offered and refused anyway,
+        // because it wanted a COMPOUND the catalog cannot express in one row
+        // ("retaliation that also leaves Difficult Terrain under the attacker")
+        // or a near-variant of one ("escalating hardening as it loses HP, not
+        // retaliation"). Dropping the row loses the whole ask to get none of it;
+        // landing the named nearest gets most of it. The gap line still records
+        // what was missing, so the demand stays countable.
+        // Guarded: the named template must be one this sheet was actually offered
+        // and can render — never a free pick off the whole catalog.
+        if (!fit.template && fit.closest) {
+          const near = pool.find((t) => t.id === fit.closest || t.key === fit.closest);
+          if (near) {
+            const rend = renderTemplate(near, ctxT, bindFills(near));
+            if (rend) {
+              trace('closest accepted:', `${seat} — the call refused every template but named "${near.id}" as nearest; it lands rather than the row being dropped (what it wanted: ${String(fit.missing ?? 'unstated').slice(0, 80)})`);
+              fit = { ...fit, template: near, because: fit.missing ?? fit.because, name: fit.name, accepted_closest: true };
+            } else trace('closest refused:', `${seat} — "${near.id}" was named closest but will not render on this sheet`);
+          } else trace('closest refused:', `${seat} — "${fit.closest}" was named closest but was never on this sheet's menu`);
+        }
         const hnF = headNoun(verbText); const topC = conceptBound.length ? rankByVerb([conceptBound[0]], verbText)[0].concept : [];
         if (!fit.template && conceptBound.length) for (const t of conceptBound) declinedT.add(t.id);
         // STAGE 2 ITEM 1: the reason rides on the record for every decline, so the
@@ -3862,8 +3893,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // One line per decline, in a fixed shape so runs can be grepped into a
         // list: if fifty declines name the same mechanic, that is a template to
         // build; if they name nothing in common, the call was timid.
-        if (!fit.template) {
-          if (fit.missing) trace('[gap]', `${fit.missing} — "${String(idea.idea ?? '').slice(0, 70)}" — ${p.name ?? 'this sheet'}${fit.closest ? ` (closest offered: ${fit.closest})` : ''}`);
+        if (callRefused) {
+          if (fit.missing) trace('[gap]', `${fit.missing} — "${String(idea.idea ?? '').slice(0, 70)}" — ${p.name ?? 'this sheet'}${fit.closest ? ` (closest offered: ${fit.closest})` : ''}${fit.missing_effect ? ` [effect: ${fit.missing_effect}]` : ''}${fit.accepted_closest ? ' [nearest landed]' : ' [row dropped]'}`);
           else trace('[gap] UNNAMED', `${seat} declined with no missing mechanic named — the schema asks for one; "${String(idea.idea ?? '').slice(0, 70)}" — ${p.name ?? 'this sheet'}`);
         }
         if (!fit.template && conceptBound.length) trace('key match declined:', `${seat} — "${conceptBound[0].id}" was ranked first on the call's own menu for ${rankByVerb([conceptBound[0]], verbText)[0].concept.join('+')}, and the call read it as ${wrongT.has(conceptBound[0].id) ? 'a collision, not the mechanic' : 'no fit'}; the words keep their claim and nothing is forced`);
@@ -4028,7 +4059,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (pendingWildcard) {
     if (floatingOrb) {
       const rt = TEMPLATE_BY_ID.get('random-ray'); const rr = rt ? renderTemplate(rt, ctxT, {}, { blind: true }) : null;
-      if (rr) { imposedActionT = { row: { name: rr.name /* at will: print's Beholder shoots three rays every turn; a recharge left the orb at 45 a round at CR 13 (rerun 2026-10-03) */, text: stampT(rr.text), library: true, template: 'random-ray', name_locked: true }, templateName: rr.name, section: rr.section, template: 'random-ray', because: 'the floating-orb overlay imposes its rays [verb: eyestalks:concept]' }; trace('imposed nova:', 'Eye Rays — the orb\'s rays are its nova, not a fit'); }
+      if (rr) { imposedActionT = { row: { name: rr.name /* at will: print's Beholder shoots three rays every turn; a recharge left the orb at 45 a round at CR 13 (rerun 2026-10-03) */, text: stampT(rr.text), library: true, ...(rr.imposes ? { imposes: rr.imposes } : {}), template: 'random-ray', name_locked: true }, templateName: rr.name, section: rr.section, template: 'random-ray', because: 'the floating-orb overlay imposes its rays [verb: eyestalks:concept]' }; trace('imposed nova:', 'Eye Rays — the orb\'s rays are its nova, not a fit'); }
     }
     let actionT = imposedActionT ?? (wildcardAllowed && !printPlain ? await fitSeat('action', ideasT?.action) : null);
     // a NOVA is a whole-round ability: taken on shape alone, with no verb in the
@@ -4300,7 +4331,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const r = renderTemplate(ot, ctxT, bindFills(ot), { blind: true });
         if (!r) continue;
         trace('seat default:', `${scaled.style ?? archetype} owes ${owed} by print — it seats before the idea`);
-        shipTrait({ row: { name: r.name, text: stampT(r.text), library: true, template: owed }, templateName: r.name, section: r.section, template: owed, because: 'the seat owes it by print', owed: true });
+        shipTrait({ row: { name: r.name, text: stampT(r.text), library: true, ...(r.imposes ? { imposes: r.imposes } : {}), template: owed }, templateName: r.name, section: r.section, template: owed, because: 'the seat owes it by print', owed: true });
       }
       // a MEAT body earns its trait by a verb (review 2026-09-28): "a bear" took a
       // barbed coat the shelf fit with no word of the concept or the idea behind
@@ -4346,7 +4377,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           const rr = renderTemplate(r.t, ctxT, bindFills(r.t), { blind: true });
           if (!rr) { trace('concept-first trait skipped:', `${r.t.id} (the sheet cannot render it blind)`); continue; }
           trace('trait bound to the concept\'s verb (concept-first):', `${r.t.id} — ${r.concept.join('+')} in the user's words; the idea path had nothing`);
-          shipTrait({ row: { name: rr.name, text: stampT(rr.text), library: true, template: r.t.id }, templateName: rr.name, section: rr.section, template: r.t.id, because: `exact concept match [verb: ${r.concept.map((k) => `${k}:concept`).join(', ')}]` });
+          shipTrait({ row: { name: rr.name, text: stampT(rr.text), library: true, ...(rr.imposes ? { imposes: rr.imposes } : {}), template: r.t.id }, templateName: rr.name, section: rr.section, template: r.t.id, because: `exact concept match [verb: ${r.concept.map((k) => `${k}:concept`).join(', ')}]` });
           break;
         }
       }
@@ -4374,6 +4405,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
   }
   const owedUnanswered = []; // 1e: owed clauses the repair could not answer — the checker fails on these
+  const repairProse = []; // 1e: clauses the repair call judged flavour, not rules — they reach the description instead of a row
+  const repairCredited = []; // 1e: clauses the repair call credited to a row already on the sheet — recorded so a credit to a generic print row stays auditable
   if (!printExact) { // AUTHORING IS THE REPAIR CALL (step 7): after the template path, one call for a mechanical clause that no part row, template row or seed claimed; never on an exact print body (a borrow takes it — step 8)
     // A ROW'S BOUND KEYS ARE WORDS IT CLAIMS (critic, 2026-10-14: Meshrin's hook
     // rider welded onto Hooked Chain and the repair then authored the same clause
@@ -4405,15 +4438,58 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const lacksForAuthor = clauseRecord.filter((c) => c.polarity === 'lacks').map((c) => c.text);
         const rawR = await callLLM(buildRepairPrompt({ name: p.name, inline: inlineGuessRef(), clauses: unclaimed, cr, sheet: sheetText, attackCap: unclaimed.length, lacks: lacksForAuthor, taken: Object.values(sections).flat().map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean) }), validateAuthorResponse);
         const rep = parseAuthorResponse(rawR, { attackKeys: [], attackCap: 1, traitSlots: 1 });
+        trace('repair answer:', `attacks ${rep?.attacks.length ?? 0}, saves ${rep?.saves.length ?? 0}, traits ${rep?.traits.length ?? 0}, reactions ${rep?.reactions.length ?? 0}, answered ${JSON.stringify(rep?.answered ?? [])}, unplaced ${JSON.stringify((rep?.unplaced ?? []).map((u) => `${u.where}:${u.clause}`))}${rep ? '' : ' — THE ANSWER DID NOT PARSE'}`);
+        // A CLAUSE THE SHEET ALREADY ANSWERS IS NOT OWED (2026-10-21). Vashka the
+        // Red shipped a FAIL for "never breaks ranks" while carrying "Shield Wall
+        // Stance. ...refusing to yield while unbroken" — the row that answers it.
+        // `claimedBy` decides coverage by 4-character stem overlap, and
+        // "breaks"/"ranks" share no stem with "unbroken"/"yield", so the clause
+        // went to the repair call, which correctly wrote nothing because the sheet
+        // already had it — and "no rows" was read as failure. Widening the stem
+        // matcher is the word rule the ruling forbids; the call that is already
+        // holding the clause AND the whole sheet answers it instead, and the engine
+        // validates the row it names really exists.
+        const rowsNow = Object.values(sections).flat();
+        const bare2 = (n) => String(n ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase();
+        const alreadyAnswered = new Set();
+        for (const a of rep?.answered ?? []) {
+          const row = rowsNow.find((e) => bare2(e.name) === bare2(a.row));
+          const cl = unclaimed.find((c) => c.text === a.clause) ?? unclaimed.find((c) => clauseWords(c.text).some((w) => clauseWords(a.clause).includes(w)));
+          if (!row || !cl) { trace('repair:', `the call said "${a.clause}" is already answered by "${a.row}", but no such row is on the sheet — the clause stays owed`); continue; }
+          alreadyAnswered.add(cl.text);
+          if (!row.clause) row.clause = cl.text;
+          row.answersAlso = [...new Set([...(row.answersAlso ?? []), cl.text])];
+          repairCredited.push(`${cl.text} -> ${String(row.name).replace(/ \(.*\)$/, '')}`);
+          trace('clause already answered:', `"${cl.text}" is carried by "${String(row.name).replace(/ \(.*\)$/, '')}" in different words — the call read the sheet and declined to answer it twice`);
+        }
+        // "THIS IS NOT A ROW" IS AN ANSWER (2026-10-21). Vashka the Red failed
+        // `owed-clause` for "never breaks ranks" while the repair call had answered
+        // `unplaced: ["description:never breaks ranks"]` — it read the whole sheet
+        // and judged the clause flavour, which is a verdict, not an empty hand. The
+        // engine discarded it and failed the block; worse, `landAuthored` only runs
+        // when there are ROWS, so the prose never reached the description either and
+        // the GM's words vanished entirely. The clause reader called it mechanical
+        // and this call disagrees — and this call is the one holding the finished
+        // sheet, so it is the one that judges. Recorded on the sheet either way, so
+        // a call that tried to dodge rules work into prose stays visible.
+        for (const u of rep?.unplaced ?? []) {
+          if (!u.clause || (u.where !== 'description' && u.where !== 'languages')) continue;
+          const cl = unclaimed.find((c) => c.text === u.clause) ?? unclaimed.find((c) => clauseWords(c.text).some((w) => clauseWords(u.clause).includes(w)));
+          if (!cl) continue;
+          alreadyAnswered.add(cl.text);
+          repairProse.push(u);
+          trace('clause answered in prose:', `"${cl.text}" — the call read the sheet and judged it ${u.where}, not a row; the words reach the ${u.where === 'languages' ? 'languages line' : 'description'} instead`);
+        }
+        const stillOwed = unclaimed.filter((c) => !alreadyAnswered.has(c.text));
         if (rep && (rep.attacks.length + rep.saves.length + rep.traits.length + rep.reactions.length)) { rep.placed = rep.attacks.map((a) => ({ ...a, key: null })); rep.unplaced = rep.unplaced ?? []; landAuthored(rep, { repair: true }); if (authored) authored.unplaced = [...(authored.unplaced ?? []), ...rep.unplaced]; else authored = { attacks: [], saves: [], traits: [], reactions: [], crossRef: null, unplaced: rep.unplaced, placed: [], repairOnly: true }; }
-        else if (closedPath) { owedUnanswered.push(...unclaimed.map((c) => c.text)); }
-        else trace('repair:', `the answer held no rows — the clauses stay unplaced${closedPath ? ' AND they were owed: a print body plus a clause the sheet never answers is the stock monster (1e)' : ''}`);
+        else if (closedPath && stillOwed.length) { owedUnanswered.push(...stillOwed.map((c) => c.text)); trace('repair:', `the answer held no rows for ${stillOwed.length} owed clause(s) — ${stillOwed.map((c) => `"${c.text}"`).join(', ')}: a print body plus a clause the sheet never answers is the stock monster (1e)`); }
+        else trace('repair:', `the answer held no rows — the clauses stay unplaced${closedPath && stillOwed.length ? ' AND they were owed: a print body plus a clause the sheet never answers is the stock monster (1e)' : ''}`);
       } catch (eR) { trace('repair call failed —', `${eR?.message ?? eR}; the clauses stay unplaced`); if (closedPath) owedUnanswered.push(...unclaimed.map((c) => c.text)); }
     }
   }
   { // THE RECORD'S UNPLACED LIST IS FINAL HERE (step 8): the repair ran after the sheet was assembled; a descriptive clause nothing claimed is flavor and reaches the description
     const claimedAll = new Set(Object.values(sections).flat().flatMap((e) => [...clauseWords(`${e.clause ?? ''} ${e.name ?? ''}`), ...(Array.isArray(e.boundKeys) ? e.boundKeys.flatMap((k) => clauseWords(k)) : [])]));
-    const unplacedNow = [...(authored?.unplaced ?? [])];
+    const unplacedNow = [...(authored?.unplaced ?? []), ...repairProse]; // the repair's own prose verdict lands even when it wrote no rows
     for (const c of clauseRecord) if (c.kind === 'descriptive' && !c.head && !clauseWords(c.text).some((w) => claimedAll.has(w)) && !unplacedNow.some((u) => clauseWords(u.clause).some((w) => clauseWords(c.text).includes(w)))) unplacedNow.push({ clause: c.text, where: 'description', text: c.text });
     if (monster.generation) monster.generation.unplaced = unplacedNow;
   }
@@ -6547,6 +6623,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // 1e: AN OWED CLAUSE THAT NOTHING ANSWERED IS A DEFECT, NOT A TRACE LINE
   // (critic's ruling). A print body plus a clause the sheet never answers is the
   // stock monster, and the gate used to read it clean.
+  if (repairProse.length && monster.generation) monster.generation.answered_in_prose = repairProse.map((u) => u.clause);
+  if (repairCredited.length && monster.generation) monster.generation.answered_by_existing = repairCredited;
   if (owedUnanswered.length) {
     monster.generation.owed_unanswered = [...new Set(owedUnanswered)];
     trace('owed and unanswered:', `${monster.generation.owed_unanswered.map((t) => `"${t}"`).join(', ')} — the checker fails this block (1e)`);
@@ -6567,19 +6645,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // ordering note), and after the lacks sweep, which can remove one.
   // Print's own rows are never touched, nor the GM's named weapon.
   {
-    const CONDS = ['Grappled', 'Restrained', 'Prone', 'Incapacitated', 'Paralyzed', 'Stunned', 'Blinded', 'Poisoned', 'Frightened', 'Charmed', 'Deafened'];
-    const imposedIn = (t) => {
-      const out = new Set();
-      for (const mm of String(t ?? '').matchAll(/has the (\w+) condition/g)) {
-        const pre = String(t).slice(Math.max(0, mm.index - 46), mm.index);
-        if (/\bif\b[^.]*$|\balready\b\s*$/i.test(pre)) continue;
-        if (CONDS.includes(mm[1])) out.add(mm[1]);
-      }
-      return [...out];
-    };
     const rowsAll = Object.values(monster.sections ?? {}).flat();
     const tally = {};
-    for (const e of rowsAll) for (const c of imposedIn(e.text)) (tally[c] = tally[c] ?? []).push(e);
+    for (const e of rowsAll) for (const c of imposedConditions(e)) { if (AFFLICTIONS.includes(c)) (tally[c] = tally[c] ?? []).push(e); }
     for (const [cond, holders] of Object.entries(tally)) {
       if (holders.length < 3) continue;
       // the two that KEEP it: print's own first, then the GM's named part, then
@@ -6592,7 +6660,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           .replace(new RegExp(`,? and (?:the target|it) has the ${cond} condition[^.]*\\.?`, 'i'), '.')
           .replace(new RegExp(`\\s*The target has the ${cond} condition[^.]*\\.`, 'i'), '')
           .replace(/\s{2,}/g, ' ').replace(/\.\./g, '.').trim();
-        if (e.text === was) continue; // nothing matched: leave the row alone rather than mangle it
+        if (e.text === was) {
+          // A SILENT DECLINE IS INVISIBLE. Leaving the row alone is right — better
+          // an unstripped rider than a mangled sentence — but saying nothing meant
+          // the gate could FAIL a sheet while the pass looked like it had never run,
+          // which is exactly how the Guardian case stayed unexplained for a day.
+          trace('one mechanic, at most twice:', `"${e.name}" keeps its ${cond} rider — the strip has no pattern for how this row words it: ${String(e.text).slice(0, 120)}`);
+          continue;
+        }
         if (e.imposes === cond) delete e.imposes;
         trace('one mechanic, at most twice:', `"${e.name}" drops its ${cond} rider — ${holders.length} rows imposed it and print has none with three; the row, its damage and its name all stay`);
       }

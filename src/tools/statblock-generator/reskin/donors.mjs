@@ -731,7 +731,7 @@ export const DONORS = [
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
-        { name: 'Trample', imposes: 'Prone', rules: true, text: '*Dexterity Saving Throw*: DC 12, one creature within 5 feet that has the Prone condition. *Failure:* 9 (2d8) {damage_type} damage. *Success:* Half damage.' },
+        { name: 'Trample', rules: true, text: '*Dexterity Saving Throw*: DC 12, one creature within 5 feet that has the Prone condition. *Failure:* 9 (2d8) {damage_type} damage. *Success:* Half damage.' },
       ],
     },
   },
@@ -751,7 +751,7 @@ export const DONORS = [
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
-        { name: 'Trample', imposes: 'Prone', rules: true, text: '*Dexterity Saving Throw*: DC 13, one creature within 5 feet that has the Prone condition. *Failure:* 13 (3d8) {damage_type} damage. *Success:* Half damage.' },
+        { name: 'Trample', rules: true, text: '*Dexterity Saving Throw*: DC 13, one creature within 5 feet that has the Prone condition. *Failure:* 13 (3d8) {damage_type} damage. *Success:* Half damage.' },
       ],
     },
   },
@@ -863,7 +863,7 @@ export const DONORS = [
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 16, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
-        { name: 'Trample', imposes: 'Prone', rules: true, text: '*Dexterity Saving Throw*: DC 16, one creature within 5 feet that has the Prone condition. *Failure:* 18 (4d8) {damage_type} damage. *Success:* Half damage.' },
+        { name: 'Trample', rules: true, text: '*Dexterity Saving Throw*: DC 16, one creature within 5 feet that has the Prone condition. *Failure:* 18 (4d8) {damage_type} damage. *Success:* Half damage.' },
       ],
     },
   },
@@ -936,7 +936,7 @@ export const DONORS = [
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
-        { name: 'Trample', imposes: 'Prone', rules: true, text: '*Dexterity Saving Throw*: DC 19, one creature within 5 feet that has the Prone condition. *Failure:* 22 (4d10) {damage_type} damage. *Success:* Half damage.' },
+        { name: 'Trample', rules: true, text: '*Dexterity Saving Throw*: DC 19, one creature within 5 feet that has the Prone condition. *Failure:* 22 (4d10) {damage_type} damage. *Success:* Half damage.' },
       ],
       'Legendary Actions': [
         { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },

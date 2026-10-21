@@ -11,6 +11,7 @@
 // single-target with a repeat save (the Ghoul); leveled spells at will are a
 // fail only for hard control below CR 13; reach follows size before a tether.
 import { fromLegacyModel } from '../format-2024/generate.mjs';
+import { AFFLICTIONS, imposedConditions } from './author.mjs'; // one definition: the conditions a finished row imposes
 import { lintStatblock } from '../format-2024/lint.mjs';
 import { HIT_DIE_BY_SIZE } from '../format-2024/dice.mjs';
 import { WEAPONS, weaponFor, weaponProp, namesWeapon } from './weapons.mjs';
@@ -422,19 +423,8 @@ function gateStructure(m, ctx, F) {
   //     times print's, which is a quality signal rather than a per-sheet defect.
   //   3+ rows on one condition — print 0 of 329. Never. A hard floor.
   {
-    const CONDS = ['Grappled', 'Restrained', 'Prone', 'Incapacitated', 'Paralyzed', 'Stunned', 'Blinded', 'Poisoned', 'Frightened', 'Charmed', 'Deafened'];
-    const imposedBy = (e) => {
-      if (e.imposes && CONDS.includes(e.imposes)) return [e.imposes]; // the row's own record, where it has one
-      const t = String(e.text ?? ''); const out = new Set();
-      for (const mm of t.matchAll(/has the (\w+) condition/g)) {
-        const pre = t.slice(Math.max(0, mm.index - 46), mm.index);
-        if (/\bif\b[^.]*$|\balready\b\s*$/i.test(pre)) continue; // required, not imposed
-        if (CONDS.includes(mm[1])) out.add(mm[1]);
-      }
-      return [...out];
-    };
     const tally = {};
-    for (const { e } of allRows(m)) for (const c of imposedBy(e)) (tally[c] = tally[c] ?? []).push(bare(e.name));
+    for (const { e } of allRows(m)) for (const c of imposedConditions(e)) { if (AFFLICTIONS.includes(c)) (tally[c] = tally[c] ?? []).push(bare(e.name)); }
     for (const [cond, names] of Object.entries(tally)) {
       if (names.length >= 3) F('duplicate-mechanic', 'fail', `${names.length} rows impose ${cond} — ${names.join(', ')}; print has no block with three (0 of 329)`, cond);
       // NO SOFT AT TWO. Print allows it (3% of blocks, a grab and its payoff),

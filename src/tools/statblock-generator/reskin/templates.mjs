@@ -603,6 +603,68 @@ export function composeRayTable(band) {
     return `${i + 1} — ${r.name}: *${stat} Saving Throw*: DC {dc}. *Failure:* ${clause}`;
   }).join(' ');
 }
+/**
+ * WHAT EACH TEMPLATE IMPOSES, DECLARED — not read back out of the rendered text.
+ *
+ * Hand-checked against every condition clause in the frames below (2026-10-21).
+ * It is declared rather than derived because the text cannot be parsed reliably:
+ * `if` means IMPOSES in snatch ("If the target is a Medium or smaller creature,
+ * it has the Grappled condition") and REQUIRES in evasion ("It can't use this
+ * trait if it has the Incapacitated condition"), with identical grammar either
+ * side. A derivation also reads shell-withdraw's SELF-imposed Prone as an
+ * affliction on a target, and condition-payoff's `{consumed_condition}` target
+ * filter as an imposition. Five such modes conflict; no regex separates them.
+ *
+ * A value is either one condition for every frame, or a map from CR band to the
+ * condition that band's frame imposes. Only frames listed here impose anything.
+ *
+ * DELIBERATELY ABSENT:
+ *   shell-withdraw — "it gains +4 AC and has the Prone condition": on ITSELF.
+ *   evasion        — "can't use this trait if it has the Incapacitated
+ *                     condition": a requirement.
+ *   condition-payoff's target filter — it CONSUMES a condition (REQUIRES_IMPOSED)
+ *                     and separately imposes Stunned at 21+, which is listed.
+ */
+const IMPOSES_BY_TEMPLATE = {
+  // print's own swallow text imposes three at once, in the COMPOUND idiom
+  // ("has the Blinded and Restrained conditions") that a singular-only scan
+  // misses — the gap the owner caught, 2026-10-21
+  swallow: ['Prone', 'Blinded', 'Restrained'],
+  trample: 'Prone',
+  snare: 'Restrained',
+  contagion: 'Poisoned',
+  spew: 'Poisoned',
+  'resonant-body': 'Deafened',
+  'active-toll': 'Deafened',
+  adhesive: 'Grappled',           // "is also Grappled by it (escape DC)"
+  snatch: 'Grappled',             // behind a size gate — still an imposition
+  'bolt-restrain': 'Restrained',  // behind a size gate
+  'shield-bash': 'Prone',         // behind a size gate
+  pounce: 'Prone',
+  'charge-push': 'Prone',
+  'gaze-aura': 'Frightened',
+  lure: 'Charmed',
+  'hook-drag': ['Grappled', 'Restrained'], // Restrained follows the grapple from 10-12 up
+  'pull-through': 'Prone',   // "the target emerges Prone" — a bare condition word, no "condition" noun
+  'stunning-strike': { '3-5': 'Stunned', '6-9': 'Stunned', '10-12': 'Stunned', '13-20': 'Stunned', '21+': 'Stunned' },
+  leap: { '3-5': 'Prone', '6-9': 'Prone', '10-12': 'Prone' },
+  'thrown-burst': { '6-9': 'Prone', '10-12': 'Prone', '21+': 'Prone' },
+  charge: { '3-5': 'Prone', '6-9': 'Prone', '10-12': 'Prone', '13-20': 'Prone', '21+': 'Prone' },
+  'burrow-ambush': { '0-2': 'Prone', '3-5': 'Prone', '6-9': 'Prone', '10-12': 'Prone', '13-20': 'Prone' },
+  reel: { '13-20': 'Prone' },
+  execute: { '3-5': 'Unconscious' },
+  'condition-payoff': { '21+': 'Stunned' },
+  'gaze-single': { '0-2': 'Frightened', '3-5': 'Frightened', '13-20': 'Paralyzed', '21+': 'Blinded' },
+};
+
+// the condition a given template's given CR band imposes, or null
+export function imposedByFrame(id, band) {
+  const d = IMPOSES_BY_TEMPLATE[id];
+  if (!d) return null;
+  if (typeof d === 'string' || Array.isArray(d)) return d;
+  return d[band] ?? null;
+}
+
 export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   let pickedCondition = null; // the condition this render imposes, chosen from the closed list below
   // the fiction ladder: the model's fill > the sheet's own noun > the blind
@@ -629,15 +691,22 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
       text = text.split(`{${k}}`).join(w);
     }
     if (/\{[a-z_]+\}/.test(text)) return null;
-    return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(pickedCondition ? { imposes: pickedCondition } : {}) };
+    // the drawn card's own tag, which this return used to drop on the floor
+    // (it built a fresh object and only looked at `pickedCondition`, which no
+    // seed ever sets) — the same allow-list-forgets shape as the chassis rename
+    return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(drawn.row.imposes ? { imposes: drawn.row.imposes } : {}) };
   }
   // A THROWN NAMED WEAPON KEEPS ITS OWN TYPE AND RANGE (the critic's second
   // species read: a spear hurled for Bludgeoning at 30/120). One table.
   const projW = /\{projectile\}/.test(t.frames?.[bandFor(ctx.cr)] ?? '') ? weaponProp(fills.projectile) : null;
   const projWeapon = projW?.thrown ? [null, projW.type, projW.range] : null;
   const projWeaponRange = projWeapon ? projWeapon[2] : null;
-  let text = t.frames[bandFor(ctx.cr)];
+  const band = bandFor(ctx.cr);
+  let text = t.frames[band];
   if (!text) return null;
+  // THE WRITER RECORDS WHAT IT WROTE. The catalog declares what this frame
+  // imposes, so no reader has to recover it from the rendered sentence.
+  pickedCondition = imposedByFrame(t.id, band) ?? pickedCondition;
   if (projWeaponRange) text = text.replace(/range \d+\/\d+ ft\./, `range ${projWeaponRange} ft.`);
   const per = Math.max(3, Math.round(scaled.per_hit ?? 6));
   // an ATTACK-ROLL frame prices like the chassis's attack rows — dice plus the striker's mod (print's Hill
@@ -681,6 +750,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // seat falls through to one that fits.
   if (/\{ranged_name\}/.test(frameOf(t, ctx.cr) ?? '') && !ctx.rangedName) return null;
   for (const [k, v] of Object.entries(engine)) text = text.split(`{${k}}`).join(v);
+  if (obscuring && text.includes('has the Poisoned condition')) pickedCondition = 'Blinded'; // the retype below moves the record with the text
   if (obscuring) text = text.replace('has the Poisoned condition', 'has the Blinded condition'); // the Poison-breath frame's own rider, retyped for what ash does
   // A GULLET MATCHES THE BODY IT IS IN (flagged four times, 2026-10-14: a
   // rime-scaled wyrm swallowed for 18 (4d8) Cold and digested in Acid). Print's
@@ -688,7 +758,11 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // words name an energy digests in that energy. A physical type never applies —
   // nothing is digested in Bludgeoning.
   if (t.id === 'swallow' && dtype && !['Bludgeoning', 'Piercing', 'Slashing'].includes(dtype)) text = text.replace(/Acid damage at the start/, `${dtype} damage at the start`);
-  if (stomping) text = text.replace(/ damage\. \*Success:\* Half damage\.$/, ' damage, and the target has the Prone condition. *Success:* Half damage only.');
+  if (stomping) {
+    const was = text;
+    text = text.replace(/ damage\. \*Success:\* Half damage\.$/, ' damage, and the target has the Prone condition. *Success:* Half damage only.');
+    if (text !== was) pickedCondition = 'Prone'; // this line WROTE the rider, so this line records it
+  }
   // THE SAVE FOLLOWS THE CONDITION on a condition aura (critic fresh four: Stench
   // is Con on the toad and became Wis on the kilnblight — the stat drifted to the
   // caster's spell stat). Print: Poisoned/Deafened = Constitution, Frightened =
@@ -820,9 +894,9 @@ THE VERB DECIDES. The concept has a central verb — seal, lure, stick, toll, dr
 A VERB MATCH is a WORD match, not a judgement — the engine found the template's key word in the user's words and is asking you whether it MEANS that mechanic for this creature. It does not mean it when the word sits in the modifier slot of a compound (a blood-priest has no blood sense; a stone-herder is not made of stone; a knife ball is not an assassin), when the sheet or the creature's own kind already answers it (a climb Speed answers "climbs the wall"), or when it belongs to another fiction (a living warden who guards a reef is not bound to a resting place). Name every such template in "wrong" — the engine will not use one you list there. Leave "wrong" empty when each match genuinely means its mechanic.
 A template whose match is marked (concept) may be used even if you answer none, so fill its "you fill" slots in "fills" whichever answer you give, quoting the user's own words (a phobia of chickens fills {phobia} with "chickens"; a warden of the reef fills {place} with "the reef").
 WHY NONE FITS. When you answer "none", answer "declined_because" with exactly one of: collision (a template's key word is here but does not mean that mechanic for this creature), already_answered (the sheet or the creature's own kind already does this), no_fit (nothing offered carries the idea). Answer "" when you did pick a template.
-A REFUSAL NAMES ITS GAP. "no_fit" is not an answer on its own — say which of the offered templates comes CLOSEST ("closest") and what the rules would have to do that none of them does ("missing"), in a few plain words naming the MECHANIC, not the fiction: "pulls the creature back to where it started", "picks one target and holds the aim", "costs the creature something when it fails". Never "nothing fits" and never a restatement of the idea. These accumulate into a list of templates worth building, so a vague answer is a wasted one.
+A REFUSAL NAMES ITS GAP. "no_fit" is not an answer on its own — say which of the offered templates comes CLOSEST ("closest"), what the rules would have to do that none of them does ("missing"), and WHICH KIND OF EFFECT that missing thing is ("missing_effect"), exactly one of: damage | condition | movement | resource | defense. Judge the effect by what the row DOES to its target, not by words that appear in passing: a row that only applies against an already-prone target is not a condition row, and a row that resists being pushed is defense, not movement. In a few plain words naming the MECHANIC, not the fiction: "pulls the creature back to where it started", "picks one target and holds the aim", "costs the creature something when it fails". Never "nothing fits" and never a restatement of the idea. These accumulate into a list of templates worth building, so a vague answer is a wasted one.
 DID THE USER ASK FOR IT? Answer "asked" with the user's OWN WORDS that ask for this template's mechanic, quoted verbatim from THE USER TYPED line above — never from THE IDEA, which is the engine's own prose and is not the user's words. The few words, not a sentence. Leave it "" when the user's words never ask for it and your pick rests on the idea you were given or on the template's shape. Answering "" is not a failure and does not withdraw your pick; it tells the engine the pick is yours, not the GM's, and some seats take only what the GM asked for.
-Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", "closest": "<on a refusal: the offered id that comes nearest, else \"\">", "missing": "<on a refusal: the mechanic none of them does, else \"\">", "name": "<2-3 words>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
+Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", "closest": "<on a refusal: the offered id that comes nearest, else \"\">", "missing": "<on a refusal: the mechanic none of them does, else \"\">", "missing_effect": "<on a refusal: damage | condition | movement | resource | defense, else \"\">", "name": "<2-3 words>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
 }
 
 export function validateFitResponse(jsonString) {
@@ -871,6 +945,13 @@ export function parseFit(raw, menu, creatureName = '') {
     // list can be read across runs; the caller decides what a bare refusal costs.
     closest: String(p.closest ?? '').trim().slice(0, 40) || null,
     missing: String(p.missing ?? '').trim().slice(0, 120) || null,
+    // the EFFECT AXIS is the call's answer too, validated against the catalog's
+    // own closed list. My own classification of these from the gap text measured
+    // 40% accurate on a 30-item hand check: a condition word anywhere in the
+    // sentence captured it, whether the row imposed that condition, required it,
+    // or named it only to say what it was not. The model is answering about its
+    // own refusal; it does not have to infer it from prose.
+    missing_effect: EFFECTS.includes(String(p.missing_effect ?? '').trim().toLowerCase()) ? String(p.missing_effect).trim().toLowerCase() : null,
     // THE WORD MATCH IS THE ENGINE'S, THE MEANING IS THE CALL'S (owner, 2026-10-13:
     // "engineer less deterministic gating when the llm can make these judgements"):
     // a key word in the modifier slot of a compound, or one the sheet already

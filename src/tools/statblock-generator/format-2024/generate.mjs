@@ -15,7 +15,8 @@
 import { hintsBlock, HINT_VERDICTS_FIELD, readPhrases } from '../reskin/lexicon.mjs';
 import { templatesFor, renderTemplate, rankByVerb, valueCheck, templateMenuLines, parseFit } from '../reskin/templates.mjs';
 import { LINES } from '../reskin/route.mjs';
-import { canWear, canShield } from '../reskin/classes.mjs'; // 4a: armour proficiency is a closed fact from the rules
+import { canWear, canShield } from '../reskin/classes.mjs';
+import { imposedCondition } from '../reskin/author.mjs'; // one definition: the condition a finished row imposes // 4a: armour proficiency is a closed fact from the rules
 import { seedLeakTokens, rollNameBans, TYPE_ESSENCES } from './concept-seeds.mjs';
 import spec from '@/data/archetype-chassis-spec.json';
 import srdMonsters from '@/data/srd52-monsters.json';
@@ -1101,12 +1102,38 @@ export function normalizeNonmagicalClause(value) {
   return rest.length ? `${rest.join(', ')}; ${clauseStr}` : clauseStr;
 }
 
+// 2014 GATES A CONDITION THE WAY ITS OWN BOOK DOES (owner's design, 2026-10-21).
+// 2024 lets a condition ride a hit unqualified; 2014 almost always gates it, and
+// WHICH gate depends on the condition. Measured across the SRD 5.1 corpus:
+//
+//   bodily    poisoned, paralyzed, unconscious, petrified -> a SAVING THROW,
+//             23 of 24 rows (96%). Something happening inside the target.
+//   restraint grappled, restrained -> an ESCAPE DC, 25 of 30 and 19 of 27.
+//             An ongoing hold you keep trying to break, never a save.
+//   knockdown prone -> a SAVING THROW, 14 of 19 (74%), and an escape DC in
+//             none of them. The five exceptions are heavy tramplers (the
+//             Elephant's Stomp, the Elk's Hooves) and are not detected.
+//
+// Our own 2014 printings measured 33% on bodily and 18% on prone against the
+// book's 96% and 74%, so an ungated "the target is paralyzed" was shipping on a
+// 2014 sheet — materially stronger than anything in that book. Restraints
+// already matched at 88%, because the engine computes escape DCs deliberately.
+//
+// This is a CLOSED TABLE keyed on the condition the row records, not a reading of
+// its prose. It runs in code, not in the conversion call, because that call is
+// forbidden from changing mechanics ("rewrite ONLY the wording") and this is a
+// mechanical difference between the editions by design.
+const SAVE_ON_HIT_2014 = { poisoned: 'Constitution', paralyzed: 'Constitution', unconscious: 'Constitution', petrified: 'Constitution', prone: 'Strength' };
+// 2014 says "or be knocked prone", never "or be prone"
+const SAVE_PHRASE_2014 = { prone: 'knocked prone' };
+const NEVER_SAVED_2014 = new Set(['grappled', 'restrained', 'incapacitated']); // the escape-DC family
+
 export function toLegacyModel(m) {
   // the classic card renders INLINE MARKDOWN now (owner 2026-09-14) —
   // italics survive the gate; only the bullets and the 2024 Multiattack
   // idiom scrub
   const plain = (t) => String(t ?? '').replace(/^[ \t]*-[ \t]*$\n?/gm, '') /* a bullet marker with nothing on it printed a stray "-" line in the 2014 spell block (critic's blockers audit 2026-10-03) */.replace(/^- /gm, '').replace(/ in any combination\b/, '').replace(/\*?Hit or Miss:\*?\s*/g, ''); // exports keep 2024 wording; the 2014 grammar pass runs on the CONVERSION path alone (checker 2026-10-02)
-  const entryList = (name) => (m.sections?.[name] ?? []).map((e) => ({ name: e.name, description: plain(e.text) })); // a row's `flavor` field is a holding slot for the pipeline, never printed inside a row (owner 2026-10-04: it routes to Languages or the description)
+  const entryList = (name) => (m.sections?.[name] ?? []).map((e) => ({ name: e.name, description: plain(e.text), ...(e.imposes ? { imposes: e.imposes } : {}) })); // a row's `flavor` field is a holding slot for the pipeline, never printed inside a row (owner 2026-10-04: it routes to Languages or the description)
   // Split merged 2024-style defense lines into 2014's damage vs condition
   // fields. Classification is by token against the known condition
   // vocabulary, NOT by the semicolon — the LLM doesn't always emit the
@@ -1127,6 +1154,36 @@ export function toLegacyModel(m) {
     .map((s) => `${s} ${signed(m.saves[s])}`)
     .join(', ');
 
+  // apply the 2014 gate to every row that imposes a condition on a hit
+  const gate2014 = (list) => {
+    const mods = Object.fromEntries(Object.entries(m.stats ?? {}).map(([k, v]) => [k, Math.floor((v - 10) / 2)]));
+    const best = Math.max(0, ...Object.values(mods));
+    const dc = 8 + Number(m.pb ?? 2) + best;
+    return (list ?? []).map((e) => {
+      // ONE DEFINITION, EVERY READER: the row's record when it has one, else a
+      // parse of our own canonical output. Measured reach before this: the gate
+      // fired on 0 of 6 bodily rows and 1 of 13 prone rows, because most carry
+      // no record — a working feature limited by a data gap, not by its rule.
+      const cond = String(imposedCondition(e) ?? '').toLowerCase();
+      if (!cond || NEVER_SAVED_2014.has(cond)) return e;
+      const stat = SAVE_ON_HIT_2014[cond];
+      if (!stat) return e;
+      const t = String(e.description ?? '');
+      if (!/to hit|Attack Roll/i.test(t)) return e;          // only a row the hit delivers
+      if (/saving throw/i.test(t) || /escape DC/i.test(t)) return e; // already gated
+      // THE GATE RUNS AFTER THE CONVERSION CALL, so the clause may already be in
+      // 2014 wording: "has the Prone condition" becomes "is knocked prone"
+      // before this sees it. Matching only the 2024 form meant the gate fired on
+      // nothing in the live path (the Bronze-Road Bull's Slam, 2026-10-21) —
+      // `toLegacyModel` is reached through convertEdition, not before it.
+      // Both idioms, and prone's "knocked" variant.
+      const alt = cond === 'prone' ? '(?:knocked )?prone' : cond;
+      const clause = new RegExp(`,?\\s*and\\s+(?:the target|it)\\s+(?:has the ${cond} condition|is ${alt})[^.]*\\.?`, 'i');
+      const gated = t.replace(clause, `, and the target must succeed on a DC ${dc} ${stat} saving throw or be ${SAVE_PHRASE_2014[cond] ?? cond}.`);
+      if (gated === t) return e; // the clause did not match: leave it rather than mangle it
+      return { ...e, description: gated.replace(/\s{2,}/g, ' ').replace(/\.\./g, '.') };
+    });
+  };
   const abilities = [
     ...entryList('Traits'),
     // Guard: a model-emitted name that ALREADY carries the suffix must not
@@ -1192,7 +1249,7 @@ export function toLegacyModel(m) {
     challenge_rating: `${m.cr_str} (${(m.xp ?? 0).toLocaleString('en-US')} XP)`,
     proficiency_bonus: `+${m.pb}`,
     abilities,
-    actions: entryList('Actions'),
+    actions: gate2014(entryList('Actions')),
     // Engine metadata (same keys the 2024 path stamps, minus format '2024'
     // so displayFormat routes to the legacy Statblock.vue display).
     format: '2014',

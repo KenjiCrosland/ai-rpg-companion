@@ -26,13 +26,16 @@ ${clauses.map((c, i) => `${i + 1}. ${c.text}`).join('\n')}${taken.length ? `\n\n
 THE FORMS
 - attack (a weapon or body part): { "key": null, "clause", "name", "mode": "melee"|"ranged"|"both", "type": one of ${DAMAGE_TYPES.join('/')}, "rider": one of ${CONDITIONS.join('/')} or null, "flavor": optional } — up to ${attackCap} new rows.
 - save (a curse, a breath, a shove, a gaze): { "clause", "name", "stat": one of ${STATS.join('/')}, "target": "one creature within N feet" | "each creature in a N-foot Cone|Sphere|Line|Emanation", "damage": true|false, "type": one of the damage types or null, "condition": one of the conditions or null, "movement": "pushed up to N feet"|"pulled up to N feet"|null, "success": "half"|"none", "recharge": true|false }.
-- trait (a passive, a style, a resource — it costs the creature NOTHING; never write "uses its Reaction" here, that is the reaction form below): { "clause", "name", "trigger": a when/while/if clause or null, "effect": one sentence; write {dc} where a save DC belongs and {dmg} where damage belongs — never a number }.
+- trait (a passive, a style, a resource — it costs the creature NOTHING; never write "uses its Reaction" here, that is the reaction form below): { "clause", "name", "trigger": a when/while/if clause or null, "effect": one sentence; write {dc} where a save DC belongs and {dmg} where damage belongs — never a number, "imposes": one of ${CONDITIONS.join('/')} or null }.
 - A row that HEALS states the Hit Points as {dmg}, the action it costs, and a limit (a trigger, "1/Day", or "Recharge 5-6"): "restores hit points to the faithful" and "after minutes" are not rows a table can run.
-- reaction: { "clause", "name", "trigger": one sentence, "response": one sentence, same tokens }.
+- reaction: { "clause", "name", "trigger": one sentence, "response": one sentence, same tokens, "imposes": one of ${CONDITIONS.join('/')} or null }.
+- "imposes" ON A TRAIT OR REACTION: name the condition the row INFLICTS on a target, and null otherwise. Say null when the row only MENTIONS a condition — when it requires one the target already has ("while the target is Prone"), when it names one to say the creature is immune to it, or when the condition lands on the CREATURE ITSELF rather than on a target. A row that requires one condition and inflicts another names the one it INFLICTS.
 - A clause that is speech goes to "unplaced" with "where": "languages"; pure lore goes to "unplaced" with "where": "description". Never invent a clause the creator did not type. Never write "the ${String(name).toLowerCase()}" if ${name} is a person; write "${inline}".
 
 Answer with ONE JSON object:
-{ "attacks": [ ... ], "saves": [ ... ], "traits": [ ... ], "reactions": [ ... ], "crossRef": null, "unplaced": [ { "clause": "...", "where": "languages"|"description", "text": "one line in the creator's register" } ] }`;
+{ "attacks": [ ... ], "saves": [ ... ], "traits": [ ... ], "reactions": [ ... ], "crossRef": null, "answered": [ { "clause": "...", "row": "..." } ], "unplaced": [ { "clause": "...", "where": "languages"|"description", "text": "one line in the creator's register" } ] }
+
+IF THE SHEET ALREADY ANSWERS A CLAUSE, SAY SO INSTEAD OF WRITING A ROW. Read THE SHEET SO FAR above. Where one of the clauses listed below is already carried by a row that is on it — the same mechanic in different words — put it in "answered" with that row's EXACT name, and write no new row for it. The words need not match: a row reading "cannot be moved against its will" answers "holds its ground", and one reading "its wounds close over" answers "knits itself back together". Answering twice is the defect this prevents. Use [] when every clause still needs a row, and never name a row that is not on the sheet.`;
 }
 
 export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, riderSlots = 2, traitSlots = 1 } = {}) {
@@ -57,20 +60,98 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // a trait is a RULE: it names a DC, damage, a number, a condition, or a rule verb — a sentence with none is flavor and goes to the description (the archlich's "Bound Dead of the Kingdom", check-in 2026-10-11)
   const scrubDmg = (eff) => String(eff ?? '').replace(/\s*\{dmg\}(?:\s+damage)?/g, (tok, off, whole) => (/\b(?:takes?|deals?|dealing|taking|extra|additional|plus|regains?|suffers?|an extra)\s*$/i.test(whole.slice(0, off)) ? tok : '')).replace(/\s{2,}/g, ' '); // the same rule the landing applies: a {dmg} that deals nothing is not a mechanic ("granting it {dmg} or a defensive benefit" — Meshrin, step 7 twelve)
   const MECHANIC = /\{dc\}|\{dmg\}|\d|\b(?:Advantage|Disadvantage|Resistance|Immun\w*|Vulnerab\w*|condition|saving throw|attack roll|Hit Points|Temporary|Speed|reach|range|can't|cannot|ignores?|regains?|takes? (?:no|half|extra|double|additional)|deals? (?:extra|double|additional)|Blinded|Charmed|Deafened|Frightened|Grappled|Paralyzed|Poisoned|Prone|Restrained|Stunned|Incapacitated|Invisible|Difficult Terrain|indistinguishable|motionless|rather than|counts as)\b/i;
-  const traitsAll = (Array.isArray(p.traits) ? p.traits : []).map((t) => ({ clause: str(t?.clause, 120), name: str(t?.name, 40), trigger: perTurn(clean(t?.trigger) || null, clean(t?.effect)), effect: scrubDmg(clean(t?.effect)), flavor: str(t?.flavor, 160) || null })).filter((t) => t.name && t.effect);
+  const traitsAll = (Array.isArray(p.traits) ? p.traits : []).map((t) => ({ clause: str(t?.clause, 120), name: str(t?.name, 40), imposes: CONDITIONS.includes(t?.imposes) ? t.imposes : null, trigger: perTurn(clean(t?.trigger) || null, clean(t?.effect)), effect: scrubDmg(clean(t?.effect)), flavor: str(t?.flavor, 160) || null })).filter((t) => t.name && t.effect);
   // a trait is not a save (a prose save belongs in the save form — the wyrm's "must succeed on a DC 21 Dexterity saving throw" trait, step 7 twelve), and {dc} stands only where a DC stands ("within {dc} feet" is not a DC)
   // an unquantified heal is refused: it must carry {dmg} and a trigger or a limit (critic A8, 2026-10-18 — Heal the Faithful, Harbour-Mud Rising, Gleeful Growth, Waxen Reknitting)
   const healOk = (t) => { const tx = `${t.trigger ?? ''} ${t.effect}`; if (!/\b(?:regains?|restores?|heals?|recovers?)\b[^.]*\bhit points\b/i.test(tx)) return true; return /\{dmg\}/.test(tx) && (!!t.trigger || /\b(?:\d\/Day|Recharge|once)\b/i.test(tx)); };
   const traitOk = (t) => { const tx = `${t.trigger ?? ''} ${t.effect}`; return MECHANIC.test(tx) && healOk(t) && !/saving throw/i.test(tx) && !/\{dc\}\s+(?:feet|ft)\b|within \{dc\}/i.test(tx); };
   const refusedTraits = traitsAll.filter((t) => !traitOk(t));
   const traits = traitsAll.filter(traitOk).slice(0, traitSlots);
-  const reactions = (Array.isArray(p.reactions) ? p.reactions : []).map((r) => ({ clause: str(r?.clause, 120), name: str(r?.name, 40), trigger: clean(r?.trigger), response: clean(r?.response) })).filter((r) => r.name && r.trigger && r.response).slice(0, 1);
+  const reactions = (Array.isArray(p.reactions) ? p.reactions : []).map((r) => ({ clause: str(r?.clause, 120), name: str(r?.name, 40), imposes: CONDITIONS.includes(r?.imposes) ? r.imposes : null, trigger: clean(r?.trigger), response: clean(r?.response) })).filter((r) => r.name && r.trigger && r.response).slice(0, 1);
   const crossRef = p.crossRef && typeof p.crossRef === 'object' && CONDITIONS.includes(p.crossRef.condition) ? { riderRow: str(p.crossRef.riderRow, 40), payoffRow: str(p.crossRef.payoffRow, 40), condition: p.crossRef.condition } : null;
+  const answered = (Array.isArray(p.answered) ? p.answered : []).map((a) => ({ clause: str(a?.clause, 120), row: str(a?.row, 60) })).filter((a) => a.clause && a.row); // the engine checks the row is really on the sheet
   const unplaced = (Array.isArray(p.unplaced) ? p.unplaced : []).map((u) => ({ clause: str(u?.clause, 120), where: u?.where === 'languages' ? 'languages' : 'description', text: str(u?.text, 160) })).filter((u) => u.clause);
   for (const a of refusedAttacks) if (a.clause) unplaced.push({ clause: a.clause, where: 'description', text: a.flavor ?? a.name });
   for (const t of refusedTraits) if (t.clause) unplaced.push({ clause: t.clause, where: 'description', text: t.effect });
   // the rider slots: a rider is an attack row's condition; past the slot count, later riders fold to flavor
   let riders = 0; for (const a of attacksKept) if (a.rider) { riders += 1; if (riders > riderSlots) { a.flavor = [a.flavor, `(${a.rider})`].filter(Boolean).join(' '); a.rider = null; } }
-  return { attacks: attacksKept, saves: saves.slice(0, 1), traits, reactions, crossRef: crossRef && crossRef.payoffRow !== crossRef.riderRow ? crossRef : null, unplaced }; // a payoff on its own rider row is pointless (the bog hound's bite, check-in 2026-10-11)
+  return { attacks: attacksKept, saves: saves.slice(0, 1), traits, reactions, crossRef: crossRef && crossRef.payoffRow !== crossRef.riderRow ? crossRef : null, answered, unplaced }; // a payoff on its own rider row is pointless (the bog hound's bite, check-in 2026-10-11)
 }
 export function validateAuthorResponse(raw) { return !!parseAuthorResponse(raw); } // a well-formed answer with nothing to add is valid: "no row for this clause" is an answer, not a failure to retry (Meshrin's repair call, step 7 twelve)
+
+/**
+ * THE CONDITION A FINISHED ROW IMPOSES — one definition, every reader.
+ *
+ * The row's own `imposes` record is the truth when it has one: the call answered
+ * it, validated against CONDITIONS above. Many rows have none, because a
+ * condition reaches a row's text from more places than record it, and five
+ * attempts to enumerate those places did not close the gap.
+ *
+ * So this reads the finished row as a FALLBACK. That is a parse of our own
+ * canonical output, not a judgement about what a GM meant: print writes an
+ * imposed condition as "has the X condition" in 220 of its 221 such phrases,
+ * and the single exception sits inside an if-clause — which is the one real
+ * distinction here and is excluded structurally. A condition the row merely
+ * REQUIRES ("if the target is already Prone") is not one it imposes, and
+ * confusing the two is what made the save pass pick the wrong stat.
+ *
+ * Two readers: the save-stat pass, which picks the stat print pairs with the
+ * condition, and the 2014 condition gate, which decides whether that edition
+ * wants a saving throw, an escape DC, or nothing.
+ */
+// TWO DIFFERENT LISTS, deliberately. CONDITIONS above is what the authoring
+// call may CHOOSE from — a curated set the engine is happy to author. This is
+// every condition the rules define, which is what a finished row might be
+// carrying however it got there (print's Ghoul paralyzes; its Basilisk
+// petrifies). Reading a row against the authoring list alone missed Unconscious
+// and Petrified entirely.
+export const ALL_CONDITIONS = ['Blinded', 'Charmed', 'Deafened', 'Exhaustion', 'Frightened', 'Grappled', 'Incapacitated', 'Invisible', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious'];
+
+// REQUIRED, NOT IMPOSED — three grammars, not two. "if the target has…" and
+// "already…" were covered; a RELATIVE CLAUSE was not. The deciding word is the
+// relative pronoun, not the noun: "one creature within 5 ft THAT has the Prone
+// condition" selects a target, while "and THE TARGET has the Prone condition"
+// inflicts one, and both end in a noun. Reading the first as an imposition put
+// a false `imposes: Prone` on print's own Trample and made the
+// duplicate-mechanic gate fail a sheet that imposes Prone only twice.
+const PRECONDITION = /\bif\b[^.]*$|\balready\b\s*$|\b(?:that|which|who)\s*$/i;
+
+// AFFLICTIONS: the conditions a row inflicts ON A TARGET, which is the subset
+// the duplicate-mechanic gate counts. The four left out of ALL_CONDITIONS here
+// describe a creature's own state rather than something done to a target —
+// a row reading "the hull has the Invisible condition" is a self-buff, and
+// three of those are not the repetition the gate is looking for.
+export const AFFLICTIONS = ['Grappled', 'Restrained', 'Prone', 'Incapacitated', 'Paralyzed', 'Stunned', 'Blinded', 'Poisoned', 'Frightened', 'Charmed', 'Deafened'];
+
+/**
+ * Every condition a finished row imposes. ONE DEFINITION, EVERY READER: the
+ * duplicate-mechanic gate and the engine's stripping pass each grew a private
+ * copy of this grammar, so widening the exclusion here fixed neither of them
+ * and the gate failed a sheet the engine saw nothing wrong with.
+ */
+export function imposedConditions(row) {
+  // the record may name one condition or several — hook-drag's victim is
+  // Grappled AND Restrained, and masking the second would hide a real triple
+  const rec = typeof row === 'object' ? row?.imposes : null;
+  const recs = (Array.isArray(rec) ? rec : rec ? [rec] : []).map(String).filter((c) => ALL_CONDITIONS.includes(c));
+  if (recs.length) return recs;
+  const t = String((typeof row === 'object' ? (row?.text ?? row?.description) : row) ?? '');
+  const out = new Set();
+  for (const m of t.matchAll(/has the (\w+) condition/g)) {
+    if (PRECONDITION.test(t.slice(Math.max(0, m.index - 46), m.index))) continue;
+    if (ALL_CONDITIONS.includes(m[1])) out.add(m[1]);
+  }
+  if (out.size) return [...out];
+  // the 2014 printing says it differently: "is poisoned", "is knocked prone"
+  for (const c of ALL_CONDITIONS) {
+    const re = new RegExp(`\\b(?:is|are|becomes?)\\s+(?:knocked\\s+)?${c}\\b`, 'i');
+    if (!re.test(t)) continue;
+    if (PRECONDITION.test(t.slice(Math.max(0, t.search(re) - 46), t.search(re)))) continue;
+    out.add(c);
+  }
+  return [...out];
+}
+
+export function imposedCondition(row) {
+  return imposedConditions(row)[0] ?? null;
+}

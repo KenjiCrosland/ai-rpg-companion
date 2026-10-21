@@ -1,0 +1,30 @@
+[
+  {
+    "name": "",
+    "description": "a bog-fen serpent whose bite floods the blood with venom",
+    "cr": 5,
+    "rules": "2014",
+    "canary": "BODILY: poison on a hit must gate behind a CON save (book 96%); 2024 printing stays ungated"
+  },
+  {
+    "name": "",
+    "description": "a crypt-ghoul whose claws lock the limbs rigid",
+    "cr": 6,
+    "rules": "2014",
+    "canary": "BODILY: paralysis on a hit must gate behind a CON save"
+  },
+  {
+    "name": "",
+    "description": "a bronze-road bull that slams riders flat with its shoulder",
+    "cr": 7,
+    "rules": "2014",
+    "canary": "KNOCKDOWN: prone on a hit must gate behind a STR save, phrased 'or be knocked prone'"
+  },
+  {
+    "name": "",
+    "description": "a sump-coil wyrm that seizes prey and holds it fast",
+    "cr": 8,
+    "rules": "2014",
+    "canary": "RESTRAINT CONTROL: grappled must keep its escape DC and gain NO save"
+  }
+]

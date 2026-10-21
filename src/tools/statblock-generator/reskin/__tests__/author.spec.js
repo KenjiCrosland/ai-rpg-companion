@@ -25,3 +25,48 @@ describe('authoring into forms (fidelity pipeline step 5): the model never write
     expect(validateAuthorResponse(raw)).toBe(true); expect(validateAuthorResponse('{"attacks":[]}')).toBe(true); expect(validateAuthorResponse('not json')).toBe(false); // step 7: a well-formed answer with nothing to add is valid — "no row for this clause" is an answer, not a retry
   });
 });
+
+/**
+ * "ALREADY ANSWERED" IS AN ANSWER (2026-10-21).
+ *
+ * Vashka the Red failed `owed-clause` for "never breaks ranks" while carrying
+ * "Shield Wall Stance. ...refusing to yield while unbroken" — the row that
+ * answers it. Coverage is decided by 4-character stem overlap, and
+ * "breaks"/"ranks" share no stem with "unbroken"/"yield", so the clause reached
+ * the repair call, which wrote nothing because the sheet already had it. The
+ * call can now say which row answers it instead of returning an empty hand.
+ */
+describe('the repair call can name the row that already answers a clause', () => {
+  const { parseAuthorResponse } = require('../author.mjs');
+
+  it('parses an answered entry', () => {
+    const r = parseAuthorResponse(JSON.stringify({
+      attacks: [], saves: [], traits: [], reactions: [],
+      answered: [{ clause: 'never breaks ranks', row: 'Shield Wall Stance' }],
+    }));
+    expect(r.answered).toEqual([{ clause: 'never breaks ranks', row: 'Shield Wall Stance' }]);
+  });
+
+  it('drops an entry missing either half', () => {
+    const r = parseAuthorResponse(JSON.stringify({
+      attacks: [], saves: [], traits: [], reactions: [],
+      answered: [{ clause: 'holds its ground', row: '' }, { clause: '', row: 'Immovable' }, { row: 'x' }],
+    }));
+    expect(r.answered).toEqual([]);
+  });
+
+  it('defaults to an empty list, so an old-shaped answer still parses', () => {
+    const r = parseAuthorResponse(JSON.stringify({ attacks: [], saves: [], traits: [], reactions: [] }));
+    expect(r.answered).toEqual([]);
+  });
+
+  it('keeps answered beside real rows — a call may do both', () => {
+    const r = parseAuthorResponse(JSON.stringify({
+      attacks: [], saves: [], reactions: [],
+      traits: [{ clause: 'wreathed in frost', name: 'Frost Shroud', trigger: null, effect: 'A creature within 5 feet takes {dmg} Cold damage.' }],
+      answered: [{ clause: 'never breaks ranks', row: 'Shield Wall Stance' }],
+    }));
+    expect(r.traits).toHaveLength(1);
+    expect(r.answered).toHaveLength(1);
+  });
+});
