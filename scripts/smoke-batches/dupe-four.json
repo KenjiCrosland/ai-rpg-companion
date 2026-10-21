@@ -1,0 +1,30 @@
+[
+  {
+    "name": "",
+    "description": "a bronze-road bull that gores, shockwaves and tramples everything flat",
+    "cr": 8,
+    "rules": "2024",
+    "canary": "THE DEFECT SHAPE: three Prone rows (Gore, Shockwave, Trample) \u2014 print has none with three; two must keep it, the third drops its rider and keeps its damage"
+  },
+  {
+    "name": "",
+    "description": "a coil-sump wyrm that seizes prey in its coils and smothers them",
+    "cr": 9,
+    "rules": "2024",
+    "canary": "three Grappled/Restrained rows \u2014 the critic's four-ways-to-bury case"
+  },
+  {
+    "name": "",
+    "description": "a forge-heart colossus whose flare, breath and hammer all terrify",
+    "cr": 12,
+    "rules": "2024",
+    "canary": "three Frightened rows"
+  },
+  {
+    "name": "",
+    "description": "a kraken-like horror whose tentacle restrains and whose swallow restrains",
+    "cr": 14,
+    "rules": "2024",
+    "canary": "CONTROL: exactly two \u2014 print does this (Kraken's Tentacle + Swallow), must NOT be touched"
+  }
+]

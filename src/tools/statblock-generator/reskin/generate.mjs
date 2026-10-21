@@ -6551,6 +6551,53 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     monster.generation.owed_unanswered = [...new Set(owedUnanswered)];
     trace('owed and unanswered:', `${monster.generation.owed_unanswered.map((t) => `"${t}"`).join(', ')} — the checker fails this block (1e)`);
   }
+  // ONE MECHANIC, AT MOST TWICE — AND THE ROW SURVIVES (critic's section 5 +
+  // owner's design, 2026-10-20). A sheet that buries four ways is the defect;
+  // print has no block imposing one condition three times (0 of 329) and does it
+  // twice on 3% — a grab and its payoff, like the Kraken's Tentacle and Swallow.
+  // We were at 2.7% with three or more.
+  //
+  // The owner's point: DELETING the third row loses what the GM asked for. So the
+  // row stays and its redundant CONDITION RIDER goes — the damage, the name and
+  // the fiction all survive, and only the third copy of the same condition
+  // leaves. Nothing is invented: changing Prone to Frightened on a Trample would
+  // be new fiction, and dropping the row would be lost work.
+  //
+  // It runs HERE, after repair, because repair can add the third (the critic's
+  // ordering note), and after the lacks sweep, which can remove one.
+  // Print's own rows are never touched, nor the GM's named weapon.
+  {
+    const CONDS = ['Grappled', 'Restrained', 'Prone', 'Incapacitated', 'Paralyzed', 'Stunned', 'Blinded', 'Poisoned', 'Frightened', 'Charmed', 'Deafened'];
+    const imposedIn = (t) => {
+      const out = new Set();
+      for (const mm of String(t ?? '').matchAll(/has the (\w+) condition/g)) {
+        const pre = String(t).slice(Math.max(0, mm.index - 46), mm.index);
+        if (/\bif\b[^.]*$|\balready\b\s*$/i.test(pre)) continue;
+        if (CONDS.includes(mm[1])) out.add(mm[1]);
+      }
+      return [...out];
+    };
+    const rowsAll = Object.values(monster.sections ?? {}).flat();
+    const tally = {};
+    for (const e of rowsAll) for (const c of imposedIn(e.text)) (tally[c] = tally[c] ?? []).push(e);
+    for (const [cond, holders] of Object.entries(tally)) {
+      if (holders.length < 3) continue;
+      // the two that KEEP it: print's own first, then the GM's named part, then
+      // the row whose NAME promises it (stripping that would fail name-mechanic)
+      const rank = (e) => (e.print ? 0 : e.part || e.gmArmed ? 1 : new RegExp(cond.slice(0, 5), 'i').test(String(e.name ?? '')) ? 2 : 3);
+      const order = [...holders].sort((a, b) => rank(a) - rank(b));
+      for (const e of order.slice(2)) {
+        const was = e.text;
+        e.text = String(e.text)
+          .replace(new RegExp(`,? and (?:the target|it) has the ${cond} condition[^.]*\\.?`, 'i'), '.')
+          .replace(new RegExp(`\\s*The target has the ${cond} condition[^.]*\\.`, 'i'), '')
+          .replace(/\s{2,}/g, ' ').replace(/\.\./g, '.').trim();
+        if (e.text === was) continue; // nothing matched: leave the row alone rather than mangle it
+        if (e.imposes === cond) delete e.imposes;
+        trace('one mechanic, at most twice:', `"${e.name}" drops its ${cond} rider — ${holders.length} rows imposed it and print has none with three; the row, its damage and its name all stay`);
+      }
+    }
+  }
   // THE RECORD IS RECONCILED AGAINST THE FINISHED ROW (2026-10-20). Three
   // sites strip a condition clause, and clearing `imposes` AT those sites
   // cleared it whether or not the strip actually fired — which took the working

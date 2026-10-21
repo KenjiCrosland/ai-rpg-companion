@@ -408,6 +408,43 @@ function gateStructure(m, ctx, F) {
     if (count && count > 1 && named.length === 0) F('multiattack-count', 'soft', `Multiattack says ${count} but names no rows`, count);
     if (combo && combo[1].split(/,|\bor\b/).map((x) => x.trim()).filter(Boolean).length < 2) F('multiattack-combination', 'fail', `"in any combination" with one row: "${multi.text}"`, multi.text); // Wearwretch, Bog Hound (critic's step-5 read)
   }
+  // ONE MECHANIC, ONE ROW — AT PRINT'S OWN LINE (critic's section 5, 2026-10-20).
+  // The critic found a sheet that buries four ways ("Scree restrains, Quarry Bury
+  // restrains, Entomb engulfs, Quarry Entombment swallows"). The existing
+  // duplicate-entry lint compares TEXT, so it only catches two rows worded
+  // identically; and the engine-family vocabulary is deliberately narrow, so it
+  // reported NO family for all four of the Coil Sump Wyrm's grabs.
+  //
+  // What each row IMPOSES is the right key, and print sets both thresholds:
+  //   2 rows on one condition — print 10 of 329 (3.0%), deliberate: the Kraken's
+  //     Tentacle and Swallow both Restrain, the Gorgon's Gore and Trample both
+  //     knock Prone. A grab and its payoff. Soft; our own rate is 15.9%, five
+  //     times print's, which is a quality signal rather than a per-sheet defect.
+  //   3+ rows on one condition — print 0 of 329. Never. A hard floor.
+  {
+    const CONDS = ['Grappled', 'Restrained', 'Prone', 'Incapacitated', 'Paralyzed', 'Stunned', 'Blinded', 'Poisoned', 'Frightened', 'Charmed', 'Deafened'];
+    const imposedBy = (e) => {
+      if (e.imposes && CONDS.includes(e.imposes)) return [e.imposes]; // the row's own record, where it has one
+      const t = String(e.text ?? ''); const out = new Set();
+      for (const mm of t.matchAll(/has the (\w+) condition/g)) {
+        const pre = t.slice(Math.max(0, mm.index - 46), mm.index);
+        if (/\bif\b[^.]*$|\balready\b\s*$/i.test(pre)) continue; // required, not imposed
+        if (CONDS.includes(mm[1])) out.add(mm[1]);
+      }
+      return [...out];
+    };
+    const tally = {};
+    for (const { e } of allRows(m)) for (const c of imposedBy(e)) (tally[c] = tally[c] ?? []).push(bare(e.name));
+    for (const [cond, names] of Object.entries(tally)) {
+      if (names.length >= 3) F('duplicate-mechanic', 'fail', `${names.length} rows impose ${cond} — ${names.join(', ')}; print has no block with three (0 of 329)`, cond);
+      // NO SOFT AT TWO. Print allows it (3% of blocks, a grab and its payoff),
+      // and we do it on 13.5% — four times print's rate. That is a real quality
+      // signal, but it is a RUN-level one: as a per-block soft it fired on 1 in 7
+      // sheets, which would train a reader to skip this gate's findings
+      // altogether and bury the 3+ FAIL that actually matters. Measure the
+      // two-rate when we want it; do not spend the gate table on it.
+    }
+  }
   // THE ATTACK FLOOR BY CR. Print's 329: a Multiattack appears on 40 of 42
   // blocks at CR 5-7, 24 of 24 at 8-10, 21 of 22 at 11-15, and every block
   // above — 110 of 113 at CR 5 and up. One attack and no Multiattack is a
