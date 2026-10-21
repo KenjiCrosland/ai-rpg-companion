@@ -652,6 +652,93 @@ const SPECTRAL_COMPOUNDS = /witch-?fire|fox-?fire|bale-?fire|marsh-?fire|ghost-?
  * judgement — the call that coined the name owns it. Whether the word is fused
  * at all is a fact, and that is what the engine checks before believing it.
  */
+// WHOLE-SHEET BUDGETS SETTLE ON THE FINISHED SHEET (critic's package-six
+// review, 2026-10-22). Four budgets in this file are questions about the
+// finished sheet, and two had already been moved here after each cost a run:
+// the row cap ("the cap evicts by priority, it does not refuse the newcomer")
+// and Guarded Stance's AC filter, "reconciled against the FINISHED AC, which
+// cannot miss a path". Two were still answered mid-build:
+//   * THE FREE-ROW ALLOWANCE was spent at grant and never released, so a
+//     granted row vetoed ~100 lines later still cost the sheet its second
+//     candidate. Four sheets in one forty lost a real trait to a budget no
+//     shipped row was using.
+//   * ONE NOVA A SHEET was read by hasChassisNova, which counts
+//     `!e.library && !e.template` rows only — so a FITTED nova never blocked a
+//     later one — and it ran ~1,460 lines before print canon places print's
+//     rows. The Air Elemental shipped Chorus Barrage (library, active-toll)
+//     beside print's own Whirlwind.
+// Both settle here, after everything that can change their input. The
+// mid-build checks stay as cheap advisories; this is the enforcement.
+//
+// Extracted so each budget is testable on a finished sheet without driving the
+// whole pipeline through chained LLM mocks (the critic's test categories 1, 9
+// and 10). `sections` is mutated in place, which is the same object the finished
+// monster carries.
+export function settleSheetBudgets({ sections, printExact = false, scaled = null, cr = null, generation = null, trace: traceFn = () => {} }) {
+  const trace = traceFn;
+  const bareName = (e) => String(e.name ?? '').replace(/ \(.*\)$/, '');
+  // A FREE ROW'S BUDGET, AND ONE PER DECLARED SEAT CELL. The critic's
+  // "retaliation family" (damage-on-touch, bloodied-burst, own-turn-punisher)
+  // is not a word list and needs no new vocabulary: heated-body,
+  // bloodied-burst and resonant-body all DECLARE trigger=on_being_hit,
+  // effect=damage. The declared cell IS the family, so the cap reads template
+  // data. 12 of 13 free rows in the package-six forty came from three
+  // templates, which is where the sameness had moved.
+  const freeRows = [];
+  for (const [sec, es] of Object.entries(sections)) for (const e of es ?? []) if (e.freeRow) freeRows.push({ sec, e });
+  const freeBudget = printExact ? 0 : 1;
+  const cellOf = (e) => { const t = TEMPLATE_BY_ID.get(e.template ?? e.seed ?? ''); return t ? `${t.section}/${t.trigger}/${t.effect}` : null; };
+  const keptCells = new Set();
+  const keptFree = [];
+  for (const { sec, e } of freeRows) {
+    const cell = cellOf(e);
+    const sameCell = !!cell && keptCells.has(cell);
+    if (keptFree.length < freeBudget && !sameCell) { keptFree.push(e); if (cell) keptCells.add(cell); continue; }
+    sections[sec] = (sections[sec] ?? []).filter((x) => x !== e);
+    trace('free row over budget:', `${sec}/"${bareName(e)}" leaves at ship — ${sameCell ? `a free row already fills the declared cell ${cell}` : `this sheet's free-row budget (${freeBudget}) is spent by a row that SHIPPED`}`);
+    sweepDeadName(sections, bareName(e), null, trace);
+  }
+  if (generation) generation.free_rows = keptFree.length;
+  if (generation) generation.free_row_templates = keptFree.map((e) => e.template ?? e.seed ?? 'unknown');
+  if (freeRows.length) trace('free-row budget:', `${freeRows.length} candidate(s) reached the finished sheet, ${keptFree.length} kept (budget ${freeBudget})${keptFree.length ? ` — ${keptFree.map((e) => `"${bareName(e)}" [${cellOf(e) ?? 'no template'}]`).join(', ')}` : ''}`);
+
+  // ONE RECHARGE NOVA A SHEET, COUNTED WHATEVER WROTE IT (0 of 329 print
+  // blocks carry two; 72 carry exactly one). Print's own nova always keeps its
+  // gate — print wins — and the rest un-gate and re-price through the same
+  // valueCheck branch the mid-build sites use ("a nova already stands on the
+  // sheet: this row stays ungated and scales to the ceiling instead").
+  // ONE DEFINITION OF A NOVA, not a third copy. checker.mjs's novasOf is the
+  // gate this pass has to satisfy, and it counts a gate written in the row's
+  // TEXT as well as in its name (TEXT_GATE lives in this file and the checker
+  // imports it). A name-only filter would miss exactly the bloodied-burst and
+  // death-burst rows that cost hold 4 on 2026-10-16, where a CR 13 swarm's 91
+  // (14d12) emanation read as "nova none". The checker cannot be imported back
+  // — it imports this file — so the predicate is kept deliberately identical.
+  const nameGateOf = (e) => /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '');
+  const novaRows = (sections.Actions ?? []).filter((e) => (nameGateOf(e) || TEXT_GATE.test(e.text ?? '')) && /Saving Throw/i.test(e.text ?? '') && /\d+ \(\d+d\d+/.test(e.text ?? ''));
+  if (novaRows.length > 1) {
+    // Keep, in order: print's own row; then a row whose gate is in its TEXT,
+    // which a rename cannot un-gate; then a chassis row.
+    const keepNova = novaRows.find((e) => e.print) ?? novaRows.find((e) => !nameGateOf(e)) ?? novaRows.find((e) => !e.library && !e.template) ?? novaRows[0];
+    for (const e of novaRows) {
+      if (e === keepNova || e.print) continue; // print's own row is never un-gated
+      if (!nameGateOf(e)) { trace('one nova at ship:', `"${bareName(e)}" carries its limit in its TEXT, so a rename cannot un-gate it — "${bareName(keepNova)}" also stands and the checker will report the pair`); continue; }
+      const beforeName = String(e.name);
+      const beforeText = String(e.text ?? '');
+      e.name = beforeName.replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '');
+      e.gate = undefined;
+      const vc = valueCheck(e, { scaled, sections, cr, section: 'Actions', noGate: true, template: e.template ?? e.seed ?? null });
+      if (vc.steps.length) {
+        e.text = vc.text; e.name = vc.name;
+        const DMG = /\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\)/;
+        const was = DMG.exec(beforeText)?.[0]; const now = DMG.exec(e.text)?.[0];
+        if (e.text_noRider && was && now && was !== now) e.text_noRider = e.text_noRider.replace(was, now); // the rider weld rebuilds from this twin
+      }
+      trace('one nova at ship:', `"${beforeName}" un-gated to "${e.name}" — "${bareName(keepNova)}" already carries this sheet's Recharge nova${vc.steps.length ? ` (${vc.steps.join('; ')})` : ''}`);
+    }
+  }
+}
+
 export function elementFused(rename) {
   for (const [re] of NAME_CLAIMS) {
     const m = re.exec(rename); if (!m) continue;
@@ -4018,16 +4105,27 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // sniper's tracker trait) with no evidence behind it, so it waits for a
         // ruling of its own.
         const freeAllowance = printExact ? 0 : 1;
+        let freeRowHere = false; // stamped onto the row below, so the ship-time budget can find it
         if (!verbs.length && !askedOk && verbRanked.some((r) => r.concept.length)) {
           if (!fit.expresses) {
             trace('signature miss:', `${seat} — "${fit.template.id}" quotes nothing the GM typed, matches no key-table verb, and the call named none of this creature's own elements for it: decoration, not a signature`);
             return null;
           }
-          if (freeRowsUsed >= freeAllowance) {
-          trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — the model picked "${fit.template.id}" (no verb, and it quotes nothing the GM typed) over a concept-verb template (${verbRanked.filter((r) => r.concept.length).map((r) => r.t.id).join(', ')})`);
+          // THE ALLOWANCE IS NOT SPENT HERE (critic's package-six review,
+          // 2026-10-22). It used to refuse the newcomer against a counter
+          // incremented at GRANT, which nothing released when the granted row
+          // was vetoed ~100 lines later: Bog Hound, Thunderwall Drake, Drowned
+          // Choir and Trench Antiphon each lost a real trait to a budget no
+          // shipped row was using. The budget now settles on the FINISHED sheet,
+          // the way the row cap and Guarded Stance's AC filter already do. Only
+          // an EXACT print sheet still refuses here — print closes the row set,
+          // so there is no finished sheet on which a free row could fit.
+          if (freeAllowance === 0) {
+            trace('signature miss:', `${seat} — "${fit.template.id}" names the element "${fit.expresses}", but print closes this sheet's row set (exact path: no free row)`);
             return null;
           }
           freeRowsUsed += 1;
+          freeRowHere = true;
           trace('free signature row:', `${seat} — "${fit.template.id}" quotes nothing the GM typed and matches no key-table verb, but the call names the element it expresses: "${fit.expresses}" — a receipt the trait seat can produce. Earns no clause credit; the ${closedPath ? 'twist/class' : 'homebrew'} path allows ${freeAllowance} and this is number ${freeRowsUsed}`);
         }
         if (!verbs.length && askedOk) trace('pick kept on the GM\'s own words:', `${seat} — "${fit.template.id}" has no key-table verb, but the call quotes "${askedOk}" from the description`);
@@ -4037,7 +4135,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // itself, not just the words. Coverage then credits a receipt rather than
         // a stem overlap ("wound" crediting "cracks open when wounded" to
         // Rampage, the critic's case).
-        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, text: stampT(rendered.text), library: true, template: fit.template.id, ...(rendered?.imposes ? { imposes: rendered.imposes } : fit.template?.imposes ? { imposes: fit.template.imposes } : {}), ...(fit.fills?.condition_minor && CONDITIONS_CLOSED.includes(fit.fills.condition_minor) ? { imposes: fit.fills.condition_minor } : {}), ...(fit.fills?.consumed_condition ? { requiresCondition: fit.fills.consumed_condition } : {}), boundKeys: [...String(fit.because ?? '').matchAll(/([a-z][a-z' -]*?):concept\b/g)].map((mm) => mm[1].trim()) /* provenance: the user's words this row binds to (step 8) */ }, templateName: rendered.name, section: rendered.section, template: fit.template.id, host: fit.template.host ?? 'melee', supersedes: fit.template.supersedes ?? null, asked: askedOk, askedRaw: String(fit.asked ?? '').trim(), expresses: fit.expresses ?? null, elementsOffered: sigElements, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
+        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, text: stampT(rendered.text), library: true, template: fit.template.id, ...(rendered?.imposes ? { imposes: rendered.imposes } : fit.template?.imposes ? { imposes: fit.template.imposes } : {}), ...(fit.fills?.condition_minor && CONDITIONS_CLOSED.includes(fit.fills.condition_minor) ? { imposes: fit.fills.condition_minor } : {}), ...(fit.fills?.consumed_condition ? { requiresCondition: fit.fills.consumed_condition } : {}), boundKeys: [...String(fit.because ?? '').matchAll(/([a-z][a-z' -]*?):concept\b/g)].map((mm) => mm[1].trim()) /* provenance: the user's words this row binds to (step 8) */, ...(freeRowHere ? { freeRow: true } : {}) /* the ship-time budget reads the mark off the row */ }, templateName: rendered.name, section: rendered.section, template: fit.template.id, host: fit.template.host ?? 'melee', supersedes: fit.template.supersedes ?? null, asked: askedOk, askedRaw: String(fit.asked ?? '').trim(), expresses: fit.expresses ?? null, elementsOffered: sigElements, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
       } catch (e8) {
         trace('signature fit call failed —', `${seat}: ${e8?.message ?? e8}`);
         return null;
@@ -4449,12 +4547,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           trace('trait declined:', `"${traitT.row.name}" — no receipt of any kind: no quote, no concept key, and the call named none of this creature's own elements for it (decoration, not a signature)`);
           traitT = null;
         } else
-        if (freeRowsUsed >= freeAllowanceT) {
-          trace('trait declined:', `"${traitT.row.name}" — no receipt, and this sheet's free-row allowance (${freeAllowanceT}) is spent (1d: a receipt decides credit, not existence)`);
+        if (freeAllowanceT === 0) {
+          trace('trait declined:', `"${traitT.row.name}" — names the element "${traitT.expresses}", but print closes this sheet's row set (exact path: no free row)`);
           traitT = null;
         } else {
           freeRowsUsed += 1;
           traitT.freeRow = true; // the print-body gate below must not re-kill it
+          traitT.row.freeRow = true; // and the ship-time budget reads it off the row
           trace('free signature row:', `"${traitT.row.name}" — the trait seat cannot quote the GM, but the call names the element it expresses: "${traitT.expresses}". Earns no clause credit; the ${closedPath ? 'twist/class' : 'homebrew'} path allows ${freeAllowanceT} and this is number ${freeRowsUsed}`);
         }
       }
@@ -6095,6 +6194,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (e.text_noRider) e.text_noRider = e.text_noRider.replace(dm[0], `${d.avg} (${d.dice})`);
     trace('nova capped:', `${sec}/${String(e.name)} — ${dm[1]} over the CR ${cr} ceiling ${cap}, dice to ${d.avg} (${d.dice})`);
   }
+
+  settleSheetBudgets({ sections, printExact, scaled, cr, generation: monster.generation, trace });
+
   // EVERY NUMBER DERIVED FROM A CAPPED VALUE RE-DERIVES AFTER THE CAP (owner's
   // stage 1, 2026-10-16). The cap above moves a row's damage; a THRESHOLD in the
   // same row was priced against the uncapped figure and did not move, so the

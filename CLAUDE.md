@@ -12,6 +12,33 @@ Before implementing anything substantive, **scan `plans/README.md`** and read an
 
 When you finish work that resolved a plan's trigger, delete the plan file and remove its entry from `plans/README.md` — don't leave stale ones around.
 
+### Statblock reskin sprint — start here
+
+Work on the 2024/2014 statblock **reskin** engine
+(`src/tools/statblock-generator/reskin/`) is an ongoing sprint with a lot of
+earned context. Read these two before touching it:
+
+1. **[`plans/critic-response-2026-10-21.md`](plans/critic-response-2026-10-21.md)**
+   — the current state. The owner's free-row ruling, the `expresses` element
+   receipt, what landed, **what remains in the critic's order**, how to analyse
+   the next run (durable commands), and six measurement lessons that have each
+   cost a wasted run.
+2. **[`plans/BACKLOG-reskin-2026-10-21.md`](plans/BACKLOG-reskin-2026-10-21.md)**
+   — the standing FAIL rate across forties and why a single run's FAIL list is
+   **not** a work queue.
+
+Two things to know before measuring anything here:
+
+- **Print overrules reviewers, pins and you.** A rule that sounds universal may
+  fail the corpus — "a row that imposes a condition states when it ends" fails
+  print 58 times, because Prone self-ends. Measure a proposed gate against
+  `src/data/srd52-monsters.json` before shipping it.
+- **The cadence is** land → `npx jest src/tools/statblock-generator src/util
+  --maxWorkers=2 --silent` → `npm run build` → targeted smoke on the live dev
+  server (`SMOKE_TIMEOUT_MS=300000 node scripts/smoke-statblock.mjs <batch>`) →
+  `node --import ./scripts/alias-loader.mjs scripts/check-run.mjs <run-dir>`.
+  The owner commits; never commit for them.
+
 ## Meaning is a call field, never a word list
 
 **Do not add, extend or rely on keyword tables, regexes or word lists to decide

@@ -169,3 +169,181 @@ allowance, because it would have reversed those three pins with no evidence (all
 six structural kills were twist sheets). The element receipt reaches the same
 place more safely: homebrew gets one free row, but only when the call can name
 the element it expresses.
+
+## How to analyse the next run
+
+Everything below is a durable command. The scratchpad scripts used on the day are
+gone; `scripts/gap-outcomes.mjs` is the one that mattered and is checked in.
+
+```bash
+D=$(ls -dt smoke-out/sweep-* | head -1)
+
+# 1. the gate table and the FAIL list
+node --import ./scripts/alias-loader.mjs scripts/check-run.mjs "$D"
+grep -E "· FAIL ·" scripts/smoke-evidence/CHECK-$(basename "$D").md
+
+# 2. THE NUMBER THAT MATTERS — the signature-outcome table (critic's section 6).
+#    "VETOED after acceptance" read 23 of 41 on 2026-10-21 before 1d was replaced.
+node --import ./scripts/alias-loader.mjs scripts/gap-outcomes.mjs "$D"
+
+# 3. did the twists land? each free row names the element it expresses
+grep -hE "free signature row" "$D"/[0-9]*.md | cut -c1-200
+
+# 4. every free row's element must appear in that sheet's OWN element list
+for f in "$D"/[0-9]*.md; do
+  grep -ho 'names the element it expresses: "[^"]*"' "$f" | sed 's/.*: "//;s/"$//' | while read -r n; do
+    grep -h "signature elements:" "$f" | head -1 | grep -qF "$n" \
+      && echo "  OK   $(basename $f)  \"$n\"" || echo "  BAD  $(basename $f)  \"$n\" NOT in list"
+  done
+done
+
+# 5. the two NEW gates — a burst of either means it is mis-tuned
+grep -hE "condition-duration" scripts/smoke-evidence/CHECK-$(basename "$D").md
+grep -hE "audit rename blocked" "$D"/[0-9]*.md | cut -c1-190
+
+# 6. the regressions, in a run nobody hand-picked
+grep -hE "claimed as print|prints no row for it" "$D"/[0-9]*.md | cut -c1-180
+grep -hE "guarded stance withdrawn" "$D"/[0-9]*.md | cut -c1-150
+```
+
+### Re-verifying the condition-duration gate against print
+
+This is the newest and least-tested gate: zero false positives on print's 20
+qualifying rows, but never yet exercised over a forty. If it fires often, check
+it against the corpus BEFORE loosening it:
+
+```bash
+node --import ./scripts/alias-loader.mjs -e '
+(async()=>{
+ const {imposedCondition}=await import("@/tools/statblock-generator/reskin/author.mjs");
+ const print=(await import("@/data/srd52-monsters.json")).default;
+ const MUST_END=["Paralyzed","Stunned","Blinded","Charmed","Deafened","Petrified","Unconscious"];
+ const OK=/until the (?:end|start) of|for 1 (?:minute|hour)|until (?:it|the target|the creature|this|that|cured|dispelled|removed|\w+) (?:dies|ends|is cured|is removed|recovers)|\bwhile\b|\(escape DC|repeats the save|until the (?:web|vines|grasp)/i;
+ let n=0; const fp=[];
+ for (const b of (Array.isArray(print)?print:Object.values(print)))
+  for (const es of Object.values(b?.sections??{})) for (const e of es??[]) {
+   const c=imposedCondition(e); if(!c||!MUST_END.includes(c)) continue; n++;
+   if(!OK.test(String(e.text))) fp.push(`${b.name} / ${e.name} (${c})`); }
+ console.log(`print rows checked: ${n}   FALSE POSITIVES: ${fp.length}`); fp.forEach(x=>console.log("  "+x));
+})();'
+```
+
+Expected: `print rows checked: 20   FALSE POSITIVES: 0`. Any regression there
+means a loosened pattern broke the corpus guarantee.
+
+### What good looks like
+
+- **"VETOED after acceptance" well below 23 of 41.** That is the 1d replacement's
+  whole purpose; the FAIL count is not expected to move much (five forties ran
+  2-3 FAIL with near-total turnover between them).
+- **Free rows landing on twist sheets**, each naming a real element (step 4 all OK).
+- **`condition-duration` firing rarely**, and only on genuinely unbounded rows.
+- **No `prints no row for it`** on a row print actually has — Halric's Mace.
+- Do NOT read a single forty's FAIL list as a work queue. Pick by frequency
+  across runs.
+
+## The run read: `sweep-2026-10-21T22-17-49` (40 blocks)
+
+> **CORRECTED by the critic's package-six review — see
+> `critic-response-2026-10-22.md`.** Two of the four pass criteria below were
+> scored wrong:
+> - **"17 of 17 free rows"** is stamped at GRANT, not at ship. **13 shipped.**
+>   The allowance is spent at grant and never released when the granted row is
+>   vetoed (Bog Hound, Thunderwall Drake, Drowned Choir, Trench Antiphon).
+> - **"`condition-duration`: 1 firing, correct"** is a **false positive**. Drowned
+>   Choir's `One Voice` grants *immunity* to Deafened and imposes nothing; the
+>   writer's record said otherwise and I read the gate's message instead of the
+>   row. The 2014 paralysis hole it was supposed to close is also still open
+>   (`checker.mjs:673` skips every `e.print` row).
+>
+> The claim this package asked the critic to attack — that an element receipt
+> substitutes for a GM quote — **failed**. Do not re-use the receipt argument.
+
+
+Measured against the six criteria above. **All four "what good looks like" tests
+pass.** The 1d replacement did what it was for.
+
+| criterion | result |
+|---|---|
+| VETOED after acceptance well below 23 of 41 | **10 of 30 (33%)**, was 23 of 41 (56%) |
+| free rows land, each naming a real element | **17 of 17 verbatim in their own sheet's list** |
+| `condition-duration` fires rarely, only on unbounded rows | **1 firing**, correct (below) |
+| no `prints no row for it` on a row print has | **2 firings, both verified correct** against the corpus |
+
+- **The outcome table**: 30 seat records — 20 landed, 10 vetoed, 0 dropped. Causes:
+  63% over-decline, 17% role shelf, 7% legality, 13% genuine gap. Consistent with
+  the catalog being ~93% complete for observed demand.
+- **`condition-duration`** fired once, on the Drowned Choir's `One Voice`
+  (Deafened, never bounded). Correct — print bounds every Deafened it hands out.
+  The same row's rename to "Deafening Chorus" was blocked for dropping the GM's
+  word "voice", so both new guards engaged on one row and neither mis-fired.
+- **The audit rename rule** blocked 6 renames, all defensible (an unpaid element,
+  two print/user-owned names, a promised Prone the host row lacks, a re-weaponing).
+- **Regression 1 held.** The two `prints no row for it` firings were the Mage's
+  `Mire Rot` and the Priest's `Warhammer`. Print confirms the Mage prints neither
+  and the Priest prints `Mace`, not `Warhammer` — and **Halric's sheet shipped
+  `Mace` and `Radiant Flame`, exactly what its Multiattack cites**, so the
+  withdrawal hit a duplicate weapon row and not print's own.
+- **Regression 2 held.** `guarded stance withdrawn` fired once, reconciled against
+  the finished AC.
+
+### The instrument was broken and read as a clean run
+
+`gap-outcomes.mjs` matched **0 of 30** records on first use. Its single positional
+regex required the outcome stamp BEFORE `[menu:]`, but gap records now emit at
+sheet-final, which puts the stamp last — and `(\S+)\]` could not span
+`[VETOED AFTER ACCEPTANCE: <id> never reached the sheet]`. It printed a table of
+zeroes, which looks exactly like a run with nothing to report.
+
+Fixed by reading every field **by name** rather than by position, and by counting
+and printing anything unparsed. This is measurement lesson 4 again, one level up:
+*the instrument must also trace what it saw.* A seventh lesson:
+
+7. **An analysis script that reports zero has two possible causes.** Never accept
+   a zero from a parser without first confirming the thing it parses exists
+   (`grep -c "\[gap\]"`). Field order in a free-form trace line is not a contract.
+
+### Pick by frequency: `two-novas` is the one recurring defect
+
+Tallied across all six forties (count of `two-novas` firings per CHECK file):
+
+| run | 15-19 | 15-59 | 16-48 | 17-45 | 18-15 | 22-17 |
+|---|---|---|---|---|---|---|
+| firings | 0 | 0 | 1 | 1 | 0 | **2** |
+
+Four firings in three of six runs, on **three different creatures across both
+editions** — Knell Swarm, then the Air Elemental (2024, `lurker-5`,
+"Chorus Barrage" + "Whirlwind") and Rimeheart Stalker (2014,
+`brute-9-juggernaut`, "Killing Cold" + "Threshold Execute"). Every other FAIL
+class in the backlog's P1 list has appeared once, or is closed.
+
+The gate is sound — re-measured independently: **0 of 329 print blocks carry two
+Recharge Action rows**, 72 carry exactly one (`checker.mjs:456`). So this is a
+real engine defect, not a false positive, and it is the only item in the P1 "long
+tail of one-offs" that is **not** a one-off. It is the evidence-backed next pick.
+
+### Package six is built
+
+Rendered from `sweep-2026-10-21T22-17-49` with no new run — the 40 blocks and
+their traces were already on disk:
+
+```bash
+node --import ./scripts/alias-loader.mjs scripts/review-batch.mjs smoke-out/sweep-2026-10-21T22-17-49
+node scripts/critic-files.mjs plans/RELEASE-case-receipt-2026-10-21.md REVIEW-sweep-2026-10-21T22-17-49
+```
+
+- `scripts/smoke-evidence/RELEASE-for-critic-2024-2026-10-21-receipt.md` — the
+  case on top, then 20 2024 blocks (Stone Golem is the 2024 twist to read first).
+- `scripts/smoke-evidence/RELEASE-for-critic-2014-2026-10-21-receipt.md` — 20
+  2014 blocks, including four of the five headline twists (Hydra, Vampire, Bone
+  Sun Lich, Adult Red Dragon).
+
+Verified before handing over: 40 fenced renders per half, **zero empty** (the
+2026-10-02 failure mode where a fence came back blank or carried the other
+edition), and each named free row present in its own sheet's render and trace.
+Jest 198 suites / 5763 passing (26 skipped), build clean.
+
+**The case asks the critic to attack one claim**: that the `expresses` element
+receipt is hard to satisfy spuriously, since it is what justifies refusing the
+critic's broader "homebrew gets free rows always" while keeping the three
+unasked-decoration pins.

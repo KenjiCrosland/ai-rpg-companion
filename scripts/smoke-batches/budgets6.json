@@ -1,0 +1,44 @@
+[
+ {
+  "name": "",
+  "description": "a mud-caked bog hound that drags fishermen under",
+  "cr": "1",
+  "rules": "2014",
+  "canary": "SPINE 1 \u00b7 homebrew one-liner"
+ },
+ {
+  "name": "Air Elemental",
+  "description": "that carries stolen voices",
+  "cr": "5",
+  "rules": "2024",
+  "canary": "SPINE 5 \u00b7 print head + addition on an Elemental body"
+ },
+ {
+  "name": "",
+  "description": "a drowned cathedral choir that sings in one voice",
+  "cr": "10",
+  "rules": "2014",
+  "canary": "SPINE 10 \u00b7 homebrew one-liner"
+ },
+ {
+  "name": "",
+  "description": "a glacier's heart given legs, trailing a wake of killing cold",
+  "cr": "15",
+  "rules": "2014",
+  "canary": "SPINE 15 \u00b7 homebrew one-liner"
+ },
+ {
+  "name": "",
+  "description": "a leviathan of the trench whose song drowns fleets",
+  "cr": "24",
+  "rules": "2024",
+  "canary": "SPINE 24 \u00b7 homebrew one-liner at the ceiling"
+ },
+ {
+  "name": "",
+  "description": "a young storm drake whose breath is a rolling wall of thunder",
+  "cr": "7",
+  "rules": "2024",
+  "canary": "USE CASE \u00b7 DRAGON body, homebrew: a breath nova inside the cap"
+ }
+]

@@ -12,12 +12,16 @@ choose what to work on; each item says where its context lives.
 | `sweep-2026-10-21T16-48-01` | 3 of 40 | two-novas, save-fit, lack-honored |
 | `sweep-2026-10-21T17-45-29` | 3 of 40 | two-novas, lack-honored, save-fit (after the `effectOnly` fix; read 5 before it) |
 | `sweep-2026-10-21T18-15-11` | **2 of 40** | lint:dangling-use-ref + undefined-attack-ref (one block), speaks-by-int |
+| `sweep-2026-10-21T22-17-49` | 5 of 40 | two-novas ×2, condition-duration (new gate, correct), duplicate-mechanic, control-aoe-ungated + name-mechanic |
 
-Five runs, 2-3 FAIL each, and **the population turns over almost completely
-between runs**. `two-novas` (Knell Swarm) and `lack-honored` (Adult Red Dragon)
-repeated twice and then vanished on the next run from the same fixed batch, so
-even an apparent repeat is variance, not a deterministic defect. The rate is
-~5-7% and it is a long tail. Three classes were genuinely closed on 2026-10-21
+Six runs, 2-5 FAIL each, and **the population turns over almost completely
+between runs**. `lack-honored` (Adult Red Dragon) repeated twice and then
+vanished on the next run from the same fixed batch, so an apparent repeat can be
+variance rather than a deterministic defect. The rate is ~5-7% and it is mostly a
+long tail. **But do not generalise that to every class**: tallied over all six
+runs, `two-novas` fired four times in three runs on three different creatures,
+and it is a real defect (see P1). A repeat is variance until the tally says
+otherwise — so tally. Three classes were genuinely closed on 2026-10-21
 (duplicate-mechanic false positives, owed-clause, the `effectOnly` save-fit false
 positives) and the count barely moved, because different ones surface each time.
 Do not read a single forty's FAIL list as a work queue.
@@ -85,15 +89,23 @@ Not one bug. Current examples, each needing its own diagnosis:
   old lance" and the sheet still carries the eye. The lacks path has a hole.
 - `save-fit` — "Opportunist's Lash": a Strength save for an effect that calls
   for Wisdom or Charisma.
-- `two-novas` — Knell Swarm: "Tolling Peal" and "Whirlwind" both Recharge.
+- `two-novas` — **NOT a one-off; this is the frequency pick.** Four firings in
+  three of six forties, on three different creatures across both editions:
+  Knell Swarm ("Tolling Peal" + "Whirlwind"), the Air Elemental (2024,
+  `lurker-5`, "Chorus Barrage" + "Whirlwind") and Rimeheart Stalker (2014,
+  `brute-9-juggernaut`, "Killing Cold" + "Threshold Execute"). The gate is
+  corpus-sound — 0 of 329 print blocks carry two Recharge Action rows, 72 carry
+  exactly one (`checker.mjs:456`). See the run read in
+  `critic-response-2026-10-21.md`.
 - `control-aoe-ungated` — Adult Red Dragon (2014): `Scarred Visage` is at-will
   multi-target control with no damage, no gate and nothing traded for it.
 - `escape-dc` — Stirge Swarm: `Proboscis` states escape DC 13 against a derived 8.
 - `name-mechanic` — Canyon Gore-Wyrm: `Canyon Charge` promises movement its text
   lacks.
 
-Pick by frequency across runs, not by the most recent forty — each of these has
-appeared once.
+Pick by frequency across runs, not by the most recent forty. Every class here
+has appeared once **except `two-novas`**, which is tallied above and is the
+standing pick.
 
 ## P2 — A soft report on the repair call's own verdicts
 
@@ -116,3 +128,16 @@ generic print rows like `Multiattack`, is visible without having to read traces.
   "Strength-based d20 tests" on the gold dragon.
 - **Gap-list accumulation** — 185 distinct gaps; ordering below the top few is
   still noisy, so gather more before acting on the tail.
+
+## SUPERSEDED on priorities — read `critic-response-2026-10-22.md` first
+
+The critic's package-six review (`sweep-2026-10-21T22-17-49`: 6 ship / 27
+fix-lite / 7 fix) replaced the priority order again. The `expresses` element
+receipt shipped in package six **failed** the claim it was offered on: membership
+is not expression. Free rows are now the main sameness source — 12 of 13 from
+three templates — and the owner has ruled on invented-element rows (allowed,
+capped by template family, counted in the metric).
+
+`two-novas` (the standing pick below) is **confirmed by the critic** as a real
+defect, and now sits behind instrument honesty and element provenance in the
+critic's order.
