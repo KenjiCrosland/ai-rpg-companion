@@ -26,6 +26,19 @@ The 10-20 forty read 0 FAIL. That was NOT better — it predates the
 `owed-clause`, `control-aoe-ungated` and `duplicate-mechanic` gates, which
 surface defects that were shipping unseen.
 
+## SUPERSEDED BY THE CRITIC REVIEW — read `critic-response-2026-10-21.md` first
+
+The critic's 2026-10-21 review refuted the measurement this backlog was built on.
+`[nearest landed]` was stamped at ACCEPTANCE, not at ship, so "1 row in 41
+shipped nothing" was really **23 of 41** — and the OVER-DECLINE / GENUINE-GAP
+buckets below measure whether a template EXISTS for the seat, not whether it does
+what was wanted. The real bottleneck is the **provenance rules**: 12 of 20 vetoes
+were 1d, and six of its kills were the twist itself.
+
+The ruling, the fixes and the remaining order all live in
+`plans/critic-response-2026-10-21.md`. The buckets below are kept only for the
+two measurement errors recorded with them.
+
 ## RESOLVED — the catalog is not the problem (measured 2026-10-21)
 
 Composition was written as P1 here. **It is not supported, and neither is any

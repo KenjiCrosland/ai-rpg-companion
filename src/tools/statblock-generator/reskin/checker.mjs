@@ -11,7 +11,7 @@
 // single-target with a repeat save (the Ghoul); leveled spells at will are a
 // fail only for hard control below CR 13; reach follows size before a tether.
 import { fromLegacyModel } from '../format-2024/generate.mjs';
-import { AFFLICTIONS, imposedConditions } from './author.mjs'; // one definition: the conditions a finished row imposes
+import { AFFLICTIONS, imposedCondition, imposedConditions } from './author.mjs'; // one definition: the conditions a finished row imposes
 import { lintStatblock } from '../format-2024/lint.mjs';
 import { HIT_DIE_BY_SIZE } from '../format-2024/dice.mjs';
 import { WEAPONS, weaponFor, weaponProp, namesWeapon } from './weapons.mjs';
@@ -677,6 +677,24 @@ function gateAdjudicability(m, ctx, F) {
     // a row that APPLIES Grappled states the escape DC (print: 0 of 2 corpora without it; "that has the Grappled condition" and "While Grappled" are prerequisites, not applications)
     if (/(?<!\b(?:that|which|who|already|while|if the target|if it|unless it|while the target|target that|creature that)\s)has the Grappled condition(?!\s*\(escape DC)/.test(t) || /\bis grappled\b(?!\s*\(escape DC)(?!\s+by\b)/i.test(t)) F('grapple-no-escape', 'fail', `${sec}/${bare(e.name)}: applies the Grappled condition with no escape DC`, bare(e.name));
     if (sec === 'Traits' && !/\d|\{dc\}|\{dmg\}|\b(?:Advantage|Disadvantage|Resistan\w*|Immun\w*|Vulnerab\w*|condition|saving throw|attack roll|Hit Points?|Temporary|Speed|reach|range|can't|cannot|can |ignores?|regains?|moves?|takes? (?:no|half|extra|double|additional)|deals? (?:extra|double|additional)|Blinded|Charmed|Deafened|Frightened|Grappled|Paralyzed|Poisoned|Prone|Restrained|Stunned|Incapacitated|Invisible|Difficult Terrain|breathe|climb|swim|fly|burrow|speak|understand|see|hear|sense|detect|doesn't|does not|isn't|is not|must|dies|die|succeeds|automatically|unless|only|indistinguishable|motionless|while|when|whenever|if|rather than|counts as|determined|damage types?)\b/i.test(t)) F('adjudicable-mechanic', 'fail', `${sec}/${bare(e.name)}: a trait with no rule in it — flavor on a rules row`, bare(e.name)); // the archlich's "Bound Dead of the Kingdom" (check-in 2026-10-11)
+    // A CONDITION THAT DOES NOT SELF-END STATES WHEN IT ENDS (critic, 2026-10-21:
+    // Ossuar's Paralyzing Touch read "or be paralyzed" with no bound at all, and
+    // indefinite paralysis passed this gate). Measured over print's 171 rows that
+    // impose an affliction, the split is not uniform and the rule is NOT "every
+    // condition states a duration" — that would fail print 58 times:
+    //   Prone        50 bare / 1 bounded  — it self-ends; you stand up. EXEMPT.
+    //   Grappled      0 bare / 38 bounded — always an escape DC (gated above).
+    //   Paralyzed/Stunned/Blinded/Charmed/Deafened  0 bare — ALWAYS bounded.
+    //   Incapacitated/Poisoned/Restrained/Frightened  mostly bounded.
+    // So: the five that print always bounds must be bounded here too.
+    {
+      const impo = imposedCondition(e);
+      const MUST_END = ['Paralyzed', 'Stunned', 'Blinded', 'Charmed', 'Deafened', 'Petrified', 'Unconscious'];
+      if (impo && MUST_END.includes(impo)
+        && !/until the (?:end|start) of|for 1 (?:minute|hour)|until (?:it|the target|the creature|this|that|cured|dispelled|removed|\w+) (?:dies|ends|is cured|is removed|recovers)|\bwhile\b|\(escape DC|repeats the save|until the (?:web|vines|grasp)/i.test(t)) {
+        F('condition-duration', 'fail', `${sec}/${bare(e.name)}: imposes ${impo} and never says when it ends — print bounds every ${impo} it hands out (0 of ${impo === 'Paralyzed' ? 5 : 'its'} rows bare)`, impo);
+      }
+    }
     if (/^(?:Traits|Reactions)$/.test(sec) && how === 'passive' && dealsOrTargets) F('adjudicable-resolution', 'fail', `${sec}/${bare(e.name)}: deals damage or imposes a condition but states no trigger, attack roll, or save`, bare(e.name));
     if (how === 'save') {
       const head = /(?:Saving Throw\*?:\*?\s*DC \d+,\s*([^.*]+?)\.)|((?:[^.]*?)\bmust (?:make|succeed on) a DC \d+ \w+ saving throw)/.exec(t);

@@ -4362,6 +4362,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const traitRows = () => (sections.Traits = sections.Traits ?? []);
       const shipTrait = (tt) => {
         const secT = tt.section === 'Reactions' ? 'Reactions' : 'Traits';
+        // the element receipt rides onto the row, so the audit-rename guard can see
+        // it: a free signature row has no clause and would otherwise be unprotected
+        if (tt.expresses && tt.row && !tt.row.expresses) tt.row.expresses = tt.expresses;
         const bound = tt.owed === true || /:concept\b/.test(tt.because ?? '');
         if (secT === 'Traits' && traitRows().length >= ceiling) {
           // a concept-bound trait is what the user asked for: it evicts a shelf
@@ -5014,7 +5017,23 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             const pbDiffPR = Number.isFinite(pc.pb) ? scaled.pb - pc.pb : 0;
             for (const pr of pc.rangedRows) {
               if (!pr.dmg || !Number.isFinite(pr.bonus) || !pr.range) continue;
-              if (Object.values(monster.sections).flat().some((e) => String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === pr.name.toLowerCase())) continue;
+              // A ROW ALREADY CARRYING PRINT'S NAME IS PRINT'S ROW — CLAIM IT
+              // (critic, 2026-10-21). Skipping silently lost Brother Halric his Mace:
+              // the call had renamed a chassis row to "Mace" (it answered "Mace = mace"),
+              // so this add was skipped as a duplicate, and the closed-path sweep below
+              // then deleted that chassis row for having no provenance — "the Priest
+              // prints no row for it" — while print's own Multiattack went on citing it.
+              // He shipped two Radiant Flames and nothing else. Both the melee and the
+              // ranged add had it; the row now stays, stamped as print's.
+              const already = Object.values(monster.sections).flat().find((e) => String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === pr.name.toLowerCase());
+              if (already) {
+                if (!already.print) {
+                  already.print = true;
+                  already.weapon = already.weapon ?? weaponFor(pr.name) ?? null;
+                  trace('print canon row:', `Actions/${pr.name} — a chassis row already carries the ${pc.name}'s own row name, so it IS that row: claimed as print's rather than skipped (it would otherwise leave as filler on a closed path)`);
+                }
+                continue;
+              }
               const bonusR = printNearAdd ? pr.bonus + pbDiffPR : Number(scaled.atk ?? pr.bonus + pbDiffPR);
               const rowR = { name: pr.name, text: `*Ranged Attack Roll:* +${bonusR}, range ${pr.range} ft. ${pr.dmg} ${pr.type ?? 'Piercing'} damage.`, print: true, weapon: weaponFor(pr.name) ?? null };
               (monster.sections.Actions = monster.sections.Actions ?? []).push(rowR);
@@ -5034,7 +5053,15 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             const pbDiffPM = Number.isFinite(pc.pb) ? scaled.pb - pc.pb : 0;
             for (const pr of pc.meleeRows) {
               if (!pr.text || !Number.isFinite(pr.bonus)) continue;
-              if (Object.values(monster.sections).flat().some((e) => String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === pr.name.toLowerCase())) continue;
+              const already = Object.values(monster.sections).flat().find((e) => String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === pr.name.toLowerCase());
+              if (already) {
+                if (!already.print) {
+                  already.print = true;
+                  already.weapon = already.weapon ?? weaponFor(pr.name) ?? null;
+                  trace('print canon row:', `Actions/${pr.name} — a chassis row already carries the ${pc.name}'s own row name, so it IS that row: claimed as print's rather than skipped (it would otherwise leave as filler on a closed path)`);
+                }
+                continue;
+              }
               const bonusM = printNearAdd ? pr.bonus + pbDiffPM : Number(scaled.atk ?? pr.bonus + pbDiffPM);
               const tx = asInline(pr.text).replace(/(Attack Roll:\*? )\+\d+/, `$1+${bonusM}`).replace(/\bDC (\d+)\b/g, (m0, d) => `DC ${printNearAdd ? Number(d) + pbDiffPM : scaled.dc}`);
               (monster.sections.Actions = monster.sections.Actions ?? []).push({ name: pr.name, text: tx.charAt(0).toUpperCase() + tx.slice(1), print: true, weapon: weaponFor(pr.name) ?? null });
@@ -6669,6 +6696,32 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             continue;
           }
         }
+        // A RENAME MAY NOT TAKE THE GM'S OWN WORD OFF A CLAUSE-BOUND ROW (critic,
+        // 2026-10-21). The audit renamed the Stone Golem's "Weeping Stain" to "Gaze
+        // Lock" and Ilvareth's "Dusk Double" to "Shadow Step" — rows bound to "carved
+        // as a weeping saint" and to the GM's shadow double. The mechanic survived and
+        // the receipt did not, so the clause read as dropped on a sheet that answered
+        // it. Like the weapon guard above this is a validator, not a word rule: the
+        // comparison is against the row's OWN bound clause, which is the GM's text.
+        {
+          const row = Object.values(monster.sections ?? {}).flat().find((e) => String(e.name ?? '').replace(/\s*\(.*\)$/, '') === bare);
+          // A FREE SIGNATURE ROW HAS NO CLAUSE BY DESIGN — it earns no clause
+          // credit — so `clause` alone left exactly the twist rows unprotected:
+          // "Smoldering Stumps" was renamed "Searing Body", dropping the GM's
+          // "stumps". The element it named is the GM's text in the same sense, so
+          // it guards the name the same way.
+          const cl = String(row?.clause ?? row?.expresses ?? '');
+          if (cl) {
+            const wordsOf = (x) => String(x).toLowerCase().match(/[a-z]{4,}/g) ?? [];
+            const gmWords = new Set(wordsOf(cl));
+            const kept = new Set(wordsOf(f.rename));
+            const lost = [...new Set(wordsOf(bare))].filter((w) => gmWords.has(w) && !kept.has(w));
+            if (lost.length) {
+              trace('audit rename blocked —', `"${bare}" -> "${f.rename}" would drop the GM's own word${lost.length > 1 ? 's' : ''} ${lost.map((w) => `"${w}"`).join(', ')} from a row bound to "${cl}"; the mechanic would stay and the receipt would not`);
+              continue;
+            }
+          }
+        }
         let fresh = `${f.rename}${gate}`;
         let applied = false;
         for (const es of Object.values(monster.sections ?? {})) {
@@ -6742,6 +6795,26 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
     if (monster.generation) monster.generation.gap_vetoed = `${vetoed} of ${gapRecords.length}`;
     if (vetoed) trace('signature outcome:', `${vetoed} of ${gapRecords.length} accepted signature pick(s) never reached the sheet — the seat shipped a fallback or nothing`);
+  }
+  // GUARDED STANCE IS RECONCILED AGAINST THE FINISHED AC (critic, 2026-10-21:
+  // the Reedmarch Sap-Keeper shipped it). The menu filter runs while the pool is
+  // built and tests `monster.ac ?? scaled.ac` — but print canon can still move the
+  // AC afterwards ("AC 12 -> 13"), and three other paths ship a trait without
+  // passing that filter at all (the owed trait, the concept-first pick, the class
+  // kit). Guarding each one missed this; asking the FINISHED sheet does not.
+  {
+    const acNow = monster.ac ?? scaled.ac;
+    if (guardedStanceIsIllegal(acNow)) {
+      for (const [sec, es] of Object.entries(monster.sections ?? {})) {
+        for (let i = (es ?? []).length - 1; i >= 0; i -= 1) {
+          const e = es[i];
+          if (e.template !== 'guarded-stance') continue;
+          es.splice(i, 1);
+          sweepDeadName(monster.sections, e.name, null, trace);
+          trace('guarded stance withdrawn:', `${sec}/"${e.name}" leaves the finished sheet — ${guardedStanceWhy(acNow)}; the menu filter had checked an AC that print canon changed afterwards`);
+        }
+      }
+    }
   }
   if (repairProse.length && monster.generation) monster.generation.answered_in_prose = repairProse.map((u) => u.clause);
   if (repairCredited.length && monster.generation) monster.generation.answered_by_existing = repairCredited;

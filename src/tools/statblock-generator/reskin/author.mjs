@@ -114,7 +114,7 @@ export const ALL_CONDITIONS = ['Blinded', 'Charmed', 'Deafened', 'Exhaustion', '
 // inflicts one, and both end in a noun. Reading the first as an imposition put
 // a false `imposes: Prone` on print's own Trample and made the
 // duplicate-mechanic gate fail a sheet that imposes Prone only twice.
-const PRECONDITION = /\bif\b[^.]*$|\balready\b\s*$|\b(?:that|which|who)\s*$/i;
+const PRECONDITION = /\bif\b[^.]*$|\balready\b\s*$|\b(?:that|which|who)\s*$|\b(?:can't|cannot|never|immune to being|resistance to being)\s*$/i;
 
 // AFFLICTIONS: the conditions a row inflicts ON A TARGET, which is the subset
 // the duplicate-mechanic gate counts. The four left out of ALL_CONDITIONS here
@@ -144,7 +144,12 @@ export function imposedConditions(row) {
   if (out.size) return [...out];
   // the 2014 printing says it differently: "is poisoned", "is knocked prone"
   for (const c of ALL_CONDITIONS) {
-    const re = new RegExp(`\\b(?:is|are|becomes?)\\s+(?:knocked\\s+)?${c}\\b`, 'i');
+    // "or BE paralyzed" is standard 2014 phrasing for a save-or-suffer row, and it
+    // was unreadable here: Ossuar's Paralyzing Touch imposed indefinite paralysis and
+    // no reader saw a condition at all (critic, 2026-10-21). `be` is admitted, with
+    // negation excluded below — "can't be paralyzed" and "immune to being paralyzed"
+    // describe what CANNOT be done to the creature, the opposite of an imposition.
+    const re = new RegExp(`\\b(?:is|are|becomes?|be)\\s+(?:knocked\\s+)?${c}\\b`, 'i');
     if (!re.test(t)) continue;
     if (PRECONDITION.test(t.slice(Math.max(0, t.search(re) - 46), t.search(re)))) continue;
     out.add(c);
