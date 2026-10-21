@@ -758,22 +758,26 @@ describe('step 6: with a path decision, no retired rule decides', () => {
     expect(r.trace).not.toMatch(/print canon trait:/);
   });
 
-  // FOUND BY THIS GUARD (2026-10-20), AND NOT YET FIXED. The brief retires "the
-  // name-canon trait stamp"; it is still live, and on the homebrew path it reads
-  // the WORD "golem" and stamps print's golem traits even though the path call
-  // answered print_body null with the receipt "lashed timber". Live it is usually
-  // suppressed, because the identity call answers golem -> canon ✗ and
-  // `options.rejectedCanon` gates the stamp — but the suppression depends on that
-  // call, not on the path. Retiring it is a behaviour change with pins, so it goes
-  // to the owner for a ruling rather than a rewrite (the brief's own instruction).
-  // This test records today's behaviour so the change is visible when it lands.
-  test('OUTSTANDING: the name-canon trait stamp still fires from a word on the homebrew path', async () => {
-    const r = await run({ concept: 'a siege-engine golem of lashed timber that shoulders through walls', cr: 8, archetype: 'brute', path: { path: 'homebrew', by: 'call', print_body: null, relation: null, class: null, species: null, receipt: 'lashed timber' } });
-    expect(names(r)).toContain('Immutable Form');
-    expect(r.trace).toMatch(/name-canon trait stamped: Immutable Form/);
-    // and the hint call's ✗ is what suppresses it today
-    const q = await run({ concept: 'a siege-engine golem of lashed timber that shoulders through walls', cr: 8, archetype: 'brute', path: { path: 'homebrew', by: 'call', print_body: null, relation: null, class: null, species: null, receipt: 'lashed timber' }, over: {} , rejected: ['golem'] });
-    expect(names(q)).not.toContain('Immutable Form');
+  // FOUND BY THIS GUARD (2026-10-20), THEN RULED ON BY THE OWNER. The name-canon
+  // stamp read the WORD "golem" and stamped print's golem traits onto a sheet
+  // whose path call answered print_body null with the receipt "lashed timber".
+  // Its only brake was a SECOND call answering golem → canon ✗, so the staple
+  // landed whenever that call missed. Owner's ruling: the word stands down
+  // whenever the path named no published body. This retires the last row of the
+  // brief's Retirements table.
+  test('the name-canon trait stamp stands down when the path named no print body', async () => {
+    const hb = { path: 'homebrew', by: 'call', print_body: null, relation: null, class: null, species: null, receipt: 'lashed timber' };
+    const r = await run({ concept: 'a siege-engine golem of lashed timber that shoulders through walls', cr: 8, archetype: 'brute', path: hb });
+    expect(names(r)).not.toContain('Immutable Form');
+    expect(names(r)).not.toContain('Magic Resistance');
+    expect(r.trace).toMatch(/name-canon stands down:.*named no print body/);
+    expect(r.trace).not.toMatch(/name-canon trait stamped/);
+  });
+
+  test('a TWIST on a print body still takes print\'s own canon trait — the stand-down is only for a bodiless path', async () => {
+    const r = await run({ concept: 'a troll that grows back unless the blade was silvered', cr: 5, archetype: 'brute', path: twist('Troll', 'troll') });
+    expect(names(r)).toContain('Regeneration');
+    expect(r.trace).not.toMatch(/name-canon stands down/);
   });
 
   test('a twist decision is not stood down by a cue verdict aimed at the matcher', async () => {
@@ -794,5 +798,135 @@ describe('step 6: with a path decision, no retired rule decides', () => {
   test('the homebrew path loads none of print\'s rows even where a name is in the words', async () => {
     const r = await run({ concept: 'a leviathan of the trench whose song drowns fleets', cr: 16, archetype: 'brute', path: { path: 'homebrew', by: 'call', print_body: null, relation: null, class: null, species: null, receipt: 'of the trench' } });
     expect(r.trace).not.toMatch(/print canon trait:|print canon route/);
+  });
+});
+
+// 1f, THE FLAW ROW (owner's ruling, 2026-10-20). "Adult Red Dragon — blind in
+// one eye from an old lance" removed nothing and shipped a stock dragon, and the
+// checker's lack-honored gate failed it with nothing to point at. Print carries
+// a costing trait on only 11 of 329 blocks and every one is keyed to an EXTERNAL
+// trigger (sunlight, bright light, taking Fire damage) — there is no print flaw
+// for a missing faculty — so the row is authored in print's grammar and nowhere
+// beyond it: "has Disadvantage on <test>". WHICH faculty is the call's answer
+// (`takes`, a validated enum); the enum → sentence table is a closed fact.
+describe('a lacks clause with nothing to remove costs the creature something', () => {
+  const { checkBlock } = require('../checker.mjs');
+
+  test("the dragon's blind side lands a flaw row named in the GM's own words, and the lack-honored gate stops failing", async () => {
+    const r = await run({
+      concept: 'Adult Red Dragon — blind in one eye from an old lance', cr: 17, archetype: 'brute',
+      path: twist('Adult Red Dragon', 'Adult Red Dragon'),
+      over: { lacks: [{ quote: 'blind in one eye', takes: 'sight', costs: 'sight' }] },
+    });
+    const flaw = r.rows.find((e) => e.flaw);
+    expect(flaw).toBeTruthy();
+    expect(flaw.text).toMatch(/has Disadvantage on Wisdom \(Perception\) checks that rely on sight\./);
+    // print names a flaw by its CAUSE, never by a condition — "Blind in One Eye"
+    // promises the Blinded condition the text never imposes, and the
+    // name-mechanic gate failed it in 4 of 5 live runs. The GM's words stay on
+    // the row as its receipt.
+    expect(flaw.name).toBe('Sight Weakness');
+    expect(flaw.because).toBe('blind in one eye');
+    expect(r.trace).toMatch(/flaw row: "Sight Weakness"/);
+    // and the gate the critic saw failing now has something to point at
+    const fails = Object.values(checkBlock(r.m).gates ?? {}).flatMap((g) => g.findings ?? []).filter((f) => f.rule === 'lack-honored');
+    expect(fails).toHaveLength(0);
+  });
+
+  test('one flaw row per sheet, matching print\'s rarity of 11 in 329', async () => {
+    const r = await run({
+      concept: 'a blinded, deafened old wyrm that lost an eye and an ear', cr: 14, archetype: 'brute',
+      over: { lacks: [{ quote: 'lost an eye', takes: 'sight', costs: 'sight' }, { quote: 'lost an ear', takes: 'hearing', costs: 'hearing' }] },
+    });
+    expect(r.rows.filter((e) => e.flaw)).toHaveLength(1);
+  });
+
+  test('a lack that REMOVES a row takes no flaw row — the removal is the cost', async () => {
+    const r = await run({
+      concept: 'a troll that cannot regenerate at all', cr: 5, archetype: 'brute',
+      path: twist('Troll', 'troll'),
+      over: { lacks: [{ quote: 'cannot regenerate', takes: 'regeneration', costs: 'none' }] },
+    });
+    expect(names(r)).not.toContain('Regeneration');
+    expect(r.rows.filter((e) => e.flaw)).toHaveLength(0);
+  });
+});
+
+// 1e, AN OWED CLAUSE IS OWED A ROW (critic's ruling, 2026-10-20). On a print
+// body, every clause the GM added beyond print is the whole reason the sheet is
+// not just the printed monster. The Vampire "who keeps a garden of thorns"
+// shipped a stock vampire because the clause reader had called the thorns
+// DESCRIPTIVE and only mechanical clauses ever reached the repair call.
+describe('1e: a clause added to a printed creature is owed a row', () => {
+  const { checkBlock } = require('../checker.mjs');
+
+  test('a DESCRIPTIVE clause reaches the repair call on a twist, where it never used to', async () => {
+    const r = await run({ concept: 'a vampire who keeps a garden of thorns', cr: 13, archetype: 'brute', path: twist('Vampire', 'vampire') });
+    // either a row answers it, or the repair ran for it and the trace says so —
+    // what must NOT happen is the clause vanishing with no record
+    expect(r.trace).toMatch(/repair:|owed and unanswered:|seat takes its clause/);
+  });
+
+  test('an owed clause nothing answered is recorded on the block and FAILS the checker', async () => {
+    const m = {
+      name: 'Stock Vampire', size: 'Medium', type: 'Undead', alignment: 'Lawful Evil', ac: 16, hp: 195,
+      hp_formula: '23d8 + 92', speed: '40 ft.', stats: { STR: 18, DEX: 18, CON: 18, INT: 17, WIS: 15, CHA: 18 },
+      cr: 13, cr_str: '13', pb: 5, senses: 'Passive Perception 17', languages: 'Common',
+      sections: { Actions: [{ name: 'Multiattack', text: 'The vampire makes two Grave Strike attacks.' }, { name: 'Grave Strike', text: '*Melee Attack Roll:* +9, reach 5 ft. 13 (2d8 + 4) Bludgeoning damage.' }] },
+      generation: { path: 'reskin', owed_unanswered: ['who keeps a garden of thorns'] },
+    };
+    const fails = Object.values(checkBlock(m).gates ?? {}).flatMap((g) => g.findings ?? []).filter((f) => f.rule === 'owed-clause');
+    expect(fails).toHaveLength(1);
+    expect(fails[0].severity).toBe('fail');
+    expect(fails[0].message).toMatch(/ships as the stock monster/);
+  });
+
+  test('a block with nothing owed is untouched by the new gate', () => {
+    const m = { name: 'X', size: 'Medium', type: 'Undead', alignment: 'Neutral', ac: 15, hp: 100, hp_formula: '12d10+34', speed: '30 ft.', stats: { STR: 14, DEX: 14, CON: 14, INT: 10, WIS: 10, CHA: 10 }, cr: 5, cr_str: '5', pb: 3, senses: 'Passive Perception 10', languages: '—', sections: { Actions: [] }, generation: { path: 'reskin' } };
+    const fails = Object.values(checkBlock(m).gates ?? {}).flatMap((g) => g.findings ?? []).filter((f) => f.rule === 'owed-clause');
+    expect(fails).toHaveLength(0);
+  });
+});
+
+describe('1e: the idea starts from the GM\'s clause, not the flavour paragraph', () => {
+  test("the idea prompt names the clause the sheet is for, and says print supplies the rest", () => {
+    const { buildIdeaPrompt } = require('../templates.mjs');
+    const p = buildIdeaPrompt({ name: 'Ash-Marsh Hydra', cr: 8, concept: 'Hydra whose stumps smoke instead of regrowing', sheetLines: 'AC 15', owedClause: 'whose stumps smoke' });
+    expect(p).toMatch(/THE CLAUSE THIS ABILITY IS FOR/);
+    expect(p).toMatch(/"whose stumps smoke"/);
+    expect(p).toMatch(/do not describe the creature in general/);
+  });
+
+  test('a homebrew sheet is given no owed clause — it has both seats and the catalog', () => {
+    const { buildIdeaPrompt } = require('../templates.mjs');
+    const p = buildIdeaPrompt({ name: 'X', cr: 8, concept: 'a thing', sheetLines: 'AC 15', owedClause: null });
+    expect(p).not.toMatch(/THE CLAUSE THIS ABILITY IS FOR/);
+  });
+});
+
+// THE BODY'S OWN NOUN IS NOT THIS CREATURE'S NAME (critic, section 5,
+// 2026-10-20). A print body's rows carry print's word for itself — "The guard
+// makes two Mace attacks", "The bandit makes two attacks", "The pirate makes
+// three" — and the class and twist paths take those rows verbatim. Confirmed
+// live on three blocks across two fresh runs before the fix.
+describe('the print body\'s noun is swept for the sheet\'s own name', () => {
+  test('a class NPC on a print person body does not call itself by the body\'s noun', async () => {
+    const r = await run({
+      concept: 'Harl Sedgewick, a grizzled sergeant who holds the gate', cr: 4, archetype: 'defender',
+      path: { path: 'class_npc', by: 'call', print_body: null, relation: null, class: 'fighter', species: null, receipt: 'sergeant' },
+    });
+    const leaked = r.rows.filter((e) => /\bthe (?:guard|bandit|pirate|warrior|commoner|scout|knight|priest|mage)\b/i.test(e.text ?? ''));
+    expect(leaked.map((e) => `${e.name}: ${e.text}`)).toEqual([]);
+  });
+
+  test('a twist keeps print\'s Multiattack but says the sheet\'s own name', async () => {
+    const r = await run({ concept: 'a dire wolf with a frost-rimed hide', cr: 2, archetype: 'skirmisher', path: twist('Dire Wolf', 'dire wolf') });
+    const ma = r.rows.find((e) => /^Multiattack/.test(e.name ?? ''));
+    if (ma) expect(ma.text).not.toMatch(/\bthe wolf\b(?! with)/i);
+  });
+
+  test('a sheet that IS the print creature keeps its own noun — nothing is swept needlessly', async () => {
+    const r = await run({ concept: 'a troll that grows back unless the blade was silvered', cr: 5, archetype: 'brute', path: twist('Troll', 'troll') });
+    expect(r.trace).not.toMatch(/body noun swept/);
   });
 });

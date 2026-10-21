@@ -14,6 +14,7 @@
  * kit keys) and validators (a receipt is a span of the GM's words).
  */
 import printBlocks from '@/data/srd52-monsters.json';
+import srd51 from '@/data/srd-monsters.json';
 import { CLASSES } from './classes.mjs';
 import { SPECIES } from './species.mjs';
 
@@ -22,21 +23,34 @@ export const PATHS = ['exact', 'twist', 'class_npc', 'homebrew', 'blank'];
 const CLASS_KEYS = CLASSES.map((c) => c.key);
 const SPECIES_KEYS = SPECIES.map((s) => s.key);
 const CORPUS = (Array.isArray(printBlocks) ? printBlocks : []).map((b) => ({ name: String(b.name ?? ''), type: String(b.type ?? '') }));
+// THE 2014 BOOK'S OWN NAMES ARE PRINT TOO (owner's ruling, 2026-10-20). The two
+// corpora do not share every name: 5.1 has "Goblin" where 5.2 has "Goblin
+// Warrior", so a 2014 GM typing "Goblin" had their print_body refused for not
+// being in the corpus — checked against the 5.2 book alone — and the sheet fell
+// to homebrew. Found by the ruling's own smoke. A name print carries in EITHER
+// book is a print name; the edition decides which block gets served, not
+// whether the name is real.
+const CORPUS_2014 = (Array.isArray(srd51) ? srd51 : []).map((b) => ({ name: String(b.name ?? ''), type: String(b.type_and_alignment ?? '').replace(/^\w+\s+/, '') }));
 
 const norm = (s) => String(s ?? '').toLowerCase().replace(/[’`]/g, "'").replace(/[—–-]/g, ' ').replace(/[^a-z0-9' ]+/g, ' ').replace(/\s+/g, ' ').trim();
 const stripArticle = (s) => norm(s).replace(/^(?:a|an|the) /, '');
 const words = (s) => norm(s).split(' ').filter(Boolean);
 
 /** A whole print name, article and case aside — a closed fact, never a judgement. */
-export function printNameOf(text) {
+export function printNameOf(text, { edition = '2024' } = {}) {
   const t = stripArticle(text);
   if (!t) return null;
   const hit = CORPUS.find((b) => norm(b.name) === t);
-  return hit ? hit.name : null;
+  if (hit) return hit.name;
+  // only a 2014 SHEET may stand on a name only the 2014 book carries, so a 2024
+  // sheet can never dispatch "Goblin" as exact and then find no 5.2 block.
+  if (edition === '2014') { const h14 = CORPUS_2014.find((b) => norm(b.name) === t); if (h14) return h14.name; }
+  return null;
 }
-export function corpusEntry(name) {
+export function corpusEntry(name, { edition = '2024' } = {}) {
   const n = stripArticle(name); if (!n) return null;
   const exact = CORPUS.find((b) => norm(b.name) === n); if (exact) return exact;
+  if (edition === '2014') { const in2014 = CORPUS_2014.find((b) => norm(b.name) === n); if (in2014) return in2014; }
   // a VARIANT the call named ("Cave Troll", "Stone Giant Exile") is the printed creature its
   // tail names — a closed-fact lookup (the longest corpus name the answer contains as whole words — tail or head), not a
   // reading of the GM's words; probe 2026-10-19: "Cave Troll" was refused and the troll went homebrew
@@ -79,7 +93,7 @@ const isSpan = (receipt, concept) => { const r = norm(receipt); return !!r && no
 const shorter = (receipt, concept) => words(concept).length <= 3 || words(receipt).length < words(concept).length;
 
 /** Validators, not judgements: each refusal is named for the trace. */
-export function readPath(raw, { concept = '' } = {}) {
+export function readPath(raw, { concept = '', edition = '2024' } = {}) {
   let p; try { p = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch { p = null; }
   const refused = [];
   if (!p || typeof p !== 'object') return { assembly: null, print_body: null, relation: null, species: null, class: null, receipts: {}, refused: ['the call returned no object'] };
@@ -89,7 +103,7 @@ export function readPath(raw, { concept = '' } = {}) {
   if (ASSEMBLIES.includes(a)) out.assembly = a; else refused.push(`assembly "${p.assembly}" is not twist|class_npc|homebrew`);
   if (p.assembly_receipt && isSpan(p.assembly_receipt, concept)) out.receipts.assembly = String(p.assembly_receipt).trim(); else if (p.assembly_receipt) refused.push(`assembly receipt "${p.assembly_receipt}" is not a span of the GM's words`);
   if (p.print_body != null && String(p.print_body).trim() && !/^null$/i.test(String(p.print_body))) {
-    const hit = corpusEntry(p.print_body);
+    const hit = corpusEntry(p.print_body, { edition });
     if (hit) out.print_body = hit.name; else refused.push(`print_body "${p.print_body}" is not in the corpus`);
     if (hit && p.print_body_receipt && isSpan(p.print_body_receipt, concept)) out.receipts.print_body = String(p.print_body_receipt).trim();
     else if (hit) { refused.push(`print_body receipt "${p.print_body_receipt ?? ''}" is not a span of the GM's words — the body is refused with it`); out.print_body = null; }
@@ -128,12 +142,12 @@ export function readPath(raw, { concept = '' } = {}) {
  *   fields: { name, concept, cr, role } — the form, verbatim
  *   read:   readPath()'s output, or null when the call did not run / failed
  */
-export function dispatch({ name = '', concept = '', role = null } = {}, read = null) {
+export function dispatch({ name = '', concept = '', role = null, edition = '2024' } = {}, read = null) {
   const nameT = String(name ?? '').trim(); const conceptT = String(concept ?? '').trim();
-  const whole = printNameOf(nameT) ?? (!nameT ? printNameOf(conceptT) : null);
+  const whole = printNameOf(nameT, { edition }) ?? (!nameT ? printNameOf(conceptT, { edition }) : null);
   if (whole && (!conceptT || !nameT)) return { path: 'exact', by: 'code', print_body: whole, relation: 'is', class: null, species: null, receipt: whole };
   if (!nameT && !conceptT) return { path: 'blank', by: 'code', print_body: null, relation: null, class: null, species: null, receipt: role ? `role: ${role}` : 'an empty form' };
-  const named = printNameOf(nameT);
+  const named = printNameOf(nameT, { edition });
   if (named && conceptT) return { path: 'twist', by: 'code', print_body: named, relation: 'is', class: read?.class ?? null, species: read?.species ?? null, receipt: `Name field: ${named}` };
   if (!read || !read.assembly) return { path: null, by: 'call', failed: true, print_body: null, relation: null, class: null, species: null, receipt: read?.refused?.join('; ') || 'the path call failed' };
   const body = read.print_body; const rel = read.relation;

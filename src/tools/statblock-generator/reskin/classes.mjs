@@ -178,3 +178,44 @@ export const classStats = (key) => { const c = CLASSES.find((x) => x.key === key
 
 /** The class's own weapon when the GM named none — monk fights unarmed; a magic strike is never re-armed. */
 export const classWeapon = (key) => CLASSES.find((x) => x.key === key)?.weapon ?? null;
+
+/**
+ * 4a, ARMOUR LEGALITY (critic, 2026-10-20). 2024 prints no armour label, so the
+ * 2014 converter invented one by trying kits heaviest-first until the number
+ * matched — with no idea what the creature could actually wear. Live results:
+ * splint on Thurivald (a BARD) and on Ilvareth (an archmage), a chain shirt on
+ * Sisshar (a MONK), chain mail on Meshrin (a barbarian).
+ *
+ * The proficiency table is a closed fact from the rules, not a judgement.
+ * Categories: light = padded, leather, studded leather; medium = hide, chain
+ * shirt, scale mail, breastplate, half plate; heavy = ring mail, chain mail,
+ * splint, plate. A barbarian and a cleric stop at medium; a monk and a mage wear
+ * none at all and take their AC from their own ability scores.
+ */
+export const ARMOR_PROFICIENCY = {
+  barbarian: { categories: ['light', 'medium'], shield: true },
+  bard: { categories: ['light'], shield: false },
+  cleric: { categories: ['light', 'medium'], shield: true },
+  fighter: { categories: ['light', 'medium', 'heavy'], shield: true },
+  monk: { categories: [], shield: false },
+  paladin: { categories: ['light', 'medium', 'heavy'], shield: true },
+  rogue: { categories: ['light'], shield: false },
+  mage: { categories: [], shield: false },
+};
+export const ARMOR_CATEGORY = {
+  padded: 'light', leather: 'light', 'studded leather': 'light',
+  hide: 'medium', 'chain shirt': 'medium', 'scale mail': 'medium', breastplate: 'medium', 'half plate': 'medium',
+  'ring mail': 'heavy', 'chain mail': 'heavy', splint: 'heavy', plate: 'heavy',
+};
+/** May this class wear this armour? An unknown class is unconstrained (the old behaviour). */
+export function canWear(classKey, kit) {
+  const prof = ARMOR_PROFICIENCY[String(classKey ?? '').toLowerCase()];
+  if (!prof) return true;
+  const cat = ARMOR_CATEGORY[String(kit ?? '').toLowerCase()];
+  return !!cat && prof.categories.includes(cat);
+}
+/** May this class carry a shield? An unknown class is unconstrained. */
+export function canShield(classKey) {
+  const prof = ARMOR_PROFICIENCY[String(classKey ?? '').toLowerCase()];
+  return prof ? prof.shield : true;
+}

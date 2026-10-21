@@ -15,6 +15,7 @@
 import { hintsBlock, HINT_VERDICTS_FIELD, readPhrases } from '../reskin/lexicon.mjs';
 import { templatesFor, renderTemplate, rankByVerb, valueCheck, templateMenuLines, parseFit } from '../reskin/templates.mjs';
 import { LINES } from '../reskin/route.mjs';
+import { canWear, canShield } from '../reskin/classes.mjs'; // 4a: armour proficiency is a closed fact from the rules
 import { seedLeakTokens, rollNameBans, TYPE_ESSENCES } from './concept-seeds.mjs';
 import spec from '@/data/archetype-chassis-spec.json';
 import srdMonsters from '@/data/srd52-monsters.json';
@@ -1154,14 +1155,28 @@ export function toLegacyModel(m) {
       if (m.ac_note) return `${m.ac} (${m.ac_note})`;
       if (m.ac_gear) return `${m.ac} (${m.ac_gear})`; // print's Gear line named the armor (the Goblin Boss is chain shirt and shield, not the kit table's "splint" — canaries 2026-10-12)
       const dex = modOf(m.stats.DEX);
+      // 4a, NEVER A LABEL THE CLASS CANNOT WEAR (critic, 2026-10-20). The kit
+      // loop below tries armour heaviest-first until the number matches, and
+      // knew nothing about proficiency: it printed splint on a BARD, a chain
+      // shirt on a MONK and chain mail on a barbarian. The class rides on the
+      // block from the path decision, and the proficiency table is a closed fact
+      // from the rules. A monk or a mage wears none at all, so their AC is their
+      // own ability scores and the label is the bare number.
+      const npcClass = String(m.generation?.pipeline?.class ?? '').toLowerCase() || null;
       if (/humanoid/i.test(m.type)) {
         const KITS = [['plate', 18, 0], ['splint', 17, 0], ['chain mail', 16, 0], ['half plate', 15, 2], ['breastplate', 14, 2], ['scale mail', 14, 2], ['chain shirt', 13, 2], ['studded leather', 12, 99], ['leather', 11, 99]];
         const twoHanded = Object.values(m.sections ?? {}).flat().some((e) => /\b(?:greatsword|greataxe|maul|pike|halberd|glaive|longbow|shortbow|heavy crossbow|light crossbow)\b/i.test(String(e.name ?? ''))); // no shield hand beside a two-handed weapon (Meshrin's "splint, shield" beside a greatsword — the critic's species read)
-        for (const withShield of (twoHanded ? [false] : [false, true])) {
+        const shieldOk = !npcClass || canShield(npcClass);
+        for (const withShield of (twoHanded || !shieldOk ? [false] : [false, true])) {
           for (const [kit, base, cap] of KITS) {
+            if (npcClass && !canWear(npcClass, kit)) continue; // 4a: proficiency, not just arithmetic
             if (base + Math.min(dex, cap) + (withShield ? 2 : 0) === m.ac) return `${m.ac} (${kit}${withShield ? ', shield' : ''})`;
           }
         }
+        // 4a: no LEGAL kit reaches this number. Owner's call, recorded: print the
+        // number alone rather than invent a label the class cannot wear or
+        // silently move the AC — the number is the sheet's, the label is a gloss.
+        if (npcClass) return String(m.ac);
       }
       if (m.ac > 10 + dex) return `${m.ac} (natural armor)`;
       return String(m.ac);

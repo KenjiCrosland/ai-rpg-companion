@@ -1,0 +1,212 @@
+[
+  {
+    "name": "Adult Red Dragon",
+    "description": "blind in one eye from an old lance",
+    "cr": 17,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 1/5 \u2014 the blind side must cost it something \u2014 a row or a flaw, not a stock dragon"
+  },
+  {
+    "name": "Adult Red Dragon",
+    "description": "blind in one eye from an old lance",
+    "cr": 17,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 2/5 \u2014 the blind side must cost it something \u2014 a row or a flaw, not a stock dragon"
+  },
+  {
+    "name": "Adult Red Dragon",
+    "description": "blind in one eye from an old lance",
+    "cr": 17,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 3/5 \u2014 the blind side must cost it something \u2014 a row or a flaw, not a stock dragon"
+  },
+  {
+    "name": "Adult Red Dragon",
+    "description": "blind in one eye from an old lance",
+    "cr": 17,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 4/5 \u2014 the blind side must cost it something \u2014 a row or a flaw, not a stock dragon"
+  },
+  {
+    "name": "Adult Red Dragon",
+    "description": "blind in one eye from an old lance",
+    "cr": 17,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 5/5 \u2014 the blind side must cost it something \u2014 a row or a flaw, not a stock dragon"
+  },
+  {
+    "name": "Vampire",
+    "description": "who keeps a garden of thorns",
+    "cr": 13,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 1/5 \u2014 the thorn garden owes a row \u2014 not a stock vampire"
+  },
+  {
+    "name": "Vampire",
+    "description": "who keeps a garden of thorns",
+    "cr": 13,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 2/5 \u2014 the thorn garden owes a row \u2014 not a stock vampire"
+  },
+  {
+    "name": "Vampire",
+    "description": "who keeps a garden of thorns",
+    "cr": 13,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 3/5 \u2014 the thorn garden owes a row \u2014 not a stock vampire"
+  },
+  {
+    "name": "Vampire",
+    "description": "who keeps a garden of thorns",
+    "cr": 13,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 4/5 \u2014 the thorn garden owes a row \u2014 not a stock vampire"
+  },
+  {
+    "name": "Vampire",
+    "description": "who keeps a garden of thorns",
+    "cr": 13,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 5/5 \u2014 the thorn garden owes a row \u2014 not a stock vampire"
+  },
+  {
+    "name": "",
+    "description": "a lich enthroned on a sun of bone",
+    "cr": 14,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 1/5 \u2014 the bone sun owes a row \u2014 not a stock lich"
+  },
+  {
+    "name": "",
+    "description": "a lich enthroned on a sun of bone",
+    "cr": 14,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 2/5 \u2014 the bone sun owes a row \u2014 not a stock lich"
+  },
+  {
+    "name": "",
+    "description": "a lich enthroned on a sun of bone",
+    "cr": 14,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 3/5 \u2014 the bone sun owes a row \u2014 not a stock lich"
+  },
+  {
+    "name": "",
+    "description": "a lich enthroned on a sun of bone",
+    "cr": 14,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 4/5 \u2014 the bone sun owes a row \u2014 not a stock lich"
+  },
+  {
+    "name": "",
+    "description": "a lich enthroned on a sun of bone",
+    "cr": 14,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 5/5 \u2014 the bone sun owes a row \u2014 not a stock lich"
+  },
+  {
+    "name": "Hydra",
+    "description": "whose stumps smoke instead of regrowing",
+    "cr": 8,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 1/5 \u2014 the regrowth leaves AND the smoke lands (1f, already verified live)"
+  },
+  {
+    "name": "Hydra",
+    "description": "whose stumps smoke instead of regrowing",
+    "cr": 8,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 2/5 \u2014 the regrowth leaves AND the smoke lands (1f, already verified live)"
+  },
+  {
+    "name": "Hydra",
+    "description": "whose stumps smoke instead of regrowing",
+    "cr": 8,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 3/5 \u2014 the regrowth leaves AND the smoke lands (1f, already verified live)"
+  },
+  {
+    "name": "Hydra",
+    "description": "whose stumps smoke instead of regrowing",
+    "cr": 8,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 4/5 \u2014 the regrowth leaves AND the smoke lands (1f, already verified live)"
+  },
+  {
+    "name": "Hydra",
+    "description": "whose stumps smoke instead of regrowing",
+    "cr": 8,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 5/5 \u2014 the regrowth leaves AND the smoke lands (1f, already verified live)"
+  },
+  {
+    "name": "Meshrin",
+    "description": "Give him a frightening roar",
+    "cr": 8,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 1/5 \u2014 the roar needs terror-pulse, which the role filter used to cut (1a)"
+  },
+  {
+    "name": "Meshrin",
+    "description": "Give him a frightening roar",
+    "cr": 8,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 2/5 \u2014 the roar needs terror-pulse, which the role filter used to cut (1a)"
+  },
+  {
+    "name": "Meshrin",
+    "description": "Give him a frightening roar",
+    "cr": 8,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 3/5 \u2014 the roar needs terror-pulse, which the role filter used to cut (1a)"
+  },
+  {
+    "name": "Meshrin",
+    "description": "Give him a frightening roar",
+    "cr": 8,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 4/5 \u2014 the roar needs terror-pulse, which the role filter used to cut (1a)"
+  },
+  {
+    "name": "Meshrin",
+    "description": "Give him a frightening roar",
+    "cr": 8,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 5/5 \u2014 the roar needs terror-pulse, which the role filter used to cut (1a)"
+  },
+  {
+    "name": "",
+    "description": "a glacier-hearted juggernaut that ploughs through everything in its path",
+    "cr": 12,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 1/5 \u2014 ploughs through is trample, which the STYLE filter used to cut (1a)"
+  },
+  {
+    "name": "",
+    "description": "a glacier-hearted juggernaut that ploughs through everything in its path",
+    "cr": 12,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 2/5 \u2014 ploughs through is trample, which the STYLE filter used to cut (1a)"
+  },
+  {
+    "name": "",
+    "description": "a glacier-hearted juggernaut that ploughs through everything in its path",
+    "cr": 12,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 3/5 \u2014 ploughs through is trample, which the STYLE filter used to cut (1a)"
+  },
+  {
+    "name": "",
+    "description": "a glacier-hearted juggernaut that ploughs through everything in its path",
+    "cr": 12,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 4/5 \u2014 ploughs through is trample, which the STYLE filter used to cut (1a)"
+  },
+  {
+    "name": "",
+    "description": "a glacier-hearted juggernaut that ploughs through everything in its path",
+    "cr": 12,
+    "rules": "2024",
+    "canary": "SECTION 1 PROBE run 5/5 \u2014 ploughs through is trample, which the STYLE filter used to cut (1a)"
+  }
+]

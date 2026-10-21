@@ -1393,12 +1393,12 @@ describe('the brute plumbing (2026-08-26): archetype flows loudly end to end', (
   // chassis already brings three rules traits, so the SAME sheet, the same idea
   // and the same fit ship a fourth on a Construct and refuse it on a Giant.
   const fitPrompts = [];
-  const ceilingRun = async (resolvedType, traitIdea = 'While it is wounded it fights with a blind fury that makes it more dangerous, not less.') => {
+  const ceilingRun = async (resolvedType, traitIdea = 'While it is wounded it fights with a blind fury that makes it more dangerous, not less.', conceptText = 'a nameless hulk of old plating') => {
     const lines = []; const orig = console.log; console.log = (...a) => { lines.push(a.join(' ')); };
     let m;
     try {
       m = await generateReskin(
-        { archetype: 'brute', concept: 'a nameless hulk of old plating', userConcept: 'a nameless hulk of old plating', cr: 12, style: 'juggernaut', mechanics: [], resolvedType },
+        { archetype: 'brute', concept: conceptText, userConcept: conceptText, cr: 12, style: 'juggernaut', mechanics: [], resolvedType },
         async (prompt) => {
           if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ action: { idea: 'It slams the ground and everything near it is thrown down.', section: 'action', trigger: 'save', effect: 'damage' }, trait: { idea: traitIdea, trigger: 'always', effect: 'defense' } });
           if (prompt.startsWith("A monster's signature ability")) { fitPrompts.push(prompt); return JSON.stringify({ template: 'bloodied-fury', because: 'wounded', name: 'Iron Fury', fills: {} }); }
@@ -1429,7 +1429,11 @@ describe('the brute plumbing (2026-08-26): archetype flows loudly end to end', (
     const chassis = await ceilingRun('Giant');
     expect(chassis.traits.length).toBeLessThanOrEqual(3); // the juggernaut's own Acid Absorption + Siege Monster (Immutable Form is a golem's and leaves a Giant, 2026-09-29) + at most one fitted: print's ceiling for a meat body is 3
     expect(chassis.traits).toContain('Acid Absorption'); expect(chassis.traits).toContain('Siege Monster'); expect(chassis.traits).not.toContain('Immutable Form');
-    const material = await ceilingRun('Construct');
+    // 1d (2026-10-20): the fitted trait now needs a RECEIPT in the GM's own
+    // words, so the ceiling is tested with a concept that earns one ("fights
+    // harder" is bloodied-fury's key). The ceiling itself is unchanged: a
+    // material body seats a fourth trait, a meat body does not.
+    const material = await ceilingRun('Construct', undefined, 'a nameless hulk of old plating that fights harder the more it is broken open');
     expect(material.traits).toHaveLength(4);
     // the FIT call sees the whole sheet so far too (no call is an island)
     expect(fitPrompts.at(-1)).toMatch(/THE SHEET SO FAR[\s\S]*\| STR \| \d+ \|[\s\S]*### Traits/);
@@ -1437,13 +1441,24 @@ describe('the brute plumbing (2026-08-26): archetype flows loudly end to end', (
     expect(material.trace).not.toMatch(/trait ceiling/);
   });
 
-  test('a meat body earns its trait by a verb — a shape fit with no verb match ships on a Construct, not on a Giant', async () => {
-    const noVerb = 'It is old stone and it does not like company.'; // 'stone' keeps another card in the race so the fit runs; the PICK (bloodied-fury) matches nothing — a bare shape fit
+  // THE MEAT-BODY VERB RULE RETIRED (critic's 1d, 2026-10-20). This pin used to
+  // assert that a receiptless shape fit SHIPS on a Construct and not on a Giant.
+  // The body no longer decides: the receipt does, on any body. The outcome kept
+  // is the one the rule existed for — a pick the GM's words never asked for does
+  // not ship — and it now holds for material bodies too. OUTCOME CHANGED BY
+  // DESIGN; reported to the owner with the landing.
+  test('a receiptless shape fit is declined on ANY body — the receipt is the gate, not the substance', async () => {
+    const noVerb = 'It is old stone and it does not like company.'; // the PICK (bloodied-fury) matches nothing in the GM's words
     const meat = await ceilingRun('Giant', noVerb);
-    expect(meat.trace).toMatch(/trait declined: .*shape fit with no verb match/);
+    expect(meat.trace).toMatch(/trait declined: .*no receipt: the call quoted none of the GM's words/);
     expect(meat.traits.join('|')).not.toMatch(/Iron Fury|Bloodied Fury/);
     const made = await ceilingRun('Construct', noVerb);
-    expect(made.traits.join('|')).toMatch(/Iron Fury|Bloodied Fury/);
+    expect(made.trace).toMatch(/trait declined: .*no receipt/);
+    expect(made.traits.join('|')).not.toMatch(/Iron Fury|Bloodied Fury/);
+    // (That a RECEIPTED trait still stands is pinned by the ceiling test above,
+    // where the Construct run seats a fourth trait on a concept carrying
+    // bloodied-fury's own key. Not re-asserted here on the meat body, where the
+    // meat ceiling is the binding constraint rather than the receipt.)
   });
 
   test('regeneration claimed pulls the regenerator line — the organ\'s own seat (0/3 draws before)', async () => {
@@ -5300,7 +5315,11 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
         return answer(fullAnswer(archer, 'Iron Legion Sharpshot', { 'Melee Attack': 'Shortsword' }));
       });
     } finally { console.log = orig; }
-    expect(lines.join('\n')).toMatch(/trait declined: "Marked Quarry" — bound only on the idea's own words/);
+    // 1d: the same decline, now named by the receipt rather than the body — the
+    // tracker is bound on the IDEA's words ("it tracks the marked quarry"), and
+    // the GM typed none of them. This is the case the retired rule was written
+    // for, and the critic's ruling promises it stays covered.
+    expect(lines.join('\n')).toMatch(/trait declined: "Marked Quarry" — no receipt: the call quoted none of the GM's words/);
     expect((m.sections.Traits ?? []).some((e) => e.name === 'Marked Quarry')).toBe(false);
   });
   test('a nova taken on shape alone is declined: the cauldron\'s vent (library round 2026-09-29)', async () => {
@@ -5320,7 +5339,15 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     // the receipt distinguishes "the call offered no quote" from "it quoted
     // something the GM never typed" (stage 2 item 2, 2026-10-16): the two have
     // opposite fixes, and this stub offers none.
-    expect(trace).toMatch(/nova declined: "Scalding Vent \(Recharge 5-6\)" — a whole-round ability the GM never asked for: the call offered no quote, and the key table finds no verb either/);
+    // ROUTE CHANGED, OUTCOME KEPT (2026-10-20). The chassis row now carries
+    // itself forward instead of being rebuilt from an allow-list, so the
+    // grappler's own `engulf_engine` is visible on the sheet where it used to be
+    // stripped. The sheet's existing area engine therefore excludes a second
+    // one, and the pick never lands — "signature miss" — rather than landing and
+    // then being declined as a nova the GM never asked for. The thing this pin
+    // exists to prevent is unchanged and asserted below: no gated Emanation row
+    // ships. Reported to the owner with the landing.
+    expect(trace).toMatch(/signature miss: action|nova declined: "Scalding Vent/);
     expect(Object.values(m.sections).flat().some((e) => /Emanation originating from/.test(e.text ?? '') && /Recharge/.test(e.name))).toBe(false);
     // and a nova bound only on the IDEA's words ("around it" in the proposal, not the concept) is declined too
     const lines2 = []; console.log = (...a) => { lines2.push(a.join(' ')); };

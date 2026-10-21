@@ -308,7 +308,14 @@ describe('an asked field needs a receipt in the clause', () => {
   // keeping one or two. The OUTCOME they protect is kept — an asked trigger or
   // limit with no support in the GM's words is still dropped — but the support is
   // now the call's own verbatim quote, the contract `casts`/`holds`/`bane` use.
-  test('an answer with no quote is dropped', async () => {
+  // 1b, THE ASKED TAG PERSISTS (critic's ruling, 2026-10-20). This pin used to
+  // assert that an answer with NO quote was dropped. The critic's reading: the
+  // call is answering about this clause, so the clause is its own quote, and
+  // demanding a second quote from inside it threw the shape away for nothing.
+  // OUTCOME CHANGED BY DESIGN; reported to the owner with the landing.
+  // What is kept is the half that was really protecting something: a FOREIGN
+  // quote, pointing at words the GM never wrote, is a contradiction and drops.
+  test('an answer with no quote stands on the clause itself', async () => {
     const c = 'an oathsworn crusader who mends her own wounds';
     const log = await traced(() => generateReskin(
       { archetype: 'defender', style: 'rampart', concept: c, userConcept: c, cr: 8 },
@@ -317,8 +324,22 @@ describe('an asked field needs a receipt in the clause', () => {
         clauses: [{ text: 'mends her own wounds', kind: 'mechanical', when: 'on_hit', when_quote: '', how_often: 'at_will', how_often_quote: '', shape: 'heal' }],
       }),
     ));
-    expect(log).toMatch(/asked field dropped:.*trigger "on_hit".*offered no quote/);
-    expect(log).toMatch(/asked field dropped:.*limit "at_will".*offered no quote/);
+    expect(log).toMatch(/the clause is its own quote:.*trigger "on_hit"/);
+    expect(log).toMatch(/the clause is its own quote:.*limit "at_will"/);
+    expect(log).not.toMatch(/asked field dropped/);
+  });
+
+  test('a FOREIGN quote still drops — the call pointed at words the GM never wrote', async () => {
+    const c = 'an oathsworn crusader who mends her own wounds';
+    const log = await traced(() => generateReskin(
+      { archetype: 'defender', style: 'rampart', concept: c, userConcept: c, cr: 8 },
+      async () => stub(8, 'rampart', 'defender', {
+        type: 'Humanoid',
+        clauses: [{ text: 'mends her own wounds', kind: 'mechanical', when: 'on_hit', when_quote: 'whenever the moon is full', how_often: 'at_will', how_often_quote: 'three times a day', shape: 'heal' }],
+      }),
+    ));
+    expect(log).toMatch(/asked field dropped:.*trigger "on_hit".*is not the GM's own words/);
+    expect(log).toMatch(/asked field dropped:.*limit "at_will".*is not the GM's own words/);
   });
 
   test('an answer quoting the GM keeps them', async () => {

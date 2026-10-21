@@ -364,7 +364,7 @@ export const TEMPLATES = [
       : /at the start of each of (?:its|the creature's) turns/i.test(seed.text) ? 'start_of_turn' // the recurring idiom; "until the start of its next turn" is a duration
       : /Saving Throw/.test(seed.text) ? 'save' : 'always',
     effect: /condition/.test(seed.text) ? 'condition' : /damage/.test(seed.text) ? 'damage' : 'movement',
-    text: seed.text, keys: [...new Set([seed.key, ...(seed.keys ?? []), ...(VERB_KEYS[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? [])])], flavor: slotsOf(seed.text).filter((x) => FLAVOR_SLOTS.includes(x)),
+    text: seed.text, ...(seed.imposes ? { imposes: seed.imposes } : {}), keys: [...new Set([seed.key, ...(seed.keys ?? []), ...(VERB_KEYS[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? [])])], flavor: slotsOf(seed.text).filter((x) => FLAVOR_SLOTS.includes(x)),
   })),
 ];
 const BY_ID = new Map(TEMPLATES.map((t) => [t.id, t]));
@@ -389,7 +389,45 @@ export function triggerCompatible(want, have) {
   return true;
 }
 
-export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '', concept = '', holds = null } = {}) {
+// THE SHAPE OF THE MOVE, NOT THE ARCHETYPE OF THE MONSTER (critic's ruling 1a,
+// 2026-10-20). A third of the signature misses were templates the ROLE FILTER cut
+// before the call ever saw them: Meshrin's roar needed terror-pulse, which is not
+// on the skirmisher-hurler shelf; Glacier Heart's "ploughs through everything"
+// needed trample, not offered to brute-juggernaut; Krennik's planted standard
+// needed rally. Monsters cross archetypes — a skirmisher can roar.
+//
+// The shape metadata already exists in two vocabularies. The catalog tags every
+// template with a (trigger, effect) pair; the clause reader tags an owed clause
+// with its own `asked` shape. This table is the translation between the two
+// ENUMS — closed facts, not a reading of words. A clause may map to more than one
+// catalog shape, because "save_single" is honestly either a condition or damage.
+const ASKED_SHAPES = {
+  save_area: [['save', 'damage'], ['save', 'condition']],
+  save_single: [['save', 'condition'], ['save', 'damage']],
+  save: [['save', 'condition'], ['save', 'damage'], ['save', 'movement']],
+  condition: [['on_hit', 'condition'], ['save', 'condition'], ['always', 'condition']],
+  movement: [['always', 'movement'], ['save', 'movement'], ['on_hit', 'movement']],
+  buff_self: [['always', 'defense'], ['always', 'resource'], ['once_per_fight', 'damage']],
+  buff_ally: [['always', 'resource'], ['always', 'defense']],
+  defense: [['always', 'defense'], ['on_being_hit', 'defense']],
+  retaliate: [['on_being_hit', 'damage'], ['on_being_hit', 'defense']],
+};
+/** The catalog shapes a clause's `asked` tag names. A slashed tag ("on_hit/condition") is already a pair. */
+export function shapesForAsked(asked) {
+  const raw = String(asked ?? '').trim().toLowerCase();
+  if (!raw || raw === 'nothing' || raw === 'attack') return []; // an attack row is not a template shape
+  const out = [];
+  for (const part of raw.split('/')) if (ASKED_SHAPES[part]) out.push(...ASKED_SHAPES[part]);
+  // a slashed tag whose halves are a catalog trigger and effect IS a shape
+  const [a, b] = raw.split('/');
+  if (a && b && TRIGGERS.includes(a) && EFFECTS.includes(b)) out.push([a, b]);
+  if (b && EFFECTS.includes(b) && !out.length) for (const t of TRIGGERS) out.push([t, b]); // the effect alone still narrows
+  return [...new Map(out.map((p) => [p.join('/'), { trigger: p[0], effect: p[1] }])).values()];
+}
+/** How many off-shelf shape matches a signature menu may gain (the critic's "3-6"). */
+export const SHAPE_MENU_CAP = 6;
+
+export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '', concept = '', holds = null, shapes = null, shapeCap = SHAPE_MENU_CAP } = {}) {
   const band = bandFor(cr);
   const rows = Object.values(sections).flat();
   // A FEATURE ALREADY ON A ROW IS OWNED (critic, 2026-10-14: Rruzhk's Open Hand
@@ -421,11 +459,16 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
       && (k.includes(' ') ? src.toLowerCase().includes(k) : words.some((w) => sameStem(w, stem(k)))));
   };
   const onShelf = (t) => t.roles.some((r) => roles.includes(r));
+  // STYLE IS A TASTE FILTER, LIKE ROLE — not a renderability one, so it steps
+  // aside for a shape match (critic's 1a). It cut the critic's own Glacier Heart
+  // case: `trample` is tagged styles:['mounted'], so a brute-JUGGERNAUT could
+  // not see it while a plain brute could — and print's tramplers are the Gorgon,
+  // the Triceratops and the Elephant, none of them mounts.
+  const onStyle = (t) => !style || t.styles.length === 0 || t.styles.includes(style);
   // the off-shelf ones are APPENDED, never mixed in: a longer menu must not
   // reorder a pick the shelf already had (the re-roll's own reel pin)
   const rest = (t) => (true
     && (!(EXCLUDE_ON[t.id] ?? []).some((fam) => engines.has(fam)) || supersedesRow(t))
-    && (!style || t.styles.length === 0 || t.styles.includes(style))
     && cr >= t.cr_range[0] && cr <= t.cr_range[1]
     && (t.kind !== 'shape' || t.frames[band])
     && (!t.requires_movement || new RegExp(t.requires_movement, 'i').test(movement))
@@ -455,7 +498,19 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     && !(t.host && rows.length && !rows.some((e) => (t.host === 'ranged' ? /Ranged Attack Roll/ : /Melee Attack Roll/).test(e.text ?? '')))
     && !(t.nova && hasNova)
     && !owned.has(t.name.toLowerCase()));
-  return [...TEMPLATES.filter((t) => onShelf(t) && rest(t)), ...TEMPLATES.filter((t) => !onShelf(t) && askedFor(t) && rest(t))];
+  // the ROLE FILTER NO LONGER EXCLUDES on a slot that named its shape: the
+  // shape-matched templates are appended across roles, after the shelf and the
+  // key-asked ones, so a pick the shelf already had keeps its order (the
+  // re-roll's reel pin) and nothing the shelf offered is lost.
+  const wantShape = Array.isArray(shapes) && shapes.length
+    ? new Set(shapes.filter((x) => x?.trigger && x?.effect).map((x) => `${x.trigger}/${x.effect}`))
+    : null;
+  const onShelfList = TEMPLATES.filter((t) => onShelf(t) && onStyle(t) && rest(t));
+  const askedList = TEMPLATES.filter((t) => !(onShelf(t) && onStyle(t)) && askedFor(t) && rest(t));
+  if (!wantShape) return [...onShelfList, ...askedList];
+  const already = new Set([...onShelfList, ...askedList].map((t) => t.id));
+  const byShape = TEMPLATES.filter((t) => !already.has(t.id) && wantShape.has(`${t.trigger}/${t.effect}`) && rest(t)).slice(0, shapeCap);
+  return [...onShelfList, ...askedList, ...byShape];
 }
 
 /**
@@ -549,6 +604,7 @@ export function composeRayTable(band) {
   }).join(' ');
 }
 export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
+  let pickedCondition = null; // the condition this render imposes, chosen from the closed list below
   // the fiction ladder: the model's fill > the sheet's own noun > the blind
   // default; an empty fills object cost four signatures (critic, 2026-09-22)
   // the terrain of a FORCED bind is the concept's, not the blind default (an ice
@@ -573,7 +629,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
       text = text.split(`{${k}}`).join(w);
     }
     if (/\{[a-z_]+\}/.test(text)) return null;
-    return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate };
+    return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(pickedCondition ? { imposes: pickedCondition } : {}) };
   }
   // A THROWN NAMED WEAPON KEEPS ITS OWN TYPE AND RANGE (the critic's second
   // species read: a spear hurled for Bludgeoning at 30/120). One table.
@@ -642,6 +698,12 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     const proposedC = String(fills.condition_minor ?? '').trim();
     const condPick = MINOR.find((x) => x.toLowerCase() === proposedC.toLowerCase()) ?? (MINOR.includes(ctx.conditionMinor) ? ctx.conditionMinor : 'Frightened');
     fills = { ...fills, condition_minor: condPick, save_stat: CONDITION_SAVE[condPick] };
+    // THE PICK IS KEPT (2026-10-20). This block already chooses the condition
+    // from the closed MINOR list, validates the model's proposal against it, and
+    // pairs print's own save stat — then discarded the choice, so every reader
+    // downstream had to re-derive it from the prose. The condition and its save
+    // are decided together here; the row should say so.
+    pickedCondition = condPick;
   }
   if (text.includes('{save_stat}')) { // SAVE BY EFFECT (the critic's fourth read): Prone, push or grapple → Strength; Dexterity for an area a creature dodges; poison, disease or a breath → Constitution; fear or charm → Wisdom. The Iron Bull knocked Prone on a Wisdom save.
     const eff = text.replace(/\{save_stat\}/g, '');
@@ -668,7 +730,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     text = text.split(`{${k}}`).join(w);
   }
   if (/\{[a-z_]+\}/.test(text)) return null;
-  return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate };
+  return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(pickedCondition ? { imposes: pickedCondition } : {}) };
 }
 
 // SEAT DEFAULTS (critic run four): some seats OWE a trait by print — the 2024
@@ -685,12 +747,13 @@ export function conceptVerbs(conceptText) {
   return [...new Set(rankByVerb(TEMPLATES, conceptText).flatMap((r) => r.concept))];
 }
 
-export function buildIdeaPrompt({ name, cr, concept, sheetLines, seats = null, energy = null, wantTrait = true, engines = [], verbs = [] }) {
+export function buildIdeaPrompt({ name, cr, concept, sheetLines, seats = null, energy = null, wantTrait = true, engines = [], verbs = [], owedClause = null }) {
   return `You are inventing the SIGNATURE ability for a nearly-complete D&D monster. Everything below is already final. Describe the ability in PLAIN WORDS — what it does, when it fires, whom it affects, what limits it. NO rules grammar, NO numbers, NO dice, NO DCs, NO condition names in capitals: the engine owns every number and will pour your idea into a printed rules shape afterwards. Your job is the IDEA a fan would riot to find missing.
 THE SHEET SO FAR (${name}, CR ${cr}) — everything already on it, header and rows:
 ${sheetLines}
 CONCEPT: ${concept}
-${verbs.length ? `THE CONCEPT'S OWN VERBS: ${verbs.join(', ')} — the signature is one of these verbs made mechanical; an idea that abandons them for something the concept never said (a teleport, a mist, a generic burst) is the wrong idea however clever. ` : ''}${seats ? `BUILD THIS: the action idea builds "${seats.action}"${wantTrait && !seats.packaged ? `; the trait idea makes "${seats.trait}" true on the sheet` : ''}. ` : ''}${engines.length ? `THE SHEET'S ENGINE IS ALREADY BUILT: ${engines.join(', ')} — the concept's holding, swallowing, or caging is DONE by those rows; do not describe it again in any wording. Build the concept's OTHER face. ` : ''}The rows above already OWN their fiction — never describe another version of one; the best ideas key off a condition a row applies, or set up a state the rows exploit.${energy ? ` This creature's energy is ${energy}.` : ''}
+${owedClause ? `THE CLAUSE THIS ABILITY IS FOR — the sheet is a PRINTED creature plus what the GM added, and this is what they added. It is the whole reason this sheet is not just the printed monster, and nothing on it answers the clause yet. Invent the ability that makes THIS true of THIS creature; do not describe the creature in general: "${String(owedClause).replace(/"/g, "'")}"
+` : ''}${verbs.length ? `THE CONCEPT'S OWN VERBS: ${verbs.join(', ')} — the signature is one of these verbs made mechanical; an idea that abandons them for something the concept never said (a teleport, a mist, a generic burst) is the wrong idea however clever. ` : ''}${seats ? `BUILD THIS: the action idea builds "${seats.action}"${wantTrait && !seats.packaged ? `; the trait idea makes "${seats.trait}" true on the sheet` : ''}. ` : ''}${engines.length ? `THE SHEET'S ENGINE IS ALREADY BUILT: ${engines.join(', ')} — the concept's holding, swallowing, or caging is DONE by those rows; do not describe it again in any wording. Build the concept's OTHER face. ` : ''}The rows above already OWN their fiction — never describe another version of one; the best ideas key off a condition a row applies, or set up a state the rows exploit.${energy ? ` This creature's energy is ${energy}.` : ''}
 NOT A SIGNATURE (the wide run's biggest miss class, 12 of 48): a damage resistance or immunity, "blades only chip it", "can't be moved", "immune to its own fire", or a saving-throw bonus — those are the HEADER's to grant and the engine already derives them from type and energy. A trait idea must be a RULE that happens: something the creature does, or something that happens to whoever touches, hits, or holds it. Tag each idea: "section" is action | bonus_action | reaction | rider (a clause on the creature's own attack: "when it hits, …")${wantTrait ? ' (the trait idea is always a trait)' : ''}; "trigger" is one of ${TRIGGERS.join(' | ')}; "effect" is one of ${EFFECTS.join(' | ')}.
 Return ONLY JSON: {"action": {"idea": "<2-3 plain sentences>", "section": "<action|bonus_action|reaction>", "trigger": "<...>", "effect": "<...>"}${wantTrait ? ', "trait": {"idea": "<1-2 plain sentences: a passive rule of its body or nature>", "trigger": "<...>", "effect": "<...>"}' : ''}}`;
 }
@@ -757,8 +820,9 @@ THE VERB DECIDES. The concept has a central verb — seal, lure, stick, toll, dr
 A VERB MATCH is a WORD match, not a judgement — the engine found the template's key word in the user's words and is asking you whether it MEANS that mechanic for this creature. It does not mean it when the word sits in the modifier slot of a compound (a blood-priest has no blood sense; a stone-herder is not made of stone; a knife ball is not an assassin), when the sheet or the creature's own kind already answers it (a climb Speed answers "climbs the wall"), or when it belongs to another fiction (a living warden who guards a reef is not bound to a resting place). Name every such template in "wrong" — the engine will not use one you list there. Leave "wrong" empty when each match genuinely means its mechanic.
 A template whose match is marked (concept) may be used even if you answer none, so fill its "you fill" slots in "fills" whichever answer you give, quoting the user's own words (a phobia of chickens fills {phobia} with "chickens"; a warden of the reef fills {place} with "the reef").
 WHY NONE FITS. When you answer "none", answer "declined_because" with exactly one of: collision (a template's key word is here but does not mean that mechanic for this creature), already_answered (the sheet or the creature's own kind already does this), no_fit (nothing offered carries the idea). Answer "" when you did pick a template.
+A REFUSAL NAMES ITS GAP. "no_fit" is not an answer on its own — say which of the offered templates comes CLOSEST ("closest") and what the rules would have to do that none of them does ("missing"), in a few plain words naming the MECHANIC, not the fiction: "pulls the creature back to where it started", "picks one target and holds the aim", "costs the creature something when it fails". Never "nothing fits" and never a restatement of the idea. These accumulate into a list of templates worth building, so a vague answer is a wasted one.
 DID THE USER ASK FOR IT? Answer "asked" with the user's OWN WORDS that ask for this template's mechanic, quoted verbatim from THE USER TYPED line above — never from THE IDEA, which is the engine's own prose and is not the user's words. The few words, not a sentence. Leave it "" when the user's words never ask for it and your pick rests on the idea you were given or on the template's shape. Answering "" is not a failure and does not withdraw your pick; it tells the engine the pick is yours, not the GM's, and some seats take only what the GM asked for.
-Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", "name": "<2-3 words>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
+Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", "closest": "<on a refusal: the offered id that comes nearest, else \"\">", "missing": "<on a refusal: the mechanic none of them does, else \"\">", "name": "<2-3 words>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
 }
 
 export function validateFitResponse(jsonString) {
@@ -802,6 +866,11 @@ export function parseFit(raw, menu, creatureName = '') {
       return null;
     })(),
     declined_raw: String(p.declined_because ?? '').trim().slice(0, 40),
+    // 1c (critic, 2026-10-20): a decline that names no missing mechanic is a
+    // schema failure, not an answer. The engine keeps both fields so the gap
+    // list can be read across runs; the caller decides what a bare refusal costs.
+    closest: String(p.closest ?? '').trim().slice(0, 40) || null,
+    missing: String(p.missing ?? '').trim().slice(0, 120) || null,
     // THE WORD MATCH IS THE ENGINE'S, THE MEANING IS THE CALL'S (owner, 2026-10-13:
     // "engineer less deterministic gating when the llm can make these judgements"):
     // a key word in the modifier slot of a compound, or one the sheet already

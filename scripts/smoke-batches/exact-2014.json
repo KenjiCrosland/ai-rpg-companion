@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Vampire",
+    "description": "",
+    "cr": 13,
+    "rules": "2014",
+    "canary": "2014 EXACT (owner's ruling) \u2014 5.1 Vampire: AC 16 (Natural Armor), HP 144 (17d8+68), Shapechanger/Misty Escape \u2014 NOT the 5.2 block"
+  },
+  {
+    "name": "Owlbear",
+    "description": "",
+    "cr": 3,
+    "rules": "2014",
+    "canary": "2014 EXACT (owner's ruling) \u2014 5.1 Owlbear served straight, no call"
+  },
+  {
+    "name": "Druid",
+    "description": "",
+    "cr": 2,
+    "rules": "2014",
+    "canary": "2014 EXACT (owner's ruling) \u2014 5.1 Druid served straight, no call"
+  },
+  {
+    "name": "Goblin",
+    "description": "",
+    "cr": 0.25,
+    "rules": "2014",
+    "canary": "2014 EXACT (owner's ruling) \u2014 5.1 Goblin: Nimble Escape, no 2024 wording"
+  },
+  {
+    "name": "Vampire",
+    "description": "who keeps a garden of thorns",
+    "cr": 13,
+    "rules": "2014",
+    "canary": "CONTROL: a TWIST on 2014 still starts from the 5.2 body (narrow ruling) \u2014 must NOT be served from 5.1"
+  }
+]

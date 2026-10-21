@@ -1,0 +1,30 @@
+[
+  {
+    "name": "",
+    "description": "a forge-heart colossus that breathes a cone of furnace heat so terrifying its victims flee",
+    "cr": 12,
+    "rules": "2024",
+    "canary": "A2: the fire cone's save is CON or DEX (how the damage arrives), NOT Wisdom because a Frightened rider rides along"
+  },
+  {
+    "name": "",
+    "description": "a siltbound hag whose curse addles the mind of anyone who meets her eyes",
+    "cr": 9,
+    "rules": "2024",
+    "canary": "A2 CONTROL: a curse KEEPS its mental save \u2014 must not be flipped to Dexterity"
+  },
+  {
+    "name": "",
+    "description": "a glacier-hearted warden whose rebuke smashes a foe that is already prone",
+    "cr": 11,
+    "rules": "2024",
+    "canary": "A2: the payoff REQUIRES Prone but imposes nothing of the kind \u2014 its save must NOT become Strength"
+  },
+  {
+    "name": "",
+    "description": "a cold-wake leviathan whose surge knocks everything near it flat",
+    "cr": 13,
+    "rules": "2024",
+    "canary": "A2 CONTROL: this row IMPOSES Prone, so a Strength save is right and must not change"
+  }
+]

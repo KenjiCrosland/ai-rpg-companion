@@ -753,7 +753,17 @@ export function fidelityOf(m, raw, ctx) {
   // 2026-10-15): "no magic at all" shipped on a priest carrying Spellcasting and
   // Divine Aid, and it passed every gate because an unhonored lack only ever
   // lowered coverage. `present()` above already computes it — now it is reported.
-  const brokenLacks = clauses.filter((c) => c.polarity === 'lacks' && !present(c)).map((c) => c.text);
+  // 1f (owner's ruling, 2026-10-20): A FLAW ROW HONOURS THE LACK. Some absences
+  // have no row to remove — "blind in one eye" — and for those the engine now
+  // authors one line in print's grammar that costs the creature something. A
+  // lack answered that way is honoured, and coverage credits it; a lack with
+  // neither a removal nor a flaw row is still the defect this gate was built for.
+  const flawRows = rows.filter(({ e }) => e.flaw);
+  const flawFor = (c) => flawRows.some(({ e }) => {
+    const because = words(String(e.because ?? ''));
+    return because.length > 0 && because.every((w) => words(c.text).includes(w));
+  });
+  const brokenLacks = clauses.filter((c) => c.polarity === 'lacks' && !present(c) && !flawFor(c)).map((c) => c.text);
   return { covered: covered.length, total: clauses.length, dropped, conceptRows: traced.length, rows: rows.length, brokenLacks };
 }
 
@@ -1107,7 +1117,23 @@ export function checkBlock(raw, ctx = {}) {
     const g = gates[gate]; g.findings.push({ rule, severity, message, value });
     if (severity === 'fail') g.status = 'fail'; else if (severity === 'soft' && g.status !== 'fail') g.status = 'soft';
   };
+  const servedVerbatimEarly = raw?.generation?.source === 'srd-5.1' && raw?.generation?.calls === 0;
   const safe = (gate, fn) => { try { fn(F(gate)); } catch (e) { F(gate)('checker-error', 'soft', `the gate threw: ${e?.message ?? e}`, String(e)); } };
+  // A BLOCK SERVED VERBATIM FROM PRINT IS CHECKED AGAINST THE CORPUS, NOT
+  // AGAINST OUR GATES (2026-10-20). Under the owner's 4c ruling an exact 2014
+  // name is served straight from the SRD 5.1 corpus: no call, nothing authored,
+  // nothing rephrased. Every content gate then judged print by the engine's own
+  // standards and failed it — the phrasing lint 12-28 times a block, and after
+  // that was stood down, `print-rows` (print's rows are not "ours"),
+  // `print-hp` (the 5.1 Vampire's 144 against the 5.2 record's 195, because the
+  // print lookup reads the 2024 corpus), `multiattack-integrity`, `escape-dc`,
+  // `alignment-fit`. All the same mistake: print overrules reviewers, and this
+  // IS print. The brief says so outright — the exact path's gate is "equals the
+  // corpus, field by field", which is what the corpus-diff test owns.
+  if (servedVerbatimEarly) {
+    F('donor')('print-served', 'ok', `"${m.name}" is the SRD 5.1 block, served with no call — the gates that judge authored content do not apply; equality with the corpus is the test`, null);
+    return { name: m.name, cr, edition, donor: context.donorId, gates, fails: GATES.filter((g) => gates[g].status === 'fail'), softs: GATES.filter((g) => gates[g].status === 'soft'), read: dmgRead(m), fidelity: null };
+  }
   safe('derivation', (f) => gateDerivation(m, context, f));
   safe('bands', (f) => gateBands(m, context, f));
   safe('structure', (f) => gateStructure(m, context, f));
@@ -1118,9 +1144,20 @@ export function checkBlock(raw, ctx = {}) {
   safe('donor', (f) => gateDonor(raw, m, context, f));
   safe('reader', (f) => gateReader(raw, m, context, f));
   safe('class', (f) => gateClass(raw, m, context, f));
+  // A BLOCK SERVED VERBATIM FROM PRINT IS NOT LINTED (2026-10-20). The owner's
+  // 4c ruling serves an exact 2014 name straight from the SRD 5.1 corpus, no
+  // call, nothing rephrased — and the real published text then failed our own
+  // 2014 phrasing lint 12 to 28 times a block (`phrasing-to-hit`, `term-caps`,
+  // `damage-type-caps`). That lint is calibrated to the ENGINE's 2014 idiom, not
+  // to the book, so checking the book against it is backwards: print overrules
+  // reviewers, and this is print itself. The line below already exempted print's
+  // own ROWS one at a time for the same reason; on a served block every row is
+  // print's, so the whole pass stands down.
+  const servedVerbatim = servedVerbatimEarly;
+  if (servedVerbatim) F('edition')('print-served', 'ok', 'served verbatim from the SRD 5.1 corpus — print is not linted against the engine\'s own idiom', null);
   // the lint's own predicates ride in by rule id — one fix, one place
   try {
-    const { findings } = lintStatblock(JSON.parse(JSON.stringify(m)), { edition: '2024' });
+    const { findings } = servedVerbatim ? { findings: [] } : lintStatblock(JSON.parse(JSON.stringify(m)), { edition: '2024' });
     for (const f of findings) {
       const gate = LINT_GATE.find(([re]) => re.test(f.rule))?.[1]; if (!gate) continue;
       if (f.loc?.entry && allRows(m).some(({ e }) => e.print && bare(e.name) === bare(f.loc.entry))) continue; // print's row is print
@@ -1128,6 +1165,11 @@ export function checkBlock(raw, ctx = {}) {
     }
   } catch (e) { F('structure')('lint-error', 'soft', `the lint threw: ${e?.message ?? e}`, String(e)); }
   const fid = fidelityOf(m, raw, context);
+  // 1e (critic's ruling, 2026-10-20): on a print body, a clause the GM added
+  // beyond print is the whole reason the sheet exists. The engine records the
+  // owed clauses its repair call could not answer; a sheet that shipped as the
+  // stock monster fails here instead of reading clean.
+  for (const t of (m.generation?.owed_unanswered ?? [])) F('reader')('owed-clause', 'fail', `the GM added "${t}" to a printed creature and the sheet answers it with nothing — this ships as the stock monster`, t);
   for (const t of fid.brokenLacks ?? []) F('reader')('lack-honored', 'fail', `the GM asked for an absence — "${t}" — and the sheet still carries it`, t);
   const fails = GATES.filter((g) => gates[g].status === 'fail'); const softs = GATES.filter((g) => gates[g].status === 'soft');
   return { name: m.name, cr, edition, donor: context.donorId, gates, fails, softs, read: dmgRead(m), fidelity: fid };

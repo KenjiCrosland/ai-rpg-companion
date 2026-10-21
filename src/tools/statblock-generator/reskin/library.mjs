@@ -41,32 +41,32 @@ export const LIBRARY_SEEDS = [
     text: "*Strength Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target is pulled up to 15 feet straight toward the creature, and its Speed is 0 until the start of the creature's next turn.",
   },
   {
-    key: 'lure', retired: true, // promoted to a shape (shapes.mjs) 2026-09-22
+    key: 'lure', imposes: 'Charmed', retired: true, // promoted to a shape (shapes.mjs) 2026-09-22
     keys: ['lure', 'beguile', 'song', 'call'],
     section: 'Actions', archetypes: ['lurker', 'caster', 'skirmisher'],
     name: 'Luring Presence', // Dull Compliance + the Bog Lantern's live proof
     text: "*Wisdom Saving Throw:* DC {dc}, one creature within 30 feet that can see or hear the creature. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn.",
   },
   {
-    key: 'pacify', keys: ['transfix', 'hold', 'stillness', 'trance'],
+    key: 'pacify', imposes: 'Incapacitated', keys: ['transfix', 'hold', 'stillness', 'trance'],
     section: 'Actions', archetypes: ['caster', 'lurker'],
     name: 'Transfixing Regard (2/Day)', // Weight of Attention, gated
     text: "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target has the Incapacitated condition and its Speed is 0 until the end of its next turn.",
   },
   {
-    key: 'escalating-dread', keys: ['dread', 'fear', 'wither', 'doom'],
+    key: 'escalating-dread', imposes: 'Frightened', keys: ['dread', 'fear', 'wither', 'doom'],
     section: 'Actions', archetypes: ['lurker', 'caster', 'brute'],
     name: 'Creeping Dread', dpr_frac: 0.5, // the Mummy's Dreadful Glare
     text: "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target has the Frightened condition until the end of the creature's next turn. If the target was already Frightened by this ability, it also takes {burst} {damage_type} damage.",
   },
   {
-    key: 'terror-pulse', keys: ['terror', 'roar', 'shriek', 'presence'],
+    key: 'terror-pulse', imposes: 'Frightened', keys: ['terror', 'roar', 'shriek', 'presence'],
     section: 'Actions', archetypes: ['brute', 'lurker', 'defender'],
     name: 'Horrid Display (2/Day)', // the Frightful Presence class
     text: "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice within 30 feet that can see or hear it. *Failure:* The target has the Frightened condition until the end of its next turn.",
   },
   {
-    key: 'snare-bolt', keys: ['snare', 'web', 'bind', 'tangle'],
+    key: 'snare-bolt', imposes: 'Restrained', keys: ['snare', 'web', 'bind', 'tangle'],
     section: 'Actions', archetypes: ['lurker', 'caster', 'skirmisher'],
     name: 'Binding Lash', // the Web-bolt class (Restrained, self-ending)
     text: "*Dexterity Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target has the Restrained condition until the end of the creature's next turn.",
@@ -78,7 +78,7 @@ export const LIBRARY_SEEDS = [
     text: "*Constitution Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target's Speed is halved and it can't take Reactions until the end of the creature's next turn.",
   },
   {
-    key: 'sensory-strike', keys: ['blind', 'dazzle', 'flash', 'deafen'],
+    key: 'sensory-strike', imposes: 'Blinded', keys: ['blind', 'dazzle', 'flash', 'deafen'],
     section: 'Actions', archetypes: ['caster', 'skirmisher', 'lurker'],
     name: 'Dazzling Burst', // the Blindness class, self-ending
     text: "*Constitution Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target has the Blinded condition until the end of the creature's next turn.",
@@ -91,7 +91,7 @@ export const LIBRARY_SEEDS = [
   },
   // ——— forced movement ———
   {
-    key: 'push-prone', keys: ['shove', 'topple', 'slam', 'bowl'],
+    key: 'push-prone', imposes: 'Prone', keys: ['shove', 'topple', 'slam', 'bowl'],
     section: 'Actions', archetypes: ['brute', 'defender'],
     name: 'Sundering Shove', // the Topple Foe / push class
     text: '*Strength Saving Throw:* DC {dc}, one creature within 5 feet. *Failure:* The target is pushed up to 15 feet away from the creature and has the Prone condition.',
@@ -103,7 +103,7 @@ export const LIBRARY_SEEDS = [
     text: "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice within 30 feet. *Failure:* The target immediately moves up to half its Speed in a direction of the creature's choice, using the safest available route.",
   },
   {
-    key: 'hook-drag', retired: true, // promoted to a shape (shapes.mjs) 2026-09-22
+    key: 'hook-drag', imposes: 'Grappled', retired: true, // promoted to a shape (shapes.mjs) 2026-09-22
     keys: ['hook', 'chain', 'harpoon', 'drag', 'grapple'],
     section: 'Actions', archetypes: ['brute', 'lurker', 'defender'],
     name: 'Hooked Lash', // the whip-and-drag class
@@ -301,5 +301,6 @@ export function drawLibraryRow(scaled, { archetype = null, energy = null, mix = 
   // draw had no way to skip a seed the sheet already carried, and Meridane
   // shipped two bonus actions that both charge its next strike. The id is also
   // the row's provenance, which the review doc wants anyway (hold 3).
-  return { seed: seed.key, section: seed.section, row: { name: seed.name, text, library: true, seed: seed.key } };
+  // the card's own `imposes` rides onto the row: A2 reads a field, never prose
+  return { seed: seed.key, section: seed.section, row: { name: seed.name, text, library: true, seed: seed.key, ...(seed.imposes ? { imposes: seed.imposes } : {}) } };
 }

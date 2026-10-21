@@ -110,6 +110,8 @@ for (const f of fs.readdirSync(dir).filter((x) => /^\d+-.*\.json$/.test(x)).sort
   // the primary provider was failing had its validation gates relaxed, so its
   // "clean" means less. The engine stamps it; the table says so.
   if (block.generation?.degraded === true) r.degraded = true;
+  // 1g: seed share per block, so the sameness metric is a column and not a hunt
+  if (Number.isFinite(block.generation?.signature_rows)) { r.sigRows = block.generation.signature_rows; r.seedRows = block.generation.seed_rows ?? 0; }
   const m = r.edition === '2014' && block.other_edition ? block.other_edition : block;
   const provenance = provenanceOf(m); // m is already the edition the sheet shipped in
   entries.push({ f, input, text, trace, reroll, provenance, r, print: /print canon: ".*" (?:heads on|is) the/.test(trace) || /print canon route/.test(trace), nova: (m.sections?.Actions ?? []).some((e) => /\((?:Recharge|\d\/Day)/.test(e.name ?? '') && /Saving Throw/.test(e.text ?? '')), legendary: !!(m.sections?.['Legendary Actions'] ?? []).length });
@@ -125,7 +127,7 @@ for (const e of entries) if (e.r.gates.bands.status !== 'ok' && !pick.some((p) =
 // EVERY BLOCK, by default (the critic, 2026-10-13: "blocks are missing from the docs"): a reader reads sheets, not a sample of them. `--sample`
 // restores the spanning subset for a run too large to read whole (the forty).
 if (!args.includes('--sample')) for (const e of entries) if (!pick.some((p) => p.e === e)) pick.push({ label: 'in the run', e });
-const rowFor = (r) => `| ${r.name}${r.degraded ? ' ⚠︎degraded' : ''} | ${r.cr}${r.edition === '2014' ? ' (2014)' : ''} | ${r.donor ?? '—'} | ${GATES.map((g) => (r.gates[g].status === 'ok' ? 'ok' : `${r.gates[g].status.toUpperCase()}: ${r.gates[g].findings.filter((f) => f.severity === r.gates[g].status).map((f) => f.rule).join(', ')}`)).join(' | ')} |`;
+const rowFor = (r) => `| ${r.name}${r.degraded ? ' ⚠︎degraded' : ''}${r.seedRows ? ` [seed ${r.seedRows}/${r.sigRows}]` : ''} | ${r.cr}${r.edition === '2014' ? ' (2014)' : ''} | ${r.donor ?? '—'} | ${GATES.map((g) => (r.gates[g].status === 'ok' ? 'ok' : `${r.gates[g].status.toUpperCase()}: ${r.gates[g].findings.filter((f) => f.severity === r.gates[g].status).map((f) => f.rule).join(', ')}`)).join(' | ')} |`;
 let md = `# Review batch — ${path.basename(dir)}\n\nThe checker ran first. The gate table covers every block in the run; ${args.includes('--sample') ? `the blocks below span it (${pick.map((p) => p.label).join(', ')})` : 'every block of the run follows'}. Each block carries its checker row above and its engine trace below. Hand-derive against the row first; then read for what predicates can't see.\n\n${checkTable(results, { title: 'Gate table — the whole run' })}\n`;
 for (const { label, e } of pick) {
   const notes = GATES.flatMap((g) => e.r.gates[g].findings.filter((x) => x.severity !== 'ok').map((x) => `- ${g} · ${x.severity} · ${x.rule}: ${x.message}`));

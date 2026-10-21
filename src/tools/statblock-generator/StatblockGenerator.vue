@@ -1280,7 +1280,7 @@ async function generateStatblockEngine(edition) {
             if (byCode.path && byCode.by === 'code') return byCode;
             try {
               const rawP = await generateGptResponse(buildPathPrompt(pathFields), validatePathResponse, 2);
-              const read = readPath(rawP, { concept: `${pathFields.name} ${pathFields.concept}`.trim() });
+              const read = readPath(rawP, { concept: `${pathFields.name} ${pathFields.concept}`.trim(), edition });
               for (const r of read.refused) logger.log('[path] refused:', r);
               return dispatchPath(pathFields, read);
             } catch (e) { logger.warn('[path] call failed:', e?.message ?? e); return dispatchPath(pathFields, null); }
@@ -1413,8 +1413,27 @@ async function generateStatblockEngine(edition) {
     // (other_edition = the 2024 original, so the tabs flip free). The
     // slot path remains behind the kill switch:
     // localStorage['statblock-reskin-2014']='0'.
+    let served2014 = false;
     const reskin2014 = edition === '2014' && localStorage.getItem('statblock-reskin-2014') !== '0';
-    if ((edition === '2024' || reskin2014) && (
+    // OWNER'S RULING (2026-10-20): AN EXACT NAME ON A 2014 SHEET IS THE 2014
+    // BLOCK, SERVED STRAIGHT. The two books hold different creatures — the 5.1
+    // Vampire is AC 16 / 144 HP, the 5.2 one 16 / 195 — and a GM on 2014 rules
+    // who typed "Vampire" was getting the 5.2 creature with 2014 phrasing laid
+    // over it. The exact path takes no call in either edition, so this is a
+    // lookup: no generation, no conversion call, nothing rephrased.
+    // Narrow by ruling: TWISTS on a 2014 sheet still start from the 5.2 body.
+    if (edition === '2014' && conceptPath?.path === 'exact') {
+      const { exact2014Printing } = await import('./reskin/print-2014.mjs');
+      const served = exact2014Printing(conceptPath.print_body ?? monsterName.value.trim());
+      if (served) {
+        logger.log('[reskin] 2014 exact:', `"${served.name}" served from the SRD 5.1 corpus — no call, nothing rephrased (owner's ruling; the 2014 book's own creature)`);
+        finalMonster = served;
+        served2014 = true;
+      } else {
+        logger.log('[reskin] 2014 exact:', `"${conceptPath.print_body ?? monsterName.value.trim()}" is not in the SRD 5.1 corpus — the 5.2 block converts as before`);
+      }
+    }
+    if (!served2014 && (edition === '2024' || reskin2014) && (
       (archetypeName === 'skirmisher' && localStorage.getItem('statblock-reskin-pilot') !== '0')
       || (archetypeName === 'brute' && localStorage.getItem('statblock-reskin-brute') !== '0')
       || (archetypeName === 'lurker' && localStorage.getItem('statblock-reskin-lurker') !== '0')
@@ -1501,7 +1520,7 @@ async function generateStatblockEngine(edition) {
           finalMonster = shaped;
         }
       }
-    } else {
+    } else if (!served2014) {
       finalMonster = await generateMonster2024(
       {
         concept,
