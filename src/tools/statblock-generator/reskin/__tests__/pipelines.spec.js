@@ -62,7 +62,7 @@ describe('the twist path at a CR far from print\'s', () => {
     // clause the sheet has not answered ("was a gladiator in a former life"), which is what the GM
     // typed and what the critic counted as a miss for three packages. So the row SHIPS, for that
     // clause, with the clause as its receipt by construction.
-    expect(tr).toMatch(/seat takes its clause: "Deathless Grin" answers "was a gladiator in a former life"/);
+    expect(tr).toMatch(/seat takes its clause: "Deathless Grin" is HANDED "was a gladiator in a former life"/);
     expect(Object.values(m.sections).flat().some((e) => e.template === 'false-appearance')).toBe(true);
   });
 });
@@ -480,7 +480,7 @@ describe("the twist seat receives its clause (the critic's prescription, 2026-10
   test('and with a quote that names only the body (the skeleton\'s former life)', async () => {
     const r = await fitFor({ concept: 'a skeleton who was a gladiator in a former life', cr: 4, archetype: 'brute', body: 'Skeleton', template: 'false-appearance', rowName: 'Old Champion', asked: 'a skeleton' });
     expect(r.rows.some((e) => e.template === 'false-appearance')).toBe(true);
-    expect(r.trace).toMatch(/seat takes its clause: "Old Champion" answers "(?:who )?was a gladiator in a former life"|bound to the concept's verb/);
+    expect(r.trace).toMatch(/seat takes its clause: "Old Champion" is HANDED "(?:who )?was a gladiator in a former life"|bound to the concept's verb/);
   });
   test('control: a print body that asks for NOTHING still takes no row', async () => {
     const r = await fitFor({ concept: 'Owlbear', cr: 3, archetype: 'brute', body: 'Owlbear', template: 'false-appearance', rowName: 'Invented Thing' });

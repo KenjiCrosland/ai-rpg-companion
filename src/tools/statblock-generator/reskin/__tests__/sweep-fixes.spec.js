@@ -347,8 +347,11 @@ describe('the critic\'s audit, engine side (2026-10-02)', () => {
     test('clauses not in the user\'s words leave the record; a user-set CR survives', () => {
       const { groundedClauses } = require('../generate.mjs');
       const kept = groundedClauses([{ text: 'hooked beak to seize and crush', kind: 'mechanical' }, { text: 'razor sharp claws', kind: 'mechanical' }, { text: 'CR 5', kind: 'header' }, { text: 'owlbear', kind: 'descriptive' }], 'an owlbear with razor sharp claws, CR 5');
-      expect(kept).toEqual([{ text: 'an owlbear with razor sharp claws', kind: 'mechanical' }, { text: 'CR 5', kind: 'header' }]); // the user's phrases are the record; the model's invented beak is gone
-      expect(groundedClauses([], 'knife ball')).toEqual([{ text: 'knife ball', kind: 'descriptive', head: true }]); // the head phrase: the creature itself, the one clause of a creature-only prompt (step 6) // no verb, two words: the template composes the whole sheet
+      const noIds = (l) => l.map(({ id, ...rest }) => rest); // a clause now carries a stable `id` (a text hash) so coverage credits by identity, not word overlap
+      expect(noIds(kept)).toEqual([{ text: 'an owlbear with razor sharp claws', kind: 'mechanical' }, { text: 'CR 5', kind: 'header' }]); // the user's phrases are the record; the model's invented beak is gone
+      expect(noIds(groundedClauses([], 'knife ball'))).toEqual([{ text: 'knife ball', kind: 'descriptive', head: true }]);
+      expect(kept.every((c) => /^cl_/.test(c.id))).toBe(true); // every clause carries one, or a row cannot link to it
+      expect(groundedClauses([{ text: 'CR 5', kind: 'header' }], 'CR 5')[0].id).toBe(kept[1].id); // the same words give the same id on every run // the head phrase: the creature itself, the one clause of a creature-only prompt (step 6) // no verb, two words: the template composes the whole sheet
       expect(groundedClauses([{ text: 'lizard folk', kind: 'descriptive' }], 'Large lizard folk, 30 feet of movement, wields a greatsword and a long tail').map((c) => `${c.kind[0]}:${c.text}`)).toEqual(['h:Large lizard folk', 'h:30 feet of movement', 'm:wields a greatsword', 'm:a long tail']);
     });
     test('a Spell label on a bonus that derives from Dex with no caster becomes Weapon; a Spell label that derives only from the casting stat stays', () => {

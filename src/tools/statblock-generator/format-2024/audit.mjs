@@ -229,7 +229,18 @@ A typical reskin block carries 1-3 such findings; an empty array on a block with
 // that is the half a call cannot be trusted with. Here we only ensure the field
 // is a list of {entry, quote} and never throws the whole response away for it:
 // an audit response is never allowed to block shipping.
-export function readElementClaims(parsed) {
+export function readElementClaims(response) {
+  // THE AUDIT CALL RETURNS A RAW STRING (critic's package-seven review): callLLM
+  // hands back the model's text and `validateAuditResponse` is a BOOLEAN
+  // validator, not a parser — `verifyAuditFindings` parses it itself. Reading
+  // `.element_claims` off the string yielded undefined on every sheet, so EVERY
+  // claim was revoked for "no verdict" and the expression judge never functioned
+  // in the pipeline at all. "0 of 16 expressed" was 0 ANSWERS, not 0 positives.
+  // Accept either shape so neither caller can reintroduce it.
+  let parsed = response;
+  if (typeof response === 'string') {
+    try { parsed = JSON.parse(response.replace(/^```(?:json)?\s*|\s*```$/g, '')); } catch { return []; }
+  }
   const raw = parsed?.element_claims;
   if (!Array.isArray(raw)) return [];
   return raw

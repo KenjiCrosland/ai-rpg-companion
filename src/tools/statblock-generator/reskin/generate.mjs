@@ -1427,7 +1427,21 @@ const LACK_COSTS = ['sight', 'hearing', 'one_limb_attacks', 'all_attacks', 'none
   trace('clauses:', kept.map((c) => `"${c.text}" -> ${c.polarity === 'lacks' ? 'LACKS' : 'has'}${c.kind ? ` (${c.kind})` : ''}${c.head ? ', head' : ''}${c.askWhen || c.askOften || c.askShape ? ` [asked: ${[c.askWhen, c.askOften, c.askShape].filter(Boolean).join('/')}]` : ''}`).join(' | '));
   const orphan = model.filter((c) => !clauseWords(c.text).some((w) => new Set(clauseWords(text)).has(w)));
   if (orphan.length) trace('extraction:', `${orphan.length} of ${model.length} model clauses quote nothing the user typed and leave the record (${orphan.slice(0, 3).map((c) => `"${c.text}"`).join(', ')}${orphan.length > 3 ? ', …' : ''})`);
-  return kept;
+  // A STABLE ID PER CLAUSE (owner, 2026-10-22). Coverage credit matched a row's
+  // COPY of the clause text by WORD OVERLAP, and `words()` stems — which is how
+  // "wound" once credited "cracks open when wounded" to a row that moves and
+  // attacks (checker.mjs:828). Measured over sweep-2026-10-22T03-29-45: of 30
+  // rows carrying a clause string, 18 matched a clause exactly and 12 were a
+  // substring either way (the seat surgery), and **0 matched by word overlap
+  // alone** — so an identity link preserves every credit and loses none. The id
+  // is a hash of the clause text, so it is the same id for the same words on
+  // every run and survives the saved JSON.
+  const clauseId = (t) => {
+    const s = String(t ?? '');
+    let h = 0; for (let k = 0; k < s.length; k += 1) { h = ((h << 5) - h + s.charCodeAt(k)) | 0; }
+    return `cl_${(h >>> 0).toString(36)}`;
+  };
+  return kept.map((c) => ({ id: clauseId(c.text), ...c }));
 }
 const PART_NOUN = /\b(greatswords?|longswords?|shortswords?|scimitars?|rapiers?|swords?|greataxes?|battleaxes?|handaxes?|axes?|spears?|lances?|pikes?|glaives?|halberds?|tridents?|longbows?|shortbows?|crossbows?|bows?|slings?|javelins?|darts?|daggers?|kni(?:fe|ves)|quarterstaffs?|staffs?|staves|warhammers?|hammers?|mauls?|greatclubs?|clubs?|maces?|flails?|whips?|chains?|nets?|kicks?|headbutts?|fingers?|tail|claws?|talons?|nails?|teeth|tooth|fangs?|jaws?|maw|bites?|horns?|antlers?|tusks?|hooves|hoof|tentacles?|stingers?|stings?|beak|pincers?|fists?|slams?|gores?)\b/gi; // no wings, shield or lantern: a part that does not strike, or one the thrown-weapon template owns
 const PART_TYPE = { kick: 'Bludgeoning', headbutt: 'Bludgeoning', finger: 'Bludgeoning', /* a kick, a headbutt, strangling fingers: body parts the sprint run named (2026-10-12) */ nail: 'Slashing', bow: 'Piercing', longbow: 'Piercing', shortbow: 'Piercing', crossbow: 'Piercing', sling: 'Bludgeoning', javelin: 'Piercing', dart: 'Piercing', spear: 'Piercing', lance: 'Piercing', pike: 'Piercing', trident: 'Piercing', glaive: 'Slashing', halberd: 'Slashing', scimitar: 'Slashing', rapier: 'Piercing', dagger: 'Piercing', knife: 'Piercing', whip: 'Slashing', chain: 'Bludgeoning', net: 'Bludgeoning', flail: 'Bludgeoning', maul: 'Bludgeoning', fist: 'Bludgeoning', hoof: 'Bludgeoning', slam: 'Bludgeoning', gore: 'Piercing', bite: 'Piercing', tooth: 'Piercing', fang: 'Piercing', jaw: 'Piercing', maw: 'Piercing', horn: 'Piercing', antler: 'Piercing', tusk: 'Piercing', beak: 'Piercing', sting: 'Piercing', stinger: 'Piercing', pincer: 'Bludgeoning', tentacle: 'Bludgeoning', tail: 'Bludgeoning', claw: 'Slashing', talon: 'Slashing', sword: 'Slashing', axe: 'Slashing', club: 'Bludgeoning', hammer: 'Bludgeoning', mace: 'Bludgeoning', staff: 'Bludgeoning' };
@@ -4266,7 +4280,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           } else if (!fit.expresses) {
             trace('signature miss:', `${seat} — "${fit.template.id}" quotes nothing the GM typed, matches no key-table verb, and the call named none of this creature's own elements for it: decoration, not a signature`);
             return null;
-          }
+          } else {
           // THE ALLOWANCE IS NOT SPENT HERE (critic's package-six review,
           // 2026-10-22). It used to refuse the newcomer against a counter
           // incremented at GRANT, which nothing released when the granted row
@@ -4283,6 +4297,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           freeRowsUsed += 1;
           freeRowHere = true;
           trace('free signature row:', `${seat} — "${fit.template.id}" quotes nothing the GM typed and matches no key-table verb, but the call names the element it expresses: "${fit.expresses}" — a receipt the trait seat can produce. Earns no clause credit; the ${closedPath ? 'twist/class' : 'homebrew'} path allows ${freeAllowance} and this is number ${freeRowsUsed}`);
+          }
         }
         if (!verbs.length && askedOk) trace('pick kept on the GM\'s own words:', `${seat} — "${fit.template.id}" has no key-table verb, but the call quotes "${askedOk}" from the description`);
         // ITEM 5 (owner's stage 3, 2026-10-16): a row that ANSWERS a clause binds
@@ -4291,7 +4306,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // itself, not just the words. Coverage then credits a receipt rather than
         // a stem overlap ("wound" crediting "cracks open when wounded" to
         // Rampage, the critic's case).
-        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, ...(rendered.gate ? { gate: rendered.gate } : {}), text: stampT(rendered.text), library: true, template: fit.template.id, ...(rendered?.imposes ? { imposes: rendered.imposes } : fit.template?.imposes ? { imposes: fit.template.imposes } : {}), ...(fit.fills?.condition_minor && CONDITIONS_CLOSED.includes(fit.fills.condition_minor) ? { imposes: fit.fills.condition_minor } : {}), ...(fit.fills?.consumed_condition ? { requiresCondition: fit.fills.consumed_condition } : {}), boundKeys: [...String(fit.because ?? '').matchAll(/([a-z][a-z' -]*?):concept\b/g)].map((mm) => mm[1].trim()) /* provenance: the user's words this row binds to (step 8) */, ...(freeRowHere ? { freeRow: true } : {}), ...(decorationHere ? { decoration: true } : {}) /* the ship-time budget reads the mark off the row */ }, templateName: rendered.name, section: rendered.section, template: fit.template.id, host: fit.template.host ?? 'melee', supersedes: fit.template.supersedes ?? null, asked: askedOk, askedRaw: String(fit.asked ?? '').trim(), expresses: decorationHere ? null : (fit.expresses ?? null), /* a template the call refused claims nothing */ elementsOffered: sigElements, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
+        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, ...(rendered.gate ? { gate: rendered.gate } : {}), text: stampT(rendered.text), library: true, template: fit.template.id, ...(rendered?.imposes ? { imposes: rendered.imposes } : fit.template?.imposes ? { imposes: fit.template.imposes } : {}), ...(fit.fills?.condition_minor && CONDITIONS_CLOSED.includes(fit.fills.condition_minor) ? { imposes: fit.fills.condition_minor } : {}), ...(fit.fills?.consumed_condition ? { requiresCondition: fit.fills.consumed_condition } : {}), boundKeys: [...String(fit.because ?? '').matchAll(/([a-z][a-z' -]*?):concept\b/g)].map((mm) => mm[1].trim()) /* provenance: the user's words this row binds to (step 8) */, ...(freeRowHere ? { freeRow: true } : {}), ...(decorationHere ? { decoration: true } : {}), ...(fit.accepted_closest ? { accepted_closest: true } : {}) /* the credit rule: a template the call REFUSED never buys a key bind (critic, 2026-10-22) */, ...(askedOk ? { gmQuote: String(askedOk) } : {}) /* credit rule (b): the GM quote this row was kept on, so the checker can test it lies inside ONE non-head clause */ /* the ship-time budget reads the mark off the row */ }, templateName: rendered.name, section: rendered.section, template: fit.template.id, host: fit.template.host ?? 'melee', supersedes: fit.template.supersedes ?? null, asked: askedOk, askedRaw: String(fit.asked ?? '').trim(), expresses: decorationHere ? null : (fit.expresses ?? null), /* a template the call refused claims nothing */ accepted_closest: !!fit.accepted_closest, /* the trait gate must see this, or it declines the row for want of a receipt */ elementsOffered: sigElements, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
       } catch (e8) {
         trace('signature fit call failed —', `${seat}: ${e8?.message ?? e8}`);
         return null;
@@ -4372,7 +4387,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const own = unansweredTwistClause();
       if (!own) return false;
       f.asked = own; // the receipt by construction: the engine's clause, not the call's quote
-      trace('seat takes its clause:', `"${f.row?.name ?? f.template}" answers "${own}" — the engine hands the seat the clause it is for; the call only picked the template`);
+      trace('seat takes its clause:', `"${f.row?.name ?? f.template}" is HANDED "${own}" (this is not a receipt and buys no coverage credit — the critic, 2026-10-22: the Owlbear's Adhesive "took" the climb clause) — the engine hands the seat the clause it is for; the call only picked the template`);
       return true;
     };
     // WHY THE RECEIPT FAILED, not just that it did (stage 2 item 2, 2026-10-16).
@@ -4478,6 +4493,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // rode its Bite and Krennik's rode his Saber, and both were counted as
         // never reaching the sheet.
         { const rt = actionT.template ?? actionT.row?.template; if (rt) host.riderTemplates = [...new Set([...(host.riderTemplates ?? []), rt])]; }
+        // AND ITS DECORATION MARK (2026-10-22). A rider owns no row, so a
+        // decoration seat welded onto a host vanished from `decoration_rows` and
+        // my own check reported the row LOST — the Dire Wolf's `contagion` rode
+        // its Bite and read as a dropped seat. Second time the rider blind spot
+        // has broken a measurement rather than the engine (the gap ship-check was
+        // the first), so the count reads the host as well as the rows.
+        if (actionT.row?.decoration || actionT.decoration) host.riderDecorations = [...new Set([...(host.riderDecorations ?? []), actionT.template ?? 'rider'])];
         libraryDrawn = true;
         riderShipped = true;
         trace('signature rider:', `${actionT.template} -> ${host.name} (appended; ${actionT.because})`);
@@ -6922,12 +6944,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // THE OWNER'S RULING, COUNTED (2026-10-22): invented-element rows are
         // allowed, capped by declared family, and visible in the metric, so it can
         // be seen whether free rows add variety or just more damage-on-touch.
-        const free = Object.values(monster.sections ?? {}).flat().filter((e) => e.freeRow);
+        const rows = Object.values(monster.sections ?? {}).flat();
+        const riderDeco = rows.reduce((n, e) => n + (e.riderDecorations?.length ?? 0), 0); // a rider owns no row
+        const free = rows.filter((e) => e.freeRow);
         // `decoration` is set either at GRANT (a template the call refused) or by
         // revokeUnexpressedClaims above (a claim that could not be quoted).
         const deco = free.filter((e) => e.decoration);
         if (monster.generation) {
-          monster.generation.decoration_rows = deco.length;
+          monster.generation.decoration_rows = deco.length + riderDeco;
           monster.generation.expressed_rows = free.length - deco.length;
         }
         if (deco.length) trace('sameness:', `${deco.length} of ${free.length} free row(s) express nothing their rules carry — counted as decoration (${deco.map((e) => `"${String(e.name).replace(/ \(.*\)$/, '')}"`).join(', ')})`);
@@ -7117,6 +7141,26 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // 1e: AN OWED CLAUSE THAT NOTHING ANSWERED IS A DEFECT, NOT A TRACE LINE
   // (critic's ruling). A print body plus a clause the sheet never answers is the
   // stock monster, and the gate used to read it clean.
+  // EVERY ROW'S CLAUSE RESOLVES TO AN ID, IN ONE PLACE (owner, 2026-10-22). Seven
+  // sites assign `row.clause` as a copy of the clause TEXT, and the checker then
+  // credited coverage by word overlap against that copy. Rather than edit seven
+  // assignment sites, the text is resolved to the clause's id once, here, after
+  // every pass that can rewrite a row. Measured: 18 of 30 rows matched a clause
+  // exactly and 12 were a substring (the seat surgery cut the clause), so an
+  // exact-then-substring resolve covers all 30. A row whose clause cannot be
+  // resolved is TRACED — that is the signal that a seat was handed something the
+  // clause list does not contain.
+  {
+    const list = monster.generation?.clauses ?? [];
+    for (const es of Object.values(monster.sections ?? {})) for (const e of (es ?? [])) {
+      const rc = String(e.clause ?? '').trim();
+      if (!rc || e.clauseId) continue;
+      const exact = list.find((c) => String(c.text ?? '').trim() === rc);
+      const part = exact ?? list.find((c) => { const t = String(c.text ?? '').trim(); return t && (t.includes(rc) || rc.includes(t)); });
+      if (part?.id) { e.clauseId = part.id; if (!exact) trace('clause id by substring:', `"${e.name}" carries "${rc.slice(0, 48)}" which is not a whole clause — the seat surgery cut it; resolved to ${part.id}`); continue; }
+      trace('clause unresolved:', `"${e.name}" carries "${rc.slice(0, 56)}", which matches no clause on the sheet — no coverage credit by id`);
+    }
+  }
   readGapOutcomes({ sections: monster.sections, gapRecords, generation: monster.generation, trace });
   // GUARDED STANCE IS RECONCILED AGAINST THE FINISHED AC (critic, 2026-10-21:
   // the Reedmarch Sap-Keeper shipped it). The menu filter runs while the pool is
@@ -7197,9 +7241,43 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // the condition, the record does not either.
   for (const es of Object.values(monster.sections ?? {})) for (const e of (es ?? [])) {
     if (!e.imposes) continue;
-    if (new RegExp(`has the ${String(e.imposes).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} condition`).test(e.text ?? '')) continue;
+    // BOTH PRINTINGS, OR THE RECORD IS DELETED WHILE THE TEXT STILL IMPOSES IT
+    // (critic's package-seven review, 2026-10-22). This tested only the 2024
+    // grammar `has the X condition`, so on a 2014 sheet "is grappled" and
+    // "blinded and restrained" failed it and a TRUE record was dropped — all four
+    // "the clause left" lines in sweep-2026-10-22T03-29-45 are on 2014 sheets
+    // whose text still imposes the condition (Owlbear, Scree Entombment, Clotting
+    // Scree, Vessel Devouring). Same class as the paralysis hole: 2024 grammar
+    // read against 2014 text.
+    //
+    // `imposedConditions` is the shared reader and handles both printings
+    // (verified: "has the Grappled condition" and "is grappled (escape DC 15)"
+    // both read Grappled). Reading the TEXT ONLY here is deliberate — passing the
+    // row would return its own record and the test would always pass.
+    if (imposedConditions({ name: e.name, text: e.text }).includes(String(e.imposes))) continue;
     trace('record reconciled:', `"${e.name}" no longer imposes ${e.imposes} — the clause left, so the record goes with it`);
     delete e.imposes;
+  }
+  // THE RECORD IS COMPLETED HERE, ONCE (owner, 2026-10-22: "why are we still
+  // doing string matches"). `imposedConditions` is a PROSE READER that
+  // duplicate-mechanic, condition-duration, the A2 save stat and the reconcile
+  // above all depend on, and it has now failed twice on wording the engine itself
+  // produced. Measured over sweep-2026-10-22T03-29-45: of 47 rows whose text
+  // reads a condition, 28 already carried a record and 14 are print's own rows —
+  // only 5 had no declared source, and every one of those was a condition a RIDER
+  // or a chassis fill added without updating the record.
+  //
+  // So the reader runs ONCE, here, on text the engine itself wrote, and the result
+  // becomes the FIELD every consumer reads — the same move that retired seven
+  // name-readers for `gate`. Each firing is traced, so the count is the measure of
+  // how much the fill sites still owe: when a forty reports none on
+  // engine-written rows, the reader survives only for print's published text.
+  for (const es of Object.values(monster.sections ?? {})) for (const e of (es ?? [])) {
+    if (e.imposes || e.print) continue;
+    const fromText = imposedConditions({ name: e.name, text: e.text });
+    if (!fromText.length) continue;
+    e.imposes = fromText.length === 1 ? fromText[0] : fromText;
+    trace('record completed:', `"${e.name}" imposes ${fromText.join(', ')} by its own text and carried no record — the fill site that wrote it owes this field (template=${e.template ?? e.seed ?? 'chassis'})`);
   }
   monster.generation.signature = engineIsSignature ? 'dropped' : libraryDrawn ? 'library' : wcDropped ? 'dropped' : 'none'; // 'none': no slot on this sheet (claim-gated low CR)
   // REMOVALS the concept names in the "no X" form act on the finished block (an Ancient

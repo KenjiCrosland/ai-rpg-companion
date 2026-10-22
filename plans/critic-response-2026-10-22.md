@@ -1231,3 +1231,204 @@ whose only free row is a refused template would report no decoration at all.
 **Not yet verified live** — this needs a run where closest-acceptance fires on a
 trait seat (it did 3 times in ten, so a ten should cover it). The greps are
 `ships as DECORATION` and `decoration_rows`.
+
+### The decoration-at-grant ten: criteria, written before the run
+
+Same batch as `express10` — it produced 3 closest-accepted trait rows, so it is
+the set most likely to exercise the new path.
+
+1. **The path fires:** `ships as DECORATION` appears. Zero means unexercised, not
+   a pass.
+2. **A refused template is NOT asked to justify itself:** no `element claim
+   revoked` for a row that traced `ships as DECORATION`. The point is to remove
+   the post-hoc question, not to answer it differently.
+3. **`decoration_rows` counts them**, and `decoration + expressed = free_rows`.
+4. **THE SEAT STAYS FILLED.** Every `ships as DECORATION` row is on the finished
+   sheet. closest-acceptance exists to stop empty seats (22% → 1 in 41); if these
+   rows now vanish, the landing has reintroduced the thing it was built around.
+5. **No rise in signature misses** against `express10` — `signature miss:` count
+   should not grow.
+6. **The audit is still healthy** (findings present at the usual rate).
+7. No new FAIL class.
+
+**Revert trigger:** criterion 4. A decoration row that does not ship is worse than
+the decoration it replaced.
+
+**One interaction to watch:** nulling `expresses` also removes that row from the
+audit RENAME guard, which protects a name against dropping its receipt's words.
+For a decoration row that is desirable — it should not be able to defend a name it
+has not earned — but it means such a row's name may now be rewritten by the audit,
+and that is a behaviour change worth seeing rather than assuming.
+
+### The decoration-at-grant read — two bugs caught by the pre-run criterion
+
+The first attempt FAILED criterion 4 and the criterion is why. Both bugs were
+invisible except in a trace:
+
+1. **A double-spend.** The new `accepted_closest` branch was not exclusive, so the
+   ORIGINAL receipt grant ran as well: the allowance was consumed twice and two
+   `free signature row:` traces appeared for one row.
+2. **`accepted_closest` never reached the SEAT.** The trait gate could not see it,
+   declined the row for having no receipt, and left the seat empty — reintroducing
+   the exact 22%-of-blocks problem closest-acceptance exists to prevent (Bone
+   Duelist shipped `free_rows=0`).
+
+The second is the instructive one: **I nulled `expresses` so the row would claim
+nothing, without tracing that `expresses` is also what three other gates read to
+let a row through.** Removing a field's meaning in one place changed its meaning
+in four. Both are now pinned by a regression test asserting the allowance is spent
+exactly once, a decoration row is on the finished sheet, and decoration rows carry
+no receipt.
+
+**The fixture took three attempts**, because closest-acceptance is hard to
+provoke: the verb gate refuses before the fit call runs unless the idea shares a
+verb with the shelf. It only works with a concept and idea copied from a sibling
+test that reaches it. A path this hard to reach in a fixture is a path that stays
+under-tested, which is part of why it shipped decoration unnoticed.
+
+#### The re-run: 5 of 6, and the sixth was a measurement artifact
+
+`express10-2026-10-22T03-21-20` — 9 decoration grants, every one shipping except
+the Dire Wolf's, which read `NONE <-- LOST`. It was not lost:
+
+```
+signature rider: contagion -> Bite (appended; ...)
+```
+
+The seat was welded onto Bite as a RIDER, so it owns no row, and a metric that
+counts rows cannot see it. **Second time the rider blind spot has broken a
+measurement rather than the engine** — the gap ship-check was the first. The weld
+now carries the decoration mark to the host (`riderDecorations`) and
+`decoration_rows` counts it, the same shape as `riderTemplates`.
+
+| criterion | result |
+|---|---|
+| 1 path fires | PASS — 9 grants |
+| 2 a refused template is not asked to justify itself | PASS — the 2 revokes are other rows |
+| 3 the metric adds up | PASS once riders are counted |
+| 4 the seat stays filled (REVERT) | **PASS — 6 of 6 once the rider is read** |
+| 5 no rise in signature misses | PASS — 0, same as before |
+| 6 the audit is healthy | PASS — 10 of 10 sheets |
+| 7 coverage | 71% (17 clauses); the small-sample caveat stands |
+| 8 no new FAIL class | PASS — 2 FAIL of 10 |
+
+**Gate:** Jest 117 suites / 3754 passing, build clean.
+
+## THE RELEASE FORTY — criteria, written before the run
+
+Everything since `sweep-2026-10-21T22-17-49`: the ship-time budget, the rider
+ship-check, `conversion-dropped-duration`, `condition_relation`, the Vrock
+exception, the gate field (stamped, equivalence proven, 7 readers retired), item
+3's three provenance gates, verb preference standing down, `forceUngated` nova
+pricing, the expression quote with a soft revoke, and decoration-at-grant.
+
+**THE QUESTION THIS RUN EXISTS TO ANSWER: coverage.** Two twist-heavy tens read
+**69% and 71%** against the forty's ~78% baseline. Twice in the same direction is
+no longer comfortably variance, and 13–17 clauses is too thin to judge. The forty
+has ~67 clauses and is the only sample that settles it.
+
+| # | criterion | baseline |
+|---|---|---|
+| 1 | **coverage** | ~78% (dropped 15 of 67). **A drop to ~70% is a REGRESSION to chase, not a pass.** |
+| 2 | FAIL blocks | 2-5 of 40 across six forties |
+| 3 | `gap-outcomes` VETOED after acceptance | 10 of 30 — should IMPROVE, the rider false-read is fixed |
+| 4 | `condition relation:` traced | never yet seen live (3 smokes) |
+| 5 | a welded rider reads `[landed: X]` | never yet seen live (3 smokes) |
+| 6 | `decoration_rows` / `expressed_rows` | the sameness number, first time at scale |
+| 7 | `e.gate` equivalence | 0 unstamped, 0 disagreeing — 7 readers now depend on it |
+| 8 | no `two-novas` | `forceUngated` must hold |
+| 9 | no dangling refs | the budget pass evicts rows |
+| 10 | audit healthy | ~39 of 40 sheets |
+
+**Revert triggers:** criterion 1 confirming a real coverage regression; criterion 7
+(a reader now trusts the field); criterion 9.
+
+**What I expect to be wrong:** criterion 6 will probably read high — the express
+tens said 5 of 5 and 9 of 9 free rows were decoration. If the forty agrees, the
+free-row mechanism is mostly producing decoration and that is the next piece of
+work, not a defect in this run.
+
+## THE RELEASE FORTY (`sweep-2026-10-22T03-29-45`) — 2 FAIL of 40
+
+| # | criterion | result |
+|---|---|---|
+| 1 | coverage | **69%** (48/70) vs a 77-90% recent range — **see the finding below** |
+| 2 | FAIL blocks | **2 of 40** — the low end of six forties |
+| 3 | `gap-outcomes` vetoed | re-measure (rider false-read now fixed) |
+| 4 | `condition relation:` traced | **PASS — fired live for the first time (2)** |
+| 5 | a welded rider reads landed | **PASS — 9 welds to read** (3 smokes produced none) |
+| 6 | decoration / expressed | **16 decoration grants, 0 expressed** |
+| 7 | `e.gate` equivalence | to re-verify |
+| 8 | no `two-novas` | **PASS — none** |
+| 9 | no dangling refs | **PASS** |
+| 10 | audit healthy | **PASS — 39 of 40, identical to the baseline** |
+
+### THE FINDING: the old coverage number was inflated by the defect itself
+
+Coverage read 69% against a recent range of 77-90%, and it is below every forty
+since 10-04. I treated that as a regression to chase and tested three
+hypotheses — **all three disproven by measurement**:
+
+1. *More rows refused?* No — refusals went DOWN (`trait declined` 9 → 0, absorbed
+   into decoration; `fit`/`rider declined` also down).
+2. *Decoration rows crowding out clause-answering rows?* No — coverage on sheets
+   WITH a decoration grant is 69%, WITHOUT 70%. Flat.
+3. *The audit renaming rows now that decoration rows lost the rename guard?* No —
+   renames are flat or down.
+
+Then I read the DROPPED CLAUSES instead of aggregates, and they are the twists:
+
+```
+Silt Hound        "drags fishermen under"
+Drowned Choir     "sings in one voice"
+Vampire           "keeps a garden of thorns"
+Purple Worm       "swallowed a war-band's armoury"
+Adult Red Dragon  "blind in one eye from an old lance"
+Brass Tyrant      "rules a city of forges"
+```
+
+**Coverage is word-overlap against the clause list** (`checker.mjs:749`:
+"string-work against the extraction's clause list, never a model"). So a generic
+row whose NAME borrowed the twist's words scored as coverage. The proof is the
+Drowned Choir, which went 1/1 → 0/1:
+
+```
+OLD, counted as COVERED for "sings in one voice":
+  One Voice. When the drowned choir would be deafened or silenced, it sings
+  through every throat it has drowned ... and it is immune to being deafened.
+
+and the engine PROTECTED that name to keep the binding:
+  audit rename blocked — "One Voice" -> "Deafening Chorus" would drop the GM's
+  own word "voice" from a row bound to "sings in one voice"
+```
+
+That row is a **deafness immunity**. It does not sing in one voice; it cannot be
+deafened. It scored the clause on the word "voice" in its name — and the rename
+guard actively defended the name to preserve the credit.
+
+**So the 9-point drop is the REMOVAL OF FALSE COVERAGE, not a regression in what
+the engine delivers.** The real figure was always ~69%; the metric was scoring
+names. Three landings together stripped the inflation: the expression quote (a row
+must carry what it claims), decoration-at-grant (a refused template claims
+nothing), and verb preference standing down (a receiptless row is decoration
+whatever else was on the shelf).
+
+This is the critic's finding reaching its conclusion. The engine was advertising
+twists it had not honoured, and **the coverage metric was complicit**, because it
+measured the words in a name rather than the rules in a row.
+
+### What this means for the metric
+
+`coverage` as currently computed cannot be the release gate it has been used as —
+it rewards a row for borrowing the GM's words. Options for the owner:
+
+1. **Credit a clause only when the row EXPRESSES it** — reuse the expression quote
+   already landed, so coverage means what it says. The honest baseline becomes
+   ~69% and the target is raising it by honouring twists, not naming them.
+2. **Report both** — word-overlap coverage beside expressed coverage, so the gap
+   between "advertised" and "honoured" is visible per run.
+3. Leave it and read 69% as the new baseline.
+
+My recommendation is 2 first (it costs nothing and shows the gap), then 1 once the
+expressed number is trusted. **This wants the owner's ruling before any forty is
+judged on coverage again.**

@@ -5393,6 +5393,46 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
   //
   // The pin above is what proves this did not become a blanket allowance: with no
   // element named, the nova is still refused.
+  // A REFUSED TEMPLATE SHIPS AS DECORATION — AND SHIPS (2026-10-22). Two bugs on
+  // the first attempt, both caught by the pre-run criterion "the seat stays
+  // filled", and neither visible except in a trace:
+  //   1. the new branch was not exclusive, so the ORIGINAL grant also ran — the
+  //      allowance was spent twice and two grant traces were emitted;
+  //   2. `accepted_closest` never reached the SEAT, so the trait gate could not
+  //      see it and declined the row for having no receipt, leaving the seat
+  //      empty — the exact thing closest-acceptance exists to prevent (it took
+  //      "the row shipped nothing" from 22% of blocks to about 1 in 41).
+  test('a template the call REFUSED ships as decoration, exactly once', async () => {
+    const orig = console.log;
+    const brute = scaleDonor(pickDonor(9, 'grappler', 'brute'), 9, { mechanics: [] });
+    const lines = []; console.log = (...a) => { lines.push(a.join(' ')); };
+    let m;
+    try {
+      m = await generateReskin({ cr: 9, mechanics: [], archetype: 'brute', style: 'grappler', concept: "a bog witch's iron cauldron that walks on three legs and cooks whatever climbs in", signatureElements: [{ element: 'a cauldron brim-full of scalding bog-water', kind: 'body' }] }, async (prompt) => {
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ action: { idea: 'The cauldron tips and spills scalding bog-water in a wide hissing wave around it', missing: 'a wave of scalding water' } });
+        // the call REFUSES every template and names a nearest
+        // a refusal names its gap: template "none", plus `closest` (which must be
+        // on this seat's POOL) and `missing`
+        if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify({ template: 'none', closest: 'exploiter', missing: 'a wave of scalding water that lingers', because: 'nothing holds it', name: 'Scalding Spill', expresses: 'a cauldron brim-full of scalding bog-water' });
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return answer(Object.assign(fullAnswer(brute, 'Kettlewright', {}), { type: 'Construct' }));
+      });
+    } finally { console.log = orig; }
+    const trace = lines.join('\n');
+    expect(trace).toMatch(/closest accepted/);
+    // it ships as decoration, and claims nothing
+    expect(trace).toMatch(/ships as DECORATION/);
+    // BUG 1: the allowance may be spent only ONCE
+    expect((trace.match(/free signature row:/g) ?? []).length).toBe(1);
+    // BUG 2: THE SEAT STAYS FILLED — a decoration row that vanishes is worse
+    // than the decoration it replaced
+    const rows = Object.values(m.sections).flat();
+    expect(rows.some((e) => e.decoration)).toBe(true);
+    // and it carries no receipt, so the audit is never asked to judge it
+    expect(rows.filter((e) => e.decoration).every((e) => !e.expresses)).toBe(true);
+  });
+
   test('the action seat takes a free row when the call names an element it expresses', async () => {
     const orig = console.log;
     const brute = scaleDonor(pickDonor(9, 'grappler', 'brute'), 9, { mechanics: [] });

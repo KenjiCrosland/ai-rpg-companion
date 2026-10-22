@@ -1,0 +1,740 @@
+{
+ "1a630f793a5e": {
+  "concept": "Dire Wolf — with a frost-rimed hide",
+  "clauses": [
+   {
+    "text": "Dire Wolf — with a frost-rimed hide",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "11b427883c5c": {
+  "concept": "a mud-caked bog hound that drags fishermen under",
+  "clauses": [
+   {
+    "text": "a mud-caked bog hound",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "drags fishermen under",
+    "kind": "mechanical"
+   }
+  ]
+ },
+ "2be75ba2ea5d": {
+  "concept": "Owlbear — that has learned to climb",
+  "clauses": [
+   {
+    "text": "Owlbear —",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "has learned to climb",
+    "kind": "mechanical",
+    "askShape": "movement"
+   }
+  ]
+ },
+ "43f64ccf96f5": {
+  "concept": "a chapel bell-ringer's ghost that tolls for the dying",
+  "clauses": [
+   {
+    "text": "a chapel bell-ringer's ghost",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "tolls for the dying",
+    "kind": "mechanical",
+    "askShape": "condition"
+   }
+  ]
+ },
+ "2adf6dc675ae": {
+  "concept": "Air Elemental — that carries stolen voices",
+  "clauses": [
+   {
+    "text": "Air Elemental —",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "carries stolen voices",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "7aecceefe666": {
+  "concept": "a quarry-pit thing of living scree that buries what it catches",
+  "clauses": [
+   {
+    "text": "a quarry-pit thing of living scree",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "buries what it catches",
+    "kind": "mechanical",
+    "askShape": "condition"
+   }
+  ]
+ },
+ "17a7f489feca": {
+  "concept": "Hydra — whose stumps smoke instead of regrowing",
+  "clauses": [
+   {
+    "text": "Hydra — whose stumps smoke instead of regrowing",
+    "kind": "mechanical",
+    "polarity": "lacks",
+    "takes": "regeneration",
+    "lackQuote": "instead of regrowing"
+   }
+  ]
+ },
+ "0518634863fb": {
+  "concept": "a siege-engine golem of lashed timber that shoulders through walls",
+  "clauses": [
+   {
+    "text": "a siege-engine golem of lashed timber",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "shoulders through walls",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "d5d6daf32ff5": {
+  "concept": "Stone Golem — carved as a weeping saint",
+  "clauses": [
+   {
+    "text": "Stone Golem — carved as a weeping saint",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "93097a1bc3fe": {
+  "concept": "a drowned cathedral choir that sings in one voice",
+  "clauses": [
+   {
+    "text": "a drowned cathedral choir",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "sings in one voice",
+    "kind": "mechanical"
+   }
+  ]
+ },
+ "ebb1a9123ab1": {
+  "concept": "Vampire — who keeps a garden of thorns",
+  "clauses": [
+   {
+    "text": "Vampire —",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "keeps a garden of thorns",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "1bf6f9bdcb16": {
+  "concept": "a plague-bearing archon of flies that commands lesser swarms",
+  "clauses": [
+   {
+    "text": "a plague-bearing archon of flies",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "commands lesser swarms",
+    "kind": "mechanical",
+    "askShape": "condition"
+   }
+  ]
+ },
+ "0ce3881779f8": {
+  "concept": "Purple Worm — that swallowed a war-band's armoury",
+  "clauses": [
+   {
+    "text": "Purple Worm —",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "swallowed a war-band's armoury",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "b4984ff09687": {
+  "concept": "a glacier's heart given legs, trailing a wake of killing cold",
+  "clauses": [
+   {
+    "text": "a glacier's heart given legs",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "trailing a wake of killing cold",
+    "kind": "mechanical",
+    "askShape": "save_area"
+   }
+  ]
+ },
+ "079cb02115b2": {
+  "concept": "Adult Red Dragon — blind in one eye from an old lance",
+  "clauses": [
+   {
+    "text": "Adult Red Dragon — blind in one eye from an old lance",
+    "kind": "mechanical",
+    "polarity": "lacks",
+    "takes": "sight",
+    "costs": "sight",
+    "lackQuote": "blind in one eye"
+   }
+  ]
+ },
+ "0de033f08163": {
+  "concept": "a tyrant of burning brass who rules a city of forges",
+  "clauses": [
+   {
+    "text": "a tyrant of burning brass",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "rules a city of forges",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "fdaf12dbd72b": {
+  "concept": "Pit Fiend — who collects the oaths of dying knights",
+  "clauses": [
+   {
+    "text": "Pit Fiend —",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "collects the oaths of dying knights",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "8ac4f3237523": {
+  "concept": "an archlich enthroned on a sun of bone",
+  "clauses": [
+   {
+    "text": "an archlich enthroned on a sun of bone",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "29441653e47c": {
+  "concept": "a leviathan of the trench whose song drowns fleets",
+  "clauses": [
+   {
+    "text": "a leviathan of the trench whose song drowns fleets",
+    "kind": "mechanical",
+    "askShape": "save_area"
+   }
+  ]
+ },
+ "4c5316c17108": {
+  "concept": "Owlbear",
+  "clauses": [
+   {
+    "text": "Owlbear",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "c588b2d54ee7": {
+  "concept": "Goblin Boss",
+  "clauses": [
+   {
+    "text": "Goblin Boss",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "15e3a6f9e766": {
+  "concept": "Vashka the Red — A hobgoblin warlord in lacquered plate who fights from a shield wall and never breaks ranks.",
+  "clauses": [
+   {
+    "text": "Vashka the Red — A hobgoblin warlord in lacquered plate",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "fights from a shield wall",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "fights from a shield wall",
+    "askOften": "at_will",
+    "askOftenWhy": "fights from a shield wall",
+    "askShape": "buff_self"
+   },
+   {
+    "text": "never breaks ranks",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "never breaks ranks",
+    "askShape": "resist"
+   }
+  ]
+ },
+ "0c273073a7e2": {
+  "concept": "A Large insectile horror. It has four scythe-arms, a spitting maw, and a shell that sheds acid. It fights by pinning pre",
+  "clauses": [
+   {
+    "text": "A Large insectile horror",
+    "kind": "header"
+   },
+   {
+    "text": "It has four scythe-arms",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "It has four scythe-arms",
+    "askShape": "attack"
+   },
+   {
+    "text": "a spitting maw",
+    "kind": "descriptive"
+   },
+   {
+    "text": "a shell that sheds acid",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "sheds acid",
+    "askOften": "at_will",
+    "askOftenWhy": "a shell that sheds acid",
+    "askShape": "save_area"
+   },
+   {
+    "text": "It fights by pinning prey with two arms",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "pinning prey",
+    "askOften": "at_will",
+    "askOftenWhy": "It fights by pinning prey with two arms",
+    "askShape": "condition"
+   },
+   {
+    "text": "carving with the others",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "carving with the others",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "ba32ae50f23a": {
+  "concept": "a sentinel of black iron, AC 20, Huge, speed 20 feet",
+  "clauses": [
+   {
+    "text": "a sentinel of black iron",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "AC 20",
+    "kind": "header"
+   },
+   {
+    "text": "Huge",
+    "kind": "header"
+   },
+   {
+    "text": "speed 20 feet",
+    "kind": "header"
+   }
+  ]
+ },
+ "ee035e5c850a": {
+  "concept": "a marsh witch who curses trespassers, cr 7",
+  "clauses": [
+   {
+    "text": "a marsh witch",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "curses trespassers",
+    "kind": "mechanical",
+    "askShape": "condition"
+   },
+   {
+    "text": "cr 7",
+    "kind": "header"
+   }
+  ]
+ },
+ "c3b7d88222b5": {
+  "concept": "a templar priest with a mace and no magic at all",
+  "clauses": [
+   {
+    "text": "a templar priest with a mace",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "a templar priest with a mace",
+    "askShape": "attack"
+   },
+   {
+    "text": "no magic at all",
+    "kind": "mechanical",
+    "polarity": "lacks",
+    "takes": "spellcasting",
+    "lackQuote": "no magic at all"
+   }
+  ]
+ },
+ "3f2b3caf5c94": {
+  "concept": "Ilvareth Dusksong — An elf archmage who bends shadow and steps between places.",
+  "clauses": [
+   {
+    "text": "Ilvareth Dusksong — An elf archmage",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "bends shadow and steps between places",
+    "kind": "mechanical",
+    "askShape": "movement"
+   }
+  ]
+ },
+ "b06fa5f3be84": {
+  "concept": "a swarm of funeral bells that ring themselves over the dying",
+  "clauses": [
+   {
+    "text": "a swarm of funeral bells",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "ring themselves over the dying",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "23bcd91b9fde": {
+  "concept": "a cathedral-vault ooze that digests reliquaries",
+  "clauses": [
+   {
+    "text": "a cathedral-vault ooze",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "digests reliquaries",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "b08e6c929138": {
+  "concept": "a young storm drake whose breath is a rolling wall of thunder",
+  "clauses": [
+   {
+    "text": "a young storm drake whose breath is a rolling wall of thunder",
+    "kind": "mechanical",
+    "askShape": "save_area"
+   }
+  ]
+ },
+ "fa996f9563fb": {
+  "concept": "a stone giant exile who speaks only Giant and understands no Common",
+  "clauses": [
+   {
+    "text": "a stone giant exile",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "speaks only Giant",
+    "kind": "header"
+   },
+   {
+    "text": "understands no Common",
+    "kind": "mechanical",
+    "polarity": "lacks",
+    "takes": "speech",
+    "lackQuote": "understands no Common"
+   }
+  ]
+ },
+ "2f30c63c68ef": {
+  "concept": "lizardfolk monk",
+  "clauses": [
+   {
+    "text": "lizardfolk monk",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "04bfaab89ce0": {
+  "concept": "Krennik Skullstandard — riding a worg",
+  "clauses": [
+   {
+    "text": "Krennik Skullstandard — riding a worg",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "e3e29af72f75": {
+  "concept": "the thing in the well",
+  "clauses": [
+   {
+    "text": "the thing in the well",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "59e8a370d48a": {
+  "concept": "A Slope-Render is a single gaunt, furred aberration whose ribcage has split open along the sternum into a drifting latti",
+  "clauses": [
+   {
+    "text": "A Slope-Render is a single gaunt",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "furred aberration whose ribcage has split open along the sternum into a drifting lattice of dead-white bone",
+    "kind": "mechanical"
+   },
+   {
+    "text": "so it floats down from high passes on a cold wind rather than climbing",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "so it floats down from high passes on a cold wind rather than climbing",
+    "askOften": "at_will",
+    "askOftenWhy": "so it floats down from high passes on a cold wind rather than climbing",
+    "askShape": "movement"
+   },
+   {
+    "text": "It shadows travelers for hours",
+    "kind": "descriptive"
+   },
+   {
+    "text": "testing them with a low click before it dives to rake them with those necrotic ribs",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "text": "every round thereafter it drags the freshest kill",
+    "kind": "mechanical"
+   },
+   {
+    "text": "the choicest loot back to a bone-littered crag",
+    "kind": "descriptive"
+   },
+   {
+    "text": "Scheming and patient",
+    "kind": "descriptive"
+   },
+   {
+    "text": "it hoards trophies by value",
+    "kind": "descriptive"
+   },
+   {
+    "text": "not hunger",
+    "kind": "descriptive"
+   },
+   {
+    "text": "when bloodied it feigns a limp to lure the pursuit into a deadfall narrows",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "when bloodied",
+    "askShape": "condition"
+   },
+   {
+    "text": "It is scheming (INT 14-16)",
+    "kind": "descriptive"
+   },
+   {
+    "text": "it is a hoarder that drags its kills back to a lair of trophies",
+    "kind": "mechanical"
+   }
+  ]
+ },
+ "3776edc77d61": {
+  "concept": "Meshrin — Large lizard folk, 30 feet of movement, Wields a greataxe two-handed and a javelin for the throw. He is a barb",
+  "clauses": [
+   {
+    "text": "Meshrin — Large lizard folk",
+    "kind": "header"
+   },
+   {
+    "text": "30 feet of movement",
+    "kind": "header"
+   },
+   {
+    "text": "Wields a greataxe two-handed",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "text": "a javelin for the throw",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "text": "He is a barbarian who rages",
+    "kind": "descriptive"
+   },
+   {
+    "text": "Give him a frightening roar",
+    "kind": "mechanical",
+    "askShape": "save_area"
+   },
+   {
+    "text": "AC 16",
+    "kind": "header"
+   },
+   {
+    "text": "120 hit points",
+    "kind": "header"
+   }
+  ]
+ },
+ "fb7de57d22d2": {
+  "concept": "a skeleton with a greatsword",
+  "clauses": [
+   {
+    "text": "a skeleton with a greatsword",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "e3b91bce26da": {
+  "concept": "a sellsword who hurls a handaxe and closes with a shortsword",
+  "clauses": [
+   {
+    "text": "a sellsword",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "hurls a handaxe",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "text": "closes with a shortsword",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "2a8871a8f1ee": {
+  "concept": "Brother Halric",
+  "clauses": [
+   {
+    "text": "Brother Halric",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "c52bc586a9f1": {
+  "concept": "A furnace-hearted thing of black iron, its segmented, many-legged body a single skittering engine of razored cables that",
+  "clauses": [
+   {
+    "text": "A furnace-hearted thing of black iron",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "text": "its segmented",
+    "kind": "descriptive"
+   },
+   {
+    "text": "many-legged body a single skittering engine of razored cables that drags a captive heat-haze with it across the dunes",
+    "kind": "mechanical"
+   },
+   {
+    "text": "gleaming and clicking with a cold intelligence no beast should have",
+    "kind": "mechanical"
+   },
+   {
+    "text": "It opens by stamping its forelegs to sheet the sand in a curtain of white fire",
+    "kind": "mechanical",
+    "askShape": "save_area"
+   },
+   {
+    "text": "circles and stabs with its burning limbs",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "text": "herding intruders away from the ones who kneel",
+    "kind": "mechanical",
+    "askShape": "condition"
+   },
+   {
+    "text": "speak plainly",
+    "kind": "header"
+   },
+   {
+    "text": "It fights with patient",
+    "kind": "descriptive"
+   },
+   {
+    "text": "watchful greed — holding back against the respectful",
+    "kind": "descriptive"
+   },
+   {
+    "text": "scorching the arrogant",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "text": "only withdrawing",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "when badly overmatched",
+    "askShape": "movement"
+   },
+   {
+    "text": "still hissing",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "when badly overmatched",
+    "askShape": "movement"
+   },
+   {
+    "text": "when badly overmatched",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "when badly overmatched",
+    "askShape": "movement"
+   },
+   {
+    "text": "It is possessed of alien genius (INT 17-20)",
+    "kind": "descriptive"
+   },
+   {
+    "text": "it is a benevolent warden sworn to protect travelers who show respect",
+    "kind": "descriptive"
+   }
+  ]
+ }
+}

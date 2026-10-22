@@ -766,7 +766,14 @@ export const SPEECH_CUE = /\b(?:speaks?|spoke|languages?|talks?)\b/i;
 const SPEECH_STOP = new Set(['speak', 'spoke', 'language', 'talk', 'only', 'understand']);
 export function fidelityOf(m, raw, ctx) {
   const printNamed = !!ctx?.print && (ctx.print.exact || ctx.print.borrowOnly);
-  const recorded = raw?.generation?.clauses ?? m?.generation?.clauses ?? [];
+  // A FROZEN CLAUSE LIST KEEPS THE DENOMINATOR STILL (critic's package-seven
+  // review, 2026-10-22). The extraction is an LLM call, so the SAME concept text
+  // yields a different clause list run to run — Caustic Scythe 5 -> 4, Meshrin
+  // 7 -> 8 — and two forties therefore score against different denominators.
+  // `ctx.frozenClauses` lets the measurement layer pin the list for a concept
+  // (keyed by a hash of the concept text, see scripts/frozen-clauses.json), so a
+  // forty compares like with like. Nothing in the engine reads this.
+  const recorded = ctx?.frozenClauses ?? raw?.generation?.clauses ?? m?.generation?.clauses ?? [];
   // THE READER'S DENOMINATOR (critic's step-5 read: 38 automated against 61 by hand): every phrase counts except the identity
   // phrase (the creature itself); a record without head marks (blocks saved before step 6) keeps the step-4 rule. A prompt that
   // is ONLY a creature ("knife ball", "a bog witch", "Pikachu") has the creature as its one clause
@@ -776,9 +783,13 @@ export function fidelityOf(m, raw, ctx) {
   const rows = allRows(m).filter(({ e }) => !/^(?:Multiattack|Legendary Action Uses)\b/.test(e.name ?? ''));
   const sheet = `${m.name} ${m.size} ${m.type} ${m.speed} ${m.languages} ${m.immunities ?? ''} ${m.resistances ?? ''} ${m.vulnerabilities ?? ''} ${rows.map(({ e }) => `${e.name} ${e.text} ${e.flavor ?? ''}`).join(' ')}`;
   const sheetWords = new Set(words(sheet));
+  // the credited-by column: which row and which path bought each clause, or "—"
+  const creditedBy = new Map(); const creditNotes = new Map();
+  const credit = (c, path, row) => { if (!creditedBy.has(c)) creditedBy.set(c, { path, row: row ? bare(row) : null }); };
+  const note = (c, why) => { if (!creditNotes.has(c)) creditNotes.set(c, why); };
   const present = (c) => {
     const crAsk = /\bcr\s*(\d+(?:\/\d+)?|\d*\.\d+)\b/i.exec(c.text ?? ''); if (crAsk && !/\b(?:damage|feet|ft)\b/i.test(c.text ?? '')) return Number.isFinite(Number(ctx?.cr)) && crNum(crAsk[1]) === Number(ctx.cr); // "cr 5" is a header directive the sheet honors or not — two letters and a digit, nothing a row could carry (the big ogre read 1/2, canaries 2026-10-12)
-    if (c._print) return true;
+    if (c._print) { credit(c, 'print', null); return true; }
     // a LACKS clause ("cannot cast any spells") is covered only when the lacked thing is absent — the Staffbound Caster scored 2/2 with the Mage's full spell list (critic's step-5 read)
     // A KEYED LACK IS JUDGED BY ITS MECHANIC (2026-10-18). The engine's lacks call names
     // what the clause takes ({quote, takes}); the sheet is then checked for THAT, not for
@@ -790,12 +801,12 @@ export function fidelityOf(m, raw, ctx) {
       const rowText = rows.map(({ e }) => `${e.name} ${e.text}`).join(' ');
       const senses = String(m.senses ?? ''); const speed = String(m.speed ?? '');
       switch (c.takes) {
-        case 'grapple': return !/\b(?:has the Grappled condition|is grappled|Grappled condition \(escape|grappled \(escape)/i.test(rowText);
-        case 'regeneration': return !/\bRegeneration\b|regains \d+ hit points at the start of/i.test(rowText);
-        case 'spellcasting': return !/\bSpellcasting\b|\bcasts?\b/i.test(rowText);
-        case 'flight': return !/\b(?:Fly|fly) \d+ ft/.test(speed);
-        case 'ranged': return !/Ranged (?:Attack Roll|Weapon Attack|Spell Attack)|Melee or Ranged/i.test(rowText);
-        case 'melee': return !/Melee (?:Attack Roll|Weapon Attack|Spell Attack)|Melee or Ranged/i.test(rowText);
+        case 'grapple': { const ok = !/\b(?:has the Grappled condition|is grappled|Grappled condition \(escape|grappled \(escape)/i.test(rowText); if (ok) credit(c, 'lacks', 'removed'); return ok; }
+        case 'regeneration': { const ok = !/\bRegeneration\b|regains \d+ hit points at the start of/i.test(rowText); if (ok) credit(c, 'lacks', 'removed'); return ok; }
+        case 'spellcasting': { const ok = !/\bSpellcasting\b|\bcasts?\b/i.test(rowText); if (ok) credit(c, 'lacks', 'removed'); return ok; }
+        case 'flight': { const ok = !/\b(?:Fly|fly) \d+ ft/.test(speed); if (ok) credit(c, 'lacks', 'removed'); return ok; }
+        case 'ranged': { const ok = !/Ranged (?:Attack Roll|Weapon Attack|Spell Attack)|Melee or Ranged/i.test(rowText); if (ok) credit(c, 'lacks', 'removed'); return ok; }
+        case 'melee': { const ok = !/Melee (?:Attack Roll|Weapon Attack|Spell Attack)|Melee or Ranged/i.test(rowText); if (ok) credit(c, 'lacks', 'removed'); return ok; }
         case 'sight': return /blind beyond this radius/i.test(senses) || !/\b(?:darkvision|truesight|tremorsense)\b/i.test(senses) && !/\b(?:sees|can see|sight)\b/i.test(rowText);
         // speech and hearing fall through to the word rule below: "understands no Common"
         // beside Languages: Giant is honoured, and a whole-voice test called it broken
@@ -817,12 +828,12 @@ export function fidelityOf(m, raw, ctx) {
       if (IMM_CUE.test(c.text)) return line('immunities') || (!!ty && (m.sections?.Traits ?? []).some((e) => new RegExp(`\\b${ty}\\b`, 'i').test(e.name ?? ''))); // the adamantine clause has no 2024 header idiom; a trait named for it is the sheet's way
       if (RES_CUE.test(c.text)) return line('resistances');
       if (SPEECH_CUE.test(c.text)) { const lw = words(String(m.languages ?? '')); return words(c.text).filter((w) => !SPEECH_STOP.has(w)).some((w) => lw.includes(w)); }
-      const hw = words(`${m.name} ${m.size} ${m.type} ${m.speed} ${m.languages} ${m.senses ?? ''}`); return words(c.text).some((w) => hw.includes(w));
+      const hw = words(`${m.name} ${m.size} ${m.type} ${m.speed} ${m.languages} ${m.senses ?? ''}`); const ok = words(c.text).some((w) => hw.includes(w)); if (ok) credit(c, 'header', 'header line'); return ok;
     }
     // COVERAGE BY PROVENANCE (step 8): a clause is covered when a row's trace binds to it — a part, feature or repaired row's own
     // `clause`, a template row's concept keys (`boundKeys`), or an unplaced entry that carried it to the description — never when a
     // row's text happens to contain its words
-    if (c.head) return rows.length > 0; // a creature-only prompt: the sheet IS the creature
+    if (c.head) { if (rows.length > 0) { credit(c, 'head', null); return true; } return false; } // a creature-only prompt: the sheet IS the creature
     const ws = words(c.text); if (!ws.length) return false;
     const overlaps = (t) => words(t).some((w) => ws.includes(w));
     // A RECEIPT, NOT A WORD MATCH (owner's stage 3 item 4, 2026-10-16). A row's
@@ -831,9 +842,65 @@ export function fidelityOf(m, raw, ctx) {
     // attacks and answers nothing of the sort. Only an explicit clause binding
     // counts now: the row says which clause it answers, or it does not count.
     // boundKeys still ride for provenance; they just no longer buy credit.
-    if (rows.some(({ e }) => e.clause && overlaps(e.clause))) return true;
+    // ONE CREDIT RULE, AND IT NAMES ITS PATH (critic's package-seven review,
+    // 2026-10-22). This was a single `e.clause` test covering two different
+    // receipts, so the gate table could not say WHY a clause scored and the
+    // errors in each direction cancelled (5 shipped answers uncredited, 5 credits
+    // with no row behind them, net 41 — "fix either category alone and the number
+    // moves about 5 points with no sheet changing").
+    //
+    // (a) KEY BIND — only when the call ACCEPTED the keyed template.
+    //     Closest-acceptance never counts: the call refused it. Note Glacier
+    //     Heart refutes the simpler story — a closest-accepted row CAN carry a
+    //     key ("wake:concept") and bind, which is exactly why this is checked on
+    //     the row's own provenance and not inferred from the keys.
+    // CREDIT BY IDENTITY WHERE THE ROW CARRIES ONE (owner, 2026-10-22). The id is
+    // a hash of the clause text assigned in `groundedClauses` and resolved onto
+    // each row in one pass, so this is set membership with nothing to stem. The
+    // word-overlap match stays only as a fallback for blocks saved before ids
+    // existed, and it says so when it fires — measured 0 of 30 credits depended
+    // on it, so a firing on a fresh run means the resolve pass failed.
+    const byId = (e) => !!c.id && !!e.clauseId && e.clauseId === c.id;
+    const linked = (e) => (e.clauseId || c.id ? byId(e) : (e.clause && overlaps(e.clause)));
+    const keyRow = rows.find(({ e }) => linked(e) && !e.accepted_closest);
+    if (keyRow) { credit(c, 'key', keyRow.e.name); return true; }
+    const refusedRow = rows.find(({ e }) => linked(e) && e.accepted_closest);
+    if (refusedRow) note(c, `a key bind on "${bare(refusedRow.e.name)}", refused by the call (closest-accepted) — no credit`);
+    // (b) GM-QUOTE RECEIPT — the quote must lie inside ONE non-head clause.
+    //     Measured by the critic on this forty: 5 of 9 quote receipts quoted the
+    //     WHOLE DESCRIPTION or the head clause (Dire Wolf, Passexile, Sellsword,
+    //     Cragwake, Ser Aldric), which is not a receipt for any particular clause
+    //     — it is a receipt for everything, so it credits nothing. Containment is
+    //     the half that discriminates.
+    //
+    //     The judge's agreement against the finished row text is the rule's other
+    //     half and is NOT yet applied here: the expression judge returned no
+    //     verdict on every sheet until the raw-string bug was fixed on
+    //     2026-10-22, so there is no verdict corpus to gate on. Once a forty runs
+    //     with real verdicts, require `expressedQuote` as well.
+    if (!c.head) {
+      const quoted = rows.find(({ e }) => {
+        const q = String(e.gmQuote ?? '').trim().toLowerCase();
+        if (q.length < 4) return false;
+        const text = String(c.text ?? '').toLowerCase();
+        if (!text.includes(q)) return false;                 // the quote sits inside THIS clause
+        const inHead = clauses.some((x) => x.head && String(x.text ?? '').toLowerCase().includes(q));
+        return !inHead;                                      // ...and not inside the head clause
+      });
+      if (quoted) { credit(c, 'quote', quoted.e.name); return true; }
+      const loose = rows.find(({ e }) => String(e.gmQuote ?? '').trim().length >= 4 && !String(c.text ?? '').toLowerCase().includes(String(e.gmQuote).trim().toLowerCase()));
+      if (loose) note(c, `a GM quote on "${bare(loose.e.name)}" that does not lie inside this clause — no credit`);
+    }
+    // (e) PROSE — descriptive clauses only. A MECHANICAL clause moved into the
+    //     description is not answered (Breaching Frame's "shoulders through
+    //     walls", Vashka's "never breaks ranks"), while a descriptive one is
+    //     (Brass Tyrant's "rules a city of forges").
     const unplaced = (raw?.generation ?? m?.generation)?.unplaced ?? [];
-    if (unplaced.some((u) => u?.clause && overlaps(u.clause))) return true;
+    const prose = unplaced.find((u) => u?.clause && overlaps(u.clause));
+    if (prose) {
+      if (c.kind === 'descriptive') { credit(c, 'prose', 'description'); return true; }
+      note(c, 'carried to the description, but the clause is mechanical — no credit');
+    }
     const styleWord = String(ctx?.donorId ?? '').replace(/-\d+/, '').split('-').slice(1).join(' '); // the chassis IS the clause when the donor's style is its verb (brute-11-charger for "It charges")
     if (styleWord && words(styleWord).some((k) => ws.some((w) => w.startsWith(k.slice(0, 4)) || k.startsWith(w.slice(0, 4))))) return true;
     return false;
@@ -856,8 +923,18 @@ export function fidelityOf(m, raw, ctx) {
     const because = words(String(e.because ?? ''));
     return because.length > 0 && because.every((w) => words(c.text).includes(w));
   });
+  for (const c of clauses) if (c.polarity === 'lacks' && flawFor(c)) credit(c, 'lacks', 'flaw row'); // (c): a flaw row honours the lack (1f) — the red dragon's Sight Weakness has read 0/1 for three packages
   const brokenLacks = clauses.filter((c) => c.polarity === 'lacks' && !present(c) && !flawFor(c)).map((c) => c.text);
-  return { covered: covered.length, total: clauses.length, dropped, conceptRows: traced.length, rows: rows.length, brokenLacks };
+  // THE CREDITED-BY COLUMN (critic's package-seven review): per clause, the row
+  // and path that bought it, or "—". "Then anyone can check a credit at a glance."
+  const credits = clauses.map((c) => ({
+    clause: c.text,
+    kind: c.kind ?? null,
+    polarity: c.polarity ?? null,
+    ...(creditedBy.get(c) ?? { path: null, row: null }),
+    ...(creditNotes.has(c) ? { note: creditNotes.get(c) } : {}),
+  }));
+  return { covered: covered.length, total: clauses.length, dropped, conceptRows: traced.length, rows: rows.length, brokenLacks, credits };
 }
 
 // THE READER GATE (the critic's third species read, 2026-10-13): behaviour checks over the output sheet for the defect classes a reader
@@ -1225,7 +1302,7 @@ export function checkBlock(raw, ctx = {}) {
   // corpus, field by field", which is what the corpus-diff test owns.
   if (servedVerbatimEarly) {
     F('donor')('print-served', 'ok', `"${m.name}" is the SRD 5.1 block, served with no call — the gates that judge authored content do not apply; equality with the corpus is the test`, null);
-    return { name: m.name, cr, edition, donor: context.donorId, gates, fails: GATES.filter((g) => gates[g].status === 'fail'), softs: GATES.filter((g) => gates[g].status === 'soft'), read: dmgRead(m), fidelity: null };
+    return { name: m.name, cr, edition, donor: context.donorId, pipeline: (raw?.generation ?? m?.generation ?? raw?.other_edition?.generation)?.pipeline?.path ?? null, gates, fails: GATES.filter((g) => gates[g].status === 'fail'), softs: GATES.filter((g) => gates[g].status === 'soft'), read: dmgRead(m), fidelity: null };
   }
   safe('derivation', (f) => gateDerivation(m, context, f));
   safe('bands', (f) => gateBands(m, context, f));
@@ -1265,7 +1342,7 @@ export function checkBlock(raw, ctx = {}) {
   for (const t of (m.generation?.owed_unanswered ?? [])) F('reader')('owed-clause', 'fail', `the GM added "${t}" to a printed creature and the sheet answers it with nothing — this ships as the stock monster`, t);
   for (const t of fid.brokenLacks ?? []) F('reader')('lack-honored', 'fail', `the GM asked for an absence — "${t}" — and the sheet still carries it`, t);
   const fails = GATES.filter((g) => gates[g].status === 'fail'); const softs = GATES.filter((g) => gates[g].status === 'soft');
-  return { name: m.name, cr, edition, donor: context.donorId, gates, fails, softs, read: dmgRead(m), fidelity: fid };
+  return { name: m.name, cr, edition, donor: context.donorId, pipeline: (raw?.generation ?? m?.generation ?? raw?.other_edition?.generation)?.pipeline?.path ?? null, gates, fails, softs, read: dmgRead(m), fidelity: fid };
 }
 export function checkTable(results, { title = 'Mechanics check' } = {}) {
   const head = `## ${title}\n\n| block | CR | ed | donor | ${GATES.join(' | ')} | verdict | coverage | concept |\n|---|---|---|---|${GATES.map(() => '---').join('|')}|---|---|---|\n`;
@@ -1274,9 +1351,22 @@ export function checkTable(results, { title = 'Mechanics check' } = {}) {
   const bySeat = {};
   for (const r of results) for (const g of r.fails) { const k = `${r.donor ?? '?'} / ${g}`; bySeat[k] = (bySeat[k] ?? 0) + 1; }
   const sorted = Object.entries(bySeat).sort((a, b) => b[1] - a[1]).map(([k, v]) => `- ${k}: ${v}`).join('\n');
-  const fid = results.filter((r) => r.fidelity && r.fidelity.total > 0);
+  // A BLANK-PATH SHEET SCORES ITSELF (critic's package-seven review, 2026-10-22).
+  // On the blank path the ENGINE writes the description, and that prose is then
+  // fed back through the clause extractor and scored as "user clauses" — Uulgh
+  // recorded 16 of them, including fragments like "its segmented" and "still
+  // hissing". That one slot moved the forty's total more than the engine did:
+  // 52/67 -> 48/70 looked like an 8-point drop, and excluding the slot it is
+  // 42/55 -> 41/55. ONE clause. It is also why closest-acceptance showed no
+  // correlation with coverage across seven forties.
+  //
+  // A blank-path sheet adds nothing to either side of the ratio.
+  const blankPath = (r) => r.pipeline === 'blank';
+  const fid = results.filter((r) => r.fidelity && r.fidelity.total > 0 && !blankPath(r));
+  const blanksOut = results.filter((r) => r.fidelity && r.fidelity.total > 0 && blankPath(r));
   const cov = fid.reduce((a, r) => a + r.fidelity.covered, 0); const tot = fid.reduce((a, r) => a + r.fidelity.total, 0);
   const con = fid.reduce((a, r) => a + r.fidelity.conceptRows, 0); const all = fid.reduce((a, r) => a + r.fidelity.rows, 0);
-  const droppedLine = tot ? `**Dropped ${tot - cov} of ${tot} user clauses** (coverage ${Math.round((cov / tot) * 100)}%); concept share ${all ? Math.round((con / all) * 100) : 0}% (${con}/${all} rows). A run with zero fails and 60% coverage is a failing run.\n` : '';
+  const blankNote = blanksOut.length ? ` ${blanksOut.length} blank-path sheet(s) excluded — the engine writes their description, so scoring it is self-scoring (${blanksOut.map((r) => `${r.name} ${r.fidelity.covered}/${r.fidelity.total}`).join(', ')}).` : '';
+  const droppedLine = tot ? `**Dropped ${tot - cov} of ${tot} GM clauses** (coverage ${Math.round((cov / tot) * 100)}%); concept share ${all ? Math.round((con / all) * 100) : 0}% (${con}/${all} rows). A run with zero fails and 60% coverage is a failing run.${blankNote}\n` : '';
   return `${head}${rows}\n\n${droppedLine}**Fails by seat and gate:**\n${sorted || '- none'}\n`;
 }

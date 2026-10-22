@@ -335,3 +335,43 @@ describe('revokeUnexpressedClaims softens the rejection', () => {
     expect(m.sections.Traits[0].decoration).toBe(true);
   });
 });
+
+// THE AUDIT RETURNS A RAW STRING (critic's package-seven review, 2026-10-22).
+// `callLLM` hands back the model's text and `validateAuditResponse` is a BOOLEAN
+// validator, not a parser — `verifyAuditFindings` parses it itself. Reading
+// `.element_claims` off a string gave undefined on every sheet, so every claim was
+// revoked for "no verdict" and the expression judge NEVER FUNCTIONED in the
+// pipeline. All 7 revocations in sweep-2026-10-22T03-29-45 say "no verdict" and
+// none says "the audit judged that nothing in the row carries it": that is 0
+// ANSWERS, not 0 positives, and it was reported as a judgment.
+describe('readElementClaims reads what the audit actually returns', () => {
+  const { readElementClaims } = require('../../format-2024/audit.mjs');
+  const payload = { findings: [], element_claims: [{ entry: 'Thorn Garden', quote: null }, { entry: 'Rimed Hide', quote: 'takes 2 (1d4) Cold damage' }] };
+
+  test('a raw STRING — the shape callLLM actually hands back', () => {
+    expect(readElementClaims(JSON.stringify(payload))).toEqual([
+      { entry: 'Thorn Garden', quote: null },
+      { entry: 'Rimed Hide', quote: 'takes 2 (1d4) Cold damage' },
+    ]);
+  });
+
+  test('a fenced string, as models often answer', () => {
+    expect(readElementClaims('```json\n' + JSON.stringify(payload) + '\n```')).toHaveLength(2);
+  });
+
+  test('an already-parsed object still works — neither caller can reintroduce it', () => {
+    expect(readElementClaims(payload)).toHaveLength(2);
+  });
+
+  test('unparseable input yields no claims rather than throwing', () => {
+    expect(readElementClaims('not json')).toEqual([]);
+    expect(readElementClaims(undefined)).toEqual([]);
+  });
+
+  // the distinction that made the bug visible at all
+  test('an explicit null quote is a VERDICT, not a missing answer', () => {
+    const claims = readElementClaims(JSON.stringify({ findings: [], element_claims: [{ entry: 'X', quote: null }] }));
+    expect(claims).toHaveLength(1);
+    expect(claims[0]).toEqual({ entry: 'X', quote: null });
+  });
+});
