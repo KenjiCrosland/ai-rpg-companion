@@ -996,3 +996,238 @@ at 14). Print's `Whirlwind (Recharge 4-6)` keeps its gate.
    (`Cold Hands` → `Hands Strike`) plus a Multiattack re-read to "makes three
    attacks", which names no rows. Not this branch's work; it belongs to the
    critic's item 7 (forced mixed Multiattacks) and is the same family as Klahk's.
+
+## Landed: the expression quote, and a SOFT rejection (owner, 2026-10-22)
+
+The critic's proposal 4. Membership is not expression — the one-eyed dragon's
+`Blindside Lash` named "a blinded eye from an old lance" and shipped as
+damage-on-touch — so expression is now its own question, judged against the
+FINISHED row text by a call other than the one that picked the template, and
+validated by the engine: **the quote must be VERBATIM in that row's own text.**
+
+### Probed alone first, with the critic's own verdict as the test set
+
+`scripts/probe-expression-quote.mjs` — five REAL twist rows from
+`sweep-2026-10-21T22-17-49`, labelled to the critic's finding that only Hydra and
+Vampire express theirs mechanically, plus two controls.
+
+| round | score | the three null cases | fabricated quotes |
+|---|---|---|---|
+| first | 16/21 | **3/3 each** | 0 of 21 |
+| + one recall line | **18/21** | **3/3 each** | 0 of 21 |
+
+**Every error was a false NEGATIVE; there were zero false positives.** That
+asymmetry decided the design. A false positive restores the rubber stamp; a false
+negative refuses a row that genuinely expresses its element — which is the 1d
+behaviour that killed six twists a forty.
+
+The recall line (*"PART of the feature is enough…"*) fixed `Smoldering Stumps`
+3/3 without flipping any null case or the `Iron Fury` pin. The one remaining miss,
+`Tail-Blow Drag`, is **my label**: its element is "a tail that sweeps riders out of
+the saddle" and the row pulls and knocks Prone with no dismount rule, so `none` is
+defensible. Recorded as a dispute rather than tuned against — tuning a prompt
+until it agrees with a questionable label is how a probe stops measuring anything.
+
+### The softening: a failed quote costs the CLAIM, not the row
+
+Per the owner's ruling. `revokeUnexpressedClaims`:
+
+- the row **stays** — no coverage is lost to a conservative call;
+- the **name may no longer advertise the element**. The harm in the exhibit was
+  never that the dragon had a damage-on-touch trait; it was that the trait was
+  *called* `Blindside Lash`, which tells a GM the blind eye was honoured. The
+  words the name borrows are identified on `nameClaimRevoked` for the rename pass;
+- the row is marked `decoration`, and `generation.decoration_rows` /
+  `expressed_rows` count it — so the owner's invented-element ruling and a failed
+  expression land in the same visible place;
+- an audit that answers **nothing** revokes rather than silently passing.
+
+### No new LLM call
+
+The question rides the **audit**, which already reads every row and already
+proposes renames (`buildAuditPrompt(..., { elementClaims })` +
+`readElementClaims`). Zero extra round trips — the owner's standing constraint.
+
+**Gate:** Jest 117 suites / 3753 passing (+7), build clean.
+
+### Still to do on this
+
+- **The rename pass does not yet act on `nameClaimRevoked`.** The flag and the
+  trace are in; stripping the borrowed words from the name is the next step, and
+  wants its own measurement (the audit rename rule already refuses a rename that
+  drops a receipt's words, so the two rules meet here and the interaction needs
+  checking before it ships).
+- **The source tag** (a GM clause vs `invented`) — the other half of item 2,
+  which is what turns a GM-sourced element into coverage credit.
+- Not yet seen live: the whole path needs a forty, since `elementClaims` is only
+  non-empty when a sheet ships a free row carrying `expresses`.
+
+### The expression ten: pass criteria, written before the run
+
+Chosen so the path is actually exercised — `elementClaims` is non-empty only when
+a sheet ships a free row carrying `expresses`, which is why three previous smokes
+left other landings unproven. Five of the ten are the critic's own exhibit cases.
+
+1. **THE PATH FIRES.** `element expressed:` or `element claim revoked:` appears on
+   several sheets. **If it appears zero times the run proves nothing** — say so
+   rather than reading a clean sheet as a pass. This has happened three times
+   already this session (the rider weld, `condition_relation` twice).
+2. **A REVOKED CLAIM KEEPS ITS ROW.** Every sheet with a revoke still carries that
+   row. This is the whole point of the softening; a missing row means the
+   rejection is not soft and the landing is wrong.
+3. **`decoration_rows` + `expressed_rows` = `free_rows`** on every sheet.
+4. **The exhibit behaves.** If the red dragon, stone golem or lich ship a generic
+   row claiming an element, it is revoked, not credited.
+5. **A quote that is accepted is verbatim.** Any `element expressed:` trace quotes
+   text that really appears in that row — the engine's half.
+6. **THE AUDIT STILL WORKS.** I added a field to its prompt and schema, so audit
+   findings must still appear at the usual rate. A silent collapse of the audit
+   would be the real cost of this change and would not show as a FAIL.
+7. **No coverage regression** — dropped-clause rate no worse than the ~78% baseline.
+8. No new FAIL class.
+
+**Revert trigger:** criterion 2 (a revoke removing a row) or criterion 6 (the
+audit going quiet).
+
+### The express-ten read (`smoke-out/express10-2026-10-22T02-45-13`) — 2 FAIL of 10
+
+| # | criterion | result |
+|---|---|---|
+| 1 | the path fires | **PASS — 5 revokes**, and the audit verified to really answer |
+| 2 | a revoked claim keeps its row (REVERT trigger) | **PASS — all 5 rows present** |
+| 3 | `decoration + expressed = free_rows` | **PASS** on all ten |
+| 4 | the exhibit behaves | **PASS** — golem and lich revoked; the dragon shipped no free row this roll |
+| 5 | an accepted quote is verbatim | **UNEXERCISED — 0 expressed** |
+| 6 | the audit still works (REVERT trigger) | **PASS** — 10/10 sheets, findings present |
+| 7 | no coverage regression | **69% vs a ~78% baseline — see below** |
+| 8 | no new FAIL class | PASS — 2 FAIL of 10 |
+
+#### THE FINDING: 5 of 5 free rows express nothing their rules carry
+
+Not a broken gate — the gate measuring the defect the critic named. The revokes
+are correct, and two are textbook repeats of the exhibit:
+
+```
+"Thorn Garden"       claims "a garden of thorns grown from the dead it buries"
+                     ships: difficult terrain composed of MUD, and moving across mud
+"Snaring Chain"      claims "iron-bound cudgel and chain"
+                     ships: adhesive + grapple (escape DC 13) — "chain" is only in the NAME
+"Weeping Flagstones" claims "endless mineral tears streaming from carved eyes"
+                     ships: the ground in a 10-foot Emanation is Difficult Terrain
+"Dead Star Draught"  claims "solar radiance spent like a spell from a fixed throne"
+                     ships: absorbs radiant damage and heals from it
+```
+
+`decoration_rows` now makes this countable per sheet. The critic's "12 of 13 free
+rows from three templates" is confirmed live, and sharpened: it is not just
+template concentration, it is that the rows do not carry what they claim.
+
+**Verified the audit really answers**, rather than inferring it from a run of
+revokes — a direct call with a real saved sheet returned
+`element_claims: [{"entry":"Thorn Garden","quote":null}]` alongside a normal
+finding. So the nulls are judgments, not an ignored field.
+
+#### Honest gaps
+
+- **The `expressed` branch has ZERO live examples.** The probe's two positives
+  (Hydra's `Smoldering Stumps`, Vampire's `Briar Regrowth`) did not recur — this
+  run rolled different rows. So "a quote is accepted and validated" rests on the
+  probe and unit tests only.
+- **Coverage read 69% against a ~78% baseline.** The sample is 10 twist-heavy
+  sheets and 13 clauses against the forty's 67, so this is probably variance — and
+  the revoke removes no rows, so it cannot mechanically drop coverage. Flagged
+  rather than waved away; the release forty settles it.
+- **A trace gap closed on the way:** "could quote nothing" covered both an
+  explicit null and a MISSING answer, so 5 revokes read identically whether the
+  audit had judged them or ignored the field. Diagnosing that cost a detour. The
+  three failure modes now trace distinctly.
+
+## WHY the free-row path ships decoration: closest-acceptance (measured 2026-10-22)
+
+Owner asked why the path keeps picking templates that do not carry the element.
+It mostly is not the call picking badly. **On the trait seat, the engine ships a
+template the call explicitly REFUSED, and then asks it to justify the row.**
+
+The Vampire's chain, in order:
+
+```
+signature idea (trait): "Any foe who dies in the vampire's garden ... roots take
+  the body ... a new-walled clump of thorn rises over it ..."
+word match declined by the call: heated-body, absorption, aberrant-ground,
+  death-burst, false-appearance — the key word does not mean the mechanic here
+closest accepted: trait — the call REFUSED EVERY TEMPLATE but named "terrain-walk"
+  as nearest; it lands rather than the row being dropped
+free signature row: "Thorn Garden" — ... the call names the element it expresses:
+  "a garden of thorns grown from the dead it buries"
+signature template (trait): terrain-walk -> Traits/"Thorn Garden"
+```
+
+The call answered **no_fit**. The engine took its "if forced, nearest" answer and
+shipped it. `expresses` is then asked about a template the call had just refused —
+so it justifies post hoc, and the row cannot carry what it claims. `Thorn Garden`
+ships as mud-walking.
+
+### Measured over the express ten
+
+| sheet | the call refused all, named | the revoked row's template | same? |
+|---|---|---|---|
+| Stone Golem | `aberrant-ground` | `aberrant-ground` | **yes** |
+| Vampire | `terrain-walk` | `terrain-walk` | **yes** |
+| Brother Halric | `adhesive` | `adhesive` | **yes** |
+| Hydra | `zone` (action seat) | `bloodied-burst` (trait) | no |
+| Ossuar | `obstacle-pull` (action) | `absorption` (trait) | no |
+
+**3 of 5 — and 3 of 3 where closest-acceptance fired on the TRAIT seat.** The other
+two reached the free-row path the ordinary way (no verb, no quote) and are
+genuinely the call's own picks. Across the run: 10 closest-acceptances, 11 free
+rows granted — near 1:1.
+
+This is the same disease as 1d and verb preference, in a third place: **the engine
+overruling the call's own "no".** The critic's wording understates it — "a keyed
+template the call already declined is not a better answer" becomes, here, *a
+template the call REFUSED is not an answer at all.*
+
+### But closest-acceptance may not simply be deleted
+
+It exists for a measured reason (`BACKLOG-reskin-2026-10-21.md`): it took "the row
+shipped nothing" from **22% of blocks at 2026-10-16 to about 1 in 41**. Retiring it
+reopens that, and an empty seat is worse than a decoration row.
+
+### The fix that follows from the data
+
+A closest-accepted row is, **by construction**, a row the call refused. It cannot
+be deliberately expressing anything — so it should never have been asked to claim
+an element, and 3 of 3 such rows were revoked anyway. So:
+
+1. **A closest-accepted row is decoration from the start.** It still ships (the
+   free-row allowance is what keeps the seat from being empty), but it carries no
+   receipt and never claims an element in its NAME.
+2. The audit's element-claims question is then only asked of rows that claimed an
+   element through a pick the call actually wanted — which is also fewer claims
+   per sheet, and a cleaner signal.
+
+This costs nothing measurable (those rows were revoked after a round trip anyway)
+and removes the post-hoc justification step entirely.
+
+### Landed: a template the call refused ships as decoration, and claims nothing
+
+Both seats. `closest-acceptance` still fires — it is what keeps a seat from being
+empty, and it is worth 22%-of-blocks-to-1-in-41 — but the row it produces now:
+
+- **takes the free-row allowance** (so the seat stays filled, no regression on the
+  thing closest-acceptance exists for);
+- **carries no receipt** — `expresses` is nulled on both the seat and the row, so
+  the audit is never asked to judge a claim that cannot be true;
+- **is marked `decoration` at GRANT**, not after a round trip;
+- **is counted** in `decoration_rows` / `expressed_rows`.
+
+The audit's element-claims question is now only asked of rows that claimed an
+element through a pick the call actually wanted — fewer claims per sheet and a
+cleaner signal. The metric was also decoupled from the claims list, or a sheet
+whose only free row is a refused template would report no decoration at all.
+
+**Gate:** Jest 117 suites / 3753 passing, build clean.
+
+**Not yet verified live** — this needs a run where closest-acceptance fires on a
+trait seat (it did 3 times in ten, so a ten should cover it). The greps are
+`ships as DECORATION` and `decoration_rows`.

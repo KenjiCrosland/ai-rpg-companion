@@ -32,7 +32,7 @@ export function auditEligible() {
   return true;
 }
 
-export function buildAuditPrompt(monster, edition = '2024', { reskin = false } = {}) {
+export function buildAuditPrompt(monster, edition = '2024', { reskin = false, elementClaims = [] } = {}) {
   const is2014 = edition === '2014';
   return `You are auditing a D&D ${is2014 ? '5th edition (2014 rules)' : '2024-format'} monster statblock for MECHANICAL defects.
 Deterministic checks (math, DCs, damage bands, known formatting rules) have
@@ -191,6 +191,7 @@ Spellcasting, or Legendary Resistance.
 OUTPUT: JSON only, no markdown fences. Report at most 6 findings.
 { "name_grade": "A-F",
   "type_correction": null,
+  "element_claims": [],
   "findings": [ { "principle": <1-5>, "section": "<section name>",
   "entry": "<entry name>", "span": "<exact quoted text, verbatim>",
   "issue": "<one sentence>", "suggestion": "<one sentence, direction not prose>",
@@ -199,7 +200,18 @@ OUTPUT: JSON only, no markdown fences. Report at most 6 findings.
   "confidence": "high|medium|low" } ] }
 An empty findings array is a correct and common output. Do not manufacture
 findings to appear thorough. Every span must be verbatim text from the block —
-if you cannot quote it, the finding does not exist.${reskin ? `
+if you cannot quote it, the finding does not exist.${elementClaims.length ? `
+
+ELEMENT CLAIMS. These rows were allowed onto the sheet because they were said to
+express one of this creature's distinctive features. For EACH, quote the words of
+THAT ROW'S TEXT which carry the feature, or null if the row does not carry it.
+${elementClaims.map((c) => `- "${c.entry}" claims: ${c.element}`).join('\n')}
+
+Answer in "element_claims": [ { "entry": "<the row name>", "quote": "<exact words from that row's text, verbatim — or null>" } ]
+- The quote MUST be copied verbatim from that row's text. Never quote the row's NAME.
+- A row carries the feature only if its RULES do. A name that sounds like the feature is not the feature, and damage of a plausible type is not on its own.
+- If the row would read the same for a creature without this feature at all, answer null.
+- But PART of the feature is enough. If any clause of the row's rules carries any part of it — a condition it imposes, a trigger, a movement, a damage type the feature specifically calls for — quote that clause.` : ''}${reskin ? `
 
 RESKIN MODE. This block's numbers, DCs, and damage budgets are engine-authored and correct by construction — never flag them. The model-written parts are the entry NAMES, the TRAIT texts, and ONE signature action; your entire value is there:
 1. Garbled rules language ("attacks hit the target's AC with advantage" is not adjudicable — supply the rewrite).
@@ -210,6 +222,19 @@ RESKIN MODE. This block's numbers, DCs, and damage budgets are engine-authored a
 6. REDUNDANT RULES — list each benefit the block grants; if a model-written trait duplicates one the chassis already grants (two entries both giving Disadvantage on Opportunity Attacks), or a clause is made dead by another entry (a trait converting damage a row already deals), flag it and supply a rewrite trimming the duplicate clause.
 7. STAT-FICTION MISMATCH — a save whose STAT contradicts what the save represents (a Strength save to shake off a scent-lock, a Charisma save to dodge a falling rock). Propose the stat the fiction demands; the DC never changes.
 A typical reskin block carries 1-3 such findings; an empty array on a block with model-written traits usually means a MISSED finding, not a clean block — look again before returning empty. The don't-manufacture rule still stands, and every span must be copied character-for-character, capitalization included.` : ''}`;
+}
+
+// THE ELEMENT CLAIMS PASS THROUGH, SHAPE-CHECKED ONLY (2026-10-22). The engine
+// validates the quote itself — it must be VERBATIM in that row's text — because
+// that is the half a call cannot be trusted with. Here we only ensure the field
+// is a list of {entry, quote} and never throws the whole response away for it:
+// an audit response is never allowed to block shipping.
+export function readElementClaims(parsed) {
+  const raw = parsed?.element_claims;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((c) => ({ entry: String(c?.entry ?? '').trim(), quote: c?.quote == null ? null : String(c.quote).trim() }))
+    .filter((c) => c.entry);
 }
 
 export function validateAuditResponse(raw) {

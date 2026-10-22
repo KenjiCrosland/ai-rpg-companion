@@ -34,7 +34,7 @@ export const guardedStanceWhyAt = (cr, ac) => `AC ${ac} already beats print's ${
 import { hpFormulaFor as hpFormulaForSize, saveDamageDiceFor as engineDiceFor, attackDamageDiceFor } from '../format-2024/dice.mjs';
 import { AFFLICTIONS, imposedConditions } from './author.mjs'; // one definition: the conditions a finished row imposes
 import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the validated condition list the authoring call answers against
-import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection } from '../format-2024/audit.mjs';
+import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
 import { buildRepairPrompt, parseAuthorResponse, validateAuthorResponse } from './author.mjs';
 import { featureRows } from './features.mjs';
@@ -681,6 +681,62 @@ const SPECTRAL_COMPOUNDS = /witch-?fire|fox-?fire|bale-?fire|marsh-?fire|ghost-?
 //
 // Extracted so the ship-check is testable without driving the pipeline through
 // chained LLM mocks (the critic's test category 4).
+// A FAILED EXPRESSION REVOKES THE CLAIM, NOT THE ROW (owner, 2026-10-22:
+// "we need some way to soften the rejection").
+//
+// The element receipt let a row exist because the call NAMED one of the creature's
+// own elements. Membership is not expression: the one-eyed red dragon's
+// `Blindside Lash` named "a blinded eye from an old lance" and shipped as
+// "a creature that touches the dragon takes 10 (3d6) fire damage". But refusing
+// such a row outright is the 1d behaviour that killed six twists a forty, and the
+// expression call errs toward `null` (measured: 18/21, every error a false
+// negative, 0 false positives — scripts/probe-expression-quote.mjs).
+//
+// So a failed quote costs the row its CLAIM, not its existence:
+//   * the NAME may no longer carry the element's words — the harm in the exhibit
+//     was a generic row TELLING a GM the twist was honoured;
+//   * the row is marked decoration, so the sameness metric counts it (the owner's
+//     ruling on invented-element rows lands in the same place);
+//   * the row itself stays, so no coverage is lost to a conservative call.
+//
+// The engine validates the quote — VERBATIM in that row's own text — because that
+// is the half a call cannot be trusted with.
+export function revokeUnexpressedClaims(monster, claims, trace = () => {}) {
+  const byEntry = new Map(claims.map((c) => [c.entry.toLowerCase(), c]));
+  const stop = new Set(['a', 'an', 'the', 'of', 'and', 'or', 'with', 'its', 'that', 'in', 'on', 'from', 'to']);
+  for (const es of Object.values(monster.sections ?? {})) {
+    for (const e of es ?? []) {
+      if (!e.expresses || !e.freeRow) continue;
+      const bare = String(e.name ?? '').replace(/ \(.*\)$/, '');
+      const claim = byEntry.get(bare.toLowerCase());
+      const text = String(e.text ?? '');
+      const quote = claim?.quote ?? null;
+      const ok = !!quote && text.toLowerCase().includes(quote.toLowerCase());
+      if (ok) { e.expressedQuote = quote; trace('element expressed:', `${bare} carries "${e.expresses}" — "${quote.slice(0, 80)}"`); continue; }
+      // the claim fails: the row stays, the name may not advertise the element
+      e.decoration = true;
+      // DISTINGUISH THE THREE WAYS A CLAIM FAILS (2026-10-22). "could quote
+      // nothing" covered both an explicit null and a MISSING answer, so a run of
+      // 5 revokes read identically whether the audit had judged them or had
+      // ignored the field — and diagnosing that cost a detour. Measurement lesson
+      // 4 again: a decline must trace what it saw.
+      const why = quote
+        ? "the quote was not in the row's own text"
+        : claim
+          ? 'the audit judged that nothing in the row carries it'
+          : 'the audit returned no verdict for this row';
+      const words = String(e.expresses).toLowerCase().split(/[^a-z']+/).filter((w) => w.length > 3 && !stop.has(w));
+      const nameCarries = words.filter((w) => bare.toLowerCase().includes(w.slice(0, Math.max(4, w.length - 2))));
+      if (nameCarries.length) {
+        trace('element claim revoked:', `"${bare}" claims "${e.expresses}" but ${why}; the name carries ${nameCarries.map((w) => `"${w}"`).join(', ')} and may not advertise what the rules do not do — flagged decoration for the rename pass`);
+        e.nameClaimRevoked = nameCarries;
+      } else {
+        trace('element claim revoked:', `"${bare}" claims "${e.expresses}" but ${why}; the name advertises nothing, so the row stands as decoration`);
+      }
+    }
+  }
+}
+
 export function readGapOutcomes({ sections = {}, gapRecords = [], generation = null, trace = () => {} }) {
   if (!gapRecords.length) return { vetoed: 0, landed: 0 };
   // A RIDER THAT RODE A ROW SHIPPED. It owns no row of its own, so its template
@@ -4166,6 +4222,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // ruling of its own.
         const freeAllowance = printExact ? 0 : 1;
         let freeRowHere = false; // stamped onto the row below, so the ship-time budget can find it
+        let decorationHere = false; // a closest-accepted row ships, but claims nothing
         // VERB PREFERENCE STANDS DOWN (critic's item 1, other half, 2026-10-22:
         // "a keyed template the call already declined is not a better answer").
         // This test used to fire only when `verbRanked.some((r) => r.concept.length)`
@@ -4186,7 +4243,27 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // the critic cited in point (c), where the real fix is the call naming the
         // element its own list already holds, not a gate that lets decoration by.
         if (!verbs.length && !askedOk) {
-          if (!fit.expresses) {
+          // A ROW THE CALL REFUSED MAY NOT CLAIM AN ELEMENT (measured 2026-10-22).
+          // closest-acceptance ships the call's "if forced, nearest" answer so the
+          // seat is not left empty — it took "the row shipped nothing" from 22% of
+          // blocks to about 1 in 41, so it stays. But asking THAT row which
+          // element it expresses invites a post-hoc justification, and the answer
+          // cannot be true: the call had just refused the template. Measured on
+          // the express ten, 3 of 3 closest-accepted TRAIT rows were revoked after
+          // the fact — the Vampire's "Thorn Garden" claimed "a garden of thorns
+          // grown from the dead it buries" and shipped as mud-walking.
+          //
+          // So it ships as DECORATION from the start: no receipt, no element
+          // claim, counted in the metric, never asked to justify itself. The seat
+          // stays filled and the sheet stops advertising a twist it did not honour.
+          if (fit.accepted_closest) {
+            if (freeAllowance === 0) {
+              trace('signature miss:', `${seat} — "${fit.template.id}" was the call's nearest after it refused every template, but print closes this sheet's row set`);
+              return null;
+            }
+            freeRowsUsed += 1; freeRowHere = true; decorationHere = true;
+            trace('free signature row:', `${seat} — "${fit.template.id}" is the call's nearest after it refused every template, so it ships as DECORATION: no receipt, no element claim, counted in the metric. Earns no clause credit`);
+          } else if (!fit.expresses) {
             trace('signature miss:', `${seat} — "${fit.template.id}" quotes nothing the GM typed, matches no key-table verb, and the call named none of this creature's own elements for it: decoration, not a signature`);
             return null;
           }
@@ -4214,7 +4291,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // itself, not just the words. Coverage then credits a receipt rather than
         // a stem overlap ("wound" crediting "cracks open when wounded" to
         // Rampage, the critic's case).
-        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, ...(rendered.gate ? { gate: rendered.gate } : {}), text: stampT(rendered.text), library: true, template: fit.template.id, ...(rendered?.imposes ? { imposes: rendered.imposes } : fit.template?.imposes ? { imposes: fit.template.imposes } : {}), ...(fit.fills?.condition_minor && CONDITIONS_CLOSED.includes(fit.fills.condition_minor) ? { imposes: fit.fills.condition_minor } : {}), ...(fit.fills?.consumed_condition ? { requiresCondition: fit.fills.consumed_condition } : {}), boundKeys: [...String(fit.because ?? '').matchAll(/([a-z][a-z' -]*?):concept\b/g)].map((mm) => mm[1].trim()) /* provenance: the user's words this row binds to (step 8) */, ...(freeRowHere ? { freeRow: true } : {}) /* the ship-time budget reads the mark off the row */ }, templateName: rendered.name, section: rendered.section, template: fit.template.id, host: fit.template.host ?? 'melee', supersedes: fit.template.supersedes ?? null, asked: askedOk, askedRaw: String(fit.asked ?? '').trim(), expresses: fit.expresses ?? null, elementsOffered: sigElements, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
+        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, ...(rendered.gate ? { gate: rendered.gate } : {}), text: stampT(rendered.text), library: true, template: fit.template.id, ...(rendered?.imposes ? { imposes: rendered.imposes } : fit.template?.imposes ? { imposes: fit.template.imposes } : {}), ...(fit.fills?.condition_minor && CONDITIONS_CLOSED.includes(fit.fills.condition_minor) ? { imposes: fit.fills.condition_minor } : {}), ...(fit.fills?.consumed_condition ? { requiresCondition: fit.fills.consumed_condition } : {}), boundKeys: [...String(fit.because ?? '').matchAll(/([a-z][a-z' -]*?):concept\b/g)].map((mm) => mm[1].trim()) /* provenance: the user's words this row binds to (step 8) */, ...(freeRowHere ? { freeRow: true } : {}), ...(decorationHere ? { decoration: true } : {}) /* the ship-time budget reads the mark off the row */ }, templateName: rendered.name, section: rendered.section, template: fit.template.id, host: fit.template.host ?? 'melee', supersedes: fit.template.supersedes ?? null, asked: askedOk, askedRaw: String(fit.asked ?? '').trim(), expresses: decorationHere ? null : (fit.expresses ?? null), /* a template the call refused claims nothing */ elementsOffered: sigElements, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
       } catch (e8) {
         trace('signature fit call failed —', `${seat}: ${e8?.message ?? e8}`);
         return null;
@@ -4659,7 +4736,22 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // was always right.
       if (traitT && !traitT.asked && !/:concept\b/.test(traitT.because ?? '')) {
         const freeAllowanceT = printExact ? 0 : 1;
-        if (!traitT.expresses) {
+        // THE TRAIT SEAT IS WHERE THIS WAS MEASURED: 3 of 3 closest-accepted trait
+        // rows were revoked after the fact. A template the call refused ships to
+        // keep the seat filled, but claims nothing. (See the action seat above.)
+        if (traitT.accepted_closest) {
+          if (freeAllowanceT === 0) {
+            trace('trait declined:', `"${traitT.row.name}" — the call's nearest after it refused every template, but print closes this sheet's row set`);
+            traitT = null;
+          } else {
+            freeRowsUsed += 1;
+            traitT.freeRow = true;
+            traitT.row.freeRow = true;
+            traitT.row.decoration = true;
+            traitT.expresses = null; traitT.row.expresses = null; // a refused template claims nothing
+            trace('free signature row:', `"${traitT.row.name}" — the call's nearest after it refused every template, so it ships as DECORATION: no receipt, no element claim, counted in the metric. Earns no clause credit`);
+          }
+        } else if (!traitT.expresses) {
           trace('trait declined:', `"${traitT.row.name}" — no receipt of any kind: no quote, no concept key, and the call named none of this creature's own elements for it (decoration, not a signature)`);
           traitT = null;
         } else
@@ -6813,7 +6905,33 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const libraryBrief = libraryGenericName
         ? `\n\nLIBRARY NOTICE: the entry "${libraryGenericName}" is an engine stand-in wearing a GENERIC name — propose a rename that fits THIS creature's concept (keep its rules text unchanged).`
         : '';
-      const rawAudit = await callLLM(buildAuditPrompt(monster, '2024', { reskin: true }) + libraryBrief, validateAuditResponse);
+      // THE CLAIMS RIDE THE AUDIT, NOT A NEW CALL (2026-10-22). Expression has to be
+      // judged against the FINISHED row text by a call other than the one that
+      // picked the template — and the audit already reads every row and already
+      // proposes renames, so the question is a field on a call we were making
+      // anyway. No extra round trip.
+      const elementClaims = Object.values(monster.sections ?? {}).flat()
+        .filter((e) => e.expresses && e.freeRow)
+        .map((e) => ({ entry: String(e.name ?? '').replace(/ \(.*\)$/, ''), element: e.expresses }));
+      const rawAudit = await callLLM(buildAuditPrompt(monster, '2024', { reskin: true, elementClaims }) + libraryBrief, validateAuditResponse);
+      // the metric runs whether or not there was anything to ASK: a sheet whose
+      // only free row is a refused template has no claim to judge and would
+      // otherwise report no decoration at all.
+      if (elementClaims.length) revokeUnexpressedClaims(monster, readElementClaims(rawAudit), trace);
+      {
+        // THE OWNER'S RULING, COUNTED (2026-10-22): invented-element rows are
+        // allowed, capped by declared family, and visible in the metric, so it can
+        // be seen whether free rows add variety or just more damage-on-touch.
+        const free = Object.values(monster.sections ?? {}).flat().filter((e) => e.freeRow);
+        // `decoration` is set either at GRANT (a template the call refused) or by
+        // revokeUnexpressedClaims above (a claim that could not be quoted).
+        const deco = free.filter((e) => e.decoration);
+        if (monster.generation) {
+          monster.generation.decoration_rows = deco.length;
+          monster.generation.expressed_rows = free.length - deco.length;
+        }
+        if (deco.length) trace('sameness:', `${deco.length} of ${free.length} free row(s) express nothing their rules carry — counted as decoration (${deco.map((e) => `"${String(e.name).replace(/ \(.*\)$/, '')}"`).join(', ')})`);
+      }
       const findings = verifyAuditFindings(monster, rawAudit);
       trace('audit:', findings.length ? findings.map((f) => `${f.loc?.entry ?? '-'}: ${f.message}`) : 'nothing flagged');
       // THE AUDIT ALREADY READS THE FINISHED SHEET (critic A2b, 2026-10-18). It is

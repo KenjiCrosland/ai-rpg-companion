@@ -268,3 +268,70 @@ describe('gateOf is the single definition of a row gate', () => {
     expect(gateFromName(unstamped)).toBe('Recharge 5-6');
   });
 });
+
+// A FAILED EXPRESSION REVOKES THE CLAIM, NOT THE ROW (owner, 2026-10-22: "we need
+// some way to soften the rejection"). Membership is not expression — the one-eyed
+// dragon's Blindside Lash named "a blinded eye from an old lance" and shipped as
+// damage-on-touch — but refusing the row outright is the 1d behaviour that killed
+// six twists a forty, and the expression call errs toward null (18/21, every error
+// a false negative, 0 false positives). So the row stays and loses the claim.
+describe('revokeUnexpressedClaims softens the rejection', () => {
+  const { revokeUnexpressedClaims } = require('../generate.mjs');
+  const dragon = () => ({
+    sections: { Traits: [{
+      name: 'Blindside Lash', freeRow: true, expresses: 'a blinded eye from an old lance',
+      text: 'A creature that touches the dragon or hits it with a melee attack while within 5 feet of it takes 10 (3d6) fire damage.',
+    }] },
+    generation: {},
+  });
+
+  test('a row whose quote is verbatim keeps its claim', () => {
+    const m = dragon();
+    m.sections.Traits[0].text = 'A creature that hits the dragon on its blind side has Disadvantage, and the dragon takes 10 (3d6) fire damage from its own lashing.';
+    revokeUnexpressedClaims(m, [{ entry: 'Blindside Lash', quote: 'hits the dragon on its blind side has Disadvantage' }]);
+    const e = m.sections.Traits[0];
+    expect(e.decoration).toBeUndefined();
+    expect(e.expressedQuote).toMatch(/blind side/);
+  });
+
+  test('THE EXHIBIT: a null quote keeps the ROW but marks it decoration', () => {
+    const m = dragon();
+    revokeUnexpressedClaims(m, [{ entry: 'Blindside Lash', quote: null }]);
+    expect(m.sections.Traits).toHaveLength(1);           // the row is NOT removed
+    expect(m.sections.Traits[0].decoration).toBe(true);
+  });
+
+  test('the name claim is identified so the rename pass can strip it', () => {
+    const m = dragon();
+    revokeUnexpressedClaims(m, [{ entry: 'Blindside Lash', quote: null }]);
+    // "blinded" in the element vs "Blindside" in the name
+    expect(m.sections.Traits[0].nameClaimRevoked).toEqual(expect.arrayContaining([expect.stringMatching(/blind/)]));
+  });
+
+  // the engine validates the quote; this is the half a call cannot be trusted with
+  test('a fabricated quote is rejected like a missing one', () => {
+    const m = dragon();
+    revokeUnexpressedClaims(m, [{ entry: 'Blindside Lash', quote: 'the dragon cannot see on its left side' }]);
+    expect(m.sections.Traits[0].decoration).toBe(true);
+  });
+
+  test('a name that advertises nothing is still decoration, with no rename needed', () => {
+    const m = dragon();
+    m.sections.Traits[0].name = 'Searing Body';
+    revokeUnexpressedClaims(m, [{ entry: 'Searing Body', quote: null }]);
+    expect(m.sections.Traits[0].decoration).toBe(true);
+    expect(m.sections.Traits[0].nameClaimRevoked).toBeUndefined();
+  });
+
+  test('a row carrying no receipt is untouched', () => {
+    const m = { sections: { Traits: [{ name: 'Legendary Resistance (3/Day)', text: 'It succeeds instead.' }] } };
+    revokeUnexpressedClaims(m, []);
+    expect(m.sections.Traits[0].decoration).toBeUndefined();
+  });
+
+  test('an audit that answers nothing at all revokes rather than silently passing', () => {
+    const m = dragon();
+    revokeUnexpressedClaims(m, []);          // no claim returned for the row
+    expect(m.sections.Traits[0].decoration).toBe(true);
+  });
+});
