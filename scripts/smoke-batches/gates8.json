@@ -1,0 +1,58 @@
+[
+ {
+  "name": "Air Elemental",
+  "description": "that carries stolen voices",
+  "cr": "5",
+  "rules": "2024",
+  "canary": "SPINE 5 \u00b7 print head + addition on an Elemental body"
+ },
+ {
+  "name": "",
+  "description": "a glacier's heart given legs, trailing a wake of killing cold",
+  "cr": "15",
+  "rules": "2014",
+  "canary": "SPINE 15 \u00b7 homebrew one-liner"
+ },
+ {
+  "name": "",
+  "description": "a plague-bearing archon of flies that commands lesser swarms",
+  "cr": "13",
+  "rules": "2024",
+  "canary": "SPINE 13 \u00b7 homebrew one-liner"
+ },
+ {
+  "name": "Adult Red Dragon",
+  "description": "blind in one eye from an old lance",
+  "cr": "17",
+  "rules": "2014",
+  "canary": "SPINE 17 \u00b7 print head + a lack, legendary 2014"
+ },
+ {
+  "name": "",
+  "description": "a leviathan of the trench whose song drowns fleets",
+  "cr": "24",
+  "rules": "2024",
+  "canary": "SPINE 24 \u00b7 homebrew one-liner at the ceiling"
+ },
+ {
+  "name": "",
+  "description": "a young storm drake whose breath is a rolling wall of thunder",
+  "cr": "7",
+  "rules": "2024",
+  "canary": "USE CASE \u00b7 DRAGON body, homebrew: a breath nova inside the cap"
+ },
+ {
+  "name": "",
+  "description": "a swarm of funeral bells that ring themselves over the dying",
+  "cr": "13",
+  "rules": "2024",
+  "canary": "USE CASE \u00b7 SWARM body: print's swarm shape and resistances"
+ },
+ {
+  "name": "Meshrin",
+  "description": "Large lizard folk, 30 feet of movement, Wields a greataxe two-handed and a javelin for the throw. He is a barbarian who rages. Give him a frightening roar. AC 16, 120 hit points.",
+  "cr": "8",
+  "rules": "2014",
+  "canary": "USE CASE \u00b7 DENSE: body + class + GM requests + math, all at once"
+ }
+]

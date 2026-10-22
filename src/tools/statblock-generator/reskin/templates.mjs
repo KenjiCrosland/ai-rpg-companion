@@ -1124,10 +1124,16 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
     }
     if (cur < startAvg) steps.push(`dice ${startAvg} → ${cur} (scaled down to the ceiling)`);
   }
+  // THE GATE IS A DECISION, SO IT IS RETURNED — not left for a consumer to read
+  // back off the name it just built (owner, 2026-10-22: send the metadata back
+  // rather than inferring it with a pattern). Donor rows carry no gate: a chassis
+  // nova gets its `(Recharge 5-6)` HERE, from pricing, which is why 0 of 18 gated
+  // rows in sweep-2026-10-21T22-17-49 carried a declared gate.
+  let gateChosen = null;
   if (v.ev > ceiling && !gated && section !== 'Traits' && !controlOnly && noGate && v.hasDamage && !kill && !recurring) { // a nova already stands on the sheet: this row stays ungated and scales to the ceiling instead (the wyrm's Frozen Maw beside Freezing Breath, step 7 twelve)
     let cur = v.avg; for (let i = 0; i < 8 && v.ev > ceiling && cur > perHit; i += 1) { const d = saveDamageDiceFor(Math.max(perHit, Math.floor(cur * ceiling / v.ev))); if (d.avg >= cur) break; text = text.replace(DMG, `${d.avg} (${d.dice})`); v = value(text); cur = v.avg; }
     steps.push(`a nova already stands — kept ungated, dice to ${v.avg} at the ceiling`);
-  } else if (v.ev > ceiling && !gated && section !== 'Traits' && !controlOnly) { name = `${name} (Recharge 5-6)`; steps.push('over the ceiling — gated Recharge 5-6'); }
+  } else if (v.ev > ceiling && !gated && section !== 'Traits' && !controlOnly) { name = `${name} (Recharge 5-6)`; gateChosen = 'Recharge 5-6'; steps.push('over the ceiling — gated Recharge 5-6'); }
   else if (v.ev > ceiling && !gated && section !== 'Traits' && controlOnly) steps.push('over the ceiling but a control row (no damage, no KO) — print leaves these ungated');
-  return { text, name, ev: Math.round(v.ev * 10) / 10, floor: Math.round(floor * 10) / 10, replaced: label, steps };
+  return { text, name, ev: Math.round(v.ev * 10) / 10, floor: Math.round(floor * 10) / 10, replaced: label, steps, gate: gateChosen };
 }

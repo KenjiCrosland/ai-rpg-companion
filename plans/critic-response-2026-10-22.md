@@ -414,3 +414,283 @@ Stated plainly rather than counted as coverage:
   anger. Criterion 6 passing therefore shows no regression, not that eviction is
   proven safe. Unit tests cover the eviction; a forty at close-out is what would
   exercise both for real.
+
+## Landed: order item 1 complete — the gap ship-check counts appended riders
+
+The other half of instrument honesty. A rider welded onto a row **owns no row of
+its own**, and the ship-check asked "did this template ship?" by reading
+`e.template` off the rows — so a rider that shipped read as a veto.
+
+Confirmed in the forty before fixing: both sheets logged the weld AND the veto.
+
+```
+13-purple-worm : signature rider: charge -> Bite (appended; ...)
+34-krennik     : signature rider: charge -> Saber (appended; ...)
+                 ...and both [gap] lines stamped VETOED AFTER ACCEPTANCE: charge
+```
+
+**The fix follows the line directly above the bug.** The weld already hands the
+host the rider's *provenance* (`host.boundKeys = [...]` — "the rider's provenance
+rides on the host"); it simply never handed over **which template** shipped. It
+now also records `host.riderTemplates`, and the ship-check reads that alongside
+`e.template`.
+
+Extracted as `readGapOutcomes({ sections, gapRecords, generation, trace })` for
+the same reason `settleSheetBudgets` was — the late passes are otherwise only
+reachable through chained LLM mocks (the critic's test category 4).
+
+**This moves a published number.** "VETOED after acceptance: 10 of 30" counted at
+least these two shipped riders as vetoes, so the real figure is **8 of 30 or
+better** — the 1d replacement did more than I reported, and `gap-outcomes.mjs`
+will show it on the next run with no change to the parser (the trace format is
+unchanged; only which branch fires).
+
+**Gate:** Jest 116 suites / 3713 passing (+16 total new), build clean.
+
+### Pass criteria for the `riders2` smoke, written before the run
+
+Two cases: Purple Worm and Krennik Skullstandard, the two sheets that misreported.
+
+1. **Wherever a `signature rider:` weld trace appears, that template's `[gap]`
+   line reads `[landed: X]`** — never `VETOED AFTER ACCEPTANCE`.
+2. **`generation.gap_vetoed` does not count a welded rider.**
+3. **No new FAIL** on either sheet.
+4. **Honest caveat up front:** the charge rider may not re-form on this roll
+   (the forty turns over almost completely between runs). If no
+   `signature rider:` trace appears, the fix is **not exercised live** and rests
+   on the unit tests — say so rather than counting the run as proof.
+
+### The `riders2` smoke read (`smoke-out/riders2-2026-10-21T23-53-06`)
+
+**0 FAIL of 2.** Criterion 4's caveat is the headline: **the charge rider did not
+re-form on this roll, so the fix was not exercised live.** No `signature rider:`
+trace on either sheet. This run's Krennik shipped `Pack-Call Standard` (lure)
+where the forty's rode `charge` onto his Saber. The rider fix rests on its unit
+tests until a run happens to weld one.
+
+What the run DOES establish — no false veto survives:
+
+| sheet | `gap_vetoed` | stamps |
+|---|---|---|
+| Purple Worm | 0 of 1 | `[landed: exploiter]` |
+| Krennik Skullstandard | 1 of 2 | `[landed: lure]`, `[VETOED: resonant-body]` |
+
+**The one veto is a TRUE positive**, traced end to end:
+
+```
+closest accepted: trait — the call refused every template but named
+  "resonant-body" as nearest; it lands rather than the row being dropped
+trait declined: "Resonant Body" — no receipt of any kind: no quote, no concept
+  key, and the call named none of this creature's own elements
+```
+
+Accepted by closest-acceptance, then declined by the receipt gate. The row
+genuinely never reached the sheet, and for the right reason.
+
+**A verification error worth recording.** I first "confirmed" resonant-body was
+absent by scanning the saved JSON's `sections` — but **this sheet's saved JSON has
+empty sections** (so do Bog Hound's and Drowned Choir's). The check could not
+have failed, so it proved nothing. The trace and the rendered card are the
+authoritative record for a smoke, not the JSON. Third instance this session of
+the same mistake shape: read the artifact, not a proxy for it.
+
+**This veto is also a live example of order item 2's remaining work** — the
+critic's point (c): pass/fail tracks whether the call FILLS the `expresses`
+field, not whether the row is decoration. Krennik's element list contains
+"skull-trophy standard" and the idea was literally about the standard's rattle,
+yet the call named no element and the row died. The source tag plus the
+expression quote are what fix this class.
+
+## Landed: the print-exemption hole — `conversion-dropped-duration`
+
+Order item 4's first regression, pulled forward because it was already diagnosed
+and is a correctness bug that ships today.
+
+**The root cause, which is NOT what the critic guessed.** The critic expected the
+gate to be reading the 2024 printing. It is not, and the reader is fine —
+`imposedCondition` detects the 2014 phrasing ("or be paralyzed") and is actually
+blind to 2024's "has the Paralyzed condition". The real cause is
+`checker.mjs`'s adjudicability loop, which opens:
+
+```js
+if (/^(?:Multiattack|Legendary Action Uses|Spellcasting)\b/.test(e.name ?? '') || e.print) continue;
+```
+
+`Paralyzing Touch` is stamped `e.print`, so **every adjudicability gate skips
+it**. The exemption is justified for print's own text — but the 2014 conversion
+REWRITES the row and it keeps the print stamp, so a converted print row carries
+text print never wrote and is exempt from every one of those gates. Print's own
+2024 text ends "until the start of the lich's next turn"; the conversion dropped
+it. **The exemption outlives the text it was granted for**, and this is general,
+not about paralysis.
+
+**The fix is the printing-equivalence test** the package-five brief asked for,
+placed beside `conversion-dropped-half` in `gateEdition`, which already makes
+exactly this 2024-vs-2014 comparison through `legacyByName`. It accuses only the
+CONVERSION: it fires when the 2024 row bounds the condition and the 2014 row does
+not. If neither printing bounds it, that is a different finding and not this
+gate's to make.
+
+**Measured before shipping**, over the 19 two-printing sheets of
+`sweep-2026-10-21T22-17-49`: **1 fire, 0 false positives**, and the fire is the
+Bone Sun Lich's `Paralyzing Touch`. Re-running the checker over that forty now
+reads **6 FAIL blocks instead of 5** — the new one is a defect that was shipping
+invisibly, which is the same pattern the backlog records for the 10-20 forty
+("0 FAIL was NOT better").
+
+**One definition, not two.** The bound pattern and the must-be-bounded condition
+list are now module constants (`CONDITION_BOUNDED`, `MUST_BE_BOUNDED`) shared by
+the `condition-duration` gate and this new check. Two copies of a bound pattern
+is how a gate and its sibling drift apart.
+
+**Gate:** Jest 117 suites / 3719 passing (+6), build clean.
+
+### NOT done: the immunity half of test category 5 — needs a ruling
+
+The critic's other section-4 item: the single `condition-duration` firing was a
+**false positive**. Drowned Choir's `One Voice` reads "it is immune to being
+deafened" — it imposes nothing, but the writer's record said it did, and
+`imposedConditions` **prefers the record and never consults the text**:
+
+```js
+const rec = typeof row === 'object' ? row?.imposes : null;
+...
+if (recs.length) return recs;   // the text is never read
+```
+
+Fixing it means teaching the engine that an immunity is not an imposition, and
+every formulation needs **new phrase patterns** — "immune to being deafened",
+"can't be deafened", and the fact that "would be deafened" is a trigger rather
+than an application. The 2014 text reader would otherwise match "be deafened"
+inside "would be deafened" and the gate would still fire.
+
+CLAUDE.md's standing instruction is explicit: *"If a fix seems to need a new word
+rule, stop and propose it to the owner instead of writing it."* So it is proposed,
+not written. Two candidate shapes:
+
+1. **Validate the call's answer** (fits the house rule's own split — the call
+   judges, the engine validates): on authoring, drop a recorded `imposes` the row
+   text contradicts. Needs the immunity patterns.
+2. **Ask the authoring call directly** — it already answers `imposes`; it could
+   answer whether the row *imposes* the condition or *grants immunity* to it, as
+   a second enum on a call we already make. No word rule at all, and the same
+   shape as the `costs` lesson (3/5 wrong → 5/5 right).
+
+Shape 2 looks right by the repo's own precedent, and it is the owner's call.
+
+### A third vacuous-assertion slip, caught by a harness guard
+
+The first draft of `conversion-duration.spec.js` extracted findings with
+`Object.values(r.gates).flat()` — but a gate is `{ status, findings: [...] }`, so
+that yields gate objects with no `rule`, and every `not.toMatch` assertion
+matched the empty string. **Four negative tests passed vacuously.** Caught only
+because the positive test failed and forced a look at the real shape.
+
+The file now carries a guard test — *"the harness reads findings at all"* —
+asserting the extractor sees something on a block known to be flagged. Any spec
+whose negatives carry the weight should have one.
+
+## Landed: `condition_relation` — the immunity half of test category 5
+
+The critic's other section-4 item: the single `condition-duration` firing was a
+**false positive**. Drowned Choir's `One Voice` grants immunity to Deafened and
+imposes nothing, but the writer's record said it did.
+
+**The premise of my own earlier proposal was wrong.** I had said the fix needed
+new immunity phrase patterns. It did not — the prompt ALREADY said:
+
+> "Say null when the row only MENTIONS a condition — … when it names one to say
+> the creature is **immune** to it …"
+
+The call had that instruction and disobeyed it. So "tell it more" was never the
+fix. The actual flaw: **one nullable field was being asked to carry five
+different relationships** — inflicts / requires / immune / self / none. Collapsing
+them is what made it unreliable.
+
+### Probed alone first, which is the method worth keeping
+
+Per the owner (2026-10-22), a prompt hypothesis is tested with **direct calls
+through the dev proxy**, not by running the pipeline and reading traces.
+`scripts/probe-condition-relation.mjs` is checked in beside `probe-path.mjs`:
+15 hand-labelled rows × 3 runs, ~90 calls, about four minutes.
+
+| round | strict | on the consequence |
+|---|---|---|
+| straightforward cases only | 27/27 | 27/27 |
+| + 6 adversarial shapes | 41/45 | 44/45 |
+| + one prompt line on flavour | 42/45 | **45/45** |
+
+**The strict score is the wrong number and I measured it wrong at first.** The
+engine honours a recorded `imposes` ONLY when the relation is `inflicts`, so
+confusing `requires`/`immune`/`self`/`none` with each other costs nothing. The
+probe now reports the consequence — inflicts vs not — as its headline.
+
+Two cases worth recording honestly:
+
+- **`Soothing Word`** ("ends the Frightened condition on it") — I labelled it
+  `none`; the call answers `requires` 3/3, and that is defensible: the row does
+  need the ally to have Frightened. **Kept in the probe as a recorded dispute
+  rather than re-labelled to improve the score.** Immaterial either way — neither
+  value is `inflicts`.
+- **`Dread Aspect`** ("a frightening ruin of bone and tallow") read as
+  `Frightened/inflicts` on 1 of 3 runs — flavour prose scored as a rules effect.
+  This was the one genuine miss, and one prompt line closed it 3/3: *"A word that
+  merely DESCRIBES is not the condition."* Its failure mode was a spurious checker
+  complaint, not a shipped defect — the visible stochastic error the ruling
+  accepts.
+
+### What landed
+
+- The prompt asks `condition_relation` as its own enum on traits and reactions,
+  and `imposes` now names the condition the row INVOLVES.
+- `parseAuthorResponse` validates by **membership** and honours the record only on
+  `inflicts`. Verified across all five values plus two fallbacks:
+
+```
+inflicts  -> imposes="Prone"    requires -> imposes=null
+immune    -> imposes=null       self     -> imposes=null
+none      -> imposes=null
+(no relation)      -> imposes="Stunned"  — older answers unchanged
+(unknown value)    -> imposes="Charmed"  — falls back rather than guessing
+```
+
+- Backward compatible by construction: an answer carrying no relation behaves
+  exactly as before, so nothing depends on the new field arriving.
+
+**Gate:** Jest 117 suites / 3730 passing (+8), build clean.
+
+### The `relation2` e2e read (`smoke-out/relation2-2026-10-22T00-58-52`)
+
+One full e2e with trace on the two sheets that exposed the defects.
+
+**The print-exemption fix is confirmed LIVE.** Ossun Lich — a fresh generation of
+the archlich prompt, not the saved forty — fires:
+
+```
+edition · FAIL · conversion-dropped-duration: Actions/Paralyzing Touch:
+  the 2024 row bounds Paralyzed; the 2014 sheet dropped the duration and
+  imposes it indefinitely
+```
+
+So the gate catches the defect on a run nobody hand-picked, and the exemption
+hole is closed in anger rather than only against saved evidence.
+
+**The `condition_relation` fix was NOT exercised live, and the clean read is not
+evidence for it.** Drowned Hymn Choir came back clean — but that roll produced no
+authoring-call trace and no immunity-shaped row at all, so the field never came
+into play. The clean verdict is a different roll, not a pass. Same shape as the
+rider ship-check two landings ago: the defect simply did not re-form.
+
+What the relation fix actually rests on:
+
+- **45/45 on the consequence** across 15 hand-labelled rows × 3 runs of direct
+  calls (`scripts/probe-condition-relation.mjs`) — including the exact defect row,
+  `One Voice` → `Deafened/immune`, 3/3.
+- **8 unit tests** covering all five enum values plus the two fallbacks.
+
+That is stronger evidence than a single e2e roll would have been, which is the
+point of probing the prompt alone. But it is not the same as having seen it fire
+in the pipeline, and it should not be written up as though it were. The next forty
+will exercise it incidentally; `grep -h "condition_relation" <run>/*.md` is the
+check, and the trace does not currently log the field — **worth adding a trace
+line for it before the next forty**, or the evidence will be invisible again.

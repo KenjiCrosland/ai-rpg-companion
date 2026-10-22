@@ -30,6 +30,28 @@ describe('the gates (critic\'s step-5 read)', () => {
     const one = base(); one.sections.Actions.push(nova('Freezing Breath'));
     expect(has(checkBlock(one), 'structure', 'two-novas')).toBe(false);
   });
+  // THE VROCK IS AN EXCEPTION TO PATTERN FROM, NOT ONE TO SHIP (owner's ruling,
+  // 2026-10-22). Re-measured under novasOf's own predicate — which counts
+  // "(N/Day)", not only "(Recharge N)" — 1 of 329 print blocks carries two: the
+  // Vrock's Spores (Recharge 6) beside Stunning Screech (1/Day). A tweak off the
+  // Vrock keeps the pair print gave it; an engine-written second nova is still a
+  // defect.
+  test("both novas being PRINT's is allowed — the Vrock ships a pair", () => {
+    const b = base();
+    b.sections.Actions.push({ ...nova('Spores'), print: true }, { ...nova('Stunning Screech'), print: true });
+    expect(has(checkBlock(b), 'structure', 'two-novas')).toBe(false);
+  });
+  test("a print nova beside an ENGINE-written one still fails", () => {
+    const b = base();
+    b.sections.Actions.push({ ...nova('Spores'), print: true }, nova('Chorus Barrage'));
+    expect(has(checkBlock(b), 'structure', 'two-novas', 'fail')).toBe(true);
+  });
+  test('the message names which nova is not print\'s', () => {
+    const b = base();
+    b.sections.Actions.push({ ...nova('Spores'), print: true }, nova('Chorus Barrage'));
+    const f = checkBlock(b).gates.structure.findings.find((x) => x.rule === 'two-novas');
+    expect(f.message).toMatch(/"Chorus Barrage" is not print's/);
+  });
   test('"in any combination" with one row is a structure fail', () => {
     const b = base(); b.sections.Actions[0].text = 'The stalker makes two attacks, using Claw in any combination.';
     expect(has(checkBlock(b), 'structure', 'multiattack-combination', 'fail')).toBe(true);

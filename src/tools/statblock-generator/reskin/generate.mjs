@@ -674,6 +674,32 @@ const SPECTRAL_COMPOUNDS = /witch-?fire|fox-?fire|bale-?fire|marsh-?fire|ghost-?
 // whole pipeline through chained LLM mocks (the critic's test categories 1, 9
 // and 10). `sections` is mutated in place, which is the same object the finished
 // monster carries.
+// THE GAP LINE'S OUTCOME, READ OFF THE FINISHED SHEET (critic, 2026-10-21).
+// Every gate that can veto a signature seat has run by the call site, so "did
+// the accepted pick actually ship" is answerable. Stamping it at acceptance made
+// 23 vetoes of 41 look like 1.
+//
+// Extracted so the ship-check is testable without driving the pipeline through
+// chained LLM mocks (the critic's test category 4).
+export function readGapOutcomes({ sections = {}, gapRecords = [], generation = null, trace = () => {} }) {
+  if (!gapRecords.length) return { vetoed: 0, landed: 0 };
+  // A RIDER THAT RODE A ROW SHIPPED. It owns no row of its own, so its template
+  // is read off the host it was welded onto (`riderTemplates`) as well as off
+  // the rows themselves — otherwise a shipped rider counts as a veto and the
+  // signature-outcome table reads pessimistically (2 of the 10 on 2026-10-21:
+  // the Purple Worm's charge rode its Bite, Krennik's rode his Saber).
+  const shipped = new Set(Object.values(sections ?? {}).flat().flatMap((e) => [e.template, ...(e.riderTemplates ?? [])]).filter(Boolean));
+  let vetoed = 0;
+  for (const g of gapRecords) {
+    const landed = g.template ? shipped.has(g.template) : false;
+    if (!landed) vetoed += 1;
+    trace('[gap]', `${g.line}${g.template ? (landed ? ` [landed: ${g.template}]` : ` [VETOED AFTER ACCEPTANCE: ${g.template} never reached the sheet]`) : ' [row dropped]'}`);
+  }
+  if (generation) generation.gap_vetoed = `${vetoed} of ${gapRecords.length}`;
+  if (vetoed) trace('signature outcome:', `${vetoed} of ${gapRecords.length} accepted signature pick(s) never reached the sheet — the seat shipped a fallback or nothing`);
+  return { vetoed, landed: gapRecords.length - vetoed };
+}
+
 export function settleSheetBudgets({ sections, printExact = false, scaled = null, cr = null, generation = null, trace: traceFn = () => {} }) {
   const trace = traceFn;
   const bareName = (e) => String(e.name ?? '').replace(/ \(.*\)$/, '');
@@ -729,10 +755,19 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
       e.gate = undefined;
       const vc = valueCheck(e, { scaled, sections, cr, section: 'Actions', noGate: true, template: e.template ?? e.seed ?? null });
       if (vc.steps.length) {
-        e.text = vc.text; e.name = vc.name;
+        e.text = vc.text; e.name = vc.name; if (vc.gate) e.gate = vc.gate; // the pricing's gate is recorded, not re-read off the name
         const DMG = /\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\)/;
         const was = DMG.exec(beforeText)?.[0]; const now = DMG.exec(e.text)?.[0];
         if (e.text_noRider && was && now && was !== now) e.text_noRider = e.text_noRider.replace(was, now); // the rider weld rebuilds from this twin
+      }
+      // PRICING MAY REFUSE THE UN-GATE, and that must not pass silently. The
+      // `noGate` branch of valueCheck needs `hasDamage && !kill && !recurring`;
+      // a row that misses those falls through to "over the ceiling — gated
+      // Recharge 5-6" and is re-gated on the spot. Before `gate` was returned
+      // this was invisible — the row simply still had a gate in its name.
+      if (vc.gate) {
+        trace('one nova at ship:', `"${beforeName}" could NOT be un-gated — pricing re-gated it (${vc.steps.join('; ')}). It stands beside "${bareName(keepNova)}" and the checker will report the pair`);
+        continue;
       }
       trace('one nova at ship:', `"${beforeName}" un-gated to "${e.name}" — "${bareName(keepNova)}" already carries this sheet's Recharge nova${vc.steps.length ? ` (${vc.steps.join('; ')})` : ''}`);
     }
@@ -3420,7 +3455,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         }
       }
       if (e.wildcard) pendingWildcard = e; // the slot row: the template signature replaces it (or the library seed does)
-      delete e.was; delete e.wildcard; delete e.gate;
+      // `was` and `wildcard` are scaffolding and go. `gate` IS NOT: it is a fact
+      // about the row the DONOR declared ("Area Nova", gate: 'Recharge 5-6') and
+      // the rename carried forward — and it was being wiped here, lumped in with
+      // the scaffolding, before the sheet was ever built. That is why 0 of 18
+      // gated rows in sweep-2026-10-21T22-21-49 carried a declared gate, and why
+      // five separate consumers recover the engine's own decision by
+      // re-reading the name it chose: novasOf, hasChassisNova, the late nova
+      // damage cap, settleSheetBudgets and valueCheck's own `gated` read — which
+      // llm-metadata-over-regex already calls "the third copy of the same
+      // name-only blind spot". Keeping it is the whole consolidation (owner,
+      // 2026-10-22: send the metadata back rather than inferring it).
+      delete e.was; delete e.wildcard;
     }
   }
   // the dropped slot leaves no residue — no bespoke twin, no fallback zap
@@ -4135,7 +4181,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // itself, not just the words. Coverage then credits a receipt rather than
         // a stem overlap ("wound" crediting "cracks open when wounded" to
         // Rampage, the critic's case).
-        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, text: stampT(rendered.text), library: true, template: fit.template.id, ...(rendered?.imposes ? { imposes: rendered.imposes } : fit.template?.imposes ? { imposes: fit.template.imposes } : {}), ...(fit.fills?.condition_minor && CONDITIONS_CLOSED.includes(fit.fills.condition_minor) ? { imposes: fit.fills.condition_minor } : {}), ...(fit.fills?.consumed_condition ? { requiresCondition: fit.fills.consumed_condition } : {}), boundKeys: [...String(fit.because ?? '').matchAll(/([a-z][a-z' -]*?):concept\b/g)].map((mm) => mm[1].trim()) /* provenance: the user's words this row binds to (step 8) */, ...(freeRowHere ? { freeRow: true } : {}) /* the ship-time budget reads the mark off the row */ }, templateName: rendered.name, section: rendered.section, template: fit.template.id, host: fit.template.host ?? 'melee', supersedes: fit.template.supersedes ?? null, asked: askedOk, askedRaw: String(fit.asked ?? '').trim(), expresses: fit.expresses ?? null, elementsOffered: sigElements, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
+        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, ...(rendered.gate ? { gate: rendered.gate } : {}), text: stampT(rendered.text), library: true, template: fit.template.id, ...(rendered?.imposes ? { imposes: rendered.imposes } : fit.template?.imposes ? { imposes: fit.template.imposes } : {}), ...(fit.fills?.condition_minor && CONDITIONS_CLOSED.includes(fit.fills.condition_minor) ? { imposes: fit.fills.condition_minor } : {}), ...(fit.fills?.consumed_condition ? { requiresCondition: fit.fills.consumed_condition } : {}), boundKeys: [...String(fit.because ?? '').matchAll(/([a-z][a-z' -]*?):concept\b/g)].map((mm) => mm[1].trim()) /* provenance: the user's words this row binds to (step 8) */, ...(freeRowHere ? { freeRow: true } : {}) /* the ship-time budget reads the mark off the row */ }, templateName: rendered.name, section: rendered.section, template: fit.template.id, host: fit.template.host ?? 'melee', supersedes: fit.template.supersedes ?? null, asked: askedOk, askedRaw: String(fit.asked ?? '').trim(), expresses: fit.expresses ?? null, elementsOffered: sigElements, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
       } catch (e8) {
         trace('signature fit call failed —', `${seat}: ${e8?.message ?? e8}`);
         return null;
@@ -4285,6 +4331,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // the welded rider's condition rides onto the HOST, which now owns it
         { const wc = /has the (\w+) condition/.exec(riderText)?.[1] ?? (actionT.row?.imposes ?? null); if (wc && !host.imposes) imposeOn(host, wc); }
         host.boundKeys = [...new Set([...(host.boundKeys ?? []), ...keysOf(actionT.because), ...userKeysFor(actionT.template ?? actionT.row?.template)])]; // the rider's provenance rides on the host (the Bog Hound read 0/1 with the drag on its Bite)
+        // AND ITS TEMPLATE RIDES TOO (critic's package-six review, 2026-10-22).
+        // The line above hands the host the rider's provenance, but not which
+        // TEMPLATE shipped — and the gap ship-check below asks exactly that, by
+        // reading `e.template` off the rows. A rider welded onto a row owns no row
+        // of its own, so a shipped rider read as VETOED: the Purple Worm's charge
+        // rode its Bite and Krennik's rode his Saber, and both were counted as
+        // never reaching the sheet.
+        { const rt = actionT.template ?? actionT.row?.template; if (rt) host.riderTemplates = [...new Set([...(host.riderTemplates ?? []), rt])]; }
         libraryDrawn = true;
         riderShipped = true;
         trace('signature rider:', `${actionT.template} -> ${host.name} (appended; ${actionT.because})`);
@@ -4295,7 +4349,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // THE VALUE CHECK — the row must be worth the attack it replaces
       if (hasChassisNova(sections) && / \(Recharge [\d–-]+\)$/.test(actionT.row.name ?? '') && !TEMPLATE_BY_ID.get(actionT.template ?? actionT.row?.template)?.nova) { actionT.row.name = actionT.row.name.replace(/ \(Recharge [\d–-]+\)$/, ''); actionT.row.gate = undefined; trace('one nova:', `"${actionT.row.name}" arrived gated on a sheet whose chassis already carries a Recharge nova — the gate leaves and the row prices at the ceiling (the wyrm's Shattering Ice Snare, step 7)`); }
       const vc = valueCheck(actionT.row, { scaled, sections, cr, section: actionT.section, noGate: hasChassisNova(sections), template: actionT.template ?? actionT.row?.template ?? null });
-      if (vc.steps.length) { actionT.row.text = vc.text; actionT.row.name = vc.name; }
+      if (vc.steps.length) { actionT.row.text = vc.text; actionT.row.name = vc.name; if (vc.gate) actionT.row.gate = vc.gate; }
       const vcSection = actionT.section; const vcName = actionT.row.name; // what the floor judged, so a re-slot is recognisable below
       trace('value check:', `"${actionT.row.name}" EV ${vc.ev} vs floor ${vc.floor} (${vc.replaced})${vc.steps.length ? ` — ${vc.steps.join('; ')}` : ' — worth the trade'}`);
       // THE FLOOR BLOCKS (critic run two: a dead disarm shipped past the floor
@@ -4391,7 +4445,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const t = i < verbFirst ? shelfT[i] : shelfT[verbFirst + ((nameHash(p.name) + i) % Math.max(1, shelfT.length - verbFirst))];
         const r = renderTemplate(t, ctxT, {}, { blind: true });
         if (!r) { trace('fallback skipped:', `${t.id} (the sheet cannot render it)`); continue; }
-        const cand = { seed: t.id, section: r.section, row: { name: `${r.name}${r.gate ? ` (${r.gate})` : ''}`, text: r.text, library: true, ...(r.imposes ? { imposes: r.imposes } : {}), seed: t.id } }; // the row carries its shape (hold 5) — this shelf path builds its own row, so it needs the stamp drawLibraryRow does
+        const cand = { seed: t.id, section: r.section, row: { name: `${r.name}${r.gate ? ` (${r.gate})` : ''}`, ...(r.gate ? { gate: r.gate } : {}), text: r.text, library: true, ...(r.imposes ? { imposes: r.imposes } : {}), seed: t.id } }; // the row carries its shape (hold 5) — this shelf path builds its own row, so it needs the stamp drawLibraryRow does
         // a seed the floor cannot lift is skipped for the next one, never shipped
         const pre = valueCheck(cand.row, { scaled, sections, cr, section: cand.section });
         // the floor prices an attack's trade; a UTILITY self-buff the user's own
@@ -4421,7 +4475,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (drawn) {
         if (hasChassisNova(sections) && / \(Recharge [\d–-]+\)$/.test(drawn.row.name ?? '')) { drawn.row.name = drawn.row.name.replace(/ \(Recharge [\d–-]+\)$/, ''); drawn.row.gate = undefined; trace('one nova:', `"${drawn.row.name}" — the seed's gate leaves; the chassis nova stands`); }
         const vc = valueCheck(drawn.row, { scaled, sections, cr, section: drawn.section, noGate: hasChassisNova(sections), template: drawn.seed ?? drawn.row?.template ?? null });
-        if (vc.steps.length) { drawn.row.text = vc.text; drawn.row.name = vc.name; }
+        if (vc.steps.length) { drawn.row.text = vc.text; drawn.row.name = vc.name; if (vc.gate) drawn.row.gate = vc.gate; }
         trace('value check:', `"${drawn.row.name}" EV ${vc.ev} vs floor ${vc.floor} (${vc.replaced})${vc.steps.length ? ` — ${vc.steps.join('; ')}` : ' — worth the trade'}`);
         if (!drawn.floorWaived && vc.steps.some((st) => /still under|does nothing/.test(st))) { trace('signature dropped by the floor:', `"${drawn.row.name}" — a seed that cannot be lifted does not ship`); drawn = null; }
       }
@@ -6883,21 +6937,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // 1e: AN OWED CLAUSE THAT NOTHING ANSWERED IS A DEFECT, NOT A TRACE LINE
   // (critic's ruling). A print body plus a clause the sheet never answers is the
   // stock monster, and the gate used to read it clean.
-  // THE GAP LINE'S OUTCOME, READ OFF THE FINISHED SHEET (critic, 2026-10-21).
-  // Every gate that can veto a signature seat has run by here, so "did the
-  // accepted pick actually ship" is answerable. Stamping it at acceptance made
-  // 23 vetoes of 41 look like 1.
-  if (gapRecords.length) {
-    const shipped = new Set(Object.values(monster.sections ?? {}).flat().map((e) => e.template).filter(Boolean));
-    let vetoed = 0;
-    for (const g of gapRecords) {
-      const landed = g.template ? shipped.has(g.template) : false;
-      if (!landed) vetoed += 1;
-      trace('[gap]', `${g.line}${g.template ? (landed ? ` [landed: ${g.template}]` : ` [VETOED AFTER ACCEPTANCE: ${g.template} never reached the sheet]`) : ' [row dropped]'}`);
-    }
-    if (monster.generation) monster.generation.gap_vetoed = `${vetoed} of ${gapRecords.length}`;
-    if (vetoed) trace('signature outcome:', `${vetoed} of ${gapRecords.length} accepted signature pick(s) never reached the sheet — the seat shipped a fallback or nothing`);
-  }
+  readGapOutcomes({ sections: monster.sections, gapRecords, generation: monster.generation, trace });
   // GUARDED STANCE IS RECONCILED AGAINST THE FINISHED AC (critic, 2026-10-21:
   // the Reedmarch Sap-Keeper shipped it). The menu filter runs while the pool is
   // built and tests `monster.ac ?? scaled.ac` — but print canon can still move the

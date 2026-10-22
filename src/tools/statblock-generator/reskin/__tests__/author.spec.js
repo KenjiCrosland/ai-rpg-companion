@@ -70,3 +70,50 @@ describe('the repair call can name the row that already answers a clause', () =>
     expect(r.answered).toHaveLength(1);
   });
 });
+
+// THE CONDITION RELATION IS ITS OWN QUESTION (owner's ruling, 2026-10-22).
+//
+// One nullable `imposes` was being asked to carry five different relationships a
+// row can have to a condition — inflicts / requires / immune / self / none. The
+// prompt already spelled all five out, and the call still answered
+// `imposes: Deafened` for the Drowned Choir's One Voice, which GRANTS IMMUNITY to
+// Deafened: a false `condition-duration` FAIL on a correct row. So the fix is not
+// more instruction. It is asking the relation as its own enum and validating by
+// MEMBERSHIP — the engine's half of the split.
+//
+// Measured alone before wiring (scripts/probe-condition-relation.mjs, 15
+// hand-labelled rows × 3 runs): 42/45 exact, and 45/45 on the only distinction
+// the engine acts on — inflicts vs not.
+describe('condition_relation gates the imposes record', () => {
+  const { parseAuthorResponse } = require('../author.mjs');
+  const one = (imposes, relation) => JSON.stringify({
+    attacks: [], saves: [], reactions: [], answered: [], unplaced: [],
+    traits: [{
+      clause: 'a clause', name: 'Test Row', trigger: 'when a creature touches it',
+      effect: `the creature has the ${String(imposes).toLowerCase()} condition until the end of its next turn`,
+      imposes, ...(relation === undefined ? {} : { condition_relation: relation }),
+    }],
+  });
+  const read = (imposes, relation) => (parseAuthorResponse(one(imposes, relation))?.traits ?? [])[0];
+
+  test('inflicts keeps the record — the row hands the condition out', () => {
+    expect(read('Prone', 'inflicts')).toMatchObject({ imposes: 'Prone', condition_relation: 'inflicts' });
+  });
+
+  // the defect this fixes: One Voice is immune to Deafened and imposes nothing
+  test.each(['immune', 'requires', 'self', 'none'])('%s drops the record', (rel) => {
+    expect(read('Deafened', rel).imposes).toBeNull();
+  });
+
+  test('an answer with NO relation keeps the record — older answers are unchanged', () => {
+    expect(read('Stunned', undefined)).toMatchObject({ imposes: 'Stunned', condition_relation: null });
+  });
+
+  test('an unknown relation falls back to the record rather than guessing', () => {
+    expect(read('Charmed', 'sideways')).toMatchObject({ imposes: 'Charmed', condition_relation: null });
+  });
+
+  test('a condition that is not a real condition is never recorded', () => {
+    expect(read('Bewildered', 'inflicts').imposes).toBeNull();
+  });
+});

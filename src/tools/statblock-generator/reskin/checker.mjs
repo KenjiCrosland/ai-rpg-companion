@@ -102,6 +102,15 @@ export function attackRowsOf(m) {
 // ("The first time the swarm is Bloodied in a fight"), so a CR 13 swarm shipped
 // a 91 (14d12) Necrotic burst in a 30-foot emanation and the read said "nova
 // none" — the reader could not see it and the cap never priced it.
+// A CONDITION THAT DOES NOT SELF-END STATES WHEN IT ENDS. Measured over print's
+// 171 affliction rows: Prone is 50 bare of 51 (it self-ends — you stand up),
+// Grappled is always an escape DC, while these are NEVER bare. ONE definition,
+// used by the `condition-duration` gate and by the conversion-equivalence check
+// in gateEdition (2026-10-22): two copies of a bound pattern is how a gate and
+// its sibling drift apart.
+const MUST_BE_BOUNDED = ['Paralyzed', 'Stunned', 'Blinded', 'Charmed', 'Deafened', 'Petrified', 'Unconscious'];
+const CONDITION_BOUNDED = /until the (?:end|start) of|for 1 (?:minute|hour)|until (?:it|the target|the creature|this|that|cured|dispelled|removed|\w+) (?:dies|ends|is cured|is removed|recovers)|\bwhile\b|\(escape DC|repeats the save|until the (?:web|vines|grasp)/i;
+
 export function novasOf(m) {
   const all = allRows(m);
   return all.map(({ sec, e }, i) => {
@@ -451,9 +460,19 @@ function gateStructure(m, ctx, F) {
     // Rend attacks"). Only the MISSING Multiattack is the floor.
     if (!multi) F('attack-floor', 'soft', `CR ${crHere} with no Multiattack (print: 110 of 113 blocks at CR 5+ carry one)`, String(crHere));
   }
-  // ONE RECHARGE NOVA PER SHEET: 0 of 2 corpora carry two (the Duergar's two Recharges are short-rest utilities, no damage) — the Glacier Wyrm shipped Freezing Breath beside Glacial Breath (critic's step-5 read)
+  // ONE RECHARGE NOVA PER SHEET — unless BOTH are print's own. Re-measured
+  // 2026-10-22 under this gate's OWN predicate (novasOf counts "(N/Day)", not
+  // only "(Recharge N)"): 1 of 329 print blocks carries two, the Vrock's
+  // Spores (Recharge 6) beside Stunning Screech (1/Day). The earlier "0 of 329"
+  // was measured with a narrower pattern than the gate uses.
+  //
+  // So the Vrock is an exception to pattern FROM, not an exception to ship: a
+  // tweak off the Vrock keeps the pair print gave it, and an engine-written
+  // second nova is still a defect (owner's ruling, 2026-10-22). The gate
+  // therefore fires only when at least one of the pair is NOT print's.
   const novaRows = novasOf(m).filter((n) => n.sec === 'Actions');
-  if (novaRows.length > 1) F('two-novas', 'fail', `two Recharge novas on one sheet: ${novaRows.map((n) => `"${n.name}"`).join(' and ')}`, novaRows.length);
+  const inventedNovas = novaRows.filter((n) => !n.e?.print);
+  if (novaRows.length > 1 && inventedNovas.length) F('two-novas', 'fail', `two Recharge novas on one sheet: ${novaRows.map((n) => `"${n.name}"`).join(' and ')}${novaRows.length > inventedNovas.length ? ` — ${inventedNovas.map((n) => `"${n.name}"`).join(' and ')} ${inventedNovas.length > 1 ? 'are' : 'is'} not print's` : ''}`, novaRows.length);
   for (const { sec, e } of allRows(m)) {
     if (!e.print && /\d+ \(\d+d\d+/.test(e.text ?? '') === false && /\bdamage\b/.test(e.text ?? '') && /\d+ (?:Bludgeoning|Piercing|Slashing|Fire|Cold|Lightning|Thunder|Acid|Poison|Necrotic|Radiant|Psychic|Force) damage/.test(e.text ?? '')) F('diceless-damage', 'fail', `${sec}/${bare(e.name)}: a damage number with no dice`, bare(e.name));
     {
@@ -610,6 +629,28 @@ function gateEdition(raw, m, ctx, F) {
     // a 2024 row with a half-damage success whose 2014 row lost the clause (the dragon's Noxious Miasma, check-in 2026-10-11)
     const legacyByName = new Map([...(raw.abilities ?? []), ...(raw.actions ?? []), ...(raw.reactions ?? []), ...(raw.legendary_actions ?? []), ...(raw.bonus_actions ?? [])].map((e) => [bare(e.name).toLowerCase(), String(e.description ?? e.text ?? '')]));
     for (const { sec, e } of allRows(m)) { if (!/\*Success:\*\s*Half damage/i.test(e.text ?? '')) continue; const l = legacyByName.get(bare(e.name).toLowerCase()); if (l != null && !/half (?:as much )?damage/i.test(l)) F('conversion-dropped-half', 'fail', `${sec}/${bare(e.name)}: the 2024 row halves on a success; the 2014 sheet dropped the clause`, bare(e.name)); }
+    // THE PRINT EXEMPTION OUTLIVES THE TEXT IT WAS GRANTED FOR (critic's
+    // package-six review, 2026-10-22). The adjudicability loop opens with
+    // `|| e.print) continue` — justified, because print's own text is print's.
+    // But the 2014 conversion REWRITES a print row and the row keeps its print
+    // stamp, so a converted print row carries text print never wrote and is
+    // exempt from every adjudicability gate. Ossuar's Paralyzing Touch shipped
+    // "or be paralyzed" with no bound at all and the block read CLEAN, while
+    // print's own 2024 row ends "until the start of the lich's next turn".
+    //
+    // This is the printing-equivalence test the package-five brief asked for,
+    // and it belongs here beside conversion-dropped-half, which already makes
+    // exactly this 2024-vs-2014 comparison. Measured over the 19 2014 sheets of
+    // sweep-2026-10-21T22-17-49: 1 fire, 0 false positives, and the one fire is
+    // the Bone Sun Lich's Paralyzing Touch.
+    for (const { sec, e } of allRows(m)) {
+      const l = legacyByName.get(bare(e.name).toLowerCase());
+      if (l == null) continue;
+      const impo = imposedCondition({ name: e.name, text: l }); // the reader is tuned to 2014 phrasing ("or be paralyzed"); the 2024 wording reads null
+      if (!impo || !MUST_BE_BOUNDED.includes(impo)) continue;
+      if (CONDITION_BOUNDED.test(l) || !CONDITION_BOUNDED.test(String(e.text ?? ''))) continue;
+      F('conversion-dropped-duration', 'fail', `${sec}/${bare(e.name)}: the 2024 row bounds ${impo}; the 2014 sheet dropped the duration and imposes it indefinitely`, bare(e.name));
+    }
     const acm = /^(\d+) \(([^)]+)\)/.exec(String(raw.armor_class ?? ''));
     if (acm && !/natural|mage armor|unarmored/i.test(acm[2])) {
       const parts = acm[2].toLowerCase().split(/,\s*/); const base = ARMOR[parts[0]]; const dexMod = modOf(m.stats?.DEX ?? 10);
@@ -689,9 +730,10 @@ function gateAdjudicability(m, ctx, F) {
     // So: the five that print always bounds must be bounded here too.
     {
       const impo = imposedCondition(e);
-      const MUST_END = ['Paralyzed', 'Stunned', 'Blinded', 'Charmed', 'Deafened', 'Petrified', 'Unconscious'];
-      if (impo && MUST_END.includes(impo)
-        && !/until the (?:end|start) of|for 1 (?:minute|hour)|until (?:it|the target|the creature|this|that|cured|dispelled|removed|\w+) (?:dies|ends|is cured|is removed|recovers)|\bwhile\b|\(escape DC|repeats the save|until the (?:web|vines|grasp)/i.test(t)) {
+      // The bound pattern and the condition list are MODULE constants (above),
+      // shared with the conversion-equivalence check in gateEdition — a second
+      // copy of either is how a gate and its sibling drift apart.
+      if (impo && MUST_BE_BOUNDED.includes(impo) && !CONDITION_BOUNDED.test(t)) {
         F('condition-duration', 'fail', `${sec}/${bare(e.name)}: imposes ${impo} and never says when it ends — print bounds every ${impo} it hands out (0 of ${impo === 'Paralyzed' ? 5 : 'its'} rows bare)`, impo);
       }
     }

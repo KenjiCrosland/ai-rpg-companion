@@ -436,3 +436,126 @@ rejects "Shield Bash" because a template might want that name and renames the ro
 "Sword Strike"; the narrowing rule reads "Sword Strike" as a melee weapon by name
 and strips the hybrid's range — the one thing telling it apart from the Longsword
 row. Nothing afterwards compares two rows' text.
+
+## Audit, 2026-10-22: a THIRD category — the field exists and is never filled
+
+Owner asked directly whether regex had been added where a prompt change would do.
+Audited the session's landings (`settleSheetBudgets`, `readGapOutcomes`,
+`conversion-dropped-duration`). Result, and a finding worth more than the audit:
+
+**What was clean.** The retaliation-family cap uses **no word rule at all** — the
+critic's "damage-on-touch / bloodied-burst / own-turn-punisher" family is the
+DECLARED cell `trigger=on_being_hit, effect=damage`, shared by `heated-body`,
+`bloodied-burst` and `resonant-body`. And the immunity fix (an immunity is not an
+imposition) was **declined and proposed** as a second enum on the authoring call,
+per CLAUDE.md, rather than written as immunity phrase patterns.
+
+**What the owner correctly flagged.** The nova count reads four regexes off the
+row's own text: the `(Recharge 5-6)` / `(N/Day)` name gate, `/Saving Throw/i`, and
+a dice expression. Templates DO declare `nova`, and rows have a `gate` field, so
+this looked like re-deriving a declared fact.
+
+**But measured over the 18 gated Action rows of `sweep-2026-10-21T22-17-49`:**
+
+| source | rows |
+|---|---|
+| carry a declared `e.gate` | **0 of 18** |
+| template declares `nova` | 7 |
+| are print rows (gate is in print's own name) | 4 |
+| **no declared source at all** | **7** |
+
+The seven are chassis novas with `template=-` (Plague Archon's Stoop, Rimeheart's
+Killing Cold, Trench Antiphon's Cacophonous Bellow, Thunderwall's Thunder Cone,
+Krennik's Worg Gallop, Iron Oath's Warding Bulwark 2/Day). A declared-data-only
+predicate would see 7 of 18. So the text-reading is currently **load-bearing**,
+not laziness.
+
+Same for the condition reader: `imposes` is declared on **25 of 260** rows and on
+**2 of 79 print rows**, so `conversion-dropped-duration` had no record to read and
+had to read the legacy text.
+
+### THE FIX IS NOT A PROMPT — IT IS FILLING A FIELD WE ALREADY HAVE
+
+`e.gate` exists. The un-gate path in `settleSheetBudgets` even sets it to
+`undefined`. **Nothing ever populates it**, so every consumer re-reads the row's
+name instead — `novasOf` in the checker, `hasChassisNova`, the late nova damage
+cap, `settleSheetBudgets`, and `valueCheck`'s own `gated` read (which
+`llm-metadata-over-regex` already calls "the third copy of the same name-only
+blind spot").
+
+Proposal, in the owner's direction and cheaper than any of them:
+
+1. **Stamp `gate` on a row when the engine writes a gated row** — chassis novas
+   included. It is the engine's own decision; it should not have to recover it
+   from the name it chose.
+2. **Read `e.gate` everywhere**, falling back to the name ONLY for `e.print` rows,
+   where print's own furniture is the closed fact.
+3. That retires four name-reading sites and removes the drift risk the hold-4
+   comment already warned about (a CR 13 swarm's 91 (14d12) read as "nova none"
+   because the limit was in the TEXT, not the name — a stamped field has no such
+   blind spot).
+
+**Measurement to run before shipping it:** after stamping, assert that for every
+row where the name carries a gate, `e.gate` agrees — over a forty. That is the
+equivalence check that proves the field can replace the regex. Until it passes,
+the name-reading stays.
+
+**Also still open from the earlier list:** the `imposes` record covers 25 of 260
+rows. If a gate is going to depend on it, the authoring call should answer it for
+every row it writes, not some.
+
+## LANDED 2026-10-22: the gate was being DELETED, one line before the sheet
+
+The consolidation above turned out to have a single root cause, and it was not
+"the field is never filled". **The field was filled and then deliberately wiped.**
+
+`generate.mjs`, in the pass that clears rename scaffolding:
+
+```js
+if (e.wildcard) pendingWildcard = e;
+delete e.was; delete e.wildcard; delete e.gate;   // <- gate is not scaffolding
+```
+
+`was` and `wildcard` are scaffolding and should go. **`gate` is a fact the DONOR
+declared** — `{ name: 'Area Nova', text: '...', gate: 'Recharge 5-6' }` — which
+`scaleDonor` preserves and the rename pass explicitly carries forward
+(`gate: e.gate`). It was being swept away with the scaffolding, before the sheet
+was built. Hence 0 of 18 gated rows carrying a declared gate, and five consumers
+recovering the engine's own decision by re-reading the name it chose.
+
+Fix: stop deleting it. Verified end to end through the real pipeline with a
+mocked LLM — `Bramble Sweep (Recharge 5-6)` now ships `gate="Recharge 5-6"`.
+
+Also landed, so the field is complete rather than partial:
+
+- **`valueCheck` returns the gate it chooses** (`gate: gateChosen`) instead of
+  leaving a consumer to read it back off the name it just built. A chassis nova
+  priced over the ceiling gets its gate here.
+- **Five sites stamp it**: the three `valueCheck` consumers that apply `vc.name`,
+  the template-render row, and the seed-draw row.
+- **A bug this surfaced in `settleSheetBudgets`.** `valueCheck`'s "keep it
+  un-gated" branch needs `hasDamage && !kill && !recurring`; a row missing those
+  falls through to "over the ceiling — gated Recharge 5-6" and is **re-gated on
+  the spot**, so the nova un-gate could silently fail and leave the pair. Invisible
+  before the gate was returned. It now traces and leaves the pair for the checker.
+
+### How it was found, and the method worth reusing
+
+Three guesses failed (the donor, an allow-list rebuild, a kit pass). What worked
+was **bisecting with checkpoints through the real pipeline under a mocked LLM** —
+fast, local, no dev server — plus **tagging the row object** to tell mutation from
+replacement. The tag survived while the keys vanished, which proved it was a
+delete on the same object rather than a rebuild, and that narrowed 800 lines to
+one. Worth noting that the rename pass at ~2580 already carries a comment
+recording this exact disease found once before (an allow-list rebuild silently
+dropping `imposes` ×53, `gated_on` ×23, `engulf_engine` ×11, `engine` ×3) — the
+same field-loss pattern, a different mechanism.
+
+### Still to do before a consumer may read `e.gate`
+
+Nothing reads the field yet — deliberately. The remaining step is the
+**equivalence check over a forty**: for every row whose NAME carries a gate,
+assert `e.gate` agrees (print rows excepted, where the name is the closed fact).
+The jest probe proves one chassis nova; a forty proves the population. Only then
+retire the name-reading in `novasOf`, `hasChassisNova`, the late damage cap,
+`settleSheetBudgets` and `valueCheck`'s `gated` read.

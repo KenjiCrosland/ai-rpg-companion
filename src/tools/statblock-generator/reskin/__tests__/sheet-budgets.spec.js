@@ -1,7 +1,7 @@
 // WHOLE-SHEET BUDGETS SETTLE ON THE FINISHED SHEET (critic's package-six review,
 // 2026-10-22). Test categories 1, 9 and 10 from that review, plus the declared
 // seat-cell cap the owner's ruling asked for.
-import { settleSheetBudgets } from '../generate.mjs';
+import { settleSheetBudgets, readGapOutcomes } from '../generate.mjs';
 import { scaleDonor, pickDonor } from '../scale.mjs';
 
 const scaled = () => scaleDonor(pickDonor(8, null, 'brute'), 8, { mechanics: [] });
@@ -114,5 +114,49 @@ describe('one Recharge nova a sheet, counted whatever wrote it', () => {
     const sections = { Actions: [nova('One', { print: true }), nova('Two', { print: true })] };
     settleSheetBudgets({ sections, scaled: scaled(), cr: 8, generation: {} });
     expect(sections.Actions.filter((e) => /\(Recharge/.test(e.name))).toHaveLength(2);
+  });
+});
+
+// THE GAP SHIP-CHECK COUNTS APPENDED RIDERS (critic's test category 4,
+// 2026-10-22). A rider welded onto a row owns no row of its own, so the
+// ship-check — which reads `e.template` off the rows — counted a SHIPPED rider
+// as a veto. The Purple Worm's charge rode its Bite and Krennik's rode his
+// Saber; both logged "VETOED: charge never reached the sheet".
+describe('the gap ship-check counts appended riders', () => {
+  const rec = (template) => ({ template, line: `a ram that drives the target back — ${template}` });
+
+  test('a rider welded onto a host row counts as landed', () => {
+    const sections = { Actions: [{ name: 'Bite', text: 'Melee Attack Roll: +9. Hit: 22 (3d10 + 6) Piercing damage. ...', riderTemplates: ['charge'] }] };
+    const generation = {};
+    const lines = [];
+    const out = readGapOutcomes({ sections, gapRecords: [rec('charge')], generation, trace: (l, d) => lines.push(`${l} ${d}`) });
+    expect(out).toEqual({ vetoed: 0, landed: 1 });
+    expect(generation.gap_vetoed).toBe('0 of 1');
+    expect(lines.join('\n')).toMatch(/\[landed: charge\]/);
+  });
+
+  test('a template on no row and no host is still a veto', () => {
+    const sections = { Actions: [{ name: 'Bite', text: 'Melee Attack Roll: +9.' }] };
+    const generation = {};
+    const out = readGapOutcomes({ sections, gapRecords: [rec('charge')], generation, trace: () => {} });
+    expect(out).toEqual({ vetoed: 1, landed: 0 });
+    expect(generation.gap_vetoed).toBe('1 of 1');
+  });
+
+  test('a row of its own still counts as landed', () => {
+    const sections = { Traits: [{ name: 'Heated Body', text: 'A creature that touches it takes damage.', template: 'heated-body' }] };
+    const out = readGapOutcomes({ sections, gapRecords: [rec('heated-body')], trace: () => {} });
+    expect(out.landed).toBe(1);
+  });
+
+  test('a gap record with no template reads as a dropped row, not a veto of something', () => {
+    const lines = [];
+    const out = readGapOutcomes({ sections: {}, gapRecords: [{ line: 'nothing was offered' }], trace: (l, d) => lines.push(`${l} ${d}`) });
+    expect(out.vetoed).toBe(1);
+    expect(lines.join('\n')).toMatch(/\[row dropped\]/);
+  });
+
+  test('no gap records is not an error', () => {
+    expect(readGapOutcomes({ sections: {}, gapRecords: [] })).toEqual({ vetoed: 0, landed: 0 });
   });
 });
