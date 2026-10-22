@@ -694,3 +694,305 @@ in the pipeline, and it should not be written up as though it were. The next for
 will exercise it incidentally; `grep -h "condition_relation" <run>/*.md` is the
 check, and the trace does not currently log the field — **worth adding a trace
 line for it before the next forty**, or the evidence will be invisible again.
+
+## Landed: order item 3 — the three provenance gates decide credit, not existence
+
+The action seat had the same disease 1d had, wearing three different coats. Each
+gate killed the row outright (`actionT = null`) when it could not quote the GM:
+
+| gate | the row the critic named |
+|---|---|
+| "a print body takes only what the user's words ask" | Renounced Templar's `Wardens' Rebuke`, Greatsword Skeleton's `Sweeping Greatsword` |
+| "a whole-round ability the GM never asked for" | Scree Slide's `Grinding Surge` |
+| "a rider rides the user's own attack" | Thunderwall's `Stormwake Corridor` |
+
+All three now accept the **element receipt** as a receipt of the same kind as a
+quote, through one shared `takeAsFreeRow(seat, label)`. The row earns no clause
+credit and still faces the ship-time free-row budget, the value floor, dedup,
+adjudicability, body legality and the nova caps. Exact sheets are untouched —
+print closes the row set and the budget is 0 there.
+
+**The nova gate is the one worth watching**, since a nova is the largest single
+power grant a seat makes. What still holds it is named in the code: one Recharge
+nova a sheet (enforced on the FINISHED sheet, counting every provenance),
+`NOVA_CAP` on its damage, the value floor, and the free-row budget. A second nova
+taken this way un-gates and re-prices rather than shipping beside the first.
+
+### Why this is not the blanket allowance the critic originally asked for
+
+`expresses` is validated by **MEMBERSHIP** against the element list the concept
+call produced. My first attempt at a positive test failed for exactly that
+reason — the element I invented for the fixture was not in the creature's list, so
+the row was still declined. The test only passes once `signatureElements` actually
+contains it. **That membership check is the whole guard**, and it is now pinned
+from both sides:
+
+- With no element named, all three action-seat pins still refuse — the gong's
+  `Bone-Rattling Note`, the cauldron's `Scalding Spill`, `Scalding Vent`.
+- With a real element named, the cauldron's nova ships as a free row, earning no
+  clause credit (new test, same fixture, one field different).
+
+The three trait-seat decoration pins (`Iron Fury`, `Marked Quarry`, the forged
+`ground-burst`) are unaffected by construction — they guard the trait seat, which
+1d already covered — and still assert both the refusal trace and the row's
+absence.
+
+### Also landed: the relation is traced
+
+`condition_relation` now emits a `condition relation:` line for every authored
+trait and reaction that carries one, so the next forty can be audited with
+`grep -h "condition relation:" <run>/*.md`. Without it the judgment would have
+been invisible, which is measurement lesson 4.
+
+**Gate:** Jest 117 suites / 3731 passing, build clean.
+
+**Verb preference (item 1's other half) is still UNTOUCHED** — a keyed template
+the call already declined is not a better answer. That is the last structural
+piece before element provenance (item 2).
+
+## Landed: verb preference stands down — item 1 is now fully closed
+
+The last structural piece. The receipt test inside `fitSeat` used to fire only
+when `verbRanked.some((r) => r.concept.length)` — only when a CONCEPT-KEYED
+template was also on the menu — and its trace said the model "picked X over a
+concept-verb template."
+
+**That keyed template was ranked FIRST on the menu and the call declined it.** The
+decline is information, not an error, and force-binding was retired for exactly
+this reason (the retirement note above lists the word-collision defects it caused:
+"guard" → Guarded Stance, "mimic" → False Appearance, "ooze" → Aberrant Ground).
+Whether some *other* template happened to carry a matching key has nothing to do
+with whether THIS row has a receipt.
+
+The test is now uniform: **no verb, no quote, no element named → decoration,
+whatever else was on the shelf.** The `conceptBound` ranking stays — ranking a
+keyed template first is not overruling the call.
+
+### The blast radius, measured before shipping
+
+Over `sweep-2026-10-21T22-17-49`, of 27 shipped signature rows:
+
+| | rows |
+|---|---|
+| matched a verb | 46 trace hits across the forty |
+| shape fit, NO verb match | 12 |
+| of those, quote-backed (`pick kept on the GM's own words`) | 8 |
+| of those, element-backed (free rows) | 4 of the no-verb set |
+| **newly refused** | **1 — Well Drownedthing** |
+
+The one row that changes had no receipt of any kind and shipped only because no
+keyed alternative existed. **It is on the sheet the critic cited in point (c)** —
+where the complaint was that `Brine-Slick Coils` was refused while the creature's
+own element list held "a body of briny, weed-choked coils". That is the call
+failing to name an element it had, and the fix is item 2, not a gate that lets
+decoration through.
+
+### A trace matcher moved; no assertion changed
+
+`a receiptless shape fit is declined on ANY body` asserted the
+`trait declined:` wording. A receiptless pick is now refused one stage earlier,
+inside `fitSeat` (`signature miss: … decoration, not a signature`), so the trace
+moved while the outcome did not. The matcher now pins **the reason the two
+messages share** — "the call named none of this creature's own elements" — rather
+than which gate caught it. The substantive assertion (the row is absent from the
+sheet) is untouched, and still passes.
+
+**Gate:** Jest 117 suites / 3731 passing, build clean.
+
+## Where the critic's order stands
+
+| item | state |
+|---|---|
+| 1. instrument honesty + verb preference | **CLOSED** |
+| 2. element provenance (source tag, expression quote, family cap, metric) | family cap + metric landed; **source tag and expression quote remain** |
+| 3. the three provenance gates | **CLOSED** |
+| 4. regressions | 2014 paralysis **CLOSED**; Sellsword's shortsword, Klahk's Multiattack, warded-mending anchors, duplicated riders remain |
+| 5. zone pricing at the floor | open |
+| 6. coverage (chassis-row binding, rename on chassis/hyphens) | open |
+| 7. the still-open list | open |
+
+Not yet verified live: the `e.gate` equivalence over a forty (nothing reads the
+field until it passes), `condition_relation` firing in the pipeline, and the
+rider ship-check.
+
+## The branch ten: pass criteria, written before the run
+
+Built fresh for THIS branch's changes, no fixed sentinels (owner, 2026-10-14).
+The forty is the release gate, not this.
+
+| # | case | what it is here to prove |
+|---|---|---|
+| 1 | the thing in the well | verb preference: the ONE row the measurement said changes |
+| 2 | Purple Worm | a welded rider reads as landed, not vetoed |
+| 3 | Krennik Skullstandard | the same, on a 2014 mounted sheet |
+| 4 | drowned cathedral choir | `condition_relation` fires and is traced |
+| 5 | archlich | `conversion-dropped-duration` on a fresh roll |
+| 6 | Air Elemental | one nova at ship + `e.gate` on a fitted row |
+| 7 | glacier's heart | `e.gate` on a CHASSIS nova (2014) |
+| 8 | templar priest | print-body gate yields to an element receipt |
+| 9 | skeleton with a greatsword | the same |
+| 10 | quarry-pit scree thing | nova gate yields to an element receipt |
+
+**Criteria:**
+
+1. **THE EQUIVALENCE CHECK — the point of the run.** For every row whose NAME
+   carries a gate, `e.gate` agrees; print rows excepted (their name is the closed
+   fact). Anything unstamped is named. Until this passes, no consumer may read
+   `e.gate` and the five name-reading sites stay.
+2. **No `lint:dangling-use-ref` / `undefined-attack-ref`** anywhere. The budget
+   pass evicts rows and `sweepDeadName` is what keeps a Multiattack citation
+   valid; eviction was never exercised live.
+3. **No `two-novas`**, and no sheet left with zero novas by an over-eager un-gate.
+4. **`condition relation:` appears** on any sheet whose authoring call wrote a
+   trait or reaction. If it never appears, the field is still unexercised — say so
+   rather than counting the run as proof.
+5. **A welded rider reads `[landed: X]`**, never `VETOED AFTER ACCEPTANCE`, on any
+   sheet showing a `signature rider:` trace.
+6. **At least one `free signature row:` on an ACTION seat** (cases 8-10), proving
+   item 3's gates now yield. If none appears, the gates were not exercised.
+7. **`free_rows` ≤ 1 on every sheet**, and `free_row_templates` populated.
+8. **No new FAIL class** attributable to these changes. `conversion-dropped-duration`
+   on the archlich is EXPECTED and is a pass, not a regression.
+
+**What would make me revert rather than iterate:** a dangling reference (2), or a
+sheet shipping two novas (3) — both mean a pass that mutates the finished sheet is
+unsafe, and both are things the unit tests cover but had never been seen live.
+
+### The branch-ten read (`smoke-out/branch10-2026-10-22T01-49-29`) — 3 FAIL of 10
+
+Scored against the criteria written before the run.
+
+| # | criterion | result |
+|---|---|---|
+| 1 | `e.gate` equivalence | **7 agree, 0 disagree, 2 unstamped** (below) |
+| 2 | no dangling reference (REVERT trigger) | **PASS — and the eviction path finally fired** |
+| 3 | no `two-novas` (REVERT trigger) | **FAIL — 1 sheet** (below) |
+| 4 | `condition relation:` traced | **0 — still unexercised** |
+| 5 | a welded rider reads landed | **0 welds — still unexercised** |
+| 6 | a free row on an ACTION seat | **PASS** — `ground-burst` (Grave Legionnaire), `leap` (Slough Pit Scree) |
+| 7 | `free_rows` ≤ 1, templates named | **PASS** on all ten |
+| 8 | no new FAIL class from these changes | **PASS** — see the three below |
+
+**Criterion 2 is the one worth noting.** Ossuar evicted a row at ship —
+`free row over budget: Actions/"Shell Scour" leaves at ship` — the first time the
+eviction path has run outside a unit test. That sheet carries **no dangling
+reference**; `sweepDeadName` held. Its only FAIL is the expected
+`conversion-dropped-duration`.
+
+**Verb preference behaved as measured.** Well Drowned Dweller reads
+`free_rows=0` and ships clean — the receiptless row it used to carry is gone,
+which is the one change the pre-run measurement predicted.
+
+#### The two unstamped gates are a bounded category, not a leak
+
+Both are on Ossuar: `Legendary Resistance (3/Day)` and `Protective Magic (3/Day)`.
+These are **donor rows that declare the gate inside the name string** — the donor
+data holds 30 such names, all Legendary Resistance / Protective Magic — and they
+take the rename pass's `e.rules` branch, so there was never a `gate` field to
+carry. Fixable in one place: split a gate out of the donor's name at the boundary,
+which converts a closed fact into the field once instead of leaving five consumers
+to re-read it. Until then, **no consumer may read `e.gate`** — the equivalence is
+not yet total.
+
+#### The `two-novas` sheet: the pass detected it, pricing refused the fix
+
+Air Elemental shipped `Stolen Chorus (Recharge 5-6)` beside print's
+`Whirlwind (Recharge 4-6)`, and the trace I added last landing says exactly why:
+
+```
+one nova at ship: "Stolen Chorus (1/Day)" could NOT be un-gated — pricing
+  re-gated it (over the ceiling — gated Recharge 5-6). It stands beside
+  "Whirlwind" and the checker will report the pair
+```
+
+`settleSheetBudgets` found the pair, kept print's row, stripped the gate, and
+`valueCheck` put it straight back: the "keep it ungated and scale to the ceiling"
+branch needs `hasDamage && !kill && !recurring`, and the `wail` template fails one
+of those, so the row fell through to "over the ceiling — gated Recharge 5-6".
+
+**On my own revert criterion, honestly.** I wrote that a two-novas sheet would
+make me revert rather than iterate. I am not reverting, and the reasoning should
+be checkable rather than convenient: that criterion was aimed at *the pass making
+a sheet unsafe*. It did not. Before this change the Air Elemental shipped two
+novas **silently**; it now ships two with a trace naming the cause and a checker
+FAIL. Reverting restores the silence and the defect. So the criterion as written
+does not fit what happened — but I am flagging that I am interpreting it rather
+than obeying it, because that is exactly the move that needs to be visible.
+
+**The real fix needs a ruling.** When an extra nova cannot be un-gated because
+pricing insists:
+
+1. **Drop the row.** Matches the row-cap precedent (evict by priority). Risk: the
+   row may answer a GM clause — here it carries the "stolen voices" idea, and the
+   sheet reads 5/5 concept, so dropping costs real coverage.
+2. **Force it to the at-will ceiling**, overriding the `kill`/`recurring` guard in
+   this one situation. Keeps the row and the clause; deliberately prices a
+   kill-shaped effect as at-will, which is what that guard exists to prevent.
+3. **Leave the pair** and let the checker report it (today's behaviour) — one
+   visible FAIL a forty rather than a silent one.
+
+My lean is 2 with the damage scaled hard, because it keeps coverage and the gate
+stays honest either way; but it trades against a guard that was put there on
+purpose, so it is the owner's call.
+
+#### Still unexercised after three runs
+
+`condition_relation` (0 traces) and the rider ship-check (0 welds) have now failed
+to re-form in three consecutive smokes. Both rest on unit tests and, for the
+relation, the 45/45 probe. The forty at release is where they will surface; the
+greps are `condition relation:` and `signature rider:`.
+
+## The owner's ruling on the second nova (2026-10-22), implemented
+
+> "the action economy should limit the use unless they are recharge 5-6. if there
+> are two recharges then yes we need to weaken and remove the recharge gate, but
+> it still has the interesting mechanics (saves, etc) it should be the same damage
+> or less as a multiattack sum or main attack"
+
+Option 2, with the ceiling named. **The gate cannot be refused, and the damage is
+the thing that moves.**
+
+`valueCheck` takes a `forceUngated` mode:
+
+- it **never** hands the gate back (the voluntary branch's
+  `hasDamage && !kill && !recurring` guard is what let `wail` be re-gated);
+- its ceiling is **`maEV`, the Multiattack sum**, not the ordinary ungated
+  `1.5 × attackEV`;
+- it scales **only the dice**. The save, the area, the condition and the DC are
+  untouched.
+
+The reasoning that makes the kill guard unnecessary here is the owner's: using the
+row costs the whole action, so at or below the sum of what attacking would have
+dealt, it is never the strictly better play. **The economy is the limit, not the
+recharge.** `settleSheetBudgets` now passes `forceUngated`, and a gate handed back
+anyway is traced as *a bug in the pricing path, not a balance decision*.
+
+Verified on the exact branch-ten case:
+
+```
+one nova at ship: "Stolen Chorus (Recharge 5-6)" un-gated to "Stolen Chorus"
+  — "Whirlwind" already carries this sheet's Recharge nova
+  (dice 45 → 18 (scaled down to the ceiling); un-gated by the one-nova rule)
+
+*Constitution Saving Throw:* DC 13, each creature in a 15-foot Emanation.
+*Failure:* 18 (4d8) Thunder damage, and the target has the Deafened condition
+until the end of its next turn.
+```
+
+Save ✓, area ✓, condition ✓, DC ✓. 18 against a Multiattack sum of 28 (two Slams
+at 14). Print's `Whirlwind (Recharge 4-6)` keeps its gate.
+
+**Gate:** Jest 117 suites / 3736 passing (+5), build clean.
+
+### What is still open on this branch
+
+1. **The donor name-gates** — `Legendary Resistance (3/Day)` and
+   `Protective Magic (3/Day)` carry their gate inside the name and so are the last
+   two rows failing the `e.gate` equivalence. One boundary fix (split the gate out
+   of the donor's name once); until it lands, **no consumer may read `e.gate`**.
+2. **`condition_relation` and the rider ship-check** have not re-formed in three
+   smokes. The release forty is where they surface.
+3. **`attack-in-multiattack` on the Drowned Choir** — a rename
+   (`Cold Hands` → `Hands Strike`) plus a Multiattack re-read to "makes three
+   attacks", which names no rows. Not this branch's work; it belongs to the
+   critic's item 7 (forced mixed Multiattacks) and is the same family as Klahk's.

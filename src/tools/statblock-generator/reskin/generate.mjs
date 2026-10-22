@@ -753,7 +753,7 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
       const beforeText = String(e.text ?? '');
       e.name = beforeName.replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '');
       e.gate = undefined;
-      const vc = valueCheck(e, { scaled, sections, cr, section: 'Actions', noGate: true, template: e.template ?? e.seed ?? null });
+      const vc = valueCheck(e, { scaled, sections, cr, section: 'Actions', noGate: true, forceUngated: true, template: e.template ?? e.seed ?? null });
       if (vc.steps.length) {
         e.text = vc.text; e.name = vc.name; if (vc.gate) e.gate = vc.gate; // the pricing's gate is recorded, not re-read off the name
         const DMG = /\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\)/;
@@ -765,8 +765,12 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
       // a row that misses those falls through to "over the ceiling — gated
       // Recharge 5-6" and is re-gated on the spot. Before `gate` was returned
       // this was invisible — the row simply still had a gate in its name.
+      // `forceUngated` may not hand the gate back (owner's ruling, 2026-10-22: the
+      // action economy is the limit, so the row is priced to the Multiattack sum
+      // instead of being re-gated). If it ever does, the sheet ships the defect
+      // and the cause must be visible rather than inferred from a FAIL.
       if (vc.gate) {
-        trace('one nova at ship:', `"${beforeName}" could NOT be un-gated — pricing re-gated it (${vc.steps.join('; ')}). It stands beside "${bareName(keepNova)}" and the checker will report the pair`);
+        trace('one nova at ship:', `"${beforeName}" could NOT be un-gated — pricing handed the gate back despite forceUngated (${vc.steps.join('; ')}). It stands beside "${bareName(keepNova)}"; this is a bug in the pricing path, not a balance decision`);
         continue;
       }
       trace('one nova at ship:', `"${beforeName}" un-gated to "${e.name}" — "${bareName(keepNova)}" already carries this sheet's Recharge nova${vc.steps.length ? ` (${vc.steps.join('; ')})` : ''}`);
@@ -2818,6 +2822,16 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (s.recharge) slotYield(['nova'], saveRow);
     }
     const dmgTok = (eff) => String(eff).replace(/\s*\{dmg\}(?:\s+damage)?/g, (tok, off, whole) => (/\b(?:takes?|deals?|dealing|taking|extra|additional|plus|regains?|suffers?|an extra)\s*$/i.test(whole.slice(0, off)) ? tok : '')).replace(/\s{2,}/g, ' '); // "immune to anything {dmg}" — the token only stands where damage is dealt or taken (the Vault Bull, step 6 baseline)
+    // THE RELATION IS TRACED, OR THE EVIDENCE IS INVISIBLE (2026-10-22). The
+    // `condition_relation` enum stops a row that is IMMUNE to a condition being
+    // recorded as imposing it — the Drowned Choir's One Voice, which cost a false
+    // `condition-duration` FAIL. But a judgment nothing traces cannot be checked
+    // on the next forty, which is measurement lesson 4 ("a decline must trace what
+    // it saw"). Grep a run for `condition relation:` to audit the call's answers.
+    for (const t of [...authored.traits, ...authored.reactions]) {
+      if (!t?.condition_relation) continue;
+      trace('condition relation:', `"${t.name}" — the call reads its condition as ${t.condition_relation}${t.condition_relation === 'inflicts' ? ` and the row records ${t.imposes}` : ', so no condition is recorded against it'}`);
+    }
     for (const t of authored.traits) { const text = renderForm({ kind: 'trait', trigger: t.trigger, effect: dmgTok(t.effect).replace(/(?:DC )?\{dc\}/g, `DC ${scaled.dc}`) /* "a 15 Charisma saving throw" — the token always carries its DC (step 7 defect 5) */.replace(/\{dmg\}/g, (() => { const d = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * 0.5))); return `${d.avg} (${d.dice})`; })()) }, '2024'); (sections.Traits = sections.Traits ?? []).unshift({ name: t.name, text, authored: true, clause: t.clause, ...(t.imposes ? { imposes: t.imposes } : {}), ...(t.flavor ? { flavor: t.flavor } : {}) }); }
     for (const r of authored.reactions) { const text = renderForm({ kind: 'reaction', trigger: r.trigger, response: r.response.replace(/(?:DC )?\{dc\}/g, `DC ${scaled.dc}`).replace(/\{dmg\}/g, (() => { const d = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * 0.5))); return `${d.avg} (${d.dice})`; })()) }, '2024'); (sections.Reactions = sections.Reactions ?? []).push({ name: r.name, text, authored: true, clause: r.clause, ...(r.imposes ? { imposes: r.imposes } : {}) }); }
     if (authored.crossRef && authored.crossRef.payoffRow !== authored.crossRef.riderRow) { const pay = rowByName(authored.crossRef.payoffRow); const rid = rowByName(authored.crossRef.riderRow); if (pay && rid && new RegExp(`has the ${authored.crossRef.condition} condition`).test(rid.text) && /Attack Roll:\*? \+\d+/.test(pay.text) && !/with Advantage/.test(pay.text)) { pay.text = pay.text.replace(/(Attack Roll:\*? \+\d+)/, `$1 (with Advantage if the target has the ${authored.crossRef.condition} condition)`); requireOn(pay, authored.crossRef.condition); trace('cross-row reference:', `"${rid.name}" applies ${authored.crossRef.condition}; "${pay.name}" exploits it`); } }
@@ -4152,7 +4166,26 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // ruling of its own.
         const freeAllowance = printExact ? 0 : 1;
         let freeRowHere = false; // stamped onto the row below, so the ship-time budget can find it
-        if (!verbs.length && !askedOk && verbRanked.some((r) => r.concept.length)) {
+        // VERB PREFERENCE STANDS DOWN (critic's item 1, other half, 2026-10-22:
+        // "a keyed template the call already declined is not a better answer").
+        // This test used to fire only when `verbRanked.some((r) => r.concept.length)`
+        // — that is, only when a CONCEPT-KEYED template was also on the menu — and
+        // its trace said the model "picked X over a concept-verb template". But the
+        // keyed template was ranked FIRST on the menu and the call declined it; that
+        // decline is information, not an error, and force-binding was retired for
+        // exactly this reason (see the retirement note above). Whether some other
+        // template happened to carry a matching key has nothing to do with whether
+        // THIS row has a receipt.
+        //
+        // So the receipt test is now uniform: no verb, no quote, no element named →
+        // decoration, whatever else was on the shelf. Measured over
+        // sweep-2026-10-21T22-21-49 before shipping: of 27 shipped signature rows,
+        // 12 matched no verb, and 11 of those were quote-backed or element-backed.
+        // ONE row changes — Well Drownedthing's, which had no receipt of any kind
+        // and shipped only because no keyed alternative existed. That is the sheet
+        // the critic cited in point (c), where the real fix is the call naming the
+        // element its own list already holds, not a gate that lets decoration by.
+        if (!verbs.length && !askedOk) {
           if (!fit.expresses) {
             trace('signature miss:', `${seat} — "${fit.template.id}" quotes nothing the GM typed, matches no key-table verb, and the call named none of this creature's own elements for it: decoration, not a signature`);
             return null;
@@ -4290,13 +4323,42 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // a NOVA is a whole-round ability: taken on shape alone, with no verb in the
     // concept or the idea, it is churn (the cauldron drew a Shockwave vent by
     // shape and lost its seat's own read, goldens 2026-09-29) — the fallback stands in
-    if (actionT && printBody && !gmAsked(actionT)) {
-      trace('fit declined:', `"${actionT.row.name}" — a print body takes only what the user's words ask; ${askWhy(actionT)} (the blacksmith's rally, critic-ten 2026-10-01)`);
+    // A RECEIPT DECIDES CREDIT, NOT EXISTENCE — for the ACTION seat too (critic's
+    // order item 3, 2026-10-22). 1d was replaced for the trait seat on exactly
+    // this reasoning: the seat is shown no text it can quote, so "it quotes none
+    // of the GM's words" killed rows that were precisely what the GM asked for.
+    // The three gates below are the same rule wearing different clothes — a print
+    // body, a nova, a rider — and each killed a row the critic named (Renounced
+    // Templar's Wardens' Rebuke and Greatsword Skeleton's Sweeping Greatsword;
+    // Scree Slide's Grinding Surge; Thunderwall's Stormwake Corridor).
+    //
+    // So each now accepts the ELEMENT RECEIPT as a receipt of the same kind as a
+    // quote: the call named one of this creature's own signature elements, from
+    // the closed list the concept call produced. The row earns NO clause credit,
+    // and it still faces the ship-time free-row budget, the value floor, dedup,
+    // adjudicability, body legality and the nova caps. Exact sheets are untouched
+    // — print closes the row set and `freeAllowance` is 0 there.
+    const takeAsFreeRow = (seat, label) => {
+      if (printExact || !seat?.expresses) return false;
+      seat.freeRow = true;
+      if (seat.row) seat.row.freeRow = true; // the ship-time budget reads the mark off the row
+      trace('free signature row:', `"${seat.row?.name}" — ${label}, but the call names the element it expresses: "${seat.expresses}". Earns no clause credit; the budget settles on the finished sheet`);
+      return true;
+    };
+    if (actionT && printBody && !gmAsked(actionT) && !takeAsFreeRow(actionT, 'a print body takes only what the user\'s words ask')) {
+      trace('fit declined:', `"${actionT.row.name}" — a print body takes only what the user's words ask, and the call named none of this creature's own elements for it; ${askWhy(actionT)} (the blacksmith's rally, critic-ten 2026-10-01)`);
       actionT = null;
     }
     if (actionT && actionT.section !== 'Rider' && TEMPLATE_BY_ID.get(actionT.template ?? actionT.row?.template)?.nova) {
       const because = actionT.because ?? '';
-      if (!gmAsked(actionT)) { trace('nova declined:', `"${actionT.row.name}" — a whole-round ability the GM never asked for: ${askWhy(actionT)}${/\[verb: ([^\]]*)\]/.exec(because) ? ` (the idea's own words: ${/\[verb: ([^\]]*)\]/.exec(because)[1]})` : ''}; the fallback stands in (the cauldron's spill, 2026-09-29)`); actionT = null; }
+      // A NOVA ON AN ELEMENT RECEIPT IS STILL CAPPED. This gate yields like the
+      // other two, but a nova is the largest single power grant a seat can make,
+      // so it is worth naming what still holds it: one Recharge nova a sheet
+      // (settleSheetBudgets, enforced on the FINISHED sheet and counting rows of
+      // every provenance), NOVA_CAP on its damage, the value floor, and the
+      // ship-time free-row budget. A second nova taken this way un-gates and
+      // re-prices rather than shipping beside the first.
+      if (!gmAsked(actionT) && !takeAsFreeRow(actionT, 'a whole-round ability the GM never asked for')) { trace('nova declined:', `"${actionT.row.name}" — a whole-round ability the GM never asked for and the call named none of this creature's own elements for it: ${askWhy(actionT)}${/\[verb: ([^\]]*)\]/.exec(because) ? ` (the idea's own words: ${/\[verb: ([^\]]*)\]/.exec(because)[1]})` : ''}; the fallback stands in (the cauldron's spill, 2026-09-29)`); actionT = null; }
     }
     // the slot row leaves either way — a proven row stands where it stood
     wcDropped = true;
@@ -4306,7 +4368,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
     const deadBareT = String(pendingWildcard?.name ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '');
     let riderShipped = false;
-    if (actionT && actionT.section === 'Rider' && !gmAsked(actionT)) {
+    if (actionT && actionT.section === 'Rider' && !gmAsked(actionT) && !takeAsFreeRow(actionT, 'a rider rides the user\'s own attack, so it needs the user\'s own ask')) {
       trace('rider declined:', `"${actionT.row.name}" — a rider rides the user's own attack, so it needs the user's own ask; ${askWhy(actionT)} (the gong's bandaged concussion, 2026-10-01)`);
       actionT = null;
     }

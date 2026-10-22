@@ -160,3 +160,59 @@ describe('the gap ship-check counts appended riders', () => {
     expect(readGapOutcomes({ sections: {}, gapRecords: [] })).toEqual({ vetoed: 0, landed: 0 });
   });
 });
+
+// THE ACTION ECONOMY IS THE LIMIT (owner's ruling, 2026-10-22). A sheet carrying
+// two Recharge novas loses the gate on the extra one, and pricing may NOT refuse:
+// valueCheck's voluntary "keep it ungated" branch needs
+// `hasDamage && !kill && !recurring`, so a kill-shaped template like `wail` fell
+// through and was re-gated on the spot — the Air Elemental shipped Stolen Chorus
+// beside print's Whirlwind (branch10-2026-10-22T01-49-29).
+//
+// Forced, the row keeps its MECHANICS and only its damage moves: down to the
+// Multiattack sum. Using it costs the whole action, so at or below the sum of
+// what attacking would have dealt, it is never the strictly better play.
+describe('the extra nova is un-gated and priced to the Multiattack sum', () => {
+  const sheet = () => ({
+    Actions: [
+      { name: 'Multiattack', text: 'The elemental makes two Slam attacks.' },
+      { name: 'Slam', text: '*Melee Attack Roll:* +5, reach 10 ft. 14 (3d6 + 4) Bludgeoning damage.' },
+      { name: 'Whirlwind (Recharge 4-6)', text: '*Strength Saving Throw:* DC 13, one creature in the space. *Failure:* 24 (4d10 + 2) Thunder damage.', print: true },
+      // `wail` is kill-shaped, which is what the voluntary branch refuses
+      { name: 'Stolen Chorus (Recharge 5-6)', text: '*Constitution Saving Throw:* DC 13, each creature in a 15-foot Emanation. *Failure:* 45 (10d8) Thunder damage, and the target has the Deafened condition until the end of its next turn.', library: true, template: 'wail', gate: 'Recharge 5-6' },
+    ],
+  });
+  const run = () => { const s = sheet(); settleSheetBudgets({ sections: s, scaled: scaled(), cr: 5, generation: {} }); return s; };
+
+  test('the gate is removed, and print keeps its own', () => {
+    const s = run();
+    const names = s.Actions.map((e) => e.name);
+    expect(names).toContain('Stolen Chorus');
+    expect(names).toContain('Whirlwind (Recharge 4-6)');
+  });
+
+  test('pricing may not hand the gate back', () => {
+    const sc = run().Actions.find((e) => e.name.startsWith('Stolen Chorus'));
+    expect(sc.name).not.toMatch(/\(Recharge/);
+    expect(sc.gate).toBeFalsy();
+  });
+
+  // the interesting part of the row is the point of keeping it
+  test('the save, the area and the condition all survive', () => {
+    const sc = run().Actions.find((e) => e.name.startsWith('Stolen Chorus'));
+    expect(sc.text).toMatch(/Saving Throw/);
+    expect(sc.text).toMatch(/each creature in a 15-foot Emanation/);
+    expect(sc.text).toMatch(/Deafened/);
+  });
+
+  test('the damage drops to at most the Multiattack sum', () => {
+    const sc = run().Actions.find((e) => e.name.startsWith('Stolen Chorus'));
+    const dmg = Number(/(\d+) \(\d+d\d+/.exec(sc.text)[1]);
+    expect(dmg).toBeLessThan(45);          // it moved
+    expect(dmg).toBeLessThanOrEqual(28);   // two Slams at 14
+  });
+
+  test('the row is still worth using — not scaled to nothing', () => {
+    const sc = run().Actions.find((e) => e.name.startsWith('Stolen Chorus'));
+    expect(Number(/(\d+) \(\d+d\d+/.exec(sc.text)[1])).toBeGreaterThan(0);
+  });
+});

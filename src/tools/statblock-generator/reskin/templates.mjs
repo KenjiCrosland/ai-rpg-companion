@@ -1034,7 +1034,7 @@ export function rowValue(text, perHit, { area = false } = {}) {
 // (38-54 at CR 6-10), adults ~4x (54-66 at 13-17), ancients ~3.8x (77-91 at
 // 20-24). No nova's dice climb past this line, gate or no gate.
 export const NOVA_CAP = (cr) => Math.round(cr <= 10 ? 5.5 * cr : 4 * cr + 15);
-export function valueCheck(row, { scaled, sections, section, cr = null, noGate = false, template = null }) {
+export function valueCheck(row, { scaled, sections, section, cr = null, noGate = false, template = null, forceUngated = false }) {
   const perHit = Math.max(3, Math.round(scaled.per_hit ?? 6));
   const attackEV = P_HIT * perHit;
   const gated = /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(row.name ?? '');
@@ -1130,10 +1130,33 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
   // nova gets its `(Recharge 5-6)` HERE, from pricing, which is why 0 of 18 gated
   // rows in sweep-2026-10-21T22-17-49 carried a declared gate.
   let gateChosen = null;
-  if (v.ev > ceiling && !gated && section !== 'Traits' && !controlOnly && noGate && v.hasDamage && !kill && !recurring) { // a nova already stands on the sheet: this row stays ungated and scales to the ceiling instead (the wyrm's Frozen Maw beside Freezing Breath, step 7 twelve)
+  // THE ACTION ECONOMY IS THE LIMIT (owner's ruling, 2026-10-22). When a sheet
+  // carries two Recharge novas, the extra one loses its gate — and the gate
+  // cannot be refused, because leaving it ships a defect print never has (1 of
+  // 329 blocks carries a pair, and only the Vrock's are both print's). The
+  // voluntary branch below needs `hasDamage && !kill && !recurring`, so a
+  // kill-shaped template like `wail` fell through it and was re-gated on the
+  // spot — the Air Elemental's Stolen Chorus beside print's Whirlwind.
+  //
+  // Forced, the row keeps its MECHANICS — the save, the condition, the area —
+  // and only its damage moves: down to the MULTIATTACK SUM (`maEV`), the
+  // owner's ceiling. Using it costs the whole action, so at or below the sum of
+  // what attacking would have dealt it is never the strictly better play. That
+  // is what makes it safe without the gate, and why the kill guard does not
+  // need to hold here: the economy limits the use, not the recharge.
+  const ceilNow = forceUngated ? Math.max(perHit, maEV) : ceiling;
+  if (forceUngated && v.ev > ceilNow && v.hasDamage) {
+    let cur = v.avg;
+    for (let i = 0; i < 12 && v.ev > ceilNow && cur > perHit; i += 1) {
+      const d = saveDamageDiceFor(Math.max(perHit, Math.floor(cur * ceilNow / v.ev)));
+      if (d.avg >= cur) break;
+      text = text.replace(DMG, `${d.avg} (${d.dice})`); v = value(text); cur = v.avg;
+    }
+    steps.push(`un-gated by the one-nova rule — dice to ${v.avg}, at or under the Multiattack sum (${Math.round(maEV)}); the action economy is the limit`);
+  } else if (v.ev > ceiling && !gated && section !== 'Traits' && !controlOnly && noGate && v.hasDamage && !kill && !recurring) { // a nova already stands on the sheet: this row stays ungated and scales to the ceiling instead (the wyrm's Frozen Maw beside Freezing Breath, step 7 twelve)
     let cur = v.avg; for (let i = 0; i < 8 && v.ev > ceiling && cur > perHit; i += 1) { const d = saveDamageDiceFor(Math.max(perHit, Math.floor(cur * ceiling / v.ev))); if (d.avg >= cur) break; text = text.replace(DMG, `${d.avg} (${d.dice})`); v = value(text); cur = v.avg; }
     steps.push(`a nova already stands — kept ungated, dice to ${v.avg} at the ceiling`);
-  } else if (v.ev > ceiling && !gated && section !== 'Traits' && !controlOnly) { name = `${name} (Recharge 5-6)`; gateChosen = 'Recharge 5-6'; steps.push('over the ceiling — gated Recharge 5-6'); }
+  } else if (!forceUngated && v.ev > ceiling && !gated && section !== 'Traits' && !controlOnly) { name = `${name} (Recharge 5-6)`; gateChosen = 'Recharge 5-6'; steps.push('over the ceiling — gated Recharge 5-6'); }
   else if (v.ev > ceiling && !gated && section !== 'Traits' && controlOnly) steps.push('over the ceiling but a control row (no damage, no KO) — print leaves these ungated');
   return { text, name, ev: Math.round(v.ev * 10) / 10, floor: Math.round(floor * 10) / 10, replaced: label, steps, gate: gateChosen };
 }

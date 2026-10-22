@@ -1456,11 +1456,19 @@ describe('the brute plumbing (2026-08-26): archetype flows loudly end to end', (
   // so they are decoration and still refused — on any body, as the title says.
   test('a receiptless shape fit is declined on ANY body — the receipt is the gate, not the substance', async () => {
     const noVerb = 'It is old stone and it does not like company.'; // the PICK (bloodied-fury) matches nothing in the GM's words
+    // THE REASON IS PINNED, NOT THE STAGE (2026-10-22). Verb preference standing
+    // down made the receipt test uniform inside fitSeat, so a receiptless pick is
+    // now refused there ("signature miss: … decoration, not a signature") rather
+    // than later at the trait seat ("trait declined: …"). Both say the same thing
+    // and both leave the row off the sheet, so the matcher asserts the REASON the
+    // two messages share. The substantive assertion — the row is absent — is
+    // unchanged.
+    const refusedForNoReceipt = /the call named none of this creature's own elements/;
     const meat = await ceilingRun('Giant', noVerb);
-    expect(meat.trace).toMatch(/trait declined: .*no receipt of any kind: no quote, no concept key, and the call named none of this creature's own elements/);
+    expect(meat.trace).toMatch(refusedForNoReceipt);
     expect(meat.traits.join('|')).not.toMatch(/Iron Fury|Bloodied Fury/);
     const made = await ceilingRun('Construct', noVerb);
-    expect(made.trace).toMatch(/trait declined: .*no receipt of any kind: no quote, no concept key, and the call named none of this creature's own elements/);
+    expect(made.trace).toMatch(refusedForNoReceipt);
     expect(made.traits.join('|')).not.toMatch(/Iron Fury|Bloodied Fury/);
     // (That a RECEIPTED trait still stands is pinned by the ceiling test above,
     // where the Construct run seats a fourth trait on a concept carrying
@@ -5370,6 +5378,38 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     } finally { console.log = orig; }
     expect(lines2.join('\n')).toMatch(/nova declined: "Scalding Spill \(Recharge 5-6\)" — a whole-round ability the GM never asked for.*the idea's own words:/);
     expect(Object.values(m2.sections).flat().some((e) => e.template === 'ground-burst')).toBe(false);
+  });
+
+  // A RECEIPT DECIDES CREDIT, NOT EXISTENCE — THE ACTION SEAT TOO (critic's order
+  // item 3, 2026-10-22). The same cauldron, the same declined nova, with ONE
+  // difference: the fit call names one of the creature's own signature elements.
+  // That is a receipt of the same kind as a quote (the element list comes from the
+  // concept call, which drew it from the GM's description), so the row exists as a
+  // FREE row instead of dying. It earns no clause credit and still faces the
+  // ship-time budget, the value floor and the one-nova-a-sheet cap.
+  //
+  // The pin above is what proves this did not become a blanket allowance: with no
+  // element named, the nova is still refused.
+  test('the action seat takes a free row when the call names an element it expresses', async () => {
+    const orig = console.log;
+    const brute = scaleDonor(pickDonor(9, 'grappler', 'brute'), 9, { mechanics: [] });
+    const lines = []; console.log = (...a) => { lines.push(a.join(' ')); };
+    let m3;
+    try {
+      m3 = await generateReskin({ cr: 9, mechanics: [], archetype: 'brute', style: 'grappler', concept: "a bog witch's iron cauldron that walks on three legs and cooks whatever climbs in", signatureElements: [{ element: 'a cauldron brim-full of scalding bog-water', kind: 'body' }] }, async (prompt) => {
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ action: { idea: 'The cauldron tips and spills scalding bog-water in a wide hissing wave around it', missing: 'a wave of scalding water' } });
+        if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify({ template: 'ground-burst', because: 'a wave around it', name: 'Scalding Spill', expresses: 'a cauldron brim-full of scalding bog-water' });
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return answer(Object.assign(fullAnswer(brute, 'Kettlewright', {}), { type: 'Construct' }));
+      });
+    } finally { console.log = orig; }
+    const trace = lines.join('\n');
+    // the row is granted on the element receipt rather than declined for want of a quote
+    expect(trace).toMatch(/free signature row:.*names the element it expresses/);
+    expect(trace).not.toMatch(/nova declined: "Scalding Spill/);
+    // and it earns no clause credit: the budget, not the clause, is what carries it
+    expect(trace).toMatch(/Earns no clause credit/);
   });
   // THE GM'S ASK IS THE CALL'S ANSWER, AND THE QUOTE IS CHECKED (critic's hold 1
   // door 5, 2026-10-16). The three seats that take only what the GM asked for
