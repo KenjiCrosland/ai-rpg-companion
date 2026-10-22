@@ -1034,10 +1034,30 @@ export function rowValue(text, perHit, { area = false } = {}) {
 // (38-54 at CR 6-10), adults ~4x (54-66 at 13-17), ancients ~3.8x (77-91 at
 // 20-24). No nova's dice climb past this line, gate or no gate.
 export const NOVA_CAP = (cr) => Math.round(cr <= 10 ? 5.5 * cr : 4 * cr + 15);
+// ONE DEFINITION OF A ROW'S GATE (2026-10-22). Five sites used to recover a gate
+// by re-reading the row's NAME — novasOf in the checker, hasChassisNova, the late
+// nova damage cap, settleSheetBudgets, and valueCheck's own `gated` read, which
+// llm-metadata-over-regex already called "the third copy of the same name-only
+// blind spot". The field is now authoritative: a gate declared in donor data, one
+// written inside a donor's name, and one chosen by pricing all land on `e.gate`
+// (equivalence verified on gatefield4-2026-10-22T02-10-51 — 4 engine rows, 0
+// unstamped, 0 disagreeing).
+//
+// The NAME stays as a FALLBACK rather than being deleted, deliberately:
+//   * for a PRINT row it is canonical — print's own furniture carries the rate in
+//     its name and the engine never stamps it;
+//   * for anything else it is a SIGNAL. An engine row reaching here with a gate in
+//     its name and no field means a stamping site was missed, and the fallback
+//     keeps that a cosmetic miss rather than a dropped nova.
+// `gateFromName` is exported so a checker can report that case instead of
+// silently benefiting from it.
+export const gateFromName = (e) => (/\((Recharge [\d–-]+|\d+\/Day)\)\s*$/.exec(String(e?.name ?? '')) ?? [])[1] ?? null;
+export const gateOf = (e) => e?.gate ?? gateFromName(e);
+
 export function valueCheck(row, { scaled, sections, section, cr = null, noGate = false, template = null, forceUngated = false }) {
   const perHit = Math.max(3, Math.round(scaled.per_hit ?? 6));
   const attackEV = P_HIT * perHit;
-  const gated = /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(row.name ?? '');
+  const gated = !!gateOf(row); // one definition; the field first, the name as fallback
   const ma = multiattackShape(sections);
   // a bonus action is free (no trade — ceiling only); a gated action stands alone
   // A GATED NOVA fires ~1 round in 3 and must beat the round it replaces or a

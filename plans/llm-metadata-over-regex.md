@@ -559,3 +559,109 @@ assert `e.gate` agrees (print rows excepted, where the name is the closed fact).
 The jest probe proves one chassis nova; a forty proves the population. Only then
 retire the name-reading in `novasOf`, `hasChassisNova`, the late damage cap,
 `settleSheetBudgets` and `valueCheck`'s `gated` read.
+
+## EQUIVALENCE HOLDS (2026-10-22) — consumers may now read `e.gate`
+
+The last gap was donor rows that declare their gate inside the NAME rather than as
+data: every `Legendary Resistance` and `Protective Magic`, 30 names in
+`donors.mjs`, with no `gate` field at all. They were the two rows failing the
+check on branch10.
+
+Normalised **once, at the boundary** in `scaleDonor`, right after the donor is
+cloned: a trailing `(Recharge N-M)` / `(N/Day)` in a donor's own name sets
+`e.gate`. The name is left untouched — print shows the rate, and
+"Legendary Resistance (3/Day)" is the name print gives it. Reading a donor's own
+name is a closed fact, so this converts a fact we already hold into the field the
+engine can trust; it is not inferring meaning from prose.
+
+Verified on `smoke-out/gatefield4-2026-10-22T02-10-51`, chosen to hit all three
+paths:
+
+```
+Skeleton Sun       Traits/Legendary Resistance (3/Day)  gate="3/Day"       <- donor name-gate
+                   Reactions/Protective Magic (3/Day)   gate="3/Day"       <- donor name-gate
+Rimewake Colossus  Actions/Killing Cold (Recharge 5-6)  gate="Recharge 5-6" <- chassis nova, from pricing
+Adult Red Dragon   Traits/Legendary Resistance (3/Day)  gate="3/Day"       <- donor name-gate
+Air Elemental      Actions/Whirlwind (Recharge 4-6)     print — name is canon
+Adult Red Dragon   Actions/Fire Breath (Recharge 5-6)   print — name is canon
+```
+
+**6 gated rows: 4 engine rows all stamped and AGREEING, 0 unstamped, 0 disagreeing,
+2 print rows exempt.** The three sources are all covered — a gate declared in
+donor data, a gate in a donor's name, and a gate chosen by pricing.
+
+### Two tests broke, and the reason is the point
+
+Both located the damage nova with `find((e) => e.gate)` — which only worked
+because the field was **sparse**. Completing it made `Legendary Resistance (3/Day)`
+match first, and it has no dice, so they threw. Tightened to "a gated row with
+dice". No behaviour changed; the field becoming authoritative exposed two
+heuristics that depended on its incompleteness. **Expect more of that when the
+five name-readers are retired** — which is why that is its own step with its own
+gate.
+
+### A measurement slip worth recording
+
+My first per-sheet dump of this run reported 3 gated rows where the equivalence
+script found 6, and I nearly reported the smaller number. The dump's regex was
+`\((?:Recharge|\d+\/Day)\)` — which cannot match `(Recharge 4-6)`, because it
+expects `)` immediately after "Recharge". The script's `Recharge [\d–-]+` was
+right. **An unexplained disagreement between two of your own measurements is a
+bug in one of them; reconcile before reporting either.**
+
+### Now unblocked
+
+`novasOf` (checker), `hasChassisNova`, the late nova damage cap,
+`settleSheetBudgets` and `valueCheck`'s `gated` read may each prefer `e.gate`,
+falling back to the name ONLY for `e.print` rows. That retires four name-reading
+sites and removes the drift the hold-4 comment warned about.
+
+## LANDED: seven name-readers retired to one definition (2026-10-22)
+
+`templates.mjs` now exports the single definition, and `checker.mjs` /
+`generate.mjs` import it:
+
+```js
+export const gateFromName = (e) => (/\((Recharge [\d–-]+|\d+\/Day)\)\s*$/.exec(String(e?.name ?? '')) ?? [])[1] ?? null;
+export const gateOf = (e) => e?.gate ?? gateFromName(e);
+```
+
+Retired — the five the plan named, plus two siblings found while checking:
+
+| site | was |
+|---|---|
+| `valueCheck`'s own `gated` read | its own regex (the "third copy" the plan named) |
+| `novasOf` (checker) | `nameGate` regex + a second regex for the gate LABEL |
+| `hasChassisNova` | its own regex |
+| the late nova damage cap | its own regex |
+| `settleSheetBudgets` | `nameGateOf` |
+| checker `const gated =` (gate-4 area) | **sibling found while checking** |
+| checker at-will attack-row scan | **sibling found while checking** |
+
+**The name is kept as a FALLBACK, not deleted, and that is deliberate.** For a
+print row it is canonical — print's own furniture carries the rate in its name and
+the engine never stamps it. For anything else it is a *signal*: an engine row with
+a gate in its name and no field means a stamping site was missed, and the fallback
+keeps that a cosmetic miss rather than a dropped nova. `gateFromName` is exported
+so that case can be reported rather than silently absorbed.
+
+**Gate:** Jest 117 suites / 3746 passing (+10), build clean.
+
+### NOT retired, and why — an inventory rather than a silent skip
+
+Grepping the gate pattern finds ~30 more hits. Most are **not** gate detection and
+should stay:
+
+- **name-stripping** (`bare`, `sweepDeadName`, `species.mjs`'s `bareName`,
+  `printing-equivalence.mjs`) — removing a parenthetical from a name for
+  comparison, not asking whether a row is gated;
+- **`rowOften`** — classifying frequency for the reader, a different question;
+- **`library.mjs:253` and `templates.mjs:438`** — already written as
+  `e.gate || name`, which is the right shape and predates this work.
+
+A handful in `generate.mjs` (around the chassis-nova accessor, the re-slot paths
+and the Multiattack un-gate) *are* detection and could move, but each sits inside
+a larger condition where the surrounding logic also strips or rewrites the name,
+so they want reading one at a time rather than a sweep. Left as a follow-up with
+this note, since an unexamined bulk replace is how the next drift defect gets
+written.

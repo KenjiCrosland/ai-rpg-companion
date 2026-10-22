@@ -16,7 +16,7 @@ import { lintStatblock } from '../format-2024/lint.mjs';
 import { HIT_DIE_BY_SIZE } from '../format-2024/dice.mjs';
 import { WEAPONS, weaponFor, weaponProp, namesWeapon } from './weapons.mjs';
 import { cardBudget, dmgRow } from './card-budgets.mjs';
-import { NOVA_CAP } from './templates.mjs';
+import { NOVA_CAP, gateOf } from './templates.mjs'; // one definition of a row's gate: the field first, the name only as print's canon/a missed-stamp signal
 import { CONTROL_SPELL_LEVEL, CONTROL_AT_WILL_CR, SPELL_DAMAGE_AVG, printCanonFor, nearPrintCr } from './generate.mjs';
 import { speciesFor } from './species.mjs';
 import { LINE_VERBS } from './route.mjs'; // the router's own key tables — one definition for what keys an engine (stage 1b)
@@ -114,13 +114,13 @@ const CONDITION_BOUNDED = /until the (?:end|start) of|for 1 (?:minute|hour)|unti
 export function novasOf(m) {
   const all = allRows(m);
   return all.map(({ sec, e }, i) => {
-    const nameGate = /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '');
+    const nameGate = !!gateOf(e); // the recorded gate, falling back to the name
     if (!nameGate && !TEXT_GATE.test(e.text ?? '')) return null;
     // the 2014 two-row breath: "Breath Weapons (Recharge 5–6). The dragon uses one of the following" and the damage sits in the rows beneath
     const subs = /one of the following/i.test(e.text ?? '') && !/\d+ \(\d+d\d+/.test(e.text ?? '') ? all.slice(i + 1, i + 4).map((x) => x.e).filter((x) => /saving throw/i.test(x.text ?? '') && /\d+ \(\d+d\d+/.test(x.text ?? '')) : [];
     const src = subs.length ? subs.sort((a, b) => avgOf(b.text) - avgOf(a.text))[0] : e;
     if (!/Saving Throw/i.test(src.text ?? '') || !/\d+ \(\d+d\d+/.test(src.text ?? '')) return null;
-    return { sec, e, name: bare(e.name), gate: nameGate ? /\((Recharge [\d–-]+|\d\/Day)\)/.exec(e.name)[1] : '1/Day' /* a once-per-fight trigger prices as a daily */, avg: avgOf(src.text), area: /each creature|Cone|Sphere|radius|Line|Emanation|Cube/i.test(src.text) };
+    return { sec, e, name: bare(e.name), gate: nameGate ? gateOf(e) : '1/Day' /* a once-per-fight trigger prices as a daily */, avg: avgOf(src.text), area: /each creature|Cone|Sphere|radius|Line|Emanation|Cube/i.test(src.text) };
   }).filter(Boolean);
 }
 export function sustainedOf(m) {
@@ -556,7 +556,7 @@ function gateClass(raw, m, ctx, F) {
 function gateGates(m, ctx, F) {
   for (const { sec, e } of allRows(m)) {
     if (sec === 'Legendary Actions' || e.print) continue;
-    const gated = /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '');
+    const gated = !!gateOf(e); // one definition (templates.mjs): the field first, the name as fallback
     const koText = effectOnly(e.text ?? ''); // a condition this row EXPLOITS is not one it imposes (hold 7)
     const ko = KO.exec(koText);
     // a KO is IMPOSED when a target or each creature gets it on a failure — "It can't use this trait if it has the Incapacitated condition" is a guard on itself (Evasion, goldens 2026-10-02)
@@ -1034,7 +1034,7 @@ function gateReader(raw, m, ctx, F) {
         // kept Radiant Flame orphaned outside the Multiattack)
         const printWhole = !!ctx.print?.exact && nearPrintCr(ctx.cr, ctx.print.cr);
         if (sec !== 'Actions' || !/Attack Roll/.test(e.text ?? '') || (e.print && printWhole) || /^Multiattack/.test(e.name ?? '')) continue;
-        if (/\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '')) continue;
+        if (gateOf(e)) continue; // a gated row is not an at-will attack row
         const n = bare(e.name).toLowerCase(); if (!n) continue;
         if (!cited.includes(n)) F('attack-in-multiattack', 'fail', `Actions/${bare(e.name)} is an attack row the Multiattack never names — a GM who reads the Multiattack never uses it`, bare(e.name));
       }

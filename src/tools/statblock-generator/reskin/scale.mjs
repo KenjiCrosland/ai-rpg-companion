@@ -47,6 +47,26 @@ const ATTACK_RE = /(\+\d+)(?: \(with Advantage[^)]*\))?(, reach \d+ ft\. or rang
 export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null, dprScale = 1, edition = null, concept = '', oneAttack = false } = {}) {
   const card = cardBudget(cr, { legendary: !!legendary, edition }); // a 2014 sheet prices against the DMG table (2026-10-02)
   const scaled = JSON.parse(JSON.stringify(donor));
+  // A GATE IN THE NAME BECOMES THE FIELD, ONCE, HERE (2026-10-22). Most donor
+  // rows declare their gate as data — `{ name: 'Area Nova', gate: 'Recharge 5-6' }`
+  // — but 30 of them carry it inside the NAME instead (every Legendary Resistance
+  // and Protective Magic), with no field at all. Those were the last two rows
+  // failing the `e.gate` equivalence on branch10, and the reason five consumers
+  // still recover the gate by re-reading a name: `novasOf`, `hasChassisNova`, the
+  // late nova damage cap, `settleSheetBudgets`, and valueCheck's own `gated` read.
+  //
+  // The donor's own name is a CLOSED FACT, so reading it once at the boundary and
+  // recording what it says is the opposite of inferring meaning from prose — it
+  // converts a fact we already have into the field the rest of the engine can
+  // trust. The NAME is left exactly as it is: print shows the rate, and
+  // "Legendary Resistance (3/Day)" is the name print gives it.
+  for (const es of Object.values(scaled.sections ?? {})) {
+    for (const e of es ?? []) {
+      if (e.gate) continue;
+      const m = /\((Recharge [\d–-]+|\d+\/Day)\)\s*$/.exec(String(e.name ?? ''));
+      if (m) e.gate = m[1];
+    }
+  }
   // ONE ATTACK MEANS ONE ATTACK'S WORTH OF DAMAGE (2026-10-16). print's seven
   // swarms each make a single attack, so the swarm body drops the donor's
   // inherited Multiattack — but it has to drop BEFORE the per-hit solve, or the

@@ -93,7 +93,10 @@ describe('batch-review fixes (2026-08-18)', () => {
     const { pickDonor: pd, scaleDonor: sd } = require('../scale.mjs');
     for (const cr of [8, 12, 16, 20]) {
       const s = sd(pd(cr, null, 'skirmisher'), cr);
-      const nova = Object.values(s.sections).flat().find((e) => e.gate);
+      // the DAMAGE nova, not merely the first row carrying a gate: `gate` is now
+      // complete (a gate in a donor's name is normalised into the field), so
+      // Legendary Resistance (3/Day) carries one too and has no dice to read.
+      const nova = Object.values(s.sections).flat().find((e) => e.gate && /\d+ \(\d+d\d+/.test(e.text ?? ''));
       const avg = Number(/(\d+) \(/.exec(nova.text)[1]);
       expect(`CR ${cr}: ${avg}`).toBe(`CR ${cr}: ${avg <= Math.min(Math.round(6 * cr), 70) + 7 ? avg : 'OVER CEILING'}`);
     }
@@ -150,7 +153,7 @@ describe('batch two (2026-08-18): types are reskin outputs, wildcards land in th
 
   test('nova ceiling now slopes: 12/16/20 differ', () => {
     const { pickDonor: pd4, scaleDonor: sd4 } = require('../scale.mjs');
-    const avgAt = (cr) => Number(/(\d+) \(/.exec(Object.values(sd4(pd4(cr, null, 'skirmisher'), cr).sections).flat().find((e) => e.gate).text)[1]);
+    const avgAt = (cr) => Number(/(\d+) \(/.exec(Object.values(sd4(pd4(cr, null, 'skirmisher'), cr).sections).flat().find((e) => e.gate && /\d+ \(\d+d\d+/.test(e.text ?? '')).text)[1]);
     const [a, b, c] = [12, 16, 20].map(avgAt);
     expect(new Set([a, b, c]).size).toBeGreaterThan(1);
     expect(c).toBeLessThanOrEqual(80);

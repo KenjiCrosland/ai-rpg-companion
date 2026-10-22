@@ -216,3 +216,55 @@ describe('the extra nova is un-gated and priced to the Multiattack sum', () => {
     expect(Number(/(\d+) \(\d+d\d+/.exec(sc.text)[1])).toBeGreaterThan(0);
   });
 });
+
+// ONE DEFINITION OF A ROW'S GATE (2026-10-22). Seven sites used to recover a gate
+// by re-reading the row's NAME. The field is authoritative now — a gate declared
+// in donor data, one written inside a donor's name, and one chosen by pricing all
+// land on `e.gate` — and the name survives only as a fallback: canonical for a
+// PRINT row, and a missed-stamp SIGNAL for anything else.
+describe('gateOf is the single definition of a row gate', () => {
+  const { gateOf, gateFromName } = require('../templates.mjs');
+
+  test('the recorded field wins', () => {
+    expect(gateOf({ name: 'Area Nova', gate: 'Recharge 5-6' })).toBe('Recharge 5-6');
+  });
+
+  test("a print row's name is canonical — the engine never stamps it", () => {
+    expect(gateOf({ name: 'Fire Breath (Recharge 5-6)', print: true })).toBe('Recharge 5-6');
+    expect(gateOf({ name: 'Legendary Resistance (3/Day)', print: true })).toBe('3/Day');
+  });
+
+  // the fallback is deliberate: a missed stamping site must be a cosmetic miss,
+  // never a dropped nova
+  test('an unstamped engine row still reads its gate off the name', () => {
+    expect(gateOf({ name: 'Killing Cold (Recharge 5-6)', library: true })).toBe('Recharge 5-6');
+  });
+
+  test('an ungated row reads null', () => {
+    expect(gateOf({ name: 'Slam', text: 'x' })).toBeNull();
+    expect(gateOf({})).toBeNull();
+    expect(gateOf(null)).toBeNull();
+  });
+
+  // a range and a /Day rate are both gates; "(Recharge" alone is not
+  test.each([
+    ['Breath (Recharge 4-6)', 'Recharge 4-6'],
+    ['Breath (Recharge 6)', 'Recharge 6'],
+    ['Ward (3/Day)', '3/Day'],
+    ['Ward (10/Day)', '10/Day'],
+  ])('%s -> %s', (name, want) => { expect(gateOf({ name })).toBe(want); });
+
+  test('a parenthetical that is not a gate is not read as one', () => {
+    expect(gateOf({ name: 'Bite (Bonus Action)' })).toBeNull();
+    expect(gateOf({ name: 'Spellcasting (Psionics)' })).toBeNull();
+  });
+
+  // gateFromName is exported so a missed stamp can be REPORTED rather than
+  // silently absorbed by the fallback
+  test('gateFromName distinguishes a stamped row from one relying on the fallback', () => {
+    const stamped = { name: 'Area Nova', gate: 'Recharge 5-6' };
+    const unstamped = { name: 'Area Nova (Recharge 5-6)', library: true };
+    expect(gateFromName(stamped)).toBeNull();        // its name carries no gate
+    expect(gateFromName(unstamped)).toBe('Recharge 5-6');
+  });
+});

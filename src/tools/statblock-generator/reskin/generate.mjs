@@ -11,7 +11,7 @@ import { pickDonor, scaleDonor } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { NOVA_CAP, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY } from './templates.mjs';
+import { NOVA_CAP, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
@@ -740,7 +740,7 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   // death-burst rows that cost hold 4 on 2026-10-16, where a CR 13 swarm's 91
   // (14d12) emanation read as "nova none". The checker cannot be imported back
   // — it imports this file — so the predicate is kept deliberately identical.
-  const nameGateOf = (e) => /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '');
+  const nameGateOf = (e) => !!gateOf(e); // the recorded gate; the name remains the fallback inside gateOf
   const novaRows = (sections.Actions ?? []).filter((e) => (nameGateOf(e) || TEXT_GATE.test(e.text ?? '')) && /Saving Throw/i.test(e.text ?? '') && /\d+ \(\d+d\d+/.test(e.text ?? ''));
   if (novaRows.length > 1) {
     // Keep, in order: print's own row; then a row whose gate is in its TEXT,
@@ -3264,7 +3264,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // chassis rows yield (never print's, a seed's, or another template's); the keeper owns the evicted row's citations.
   const userKeysFor = (tid) => { const tpl = tid ? TEMPLATES.find((t) => t.id === tid || t.key === tid) : null; return tpl ? (rankByVerb([tpl], readPhrases(String(options.userConcept ?? concept ?? '')), '')[0]?.concept ?? []) : []; }; // the keys the USER's words matched on the template — a row the idea call placed still answers the user's clause (the Gullet-Wyrm's Swallow, the scarecrow's flinch; sprint run 2026-10-12)
   const keysOf = (because) => [...String(because ?? '').matchAll(/([a-z][a-z' -]*?):(?:concept|idea)\b/g)].map((mm) => mm[1].trim()); // the keys a fit bound on, from its annotated reason
-  const hasChassisNova = (secs) => (secs.Actions ?? []).some((e) => !e.library && !e.template && /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '') && /Saving Throw/.test(e.text ?? '') && /\d+ \(\d+d\d+/.test(e.text ?? '')); // one Recharge nova per sheet (0 of 2 corpora carry two): a fitted row on a dragon stays ungated at the ceiling
+  const hasChassisNova = (secs) => (secs.Actions ?? []).some((e) => !e.library && !e.template && !!gateOf(e) && /Saving Throw/.test(e.text ?? '') && /\d+ \(\d+d\d+/.test(e.text ?? '')); // one Recharge nova per sheet (0 of 2 corpora carry two): a fitted row on a dragon stays ungated at the ceiling
   function slotYield(templateId, keeper) { // hoisted: the authored landing above calls it before this line (step 6)
     const declared = Array.isArray(templateId) ? templateId[0] : TEMPLATE_BY_ID.get(templateId)?.replaces; // an array names the slot outright (an authored Recharge save is the nova slot — the Glacier Wyrm shipped two breaths, critic's step-5 read)
     // a template whose rendered row ROLLS a ranged attack claims the ranged slot whatever it declares (throw-retrieve declares `signature`)
@@ -6300,7 +6300,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // Like the Bloodied half and the Multiattack collapse, it runs after
   // everything that can change its input.
   for (const [sec, es] of Object.entries(sections)) for (const e of es) {
-    const gatedHere = /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '') || TEXT_GATE.test(e.text ?? '');
+    const gatedHere = !!gateOf(e) || TEXT_GATE.test(e.text ?? ''); // the field first; TEXT_GATE still covers a limit written in the TEXT
     if (!gatedHere || !/Saving Throw/.test(e.text ?? '')) continue;
     const dm = /(\d+) \((\d+d\d+(?:\s*\+\s*\d+)?)\)/.exec(e.text ?? ''); if (!dm) continue;
     const cap = NOVA_CAP(cr);
