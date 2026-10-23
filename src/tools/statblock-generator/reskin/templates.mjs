@@ -162,6 +162,19 @@ const SLOT_CONTRACTS = {
 const fillKeepsFrame = (k, v) => k !== 'wound_phrase' || /\bwounds?\b/i.test(String(v ?? ''));
 // flavor slots: the model's words, bounded (no digits, no rules grammar, short)
 export const FLAVOR_SLOTS = ['phobia', 'restraint', 'projectile', 'wound_phrase', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
+// HOW TO CHOOSE, not just what is legal. A closed enum tells the model the legal
+// values and nothing about which one this sheet can support, and for
+// `consumed_condition` that gap WAS the defect: a payoff reads "one creature that
+// has the X condition", the model picked X freely, and the engine's own fallback
+// was `ctx.imposed[0]` — a regex over the engine's generated text that reads
+// Evasion's "can't use this trait if it has the Incapacitated condition" as an
+// IMPOSITION (25 of 156 rows known to that regex carry no declared record; the
+// Evasion false positive recurred in all three runs of the focused ten). The whole
+// sheet is already in this prompt, so the model can see which row imposes what —
+// this costs no call of its own, only the question.
+const VOCAB_GUIDANCE = {
+  consumed_condition: 'name the one THE SHEET ABOVE already imposes, and in "because" quote the row that imposes it. If no row on the sheet imposes any of these, this template does not belong on this sheet: refuse it',
+};
 // engine slots: never the model's
 const ENGINE_SLOTS = ['dc', 'atk', 'avg', 'dice', 'avg_half', 'dice_half', 'damage_type', 'melee_name', 'ranged_name', 'ray_table'];
 
@@ -1352,7 +1365,7 @@ export function templateMenuLines(menu, { cr, concept = '', idea = '' } = {}) {
   return rankByVerb(menu, concept, idea).map(({ t, concept: cv, idea: iv }) => {
     const matched = [...cv.map((k) => `${k} (concept)`), ...iv.map((k) => `${k} (idea)`)];
     const flav = t.flavor.length ? ` — you fill: ${t.flavor.map((f) => (PREDICATE_SLOTS.has(f) ? `{${f}} (a PREDICATE, no subject and no full stop — the frame already says "Each creature in the area": answer like "has Disadvantage on attack rolls")` : SLOT_CONTRACTS[f] ? `{${f}} (${SLOT_CONTRACTS[f]})` : `{${f}}`)).join(', ')}` : '';
-    const vocab = slotsOf(frameOf(t, cr)).filter((s) => VOCAB[s]).map((s) => `{${s}} ∈ ${VOCAB[s].join('/')}`);
+    const vocab = slotsOf(frameOf(t, cr)).filter((s) => VOCAB[s]).map((s) => `{${s}} ∈ ${VOCAB[s].join('/')}${VOCAB_GUIDANCE[s] ? ` — ${VOCAB_GUIDANCE[s]}` : ''}`);
     // A TEMPLATE WITH A VARIABLE AREA SHAPE HAS TO SAY SO. The frame carries
     // `{target}` (an engine-filled clause, sized by band) while the choice the
     // model makes is `area_shape` — two names on purpose, so the model never sets
