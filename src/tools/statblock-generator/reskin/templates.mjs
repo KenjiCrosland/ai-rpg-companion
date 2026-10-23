@@ -464,13 +464,20 @@ const DENIED_CLAUSE = new RegExp(`\\b(?:takes? (?:extra|double|additional) damag
 export function scrubDeniedClauses(text) { return String(text ?? '').split(/([,;.]|\s+(?:and|but|or)\s+)/).map((seg, i) => (i % 2 === 1 ? seg : seg.replace(new RegExp(`${DENIED_CLAUSE.source}.*$`, 'i'), '').replace(LACK_PHRASE, ''))).join('').replace(/\s{2,}/g, ' ').trim(); } // the phrase leaves, the words before it stay ("a tiefling duelist who hates fire" keeps the duelist — the critic's second species read)
 // A TEMPLATE DENIED BY THE CONCEPT: a heated body or fire aura never lands on a creature the words make vulnerable to fire, whatever word matched ("lives in the burned forest" bound Ash a Heated Body)
 const TEMPLATE_DENY = { 'heated-body': new RegExp(`(?:hates?|loathes?|fears?|vulnerable to|weak to|extra damage from|takes? extra damage from)\\s+(?:the\\s+)?(?:fire|flames?|heat|burning)`, 'i'), 'fire-aura': new RegExp(`(?:hates?|loathes?|fears?|vulnerable to|weak to|extra damage from|takes? extra damage from)\\s+(?:the\\s+)?(?:fire|flames?|heat|burning)`, 'i') };
-export function rankByVerb(menu, conceptText0, ideaText0 = '') {
+export function rankByVerb(menu, conceptText0, ideaText0 = '', askedMechanic = null) {
+  // THE DECLARED MECHANIC OUTRANKS EVERY WORD (owner's architecture, 2026-10-23).
+  // The resolve call already named what the GM asked a row to DO, from the GM's own
+  // words. A template that declares that same mechanic is the answer; the 1,553 key
+  // words below are a bridge built because nothing was declared, and where both
+  // speak, the stamp wins. This ORDERS rather than filters, so a stochastic misread
+  // of the mechanic costs the menu's first seats, never a candidate.
   const conceptText = readPhrases(scrubDeniedClauses(conceptText0)); const ideaText = readPhrases(ideaText0); // fixed phrases carry one sense; a denied clause's words never key a template
   const c = wordsOf(conceptText); const d = wordsOf(ideaText);
   const hit = (t, words, raw) => (t.keys ?? []).filter((k) => !(SENSE_DENY[k] && SENSE_DENY[k].test(String(raw ?? ''))) && (k.includes(' ') ? String(raw ?? '').toLowerCase().includes(k) : words.some((w) => sameStem(w, stem(k)))));
   const rawAll = String(conceptText0 ?? '');
+  const wantsMech = (t) => !!askedMechanic && t.mechanic === askedMechanic;
   return menu.map((t, i) => { const denied = TEMPLATE_DENY[t.id]?.test(rawAll); const concept = denied ? [] : hit(t, c, conceptText); const idea = denied ? [] : hit(t, d, ideaText).filter((k) => !concept.includes(k)); return { t, i, concept, idea, matched: [...concept, ...idea], score: concept.length * 2 + idea.length }; })
-    .sort((a, b) => b.score - a.score || a.i - b.i);
+    .sort((a, b) => (wantsMech(b.t) ? 1 : 0) - (wantsMech(a.t) ? 1 : 0) || b.score - a.score || a.i - b.i);
 }
 
 // a PAYOFF template consumes a condition another row must produce (Gristle
@@ -480,6 +487,54 @@ const REQUIRES_IMPOSED = new Set(['condition-payoff', 'exploiter']);
 // A MECHANIC ENGINE NEEDS A KEY IN THE GM's WORDS (the critic's third species read): a shape whose frame imposes Grappled or swallows
 // never lands on words that never asked for it. A creature-only prompt (three significant words or fewer) gives nothing to read and the
 // catalog composes freely, as the head-clause rule says.
+/**
+ * WHAT THE ROW DOES — the mechanic, declared, so the engine can match the GM's
+ * ask to a template without reading words.
+ *
+ * The owner's architecture (2026-10-23): categorize in the first calls, sort on
+ * the stamps, and let the final prompt take instruction. The resolve call already
+ * names a mechanic from the GM's own words; no template declared one, so there
+ * was nothing to match it against and `rankByVerb`'s 1,553 key words were the
+ * only bridge.
+ *
+ * Measured before this landed: the declared `askShape` narrowing gets 108 -> ~30
+ * templates, and the word list then cut 30 -> 14, which is SELECTION by word
+ * overlap, not ordering. Adding this field takes the same cells to a mean of
+ * **2.3 candidates** (worst bucket 5), which is what makes selection-by-stamp
+ * reachable. A cell like `save/condition` holds a swallow, a gaze, a shove and a
+ * charm; nothing in the other 24 declared fields could tell them apart.
+ */
+export const MECHANIC = {
+  swallow: ['swallow'],
+  gaze: ['gaze-single', 'gaze-aura', 'random-ray'],
+  snare: ['snare', 'snare-bolt'],
+  grapple: ['snatch', 'hook-drag', 'hook-rider', 'reel', 'pull-through', 'adhesive'],
+  shove: ['shield-bash', 'push-prone', 'charge-push', 'obstacle-pull', 'disarm'],
+  charm: ['lure', 'aggro-curse', 'pacify'],
+  fear: ['escalating-dread', 'terror-pulse', 'phobia', 'wail'],
+  dazzle: ['sensory-strike', 'reveal', 'marking-light', 'bolt-mark'],
+  charge: ['trample', 'charge', 'leap', 'pounce', 'burrow-ambush', 'relentless-pursuit'],
+  breath: ['spew', 'noxious-aura'],
+  burst: ['thrown-burst', 'thrown-burst-seed', 'ground-burst', 'death-burst', 'bloodied-burst', 'active-toll', 'throw-retrieve'],
+  drain: ['drain', 'life-drain'],
+  curse: ['curse-debt', 'delayed-brand', 'affliction', 'contagion', 'seal'],
+  retaliate: ['heated-body', 'resonant-body', 'ward-retaliation', 'riposte', 'own-turn-punisher', 'weapon-lodge', 'coating', 'interpose', 'snap-shot'],
+  climb: ['spider-climb', 'web-walker', 'terrain-walk', 'earth-glide', 'tunneler'],
+  teleport: ['blink', 'phase-slip', 'self-invisibility'],
+  zone: ['zone', 'zone-seed', 'blighted-ground', 'aberrant-ground', 'fire-aura'],
+  disguise: ['false-appearance', 'mimicry', 'blurred-form'],
+  // split from one bucket of 8, which was the worst in the measurement
+  harden: ['shell-withdraw', 'sealed-body', 'guarded-stance', 'patient-defense'],
+  resist: ['absorption', 'evasion', 'shielded-mind', 'undead-fortitude'],
+  escalate: ['bloodied-fury', 'rampage', 'berserk', 'execute', 'condition-payoff', 'exploiter', 'assassinate', 'isolation', 'wind-up'],
+  mend: ['lay-on-hands', 'second-wind', 'warded-mending'],
+  command: ['rally', 'volley-order', 'herd'],
+  track: ['uncanny-sense', 'faultless-tracker', 'bound', 'focus', 'feint-slip', 'slow-bolt', 'stunning-strike', 'bolt-restrain', 'bolt-drag', 'truth-aura'],
+};
+/** The mechanic a template implements, or null. One definition, built once. */
+export const MECHANIC_OF = Object.fromEntries(Object.entries(MECHANIC).flatMap(([m, ids]) => ids.map((id) => [id, m])));
+export const MECHANICS = Object.keys(MECHANIC);
+
 /**
  * WHAT MUST BE TRUE OF THE BODY — in plain words, for the CALL to judge.
  *
@@ -590,7 +645,7 @@ export const TEMPLATES = [
   ...SHAPES.filter((s) => SECTION_BY_REPLACES[s.replaces] && SHAPE_TAGS[s.id]).map((s) => ({
     id: s.id, name: s.name, kind: 'shape', cite: s.cite,
     section: SECTION_BY_REPLACES[s.replaces], replaces: s.replaces, roles: s.roles, styles: s.styles, cr_range: s.cr_range, /* `replaces` names the SLOT the template claims — the slot-yield rule reads it (fidelity pipeline step 2) */
-    gate: s.gate ?? null, nova: s.replaces === 'nova', requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null, requires_row: s.requires_row ?? null, requires_claim: s.requires_claim ?? null, requires_size: s.requires_size ?? null, needs_body: NEEDS_BODY[s.id] ?? null, family: FAMILY[s.id] ?? null, targets: s.targets ?? null, target_sizes: s.target_sizes ?? null, duration_default: s.duration_default ?? null,
+    gate: s.gate ?? null, nova: s.replaces === 'nova', requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null, requires_row: s.requires_row ?? null, requires_claim: s.requires_claim ?? null, requires_size: s.requires_size ?? null, needs_body: NEEDS_BODY[s.id] ?? null, family: FAMILY[s.id] ?? null, mechanic: MECHANIC_OF[s.id] ?? null, targets: s.targets ?? null, target_sizes: s.target_sizes ?? null, duration_default: s.duration_default ?? null,
     host: s.host ?? HOST_BY_REPLACES[s.replaces] ?? null, // a reaction that fires a ranged row needs one on the sheet (snap-shot)
     trigger: SHAPE_TAGS[s.id][0], effect: SHAPE_TAGS[s.id][1],
     keys: [...new Set([...(VERB_KEYS[s.id] ?? []), ...(SHAPE_KEYS[s.id] ?? [])])],
@@ -611,6 +666,7 @@ export const TEMPLATES = [
     // A declaration that never reaches its template is worse than no declaration:
     // the table reads complete. `body-requirements.spec.js` now asserts every
     // NEEDS_BODY and FAMILY key lands on its template, so this cannot recur.
+    mechanic: MECHANIC_OF[seed.key] ?? MECHANIC_OF[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? null,
     duration_default: seed.duration_default ?? null, // a seed declares its own default too, or the frame path's choice never reaches it
     needs_body: NEEDS_BODY[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? NEEDS_BODY[seed.key] ?? null,
     family: FAMILY[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? FAMILY[seed.key] ?? null,

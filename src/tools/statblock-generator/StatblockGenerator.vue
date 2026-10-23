@@ -1093,6 +1093,7 @@ async function generateStatblockEngine(edition) {
   let conceptMechanics = null;
   let conceptBane = null;
   let conceptHolds = null; // the route call's read of a containment engine
+  let conceptAskedMechanic = null; // the route call's read of WHAT the GM asked a row to do (2026-10-23)
   // Type-by-substance (owner call): the micro-calls decide creature type
   // from the concept's substance; the engine stamps it. Random path falls
   // back to the rolled type when the call fails or skips.
@@ -1249,6 +1250,7 @@ async function generateStatblockEngine(edition) {
       conceptMechanics = route.mechanics;
       conceptBane = route.bane ?? null;
       conceptHolds = route.holds ?? null; // the GM's own undoing, as the route call read it
+      conceptAskedMechanic = route.askedMechanic ?? null;
       if (route.resolvedType) resolvedType = route.resolvedType;
       logger.log('[route]', `${route.line}${route.role && route.role !== route.archetype ? ` (${route.role})` : ''} type=${resolvedType ?? '?'} mechanics=${route.mechanics.join(', ') || 'none'} — ${route.notes.join(' | ')}`);
     } else {
@@ -1468,6 +1470,7 @@ async function generateStatblockEngine(edition) {
           mechanics: conceptMechanics ?? null,
           bane: conceptBane ?? null,
           holds: conceptHolds,
+          askedMechanic: conceptAskedMechanic, // selects templates by DECLARED mechanic, ahead of any word rule
           themes: conceptThemes ?? null, // the call's own read of the creature's substance, for the alias guard
           rejectedCanon: conceptRejectedCanon,
           typeSource: conceptTypeSource, // 'user' | 'inferred' | null — the call's field, not a word read

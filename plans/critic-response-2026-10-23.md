@@ -793,3 +793,17 @@ Beguile`; Mummy Lord rides `Glare, Necrotic Strike, Dread Command`; the CR 17
 dragon unchanged at 4 rows with no duplication; and the six creatures print gives
 none (Stone Golem, Purple Worm, Hydra, brass tyrant, bog hound, Brother Halric)
 stay at 0.
+
+## The critic package must be keyed by sheet index, not name (2026-10-23)
+
+Two Owlbears (#03 and #21) collapsed to one entry in package seven's
+`BLOCKS.md`, and the same collision happened in an earlier package. The smoke
+harness is NOT at fault — `scripts/smoke-statblock.mjs:325` already writes
+`${n}-${slug(name)}.md`, so its per-block files are unique. The collision was in
+the ad-hoc package builder, which keyed a map by monster name.
+
+When building the next critic package:
+- key by the run's sheet index (`n`), never by `monster.name`;
+- assert `new Set(keys).size === blocks.length` before writing, and fail loudly
+  if not — a silently short package is how two reviews were spent on 39 blocks
+  while reporting 40.

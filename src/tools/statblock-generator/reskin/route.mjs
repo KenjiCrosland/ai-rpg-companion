@@ -198,6 +198,21 @@ const NOT_PHANTOM_SIZES = ['Huge', 'Gargantuan'];
 // no bow, arrow, crossbow, sling or shot in the words, no archer seat ('bolts' is a caster's too)
 const MAGIC_WORD = /\b(?:spell|spells|spellcast\w*|cast|casts|casting|magic|magical|arcane|sorcer\w*|wizard|witch|warlock|mage|magus|priest|priestess|cleric|acolyte|prays?|prayer|holy|divine|blessed|hex|hexes|hexed|curse|curses|cursed|ritual|incant\w*|enchant\w*|summon\w*|conjur\w*|necroman\w*|shaman|druid|oracle|seer|psychic|telepath\w*|eldritch|rune|runes|sigil|glyph|ward|wards|warding|miracle|channel|invoke|invokes|scroll|grimoire|tome|staff of|wand)\b/i; // a caster line needs one of these in the GM's words (the critic's fourth read)
 const ARCHER_NOUN = /\b(?:bows?|longbows?|shortbows?|crossbows?|arrows?|quivers?|slings?|archers?|bowman|bowmen|marksman|markswoman|marksmen|sniper|sharpshooter|shoots?|shooting|nocks?|volley)\b/i;
+/**
+ * WHAT THE GM ASKED THE ROW TO DO — one of the catalog's declared mechanics.
+ *
+ * Separate from EXTRA_MECHANICS (the `extras` field, gated add-ons) and from
+ * `mechanics` (tested downstream for 'engulf' and 'regeneration'), both of which
+ * are left exactly as they were. This field exists only so template selection can
+ * match a declared ask to a declared mechanic instead of a word overlap: measured
+ * 2026-10-23, the declared cell narrowing leaves ~30 candidates and the key list
+ * cut 30 -> 14, while cell + mechanic leaves a mean of 2.3.
+ *
+ * The list is MECHANIC's keys in templates.mjs; it is repeated here rather than
+ * imported because route.mjs is upstream of the catalog.
+ */
+export const ASKED_MECHANICS = ['swallow', 'gaze', 'snare', 'grapple', 'shove', 'charm', 'fear', 'dazzle', 'charge', 'breath', 'burst', 'drain', 'curse', 'retaliate', 'climb', 'teleport', 'zone', 'disguise', 'harden', 'resist', 'escalate', 'mend', 'command', 'track'];
+
 export const EXTRA_MECHANICS = ['gaze', 'teleport', 'aura', 'breath', 'snare', 'thrown-weapon', 'grapple']; // 'summon' retired with the group templates (owner 2026-09-28): the tag opened the CR<=2 wildcard slot for a mechanic nothing renders
 const TYPES = ['Aberration', 'Beast', 'Celestial', 'Construct', 'Dragon', 'Elemental', 'Fey', 'Fiend', 'Giant', 'Humanoid', 'Monstrosity', 'Ooze', 'Plant', 'Undead'];
 
@@ -263,6 +278,7 @@ RULES
 - swarm, ooze, and dragon only when the BODY is that thing — a mass of many, an amorphous mass, a true dragon. lurker-phantom too: only when the body is INCORPOREAL. The drowned, the buried and the hanged are usually corpses that walk, and a corpse that drags people down by the ankles has hands and weight — pick it a body that can hold someone. A phantom drifts through a wall and cannot.
 - A concept that holds, seizes, swallows, entombs, or folds shut around prey is brute-grappler however it is built — that chassis alone carries the containment engine. A thing that traps by LOOKING harmless is lurker-trap.
 - creature_type from the concept's SUBSTANCE — what it physically is: animated objects and machines are Construct; remains or spirits of the dead are Undead; natural animals are Beast; fungus and vegetation are Plant; giants are Giant. Humanoid is the NPC type — a remade, fused, grown, or woven thing is a Monstrosity however upright it stands. Never type by vibe.
+- asked_mechanic: WHAT THE GM ASKED A ROW TO DO, one of: ${ASKED_MECHANICS.join(', ')} — with the GM's own words as "because". Answer "" when the words name no mechanic at all; never guess one because it would be cool.
 - extras: gated add-on mechanics the concept ITSELF shows, from: ${EXTRA_MECHANICS.join(', ')} — each with its own quote. Most concepts have none. Never list what would merely be cool.
 
 WHAT ELSE DO THE WORDS NAME? Three more, each with the user's own words quoted in "because" (leave a field out if the words do not settle it):
@@ -272,7 +288,7 @@ WHAT ELSE DO THE WORDS NAME? Three more, each with the user's own words quoted i
 
 DOES THIS CREATURE WORK MAGIC? ("casts") True when the words name magic outright ("casts", "spells", "hexes") and ALSO when the KIND implies it: a cleric, a crusader who smites, a chaplain who blesses, a druid, a warlock. False for a plain warrior however armoured, false for a title alone, and false for a creature whose uncanny power is its BODY rather than a worked art — a fey piper's music, a gaze, a breath weapon. Quote the user's words that settle it in "because"; set "implied_by_kind" when nothing in the words says magic but the kind does.
 
-Return ONLY JSON, no markdown: {"shoots": {"yes": false, "because": ""}, "is_a_swarm": {"yes": false, "because": ""}, "holds": {"yes": false, "because": ""}, "casts": {"yes": true, "because": "<the user's own words>", "implied_by_kind": false}, "bane": {"what": "<a damage type or a weapon material, or omit>", "because": "<the user's own words that say so>"}, "cue_verdicts": [{"key": "<a key word listed above, copied exactly>", "means": true, "because": "<the words that settle it>"}], "picks": [{"line": "<id from the shelf>", "because": "<phrase copied from the concept>"}], "cr": "<the Challenge Rating this creature reads as, 0 to 30 (e.g. 5, or 1/2) — print's own CR for a print creature; otherwise the tier a table meets it at — village and folklore threats read 1 to 8, only world-enders read 17 or more>", "creature_type": "<one of: ${TYPES.join(', ')}>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan — the body these words describe>", "extras": [{"mechanic": "<one of the list>", "because": "<phrase copied from the concept>"}]}`;
+Return ONLY JSON, no markdown: {"shoots": {"yes": false, "because": ""}, "is_a_swarm": {"yes": false, "because": ""}, "holds": {"yes": false, "because": ""}, "casts": {"yes": true, "because": "<the user's own words>", "implied_by_kind": false}, "bane": {"what": "<a damage type or a weapon material, or omit>", "because": "<the user's own words that say so>"}, "cue_verdicts": [{"key": "<a key word listed above, copied exactly>", "means": true, "because": "<the words that settle it>"}], "picks": [{"line": "<id from the shelf>", "because": "<phrase copied from the concept>"}], "cr": "<the Challenge Rating this creature reads as, 0 to 30 (e.g. 5, or 1/2) — print's own CR for a print creature; otherwise the tier a table meets it at — village and folklore threats read 1 to 8, only world-enders read 17 or more>", "creature_type": "<one of: ${TYPES.join(', ')}>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan — the body these words describe>", "asked_mechanic": {"mechanic": "<one from the list, or \"\">", "because": "<the user's own words>"}, "extras": [{"mechanic": "<one of the list>", "because": "<phrase copied from the concept>"}]}`;
 }
 
 function tryParse(raw) {
@@ -551,6 +567,15 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
     if (!extras.includes(m)) extras.push(m);
   }
   const mechanics = [...new Set([...(chosen?.implies ?? []), ...extras])];
+  // the asked mechanic: enum membership plus a quote that is really in the GM's
+  // words, dropped rather than coerced — the same rule every other field here has
+  const askedRaw = String(parsed?.asked_mechanic?.mechanic ?? parsed?.asked_mechanic ?? '').toLowerCase().trim();
+  let askedMechanic = null;
+  if (askedRaw && ASKED_MECHANICS.includes(askedRaw)) {
+    const q = parsed?.asked_mechanic?.because;
+    if (q == null || evidenceIn(q, text)) askedMechanic = askedRaw;
+    else notes.push(`asked_mechanic ${askedRaw}: quote not found`);
+  } else if (askedRaw) notes.push(`asked_mechanic "${askedRaw}" is not in the list`);
   // the call's bane, validated: a closed list, and a quote that is really in the
   // GM's words. Anything else is dropped rather than coerced.
   const BANE_OK = /^(?:Acid|Fire|Cold|Lightning|Thunder|Poison|Necrotic|Radiant|Psychic|Force|silver|adamantine|cold iron)$/i;
@@ -573,6 +598,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
     } else if (what) notes.push(`bane refused: "${what}" is not a damage type or a material the rules know`);
   }
   return {
+    askedMechanic, // what the GM asked a row to DO, for selection by declared agreement
     bane,
     holds: holdsA, // the call's read of whether this creature keeps hold of a creature — the checker asks the same question (2026-10-17)
     line: chosen?.id ?? null,

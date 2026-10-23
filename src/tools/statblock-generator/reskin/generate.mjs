@@ -4106,7 +4106,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // no verb of this concept OR this idea is on the shelf → the fit would be
       // a shape fit by construction (v2 blind read: "template variety went up,
       // template fit went down"); an honest miss, no call spent
-      const verbRanked = rankByVerb(pool, verbText, `${seatText} ${idea.idea}`);
+      const verbRanked = rankByVerb(pool, verbText, `${seatText} ${idea.idea}`, options.askedMechanic ?? null);
       if (!verbRanked.some((r) => r.matched.length)) {
         if (idea.section === 'rider') {
           // the rider shelf is small: a rider idea with no verb there is re-seated
@@ -4147,9 +4147,23 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // (reported three times), "ooze" -> Aberrant Ground, "death" -> execute.
       // Some verbs will now be missed; a miss shows in the trace and the
       // coverage line instead of shipping a wrong trait.
-      const offered = conceptBound.length
+      let offered = conceptBound.length
         ? [...conceptBound, ...menu.filter((t) => !conceptBound.includes(t)), ...ideaNamed.filter((t) => !conceptBound.includes(t))]
         : [...menu, ...ideaNamed];
+      // THE DECLARED MECHANIC LEADS THE MENU (owner's architecture, 2026-10-23). The
+      // resolve call read what the GM asked a row to DO; every template declares the
+      // same field, so the match is a stamp comparison, not a word overlap. On a
+      // verbless concept ("lizardfolk ninja", "fire monk") the word list seats a
+      // mechanic-member first 12% of the time and the stamp 100% — and because this
+      // REORDERS, a misread costs the first seats, never a candidate (measured: the
+      // word-ranked pick survives the 14-cap in 432 of 432 wrong-mechanic trials).
+      if (options.askedMechanic) {
+        const lead = offered.filter((t) => t.mechanic === options.askedMechanic);
+        if (lead.length) {
+          offered = [...lead, ...offered.filter((t) => !lead.includes(t))];
+          trace('declared mechanic leads the menu:', `${seat} — ${options.askedMechanic}: ${lead.map((t) => t.id).join(', ')}`);
+        }
+      }
       if (conceptBound.length) trace('signature bound to the concept\'s verb:', `${seat} — ${conceptBound.map((t) => t.id).join(', ')} (${[...new Set(rankByVerb(conceptBound, verbText).flatMap((r) => r.concept))].join(', ')})`);
       try {
         const ownClauseForCall = closedPath ? unansweredClause() : null; // the engine names the clause; the call picks a template FOR it (the critic's prescription, 2026-10-19)
