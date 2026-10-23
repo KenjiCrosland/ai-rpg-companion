@@ -10,7 +10,11 @@ describe('the catalog', () => {
     expect(lure.kind).toBe('shape'); expect(hook.kind).toBe('shape');
     expect(TEMPLATES.filter((t) => t.id === 'lure').length).toBe(1);
     const ctx = { scaled: sheet(15, null, 'lurker'), archetype: 'lurker', cr: 15, energy: null, mix: 'physical', meleeName: 'Claw', imposed: [], name: 'X' };
-    expect(renderTemplate(lure, ctx, { lure_source: 'the lamp' }).text).toMatch(/within 90 feet that can see or hear the lamp/);
+    // EMANATION, not "within N feet" (2026-10-22): print's 2024 idiom for an area
+    // around the creature is an Emanation — 25 such clauses in the corpus against
+    // ONE bare "within N feet" (Lich/Deathly Teleport). The SIZE is unchanged, so
+    // this is grammar only and the pricing does not move.
+    expect(renderTemplate(lure, ctx, { lure_source: 'the lamp' }).text).toMatch(/in a 90-foot Emanation originating from the creature that can see or hear the lamp/);
     expect(renderTemplate(lure, ctx, {}).text).toMatch(/can see or hear the creature/); // a missing fill falls to the plain default, never a miss
     expect(renderTemplate(hook, { ...ctx, scaled: sheet(3, null, 'brute'), archetype: 'brute', cr: 3 }, { hook: 'its barbed chain' }).text).toMatch(/pulled up to 20 feet straight toward the creature by its barbed chain/);
     expect(lure.keys).toEqual(expect.arrayContaining(['lure', 'beckon', 'lamp']));
@@ -533,7 +537,10 @@ describe('the fourteen (2026-09-28): eight print families, six kin-cited inventi
     const wailMenu = templatesFor({ archetype: 'lurker', cr: 15, sections: {}, section: 'action' });
     expect(rankByVerb(wailMenu, "a drowned cathedral's choir, one body of many mouths, whose hymn stops hearts")[0].t.id).toBe('wail');
     const w = renderTemplate(TEMPLATES.find((x) => x.id === 'wail'), { ...ctx(15, 'lurker'), energy: 'Necrotic' }, {});
-    expect(w.text).toMatch(/each creature within 60 feet of the creature that can hear it/);
+    // EMANATION, not "within N feet" — see the note in library.mjs (2026-10-22).
+    // Print attests the sense qualifier AFTER the Emanation (Doppelganger:
+    // "...originating from the doppelganger that can see the doppelganger").
+    expect(w.text).toMatch(/each creature in a 60-foot Emanation originating from the creature that can hear it/);
     expect(w.text).toMatch(/75 Hit Points or fewer after taking this damage, it drops to 0 Hit Points/);
     expect(w.gate).toBe('1/Day');
     // the kill clause IS the payload: the Wail never climbs the dice ladder

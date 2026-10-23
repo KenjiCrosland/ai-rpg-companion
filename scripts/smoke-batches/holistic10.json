@@ -1,0 +1,12 @@
+[
+  { "name": "Vampire", "description": "who keeps a garden of thorns", "cr": "13", "rules": "2024", "canary": "THE FIX: 'Bloodthorn Garden' must not be a generic buff wearing the GM's words" },
+  { "name": "", "description": "a tyrant of burning brass who rules a city of forges", "cr": "16", "rules": "2024", "canary": "THE OTHER DEFECT: two rows opened identically; the brass did nothing" },
+  { "name": "", "description": "a mud-caked bog hound that drags fishermen under", "cr": "3", "rules": "2024", "canary": "CONTROL: this one read WELL last time — it must not regress" },
+  { "name": "Hydra", "description": "whose stumps smoke instead of regrowing", "cr": "8", "rules": "2024", "canary": "a twist that removes print's own mechanic" },
+  { "name": "", "description": "a lamplighter's widow who still walks her round, trailing cold", "cr": "3", "rules": "2024", "canary": "a quiet, low-CR haunt — fun and originality at the bottom of the range" },
+  { "name": "", "description": "a reef warden that slips aside from any blast and answers with a lash", "cr": "7", "rules": "2024", "canary": "an evade-and-counter the catalog struggles with" },
+  { "name": "", "description": "a grave-specter that drinks the years out of whoever it touches", "cr": "4", "rules": "2024", "canary": "life-drain should answer this" },
+  { "name": "Stone Golem", "description": "carved as a weeping saint", "cr": "10", "rules": "2024", "canary": "a print body with a purely aesthetic twist — does anything express it?" },
+  { "name": "", "description": "a quarry-pit thing of living scree that buries what it catches", "cr": "6", "rules": "2024", "canary": "entombment; a known gap" },
+  { "name": "Brother Halric", "description": "a templar priest with a mace and no magic at all", "cr": "6", "rules": "2024", "canary": "an absence the sheet must honour" }
+]

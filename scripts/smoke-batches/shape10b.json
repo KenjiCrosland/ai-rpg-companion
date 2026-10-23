@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "a quarry-pit golem that stamps the ground and throws everyone near it down", "cr": "8", "rules": "2024", "canary": "SHAPE: ground-burst's own EMANATION must be unchanged — 15-foot at this band" },
+  { "name": "", "description": "a siege ram that drives a shockwave straight down the line of a corridor", "cr": "8", "rules": "2024", "canary": "SHAPE: ground-burst as a CONE — the added option, print-sized 30-foot" },
+  { "name": "", "description": "a bile-spitting horror that hoses a line of acid down a corridor", "cr": "8", "rules": "2024", "canary": "SHAPE: spew as a LINE, still working after the refactor" },
+  { "name": "", "description": "a plague-lunged thing that breathes a wide fan of spores over a crowd", "cr": "6", "rules": "2024", "canary": "SHAPE: spew as a CONE" },
+  { "name": "", "description": "a bell-golem of a desert temple that tolls and shakes the sand flat", "cr": "16", "rules": "2024", "canary": "SHAPE: active-toll NOT parameterised — must keep its own Emanation" },
+  { "name": "Hydra", "description": "whose stumps smoke instead of regrowing", "cr": "8", "rules": "2024", "canary": "CONTROL: a known twist" },
+  { "name": "Owlbear", "description": "that has learned to climb", "cr": "3", "rules": "2024", "canary": "CONTROL: the package-seven twist" },
+  { "name": "", "description": "a grave-specter that drinks the years out of whoever it touches", "cr": "4", "rules": "2024", "canary": "CONTROL: life-drain still lands" },
+  { "name": "Ancient Gold Dragon", "description": "", "cr": "24", "rules": "2014", "canary": "CONTROL: print-exact, untouched" },
+  { "name": "", "description": "a glacier's heart given legs, trailing a wake of killing cold", "cr": "15", "rules": "2024", "canary": "CONTROL: unaffected" }
+]

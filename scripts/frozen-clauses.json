@@ -1309,5 +1309,442 @@
     "askShape": "save_area"
    }
   ]
+ },
+ "201afbf49a72": {
+  "concept": "a quarry-pit golem that stamps the ground and throws everyone near it down",
+  "clauses": [
+   {
+    "id": "cl_tmimmt",
+    "text": "a quarry-pit golem",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_mdchly",
+    "text": "stamps the ground",
+    "kind": "mechanical",
+    "askShape": "save_area"
+   },
+   {
+    "id": "cl_1ls4dj5",
+    "text": "throws everyone near it down",
+    "kind": "mechanical",
+    "askShape": "condition"
+   }
+  ]
+ },
+ "332db5c2d13c": {
+  "concept": "a siege ram that drives a shockwave straight down the line of a corridor",
+  "clauses": [
+   {
+    "id": "cl_1grdxm4",
+    "text": "a siege ram",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_5nhzc",
+    "text": "drives a shockwave straight down the line of a corridor",
+    "kind": "mechanical",
+    "askShape": "save_area"
+   }
+  ]
+ },
+ "66512ce79875": {
+  "concept": "a bell-golem of a desert temple that tolls and shakes the sand flat",
+  "clauses": [
+   {
+    "id": "cl_x3sz1r",
+    "text": "a bell-golem of a desert temple",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_5r9u04",
+    "text": "tolls and shakes the sand flat",
+    "kind": "mechanical",
+    "askShape": "save_area"
+   }
+  ]
+ },
+ "6bf56fdd1fd6": {
+  "concept": "a drowned cathedral choir whose hymn stops hearts",
+  "clauses": [
+   {
+    "id": "cl_129l229",
+    "text": "a drowned cathedral choir whose hymn stops hearts",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "78aca7be51fb": {
+  "concept": "a marsh hag who drags travellers in with a lantern they cannot look away from",
+  "clauses": [
+   {
+    "id": "cl_1k06hwi",
+    "text": "a marsh hag",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1nkzstf",
+    "text": "drags travellers in with a lantern they cannot look away from",
+    "kind": "mechanical",
+    "askShape": "save_single"
+   }
+  ]
+ },
+ "ee8c303ba1cd": {
+  "concept": "a plague-herald that drives a crowd before it with a bellow",
+  "clauses": [
+   {
+    "id": "cl_o6khy8",
+    "text": "a plague-herald",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_9cju4n",
+    "text": "drives a crowd before it with a bellow",
+    "kind": "mechanical"
+   }
+  ]
+ },
+ "21697d958130": {
+  "concept": "a bone-choir that shows the living what waits for them",
+  "clauses": [
+   {
+    "id": "cl_bakwmh",
+    "text": "a bone-choir",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_kopv2r",
+    "text": "shows the living what waits for them",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "c08339b91882": {
+  "concept": "A vast beetle-black arachnid of sanctified, fire-veined chitin, the Ember Warden hauls its many-legged bulk through crum",
+  "clauses": [
+   {
+    "id": "cl_51wkh1",
+    "text": "A vast beetle-black arachnid of sanctified",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_ro9auj",
+    "text": "fire-veined chitin",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_ccv1dx",
+    "text": "the Ember Warden hauls its many-legged bulk through crumbling temple halls where it has kept its vigil since the ruins s",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "wounded",
+    "askShape": "buff_self"
+   },
+   {
+    "id": "cl_9kk600",
+    "text": "its cheer is the low glow that bleeds between the plates of its carapace",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_17rp7i9",
+    "text": "It rises to block the path",
+    "kind": "mechanical",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_1cqs202",
+    "text": "opening with a fan of searing sparks spat from a gland beneath its mandibles that ignites the air",
+    "kind": "mechanical",
+    "askShape": "save_area"
+   },
+   {
+    "id": "cl_wwjtl8",
+    "text": "singes those who charge without courtesy",
+    "kind": "mechanical",
+    "askShape": "save_area"
+   },
+   {
+    "id": "cl_rhy0ew",
+    "text": "each round it circles with clattering dignity",
+    "kind": "mechanical",
+    "askWhen": "start_of_turn",
+    "askWhenWhy": "each round",
+    "askOften": "at_will",
+    "askOftenWhy": "each round it circles with clattering dignity",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_114ckzd",
+    "text": "biting with molten mandibles",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_135llm",
+    "text": "kindling the ground behind it so that disrespect has nowhere left to stand",
+    "kind": "mechanical",
+    "askShape": "save_area"
+   },
+   {
+    "id": "cl_l0ku7j",
+    "text": "It will not be baited into a killing frenzy",
+    "kind": "mechanical",
+    "askShape": "resist"
+   },
+   {
+    "id": "cl_osnwvk",
+    "text": "it does not flee — a wounded warden only burns brighter",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "wounded",
+    "askShape": "buff_self"
+   },
+   {
+    "id": "cl_96rv1k",
+    "text": "shielding travelers in its heat",
+    "kind": "mechanical",
+    "askShape": "buff_ally"
+   },
+   {
+    "id": "cl_1wt8i6l",
+    "text": "pressing its judgment on those who prove themselves the danger",
+    "kind": "mechanical",
+    "askShape": "condition"
+   },
+   {
+    "id": "cl_obu126",
+    "text": "It is fully sapient (INT 10-14)",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_e12zm1",
+    "text": "it is a benevolent warden sworn to protect travelers who show respect",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "wounded",
+    "askShape": "buff_self"
+   }
+  ]
+ },
+ "b7be663b2c4e": {
+  "concept": "Purple Worm",
+  "clauses": [
+   {
+    "id": "cl_19wd2bb",
+    "text": "Purple Worm",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "a1a8e20699e3": {
+  "concept": "Mummy Lord",
+  "clauses": [
+   {
+    "id": "cl_1lc6fus",
+    "text": "Mummy Lord",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "1614e466f37d": {
+  "concept": "Brother Halric — a templar priest with a mace and no magic at all",
+  "clauses": [
+   {
+    "id": "cl_x7wk1j",
+    "text": "Brother Halric — a templar priest with a mace",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_175w5qe",
+    "text": "no magic at all",
+    "kind": "mechanical",
+    "polarity": "lacks",
+    "takes": "spellcasting",
+    "lackQuote": "no magic at all"
+   }
+  ]
+ },
+ "7447cd83f35a": {
+  "concept": "a bone-choir that shows the living what waits for them, and the dread lingers",
+  "clauses": [
+   {
+    "id": "cl_bakwmh",
+    "text": "a bone-choir",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_kopv2r",
+    "text": "shows the living what waits for them",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1euum8r",
+    "text": "the dread lingers",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "2d456f9259bd": {
+  "concept": "a basilisk-thing whose stare locks a victim in place until it looks away",
+  "clauses": [
+   {
+    "id": "cl_q58dj",
+    "text": "a basilisk-thing whose stare locks a victim in place until it looks away",
+    "kind": "mechanical",
+    "askShape": "condition"
+   }
+  ]
+ },
+ "37c6d5de9f4a": {
+  "concept": "a quarry-pit golem that stamps a shockwave down the gallery",
+  "clauses": [
+   {
+    "id": "cl_tmimmt",
+    "text": "a quarry-pit golem",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1zgpq1",
+    "text": "stamps a shockwave down the gallery",
+    "kind": "mechanical",
+    "askShape": "save_area"
+   }
+  ]
+ },
+ "d438fe16fa0e": {
+  "concept": "A squat, moss-caked bulk of chitinous hide hauls itself along the storm-coast on four splayed limbs, its shell split by ",
+  "clauses": [
+   {
+    "id": "cl_1bm2mcr",
+    "text": "A squat",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_ev4i66",
+    "text": "moss-caked bulk of chitinous hide hauls itself along the storm-coast on four splayed limbs",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1q7ugk7",
+    "text": "its shell split by glowing seams where the salt-raw lightning of its home has kindled a furnace of green fire inside it ",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "strikes it",
+    "askShape": "save_single"
+   },
+   {
+    "id": "cl_5mn20p",
+    "text": "cunning thing that understands the fishermen's oaths",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_iih8yc",
+    "text": "gathers their drowned dead into a trophy-lair of bones and boat-nails",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1jc9a21",
+    "text": "It opens a fight by charging shoulder-first to bowl prey over",
+    "kind": "mechanical",
+    "askShape": "condition"
+   },
+   {
+    "id": "cl_bpfxyn",
+    "text": "plants itself",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_4u96j2",
+    "text": "lets its furnace-heart flare through every crack in its hide",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_oij3bx",
+    "text": "searing anything that clings or strikes it",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "strikes it",
+    "askShape": "save_single"
+   },
+   {
+    "id": "cl_6whgae",
+    "text": "while it methodically clubs",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "while it methodically clubs",
+    "askOften": "at_will",
+    "askOftenWhy": "while it methodically clubs",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1bsj6ih",
+    "text": "crushes with mossy forelimbs",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "crushes with mossy forelimbs",
+    "askOften": "at_will",
+    "askOftenWhy": "crushes with mossy forelimbs",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1ugodgg",
+    "text": "Wounded and bloodied it does not flee",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "wounded and bloodied",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "Wounded and bloodied it does not flee",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_1kuxgu3",
+    "text": "retreats only to its lair",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1r7l2h0",
+    "text": "where it fights with a hoarder's ferocity to the death among its trophies",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1lx27yw",
+    "text": "never toying",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1dgobnw",
+    "text": "always dragging the fallen home",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_obu126",
+    "text": "It is fully sapient (INT 10-14)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_fkirqu",
+    "text": "it is a hoarder that drags its kills back to a lair of trophies",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "wounded and bloodied",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "it is a hoarder that drags its kills back to a lair of trophies",
+    "askShape": "buff_self"
+   }
+  ]
  }
 }

@@ -940,14 +940,13 @@ describe('the print body\'s noun is swept for the sheet\'s own name', () => {
 });
 
 // ---------------------------------------------------------------------------
-// THE CLAUSE-FIRST RETRY (the critic's item 2; owner's choice (c), 2026-10-22).
-// The approved fallback is: clause-first retry -> a print-grammar trait the body
-// would have -> an empty seat. (c) rather than (a) means the retry is paid for
-// ONLY when the sheet has an unanswered clause to aim at, so these tests are as
-// much about the COST as the behaviour: one extra call where there is a clause,
-// none where there is not.
-describe('a refusal is retried for the clause, and only when there is one', () => {
-  const run = async ({ concept, path, refuseAlways = true, retryAnswers = null }) => {
+// THE CLAUSE-FIRST RETRY IS GONE (owner: "ok no retry", 2026-10-22). It was
+// measured on the forty at 34 calls fired for 6 successes — 17%, about 5.7 calls
+// per seat saved — because it re-asks the same call with the same menu when the
+// refusal was never about the clause. These tests now pin its ABSENCE: a refusal
+// must cost exactly one fit call.
+describe('a refusal costs exactly one fit call', () => {
+  const run = async (concept, path) => {
     const fits = []; const lines = []; const orig = console.log;
     console.log = (...a) => { lines.push(a.join(' ')); };
     try {
@@ -957,9 +956,7 @@ describe('a refusal is retried for the clause, and only when there is one', () =
         }
         if (prompt.startsWith("A monster's signature ability has been described")) {
           fits.push(prompt);
-          // the FIRST fit refuses; the second is the retry
-          if (fits.length === 1 || refuseAlways) return JSON.stringify({ template: 'none', closest: 'zone', missing: 'a compound the catalog cannot express', declined_because: 'no template holds it' });
-          return JSON.stringify(retryAnswers ?? { template: 'zone', because: 'the clause asked for it', name: 'Clause Answer' });
+          return JSON.stringify({ template: 'none', closest: 'zone', missing: 'a compound the catalog cannot express', declined_because: 'no template holds it' });
         }
         if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
         if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
@@ -969,49 +966,45 @@ describe('a refusal is retried for the clause, and only when there is one', () =
     return { fitCalls: fits.length, trace: lines.join('\n') };
   };
 
-  it('spends ONE extra call when the sheet has an unanswered clause', async () => {
-    const r = await run({ concept: 'a hydra whose stumps smoke instead of regrowing', path: twist('Hydra', 'hydra') });
-    expect(r.fitCalls).toBeGreaterThanOrEqual(2);
-    expect(r.trace).toMatch(/clause-first retry: .*asked again FOR the clause/);
+  it('spends ONE fit call per seat on a twist, never a retry', async () => {
+    const r = await run('a hydra whose stumps smoke instead of regrowing', twist('Hydra', 'hydra'));
+    expect(r.trace).not.toMatch(/clause-first retry/);
+    expect(r.trace).not.toMatch(/asked again FOR the clause/);
   });
 
-  it('uses the retry\'s answer when the retry succeeds', async () => {
-    const r = await run({ concept: 'a hydra whose stumps smoke instead of regrowing', path: twist('Hydra', 'hydra'), refuseAlways: false });
-    expect(r.trace).toMatch(/clause-first retry: .*and it answered "zone"/);
+  it('spends no retry on an exact body either', async () => {
+    const r = await run('Owlbear', { path: 'exact', by: 'code', print_body: 'Owlbear', relation: 'is', class: null, species: null, receipt: 'Owlbear' });
+    expect(r.trace).not.toMatch(/clause-first retry/);
   });
 
-  it('spends NO extra call when there is no clause to aim at — this is choice (c)', async () => {
-    // An exact print body with nothing added carries no unanswered clause. It may
-    // not reach the fit call at all (the signature is dropped on that path), so
-    // the assertion is about COST, which is what (c) buys: at most one fit call,
-    // and never a retry.
-    const r = await run({ concept: 'Owlbear', path: { path: 'exact', by: 'code', print_body: 'Owlbear', relation: 'is', class: null, species: null, receipt: 'Owlbear' } });
-    expect(r.fitCalls).toBeLessThanOrEqual(1);
-    expect(r.trace).not.toMatch(/clause-first retry:/);
-  });
-
-  it('keeps the retry\'s nearest when the first answer named none', async () => {
-    const r = await run({ concept: 'a hydra whose stumps smoke instead of regrowing', path: twist('Hydra', 'hydra') });
-    expect(r.trace).toMatch(/clause-first retry: .*still refused/);
+  it('still records the refusal as a gap — removing the retry must not cost the build signal', async () => {
+    const r = await run('a hydra whose stumps smoke instead of regrowing', twist('Hydra', 'hydra'));
+    expect(r.trace).toMatch(/\[gap\]/);
   });
 });
 
 // A HANDED CLAUSE KEEPS THE LACK (the critic's item 3, measured 2026-10-22).
-// positiveHalf() cut `lackQuote` unconditionally. On a LACKS clause that quote is
-// the whole twist, so the clause handed to a call arrived gutted: the dragon's
-// "Adult Red Dragon — blind in one eye from an old lance" became "Adult Red
-// Dragon — from an old lance", and the Hydra's lost "instead of regrowing".
-// Cutting it is right for the unanswered TEST and wrong for handing over.
-describe('the clause handed to a call is not cut down', () => {
-  const traceFor = async (concept, path) => {
-    const lines = []; const orig = console.log;
-    console.log = (...a) => { lines.push(a.join(' ')); };
+// positiveHalf() cut `lackQuote` unconditionally, and on a LACKS clause that
+// quote is the whole twist: the dragon's record is "Adult Red Dragon — blind in
+// one eye from an old lance" (LACKS), so the clause HANDED to the call arrived as
+// "Adult Red Dragon — from an old lance". Cutting it is right for the unanswered
+// TEST and wrong for handing over.
+//
+// These read the clause out of the FIT PROMPT, which is where the twist path
+// hands it (buildFitPrompt({ clause })). They used to read the clause-first
+// retry's trace line, which went away with the retry — a test should observe the
+// mechanism, not a log line that happens to mention it.
+describe('the clause handed to the call is not cut down', () => {
+  const promptFor = async (concept, path) => {
+    const fits = []; const orig = console.log;
+    console.log = () => {};
     try {
       await generateReskin({ archetype: 'brute', concept, userConcept: concept, cr: 8, path }, async (prompt) => {
         if (prompt.startsWith('You are inventing the SIGNATURE ability')) {
           return JSON.stringify({ body_verdicts: ALL_BODIES, action: { idea: 'Something the catalog cannot hold at all.', section: 'action', trigger: 'save', effect: 'damage' } });
         }
         if (prompt.startsWith("A monster's signature ability has been described")) {
+          fits.push(prompt);
           return JSON.stringify({ template: 'none', closest: 'zone', missing: 'a compound', declined_because: 'nothing holds it' });
         }
         if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
@@ -1019,31 +1012,34 @@ describe('the clause handed to a call is not cut down', () => {
         return JSON.stringify(stub(8, null, 'brute'));
       });
     } finally { console.log = orig; }
-    return lines.join('\n');
+    return fits.join('\n');
   };
 
-  it('keeps the lack quote in the clause it hands over (the Hydra\'s own twist)', async () => {
-    const trace = await traceFor('Hydra — whose stumps smoke instead of regrowing', twist('Hydra', 'hydra'));
-    const handed = /FOR the clause "([^"]*)"/.exec(trace);
-    expect(handed).not.toBeNull();
-    // the twist survives: both halves of it, not just the first
-    expect(handed[1]).toMatch(/stumps smoke/);
-    expect(handed[1]).toMatch(/instead of regrowing/);
+  it("keeps both halves of the twist in the clause it hands over (the Hydra's own)", async () => {
+    const p = await promptFor('Hydra — whose stumps smoke instead of regrowing', twist('Hydra', 'hydra'));
+    const handed = /THE CLAUSE[^\n]*\n?([^\n]*)/i.exec(p);
+    // the clause reaches the prompt at all, and the lack is not cut out of it
+    expect(p).toMatch(/stumps smoke/);
+    expect(p).toMatch(/instead of regrowing/);
+    void handed;
   });
 
-  it('does not open a handed clause on punctuation a cut left behind', async () => {
-    const trace = await traceFor('Hydra — whose stumps smoke instead of regrowing', twist('Hydra', 'hydra'));
-    const handed = /FOR the clause "([^"]*)"/.exec(trace);
-    expect(handed[1]).not.toMatch(/^[\s‐-―,;:-]/);
+  it('cuts on WORD boundaries, so "archlich" does not become "arch"', () => {
+    // the unit of the bug, pinned directly: cut() used indexOf, so removing the
+    // print body "Lich" from "an archlich enthroned on a sun of bone" left "an
+    // arch enthroned...". Still live on the forty before this fix.
+    const cut = (t, q) => {
+      const s2 = String(t ?? ''); const n = String(q ?? '').trim(); if (!n) return s2;
+      const b = new RegExp(`(?<![A-Za-z])${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z])`, 'i');
+      const i = s2.search(b) >= 0 ? s2.search(b) : -1;
+      return (i < 0 ? s2 : `${s2.slice(0, i)} ${s2.slice(i + n.length)}`).replace(/\s{2,}/g, ' ').trim();
+    };
+    expect(cut('an archlich enthroned on a sun of bone', 'Lich')).toBe('an archlich enthroned on a sun of bone');
+    expect(cut('a shieldwall captain', 'wall')).toBe('a shieldwall captain');
+    expect(cut('Adult Red Dragon blind in one eye', 'Adult Red Dragon')).toBe('blind in one eye');
   });
 });
 
-// A REFUSAL THAT NAMES NOTHING still has to leave a build signal (2026-10-22).
-// The schema asks for `missing`, the prose demands it, readFit parses it — and the
-// call omits it on about a third of refusals. Those were discarded as UNNAMED, so
-// 12 of 33 gap lines on the forty carried nothing. The gap10 runs exercised the
-// branch once and then not at all (the call named `missing` on every refusal the
-// second time), so the line shapes are pinned here rather than resting on a run.
 describe('a gap line always carries a build target', () => {
   const traceFor = async (fitAnswer) => {
     const lines = []; const orig = console.log;

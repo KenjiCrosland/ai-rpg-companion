@@ -4183,7 +4183,11 @@ describe('the escalation pattern (owner 2026-09-15): one save, the Mummy grammar
       if (d.seed === 'escalating-dread') {
         expect(d.row.text).toContain(`DC ${scaled.dc}`);
         expect(d.row.text).toMatch(/Necrotic damage/);
-        expect(d.row.text).not.toMatch(/\{/);
+        // {duration} is the ONE slot a drawn row may still carry: it is resolved by
+        // renderTemplate from the call's own choice (print's four condition-duration
+        // forms), which drawLibraryRow has no access to. Every other slot must be
+        // filled here (2026-10-23).
+        expect(d.row.text.replace(/\{duration\}/g, '')).not.toMatch(/\{/);
         // ONE save frame by construction
         expect((d.row.text.match(/Saving Throw/g) ?? []).length).toBe(1);
         return;

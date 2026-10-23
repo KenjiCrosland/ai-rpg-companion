@@ -326,7 +326,126 @@ describe('area shape is a parameter, sized by the engine', () => {
   });
 
   it('only advertises a choice where there IS one', () => {
-    const fixed = TEMPLATES.find((t) => t.id === 'ground-burst'); // still single-shape
+    // picked DYNAMICALLY: naming a template here went stale the moment
+    // ground-burst was parameterised (2026-10-22), and a test that names the
+    // thing it is asserting the absence of will keep going stale.
+    const fixed = TEMPLATES.find((t) => (t.targets ?? []).length <= 1 && t.frames);
+    expect(fixed).toBeDefined();
     expect(templateMenuLines([fixed], { cr: 8, concept: '', idea: '' })).not.toMatch(/"area_shape" ∈/);
+  });
+
+  it('a parameterised template keeps its DEFAULT shape byte for byte', () => {
+    // the point of per-template sizes: today's output must not move
+    const gb = TEMPLATES.find((t) => t.id === 'ground-burst');
+    const ctx8 = { scaled: { per_hit: 10 }, archetype: 'brute', cr: 8, energy: null, mix: 'physical', meleeName: 'Slam', imposed: [], name: 'X' };
+    expect(renderTemplate(gb, ctx8, {}).text).toMatch(/each creature in a 15-foot Emanation originating from the creature/);
+    expect(renderTemplate(gb, ctx8, { area_shape: 'Cone' }).text).toMatch(/each creature in a 30-foot Cone/);
+  });
+});
+
+// A ROW THAT CLAIMS NOTHING MAY NOT WEAR THE GM'S WORDS (2026-10-23). The Vampire
+// asked for "a garden of thorns" and shipped "Bloodthorn Garden. While it has half
+// its hit points or fewer, the vampire has advantage on attack rolls." — the
+// generic bloodied buff with the twist's words as a NAME. That is the package-six
+// complaint the element receipt was meant to close, and it was still live on the
+// forty (1 of 16 generic rows). It is the worst class of defect because the sheet
+// LOOKS like it answered the GM.
+describe("a decoration row does not borrow the GM's vocabulary", () => {
+  const { TEMPLATES } = require('@/tools/statblock-generator/reskin/templates.mjs');
+
+  // the unit of the rule, exercised directly — the engine's own guard lives at the
+  // row-build site and is covered end to end by the pipelines suite
+  const wouldRename = (callName, concept, creatureName, templateName) => {
+    const splitW = (x) => String(x ?? '').toLowerCase().replace(/[^a-z' -]/g, ' ').split(/[\s-]+/).filter(Boolean);
+    const stop = new Set(['the', 'and', 'with', 'that', 'who', 'its', 'his', 'her', 'their', 'from', 'into', 'this', 'which', 'what', 'when', 'where', 'while']);
+    const own = new Set(splitW(creatureName));
+    const gm = new Set(splitW(concept).filter((w) => w.length >= 5 && !stop.has(w) && !own.has(w)));
+    const borrowed = splitW(callName).filter((w) => gm.has(w));
+    return borrowed.length && templateName && templateName !== callName ? templateName : callName;
+  };
+
+  it("renames the Vampire's 'Bloodthorn Garden' to the template's own name", () => {
+    expect(wouldRename('Bloodthorn Garden', 'Vampire who keeps a garden of thorns', 'Vampire', 'Bloodied Fury'))
+      .toBe('Bloodied Fury');
+  });
+
+  it("does not touch a name that borrows nothing from the GM", () => {
+    expect(wouldRename('Answering Sting', 'a bog witch\'s iron cauldron that cooks whatever climbs in', 'Kettlewright', 'Opportunist\'s Lash'))
+      .toBe('Answering Sting');
+  });
+
+  it("never counts the creature's OWN name as the GM's vocabulary", () => {
+    // every row says "the vampire ...", so the creature's name must not trip it
+    expect(wouldRename('Vampire Resolve', 'Vampire who keeps a garden of thorns', 'Vampire', 'Bloodied Fury'))
+      .toBe('Vampire Resolve');
+  });
+
+  it('ignores stop words, so a shared "which" or "while" does not trigger it', () => {
+    // "which" is 5 letters and in both strings, but it carries no concept — only a
+    // CONTENT word the GM chose should cost a decoration its name
+    expect(wouldRename('Which Stands Fast', 'a sentinel which guards the broken gate', 'Gate Sentinel', 'Bloodied Fury'))
+      .toBe('Which Stands Fast');
+  });
+
+  it('DOES trigger on a content word, even an unremarkable one', () => {
+    // the counter-case to the above: "waits" is the GM's own word for what this
+    // thing does, so a row expressing nothing may not take it
+    expect(wouldRename('That Which Waits', 'a thing that waits in the well', 'Well Thing', 'Bloodied Fury'))
+      .toBe('Bloodied Fury');
+  });
+
+  it('every template it can fall back to HAS a name of its own', () => {
+    for (const t of TEMPLATES) expect(typeof t.name).toBe('string');
+  });
+});
+
+// HOW LONG IT LASTS, as a parameter (2026-10-23). 11 of 39 named gaps on the forty
+// asked for persistence where a template hard-codes a one-shot. Print attests all
+// four condition-duration forms (n=71) and attests NO lengthening for a self-buff,
+// recurring damage or a persistent area — its persistence is always ANCHORED (a
+// grapple, a wound, concentration, an environment) — so the parameter is offered
+// only on condition-effect templates.
+describe('duration is a parameter on condition-effect templates', () => {
+  const { TEMPLATES, renderTemplate, DURATIONS, durationClause } = require('@/tools/statblock-generator/reskin/templates.mjs');
+  const ctx = (cr) => ({ scaled: { per_hit: 10 }, archetype: 'controller', cr, energy: null, mix: 'physical', meleeName: 'Slam', imposed: [], name: 'X' });
+  const dur = (r) => /until the (?:start|end) of (?:its|the creature's) next turn/.exec(r?.text ?? '')?.[0] ?? null;
+  const gaze = () => TEMPLATES.find((t) => t.id === 'gaze-single');
+
+  it("offers only print's four condition-duration forms", () => {
+    expect(DURATIONS).toEqual(['target_end', 'target_start', 'source_end', 'source_start']);
+    expect(durationClause('source_start')).toBe("until the start of the creature's next turn");
+  });
+
+  it('renders the form the call asked for', () => {
+    expect(dur(renderTemplate(gaze(), ctx(9), { condition_minor: 'Blinded', duration: 'target_end' }))).toBe('until the end of its next turn');
+    expect(dur(renderTemplate(gaze(), ctx(9), { condition_minor: 'Blinded', duration: 'source_start' }))).toBe("until the start of the creature's next turn");
+  });
+
+  it('falls to the template default for an absent or off-enum choice, never to a miss', () => {
+    expect(dur(renderTemplate(gaze(), ctx(9), { condition_minor: 'Blinded' }))).toBe("until the end of the creature's next turn");
+    expect(dur(renderTemplate(gaze(), ctx(9), { condition_minor: 'Blinded', duration: 'forever' }))).toBe("until the end of the creature's next turn");
+  });
+
+  it('honours a PER-BAND default, which is why the parameter changed no printed text', () => {
+    // gaze-single's 21+ frame always read a different form from its lower bands;
+    // collapsing them would have silently rewritten that band
+    expect(dur(renderTemplate(gaze(), ctx(22), { condition_minor: 'Blinded' }))).toBe('until the start of its next turn');
+    expect(dur(renderTemplate(gaze(), ctx(9), { condition_minor: 'Blinded' }))).toBe("until the end of the creature's next turn");
+  });
+
+  it('is carried by 13 templates, every one condition-effect', () => {
+    const carry = TEMPLATES.filter((t) => {
+      const f = t.frames ? Object.values(t.frames).join(' ') : (t.text ?? '');
+      return f.includes('{duration}');
+    });
+    expect(carry).toHaveLength(13);
+    for (const t of carry) expect(t.effect).toBe('condition');
+  });
+
+  it('works on the SEED render path too, which fills slots separately', () => {
+    const seed = TEMPLATES.find((t) => t.id === 'terror-pulse');
+    expect(seed.kind).toBe('seed');
+    const r = renderTemplate(seed, { ...ctx(7), archetype: 'brute' }, { duration: 'source_end' });
+    expect(dur(r)).toBe("until the end of the creature's next turn");
   });
 });

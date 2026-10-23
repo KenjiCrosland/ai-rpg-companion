@@ -526,6 +526,15 @@ const sweepDeadName = (sectionsMap, deadName, keepRow, traceFn) => {
             .replace(/attacks?,\s+(?=(?:one|two|three|four|five|six)\b[^,]*\.?$)/i, (m) => m.replace(/,\s+$/, ' and ')).trim();
         })();
         row.text = merged ?? (re1.test(t0) ? t0.replace(re1, 'makes $1 $2 attacks') : re2.test(t0) ? t0.replace(re2, 'makes $1 $2 attacks') : t0.replace(new RegExp(`,?\\s*(?:and |or )?(?:a use of )?\\b${esc}\\b`, 'g'), '').replace(/\s{2,}/g, ' ').replace(/,\s*\./g, '.').replace(/ ,/g, ','));
+        // A REPLACEMENT CLAUSE WITHOUT ITS OBJECT IS NONSENSE (2026-10-23). The
+        // fallback above strips the dead name out of the text, which on a
+        // Multiattack leaves the stump "It can replace one attack with." — read
+        // live on param10, where "a use of Petrifying Gaze" lost its row to a
+        // rename and the sweep took only the name. A GM reads a sentence that
+        // stops. If the clause has lost its object, the whole clause goes.
+        row.text = String(row.text ?? '')
+          .replace(/\s*(?:It|The \w+) can replace (?:one|two|three) attacks? with(?:\s+a use of)?\s*\./gi, '')
+          .replace(/\s{2,}/g, ' ').trim();
         if (row.text !== t0) traceFn('multiattack re-read —', `"${bare}" left; "${row.name}" now reads "${row.text.slice(0, 90)}"`);
         continue;
       }
@@ -4160,34 +4169,22 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // improve the probe is a bad trade made silently. The refusal is a fact
         // about the call's answer and is captured here, before anything acts on it.
         const callRefused = !fit.template;
-        // THE CLAUSE-FIRST RETRY (the critic's item 2; owner's choice (c),
-        // 2026-10-22). The call refused every template. Before anything is
-        // invented for this seat, ask once more with the clause the sheet has NOT
-        // answered put in front of it — the fallback order the owner approved is
-        // clause-first retry -> a print-grammar trait the body would have -> an
-        // empty seat, and a GM never sees an empty seat but they do see a sticky
-        // owlbear.
+        // THE CLAUSE-FIRST RETRY IS REMOVED (owner: "ok no retry", 2026-10-22).
+        // It was landed as choice (c) — retry only where a clause existed — and
+        // then measured on the forty: **34 calls fired, 6 succeeded (17%)**, about
+        // 0.85 extra calls a block to save 0.15 seats, or ~5.7 calls per seat. The
+        // small runs that looked better (50%, 36% at n=10) were noise around that.
         //
-        // (c), not (a): the retry is paid for ONLY when there is a clause to aim
-        // at. The whole value of a clause-first retry is the clause, so spending a
-        // call where the sheet has none buys nothing. One retry, never a loop.
-        if (!fit.template) {
-          const retryClause = unansweredClause({ anyPath: true });
-          if (!retryClause) {
-            trace('no clause-first retry:', `${seat} — the call refused every template and this sheet has no unanswered clause to retry against, so no call is spent`);
-          } else {
-            const rawRetry = await callLLM(buildFitPrompt({ name: p.name, sheet: sheetSoFarT, idea, menu: offered, cr, concept: verbText, clause: retryClause, elements: sigElements }), null);
-            const retried = readFit(parseFit(rawRetry, offered, p.name, sigElements), offered, `${verbText} ${idea.idea}`);
-            if (retried?.template) {
-              trace('clause-first retry:', `${seat} — refused every template, so asked again FOR the clause "${retryClause}" and it answered "${retried.template.id}"`);
-              fit = retried;
-            } else {
-              trace('clause-first retry:', `${seat} — asked again FOR the clause "${retryClause}" and it still refused${retried?.closest ? `, naming "${retried.closest}" as nearest` : ''}`);
-              // the retry's own nearest is worth no less than the first answer's
-              if (!fit.closest && retried?.closest) fit = { ...fit, closest: retried.closest, missing: fit.missing ?? retried.missing ?? null };
-            }
-          }
-        }
+        // Why it could not pay: the retry re-asks the SAME call with the SAME menu,
+        // and the refusal was never about the clause — it was about the catalog
+        // lacking the shape the idea wanted. Re-asking cannot fix that. The compose
+        // probe reached the same conclusion independently
+        // (plans/parameterise-the-catalog-2026-10-22.md).
+        //
+        // What STAYS, because it serves the twist path's own clause-first binding
+        // and not the retry: `cut()` on word boundaries (it cut "archlich" to
+        // "arch"), the lack quote preserved in a handed clause, and the preference
+        // for a MECHANICAL clause over a descriptive head.
         // THE CLOSEST TEMPLATE IS ACCEPTED RATHER THAN THE ROW DROPPED (owner's
         // call, 2026-10-21). Measured across 358 recorded refusals: in 167 the
         // model NAMED a close template it had been offered and refused anyway,
@@ -4325,7 +4322,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             return null;
           }
         }
-        const bare = fit.name ?? rendered.name;
+        let bare = fit.name ?? rendered.name;
         // the tally distinguishes a VERB fit (the template's own verbs appear in
         // the concept/idea) from a SHAPE fit — the critic's split, made measurable
         const vr = rankByVerb([fit.template], verbText, idea.idea)[0];
@@ -4431,6 +4428,49 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // itself, not just the words. Coverage then credits a receipt rather than
         // a stem overlap ("wound" crediting "cracks open when wounded" to
         // Rampage, the critic's case).
+        // A ROW THAT CLAIMS NOTHING MAY NOT WEAR THE GM'S WORDS (2026-10-23).
+        // The Vampire asked for "a garden of thorns" and shipped "Bloodthorn
+        // Garden. While it has half its hit points or fewer, the vampire has
+        // advantage on attack rolls." — bloodied-fury with the twist's words as a
+        // NAME. That is the package-six complaint the element receipt was supposed
+        // to close: "the receipt is satisfied by putting the twist's words in a
+        // generic template's name." Still live on sweep-2026-10-23T04-57-39 (1 of
+        // 16 generic rows), and the worst class of defect because the sheet LOOKS
+        // like it answered the GM.
+        //
+        // No meaning is judged. A DECORATION row is already defined as one with no
+        // receipt of any kind — no GM quote, no verb, no element — and the stamp is
+        // set above. If such a row's name borrows a distinctive word from the GM's
+        // own text, it takes the TEMPLATE'S print-derived name instead. The GM's
+        // words stay available to any row that actually earns them.
+        //
+        // FLAGGED AS A STRING MATCH, and argued for (owner's rule, 2026-10-23).
+        // What it does NOT do is judge meaning: the meaning call was already made,
+        // because a DECORATION row is by definition one the call gave no receipt
+        // for. This only answers "did the name reuse a word the GM typed", a fact
+        // about strings. What it MISSES: a generic row named "Rose Keeper" on a
+        // concept about thorns shares no word and passes. The whole class would
+        // need a call — "does this name promise something the text does not do?" —
+        // which is the right fix and is not this one. This is a stopgap and the
+        // limit is the reason it says so here.
+        //
+        // The splitter is LOCAL on purpose: the first attempt called `wordsOf`,
+        // which lives in printHeadCr's scope, so it threw a ReferenceError that
+        // this block's own try/catch swallowed — the row vanished and the trace
+        // said only "signature fit call failed". Do not reach for a helper from
+        // another function here.
+        if (decorationHere) {
+          const splitW = (x) => String(x ?? '').toLowerCase().replace(/[^a-z' -]/g, ' ').split(/[\s-]+/).filter(Boolean);
+          const stop = new Set(['the', 'and', 'with', 'that', 'who', 'its', 'his', 'her', 'their', 'from', 'into', 'this', 'which', 'what', 'when', 'where', 'while']);
+          const ownName = new Set(splitW(p.name));
+          const gmWords = new Set(splitW(options.userConcept ?? concept ?? '')
+            .filter((w) => w.length >= 5 && !stop.has(w) && !ownName.has(w)));
+          const borrowed = splitW(bare).filter((w) => gmWords.has(w));
+          if (borrowed.length && rendered.name && rendered.name !== bare) {
+            trace('decoration renamed:', `"${bare}" borrowed the GM's own word${borrowed.length > 1 ? 's' : ''} "${borrowed.join(', ')}" for a row that expresses nothing — it takes "${rendered.name}", the template's own name`);
+            bare = rendered.name;
+          }
+        }
         return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, ...(rendered.gate ? { gate: rendered.gate } : {}), text: stampT(rendered.text), library: true, template: fit.template.id, ...(rendered?.imposes ? { imposes: rendered.imposes } : fit.template?.imposes ? { imposes: fit.template.imposes } : {}), ...(fit.fills?.condition_minor && CONDITIONS_CLOSED.includes(fit.fills.condition_minor) ? { imposes: fit.fills.condition_minor } : {}), ...(fit.fills?.consumed_condition ? { requiresCondition: fit.fills.consumed_condition } : {}), boundKeys: [...String(fit.because ?? '').matchAll(/([a-z][a-z' -]*?):concept\b/g)].map((mm) => mm[1].trim()) /* provenance: the user's words this row binds to (step 8) */, ...(freeRowHere ? { freeRow: true } : {}), ...(decorationHere ? { decoration: true } : {}), ...(fit.accepted_closest ? { accepted_closest: true } : {}) /* the credit rule: a template the call REFUSED never buys a key bind (critic, 2026-10-22) */, ...(askedOk ? { gmQuote: String(askedOk) } : {}) /* credit rule (b): the GM quote this row was kept on, so the checker can test it lies inside ONE non-head clause */ /* the ship-time budget reads the mark off the row */ }, templateName: rendered.name, section: rendered.section, template: fit.template.id, host: fit.template.host ?? 'melee', supersedes: fit.template.supersedes ?? null, asked: askedOk, askedRaw: String(fit.asked ?? '').trim(), expresses: decorationHere ? null : (fit.expresses ?? null), /* a template the call refused claims nothing */ accepted_closest: !!fit.accepted_closest, /* the trait gate must see this, or it declines the row for want of a receipt */ elementsOffered: sigElements, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
       } catch (e8) {
         trace('signature fit call failed —', `${seat}: ${e8?.message ?? e8}`);
@@ -6170,10 +6210,40 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           delete sections['Legendary Actions'];
           trace('print canon legendary:', `the chassis's Legendary Actions leave — the ${pc.name} has none of its own at its CR`);
         }
-        if (printBody && (pc.legendaryRows ?? []).length && (sections['Legendary Actions'] ?? []).length) {
-          const uses = sections['Legendary Actions'].filter((e) => /^Legendary Action Uses/.test(e.name ?? ''));
-          sections['Legendary Actions'] = [...uses, ...pc.legendaryRows.map((r) => { const tx = asInline(r.text).replace(/\bDC \d+\b/g, `DC ${scaled.dc}`); return { name: r.name, text: tx.charAt(0).toUpperCase() + tx.slice(1), rules: true, print: true }; })];
-          trace('print canon legendary:', `${pc.legendaryRows.map((r) => r.name).join(', ')} — the ${pc.name}'s own kit stands where the chassis's stood`);
+        // PRINT'S LEGENDARY ROWS RIDE WHETHER OR NOT THE CHASSIS MADE A SECTION
+        // (2026-10-23). This used to require `sections['Legendary Actions']` to be
+        // non-empty — it could only OVERWRITE a section the chassis had already
+        // created. At CR 17+ the legendary-tier chassis makes one, so print's
+        // dragons kept their own; at CR 10-16 no chassis does, so print's rows were
+        // dropped on the floor. Measured on sweep-2026-10-23T04-57-39: our CR 10-16
+        // sheets carried **0** legendary rows against print's 1.0 per sheet (33
+        // rows across 33 creatures, 12 of them legendary), and our CR 13 Vampire
+        // lost print's own `Deathless Strike` and `Beguile`. That is the whole
+        // mid-tier gap — Actions 2.1 vs print's 2.8, and bonus/reaction/legendary
+        // 0.2 vs 1.4 — and it is a fidelity defect, not a richness preference:
+        // print's rows ride, which is this engine's rule everywhere else.
+        if (printBody && (pc.legendaryRows ?? []).length) {
+          const uses = (sections['Legendary Actions'] ?? []).filter((e) => /^Legendary Action Uses/.test(e.name ?? ''));
+          // PRINT'S LEGENDARY TEXT CITES PRINT'S ACTION NAMES, which a reskin has
+          // renamed — the Mummy Lord's Necrotic Strike says "Rotting Fist or Channel
+          // Negative Energy" and neither is a row on a reskinned sheet. That tripped
+          // `dangling-ref` as soon as these rows started riding at CR 10-16
+          // (leg10-2026-10-23T14-53-20, a regression from that same fix).
+          //
+          // A row that cites something absent is dropped, with a trace — the same
+          // rule the signature path already applies above ("a row citing X, which is
+          // not on this sheet — the checker would fail it"). Print fidelity yields to
+          // coherence, because a GM cannot run a reference to a row that is not there.
+          const placed = pc.legendaryRows.map((r) => { const tx = asInline(r.text).replace(/\bDC \d+\b/g, `DC ${scaled.dc}`); return { name: r.name, text: tx.charAt(0).toUpperCase() + tx.slice(1), print: true }; });
+          const legKnown = [...rowNamesOf({ sections }), ...placed.map((r) => r.name)];
+          const kept = placed.filter((r) => {
+            const d = danglingRefIn(r.text, legKnown, r.name);
+            if (d) trace('print canon legendary:', `"${r.name}" leaves — it cites "${d}", which this sheet has renamed away; a GM cannot run a reference to a row that is not there`);
+            return !d;
+          });
+          sections['Legendary Actions'] = [...uses, ...kept];
+          if (kept.length) trace('print canon legendary:', `${kept.map((r) => r.name).join(', ')} — the ${pc.name}'s own kit stands where the chassis's stood`);
+          else delete sections['Legendary Actions'];
         }
         // ON A CLOSED PATH THE ACTIONS ARE CLOSED TOO (forty 2026-10-19): a chassis HYBRID row ("Javelin",
         // Melee or Ranged) sat in neither rename loop — print's Hobgoblin Warrior has no hybrid — and rode

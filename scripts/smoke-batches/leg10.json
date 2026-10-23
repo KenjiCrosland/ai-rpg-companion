@@ -1,0 +1,12 @@
+[
+  { "name": "Vampire", "description": "who keeps a garden of thorns", "cr": "13", "rules": "2024", "canary": "LEGENDARY: print's Deathless Strike + Beguile must RIDE on a twist (they were dropped)" },
+  { "name": "Vampire", "description": "", "cr": "13", "rules": "2024", "canary": "LEGENDARY: and on the exact body" },
+  { "name": "Adult Red Dragon", "description": "blind in one eye from an old lance", "cr": "17", "rules": "2024", "canary": "CONTROL: CR 17+ already worked — must not double or duplicate" },
+  { "name": "Stone Golem", "description": "carved as a weeping saint", "cr": "10", "rules": "2024", "canary": "CONTROL: print's Stone Golem has NO legendary actions — none may appear" },
+  { "name": "Purple Worm", "description": "", "cr": "15", "rules": "2024", "canary": "CONTROL: print has none — none may appear" },
+  { "name": "Hydra", "description": "whose stumps smoke instead of regrowing", "cr": "8", "rules": "2024", "canary": "CONTROL: print has none at CR 8" },
+  { "name": "", "description": "a tyrant of burning brass who rules a city of forges", "cr": "16", "rules": "2024", "canary": "NON-PRINT at mid tier: still thin? this one has no print body to inherit from" },
+  { "name": "Mummy Lord", "description": "", "cr": "15", "rules": "2024", "canary": "LEGENDARY: print's Mummy Lord has them — must ride" },
+  { "name": "", "description": "a mud-caked bog hound that drags fishermen under", "cr": "3", "rules": "2024", "canary": "CONTROL: low CR unaffected" },
+  { "name": "Brother Halric", "description": "a templar priest with a mace and no magic at all", "cr": "6", "rules": "2024", "canary": "CONTROL: an absence still honoured" }
+]

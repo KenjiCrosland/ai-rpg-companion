@@ -277,9 +277,10 @@ reader does not read it as a ladder violation.
 - [x] Change 2 — the gap list keeps its unnamed refusals as build signals
 - [x] Change 3 — compose PROBED and declined; it is parameters, not composition
 - [x] Change 4 — area shape parameterised (Cone/Line) on `spew`, conservatively
-- [ ] Next — widen `targets` to the other 8 gated area templates, one focused ten
-      at a time. `ground-burst` (Emanation→Cone) and `active-toll` (Emanation→Cone)
-      are the obvious next two; both are gated, so both are sound by the same rule.
+- [x] Change 5 — `ground-burst` widened, with per-template default sizes
+- [x] Change 6 — the catalog's area clauses moved to print's Emanation idiom
+- [x] Change 7 — DURATION parameterised (13 condition-effect templates)
+- [x] PARAMETERISATION COMPLETE — every dimension built or assessed, see below
 
 ## Do not build
 
@@ -289,3 +290,152 @@ reader does not read it as a ladder violation.
   real exposure is ~4 modest rows in 40, and the apparent offenders are mostly
   legitimate (a death burst, a 2-action legendary cost, a bloodied one-shot, and a
   breath whose `(Recharge 5-6)` sits on its PARENT row).
+
+
+---
+
+## Changes 5 and 6: per-template sizes, and print's Emanation idiom
+
+### 5. A parameterised template keeps its OWN default sizes
+
+The plan said `ground-burst` and `active-toll` were "the obvious next two". Half
+of that was wrong, and checking first caught it: the shared ladder holds Cone and
+Line, and both of those templates are **Emanation** — their defaults would not
+have rendered.
+
+There is no sound shared Emanation ladder. Print's medians are non-monotone at
+n = 3-6 (5/10/20/5/30/20), and this catalog's own two Emanation templates already
+disagree (`ground-burst` 10/15/15/20/30, `active-toll` 10/15/20/30/30/60). So
+`target_sizes` lets a template carry its own ladder for its **default** shape —
+today's output unchanged byte for byte — while an **added** shape draws on
+`AREA_LADDER`, where Cone and Line are well evidenced. `ground-burst` now offers
+Emanation (its own, 15-foot at CR 8) or Cone (print's, 30-foot at CR 8).
+
+**CORRECTION to change 4's claim.** I wrote "the catalog could not produce a LINE
+at all". Too strong: no TEMPLATE could, but **donor chassis rows always could** —
+`donors.mjs` carries 2 Line rows, 10 Cone, 12 Emanation, 3 Sphere, and this run's
+30-foot Line came from `brute-5-charger`'s own nova, not from the new parameter.
+The real gap is narrower: the templates the CALL picks from could not offer a Line.
+
+### 6. "each creature within N feet" was a form print uses ONCE
+
+| form | print instances |
+|---|---|
+| `N-foot Emanation originating from X` | **25 clauses / 34 sizes** |
+| bare `each creature within N feet` (area) | **1** — Lich/Deathly Teleport |
+
+Print's 2024 idiom for an area around the creature is an Emanation, and dragons'
+Frightful Presence is now a *Fear* spell rather than a radius save. Nine clauses
+across `wail`, `lure`, `herd`, `terror-pulse` and `wind-up` used the outlier form.
+
+Both qualifier positions are print-attested, so the rewrite invents no grammar:
+
+- choice **before** — Azer Sentinel: *"each creature of the azer's choice in a
+  5-foot Emanation originating from the azer"*
+- sense **after** — Doppelganger: *"...originating from the doppelganger that can
+  see the doppelganger"*
+
+**Sizes are unchanged in every case**, so this is grammar only and the pricing does
+not move. The single-target `one creature within N feet` is untouched — print uses
+it constantly (14 instances remain in `shapes.mjs`).
+
+### The ten (`eman10-2026-10-23T03-20-02`)
+
+| metric | result |
+|---|---|
+| bare area-radius clauses shipped | **0** |
+| Emanations keep their template's own size | ✓ 60, 60, 15, 30, 30, 15 |
+| single-target form untouched | ✓ |
+| FAIL | **0 of 10** |
+
+The inline substitution reads well: *"originating from the drowned congregation"*,
+*"from the reedlight crone"*, *"from the crier"*, *"from the colossus"*.
+
+### One thing to watch: clause length
+
+`lure` now ships the longest targeting clause in the catalog at **165 characters**:
+
+> *"each creature of the reedlight crone's choice in a 60-foot Emanation
+> originating from the reedlight crone that can see or hear the lantern they
+> cannot look away from"*
+
+Print's longest is **127**. That is the cost of combining both qualifier positions
+with a long `{lure_source}` fill — grammatical and print-shaped, but at the edge
+of readable, and it is 160 characters of targeting before the GM reaches the
+effect. Not a correctness problem. Worth a decision: cap the `{lure_source}` fill,
+or drop the choice qualifier on `lure`, or accept it.
+
+
+---
+
+## Change 7, and parameterisation CLOSED
+
+### Duration — the biggest dimension, and it was unbuilt
+
+11 of 39 named gaps asked for persistence. Print's forms, measured:
+
+| form | n |
+|---|---|
+| until the start of its next turn | 46 |
+| until the end of its next turn | 31 |
+| until the start of the creature's next turn | 24 |
+| until the end of the creature's next turn | 15 |
+| until the effect ends | 12 |
+| for 1 minute | 6 |
+
+**By effect kind, which decides what may be offered:** a condition has all four
+short forms attested (n = 71); a self-buff has ONLY the short forms (n = 5, print
+never lengthens one); recurring damage is 15 rows and **every one is anchored** —
+to a grapple (Barbed Devil), a wound (Bearded Devil), a condition; a persistent
+area is 7 rows, **every one anchored** — to concentration (Darkmantle), to an
+environment (Aboleth). **Print never prints free-floating persistence**, and
+nothing here prices duration, so the parameter is offered on condition-effect
+templates only: **13 of them**.
+
+`duration_default` may be a string OR band-keyed, like `target_sizes`.
+
+### Zero default drift, proved by rendered output
+
+78 rendered duration clauses compared before and after: **0 changed.** That took
+four attempts, and the first three were source-parsing:
+
+1. a segment boundary that bled into the neighbouring template, so `gaze-single`
+   got the neighbour's default;
+2. a brace-walk that found the wrong object entirely;
+3. the realisation that JS escapes the apostrophe — `the creature\'s` — so two of
+   the four forms never matched and only half the swaps happened.
+
+**Diffing rendered output is the only honest check here.** It found the one real
+case too: `gaze-single`'s 21+ frame always read a different form from its lower
+bands, which a single default would have silently rewritten.
+
+And a mistake made TWICE in one session: a trailing `//` comment on a template's
+`id:` line swallows the rest of that line, taking `name:` and `cite:` with it. 154
+tests failed the second time. **Put the comment on its own line.**
+
+### Every dimension, built or assessed
+
+| dimension | state |
+|---|---|
+| duration | **built** — 13 condition-effect templates |
+| target shape | **built** where more than one shape is coherent (`spew` spit/breath → Cone or Line; `ground-burst` stomp → Emanation or Cone) |
+| energy / damage type | **already existed** — 37 templates carry `{damage_type}` |
+| condition | **already correctly scoped** to the 4 where it is interchangeable — see below |
+| save stat | **engine-derived by design** — the A2 work established that the save follows the row's SHAPE (area + prone → DEX), so it is not a free choice |
+
+**Why area shape stops at two templates.** The other 11 gated area templates are
+radial by nature: a cone-shaped `wail`, a cone-shaped `active-toll` (a bell), a
+cone-shaped `blink` (a teleport burst) or a cone-shaped `thrown-burst` (a sphere
+where it lands) are all incoherent. Shape is only a parameter where more than one
+shape reads correctly.
+
+**Why condition is NOT widened.** 16 condition-effect templates hard-code one, and
+in nearly all of them the condition IS the template: `snatch` is Grappled because
+the row carries the target; `snare` and `bolt-restrain` are Restrained because
+restraint is the mechanic; `swallow`, `pounce` and `shield-bash` are Prone because
+a shove knocks prone; `lure` is Charmed, `stunning-strike` is Stunned,
+`contagion` is Poisoned. Print varies the condition ACROSS templates — a
+Petrifying gaze is a different template from a Frightening one — not within one.
+`{condition_minor}` is already exposed on exactly the four where it is genuinely
+interchangeable (`gaze-single`, `condition-payoff`, `bloodied-burst`,
+`noxious-aura`). Widening it would ship a snatch that Poisons.

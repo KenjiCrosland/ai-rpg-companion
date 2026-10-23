@@ -467,3 +467,31 @@ describe('gap records: an unnamed mechanic is kept, and does not corrupt the tal
     expect(r.generation.gap_vetoed).toBe('0 of 0');
   });
 });
+
+// A REPLACEMENT CLAUSE WITHOUT ITS OBJECT IS NONSENSE (2026-10-23). Read live on
+// param10: "Multiattack. The gaze lizard makes two Bite attacks. It can replace
+// one attack with." The engine wrote "a use of Petrifying Gaze", that row lost its
+// name to a rename, and the dead-name sweep removed only the NAME — leaving a
+// sentence that stops. Found by READING the block, not by any gate.
+describe('a multiattack never ends mid-sentence', () => {
+  const strip = (t) => String(t ?? '')
+    .replace(/\s*(?:It|The \w+) can replace (?:one|two|three) attacks? with(?:\s+a use of)?\s*\./gi, '')
+    .replace(/\s{2,}/g, ' ').trim();
+
+  it('drops a replacement clause that lost its object', () => {
+    expect(strip('The gaze lizard makes two Bite attacks. It can replace one attack with.'))
+      .toBe('The gaze lizard makes two Bite attacks.');
+    expect(strip('The hydra makes two Bite attacks. It can replace one attack with a use of.'))
+      .toBe('The hydra makes two Bite attacks.');
+  });
+
+  it('leaves an INTACT replacement clause alone', () => {
+    const ok = 'The hydra makes two Bite attacks. It can replace one attack with a use of Choking Fumes.';
+    expect(strip(ok)).toBe(ok);
+  });
+
+  it('leaves a plain multiattack alone', () => {
+    const ok = 'The owlbear makes two Rend attacks.';
+    expect(strip(ok)).toBe(ok);
+  });
+});

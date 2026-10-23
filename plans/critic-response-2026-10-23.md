@@ -659,3 +659,137 @@ the baseline, so it is a regression from today's work. Not yet diagnosed; the
 candidates are the new `EXCLUDE_ON` entries (which make `supersedesRow` evaluate
 on templates it never ran on), the seed-branch field additions, and the retry's
 second `readFit`.
+
+
+---
+
+# THE FORTY AFTER THE DAY'S WORK — `sweep-2026-10-23T04-57-39`
+
+Same batch as package seven. Baselines: pkg7 = `...T03-29-45`, mid-day =
+`...T17-05-33`.
+
+| metric | pkg 7 | mid-day | NOW | |
+|---|---|---|---|---|
+| FAIL | 2/40 | 2/39 | **4/40** | in band (2-5), four different known classes |
+| generation threw | 0 | **1** | **0** | Vashka passed; the guard never fired, so the crash just did not recur |
+| retry calls | — | 34 | **0** | the owner's "no retry", honoured |
+| `[gap] UNNAMED` | 12 of 33 | 12 of 33 | **0 of 40** | the instrument fix holds at scale |
+| body verdicts complete | — | 38, 1 partial | **39, 0 partial** | |
+| refusals (closest-accepted) | 35 | 28 | **38** | **worse** |
+| decoration rows | 14 | 13 | **18** | **worst yet** |
+| Emanation clauses | — | — | 9 | print's idiom |
+
+## The cost of "no retry", now quantified
+
+Refusals 28 → 38 and decorations 13 → 18. That is not noise: **the retry was
+filling 6 seats a forty**, and with it gone those seats refuse and fall through to
+closest-acceptance, which ships them as DECORATION.
+
+So the trade is: **34 fewer calls a forty, about 5 more decoration rows.** The
+critic judged 7 of 11 decoration rows worse than an empty seat, so this is a
+quality cost, not just a count. Three ways to spend it:
+
+1. **Accept it** — 34 calls is real money and the decoration conditions now gate
+   what ships (body truth, family, budget order).
+2. **Put the retry back only where the clause is MECHANICAL** — on the forty, the
+   clauses it aimed at were ~⅔ names and flavour. A mechanical-only retry would
+   have fired perhaps a third as often for most of the benefit.
+3. **Take the empty seat instead of the decoration** — the critic's own
+   preference, and the one remaining piece of their item 2.
+
+My lean is (3) then (2): the critic's whole argument is that an empty seat beats a
+bad row, and we have never actually tested shipping one.
+
+## Built and tested, but NOT exercised by this batch
+
+- **A Line: 0 shipped.** `spew` must be picked AND the call must choose Line.
+- **`life-drain`: asked on 38 sheets, judged NOT TRUE on 29, shipped 0 rows.** The
+  batch holds 3 draining concepts, and the obvious one (Vampire) is print-exact
+  with print's own HP-maximum Bite — which it correctly did not double. The
+  evidence for this feature is `drain10`, not this run.
+- **The nullish-row guard never fired.** Vashka's crash did not recur, so the guard
+  is still untested in production. Its trace is the lead if it ever does.
+
+## A metric of mine that was wrong
+
+I fixed "no bare `each creature within N feet`" as a pass/fail. Three shipped —
+and all three are print's OWN shape, from authored and print rows rather than
+template frames: *"each creature within 10 feet of the space it left"* is
+Lich/Deathly Teleport, the one instance print has. The metric should have read "no
+TEMPLATE-derived bare-radius clause", which is 0.
+
+
+---
+
+# THE METRIC THAT MATTERED WENT BACKWARDS
+
+**Owner, 2026-10-23:** *"let's not lose sight of whether GM's requests for a power
+or ability, or if signature abilities, are being properly translated to a template
+with rider. that was the point of this whole session."*
+
+GM clauses answered by a row carrying a receipt, same batch each time:
+
+| forty | clause coverage | element coverage |
+|---|---|---|
+| `...T03-29-45` (package 7, before today) | **43/70 — 61%** | 203/220 — 92% |
+| `...T17-05-33` (mid-day) | 40/69 — 57% | 178/215 — 82% |
+| `...T04-57-39` (after the day's work) | **30/70 — 42%** | 193/220 — 87% |
+
+**Down 19 points from where the day started.** Decoration rows rose 14 → 18 over
+the same span. So the sheets answer the GM LESS often and invent MORE often, which
+is the opposite of the session's goal.
+
+## I evaluated the retry on the wrong axis
+
+The retry was removed on my framing: **34 calls fired, 6 succeeded (17%), ~5.7
+calls per seat saved.** Every one of those numbers is about COST and HIT RATE.
+None of them is about clause coverage — the thing the retry existed to serve.
+
+Six clause answers out of a 70-clause denominator is **~8.6 points**, which is
+about half the total drop. So on the metric that mattered the retry was earning
+its keep, and I reported it as a failure because I measured the wrong thing. The
+owner's "ok no retry" was a reasonable call on the framing I gave; the framing was
+incomplete.
+
+## What I can and cannot attribute
+
+A name-matched subset (15 sheets whose generated names survived between runs)
+shows **2 worse, 12 same, 1 better** — which does NOT account for a 15-point
+aggregate move. Generated names change between runs, so most sheets cannot be
+paired. **The per-sheet cause is therefore unattributed**, and I am not going to
+guess it.
+
+Two hypotheses, in order of expected size:
+
+1. **the retry removal** — ~8.6 points by the arithmetic above; testable by
+   restoring it and re-running the forty with nothing else changed.
+2. **the 8 newly-live `needs_body` declarations.** `coating`, `phase-slip`,
+   `herd`, `rally`, `snare-bolt`, `zone-seed`, `blighted-ground` and `drain` were
+   silently inert until mid-session and went live between the two forties. Eight
+   more gateable templates means shorter menus, more refusals, fewer clause
+   answers. Testable by logging refusals that cite a body verdict.
+
+## The recommendation
+
+**Restore the retry**, in its mechanical-clause-only form: on the forty, ~⅔ of the
+clauses it aimed at were names and flavour, so gating it on a MECHANICAL clause
+should keep most of the 8.6 points at roughly a third of the 34 calls. Then
+re-measure clause coverage, not hit rate.
+
+And **clause coverage becomes the headline number of every run from here** — above
+FAIL, above decoration counts, above everything. It is what the engine is for.
+
+## Landed and verified this round: print's legendary rows ride
+
+Separate from the above, and clean. `generate.mjs:6204` required a non-empty
+`Legendary Actions` section before print's own legendary rows could be applied —
+so it could only OVERWRITE a section the chassis had made. The CR 17+ chassis
+makes one; nothing at CR 10-16 does. Result: our CR 10-16 sheets carried **0**
+legendary rows against print's **1.0 per sheet**, and the CR 13 Vampire lost
+print's own `Deathless Strike` and `Beguile`.
+
+Ten, all controls correct: Vampire twist AND exact both ride `Deathless Strike,
+Beguile`; Mummy Lord rides `Glare, Necrotic Strike, Dread Command`; the CR 17
+dragon unchanged at 4 rows with no duplication; and the six creatures print gives
+none (Stone Golem, Purple Worm, Hydra, brass tyrant, bog hound, Brother Halric)
+stay at 0.

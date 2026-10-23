@@ -70,15 +70,17 @@ export const SHAPES = [
     },
   },
   {
+    // its 21+ frame always read a different duration form from its lower bands
+    duration_default: { default: 'source_end', '21+': 'target_start' },
     id: 'gaze-single', name: 'Dread Gaze', cite: 'Mummy/Dreadful Glare (CR 3); Mummy Lord/Dreadful Glare (CR 15); Solar/Blinding Gaze (CR 21)',
     roles: ['skirmisher', 'controller', 'lurker'], styles: ['skulker'], cr_range: [2, 30], replaces: 'signature',
     frames: {
-      '0-2': '*Wisdom Saving Throw*: DC {dc}, one creature the creature can see within 30 feet. *Failure:* The target has the Frightened condition until the end of the creature\'s next turn.',
-      '3-5': '*Wisdom Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* The target has the Frightened condition until the end of the creature\'s next turn. *Success:* The target is immune to this creature\'s gaze for 24 hours.',
-      '6-9': '*Wisdom Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* The target has the {condition_minor} condition until the end of the creature\'s next turn. *Success:* The target is immune to this creature\'s gaze for 24 hours.',
-      '10-12': '*Wisdom Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target has the {condition_minor} condition until the end of the creature\'s next turn.',
-      '13-20': '*Wisdom Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Paralyzed condition until the end of the creature\'s next turn.',
-      '21+': '*Constitution Saving Throw*: DC {dc}, one creature the creature can see within 120 feet. *Failure:* The target has the Blinded condition for 1 minute. *Failure or Success:* The creature can\'t use this gaze again until the start of its next turn.',
+      '0-2': '*Wisdom Saving Throw*: DC {dc}, one creature the creature can see within 30 feet. *Failure:* The target has the Frightened condition {duration}.',
+      '3-5': '*Wisdom Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* The target has the Frightened condition {duration}. *Success:* The target is immune to this creature\'s gaze for 24 hours.',
+      '6-9': '*Wisdom Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* The target has the {condition_minor} condition {duration}. *Success:* The target is immune to this creature\'s gaze for 24 hours.',
+      '10-12': '*Wisdom Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target has the {condition_minor} condition {duration}.',
+      '13-20': '*Wisdom Saving Throw*: DC {dc}, one creature the creature can see within 60 feet. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Paralyzed condition {duration}.',
+      '21+': '*Constitution Saving Throw*: DC {dc}, one creature the creature can see within 120 feet. *Failure:* The target has the Blinded condition for 1 minute. *Failure or Success:* The creature can\'t use this gaze again {duration}.',
     },
   },
   {
@@ -267,9 +269,9 @@ export const SHAPES = [
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature hurls {projectile}. *Ranged Attack Roll:* {atk}, range 30/120 ft. {avg} ({dice}) {damage_type} damage. The weapon lands in an unoccupied space within 5 feet of the target; until the creature spends 5 feet of movement in that space to recover it, the creature\'s Speed is halved and it can\'t use this action.'])),
   },
   {
-    id: 'seal', name: 'Sealing Touch', invented: true, // "sermons seal": a save that stops healing (2014 kin: Wight/Vampire life drain; 2024 kin: the Chasme's drone) — the preacher's verb, asked twice
+    id: 'seal', duration_default: 'source_end', name: 'Sealing Touch', invented: true, // "sermons seal": a save that stops healing (2014 kin: Wight/Vampire life drain; 2024 kin: the Chasme's drone) — the preacher's verb, asked twice
     roles: ['controller', 'artillery', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'signature',
-    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target can\'t regain Hit Points until the end of the creature\'s next turn.'])),
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and the target can\'t regain Hit Points {duration}.'])),
   },
   {
     id: 'adhesive', name: 'Adhesive', cite: 'Mimic/Adhesive (CR 2)',
@@ -330,9 +332,9 @@ export const SHAPES = [
     frames: { '0-2': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 5 (1d10) {damage_type} damage.', '3-5': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 5 (1d10) {damage_type} damage.', '6-9': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 7 (2d6) {damage_type} damage.', '10-12': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 10 (3d6) {damage_type} damage.', '13-20': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 13 (3d8) {damage_type} damage.', '21+': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 16 (3d10) {damage_type} damage.' },
   },
   {
-    id: 'noxious-aura', name: 'Noxious Aura', cite: 'Ghast/Stench (CR 2, 5 ft); Hezrou/Stench (CR 8, 10 ft); Pit Fiend/Fear Aura (CR 20, 20 ft); Sea Hag/Vile Appearance (CR 2)',
+    id: 'noxious-aura', duration_default: 'target_start', name: 'Noxious Aura', cite: 'Ghast/Stench (CR 2, 5 ft); Hezrou/Stench (CR 8, 10 ft); Pit Fiend/Fear Aura (CR 20, 20 ft); Sea Hag/Vile Appearance (CR 2)',
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait', deny_types: ['Humanoid'],
-    frames: { '0-2': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 5-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.', '3-5': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 5-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.', '6-9': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 10-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.', '10-12': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 10-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.', '13-20': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 20-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.', '21+': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 20-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition until the start of its next turn. *Success:* The target is immune to this creature\'s aura for 24 hours.' },
+    frames: { '0-2': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 5-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition {duration}. *Success:* The target is immune to this creature\'s aura for 24 hours.', '3-5': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 5-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition {duration}. *Success:* The target is immune to this creature\'s aura for 24 hours.', '6-9': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 10-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition {duration}. *Success:* The target is immune to this creature\'s aura for 24 hours.', '10-12': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 10-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition {duration}. *Success:* The target is immune to this creature\'s aura for 24 hours.', '13-20': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 20-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition {duration}. *Success:* The target is immune to this creature\'s aura for 24 hours.', '21+': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 20-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition {duration}. *Success:* The target is immune to this creature\'s aura for 24 hours.' },
   },
   {
     id: 'bloodied-fury', name: 'Bloodied Fury', cite: 'Boar/Bloodied Fury (CR 1/4); Giant Boar (CR 2); Berserker/Bloodied Frenzy (CR 2); Sahuagin/Blood Frenzy (CR 1/2)',
@@ -379,9 +381,9 @@ export const SHAPES = [
   // Dodge reduce incoming damage, which this engine forbids outright; Action
   // Surge is an extra Attack action no band can price.
   {
-    id: 'stunning-strike', name: 'Stunning Strike', invented: true, // Contagion's on-hit save frame (Giant Scorpion, Ghast) with print's Stunned idiom; print stuns on a save, never on every hit, so the clause is once a turn
+    id: 'stunning-strike', duration_default: 'source_end', name: 'Stunning Strike', invented: true, // Contagion's on-hit save frame (Giant Scorpion, Ghast) with print's Stunned idiom; print stuns on a save, never on every hit, so the clause is once a turn
     roles: ['skirmisher', 'lurker', 'brute', 'defender'], styles: [], cr_range: [5, 30], replaces: 'melee-rider',
-    frames: Object.fromEntries(['3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'Once on each of the creature\'s turns when it hits with this attack, the target is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Stunned condition until the end of the creature\'s next turn.'])),
+    frames: Object.fromEntries(['3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'Once on each of the creature\'s turns when it hits with this attack, the target is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Stunned condition {duration}.'])),
   },
   {
     id: 'patient-defense', name: 'Patient Defense', invented: true, // Cunning Action's grammar (Assassin, Spy) on print's Dodge action
@@ -415,9 +417,9 @@ export const SHAPES = [
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature is bound to {anchor}. It can\'t willingly move more than 120 feet from {anchor}, and it always knows the direction and distance to {anchor}.'])),
   },
   {
-    id: 'marking-light', name: 'Marking Light', invented: true, // Faerie Fire's 2024 clause on a damage trigger: the lighthouse keeper's lit bolt, the orrery's star-shard (5 sightings)
+    id: 'marking-light', duration_default: 'source_end', name: 'Marking Light', invented: true, // Faerie Fire's 2024 clause on a damage trigger: the lighthouse keeper's lit bolt, the orrery's star-shard (5 sightings)
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
-    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'A creature the creature damages sheds Dim Light in a 5-foot radius until the end of the creature\'s next turn and can\'t benefit from the Invisible condition while it does.'])),
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'A creature the creature damages sheds Dim Light in a 5-foot radius {duration} and can\'t benefit from the Invisible condition while it does.'])),
   },
   {
     id: 'sealed-body', name: 'Sealed Body', invented: true, // Immutable Form + Shielded Mind fused for the sealed reliquary (the bishop, the penitent)
@@ -451,7 +453,7 @@ export const SHAPES = [
   {
     id: 'wail', name: 'Wail', invented: true, // Banshee/Wail (2024 MM, not in this corpus) = the area form of Threshold Execute (Sea Hag/Death Glare, cited there): the drowned choir "whose hymn stops hearts" (critic, fresh three)
     roles: ['lurker', 'controller', 'artillery'], styles: [], cr_range: [3, 30], replaces: 'nova', gate: '1/Day',
-    frames: { '3-5': '*Constitution Saving Throw*: DC {dc}, each creature within 30 feet of the creature that can hear it. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and if the target has 20 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. *Success:* Half damage only.', '6-9': '*Constitution Saving Throw*: DC {dc}, each creature within 30 feet of the creature that can hear it. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and if the target has 30 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. *Success:* Half damage only.', '10-12': '*Constitution Saving Throw*: DC {dc}, each creature within 30 feet of the creature that can hear it. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and if the target has 50 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. *Success:* Half damage only.', '13-20': '*Constitution Saving Throw*: DC {dc}, each creature within 60 feet of the creature that can hear it. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and if the target has 75 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. *Success:* Half damage only.', '21+': '*Constitution Saving Throw*: DC {dc}, each creature within 60 feet of the creature that can hear it. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and if the target has 100 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. *Success:* Half damage only.' },
+    frames: { '3-5': '*Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Emanation originating from the creature that can hear it. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and if the target has 20 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. *Success:* Half damage only.', '6-9': '*Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Emanation originating from the creature that can hear it. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and if the target has 30 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. *Success:* Half damage only.', '10-12': '*Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Emanation originating from the creature that can hear it. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and if the target has 50 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. *Success:* Half damage only.', '13-20': '*Constitution Saving Throw*: DC {dc}, each creature in a 60-foot Emanation originating from the creature that can hear it. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and if the target has 75 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. *Success:* Half damage only.', '21+': '*Constitution Saving Throw*: DC {dc}, each creature in a 60-foot Emanation originating from the creature that can hear it. *Failure:* {avg_half} ({dice_half}) {damage_type} damage, and if the target has 100 Hit Points or fewer after taking this damage, it drops to 0 Hit Points. *Success:* Half damage only.' },
   },
   {
     id: 'truth-aura', name: 'Aura of Truth', invented: true, // Zone of Truth as an aura (the spell's own save and clause); the reliquary knight "will not let a lie be spoken near it" — mechanics=aura detected, nothing rendered (critic, fresh four 2026-09-28)
@@ -466,9 +468,9 @@ export const SHAPES = [
   // (Prone/Poisoned/Deafened/Frightened; a Medusa's Petrifying Gaze earns KO
   // only as a gated bonus action with the escalation clause).
   {
-    id: 'gaze-aura', name: 'Vile Appearance', cite: 'Sea Hag/Vile Appearance (CR 2, 30 ft, Wis, Frightened)',
+    id: 'gaze-aura', duration_default: 'target_start', name: 'Vile Appearance', cite: 'Sea Hag/Vile Appearance (CR 2, 30 ft, Wis, Frightened)',
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
-    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Wisdom Saving Throw*: DC {dc}, any creature that starts its turn within 30 feet of the creature and can see it. *Failure:* The target has the Frightened condition until the start of its next turn. *Success:* The target is immune to this creature\'s gaze for 24 hours.'])), // print literal: a gaze frightens (the barrel's took Prone on a Strength save, 2026-09-28)
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Wisdom Saving Throw*: DC {dc}, any creature that starts its turn within 30 feet of the creature and can see it. *Failure:* The target has the Frightened condition {duration}. *Success:* The target is immune to this creature\'s gaze for 24 hours.'])), // print literal: a gaze frightens (the barrel's took Prone on a Strength save, 2026-09-28)
   },
   // THE CHARGE, PUSH FORM (critic: "off the cliff" is a push, not a bite-down;
   // kin the 2024 Minotaur's Gore — moved 20+ feet straight, pushed 10 feet and
@@ -483,15 +485,15 @@ export const SHAPES = [
   // one frame per band (print grows range and reach with tier) and a flavor
   // slot for the fiction the seed used to bake in. The seeds retire.
   {
-    id: 'lure', name: 'Luring Presence', cite: 'Harpy/Luring Song (CR 1); Siren-class lures',
+    id: 'lure', duration_default: 'source_start', name: 'Luring Presence', cite: 'Harpy/Luring Song (CR 1); Siren-class lures',
     roles: ['lurker', 'artillery', 'controller', 'skirmisher'], styles: [], cr_range: [0, 30], replaces: 'signature',
     frames: {
-      '0-2': "*Wisdom Saving Throw:* DC {dc}, one creature within 30 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn.",
-      '3-5': "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn.",
-      '6-9': "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
-      '10-12': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice within 60 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
-      '13-20': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice within 90 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
-      '21+': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice within 120 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
+      '0-2': "*Wisdom Saving Throw:* DC {dc}, one creature within 30 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition {duration}, and while Charmed this way, it must move toward the creature by the safest available route on its turn.",
+      '3-5': "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition {duration}, and while Charmed this way, it must move toward the creature by the safest available route on its turn.",
+      '6-9': "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition {duration}, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
+      '10-12': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice in a 60-foot Emanation originating from the creature that can see or hear {lure_source}. *Failure:* The target has the Charmed condition {duration}, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
+      '13-20': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice in a 90-foot Emanation originating from the creature that can see or hear {lure_source}. *Failure:* The target has the Charmed condition {duration}, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
+      '21+': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice in a 120-foot Emanation originating from the creature that can see or hear {lure_source}. *Failure:* The target has the Charmed condition {duration}, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
     },
   },
   {
@@ -612,14 +614,22 @@ export const SHAPES = [
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'Each ally within 30 feet of the creature that can see or hear it can take a Reaction to make one ranged attack roll.'])),
   },
   {
-    id: 'ground-burst', name: 'Shockwave', cite: 'Nalfeshnee/Horror Nimbus (CR 13); Vrock/Stunning Screech (CR 6)', // print's SELF-CENTRED Emanation nova; "eruption" concepts borrowed the leap (critic 2026-09-29)
+    id: 'ground-burst',
+    // Emanation is its own and stays EXACTLY the size it was authored at (there
+    // is no sound shared Emanation ladder: print's medians are non-monotone at
+    // n = 3-6 and this catalog's two Emanation templates disagree). The ADDED
+    // shape is Cone, which draws on AREA_LADDER where print gives 49 instances.
+    // Gated (Recharge 5-6), so the widening is priced — the owner's conservative
+    // ruling, 2026-10-22.
+    targets: ['Emanation', 'Cone'],
+    target_sizes: { Emanation: { '10-12': 15, '13-20': 20, '21+': 30, '3-5': 10, '6-9': 15 } }, name: 'Shockwave', cite: 'Nalfeshnee/Horror Nimbus (CR 13); Vrock/Stunning Screech (CR 6)', // print's SELF-CENTRED Emanation nova; "eruption" concepts borrowed the leap (critic 2026-09-29)
     roles: ['brute', 'defender', 'controller', 'skirmisher', 'lurker'], styles: [], cr_range: [3, 30], replaces: 'nova', gate: 'Recharge 5-6', // lurker too: a barrow-wight routed to the trap seat lost its eruption (2026-09-29)
     frames: {
-      '3-5': '*{save_stat} Saving Throw*: DC {dc}, each creature in a 10-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
-      '6-9': '*{save_stat} Saving Throw*: DC {dc}, each creature in a 15-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
-      '10-12': '*{save_stat} Saving Throw*: DC {dc}, each creature in a 15-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
-      '13-20': '*{save_stat} Saving Throw*: DC {dc}, each creature in a 20-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
-      '21+': '*{save_stat} Saving Throw*: DC {dc}, each creature in a 30-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
+      '3-5': '*{save_stat} Saving Throw*: DC {dc}, {target}. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
+      '6-9': '*{save_stat} Saving Throw*: DC {dc}, {target}. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
+      '10-12': '*{save_stat} Saving Throw*: DC {dc}, {target}. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
+      '13-20': '*{save_stat} Saving Throw*: DC {dc}, {target}. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
+      '21+': '*{save_stat} Saving Throw*: DC {dc}, {target}. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
     },
   },
   {
@@ -645,9 +655,9 @@ export const SHAPES = [
   // with "no template exists for this section on this line"): riders that
   // append to the RANGED or hybrid attack row.
   {
-    id: 'bolt-restrain', name: 'Binding Bolt', invented: true, // Web / Hold-style rider on a spell attack
+    id: 'bolt-restrain', duration_default: 'target_end', name: 'Binding Bolt', invented: true, // Web / Hold-style rider on a spell attack
     roles: ['artillery', 'controller'], styles: [], cr_range: [1, 30], replaces: 'ranged-rider',
-    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the target is a Large or smaller creature, it has the Restrained condition until the end of its next turn.'])),
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the target is a Large or smaller creature, it has the Restrained condition {duration}.'])),
   },
   {
     id: 'bolt-drag', name: 'Reeling Bolt', invented: true, // Thorn Whip / Lightning Lure grammar as a rider

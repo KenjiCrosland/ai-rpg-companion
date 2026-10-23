@@ -68,21 +68,79 @@ const PHYSICAL = ['Bludgeoning', 'Piercing', 'Slashing'];
  * not calculateCR — so widening one would inflate CR invisibly. Gated widening
  * routes into pricing print already backs; ungated widening is simply not offered.
  */
+/**
+ * HOW LONG IT LASTS — print's own clauses, as a parameter.
+ *
+ * The forty's gap list wanted persistence more than anything else: 11 of 39 named
+ * gaps asked for "and it keeps happening" where the template hard-codes a
+ * one-shot ("a lingering patch that keeps damaging", "persisting until the grapple
+ * ends", "a lasting mark"). Measured against srd52-monsters, 2026-10-23:
+ *
+ *   until the start of its next turn            46
+ *   until the end of its next turn              31
+ *   until the start of the <creature>'s turn    24
+ *   until the end of the <creature>'s turn      15
+ *   until the effect ends                       12
+ *   for 1 minute                                 6
+ *
+ * By EFFECT KIND, which is what decides what may be offered:
+ *
+ *   imposes a condition   all four forms attested (n = 71)
+ *   a buff on itself      ONLY the short forms (n = 5); print never lengthens one
+ *   recurring damage      15 rows, every one ANCHORED — to a grapple (Barbed
+ *                         Devil), a wound (Bearded Devil), a condition
+ *   a persistent area      7 rows, every one ANCHORED — to concentration
+ *                         (Darkmantle), to an environment (Aboleth's Mucus Cloud)
+ *
+ * So print never prints free-floating persistence, and nothing in this engine
+ * prices duration (the same hole area damage had). The parameter is therefore
+ * offered ONLY on condition-effect templates, where all four forms are print-
+ * attested — 13 templates. The other 14 that hard-code a duration keep it.
+ */
+const DURATION_FORMS = {
+  target_end: 'until the end of its next turn',
+  target_start: 'until the start of its next turn',
+  source_end: "until the end of the creature's next turn",
+  source_start: "until the start of the creature's next turn",
+};
+export const DURATIONS = Object.keys(DURATION_FORMS);
+export const durationClause = (form) => DURATION_FORMS[form] ?? null;
+/** The form a clause already reads as, so a template's default is its own text. */
+export const durationFormOf = (text) => {
+  for (const [k, v] of Object.entries(DURATION_FORMS)) if (String(text ?? '').includes(v)) return k;
+  return null;
+};
+
 const AREA_LADDER = {
   Cone: { '0-2': 15, '3-5': 15, '6-9': 30, '10-12': 30, '13-20': 60, '21+': 90 },
   Line: { '0-2': 20, '3-5': 30, '6-9': 40, '10-12': 60, '13-20': 60, '21+': 90 },
 };
 export const AREA_SHAPES = Object.keys(AREA_LADDER);
 /** Print's clause for a shape at a CR band. */
-export const areaClause = (shape, band) => {
-  const n = AREA_LADDER[shape]?.[band];
-  if (!n) return null;
-  return shape === 'Cone'
-    ? `each creature in a ${n}-foot Cone`
-    : `each creature in a ${n}-foot-long, 5-foot-wide Line`;
+const AREA_FORM = {
+  Cone: (n) => `each creature in a ${n}-foot Cone`,
+  Line: (n) => `each creature in a ${n}-foot-long, 5-foot-wide Line`,
+  Emanation: (n) => `each creature in a ${n}-foot Emanation originating from the creature`,
+};
+/**
+ * Print's clause for a shape at a CR band.
+ *
+ * `sizes` lets a template carry its OWN ladder for its DEFAULT shape, which is
+ * how Emanation is supported without inventing a shared one: print's Emanation
+ * medians are non-monotone at n = 3-6 (5/10/20/5/30/20), and this catalog's two
+ * Emanation templates already disagree with each other (ground-burst
+ * 10/15/15/20/30, active-toll 10/15/20/30/30/60). So a default shape keeps the
+ * sizes it was authored with, byte for byte, and only an ADDED shape draws on
+ * AREA_LADDER — where Cone and Line are well evidenced. Measured 2026-10-22.
+ */
+export const areaClause = (shape, band, sizes = null) => {
+  const n = sizes?.[shape]?.[band] ?? AREA_LADDER[shape]?.[band];
+  const form = AREA_FORM[shape];
+  if (!n || !form) return null;
+  return form(n);
 };
 
-const VOCAB = { area_shape: AREA_SHAPES, save_stat: SAVE_STATS, consumed_condition: CONDITIONS, condition_minor: MINOR, restraint: RESTRAINTS, r_vuln: DAMAGE };
+const VOCAB = { area_shape: AREA_SHAPES, duration: DURATIONS, save_stat: SAVE_STATS, consumed_condition: CONDITIONS, condition_minor: MINOR, restraint: RESTRAINTS, r_vuln: DAMAGE };
 // flavor slots: the model's words, bounded (no digits, no rules grammar, short)
 export const FLAVOR_SLOTS = ['phobia', 'restraint', 'projectile', 'wound_noun', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
 // engine slots: never the model's
@@ -532,7 +590,7 @@ export const TEMPLATES = [
   ...SHAPES.filter((s) => SECTION_BY_REPLACES[s.replaces] && SHAPE_TAGS[s.id]).map((s) => ({
     id: s.id, name: s.name, kind: 'shape', cite: s.cite,
     section: SECTION_BY_REPLACES[s.replaces], replaces: s.replaces, roles: s.roles, styles: s.styles, cr_range: s.cr_range, /* `replaces` names the SLOT the template claims — the slot-yield rule reads it (fidelity pipeline step 2) */
-    gate: s.gate ?? null, nova: s.replaces === 'nova', requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null, requires_row: s.requires_row ?? null, requires_claim: s.requires_claim ?? null, requires_size: s.requires_size ?? null, needs_body: NEEDS_BODY[s.id] ?? null, family: FAMILY[s.id] ?? null, targets: s.targets ?? null,
+    gate: s.gate ?? null, nova: s.replaces === 'nova', requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null, requires_row: s.requires_row ?? null, requires_claim: s.requires_claim ?? null, requires_size: s.requires_size ?? null, needs_body: NEEDS_BODY[s.id] ?? null, family: FAMILY[s.id] ?? null, targets: s.targets ?? null, target_sizes: s.target_sizes ?? null, duration_default: s.duration_default ?? null,
     host: s.host ?? HOST_BY_REPLACES[s.replaces] ?? null, // a reaction that fires a ranged row needs one on the sheet (snap-shot)
     trigger: SHAPE_TAGS[s.id][0], effect: SHAPE_TAGS[s.id][1],
     keys: [...new Set([...(VERB_KEYS[s.id] ?? []), ...(SHAPE_KEYS[s.id] ?? [])])],
@@ -553,6 +611,7 @@ export const TEMPLATES = [
     // A declaration that never reaches its template is worse than no declaration:
     // the table reads complete. `body-requirements.spec.js` now asserts every
     // NEEDS_BODY and FAMILY key lands on its template, so this cannot recur.
+    duration_default: seed.duration_default ?? null, // a seed declares its own default too, or the frame path's choice never reaches it
     needs_body: NEEDS_BODY[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? NEEDS_BODY[seed.key] ?? null,
     family: FAMILY[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? FAMILY[seed.key] ?? null,
     trigger: /When (?:the creature|it) hits\b/i.test(seed.text) ? 'on_hit'
@@ -958,6 +1017,20 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
       if (!w) return null;
       text = text.split(`{${k}}`).join(w);
     }
+    // {duration} ON A SEED. Seeds render through their own pipeline, which fills
+    // FLAVOR_SLOTS and then rejects any slot left over — so a seed carrying
+    // {duration} rendered null until this ran (escalating-dread, 2026-10-23). Same
+    // rule as the frame path: the call's choice if the effect is a condition and
+    // the form is print's, else the template's own default.
+    if (text.includes('{duration}')) {
+      const allowedS = t.effect === 'condition' ? DURATIONS : [];
+      const askedS = String(fills.duration ?? '').trim();
+      const ddS = t.duration_default;
+      const fallbackS = (ddS && typeof ddS === 'object' ? (ddS[bandFor(ctx.cr)] ?? ddS.default) : ddS) ?? 'target_end';
+      const clauseS = durationClause(allowedS.includes(askedS) ? askedS : fallbackS);
+      if (!clauseS) return null;
+      text = text.split('{duration}').join(clauseS);
+    }
     if (/\{[a-z_]+\}/.test(text)) return null;
     // the drawn card's own tag, which this return used to drop on the floor
     // (it built a fresh object and only looked at `pickedCondition`, which no
@@ -1021,11 +1094,32 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // template that is already GATED, because nothing prices an ungated area row.
   // An unusable or absent choice falls to the template's own first declared shape,
   // never to a miss — the same ladder every other slot uses.
+  // {duration} — HOW LONG IT LASTS, chosen by the call from print's closed set,
+  // defaulting to the form the template's own text already read as. Offered only
+  // where the template's declared effect is a CONDITION: print attests all four
+  // forms there (n = 71) and attests NO lengthening for a self-buff, recurring
+  // damage or a persistent area — its persistence is always anchored to something
+  // (a grapple, a wound, concentration, an environment), and nothing here prices
+  // duration. An unusable or absent choice falls to the default, never to a miss.
+  if (/\{duration\}/.test(frameOf(t, ctx.cr) ?? '')) {
+    const allowed = t.effect === 'condition' ? DURATIONS : [];
+    const asked = String(fills.duration ?? '').trim();
+    // the default may be PER BAND, like target_sizes: gaze-single's 21+ frame used
+    // a different form from its lower bands, and collapsing them silently changed
+    // that band's printed text (caught by diffing rendered output, not by reading
+    // source — three source-parsing attempts got it wrong first, 2026-10-23)
+    const dd = t.duration_default;
+    const fallback = (dd && typeof dd === 'object' ? (dd[bandFor(ctx.cr)] ?? dd.default) : dd) ?? 'target_end';
+    const pick = allowed.includes(asked) ? asked : fallback;
+    const clause = durationClause(pick);
+    if (!clause) return null;
+    engine.duration = clause;
+  }
   if (/\{target\}/.test(frameOf(t, ctx.cr) ?? '')) {
-    const allowed = (t.targets ?? []).filter((sh) => AREA_SHAPES.includes(sh));
+    const allowed = (t.targets ?? []).filter((sh) => AREA_SHAPES.includes(sh) || t.target_sizes?.[sh]);
     const asked = String(fills.area_shape ?? '').trim();
     const pick = (t.gate && allowed.includes(asked)) ? asked : allowed[0];
-    const clause = pick ? areaClause(pick, bandFor(ctx.cr)) : null;
+    const clause = pick ? areaClause(pick, bandFor(ctx.cr), t.target_sizes ?? null) : null;
     if (!clause) return null; // a {target} frame with no declared shape cannot render
     engine.target = clause;
   }
@@ -1190,6 +1284,9 @@ export function templateMenuLines(menu, { cr, concept = '', idea = '' } = {}) {
     // a distance. Without this line the menu advertised neither and the choice was
     // unreachable (2026-10-22).
     if ((t.targets ?? []).length > 1) vocab.push(`"area_shape" ∈ ${t.targets.join('/')} — the engine sizes it`);
+    // same two-name split as area_shape: the frame carries {duration}, the choice
+    // the model makes is "duration", so the menu has to name it or it is unreachable
+    if (/\{duration\}/.test(frameOf(t, cr) ?? '') && t.effect === 'condition') vocab.push(`"duration" ∈ ${DURATIONS.join('/')} — how long the condition lasts`);
     return `- ${t.id} [${SECTION_OF[t.section]}${t.gate ? `, ${t.gate}` : ''}]${matched.length ? ` VERB MATCH: ${matched.join(', ')}` : ''}: ${frameOf(t, cr).replace(/\*/g, '')}${flav}${vocab.length ? ` — choose: ${vocab.join('; ')}` : ''}`;
   }).join('\n');
 }

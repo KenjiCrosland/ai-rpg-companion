@@ -1,4 +1,8 @@
 // THE FALLBACK LIBRARY (owner go 2026-09-13; expanded to the print
+// EMANATION, NOT "WITHIN N FEET" (2026-10-22): print's 2024 idiom for an area around the creature is an EMANATION: 25 Emanation clauses in the corpus against ONE bare "within N feet" (Lich/Deathly Teleport).
+// Both qualifier positions are print-attested — a choice qualifier BEFORE (Azer Sentinel: "each creature of the azer's choice in a 5-foot Emanation originating from the azer") and a sense qualifier AFTER (Doppelganger: "...originating from the doppelganger that can see the doppelganger").
+// The SIZE is unchanged in every case, so this is grammar only and the pricing does not move.
+// Measured 2026-10-22.
 // SHAPE-SPACE 2026-09-15: "a more comprehensive action library").
 // When a concept's wildcard dies in vetting and repair, the engine
 // draws a GENERIFIED print shape priced at the block's own numbers.
@@ -41,35 +45,35 @@ export const LIBRARY_SEEDS = [
     text: "*Strength Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target is pulled up to 15 feet straight toward the creature, and its Speed is 0 until the start of the creature's next turn.",
   },
   {
-    key: 'lure', imposes: 'Charmed', retired: true, // promoted to a shape (shapes.mjs) 2026-09-22
+    key: 'lure', duration_default: 'source_start', imposes: 'Charmed', retired: true, // promoted to a shape (shapes.mjs) 2026-09-22
     keys: ['lure', 'beguile', 'song', 'call'],
     section: 'Actions', archetypes: ['lurker', 'caster', 'skirmisher'],
     name: 'Luring Presence', // Dull Compliance + the Bog Lantern's live proof
-    text: "*Wisdom Saving Throw:* DC {dc}, one creature within 30 feet that can see or hear the creature. *Failure:* The target has the Charmed condition until the start of the creature's next turn, and while Charmed this way, it must move toward the creature by the safest available route on its turn.",
+    text: "*Wisdom Saving Throw:* DC {dc}, one creature within 30 feet that can see or hear the creature. *Failure:* The target has the Charmed condition {duration}, and while Charmed this way, it must move toward the creature by the safest available route on its turn.",
   },
   {
-    key: 'pacify', imposes: 'Incapacitated', keys: ['transfix', 'hold', 'stillness', 'trance'],
+    key: 'pacify', duration_default: 'target_end', imposes: 'Incapacitated', keys: ['transfix', 'hold', 'stillness', 'trance'],
     section: 'Actions', archetypes: ['caster', 'lurker'],
     name: 'Transfixing Regard (2/Day)', // Weight of Attention, gated
-    text: "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target has the Incapacitated condition and its Speed is 0 until the end of its next turn.",
+    text: "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target has the Incapacitated condition and its Speed is 0 {duration}.",
   },
   {
-    key: 'escalating-dread', imposes: 'Frightened', keys: ['dread', 'fear', 'wither', 'doom'],
+    key: 'escalating-dread', duration_default: 'source_end', imposes: 'Frightened', keys: ['dread', 'fear', 'wither', 'doom'],
     section: 'Actions', archetypes: ['lurker', 'caster', 'brute'],
     name: 'Creeping Dread', dpr_frac: 0.5, // the Mummy's Dreadful Glare
-    text: "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target has the Frightened condition until the end of the creature's next turn. If the target was already Frightened by this ability, it also takes {burst} {damage_type} damage.",
+    text: "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target has the Frightened condition {duration}. If the target was already Frightened by this ability, it also takes {burst} {damage_type} damage.",
   },
   {
-    key: 'terror-pulse', imposes: 'Frightened', keys: ['terror', 'roar', 'shriek', 'presence'],
+    key: 'terror-pulse', duration_default: 'target_end', imposes: 'Frightened', keys: ['terror', 'roar', 'shriek', 'presence'],
     section: 'Actions', archetypes: ['brute', 'lurker', 'defender'],
     name: 'Horrid Display (2/Day)', // the Frightful Presence class
-    text: "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice within 30 feet that can see or hear it. *Failure:* The target has the Frightened condition until the end of its next turn.",
+    text: "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice in a 30-foot Emanation originating from the creature that can see or hear it. *Failure:* The target has the Frightened condition {duration}.",
   },
   {
-    key: 'snare-bolt', imposes: 'Restrained', keys: ['snare', 'web', 'bind', 'tangle'],
+    key: 'snare-bolt', duration_default: 'source_end', imposes: 'Restrained', keys: ['snare', 'web', 'bind', 'tangle'],
     section: 'Actions', archetypes: ['lurker', 'caster', 'skirmisher'],
     name: 'Binding Lash', // the Web-bolt class (Restrained, self-ending)
-    text: "*Dexterity Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target has the Restrained condition until the end of the creature's next turn.",
+    text: "*Dexterity Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target has the Restrained condition {duration}.",
   },
   {
     key: 'slow-bolt', keys: ['slow', 'chill', 'mire', 'leaden'],
@@ -78,10 +82,10 @@ export const LIBRARY_SEEDS = [
     text: "*Constitution Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target's Speed is halved and it can't take Reactions until the end of the creature's next turn.",
   },
   {
-    key: 'sensory-strike', imposes: 'Blinded', keys: ['blind', 'dazzle', 'flash', 'deafen'],
+    key: 'sensory-strike', duration_default: 'source_end', imposes: 'Blinded', keys: ['blind', 'dazzle', 'flash', 'deafen'],
     section: 'Actions', archetypes: ['caster', 'skirmisher', 'lurker'],
     name: 'Dazzling Burst', // the Blindness class, self-ending
-    text: "*Constitution Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target has the Blinded condition until the end of the creature's next turn.",
+    text: "*Constitution Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target has the Blinded condition {duration}.",
   },
   {
     key: 'disarm', keys: ['disarm', 'twist', 'strip'],
@@ -100,7 +104,7 @@ export const LIBRARY_SEEDS = [
     key: 'herd', keys: ['herd', 'drive', 'command'],
     section: 'Actions', archetypes: ['defender', 'brute', 'caster'],
     name: 'Driving Bellow (2/Day)', // area forced-move, gated
-    text: "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice within 30 feet. *Failure:* The target immediately moves up to half its Speed in a direction of the creature's choice, using the safest available route.",
+    text: "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice in a 30-foot Emanation originating from the creature. *Failure:* The target immediately moves up to half its Speed in a direction of the creature's choice, using the safest available route.",
   },
   {
     key: 'hook-drag', imposes: 'Grappled', retired: true, // promoted to a shape (shapes.mjs) 2026-09-22
@@ -200,7 +204,7 @@ LIBRARY_SEEDS.push(
     key: 'wind-up', keys: ['gather', 'charge-up', 'telegraph', 'brew'],
     section: 'Actions', archetypes: ['brute', 'caster', 'defender'], nova: true,
     name: 'Gathering Ruin (Recharge 5-6)', dpr_frac: 1.2,
-    text: "The creature begins gathering destructive power, {telegraph} until the start of its next turn — when the power erupts. *Dexterity Saving Throw:* DC {dc}, each creature within 15 feet of the creature at that moment. *Failure:* {burst} {damage_type} damage. *Success:* Half damage.",
+    text: "The creature begins gathering destructive power, {telegraph} until the start of its next turn — when the power erupts. *Dexterity Saving Throw:* DC {dc}, each creature in a 15-foot Emanation originating from the creature at that moment. *Failure:* {burst} {damage_type} damage. *Success:* Half damage.",
   },
   {
     key: 'coating', keys: ['coat', 'venom', 'anoint', 'charge-weapon'],
