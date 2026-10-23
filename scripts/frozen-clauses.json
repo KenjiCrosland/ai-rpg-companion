@@ -1767,5 +1767,99 @@
     "askShape": "movement"
    }
   ]
+ },
+ "bb2c2fb8d1ee": {
+  "concept": "lizardfolk ninja",
+  "clauses": [
+   {
+    "id": "cl_t84ars",
+    "text": "lizardfolk ninja",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "1455d10427c3": {
+  "concept": "fire monk",
+  "clauses": [
+   {
+    "id": "cl_1tbxua1",
+    "text": "fire monk",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "ca861b63f198": {
+  "concept": "a berserker who flies into an unstoppable rage",
+  "clauses": [
+   {
+    "id": "cl_2vxah4",
+    "text": "a berserker",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_4hsfls",
+    "text": "flies into an unstoppable rage",
+    "kind": "mechanical",
+    "askShape": "buff_self"
+   }
+  ]
+ },
+ "b6c7374086ce": {
+  "concept": "Owlbear — whose feathers are tarred and cling",
+  "clauses": [
+   {
+    "id": "cl_ybop78",
+    "text": "Owlbear — whose feathers are tarred and cling",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "4ed1cc58bc62": {
+  "concept": "Stone Golem",
+  "clauses": [
+   {
+    "id": "cl_1yb6x69",
+    "text": "Stone Golem",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "27bd1cae3b17": {
+  "concept": "a thing that swallows people whole",
+  "clauses": [
+   {
+    "id": "cl_k3d4rz",
+    "text": "a thing",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1s223vc",
+    "text": "swallows people whole",
+    "kind": "mechanical"
+   }
+  ]
+ },
+ "5f2479e99744": {
+  "concept": "a marsh witch who curses trespassers",
+  "clauses": [
+   {
+    "id": "cl_1enkq57",
+    "text": "a marsh witch",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_a3qo0a",
+    "text": "curses trespassers",
+    "kind": "mechanical",
+    "askShape": "condition"
+   }
+  ]
  }
 }

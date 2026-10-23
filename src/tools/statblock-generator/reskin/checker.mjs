@@ -660,6 +660,36 @@ function gateEdition(raw, m, ctx, F) {
   }
 }
 const RAYS_2014 = ['Charm Ray', 'Paralyzing Ray', 'Fear Ray', 'Slowing Ray', 'Enervation Ray', 'Telekinetic Ray', 'Sleep Ray', 'Petrification Ray', 'Disintegration Ray', 'Death Ray'];
+/**
+ * WHY A NON-PRINT ROW IS ON THE SHEET, read from the row's OWN receipts.
+ *
+ * The critic's ask #1 (2026-10-23): this list is the engine's account of itself,
+ * and two of its labels asserted a provenance the row did not carry. Every
+ * library draw was reported as "seed the user's words keyed" even when the
+ * FALLBACK library drew it on no user word at all — 9 of 26 library rows across
+ * three runs — and every template as "bound on the user's verb" even when it was
+ * shape-fit or picked for a clause. Wrong in both directions, and invisible,
+ * because a confident label reads the same as a true one.
+ *
+ * So each branch names the receipt actually present: `boundKeys` are the GM's own
+ * matched words, `clause` the GM's own clause the row answers, `decoration` a free
+ * row invented inside the template's family. Exported so the mapping can be pinned
+ * by test — see [[the-receipt-is-not-the-expression]]: a receipt proves the row MAY
+ * exist, never that it does what it claims, so the least this label can do is not
+ * overstate which receipt it has.
+ */
+export function ridesOn(e) {
+  if (e.part || e.feature || e.kit) return 'the user\'s own part, feature or species';
+  if (e.print) return 'print rules row';
+  const keys = (e.boundKeys ?? []).length ? ` (${e.boundKeys.slice(0, 4).join(', ')})` : '';
+  if (e.library) return keys ? `seed keyed on the user's words${keys}`
+    : e.clause ? 'seed drawn for the user\'s clause' : 'seed from the fallback library — no word of the user\'s keyed it';
+  if (e.template) return keys ? `template bound on the user's verb${keys}`
+    : e.clause ? 'template picked for the user\'s clause' : e.decoration ? 'free row, invented inside the template\'s family'
+    : 'template fit on shape alone — no verb of the user\'s matched';
+  return null;
+}
+
 function gateDonor(raw, m, ctx, F) {
   const hits = piGuard(JSON.parse(JSON.stringify(m)));
   if (hits.length) F('pi-denylist', 'fail', `Product Identity on the sheet: ${hits.join(', ')}`, hits.join(', '));
@@ -675,10 +705,7 @@ function gateDonor(raw, m, ctx, F) {
     const n = bare(e.name);
     let why = null;
     if (/^(Multiattack|Spellcasting|Legendary Resistance)$/.test(n) || printNames.has(n)) continue;
-    else if (e.part || e.feature || e.kit) why = 'the user\'s own part, feature or species';
-    else if (e.print) why = 'print rules row';
-    else if (e.library) why = 'seed the user\'s words keyed';
-    else if (e.template) why = 'template bound on the user\'s verb';
+    else if (ridesOn(e)) why = ridesOn(e);
     else if (sec === 'Legendary Actions' && ctx.cr >= 17 && !printHasLegendary) why = 'the legendary tier\'s kit (print carries none)';
     else if (sec === 'Legendary Actions' && (pc.legendaryRows ?? []).length) { F('print-legendary', 'soft', `${sec}/${n}: the chassis's legendary row stands where ${pc.name} prints its own (${pc.legendaryRows.map((x) => bare(x.name)).join(', ')})`, n); continue; }
     else if (pc.addsSeat && (donorNames.has(e.was ?? '') || sec === 'Legendary Actions' || sec === 'Bonus Actions' || sec === 'Actions' || sec === 'Traits')) why = 'the seat the user\'s words named';
