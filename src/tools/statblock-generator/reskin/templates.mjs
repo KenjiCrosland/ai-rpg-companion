@@ -1291,16 +1291,31 @@ export function templateMenuLines(menu, { cr, concept = '', idea = '' } = {}) {
   }).join('\n');
 }
 
-export function buildFitPrompt({ name, idea, menu, cr, concept = '', sheet = null, clause = null, elements = [] }) {
+export function buildFitPrompt({ name, idea, menu, cr, concept = '', sheet = null, clause = null, elements = [], asked = null }) {
   const lines = templateMenuLines(menu, { cr, concept, idea: idea.idea });
+  // WHAT THE ENGINE ALREADY KNOWS, handed over instead of re-inferred (owner's
+  // architecture, 2026-10-23: "the final prompt is just taking instruction after
+  // we have properly sorted things out"). The identity, resolve and clause calls
+  // already classified this sheet — archetype, creature type, the mechanic the GM
+  // asked for, and per clause its SHAPE, its trigger and its limit — each with a
+  // quote from the GM's own words. None of it reached this prompt, so the model
+  // was re-reading raw text the engine had already judged.
+  const askedLines = [
+    asked?.mechanic ? `- the mechanic the GM asked for: ${asked.mechanic}` : null,
+    asked?.shape ? `- the SHAPE that clause asks for: ${asked.shape}` : null,
+    asked?.when ? `- when it fires: ${asked.when}` : null,
+    asked?.often ? `- how often: ${asked.often}` : null,
+  ].filter(Boolean);
   return `A monster's signature ability has been described in plain words. Pour it into ONE of the printed rules templates below, or say none fits. The template's rules are FIXED; the engine fills every {slot} shown in braces except the ones marked "you fill". Do not rewrite the template.
 MONSTER: ${name} (CR ${cr})${sheet ? `\nTHE SHEET SO FAR — read it before you pick; a save stat, a damage type, a reach all come from here:\n${sheet}` : ''}
 THE IDEA (${idea.section} / ${idea.trigger} / ${idea.effect}): ${idea.idea}${clause ? `
 THE CLAUSE THIS ROW IS FOR — the GM wrote it and nothing on the sheet answers it yet; pick the template that answers THIS, and answer "asked" with it: "${String(clause).replace(/"/g, "'")}"` : ''}
 THE USER TYPED — the GM's own words, and the ONLY text "asked" may quote: ${concept ? `"${String(concept).replace(/"/g, "'")}"` : '(the user typed nothing — answer "asked" with "")'}
-TEMPLATES:
+${askedLines.length ? `WHAT THE ENGINE HAS ALREADY CLASSIFIED — these came from earlier calls on the GM's own words, so do not re-derive them. Pick the template that matches THIS classification; if none does, say none.
+${askedLines.join('\n')}
+` : ''}TEMPLATES:
 ${lines}
-THE VERB DECIDES. The concept has a central verb — seal, lure, stick, toll, drown, drag. Templates are listed best-match first; a VERB MATCH marked (concept) means the template's own verb is in the user's words and outranks everything; (idea) means only your invented description used it. Never pick a template with no verb match over one that has a (concept) match. Pick the template whose rules genuinely CARRY the idea — the same verb, the same target, the same kind of effect, the same moment. If the idea is one of these templates PLUS an extra clause, take the template — the extra is fiction the name can carry. A template that merely resembles it does not fit; answer "none" then, honestly — a miss is logged and a template gets written. Name the ability in Monster Manual register: two words, three at most, never a description, and never the creature's own name ("Wax Preacher's Sermon" is a label, "Sealing Sermon" is a name).
+THE CLASSIFICATION DECIDES, NOT A WORD. Templates are listed in the engine's order, which is NOT a ranking of fit — a VERB MATCH marked (concept) means only that the template's key word appears in the GM's words. It nominates; it never accepts. Judge the template against the classification above and the clause, and ignore the order.
 A VERB MATCH is a WORD match, not a judgement — the engine found the template's key word in the user's words and is asking you whether it MEANS that mechanic for this creature. It does not mean it when the word sits in the modifier slot of a compound (a blood-priest has no blood sense; a stone-herder is not made of stone; a knife ball is not an assassin), when the sheet or the creature's own kind already answers it (a climb Speed answers "climbs the wall"), or when it belongs to another fiction (a living warden who guards a reef is not bound to a resting place). Name every such template in "wrong" — the engine will not use one you list there. Leave "wrong" empty when each match genuinely means its mechanic.
 A template whose match is marked (concept) may be used even if you answer none, so fill its "you fill" slots in "fills" whichever answer you give, quoting the user's own words (a phobia of chickens fills {phobia} with "chickens"; a warden of the reef fills {place} with "the reef").
 WHY NONE FITS. When you answer "none", answer "declined_because" with exactly one of: collision (a template's key word is here but does not mean that mechanic for this creature), already_answered (the sheet or the creature's own kind already does this), no_fit (nothing offered carries the idea). Answer "" when you did pick a template.

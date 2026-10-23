@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "a siegewright's golem that shoulders through walls", "cr": "11", "rules": "2024", "canary": "CRITIC: 'Shoulders Through Walls' read 0/1 — the clause must credit" },
+  { "name": "Owlbear", "description": "that has learned to climb", "cr": "3", "rules": "2024", "canary": "CRITIC: Ceiling Climber read 0/1 on its own clause" },
+  { "name": "", "description": "a mud-caked bog hound that drags fishermen under", "cr": "3", "rules": "2024", "canary": "CRITIC: 'Drag Under' read 0/1 for 'drags fishermen under'" },
+  { "name": "Purple Worm", "description": "that swallowed a war-band's armoury", "cr": "15", "rules": "2024", "canary": "CRITIC: the one concept weapon-lodge FITS, and it lost it" },
+  { "name": "", "description": "a young storm drake whose breath is a rolling wall of thunder", "cr": "7", "rules": "2024", "canary": "CRITIC: weapon-lodge landed here as 'Absorbed Thunder'; must not" },
+  { "name": "Dire Wolf", "description": "with a frost-rimed hide", "cr": "1", "rules": "2024", "canary": "CRITIC: spider-climb landed on a frost twist as 'Rimed Hide'; must not" },
+  { "name": "", "description": "a drowned cathedral choir that sings in one voice", "cr": "10", "rules": "2024", "canary": "CRITIC: mimicry landed as 'Drowned Hymn'; one voice is not mimicry" },
+  { "name": "Vampire", "description": "who keeps a garden of thorns", "cr": "13", "rules": "2024", "canary": "CONTROL: the thorn garden, and print's legendary rows" },
+  { "name": "Hydra", "description": "whose stumps smoke instead of regrowing", "cr": "8", "rules": "2024", "canary": "CONTROL: a twist that removes print's mechanic" },
+  { "name": "Brother Halric", "description": "a templar priest with a mace and no magic at all", "cr": "6", "rules": "2024", "canary": "CONTROL: an absence honoured; a critic SHIP last time" }
+]

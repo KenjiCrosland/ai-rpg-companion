@@ -4159,7 +4159,26 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // Stumps" was refused as decoration while its seat was bound to "smoking
         // stumps instead of regrowth" (receipt-ten, 2026-10-21).
         const sigElements = (options.signatureElements ?? []).map((e) => String(typeof e === 'string' ? e : (e?.element ?? e?.text ?? ''))).map((x) => x.trim()).filter(Boolean);
-        const rawFit = await callLLM(buildFitPrompt({ name: p.name, sheet: sheetSoFarT, idea, menu: offered, cr, concept: verbText, clause: ownClauseForCall, elements: sigElements }), validateFitResponse);
+        // HAND OVER WHAT THE EARLIER CALLS ALREADY DECIDED (2026-10-23). The
+        // resolve call named the mechanic and the clause call named each clause's
+        // shape, trigger and limit — all from the GM's own words, all validated —
+        // and none of it reached this prompt, so the fit call was re-reading raw
+        // text the engine had already classified. The clause whose stamps we send
+        // is the one this row is FOR, when there is one.
+        const askedFor = (() => {
+          const c = (clauseRecord ?? []).find((x) => ownClauseForCall && String(x?.text ?? '').includes(String(ownClauseForCall).slice(0, 24)))
+            ?? (clauseRecord ?? []).find((x) => x?.askShape);
+          const mech = (options.mechanics ?? []).filter(Boolean);
+          const out = {
+            ...(mech.length ? { mechanic: mech.join(', ') } : {}),
+            ...(c?.askShape ? { shape: c.askShape } : {}),
+            ...(c?.askWhen ? { when: c.askWhen } : {}),
+            ...(c?.askOften ? { often: c.askOften } : {}),
+          };
+          return Object.keys(out).length ? out : null;
+        })();
+        if (askedFor) trace('classification handed to the fit call:', Object.entries(askedFor).map(([k, v]) => `${k}=${v}`).join(' '));
+        const rawFit = await callLLM(buildFitPrompt({ name: p.name, sheet: sheetSoFarT, idea, menu: offered, cr, concept: verbText, clause: ownClauseForCall, elements: sigElements, asked: askedFor }), validateFitResponse);
         let fit = readFit(parseFit(rawFit, offered, p.name, sigElements), offered, `${verbText} ${idea.idea}`);
         // THE REFUSAL IS RECORDED BEFORE IT IS ANSWERED (2026-10-21). Accepting
         // the closest sets `fit.template`, and every decline trace below is

@@ -1746,5 +1746,26 @@
     "askShape": "buff_self"
    }
   ]
+ },
+ "a3f0d1b2abab": {
+  "concept": "a siegewright's golem that shoulders through walls",
+  "clauses": [
+   {
+    "id": "cl_kl8c2z",
+    "text": "a siegewright's golem",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_vcmdz5",
+    "text": "shoulders through walls",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "shoulders through walls",
+    "askOften": "at_will",
+    "askOftenWhy": "shoulders through walls",
+    "askShape": "movement"
+   }
+  ]
  }
 }
