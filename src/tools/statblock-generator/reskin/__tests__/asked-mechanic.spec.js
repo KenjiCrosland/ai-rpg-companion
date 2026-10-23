@@ -53,3 +53,36 @@ describe('asked_mechanic', () => {
     }
   });
 });
+
+/**
+ * A SLOT MUST KEEP THE PROMISE ITS FRAME MAKES.
+ *
+ * print writes "an infernal wound" and then "While wounded… The wound closes…
+ * stanch the wound". The slot used to swallow the whole noun phrase, so a fill of
+ * "tar-snared footing" shipped "The target receives a tar-snared footing. While
+ * wounded… stanch the wound, succeeding on a DC 15 Wisdom (Medicine) check."
+ */
+describe('the affliction frame and its wound slot', () => {
+  const { TEMPLATES: T2, renderTemplate, SHAPES } = require('@/tools/statblock-generator/reskin/templates.mjs');
+  const frames = require('@/tools/statblock-generator/reskin/shapes.mjs');
+
+  it('the frame keeps print\'s noun and never parameterises it away', () => {
+    const aff = (frames.SHAPES ?? []).find((s) => s.id === 'affliction');
+    expect(aff).toBeTruthy();
+    for (const text of Object.values(aff.frames)) {
+      expect(text).toContain('{wound_phrase}');
+      expect(text).not.toContain('{wound_noun}');
+      // the three back-references print makes, which the fill has to agree with
+      expect(text).toMatch(/While wounded/);
+      expect(text).toMatch(/The wound closes/);
+      expect(text).toMatch(/stanch the wound/);
+      // the article now belongs to the fill, so the frame must not supply one
+      expect(text).not.toMatch(/\ba \{wound_phrase\}/);
+    }
+  });
+
+  it('the slot carries a contract the model can read', () => {
+    const tpl = T2.find((t) => t.id === 'affliction');
+    expect(tpl.flavor).toContain('wound_phrase');
+  });
+});

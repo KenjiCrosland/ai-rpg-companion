@@ -430,7 +430,7 @@ export function buildReskinPrompt(scaled, { userTyped = null, concept = '', remo
   const hintFor = (n) => (scaled.style === 'shifter' && /^Melee Attack$/.test(n) ? 'a weapon or unarmed strike it can use in ANY form (Scratch, Longknife, Club) — NEVER the beast\'s natural weapon; the Bite is the beast\'s'
     : /^caster/.test(String(scaled.id ?? '')) && /^Ranged Attack$/.test(n) ? 'a SPELL bolt the caster hurls (Arcane Burst, Radiant Flame, Hex Bolt, Withering Ray) — never a thrown object ("Spoon" on a hedge-witch, critic form-ten 2026-10-01)'
     : scaled.style === 'mounted' && /^Melee Attack$/.test(n) ? 'the RIDER\'s weapon (Saber, Lance, Scimitar) — NEVER the mount\'s hooves or bite; the mount carries the rider (a Headless Horseman made three Hooves attacks, critic form-ten 2026-10-01)'
-    : RENAME_HINTS.find(([re]) => re.test(n))?.[1] ?? 'plain, 1-2 words like print');
+    : RENAME_HINTS.find(([re]) => re.test(n))?.[1] ?? 'plain, 1-2 words like print') + ' — Title Case, as print writes every row name';
   const renameSkeleton = renameKeysOf(scaled)
     .map((n) => `"${n}": "<${hintFor(n)}>"`).join(', ');
   return `You are reskinning a mechanical monster chassis to a concept. The mechanics are FIXED; you provide identity.

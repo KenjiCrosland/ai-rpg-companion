@@ -141,8 +141,27 @@ export const areaClause = (shape, band, sizes = null) => {
 };
 
 const VOCAB = { area_shape: AREA_SHAPES, duration: DURATIONS, save_stat: SAVE_STATS, consumed_condition: CONDITIONS, condition_minor: MINOR, restraint: RESTRAINTS, r_vuln: DAMAGE };
+// WHAT A SLOT OWES ITS OWN FRAME. Print parameterises the QUALIFIER and keeps the
+// noun — "an infernal wound" (Bearded Devil) — which is why its frame can go on to
+// say "While wounded… The wound closes… stanch the wound". Our slot took the whole
+// noun phrase instead, so a fill of "tar-snared footing" rendered "The target
+// receives a tar-snared footing. While wounded… stanch the wound (DC 15 Medicine)"
+// — a tar-fouled foot you bandage (focused ten, 2026-10-23). The frame cannot drop
+// those three references without losing print's shape, so the FILL carries the noun
+// and its own article, and the contract says so where the model can read it.
+const SLOT_CONTRACTS = {
+  wound_phrase: 'a whole noun phrase WITH its article and ending in the word "wound" — like print\'s "an infernal wound": "a tar-fouled wound", "a weeping wound". The frame later says "While wounded", "The wound closes" and "stanch the wound", so a fill that is not a wound makes nonsense of them',
+};
+// Does the fill keep the promise its frame already makes? The frame's own noun is a
+// CLOSED FACT — print writes "wound" three more times after the slot and we cannot
+// drop those lines without losing print's shape — so this VALIDATES the call's
+// answer against it rather than inferring anything about meaning (CLAUDE.md allows
+// exactly that, and the ladder below falls to the blind default, never to a miss).
+// What a call would catch that this does not: a fill that says "wound" and still
+// does not read as an injury ("a wound of silence"). This is the cheap half.
+const fillKeepsFrame = (k, v) => k !== 'wound_phrase' || /\bwounds?\b/i.test(String(v ?? ''));
 // flavor slots: the model's words, bounded (no digits, no rules grammar, short)
-export const FLAVOR_SLOTS = ['phobia', 'restraint', 'projectile', 'wound_noun', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
+export const FLAVOR_SLOTS = ['phobia', 'restraint', 'projectile', 'wound_phrase', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
 // engine slots: never the model's
 const ENGINE_SLOTS = ['dc', 'atk', 'avg', 'dice', 'avg_half', 'dice_half', 'damage_type', 'melee_name', 'ranged_name', 'ray_table'];
 
@@ -964,7 +983,7 @@ const shortFlavor = (s) => typeof s === 'string' && s.trim().split(/\s+/).length
  * ctx: { scaled, energy, mix, meleeName, conditionMinor, projectile, archetype, imposed, mechanics, cr, name }
  */
 // generic fills for a BLIND render (the fallback): the fiction is plain, never wrong
-const BLIND_FILLS = { phobia: 'the thing it fears', restraint: 'the binding', /* the snare's object noun: an empty slot printed "Restrained until the Restrained is destroyed" (critic's blockers audit 2026-10-03) */ douse: 'tear the brand away', projectile: 'a hurled object', wound_noun: 'wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'its whole frame tensing', lure_source: 'the creature', hook: 'its grip', terrain: 'mud', sense_target: 'moving creatures', anchor: 'its resting place', ward: 'its ward' }; // sense_target is the neutral sense: a rejected fill on a hound printed "precious metal" (the fourteen, 2026-09-28)
+const BLIND_FILLS = { phobia: 'the thing it fears', restraint: 'the binding', /* the snare's object noun: an empty slot printed "Restrained until the Restrained is destroyed" (critic's blockers audit 2026-10-03) */ douse: 'tear the brand away', projectile: 'a hurled object', wound_phrase: 'a festering wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'its whole frame tensing', lure_source: 'the creature', hook: 'its grip', terrain: 'mud', sense_target: 'moving creatures', anchor: 'its resting place', ward: 'its ward' }; // sense_target is the neutral sense: a rejected fill on a hound printed "precious metal" (the fourteen, 2026-09-28)
 // THE RAY TABLE is composed from library cards, never authored (critic 2026-10-01): each
 // ray takes its save and its failure clause from a bolt or pulse card already on the
 // shelf; the names are the engine's own. A band of 3-5 rolls a d4 over the first four.
@@ -1067,7 +1086,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
       if (!text.includes(`{${k}}`)) continue;
       // the same ladder as a shape: a fill the bound rejects falls to the blind
       // default, never to a miss (the ledger's Delayed Brand died on its douse, fresh two)
-      const v = shortFlavor(fills[k]) && !doublesFrameVerb(text, k, fills[k]) ? fills[k] : BLIND_FILLS[k];
+      const v = shortFlavor(fills[k]) && !doublesFrameVerb(text, k, fills[k]) && fillKeepsFrame(k, fills[k]) ? fills[k] : BLIND_FILLS[k];
       if (!shortFlavor(v)) return null;
       const w = PREDICATE_SLOTS.has(k) ? (asPredicate(v) ?? asPredicate(BLIND_FILLS[k])) : v.trim();
       if (!w) return null;
@@ -1228,7 +1247,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   }
   for (const k of FLAVOR_SLOTS) {
     if (!text.includes(`{${k}}`)) continue;
-    const v = shortFlavor(fills[k]) && !doublesFrameVerb(text, k, fills[k]) ? fills[k] : BLIND_FILLS[k];
+    const v = shortFlavor(fills[k]) && !doublesFrameVerb(text, k, fills[k]) && fillKeepsFrame(k, fills[k]) ? fills[k] : BLIND_FILLS[k];
     if (!shortFlavor(v)) return null;
     const w = PREDICATE_SLOTS.has(k) ? (asPredicate(v) ?? asPredicate(BLIND_FILLS[k])) : v.trim();
     if (!w) return null;
@@ -1332,7 +1351,7 @@ const frameOf = (t, cr) => (t.kind === 'seed' ? t.text : t.frames[bandFor(cr)]);
 export function templateMenuLines(menu, { cr, concept = '', idea = '' } = {}) {
   return rankByVerb(menu, concept, idea).map(({ t, concept: cv, idea: iv }) => {
     const matched = [...cv.map((k) => `${k} (concept)`), ...iv.map((k) => `${k} (idea)`)];
-    const flav = t.flavor.length ? ` — you fill: ${t.flavor.map((f) => (PREDICATE_SLOTS.has(f) ? `{${f}} (a PREDICATE, no subject and no full stop — the frame already says "Each creature in the area": answer like "has Disadvantage on attack rolls")` : `{${f}}`)).join(', ')}` : '';
+    const flav = t.flavor.length ? ` — you fill: ${t.flavor.map((f) => (PREDICATE_SLOTS.has(f) ? `{${f}} (a PREDICATE, no subject and no full stop — the frame already says "Each creature in the area": answer like "has Disadvantage on attack rolls")` : SLOT_CONTRACTS[f] ? `{${f}} (${SLOT_CONTRACTS[f]})` : `{${f}}`)).join(', ')}` : '';
     const vocab = slotsOf(frameOf(t, cr)).filter((s) => VOCAB[s]).map((s) => `{${s}} ∈ ${VOCAB[s].join('/')}`);
     // A TEMPLATE WITH A VARIABLE AREA SHAPE HAS TO SAY SO. The frame carries
     // `{target}` (an engine-filled clause, sized by band) while the choice the
@@ -1378,7 +1397,7 @@ WHY NONE FITS. When you answer "none", answer "declined_because" with exactly on
 A REFUSAL NAMES ITS GAP. "no_fit" is not an answer on its own — say which of the offered templates comes CLOSEST ("closest"), what the rules would have to do that none of them does ("missing"), and WHICH KIND OF EFFECT that missing thing is ("missing_effect"), exactly one of: damage | condition | movement | resource | defense. Judge the effect by what the row DOES to its target, not by words that appear in passing: a row that only applies against an already-prone target is not a condition row, and a row that resists being pushed is defense, not movement. In a few plain words naming the MECHANIC, not the fiction: "pulls the creature back to where it started", "picks one target and holds the aim", "costs the creature something when it fails". Never "nothing fits" and never a restatement of the idea. These accumulate into a list of templates worth building, so a vague answer is a wasted one.
 DID THE USER ASK FOR IT? Answer "asked" with the user's OWN WORDS that ask for this template's mechanic, quoted verbatim from THE USER TYPED line above — never from THE IDEA, which is the engine's own prose and is not the user
 ${elements.length ? `WHICH OF THIS CREATURE'S OWN ELEMENTS DOES THE ROW EXPRESS? Answer "expresses" with ONE of these, copied exactly, or "" if the row expresses none of them. These were drawn from the GM's description, so naming one is a receipt even when you cannot quote the GM directly — a trait seat usually cannot. Answer "" honestly: a row that does not express any of them is decoration, and saying so is the right answer.\n${elements.map((e) => `  - ${String(e).replace(/"/g, "'")}`).join('\n')}` : ''}'s words. The few words, not a sentence. Leave it "" when the user's words never ask for it and your pick rests on the idea you were given or on the template's shape. Answering "" is not a failure and does not withdraw your pick; it tells the engine the pick is yours, not the GM's, and some seats take only what the GM asked for.
-Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "expresses": "<one of the creature's own elements listed above, copied exactly, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", "closest": "<on a refusal: the offered id that comes nearest, else \"\">", "missing": "<on a refusal: the mechanic none of them does, else \"\">", "missing_effect": "<on a refusal: damage | condition | movement | resource | defense, else \"\">", "name": "<2-3 words>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
+Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "expresses": "<one of the creature's own elements listed above, copied exactly, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", "closest": "<on a refusal: the offered id that comes nearest, else \"\">", "missing": "<on a refusal: the mechanic none of them does, else \"\">", "missing_effect": "<on a refusal: damage | condition | movement | resource | defense, else \"\">", "name": "<2-3 words, Title Case the way print writes a row name: Dreadful Glare, Wing Attack, Cloud of Insects — every word capitalised except of/the/and/to/with>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
 }
 
 export function validateFitResponse(jsonString) {

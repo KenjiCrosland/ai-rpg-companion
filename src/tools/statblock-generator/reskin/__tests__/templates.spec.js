@@ -119,7 +119,7 @@ describe('the catalog', () => {
     expect(ids).toContain('zone-seed');
   });
   test('every template renders at a mid CR with flavor slots supplied and no slot left unfilled', () => {
-    const fills = { lure_source: 'the lamp', hook: 'its barbed chain', disguise: 'an inanimate statue', projectile: 'a knucklebone', wound_noun: 'gash', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls while inside it', save_stat: 'Wisdom', consumed_condition: 'Frightened', condition_minor: 'Prone', restraint: 'Restrained', r_vuln: 'Fire' };
+    const fills = { lure_source: 'the lamp', hook: 'its barbed chain', disguise: 'an inanimate statue', projectile: 'a knucklebone', wound_phrase: 'a weeping wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls while inside it', save_stat: 'Wisdom', consumed_condition: 'Frightened', condition_minor: 'Prone', restraint: 'Restrained', r_vuln: 'Fire' };
     for (const t of TEMPLATES) {
       const cr = Math.max(t.cr_range[0], Math.min(8, t.cr_range[1]));
       const archetype = t.roles.includes('skirmisher') ? 'skirmisher' : t.roles.includes('brute') ? 'brute' : t.roles.includes('lurker') ? 'lurker' : t.roles.includes('caster') ? 'caster' : t.roles.includes('defender') ? 'defender' : 'skirmisher';
