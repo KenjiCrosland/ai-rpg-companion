@@ -86,3 +86,48 @@ describe('the affliction frame and its wound slot', () => {
     expect(tpl.flavor).toContain('wound_phrase');
   });
 });
+
+/**
+ * A DECLARED RECORD MUST SURVIVE BOTH BRANCHES.
+ *
+ * `imposes` lives in two places — the library row and IMPOSES_BY_TEMPLATE — and
+ * renderTemplate's seed branch read only the library's, so the adhesive seed
+ * (whose template declares Grappled) shipped with no record at all. Third time a
+ * declaration has been inert on one of the catalog's two branches.
+ */
+describe('imposes reaches the row on both branches', () => {
+  const { TEMPLATES: T3, renderTemplate: rt } = require('@/tools/statblock-generator/reskin/templates.mjs');
+
+  it('the record the seed branch now consults actually holds the condition', () => {
+    // the data half of the fix: without this, reading it in the seed branch is a
+    // no-op and the test above would pass on an empty table
+    const { imposedByFrame } = require('@/tools/statblock-generator/reskin/templates.mjs');
+    expect([imposedByFrame('adhesive', '3-5')].flat()).toContain('Grappled');
+    expect([imposedByFrame('snare', '3-5')].flat().filter(Boolean).length).toBeGreaterThan(0);
+    expect(imposedByFrame('not-a-template', '3-5')).toBeNull();
+  });
+
+  it('every seed template either declares a condition or its frame imposes none', () => {
+    const CONDS = ['Grappled', 'Restrained', 'Prone', 'Poisoned', 'Frightened', 'Charmed', 'Blinded', 'Stunned'];
+    const { imposedByFrame } = require('@/tools/statblock-generator/reskin/templates.mjs');
+    const unrecorded = T3.filter((t) => t.kind === 'seed').filter((t) => {
+      const frames = Object.values(t.frames ?? {}).map(String).join(' ');
+      const imposes = CONDS.some((c) => new RegExp(`(?:target|creature|it) (?:has|gains) the (?:\\w+ and )?${c} condition|is also ${c}\\b`).test(frames)
+        && !new RegExp(`(?:that|who) (?:has the ${c} condition|is ${c})`).test(frames));
+      return imposes && !t.imposes && !imposedByFrame(t.id, '3-5') && !imposedByFrame(t.id, '6-9');
+    }).map((t) => t.id);
+    expect(unrecorded).toEqual([]);
+  });
+
+  it('no template declares a condition it also merely requires', () => {
+    // "that has the X condition" is a prerequisite; a record there would make a
+    // payoff satisfy its own gate (the self-satisfying loop)
+    for (const t of T3) {
+      const frames = Object.values(t.frames ?? {}).map(String).join(' ');
+      if (!/that has the (\w+) condition/.test(frames)) continue;
+      const req = /that has the (\w+) condition/.exec(frames)[1];
+      const rec = [t.imposes].flat().filter(Boolean);
+      expect(rec).not.toContain(req);
+    }
+  });
+});

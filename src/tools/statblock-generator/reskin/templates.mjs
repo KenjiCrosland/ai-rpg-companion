@@ -1123,7 +1123,15 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     // the drawn card's own tag, which this return used to drop on the floor
     // (it built a fresh object and only looked at `pickedCondition`, which no
     // seed ever sets) — the same allow-list-forgets shape as the chassis rename
-    return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(drawn.row.imposes ? { imposes: drawn.row.imposes } : {}) };
+    // THE RECORD LIVES IN TWO PLACES AND THIS BRANCH READ ONLY ONE (2026-10-23).
+    // A seed row declares `imposes` in the library; the TEMPLATE it is drawn for
+    // declares the same thing in IMPOSES_BY_TEMPLATE. This branch took the library's
+    // and stopped, so the adhesive seed — whose template declares Grappled — shipped
+    // with no record at all (6 rows across four runs of the ten). The shape branch
+    // below reads `imposedByFrame`; reading it here too is the same fix the body gate
+    // needed when eight `needs_body` declarations were carried on one branch only.
+    const seedImposes = drawn.row.imposes ?? imposedByFrame(t.id, bandFor(ctx.cr));
+    return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(seedImposes ? { imposes: seedImposes } : {}) };
   }
   // A THROWN NAMED WEAPON KEEPS ITS OWN TYPE AND RANGE (the critic's second
   // species read: a spear hurled for Bludgeoning at 30/120). One table.

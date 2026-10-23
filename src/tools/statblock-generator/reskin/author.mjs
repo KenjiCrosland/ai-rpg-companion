@@ -157,9 +157,17 @@ export function imposedConditions(row) {
   if (recs.length) return recs;
   const t = String((typeof row === 'object' ? (row?.text ?? row?.description) : row) ?? '');
   const out = new Set();
-  for (const m of t.matchAll(/has the (\w+) condition/g)) {
+  // PRINT'S TWO-CONDITION FORM IS PLURAL (2026-10-23). "has the Blinded and
+  // Restrained conditions" appears 13 times in the corpus — 8 of them the Swallow
+  // row — and the singular-only pattern matched NEITHER condition, so print's own
+  // swallow wording read as imposing nothing. This reader runs once and becomes the
+  // field every consumer reads, so widening it here is less text-reading overall,
+  // not more; it still misses a three-condition form and any wording print has not
+  // used. The PRECONDITION guard below is what keeps Evasion's "can't use this
+  // trait if it has the Incapacitated condition" out, and it still applies.
+  for (const m of t.matchAll(/has the (\w+)(?: and (\w+))? conditions?/g)) {
     if (PRECONDITION.test(t.slice(Math.max(0, m.index - 46), m.index))) continue;
-    if (ALL_CONDITIONS.includes(m[1])) out.add(m[1]);
+    for (const c of [m[1], m[2]]) if (c && ALL_CONDITIONS.includes(c)) out.add(c);
   }
   if (out.size) return [...out];
   // the 2014 printing says it differently: "is poisoned", "is knocked prone"

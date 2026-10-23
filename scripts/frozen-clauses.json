@@ -1861,5 +1861,114 @@
     "askShape": "condition"
    }
   ]
+ },
+ "e1b193bba9f6": {
+  "concept": "A desiccated scholar-dead, its spine stretched into a long pale centipede of jointed bone and grave-moss, lurks in the c",
+  "clauses": [
+   {
+    "id": "cl_1lhqcxv",
+    "text": "A desiccated scholar-dead",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1llg6qg",
+    "text": "its spine stretched into a long pale centipede of jointed bone and grave-moss",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_deltl3",
+    "text": "lurks in the collapsed libraries of dead cities",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_90ysro",
+    "text": "reasons with a patience no living thing can match",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_9wf5gv",
+    "text": "It opens the fight by arching that segmented tail over a parapet",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "It opens the fight by arching that segmented tail over a parapet",
+    "askOften": "at_will",
+    "askOftenWhy": "It opens the fight by arching that segmented tail over a parapet",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_bavw5x",
+    "text": "spitting a needle-thin line of green corpse-rot vented from the moss-choked sacs along its belly",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_ts1nm9",
+    "text": "repositions on clicking ribs to fire again",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "repositions on clicking ribs to fire again",
+    "askOften": "at_will",
+    "askOftenWhy": "repositions on clicking ribs to fire again",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1ez0o8e",
+    "text": "never closing to melee",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "never closing to melee",
+    "askOften": "at_will",
+    "askOftenWhy": "never closing to melee",
+    "askShape": "attack",
+    "polarity": "lacks",
+    "takes": "melee",
+    "lackQuote": "never closing to melee"
+   },
+   {
+    "id": "cl_1jft5ho",
+    "text": "It treats prey as a long experiment",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_18fa9cb",
+    "text": "preferring to lie in wait for hours",
+    "kind": "mechanical",
+    "askShape": "condition"
+   },
+   {
+    "id": "cl_1qxsdz5",
+    "text": "weaken a target at range",
+    "kind": "mechanical",
+    "askShape": "condition"
+   },
+   {
+    "id": "cl_o9zd9b",
+    "text": "only if cornered does it scuttle in a many-legged rush",
+    "kind": "mechanical",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_1qrw9j5",
+    "text": "it withdraws to cover rather than die — a coward in body",
+    "kind": "mechanical",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_rcf1iu",
+    "text": "a general in mind",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_nacmvu",
+    "text": "It is possessed of alien genius (INT 17-20)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1vytk8h",
+    "text": "it is a patient killer that strikes from extreme range",
+    "kind": "mechanical",
+    "askShape": "condition"
+   }
+  ]
  }
 }

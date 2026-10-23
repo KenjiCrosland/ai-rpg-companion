@@ -3862,8 +3862,16 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       ...sheetCovered.names,
     ])];
     const CONDS_T = ['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned'];
-    const sheetText3 = Object.values(sections).flat().map((e2) => e2.text ?? '').join(' ');
-    const imposedT = CONDS_T.filter((c) => new RegExp(`has the (?:\\w+ and )?${c} condition|is also ${c}\\b|be ${c}\\b`).test(sheetText3));
+    // ONE READER, NOT TWO (2026-10-23). This had its own regex over the sheet's
+    // text, and it disagreed with `imposedConditions` — the shared reader the
+    // reconcile, the A2 save stat, condition-duration and duplicate-mechanic all
+    // use. The private copy accepted Evasion's "can't use this trait if it has the
+    // Incapacitated condition" as an IMPOSITION, so a payoff keyed on Incapacitated
+    // could be seated on any sheet carrying Evasion (it recurred in all three runs
+    // of the focused ten). The shared reader rejects it, via the PRECONDITION guard
+    // this copy never had, and reads the DECLARED record first.
+    const imposedT = [...new Set(Object.values(sections ?? {}).flat().filter(Boolean)
+      .flatMap((e) => imposedConditions(e)))].filter((c) => CONDS_T.includes(c));
     // A HYBRID ROW IS STILL THE MELEE ROW (branch-printnames 02, 2026-10-15).
     // This read /Melee Attack Roll/, which does not match print's "Melee or
     // Ranged Attack Roll" — so a sheet whose only melee row is a thrown weapon
@@ -7551,8 +7559,24 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // (verified: "has the Grappled condition" and "is grappled (escape DC 15)"
     // both read Grappled). Reading the TEXT ONLY here is deliberate — passing the
     // row would return its own record and the test would always pass.
-    if (imposedConditions({ name: e.name, text: e.text }).includes(String(e.imposes))) continue;
-    trace('record reconciled:', `"${e.name}" no longer imposes ${e.imposes} — the clause left, so the record goes with it`);
+    // A RECORD MAY NAME SEVERAL CONDITIONS (2026-10-23). `swallow` declares
+    // ['Prone','Blinded','Restrained'] and `hook-drag` ['Grappled','Restrained'],
+    // and this test compared `String(e.imposes)` — "Prone,Blinded,Restrained" —
+    // against the reader's list, which never contains it. So BOTH templates lost
+    // their declared record here, every time, silently: the reconcile meant to drop
+    // a record whose clause had left was dropping records whose clause was intact.
+    // Now each condition is reconciled on its own and the survivors are kept; the
+    // record goes only when nothing in it is supported any more.
+    const recI = [e.imposes].flat().filter(Boolean).map(String);
+    const readI = imposedConditions({ name: e.name, text: e.text });
+    const keptI = recI.filter((c) => readI.includes(c));
+    if (keptI.length === recI.length) continue;
+    if (keptI.length) {
+      trace('record reconciled:', `"${e.name}" keeps ${keptI.join(', ')} and drops ${recI.filter((c) => !keptI.includes(c)).join(', ')} — only those clauses left`);
+      e.imposes = keptI.length === 1 ? keptI[0] : keptI;
+      continue;
+    }
+    trace('record reconciled:', `"${e.name}" no longer imposes ${recI.join(', ')} — the clause left, so the record goes with it`);
     delete e.imposes;
   }
   // THE RECORD IS COMPLETED HERE, ONCE (owner, 2026-10-22: "why are we still

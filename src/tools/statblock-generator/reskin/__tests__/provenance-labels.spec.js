@@ -53,3 +53,71 @@ describe('ridesOn', () => {
     expect(ridesOn({ kit: true, template: 'adhesive' })).toMatch(/own part, feature or species/);
   });
 });
+
+/**
+ * ONE READER FOR "WHAT DOES THIS SHEET IMPOSE".
+ *
+ * The payoff gate had its own regex, which accepted Evasion's "can't use this
+ * trait if it has the Incapacitated condition" as an imposition — so a payoff
+ * keyed on Incapacitated could be seated on any sheet carrying Evasion. The
+ * shared reader rejects it via a guard the private copy never had.
+ */
+describe('imposedConditions is the only reader', () => {
+  const { imposedConditions } = require('@/tools/statblock-generator/reskin/author.mjs');
+
+  it('reads print\'s two-condition plural form — 13 rows in the corpus use it', () => {
+    expect(imposedConditions({ name: 'Swallow', text: 'While swallowed, the target has the Blinded and Restrained conditions, has Total Cover.' }))
+      .toEqual(expect.arrayContaining(['Blinded', 'Restrained']));
+  });
+
+  it('still reads the singular form', () => {
+    expect(imposedConditions({ name: 'X', text: 'the target has the Restrained condition.' })).toEqual(['Restrained']);
+  });
+
+  it('refuses a condition the row only TESTS on itself', () => {
+    expect(imposedConditions({ name: 'Evasion', text: "It can't use this trait if it has the Incapacitated condition." })).toEqual([]);
+  });
+
+  it('a declared record outranks the prose', () => {
+    expect(imposedConditions({ name: 'X', imposes: 'Prone', text: 'the target has the Restrained condition.' })).toEqual(['Prone']);
+  });
+});
+
+/**
+ * A MULTI-CONDITION RECORD SURVIVES THE RECONCILE.
+ *
+ * `swallow` declares ['Prone','Blinded','Restrained'] and `hook-drag`
+ * ['Grappled','Restrained']. The reconcile compared String(e.imposes) —
+ * "Prone,Blinded,Restrained" — against the reader's list, so both templates lost
+ * their declared record every time, silently.
+ */
+describe('multi-condition records', () => {
+  const { imposedConditions } = require('@/tools/statblock-generator/reskin/author.mjs');
+
+  // the reconcile's own comparison, per condition
+  const reconcile = (row) => {
+    const rec = [row.imposes].flat().filter(Boolean).map(String);
+    const read = imposedConditions({ name: row.name, text: row.text });
+    const kept = rec.filter((c) => read.includes(c));
+    return kept.length ? (kept.length === 1 ? kept[0] : kept) : undefined;
+  };
+
+  it('keeps every condition the text still supports', () => {
+    expect(reconcile({ name: 'Swallow', imposes: ['Blinded', 'Restrained'],
+      text: 'the target has the Blinded and Restrained conditions.' })).toEqual(['Blinded', 'Restrained']);
+  });
+
+  it('keeps the survivors and drops only what left', () => {
+    expect(reconcile({ name: 'Swallow', imposes: ['Prone', 'Blinded', 'Restrained'],
+      text: 'the target has the Blinded and Restrained conditions.' })).toEqual(['Blinded', 'Restrained']);
+  });
+
+  it('drops the record only when nothing in it is supported', () => {
+    expect(reconcile({ name: 'X', imposes: ['Grappled'], text: 'it deals 10 damage.' })).toBeUndefined();
+  });
+
+  it('a single-condition record still collapses to a string', () => {
+    expect(reconcile({ name: 'X', imposes: ['Prone', 'Grappled'],
+      text: 'the target has the Prone condition.' })).toBe('Prone');
+  });
+});
