@@ -33,6 +33,10 @@ export const SHAPES = [
   },
   {
     id: 'trample', name: 'Trample', cite: 'Centaur Trooper/Trampling Charge (CR 2)',
+    // print 4 of 4 tramplers are Large+ (Gorgon, Triceratops, Elephant, Centaur
+    // Trooper), and the contradiction is real: a Tiny body cannot trample a
+    // Medium one. Measured 2026-10-22.
+    requires_size: 'Large',
     roles: ['skirmisher', 'brute'], styles: ['mounted'], cr_range: [2, 30], replaces: 'nova', gate: 'Recharge 5-6',
     frames: {
       '0-2': 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Medium or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC {dc}. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition.',
@@ -45,6 +49,9 @@ export const SHAPES = [
   },
   {
     id: 'leap', name: 'Crushing Leap', cite: 'Bulette/Deadly Leap (CR 5)',
+    // print 1 of 1 (Bulette/Deadly Leap, Large) — thin on count, but a CRUSHING
+    // leap is body mass, the same contradiction trample's gate names (2026-10-22).
+    requires_size: 'Large',
     roles: ['skirmisher', 'brute', 'lurker'], styles: [], cr_range: [3, 12], replaces: 'nova', // lurker joined + style gate dropped: the pounce is the Tiger's shape (the canopy leopard, critic 2026-09-22)
     frames: {
       '3-5': 'The creature spends 5 feet of movement to jump to a space within 15 feet that contains one or more Large or smaller creatures. *Dexterity Saving Throw*: DC {dc}, each creature in the destination space. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage, and the target is pushed 5 feet straight away.',
@@ -122,7 +129,13 @@ export const SHAPES = [
   },
   {
     id: 'blink', name: 'Blink Step', cite: 'Blink Dog/Teleport (40 ft, CR 1/4); Marilith/Teleport (120 ft, CR 16); Solar/Radiant Teleport (CR 21)',
-    requires_claim: /\b(?:teleport\w*|blink\w*|phase[sd]?|phasing|flicker\w*|wink\w*|steps? through|through walls|planeshift|plane shift)\b/i, // a teleport is concept-gated tech, like the phase-slip seed: "lurks in shadow" is not a claim on it (the critic's fifth read — a troglodyte blinked 40 feet)
+    // requires_claim RETIRED 2026-10-22 -> NEEDS_BODY['blink'].
+    // It was a word list deciding a BODY fact, and it failed silently on every
+    // case outside the list. The call judges it now, with the template's own
+    // `keys` as the fallback for a failed call. Measured (body6-2026-10-22): the
+    // call reliably refuses the WORD-present/body-absent case — the critic's orc
+    // that "withdraws into his shell". It does NOT rescue every body-present/
+    // word-absent case; see the CORRECTION in plans/declare-the-body-2026-10-22.
     roles: ['skirmisher', 'lurker'], styles: ['skulker'], cr_range: [0.25, 30], replaces: 'bonus-alt', gate: 'Recharge 4-6',
     frames: {
       '0-2': 'The creature teleports up to 40 feet to an unoccupied space it can see.',
@@ -230,7 +243,13 @@ export const SHAPES = [
   },
   {
     id: 'shell-withdraw', name: 'Shell Defense', cite: 'Tortle/Shell Defense (Monsters of the Multiverse)',
-    requires_claim: /\b(?:shell\w*|carapace|scutes?|tortle|turtle|terrapin|crab|snail|beetle|armou?r plates?|plating|shields? itself)\b/i, // a shell is anatomy: the GM's words or the species kit must give it one (an orc withdrew into its shell — the critic's fifth read)
+    // requires_claim RETIRED 2026-10-22 -> NEEDS_BODY['shell-withdraw'].
+    // It was a word list deciding a BODY fact, and it failed silently on every
+    // case outside the list. The call judges it now, with the template's own
+    // `keys` as the fallback for a failed call. Measured (body6-2026-10-22): the
+    // call reliably refuses the WORD-present/body-absent case — the critic's orc
+    // that "withdraws into his shell". It does NOT rescue every body-present/
+    // word-absent case; see the CORRECTION in plans/declare-the-body-2026-10-22.
     roles: ['brute', 'defender', 'lurker'], styles: [], cr_range: [0, 30], replaces: 'bonus-alt',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature withdraws into {shell}. Until it emerges, it gains a +4 bonus to Armor Class and has the Prone condition; its Speed is 0 and can\'t increase, it has Disadvantage on Dexterity saving throws, it can\'t take Actions or Reactions, and it can emerge only as a Bonus Action.' /* "the only action it can take" read as an action reference to the lint (goldens gate table 2026-10-02) */])),
   },
@@ -266,7 +285,13 @@ export const SHAPES = [
   // so none climb the ladder; a trait that grants a mode reads the header.
   {
     id: 'spider-climb', name: 'Spider Climb', cite: 'Drider/Spider Climb (CR 6); Roper (CR 5); Vampire (CR 13); Black Pudding (CR 4); Giant Spider (CR 1)',
-    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait', requires_movement: 'Climb', // print pairs the trait with a Climb Speed every time (the Swarm's "if the swarm has a Climb Speed")
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    // NO requires_movement here. That gate was CIRCULAR: Spider Climb GRANTS the
+    // climbing, so it required the very thing the trait provides. The comment it
+    // carried claimed "print pairs the trait with a Climb Speed every time" —
+    // print does not. The Vampire Spawn is Medium, "30 ft.", and carries Spider
+    // Climb outright (12 of print's 14, not 14), so a vampire-shaped concept could
+    // never be OFFERED it. Print CORRELATION is not a requirement (2026-10-22).
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature can climb difficult surfaces, including along ceilings, without needing to make an ability check.'])),
   },
   {
@@ -521,6 +546,25 @@ export const SHAPES = [
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If no creature other than the creature is within 5 feet of the target, the target takes an extra {avg_half} ({dice_half}) {damage_type} damage.'])),
   },
   {
+    // PRINT'S OWN ESCALATION IDIOM, which the catalog did not hold at all.
+    // Measured 2026-10-22 against srd52-monsters: 12 print creatures reduce a
+    // target's Hit Point maximum (Specter CR 1, Mummy 3, Succubus 4, Vampire
+    // Spawn 5, Clay Golem 9, Vampire 13, Mummy Lord 15) and NOT ONE template
+    // did. It is a RIDER in print's most common shaping — on the Slam, the Bite,
+    // the Rotting Fist — so it uses the rider weld that already exists rather
+    // than asking for a second row.
+    //
+    // Why this and not the stacking self-buff the call keeps asking for: 20 of
+    // 54 named gap lines on the forty wanted escalation, and print does NOT
+    // stack a self-buff — 11 creatures use a ONE-TIME Bloodied threshold (which
+    // is bloodied-fury) and the only cumulative thing in the corpus is the Gray
+    // Ooze's weapon corrosion. Print overrules the demand; this is the form the
+    // demand can legitimately take, and it escalates on the TARGET.
+    id: 'life-drain', name: 'Withering Touch', cite: 'Specter/Life Drain (CR 1); Clay Golem/Slam (CR 9); Mummy/Rotting Fist (CR 3); Succubus/Draining Kiss (CR 4); Vampire/Bite (CR 13)',
+    roles: ['brute', 'lurker', 'skirmisher', 'defender', 'controller'], styles: [], cr_range: [1, 30], replaces: 'melee-rider',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the target is a creature, its Hit Point maximum decreases by an amount equal to the damage taken.'])),
+  },
+  {
     id: 'snatch', name: 'Snatch', cite: 'Roc/Talons (CR 11); Giant Eagle (CR 1); Griffon (CR 2)',
     roles: ['skirmisher', 'brute', 'lurker'], styles: [], cr_range: [1, 30], replaces: 'melee-rider', requires_movement: 'Fly',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If the target is a Medium or smaller creature, it has the Grappled condition (escape DC {dc}) and is carried by the creature; the creature can drop it as part of its movement, and a dropped target falls.'])),
@@ -585,6 +629,10 @@ export const SHAPES = [
   },
   {
     id: 'riposte', name: 'Riposte', invented: true, // kin: Bandit Captain/Parry (2024 MM) + Riposte maneuver (PHB); neither is in this corpus
+    // a reaction that strikes BACK needs something to strike with — snap-shot's
+    // precedent (host: 'ranged'). 'melee' is already the weld default, so this
+    // only turns the row requirement ON (2026-10-22).
+    host: 'melee',
     roles: ['skirmisher', 'defender', 'lurker'], styles: [], cr_range: [1, 30], replaces: 'reaction',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Trigger:* A creature within 5 feet of the creature misses it with a melee attack roll. *Response:* The creature makes one {melee_name} attack against that creature.'])),
   },
@@ -613,15 +661,23 @@ export const SHAPES = [
   },
   // (3) a bodily emission comes FROM the creature — a Cone, not a lobbed sphere (the goat's vomit, critic run seven)
   {
-    id: 'spew', name: 'Noxious Spew', cite: 'Poison-breath Cone family (Green Dragon Wyrmling CR 2, Black Dragon Wyrmling CR 2)',
+    id: 'spew',
+    // THE FIRST TEMPLATE WITH A VARIABLE AREA SHAPE (2026-10-22). Cone is its own
+    // and print's commonest (49 of 109 area clauses); Line is the shape this
+    // catalog could not produce AT ALL despite print using it 22 times. The band
+    // sizes move from the frame text into AREA_LADDER, which carries print's
+    // median per band for both shapes. spew is gated (Recharge 5-6), so the
+    // widening routes into pricing valueCheck already backs — the owner's
+    // conservative ruling: no ungated widening.
+    targets: ['Cone', 'Line'], name: 'Noxious Spew', cite: 'Poison-breath Cone family (Green Dragon Wyrmling CR 2, Black Dragon Wyrmling CR 2)',
     roles: ['skirmisher', 'brute', 'lurker', 'controller'], styles: [], cr_range: [0, 30], replaces: 'nova', gate: 'Recharge 5-6',
     frames: {
-      '0-2': '*Constitution Saving Throw*: DC {dc}, each creature in a 15-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
-      '3-5': '*Constitution Saving Throw*: DC {dc}, each creature in a 15-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
-      '6-9': '*Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
-      '10-12': '*Constitution Saving Throw*: DC {dc}, each creature in a 30-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
-      '13-20': '*Constitution Saving Throw*: DC {dc}, each creature in a 60-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
-      '21+': '*Constitution Saving Throw*: DC {dc}, each creature in a 90-foot Cone. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+      '0-2': '*Constitution Saving Throw*: DC {dc}, {target}. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+      '3-5': '*Constitution Saving Throw*: DC {dc}, {target}. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+      '6-9': '*Constitution Saving Throw*: DC {dc}, {target}. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+      '10-12': '*Constitution Saving Throw*: DC {dc}, {target}. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+      '13-20': '*Constitution Saving Throw*: DC {dc}, {target}. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
+      '21+': '*Constitution Saving Throw*: DC {dc}, {target}. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.',
     },
   },
   {

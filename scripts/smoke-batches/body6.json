@@ -1,0 +1,44 @@
+[
+  {
+    "name": "Owlbear",
+    "description": "",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "BODY: adhesive must be judged NOT TRUE. NB: a BARE Owlbear is print-exact and freeAllowance is 0, so this sheet was never at risk \u2014 the real package-seven case is the TWIST 'Owlbear | that has learned to climb' (see owlbear2.json)"
+  },
+  {
+    "name": "",
+    "description": "a tar-pit horror that drags what it touches down into the black sludge",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "BODY: the gate must not be a wall \u2014 adhesive IS true here"
+  },
+  {
+    "name": "",
+    "description": "a brass gate-golem cast as a temple bell, which tolls as it walks",
+    "cr": "9",
+    "rules": "2024",
+    "canary": "BODY: resonant-body true; adhesive and heated-body false"
+  },
+  {
+    "name": "Vampire",
+    "description": "who keeps a rose garden of thorns",
+    "cr": "13",
+    "rules": "2024",
+    "canary": "BODY: warded-mending must be FALSE \u2014 the package-seven vampire healed off a ward that was never on the sheet"
+  },
+  {
+    "name": "",
+    "description": "an ancient thing carrying a stone house on its back",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "BODY: the case the retired shell regex refused \u2014 no key word, a real shell"
+  },
+  {
+    "name": "",
+    "description": "a venomous lizardfolk raider with a blowpipe and a quiver of darts",
+    "cr": "4",
+    "rules": "2024",
+    "canary": "BODY: resonant-body must be FALSE \u2014 package seven gave this one thunder damage from its scales"
+  }
+]

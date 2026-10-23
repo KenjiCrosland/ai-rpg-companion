@@ -16,7 +16,7 @@ import { lintStatblock } from '../format-2024/lint.mjs';
 import { HIT_DIE_BY_SIZE } from '../format-2024/dice.mjs';
 import { WEAPONS, weaponFor, weaponProp, namesWeapon } from './weapons.mjs';
 import { cardBudget, dmgRow } from './card-budgets.mjs';
-import { NOVA_CAP, gateOf } from './templates.mjs'; // one definition of a row's gate: the field first, the name only as print's canon/a missed-stamp signal
+import { NOVA_CAP, gateOf, SIZES } from './templates.mjs'; // one definition of a row's gate: the field first, the name only as print's canon/a missed-stamp signal
 import { CONTROL_SPELL_LEVEL, CONTROL_AT_WILL_CR, SPELL_DAMAGE_AVG, printCanonFor, nearPrintCr } from './generate.mjs';
 import { speciesFor } from './species.mjs';
 import { LINE_VERBS } from './route.mjs'; // the router's own key tables — one definition for what keys an engine (stage 1b)
@@ -399,7 +399,6 @@ function gateBands(m, ctx, F) {
 }
 const KO = /\b(Paralyzed|Stunned|Unconscious|Petrified|Incapacitated)\b/i; // 2014 prose writes the condition lowercase
 const SIZE_REACH = { Tiny: 5, Small: 5, Medium: 5, Large: 10, Huge: 15, Gargantuan: 20 };
-const SIZES = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'];
 const TETHER = /\b(whip|chain|tentacle|lash|tether|hook|tongue|vine|cable|rope|lance|pike|arm|limb)\b/i;
 function gateStructure(m, ctx, F) {
   const names = allRows(m).map(({ e }) => bare(e.name));

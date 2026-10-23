@@ -18,6 +18,14 @@ const run = async ({ concept, cr, archetype, style = null, path, over = {}, cast
 };
 const twist = (body, receipt) => ({ path: 'twist', by: 'call', print_body: body, relation: 'is', class: null, species: null, receipt });
 const names = (r) => r.rows.map((e) => String(e.name ?? '').replace(/ \(.*\)$/, ''));
+// The idea call answers the body question too (NEEDS_BODY / body_verdicts,
+// 2026-10-22). A stub that omits it falls back to each template's own `keys`,
+// which removes body-shaped templates from the menu BEFORE the mechanism a test
+// is actually about can decline them. Tests whose subject is not body truth say
+// so by granting every requirement, which is what a real call does per sheet.
+const { NEEDS_BODY: _NB } = require('../templates.mjs');
+const ALL_BODIES = Object.keys(_NB).map((id) => ({ id, means: true, because: 'test harness: body truth is not this test\'s subject' }));
+
 
 describe('the twist path', () => {
   test('a body the matcher misses lands by the path: the cave troll gets the Troll\'s Regeneration, and no fallback shelf, no value floor, no chassis nova', async () => {
@@ -49,7 +57,7 @@ describe('the twist path at a CR far from print\'s', () => {
     let m;
     try {
       m = await generateReskin({ archetype: 'brute', concept, userConcept: concept, cr: 4, path: twist('Skeleton', 'a skeleton') }, async (prompt) => {
-        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ trait: { idea: "The champion's death-grin never falters, and the longer a fight drags on the better it reads the opponent's timing.", section: 'trait', trigger: 'always', effect: 'control' } }); // the live idea: a shape fit with no verb match, carried by the quote "a skeleton" alone
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ body_verdicts: ALL_BODIES, trait: { idea: "The champion's death-grin never falters, and the longer a fight drags on the better it reads the opponent's timing.", section: 'trait', trigger: 'always', effect: 'control' } }); // the live idea: a shape fit with no verb match, carried by the quote "a skeleton" alone
         if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify({ template: 'false-appearance', because: 'it passes for an ordinary skeleton', name: 'Deathless Grin', asked: 'a skeleton' });
         if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
         if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
@@ -460,7 +468,7 @@ describe("the twist seat receives its clause (the critic's prescription, 2026-10
     let m;
     try {
       m = await generateReskin({ archetype, concept, userConcept: concept, cr, path: twist(body, body.toLowerCase()) }, async (prompt) => {
-        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ trait: { idea: 'It keeps something of what it was, and anyone who fights it finds that out.', section: 'trait', trigger: 'always', effect: 'control' } });
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ body_verdicts: ALL_BODIES, trait: { idea: 'It keeps something of what it was, and anyone who fights it finds that out.', section: 'trait', trigger: 'always', effect: 'control' } });
         if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify({ template, because: 'the shape fits', name: rowName, ...(asked ? { asked } : {}) });
         if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
         if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
@@ -928,5 +936,155 @@ describe('the print body\'s noun is swept for the sheet\'s own name', () => {
   test('a sheet that IS the print creature keeps its own noun — nothing is swept needlessly', async () => {
     const r = await run({ concept: 'a troll that grows back unless the blade was silvered', cr: 5, archetype: 'brute', path: twist('Troll', 'troll') });
     expect(r.trace).not.toMatch(/body noun swept/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// THE CLAUSE-FIRST RETRY (the critic's item 2; owner's choice (c), 2026-10-22).
+// The approved fallback is: clause-first retry -> a print-grammar trait the body
+// would have -> an empty seat. (c) rather than (a) means the retry is paid for
+// ONLY when the sheet has an unanswered clause to aim at, so these tests are as
+// much about the COST as the behaviour: one extra call where there is a clause,
+// none where there is not.
+describe('a refusal is retried for the clause, and only when there is one', () => {
+  const run = async ({ concept, path, refuseAlways = true, retryAnswers = null }) => {
+    const fits = []; const lines = []; const orig = console.log;
+    console.log = (...a) => { lines.push(a.join(' ')); };
+    try {
+      await generateReskin({ archetype: 'brute', concept, userConcept: concept, cr: 5, path }, async (prompt) => {
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) {
+          return JSON.stringify({ body_verdicts: ALL_BODIES, action: { idea: 'It does something the catalog cannot hold at all.', section: 'action', trigger: 'save', effect: 'damage' } });
+        }
+        if (prompt.startsWith("A monster's signature ability has been described")) {
+          fits.push(prompt);
+          // the FIRST fit refuses; the second is the retry
+          if (fits.length === 1 || refuseAlways) return JSON.stringify({ template: 'none', closest: 'zone', missing: 'a compound the catalog cannot express', declined_because: 'no template holds it' });
+          return JSON.stringify(retryAnswers ?? { template: 'zone', because: 'the clause asked for it', name: 'Clause Answer' });
+        }
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return JSON.stringify(stub(5, null, 'brute'));
+      });
+    } finally { console.log = orig; }
+    return { fitCalls: fits.length, trace: lines.join('\n') };
+  };
+
+  it('spends ONE extra call when the sheet has an unanswered clause', async () => {
+    const r = await run({ concept: 'a hydra whose stumps smoke instead of regrowing', path: twist('Hydra', 'hydra') });
+    expect(r.fitCalls).toBeGreaterThanOrEqual(2);
+    expect(r.trace).toMatch(/clause-first retry: .*asked again FOR the clause/);
+  });
+
+  it('uses the retry\'s answer when the retry succeeds', async () => {
+    const r = await run({ concept: 'a hydra whose stumps smoke instead of regrowing', path: twist('Hydra', 'hydra'), refuseAlways: false });
+    expect(r.trace).toMatch(/clause-first retry: .*and it answered "zone"/);
+  });
+
+  it('spends NO extra call when there is no clause to aim at — this is choice (c)', async () => {
+    // An exact print body with nothing added carries no unanswered clause. It may
+    // not reach the fit call at all (the signature is dropped on that path), so
+    // the assertion is about COST, which is what (c) buys: at most one fit call,
+    // and never a retry.
+    const r = await run({ concept: 'Owlbear', path: { path: 'exact', by: 'code', print_body: 'Owlbear', relation: 'is', class: null, species: null, receipt: 'Owlbear' } });
+    expect(r.fitCalls).toBeLessThanOrEqual(1);
+    expect(r.trace).not.toMatch(/clause-first retry:/);
+  });
+
+  it('keeps the retry\'s nearest when the first answer named none', async () => {
+    const r = await run({ concept: 'a hydra whose stumps smoke instead of regrowing', path: twist('Hydra', 'hydra') });
+    expect(r.trace).toMatch(/clause-first retry: .*still refused/);
+  });
+});
+
+// A HANDED CLAUSE KEEPS THE LACK (the critic's item 3, measured 2026-10-22).
+// positiveHalf() cut `lackQuote` unconditionally. On a LACKS clause that quote is
+// the whole twist, so the clause handed to a call arrived gutted: the dragon's
+// "Adult Red Dragon — blind in one eye from an old lance" became "Adult Red
+// Dragon — from an old lance", and the Hydra's lost "instead of regrowing".
+// Cutting it is right for the unanswered TEST and wrong for handing over.
+describe('the clause handed to a call is not cut down', () => {
+  const traceFor = async (concept, path) => {
+    const lines = []; const orig = console.log;
+    console.log = (...a) => { lines.push(a.join(' ')); };
+    try {
+      await generateReskin({ archetype: 'brute', concept, userConcept: concept, cr: 8, path }, async (prompt) => {
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) {
+          return JSON.stringify({ body_verdicts: ALL_BODIES, action: { idea: 'Something the catalog cannot hold at all.', section: 'action', trigger: 'save', effect: 'damage' } });
+        }
+        if (prompt.startsWith("A monster's signature ability has been described")) {
+          return JSON.stringify({ template: 'none', closest: 'zone', missing: 'a compound', declined_because: 'nothing holds it' });
+        }
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return JSON.stringify(stub(8, null, 'brute'));
+      });
+    } finally { console.log = orig; }
+    return lines.join('\n');
+  };
+
+  it('keeps the lack quote in the clause it hands over (the Hydra\'s own twist)', async () => {
+    const trace = await traceFor('Hydra — whose stumps smoke instead of regrowing', twist('Hydra', 'hydra'));
+    const handed = /FOR the clause "([^"]*)"/.exec(trace);
+    expect(handed).not.toBeNull();
+    // the twist survives: both halves of it, not just the first
+    expect(handed[1]).toMatch(/stumps smoke/);
+    expect(handed[1]).toMatch(/instead of regrowing/);
+  });
+
+  it('does not open a handed clause on punctuation a cut left behind', async () => {
+    const trace = await traceFor('Hydra — whose stumps smoke instead of regrowing', twist('Hydra', 'hydra'));
+    const handed = /FOR the clause "([^"]*)"/.exec(trace);
+    expect(handed[1]).not.toMatch(/^[\s‐-―,;:-]/);
+  });
+});
+
+// A REFUSAL THAT NAMES NOTHING still has to leave a build signal (2026-10-22).
+// The schema asks for `missing`, the prose demands it, readFit parses it — and the
+// call omits it on about a third of refusals. Those were discarded as UNNAMED, so
+// 12 of 33 gap lines on the forty carried nothing. The gap10 runs exercised the
+// branch once and then not at all (the call named `missing` on every refusal the
+// second time), so the line shapes are pinned here rather than resting on a run.
+describe('a gap line always carries a build target', () => {
+  const traceFor = async (fitAnswer) => {
+    const lines = []; const orig = console.log;
+    console.log = (...a) => { lines.push(a.join(' ')); };
+    try {
+      await generateReskin({
+        archetype: 'brute', concept: 'a bog hound that drags fishermen under and holds them there',
+        userConcept: 'a bog hound that drags fishermen under and holds them there', cr: 5,
+        path: { path: 'homebrew', by: 'call', print_body: null, relation: null, class: null, species: null, receipt: null },
+      }, async (prompt) => {
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) {
+          return JSON.stringify({ body_verdicts: ALL_BODIES, action: { idea: 'It hauls a creature under the water and keeps it there until it drowns.', section: 'action', trigger: 'save', effect: 'movement' } });
+        }
+        if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify(fitAnswer);
+        if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
+        if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+        return JSON.stringify(stub(5, null, 'brute'));
+      });
+    } finally { console.log = orig; }
+    return lines.join('\n');
+  };
+
+  it('never emits the old UNNAMED line', async () => {
+    const t = await traceFor({ template: 'none', declined_because: 'no_fit' });
+    expect(t).not.toMatch(/\[gap\] UNNAMED/);
+  });
+
+  it('names the VARIANT when the call gave a nearest but no mechanic', async () => {
+    const t = await traceFor({ template: 'none', closest: 'reel', declined_because: 'no_fit' });
+    expect(t).toMatch(/\[gap\] \(missing unstated\) — A VARIANT OF reel/);
+  });
+
+  it('separates a ROUTING miss from a catalog gap when the call gave neither', async () => {
+    const t = await traceFor({ template: 'none', declined_because: 'no_fit' });
+    // either the catalog holds something for this cell that the seat was not shown
+    // (routing), or it holds nothing (a real gap) — one of the two, never silence
+    expect(t).toMatch(/\[gap\] \(missing unstated\) — no nearest named; the catalog HAS .* a ROUTING miss, not a catalog gap|\[gap\] \(missing unstated\) — no nearest named, and the catalog holds NOTHING for/);
+  });
+
+  it('keeps the idea in the GM-facing words, not truncated to 70 characters', async () => {
+    const t = await traceFor({ template: 'none', declined_because: 'no_fit' });
+    expect(t).toMatch(/keeps it there until it drowns/);
   });
 });

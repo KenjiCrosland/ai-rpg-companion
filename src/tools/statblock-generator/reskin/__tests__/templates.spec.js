@@ -79,7 +79,11 @@ describe('the catalog', () => {
   test('the caster line has a rider section now; contact damage is a print constant by band', () => {
     const riders = templatesFor({ archetype: 'caster', cr: 7, sections: {}, section: 'rider' });
     expect(riders.map((t) => t.id)).toEqual(expect.arrayContaining(['bolt-restrain', 'bolt-drag', 'bolt-mark']));
-    expect(riders.every((t) => t.host === 'ranged')).toBe(true);
+    // NOT every rider: print's Mummy Lord (CR 15) and Vampire (CR 13) are casters
+    // carrying a MELEE rider that reduces Hit Point maximum, so `life-drain`
+    // reaches this shelf legitimately (2026-10-22). The claim that holds is that
+    // the caster's own BOLT riders ride a ranged row.
+    expect(riders.filter((t) => /^bolt-/.test(t.id)).every((t) => t.host === 'ranged')).toBe(true);
     expect(rankByVerb(riders, 'a hermit who calls down a lightning strike from a mile away and pins the lone climber')[0].t.id).toMatch(/^bolt-/);
     const hb = TEMPLATES.find((t) => t.id === 'heated-body');
     const ctx17 = { scaled: sheet(17, null, 'brute'), archetype: 'brute', cr: 17, energy: 'Fire', mix: 'both', meleeName: 'Slam', imposed: [], name: 'X' };
@@ -421,12 +425,19 @@ describe('the trait shelf pass (2026-09-27): four always-on cards from the miss 
       for (const cr of [1, 4, 8, 11, 16, 24]) expect(renderTemplate(t, ctx(cr), {})).not.toBeNull();
     }
   });
-  test('Spider Climb is offered only when the concept gave the header a Climb speed', () => {
+  // 2026-10-22: this test used to assert the OPPOSITE — that Spider Climb is
+  // offered ONLY with a Climb speed. That gate was circular (the trait GRANTS the
+  // climbing) and print contradicts it: the Vampire Spawn is Medium, "30 ft.", and
+  // carries Spider Climb outright. 12 of print's 14 instances pair it with a Climb
+  // speed, which is CORRELATION, not a requirement. Print overrules pins.
+  test('Spider Climb does not require a Climb speed — it grants the climbing (print: the Vampire Spawn)', () => {
     const ids = (movement) => templatesFor({ archetype: 'lurker', cr: 5, sections: {}, section: 'trait', movement }).map((t) => t.id);
     expect(ids('climb')).toContain('spider-climb');
     expect(ids('climb fly')).toContain('spider-climb');
-    expect(ids('')).not.toContain('spider-climb');
-    expect(ids('swim')).not.toContain('spider-climb');
+    expect(ids('')).toContain('spider-climb');     // the Vampire Spawn case: no Climb speed, has the trait
+    expect(ids('swim')).toContain('spider-climb');
+    expect(TEMPLATES.find((x) => x.id === 'spider-climb').requires_movement).toBeNull();
+    // the concept still RANKS it first where the fiction asks for it
     expect(rankByVerb(templatesFor({ archetype: 'lurker', cr: 5, sections: {}, section: 'trait', movement: 'climb' }), 'a gargoyle-thing that scuttles along the cathedral ceiling and drops from the gutters')[0].t.id).toBe('spider-climb');
   });
   test('Sure Footing is the Ice Walk grammar with the terrain as the slot; the blind fill is plain', () => {

@@ -336,3 +336,326 @@ rule (b) will be live and may catch them. If it does not, they need a sixth path
 (the expression judge against the finished text) and that is the owner's call.
 
 **Gate:** Jest 117 suites / 3759 passing, build clean.
+
+## Item 3 started: A2 back to DEX for damage-plus-prone in an area
+
+**Measured against print first** (house rule). Print's own rows that deal damage
+in an AREA and impose Prone:
+
+| save | rows |
+|---|---|
+| **Dexterity** | **3** — Bulette/Deadly Leap, Kraken/Fling, Giant Ape/Boulder Toss |
+| Strength | 1 — Centaur Trooper/Trampling Charge |
+| Wisdom | 1 — Sphinx of Valor/Roar |
+
+The critic's claim holds, and the single Strength is the one that proves their
+rule: `Trampling Charge` is a charge that moves through creatures — **"STR is for
+shoves."**
+
+`generate.mjs:6695` put `['Strength', 'Dexterity']` first for anything Prone-ish,
+so a Constitution save on a damaging area cone was retyped to STRENGTH — Glacier's
+`Killing Cold` (13d10 cone) and Brass's `Molten Exhalation` (16d8 cone). The
+discriminator is now the row's SHAPE, not the condition:
+
+```
+Killing Cold      areaDmg=true  movement=false -> Dexterity
+Molten Exhalation areaDmg=true  movement=false -> Dexterity
+a shove that knocks prone  areaDmg=false movement=true -> Strength
+```
+
+The shove half reads the row's own recorded `imposesMovement` flag, so it needs no
+new text reading; the area-and-damage half reads the same two shapes `valueCheck`
+already reads.
+
+### A flake, recorded rather than buried
+
+The first full run after this edit reported **1 failed** —
+`generate-2024.spec.js › correctable violations are fixed without a retry call`,
+with `monster.sections.Actions[1]` undefined. I stashed the A2 change and ran the
+test both ways in isolation: **green both times**, and two subsequent FULL runs are
+green at 3759. So it is order-dependent or genuinely intermittent, not an A2
+regression. Noted here because a one-off failure that vanishes is exactly what
+costs a future session a day (cf. `dungeon-door-conversion-flake.md`). **If it
+recurs, capture the full-suite ordering** — the test asserts on `Actions[1]`, so a
+shared-fixture mutation from an earlier suite is the first thing to look at.
+
+**Gate:** Jest 117 suites / 3759 passing (two consecutive full runs), build clean.
+
+
+---
+
+## Item 2 progress, 2026-10-22 — and the one decision left
+
+**The body half of the decoration conditions is DONE** and it was the larger
+half. `NEEDS_BODY` + the call's `body_verdicts`
+(`plans/declare-the-body-2026-10-22.md`) is condition 2, "true of the body via
+declared body/material metadata", and it already answers **four of the critic's
+seven bad rows**:
+
+| the critic's bad row | now |
+|---|---|
+| Owlbear's `Adhesive` | `adhesive` judged FALSE live; the sheet ships Multiattack + Rend only |
+| Vampire's `Warded Mending`, ward defined nowhere | `warded-mending` judged FALSE live; it took print's "bound to its resting place" instead |
+| Vashka's and Reedsong's thunder | `resonant-body` judged FALSE for a lizardfolk, and TRUE for a brass gate-bell |
+| Ilvareth's glowing foes | `marking-light` judged FALSE for a shadow mage |
+
+**Condition 4 is DONE: GM quote > element > decoration.** `settleSheetBudgets`
+walked `freeRows` in SHEET order and kept the first that fit, so which row
+survived a budget of 1 depended on where it sat in the sections object. That is
+the Marrowsun bug exactly — it cut `Marrowsun Cinder`, which carried the element
+receipt, and kept `Marrow Rise`, a decoration. Now ranked by the stamps the grant
+site already writes (`gmQuote` → `expresses` → `decoration`), stable so sheet
+order still breaks ties, with a trace line so a cut row can be accounted for.
+Six tests.
+
+### Condition 3 is PARTLY covered, and the gap is data, not logic
+
+Measured — the cap reads the declared cell `section/trigger/effect` as a proxy for
+family, and for the three families the critic named that proxy holds unevenly:
+
+| family | declared cells | caught? |
+|---|---|---|
+| grapple | `hook-drag`/`reel`/`pull-through` all `action/save/movement`; `snare`/`swallow` both `action/save/condition`; `snatch` `rider/on_hit/condition` | two groups caught, `snatch` separate |
+| light-mark | `marking-light` `trait/always/condition`, `reveal` `action/save/condition` | **no** |
+| punisher | `ward-retaliation`/`riposte` both `reaction/on_being_hit/damage`; **`own-turn-punisher` `bonus_action/always/damage`** | **no** — and this is the critic's own "own-turn-punisher into the family cap" |
+
+`own-turn-punisher`'s declared cell is honest (it IS a bonus action that always
+fires) but its FAMILY is retaliation. So the fix is a declared `family` on the few
+templates whose cell is not their family — data, in `shapes.mjs`, not a new rule.
+Left for item 3, where the critic filed it.
+
+### THE DECISION: the clause-first retry costs a call
+
+The fallback the owner approved is **clause-first retry → print-grammar trait →
+empty seat**. Steps 2 and 3 are free. **Step 1 is an extra LLM call on every
+refusal path**, which runs against the standing "no cost increases" preference,
+so it is the owner's call and not mine:
+
+- **(a) Retry as specified.** Best quality: the seat gets another chance against
+  what the GM actually asked before anything is invented. Costs +1 call on sheets
+  where the call refused every template.
+- **(b) Skip the retry — print-grammar trait, then empty seat.** Free. Loses the
+  clause-first attempt, so some seats go empty that a retry would have filled.
+- **(c) Retry only when there IS a clause to retry against** (a GM quote or a
+  twist clause on the sheet). Costs a call on a subset, and spends it only where
+  it has something to aim at.
+
+My lean is **(c)**: the retry's whole value is the clause, so paying for it when
+there is no clause buys nothing. Note also that the body gate should have made
+refusals *rarer and better-founded*, so whatever the cost is, it now falls on
+fewer sheets — but that is an expectation, not a measurement, and the forty is
+where it would show.
+
+
+---
+
+## The retry landed as (c), and the measurement is not flattering
+
+Owner chose **(c)**: retry only when there is a clause to aim at. Landed —
+`unansweredClause({ anyPath: true })` is asked at the refusal, before anything is
+invented; one retry, never a loop; and when there is no clause the trace says so
+and **no call is spent**. 6 tests, two of them about the COST, which is what (c)
+buys.
+
+### It also exposed item 3 as a hard dependency, by measurement
+
+The first run (`retry6-2026-10-22T15-44-26`) fired **5 retries and 0 succeeded** —
+and three of the five were aimed at text like this:
+
+| handed to the retry | the GM actually wrote |
+|---|---|
+| `"Adult Red Dragon — from an old lance"` | blind in one eye from an old lance |
+| `"a marsh"` | a marsh witch who curses trespassers and drinks the years out of them |
+| `"Hydra — whose stumps smoke"` | whose stumps smoke instead of regrowing |
+
+So the retry was paying for a call and aiming it at a gutted clause. **Two causes,
+both now fixed, and I had the first one wrong:**
+
+1. I assumed the receipt cut in `positiveHalf` was the culprit and guarded it
+   behind a new `forCall`. Tests green, re-ran, **the dragon was unchanged.** The
+   fix was correct in principle and did not touch that case.
+2. The real cause was the `lacks` branch, which cut `lackQuote` unconditionally.
+   On a LACKS clause that quote **is** the twist — the dragon's record is
+   `"Adult Red Dragon — blind in one eye from an old lance" -> LACKS`. Cutting it
+   is right for the unanswered TEST and wrong for handing over.
+
+Clauses are now handed whole (`retry6-2026-10-22T15-55-46`), pinned by two tests:
+
+```
+"Adult Red Dragon — blind in one eye from an old lance"
+"Hydra — whose stumps smoke instead of regrowing"
+"keeps a rose garden of thorns"
+```
+
+### What the retry is actually worth — unresolved, and n is small
+
+| run | clauses | retries fired | succeeded | FAIL of 6 |
+|---|---|---|---|---|
+| T15-44-26 | gutted | 5 | **0** | 1 |
+| T15-49-24 | partly fixed | 5 | 1 | 0 |
+| T15-55-46 | whole | 5 | **1** | 1 |
+
+**Fixing the clause did not raise the success count** (1 → 1). At 1 in 5, (c)
+costs about five extra calls per six blocks to save one seat, and the FAIL column
+(1, 0, 1) is noise at this sample size — these are stochastic generations and six
+blocks cannot separate a real effect from run-to-run variation.
+
+So: the clause fix is a clear win and stands on its own — it serves the twist path
+and the existing clause-first seat binding, not just the retry. **The retry's own
+value is unproven**, and the honest test is the forty, where 1-in-5 either holds
+or does not. If the owner wants the cost back before then, the retry is one
+`if` to disable and the clause fix keeps all of its value.
+
+
+---
+
+## The measured 10, 2026-10-22 — `branch10-2026-10-22T16-09-12` and `...T16-16-11`
+
+Built fresh to cover only this branch's changes, with the metrics fixed before the
+run. Also landed first: **condition 3, the declared `FAMILY`.**
+
+### Condition 3 is DONE, and the declared cell was never the family
+
+| family | spans these declared cells |
+|---|---|
+| retaliation | `trait/on_being_hit/damage` (heated-body, bloodied-burst, resonant-body), `reaction/on_being_hit/damage` (ward-retaliation, riposte), **`bonus_action/always/damage` (own-turn-punisher)** |
+
+`settleSheetBudgets`' comment claims "the declared cell IS the family". Measured:
+true only of the three templates it was written against. So `FAMILY` is declared
+metadata — 7 entries reusing the engine vocabulary donor rows already carry
+(`punisher`, `containment`) plus `light-mark` — and `sheetEngines` reads it off
+the row **before any text rule**. No new prose rule was added. Verified: a
+contact-damage row now bars `own-turn-punisher`, a light-mark row bars `reveal`, a
+containment engine bars `snatch`, and a clean sheet still offers all three.
+
+### A DEFECT I had shipped, found by doing that work
+
+**Eight `needs_body` declarations never reached their template.** The catalog is
+built from TWO branches — `SHAPES` and `LIBRARY_SEEDS` — and only the first
+carried the field, so `coating`, `phase-slip`, `herd`, `rally`, `snare-bolt`,
+`zone-seed`, `blighted-ground` and `drain` were **silently inert from the moment
+they were written**. The table read complete, which is worse than an empty one.
+Fixed, and `body-requirements.spec.js` now asserts every `NEEDS_BODY` and `FAMILY`
+key lands on its template, on both branches. All seven reachable ones were asked
+in the run.
+
+### The metrics, against what I fixed beforehand
+
+| metric | result |
+|---|---|
+| verdict completeness | **9 of 10 sheets answered every requirement** (22/22 … 32/32); one answered **8 of 27**, and those 19 fell back to `keys` as designed. The at-scale probe showed 41/41 on 12/12 with a bare prompt — in the real idea call, partial answers happen. The fallback is load-bearing, not decoration. Second run: 10 of 10 complete. |
+| `keys` fallback (no verdicts at all) | 0 |
+| Owlbear retry spend | **0 lines** — choice (c) spent nothing where there was no clause |
+| handed clauses | Hydra and dragon both whole |
+| two rows of one declared family | none |
+| decoration kept over a receipt row | none |
+| FAIL | 2 of 10, then **1 of 10** |
+
+### Finding: the retry was being aimed at nouns
+
+4 of 8 handed clauses were bare descriptive heads — `"a tar-pit horror"`, `"a
+will-o-wisp"`, `"a bronze shrine-warden"`, `"a courtly duelist in silk"`. The
+record splits a concept into a descriptive head and a mechanical remainder, and
+the loop returned whichever came first. Fixed: a **mechanical** clause is
+preferred, the head is the fallback. Verified — all eight handed clauses are now
+rules-shaped (`"drags what it touches down into the black sludge"`, `"burns
+whoever lays a hand on it"`, `"turns every thrust back on its owner"`).
+
+### The retry's economics — still unresolved, and my expectation MISSED
+
+| run | clauses | fired | succeeded |
+|---|---|---|---|
+| retry6 T15-44 | gutted | 5 | 0 (0%) |
+| retry6 T15-55 | whole | 5 | 1 (20%) |
+| branch10 T16-09 | whole, heads sometimes | 20 | 10 (**50%**) |
+| branch10 T16-16 | mechanical preferred | 22 | 8 (**36%**) |
+
+**I stated ">= 50%" before the mechanical-clause fix and got 36%.** The clause
+CONTENT is unambiguously better and that is deterministic — all eight are
+mechanical, measurable, not a matter of taste. The success RATE went 50% → 36%,
+which is within noise at n=10 and did not meet the expectation. Two runs cannot
+separate it. Across every run with whole clauses: **19 of 47, 40%** — about 2.2
+extra calls a block to save ~0.8 seats. Whether that trade is worth it is a
+forty-sized question, and the retry remains one `if` to disable.
+
+### One FAIL repeated, which the long tail usually does not
+
+`lack-honored` on the Adult Red Dragon failed in **both** branch10 runs — "the GM
+asked for an absence … and the sheet still carries it". The BACKLOG's standing
+observation is that forty FAILs turn over almost completely between runs, so a
+repeat is a signal. The dragon's own result today went: `name-mechanic`, clean,
+`name-mechanic`, `control-aoe-ungated`+`lack-honored`, `lack-honored`. It did NOT
+appear in the three runs before branch10, two of which already carried the lacks
+fix.
+
+**A plausible mechanism I have NOT confirmed:** the retry now aims at "blind in
+one eye from an old lance", so it may be ADDING a row that expresses the blindness
+instead of REMOVING the sight-dependent row the lack demands. That is a guess.
+`lack-honored` has 25 prior evidence files, so the class is old. First thing to
+check on the forty.
+
+
+---
+
+# THE FORTY, 2026-10-22 — `sweep-2026-10-22T17-05-33`
+
+Same batch as package seven (`sweep-2026-10-22T03-29-45`), so this is a true
+before/after. Metrics were fixed before the run.
+
+| metric | baseline | now | verdict |
+|---|---|---|---|
+| FAIL | 2 of 40 | **2 of 39** | in band (2-5), only `name-mechanic` |
+| **generation threw** | 0 | **1 — Vashka the Red** | **REGRESSION. Must fix.** |
+| decoration rows | 14 of 40 | 13 of 40 | essentially unchanged |
+| — on twist | 7 | **2** | the body gate working where the bug was |
+| — on homebrew | 4 | **7** | **worse** |
+| — on class_npc | 3 | 4 | slightly worse |
+| — on exact | 0 | 0 | still immune, as it always was |
+| free rows of any kind | 22 | 26 | up |
+| **retry** | — | **34 fired, 6 succeeded (17%)** | **does not pay** |
+| verdict completeness | — | 38 complete, 0 partial, 1 with none | good |
+| duplicate-family cuts at ship | — | **0** | never fired |
+| budget reorder | — | **0** | never fired |
+| `lack-honored` | — | absent | was long tail, not an interaction |
+| clause drift | — | 7 concepts re-marked kind/head | watch |
+
+## 1. The retry does NOT earn its cost — my projection was optimistic
+
+**34 calls to save 6 seats: 0.85 extra calls a block for 0.15 seats, about 5.7
+calls per seat.** I projected ~40% from 47 fired across small runs; at forty scale
+it is **17%**. The small-sample runs (50%, 36%) were noise around a much lower
+true rate, which is exactly what n=10 cannot tell you.
+
+So choice (c) as recommended is a bad trade on real data, and that is my error of
+estimation, not the owner's choice. The clause fixes underneath it stand on their
+own — they serve the twist path's existing clause-first binding regardless. **The
+retry is one `if` to disable** and I would now recommend disabling it unless the
+owner values the 6 seats at 34 calls.
+
+## 2. The body gate works, but only where print gives something to fall back on
+
+Twist decorations fell **7 → 2**. Homebrew rose **4 → 7**. Net 14 → 13.
+
+A plausible mechanism, unconfirmed: the gate shortens menus, so more seats reach
+a refusal; on a twist there is a print body whose own grammar can fill the seat,
+and on homebrew there is not — so the refusal lands in closest-acceptance instead.
+If that is right, the critic's **print-grammar trait** step (the middle one, which
+they said to skip on twist/exact/class) is pointed at exactly the wrong path, and
+homebrew is where it is actually needed. Worth checking before building it.
+
+## 3. Two of my changes never fired in forty blocks
+
+The duplicate-family cut and the free-row budget reorder both fired **zero** times.
+They are guards, so not firing is not failure — but **no benefit is demonstrated
+for either from this run**, and I should not claim any. The family cap's value
+rests on the unit tests and on the critic's reading of package seven.
+
+## 4. The crash — the one thing that must be fixed
+
+`Vashka the Red` (class_npc, CR 6, "a hobgoblin warlord in lacquered plate who
+fights from a shield wall and never breaks ranks") threw
+`Cannot read properties of undefined (reading 'library')`. It generated cleanly in
+the baseline, so it is a regression from today's work. Not yet diagnosed; the
+candidates are the new `EXCLUDE_ON` entries (which make `supersedesRow` evaluate
+on templates it never ran on), the seed-branch field additions, and the retry's
+second `readFit`.

@@ -1,72 +1,72 @@
 [
- {
-  "name": "the thing in the well",
-  "description": "",
-  "cr": "5",
-  "rules": "2024",
-  "canary": "USE CASE \u00b7 NEVER-FAIL: no information at all, a legal sheet still ships"
- },
- {
-  "name": "Purple Worm",
-  "description": "that swallowed a war-band's armoury",
-  "cr": "15",
-  "rules": "2024",
-  "canary": "SPINE 15 \u00b7 print head + addition: the swallow engine"
- },
- {
-  "name": "Krennik Skullstandard",
-  "description": "riding a worg",
-  "cr": "4",
-  "rules": "2014",
-  "canary": "USE CASE \u00b7 Name + a seat verb: the mounted style"
- },
- {
-  "name": "",
-  "description": "a drowned cathedral choir that sings in one voice",
-  "cr": "10",
-  "rules": "2014",
-  "canary": "SPINE 10 \u00b7 homebrew one-liner"
- },
- {
-  "name": "",
-  "description": "an archlich enthroned on a sun of bone",
-  "cr": "20",
-  "rules": "2014",
-  "canary": "SPINE 20 \u00b7 homebrew one-liner, 2014 legendary"
- },
- {
-  "name": "Air Elemental",
-  "description": "that carries stolen voices",
-  "cr": "5",
-  "rules": "2024",
-  "canary": "SPINE 5 \u00b7 print head + addition on an Elemental body"
- },
- {
-  "name": "",
-  "description": "a glacier's heart given legs, trailing a wake of killing cold",
-  "cr": "15",
-  "rules": "2014",
-  "canary": "SPINE 15 \u00b7 homebrew one-liner"
- },
- {
-  "name": "",
-  "description": "a templar priest with a mace and no magic at all",
-  "cr": "6",
-  "rules": "2024",
-  "canary": "USE CASE \u00b7 negation: the lack removes the casting, the mace stays"
- },
- {
-  "name": "",
-  "description": "a skeleton with a greatsword",
-  "cr": "6",
-  "rules": "2024",
-  "canary": "USE CASE \u00b7 print name + addition ABOVE print's CR: the borrow re-scales and the weapon stands"
- },
- {
-  "name": "",
-  "description": "a quarry-pit thing of living scree that buries what it catches",
-  "cr": "5",
-  "rules": "2014",
-  "canary": "SPINE 5 \u00b7 homebrew one-liner"
- }
+  {
+    "name": "",
+    "description": "a tar-pit horror that drags what it touches down into the black sludge",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "BODY: adhesive TRUE \u2014 the gate must not be a wall"
+  },
+  {
+    "name": "",
+    "description": "a venomous lizardfolk raider with a blowpipe and a quiver of darts",
+    "cr": "4",
+    "rules": "2024",
+    "canary": "BODY: resonant-body FALSE; `coating` is one of the 8 seed declarations that were silently inert until today"
+  },
+  {
+    "name": "",
+    "description": "a glacier's heart given legs, trailing a wake of killing cold",
+    "cr": "15",
+    "rules": "2024",
+    "canary": "SEED DECL: zone-seed now live; heated-body and noxious-aura must stay FALSE"
+  },
+  {
+    "name": "Hydra",
+    "description": "whose stumps smoke instead of regrowing",
+    "cr": "8",
+    "rules": "2024",
+    "canary": "CLAUSE: a LACKS twist \u2014 the handed clause must keep 'instead of regrowing'"
+  },
+  {
+    "name": "Adult Red Dragon",
+    "description": "blind in one eye from an old lance",
+    "cr": "17",
+    "rules": "2024",
+    "canary": "CLAUSE: the lack must survive into the handed clause ('blind in one eye')"
+  },
+  {
+    "name": "Owlbear",
+    "description": "",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "RETRY (c): no clause to aim at, so NO retry call may be spent. NB: bare Owlbear is print-exact \u2014 NOT a test of the decoration gate"
+  },
+  {
+    "name": "",
+    "description": "a bronze shrine-warden that burns whoever lays a hand on it",
+    "cr": "9",
+    "rules": "2024",
+    "canary": "FAMILY: a punisher/contact-damage row must bar a second of that family (own-turn-punisher)"
+  },
+  {
+    "name": "",
+    "description": "a will-o-wisp, a cold lantern-flame that leads travellers into the mire",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "FAMILY: marking-light TRUE, and no second light-mark row beside it"
+  },
+  {
+    "name": "",
+    "description": "a gargantuan siege beast that flattens a shield wall underfoot",
+    "cr": "12",
+    "rules": "2024",
+    "canary": "SIZE: trample is offered on a Gargantuan body (requires_size Large+)"
+  },
+  {
+    "name": "",
+    "description": "a courtly duelist in silk who turns every thrust back on its owner",
+    "cr": "7",
+    "rules": "2024",
+    "canary": "HOST: riposte needs a melee row; a duelist has one"
+  }
 ]

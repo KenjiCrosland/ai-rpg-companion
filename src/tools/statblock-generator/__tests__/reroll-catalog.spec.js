@@ -158,6 +158,14 @@ describe('what the live blocks found', () => {
   test('a trait never climbs the value ladder, so no "Success: Half" fragment lands on one', async () => {
     const m = m0();
     m.archetype = 'lurker'; // evasion's own roles are lurker and skirmisher
+    // ...and the concept must EARN evasion a place on the menu. The trait menu is
+    // rankByVerb(...).slice(0, 14), so a template's presence depends on its verb
+    // rank, not its existence. This test used to pass on evasion landing exactly
+    // 14th, and broke the moment spider-climb's circular Climb gate was removed
+    // and pushed it to 15th (2026-10-22). Evasion is the adversarial case here
+    // because its OWN text says "half damage", so it must stay the subject.
+    // conceptOf() prefers generation.userConcept, so that is the field to set.
+    m.generation = { ...m.generation, userConcept: 'a triton reef-warden who slips aside from any blast, evading what it cannot block' };
     m.sections.Traits.push({ name: 'Marsh Sense', text: 'The reef-warden has Advantage on Perception checks in water.' });
     const out = await rerollEntry(m, { kind: 'ability', current: { name: 'Marsh Sense', description: 'The reef-warden has Advantage on Perception checks in water.' }, degraded: true },
       async () => JSON.stringify({ template: 'evasion', name: 'Reef Slip', fills: {}, wrong: [] }));

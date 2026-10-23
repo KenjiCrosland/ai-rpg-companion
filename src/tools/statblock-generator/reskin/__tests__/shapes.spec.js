@@ -28,7 +28,7 @@ describe('the shape catalog: one template per band, cited or invented', () => {
     for (const s of SHAPES) {
       for (const r of s.roles) expect(ROLES).toContain(r);
       for (const st of s.styles) expect(Object.keys(STYLES)).toContain(st);
-      for (const f of Object.values(s.frames)) expect(f).toMatch(/\{[a-z_]+\}|Saving Throw|attack|teleports|Speed|condition|pulled|Advantage|ability check|Difficult Terrain|direction and distance|movement restrictions|burrow|can't be read|Hit Points|Insight|takes the \w+ action/i); // the trait shelf's movement grammars (2026-09-27)
+      for (const f of Object.values(s.frames)) expect(f).toMatch(/\{[a-z_]+\}|Saving Throw|attack|teleports|Speed|condition|pulled|Advantage|ability check|Difficult Terrain|direction and distance|movement restrictions|burrow|can't be read|Hit Points|Hit Point maximum|Insight|takes the \w+ action/i); // the trait shelf's movement grammars (2026-09-27)
     }
   });
 

@@ -1,0 +1,3 @@
+[
+  { "name": "Vashka the Red", "description": "A hobgoblin warlord in lacquered plate who fights from a shield wall and never breaks ranks.", "cr": "6", "rules": "2024", "canary": "CRASH: threw 'Cannot read properties of undefined (reading library)' on the forty; generated clean in the package-seven baseline" }
+]

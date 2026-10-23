@@ -375,3 +375,95 @@ describe('readElementClaims reads what the audit actually returns', () => {
     expect(claims[0]).toEqual({ entry: 'X', quote: null });
   });
 });
+
+// ---------------------------------------------------------------------------
+// GM QUOTE > ELEMENT > DECORATION (the critic's item 2, 2026-10-22).
+// The keep loop walked freeRows in SHEET order, so which row survived a budget
+// of 1 depended on where it sat in the sections object. That cut Marrowsun's
+// `Marrowsun Cinder` — the row carrying the element receipt — and kept
+// `Marrow Rise`, a decoration. A receipt row is never displaced by one without.
+describe('the free-row budget keeps the best receipt, not the earliest row', () => {
+  const { settleSheetBudgets } = require('../generate.mjs');
+  const row = (name, stamp) => ({ name, text: 'The creature does a thing.', freeRow: true, template: null, ...stamp });
+  const settle = (sections) => {
+    const lines = [];
+    settleSheetBudgets({ sections, printExact: false, generation: {}, trace: (a, b) => lines.push(`${a} ${b}`) });
+    return { names: Object.values(sections).flat().map((e) => e.name), trace: lines.join('\n') };
+  };
+
+  it('keeps the ELEMENT row over a decoration that sits earlier (the Marrowsun shape)', () => {
+    const out = settle({ Traits: [row('Marrow Rise', { decoration: true }), row('Marrowsun Cinder', { expresses: 'a sun of bone' })] });
+    expect(out.names).toEqual(['Marrowsun Cinder']);
+  });
+
+  it('keeps the GM-QUOTE row over an element row that sits earlier', () => {
+    const out = settle({ Traits: [row('Element Row', { expresses: 'an element' }), row('Quoted Row', { gmQuote: 'the words the GM typed' })] });
+    expect(out.names).toEqual(['Quoted Row']);
+  });
+
+  it('prefers a quote to a decoration regardless of order, both ways round', () => {
+    expect(settle({ Traits: [row('Deco', { decoration: true }), row('Quoted', { gmQuote: 'x' })] }).names).toEqual(['Quoted']);
+    expect(settle({ Traits: [row('Quoted', { gmQuote: 'x' }), row('Deco', { decoration: true })] }).names).toEqual(['Quoted']);
+  });
+
+  it('leaves a single free row alone whatever its receipt', () => {
+    expect(settle({ Traits: [row('Only', { decoration: true })] }).names).toEqual(['Only']);
+    expect(settle({ Traits: [row('Only', {})] }).names).toEqual(['Only']);
+  });
+
+  it('traces the order it chose, so a cut row can be accounted for', () => {
+    const out = settle({ Traits: [row('Deco', { decoration: true }), row('Elem', { expresses: 'e' })] });
+    expect(out.trace).toMatch(/free-row order: "Elem" \[element\] > "Deco" \[decoration\]/);
+    expect(out.trace).toMatch(/free row over budget: Traits\/"Deco"/);
+  });
+
+  it('breaks ties within a rank by sheet order, so the sort is stable', () => {
+    const out = settle({ Traits: [row('FirstDeco', { decoration: true }), row('SecondDeco', { decoration: true })] });
+    expect(out.names).toEqual(['FirstDeco']);
+  });
+});
+
+// A REFUSAL WITH NO `missing` IS STILL A BUILD SIGNAL (2026-10-22). The schema
+// asks for `missing`, the prose demands it, readFit parses it correctly — and the
+// call omits it on about a third of refusals while still naming `closest`. Those
+// were thrown away as UNNAMED, so 12 of 33 gap lines on the forty carried nothing.
+// They are now recorded as a VARIANT demand, and kept OUT of the vetoed tally,
+// which counts accepted picks only.
+describe('gap records: an unnamed mechanic is kept, and does not corrupt the tally', () => {
+  const { readGapOutcomes } = require('../generate.mjs');
+  const run = (gapRecords) => {
+    const lines = [];
+    const generation = {};
+    const out = readGapOutcomes({
+      sections: { Actions: [{ name: 'X', template: 'zone' }] },
+      gapRecords, generation, trace: (a, b) => lines.push(`${a} ${b}`),
+    });
+    return { out, generation, trace: lines.join('\n') };
+  };
+
+  it('emits a gap line for a refusal that named no mechanic', () => {
+    const r = run([{ line: '(missing unstated) — A VARIANT OF bloodied-fury', template: null, missing_unstated: true }]);
+    expect(r.trace).toMatch(/\[gap\] \(missing unstated\) — A VARIANT OF bloodied-fury/);
+  });
+
+  it('keeps those records OUT of the accepted-pick tally', () => {
+    const r = run([
+      { line: 'a real gap', template: 'zone' },                                     // landed
+      { line: 'another', template: 'pounce' },                                       // vetoed
+      { line: '(missing unstated)', template: null, missing_unstated: true },        // neither
+    ]);
+    expect(r.out.vetoed).toBe(1);
+    expect(r.generation.gap_vetoed).toBe('1 of 2');          // not "1 of 3"
+    expect(r.generation.gap_missing_unstated).toBe(1);
+    expect(r.trace).toMatch(/1 of 2 accepted signature pick\(s\) never reached the sheet/);
+  });
+
+  it('counts them separately so the share stays visible', () => {
+    const r = run([
+      { line: 'u1', template: null, missing_unstated: true },
+      { line: 'u2', template: null, missing_unstated: true },
+    ]);
+    expect(r.generation.gap_missing_unstated).toBe(2);
+    expect(r.generation.gap_vetoed).toBe('0 of 0');
+  });
+});

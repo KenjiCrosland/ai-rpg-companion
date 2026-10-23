@@ -65,9 +65,12 @@ const run = async () => {
   // console.warn
   let lines = [];
   let genFailed = null; // a THROWN generation never saves — without this the run waited out the full timeout on it (the gmAsked ReferenceError read as six "timeouts", 2026-10-18)
+  // A PAGE ERROR CARRIES THE STACK. The console text of a caught-and-logged
+  // failure usually does not, and a stochastic throw cannot be found without one.
+  page.on('pageerror', (err) => { lines.push(`[pageerror] ${err?.stack ?? err?.message ?? err}`); });
   page.on('console', (msg) => {
     const t = msg.text();
-    if (/Statblock generation failed/.test(t)) genFailed = t.slice(0, 160);
+    if (/Statblock generation failed/.test(t)) genFailed = t.slice(0, 900); // 160 truncated away the STACK, which is the only thing that locates a stochastic throw (2026-10-22)
     // every warning/error is captured (minus browser noise) — a "Statblock
     // generation failed: TypeError: Failed to fetch" was dropped by the old
     // allowlist and a dead run looked like a resolve hiccup (2026-09-20)

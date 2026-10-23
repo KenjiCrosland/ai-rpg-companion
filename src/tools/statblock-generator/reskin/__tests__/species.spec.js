@@ -354,22 +354,41 @@ describe('the critic\'s fifth read, and the judgements the call now owns (2026-1
     expect(parseFit(JSON.stringify({ template: 'charge' }), menu).wrong).toEqual([]);
   });
 
-  test('a shape whose fiction is a body or a tech needs that claim in the words or on the sheet', () => {
-    const { templatesFor, TEMPLATE_BY_ID } = require('../templates.mjs');
-    expect(TEMPLATE_BY_ID.get('shell-withdraw').requires_claim).toBeInstanceOf(RegExp);
-    expect(TEMPLATE_BY_ID.get('blink').requires_claim).toBeInstanceOf(RegExp);
+  // 2026-10-22: the critic's fifth read is unchanged — a shape whose fiction is
+  // anatomy or arcane tech needs that claim — but it changed OWNER. It was two
+  // `requires_claim` regexes on shell-withdraw and blink; it is now NEEDS_BODY,
+  // judged by the call, with each template's own `keys` as the fallback for a
+  // failed call. Every case below is one the regexes were pinned on.
+  //
+  // These FORCE a verdict, so they test the GATE and not the model. The live run
+  // (body6-2026-10-22) confirms the call refuses the orc; it does NOT confirm the
+  // call grants the stone-house shell — see plans/declare-the-body-2026-10-22.
+  test('a shape whose fiction is a body or a tech needs that claim — now the call\'s, with keys as the fallback', () => {
+    const { templatesFor, TEMPLATE_BY_ID, NEEDS_BODY } = require('../templates.mjs');
+    // the mechanism moved
+    expect(TEMPLATE_BY_ID.get('shell-withdraw').requires_claim).toBeNull();
+    expect(TEMPLATE_BY_ID.get('blink').requires_claim).toBeNull();
+    expect(NEEDS_BODY['shell-withdraw']).toMatch(/shell|carapace/i);
+    expect(NEEDS_BODY.blink).toMatch(/phase|between places/i);
+
     const base = { cr: 5, sections: { Actions: [{ name: 'Greataxe', text: '*Melee Attack Roll:* +6, reach 5 ft. 12 (2d8 + 3) Slashing damage.' }] } };
     const ids = (c) => templatesFor(c).map((t) => t.id);
-    // the orc's "retreats behind iron armor" hits shell-withdraw's loose match keys and still buys no shell
-    expect(ids({ ...base, archetype: 'brute', concept: 'an orc warchief who retreats behind iron armor' })).not.toContain('shell-withdraw');
-    expect(ids({ ...base, archetype: 'brute', concept: 'a turtlefolk guard who withdraws into its shell' })).toContain('shell-withdraw');
-    // a troglodyte that "lurks in shadow and steps away" is not a teleporter
-    expect(ids({ ...base, archetype: 'lurker', concept: 'a troglodyte that lurks in shadow and steps away' })).not.toContain('blink');
-    expect(ids({ ...base, archetype: 'lurker', concept: 'a shadow stalker that teleports behind you' })).toContain('blink');
-    // a row already on the sheet is a claim too
-    expect(ids({ cr: 5, archetype: 'brute', concept: 'a stoic guard', sections: { Traits: [{ name: 'Bony Carapace', text: 'Its shell is thick.' }] } })).toContain('shell-withdraw');
-  });
 
+    // THE CALL DECIDES. The orc's words hit shell-withdraw's loose keys ("armor",
+    // "retreat") and still buy no shell, because the verdict overrules them.
+    expect(ids({ ...base, archetype: 'brute', concept: 'an orc warchief who retreats behind iron armor', bodyVerdicts: { 'shell-withdraw': false } })).not.toContain('shell-withdraw');
+    expect(ids({ ...base, archetype: 'brute', concept: 'a turtlefolk guard who withdraws into its shell', bodyVerdicts: { 'shell-withdraw': true } })).toContain('shell-withdraw');
+    // and the case the regex could not reach: no key word anywhere, a real shell
+    expect(ids({ ...base, archetype: 'brute', concept: 'an ancient thing carrying a stone house on its back', bodyVerdicts: { 'shell-withdraw': true } })).toContain('shell-withdraw');
+
+    expect(ids({ ...base, archetype: 'lurker', concept: 'a troglodyte that lurks in shadow and steps away', bodyVerdicts: { blink: false } })).not.toContain('blink');
+    expect(ids({ ...base, archetype: 'lurker', concept: 'a shadow stalker that teleports behind you', bodyVerdicts: { blink: true } })).toContain('blink');
+
+    // NO VERDICT (a failed call): the keys decide, and a row on the sheet is a
+    // claim too — the retired regex checked rows, and the fallback must not lose it
+    expect(ids({ cr: 5, archetype: 'brute', concept: 'a stoic guard who stands his ground at the gate', sections: { Traits: [{ name: 'Bony Carapace', text: 'Its shell is thick.' }] } })).toContain('shell-withdraw');
+    expect(ids({ ...base, archetype: 'lurker', concept: 'a troglodyte that lurks in its burrow and eats what it finds' })).not.toContain('blink');
+  });
   test('the species carries its size, and a size word in the GM\'s words outranks it', async () => {
     const { SPECIES } = require('../species.mjs');
     expect(SPECIES.find((s) => s.key === 'minotaur').size).toBe('Large');

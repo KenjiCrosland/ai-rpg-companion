@@ -37,7 +37,52 @@ const DAMAGE = ['Acid', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Poiso
 const PHYSICAL = ['Bludgeoning', 'Piercing', 'Slashing'];
 
 // closed-vocabulary slots: the model may propose, the engine only accepts a listed value
-const VOCAB = { save_stat: SAVE_STATS, consumed_condition: CONDITIONS, condition_minor: MINOR, restraint: RESTRAINTS, r_vuln: DAMAGE };
+/**
+ * AREA SHAPE AS A PARAMETER — print's own grammar, with the engine owning the size.
+ *
+ * Every gated area template in this catalog is locked to ONE shape, and the
+ * catalog cannot produce a LINE at all — print's second-most-common area shape,
+ * 22 of 109 area clauses. Measured 2026-10-22 against srd52-monsters: Cone 49,
+ * Line 22, Emanation 8, Sphere 6.
+ *
+ * Only Cone and Line are here, deliberately. The size ladder is print's MEDIAN
+ * per CR band, and only those two have enough instances to derive one:
+ *
+ *   Cone  15/15/30/30/60/90   n = 11, 9, 9, 3, 14, 9   (and this is already
+ *                                                       spew's own ladder)
+ *   Line  20/30/40/60/60/90   n = 5, 1, 5, 1, 7, 5     (10-12 smoothed: print's
+ *                                                       lone instance reads 90,
+ *                                                       which is a 1-row median)
+ *
+ * Sphere and Emanation are NOT here: their bands run n = 0 to 2, which is too
+ * thin to build a ladder from. Templates that use them keep their fixed text.
+ *
+ * The MODEL picks the shape (a closed enum, validated by membership). The ENGINE
+ * owns the distance, because a size is a pricing input and engine slots are never
+ * the model's.
+ *
+ * CONSERVATIVE, by the owner's ruling 2026-10-22: an AREA shape is only offered
+ * where the template is already GATED. Print gates 72% of its area rows, and
+ * `valueCheck` already prices a gated area row correctly (its per-target budget
+ * is the round's damage). Nothing prices an UNGATED area row — not valueCheck,
+ * not calculateCR — so widening one would inflate CR invisibly. Gated widening
+ * routes into pricing print already backs; ungated widening is simply not offered.
+ */
+const AREA_LADDER = {
+  Cone: { '0-2': 15, '3-5': 15, '6-9': 30, '10-12': 30, '13-20': 60, '21+': 90 },
+  Line: { '0-2': 20, '3-5': 30, '6-9': 40, '10-12': 60, '13-20': 60, '21+': 90 },
+};
+export const AREA_SHAPES = Object.keys(AREA_LADDER);
+/** Print's clause for a shape at a CR band. */
+export const areaClause = (shape, band) => {
+  const n = AREA_LADDER[shape]?.[band];
+  if (!n) return null;
+  return shape === 'Cone'
+    ? `each creature in a ${n}-foot Cone`
+    : `each creature in a ${n}-foot-long, 5-foot-wide Line`;
+};
+
+const VOCAB = { area_shape: AREA_SHAPES, save_stat: SAVE_STATS, consumed_condition: CONDITIONS, condition_minor: MINOR, restraint: RESTRAINTS, r_vuln: DAMAGE };
 // flavor slots: the model's words, bounded (no digits, no rules grammar, short)
 export const FLAVOR_SLOTS = ['phobia', 'restraint', 'projectile', 'wound_noun', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
 // engine slots: never the model's
@@ -50,6 +95,7 @@ const SHAPE_TAGS = {
   'gaze-single': ['save', 'condition'], snare: ['save', 'condition'], swallow: ['save', 'condition'], reel: ['save', 'movement'],
   'condition-payoff': ['save', 'damage'], rampage: ['once_per_fight', 'damage'], blink: ['always', 'movement'],
   zone: ['once_per_fight', 'condition'], execute: ['save', 'damage'], 'death-burst': ['always', 'damage'],
+  'life-drain': ['on_hit', 'condition'], // print's HP-maximum reduction: a rider on the hit, the effect lasting past the turn
   'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], contagion: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], spew: ['save', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'hook-rider': ['on_hit', 'movement'], riposte: ['on_being_hit', 'damage'], 'snap-shot': ['on_being_hit', 'damage'], 'ground-burst': ['save', 'damage'], 'volley-order': ['always', 'resource'], 'random-ray': ['save', 'condition'], 'blurred-form': ['always', 'defense'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'stunning-strike': ['on_hit', 'condition'], 'patient-defense': ['always', 'defense'], 'lay-on-hands': ['always', 'resource'], 'second-wind': ['always', 'resource'], 'shield-bash': ['save', 'condition'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
   'spider-climb': ['always', 'movement'], phobia: ['always', 'condition'], 'terrain-walk': ['always', 'movement'], 'aberrant-ground': ['always', 'movement'], 'faultless-tracker': ['always', 'condition'], 'web-walker': ['always', 'movement'],
   'fire-aura': ['start_of_turn', 'damage'], 'noxious-aura': ['save', 'condition'], 'bloodied-fury': ['always', 'defense'], 'uncanny-sense': ['always', 'defense'], 'earth-glide': ['always', 'movement'], tunneler: ['always', 'movement'], berserk: ['always', 'condition'], 'shielded-mind': ['always', 'defense'], evasion: ['always', 'defense'],
@@ -62,6 +108,38 @@ const SHAPE_TAGS = {
 // (containment beside a Cage) — or, THE DIRECTION RULE (critic, 2026-09-22): an
 // engine it would work AGAINST. A grappler, swallower, or cage needs the victim
 // adjacent; a repeller (Frightened, a push) sends it away. Holders stay.
+/**
+ * THE FAMILY A TEMPLATE BELONGS TO, declared — because the declared CELL is not
+ * the family (the critic's item 2 condition 3, and item 3's "own-turn-punisher
+ * into the family cap").
+ *
+ * `settleSheetBudgets` reads `section/trigger/effect` as a proxy for family and a
+ * comment there claims "the declared cell IS the family". Measured 2026-10-22,
+ * that is true only of the three templates it was written against. The
+ * retaliation family spans THREE cells:
+ *
+ *   trait/on_being_hit/damage        heated-body, bloodied-burst, resonant-body
+ *   reaction/on_being_hit/damage     ward-retaliation, riposte
+ *   bonus_action/always/damage       own-turn-punisher   <- the cap could not see it
+ *
+ * So the family is declared, not inferred — and it reuses the engine vocabulary
+ * donor rows already carry (`punisher`, `containment`, `contact-damage`) so one
+ * name means one thing. `sheetEngines` reads this off the row BEFORE any text
+ * rule, which is the owner's standing order: declared data first, prose never.
+ */
+export const FAMILY = {
+  // retaliation — the critic's Vashka case: thunder from lacquered plate beside her own Riposte
+  'own-turn-punisher': 'punisher',
+  'ward-retaliation': 'punisher',
+  riposte: 'punisher',
+  // light-mark — the critic's named duplicate pair
+  'marking-light': 'light-mark',
+  reveal: 'light-mark',
+  // grapple — Scree-Pit's third grapple row
+  snatch: 'containment',
+  'hook-rider': 'containment',
+};
+
 const EXCLUDE_ON = {
   charge: ['charge-rider'], 'throw-retrieve': ['thrown-weapon'], pounce: ['charge-rider'],
   'hook-drag': ['containment'], 'hook-rider': ['containment'], 'obstacle-pull': ['containment'], reel: ['containment'], snare: ['containment'],
@@ -70,11 +148,22 @@ const EXCLUDE_ON = {
   'fire-aura': ['contact-damage', 'aura'], 'noxious-aura': ['aura'], 'truth-aura': ['aura'], 'gaze-aura': ['aura'], 'charge-push': ['charge-rider'], 'sealed-body': ['immutable-form', 'shielded-mind'], 'shielded-mind': ['shielded-mind'], 'warded-mending': ['regeneration'],
   // repellers, off every containment seat
   'escalating-dread': ['containment'], 'terror-pulse': ['containment'], 'push-prone': ['containment'], 'gaze-single': ['containment'],
+  // ONE OF EACH FAMILY A SHEET (2026-10-22). These read the declared FAMILY above
+  // off rows the sheet already carries, so a second row of the same family is
+  // never OFFERED — the critic's "no duplicate family including
+  // own-turn-punisher, grapple and light-mark".
+  'own-turn-punisher': ['punisher', 'contact-damage'],
+  'marking-light': ['light-mark'], reveal: ['light-mark'],
+  snatch: ['containment'],
 };
 export function sheetEngines(sections = {}) {
   const rows = Object.values(sections).flat();
   const out = new Set();
   for (const e of rows) {
+    // THE DECLARED FAMILY FIRST, prose only as the fallback (owner's standing
+    // order, 2026-10-22). A row built from a template carries its family; the
+    // text rules below exist for PRINT rows and anything unstamped.
+    if (e.family) out.add(e.family);
     // containment = the ENGULF engine or a Reel row — a plain grapple-on-hit rider
     // is not (the phantom's touch grapples, and that excluded the pull the
     // keeper's own concept names: goldens 2026-09-21)
@@ -186,6 +275,7 @@ export const VERB_KEYS = {
   interpose: ['interpose', 'shields', 'takes the blow', 'in the way', 'protects', 'bodyguard', 'guards', 'its charge', 'ward', 'sworn to protect'],
   pounce: ['pounce', 'drop on', 'drops on', 'leap onto', 'from above', 'ambush from', 'stragglers', 'spring', 'pin', 'pins'],
   isolation: ['isolated', 'alone', 'straggler', 'stragglers', 'lone', 'separated', 'cut off', 'apart from', 'picks off', 'singles out'],
+  'life-drain': ['drain', 'drains', 'withers', 'wither', 'withering', 'saps', 'sap', 'life drain', 'drinks the years', 'drinks the life', 'steals years', 'eats the life', 'leeches', 'leech', 'desiccates', 'husk', 'wasting'],
   snatch: ['snatch', 'carry off', 'carries off', 'talons', 'swoop', 'drop them', 'drops them', 'lift', 'carry', 'from the sky'],
   'ward-retaliation': ['guard', 'guards', 'protect', 'ward', 'retaliate', 'avenge', 'answer', 'bodyguard', 'sworn to', 'its charge', 'sentinel'],
   assassinate: ['assassin', 'ambush', 'first strike', 'unseen', 'surprise', 'stalk', 'strikes first', 'before they notice', 'knife', 'garrote'],
@@ -332,9 +422,105 @@ const REQUIRES_IMPOSED = new Set(['condition-payoff', 'exploiter']);
 // A MECHANIC ENGINE NEEDS A KEY IN THE GM's WORDS (the critic's third species read): a shape whose frame imposes Grappled or swallows
 // never lands on words that never asked for it. A creature-only prompt (three significant words or fewer) gives nothing to read and the
 // catalog composes freely, as the head-clause rule says.
+/**
+ * WHAT MUST BE TRUE OF THE BODY — in plain words, for the CALL to judge.
+ *
+ * Step 1 of plans/declare-the-body-2026-10-22.md. The menu screened a template
+ * against the creature's JOB (role shelf, CR band, style) and never its BODY, so
+ * `adhesive` reached an owlbear because an owlbear is a `brute`. The AI refused
+ * it, correctly, and the engine shipped the refusal anyway as a decoration row.
+ *
+ * These strings are QUESTIONS FOR THE CALL, never patterns to match. Do not turn
+ * one into a regex and do not add a word to a template's `keys` to stand in for
+ * one — that is the hidden-error failure the owner ruled against (2026-10-22:
+ * "I would rather a stochastic error of 1 in 10 over a consistent hidden error
+ * over a case we haven't tested"). The two concept regexes this retires,
+ * shell-withdraw's and blink's, are exactly that failure — a word list says
+ * nothing about the case outside it.
+ *
+ * Measured, so the claim stays honest (body6-2026-10-22T15-02-36): the call fixes
+ * the direction where the WORDS are present and the body is not — an owlbear is
+ * not sticky, a vampire has no ward, a lizardfolk is not made of brass, three for
+ * three live. It did NOT fix "an ancient thing carrying a stone house on its
+ * back", which the call also reads as no shell. That example shows what the regex
+ * could not see; it does not show the call seeing it.
+ *
+ * The bar is a CONTRADICTION A GM WOULD SEE, not a correlation in print. Print
+ * pairs Spider Climb with a Climb speed 12 times in 14 and the gate was still
+ * wrong, because the trait GRANTS the climbing. And a gate must not become a
+ * wall: print's own Mimic HAS Adhesive, so a judge that refuses a mimic is as
+ * broken as one that glues an owlbear.
+ */
+export const NEEDS_BODY = {
+  adhesive: 'a surface that is sticky, secreting, or coated in something adhesive',
+  'resonant-body': 'a body of metal, crystal, glass, or something hollow that rings when struck',
+  'active-toll': 'a body that rings, tolls, or resonates',
+  'heated-body': 'a body that is burning hot, molten, or wreathed in flame',
+  'fire-aura': 'a body that burns, radiates heat, or is wreathed in flame',
+  // 2026-10-22: the first wording, 'a body that reeks, rots, or gives off fumes',
+  // carried 3 of 5 misses on the held-out probe — it missed a siege engine that
+  // "belches smoke" and a swarm of carrion beetles, and false-positived on a
+  // glacier "trailing a wake of killing cold". It asked about a BODY while the
+  // concepts described an ACT, and "fumes" read as any emission. Name the act and
+  // the smell, and exclude the cold.
+  'noxious-aura': 'a stench it gives off, or smoke, fumes, spores or rot it belches or trails — a SMELL or a choking cloud, not merely cold or dark',
+  spew: 'a mouth, vent, or opening it can force something out of',
+  coating: 'venom, poison, acid, or some substance it can coat a strike with',
+  'marking-light': 'a body that sheds light, glows, or burns visibly',
+  'warded-mending': 'a ward, shrine, charge, or consecrated place it draws strength from',
+  'ward-retaliation': 'something specific it guards — a charge, a ward, or a place',
+  'sealed-body': 'a body that is closed or airtight, with no openings to exploit',
+  'false-appearance': 'a body that can pass for an ordinary object when it holds still',
+  'shell-withdraw': 'a shell, carapace, or hard case it can pull itself into',
+  blink: 'a body that phases, steps between places, or is not wholly here',
+  'phase-slip': 'a body that phases, steps between places, or is not wholly here',
+  'gaze-single': 'eyes, or some organ of sight it can fix on a victim',
+  'gaze-aura': 'a face or form that is horrifying to look at',
+  'random-ray': 'eyes, or many of them, that it can fire something from',
+  mimicry: 'a voice, or some way of making sounds that are not its own',
+  wail: 'a voice, or some way of making sound',
+  herd: 'a voice, horn, or some way of making a sound others obey',
+  rally: 'a voice, and allies who can hear it',
+  'volley-order': 'allies who fight alongside it and take its orders',
+  'hook-rider': 'a hook, claw, tendril, or something that catches and holds',
+  snare: 'webs, cords, tendrils, or something it can entangle with',
+  'snare-bolt': 'a lash, line, or something it can throw to entangle at range',
+  'web-walker': 'webs it spins or lives in',
+  'blurred-form': 'a body that is indistinct, shifting, or hard to look at directly',
+  zone: 'something it gives off — gas, murk, spores, dark, or cold',
+  'zone-seed': 'something it gives off — gas, murk, spores, dark, or cold',
+  'blighted-ground': 'a corrupting presence that fouls what it touches',
+  'aberrant-ground': 'a presence so unnatural that the ground near it is wrong',
+  absorption: 'a body that drinks in one kind of energy rather than being hurt by it',
+  drain: 'a way of taking life, warmth, or vitality out of what it touches',
+  // 2026-10-22, drain10: the first wording — 'a touch that drains, withers, or
+  // drinks the life out of what it strikes' — was refused for "a clay guardian
+  // whose every blow leaves a wound that will not close", which is print's OWN
+  // canonical case (Clay Golem/Slam). It framed the mechanic as life-draining
+  // when print's range runs from the Specter's drain to the Golem's acid wound
+  // to the Mummy's rot. Name the WOUND as well as the draining.
+  'life-drain': 'a strike that withers, drains, rots, or leaves a wound that will not close',
+  'faultless-tracker': 'a sense — scent, a bond, or an unnatural certainty — for following prey',
+  'uncanny-sense': 'a sense beyond sight: scent, tremor, echo, or something stranger',
+  'terrain-walk': 'a body or gait suited to one hostile terrain',
+  'bloodied-burst': 'a body that would spill, burst, or erupt when badly wounded',
+  'death-burst': 'a body that would spill, burst, or erupt when it dies',
+  seal: 'a touch that closes, binds, or seals what it is laid on',
+};
+
+/** The size ladder, smallest first. One definition: the checker's engulf-size rule reads it too. */
+export const SIZES = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'];
 const NEEDS_ENGINE_KEY = new Set(['swallow', 'hook-drag', 'snatch', 'reel', 'pull-through']);
 const ENGINE_KEY_WORD = /\b(?:grapple|grapples|grappled|grab|grabs|grabbing|seize|seizes|hold|holds|clutch|clutches|wrestle|constrict|constricts|crush|crushes|squeeze|squeezes|drag|drags|dragging|pull|pulls|pulling|haul|hauls|yank|yanks|hook|hooks|swallow|swallows|engulf|engulfs|devour|devours|gulp|smother|smothers|entomb|envelop|coil|coils|wrap|wraps|snare|snares|net|nets|tentacle|tentacles|jaws|maw|bite|bites|lash|lashes|whip|whips|chain|chains|rope|tongue|trunk|pin|pins|under|beneath|inside)\b/i;
-export const engineKeyOk = (concept) => { const sig = String(concept ?? '').toLowerCase().split(/[^a-z']+/).filter((w) => w.length > 2 && !/^(?:the|and|but|with|who|that|which|its|his|her|their|into|onto|from|for|out|off|over|under|this|than|then|them|they|was|were|has|have|had|are|been|being|not|one|two|too|very|own|new|old)$/.test(w)); return sig.length <= 3 || ENGINE_KEY_WORD.test(String(concept ?? '')); };
+/**
+ * The concept's content words. A concept with three or fewer carries too little
+ * to judge a body claim on, and the convention in this file is that the unknown
+ * does not exclude ("no type known: no exclusion" — templates.spec.js). One
+ * definition: `engineKeyOk` and the body-requirement fallback both read it.
+ */
+export const significantWords = (concept) => String(concept ?? '').toLowerCase().split(/[^a-z']+/)
+  .filter((w) => w.length > 2 && !/^(?:the|and|but|with|who|that|which|its|his|her|their|into|onto|from|for|out|off|over|under|this|than|then|them|they|was|were|has|have|had|are|been|being|not|one|two|too|very|own|new|old)$/.test(w));
+export const engineKeyOk = (concept) => significantWords(concept).length <= 3 || ENGINE_KEY_WORD.test(String(concept ?? ''));
 
 const SECTION_BY_REPLACES = { signature: 'action', nova: 'action', 'bonus-alt': 'bonus_action', trait: 'trait', 'melee-rider': 'rider', 'ranged-rider': 'rider', reaction: 'reaction' };
 const HOST_BY_REPLACES = { 'melee-rider': 'melee', 'ranged-rider': 'ranged' }; // which attack row a rider appends to
@@ -346,7 +532,7 @@ export const TEMPLATES = [
   ...SHAPES.filter((s) => SECTION_BY_REPLACES[s.replaces] && SHAPE_TAGS[s.id]).map((s) => ({
     id: s.id, name: s.name, kind: 'shape', cite: s.cite,
     section: SECTION_BY_REPLACES[s.replaces], replaces: s.replaces, roles: s.roles, styles: s.styles, cr_range: s.cr_range, /* `replaces` names the SLOT the template claims — the slot-yield rule reads it (fidelity pipeline step 2) */
-    gate: s.gate ?? null, nova: s.replaces === 'nova', requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null, requires_row: s.requires_row ?? null, requires_claim: s.requires_claim ?? null,
+    gate: s.gate ?? null, nova: s.replaces === 'nova', requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null, requires_row: s.requires_row ?? null, requires_claim: s.requires_claim ?? null, requires_size: s.requires_size ?? null, needs_body: NEEDS_BODY[s.id] ?? null, family: FAMILY[s.id] ?? null, targets: s.targets ?? null,
     host: s.host ?? HOST_BY_REPLACES[s.replaces] ?? null, // a reaction that fires a ranged row needs one on the sheet (snap-shot)
     trigger: SHAPE_TAGS[s.id][0], effect: SHAPE_TAGS[s.id][1],
     keys: [...new Set([...(VERB_KEYS[s.id] ?? []), ...(SHAPE_KEYS[s.id] ?? [])])],
@@ -359,6 +545,16 @@ export const TEMPLATES = [
     section: Object.entries(SECTION_OF).find(([, v]) => v === seed.section)?.[0] ?? 'action',
     roles: seed.archetypes, styles: [], cr_range: [seed.minCr ?? 0, 30],
     gate: / \((Recharge [\d–-]+|\d\/Day)\)$/.exec(seed.name)?.[1] ?? null, nova: !!seed.nova, requires_movement: null,
+    // DECLARATIONS REACH A SEED TOO (bug, found 2026-10-22 while adding FAMILY):
+    // the catalog is built from two branches, and only the SHAPES branch carried
+    // `needs_body`. Eight requirements — coating, phase-slip, herd, rally,
+    // snare-bolt, zone-seed, blighted-ground, drain — were silently inert from
+    // the moment they were written, because their templates are `kind: 'seed'`.
+    // A declaration that never reaches its template is worse than no declaration:
+    // the table reads complete. `body-requirements.spec.js` now asserts every
+    // NEEDS_BODY and FAMILY key lands on its template, so this cannot recur.
+    needs_body: NEEDS_BODY[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? NEEDS_BODY[seed.key] ?? null,
+    family: FAMILY[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? FAMILY[seed.key] ?? null,
     trigger: /When (?:the creature|it) hits\b/i.test(seed.text) ? 'on_hit'
       : /\*Trigger:\*|hits the creature|is hit by|takes damage/i.test(seed.text) ? 'on_being_hit'
       : /at the start of each of (?:its|the creature's) turns/i.test(seed.text) ? 'start_of_turn' // the recurring idiom; "until the start of its next turn" is a duration
@@ -427,7 +623,30 @@ export function shapesForAsked(asked) {
 /** How many off-shelf shape matches a signature menu may gain (the critic's "3-6"). */
 export const SHAPE_MENU_CAP = 6;
 
-export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '', concept = '', holds = null, shapes = null, shapeCap = SHAPE_MENU_CAP, diagnose = null } = {}) {
+/**
+ * WHICH body requirements are LIVE for this sheet — the only ones worth asking.
+ *
+ * Runs the ordinary menu filter with every body requirement treated as satisfied,
+ * so what comes back is the set a template could reach on role, CR, style, type,
+ * movement and size alone. Asking only these keeps the call's question list to the
+ * handful in play instead of all 41, and it is why the body verdicts ride on the
+ * IDEA call (once per sheet, before any menu is built) rather than costing a new
+ * round trip.
+ *
+ * @returns {Array<{id: string, needs: string}>}
+ */
+export function liveBodyRequirements(ctx = {}) {
+  const satisfied = new Proxy({}, { get: () => true, has: () => true });
+  const out = new Map();
+  for (const section of ['action', 'bonus_action', 'reaction', 'trait', 'rider']) {
+    for (const t of templatesFor({ ...ctx, section, trigger: null, bodyVerdicts: satisfied })) {
+      if (t.needs_body && !out.has(t.id)) out.set(t.id, { id: t.id, needs: t.needs_body });
+    }
+  }
+  return [...out.values()];
+}
+
+export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '', concept = '', size = '', holds = null, bodyVerdicts = null, shapes = null, shapeCap = SHAPE_MENU_CAP, diagnose = null } = {}) {
   const band = bandFor(cr);
   const rows = Object.values(sections).flat();
   // A FEATURE ALREADY ON A ROW IS OWNED (critic, 2026-10-14: Rruzhk's Open Hand
@@ -474,6 +693,16 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     && (!t.requires_movement || new RegExp(t.requires_movement, 'i').test(movement))
     && (!t.requires_style || t.requires_style === style) // a ward-shaped reaction needs the warden seat, not just a defender line
     && !(t.deny_types && type && t.deny_types.some((ty) => new RegExp(`^${ty}\\b`, 'i').test(String(type))))
+    // A BODY-MASS REQUIREMENT, read off the DECLARED size — never off the text.
+    // Fails OPEN when size is unknown, like `type` and `movement` above, so the
+    // call sites that pass no size are unaffected. Only two templates declare
+    // it: trample (print 4 of 4 Large+) and leap. Measured against print, which
+    // is also how the circular Climb gate on spider-climb was caught — print
+    // CORRELATION is not a requirement, so the test is whether a GM would read a
+    // contradiction (a Tiny body trampling a Medium one), not whether every
+    // print instance happens to satisfy it (2026-10-22).
+    && !(t.requires_size && size && SIZES.indexOf(String(size)) >= 0
+      && SIZES.indexOf(String(size)) < SIZES.indexOf(t.requires_size))
     && !(t.requires_row instanceof RegExp && rows.length && !rows.some((e) => t.requires_row.test(e.text ?? '')) && !(t.keys ?? []).some((k) => new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(readPhrases(String(concept ?? ''))))) // a body-plan filter: a hurled weapon needs something to throw — a thrown/ranged row on the sheet, or a weapon the USER's words name (the armor's lance; never the gong) // a body trait is a BODY's: contact damage on a Humanoid pirate queen read her name as brine (critic, new lines 2026-09-28)
     && (!section || t.section === section)
     && triggerCompatible(trigger, t.trigger)
@@ -488,6 +717,33 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     // (gate-2026-10-17T19-30-16). The answer decides where the row LANDS, not
     // only where it is reported. A null answer leaves the word list deciding.
     && !(NEEDS_ENGINE_KEY.has(t.id) && (holds === null ? !engineKeyOk(concept) : !holds))
+    // IS IT TRUE OF THIS BODY? The template DECLARES what it needs in plain words
+    // (NEEDS_BODY) and the CALL judges it, exactly as `holds` is judged above —
+    // that one body question, generalised to the other 41. A verdict of false
+    // keeps the template off the menu, so the AI is never offered an ability it
+    // would be right to refuse (the sticky owlbear, package seven).
+    //
+    // An UNANSWERED requirement falls back to the template's own `keys`, which is
+    // the only job `keys` has here: a fallback for a failed call, never a gate in
+    // its own right (house rule: a word list "acts as a fallback only when the
+    // call fails or errors — never as a tiebreaker against it"). A null answer
+    // leaves the word list deciding, the same concession `holds` makes.
+    && !(t.needs_body && (() => {
+      const v = bodyVerdicts ? bodyVerdicts[t.id] : undefined;
+      if (typeof v === 'boolean') return !v;
+      // UNANSWERED. A failed call must not silently strip 41 templates, so the
+      // fallback keeps this file's convention that the unknown does not exclude:
+      // a concept too thin to judge gates nothing, exactly as `engineKeyOk` lets
+      // a three-word concept through. Otherwise the template's own `keys` decide
+      // — the only job `keys` has here, and never a tiebreaker against a verdict.
+      if (significantWords(concept).length <= 3) return false;
+      // A ROW ALREADY ON THE SHEET IS A CLAIM TOO — the retired `requires_claim`
+      // checked both the words and the rows ("Bony Carapace: its shell is thick"
+      // buys a shell for a concept that never mentions one), and the fallback must
+      // not lose that. The call sees the sheet in its own prompt (`sheetLines`).
+      const says = (text) => (t.keys ?? []).some((k) => new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(text));
+      return !says(readPhrases(String(concept ?? ''))) && !rows.some((e) => says(`${e.name ?? ''} ${e.text ?? ''}`));
+    })())
     // A CLAIM FOR A BODY OR A TECH (the critic's fifth read: an orc "withdraws
     // into its shell"; a troglodyte teleports 40 feet). A shape whose fiction is
     // anatomy or arcane tech needs that claim in the GM's words or on the sheet
@@ -760,6 +1016,19 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // call never chose that weapon — the engine supplied it. A template that
   // needs a row the sheet lacks is not renderable, so it declines here and the
   // seat falls through to one that fits.
+  // {target} — THE AREA SHAPE, chosen by the call from a closed enum, sized by the
+  // engine. CONSERVATIVE (owner, 2026-10-22): an area shape is only honoured on a
+  // template that is already GATED, because nothing prices an ungated area row.
+  // An unusable or absent choice falls to the template's own first declared shape,
+  // never to a miss — the same ladder every other slot uses.
+  if (/\{target\}/.test(frameOf(t, ctx.cr) ?? '')) {
+    const allowed = (t.targets ?? []).filter((sh) => AREA_SHAPES.includes(sh));
+    const asked = String(fills.area_shape ?? '').trim();
+    const pick = (t.gate && allowed.includes(asked)) ? asked : allowed[0];
+    const clause = pick ? areaClause(pick, bandFor(ctx.cr)) : null;
+    if (!clause) return null; // a {target} frame with no declared shape cannot render
+    engine.target = clause;
+  }
   if (/\{ranged_name\}/.test(frameOf(t, ctx.cr) ?? '') && !ctx.rangedName) return null;
   for (const [k, v] of Object.entries(engine)) text = text.split(`{${k}}`).join(v);
   if (obscuring && text.includes('has the Poisoned condition')) pickedCondition = 'Blinded'; // the retype below moves the record with the text
@@ -833,7 +1102,7 @@ export function conceptVerbs(conceptText) {
   return [...new Set(rankByVerb(TEMPLATES, conceptText).flatMap((r) => r.concept))];
 }
 
-export function buildIdeaPrompt({ name, cr, concept, sheetLines, seats = null, energy = null, wantTrait = true, engines = [], verbs = [], owedClause = null }) {
+export function buildIdeaPrompt({ name, cr, concept, sheetLines, seats = null, energy = null, wantTrait = true, engines = [], verbs = [], owedClause = null, bodyRequirements = [] }) {
   return `You are inventing the SIGNATURE ability for a nearly-complete D&D monster. Everything below is already final. Describe the ability in PLAIN WORDS — what it does, when it fires, whom it affects, what limits it. NO rules grammar, NO numbers, NO dice, NO DCs, NO condition names in capitals: the engine owns every number and will pour your idea into a printed rules shape afterwards. Your job is the IDEA a fan would riot to find missing.
 THE SHEET SO FAR (${name}, CR ${cr}) — everything already on it, header and rows:
 ${sheetLines}
@@ -841,12 +1110,38 @@ CONCEPT: ${concept}
 ${owedClause ? `THE CLAUSE THIS ABILITY IS FOR — the sheet is a PRINTED creature plus what the GM added, and this is what they added. It is the whole reason this sheet is not just the printed monster, and nothing on it answers the clause yet. Invent the ability that makes THIS true of THIS creature; do not describe the creature in general: "${String(owedClause).replace(/"/g, "'")}"
 ` : ''}${verbs.length ? `THE CONCEPT'S OWN VERBS: ${verbs.join(', ')} — the signature is one of these verbs made mechanical; an idea that abandons them for something the concept never said (a teleport, a mist, a generic burst) is the wrong idea however clever. ` : ''}${seats ? `BUILD THIS: the action idea builds "${seats.action}"${wantTrait && !seats.packaged ? `; the trait idea makes "${seats.trait}" true on the sheet` : ''}. ` : ''}${engines.length ? `THE SHEET'S ENGINE IS ALREADY BUILT: ${engines.join(', ')} — the concept's holding, swallowing, or caging is DONE by those rows; do not describe it again in any wording. Build the concept's OTHER face. ` : ''}The rows above already OWN their fiction — never describe another version of one; the best ideas key off a condition a row applies, or set up a state the rows exploit.${energy ? ` This creature's energy is ${energy}.` : ''}
 NOT A SIGNATURE (the wide run's biggest miss class, 12 of 48): a damage resistance or immunity, "blades only chip it", "can't be moved", "immune to its own fire", or a saving-throw bonus — those are the HEADER's to grant and the engine already derives them from type and energy. A trait idea must be a RULE that happens: something the creature does, or something that happens to whoever touches, hits, or holds it. Tag each idea: "section" is action | bonus_action | reaction | rider (a clause on the creature's own attack: "when it hits, …")${wantTrait ? ' (the trait idea is always a trait)' : ''}; "trigger" is one of ${TRIGGERS.join(' | ')}; "effect" is one of ${EFFECTS.join(' | ')}.
-Return ONLY JSON: {"action": {"idea": "<2-3 plain sentences>", "section": "<action|bonus_action|reaction>", "trigger": "<...>", "effect": "<...>"}${wantTrait ? ', "trait": {"idea": "<1-2 plain sentences: a passive rule of its body or nature>", "trigger": "<...>", "effect": "<...>"}' : ''}}`;
+${bodyRequirements.length ? `IS IT TRUE OF THIS BODY? ("body_verdicts") The engine has abilities it can only give this creature if certain things are TRUE OF ITS BODY. For each one below, say whether it is.
+${bodyRequirements.map((r) => `- ${r.id}: ${r.needs}`).join('\n')}
+Judge the BODY, not the creature's temperament, job, mood or gear: a man with a crab's temperament is not a crab, a fierce bear is not sticky, and a poisoner is not made of metal. A thing the creature merely CARRIES or USES is not its body.
+But the concept does not have to use the requirement's words — judge what the body plainly IS. A pit of tar is sticky without the word "sticky". A thing bound to a shrine HAS a ward. A creature shaped like a chest can pass for one. Say true when the body is plainly that thing even if the concept never names it.
+Both mistakes cost something. A wrong TRUE puts a rule on the page a GM can see is nonsense \u2014 a bear that glues people to itself. A wrong FALSE takes away an ability the creature obviously should have \u2014 a mimic that isn't sticky. Weigh them evenly and answer on the body. "because" quotes the concept's OWN WORDS, and only for a true answer.
+` : ''}Return ONLY JSON: {"action": {"idea": "<2-3 plain sentences>", "section": "<action|bonus_action|reaction>", "trigger": "<...>", "effect": "<...>"}${wantTrait ? ', "trait": {"idea": "<1-2 plain sentences: a passive rule of its body or nature>", "trigger": "<...>", "effect": "<...>"}' : ''}${bodyRequirements.length ? ', "body_verdicts": [{"id": "<id copied exactly>", "means": <true|false>, "because": "<the concept\'s own words, or \\"\\">"}]' : ''}}`;
 }
 
 export function validateIdeaResponse(jsonString) {
   const p = tryParse(jsonString);
+  // `body_verdicts` is deliberately NOT required here: a missing or malformed
+  // answer falls back to the template's own `keys`, so a body question can never
+  // fail a generation. Validate the SHAPE of what arrives, never the judgement.
   return p != null && typeof p.action?.idea === 'string' && p.action.idea.trim().length >= 20;
+}
+
+/**
+ * The call's body verdicts as {id: boolean}. Anything malformed is simply absent,
+ * and an absent id falls back to that template's `keys` in the menu filter.
+ */
+export function readBodyVerdicts(answer) {
+  // Takes the RAW string callLLM returns, or an already-parsed object. The
+  // expression judge never functioned for exactly this reason — callLLM returns a
+  // string and the reader read `.element_claims` off it, so every claim was
+  // revoked for "no verdict" (critic-response-2026-10-23.md). Parse here.
+  const parsed = typeof answer === 'string' ? tryParse(answer) : answer;
+  const rows = Array.isArray(parsed?.body_verdicts) ? parsed.body_verdicts : [];
+  const out = {};
+  for (const r of rows) {
+    if (r && typeof r.id === 'string' && typeof r.means === 'boolean' && NEEDS_BODY[r.id]) out[r.id] = r.means;
+  }
+  return Object.keys(out).length ? out : null;
 }
 
 // PRINT'S SECTION GRAMMAR (2026-09-21; the blind run tagged 6/7 action ideas
@@ -889,6 +1184,12 @@ export function templateMenuLines(menu, { cr, concept = '', idea = '' } = {}) {
     const matched = [...cv.map((k) => `${k} (concept)`), ...iv.map((k) => `${k} (idea)`)];
     const flav = t.flavor.length ? ` — you fill: ${t.flavor.map((f) => (PREDICATE_SLOTS.has(f) ? `{${f}} (a PREDICATE, no subject and no full stop — the frame already says "Each creature in the area": answer like "has Disadvantage on attack rolls")` : `{${f}}`)).join(', ')}` : '';
     const vocab = slotsOf(frameOf(t, cr)).filter((s) => VOCAB[s]).map((s) => `{${s}} ∈ ${VOCAB[s].join('/')}`);
+    // A TEMPLATE WITH A VARIABLE AREA SHAPE HAS TO SAY SO. The frame carries
+    // `{target}` (an engine-filled clause, sized by band) while the choice the
+    // model makes is `area_shape` — two names on purpose, so the model never sets
+    // a distance. Without this line the menu advertised neither and the choice was
+    // unreachable (2026-10-22).
+    if ((t.targets ?? []).length > 1) vocab.push(`"area_shape" ∈ ${t.targets.join('/')} — the engine sizes it`);
     return `- ${t.id} [${SECTION_OF[t.section]}${t.gate ? `, ${t.gate}` : ''}]${matched.length ? ` VERB MATCH: ${matched.join(', ')}` : ''}: ${frameOf(t, cr).replace(/\*/g, '')}${flav}${vocab.length ? ` — choose: ${vocab.join('; ')}` : ''}`;
   }).join('\n');
 }

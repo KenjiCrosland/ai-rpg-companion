@@ -1,0 +1,12 @@
+[
+  { "name": "", "description": "a bile-spitting horror that hoses a line of acid down a corridor", "cr": "8", "rules": "2024", "canary": "SHAPE: a LINE asked for in the concept's own words — the shape the catalog could not make" },
+  { "name": "", "description": "a plague-lunged thing that breathes a wide fan of spores over a crowd", "cr": "6", "rules": "2024", "canary": "SHAPE: a CONE, spew's own default" },
+  { "name": "", "description": "a sewer drake that spits a narrow jet of filth along the tunnel", "cr": "10", "rules": "2024", "canary": "SHAPE: a LINE at a higher band (60-foot-long)" },
+  { "name": "", "description": "a rot-bellied ogre that vomits over everyone in front of it", "cr": "5", "rules": "2024", "canary": "SHAPE: a CONE at a low band (15-foot)" },
+  { "name": "Hydra", "description": "whose stumps smoke instead of regrowing", "cr": "8", "rules": "2024", "canary": "CONTROL: a known twist, unaffected" },
+  { "name": "Owlbear", "description": "that has learned to climb", "cr": "3", "rules": "2024", "canary": "CONTROL: the package-seven twist" },
+  { "name": "", "description": "a grave-specter that drinks the years out of whoever it touches", "cr": "4", "rules": "2024", "canary": "CONTROL: life-drain still lands" },
+  { "name": "Ancient Gold Dragon", "description": "", "cr": "24", "rules": "2014", "canary": "CONTROL: print's own breath keeps its parent Recharge; no shape meddling on an exact body" },
+  { "name": "", "description": "a bronze shrine-warden that burns whoever lays a hand on it", "cr": "9", "rules": "2024", "canary": "CONTROL: a retaliation body, no area widening" },
+  { "name": "", "description": "a glacier's heart given legs, trailing a wake of killing cold", "cr": "15", "rules": "2024", "canary": "CONTROL: a cold aura, unaffected" }
+]

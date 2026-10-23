@@ -2,7 +2,16 @@ import { generateReskin as generateReskinRaw, buildReskinPrompt } from '../gener
 const generateReskin = (opts, cb) => generateReskinRaw(opts, cb);
 import { pickDonor, scaleDonor } from '../scale.mjs';
 
+// The idea call answers the body question too (NEEDS_BODY / body_verdicts,
+// 2026-10-22). A stub that omits it falls back to each template's own `keys`,
+// which removes body-shaped templates from the menu BEFORE the mechanism a test
+// is actually about can decline them. Tests whose subject is not body truth say
+// so by granting every requirement, which is what a real call does per sheet.
+const { NEEDS_BODY: _NB } = require('../templates.mjs');
+const ALL_BODIES = Object.keys(_NB).map((id) => ({ id, means: true, because: 'test harness: body truth is not this test\'s subject' }));
+
 const answer = (over = {}) => JSON.stringify({
+
   name: 'Gloam Courser', type: 'Fey', size: 'Medium', alignment: 'Neutral Evil',
   senses: 'darkvision 60 ft.', languages: 'Sylvan',
   renames: {
@@ -5205,7 +5214,7 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     let m;
     try {
       m = await generateReskin({ cr: 9, mechanics: [], archetype: 'brute', style: 'juggernaut', concept: 'a temple gong given legs that stomps and sends a tremor in all directions', userConcept: 'a temple gong given legs that stomps and sends a tremor in all directions', resolvedType: 'Construct', mind: 'mindless' }, async (prompt) => {
-        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ action: { idea: 'When its slam lands, the target is hooked on the rim and dragged a few feet toward the gong by the ringing.', section: 'rider', trigger: 'on_hit', effect: 'movement' } });
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ body_verdicts: ALL_BODIES, action: { idea: 'When its slam lands, the target is hooked on the rim and dragged a few feet toward the gong by the ringing.', section: 'rider', trigger: 'on_hit', effect: 'movement' } });
         if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify({ template: 'hook-rider', because: 'hooked and dragged', name: 'Bone-Rattling Note' });
         if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
         if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
@@ -5245,7 +5254,7 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     let m;
     try {
       m = await generateReskin({ cr: 7, mechanics: [], archetype: 'lurker', style: null, movement: ['burrow'], energy: 'Necrotic', concept: 'a barrow-wight that erupts in a shockwave of grave earth around it when roused', userConcept: 'a barrow-wight that erupts in a shockwave of grave earth around it when roused', resolvedType: 'Undead', mind: 'sapient' }, async (prompt) => {
-        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ action: { idea: 'The wight erupts in a shockwave of grave earth around it, battering everything nearby.', section: 'action', trigger: 'save', effect: 'damage' }, trait: { idea: 'When roused it erupts again, spraying grave-dirt that clings and slows the living.', section: 'trait', trigger: 'once_per_fight', effect: 'damage' } });
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ body_verdicts: ALL_BODIES, action: { idea: 'The wight erupts in a shockwave of grave earth around it, battering everything nearby.', section: 'action', trigger: 'save', effect: 'damage' }, trait: { idea: 'When roused it erupts again, spraying grave-dirt that clings and slows the living.', section: 'trait', trigger: 'once_per_fight', effect: 'damage' } });
         if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify(/clings and slows/.test(prompt) && !/battering everything/.test(prompt) ? { template: 'bloodied-burst', because: 'erupts when roused', name: 'Grave-Dirt Spray' } : { template: 'ground-burst', because: 'erupts around it', name: 'Grave Eruption' });
         if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
         if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
@@ -5326,7 +5335,7 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     let m;
     try {
       m = await generateReskin({ cr: 4, mechanics: [], archetype: 'skirmisher', style: 'archer', concept: 'a hobgoblin sniper who snaps off a shot at anyone who closes to melee with him', userConcept: 'a hobgoblin sniper who snaps off a shot at anyone who closes to melee with him', resolvedType: 'Humanoid', mind: 'sapient' }, async (prompt) => {
-        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ trait: { idea: 'Its quarry is marked with an iron bead; it tracks the marked creature anywhere it runs and cannot lose the trail.', section: 'trait', trigger: 'always', effect: 'defense' } });
+        if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ body_verdicts: ALL_BODIES, trait: { idea: 'Its quarry is marked with an iron bead; it tracks the marked creature anywhere it runs and cannot lose the trail.', section: 'trait', trigger: 'always', effect: 'defense' } });
         if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify({ template: 'faultless-tracker', because: 'it tracks the marked quarry', name: 'Marked Quarry' });
         if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
         if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });

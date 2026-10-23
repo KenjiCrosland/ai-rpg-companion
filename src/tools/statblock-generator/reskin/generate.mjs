@@ -11,7 +11,7 @@ import { pickDonor, scaleDonor } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { NOVA_CAP, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf} from './templates.mjs';
+import { NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
@@ -746,18 +746,48 @@ export function readGapOutcomes({ sections = {}, gapRecords = [], generation = n
   // the Purple Worm's charge rode its Bite, Krennik's rode his Saber).
   const shipped = new Set(Object.values(sections ?? {}).flat().flatMap((e) => [e.template, ...(e.riderTemplates ?? [])]).filter(Boolean));
   let vetoed = 0;
+  let counted = 0;
   for (const g of gapRecords) {
     const landed = g.template ? shipped.has(g.template) : false;
-    if (!landed) vetoed += 1;
+    // THE VETOED TALLY COUNTS ACCEPTED PICKS ONLY. A `missing_unstated` record is
+    // a refusal the call never named a mechanic for — it was never an acceptance,
+    // so counting it would silently inflate "N of M accepted picks never reached
+    // the sheet" the moment those records started being kept (2026-10-22).
+    if (!g.missing_unstated) { counted += 1; if (!landed) vetoed += 1; }
     trace('[gap]', `${g.line}${g.template ? (landed ? ` [landed: ${g.template}]` : ` [VETOED AFTER ACCEPTANCE: ${g.template} never reached the sheet]`) : ' [row dropped]'}`);
   }
-  if (generation) generation.gap_vetoed = `${vetoed} of ${gapRecords.length}`;
-  if (vetoed) trace('signature outcome:', `${vetoed} of ${gapRecords.length} accepted signature pick(s) never reached the sheet — the seat shipped a fallback or nothing`);
+  if (generation) generation.gap_vetoed = `${vetoed} of ${counted}`;
+  if (generation) generation.gap_missing_unstated = gapRecords.filter((g) => g.missing_unstated).length;
+  if (vetoed) trace('signature outcome:', `${vetoed} of ${counted} accepted signature pick(s) never reached the sheet — the seat shipped a fallback or nothing`);
   return { vetoed, landed: gapRecords.length - vetoed };
 }
 
 export function settleSheetBudgets({ sections, printExact = false, scaled = null, cr = null, generation = null, trace: traceFn = () => {} }) {
   const trace = traceFn;
+  // NO NULLISH ROW SURVIVES TO SHIP. A single undefined entry in a section kills
+  // the whole generation — about a dozen sites read `.library`, `.print` or
+  // `.name` off a row with no guard, and the forty
+  // (sweep-2026-10-22T17-05-33) lost Vashka the Red outright to
+  // "Cannot read properties of undefined (reading 'library')".
+  //
+  // The ROOT CAUSE IS NOT LOCATED. It did not reproduce in seven attempts (one
+  // isolated run plus six in a row), so it depends on a particular model answer
+  // or on state from earlier blocks. The candidates are the several
+  // `splice(indexOf(x), 1)` calls, where a -1 index removes the wrong element,
+  // and `splice(idx, 1)` destructures that can yield undefined.
+  //
+  // This is a GUARD, not a fix: it honours never-fail generation and TRACES
+  // loudly with the section name, so the next occurrence is diagnosable instead
+  // of fatal. If this line ever fires, that trace is the lead — do not delete it
+  // without finding the insertion point first.
+  for (const [sec, es] of Object.entries(sections)) {
+    if (!Array.isArray(es)) continue;
+    const clean = es.filter((e) => e != null);
+    if (clean.length !== es.length) {
+      trace('NULLISH ROW DROPPED:', `${sec} held ${es.length - clean.length} empty slot(s) — a generation would have died reading a field off it. Root cause unlocated (see the note at settleSheetBudgets).`);
+      sections[sec] = clean;
+    }
+  }
   const bareName = (e) => String(e.name ?? '').replace(/ \(.*\)$/, '');
   // A FREE ROW'S BUDGET, AND ONE PER DECLARED SEAT CELL. The critic's
   // "retaliation family" (damage-on-touch, bloodied-burst, own-turn-punisher)
@@ -772,7 +802,24 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   const cellOf = (e) => { const t = TEMPLATE_BY_ID.get(e.template ?? e.seed ?? ''); return t ? `${t.section}/${t.trigger}/${t.effect}` : null; };
   const keptCells = new Set();
   const keptFree = [];
-  for (const { sec, e } of freeRows) {
+  // GM QUOTE > ELEMENT > DECORATION (the critic's item 2, 2026-10-22). This loop
+  // used to walk `freeRows` in SHEET order and keep the first that fit, so which
+  // row survived a budget of 1 depended on where it happened to sit in the
+  // sections object. That cut Marrowsun's `Marrowsun Cinder` — the row carrying
+  // the element receipt — and kept `Marrow Rise`, a decoration, which is the
+  // critic's own evidence for the rule. A receipt row must never be displaced by
+  // a row that has none.
+  //
+  // The rank reads the stamps the grant site already writes: `gmQuote` is the
+  // GM's own words this row was kept on, `expresses` the element the call named,
+  // `decoration` a row the call REFUSED and that claims nothing. Sort is stable,
+  // so sheet order still breaks ties within a rank.
+  const receiptRank = (e) => (e.gmQuote ? 0 : e.expresses ? 1 : 2);
+  const ranked = [...freeRows].sort((a, b) => receiptRank(a.e) - receiptRank(b.e));
+  if (freeRows.length > 1 && ranked.some(({ e }, i) => e !== freeRows[i].e)) {
+    trace('free-row order:', `${ranked.map(({ e }) => `"${bareName(e)}" [${['quote', 'element', 'decoration'][receiptRank(e)]}]`).join(' > ')} — a receipt row is never displaced by one without`);
+  }
+  for (const { sec, e } of ranked) {
     const cell = cellOf(e);
     const sameCell = !!cell && keptCells.has(cell);
     if (keptFree.length < freeBudget && !sameCell) { keptFree.push(e); if (cell) keptCells.add(cell); continue; }
@@ -3829,6 +3876,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     const ctxT = {
       holds: (typeof options.holds === 'boolean' ? options.holds : null), // the route call's read of a containment engine — one definition, every templatesFor reader (2026-10-17)
       scaled, sections, archetype, style: scaled.style ?? null, cr, movement: (options.movement ?? []).join(' '),
+      size: String(monster.size ?? ''), // the DECLARED size, for requires_size (trample, leap). monster.size is set at its construction above; print-canon may revise it later, which is after the menu reads it — 2026-10-22
       energy: options.energy ?? null, mix: options.mix ?? null, meleeName: meleeRowT?.name?.replace(/ \(.*\)$/, '') ?? 'Slam',
       rangedName: Object.values(sections).flat().find((e2) => e2 !== pendingWildcard && /Ranged Attack Roll/.test(e2.text ?? '') && !/Melee or Ranged/.test(e2.text ?? ''))?.name?.replace(/ \(.*\)$/, '') ?? null,
       conditionMinor: p.conditions?.condition_minor ?? null, projectile: p.projectile ?? null,
@@ -3844,7 +3892,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // asked about smoke, because the idea call saw only the identity paragraph.
       // This asks what the GM added BEYOND print — a fact about the prompt, not
       // about how far assembly has got, so it is safe to ask this early.
-      // (`unansweredTwistClause` below asks what the SHEET has not answered yet,
+      // (`unansweredClause` below asks what the SHEET has not answered yet,
       // which is a different question and only meaningful once rows exist.)
       const owedClauseForIdea = () => {
         if (!closedPath) return null;
@@ -3863,8 +3911,24 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         }
         return null;
       };
-      const rawIdea = await callLLM(buildIdeaPrompt({ owedClause: owedClauseForIdea(), name: p.name, cr, concept: readPhrases(concept), sheetLines: sheetSoFarT, seats: seatsT, energy: options.energy ?? null, wantTrait: traitWildcardAllowed, engines: enginesT, verbs: conceptVerbs(`${options.userConcept ?? concept} ${seatsT?.action ?? ''} ${seatsT?.trait ?? ''}`) }), validateIdeaResponse);
+      // IS IT TRUE OF THIS BODY? Only the requirements a template could actually
+      // reach here are asked (mean 24 of 41), and they ride on THIS call — once
+      // per sheet, before any menu is built — so the body question costs no extra
+      // round trip. A missing or malformed answer falls back to the template's own
+      // `keys`, so it can never fail a generation (2026-10-22).
+      const bodyReqsT = liveBodyRequirements(ctxT);
+      const rawIdea = await callLLM(buildIdeaPrompt({ bodyRequirements: bodyReqsT, owedClause: owedClauseForIdea(), name: p.name, cr, concept: readPhrases(concept), sheetLines: sheetSoFarT, seats: seatsT, energy: options.energy ?? null, wantTrait: traitWildcardAllowed, engines: enginesT, verbs: conceptVerbs(`${options.userConcept ?? concept} ${seatsT?.action ?? ''} ${seatsT?.trait ?? ''}`) }), validateIdeaResponse);
       ideasT = parseIdeas(rawIdea);
+      {
+        const verdicts = readBodyVerdicts(rawIdea);
+        if (verdicts) {
+          ctxT.bodyVerdicts = verdicts;
+          const refused = Object.entries(verdicts).filter(([, v]) => !v).map(([k]) => k);
+          trace('body verdicts:', `${Object.keys(verdicts).length} of ${bodyReqsT.length} answered; not true of this body: ${refused.join(', ') || 'none'}`);
+        } else if (bodyReqsT.length) {
+          trace('body verdicts:', `none returned for ${bodyReqsT.length} requirements — falling back to each template's own keys`);
+        }
+      }
     } catch (e7) {
       trace('signature idea call failed —', `${e7?.message ?? e7}; the library stands in`);
     }
@@ -4046,7 +4110,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // closed path with a twist clause no row answers, the warrant is the clause itself — the call's
         // job is only to pick a template for it. The skeleton's "former life" died here for three
         // packages because its idea shared no verb with the shelf.
-        const ownClause = closedPath ? unansweredTwistClause() : null;
+        const ownClause = closedPath ? unansweredClause() : null;
         if (!ownClause) { trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — no template on the shelf shares a verb with the concept or the idea (offered: ${pool.map((t) => t.id).join(', ')})`); return null; }
         trace('verb gate stands down:', `${seat} — no template shares a verb, but "${ownClause}" is a clause the sheet has not answered; the GM's own words are the warrant`);
       }
@@ -4079,7 +4143,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         : [...menu, ...ideaNamed];
       if (conceptBound.length) trace('signature bound to the concept\'s verb:', `${seat} — ${conceptBound.map((t) => t.id).join(', ')} (${[...new Set(rankByVerb(conceptBound, verbText).flatMap((r) => r.concept))].join(', ')})`);
       try {
-        const ownClauseForCall = closedPath ? unansweredTwistClause() : null; // the engine names the clause; the call picks a template FOR it (the critic's prescription, 2026-10-19)
+        const ownClauseForCall = closedPath ? unansweredClause() : null; // the engine names the clause; the call picks a template FOR it (the critic's prescription, 2026-10-19)
         // `element`, not `text` — assignSeats normalises these to { element, kind }.
         // Reading the wrong key stringified every entry to "[object Object]", so the
         // call was shown a list of those and could name none: the Hydra's "Smoking
@@ -4096,6 +4160,34 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // improve the probe is a bad trade made silently. The refusal is a fact
         // about the call's answer and is captured here, before anything acts on it.
         const callRefused = !fit.template;
+        // THE CLAUSE-FIRST RETRY (the critic's item 2; owner's choice (c),
+        // 2026-10-22). The call refused every template. Before anything is
+        // invented for this seat, ask once more with the clause the sheet has NOT
+        // answered put in front of it — the fallback order the owner approved is
+        // clause-first retry -> a print-grammar trait the body would have -> an
+        // empty seat, and a GM never sees an empty seat but they do see a sticky
+        // owlbear.
+        //
+        // (c), not (a): the retry is paid for ONLY when there is a clause to aim
+        // at. The whole value of a clause-first retry is the clause, so spending a
+        // call where the sheet has none buys nothing. One retry, never a loop.
+        if (!fit.template) {
+          const retryClause = unansweredClause({ anyPath: true });
+          if (!retryClause) {
+            trace('no clause-first retry:', `${seat} — the call refused every template and this sheet has no unanswered clause to retry against, so no call is spent`);
+          } else {
+            const rawRetry = await callLLM(buildFitPrompt({ name: p.name, sheet: sheetSoFarT, idea, menu: offered, cr, concept: verbText, clause: retryClause, elements: sigElements }), null);
+            const retried = readFit(parseFit(rawRetry, offered, p.name, sigElements), offered, `${verbText} ${idea.idea}`);
+            if (retried?.template) {
+              trace('clause-first retry:', `${seat} — refused every template, so asked again FOR the clause "${retryClause}" and it answered "${retried.template.id}"`);
+              fit = retried;
+            } else {
+              trace('clause-first retry:', `${seat} — asked again FOR the clause "${retryClause}" and it still refused${retried?.closest ? `, naming "${retried.closest}" as nearest` : ''}`);
+              // the retry's own nearest is worth no less than the first answer's
+              if (!fit.closest && retried?.closest) fit = { ...fit, closest: retried.closest, missing: fit.missing ?? retried.missing ?? null };
+            }
+          }
+        }
         // THE CLOSEST TEMPLATE IS ACCEPTED RATHER THAN THE ROW DROPPED (owner's
         // call, 2026-10-21). Measured across 358 recorded refusals: in 167 the
         // model NAMED a close template it had been offered and refused anyway,
@@ -4163,7 +4255,40 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               .map((t) => t.id);
             gapRecords.push({ line: `${fit.missing} — "${String(idea.idea ?? '')}" — ${p.name ?? 'this sheet'} [seat: ${seat} ${tagOf(idea)}]${fit.closest ? ` (closest offered: ${fit.closest}${closestOnMenu === false ? ' — NOT ON THE MENU' : ''})` : ''}${fit.missing_effect ? ` [effect: ${fit.missing_effect}]` : ''} [menu: ${ids.join(' ') || 'empty'}] [same-cell unoffered: ${sameCellUnoffered.join(' ') || 'none'}] [same-seat rejected: ${(menuDiag.sameSeatRejected ?? []).filter((r) => !ids.includes(r.split(':')[0])).join(' ') || 'none'}]`, template: fit.accepted_closest ? (fit.template?.id ?? null) : null, seat, name: p.name ?? 'this sheet' });
           }
-          else trace('[gap] UNNAMED', `${seat} declined with no missing mechanic named — the schema asks for one; "${String(idea.idea ?? '').slice(0, 70)}" — ${p.name ?? 'this sheet'}`);
+          else {
+            // A REFUSAL WITH NO `missing` IS STILL A BUILD SIGNAL (2026-10-22).
+            // The schema asks for `missing`, the prose demands it, and readFit
+            // parses it correctly — the call simply omits it on about a third of
+            // refusals while still naming `closest`. This branch used to throw
+            // that away as UNNAMED, so 12 of 33 gap lines on the forty carried
+            // nothing, and the list that is supposed to drive catalog growth was
+            // a third empty.
+            //
+            // Nothing is inferred about MEANING here: the record carries what the
+            // call actually said (`closest`, and the idea in its own words) plus
+            // one fact the engine owns (was `closest` on this seat's menu). That
+            // is enough to tell the three situations apart, which was the whole
+            // point of the record — and when `closest` WAS offered and declined
+            // anyway, the demand is "a variant of closest", which is the dominant
+            // shape in the list (every refusal on the forty named a near-miss).
+            const idsU = offered.map((t) => t.id);
+            const onMenuU = fit.closest ? idsU.includes(fit.closest) : null;
+            // WHEN THE CALL NAMES NEITHER FIELD, the engine still owns one fact
+            // worth recording: does the catalog hold a template for this idea's
+            // own declared cell that this seat was never SHOWN? That is the
+            // critic's distinction — a routing miss is not a catalog gap, and only
+            // the catalog gap is a build signal. Measured on gap10: 2 of 11 lines
+            // named neither `missing` nor `closest`, so without this they carry a
+            // description and no target (2026-10-22).
+            const unofferedSameCell = TEMPLATES
+              .filter((t) => t.trigger === idea.trigger && t.effect === idea.effect && !idsU.includes(t.id))
+              .map((t) => t.id);
+            gapRecords.push({
+              line: `(missing unstated)${fit.closest ? ` — A VARIANT OF ${fit.closest}${onMenuU ? ' (which this seat WAS offered and declined)' : ' (never offered here)'}` : (unofferedSameCell.length ? ` — no nearest named; the catalog HAS ${unofferedSameCell.slice(0, 4).join(', ')} for this cell (${idea.trigger}/${idea.effect}) and this seat was shown none of them: a ROUTING miss, not a catalog gap` : ` — no nearest named, and the catalog holds NOTHING for ${idea.trigger}/${idea.effect}: a real catalog gap`)} — "${String(idea.idea ?? '')}" — ${p.name ?? 'this sheet'} [seat: ${seat} ${tagOf(idea)}]`,
+              template: fit.template?.id ?? null,
+              missing_unstated: true,
+            });
+          }
         }
         if (!fit.template && conceptBound.length) trace('key match declined:', `${seat} — "${conceptBound[0].id}" was ranked first on the call's own menu for ${rankByVerb([conceptBound[0]], verbText)[0].concept.join('+')}, and the call read it as ${wrongT.has(conceptBound[0].id) ? 'a collision, not the mechanic' : 'no fit'}; the words keep their claim and nothing is forced`);
         // THE RE-POUR IS RETIRED WITH THE FORCE-BIND (critic, 2026-10-15). When
@@ -4338,12 +4463,45 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // hide" came back as ONE clause, marked head — so the twist lives INSIDE the head, and refusing
     // the head refused the twist. What the head gives up is the BODY (the path holds it); what remains
     // is the ask. `namesTheBodyOnly` already refuses a quote that is only the body, so the two compose.
-    const cut = (t, q) => { const s = String(t ?? ''); const needle = String(q ?? '').trim(); if (!needle) return s; const i = s.toLowerCase().indexOf(needle.toLowerCase()); return (i < 0 ? s : `${s.slice(0, i)} ${s.slice(i + needle.length)}`).replace(/\s{2,}/g, ' ').replace(/^(?:a|an|the)\s+(?=with|that|who|whose)/i, '').trim(); };
-    const positiveHalf = (c) => {
+    // ON WORD BOUNDARIES. `indexOf` cut on SUBSTRINGS, so removing the print body
+    // "Lich" from "an archlich enthroned on a sun of bone" left "an arch enthroned
+    // on a sun of bone" — the critic's named defect, still live on the forty
+    // (sweep-2026-10-22T17-05-33). "shieldwall" minus "wall" was "shield" too.
+    const cut = (t, q) => { const s = String(t ?? ''); const needle = String(q ?? '').trim(); if (!needle) return s;
+      const bounded = new RegExp(`(?<![A-Za-z])${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z])`, 'i');
+      const i = s.search(bounded) >= 0 ? s.search(bounded) : -1; return (i < 0 ? s : `${s.slice(0, i)} ${s.slice(i + needle.length)}`).replace(/\s{2,}/g, ' ').replace(/^(?:a|an|the)\s+(?=with|that|who|whose)/i, '').trim(); };
+    // `forCall` HANDS THE CLAUSE OVER, it does not test it (the critic's item 3,
+    // "hand seats the clause verbatim and carry the consumed spans as metadata").
+    // The cut form exists to find what the sheet has NOT answered, and for that
+    // removing the consumed spans is right. But the same surgery was being handed
+    // to the call, which is how the retry came to aim at "Adult Red Dragon — from
+    // an old lance" (the dragon's own twist, "blind in one eye", cut out of it) and
+    // at "a marsh" (the witch cut off her own marsh). Measured on
+    // retry6-2026-10-22T15-44-26: 5 retries fired, 0 succeeded, 3 of them aimed at
+    // text like that.
+    //
+    // The BODY NAME is still cut either way — it is genuinely redundant, the call
+    // already knows what the monster is, and `namesTheBodyOnly` exists to stop a
+    // clause that is only the body. The RECEIPT is not: it is the twist itself.
+    const positiveHalf = (c, { forCall = false } = {}) => {
       let t = String(c.text ?? '');
-      if (c.polarity === 'lacks') { const q = String(c.lackQuote ?? '').trim(); if (!q) return ''; t = cut(t, q); } // a whole-clause lack has no positive half
-      if (c.head) { t = cut(cut(t, pathBody ?? ''), String(pathD?.receipt ?? '').replace(/^Name field:\s*/i, '')); }
-      return t.trim();
+      // THE LACK IS THE TWIST. This cut `lackQuote` unconditionally, and on a
+      // LACKS clause that quote is the whole point — the dragon's record is
+      // "Adult Red Dragon — blind in one eye from an old lance" (LACKS), so the
+      // clause HANDED to the call came out as "Adult Red Dragon — from an old
+      // lance". Cutting it is right for the unanswered TEST, wrong for handing
+      // over (measured: retry6-2026-10-22T15-44-26, 5 retries fired, 0 succeeded).
+      if (c.polarity === 'lacks') {
+        const q = String(c.lackQuote ?? '').trim();
+        if (!q) return forCall ? t.trim() : ''; // a whole-clause lack has no positive half to TEST, but it can still be handed over
+        if (!forCall) t = cut(t, q);
+      }
+      if (c.head) {
+        t = cut(t, pathBody ?? '');
+        if (!forCall) t = cut(t, String(pathD?.receipt ?? '').replace(/^Name field:\s*/i, ''));
+      }
+      // a handed clause must not open on punctuation a cut left behind
+      return t.replace(/^[\s\u2010-\u2015,;:-]+/, '').trim();
     };
     // a receipt is ANSWERED only when it names the weapon a part row already carries: "with a
     // greatsword" beside the Greatsword row is answered, "keeps the line" beside a shield bash is not
@@ -4366,17 +4524,38 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // twist clause no row answers, that clause IS the receipt, whatever the call quoted (or failed to
     // quote): "carries stolen voices" was refused three packages running because the fit answered a
     // template with no usable quote, and print shipped under a new name.
-    const unansweredTwistClause = () => {
-      if (!closedPath) return null;
+    // One definition, two readers. The twist path asks it with the closed-path
+    // guard (the engine names the clause and the call picks a template FOR it);
+    // the clause-first retry below asks it with `anyPath`, because a homebrew or
+    // blank sheet can carry an unanswered clause too and the retry is only worth
+    // paying for when there IS one to aim at (owner's choice (c), 2026-10-22).
+    const unansweredClause = ({ anyPath = false } = {}) => {
+      if (!anyPath && !closedPath) return null;
       const answered = new Set(Object.values(sections).flat().filter((e) => e.clause).map((e) => flat(String(e.clause))));
-      for (const c of clauseRecord ?? []) {
+      // A MECHANICAL CLAUSE FIRST. The record splits "a tar-pit horror that drags
+      // what it touches down into the black sludge" into a DESCRIPTIVE head ("a
+      // tar-pit horror") and the mechanical remainder, and this loop returned
+      // whichever came first — the head. So the retry was aimed at "a will-o-wisp"
+      // and "a bronze shrine-warden", which name a creature and ask for no rule.
+      // Measured on branch10-2026-10-22T16-09-12: 4 of 8 handed clauses were bare
+      // descriptive heads. The retry's whole value is having something actionable
+      // to aim at, so the mechanical half is preferred and the head is the
+      // fallback. Stable within each kind, so record order still decides ties.
+      const byKind = [...(clauseRecord ?? [])].sort((a, b) => (a.kind === 'mechanical' ? 0 : 1) - (b.kind === 'mechanical' ? 0 : 1));
+      for (const c of byKind) {
         if (c.kind === 'header') continue;
         const half = positiveHalf(c); if (!half) continue;
+        const handed = positiveHalf(c, { forCall: true }).trim() || half.trim();
         const f = flat(half); if (!f || f.length < 4) continue;
         if (namesTheBodyOnly(half)) continue;
+        // ...and a clause that is only the creature's OWN NAME is not answerable
+        // either. `namesTheBodyOnly` tests the PRINT body, so a homebrew NPC with
+        // no print body slipped through: the forty spent retries on "Brother
+        // Halric" and "Ilvareth Dusksong — An elf" (2026-10-22).
+        if (flat(cut(handed, String(p.name ?? ''))).length < 4) continue;
         if (answeredByAPart(f)) continue;
         if ([...answered].some((a) => a.includes(f) || f.includes(a))) continue;
-        return half.trim();
+        return handed;
       }
       return null;
     };
@@ -4384,7 +4563,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (!!f?.asked && !namesTheBodyOnly(f.asked) && asksATwistClause(f.asked)) return true;
       if (/\[verb: [^\]]*\]/.test(f?.because ?? '') && /:concept\b/.test(f?.because ?? '') && asksATwistClause((/\[verb: ([^\]]*)\]/.exec(f.because) ?? [, ''])[1].split(',')[0].split(':')[0].trim())) return true;
       if (!f) return false;
-      const own = unansweredTwistClause();
+      const own = unansweredClause();
       if (!own) return false;
       f.asked = own; // the receipt by construction: the engine's clause, not the call's quote
       trace('seat takes its clause:', `"${f.row?.name ?? f.template}" is HANDED "${own}" (this is not a receipt and buys no coverage credit — the critic, 2026-10-22: the Owlbear's Adhesive "took" the climb clause) — the engine hands the seat the clause it is for; the call only picked the template`);
@@ -6692,7 +6871,22 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (!imposed && !e.imposesMovement) continue;
     if (fromText) trace('save stat from print grammar:', `${sec}/${String(e.name).replace(/ \(.*\)$/, '')} imposes ${imposed} by its own text — no record on the row, so the grammar stood in (A2 gap)`);
     const eff = e.imposesMovement && !imposed ? 'Prone' : String(imposed);
-    const want = /\b(?:Prone\b|pushed\b|knocked prone)/.test(eff) ? ['Strength', 'Dexterity']
+    // PRONE IN A DAMAGING AREA IS A DEXTERITY SAVE; STRENGTH IS FOR SHOVES
+    // (critic's package-seven review, 2026-10-22: Glacier's Killing Cold 13d10
+    // cone and Brass's Molten Exhalation 16d8 cone were both retyped CON -> STR
+    // for a prone rider). Measured over print's own rows — area rows that deal
+    // damage AND impose Prone: **Dexterity 3, Strength 1, Wisdom 1**, and the one
+    // Strength is the Centaur Trooper's Trampling Charge, a charge that moves
+    // through creatures. So the discriminator is the row's SHAPE, not the
+    // condition: a row that shoves or hauls keeps Strength; a row whose point is
+    // damage over an area takes Dexterity.
+    //
+    // `imposesMovement` is the row's own recorded push/pull flag, so the shove
+    // half needs no new reading; the area-and-damage half reads the same two
+    // shapes valueCheck already reads off the finished text.
+    const areaDmg = /each creature|Cone|Sphere|Line|Emanation|radius/i.test(e.text ?? '') && /\d+ \(\d+d\d+/.test(e.text ?? '');
+    const proneish = /\b(?:Prone\b|pushed\b|knocked prone)/.test(eff);
+    const want = proneish ? (areaDmg && !e.imposesMovement ? ['Dexterity', 'Strength'] : ['Strength', 'Dexterity'])
       : /\b(?:Poisoned|poison|disease|spores?|choking|suffocat)/i.test(eff) ? ['Constitution']
       : /\b(?:Frightened|Charmed)\b/.test(eff) ? ['Wisdom', 'Charisma'] : null;
     if (!want || want.includes(sv[1])) continue;

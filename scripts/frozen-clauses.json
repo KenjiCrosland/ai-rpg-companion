@@ -736,5 +736,578 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "e9301fde7154": {
+  "concept": "a tar-pit horror that drags what it touches down into the black sludge",
+  "clauses": [
+   {
+    "id": "cl_7r600m",
+    "text": "a tar-pit horror",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1f3hfmt",
+    "text": "drags what it touches down into the black sludge",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "touches",
+    "askOften": "at_will",
+    "askOftenWhy": "drags what it touches down into the black sludge",
+    "askShape": "condition"
+   }
+  ]
+ },
+ "e0829cde655b": {
+  "concept": "a brass gate-golem cast as a temple bell, which tolls as it walks",
+  "clauses": [
+   {
+    "id": "cl_1dk41xe",
+    "text": "a brass gate-golem cast as a temple bell",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_bjugqj",
+    "text": "tolls as it walks",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "as it walks",
+    "askOften": "at_will",
+    "askOftenWhy": "tolls as it walks",
+    "askShape": "save_area"
+   }
+  ]
+ },
+ "c0499f4c1258": {
+  "concept": "Vampire — who keeps a rose garden of thorns",
+  "clauses": [
+   {
+    "id": "cl_wv4qxu",
+    "text": "Vampire —",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1igpeey",
+    "text": "keeps a rose garden of thorns",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "3116985b0ed9": {
+  "concept": "an ancient thing carrying a stone house on its back",
+  "clauses": [
+   {
+    "id": "cl_1mk1yre",
+    "text": "an ancient thing carrying a stone house on its back",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "4c1fd414287c": {
+  "concept": "a venomous lizardfolk raider with a blowpipe and a quiver of darts",
+  "clauses": [
+   {
+    "id": "cl_u9af8h",
+    "text": "a venomous lizardfolk raider with a blowpipe",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_v8jezy",
+    "text": "a quiver of darts",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "8cf5fa7b93e9": {
+  "concept": "a cathedral-vault ooze that swallows whoever walks the nave",
+  "clauses": [
+   {
+    "id": "cl_1enw6wp",
+    "text": "a cathedral-vault ooze",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_13phkhp",
+    "text": "swallows whoever walks the nave",
+    "kind": "mechanical"
+   }
+  ]
+ },
+ "d8bdeb91208d": {
+  "concept": "a marsh witch who curses trespassers and drinks the years out of them",
+  "clauses": [
+   {
+    "id": "cl_1enkq57",
+    "text": "a marsh witch",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_107schg",
+    "text": "curses trespassers and drinks the years out of them",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "5f25589ccc5a": {
+  "concept": "a bronze shrine-warden that burns whoever lays a hand on it",
+  "clauses": [
+   {
+    "id": "cl_w6jhjc",
+    "text": "a bronze shrine-warden",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_mefj4b",
+    "text": "burns whoever lays a hand on it",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "lays a hand on it",
+    "askShape": "save_single"
+   }
+  ]
+ },
+ "d11cdb70c852": {
+  "concept": "a will-o-wisp, a cold lantern-flame that leads travellers into the mire",
+  "clauses": [
+   {
+    "id": "cl_buszft",
+    "text": "a will-o-wisp",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1bbfqv7",
+    "text": "a cold lantern-flame that leads travellers into the mire",
+    "kind": "mechanical",
+    "askShape": "condition"
+   }
+  ]
+ },
+ "318422a8420c": {
+  "concept": "a gargantuan siege beast that flattens a shield wall underfoot",
+  "clauses": [
+   {
+    "id": "cl_ycwpcl",
+    "text": "a gargantuan siege beast",
+    "kind": "header"
+   },
+   {
+    "id": "cl_bjutsn",
+    "text": "flattens a shield wall underfoot",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "c9c4ce018983": {
+  "concept": "a courtly duelist in silk who turns every thrust back on its owner",
+  "clauses": [
+   {
+    "id": "cl_38n6fv",
+    "text": "a courtly duelist in silk",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1pdndbu",
+    "text": "turns every thrust back on its owner",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "turns every thrust back",
+    "askOften": "at_will",
+    "askOftenWhy": "every",
+    "askShape": "condition"
+   }
+  ]
+ },
+ "45ddcf84a3dd": {
+  "concept": "A Ghulvar is a single drifting cadaver-scholar of the grave-cities, its blackened ash-chitin shell fused around a hollow",
+  "clauses": [
+   {
+    "id": "cl_osjjxy",
+    "text": "A Ghulvar is a single drifting cadaver-scholar of the grave-cities",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_ga18s2",
+    "text": "its blackened ash-chitin shell fused around a hollow thoracic brazier where its funeral pyre never finished burning",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_xo9h8g",
+    "text": "trailing smoke and papery ash as it glides above the ground on nothing but its own rising heat",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1hjivs1",
+    "text": "It fights as a herder",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "once badly bloodied",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "It fights as a herder",
+    "askShape": "buff_self"
+   },
+   {
+    "id": "cl_jwbjat",
+    "text": "seeding the battlefield with smoldering cinder-lines",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "seeding the battlefield with smoldering cinder-lines",
+    "askShape": "condition"
+   },
+   {
+    "id": "cl_1q5lcad",
+    "text": "banks of stinging ash to steer",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1aexn35",
+    "text": "pen its prey toward killing ground",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "pen its prey toward killing ground",
+    "askShape": "condition"
+   },
+   {
+    "id": "cl_tqy1ns",
+    "text": "closing to seize",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "closing to seize",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_xl4g71",
+    "text": "scorch with flame-vented claws once the trap is set",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "scorch with flame-vented claws once the trap is set",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_p3p3a8",
+    "text": "Coldly patient and utterly sapient",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_123n0hz",
+    "text": "it toys with victims",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_jgp6t0",
+    "text": "repositions rather than brawling",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_14mze2i",
+    "text": "but once badly bloodied it fights to the death — it has already died once",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "once badly bloodied",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "but once badly bloodied it fights to the death — it has already died once",
+    "askShape": "buff_self"
+   },
+   {
+    "id": "cl_qh4so3",
+    "text": "refuses a second humiliation",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_obu126",
+    "text": "It is fully sapient (INT 10-14)",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_1y8h5y3",
+    "text": "it is a battlefield manipulator that herds",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "it is a battlefield manipulator that herds",
+    "askShape": "condition"
+   },
+   {
+    "id": "cl_rmz9cm",
+    "text": "traps rather than brawls",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "3c1bef68d782": {
+  "concept": "a grave-specter that drinks the years out of whoever it touches",
+  "clauses": [
+   {
+    "id": "cl_1xdsj7j",
+    "text": "a grave-specter",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "touches",
+    "askShape": "condition"
+   },
+   {
+    "id": "cl_1st1avp",
+    "text": "drinks the years out of whoever it touches",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "touches",
+    "askShape": "condition"
+   }
+  ]
+ },
+ "2eec1533127b": {
+  "concept": "a clay guardian whose every blow leaves a wound that will not close",
+  "clauses": [
+   {
+    "id": "cl_kvi96i",
+    "text": "a clay guardian whose every blow leaves a wound",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_qdjezh",
+    "text": "will not close",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "every blow",
+    "askOften": "at_will",
+    "askOftenWhy": "every blow",
+    "askShape": "condition"
+   }
+  ]
+ },
+ "729c85d6be47": {
+  "concept": "Vampire",
+  "clauses": [
+   {
+    "id": "cl_vdg3qm",
+    "text": "Vampire",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "f1400f39f9a3": {
+  "concept": "a withered husk-thing that leaves its victims hollow and grey",
+  "clauses": [
+   {
+    "id": "cl_1yuagid",
+    "text": "a withered husk-thing",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_gveyy0",
+    "text": "leaves its victims hollow and grey",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "leaves its victims",
+    "askOften": "at_will",
+    "askOftenWhy": "leaves its victims hollow and grey",
+    "askShape": "condition"
+   }
+  ]
+ },
+ "7698ba3eb07a": {
+  "concept": "a trench leviathan whose song drowns fleets and drags the drowned down with it",
+  "clauses": [
+   {
+    "id": "cl_6iyc7i",
+    "text": "a trench leviathan whose song drowns fleets",
+    "kind": "mechanical",
+    "askShape": "save_area"
+   },
+   {
+    "id": "cl_19qdhfk",
+    "text": "drags the drowned down with it",
+    "kind": "mechanical",
+    "askShape": "condition"
+   }
+  ]
+ },
+ "67db4bc0bf5e": {
+  "concept": "a shadow-choir that spawns more of itself as it is cut down",
+  "clauses": [
+   {
+    "id": "cl_1ivhdj9",
+    "text": "a shadow-choir",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_z93z70",
+    "text": "spawns more of itself as it is cut down",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "as it is cut down"
+   }
+  ]
+ },
+ "ea1ed082728d": {
+  "concept": "a bog hound that drags fishermen under and holds them there",
+  "clauses": [
+   {
+    "id": "cl_jdjwdb",
+    "text": "a bog hound",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1noqc7c",
+    "text": "drags fishermen under",
+    "kind": "mechanical",
+    "askShape": "condition"
+   },
+   {
+    "id": "cl_1kibbzg",
+    "text": "holds them there",
+    "kind": "mechanical",
+    "askShape": "condition"
+   }
+  ]
+ },
+ "4c937e34f427": {
+  "concept": "a reef warden that slips aside from any blast and answers with a lash",
+  "clauses": [
+   {
+    "id": "cl_nitylu",
+    "text": "a reef warden",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_x69dvn",
+    "text": "slips aside from any blast",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "slips aside from any blast",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_1c9cleg",
+    "text": "answers with a lash",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "answers",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "6b6c07b975f9": {
+  "concept": "a storm drake whose breath is a rolling wall of thunder that shoves what it strikes",
+  "clauses": [
+   {
+    "id": "cl_q8tjvs",
+    "text": "a storm drake whose breath is a rolling wall of thunder",
+    "kind": "mechanical",
+    "askShape": "save_area"
+   },
+   {
+    "id": "cl_1d3ky2a",
+    "text": "shoves what it strikes",
+    "kind": "mechanical",
+    "askShape": "condition"
+   }
+  ]
+ },
+ "466673ac705c": {
+  "concept": "a lamplighter's widow who still walks her round, trailing cold",
+  "clauses": [
+   {
+    "id": "cl_oflxf6",
+    "text": "a lamplighter's widow",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1haqu7p",
+    "text": "still walks her round",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1df64q0",
+    "text": "trailing cold",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "bdc9492e479d": {
+  "concept": "a bile-spitting horror that hoses a line of acid down a corridor",
+  "clauses": [
+   {
+    "id": "cl_1wt27om",
+    "text": "a bile-spitting horror",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_xsxili",
+    "text": "hoses a line of acid down a corridor",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "hoses a line of acid down a corridor",
+    "askShape": "save_area"
+   }
+  ]
+ },
+ "4895cc2b77dc": {
+  "concept": "a plague-lunged thing that breathes a wide fan of spores over a crowd",
+  "clauses": [
+   {
+    "id": "cl_1p80yp7",
+    "text": "a plague-lunged thing",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_19zq3v8",
+    "text": "breathes a wide fan of spores over a crowd",
+    "kind": "mechanical"
+   }
+  ]
+ },
+ "8f4ed356b0e1": {
+  "concept": "a sewer drake that spits a narrow jet of filth along the tunnel",
+  "clauses": [
+   {
+    "id": "cl_l3p8o0",
+    "text": "a sewer drake",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_8eq3y",
+    "text": "spits a narrow jet of filth along the tunnel",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "c5971e1d192a": {
+  "concept": "a rot-bellied ogre that vomits over everyone in front of it",
+  "clauses": [
+   {
+    "id": "cl_1de6457",
+    "text": "a rot-bellied ogre",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_jgig53",
+    "text": "vomits over everyone in front of it",
+    "kind": "mechanical",
+    "askShape": "save_area"
+   }
+  ]
  }
 }
