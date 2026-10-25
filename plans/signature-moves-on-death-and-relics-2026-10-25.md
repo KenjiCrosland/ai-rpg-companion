@@ -537,3 +537,35 @@ rankByVerb's contract — owner's call.
 
 Misfit, logged: `undead-fortitude` ("Feral Resilience") on a LIVING bear-god. The
 template's body gate should ask whether the creature is dead already.
+
+## Fix 3 — the wind-up erupts at the END of its next turn — LANDED; measured by windup8
+
+One line in library.mjs: "until the start of its next turn — when the power
+erupts ... 15-foot Emanation" -> "At the end of its next turn, after it has moved,
+the power erupts ... 20-foot Emanation" (print: 4 rows "at the end of its next
+turn", 0 "at the start"). A frame text edit, no string matching.
+
+windup8: 0 old-form wind-ups (detector proven to report 2 on tally6 first); the
+new form landed on exactly the two known cases — Iron Sentinel's "Winding
+Mainspring" and Sexton's Toll's "Shattering Peal" — both 20 ft, both reading:
+"At the end of its next turn, after it has moved, the power erupts." As a GM runs
+it: the walk-out counter now costs the party its whole move, which is the
+telegraph working. 3,922 tests, build clean, title case 0 of 8, no throws,
+mundane/exact controls untouched.
+
+Not fix 3's, logged:
+- #02's `{telegraph}` fill was the BLIND default — "its whole frame tensing" on a
+  bell-ghost, the exact boilerplate leak the critic named. #01's was the model's
+  own ("its plates shudder and its mainspring visibly tightens"). Same
+  slot-contract-not-reaching-the-model symptom as tally/kill-denial on some
+  sheets; worth one targeted look at how `you fill:` is rendered for seeds.
+- the three other telegraph concepts (thunderhead, siege-mortar, caldera) took
+  no wind-up: a plain recharge cone, a tally with the blind fill, a bloodied
+  burst. Selection, not timing.
+- NEAR-MISS, mine: I nearly reported the caldera's "Swelling Eruption" (targets
+  Poisoned) as an orphaned payoff from a 150-char digest; the engine's own
+  reader shows Molten Eruption AND Molten Rupture both impose Poisoned. Verify a
+  defect with the real reader before naming it.
+- "Thunder Absorption" on both thunder concepts — the absorption family is
+  over-selected on energy concepts (and heals from the party's own thunder
+  spells, as the critic said of the warden's Force Absorption).

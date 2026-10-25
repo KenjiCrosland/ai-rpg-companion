@@ -204,7 +204,7 @@ LIBRARY_SEEDS.push(
     key: 'wind-up', keys: ['gather', 'charge-up', 'telegraph', 'brew'],
     section: 'Actions', archetypes: ['brute', 'caster', 'defender'], nova: true,
     name: 'Gathering Ruin (Recharge 5-6)', dpr_frac: 1.2,
-    text: "The creature begins gathering destructive power, {telegraph} until the start of its next turn — when the power erupts. *Dexterity Saving Throw:* DC {dc}, each creature in a 15-foot Emanation originating from the creature at that moment. *Failure:* {burst} {damage_type} damage. *Success:* Half damage.",
+    text: "The creature begins gathering destructive power, {telegraph}. At the end of its next turn, after it has moved, the power erupts. *Dexterity Saving Throw:* DC {dc}, each creature in a 20-foot Emanation originating from the creature at that moment. *Failure:* {burst} {damage_type} damage. *Success:* Half damage.",
   },
   {
     key: 'coating', keys: ['coat', 'venom', 'anoint', 'charge-weapon'],

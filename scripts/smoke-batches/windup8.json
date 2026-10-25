@@ -1,0 +1,10 @@
+[
+ { "name": "", "description": "a clockwork knight that winds tighter every round until it strikes", "cr": "8", "rules": "2024", "canary": "KNOWN CASE · Mainspring Warden got Gathering Ruin" },
+ { "name": "", "description": "a bell-ghost whose toll builds to one shattering peal", "cr": "6", "rules": "2024", "canary": "KNOWN CASE · Shattering Peal" },
+ { "name": "", "description": "a thunderhead elemental that gathers its charge before it lets fly", "cr": "9", "rules": "2024", "canary": "TELEGRAPH · a wind-up by idiom" },
+ { "name": "", "description": "a siege-mortar construct that must brace before each shot", "cr": "10", "rules": "2024", "canary": "TELEGRAPH · a wind-up by idiom, ranged" },
+ { "name": "", "description": "a hedge-knight with a spear and shield", "cr": "4", "rules": "2024", "canary": "MUNDANE CONTROL" },
+ { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "canary": "EXACT · untouched" },
+ { "name": "", "description": "a bog troll that drags fishermen under", "cr": "5", "rules": "2024", "canary": "unrelated" },
+ { "name": "", "description": "a volcano-heart that swells and bursts", "cr": "12", "rules": "2024", "canary": "TELEGRAPH · high CR, area must still read as 20 ft" }
+]
