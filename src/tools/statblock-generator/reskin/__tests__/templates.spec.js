@@ -285,7 +285,7 @@ describe('the catalog', () => {
     //
     // This allowlist is deliberate friction: a template that wants to skip the keys
     // rule has to be named here, in a test, so the choice is visible in review.
-    const KEYLESS_BY_DESIGN = new Set(['kill-denial', 'relic-object', 'tally']);
+    const KEYLESS_BY_DESIGN = new Set(['kill-denial', 'relic-object']);
     for (const t of TEMPLATES) {
       if (KEYLESS_BY_DESIGN.has(t.id)) { expect(t.mechanic).toBeTruthy(); continue; }
       expect(t.keys.length).toBeGreaterThanOrEqual(6);

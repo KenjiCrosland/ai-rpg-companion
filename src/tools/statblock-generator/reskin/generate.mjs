@@ -50,48 +50,6 @@ import { mechanicUnkept, honestNouns, claimWordIn } from './name-claims.mjs';
 import { classFor, classRows, CLASSES, classEligible, classWeapon } from './classes.mjs';
 import { renderForm, resolutionOf } from './forms.mjs';
 
-/**
- * THE FUSE ENDS IN THE BIG MOVE (critic's table read, 2026-10-25: "a fuse only
- * pays off at the table if what's at the end of it is the creature's big move").
- * `tally` lands as a holding form — "its most powerful action" — and here, once
- * the sheet's rows are final, it binds to the sheet's gated save nova: the nova's
- * recorded gate becomes "3 Marks" (its Recharge leaves), its name suffix follows,
- * and the tally names it. The nova is found by the RECORDED gate (`gateOf`), a
- * Saving Throw and damage dice — novaRows' own declared predicate, never text
- * that infers meaning. A sheet with no such nova has no big move for the fuse to
- * end in, so the tally leaves; a decline must say why.
- * Pricing is unchanged: valueCheck already priced the nova as `gated`, and a
- * recorded "3 Marks" gate keeps `gated` true through gateOf.
- */
-export function tallyFeedsNova(sections, trace = () => {}) {
-  const all = Object.values(sections ?? {}).flat().filter(Boolean);
-  const tally = all.find((e) => e.template === 'tally' || e.riderTemplates?.includes?.('tally'));
-  if (!tally) return null;
-  // A FUSE MUST NOT FEED A FUSE (fuse8 #03, 2026-10-25). Fixes 3 and 4 are each
-  // right and compose badly: the marks take 3 rounds, then `wind-up` spends a
-  // round charging and erupts at the END of the turn after that — 5 rounds to a
-  // payoff in fights that last 3 or 4, so the nova may never fire. A nova whose
-  // own frame defers its damage is not the big move the marks can end in, so it
-  // is not a candidate; another gated nova on the sheet still is, and with none
-  // the tally leaves. `wind-up` is the only delayed gated template (1 of 29), so
-  // this costs almost nothing in reach.
-  const isGatedNova = (e) => e && !!gateOf(e) && /Saving Throw/i.test(e.text ?? '') && /\d+ \(\d+d\d+/.test(e.text ?? '');
-  const defersDamage = (e) => /the power erupts|at the end of its next turn/i.test(e.text ?? '');
-  const novas = (sections.Actions ?? []).filter(isGatedNova);
-  const nova = novas.find((e) => !defersDamage(e)) ?? null;
-  if (!nova && novas.length) trace('tally declined:', `the only gated nova ("${novas[0].name}") defers its own damage — a fuse cannot end in another fuse`);
-  if (!nova) {
-    for (const es of Object.values(sections)) { const ix = es.indexOf(tally); if (ix !== -1) es.splice(ix, 1); }
-    trace('tally declined:', `"${tally.name}" leaves — the sheet carries no gated save nova for the marks to feed`);
-    return { declined: true };
-  }
-  const bare = String(nova.name).replace(/ \(.*\)$/, '');
-  nova.gate = '3 Marks';
-  nova.name = `${bare} (3 Marks)`;
-  tally.text = String(tally.text).replace('its most powerful action', bare);
-  trace('tally feeds the nova:', `"${tally.name}" — 3 marks spend into "${bare}", whose gate is now 3 Marks (was Recharge)`);
-  return { nova: bare };
-}
 
 const trace = (l, d) => logger.log(`[reskin] ${l}`, d ?? '');
 const GAME_TERM = /Attack Roll|Saving Throw|DC \d+|\b(Frightened|Poisoned|Blinded|Deafened|Prone|Restrained|Grappled|Charmed|Stunned|Incapacitated) condition\b|Advantage|Disadvantage|Dash|Disengage|Hide action|Speed|teleports?|Opportunity Attacks?|Difficult Terrain|unoccupied space|without provoking|Hit Points|Resistan\w*|Immun\w*|\d+ feet/i;
@@ -8110,7 +8068,6 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       }
     }
     const speech = (authored?.unplaced ?? []).filter((u) => u.where === 'languages' && u.text); if (speech.length) { const only = speech.some((u) => /\bonly\b/i.test(`${u.clause} ${u.text}`)); monster.languages = [only ? '' : String(monster.languages ?? '').replace(/^None$/i, ''), ...speech.map((u) => u.text)].filter(Boolean).join('; '); /* "speaks only in the language of socks" is the whole line — Common leaves (critic's step-5 read) */ trace('unplaced to Languages:', speech.map((u) => `"${u.clause}"`).join(', ')); } }
-  tallyFeedsNova(monster.sections, trace); // the fuse binds to the big move once the rows are final
   trace('done:', `"${monster.name}" — donor ${donor.id}, CR ${cr}`);
   return monster;
 }

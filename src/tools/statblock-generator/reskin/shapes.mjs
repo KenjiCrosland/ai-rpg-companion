@@ -50,26 +50,6 @@ export function bandFor(cr) {
 // can never both sit on a sheet handing out the same Hit Points.
 const RELIC = (ac, hp, regen) => `The creature keeps {relic} within 30 feet of itself, a Tiny object that has AC ${ac}, HP ${hp}, and Resistance to all damage. While it is intact, the creature regains ${regen} Hit Points at the start of each of its turns.`;
 
-// A COUNTER THAT BUILDS (invented, 2026-10-25). The signature survey's single most
-// reached-for runnable mechanic: five of thirty invented abilities were a number
-// that climbs and then pays off (Harvested Heads, Temporal Larceny, Crescendo of
-// the Drowned, Toys Before Boys, Devil's Wager). print has no such row, so this is
-// authored under the owner's bar — sound in the action economy, priced, and one
-// visible number — rather than cited.
-//
-// Design choices, each for soundness:
-// - it climbs at the START OF ITS OWN TURN, one mark a round, so the table tracks
-//   one number that moves on a schedule nobody has to watch for. An on-kill build
-//   was the thematic ask ("takes their heads") and does not WORK: in party combat a
-//   kill is rare, the counter never fills, and the row is dead weight.
-// - the payoff lands on the third round's hit — mid-fight, when it is felt — and
-//   then the marks are gone for the fight. rowValue prices conditional trait
-//   damage at 0 (death-burst, bloodied-burst both ev=0), so this is invisible to
-//   the budget; bounding it to ONCE, at {avg_half}, keeps what the pricer ignores
-//   small. Frightened for one turn, not Prone: Prone is already 43% of our sheets
-//   against print's 16%.
-const TALLY = 'At the start of each of its turns, the creature gains a mark {tally_fiction}, to a maximum of 3. It can use its most powerful action only when it has 3 marks, and using it spends them.'
-
 const KILL_DENIAL = 'A creature reduced to 0 Hit Points by the creature {kill_consequence}, and it can\'t be restored to life by any means short of a *Wish* spell.';
 
 export const SHAPES = [
@@ -770,11 +750,6 @@ export const SHAPES = [
     roles: ['brute', 'skirmisher', 'lurker', 'defender', 'artillery', 'controller'], styles: [], cr_range: [0, 20], replaces: 'trait', // 'caster' is not a shape ROLE (ROLES has six); a caster reaches this through the archetype map
 
     frames: { '0-2': KILL_DENIAL, '3-5': KILL_DENIAL, '6-9': KILL_DENIAL, '10-12': KILL_DENIAL, '13-20': KILL_DENIAL },
-  },
-  {
-    id: 'tally', name: 'Mounting Tally', invented: true, // no print row; authored under the owner's bar — sound, priced, one visible number
-    roles: ['brute', 'skirmisher', 'lurker', 'defender', 'artillery', 'controller'], styles: [], cr_range: [1, 20], replaces: 'trait',
-    frames: { '0-2': TALLY, '3-5': TALLY, '6-9': TALLY, '10-12': TALLY, '13-20': TALLY },
   },
   // ----- inventions: no printed frame exists at any band; flagged -----
   {

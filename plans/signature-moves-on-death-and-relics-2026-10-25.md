@@ -615,3 +615,45 @@ immediate nova when both are present).
 LESSON for the plan's own cadence: a per-fix ten measures the fix. It cannot see
 what two landed fixes do to each other. After a run of fixes, the composition is
 its own question — and the holistic read is where it shows, not the bars.
+
+## `tally` is CUT (owner, 2026-10-25) — and the rule it proves
+
+The owner read the rendered rows and called it: too fiddly to adjudicate.
+
+```
+Winding Spring. At the start of each of its turns, the knight gains a mark as the
+  mainspring coils tighter, to a maximum of 3. It can use Stone Barrage only when
+  it has 3 marks, and using it spends them.
+Stone Barrage (3 Marks). Constitution Saving Throw: DC 17, each creature in a
+  30-foot Cone. Failure: 55 (10d10) Thunder damage.
+```
+Three sentences across two rows, a counter tracked for three rounds, and the GM
+must read the trait to know when the action is legal. print buys the same
+surprise in two words — `(Recharge 5-6)` — one die roll, nothing tracked.
+
+Fix 4 made the mechanic CORRECT (the fuse ends in the big move, and cannot feed
+another fuse) and left it NOT WORTH THE INK, which is exactly what the critic had
+said before I built it. I defended the mechanic instead of hearing that.
+
+**THE RULE, worth more than the template: a mechanic that needs its own tracked
+number is a table cost, and a cheaper mechanic usually buys the same feeling.**
+The survey's token economies (Time Debt, Luck Tokens, the three-notch clock) all
+failed this way; `tally` was the same idea in a smaller coat. Before authoring a
+shape, ask what the GM must HOLD to run it — not just whether it is sound.
+
+Cut from: shapes.mjs (frame const + entry), templates.mjs (FLAVOR_SLOTS,
+SLOT_CONTRACTS, BLIND_FILLS, SHAPE_TAGS, the `escalate` member), generate.mjs
+(`tallyFeedsNova` + its call site), both test ledgers, and `tally-nova.spec.js`
+deleted. Untouched: the unrelated local `const tally = {}` condition counters in
+checker.mjs, generate.mjs and save-stat.spec.js. 3,922 tests green, build clean,
+110 templates, the two mechanic enums still identical.
+
+If a build-up is ever wanted again, the owner's cheaper shape is on record:
+collapse it to ONE row and gate on the round number, which the table already
+tracks — "Stone Barrage (3rd Round or Later)". No counter, one read.
+
+### What of fixes 3 and 4 survives the cut
+- Fix 3 (wind-up erupts at the END of its next turn, 20 ft) STANDS — it is
+  independent of tally and measured by windup8.
+- Fix 4's binding is gone with the template. The composition lesson stands and is
+  recorded above: a per-fix ten cannot see what two landed fixes do to each other.

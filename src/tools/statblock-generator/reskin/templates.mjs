@@ -150,7 +150,6 @@ const VOCAB = { area_shape: AREA_SHAPES, duration: DURATIONS, save_stat: SAVE_ST
 // those three references without losing print's shape, so the FILL carries the noun
 // and its own article, and the contract says so where the model can read it.
 const SLOT_CONTRACTS = {
-  tally_fiction: 'a short clause, 3-7 words, completing "gains a mark ___" with what the mark IS in the fiction: "as the hunt\'s fury mounts", "as another gear clicks home", "as the bell tolls once more". No numbers, no rules, no condition names',
   relic: 'a noun phrase WITH its article naming a THING the creature keeps, carries or wears and that a party could attack: "its severed head", "the soul bag", "a daughter\'s carapace". 2-4 words. It must be an OBJECT — not an effect, not a place, not a creature, because the frame gives it AC and Hit Points',
   kill_consequence: 'a PREDICATE naming what becomes of the BODY — no subject, no full stop, 2-5 words, lowercase: "crumbles to dust", "loses its head", "is absorbed into the swarm". It is what the killing leaves behind, never damage and never a condition',
   wound_phrase: 'a whole noun phrase WITH its article and ending in the word "wound" — like print\'s "an infernal wound": "a tar-fouled wound", "a weeping wound". The frame later says "While wounded", "The wound closes" and "stanch the wound", so a fill that is not a wound makes nonsense of them',
@@ -164,7 +163,7 @@ const SLOT_CONTRACTS = {
 // does not read as an injury ("a wound of silence"). This is the cheap half.
 const fillKeepsFrame = (k, v) => k !== 'wound_phrase' || /\bwounds?\b/i.test(String(v ?? ''));
 // flavor slots: the model's words, bounded (no digits, no rules grammar, short)
-export const FLAVOR_SLOTS = ['kill_consequence', 'relic', 'tally_fiction', 'phobia', 'restraint', 'projectile', 'wound_phrase', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
+export const FLAVOR_SLOTS = ['kill_consequence', 'relic', 'phobia', 'restraint', 'projectile', 'wound_phrase', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
 // HOW TO CHOOSE, not just what is legal. A closed enum tells the model the legal
 // values and nothing about which one this sheet can support, and for
 // `consumed_condition` that gap WAS the defect: a payoff reads "one creature that
@@ -184,7 +183,6 @@ const ENGINE_SLOTS = ['dc', 'atk', 'avg', 'dice', 'avg_half', 'dice_half', 'dama
 // the shapes' tags (section comes from `replaces`); melee-rider / ranged
 // replacements weld INTO an existing row and are not a standalone template
 const SHAPE_TAGS = {
-  tally: ['always', 'damage'], // builds on its own turn, pays off once; the trigger lives in the frame, as death-burst's does
   'relic-object': ['always', 'defense'], // the object IS the defense; destroying it takes the regeneration with it
   'kill-denial': ['always', 'condition'], // fires on a kill, said in the frame — the same way death-burst says "when it dies" on the `always` cell
   trample: ['save', 'damage'], leap: ['save', 'damage'], 'thrown-burst': ['save', 'damage'],
@@ -566,7 +564,7 @@ export const MECHANIC = {
   // split from one bucket of 8, which was the worst in the measurement
   harden: ['shell-withdraw', 'sealed-body', 'guarded-stance', 'patient-defense'],
   resist: ['absorption', 'evasion', 'shielded-mind', 'undead-fortitude'],
-  escalate: ['tally', 'bloodied-fury', 'rampage', 'berserk', 'execute', 'condition-payoff', 'exploiter', 'assassinate', 'isolation', 'wind-up'],
+  escalate: ['bloodied-fury', 'rampage', 'berserk', 'execute', 'condition-payoff', 'exploiter', 'assassinate', 'isolation', 'wind-up'],
   mend: ['lay-on-hands', 'second-wind', 'warded-mending'],
   command: ['rally', 'volley-order', 'herd'],
   track: ['uncanny-sense', 'faultless-tracker', 'bound', 'focus', 'feint-slip', 'slow-bolt', 'stunning-strike', 'bolt-restrain', 'bolt-drag', 'truth-aura'],
@@ -1006,7 +1004,7 @@ const shortFlavor = (s) => typeof s === 'string' && s.trim().split(/\s+/).length
  * ctx: { scaled, energy, mix, meleeName, conditionMinor, projectile, archetype, imposed, mechanics, cr, name }
  */
 // generic fills for a BLIND render (the fallback): the fiction is plain, never wrong
-const BLIND_FILLS = { kill_consequence: 'crumbles to dust', tally_fiction: 'as its fury mounts', relic: 'a sealed reliquary', /* print's own: the Mummy's victim "dies and turns to dust" */ phobia: 'the thing it fears', restraint: 'the binding', /* the snare's object noun: an empty slot printed "Restrained until the Restrained is destroyed" (critic's blockers audit 2026-10-03) */ douse: 'tear the brand away', projectile: 'a hurled object', wound_phrase: 'a festering wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'its whole frame tensing', lure_source: 'the creature', hook: 'its grip', terrain: 'mud', sense_target: 'moving creatures', anchor: 'its resting place', ward: 'its ward' }; // sense_target is the neutral sense: a rejected fill on a hound printed "precious metal" (the fourteen, 2026-09-28)
+const BLIND_FILLS = { kill_consequence: 'crumbles to dust', relic: 'a sealed reliquary', /* print's own: the Mummy's victim "dies and turns to dust" */ phobia: 'the thing it fears', restraint: 'the binding', /* the snare's object noun: an empty slot printed "Restrained until the Restrained is destroyed" (critic's blockers audit 2026-10-03) */ douse: 'tear the brand away', projectile: 'a hurled object', wound_phrase: 'a festering wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'its whole frame tensing', lure_source: 'the creature', hook: 'its grip', terrain: 'mud', sense_target: 'moving creatures', anchor: 'its resting place', ward: 'its ward' }; // sense_target is the neutral sense: a rejected fill on a hound printed "precious metal" (the fourteen, 2026-09-28)
 // THE RAY TABLE is composed from library cards, never authored (critic 2026-10-01): each
 // ray takes its save and its failure clause from a bolt or pulse card already on the
 // shelf; the names are the engine's own. A band of 3-5 rolls a d4 over the first four.
