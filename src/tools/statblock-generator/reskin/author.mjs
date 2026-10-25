@@ -84,7 +84,18 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // a trait is not a save (a prose save belongs in the save form — the wyrm's "must succeed on a DC 21 Dexterity saving throw" trait, step 7 twelve), and {dc} stands only where a DC stands ("within {dc} feet" is not a DC)
   // an unquantified heal is refused: it must carry {dmg} and a trigger or a limit (critic A8, 2026-10-18 — Heal the Faithful, Harbour-Mud Rising, Gleeful Growth, Waxen Reknitting)
   const healOk = (t) => { const tx = `${t.trigger ?? ''} ${t.effect}`; if (!/\b(?:regains?|restores?|heals?|recovers?)\b[^.]*\bhit points\b/i.test(tx)) return true; return /\{dmg\}/.test(tx) && (!!t.trigger || /\b(?:\d\/Day|Recharge|once)\b/i.test(tx)); };
-  const traitOk = (t) => { const tx = `${t.trigger ?? ''} ${t.effect}`; return MECHANIC.test(tx) && healOk(t) && !/saving throw/i.test(tx) && !/\{dc\}\s+(?:feet|ft)\b|within \{dc\}/i.test(tx); };
+  // AN ESCALATION NAMES ITS AMOUNT (critic's table read, 2026-10-25: Glacier's
+  // Heart, "this bonus increases each time it applies" — no amount, unadjudicable
+  // at the table; and "resets when the heart regains Hit Points" beside
+  // Regeneration 15/turn, so it reset every turn). Same shape as healOk, same
+  // class: this VALIDATES the model's own answer, it infers nothing about the
+  // GM's words. An effect that says the bonus grows must carry {dmg} — the
+  // engine's token for a stated amount — and a ceiling ("to a maximum of",
+  // "up to"). What a call would catch that this will not: an escalation phrased
+  // without these verbs. The audit cannot repair an authored row (rewrites touch
+  // `entry.model` only), so refusing here is the only gate it has.
+  const escalationOk = (t) => { const tx = `${t.trigger ?? ''} ${t.effect}`; if (!/\b(?:increases?|grows?|stacks?|doubles?|escalates?|compounds?)\b[^.]*\b(?:each|every) time\b|\b(?:each|every) time\b[^.]*\b(?:increases?|grows?|stacks?|doubles?)\b/i.test(tx)) return true; return /\{dmg\}/.test(tx) && /\b(?:to a maximum of|up to|at most|maximum)\b/i.test(tx); };
+  const traitOk = (t) => { const tx = `${t.trigger ?? ''} ${t.effect}`; return MECHANIC.test(tx) && healOk(t) && escalationOk(t) && !/saving throw/i.test(tx) && !/\{dc\}\s+(?:feet|ft)\b|within \{dc\}/i.test(tx); };
   const refusedTraits = traitsAll.filter((t) => !traitOk(t));
   const traits = traitsAll.filter(traitOk).slice(0, traitSlots);
   const reactions = (Array.isArray(p.reactions) ? p.reactions : []).map((r) => ({ clause: str(r?.clause, 120), name: str(r?.name, 40), imposes: imposesFromRelation(r?.imposes, r?.condition_relation), condition_relation: CONDITION_RELATIONS.includes(r?.condition_relation) ? r.condition_relation : null, trigger: clean(r?.trigger), response: clean(r?.response) })).filter((r) => r.name && r.trigger && r.response).slice(0, 1);
@@ -93,9 +104,14 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   const unplaced = (Array.isArray(p.unplaced) ? p.unplaced : []).map((u) => ({ clause: str(u?.clause, 120), where: u?.where === 'languages' ? 'languages' : 'description', text: str(u?.text, 160) })).filter((u) => u.clause);
   for (const a of refusedAttacks) if (a.clause) unplaced.push({ clause: a.clause, where: 'description', text: a.flavor ?? a.name });
   for (const t of refusedTraits) if (t.clause) unplaced.push({ clause: t.clause, where: 'description', text: t.effect });
+  // A DECLINE MUST SAY WHY (2026-10-25): a refused trait folded silently into
+  // `unplaced`, so a sheet that lost its ramp to escalationOk and a sheet whose
+  // call never wrote one looked identical from outside. The reason rides out
+  // for the caller to trace; nothing about the refusal itself changes.
+  const refused = refusedTraits.map((t) => ({ name: t.name, why: !escalationOk(t) ? 'escalation names no amount or no ceiling' : !healOk(t) ? 'heal names no amount or no limit' : 'no mechanic in the effect' }));
   // the rider slots: a rider is an attack row's condition; past the slot count, later riders fold to flavor
   let riders = 0; for (const a of attacksKept) if (a.rider) { riders += 1; if (riders > riderSlots) { a.flavor = [a.flavor, `(${a.rider})`].filter(Boolean).join(' '); a.rider = null; } }
-  return { attacks: attacksKept, saves: saves.slice(0, 1), traits, reactions, crossRef: crossRef && crossRef.payoffRow !== crossRef.riderRow ? crossRef : null, answered, unplaced }; // a payoff on its own rider row is pointless (the bog hound's bite, check-in 2026-10-11)
+  return { attacks: attacksKept, saves: saves.slice(0, 1), refused, traits, reactions, crossRef: crossRef && crossRef.payoffRow !== crossRef.riderRow ? crossRef : null, answered, unplaced }; // a payoff on its own rider row is pointless (the bog hound's bite, check-in 2026-10-11)
 }
 export function validateAuthorResponse(raw) { return !!parseAuthorResponse(raw); } // a well-formed answer with nothing to add is valid: "no row for this clause" is an answer, not a failure to retry (Meshrin's repair call, step 7 twelve)
 

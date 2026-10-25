@@ -5158,6 +5158,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const lacksForAuthor = clauseRecord.filter((c) => c.polarity === 'lacks').map((c) => c.text);
         const rawR = await callLLM(buildRepairPrompt({ name: p.name, inline: inlineGuessRef(), clauses: unclaimed, cr, sheet: sheetText, attackCap: unclaimed.length, lacks: lacksForAuthor, taken: Object.values(sections).flat().map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean) }), validateAuthorResponse);
         const rep = parseAuthorResponse(rawR, { attackKeys: [], attackCap: 1, traitSlots: 1 });
+        for (const r of (rep?.refused ?? [])) trace('authored trait refused:', `"${r.name}" — ${r.why}; the clause folds to description`);
         trace('repair answer:', `attacks ${rep?.attacks.length ?? 0}, saves ${rep?.saves.length ?? 0}, traits ${rep?.traits.length ?? 0}, reactions ${rep?.reactions.length ?? 0}, answered ${JSON.stringify(rep?.answered ?? [])}, unplaced ${JSON.stringify((rep?.unplaced ?? []).map((u) => `${u.where}:${u.clause}`))}${rep ? '' : ' — THE ANSWER DID NOT PARSE'}`);
         // A CLAUSE THE SHEET ALREADY ANSWERS IS NOT OWED (2026-10-21). Vashka the
         // Red shipped a FAIL for "never breaks ranks" while carrying "Shield Wall

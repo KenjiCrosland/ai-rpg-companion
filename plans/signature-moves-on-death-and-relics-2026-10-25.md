@@ -481,3 +481,59 @@ critic asked, and the once-per-fight bound survives because 3 marks take 3
 rounds. If the sheet has no gated nova, tally DECLINES (the relic's gated_row
 rule). Bind by `rowByName` on the nova's bare name, set at land time, after the
 sheet's rows are final.
+
+## Fix 2 — an authored escalation names its amount — LANDED; measured by escalate10
+
+`escalationOk` beside `healOk` in parseAuthorResponse: an effect whose bonus grows
+"each/every time" must carry {dmg} and a ceiling, else the trait is refused and
+its clause folds to description. Same class as healOk — validates the model's
+own answer, infers nothing about the GM's words. Spec: `__tests__/escalation.spec.js`.
+
+escalate10: 0 unadjudicable escalations (detector proven to flag Deepening Cold on
+tally6 #05 first; forty baseline 0 of 40), title case 0 of 10, no throws, signature
+8 library / 2 dropped (mundane, exact — both correct). Holistic ~4 ship / 5
+fix-lite / 0 fix: SOUND and DULL.
+
+The finding that matters: every "ramp" on the three asking sheets was the SAME
+template — `bloodied-fury`, "While Bloodied, Advantage on attack rolls" — renamed
+Rising Core / Widening Fury / Furnace Fury. The `escalate` family's blandest
+member is over-selected 3 of 4. And 0 authored escalations landed anywhere.
+
+Refusals were SILENT: a refused trait folded into `unplaced` with no trace, so a
+sheet that lost its ramp to escalationOk and a sheet whose call never wrote one
+looked identical ([[a-private-copy-hides-the-fix]]: a decline must trace WHY).
+parseAuthorResponse now returns `refused: [{name, why}]` and the one call site
+(the repair path, generate.mjs ~5160 — the only reader; `rep.traits` feed
+landAuthored) traces each. escalate4 re-runs the four asking concepts with the
+trace live to separate (a) over-refusal from (b) never-authored. Bar in
+`scratchpad/fix2-criteria.md`.
+
+A flake, recorded: one full-suite run reported 1 failed / 3921 passed with no
+suite name surfacing; the immediate re-run was 3922 / 0. Not reproduced.
+
+### escalate4 (refusals traced) — outcome (b): fix 2 is correct and inert here
+
+No refusal fired on any of the four asking sheets, and the authored (repair)
+call ran on only one of them (#03). There was never an escalation to refuse: the
+sameness is not over-refusal. #03's authored trait, "Stoked Furnace", landed and
+is adjudicable — 14 (4d6), until the end of its next turn, first creature only —
+an on-hit step, not a stacking ramp, phrased without "each time", so the gate
+correctly did not apply.
+
+`tally` DID land, on the fuse concept (#04 "a storm that gathers over three
+rounds"), with the MODEL's own fill — "gains a mark as the stormfront swells and
+thickens" — so the slot contract reaches the model when the stamp leads the
+family and no sibling out-scores it.
+
+**Why bloodied-fury wins the family (a design question for the owner, not fixed):**
+the mechanic stamp promotes the whole `escalate` family, but INSIDE the promoted
+group `rankByVerb` still orders by word score. `bloodied-fury` carries keys
+("fury", "wounded", "injury"...) and scores 2 on "every injury makes it angrier";
+`tally` and `wind-up` carry NO keys by design and score 0, so they sort last
+unless nothing in the family scores. Keyless templates are therefore reachable
+by the stamp but rarely FIRST. Options: tie all members of a promoted family (then
+catalog order), or hand the fit call the promoted family unordered. Either touches
+rankByVerb's contract — owner's call.
+
+Misfit, logged: `undead-fortitude` ("Feral Resilience") on a LIVING bear-god. The
+template's body gate should ask whether the creature is dead already.
