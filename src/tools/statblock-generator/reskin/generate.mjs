@@ -3934,7 +3934,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // round trip. A missing or malformed answer falls back to the template's own
       // `keys`, so it can never fail a generation (2026-10-22).
       const bodyReqsT = liveBodyRequirements(ctxT);
-      const rawIdea = await callLLM(buildIdeaPrompt({ bodyRequirements: bodyReqsT, owedClause: owedClauseForIdea(), name: p.name, cr, concept: readPhrases(concept), sheetLines: sheetSoFarT, seats: seatsT, energy: options.energy ?? null, wantTrait: traitWildcardAllowed, engines: enginesT, verbs: conceptVerbs(`${options.userConcept ?? concept} ${seatsT?.action ?? ''} ${seatsT?.trait ?? ''}`) }), validateIdeaResponse);
+      const rawIdea = await callLLM(buildIdeaPrompt({ askedMechanic: options.askedMechanic ?? null, bodyRequirements: bodyReqsT, owedClause: owedClauseForIdea(), name: p.name, cr, concept: readPhrases(concept), sheetLines: sheetSoFarT, seats: seatsT, energy: options.energy ?? null, wantTrait: traitWildcardAllowed, engines: enginesT, verbs: conceptVerbs(`${options.userConcept ?? concept} ${seatsT?.action ?? ''} ${seatsT?.trait ?? ''}`) }), validateIdeaResponse);
       ideasT = parseIdeas(rawIdea);
       {
         const verdicts = readBodyVerdicts(rawIdea);
@@ -4731,7 +4731,26 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const RIDES_THE_BOW = new Set(['isolation', 'affliction']);
       const wantRanged = actionT.host === 'ranged' || (scaled.style === 'archer' && RIDES_THE_BOW.has(actionT.template) && Object.values(sections).flat().some((e2) => /Ranged Attack Roll/.test(e2.text ?? '') && !/Melee or Ranged/.test(e2.text ?? '')));
       const host = Object.values(sections).flat().find((e2) => (wantRanged ? /Ranged Attack Roll/ : /Melee Attack Roll/).test(e2.text ?? '')); // a hybrid "Melee or Ranged Attack Roll" row hosts either
-      if (host) {
+      // ONE RIDER PER TRIGGER (critic's table read, 2026-10-25). The Horseman's Saber
+      // carried its donor's own charge rider AND a welded `charge-push` on the identical
+      // trigger — "If the horseman moved at least 20 feet in a straight line toward the
+      // target immediately before the hit" twice in one row, the second pushing the
+      // target out of reach of its own remaining attacks. The weld deduped by template
+      // id only; the donor's rider is print text with no id. The rider's opening
+      // clause (up to its first comma) is its trigger; if the host already carries
+      // that exact clause, the rider is a duplicate. Engine sentence against engine
+      // sentence — a fact about strings, no meaning inferred. NOT caught: the same
+      // effect in different words; the family cap owns that.
+      // The rider still carries the engine's self-reference token here — "If the
+      // creature moved" — while the host's donor text was already rewritten to "If
+      // the horseman moved". Compare what WILL print: substitute the same `inline`
+      // the later rewrite uses, or the two clauses never match (the first cut of
+      // this guard compared pre-rewrite rider to post-rewrite host and could not
+      // fire; a deterministic replay against the known-bad Saber caught it, the
+      // ten did not — the duplicate is 1 run in 4).
+      const riderTrig = String(actionT.row?.text ?? '').replace(/\*/g, '').split('The creature').join(inline.charAt(0).toUpperCase() + inline.slice(1)).split('the creature').join(inline).split(',')[0].trim();
+      const dupTrig = !!host && riderTrig.length >= 24 && String(host.text ?? '').replace(/\*/g, '').includes(riderTrig);
+      if (host && !dupTrig) {
         // a rider that imposes a hold on every hit of a repeatable row needs a
         // gate (the astrologer's no-save Restrained x3 a turn, fresh ten):
         // print's idiom is "once per turn" when there is no save
@@ -4764,6 +4783,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         riderShipped = true;
         trace('signature rider:', `${actionT.template} -> ${host.name} (appended; ${actionT.because})`);
         if (deadBareT) sweepDeadName(sections, deadBareT, host, trace);
+      } else if (dupTrig) {
+        trace('rider refused — duplicate trigger:', `"${actionT.template ?? actionT.row?.template ?? '?'}" opens with "${riderTrig.slice(0, 60)}…", which "${host.name}" already carries; the slot leaves and the seat looks elsewhere`);
+        wcDropped = true;
+        for (const es2 of Object.values(sections)) { const ix = es2.indexOf(pendingWildcard); if (ix !== -1) es2.splice(ix, 1); }
       } else trace('signature miss:', `action — a rider fit (${actionT.template}) but the sheet has no ${wantRanged ? 'ranged' : 'melee'} row to ride`);
     }
     if (actionT && actionT.section !== 'Rider' && actionT.section !== 'Traits' && !closedPath) { // a re-seated TRAIT never climbs the ladder; the TWIST path has no value floor — its one row is the GM's ask, priced by print's CR (pipeline 2) (Wounded Tolling: 27 per hit, no save — fresh ten)

@@ -150,6 +150,9 @@ const VOCAB = { area_shape: AREA_SHAPES, duration: DURATIONS, save_stat: SAVE_ST
 // those three references without losing print's shape, so the FILL carries the noun
 // and its own article, and the contract says so where the model can read it.
 const SLOT_CONTRACTS = {
+  tally_fiction: 'a short clause, 3-7 words, completing "gains a mark ___" with what the mark IS in the fiction: "as the hunt\'s fury mounts", "as another gear clicks home", "as the bell tolls once more". No numbers, no rules, no condition names',
+  relic: 'a noun phrase WITH its article naming a THING the creature keeps, carries or wears and that a party could attack: "its severed head", "the soul bag", "a daughter\'s carapace". 2-4 words. It must be an OBJECT — not an effect, not a place, not a creature, because the frame gives it AC and Hit Points',
+  kill_consequence: 'a PREDICATE naming what becomes of the BODY — no subject, no full stop, 2-5 words, lowercase: "crumbles to dust", "loses its head", "is absorbed into the swarm". It is what the killing leaves behind, never damage and never a condition',
   wound_phrase: 'a whole noun phrase WITH its article and ending in the word "wound" — like print\'s "an infernal wound": "a tar-fouled wound", "a weeping wound". The frame later says "While wounded", "The wound closes" and "stanch the wound", so a fill that is not a wound makes nonsense of them',
 };
 // Does the fill keep the promise its frame already makes? The frame's own noun is a
@@ -161,7 +164,7 @@ const SLOT_CONTRACTS = {
 // does not read as an injury ("a wound of silence"). This is the cheap half.
 const fillKeepsFrame = (k, v) => k !== 'wound_phrase' || /\bwounds?\b/i.test(String(v ?? ''));
 // flavor slots: the model's words, bounded (no digits, no rules grammar, short)
-export const FLAVOR_SLOTS = ['phobia', 'restraint', 'projectile', 'wound_phrase', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
+export const FLAVOR_SLOTS = ['kill_consequence', 'relic', 'tally_fiction', 'phobia', 'restraint', 'projectile', 'wound_phrase', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
 // HOW TO CHOOSE, not just what is legal. A closed enum tells the model the legal
 // values and nothing about which one this sheet can support, and for
 // `consumed_condition` that gap WAS the defect: a payoff reads "one creature that
@@ -181,6 +184,9 @@ const ENGINE_SLOTS = ['dc', 'atk', 'avg', 'dice', 'avg_half', 'dice_half', 'dama
 // the shapes' tags (section comes from `replaces`); melee-rider / ranged
 // replacements weld INTO an existing row and are not a standalone template
 const SHAPE_TAGS = {
+  tally: ['always', 'damage'], // builds on its own turn, pays off once; the trigger lives in the frame, as death-burst's does
+  'relic-object': ['always', 'defense'], // the object IS the defense; destroying it takes the regeneration with it
+  'kill-denial': ['always', 'condition'], // fires on a kill, said in the frame — the same way death-burst says "when it dies" on the `always` cell
   trample: ['save', 'damage'], leap: ['save', 'damage'], 'thrown-burst': ['save', 'damage'],
   'gaze-single': ['save', 'condition'], snare: ['save', 'condition'], swallow: ['save', 'condition'], reel: ['save', 'movement'],
   'condition-payoff': ['save', 'damage'], rampage: ['once_per_fight', 'damage'], blink: ['always', 'movement'],
@@ -537,6 +543,8 @@ const REQUIRES_IMPOSED = new Set(['condition-payoff', 'exploiter']);
  * charm; nothing in the other 24 declared fields could tell them apart.
  */
 export const MECHANIC = {
+  relic: ['relic-object'], // a thing it keeps, that the party can take away
+  harvest: ['kill-denial'], // what the creature does to what it kills
   swallow: ['swallow'],
   gaze: ['gaze-single', 'gaze-aura', 'random-ray'],
   snare: ['snare', 'snare-bolt'],
@@ -558,7 +566,7 @@ export const MECHANIC = {
   // split from one bucket of 8, which was the worst in the measurement
   harden: ['shell-withdraw', 'sealed-body', 'guarded-stance', 'patient-defense'],
   resist: ['absorption', 'evasion', 'shielded-mind', 'undead-fortitude'],
-  escalate: ['bloodied-fury', 'rampage', 'berserk', 'execute', 'condition-payoff', 'exploiter', 'assassinate', 'isolation', 'wind-up'],
+  escalate: ['tally', 'bloodied-fury', 'rampage', 'berserk', 'execute', 'condition-payoff', 'exploiter', 'assassinate', 'isolation', 'wind-up'],
   mend: ['lay-on-hands', 'second-wind', 'warded-mending'],
   command: ['rally', 'volley-order', 'herd'],
   track: ['uncanny-sense', 'faultless-tracker', 'bound', 'focus', 'feint-slip', 'slow-bolt', 'stunning-strike', 'bolt-restrain', 'bolt-drag', 'truth-aura'],
@@ -597,6 +605,8 @@ export const MECHANICS = Object.keys(MECHANIC);
  * broken as one that glues an owlbear.
  */
 export const NEEDS_BODY = {
+  'relic-object': 'something it keeps apart from its own body — a vessel, a trophy, a tool, a jar, a severed part; a creature that carries nothing and is all of one piece has no relic to bind',
+  'kill-denial': 'a way of killing that destroys or keeps the body — teeth, fire, rot, a blade, something that consumes; not a death by fright or persuasion alone',
   adhesive: 'a surface that is sticky, secreting, or coated in something adhesive',
   'resonant-body': 'a body of metal, crystal, glass, or something hollow that rings when struck',
   'active-toll': 'a body that rings, tolls, or resonates',
@@ -986,7 +996,7 @@ const doublesFrameVerb = (text, k, fill) => {
 // predicate: lowercase, no terminal stop. The engine's own blind default used
 // to land after a period — "...up to 10 minutes. has Disadvantage on attack
 // rolls" (critic, the forty, 2026-10-19). Shape only; no meaning is read.
-const PREDICATE_SLOTS = new Set(['zone_rule']);
+const PREDICATE_SLOTS = new Set(['zone_rule', 'kill_consequence']); // "crumbles to dust" — a predicate, so `asPredicate` already enforces the shape
 const asPredicate = (s) => { const v = String(s ?? '').trim().replace(/[.;,]+$/, ''); return /^[a-z]/.test(v) ? v : null; };
 const shortFlavor = (s) => typeof s === 'string' && s.trim().split(/\s+/).length <= 8 && noDigits(s) && !/saving throw|damage|condition|DC\b/i.test(s);
 
@@ -996,7 +1006,7 @@ const shortFlavor = (s) => typeof s === 'string' && s.trim().split(/\s+/).length
  * ctx: { scaled, energy, mix, meleeName, conditionMinor, projectile, archetype, imposed, mechanics, cr, name }
  */
 // generic fills for a BLIND render (the fallback): the fiction is plain, never wrong
-const BLIND_FILLS = { phobia: 'the thing it fears', restraint: 'the binding', /* the snare's object noun: an empty slot printed "Restrained until the Restrained is destroyed" (critic's blockers audit 2026-10-03) */ douse: 'tear the brand away', projectile: 'a hurled object', wound_phrase: 'a festering wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'its whole frame tensing', lure_source: 'the creature', hook: 'its grip', terrain: 'mud', sense_target: 'moving creatures', anchor: 'its resting place', ward: 'its ward' }; // sense_target is the neutral sense: a rejected fill on a hound printed "precious metal" (the fourteen, 2026-09-28)
+const BLIND_FILLS = { kill_consequence: 'crumbles to dust', tally_fiction: 'as its fury mounts', relic: 'a sealed reliquary', /* print's own: the Mummy's victim "dies and turns to dust" */ phobia: 'the thing it fears', restraint: 'the binding', /* the snare's object noun: an empty slot printed "Restrained until the Restrained is destroyed" (critic's blockers audit 2026-10-03) */ douse: 'tear the brand away', projectile: 'a hurled object', wound_phrase: 'a festering wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'its whole frame tensing', lure_source: 'the creature', hook: 'its grip', terrain: 'mud', sense_target: 'moving creatures', anchor: 'its resting place', ward: 'its ward' }; // sense_target is the neutral sense: a rejected fill on a hound printed "precious metal" (the fourteen, 2026-09-28)
 // THE RAY TABLE is composed from library cards, never authored (critic 2026-10-01): each
 // ray takes its save and its failure clause from a bolt or pulse card already on the
 // shelf; the names are the engine's own. A band of 3-5 rolls a d4 over the first four.
@@ -1041,6 +1051,7 @@ export function composeRayTable(band) {
  *                     and separately imposes Stunned at 21+, which is listed.
  */
 const IMPOSES_BY_TEMPLATE = {
+  tally: 'Frightened', // the payoff's one-turn Frightened — declared, so the reconcile and A2 read a record, not the text
   // print's own swallow text imposes three at once, in the COMPOUND idiom
   // ("has the Blinded and Restrained conditions") that a singular-only scan
   // misses — the gap the owner caught, 2026-10-21
@@ -1292,11 +1303,12 @@ export function conceptVerbs(conceptText) {
   return [...new Set(rankByVerb(TEMPLATES, conceptText).flatMap((r) => r.concept))];
 }
 
-export function buildIdeaPrompt({ name, cr, concept, sheetLines, seats = null, energy = null, wantTrait = true, engines = [], verbs = [], owedClause = null, bodyRequirements = [] }) {
+export function buildIdeaPrompt({ name, cr, concept, sheetLines, seats = null, energy = null, wantTrait = true, engines = [], verbs = [], owedClause = null, bodyRequirements = [], askedMechanic = null }) {
   return `You are inventing the SIGNATURE ability for a nearly-complete D&D monster. Everything below is already final. Describe the ability in PLAIN WORDS — what it does, when it fires, whom it affects, what limits it. NO rules grammar, NO numbers, NO dice, NO DCs, NO condition names in capitals: the engine owns every number and will pour your idea into a printed rules shape afterwards. Your job is the IDEA a fan would riot to find missing.
 THE SHEET SO FAR (${name}, CR ${cr}) — everything already on it, header and rows:
 ${sheetLines}
 CONCEPT: ${concept}
+${askedMechanic ? `WHAT THE GM ASKED A ROW TO DO: **${askedMechanic}**. An earlier call read this from the GM's own words, and the catalog has a shape that DOES it — so an idea serving this will be printed as that shape, and an idea that wanders will be fitted to whatever it happens to resemble instead. This is the ask; serve it in your own fiction.` : ''}
 ${owedClause ? `THE CLAUSE THIS ABILITY IS FOR — the sheet is a PRINTED creature plus what the GM added, and this is what they added. It is the whole reason this sheet is not just the printed monster, and nothing on it answers the clause yet. Invent the ability that makes THIS true of THIS creature; do not describe the creature in general: "${String(owedClause).replace(/"/g, "'")}"
 ` : ''}${verbs.length ? `THE CONCEPT'S OWN VERBS: ${verbs.join(', ')} — the signature is one of these verbs made mechanical; an idea that abandons them for something the concept never said (a teleport, a mist, a generic burst) is the wrong idea however clever. ` : ''}${seats ? `BUILD THIS: the action idea builds "${seats.action}"${wantTrait && !seats.packaged ? `; the trait idea makes "${seats.trait}" true on the sheet` : ''}. ` : ''}${engines.length ? `THE SHEET'S ENGINE IS ALREADY BUILT: ${engines.join(', ')} — the concept's holding, swallowing, or caging is DONE by those rows; do not describe it again in any wording. Build the concept's OTHER face. ` : ''}The rows above already OWN their fiction — never describe another version of one; the best ideas key off a condition a row applies, or set up a state the rows exploit.${energy ? ` This creature's energy is ${energy}.` : ''}
 NOT A SIGNATURE (the wide run's biggest miss class, 12 of 48): a damage resistance or immunity, "blades only chip it", "can't be moved", "immune to its own fire", or a saving-throw bonus — those are the HEADER's to grant and the engine already derives them from type and energy. A trait idea must be a RULE that happens: something the creature does, or something that happens to whoever touches, hits, or holds it. Tag each idea: "section" is action | bonus_action | reaction | rider (a clause on the creature's own attack: "when it hits, …")${wantTrait ? ' (the trait idea is always a trait)' : ''}; "trigger" is one of ${TRIGGERS.join(' | ')}; "effect" is one of ${EFFECTS.join(' | ')}.
@@ -1415,7 +1427,7 @@ THE CLASSIFICATION DECIDES, NOT A WORD. Templates are listed in the engine's ord
 A VERB MATCH is a WORD match, not a judgement — the engine found the template's key word in the user's words and is asking you whether it MEANS that mechanic for this creature. It does not mean it when the word sits in the modifier slot of a compound (a blood-priest has no blood sense; a stone-herder is not made of stone; a knife ball is not an assassin), when the sheet or the creature's own kind already answers it (a climb Speed answers "climbs the wall"), or when it belongs to another fiction (a living warden who guards a reef is not bound to a resting place). Name every such template in "wrong" — the engine will not use one you list there. Leave "wrong" empty when each match genuinely means its mechanic.
 A template whose match is marked (concept) may be used even if you answer none, so fill its "you fill" slots in "fills" whichever answer you give, quoting the user's own words (a phobia of chickens fills {phobia} with "chickens"; a warden of the reef fills {place} with "the reef").
 WHY NONE FITS. When you answer "none", answer "declined_because" with exactly one of: collision (a template's key word is here but does not mean that mechanic for this creature), already_answered (the sheet or the creature's own kind already does this), no_fit (nothing offered carries the idea). Answer "" when you did pick a template.
-A REFUSAL NAMES ITS GAP. "no_fit" is not an answer on its own — say which of the offered templates comes CLOSEST ("closest"), what the rules would have to do that none of them does ("missing"), and WHICH KIND OF EFFECT that missing thing is ("missing_effect"), exactly one of: damage | condition | movement | resource | defense. Judge the effect by what the row DOES to its target, not by words that appear in passing: a row that only applies against an already-prone target is not a condition row, and a row that resists being pushed is defense, not movement. In a few plain words naming the MECHANIC, not the fiction: "pulls the creature back to where it started", "picks one target and holds the aim", "costs the creature something when it fails". Never "nothing fits" and never a restatement of the idea. These accumulate into a list of templates worth building, so a vague answer is a wasted one.
+A RIDER THAT MOVES THE TARGET OUT OF REACH does not belong on a row the Multiattack repeats: push the target 10 feet on the first hit and the second and third cannot land, so the creature defeats its own Multiattack. Read the sheet's Multiattack and reach before offering a push or pull rider; refuse it there (the Horseman's Saber, 2026-10-25). A REFUSAL NAMES ITS GAP. "no_fit" is not an answer on its own — say which of the offered templates comes CLOSEST ("closest"), what the rules would have to do that none of them does ("missing"), and WHICH KIND OF EFFECT that missing thing is ("missing_effect"), exactly one of: damage | condition | movement | resource | defense. Judge the effect by what the row DOES to its target, not by words that appear in passing: a row that only applies against an already-prone target is not a condition row, and a row that resists being pushed is defense, not movement. In a few plain words naming the MECHANIC, not the fiction: "pulls the creature back to where it started", "picks one target and holds the aim", "costs the creature something when it fails". Never "nothing fits" and never a restatement of the idea. These accumulate into a list of templates worth building, so a vague answer is a wasted one.
 DID THE USER ASK FOR IT? Answer "asked" with the user's OWN WORDS that ask for this template's mechanic, quoted verbatim from THE USER TYPED line above — never from THE IDEA, which is the engine's own prose and is not the user
 ${elements.length ? `WHICH OF THIS CREATURE'S OWN ELEMENTS DOES THE ROW EXPRESS? Answer "expresses" with ONE of these, copied exactly, or "" if the row expresses none of them. These were drawn from the GM's description, so naming one is a receipt even when you cannot quote the GM directly — a trait seat usually cannot. Answer "" honestly: a row that does not express any of them is decoration, and saying so is the right answer.\n${elements.map((e) => `  - ${String(e).replace(/"/g, "'")}`).join('\n')}` : ''}'s words. The few words, not a sentence. Leave it "" when the user's words never ask for it and your pick rests on the idea you were given or on the template's shape. Answering "" is not a failure and does not withdraw your pick; it tells the engine the pick is yours, not the GM's, and some seats take only what the GM asked for.
 Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "expresses": "<one of the creature's own elements listed above, copied exactly, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", "closest": "<on a refusal: the offered id that comes nearest, else \"\">", "missing": "<on a refusal: the mechanic none of them does, else \"\">", "missing_effect": "<on a refusal: damage | condition | movement | resource | defense, else \"\">", "name": "<2-3 words, Title Case the way print writes a row name: Dreadful Glare, Wing Attack, Cloud of Insects — every word capitalised except of/the/and/to/with>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;

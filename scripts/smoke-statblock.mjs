@@ -232,7 +232,13 @@ const run = async () => {
       const m = JSON.parse(localStorage.getItem('monsters') || '{}');
       const all = Object.values(m).filter(Array.isArray).flat();
       const seen = new Set(known);
-      return all.find((x) => !seen.has(JSON.stringify(x))) ?? null;   // no new block => null, never the previous one
+      // THE LAST fresh entry, not the first (2026-10-25). A run that re-serializes an
+      // OLDER same-name entry — the 2014/2024 other_edition write does — makes that
+      // old sheet "fresh" too, and it sits EARLIER in the array, so .find returned
+      // run #1's block for run #2 (tally6: traces differed, blocks byte-identical;
+      // horseman4: a 2014 block hashed identical to a 2024 one). New saves append.
+      const fresh = all.filter((x) => !seen.has(JSON.stringify(x)));
+      return fresh.length ? fresh[fresh.length - 1] : null;   // no new block => null, never the previous one
     }, namesBefore);
 
     // GOLDENS (critic, v2 blind read 2026-09-21: "freeze the v1 winners — if a

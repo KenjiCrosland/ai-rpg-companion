@@ -131,3 +131,71 @@ describe('imposes reaches the row on both branches', () => {
     }
   });
 });
+
+/**
+ * THE FIRST MECHANIC-ROUTED TEMPLATE.
+ *
+ * `kill-denial` carries no key words on purpose — the declared mechanic is its
+ * only route. Adding it surfaced a FOURTH way a declaration can ship inert: a
+ * shape with no SHAPE_TAGS entry is silently dropped by the catalog filter
+ * (`SHAPES.filter((s) => SECTION_BY_REPLACES[s.replaces] && SHAPE_TAGS[s.id])`),
+ * so the template never existed and its NEEDS_BODY entry pointed at nothing.
+ */
+describe('kill-denial', () => {
+  const { TEMPLATES: T4, renderTemplate: rt4, NEEDS_BODY: NB } = require('@/tools/statblock-generator/reskin/templates.mjs');
+  const { SHAPES } = require('@/tools/statblock-generator/reskin/shapes.mjs');
+  const { pickDonor, scaleDonor } = require('@/tools/statblock-generator/reskin/scale.mjs');
+  const tpl = () => T4.find((t) => t.id === 'kill-denial');
+
+  it('every SHAPE reaches TEMPLATES — a missing SHAPE_TAGS entry drops it silently', () => {
+    // `throw-recall` is PRE-EXISTING dead code, found by this test rather than
+    // introduced by it: it is marked `invented: true`, has no SHAPE_TAGS entry, and
+    // declares `replaces: 'ranged'`, which is not a key of SECTION_BY_REPLACES — so
+    // it has been unreachable since it was written. Admitting it by name keeps the
+    // guard live for new shapes; reviving it would ADD a template to the catalog and
+    // needs its own measurement, so it is not done here.
+    const KNOWN_UNREACHABLE = new Set(['throw-recall']);
+    const ids = new Set(T4.map((t) => t.id));
+    expect(SHAPES.filter((s) => !ids.has(s.id) && !KNOWN_UNREACHABLE.has(s.id)).map((s) => s.id)).toEqual([]);
+  });
+
+  it('is reachable, stamped, and declares a body requirement', () => {
+    const t = tpl();
+    expect(t).toBeTruthy();
+    expect(t.mechanic).toBe('harvest');
+    expect(t.section).toBe('trait');
+    expect(NB['kill-denial']).toBeTruthy();
+  });
+
+  it('renders at every CR band and never leaves a slot unfilled', () => {
+    for (const cr of [1, 4, 8, 11, 17]) {
+      const ctx = { scaled: scaleDonor(pickDonor(cr, null, 'brute'), cr, { mechanics: [] }), archetype: 'brute', cr, imposed: [], name: 'H' };
+      const r = rt4(tpl(), ctx, { kill_consequence: 'loses its head' });
+      expect(r).toBeTruthy();
+      expect(r.text).not.toMatch(/\{[a-z_]+\}/);
+      expect(r.text).toMatch(/loses its head/);
+      expect(r.text).toMatch(/can't be restored to life/);
+    }
+  });
+
+  it('a fill carrying damage or dice falls to print\'s own default', () => {
+    const ctx = { scaled: scaleDonor(pickDonor(9, null, 'brute'), 9, { mechanics: [] }), archetype: 'brute', cr: 9, imposed: [], name: 'H' };
+    for (const bad of ['takes 10 (3d6) damage', 'has the Prone condition', 'makes a DC 15 saving throw']) {
+      expect(rt4(tpl(), ctx, { kill_consequence: bad }).text).toMatch(/crumbles to dust/);
+    }
+  });
+
+  it('the victim is never renamed by the self-reference rewrite', () => {
+    // generate.mjs rewrites the literal "the creature" to the monster's name; the
+    // frame may use it ONCE, for the killer, or the victim gets renamed too
+    const frame = SHAPES.find((s) => s.id === 'kill-denial').frames['6-9'];
+    expect((frame.match(/the creature/g) ?? []).length).toBe(1);
+  });
+
+  it('prices at zero — it changes nothing in the fight', () => {
+    const { rowValue } = require('@/tools/statblock-generator/reskin/templates.mjs');
+    const ctx = { scaled: scaleDonor(pickDonor(11, null, 'brute'), 11, { mechanics: [] }), archetype: 'brute', cr: 11, imposed: [], name: 'H' };
+    const r = rt4(tpl(), ctx, { kill_consequence: 'loses its head' });
+    expect(rowValue({ name: 'X', text: r.text, template: 'kill-denial' }, 11).ev).toBe(0);
+  });
+});

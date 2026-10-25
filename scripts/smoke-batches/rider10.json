@@ -1,0 +1,12 @@
+[
+ { "name": "Headless Horseman", "description": "rides down the living and takes their heads", "cr": "11", "rules": "2024", "canary": "THE CASE · the double charge rider" },
+ { "name": "Headless Horseman", "description": "rides down the living and takes their heads", "cr": "11", "rules": "2024", "canary": "same input again" },
+ { "name": "", "description": "a lance-knight who runs down fleeing footmen", "cr": "7", "rules": "2024", "canary": "CHARGER · invites a charge rider on a multi-attack row" },
+ { "name": "", "description": "a bull-headed brute that bowls foes over and keeps swinging", "cr": "6", "rules": "2024", "canary": "SHOVE + MULTIATTACK · the push-strands-attacks case" },
+ { "name": "", "description": "a mastiff that drags down whatever it catches", "cr": "3", "rules": "2024", "canary": "TACKLE · a grapple rider, not a push" },
+ { "name": "", "description": "a wind-dancer who flings foes off ledges and darts away", "cr": "8", "rules": "2024", "canary": "PUSH ON PURPOSE · a push belongs here, on a single-swing or save row" },
+ { "name": "", "description": "a boar-rider of the hill clans", "cr": "4", "rules": "2024", "canary": "MOUNTED · charge idiom without the word" },
+ { "name": "", "description": "a cathedral-vault ooze that digests reliquaries", "cr": "9", "rules": "2024", "canary": "UNRELATED · refusals must not collapse other menus" },
+ { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "canary": "EXACT · print only, untouched" },
+ { "name": "", "description": "a sellsword with a shortsword and no supernatural gifts", "cr": "5", "rules": "2024", "canary": "MUNDANE CONTROL" }
+]

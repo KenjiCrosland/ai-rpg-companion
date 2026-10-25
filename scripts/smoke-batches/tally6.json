@@ -1,0 +1,14 @@
+[
+ { "name": "Headless Horseman", "description": "rides down the living and takes their heads", "cr": "11", "rules": "2024",
+   "canary": "THE OWNER'S CASE · does the Horseman get a building mechanic, or charger+trait again?" },
+ { "name": "Headless Horseman", "description": "rides down the living and takes their heads", "cr": "11", "rules": "2024",
+   "canary": "SAME INPUT TWICE · run-to-run variance on the signature" },
+ { "name": "", "description": "a clockwork knight that winds tighter every round until it strikes", "cr": "8", "rules": "2024",
+   "canary": "EXPLICIT ASK · the GM names a build-up; tally is the shape" },
+ { "name": "", "description": "a bell-ghost whose toll builds to one shattering peal", "cr": "6", "rules": "2024",
+   "canary": "IDIOM · a build-up said in fiction, no mechanic word" },
+ { "name": "", "description": "a glacier's heart that grows more dangerous the longer the fight goes", "cr": "15", "rules": "2024",
+   "canary": "HIGH CR · the payoff must still read as bounded at 13d-scale sheets" },
+ { "name": "", "description": "a sellsword with a shortsword and no supernatural gifts", "cr": "5", "rules": "2024",
+   "canary": "MUNDANE CONTROL · a tally here would be invention" }
+]

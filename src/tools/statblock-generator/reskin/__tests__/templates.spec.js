@@ -275,7 +275,21 @@ describe('the catalog', () => {
     expect(TEMPLATES.find((t) => t.id === 'focus').gate).toBe('2/Day');
   });
   test('the keys pass: every template has at least six verbs; the four new cards render and match their concepts', () => {
-    for (const t of TEMPLATES) expect(t.keys.length).toBeGreaterThanOrEqual(6);
+    // ROUTED BY THE DECLARED MECHANIC, NOT BY WORDS (2026-10-25). Six verbs per
+    // template was the only bridge from the GM's words to a shape before every
+    // template declared a `mechanic` the resolve call can name. `kill-denial` is the
+    // first template added AFTER that landed, and it carries no key words on purpose:
+    // there is no verb for "what becomes of what you kill" that would not also fire
+    // on ordinary killing. It reaches the menu because the route call answers
+    // asked_mechanic: 'harvest' and `rankByVerb` seats the matching stamp first.
+    //
+    // This allowlist is deliberate friction: a template that wants to skip the keys
+    // rule has to be named here, in a test, so the choice is visible in review.
+    const KEYLESS_BY_DESIGN = new Set(['kill-denial', 'relic-object', 'tally']);
+    for (const t of TEMPLATES) {
+      if (KEYLESS_BY_DESIGN.has(t.id)) { expect(t.mechanic).toBeTruthy(); continue; }
+      expect(t.keys.length).toBeGreaterThanOrEqual(6);
+    }
     const scaled = sheet(6, null, 'brute');
     const ctx = { scaled, archetype: 'brute', cr: 6, energy: 'Thunder', mix: 'both', meleeName: 'Claw', imposed: [], name: 'H' };
     const menuT = templatesFor({ archetype: 'brute', cr: 6, sections: {}, section: 'trait' });

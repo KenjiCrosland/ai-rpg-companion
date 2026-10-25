@@ -18,6 +18,60 @@ export function bandFor(cr) {
   return cr <= 2 ? '0-2' : cr <= 5 ? '3-5' : cr <= 9 ? '6-9' : cr <= 12 ? '10-12' : cr <= 20 ? '13-20' : '21+';
 }
 
+// THE KILL IS THE SAME SENTENCE AT EVERY CR. This row changes no number in the
+// fight — no damage, no condition, no action economy — so unlike every other
+// shape it does not scale, and the band keys below all point at one string
+// rather than pretending to a ladder. `valueCheck` prices it at 0 for the same
+// reason: what it alters is what the party can do AFTER the fight.
+//
+// print writes the kill in the rider form (Mummy and Mummy Lord, Rotting Fist:
+// "A creature dies and turns to dust if reduced to 0 Hit Points by this attack");
+// this is the standalone-trait form of the same sentence, so one row covers every
+// way the creature kills instead of being welded to one attack.
+//
+// "the creature" is the ENGINE'S self-reference token — generate.mjs rewrites it
+// to the monster's own name — so the victim is "A creature" and "it", never "the
+// creature", or the rewrite would rename the victim too.
+// AN OBJECT THE PARTY CAN ATTACK (survey, 2026-10-25). `warded-mending` already
+// gates regeneration on a ward — "if {ward} is within 30 feet" — but the ward has
+// no statline, so there is nothing to attack and the gate is a fact about distance
+// rather than an objective. print gives such objects a line of their own: the Mummy
+// Lord's heart is "a Tiny object that has AC 17, HP 10, and Immunity to all damage
+// except Fire", the Night Hag's soul bag "AC 15, HP 20, and Resistance to all
+// damage", the Erinyes' rope "AC 20, HP 90". That turns a health bar into a puzzle,
+// which is the single mechanic the signature survey reached for most often in a
+// form that actually runs (Soul Lamp, Rigged High Striker, Daughterplate Armor).
+//
+// The AC/HP ladder below is AUTHORED, not derived: print's three objects serve
+// three different purposes and disagree wildly (HP 10 vs 90), so a curve fitted to
+// them would be false precision. Low HP with "Resistance to all damage" follows the
+// heart — the party must decide to spend actions on it, and cannot one-shot it.
+// `supersedes` is the same regeneration line `warded-mending` claims, so the two
+// can never both sit on a sheet handing out the same Hit Points.
+const RELIC = (ac, hp, regen) => `The creature keeps {relic} within 30 feet of itself, a Tiny object that has AC ${ac}, HP ${hp}, and Resistance to all damage. While it is intact, the creature regains ${regen} Hit Points at the start of each of its turns.`;
+
+// A COUNTER THAT BUILDS (invented, 2026-10-25). The signature survey's single most
+// reached-for runnable mechanic: five of thirty invented abilities were a number
+// that climbs and then pays off (Harvested Heads, Temporal Larceny, Crescendo of
+// the Drowned, Toys Before Boys, Devil's Wager). print has no such row, so this is
+// authored under the owner's bar — sound in the action economy, priced, and one
+// visible number — rather than cited.
+//
+// Design choices, each for soundness:
+// - it climbs at the START OF ITS OWN TURN, one mark a round, so the table tracks
+//   one number that moves on a schedule nobody has to watch for. An on-kill build
+//   was the thematic ask ("takes their heads") and does not WORK: in party combat a
+//   kill is rare, the counter never fills, and the row is dead weight.
+// - the payoff lands on the third round's hit — mid-fight, when it is felt — and
+//   then the marks are gone for the fight. rowValue prices conditional trait
+//   damage at 0 (death-burst, bloodied-burst both ev=0), so this is invisible to
+//   the budget; bounding it to ONCE, at {avg_half}, keeps what the pricer ignores
+//   small. Frightened for one turn, not Prone: Prone is already 43% of our sheets
+//   against print's 16%.
+const TALLY = 'At the start of each of its turns, the creature gains a mark {tally_fiction}, to a maximum of 3. When it has 3 marks, the next attack it hits with deals an extra {avg_half} ({dice_half}) {damage_type} damage, and the target has the Frightened condition until the end of its next turn. The marks are then spent, and the creature can\'t gain marks again until it finishes a Long Rest.';
+
+const KILL_DENIAL = 'A creature reduced to 0 Hit Points by the creature {kill_consequence}, and it can\'t be restored to life by any means short of a *Wish* spell.';
+
 export const SHAPES = [
   {
     id: 'swallow', name: 'Swallow', cite: 'Kraken/Swallow (CR 23); Behir/Swallow (CR 11); Giant Toad/Swallow (CR 1)', // a swallow for a body with no engulf engine (the glacier wyrm, step 8)
@@ -427,6 +481,16 @@ export const SHAPES = [
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature can\'t shape-shift, and its thoughts can\'t be read by any means. Other creatures can communicate with it telepathically only if it allows them.'])),
   },
   {
+    id: 'relic-object', name: 'Bound Relic', invented: true, // print's own object statlines (Mummy Lord/Heart, Night Hag/Soul Bag, Erinyes/Magic Rope); the gating is warded-mending's, the statline is new
+    roles: ['controller', 'defender', 'lurker', 'brute', 'skirmisher', 'artillery'], styles: [], cr_range: [1, 20], replaces: 'trait', // ROLES has six; 'caster' is an archetype, not a shape role
+
+    supersedes: /regains \d+ Hit Points at the start of each of its turns/,
+    frames: {
+      '0-2': RELIC(13, 5, 5), '3-5': RELIC(15, 10, 10), '6-9': RELIC(15, 15, 10),
+      '10-12': RELIC(17, 20, 15), '13-20': RELIC(17, 25, 20),
+    },
+  },
+  {
     id: 'warded-mending', name: 'Warded Mending', invented: true, // Regeneration (Troll 15 at CR 5, Oni 10 at CR 7) with the ward as the off-switch: the altar sentinel
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait', supersedes: /regains \d+ Hit Points at the start of each of its turns/, // one body, one mending: the warden chassis's Regeneration leaves when the ward-gated form ships (the litanist warden bound absorption on "mend" because this was excluded)
     frames: { '0-2': 'The creature regains 5 Hit Points at the start of each of its turns if it has at least 1 Hit Point and {ward} is within 30 feet of it.', '3-5': 'The creature regains 10 Hit Points at the start of each of its turns if it has at least 1 Hit Point and {ward} is within 30 feet of it.', '6-9': 'The creature regains 10 Hit Points at the start of each of its turns if it has at least 1 Hit Point and {ward} is within 30 feet of it.', '10-12': 'The creature regains 15 Hit Points at the start of each of its turns if it has at least 1 Hit Point and {ward} is within 30 feet of it.', '13-20': 'The creature regains 20 Hit Points at the start of each of its turns if it has at least 1 Hit Point and {ward} is within 30 feet of it.', '21+': 'The creature regains 20 Hit Points at the start of each of its turns if it has at least 1 Hit Point and {ward} is within 30 feet of it.' },
@@ -700,6 +764,17 @@ export const SHAPES = [
       '10-12': 'The creature explodes when it dies. *Dexterity Saving Throw*: DC {dc}, each creature in a 15-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
       '13-20': 'The creature explodes when it dies. *Dexterity Saving Throw*: DC {dc}, each creature in a 30-foot Emanation originating from the creature. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage. The explosion destroys the creature\'s body.',
     },
+  },
+  {
+    id: 'kill-denial', name: 'No Coming Back', cite: 'Mummy/Rotting Fist (CR 3); Mummy Lord/Rotting Fist (CR 15); Gibbering Mouther/Bite (CR 2, body absorbed)',
+    roles: ['brute', 'skirmisher', 'lurker', 'defender', 'artillery', 'controller'], styles: [], cr_range: [0, 20], replaces: 'trait', // 'caster' is not a shape ROLE (ROLES has six); a caster reaches this through the archetype map
+
+    frames: { '0-2': KILL_DENIAL, '3-5': KILL_DENIAL, '6-9': KILL_DENIAL, '10-12': KILL_DENIAL, '13-20': KILL_DENIAL },
+  },
+  {
+    id: 'tally', name: 'Mounting Tally', invented: true, // no print row; authored under the owner's bar — sound, priced, one visible number
+    roles: ['brute', 'skirmisher', 'lurker', 'defender', 'artillery', 'controller'], styles: [], cr_range: [1, 20], replaces: 'trait',
+    frames: { '0-2': TALLY, '3-5': TALLY, '6-9': TALLY, '10-12': TALLY, '13-20': TALLY },
   },
   // ----- inventions: no printed frame exists at any band; flagged -----
   {

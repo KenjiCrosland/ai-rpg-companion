@@ -211,7 +211,7 @@ const ARCHER_NOUN = /\b(?:bows?|longbows?|shortbows?|crossbows?|arrows?|quivers?
  * The list is MECHANIC's keys in templates.mjs; it is repeated here rather than
  * imported because route.mjs is upstream of the catalog.
  */
-export const ASKED_MECHANICS = ['swallow', 'gaze', 'snare', 'grapple', 'shove', 'charm', 'fear', 'dazzle', 'charge', 'breath', 'burst', 'drain', 'curse', 'retaliate', 'climb', 'teleport', 'zone', 'disguise', 'harden', 'resist', 'escalate', 'mend', 'command', 'track'];
+export const ASKED_MECHANICS = ['swallow', 'gaze', 'snare', 'grapple', 'shove', 'charm', 'fear', 'dazzle', 'charge', 'breath', 'burst', 'drain', 'curse', 'retaliate', 'climb', 'teleport', 'zone', 'disguise', 'harden', 'resist', 'escalate', 'mend', 'command', 'track', 'harvest', 'relic'];
 
 export const EXTRA_MECHANICS = ['gaze', 'teleport', 'aura', 'breath', 'snare', 'thrown-weapon', 'grapple']; // 'summon' retired with the group templates (owner 2026-09-28): the tag opened the CR<=2 wildcard slot for a mechanic nothing renders
 const TYPES = ['Aberration', 'Beast', 'Celestial', 'Construct', 'Dragon', 'Elemental', 'Fey', 'Fiend', 'Giant', 'Humanoid', 'Monstrosity', 'Ooze', 'Plant', 'Undead'];
