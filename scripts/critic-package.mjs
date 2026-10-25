@@ -10,7 +10,12 @@ const [out, ...dirs] = process.argv.slice(2);
 if (!out || !dirs.length) { console.error('usage: node scripts/critic-package.mjs <out.md> <run-dir>...'); process.exit(1); }
 const rowsOf = (m) => {
   const o = [];
-  for (const [sec, es] of Object.entries(m.sections ?? {})) for (const e of (es ?? [])) if (e) o.push([sec, e]);
+  // PRINT'S ORDER, not the JSON's insertion order (critic, 2026-10-25: "Traits
+  // print after Actions on 9 of the 2024 sheets" — that was THIS renderer; the
+  // saved JSON's keys arrive Actions-first and the UI itself prints Traits first).
+  const ORDER = ['Traits', 'Actions', 'Bonus Actions', 'Reactions', 'Legendary Actions'];
+  const secs = Object.keys(m.sections ?? {}).sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
+  for (const sec of secs) for (const e of (m.sections[sec] ?? [])) if (e) o.push([sec, e]);
   for (const [k, sec] of [['abilities', 'Traits'], ['actions', 'Actions'], ['bonus_actions', 'Bonus Actions'], ['reactions', 'Reactions'], ['legendary_actions', 'Legendary Actions']])
     for (const e of (m[k] ?? [])) if (e && typeof e === 'object') o.push([sec, e]);
   return o;

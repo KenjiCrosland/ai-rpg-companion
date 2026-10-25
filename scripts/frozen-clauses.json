@@ -1970,5 +1970,67 @@
     "askShape": "condition"
    }
   ]
+ },
+ "f3001f308188": {
+  "concept": "Erynmaethor is a single rope-braided, crab-legged fey brute whose body of Shadowfell briar-fiber sweats a caustic sap fr",
+  "clauses": [
+   {
+    "id": "cl_butmct",
+    "text": "Erynmaethor is a single rope-braided",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_qredtm",
+    "text": "crab-legged fey brute whose body of Shadowfell briar-fiber sweats a caustic sap from every knot and joint",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_hqxysi",
+    "text": "whose low cunning is as real as its furious strength",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_10rap2a",
+    "text": "It scuttles sideways into reach",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1vyh7c0",
+    "text": "opens with a wide clawed rake",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_rxud8i",
+    "text": "grapples and saws at the wound with its fiber fringe so the acid bites deepest",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "then grapples and saws at the wound",
+    "askShape": "condition"
+   },
+   {
+    "id": "cl_18roz7z",
+    "text": "It never yields",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_vgkiwi",
+    "text": "howling challenges and dragging foes down until one of them breaks",
+    "kind": "mechanical",
+    "askShape": "save_single"
+   },
+   {
+    "id": "cl_obu126",
+    "text": "It is fully sapient (INT 10-14)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_17yse1c",
+    "text": "it is a frontline berserker that revels in open violence",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
  }
 }

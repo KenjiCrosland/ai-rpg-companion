@@ -657,3 +657,123 @@ tracks — "Stone Barrage (3rd Round or Later)". No counter, one read.
   independent of tally and measured by windup8.
 - Fix 4's binding is gone with the template. The composition lesson stands and is
   recorded above: a per-fix ten cannot see what two landed fixes do to each other.
+
+---
+
+# THE CRITIC'S SECOND READ — sweep-2026-10-25T18-50-15: 7 ship / 25 fix-lite / 8 fix
+(10-23 was 5 / 22 / 13.) Five of their claims checked against the saved JSON,
+five correct — treat the read as reliable:
+- Adult Red Dragon: "Burning Brand" keys on "is frightened" (2014 lowercase) and
+  nothing on the sheet frightens. ORPHANED PAYOFF — print's Frightful Presence
+  is missing. **My orphan detector reported 0 on this forty because its patterns
+  were capitalized and the 2014 printing is lowercase.** True count: 1 of 4. The
+  consumed_condition guidance landed on 2024 and did not hold on this 2014 sheet.
+- Purple Worm: the library seed `swallow` (a DEX save) DISPLACED print's own
+  Swallow (STR save, "Grappled by the worm", a Bonus Action); "Lodged Armoury"
+  became a bloodied burst. `engulf_engine` was unset on print's row, so the
+  one-engine rule did not see it. REGRESSION on a near-exact creature.
+- Ossuary Sun-Lich: "or be paralyzed." — no duration, AGAIN (noted on 10-23 and
+  not fixed: I recorded that the reader now DETECTS it and stopped there).
+- Well Devourer: Bite imposes Grappled + welded `charge-push` pushes the same
+  target 10 ft. The duplicate-trigger guard (fix 1) correctly did not fire; the
+  prompt-only push half was ignored. The critic's rule is DECLARABLE: a rider
+  template with effect=movement must not weld onto a host whose recorded
+  `imposes` is Grappled/Restrained. No attack count needed. Build this.
+- "Traits after Actions on 9 of the 2024 sheets": **MY critic-package.mjs** —
+  it iterated the JSON's key order (Actions first); the UI prints Traits first.
+  Fixed (print's section order) and the package rebuilt. "At will::" IS the
+  engine's (it is in the JSON text).
+
+Patterns they name that I can turn into gates, all declared-data:
+1. payoff precondition reachability — a conditional payoff ships only if another
+   row's RECORDED `imposes` (or the shared reader) supplies the condition; the
+   2014 path needs it as much as 2024.
+2. grapple + push never share a row — effect=movement rider vs host.imposes.
+3. A2 on MIXED rows — damage-dominant (rowValue ev vs the condition) takes
+   DEX/CON. Furnace Breath WIS -> DEX; Molten Weld STR -> DEX.
+4. the bound/leash template on a movement-twist concept (Ilvareth) — a
+   contraindication, not a key: a body gate question.
+5. weapon-lodge x6 / thunder-retaliation x4 on bodies that do not warrant them —
+   the NEEDS_BODY questions exist; find why they pass.
+
+## Order the critic proposed, and I agree with it
+1. three small gates (payoff reachability on both printings; grapple+push; A2
+   damage-dominant) — catch 5 sheets.
+2. bound/leash contraindication.
+3. lodge + resonant-body warrants.
+4. the Sun-Lich duration flap — find the regression; the fix exists.
+5. Trench Hymn donor selection (lurker kit on a Gargantuan brute).
+6. render: "At will::", spell-list indentation (engine), section order (mine, done).
+
+## Gate 1 — a payoff needs a reachable precondition — LANDED (owner: "metadata back
+## from the LLM over string matching")
+
+The LLM half already existed and was never checked: the fit call's
+`consumed_condition` (the model's answer, with "quote the row that imposes it"
+in its guidance). Now:
+- renderTemplate records the pick on the row as `consumes` (templates.mjs, the
+  VOCAB fill loop; carried onto the fit row in generate.mjs).
+- `payoffReachable(sections, trace)` runs before `trace('done:')`: another row
+  must impose the consumed condition through the ONE shared reader
+  (`imposedConditions` — recorded `imposes` first, prose second, both
+  printings), else the row leaves and traces "payoff declined". The payoff's own
+  target filter cannot satisfy it (the reader's PRECONDITION guard).
+- Spec: `__tests__/payoff-reachable.spec.js` (2024 grammar, a recorded field
+  with no prose, the 2014 lowercase printing, drop-and-trace, self-match, no-op).
+- Replay on the forty's real Adult Red Dragon (2014): DROPS Burning Brand; with
+  print's Frightful Presence restored, KEPT.
+3,928 tests, build clean. Measured by payoff10b (bars in scratchpad).
+
+Replay near-miss worth keeping: the gate SPLICES the dropped row out of the
+sections it is handed, so a control built from the same array after the first
+call had no Burning Brand to stamp — the "undefined.consumes" error was the
+mutation, not the gate. Build each replay case from the file.
+
+## Gates 2 and 3 — designs read against the code, build on the next commit
+
+**Gate 2 — grapple and push never share a row.** At the weld (generate.mjs, the
+`if (host && !dupTrig)` block) both facts are DECLARED and in hand:
+`TEMPLATE_BY_ID.get(actionT.template).effect === 'movement'` (charge-push,
+hook-rider, bolt-drag are the three) and `host.imposes` (recorded; Grappled /
+Restrained). Refuse the weld when both hold — same shape as the dupTrig refusal:
+drop the slot, trace "rider refused — a push on a grapple row", fall through,
+never `return`. No attack count, no text. The prompt line stays (the call is
+still asked); the gate is the backstop its answer needs.
+
+**Gate 3 — A2 on mixed rows.** Finding: the model's `save_stat` pick is NEVER
+consulted. templates.mjs ~1262 ("SAVE BY EFFECT") overwrites `fills.save_stat`
+from a regex over the rendered text — 0 reads of the model's fill in that
+block — and generate.mjs ~7008 retypes again from prose where no record exists.
+The owner's ruling, "metadata back from the LLM over string matching", applies
+directly:
+1. VOCAB_GUIDANCE.save_stat — the rule where the model chooses: damage-dominant
+   area -> Dexterity; a shove/grapple/knock-down -> Strength; poison, breath,
+   disease, or a body condition -> Constitution; fear/charm/compulsion -> Wisdom.
+   Print's own split (survey: 3 DEX area+Prone rows, 1 STR trample, 1 WIS roar).
+2. SAVE BY EFFECT becomes VALIDATION of the model's pick, not replacement: keep
+   the pick when it is in SAVE_STATS and consistent with the RECORDED
+   `imposes`/`consumes` and `rowValue` (ev dominates -> DEX/CON allowed); fall
+   to the by-effect rule ONLY when the model gave none or the pick contradicts a
+   recorded condition (Prone + Wisdom). Trace every override with the reason.
+3. The prose retype at ~7008 keeps its "no record on the row" guard — it is the
+   print-row fallback and nothing else.
+Critic's two: Furnace Breath (72 fire + Frightened) WIS -> DEX; Molten Weld
+(59 fire, Prone target) STR -> DEX. Both are damage-dominant by rowValue.
+
+Order: 2 then 3 — gate 2 is eight lines on declared data; gate 3 changes a
+contract (the model's pick wins) and needs its own ten.
+
+### payoff10b — gate 1's bars, all met
+
+0 orphaned payoffs (1 payoff row, sourced: Mire Drag <- Bog Muck Grip). ONE
+decline, and it fired on **#01 the Adult Red Dragon (2014)** — the critic's exact
+case: "Terrifying Emberburst needs a Frightened target and nothing on the sheet
+imposes Frightened — the row leaves". Signatures 9 library / 1 dropped (the bare
+Owlbear, correct) against the forty's 34/6. Title case 0 of 10. No throws.
+
+HONEST LIMIT: only 1 payoff row shipped across the ten, so the run is thin
+evidence for "does not over-drop" — the spec's six cases and the dragon replay
+carry that half. #02 (breath terrifies / hammer finds the terrified), #05 and #08
+got NO payoff row at all; they were not declined (1 decline total), the template
+simply was not selected. On the forty the Brass Tyrant DID get Molten Weld, so
+that is selection variance, not the gate.

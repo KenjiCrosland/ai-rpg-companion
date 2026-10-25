@@ -1090,6 +1090,7 @@ export function imposedByFrame(id, band) {
 
 export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   let pickedCondition = null; // the condition this render imposes, chosen from the closed list below
+  let consumedPick = null; // the condition this render REQUIRES on its target (a payoff), from the model's consumed_condition
   // the fiction ladder: the model's fill > the sheet's own noun > the blind
   // default; an empty fills object cost four signatures (critic, 2026-09-22)
   // the terrain of a FORCED bind is the concept's, not the blind default (an ice
@@ -1272,6 +1273,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     const pick = list.find((x) => x.toLowerCase() === proposed.toLowerCase())
       ?? (k === 'condition_minor' && list.includes(ctx.conditionMinor) ? ctx.conditionMinor : null)
       ?? ({ save_stat: 'Wisdom', consumed_condition: ctx.imposed?.[0] ?? 'Frightened', condition_minor: 'Frightened', restraint: 'Restrained', r_vuln: 'Fire' })[k];
+    if (k === 'consumed_condition') consumedPick = pick; // the model's answer, recorded on the row so a ship-time gate can check the sheet supplies it
     text = text.split(`{${k}}`).join(pick);
   }
   for (const k of FLAVOR_SLOTS) {
@@ -1283,7 +1285,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     text = text.split(`{${k}}`).join(w);
   }
   if (/\{[a-z_]+\}/.test(text)) return null;
-  return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(pickedCondition ? { imposes: pickedCondition } : {}) };
+  return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(pickedCondition ? { imposes: pickedCondition } : {}), ...(consumedPick ? { consumes: consumedPick } : {}) };
 }
 
 // SEAT DEFAULTS (critic run four): some seats OWE a trait by print — the 2024

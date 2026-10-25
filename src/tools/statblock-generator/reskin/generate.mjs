@@ -51,6 +51,32 @@ import { classFor, classRows, CLASSES, classEligible, classWeapon } from './clas
 import { renderForm, resolutionOf } from './forms.mjs';
 
 
+/**
+ * A PAYOFF NEEDS A REACHABLE PRECONDITION (critic's second read, 2026-10-25: the
+ * Adult Red Dragon's "Burning Brand" keyed on Frightened and nothing on the sheet
+ * frightened — a dead row). The fit call already names the condition it consumes
+ * (`consumed_condition`, now RECORDED on the row as `consumes`) and was asked to
+ * quote the imposer; nothing ever checked that quote. This is the check: some
+ * OTHER row on the finished sheet must impose that condition, read through the
+ * one shared reader — a recorded `imposes` first, print's prose second, both
+ * printings. The call judges; the engine validates. With no imposer the payoff
+ * leaves and says why.
+ */
+export function payoffReachable(sections, trace = () => {}) {
+  const all = Object.values(sections ?? {}).flat().filter(Boolean);
+  const out = [];
+  for (const e of all) {
+    if (!e.consumes) continue;
+    const need = String(e.consumes);
+    const ok = all.some((o) => o !== e && imposedConditions(o).includes(need));
+    if (ok) continue;
+    for (const es of Object.values(sections)) { const ix = es.indexOf(e); if (ix !== -1) es.splice(ix, 1); }
+    trace('payoff declined:', `"${e.name}" needs a ${need} target and nothing on the sheet imposes ${need} — the row leaves`);
+    out.push({ name: e.name, need });
+  }
+  return out;
+}
+
 const trace = (l, d) => logger.log(`[reskin] ${l}`, d ?? '');
 const GAME_TERM = /Attack Roll|Saving Throw|DC \d+|\b(Frightened|Poisoned|Blinded|Deafened|Prone|Restrained|Grappled|Charmed|Stunned|Incapacitated) condition\b|Advantage|Disadvantage|Dash|Disengage|Hide action|Speed|teleports?|Opportunity Attacks?|Difficult Terrain|unoccupied space|without provoking|Hit Points|Resistan\w*|Immun\w*|\d+ feet/i;
 // Condition menus by severity (owner call, 2026-08-18: "interpolate minor
@@ -4513,7 +4539,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             bare = rendered.name;
           }
         }
-        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, ...(rendered.gate ? { gate: rendered.gate } : {}), text: stampT(rendered.text), library: true, template: fit.template.id, ...(rendered?.imposes ? { imposes: rendered.imposes } : fit.template?.imposes ? { imposes: fit.template.imposes } : {}), ...(fit.fills?.condition_minor && CONDITIONS_CLOSED.includes(fit.fills.condition_minor) ? { imposes: fit.fills.condition_minor } : {}), ...(fit.fills?.consumed_condition ? { requiresCondition: fit.fills.consumed_condition } : {}), boundKeys: [...String(fit.because ?? '').matchAll(/([a-z][a-z' -]*?):concept\b/g)].map((mm) => mm[1].trim()) /* provenance: the user's words this row binds to (step 8) */, ...(freeRowHere ? { freeRow: true } : {}), ...(decorationHere ? { decoration: true } : {}), ...(fit.accepted_closest ? { accepted_closest: true } : {}) /* the credit rule: a template the call REFUSED never buys a key bind (critic, 2026-10-22) */, ...(askedOk ? { gmQuote: String(askedOk) } : {}) /* credit rule (b): the GM quote this row was kept on, so the checker can test it lies inside ONE non-head clause */ /* the ship-time budget reads the mark off the row */ }, templateName: rendered.name, section: rendered.section, template: fit.template.id, host: fit.template.host ?? 'melee', supersedes: fit.template.supersedes ?? null, asked: askedOk, askedRaw: String(fit.asked ?? '').trim(), expresses: decorationHere ? null : (fit.expresses ?? null), /* a template the call refused claims nothing */ accepted_closest: !!fit.accepted_closest, /* the trait gate must see this, or it declines the row for want of a receipt */ elementsOffered: sigElements, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
+        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, ...(rendered.gate ? { gate: rendered.gate } : {}), text: stampT(rendered.text), library: true, template: fit.template.id, ...(rendered?.consumes ? { consumes: rendered.consumes } : {}), ...(rendered?.imposes ? { imposes: rendered.imposes } : fit.template?.imposes ? { imposes: fit.template.imposes } : {}), ...(fit.fills?.condition_minor && CONDITIONS_CLOSED.includes(fit.fills.condition_minor) ? { imposes: fit.fills.condition_minor } : {}), ...(fit.fills?.consumed_condition ? { requiresCondition: fit.fills.consumed_condition } : {}), boundKeys: [...String(fit.because ?? '').matchAll(/([a-z][a-z' -]*?):concept\b/g)].map((mm) => mm[1].trim()) /* provenance: the user's words this row binds to (step 8) */, ...(freeRowHere ? { freeRow: true } : {}), ...(decorationHere ? { decoration: true } : {}), ...(fit.accepted_closest ? { accepted_closest: true } : {}) /* the credit rule: a template the call REFUSED never buys a key bind (critic, 2026-10-22) */, ...(askedOk ? { gmQuote: String(askedOk) } : {}) /* credit rule (b): the GM quote this row was kept on, so the checker can test it lies inside ONE non-head clause */ /* the ship-time budget reads the mark off the row */ }, templateName: rendered.name, section: rendered.section, template: fit.template.id, host: fit.template.host ?? 'melee', supersedes: fit.template.supersedes ?? null, asked: askedOk, askedRaw: String(fit.asked ?? '').trim(), expresses: decorationHere ? null : (fit.expresses ?? null), /* a template the call refused claims nothing */ accepted_closest: !!fit.accepted_closest, /* the trait gate must see this, or it declines the row for want of a receipt */ elementsOffered: sigElements, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
       } catch (e8) {
         trace('signature fit call failed —', `${seat}: ${e8?.message ?? e8}`);
         return null;
@@ -8068,6 +8094,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       }
     }
     const speech = (authored?.unplaced ?? []).filter((u) => u.where === 'languages' && u.text); if (speech.length) { const only = speech.some((u) => /\bonly\b/i.test(`${u.clause} ${u.text}`)); monster.languages = [only ? '' : String(monster.languages ?? '').replace(/^None$/i, ''), ...speech.map((u) => u.text)].filter(Boolean).join('; '); /* "speaks only in the language of socks" is the whole line — Common leaves (critic's step-5 read) */ trace('unplaced to Languages:', speech.map((u) => `"${u.clause}"`).join(', ')); } }
+  payoffReachable(monster.sections, trace); // a payoff with no imposer on the finished sheet is a dead row
   trace('done:', `"${monster.name}" — donor ${donor.id}, CR ${cr}`);
   return monster;
 }
