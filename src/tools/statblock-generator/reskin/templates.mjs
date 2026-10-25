@@ -175,6 +175,7 @@ export const FLAVOR_SLOTS = ['kill_consequence', 'relic', 'phobia', 'restraint',
 // sheet is already in this prompt, so the model can see which row imposes what —
 // this costs no call of its own, only the question.
 const VOCAB_GUIDANCE = {
+  save_stat: 'by what the row DOES, as print does it — measured over the corpus: an AREA that also deals damage takes Dexterity (46 rows) or Constitution for a breath, gas or spores (29); a shove, pull or knock-down takes Strength (5 rows to Dexterity\'s 2); a condition with little damage takes Constitution for a body effect (24) or Wisdom for fear, charm or compulsion (13). Damage-dominant never takes Wisdom',
   consumed_condition: 'name the one THE SHEET ABOVE already imposes, and in "because" quote the row that imposes it. If no row on the sheet imposes any of these, this template does not belong on this sheet: refuse it',
 };
 // engine slots: never the model's
@@ -1089,6 +1090,7 @@ export function imposedByFrame(id, band) {
 }
 
 export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
+  let saveOverride = null; // why the engine overrode the model's save_stat, for the trace
   let pickedCondition = null; // the condition this render imposes, chosen from the closed list below
   let consumedPick = null; // the condition this render REQUIRES on its target (a payoff), from the model's consumed_condition
   // the fiction ladder: the model's fill > the sheet's own noun > the blind
@@ -1247,6 +1249,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // is Con on the toad and became Wis on the kilnblight — the stat drifted to the
   // caster's spell stat). Print: Poisoned/Deafened = Constitution, Frightened =
   // Wisdom, Prone = Strength. Engine-owned; the model's proposal is overruled.
+  const modelSave = SAVE_STATS.includes(String(fills.save_stat)) ? String(fills.save_stat) : null; // the MODEL's pick, read before the engine's condition-save block below writes over it
   if (text.includes('{save_stat}') && text.includes('{condition_minor}')) {
     const CONDITION_SAVE = { Poisoned: 'Constitution', Deafened: 'Constitution', Frightened: 'Wisdom', Prone: 'Strength', Blinded: 'Constitution' };
     const proposedC = String(fills.condition_minor ?? '').trim();
@@ -1265,7 +1268,40 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
       : /\b(?:Poisoned|poison|disease|diseased|breath|spores?|gas|fumes|choke|choking|suffocat)/i.test(eff) ? 'Constitution'
       : /\b(?:Frightened|Charmed|fear|terror|dread|command|compel)/i.test(eff) ? 'Wisdom'
       : /\b(?:Blinded|Deafened|Stunned|Paralyzed|Incapacitated)\b/.test(eff) ? 'Constitution' : null;
-    if (byEffect) fills = { ...fills, save_stat: byEffect };
+    // THE MODEL'S PICK IS CONSULTED FIRST (owner, 2026-10-25: "metadata back from
+    // the LLM over string matching"). This block used to overwrite
+    // `fills.save_stat` unconditionally — zero reads of the model's own answer —
+    // so the VOCAB enum it chose from was decorative. Now the pick stands unless
+    // it contradicts the one case print is decisive about: a shove, pull or
+    // knock-down is Strength (5 rows against Dexterity's 2), and a damage-dominant
+    // row is never Wisdom (the critic's Furnace Breath, 72 fire + Frightened on a
+    // Wisdom save). Everything else is the model's call, with the rule now in its
+    // own guidance. Each override traces the reason.
+    const picked = modelSave; // NOT fills.save_stat: the condition-save block above may already have written the engine's own choice there, and the replay showed every pick - and no pick - reading as Wisdom
+    const isShove = /\b(?:pushed|shoved?|pulled|knocked)\b/.test(eff);
+    const dmgDominant = /\{avg[a-z_0-9]*\} \(\{dice[a-z_0-9]*\}\)|\d+ \(\d+d\d+/.test(eff); // every damage token the frames use: {avg} {avg_half} {avg_x2} — the first cut missed _x2 and condition-payoff (the critic's Molten Weld) slipped through on Wisdom // the damage is still a TOKEN at this point ({avg} ({dice})); the number fills later
+    // THE THIRD DECISIVE CASE: a row that imposes one minor condition and nothing
+    // else has one save that fits — the condition's own (print: Poisoned ->
+    // Constitution 24 rows; Frightened -> Wisdom 13). The condition-save block
+    // above already wrote it into fills.save_stat; a contrary model pick is an
+    // OVERRIDE with that reason, not a pick to honour. (templates.spec: "a
+    // condition aura saves by its condition, whatever the model proposed".)
+    // A frame can carry BOTH a minor condition and damage dice (condition-payoff:
+    // 59 fire AND a one-turn Frightened on failure). There the damage is the row
+    // and the condition is the rider, so the damage rule wins and the condition's
+    // own save does NOT bind — the first cut re-derived the critic's Molten Weld
+    // to Wisdom "because it imposes Frightened". A condition aura binds only when
+    // it imposes a minor condition and deals no damage (noxious-aura, gaze-single).
+    const condSave = text.includes('{condition_minor}') && !dmgDominant ? String(fills.save_stat) : null;
+    const contradicts = picked && ((isShove && picked !== 'Strength') || (dmgDominant && picked === 'Wisdom') || (condSave && picked !== condSave));
+    // A damage-dominant row with no condition word has NO by-effect answer — the
+    // ladder returns null — and the replay showed a contradicted Wisdom pick, and
+    // a missing pick, both rendering Wisdom (the template's own placeholder). print's
+    // answer for area-plus-damage is Dexterity (46 rows), so that is the fallback.
+    const fallback = condSave ?? byEffect ?? (dmgDominant ? 'Dexterity' : null);
+    if (picked && !contradicts) fills = { ...fills, save_stat: picked };
+    else if (fallback) fills = { ...fills, save_stat: fallback };
+    if (picked && contradicts) saveOverride = `"${picked}" -> ${fallback ?? 'no fallback'}: ${isShove ? 'a shove is Strength in print (5 rows to 2)' : condSave && picked !== condSave ? `a ${fills.condition_minor} aura saves by its condition` : 'a damage-dominant row is never Wisdom'}`;
   }
   for (const [k, list] of Object.entries(VOCAB)) {
     if (!text.includes(`{${k}}`)) continue;
@@ -1285,7 +1321,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     text = text.split(`{${k}}`).join(w);
   }
   if (/\{[a-z_]+\}/.test(text)) return null;
-  return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(pickedCondition ? { imposes: pickedCondition } : {}), ...(consumedPick ? { consumes: consumedPick } : {}) };
+  return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(pickedCondition ? { imposes: pickedCondition } : {}), ...(consumedPick ? { consumes: consumedPick } : {}), ...(saveOverride ? { saveOverride } : {}) };
 }
 
 // SEAT DEFAULTS (critic run four): some seats OWE a trait by print — the 2024

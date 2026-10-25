@@ -814,3 +814,134 @@ parses the same sentence for `valueCheck`'s pricing. It now has a declared
 alternative — `attacksPerRound` on the rows — and consolidating the two is a
 tidy follow-up, not done here because pricing is load-bearing and wants its own
 measurement.
+
+### push10 — gate 2 holds; bar 2 failed as written and the cause is PRICING, not the gate
+
+0 push-on-holding-or-repeating rows (forty had 2); the one refusal fired on the
+Well Devourer's own Bite; `attacksPerRound` reached all 12 shipped attack rows.
+No push landed anywhere — but one refusal total, so the gate did not eat them.
+
+The mechanism, read exactly: the wind-dancer's "Sundering Shove" is the
+`push-prone` SEED ("pushed up to 15 feet away ... and has the Prone condition"),
+and valueCheck priced it at ev 3.7 against a floor of 14 (one attack of three)
+because `rowValue` gives a row with no damage dice ev 0 and the only credit a
+condition earns is through WORTH_AN_ATTACK —
+  /Restrained|Grappled|Charmed|Paralyzed|Stunned|Incapacitated|Petrified/
+— which does not contain PRONE. So a push-and-knock-down save row is priced as
+"does nothing" and can never ship as an action at any CR. The three movement
+RIDERS price differently: `charge-push` carries damage dice and clears the floor
+at every band (ev 13-26); `hook-rider` and `bolt-drag` do not (ev 3-5 vs 12-20)
+and are equally unshippable.
+
+print disagrees with that pricing: a shove is a real action it writes (Strength
+5 rows to Dexterity 2; Trampling Charge, Shield Shove, Wing Attack's push).
+Prone costs the target half its move to clear and hands melee allies Advantage —
+it is not nothing. Whether Prone (and "pushed") belongs on the worth-an-attack
+list is a PRICING decision with budget consequences, so it is the owner's; not
+changed here. If it goes in, the Sundering Shove seed ships and the
+cliff-concepts get their fling as a row rather than only as an area save.
+
+NOT a gate-2 problem. Logged, not chased.
+
+**Owner's ruling on Prone (2026-10-25): NOT worth an attack.** "Even the Dire
+Wolf at low CR has a Prone rider on a damage dealer" — Prone is a RIDER print
+attaches to damage, never a payload priced on its own. WORTH_AN_ATTACK stays as
+it is; a displacement-only row stays below the floor by design. The cliff-fling
+concepts are correctly served by an area save that also deals damage.
+
+## Gate 3 — the model's save_stat pick is CONSULTED — LANDED; measured by save10
+
+Finding, verified: templates.mjs's SAVE BY EFFECT block overwrote
+`fills.save_stat` with ZERO reads of the model's own answer — the VOCAB enum it
+chose from was decorative. The owner's rule ("metadata back from the LLM over
+string matching") applied directly.
+
+Now: (1) VOCAB_GUIDANCE.save_stat carries print's MEASURED split — area+damage
+Dexterity 46 / Constitution 29; shove Strength 5 to Dexterity 2; condition-only
+Constitution 24 / Wisdom 13 — so the model chooses with the rule in hand.
+(2) The pick STANDS unless it contradicts one of the two cases print is decisive
+about: a shove is Strength; a damage-dominant row is never Wisdom (the critic's
+Furnace Breath, 72 fire on a Wisdom save). (3) A damage-dominant row the
+by-effect ladder cannot place (no condition word — ground-burst's frame) falls to
+Dexterity; before this it rendered WISDOM, the template's own placeholder, both
+when the pick contradicted and when there was no pick at all. (4) Every override
+is recorded on the row as `saveOverride` with its reason.
+
+Reach: only FIVE templates carry {save_stat} (condition-payoff, execute, seal,
+noxious-aura, ground-burst). push-prone and wail hardcode theirs; the contract
+cannot touch them, and my first replay "failed" on exactly those two before I
+read the frames. The damage test reads the UNFILLED token ({avg} ({dice})) —
+ENGINE slots fill later than this block, so a literal-dice regex matched nothing.
+
+Spec: `__tests__/save-stat-contract.spec.js` (6 cases incl. out-of-enum pick and
+the guidance's own counts). Detector `/tmp/wisdet.mjs`: flags Burning Brand and
+Furnace Breath on the forty, exempts print's Horrific Visage (a fear row that
+IMPOSES Frightened — Wisdom is right there).
+
+Flake, second sighting: generate-2024.spec.js reported 1 failed under
+--maxWorkers=2 with no assertion surfacing in text, JSON or verbose reporters;
+alone and on immediate re-run it passed 3935/0. Not reproduced. If a third
+sighting lands, bisect the worker count before the suite.
+
+### Gate 3, second cycle — the first ten measured a HALF-LANDED gate
+
+save10 (first run) failed bar 1 on the critic's own case: Furnace Breath AND
+Furnace Glare both shipped on Wisdom with 0 overrides recorded. Four defects,
+none visible to the first replay (which covered ground-burst only):
+ a. `dmgDominant` matched {avg}/{avg_half}; condition-payoff carries {avg_x2}.
+    Fixed: every damage token.
+ b. `picked` read fills.save_stat AFTER the condition-save block (~1250) had
+    written the ENGINE's own CONDITION_SAVE choice into it — so every pick, and
+    no pick at all, read back as "Wisdom" and the contract honoured the engine
+    while believing it honoured the model. Fixed: the model's pick is captured
+    into `modelSave` BEFORE that block runs.
+ c. `saveOverride` was returned by renderTemplate and never carried onto the fit
+    row — I carried `consumes` at that site and not this. Zero overrides would
+    have been recorded regardless of behaviour. Fixed.
+ d. Furnace Breath is a CHASSIS nova — no template, no seed, no print — so gate
+    3's block in renderTemplate never saw it. A2's late re-derive (generate.mjs,
+    the "PRONE IN A DAMAGING AREA" arm) keyed on the CONDITION alone: Frightened
+    -> ['Wisdom','Charisma'], never asking whether damage dominated. Fixed in
+    that arm: areaDmg with a fear rider -> ['Dexterity','Constitution'].
+ Then templates.spec insisted on a THIRD decisive case, and it was right: a
+ condition AURA (imposes one minor condition, deals no damage) saves by its
+ condition whatever the model proposed — Poisoned on Wisdom is as wrong as fire
+ on Wisdom. Landed with the override reason "a Poisoned aura saves by its
+ condition" — and it must YIELD to the damage rule when a frame carries both
+ tokens (condition-payoff imposes a one-turn Frightened AND deals 59 fire; the
+ fire is the row). The first cut re-derived Molten Weld to Wisdom on exactly
+ that.
+
+Replays now, all correct: ground-burst (4 cases), condition-payoff (4 cases),
+noxious-aura Poisoned-on-Wisdom -> Constitution with reason, A2's arm on the
+forty's real Furnace Breath -> DEX/CON with the fear-only control keeping Wisdom.
+3,941 tests, build clean. save10 re-running.
+
+**The lesson that generalised:** "the engine validates the model's pick" is only
+true if the engine READS the pick — and the first thing a validation block reads
+is whatever the last engine block wrote into the same field. Capture the model's
+answer at the top, before any engine code touches the field, or the contract
+inverts silently and every replay that feeds a pick through the normal path
+passes for the wrong reason.
+
+**save10 re-run (`smoke-out/save10-2026-10-25T20-49-19`), read against the bars:**
+- Bar 1 damage-dominant-on-Wisdom: 2 -> 0. Furnace Breath (72 fire + Frightened)
+  shipped on CONSTITUTION; Killing Wake (71 cold + Deafened) likewise. Both via
+  the A2 chassis arm — the critic's exact case flipped live.
+- Bar 2 overrides recorded: 0 — NOT evidence either way. This ten drew ZERO
+  `{save_stat}` template rows (the first run drew two: Furnace Glare on
+  condition-payoff, Fevered Wounds on noxious-aura). The hammer went to an
+  `isolation` rider this time; the Glacier's bound `execute` was dropped by the
+  floor. The renderTemplate block ran 0 times live. Its evidence is the
+  deterministic replays (ground-burst 4, condition-payoff 4, noxious-aura 1).
+- Bar 4: 2 "print grammar" traces, both chassis novas (A2 gap) — expected.
+- Regression: 10/10 ok, no throws; signature outcomes 3 "never reached the sheet"
+  (2 dropped by the floor), 1 trait refused; no payoff declines, no push-on-hold.
+- Holistic (not gate 3's): Rimebound Glacier shipped "Aura of Truth" (can't lie)
+  for a "clinging cold" idea — shape-fit fallback with no verb match, a FIX;
+  Brass Tyrant's "hammer finds the terrified" landed as an isolation rider +
+  Scent of Fear tracker — sound but samey; Siege-Timber Golem lost its
+  wall-shouldering signature; Drake's Weapon Lodge and Bellringer's Resonant
+  Body are the open lodge/resonant-body body-warrant item.
+Verdict: gate 3 moves forward. The template path is sampled at ~0-2 draws per
+ten; the close-out forty is where it gets measured live.
