@@ -4777,7 +4777,19 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // ten did not — the duplicate is 1 run in 4).
       const riderTrig = String(actionT.row?.text ?? '').replace(/\*/g, '').split('The creature').join(inline.charAt(0).toUpperCase() + inline.slice(1)).split('the creature').join(inline).split(',')[0].trim();
       const dupTrig = !!host && riderTrig.length >= 24 && String(host.text ?? '').replace(/\*/g, '').includes(riderTrig);
-      if (host && !dupTrig) {
+      // A PUSH NEVER SHARES A ROW WITH A GRAPPLE (critic's second read, 2026-10-25:
+      // the Well Devourer's Bite grappled AND restrained the target, then its welded
+      // charge-push shoved the same target 10 feet away — "pick one", and the Bog
+      // Hound had it the package before). Both facts are DECLARED: the rider
+      // template's own `effect` (movement: charge-push, hook-rider, bolt-drag) and
+      // the HOST's recorded `imposes`. No text is read and no attack count is
+      // needed — the count is not declared anywhere, which is why the prompt-only
+      // half of this failed twice in forty. The fit prompt still asks (the call can
+      // see reach and Multiattack); this is the backstop its answer needs.
+      const riderMoves = TEMPLATE_BY_ID.get(actionT.template ?? actionT.row?.template ?? '')?.effect === 'movement';
+      const hostHolds = ['Grappled', 'Restrained'].includes(String(host?.imposes ?? ''));
+      const pushOnHold = !!host && !dupTrig && riderMoves && hostHolds;
+      if (host && !dupTrig && !pushOnHold) {
         // a rider that imposes a hold on every hit of a repeatable row needs a
         // gate (the astrologer's no-save Restrained x3 a turn, fresh ten):
         // print's idiom is "once per turn" when there is no save
@@ -4810,6 +4822,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         riderShipped = true;
         trace('signature rider:', `${actionT.template} -> ${host.name} (appended; ${actionT.because})`);
         if (deadBareT) sweepDeadName(sections, deadBareT, host, trace);
+      } else if (pushOnHold) {
+        trace('rider refused — a push on a grapple row:', `"${actionT.template ?? actionT.row?.template ?? '?'}" moves the target away from "${host.name}", which holds it ${host.imposes}; the slot leaves and the seat looks elsewhere`);
+        wcDropped = true;
+        for (const es2 of Object.values(sections)) { const ix = es2.indexOf(pendingWildcard); if (ix !== -1) es2.splice(ix, 1); }
       } else if (dupTrig) {
         trace('rider refused — duplicate trigger:', `"${actionT.template ?? actionT.row?.template ?? '?'}" opens with "${riderTrig.slice(0, 60)}…", which "${host.name}" already carries; the slot leaves and the seat looks elsewhere`);
         wcDropped = true;
