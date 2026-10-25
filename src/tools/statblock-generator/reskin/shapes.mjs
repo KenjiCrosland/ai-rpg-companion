@@ -68,7 +68,7 @@ const RELIC = (ac, hp, regen) => `The creature keeps {relic} within 30 feet of i
 //   the budget; bounding it to ONCE, at {avg_half}, keeps what the pricer ignores
 //   small. Frightened for one turn, not Prone: Prone is already 43% of our sheets
 //   against print's 16%.
-const TALLY = 'At the start of each of its turns, the creature gains a mark {tally_fiction}, to a maximum of 3. When it has 3 marks, the next attack it hits with deals an extra {avg_half} ({dice_half}) {damage_type} damage, and the target has the Frightened condition until the end of its next turn. The marks are then spent, and the creature can\'t gain marks again until it finishes a Long Rest.';
+const TALLY = 'At the start of each of its turns, the creature gains a mark {tally_fiction}, to a maximum of 3. It can use its most powerful action only when it has 3 marks, and using it spends them.'
 
 const KILL_DENIAL = 'A creature reduced to 0 Hit Points by the creature {kill_consequence}, and it can\'t be restored to life by any means short of a *Wish* spell.';
 

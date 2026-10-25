@@ -569,3 +569,49 @@ Not fix 3's, logged:
 - "Thunder Absorption" on both thunder concepts — the absorption family is
   over-selected on energy concepts (and heals from the party's own thunder
   spells, as the critic said of the warden's Force Absorption).
+
+## Fix 4 — the fuse ends in the big move — LANDED (numbers from fuse8 appended below)
+
+`tally` now renders a HOLDING form — "It can use its most powerful action only
+when it has 3 marks, and using it spends them" — and an exported late pass,
+`tallyFeedsNova(sections, trace)` in generate.mjs, called right before
+`trace('done:')` once the sheet's rows are final:
+- finds the sheet's gated save nova by novaRows' own DECLARED predicate — the
+  recorded gate (`gateOf`, which also reads a gate that lives only in the name),
+  a Saving Throw, damage dice — never text that infers meaning;
+- sets the nova's `gate` to '3 Marks', renames its suffix, and replaces the
+  tally's own phrase "its most powerful action" with the nova's bare name (the
+  one string operation: a closed token the engine itself wrote);
+- with no such nova the tally LEAVES and traces why ("tally declined") — a
+  fuse with no big move at the end is bookkeeping, the critic's exact complaint.
+tally no longer declares Frightened (its payoff is the nova now). Pricing is
+untouched: valueCheck already priced the nova as `gated`, and a recorded
+'3 Marks' gate keeps `gated` true through gateOf.
+Spec: `__tests__/tally-nova.spec.js` (bind, decline-and-trace, name-only gate,
+no-op). Detector `/tmp/fusedet.mjs` shape, proven UNBOUND on escalate4 #04 (the
+old state) before the new run.
+
+### fuse8 — bars met, and a defect I made by composing fixes 3 and 4
+
+Bars: 1 tally, BOUND (detector proven UNBOUND on escalate4 #04 first); 0 leftover
+"most powerful action"; controls (#06 mundane, #07 exact) carry no tally and no
+rewritten gate; a tally the FLOOR dropped (#01) left no stray 3-Marks gate behind;
+title case clean; no throws.
+
+THE DEFECT, caught by the GM's-eye read and not by any bar: #03 bound the marks to
+`Gathering Ruin` — which fix 3 had just made a DELAYED wind-up. So: 3 rounds of
+marks, a round spent charging, eruption at the END of the turn after that. **Five
+rounds to a payoff in fights that last three or four** — the nova may never fire.
+Each fix is right alone; together they build a fuse that feeds a fuse, which is
+the critic's own complaint ("a fuse only pays off if what's at the end of it is
+the big move") re-created one layer up by me.
+
+Fixed: `tallyFeedsNova` now skips a nova whose frame DEFERS its damage, prefers
+an immediate gated nova on the same sheet, and declines with that reason when the
+only one defers. `wind-up` is the only delayed gated template (1 of 29), so the
+cost in reach is near zero. Two more tests pin it (refuse-and-leave; prefer the
+immediate nova when both are present).
+
+LESSON for the plan's own cadence: a per-fix ten measures the fix. It cannot see
+what two landed fixes do to each other. After a run of fixes, the composition is
+its own question — and the holistic read is where it shows, not the bars.

@@ -1051,7 +1051,6 @@ export function composeRayTable(band) {
  *                     and separately imposes Stunned at 21+, which is listed.
  */
 const IMPOSES_BY_TEMPLATE = {
-  tally: 'Frightened', // the payoff's one-turn Frightened — declared, so the reconcile and A2 read a record, not the text
   // print's own swallow text imposes three at once, in the COMPOUND idiom
   // ("has the Blinded and Restrained conditions") that a singular-only scan
   // misses — the gap the owner caught, 2026-10-21
