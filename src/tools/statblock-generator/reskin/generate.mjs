@@ -7,7 +7,7 @@
  */
 import { verbHits, verbLines } from './route.mjs';
 import { readPhrases, headNoun, piAliasesIn, piGuard, removalClauses } from './lexicon.mjs';
-import { pickDonor, scaleDonor } from './scale.mjs';
+import { pickDonor, scaleDonor, stampAttacksPerRound } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
@@ -4788,7 +4788,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // see reach and Multiattack); this is the backstop its answer needs.
       const riderMoves = TEMPLATE_BY_ID.get(actionT.template ?? actionT.row?.template ?? '')?.effect === 'movement';
       const hostHolds = ['Grappled', 'Restrained'].includes(String(host?.imposes ?? ''));
-      const pushOnHold = !!host && !dupTrig && riderMoves && hostHolds;
+      // AND A PUSH STRANDS A ROW THE MULTIATTACK REPEATS (the Wrackwork Ram: two
+      // Rams a round, the first shoving the target 10 feet out of reach of the
+      // second). `attacksPerRound` is stamped on the row by scale.mjs from the
+      // Multiattack's own count — read ONCE there, so this needs no sentence.
+      const hostRepeats = Number(host?.attacksPerRound ?? 1) >= 2;
+      const pushOnHold = !!host && !dupTrig && riderMoves && (hostHolds || hostRepeats);
       if (host && !dupTrig && !pushOnHold) {
         // a rider that imposes a hold on every hit of a repeatable row needs a
         // gate (the astrologer's no-save Restrained x3 a turn, fresh ten):
@@ -4823,7 +4828,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         trace('signature rider:', `${actionT.template} -> ${host.name} (appended; ${actionT.because})`);
         if (deadBareT) sweepDeadName(sections, deadBareT, host, trace);
       } else if (pushOnHold) {
-        trace('rider refused — a push on a grapple row:', `"${actionT.template ?? actionT.row?.template ?? '?'}" moves the target away from "${host.name}", which holds it ${host.imposes}; the slot leaves and the seat looks elsewhere`);
+        trace('rider refused — a push that undoes its own row:', `"${actionT.template ?? actionT.row?.template ?? '?'}" moves the target away from "${host.name}", which ${hostHolds ? `holds it ${host.imposes}` : `swings ${host.attacksPerRound}x a round`}; the slot leaves and the seat looks elsewhere`);
         wcDropped = true;
         for (const es2 of Object.values(sections)) { const ix = es2.indexOf(pendingWildcard); if (ix !== -1) es2.splice(ix, 1); }
       } else if (dupTrig) {
@@ -8110,6 +8115,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       }
     }
     const speech = (authored?.unplaced ?? []).filter((u) => u.where === 'languages' && u.text); if (speech.length) { const only = speech.some((u) => /\bonly\b/i.test(`${u.clause} ${u.text}`)); monster.languages = [only ? '' : String(monster.languages ?? '').replace(/^None$/i, ''), ...speech.map((u) => u.text)].filter(Boolean).join('; '); /* "speaks only in the language of socks" is the whole line — Common leaves (critic's step-5 read) */ trace('unplaced to Languages:', speech.map((u) => `"${u.clause}"`).join(', ')); } }
+  stampAttacksPerRound(monster.sections); // renames and the citation sweep rewrite the Multiattack — re-stamp so the shipped count is the shipped sentence's
   payoffReachable(monster.sections, trace); // a payoff with no imposer on the finished sheet is a dead row
   trace('done:', `"${monster.name}" — donor ${donor.id}, CR ${cr}`);
   return monster;

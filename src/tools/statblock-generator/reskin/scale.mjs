@@ -44,6 +44,42 @@ export function pickDonor(cr, style = null, archetype) {
 // damage never parses, same surgery the hybrid row needed.
 const ATTACK_RE = /(\+\d+)(?: \(with Advantage[^)]*\))?(, reach \d+ ft\. or range [\d/]+ ft\.|, reach [^.]+|, range [^.]+)? ?\.? (\d+) \((\d+d\d+(?:\s*\+\s*\d+)?)\) ([\w{}]+) damage/;
 
+/**
+ * HOW MANY TIMES A ROUND THIS ROW CAN SWING, recorded on the row.
+ *
+ * The count lived only inside the Multiattack sentence, so every consumer that
+ * needed it had to re-read that sentence — `valueCheck` via `multiattackShape`,
+ * the dangling-citation sweep, and a weld guard that could not be built at all
+ * for want of it (the Wrackwork Ram pushed its own target out of reach of its
+ * second swing, critic 2026-10-25). print's text is the only source for a donor
+ * that brought its own Multiattack, so the sentence IS read — but ONCE, here,
+ * and the result becomes the field every consumer reads. The same move that
+ * retired seven name-readers for `gate` and completed the `imposes` record.
+ *
+ * Both of print's idioms give a row the same ceiling: "makes three Rend attacks"
+ * uses one row three times, and "makes three attacks, using Claw or Bite in any
+ * combination" permits three of either. So the stamp is the Multiattack's own
+ * count on each row it cites.
+ */
+export function stampAttacksPerRound(sections) {
+  const rows = Object.values(sections ?? {}).flat().filter(Boolean);
+  const ma = rows.find((e) => /^Multiattack/i.test(String(e.name ?? '')));
+  const attacks = rows.filter((e) => /Attack Roll/.test(String(e.text ?? '')));
+  for (const e of attacks) delete e.attacksPerRound;          // re-stamping after a rename must not leave a stale count
+  if (!ma) { for (const e of attacks) e.attacksPerRound = 1; return; }
+  const WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5 };
+  const n = WORDS[(/\bmakes (one|two|three|four|five)\b/i.exec(ma.text ?? '') ?? [])[1]?.toLowerCase()] ?? 1;
+  const bare = (e) => String(e.name ?? '').replace(/ \(.*\)$/, '');
+  // print's "It can replace one attack with a use of X" names X and grants it
+  // ONCE — searching the whole sentence counted it as N (a Spew cited only
+  // there read as three). The count clause is everything before that.
+  const counted = String(ma.text ?? '').split(/\bcan replace\b/i)[0];
+  for (const e of attacks) {
+    const cited = new RegExp(`\\b${bare(e).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(counted);
+    e.attacksPerRound = cited ? n : 1;   // an uncited attack row is a single swing (print's "can replace one attack with…")
+  }
+}
+
 export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null, dprScale = 1, edition = null, concept = '', oneAttack = false } = {}) {
   const card = cardBudget(cr, { legendary: !!legendary, edition }); // a 2014 sheet prices against the DMG table (2026-10-02)
   const scaled = JSON.parse(JSON.stringify(donor));
@@ -106,6 +142,7 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
         : `The creature makes ${count} attacks, using ${atk.join(' or ')} in any combination.`;
       esA.unshift({ name: 'Multiattack', text });
       scaled.sections.Actions = esA;
+      stampAttacksPerRound(scaled.sections); // the count is known HERE; every consumer reads the field, not the sentence
     }
   }
   // THE 2014 DAMAGE LINE (owner + critic 2026-09-14): 2014's table runs
@@ -446,5 +483,6 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   const conMod = Math.floor((scaled.stats.CON - 10) / 2);
   scaled.hp_formula = hpFormulaFor(scaled.hp, scaled.size ?? 'Medium', conMod);
   scaled.per_hit = perHit;
+  stampAttacksPerRound(scaled.sections); // a donor that brought print's own Multiattack is stamped from it, once
   return scaled;
 }

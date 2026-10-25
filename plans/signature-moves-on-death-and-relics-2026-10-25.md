@@ -777,3 +777,40 @@ carry that half. #02 (breath terrifies / hammer finds the terrified), #05 and #0
 got NO payoff row at all; they were not declined (1 decline total), the template
 simply was not selected. On the forty the Brass Tyrant DID get Molten Weld, so
 that is selection variance, not the gate.
+
+## Gate 2 — a push never undoes its own row — LANDED, with the count now DECLARED
+
+The owner chose the cleaner, bigger change over reading the Multiattack sentence
+at each use site.
+
+`stampAttacksPerRound(sections)` in scale.mjs records `attacksPerRound` on every
+attack row. It reads the Multiattack sentence ONCE — at the seam where scale.mjs
+COMPOSES it (the count is known there directly: two at CR 5-10, three at CR 11+)
+and once more before returning, for a donor that brought print's own. Every
+consumer reads the field. Re-stamped in generate.mjs at ship time, because
+renames and the citation sweep rewrite that sentence and a stale count is worse
+than none. Same move that retired seven name-readers for `gate` and completed the
+`imposes` record.
+
+print's two idioms give a row the same ceiling and both are handled: "makes three
+Rend attacks" (one row, three times) and "makes two attacks, using Claw or Bite
+in any combination" (either, twice). The one trap, caught in verification: "It
+can replace one attack with a use of Spew" NAMES Spew and grants it ONCE — the
+first cut counted it as three. The count clause is everything before "can
+replace".
+
+The weld's gate 2 now refuses a rider whose template declares `effect: movement`
+onto a host that EITHER holds the target (recorded `imposes` Grappled/Restrained)
+OR swings 2+ times a round (the stamp). No sentence read at the weld.
+
+Replay, both known-bad sheets from the forty: Well Devourer's Bite (Grappled)
+REFUSES; Wrackwork Ram (Prone, two swings) REFUSES; a host that holds nothing and
+swings once ALLOWS. Specs: `attacks-per-round.spec.js` (7 cases incl. the replace
+clause, a gate suffix, and re-stamp-after-rename), plus the existing weld specs.
+3,928 tests, build clean. Measured by push10 (bars in scratchpad).
+
+NOTE for whoever reads this next: `multiattackShape` in templates.mjs still
+parses the same sentence for `valueCheck`'s pricing. It now has a declared
+alternative — `attacksPerRound` on the rows — and consolidating the two is a
+tidy follow-up, not done here because pricing is load-bearing and wants its own
+measurement.
