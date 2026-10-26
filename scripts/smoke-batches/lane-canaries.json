@@ -1,0 +1,5 @@
+[
+  { "name": "", "description": "a glacier's heart given legs that charges in a straight line and leaves the ground behind it glazed in killing ice", "cr": "15", "rules": "2024", "canary": "LANE: a charging body — the sheet should carry a trample/charge row, so the lane payload is offered and should compose as a 15-foot-wide Line" },
+  { "name": "", "description": "a quarry-pit thing of living scree that barrels through a line of foes and spills loose stone in its track", "cr": "8", "rules": "2024", "canary": "LANE at Large: a 10-foot-wide Line, and the number from the aura ladder at CR 8" },
+  { "name": "", "description": "a dread sovereign who never moves from his throne, whose presence alone unmans the brave", "cr": "12", "rules": "2024", "canary": "CONTROL: a stand-and-fight body with no straight-line move — the lane must NOT be offered; the around-aura is the right answer here" }
+]

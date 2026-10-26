@@ -11,7 +11,7 @@ import { pickDonor, scaleDonor, stampAttacksPerRound } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { GRAMMARS, composedTemplate, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor} from './templates.mjs';
+import { composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
@@ -4155,7 +4155,17 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // a shape fit by construction (v2 blind read: "template variety went up,
       // template fit went down"); an honest miss, no call spent
       const verbRanked = rankByVerb(pool, verbText, `${seatText} ${idea.idea}`, options.askedMechanic ?? null);
-      if (!verbRanked.some((r) => r.matched.length)) {
+      // A KEY WORD IS NO LONGER THE ONLY WARRANT (2026-10-26). `matched` is key
+      // words only and the declared mechanic moved nothing but the sort, so this
+      // gate was discarding the engine's own declared data: measured over the 7
+      // tens of this day it fired 11 times — the largest named loss cause — and 8
+      // of those had a template on the menu whose declared trigger AND effect
+      // already agreed with the idea's own tags, 13 candidates offered and none
+      // of them shown to the call. `gateStandsDown` reads those fields. It spends
+      // no call that was not already going to be spent: the fit call is made a
+      // few lines below and this gate was returning before it.
+      const declaredWarrant = gateStandsDown(pool, idea, options.askedMechanic ?? null);
+      if (!verbRanked.some((r) => r.matched.length) && !declaredWarrant.down) {
         if (idea.section === 'rider') {
           // the rider shelf is small: a rider idea with no verb there is re-seated
           // as a save action before it can miss (eight seeds for four fits, fresh ten)
@@ -4170,6 +4180,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const ownClause = closedPath ? unansweredClause() : null;
         if (!ownClause) { trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — no template on the shelf shares a verb with the concept or the idea (offered: ${pool.map((t) => t.id).join(', ')})`); return null; }
         trace('verb gate stands down:', `${seat} — no template shares a verb, but "${ownClause}" is a clause the sheet has not answered; the GM's own words are the warrant`);
+      } else if (!verbRanked.some((r) => r.matched.length) && declaredWarrant.down) {
+        trace('verb gate stands down:', `${seat} — no template shares a verb, but ${declaredWarrant.because}${declaredWarrant.ids.length ? `: ${declaredWarrant.ids.join(', ')}` : ''}; the declared data is the warrant and the call is worth making`);
       }
       // THE CONCEPT'S WORDS NO LONGER BIND THE FIT (owner's audit, 2026-10-26;
       // plans/fit-by-stamps-not-keywords-2026-10-26.md). This block used to put
@@ -4215,7 +4227,17 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // declares the same field, so that match is a stamp comparison too. It is
       // tier 0 inside `orderByStamps` (measured: the word-ranked pick survives in
       // 432 of 432 wrong-mechanic trials, and this reorders rather than filters).
-      const offered = orderByStamps(candidates, idea, options.askedMechanic ?? null);
+      // THE COMPOSED OPTIONS ARE MENU LINES (2026-10-26). They were a FORM the
+      // call had to fill after the menu, and it refused five times in three runs
+      // — three of those on ideas whose own gap record described the form's
+      // payload nearly word for word. Picking from a menu is the task the call
+      // does well, so the engine composes first and lets it choose. Every gate
+      // that used to sit in the prompt or in a post-answer check is a filter in
+      // the factory now, so a banned combination cannot arrive.
+      const canT = [...(Object.values(sections).flat().some((e) => LINE_MOVE.includes(String(e?.template ?? '')) || (e?.riderTemplates ?? []).some((x) => LINE_MOVE.includes(String(x))) || /straight line/i.test(String(e?.text ?? ''))) ? ['line-move'] : [])];
+      const composedT = composedCandidates(idea, { can: canT });
+      if (composedT.length) trace('composed candidates on the menu:', `${seat} — ${composedT.map((t) => t.id).join(', ')} (the ${idea.family} family's options, built before the call looks)`);
+      const offered = orderByStamps([...candidates, ...composedT], idea, options.askedMechanic ?? null);
       if (options.askedMechanic && offered.some((t) => t.mechanic === options.askedMechanic)) {
         trace('declared mechanic leads the menu:', `${seat} — ${options.askedMechanic}: ${offered.filter((t) => t.mechanic === options.askedMechanic).map((t) => t.id).join(', ')}`);
       }
@@ -4249,7 +4271,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         })();
         if (askedFor) trace('classification handed to the fit call:', Object.entries(askedFor).map(([k, v]) => `${k}=${v}`).join(' '));
         const rawFit = await callLLM(buildFitPrompt({ name: p.name, sheet: sheetSoFarT, idea, menu: offered, cr, concept: verbText, clause: ownClauseForCall, elements: sigElements, asked: askedFor }), validateFitResponse);
-        let fit = readFit(parseFit(rawFit, offered, p.name, sigElements, idea.family ?? null), offered, `${verbText} ${idea.idea}`);
+        let fit = readFit(parseFit(rawFit, offered, p.name, sigElements), offered, `${verbText} ${idea.idea}`);
         // THE REFUSAL IS RECORDED BEFORE IT IS ANSWERED (2026-10-21). Accepting
         // the closest sets `fit.template`, and every decline trace below is
         // guarded on `!fit.template` — so the first run after acceptance landed
@@ -4293,29 +4315,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // keeps its receipt and is counted like a template pick. `parseFit` has
         // already validated every value by exact membership and refused the banned
         // pairs, so there is nothing to judge here — only to build.
-        if (!fit.template && fit.compose) {
-          // THE GRAMMAR IS WRITTEN FOR ONE SEAT. `body-reaction` is a TRAIT form
-          // (print's body reactions are traits), and the first canary run offered
-          // it to an ACTION seat whose idea the call had tagged body-reaction —
-          // "when something strikes the hulk, splinters burst". It composed, and
-          // because the synthesised template declares section 'trait' the row
-          // landed in Traits off the action seat, while the idea the GM typed (an
-          // AREA reaction) went unserved and showed up in the gap list. The prompt
-          // no longer offers the form across seats; this is the engine's check on
-          // the same fact.
-          const g = GRAMMARS[fit.compose.family];
-          if (g && g.section !== idea.section) {
-            trace('composed row refused:', `${seat} — the "${fit.compose.family}" form is a ${g.section} shape and this is the ${idea.section} seat; the seat takes the normal path`);
-            fit = { ...fit, compose: null };
-          }
-        }
-        if (!fit.template && fit.compose) {
-          const synth = composedTemplate(fit.compose);
-          const rendC = synth ? renderTemplate(synth, ctxT, { ...bindFills(synth), ...(synth.fills ?? {}) }) : null; // the form's own choices outrank anything read off the concept
-          if (rendC) {
-            trace('row composed from the family form:', `${seat} — ${fit.compose.family}: trigger "${fit.compose.trigger.slice(0, 40)}…" + "${fit.compose.consequence.replace(/\{[a-z_]+\}/g, '…')}"${fit.compose.condition ? ` (${fit.compose.condition})` : ''} — the call refused every template and filled the form instead (what no template did: ${String(fit.missing ?? 'unstated').slice(0, 70)})`);
-            fit = { ...fit, template: synth, composed: fit.compose.family, because: fit.because || String(idea.idea ?? '').slice(0, 160), wanted: fit.missing ?? null };
-          } else trace('composed row refused:', `${seat} — the form validated but will not render on this sheet`);
+        // A COMPOSED PICK ARRIVES AS A TEMPLATE. `parseFit` resolved it by id
+        // against the menu it was handed, so there is no form to validate and no
+        // seat or payload check to repeat here — the factory could not have
+        // offered an illegal one. What follows is the same bookkeeping a template
+        // pick gets; `fit.template.composed` is what marks it.
+        if (fit.template?.composed) {
+          trace('row composed from the family\'s own options:', `${seat} — ${fit.template.id}: the call picked it off the menu (what no printed template did: ${String(fit.missing ?? 'unstated').slice(0, 70)})`);
+          fit = { ...fit, composed: fit.template.composed, wanted: fit.missing ?? null };
         }
         if (!fit.template && fit.closest) {
           const near = pool.find((t) => t.id === fit.closest || t.key === fit.closest);
@@ -4428,7 +4435,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — the model found no template that holds it (offered: ${offered.map((t) => t.id).join(', ')})`);
           return null;
         }
-        const rendered = renderTemplate(fit.template, ctxT, fit.fills);
+        const rendered = renderTemplate(fit.template, ctxT, { ...(fit.template.fills ?? {}), ...fit.fills }); // a composed candidate carries DECLARED fills (the condition it names); the call's own fills still win where both speak
         if (!rendered) {
           trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — "${fit.template.id}" could not be filled (fills: ${JSON.stringify(fit.fills).slice(0, 80)})`);
           return null;

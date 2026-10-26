@@ -27,32 +27,31 @@ const fitJson = (o) => JSON.stringify({ template: 'none', declined_because: 'no_
 const fit = (o) => parseFit(fitJson(o), [], '', [], 'zone').compose;
 const plain = (t) => String(t).replace(/\*/g, '');
 
-describe('the zone form the call fills', () => {
-  it('accepts each payload by exact text', () => {
-    const z = Z();
-    for (let i = 0; i < z.payload.length; i += 1) {
-      const extra = i === z.condition_for ? { condition: 'Frightened' } : {};
-      expect(fit({ compose: { payload: z.payload[i], ...extra } })).toMatchObject({ family: 'zone', payload: z.payload[i] });
+// THE FORM IS GONE (2026-10-26): the call refused it five times in three runs,
+// so the options are composed into menu candidates instead and every ban is
+// enforced at ENUMERATION — a refused combination is never materialised, so
+// there is nothing for a parser to reject. What was parse-time is now factory-time.
+describe('the zone candidates, and the bans enforced where they are built', () => {
+  const { composedCandidates } = require('@/tools/statblock-generator/reskin/templates.mjs');
+  const idea = (effect) => ({ section: 'trait', trigger: 'start_of_turn', effect, family: 'zone' });
+
+  it('one candidate per condition it may name, and never Prone', () => {
+    const c = composedCandidates(idea('condition'), {});
+    expect(c.length).toBe(Z().conditions.length);
+    expect(Z().conditions).toEqual(['Poisoned', 'Frightened', 'Deafened', 'Blinded']);
+    const texts = c.flatMap((t) => Object.values(t.frames).map(String)).join(' ');
+    expect(texts).not.toMatch(/Prone condition/);
+  });
+
+  it('no candidate does damage AND a condition — print gates that behind a Recharge', () => {
+    for (const eff of ['damage', 'condition', 'movement']) {
+      for (const t of composedCandidates(idea(eff), { can: ['line-move'] })) {
+        const text = String(Object.values(t.frames)[0]);
+        const hasDmg = /takes \{?\d|takes \d+ \(/.test(text);
+        const hasCond = /has the \w+ condition|\{condition_minor\}/.test(text);
+        expect([t.id, hasDmg && hasCond]).toEqual([t.id, false]);
+      }
     }
-  });
-
-  it('refuses an invented payload', () => {
-    expect(fit({ compose: { payload: 'everything in the room dies' } })).toBeNull();
-  });
-
-  it('a condition aura takes a condition from the closed list — Frightened allowed here, Prone never', () => {
-    const z = Z();
-    const p = z.payload[z.condition_for];
-    expect(fit({ compose: { payload: p, condition: 'Frightened' } })?.condition).toBe('Frightened');
-    expect(fit({ compose: { payload: p, condition: 'Prone' } })).toBeNull();
-    expect(fit({ compose: { payload: p } })).toBeNull();                       // none given
-    expect(z.conditions).toEqual(['Poisoned', 'Frightened', 'Deafened', 'Blinded']);
-  });
-
-  it('refuses a condition on a payload that has no slot for one — print gates damage-plus-condition behind a Recharge', () => {
-    const z = Z();
-    const dmg = z.payload[z.effect.indexOf('damage')];
-    expect(fit({ compose: { payload: dmg, condition: 'Poisoned' } })).toBeNull();
   });
 });
 
@@ -104,26 +103,19 @@ describe('the engine reuses print\'s own aura frames', () => {
   });
 });
 
-describe('the zone form reaches the right seats only', () => {
-  it('a trait-seat zone idea is offered the form; an action-seat one is not', () => {
-    const menu = [TEMPLATE_BY_ID.get('energy-aura')];
-    const asTrait = buildFitPrompt({ name: 'S', idea: { idea: 'a dread presence unmans those near it', section: 'trait', trigger: 'always', effect: 'condition', family: 'zone' }, menu, cr: 8, concept: 'a dread sovereign' });
-    const asAction = buildFitPrompt({ name: 'S', idea: { idea: 'a gale that shoves a line of foes', section: 'action', trigger: 'save', effect: 'movement', family: 'zone' }, menu, cr: 8, concept: 'a storm drake' });
-    expect(asTrait).toMatch(/FILL THIS FORM/);
-    expect(asTrait).toMatch(/"compose"/);
-    expect(asAction).not.toMatch(/FILL THIS FORM/);
+describe('the candidates reach the right seats only', () => {
+  const { composedCandidates } = require('@/tools/statblock-generator/reskin/templates.mjs');
+
+  it('a trait-seat zone idea enumerates candidates; an action-seat one does not', () => {
+    expect(composedCandidates({ section: 'trait', trigger: 'start_of_turn', effect: 'damage', family: 'zone' }, {}).length).toBeGreaterThan(0);
+    expect(composedCandidates({ section: 'action', trigger: 'save', effect: 'movement', family: 'zone' }, {})).toEqual([]);
   });
 
-  it('the form states the print rules it enforces', () => {
-    const menu = [TEMPLATE_BY_ID.get('energy-aura')];
-    const p = buildFitPrompt({ name: 'S', idea: { idea: 'x '.repeat(12), section: 'trait', trigger: 'always', effect: 'condition', family: 'zone' }, menu, cr: 8, concept: 'c' });
-    expect(p).toMatch(/not both|never both/i);   // damage OR a condition
-    expect(p).toMatch(/Prone/);                   // the ban is visible
-  });
-
-  it('body-reaction still works — the two grammars do not collide', () => {
-    const g = GRAMMARS['body-reaction'];
-    const c = parseFit(fitJson({ compose: { trigger: g.trigger[0], consequence: g.consequence[2] } }), [], '', [], 'body-reaction').compose;
-    expect(c).toMatchObject({ family: 'body-reaction', consequence: g.consequence[2] });
+  it('the two grammars do not collide', () => {
+    const z = composedCandidates({ section: 'trait', trigger: 'start_of_turn', effect: 'damage', family: 'zone' }, {});
+    const b = composedCandidates({ section: 'trait', trigger: 'on_being_hit', effect: 'damage', family: 'body-reaction' }, {});
+    expect(z.every((t) => t.composed === 'zone')).toBe(true);
+    expect(b.every((t) => t.composed === 'body-reaction')).toBe(true);
+    expect(z.map((t) => t.id).some((id) => b.map((x) => x.id).includes(id))).toBe(false);
   });
 });

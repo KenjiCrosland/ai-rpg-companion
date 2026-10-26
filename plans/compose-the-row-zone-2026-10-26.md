@@ -230,3 +230,108 @@ Shape B section above, unchanged.
 no trailing (the dread sovereign, a plain heat aura) now has a route where it had
 none. Canary 01 drew a different family this run, so that half is UNMEASURED —
 re-run the zone canaries before judging the around-form worthless.
+
+---
+
+## CRITIC VERDICT on the trailing shape (2026-10-26): cut it; build the LANE instead
+
+#01 fix (cut) · #02 fix (cut) · #03 fix-lite · #04 ship. The verdict is not "a
+trail is not worth building" — it is that **a trail only works when it is a
+straight line left by a deliberate move**, not a trait that follows every step.
+
+Why all three variants fail:
+- **"Space" is the wrong word for a big body.** A creature's space is its whole
+  footprint; Huge is 15x15. "Each space it leaves as it moves" never says
+  whether that is each 5-ft square or each footprint position, and #03's "the
+  space it most recently left" is worse — a Huge creature's last space overlaps
+  its current one by two-thirds. Not adjudicable from the sentence. This alone
+  fails the first question for all three.
+- **The board does not remember paths.** A grid shows where the mini IS. By the
+  third player's turn the path is gone unless someone dropped markers.
+- **#02's damage clause is ambiguous** (once per square entered, or once per
+  turn?) and **its "starts its turn there" is near-dead**: the trail expires at
+  the start of the creature's next turn, so anyone who walked in already took
+  damage for entering and the zone is gone before their next turn. It fires only
+  after forced movement. 2024's wording settles both: "enters for the first time
+  on a turn or ends its turn there".
+- **A trail behind a stand-and-fight brute lies on ground nobody needs.** #01 is
+  bookkeeping for zero effect most rounds; the around-aura (#04) is the better
+  wake for that body.
+
+**The shape to build — the lane.** print never tracks a vacated space (one row
+in 329 monsters refers to one, the Lich's teleport, and it resolves instantly),
+but it does track lasting LINES: the wall spells and Line breaths. A trail is
+cheap when it is a straight Line from where the creature started its turn to
+where it stands — two points, one of them the mini — and the sheet's charge
+rider already makes the GM measure exactly that.
+
+> **Glazed Lane.** When the creature moves at least 20 feet in a straight line on
+> its turn, the {width}-wide Line it moved along becomes Difficult Terrain until
+> the start of its next turn. A creature that enters the Line for the first time
+> on a turn or ends its turn there takes {dmg} {damage_type} damage.
+
+Width is the creature's own size. The action form (a trample that leaves the
+lane) is the more memorable one and is the follow-up — it splits the battlefield
+between the fighters and the caster, and the GM has already traced that path to
+resolve the trample, so marking it costs nothing extra.
+
+**Gate it by MOVE SHAPE** (the critic's rule, and it fits the menu the engine
+already builds): offer the lane only on sheets that have a straight-line move —
+a charge rider or a trample row; stand-and-fight bodies are offered the
+around-aura instead, and its text can say the ice spreads around it. The model's
+"not an aura, a wake" describes the image it has; at the table the difference
+only shows when the creature moves through people.
+
+### Defects the read found in the grafted sheets (NOT this question — own items)
+- `Creeping Field`: a COLD cone imposing Poisoned (the condition pick ignores the
+  row's energy).
+- `Answering Sting`: a raw seed name shipped as-is, now dealing Cold damage.
+- Pit Scree's charge grants a free bonus-action Slam on top of Grappled +
+  Restrained + Prone — one charge is three Slams and an Entomb next turn, heavy
+  at CR 8. The same bonus-Slam rider is on #04.
+- "Melt-Reaver" names a body that freezes the ground.
+
+---
+
+## The lane LANDED, and its canaries did not reach it. Read this before judging it.
+
+Suite 3,994 green, build clean. Built exactly as the critic specified, with four
+of its findings enforced rather than copied:
+- **Width is the body's own size** (Huge 15-foot, Large 10-foot), filled from
+  `ctx.size` — the DECLARED size the sheet already carried for `requires_size`;
+  the renderer simply never read it. The word "space" appears nowhere, which was
+  the critic's first and decisive objection.
+- **2024's lasting-area wording**, and the spec asserts the dead clause is
+  ABSENT: "starts its turn there" cannot fire on a one-round zone.
+- **The number is derived** from `energy-aura`'s calibrated frames band by band,
+  which reproduces the critic's own 13 (3d8) at CR 15 rather than retyping it.
+- **Gated on move shape in BOTH places**: `composeFormLines` hides the payload
+  from a sheet with no charge or trample, and generate.mjs refuses it if the call
+  answers one anyway.
+
+**The canaries tested none of it, for two independent reasons, and the second is
+the one that matters.**
+1. All three ideas came back tagged `breach`, `breach` and `heal` — not `zone` —
+   so the zone form was never offered. My canary wording ("charges in a straight
+   line and leaves the ground glazed") reads as going THROUGH things, and the
+   call is arguably right. Canary wording problem, fixable.
+2. **No sheet carried a straight-line move at all**, so the gate would have
+   blocked the lane regardless. Not rider-blindness — the detection reads
+   `template`, `riderTemplates` and the row text, and all three came back false.
+
+**The reachability number, measured over every run of 2026-10-25/26 (111 sheets):
+a straight-line move appears on 14, or 13%.** And a lane needs that AND a `zone`
+idea AND every template refused. That is a far narrower funnel than
+`relic-object`, which shipped 0 of 40 and is the standing lesson about building a
+shape that cannot be reached.
+
+**So the lane is sound and almost certainly unreachable as a trait payload.** The
+critic said as much in passing and I under-weighted it: *"the action form
+(trample + lane) is the memorable one"*. On that form the sheet does not need to
+already have a line move — the row IS the line move, so the gate dissolves. It
+needs pricing (it is an action), which is the phase-2 work the body-reaction plan
+deferred, and it is where this should go next.
+
+**Do not run more lane canaries against the trait payload.** Either move it to the
+action form, or leave the trait payload in place as a cheap no-op for the 13% and
+spend the next change elsewhere. Owner's call.

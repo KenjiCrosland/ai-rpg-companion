@@ -307,6 +307,13 @@ export const FAMILY_GLOSS = {
 // are calibrated against the corpus. A composed damage reaction is priced by
 // being this ladder, not by a formula.
 const RETAL_LADDER = { '0-2': '3 (1d6)', '3-5': '5 (1d10)', '6-9': '7 (2d6)', '10-12': '10 (3d6)', '13-20': '10 (3d6)', '21+': '14 (4d6)' };
+// A LANE'S WIDTH IS THE BODY THAT CUT IT (critic, 2026-10-26: "space" is the
+// wrong word for a big creature — a Huge body's space is 15x15, so a trail
+// described by its spaces never says which squares). A Line with a stated width
+// is print's own way of describing a lasting strip (the wall spells, Line
+// breaths), and it needs two points, one of which is the mini.
+export const LINE_MOVE = ['trample', 'rampage', 'charge', 'charge-push']; // the rows that already make a GM measure a straight line
+const LANE_WIDTH = { Tiny: '5-foot', Small: '5-foot', Medium: '5-foot', Large: '10-foot', Huge: '15-foot', Gargantuan: '20-foot' };
 
 /**
  * A FAMILY GRAMMAR: the same form a template is, with three blanks open.
@@ -401,13 +408,22 @@ export const GRAMMARS = {
     // each payload IS an existing catalog template, copied frame for frame, so
     // the sizes by band (5/10/20 ft) and print's damage ladder come along and
     // the two can never drift apart
-    frames_from: ['energy-aura', 'noxious-aura', 'aberrant-ground'],
+    frames_from: ['energy-aura', 'noxious-aura', 'aberrant-ground', null], // the lane has no printed peer to copy; its text is below
+    // 2024's own wording for a lasting area — "enters for the first time on a
+    // turn or ends its turn there". The critic's read killed "starts its turn
+    // there": a one-round zone expires before anyone's next turn, so that clause
+    // fires only after forced movement, and "enters" without "first time on a
+    // turn" leaves the GM asking whether it is once per square.
+    lane: 'When the creature moves at least 20 feet in a straight line on its turn, the {lane_width}-wide Line it moved along becomes Difficult Terrain until the start of its next turn. A creature that enters the Line for the first time on a turn or ends its turn there takes {lane_dmg} {damage_type} damage.',
     payload: [
       'damage to everything close by at the end of each of its turns, no saving throw (the engine sets the number and takes the damage type from this creature)',
       'a saving throw for anyone who starts its turn close by, against ONE condition you name',
       'the ground close by is Difficult Terrain',
+      'a LANE of hazardous ground left behind a straight-line charge: the Line it moved along becomes Difficult Terrain and hurts anyone who enters or ends a turn in it (only for a creature that already charges or tramples)',
     ],
-    effect: ['damage', 'condition', 'movement'],
+    effect: ['damage', 'condition', 'movement', 'movement'],
+    requires: [null, null, null, 'line-move'],
+    id_of: ['damage', 'condition', 'terrain', 'lane'], // the id segment per payload — `effect` alone would collide (terrain and lane are both movement)
     condition_for: 1,
     conditions: ['Poisoned', 'Frightened', 'Deafened', 'Blinded'],
     bans: [],
@@ -446,14 +462,24 @@ export function composedTemplate(pick) {
   // its frames band for band, so its sizes and its damage ladder stay the
   // catalog's and cannot drift from the template they came from.
   // otherwise: assemble the skeleton from the chosen blanks (body-reaction).
+  const src = g.frames_from?.[choice] ?? null;
   const frames = g.frames_from
-    ? { ...(BY_ID.get(g.frames_from[choice])?.frames ?? {}) } // BY_ID is this module's own map (exported as TEMPLATE_BY_ID); it is built below, which is fine because this runs per request, never at module evaluation
+    ? (src
+      ? { ...(BY_ID.get(src)?.frames ?? {}) } // BY_ID is this module's own map (exported as TEMPLATE_BY_ID); it is built below, which is fine because this runs per request, never at module evaluation
+      // a payload with no printed peer carries the grammar's own sentence, with
+      // the per-band number taken from the aura template that IS calibrated
+      : Object.fromEntries(Object.keys(RETAL_LADDER).map((band) => [band, g.lane.replace('{lane_dmg}', (/takes (\d+ \(\d+d\d+\))/.exec(String(BY_ID.get('energy-aura')?.frames?.[band] ?? '')) ?? [, '7 (2d6)'])[1])])))
     : Object.fromEntries(Object.keys(RETAL_LADDER).map((band) => [band, g.slots.reduce(
       (acc, k) => acc.replace(`{${k}}`, pick[k].replace('{retal}', RETAL_LADDER[band])), g.skeleton,
     )]));
   if (!Object.keys(frames).length) return null;
   return {
-    id: `composed:${family}`, key: `composed:${family}`, name: 'Composed Row', kind: 'shape', composed: family,
+    // THE ID NAMES THE CHOICE, not just the family: the parser resolves a pick
+    // by id against the menu it was handed, so two candidates of one family must
+    // not share one. `effect` plus the slot index is enough and stays readable in
+    // a trace ("composed:zone:damage", "composed:zone:lane").
+    id: `composed:${family}:${g.id_of?.[choice] ?? g.effect[choice]}`, key: `composed:${family}:${g.id_of?.[choice] ?? g.effect[choice]}`,
+    name: 'Composed Row', kind: 'shape', composed: family,
     section: g.section, trigger: g.trigger_tag, effect: g.effect[choice],
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], gate: null, nova: false, // every role: the call already judged this body when it chose the trigger
     requires_movement: null, requires_style: null, supersedes: null, deny_types: null,
@@ -475,23 +501,60 @@ export function composedTemplate(pick) {
   };
 }
 
-/** The form as the call reads it: the skeleton, the lists, the bans. */
-export function composeFormLines(family) {
-  const g = GRAMMARS[family];
-  if (!g) return '';
-  const num = (xs) => xs.map((x, i) => `  ${i + 1}. ${x.replace('{retal}', '<the engine fills the number>')}`).join('\n');
-  const slotBlock = g.slots.map((k) => `"${k}" — copy ONE of these EXACTLY:\n${num(g[k])}`).join('\n');
-  const shape = g.skeleton
-    ? `THE SHAPE: ${g.slots.reduce((acc, k) => acc.replace(`{${k}}`, `<${k}>`), g.skeleton)}`
-    : 'THE SHAPE: the engine writes the row in print\'s own wording for whichever one you pick — you choose only what it does.';
-  return `IF NONE FITS, FILL THIS FORM INSTEAD — do not stretch a template that does not carry the idea, and do not write rules of your own. This family ("${family}": ${FAMILY_GLOSS[family]}) has a printed shape with blanks, and you choose the blanks. The engine writes the sentence and owns every number.
-${shape}
-${slotBlock}
-"condition" — ONLY with ${g.condition_slot} ${g.condition_for + 1}, one of: ${g.conditions.join(' | ')}
-REFUSED: ${g.bans.map((b) => `trigger ${b.trigger + 1} with consequence ${b.consequence + 1} (${b.why})`).join('; ')}.
-${g.ban_notes.map((n) => `- ${n}`).join('\n')}
-Answer "compose" with ${g.slots.map((k) => `"${k}"`).join(' and ')} (plus "condition" where it applies) ONLY when "template" is "none", and answer it with the values copied exactly. A filled form ships as the creature's own trait, so it must be the idea you were given.
-THIS FORM IS THE REFUSAL PATH, AND IT REPLACES NAMING A NEAREST TEMPLATE. Do not answer "closest" on this seat: a template that merely resembles the idea ships a row the creature does not have, which is the whole reason the form exists. Still answer "missing" and "missing_effect" so the catalog learns what it lacks. If the form cannot carry the idea either, fill nothing and say why in "missing" — a seat with no row is better than a row that is not the idea.`;
+/**
+ * THE CANDIDATES THIS SEAT COULD COMPOSE, as ordinary templates, built before
+ * the call looks at anything.
+ *
+ * The call was offered these as a FORM to fill and refused it five times in
+ * three runs — three of those on ideas whose own gap record described the
+ * form's payload nearly word for word. The form was a second task: after the
+ * menu, labelled as what to do when nothing fits, showing descriptions instead
+ * of rules text, with an explicit exit. Picking from a menu is the task the call
+ * does well, so the engine composes first and lets it choose.
+ *
+ * Every gate that used to live in the prompt or in a post-answer check is a
+ * filter HERE instead, which is why a banned combination can no longer arrive:
+ *  - the seat gate: a grammar is written for one section (body reactions and
+ *    auras are traits in print), so an action-seat idea enumerates nothing;
+ *  - `requires`: a payload the sheet cannot carry is never materialised (a lane
+ *    needs a row that already makes the GM measure a straight line);
+ *  - `bans`: the refused pairs are skipped;
+ *  - the idea's own `effect` tag pre-picks body-reaction's consequences, so a
+ *    menu gains at most a few lines rather than all twelve combinations.
+ *
+ * `can` is the set of facts this sheet has (today: 'line-move').
+ */
+export function composedCandidates(idea, { can = [] } = {}) {
+  const g = GRAMMARS[idea?.family];
+  if (!g || g.section !== idea.section) return [];
+  const out = [];
+  const payloadSlot = g.slots[g.slots.length - 1];
+  const others = g.slots.slice(0, -1);
+  // every combination of the leading slots x the payloads this sheet allows
+  const combos = others.reduce((acc, k) => acc.flatMap((c) => g[k].map((v) => ({ ...c, [k]: v }))), [{}]);
+  for (let i = 0; i < g[payloadSlot].length; i += 1) {
+    if (g.requires?.[i] && !can.includes(g.requires[i])) continue;
+    // PRE-PICKED BY THE IDEA'S OWN EFFECT. Showing a damage consequence to an
+    // idea the call tagged `condition` is noise it has to read past.
+    if (g.effect[i] !== idea.effect) continue;
+    const condition = i === g.condition_for ? g.conditions : [null];
+    for (const c of combos) {
+      const ix = { ...Object.fromEntries(others.map((k) => [k, g[k].indexOf(c[k])])), [payloadSlot]: i };
+      if (g.bans?.some((b) => g.slots.every((k) => b[k] === undefined || b[k] === ix[k]))) continue;
+      for (const cond of condition) {
+        const t = composedTemplate({ family: idea.family, ...c, [payloadSlot]: g[payloadSlot][i], condition: cond });
+        if (!t) continue;
+        // THE ID NAMES THE WHOLE COMBINATION, not just the payload: three
+        // body-reaction triggers against one consequence are three different
+        // rows, and `parseFit` resolves a pick by id against the menu it was
+        // handed — identical ids would make them indistinguishable.
+        const suffix = [...others.map((k) => `${k[0]}${g[k].indexOf(c[k])}`), ...(cond && condition.length > 1 ? [cond.toLowerCase()] : [])].join(':');
+        const id = suffix ? `${t.id}:${suffix}` : t.id;
+        out.push({ ...t, id, key: id });
+      }
+    }
+  }
+  return out;
 }
 
 export const FAMILY = {
@@ -840,6 +903,35 @@ export function orderByStamps(pool, idea = null, askedMechanic = null) {
     return 4;
   };
   return pool.map((t, i) => ({ t, i, k: tier(t) })).sort((a, b) => a.k - b.k || a.i - b.i).map((x) => x.t);
+}
+
+/**
+ * WHY THE FIT CALL IS WORTH MAKING — read off DECLARED fields, not key words.
+ *
+ * `fitSeat` refused to spend a call unless some template on the menu shared a
+ * key word with the concept or the idea ("the fit would be a shape fit by
+ * construction"). Sound when a key word was the only bridge from the GM's text
+ * to a shape; stale now. Measured over the 7 tens of 2026-10-26 the gate fired
+ * 11 times — the largest named loss cause — and 8 of those had a template on the
+ * menu whose declared trigger AND effect already matched the idea's own tags,
+ * with 13 candidates offered and none shown to the call. `rankByVerb`'s
+ * `matched` is key words only; the declared mechanic moved nothing but the sort.
+ *
+ * Both cells must agree, not one: a trigger-only match is how `spider-climb`
+ * (always/movement) would "warrant" an always/damage idea, which is the shape
+ * fit the gate exists to prevent.
+ *
+ * Spends no call that was not already going to be spent — the fit call is made
+ * immediately after this point and the gate was returning before it.
+ */
+export function gateStandsDown(menu, idea, askedMechanic = null) {
+  const no = { down: false, because: null, ids: [] };
+  if (!Array.isArray(menu) || !menu.length || !idea) return no;
+  const stamps = menu.filter((t) => stampAgrees(t, idea));
+  if (stamps.length) return { down: true, because: `${stamps.length} template(s) whose declared stamps match the idea (${idea.trigger}/${idea.effect})`, ids: stamps.map((t) => t.id) };
+  const mech = askedMechanic ? menu.filter((t) => t.mechanic === askedMechanic) : [];
+  if (mech.length) return { down: true, because: `a template declaring the mechanic the GM asked for (${askedMechanic})`, ids: mech.map((t) => t.id) };
+  return no; // no third arm: a family with a grammar puts its CANDIDATES on the pool, so a match reaches the stamps arm above
 }
 
 /** Does this template fire and act the way the idea said? (the menu's own mark) */
@@ -1495,7 +1587,10 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   if (!text) return null;
   // THE WRITER RECORDS WHAT IT WROTE. The catalog declares what this frame
   // imposes, so no reader has to recover it from the rendered sentence.
-  pickedCondition = imposedByFrame(t.id, band) ?? t.imposes ?? pickedCondition; // `t.imposes` so a template BUILT at request time can declare its own condition: the static map is keyed by id, a composed row has no entry, and its Deafened had to be recovered from the finished text downstream ("record completed", 2026-10-26)
+  pickedCondition = imposedByFrame(t.id, band) ?? t.imposes ?? pickedCondition;
+  // a lane's width is the body's own space — ctx.size is the DECLARED size the
+  // sheet already carries for requires_size, so nothing new is read
+  if (text.includes('{lane_width}')) text = text.split('{lane_width}').join(LANE_WIDTH[String(ctx.size ?? '').trim()] ?? '10-foot'); // `t.imposes` so a template BUILT at request time can declare its own condition: the static map is keyed by id, a composed row has no entry, and its Deafened had to be recovered from the finished text downstream ("record completed", 2026-10-26)
   if (projWeaponRange) text = text.replace(/range \d+\/\d+ ft\./, `range ${projWeaponRange} ft.`);
   const per = Math.max(3, Math.round(scaled.per_hit ?? 6));
   // an ATTACK-ROLL frame prices like the chassis's attack rows — dice plus the striker's mod (print's Hill
@@ -1826,12 +1921,11 @@ ${lines}
 THE CLASSIFICATION DECIDES, AND THE IDEA'S OWN TAGS ORDER THE LIST. Each template shows (fires: <when>, does: <what>) — its own declared cells — and the list is sorted by how well those agree with the tags THIS idea already carries (fires: ${idea.trigger ?? '—'}, does: ${idea.effect ?? '—'}). A template marked "matches the idea" agrees on both. That ordering is a HINT, not a verdict: it is a comparison of two labels, not a reading of your idea. Judge each template's printed rules against the classification above, the clause, and what the idea actually describes — and answer none when nothing carries it.
 WHAT THE ORDER IS NOT. It is not a ranking of fit, and nothing in the GM's wording nominates a template any more. Earlier the engine searched the GM's words for each template's key words and labelled the hits, and that label was followed: a bell-ghost whose idea was "every blow it LANDS leaves a ring" was given a template that damages whoever hits IT, three runs in four, because "bell" was one of its words. Read the rules; the GM's phrasing is context, not a vote. A template low on the list can be the right one, and the first one can be wrong.
 EVEN IF YOU ANSWER none, fill its "you fill" slots in "fills" — the engine may still use a template you declined, and your fills travel with it. Quote the user's own words (a phobia of chickens fills {phobia} with "chickens"; a warden of the reef fills {place} with "the reef").
-${GRAMMARS[idea?.family]?.section === idea?.section ? `${composeFormLines(idea.family)}
-` : ''}WHY NONE FITS. When you answer "none", answer "declined_because" with exactly one of: collision (the creature's words or kind suggest this template but it does not mean that mechanic here), already_answered (the sheet or the creature's own kind already does this), no_fit (nothing offered carries the idea). Answer "" when you did pick a template.
-A RIDER THAT MOVES THE TARGET OUT OF REACH does not belong on a row the Multiattack repeats: push the target 10 feet on the first hit and the second and third cannot land, so the creature defeats its own Multiattack. Read the sheet's Multiattack and reach before offering a push or pull rider; refuse it there (the Horseman's Saber, 2026-10-25). A REFUSAL NAMES ITS GAP. "no_fit" is not an answer on its own — ${GRAMMARS[idea?.family]?.section === idea?.section ? 'fill the form above instead of naming a nearest template, and answer' : 'say which of the offered templates comes CLOSEST ("closest"),'} what the rules would have to do that none of them does ("missing"), and WHICH KIND OF EFFECT that missing thing is ("missing_effect"), exactly one of: damage | condition | movement | resource | defense. Judge the effect by what the row DOES to its target, not by words that appear in passing: a row that only applies against an already-prone target is not a condition row, and a row that resists being pushed is defense, not movement. In a few plain words naming the MECHANIC, not the fiction: "pulls the creature back to where it started", "picks one target and holds the aim", "costs the creature something when it fails". Never "nothing fits" and never a restatement of the idea. These accumulate into a list of templates worth building, so a vague answer is a wasted one.
+WHY NONE FITS. When you answer "none", answer "declined_because" with exactly one of: collision (the creature's words or kind suggest this template but it does not mean that mechanic here), already_answered (the sheet or the creature's own kind already does this), no_fit (nothing offered carries the idea). Answer "" when you did pick a template.
+A RIDER THAT MOVES THE TARGET OUT OF REACH does not belong on a row the Multiattack repeats: push the target 10 feet on the first hit and the second and third cannot land, so the creature defeats its own Multiattack. Read the sheet's Multiattack and reach before offering a push or pull rider; refuse it there (the Horseman's Saber, 2026-10-25). A REFUSAL NAMES ITS GAP. "no_fit" is not an answer on its own — say which of the offered templates comes CLOSEST ("closest"), what the rules would have to do that none of them does ("missing"), and WHICH KIND OF EFFECT that missing thing is ("missing_effect"), exactly one of: damage | condition | movement | resource | defense. Judge the effect by what the row DOES to its target, not by words that appear in passing: a row that only applies against an already-prone target is not a condition row, and a row that resists being pushed is defense, not movement. In a few plain words naming the MECHANIC, not the fiction: "pulls the creature back to where it started", "picks one target and holds the aim", "costs the creature something when it fails". Never "nothing fits" and never a restatement of the idea. These accumulate into a list of templates worth building, so a vague answer is a wasted one.
 DID THE USER ASK FOR IT? Answer "asked" with the user's OWN WORDS that ask for this template's mechanic, quoted verbatim from THE USER TYPED line above — never from THE IDEA, which is the engine's own prose and is not the user
 ${elements.length ? `WHICH OF THIS CREATURE'S OWN ELEMENTS DOES THE ROW EXPRESS? Answer "expresses" with ONE of these, copied exactly, or "" if the row expresses none of them. These were drawn from the GM's description, so naming one is a receipt even when you cannot quote the GM directly — a trait seat usually cannot. Answer "" honestly: a row that does not express any of them is decoration, and saying so is the right answer.\n${elements.map((e) => `  - ${String(e).replace(/"/g, "'")}`).join('\n')}` : ''}'s words. The few words, not a sentence. Leave it "" when the user's words never ask for it and your pick rests on the idea you were given or on the template's shape. Answering "" is not a failure and does not withdraw your pick; it tells the engine the pick is yours, not the GM's, and some seats take only what the GM asked for.
-Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "expresses": "<one of the creature's own elements listed above, copied exactly, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", ${GRAMMARS[idea?.family]?.section === idea?.section ? '' : '"closest": "<on a refusal: the offered id that comes nearest, else \\"\\">", '}"missing": "<on a refusal: the mechanic none of them does, else \"\">", "missing_effect": "<on a refusal: damage | condition | movement | resource | defense, else \"\">", "name": "<2-3 words, Title Case the way print writes a row name: Dreadful Glare, Wing Attack, Cloud of Insects — every word capitalised except of/the/and/to/with>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]${GRAMMARS[idea?.family]?.section === idea?.section ? `, "compose": {${GRAMMARS[idea.family].slots.map((k) => `"${k}": "<copied exactly>"`).join(', ')}, "condition": "<only where it applies, else omit>"}` : ''}}`;
+Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "expresses": "<one of the creature's own elements listed above, copied exactly, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", "closest": "<on a refusal: the offered id that comes nearest, else \\"\\">", "missing": "<on a refusal: the mechanic none of them does, else \"\">", "missing_effect": "<on a refusal: damage | condition | movement | resource | defense, else \"\">", "name": "<2-3 words, Title Case the way print writes a row name: Dreadful Glare, Wing Attack, Cloud of Insects — every word capitalised except of/the/and/to/with>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
 }
 
 export function validateFitResponse(jsonString) {
@@ -1839,7 +1933,7 @@ export function validateFitResponse(jsonString) {
   return p != null && typeof p.template === 'string';
 }
 
-export function parseFit(raw, menu, creatureName = '', elements = [], composeFamily = null) {
+export function parseFit(raw, menu, creatureName = '', elements = []) { // a composed option is a MENU LINE now, resolved by id against the menu it was handed — no `compose` answer to validate
   const p = tryParse(raw) ?? {};
   const id = String(p.template ?? '').trim().toLowerCase();
   const t = id && id !== 'none' ? (menu.find((m) => m.id === id) ?? menu.find((m) => id.includes(m.id)) ?? null) : null;
@@ -1892,28 +1986,6 @@ export function parseFit(raw, menu, creatureName = '', elements = [], composeFam
     // filled alongside a real pick, all collapse to null and the engine falls
     // back to its existing closest/decoration path. A composed row is NOT
     // decoration — it carries the idea — so this is checked before that path.
-    compose: (() => {
-      if (t) return null;                       // a real pick wins; the form is moot
-      const c = p.compose; if (!c || typeof c !== 'object') return null;
-      const fam = IDEA_FAMILIES.includes(String(c.family)) ? String(c.family) : composeFamily;
-      const g = GRAMMARS[fam]; if (!g) return null;
-      // SLOT-DRIVEN, so a second family needs no second validator: each grammar
-      // names its own blanks (`slots`) and which blank's choice may carry a
-      // condition (`condition_slot`).
-      const picks = {};
-      for (const k of g.slots) {
-        const v = g[k].find((x) => x === String(c[k] ?? '').trim());
-        if (!v) return null;
-        picks[k] = v;
-      }
-      const ix = Object.fromEntries(g.slots.map((k) => [k, g[k].indexOf(picks[k])]));
-      if (g.bans.some((b) => g.slots.every((k) => b[k] === undefined || b[k] === ix[k]))) return null;
-      const want = ix[g.condition_slot] === g.condition_for;
-      const cond = String(c.condition ?? '').trim();
-      if (want && !g.conditions.includes(cond)) return null;   // Prone is in no grammar's list
-      if (!want && cond) return null;                          // a condition where the shape has no slot for one
-      return { family: fam, ...picks, condition: want ? cond : null };
-    })(),
     closest: String(p.closest ?? '').trim().slice(0, 40) || null,
     missing: String(p.missing ?? '').trim().slice(0, 120) || null,
     // the EFFECT AXIS is the call's answer too, validated against the catalog's
