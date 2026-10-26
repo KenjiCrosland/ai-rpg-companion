@@ -494,7 +494,7 @@ describe('the trait shelf pass (2026-09-27): four always-on cards from the miss 
 
 describe('the fourteen (2026-09-28): eight print families, six kin-cited inventions', () => {
   const ctx = (cr, archetype = 'brute', extra = {}) => ({ scaled: sheet(cr, null, archetype), archetype, cr, energy: 'Fire', mix: 'both', meleeName: 'Slam', imposed: [], name: 'X', ...extra });
-  const IDS = ['fire-aura', 'noxious-aura', 'bloodied-fury', 'uncanny-sense', 'earth-glide', 'tunneler', 'berserk', 'shielded-mind', 'evasion', 'relentless-pursuit', 'bound', 'marking-light', 'sealed-body', 'warded-mending', 'guarded-stance'];
+  const IDS = ['energy-aura', 'noxious-aura', 'bloodied-fury', 'uncanny-sense', 'earth-glide', 'tunneler', 'berserk', 'shielded-mind', 'evasion', 'relentless-pursuit', 'bound', 'marking-light', 'sealed-body', 'warded-mending', 'guarded-stance'];
   test('all fifteen cards are traits and render at every band inside their range', () => {
     for (const id of IDS) {
       const t = TEMPLATES.find((x) => x.id === id);
@@ -503,7 +503,7 @@ describe('the fourteen (2026-09-28): eight print families, six kin-cited inventi
     }
   });
   test('print constants by band: the aura, the mending, the sense range', () => {
-    const fa = TEMPLATES.find((x) => x.id === 'fire-aura');
+    const fa = TEMPLATES.find((x) => x.id === 'energy-aura');
     expect(renderTemplate(fa, ctx(2), {}).text).toMatch(/5-foot Emanation originating from the creature takes 5 \(1d10\) Fire damage/);
     expect(renderTemplate(fa, ctx(19), {}).text).toMatch(/takes 13 \(3d8\) Fire damage/); // the Balor's number
     expect(renderTemplate(TEMPLATES.find((x) => x.id === 'warded-mending'), ctx(5), { ward: 'the high priest' }).text).toMatch(/regains 10 Hit Points at the start of each of its turns if it has at least 1 Hit Point and the high priest is within 30 feet/);
@@ -517,7 +517,7 @@ describe('the fourteen (2026-09-28): eight print families, six kin-cited inventi
     expect(ids('burrow')).toEqual(expect.arrayContaining(['earth-glide', 'tunneler']));
     expect(ids('')).not.toContain('earth-glide'); expect(ids('')).not.toContain('tunneler');
     const heated = { Traits: [{ name: 'Molten Hide', text: 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 5 (1d10) Fire damage.' }] };
-    expect(templatesFor({ archetype: 'brute', cr: 5, sections: heated, section: 'trait' }).map((t) => t.id)).not.toContain('fire-aura');
+    expect(templatesFor({ archetype: 'brute', cr: 5, sections: heated, section: 'trait' }).map((t) => t.id)).not.toContain('energy-aura');
     const aura = { Traits: [{ name: 'Heat Aura', text: "At the end of each of the creature's turns, each creature in a 5-foot Emanation originating from the creature takes 5 (1d10) Fire damage." }] };
     const onAura = templatesFor({ archetype: 'brute', cr: 5, sections: aura, section: 'trait' }).map((t) => t.id);
     expect(onAura).not.toContain('noxious-aura'); expect(onAura).not.toContain('heated-body');
@@ -546,7 +546,7 @@ describe('the fourteen (2026-09-28): eight print families, six kin-cited inventi
     expect(templatesFor({ archetype: 'defender', cr: 6, style: 'warden', sections: {}, section: 'reaction' }).map((t) => t.id)).toEqual(expect.arrayContaining(['ward-retaliation', 'interpose']));
     expect(top('defender', 7, 'an iron duelist whose shield and blade form a seamless guard')).toBe('guarded-stance');
     expect(top('defender', 7, 'a consecrated shrine-stone sentinel whose cracks mend when litanies are spoken nearby')).toBe('warded-mending');
-    expect(top('brute', 11, 'a foundry overseer welded into his furnace-suit; the air around him shimmers with waste heat')).toBe('fire-aura');
+    expect(top('brute', 11, 'a foundry overseer welded into his furnace-suit; the air around him shimmers with waste heat')).toBe('energy-aura');
     expect(top('brute', 8, 'a hezrou-thing whose stench sickens everything that stands near it')).toBe('noxious-aura');
     // fresh three: the Zombie's and the Green Hag's own traits, bound by the concept's clause
     expect(top('defender', 7, 'a hedge knight sworn to a dead king, whose oath keeps him standing after his body should have quit')).toBe('undead-fortitude');

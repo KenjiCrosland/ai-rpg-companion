@@ -19,7 +19,7 @@ const PEAL_IDEA = { idea: 'Every blow the passing peal lands against a living cr
 const PEAL_CONCEPT = 'a bell-ghost whose toll builds to one shattering peal';
 
 // #01 of the same run: bloodied-fury IS the idea and the call declined it as a word collision
-const TYRANT_MENU = byId(['spider-climb', 'phobia', 'faultless-tracker', 'noxious-aura', 'bloodied-fury', 'berserk', 'shielded-mind', 'relentless-pursuit', 'bound', 'undead-fortitude', 'truth-aura', 'assassinate', 'heated-body', 'resonant-body', 'fire-aura']);
+const TYRANT_MENU = byId(['spider-climb', 'phobia', 'faultless-tracker', 'noxious-aura', 'bloodied-fury', 'berserk', 'shielded-mind', 'relentless-pursuit', 'bound', 'undead-fortitude', 'truth-aura', 'assassinate', 'heated-body', 'resonant-body', 'energy-aura']);
 const TYRANT_IDEA = { idea: 'The tyrant burns hotter the longer it is opposed; once it has been wounded badly, the furnace inside it roars open and it moves faster and strikes harder.', section: 'trait', trigger: 'always', effect: 'damage' };
 const TYRANT_CONCEPT = 'a brass tyrant whose furnace breath terrifies and whose hammer finds the terrified';
 
@@ -134,7 +134,7 @@ describe('aura traits reach the menu and the stamps still prefer them', () => {
   it('an always trait idea still sees the per-turn auras, and vice versa', () => {
     const always = templatesFor({ ...ctx, trigger: 'always' }).map((t) => t.id);
     const perTurn = templatesFor({ ...ctx, trigger: 'start_of_turn' }).map((t) => t.id);
-    expect(always).toContain('fire-aura');
+    expect(always).toContain('energy-aura');
     expect(perTurn).toContain('spider-climb');
   });
 
@@ -159,9 +159,9 @@ describe('aura traits reach the menu and the stamps still prefer them', () => {
   });
 
   it('the damage aura asks for any radiating body, not only a hot one', () => {
-    const q = String(NEEDS_BODY['fire-aura']);
+    const q = String(NEEDS_BODY['energy-aura']);
     expect(q).toMatch(/cold/i);
     expect(q).not.toMatch(/wreathed in flame/i);
-    expect(TEMPLATE_BY_ID.get('fire-aura').trigger).toBe('start_of_turn'); // unchanged
+    expect(TEMPLATE_BY_ID.get('energy-aura').trigger).toBe('start_of_turn'); // unchanged
   });
 });

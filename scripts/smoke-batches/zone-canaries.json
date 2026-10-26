@@ -1,0 +1,5 @@
+[
+  { "name": "", "description": "a dread sovereign whose presence alone unmans the brave", "cr": "12", "rules": "2024", "canary": "ZONE/condition: a fear AURA with no gaze and no stench — gaze-aura wants a horrifying face, noxious-aura wants a smell, so today it has no template. Must compose Frightened with a Wisdom save." },
+  { "name": "", "description": "an archon wrapped in a humming shroud of biting flies", "cr": "13", "rules": "2014", "canary": "ZONE/condition in the 2014 printing: Poisoned aura must read \"within 10 feet of it ... is poisoned\", not \"has the Poisoned condition\" or \"Emanation\"" },
+  { "name": "", "description": "a glacier's heart given legs, trailing a wake of killing cold", "cr": "15", "rules": "2024", "canary": "ZONE/trailing: records whether a TRAILING idea accepts the around-the-creature form (a cold aura) or refuses it. Either is a pass; the answer decides whether the invented trailing shape is worth the critic loop." }
+]

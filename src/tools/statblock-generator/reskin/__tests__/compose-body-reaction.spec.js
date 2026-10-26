@@ -148,7 +148,9 @@ describe('the family reaches the calls', () => {
     expect(withG).toMatch(/FILL THIS FORM/);
     expect(withG).toMatch(/"compose"/);
     expect(withG).toMatch(/Prone/); // the ban is stated
-    const withoutG = buildFitPrompt({ name: 'S', idea: { idea: 'a wake of cold follows it', section: 'trait', trigger: 'always', effect: 'damage', family: 'zone' }, menu, cr: 8, concept: 'a glacier' });
+    // `zone` has a grammar of its own since 2026-10-26, so the negative case
+    // must be a family that still has none.
+    const withoutG = buildFitPrompt({ name: 'S', idea: { idea: 'it marks one foe and hunts it', section: 'trait', trigger: 'always', effect: 'condition', family: 'mark' }, menu, cr: 8, concept: 'a hunter' });
     expect(withoutG).not.toMatch(/FILL THIS FORM/);
   });
 });

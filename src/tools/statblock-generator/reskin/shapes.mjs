@@ -361,7 +361,16 @@ export const SHAPES = [
   // six inventions the miss log asked for by cluster, each with a print kin and
   // print grammar only. Numbers are band constants from print, never budget.
   {
-    id: 'fire-aura', name: 'Searing Aura', cite: 'Azer Sentinel/Fire Aura (CR 2, 5 ft 1d10); Fire Elemental (CR 5, 1d10); Remorhaz/Heat Aura (CR 11, 3d10); Balor (CR 19, 3d8)',
+    // RENAMED FROM `fire-aura` (2026-10-26). The frame always filled
+    // {damage_type} from the sheet's own energy, so the id was the only thing
+    // about it that said fire — and the id is what the fit call reads on the
+    // menu line ("- fire-aura [Traits] … takes 13 (3d8) {damage_type} damage":
+    // two mentions of fire against one neutral token). A glacier with this
+    // template on its menu and its body question passing declined it, then
+    // asked the gap list for its exact text; the fly archon's cold twin did the
+    // same the run before. `Searing Aura` stays as the DEFAULT row name — the
+    // fit call renames it per creature anyway.
+    id: 'energy-aura', name: 'Searing Aura', cite: 'Azer Sentinel/Fire Aura (CR 2, 5 ft 1d10); Fire Elemental (CR 5, 1d10); Remorhaz/Heat Aura (CR 11, 3d10); Balor (CR 19, 3d8)',
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait', deny_types: ['Humanoid'],
     frames: { '0-2': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 5 (1d10) {damage_type} damage.', '3-5': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 5 (1d10) {damage_type} damage.', '6-9': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 7 (2d6) {damage_type} damage.', '10-12': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 10 (3d6) {damage_type} damage.', '13-20': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 13 (3d8) {damage_type} damage.', '21+': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 16 (3d10) {damage_type} damage.' },
   },

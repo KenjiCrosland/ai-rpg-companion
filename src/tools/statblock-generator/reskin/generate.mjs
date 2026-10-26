@@ -4311,7 +4311,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         }
         if (!fit.template && fit.compose) {
           const synth = composedTemplate(fit.compose);
-          const rendC = synth ? renderTemplate(synth, ctxT, bindFills(synth)) : null;
+          const rendC = synth ? renderTemplate(synth, ctxT, { ...bindFills(synth), ...(synth.fills ?? {}) }) : null; // the form's own choices outrank anything read off the concept
           if (rendC) {
             trace('row composed from the family form:', `${seat} — ${fit.compose.family}: trigger "${fit.compose.trigger.slice(0, 40)}…" + "${fit.compose.consequence.replace(/\{[a-z_]+\}/g, '…')}"${fit.compose.condition ? ` (${fit.compose.condition})` : ''} — the call refused every template and filled the form instead (what no template did: ${String(fit.missing ?? 'unstated').slice(0, 70)})`);
             fit = { ...fit, template: synth, composed: fit.compose.family, because: fit.because || String(idea.idea ?? '').slice(0, 160), wanted: fit.missing ?? null };

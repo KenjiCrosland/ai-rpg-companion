@@ -247,7 +247,7 @@ const SHAPE_TAGS = {
   'life-drain': ['on_hit', 'condition'], // print's HP-maximum reduction: a rider on the hit, the effect lasting past the turn
   'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], contagion: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], spew: ['save', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'hook-rider': ['on_hit', 'movement'], riposte: ['on_being_hit', 'damage'], 'snap-shot': ['on_being_hit', 'damage'], 'ground-burst': ['save', 'damage'], 'volley-order': ['always', 'resource'], 'random-ray': ['save', 'condition'], 'blurred-form': ['always', 'defense'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'stunning-strike': ['on_hit', 'condition'], 'patient-defense': ['always', 'defense'], 'lay-on-hands': ['always', 'resource'], 'second-wind': ['always', 'resource'], 'shield-bash': ['save', 'condition'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
   'spider-climb': ['always', 'movement'], phobia: ['always', 'condition'], 'terrain-walk': ['always', 'movement'], 'aberrant-ground': ['always', 'movement'], 'faultless-tracker': ['always', 'condition'], 'web-walker': ['always', 'movement'],
-  'fire-aura': ['start_of_turn', 'damage'], 'noxious-aura': ['start_of_turn', 'condition'], 'bloodied-fury': ['always', 'defense'], 'uncanny-sense': ['always', 'defense'], 'earth-glide': ['always', 'movement'], tunneler: ['always', 'movement'], berserk: ['always', 'condition'], 'shielded-mind': ['always', 'defense'], evasion: ['always', 'defense'],
+  'energy-aura': ['start_of_turn', 'damage'], 'noxious-aura': ['start_of_turn', 'condition'], 'bloodied-fury': ['always', 'defense'], 'uncanny-sense': ['always', 'defense'], 'earth-glide': ['always', 'movement'], tunneler: ['always', 'movement'], berserk: ['always', 'condition'], 'shielded-mind': ['always', 'defense'], evasion: ['always', 'defense'],
   'relentless-pursuit': ['always', 'movement'], bound: ['always', 'movement'], 'marking-light': ['always', 'condition'], 'sealed-body': ['always', 'defense'], 'warded-mending': ['start_of_turn', 'resource'], 'guarded-stance': ['always', 'defense'], 'undead-fortitude': ['always', 'defense'], mimicry: ['always', 'defense'], wail: ['once_per_fight', 'damage'], 'truth-aura': ['start_of_turn', 'condition'], 'gaze-aura': ['start_of_turn', 'condition'], 'charge-push': ['on_hit', 'movement'],
 };
 // ENGINE FAMILIES: a template that re-implements an engine the sheet already
@@ -325,6 +325,8 @@ export const GRAMMARS = {
   'body-reaction': {
     section: 'trait',
     trigger_tag: 'on_being_hit',
+    slots: ['trigger', 'consequence'],   // the blanks the call fills, in order
+    condition_slot: 'consequence',       // which blank's choice may need a condition
     skeleton: 'A creature that {trigger} {consequence}.',
     trigger: [
       'hits the creature with a melee attack while within 5 feet of it',
@@ -368,6 +370,54 @@ export const GRAMMARS = {
       'One creature only — not everyone nearby.',
     ],
   },
+
+  // THE ZONE FAMILY INVENTS NO TEXT. It is the family the idea call tags most
+  // (6 of 18 ideas in each of three tens) and half of those are a PRESENCE
+  // around the creature — furnace heat, a dread that unmans, a shroud of flies,
+  // turbulent air. print writes that three ways and the catalog HOLDS all three;
+  // they were refused on body questions written for one specific fiction each
+  // (noxious-aura wants "a SMELL or a choking cloud, not merely cold or dark";
+  // gaze-aura wants "a face or form that is horrifying to look at"), so a dread
+  // presence had no template to go to and shipped as a nearest match. This form
+  // offers those same frames, band for band, and lets the call say which payload.
+  //
+  // Two rules measured off the corpus:
+  //  - an always-on aura is damage OR a condition, NEVER both. Every
+  //    damage-plus-condition emanation in SRD 5.2 (Nalfeshnee's Horror Nimbus,
+  //    Vrock's Stunning Screech and Spores, the sphinx roars) is a Recharge or
+  //    n/Day ACTION, not a trait.
+  //  - a condition aura carries a SAVING THROW (Stench, Fear Aura, Vile
+  //    Appearance), which is why Frightened and Blinded belong here though both
+  //    are banned from `body-reaction`, whose skeleton has no save.
+  // The TRAILING placement half of this family ("the ground it walks over") has
+  // NO print peer — the only wake in the corpus is the Ankheg's tunnel, which
+  // has no effect — and it costs the GM the creature's path for a round, so it
+  // goes through the critic loop before the catalog, not into this form.
+  zone: {
+    section: 'trait',
+    trigger_tag: 'start_of_turn', // interchangeable with `always` for a trait since 2026-10-26
+    slots: ['payload'],
+    condition_slot: 'payload',
+    // each payload IS an existing catalog template, copied frame for frame, so
+    // the sizes by band (5/10/20 ft) and print's damage ladder come along and
+    // the two can never drift apart
+    frames_from: ['energy-aura', 'noxious-aura', 'aberrant-ground'],
+    payload: [
+      'damage to everything close by at the end of each of its turns, no saving throw (the engine sets the number and takes the damage type from this creature)',
+      'a saving throw for anyone who starts its turn close by, against ONE condition you name',
+      'the ground close by is Difficult Terrain',
+    ],
+    effect: ['damage', 'condition', 'movement'],
+    condition_for: 1,
+    conditions: ['Poisoned', 'Frightened', 'Deafened', 'Blinded'],
+    bans: [],
+    ban_notes: [
+      'Damage OR a condition, never both: every aura in print that does both is a Recharge action, not an always-on trait.',
+      'No Prone.',
+      'No counter and no "it grows stronger the longer they stand there": the GM must run it from the one sentence.',
+      'The area is the creature\'s own surroundings. An effect left BEHIND it as it moves is a different shape and is not offered here.',
+    ],
+  },
 };
 
 /**
@@ -382,25 +432,46 @@ export const GRAMMARS = {
  * number IS print's retaliation ladder (3 (1d6) at CR 0-2 up to 14 (4d6) at
  * 21+), which is how the row stays priced without a formula.
  */
-export function composedTemplate({ family, trigger, consequence, condition = null }) {
+export function composedTemplate(pick) {
+  const { family, condition = null } = pick ?? {};
   const g = GRAMMARS[family];
   if (!g) return null;
-  const ti = g.trigger.indexOf(trigger); const ci = g.consequence.indexOf(consequence);
-  if (ti < 0 || ci < 0) return null;
-  const body = (band) => g.skeleton
-    .replace('{trigger}', trigger)
-    .replace('{consequence}', consequence.replace('{retal}', RETAL_LADDER[band]))
-    .replace('{condition_minor}', condition ?? '');
-  const frames = Object.fromEntries(Object.keys(RETAL_LADDER).map((band) => [band, body(band)]));
+  // the index the call chose in the grammar's LAST slot decides the effect cell
+  // and, where the grammar copies frames, which template's frames to copy
+  const idx = g.slots.map((k) => g[k].indexOf(pick[k]));
+  if (idx.some((i) => i < 0)) return null;
+  const choice = idx[idx.length - 1];
+  // TWO WAYS TO BUILD A FRAME SET, by what the grammar declares.
+  // `frames_from`: the payload IS a printed template (the zone family) — copy
+  // its frames band for band, so its sizes and its damage ladder stay the
+  // catalog's and cannot drift from the template they came from.
+  // otherwise: assemble the skeleton from the chosen blanks (body-reaction).
+  const frames = g.frames_from
+    ? { ...(BY_ID.get(g.frames_from[choice])?.frames ?? {}) } // BY_ID is this module's own map (exported as TEMPLATE_BY_ID); it is built below, which is fine because this runs per request, never at module evaluation
+    : Object.fromEntries(Object.keys(RETAL_LADDER).map((band) => [band, g.slots.reduce(
+      (acc, k) => acc.replace(`{${k}}`, pick[k].replace('{retal}', RETAL_LADDER[band])), g.skeleton,
+    )]));
+  if (!Object.keys(frames).length) return null;
   return {
-    id: `composed:${family}`, key: `composed:${family}`, name: 'Composed Reaction', kind: 'shape', composed: family,
-    section: g.section, trigger: g.trigger_tag, effect: g.effect[ci],
+    id: `composed:${family}`, key: `composed:${family}`, name: 'Composed Row', kind: 'shape', composed: family,
+    section: g.section, trigger: g.trigger_tag, effect: g.effect[choice],
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], gate: null, nova: false, // every role: the call already judged this body when it chose the trigger
     requires_movement: null, requires_style: null, supersedes: null, deny_types: null,
     requires_row: null, requires_claim: null, requires_size: null, needs_body: null,
     family: null, mechanic: null, targets: [], target_sizes: null, duration_default: null,
-    host: null, keys: [], flavor: [], frames,
+    host: null, keys: [], flavor: [],
+    // a COPIED frame keeps its own {condition_minor} and {save_stat} slots, so
+    // renderTemplate fills them and the save contract (saveStatsFor) runs on the
+    // row exactly as it does for the template it came from; an ASSEMBLED frame
+    // has no save clause, so the condition is written in here
+    frames: g.frames_from ? frames : Object.fromEntries(Object.entries(frames).map(([b, f]) => [b, f.replace('{condition_minor}', condition ?? '')])),
     ...(condition ? { imposes: condition } : {}), // DECLARED, not left to be re-read off the finished text
+    // A COPIED FRAME KEEPS ITS {condition_minor} TOKEN ON PURPOSE — the save
+    // contract binds the stat off that token (a Frightened aura saves by Wisdom,
+    // a Poisoned one by Constitution), so substituting the word in would silently
+    // cost the row its save stat. The call's choice therefore travels as a
+    // declared FILL, which renderTemplate applies and the contract then reads.
+    ...(condition && g.frames_from ? { fills: { condition_minor: condition } } : {}),
   };
 }
 
@@ -409,16 +480,17 @@ export function composeFormLines(family) {
   const g = GRAMMARS[family];
   if (!g) return '';
   const num = (xs) => xs.map((x, i) => `  ${i + 1}. ${x.replace('{retal}', '<the engine fills the number>')}`).join('\n');
+  const slotBlock = g.slots.map((k) => `"${k}" — copy ONE of these EXACTLY:\n${num(g[k])}`).join('\n');
+  const shape = g.skeleton
+    ? `THE SHAPE: ${g.slots.reduce((acc, k) => acc.replace(`{${k}}`, `<${k}>`), g.skeleton)}`
+    : 'THE SHAPE: the engine writes the row in print\'s own wording for whichever one you pick — you choose only what it does.';
   return `IF NONE FITS, FILL THIS FORM INSTEAD — do not stretch a template that does not carry the idea, and do not write rules of your own. This family ("${family}": ${FAMILY_GLOSS[family]}) has a printed shape with blanks, and you choose the blanks. The engine writes the sentence and owns every number.
-THE SHAPE: ${g.skeleton.replace('{trigger}', '<trigger>').replace('{consequence}', '<consequence>')}
-"trigger" — copy ONE of these EXACTLY:
-${num(g.trigger)}
-"consequence" — copy ONE of these EXACTLY:
-${num(g.consequence)}
-"condition" — ONLY with consequence ${g.condition_for + 1}, one of: ${g.conditions.join(' | ')}
+${shape}
+${slotBlock}
+"condition" — ONLY with ${g.condition_slot} ${g.condition_for + 1}, one of: ${g.conditions.join(' | ')}
 REFUSED: ${g.bans.map((b) => `trigger ${b.trigger + 1} with consequence ${b.consequence + 1} (${b.why})`).join('; ')}.
 ${g.ban_notes.map((n) => `- ${n}`).join('\n')}
-Answer "compose" ONLY when "template" is "none", and answer it with the values copied exactly. A filled form ships as the creature's own trait, so it must be the idea you were given.
+Answer "compose" with ${g.slots.map((k) => `"${k}"`).join(' and ')} (plus "condition" where it applies) ONLY when "template" is "none", and answer it with the values copied exactly. A filled form ships as the creature's own trait, so it must be the idea you were given.
 THIS FORM IS THE REFUSAL PATH, AND IT REPLACES NAMING A NEAREST TEMPLATE. Do not answer "closest" on this seat: a template that merely resembles the idea ships a row the creature does not have, which is the whole reason the form exists. Still answer "missing" and "missing_effect" so the catalog learns what it lacks. If the form cannot carry the idea either, fill nothing and say why in "missing" — a seat with no row is better than a row that is not the idea.`;
 }
 
@@ -440,7 +512,7 @@ const EXCLUDE_ON = {
   'hook-drag': ['containment'], 'hook-rider': ['containment'], 'obstacle-pull': ['containment'], reel: ['containment'], snare: ['containment'],
   'false-appearance': ['disguise'], adhesive: ['adhesive'], 'heated-body': ['contact-damage', 'aura'], 'resonant-body': ['contact-damage', 'aura'],
   // one aura per body; a sealed mind never doubles the golem's Immutable Form; warded mending never sits beside Regeneration
-  'fire-aura': ['contact-damage', 'aura'], 'noxious-aura': ['aura'], 'truth-aura': ['aura'], 'gaze-aura': ['aura'], 'charge-push': ['charge-rider'], 'sealed-body': ['immutable-form', 'shielded-mind'], 'shielded-mind': ['shielded-mind'], 'warded-mending': ['regeneration'],
+  'energy-aura': ['contact-damage', 'aura'], 'noxious-aura': ['aura'], 'truth-aura': ['aura'], 'gaze-aura': ['aura'], 'charge-push': ['charge-rider'], 'sealed-body': ['immutable-form', 'shielded-mind'], 'shielded-mind': ['shielded-mind'], 'warded-mending': ['regeneration'],
   // repellers, off every containment seat
   'escalating-dread': ['containment'], 'terror-pulse': ['containment'], 'push-prone': ['containment'], 'gaze-single': ['containment'],
   // ONE OF EACH FAMILY A SHEET (2026-10-22). These read the declared FAMILY above
@@ -615,7 +687,7 @@ export const VERB_KEYS = {
   'terrain-walk': ['mire', 'bog', 'swamp', 'marsh', 'fen', 'mud', 'muddy', 'ice', 'icy', 'snow', 'frozen', 'freezes', 'freeze', 'glacier', 'sand', 'dunes', 'ash', 'cinders', 'rubble', 'scree', 'webs', 'thicket', 'brambles', 'undergrowth', 'reeds', 'shallows', 'tundra', 'debris', 'rough ground', 'wreckage', 'does not slow', 'never slows', 'never slowed', 'sure-footed', 'wades', 'wading', 'nothing can follow'], // debris/rough ground: the brass bull's "ignore rough ground, wrecked stalls, and market debris" missed on a shelf that held it (goldens 2026-09-27)
   'aberrant-ground': ['slick', 'seawater', 'brine', 'rubble', 'scree', 'wake', 'trail of', 'slime', 'sludge', 'ooze', 'treacherous', 'footing', 'uneven', 'broken ground', 'churns', 'churned', 'cracks', 'ground around it', 'roots', 'writhing', 'gibbering', 'warps the ground', 'leaves behind', 'wherever it moves', 'wherever she moves', 'wherever he moves'],
   'web-walker': ['web', 'webs', 'webbing', 'silk', 'thread', 'threads', 'strand', 'strands', 'every thread', 'spider', 'weaver', 'loom'],
-  'fire-aura': ['aura', 'radiates', 'radiating', 'waste heat', 'heat around', 'furnace', 'shimmers', 'wildfire', 'blaze', 'inferno', 'bonfire', 'pyre', 'flames', 'firestorm', 'scalding air', 'freezing air', 'chill around', 'crackles', 'static', 'emanates', 'wreathed in', 'halo of', 'sheds heat', 'cold around her', 'chills the air', 'chills the room', 'chill around', 'grave-cold', 'lose their warmth', 'warms nobody'],
+  'energy-aura': ['aura', 'radiates', 'radiating', 'waste heat', 'heat around', 'furnace', 'shimmers', 'wildfire', 'blaze', 'inferno', 'bonfire', 'pyre', 'flames', 'firestorm', 'scalding air', 'freezing air', 'chill around', 'crackles', 'static', 'emanates', 'wreathed in', 'halo of', 'sheds heat', 'cold around her', 'chills the air', 'chills the room', 'chill around', 'grave-cold', 'lose their warmth', 'warms nobody'],
   'noxious-aura': ['stench', 'reek', 'reeks', 'stink', 'stinks', 'miasma', 'rot', 'fumes', 'spores', 'aura of', 'presence', 'hymn', 'dirge', 'chant', 'keening', 'wail', 'drone', 'voices', 'stops hearts', 'dread presence', 'terrible to behold', 'true form', 'sickening', 'nauseating', 'foul', 'carrion', 'unclean'],
   'bloodied-fury': ['bloodied', 'wounded', 'cornered', 'fury', 'frenzy', 'rage', 'enraged', 'savage', 'when hurt', 'the more it bleeds', 'desperate', 'fights harder', 'maddened', 'goaded', 'temper', 'berserk'],
   'uncanny-sense': ['scent', 'smell', 'smells', 'sniff', 'sniffs', 'pinpoint', 'pinpoints', 'senses', 'can sense', 'detect', 'detects', 'gold', 'metal', 'ferrous', 'treasure', 'blood', 'magic', 'hunts by', 'nose', 'tastes the air'],
@@ -700,7 +772,7 @@ const LACK_PHRASE = /\b(?:no|without|never|cannot|can't|lacks?|has no|bereft of)
 const DENIED_CLAUSE = new RegExp(`\\b(?:takes? (?:extra|double|additional) damage|extra damage from|vulnerable|weak to|weakness(?:es)? to|susceptible to|(?:hates?|hated|loathes?|despises?|fears?|dreads?)\\s+(?:the\\s+)?${ENERGY_WORD}|(?:cannot|can't|can not|doesn't|does not|unable to|lacks?|has no|have no)\\s+(?:cast|use|wield|speak|fly|swim|climb|burrow|regenerate|heal|see|hear|smell|breathe|spells?|magic))\\b`, 'i');
 export function scrubDeniedClauses(text) { return String(text ?? '').split(/([,;.]|\s+(?:and|but|or)\s+)/).map((seg, i) => (i % 2 === 1 ? seg : seg.replace(new RegExp(`${DENIED_CLAUSE.source}.*$`, 'i'), '').replace(LACK_PHRASE, ''))).join('').replace(/\s{2,}/g, ' ').trim(); } // the phrase leaves, the words before it stay ("a tiefling duelist who hates fire" keeps the duelist — the critic's second species read)
 // A TEMPLATE DENIED BY THE CONCEPT: a heated body or fire aura never lands on a creature the words make vulnerable to fire, whatever word matched ("lives in the burned forest" bound Ash a Heated Body)
-const TEMPLATE_DENY = { 'heated-body': new RegExp(`(?:hates?|loathes?|fears?|vulnerable to|weak to|extra damage from|takes? extra damage from)\\s+(?:the\\s+)?(?:fire|flames?|heat|burning)`, 'i'), 'fire-aura': new RegExp(`(?:hates?|loathes?|fears?|vulnerable to|weak to|extra damage from|takes? extra damage from)\\s+(?:the\\s+)?(?:fire|flames?|heat|burning)`, 'i') };
+const TEMPLATE_DENY = { 'heated-body': new RegExp(`(?:hates?|loathes?|fears?|vulnerable to|weak to|extra damage from|takes? extra damage from)\\s+(?:the\\s+)?(?:fire|flames?|heat|burning)`, 'i'), 'energy-aura': new RegExp(`(?:hates?|loathes?|fears?|vulnerable to|weak to|extra damage from|takes? extra damage from)\\s+(?:the\\s+)?(?:fire|flames?|heat|burning)`, 'i') };
 export function rankByVerb(menu, conceptText0, ideaText0 = '', askedMechanic = null) {
   // THE DECLARED MECHANIC OUTRANKS EVERY WORD (owner's architecture, 2026-10-23).
   // The resolve call already named what the GM asked a row to DO, from the GM's own
@@ -816,7 +888,7 @@ export const MECHANIC = {
   retaliate: ['heated-body', 'resonant-body', 'ward-retaliation', 'riposte', 'own-turn-punisher', 'weapon-lodge', 'coating', 'interpose', 'snap-shot'],
   climb: ['spider-climb', 'web-walker', 'terrain-walk', 'earth-glide', 'tunneler'],
   teleport: ['blink', 'phase-slip', 'self-invisibility'],
-  zone: ['zone', 'zone-seed', 'blighted-ground', 'aberrant-ground', 'fire-aura'],
+  zone: ['zone', 'zone-seed', 'blighted-ground', 'aberrant-ground', 'energy-aura'],
   disguise: ['false-appearance', 'mimicry', 'blurred-form'],
   // split from one bucket of 8, which was the worst in the measurement
   harden: ['shell-withdraw', 'sealed-body', 'guarded-stance', 'patient-defense'],
@@ -866,7 +938,7 @@ export const NEEDS_BODY = {
   'resonant-body': 'a body of metal, crystal, glass, or something hollow that rings when struck',
   'active-toll': 'a body that rings, tolls, or resonates',
   'heated-body': 'a body that is burning hot, molten, or wreathed in flame',
-  'fire-aura': 'a body that radiates its own energy into the space around it — burning heat, killing cold, searing light, or creeping rot — so that merely standing near it is harmful. Not a body that merely LOOKS cold or dark, and not a creature whose only reach is its weapon', // the frame fills {damage_type} from the sheet's own energy, so this was never a fire question; a glacier was refused the cold aura the engine's own gap record asked for (2026-10-26)
+  'energy-aura': 'a body that radiates its own energy into the space around it — burning heat, killing cold, searing light, or creeping rot — so that merely standing near it is harmful. Not a body that merely LOOKS cold or dark, and not a creature whose only reach is its weapon', // the frame fills {damage_type} from the sheet's own energy, so this was never a fire question; a glacier was refused the cold aura the engine's own gap record asked for (2026-10-26)
   // 2026-10-22: the first wording, 'a body that reeks, rots, or gives off fumes',
   // carried 3 of 5 misses on the held-out probe — it missed a siege engine that
   // "belches smoke" and a swarm of carrion beetles, and false-positived on a
@@ -1759,7 +1831,7 @@ ${GRAMMARS[idea?.family]?.section === idea?.section ? `${composeFormLines(idea.f
 A RIDER THAT MOVES THE TARGET OUT OF REACH does not belong on a row the Multiattack repeats: push the target 10 feet on the first hit and the second and third cannot land, so the creature defeats its own Multiattack. Read the sheet's Multiattack and reach before offering a push or pull rider; refuse it there (the Horseman's Saber, 2026-10-25). A REFUSAL NAMES ITS GAP. "no_fit" is not an answer on its own — ${GRAMMARS[idea?.family]?.section === idea?.section ? 'fill the form above instead of naming a nearest template, and answer' : 'say which of the offered templates comes CLOSEST ("closest"),'} what the rules would have to do that none of them does ("missing"), and WHICH KIND OF EFFECT that missing thing is ("missing_effect"), exactly one of: damage | condition | movement | resource | defense. Judge the effect by what the row DOES to its target, not by words that appear in passing: a row that only applies against an already-prone target is not a condition row, and a row that resists being pushed is defense, not movement. In a few plain words naming the MECHANIC, not the fiction: "pulls the creature back to where it started", "picks one target and holds the aim", "costs the creature something when it fails". Never "nothing fits" and never a restatement of the idea. These accumulate into a list of templates worth building, so a vague answer is a wasted one.
 DID THE USER ASK FOR IT? Answer "asked" with the user's OWN WORDS that ask for this template's mechanic, quoted verbatim from THE USER TYPED line above — never from THE IDEA, which is the engine's own prose and is not the user
 ${elements.length ? `WHICH OF THIS CREATURE'S OWN ELEMENTS DOES THE ROW EXPRESS? Answer "expresses" with ONE of these, copied exactly, or "" if the row expresses none of them. These were drawn from the GM's description, so naming one is a receipt even when you cannot quote the GM directly — a trait seat usually cannot. Answer "" honestly: a row that does not express any of them is decoration, and saying so is the right answer.\n${elements.map((e) => `  - ${String(e).replace(/"/g, "'")}`).join('\n')}` : ''}'s words. The few words, not a sentence. Leave it "" when the user's words never ask for it and your pick rests on the idea you were given or on the template's shape. Answering "" is not a failure and does not withdraw your pick; it tells the engine the pick is yours, not the GM's, and some seats take only what the GM asked for.
-Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "expresses": "<one of the creature's own elements listed above, copied exactly, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", ${GRAMMARS[idea?.family]?.section === idea?.section ? '' : '"closest": "<on a refusal: the offered id that comes nearest, else \\"\\">", '}"missing": "<on a refusal: the mechanic none of them does, else \"\">", "missing_effect": "<on a refusal: damage | condition | movement | resource | defense, else \"\">", "name": "<2-3 words, Title Case the way print writes a row name: Dreadful Glare, Wing Attack, Cloud of Insects — every word capitalised except of/the/and/to/with>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]${GRAMMARS[idea?.family]?.section === idea?.section ? `, "compose": {"trigger": "<copied exactly, or omit>", "consequence": "<copied exactly, or omit>", "condition": "<only with the condition consequence, else omit>"}` : ''}}`;
+Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "expresses": "<one of the creature's own elements listed above, copied exactly, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", ${GRAMMARS[idea?.family]?.section === idea?.section ? '' : '"closest": "<on a refusal: the offered id that comes nearest, else \\"\\">", '}"missing": "<on a refusal: the mechanic none of them does, else \"\">", "missing_effect": "<on a refusal: damage | condition | movement | resource | defense, else \"\">", "name": "<2-3 words, Title Case the way print writes a row name: Dreadful Glare, Wing Attack, Cloud of Insects — every word capitalised except of/the/and/to/with>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]${GRAMMARS[idea?.family]?.section === idea?.section ? `, "compose": {${GRAMMARS[idea.family].slots.map((k) => `"${k}": "<copied exactly>"`).join(', ')}, "condition": "<only where it applies, else omit>"}` : ''}}`;
 }
 
 export function validateFitResponse(jsonString) {
@@ -1825,16 +1897,22 @@ export function parseFit(raw, menu, creatureName = '', elements = [], composeFam
       const c = p.compose; if (!c || typeof c !== 'object') return null;
       const fam = IDEA_FAMILIES.includes(String(c.family)) ? String(c.family) : composeFamily;
       const g = GRAMMARS[fam]; if (!g) return null;
-      const trigger = g.trigger.find((x) => x === String(c.trigger ?? '').trim());
-      const consequence = g.consequence.find((x) => x === String(c.consequence ?? '').trim());
-      if (!trigger || !consequence) return null;
-      const ti = g.trigger.indexOf(trigger); const ci = g.consequence.indexOf(consequence);
-      if (g.bans.some((b) => b.trigger === ti && b.consequence === ci)) return null;
-      const want = ci === g.condition_for;
+      // SLOT-DRIVEN, so a second family needs no second validator: each grammar
+      // names its own blanks (`slots`) and which blank's choice may carry a
+      // condition (`condition_slot`).
+      const picks = {};
+      for (const k of g.slots) {
+        const v = g[k].find((x) => x === String(c[k] ?? '').trim());
+        if (!v) return null;
+        picks[k] = v;
+      }
+      const ix = Object.fromEntries(g.slots.map((k) => [k, g[k].indexOf(picks[k])]));
+      if (g.bans.some((b) => g.slots.every((k) => b[k] === undefined || b[k] === ix[k]))) return null;
+      const want = ix[g.condition_slot] === g.condition_for;
       const cond = String(c.condition ?? '').trim();
-      if (want && !g.conditions.includes(cond)) return null;   // Prone is not in `conditions`
+      if (want && !g.conditions.includes(cond)) return null;   // Prone is in no grammar's list
       if (!want && cond) return null;                          // a condition where the shape has no slot for one
-      return { family: fam, trigger, consequence, condition: want ? cond : null };
+      return { family: fam, ...picks, condition: want ? cond : null };
     })(),
     closest: String(p.closest ?? '').trim().slice(0, 40) || null,
     missing: String(p.missing ?? '').trim().slice(0, 120) || null,
