@@ -276,6 +276,152 @@ const SHAPE_TAGS = {
  * name means one thing. `sheetEngines` reads this off the row BEFORE any text
  * rule, which is the owner's standing order: declared data first, prose never.
  */
+/**
+ * THE TEN FAMILIES A SIGNATURE IDEA CAN BELONG TO. The idea call answers one,
+ * from this closed list, on the same call that already answers `section`,
+ * `trigger` and `effect` — a judgement, so it is a call field and never a word
+ * match. Only families with a GRAMMAR below change any behaviour; the rest are
+ * tagged so a run can be counted and the next family chosen from the call's own
+ * answers rather than by hand-clustering gap text.
+ *
+ * Derived from the 122 "what is missing" records across 100 sheets
+ * (body-reaction 22, zone 20, payoff 12, mark 10, sentinel 8, drag 8, heal 5,
+ * breach 4, kill-growth 3).
+ */
+export const IDEA_FAMILIES = ['body-reaction', 'zone', 'payoff', 'mark', 'sentinel', 'drag', 'heal', 'breach', 'kill-growth', 'nova'];
+
+export const FAMILY_GLOSS = {
+  'body-reaction': 'something happens to whoever hits, touches or grabs it',
+  zone: 'ground or air around it, or trailing behind it, that harms or slows',
+  payoff: 'it hits harder against a target that is already wounded or afflicted',
+  mark: 'it marks one foe, and that mark has a consequence',
+  sentinel: 'it answers a foe that moves past, away from, or into its reach',
+  drag: 'it moves a creature it has hold of, or hauls several at once',
+  heal: 'it mends or feeds on damage, death or suffering nearby',
+  breach: 'it goes through walls, obstacles or difficult ground others cannot',
+  'kill-growth': 'it grows stronger each time it fells a creature',
+  nova: 'one big area effect on its own turn',
+};
+
+// print's own retaliation ladder, read off `heated-body`/`resonant-body`, which
+// are calibrated against the corpus. A composed damage reaction is priced by
+// being this ladder, not by a formula.
+const RETAL_LADDER = { '0-2': '3 (1d6)', '3-5': '5 (1d10)', '6-9': '7 (2d6)', '10-12': '10 (3d6)', '13-20': '10 (3d6)', '21+': '14 (4d6)' };
+
+/**
+ * A FAMILY GRAMMAR: the same form a template is, with three blanks open.
+ *
+ * A template is a form with every blank pinned; this is the form with its
+ * trigger, its consequence and (where the consequence needs one) its condition
+ * left to the call, each a closed list. The call picks items — it never writes
+ * rules prose — and the engine assembles the skeleton. So soundness still lives
+ * in the skeleton, the lists, the engine's numbers and `bans`.
+ *
+ * `body-reaction`'s skeleton is the Black Pudding's Corrosive Form, the single
+ * reactive trait in SRD 5.2 (the 2014 idiom is the Fire Elemental's Fire Form),
+ * and the triggers are `heated-body`'s own wording.
+ */
+export const GRAMMARS = {
+  'body-reaction': {
+    section: 'trait',
+    trigger_tag: 'on_being_hit',
+    skeleton: 'A creature that {trigger} {consequence}.',
+    trigger: [
+      'hits the creature with a melee attack while within 5 feet of it',
+      'touches the creature or hits it with a melee attack while within 5 feet of it',
+      'grapples the creature or is grappled by it',
+    ],
+    consequence: [
+      `takes ${'{retal}'} {damage_type} damage`,
+      'has the {condition_minor} condition until the end of its next turn',
+      'has its Speed halved until the end of its next turn',
+      'is pushed up to 5 feet straight away from the creature',
+    ],
+    // the consequence's own effect cell, by index — the declared field the
+    // stamp-ordered menu and the family cap both read
+    effect: ['damage', 'condition', 'movement', 'movement'],
+    // only this consequence takes a condition, and Prone is not among them
+    // (owner, 2026-10-25: "not worth an attack... Prone has a rider on a damage
+    // dealer even at low CR") — a reaction whose whole payload is Prone is a row
+    // that does nothing worth the ink.
+    condition_for: 1,
+    // MEASURED AGAINST PRINT, after the first canary composed a no-save Blinded
+    // on every melee hit at CR 8 (2026-10-26). The skeleton has no saving throw,
+    // so only a condition print itself imposes WITHOUT one belongs here, and the
+    // corpus is lopsided: Poisoned 14 rows with no save, Blinded 2 (both actions
+    // that wrap a creature's head and give it a way out), Frightened 1,
+    // Deafened 0 with no save but 3 with one and it is nearly harmless in a
+    // fight. Blinded and Frightened are out: Blinded hands every attacker
+    // Advantage and compounds with each striker, and Frightened on being hit
+    // forbids melee outright, since a Frightened creature cannot willingly move
+    // toward what it fears. Both are available WITH a save through the
+    // save-bearing templates (noxious-aura, gaze-aura); a save-bearing variant of
+    // this form is phase 2.
+    conditions: ['Poisoned', 'Deafened'],
+    // refused pairs, stated in the prompt AND enforced in parseFit
+    bans: [
+      { trigger: 2, consequence: 3, why: 'a creature grappling this one cannot be pushed away by it — the grapple holds them together' },
+    ],
+    ban_notes: [
+      'No counter, no "each time", no stacking, and no reference to another row on the sheet: the GM must be able to run this from the one sentence (the `tally` shape was cut for exactly that).',
+      'No Prone payload.',
+      'One creature only — not everyone nearby.',
+    ],
+  },
+};
+
+/**
+ * The template object the engine runs when the call filled a form instead of
+ * picking. It is an ordinary catalog entry built at request time: the same
+ * fields `renderTemplate` reads (`frames`, `section`, `effect`, `gate`,
+ * `duration_default`, `targets`, `target_sizes`, `flavor`, `key`, `id`), so a
+ * composed row goes through rendering, the trait ceiling, the checker and the
+ * weld on the normal path and nothing downstream needs to know.
+ *
+ * `frames` is per band rather than one seed text because a damage reaction's
+ * number IS print's retaliation ladder (3 (1d6) at CR 0-2 up to 14 (4d6) at
+ * 21+), which is how the row stays priced without a formula.
+ */
+export function composedTemplate({ family, trigger, consequence, condition = null }) {
+  const g = GRAMMARS[family];
+  if (!g) return null;
+  const ti = g.trigger.indexOf(trigger); const ci = g.consequence.indexOf(consequence);
+  if (ti < 0 || ci < 0) return null;
+  const body = (band) => g.skeleton
+    .replace('{trigger}', trigger)
+    .replace('{consequence}', consequence.replace('{retal}', RETAL_LADDER[band]))
+    .replace('{condition_minor}', condition ?? '');
+  const frames = Object.fromEntries(Object.keys(RETAL_LADDER).map((band) => [band, body(band)]));
+  return {
+    id: `composed:${family}`, key: `composed:${family}`, name: 'Composed Reaction', kind: 'shape', composed: family,
+    section: g.section, trigger: g.trigger_tag, effect: g.effect[ci],
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], gate: null, nova: false, // every role: the call already judged this body when it chose the trigger
+    requires_movement: null, requires_style: null, supersedes: null, deny_types: null,
+    requires_row: null, requires_claim: null, requires_size: null, needs_body: null,
+    family: null, mechanic: null, targets: [], target_sizes: null, duration_default: null,
+    host: null, keys: [], flavor: [], frames,
+    ...(condition ? { imposes: condition } : {}), // DECLARED, not left to be re-read off the finished text
+  };
+}
+
+/** The form as the call reads it: the skeleton, the lists, the bans. */
+export function composeFormLines(family) {
+  const g = GRAMMARS[family];
+  if (!g) return '';
+  const num = (xs) => xs.map((x, i) => `  ${i + 1}. ${x.replace('{retal}', '<the engine fills the number>')}`).join('\n');
+  return `IF NONE FITS, FILL THIS FORM INSTEAD — do not stretch a template that does not carry the idea, and do not write rules of your own. This family ("${family}": ${FAMILY_GLOSS[family]}) has a printed shape with blanks, and you choose the blanks. The engine writes the sentence and owns every number.
+THE SHAPE: ${g.skeleton.replace('{trigger}', '<trigger>').replace('{consequence}', '<consequence>')}
+"trigger" — copy ONE of these EXACTLY:
+${num(g.trigger)}
+"consequence" — copy ONE of these EXACTLY:
+${num(g.consequence)}
+"condition" — ONLY with consequence ${g.condition_for + 1}, one of: ${g.conditions.join(' | ')}
+REFUSED: ${g.bans.map((b) => `trigger ${b.trigger + 1} with consequence ${b.consequence + 1} (${b.why})`).join('; ')}.
+${g.ban_notes.map((n) => `- ${n}`).join('\n')}
+Answer "compose" ONLY when "template" is "none", and answer it with the values copied exactly. A filled form ships as the creature's own trait, so it must be the idea you were given.
+THIS FORM IS THE REFUSAL PATH, AND IT REPLACES NAMING A NEAREST TEMPLATE. Do not answer "closest" on this seat: a template that merely resembles the idea ships a row the creature does not have, which is the whole reason the form exists. Still answer "missing" and "missing_effect" so the catalog learns what it lacks. If the form cannot carry the idea either, fill nothing and say why in "missing" — a seat with no row is better than a row that is not the idea.`;
+}
+
 export const FAMILY = {
   // retaliation — the critic's Vashka case: thunder from lacquered plate beside her own Riposte
   'own-turn-punisher': 'punisher',
@@ -1277,7 +1423,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   if (!text) return null;
   // THE WRITER RECORDS WHAT IT WROTE. The catalog declares what this frame
   // imposes, so no reader has to recover it from the rendered sentence.
-  pickedCondition = imposedByFrame(t.id, band) ?? pickedCondition;
+  pickedCondition = imposedByFrame(t.id, band) ?? t.imposes ?? pickedCondition; // `t.imposes` so a template BUILT at request time can declare its own condition: the static map is keyed by id, a composed row has no entry, and its Deafened had to be recovered from the finished text downstream ("record completed", 2026-10-26)
   if (projWeaponRange) text = text.replace(/range \d+\/\d+ ft\./, `range ${projWeaponRange} ft.`);
   const per = Math.max(3, Math.round(scaled.per_hit ?? 6));
   // an ATTACK-ROLL frame prices like the chassis's attack rows — dice plus the striker's mod (print's Hill
@@ -1468,13 +1614,15 @@ CONCEPT: ${concept}
 ${askedMechanic ? `WHAT THE GM ASKED A ROW TO DO: **${askedMechanic}**. An earlier call read this from the GM's own words, and the catalog has a shape that DOES it — so an idea serving this will be printed as that shape, and an idea that wanders will be fitted to whatever it happens to resemble instead. This is the ask; serve it in your own fiction.` : ''}
 ${owedClause ? `THE CLAUSE THIS ABILITY IS FOR — the sheet is a PRINTED creature plus what the GM added, and this is what they added. It is the whole reason this sheet is not just the printed monster, and nothing on it answers the clause yet. Invent the ability that makes THIS true of THIS creature; do not describe the creature in general: "${String(owedClause).replace(/"/g, "'")}"
 ` : ''}${verbs.length ? `THE CONCEPT'S OWN VERBS: ${verbs.join(', ')} — the signature is one of these verbs made mechanical; an idea that abandons them for something the concept never said (a teleport, a mist, a generic burst) is the wrong idea however clever. ` : ''}${seats ? `BUILD THIS: the action idea builds "${seats.action}"${wantTrait && !seats.packaged ? `; the trait idea makes "${seats.trait}" true on the sheet` : ''}. ` : ''}${engines.length ? `THE SHEET'S ENGINE IS ALREADY BUILT: ${engines.join(', ')} — the concept's holding, swallowing, or caging is DONE by those rows; do not describe it again in any wording. Build the concept's OTHER face. ` : ''}The rows above already OWN their fiction — never describe another version of one; the best ideas key off a condition a row applies, or set up a state the rows exploit.${energy ? ` This creature's energy is ${energy}.` : ''}
-NOT A SIGNATURE (the wide run's biggest miss class, 12 of 48): a damage resistance or immunity, "blades only chip it", "can't be moved", "immune to its own fire", or a saving-throw bonus — those are the HEADER's to grant and the engine already derives them from type and energy. A trait idea must be a RULE that happens. In print a trait is most often one of these — choose the one THIS concept actually implies, not the first listed: how it MOVES (through walls or earth, over water, up sheer faces, without provoking, where others cannot); what its PRESENCE does to the space around it each turn (an emanation of cold, stench, dread, light, or broken ground); what it SPENDS or RECOVERS (regeneration with a catch, a reserve it draws on, a change when Bloodied or when an ally falls); what it SENSES or how it HIDES (what it can always find, what it can pass for); how it gets STRONGER mid-fight (a condition on the target it exploits, allies beside it). What happens to whoever touches or hits it is the RAREST trait in print — 3 of 324 — and belongs only to a body that is plainly corrosive, barbed, or adhesive; a bias toward it makes every monster the same monster. Tag each idea: "section" is action | bonus_action | reaction | rider (a clause on the creature's own attack: "when it hits, …")${wantTrait ? ' (the trait idea is always a trait)' : ''}; "trigger" is one of ${TRIGGERS.join(' | ')}; "effect" is one of ${EFFECTS.join(' | ')}.
+NOT A SIGNATURE (the wide run's biggest miss class, 12 of 48): a damage resistance or immunity, "blades only chip it", "can't be moved", "immune to its own fire", or a saving-throw bonus — those are the HEADER's to grant and the engine already derives them from type and energy. A trait idea must be a RULE that happens. In print a trait is most often one of these — choose the one THIS concept actually implies, not the first listed: how it MOVES (through walls or earth, over water, up sheer faces, without provoking, where others cannot); what its PRESENCE does to the space around it each turn (an emanation of cold, stench, dread, light, or broken ground); what it SPENDS or RECOVERS (regeneration with a catch, a reserve it draws on, a change when Bloodied or when an ally falls); what it SENSES or how it HIDES (what it can always find, what it can pass for); how it gets STRONGER mid-fight (a condition on the target it exploits, allies beside it). What happens to whoever touches or hits it is the RAREST trait in print — 3 of 324 — and belongs only to a body that is plainly corrosive, barbed, or adhesive; a bias toward it makes every monster the same monster. Tag each idea: "section" is action | bonus_action | reaction | rider (a clause on the creature's own attack: "when it hits, …")${wantTrait ? ' (the trait idea is always a trait)' : ''}; "trigger" is one of ${TRIGGERS.join(' | ')}; "effect" is one of ${EFFECTS.join(" | ")}; and "family" is the KIND of ability this is, one of:
+${IDEA_FAMILIES.map((f) => `  ${f} — ${FAMILY_GLOSS[f]}`).join("\n")}
+Pick the family that describes what you just invented, not what the creature is. An idea can be only one.
 ${bodyRequirements.length ? `IS IT TRUE OF THIS BODY? ("body_verdicts") The engine has abilities it can only give this creature if certain things are TRUE OF ITS BODY. For each one below, say whether it is.
 ${bodyRequirements.map((r) => `- ${r.id}: ${r.needs}`).join('\n')}
 Judge the BODY, not the creature's temperament, job, mood or gear: a man with a crab's temperament is not a crab, a fierce bear is not sticky, and a poisoner is not made of metal. A thing the creature merely CARRIES or USES is not its body.
 But the concept does not have to use the requirement's words — judge what the body plainly IS. A pit of tar is sticky without the word "sticky". A thing bound to a shrine HAS a ward. A creature shaped like a chest can pass for one. Say true when the body is plainly that thing even if the concept never names it.
 Both mistakes cost something. A wrong TRUE puts a rule on the page a GM can see is nonsense \u2014 a bear that glues people to itself. A wrong FALSE takes away an ability the creature obviously should have \u2014 a mimic that isn't sticky. Weigh them evenly and answer on the body. "because" quotes the concept's OWN WORDS, and only for a true answer.
-` : ''}Return ONLY JSON: {"action": {"idea": "<2-3 plain sentences>", "section": "<action|bonus_action|reaction>", "trigger": "<...>", "effect": "<...>"}${wantTrait ? ', "trait": {"idea": "<1-2 plain sentences: a passive rule of its body or nature>", "trigger": "<...>", "effect": "<...>"}' : ''}${bodyRequirements.length ? ', "body_verdicts": [{"id": "<id copied exactly>", "means": <true|false>, "because": "<the concept\'s own words, or \\"\\">"}]' : ''}}`;
+` : ''}Return ONLY JSON: {"action": {"idea": "<2-3 plain sentences>", "section": "<action|bonus_action|reaction>", "trigger": "<...>", "effect": "<...>", "family": "<...>"}${wantTrait ? ', "trait": {"idea": "<1-2 plain sentences: a passive rule of its body or nature>", "trigger": "<...>", "effect": "<...>", "family": "<...>"}' : ''}${bodyRequirements.length ? ', "body_verdicts": [{"id": "<id copied exactly>", "means": <true|false>, "because": "<the concept\'s own words, or \\"\\">"}]' : ''}}`;
 }
 
 export function validateIdeaResponse(jsonString) {
@@ -1529,7 +1677,13 @@ export function parseIdeas(raw) {
     const section0 = forced ?? (['action', 'bonus_action', 'reaction', 'rider'].includes(String(o.section).toLowerCase()) ? String(o.section).toLowerCase() : 'action');
     const trigger0 = TRIGGERS.includes(o.trigger) ? o.trigger : 'always';
     const { section, trigger } = normaliseTag(section0, trigger0);
-    return { idea: o.idea.trim().slice(0, 400), section, trigger, effect: EFFECTS.includes(o.effect) ? o.effect : 'damage' };
+    // THE FAMILY IS THE CALL'S ANSWER, from the closed list. The fallback is
+    // structural, not a word rule: a trait that fires on being hit IS a body
+    // reaction whatever it was tagged. Anything else with no valid family stays
+    // null and no grammar is offered for it.
+    const family = IDEA_FAMILIES.includes(String(o.family)) ? String(o.family)
+      : (section === 'trait' && trigger === 'on_being_hit' ? 'body-reaction' : null);
+    return { idea: o.idea.trim().slice(0, 400), section, trigger, effect: EFFECTS.includes(o.effect) ? o.effect : 'damage', family };
   };
   return { action: norm(p?.action, null), trait: norm(p?.trait, 'trait') };
 }
@@ -1600,11 +1754,12 @@ ${lines}
 THE CLASSIFICATION DECIDES, AND THE IDEA'S OWN TAGS ORDER THE LIST. Each template shows (fires: <when>, does: <what>) — its own declared cells — and the list is sorted by how well those agree with the tags THIS idea already carries (fires: ${idea.trigger ?? '—'}, does: ${idea.effect ?? '—'}). A template marked "matches the idea" agrees on both. That ordering is a HINT, not a verdict: it is a comparison of two labels, not a reading of your idea. Judge each template's printed rules against the classification above, the clause, and what the idea actually describes — and answer none when nothing carries it.
 WHAT THE ORDER IS NOT. It is not a ranking of fit, and nothing in the GM's wording nominates a template any more. Earlier the engine searched the GM's words for each template's key words and labelled the hits, and that label was followed: a bell-ghost whose idea was "every blow it LANDS leaves a ring" was given a template that damages whoever hits IT, three runs in four, because "bell" was one of its words. Read the rules; the GM's phrasing is context, not a vote. A template low on the list can be the right one, and the first one can be wrong.
 EVEN IF YOU ANSWER none, fill its "you fill" slots in "fills" — the engine may still use a template you declined, and your fills travel with it. Quote the user's own words (a phobia of chickens fills {phobia} with "chickens"; a warden of the reef fills {place} with "the reef").
-WHY NONE FITS. When you answer "none", answer "declined_because" with exactly one of: collision (the creature's words or kind suggest this template but it does not mean that mechanic here), already_answered (the sheet or the creature's own kind already does this), no_fit (nothing offered carries the idea). Answer "" when you did pick a template.
-A RIDER THAT MOVES THE TARGET OUT OF REACH does not belong on a row the Multiattack repeats: push the target 10 feet on the first hit and the second and third cannot land, so the creature defeats its own Multiattack. Read the sheet's Multiattack and reach before offering a push or pull rider; refuse it there (the Horseman's Saber, 2026-10-25). A REFUSAL NAMES ITS GAP. "no_fit" is not an answer on its own — say which of the offered templates comes CLOSEST ("closest"), what the rules would have to do that none of them does ("missing"), and WHICH KIND OF EFFECT that missing thing is ("missing_effect"), exactly one of: damage | condition | movement | resource | defense. Judge the effect by what the row DOES to its target, not by words that appear in passing: a row that only applies against an already-prone target is not a condition row, and a row that resists being pushed is defense, not movement. In a few plain words naming the MECHANIC, not the fiction: "pulls the creature back to where it started", "picks one target and holds the aim", "costs the creature something when it fails". Never "nothing fits" and never a restatement of the idea. These accumulate into a list of templates worth building, so a vague answer is a wasted one.
+${GRAMMARS[idea?.family]?.section === idea?.section ? `${composeFormLines(idea.family)}
+` : ''}WHY NONE FITS. When you answer "none", answer "declined_because" with exactly one of: collision (the creature's words or kind suggest this template but it does not mean that mechanic here), already_answered (the sheet or the creature's own kind already does this), no_fit (nothing offered carries the idea). Answer "" when you did pick a template.
+A RIDER THAT MOVES THE TARGET OUT OF REACH does not belong on a row the Multiattack repeats: push the target 10 feet on the first hit and the second and third cannot land, so the creature defeats its own Multiattack. Read the sheet's Multiattack and reach before offering a push or pull rider; refuse it there (the Horseman's Saber, 2026-10-25). A REFUSAL NAMES ITS GAP. "no_fit" is not an answer on its own — ${GRAMMARS[idea?.family]?.section === idea?.section ? 'fill the form above instead of naming a nearest template, and answer' : 'say which of the offered templates comes CLOSEST ("closest"),'} what the rules would have to do that none of them does ("missing"), and WHICH KIND OF EFFECT that missing thing is ("missing_effect"), exactly one of: damage | condition | movement | resource | defense. Judge the effect by what the row DOES to its target, not by words that appear in passing: a row that only applies against an already-prone target is not a condition row, and a row that resists being pushed is defense, not movement. In a few plain words naming the MECHANIC, not the fiction: "pulls the creature back to where it started", "picks one target and holds the aim", "costs the creature something when it fails". Never "nothing fits" and never a restatement of the idea. These accumulate into a list of templates worth building, so a vague answer is a wasted one.
 DID THE USER ASK FOR IT? Answer "asked" with the user's OWN WORDS that ask for this template's mechanic, quoted verbatim from THE USER TYPED line above — never from THE IDEA, which is the engine's own prose and is not the user
 ${elements.length ? `WHICH OF THIS CREATURE'S OWN ELEMENTS DOES THE ROW EXPRESS? Answer "expresses" with ONE of these, copied exactly, or "" if the row expresses none of them. These were drawn from the GM's description, so naming one is a receipt even when you cannot quote the GM directly — a trait seat usually cannot. Answer "" honestly: a row that does not express any of them is decoration, and saying so is the right answer.\n${elements.map((e) => `  - ${String(e).replace(/"/g, "'")}`).join('\n')}` : ''}'s words. The few words, not a sentence. Leave it "" when the user's words never ask for it and your pick rests on the idea you were given or on the template's shape. Answering "" is not a failure and does not withdraw your pick; it tells the engine the pick is yours, not the GM's, and some seats take only what the GM asked for.
-Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "expresses": "<one of the creature's own elements listed above, copied exactly, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", "closest": "<on a refusal: the offered id that comes nearest, else \"\">", "missing": "<on a refusal: the mechanic none of them does, else \"\">", "missing_effect": "<on a refusal: damage | condition | movement | resource | defense, else \"\">", "name": "<2-3 words, Title Case the way print writes a row name: Dreadful Glare, Wing Attack, Cloud of Insects — every word capitalised except of/the/and/to/with>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
+Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "expresses": "<one of the creature's own elements listed above, copied exactly, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", ${GRAMMARS[idea?.family]?.section === idea?.section ? '' : '"closest": "<on a refusal: the offered id that comes nearest, else \\"\\">", '}"missing": "<on a refusal: the mechanic none of them does, else \"\">", "missing_effect": "<on a refusal: damage | condition | movement | resource | defense, else \"\">", "name": "<2-3 words, Title Case the way print writes a row name: Dreadful Glare, Wing Attack, Cloud of Insects — every word capitalised except of/the/and/to/with>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]${GRAMMARS[idea?.family]?.section === idea?.section ? `, "compose": {"trigger": "<copied exactly, or omit>", "consequence": "<copied exactly, or omit>", "condition": "<only with the condition consequence, else omit>"}` : ''}}`;
 }
 
 export function validateFitResponse(jsonString) {
@@ -1612,7 +1767,7 @@ export function validateFitResponse(jsonString) {
   return p != null && typeof p.template === 'string';
 }
 
-export function parseFit(raw, menu, creatureName = '', elements = []) {
+export function parseFit(raw, menu, creatureName = '', elements = [], composeFamily = null) {
   const p = tryParse(raw) ?? {};
   const id = String(p.template ?? '').trim().toLowerCase();
   const t = id && id !== 'none' ? (menu.find((m) => m.id === id) ?? menu.find((m) => id.includes(m.id)) ?? null) : null;
@@ -1659,6 +1814,28 @@ export function parseFit(raw, menu, creatureName = '', elements = []) {
     // 1c (critic, 2026-10-20): a decline that names no missing mechanic is a
     // schema failure, not an answer. The engine keeps both fields so the gap
     // list can be read across runs; the caller decides what a bare refusal costs.
+    // THE FILLED FORM, validated the way every call answer here is: by exact
+    // membership of a closed list. The call copies items; anything it invented,
+    // any banned pair, a condition where none belongs (or Prone), or a form
+    // filled alongside a real pick, all collapse to null and the engine falls
+    // back to its existing closest/decoration path. A composed row is NOT
+    // decoration — it carries the idea — so this is checked before that path.
+    compose: (() => {
+      if (t) return null;                       // a real pick wins; the form is moot
+      const c = p.compose; if (!c || typeof c !== 'object') return null;
+      const fam = IDEA_FAMILIES.includes(String(c.family)) ? String(c.family) : composeFamily;
+      const g = GRAMMARS[fam]; if (!g) return null;
+      const trigger = g.trigger.find((x) => x === String(c.trigger ?? '').trim());
+      const consequence = g.consequence.find((x) => x === String(c.consequence ?? '').trim());
+      if (!trigger || !consequence) return null;
+      const ti = g.trigger.indexOf(trigger); const ci = g.consequence.indexOf(consequence);
+      if (g.bans.some((b) => b.trigger === ti && b.consequence === ci)) return null;
+      const want = ci === g.condition_for;
+      const cond = String(c.condition ?? '').trim();
+      if (want && !g.conditions.includes(cond)) return null;   // Prone is not in `conditions`
+      if (!want && cond) return null;                          // a condition where the shape has no slot for one
+      return { family: fam, trigger, consequence, condition: want ? cond : null };
+    })(),
     closest: String(p.closest ?? '').trim().slice(0, 40) || null,
     missing: String(p.missing ?? '').trim().slice(0, 120) || null,
     // the EFFECT AXIS is the call's answer too, validated against the catalog's

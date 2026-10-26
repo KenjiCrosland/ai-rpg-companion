@@ -11,7 +11,7 @@ import { pickDonor, scaleDonor, stampAttacksPerRound } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor} from './templates.mjs';
+import { GRAMMARS, composedTemplate, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
@@ -4125,7 +4125,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         }
       }
       if (pruned.length) trace('menu pruned:', `${seat} — ${[...new Set(pruned)].join(', ')} (the sheet cannot render them)`);
-      trace(`signature idea (${seat}):`, `"${idea.idea}" ${tagOf(idea)} — menu: ${menu.map((t) => t.id).join(', ') || 'EMPTY'}${pool.length > menu.length ? ` (+ shelf: ${pool.filter((t) => !menu.includes(t)).map((t) => t.id).join(', ')})` : ''}`);
+      trace(`signature idea (${seat}):`, `"${idea.idea}" ${tagOf(idea)}${idea.family ? ` [family: ${idea.family}]` : ''} — menu: ${menu.map((t) => t.id).join(', ') || 'EMPTY'}${pool.length > menu.length ? ` (+ shelf: ${pool.filter((t) => !menu.includes(t)).map((t) => t.id).join(', ')})` : ''}`);
       if (!pool.length && idea.section === 'reaction') {
         // print's answer for "when something hits me, this happens" on a line
         // with no reaction seat is a TRAIT (Heated Body, Death Burst): re-seat
@@ -4236,7 +4236,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         })();
         if (askedFor) trace('classification handed to the fit call:', Object.entries(askedFor).map(([k, v]) => `${k}=${v}`).join(' '));
         const rawFit = await callLLM(buildFitPrompt({ name: p.name, sheet: sheetSoFarT, idea, menu: offered, cr, concept: verbText, clause: ownClauseForCall, elements: sigElements, asked: askedFor }), validateFitResponse);
-        let fit = readFit(parseFit(rawFit, offered, p.name, sigElements), offered, `${verbText} ${idea.idea}`);
+        let fit = readFit(parseFit(rawFit, offered, p.name, sigElements, idea.family ?? null), offered, `${verbText} ${idea.idea}`);
         // THE REFUSAL IS RECORDED BEFORE IT IS ANSWERED (2026-10-21). Accepting
         // the closest sets `fit.template`, and every decline trace below is
         // guarded on `!fit.template` — so the first run after acceptance landed
@@ -4272,6 +4272,38 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // what was missing, so the demand stays countable.
         // Guarded: the named template must be one this sheet was actually offered
         // and can render — never a free pick off the whole catalog.
+        // THE CALL FILLED THE FAMILY'S FORM instead of stretching a template
+        // (owner, 2026-10-26: "let's try it... if we loosen the constraints to
+        // the sweet spot we might be ok"). This runs BEFORE the closest/decoration
+        // path below, because a composed row is not decoration: the call chose its
+        // trigger and its consequence from closed lists to carry THIS idea, so it
+        // keeps its receipt and is counted like a template pick. `parseFit` has
+        // already validated every value by exact membership and refused the banned
+        // pairs, so there is nothing to judge here — only to build.
+        if (!fit.template && fit.compose) {
+          // THE GRAMMAR IS WRITTEN FOR ONE SEAT. `body-reaction` is a TRAIT form
+          // (print's body reactions are traits), and the first canary run offered
+          // it to an ACTION seat whose idea the call had tagged body-reaction —
+          // "when something strikes the hulk, splinters burst". It composed, and
+          // because the synthesised template declares section 'trait' the row
+          // landed in Traits off the action seat, while the idea the GM typed (an
+          // AREA reaction) went unserved and showed up in the gap list. The prompt
+          // no longer offers the form across seats; this is the engine's check on
+          // the same fact.
+          const g = GRAMMARS[fit.compose.family];
+          if (g && g.section !== idea.section) {
+            trace('composed row refused:', `${seat} — the "${fit.compose.family}" form is a ${g.section} shape and this is the ${idea.section} seat; the seat takes the normal path`);
+            fit = { ...fit, compose: null };
+          }
+        }
+        if (!fit.template && fit.compose) {
+          const synth = composedTemplate(fit.compose);
+          const rendC = synth ? renderTemplate(synth, ctxT, bindFills(synth)) : null;
+          if (rendC) {
+            trace('row composed from the family form:', `${seat} — ${fit.compose.family}: trigger "${fit.compose.trigger.slice(0, 40)}…" + "${fit.compose.consequence.replace(/\{[a-z_]+\}/g, '…')}"${fit.compose.condition ? ` (${fit.compose.condition})` : ''} — the call refused every template and filled the form instead (what no template did: ${String(fit.missing ?? 'unstated').slice(0, 70)})`);
+            fit = { ...fit, template: synth, composed: fit.compose.family, because: fit.because || String(idea.idea ?? '').slice(0, 160), wanted: fit.missing ?? null };
+          } else trace('composed row refused:', `${seat} — the form validated but will not render on this sheet`);
+        }
         if (!fit.template && fit.closest) {
           const near = pool.find((t) => t.id === fit.closest || t.key === fit.closest);
           if (near) {
@@ -4332,7 +4364,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             const sameCellUnoffered = TEMPLATES
               .filter((t) => t.trigger === idea.trigger && t.effect === idea.effect && !ids.includes(t.id))
               .map((t) => t.id);
-            gapRecords.push({ line: `${fit.missing} — "${String(idea.idea ?? '')}" — ${p.name ?? 'this sheet'} [seat: ${seat} ${tagOf(idea)}]${fit.closest ? ` (closest offered: ${fit.closest}${closestOnMenu === false ? ' — NOT ON THE MENU' : ''})` : ''}${fit.missing_effect ? ` [effect: ${fit.missing_effect}]` : ''} [menu: ${ids.join(' ') || 'empty'}] [same-cell unoffered: ${sameCellUnoffered.join(' ') || 'none'}] [same-seat rejected: ${(menuDiag.sameSeatRejected ?? []).filter((r) => !ids.includes(r.split(':')[0])).join(' ') || 'none'}]`, template: fit.accepted_closest ? (fit.template?.id ?? null) : null, seat, name: p.name ?? 'this sheet' });
+            gapRecords.push({ composed: fit.composed ?? null, line: `${fit.composed ? `[composed: ${fit.composed}] ` : ''}${fit.missing} — "${String(idea.idea ?? '')}" — ${p.name ?? 'this sheet'} [seat: ${seat} ${tagOf(idea)}]${fit.closest ? ` (closest offered: ${fit.closest}${closestOnMenu === false ? ' — NOT ON THE MENU' : ''})` : ''}${fit.missing_effect ? ` [effect: ${fit.missing_effect}]` : ''} [menu: ${ids.join(' ') || 'empty'}] [same-cell unoffered: ${sameCellUnoffered.join(' ') || 'none'}] [same-seat rejected: ${(menuDiag.sameSeatRejected ?? []).filter((r) => !ids.includes(r.split(':')[0])).join(' ') || 'none'}]`, template: fit.accepted_closest ? (fit.template?.id ?? null) : null, seat, name: p.name ?? 'this sheet' });
           }
           else {
             // A REFUSAL WITH NO `missing` IS STILL A BUILD SIGNAL (2026-10-22).
