@@ -25,6 +25,7 @@ import { attackDamageDiceFor, saveDamageDiceFor } from '../format-2024/dice.mjs'
 import { readPhrases } from './lexicon.mjs';
 import { weaponProp } from './weapons.mjs';
 import { AREA_TARGETS } from './card-budgets.mjs';
+import { imposedConditions } from './author.mjs'; // ONE reader for the condition a row imposes: the declared record first, print's grammar second
 
 export const SECTION_OF = { trait: 'Traits', action: 'Actions', bonus_action: 'Bonus Actions', reaction: 'Reactions', rider: 'Rider' }; // Rider = a clause appended to the melee attack row
 export const TRIGGERS = ['on_hit', 'save', 'on_being_hit', 'start_of_turn', 'once_per_fight', 'always'];
@@ -33,6 +34,49 @@ const SAVE_STATS = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wi
 const CONDITIONS = ['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned'];
 const MINOR = ['Prone', 'Poisoned', 'Deafened', 'Frightened', 'Blinded']; // Blinded joined for obscuring breaths (2026-09-28); the aura save map covers it
 const RESTRAINTS = ['Grappled', 'Restrained'];
+
+// WHICH STAT A SAVE ROW ROLLS AGAINST — ONE closed fact, measured over print,
+// shared by every reader (owner, 2026-10-25: "tables might be ok if the table
+// and the call work together properly"). The CALL supplies the judgement — which
+// condition the row imposes, whether damage is the point of the row — and this
+// table supplies print's answer. It decides no meaning of its own.
+//
+// Three copies of this rule existed before today: this one, a prose ladder in
+// renderTemplate's save block, and a third in generate.mjs's A2 pass. The prose
+// ladder was the only copy that got it wrong, and it got it wrong the way a word
+// list always does — `execute`'s CR 0-2 frame targets "one Frightened creature",
+// a condition it REQUIRES, and the ladder read the bare word as a condition it
+// IMPOSES and answered Wisdom on a row whose point is damage. That is bar 1's
+// own failure, surviving inside the gate built to stop it. The imposition is
+// read by `imposedConditions`, which prefers the row's declared record and falls
+// back to print's "has the X condition" grammar; a targeting clause never
+// matches it.
+const SAVE_FOR_CONDITION = { Prone: 'Strength', Grappled: 'Strength', Restrained: 'Strength', Poisoned: 'Constitution', Deafened: 'Constitution', Blinded: 'Constitution', Stunned: 'Constitution', Paralyzed: 'Constitution', Incapacitated: 'Constitution', Petrified: 'Constitution', Frightened: 'Wisdom', Charmed: 'Wisdom' };
+
+/**
+ * The stats a save row may roll against, best first; `[]` when nothing is known
+ * and the caller must leave the row alone.
+ *
+ * print's measured splits: a shove or haul is Strength (5 rows to Dexterity's
+ * 2); area-plus-damage is Dexterity 46 / Constitution 29 / Wisdom 5, so when
+ * damage is the point of the row the save is never Wisdom whatever rider it
+ * carries; a condition-only row saves by its condition (Poisoned -> Constitution
+ * 24, Frightened -> Wisdom 13).
+ *
+ * @param imposes         the condition the row IMPOSES (declared, or read by
+ *                        `imposedConditions`) — not one it requires of its target
+ * @param damageDominant  the caller's judgement that damage is the point of the
+ *                        row, not a rider
+ * @param movement        the row shoves, hauls or drags (the row's own flag)
+ */
+export function saveStatsFor({ imposes = null, damageDominant = false, movement = false } = {}) {
+  if (movement) return ['Strength', 'Dexterity'];              // a shove keeps Strength even over an area (print's one such row is the Centaur's Trampling Charge)
+  const want = SAVE_FOR_CONDITION[String(imposes ?? '')] ?? null;
+  if (want === 'Strength') return damageDominant ? ['Dexterity', 'Strength'] : ['Strength', 'Dexterity']; // Prone self-ends; a damaging area a creature dodges is Dexterity
+  if (want === 'Wisdom') return damageDominant ? ['Dexterity', 'Constitution'] : ['Wisdom', 'Charisma'];  // the fear is the rider, the fire is the row
+  if (want === 'Constitution') return ['Constitution'];
+  return damageDominant ? ['Dexterity', 'Constitution'] : [];
+}
 const DAMAGE = ['Acid', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Poison', 'Psychic', 'Radiant', 'Thunder', 'Bludgeoning', 'Piercing', 'Slashing'];
 const PHYSICAL = ['Bludgeoning', 'Piercing', 'Slashing'];
 
@@ -1251,10 +1295,9 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // Wisdom, Prone = Strength. Engine-owned; the model's proposal is overruled.
   const modelSave = SAVE_STATS.includes(String(fills.save_stat)) ? String(fills.save_stat) : null; // the MODEL's pick, read before the engine's condition-save block below writes over it
   if (text.includes('{save_stat}') && text.includes('{condition_minor}')) {
-    const CONDITION_SAVE = { Poisoned: 'Constitution', Deafened: 'Constitution', Frightened: 'Wisdom', Prone: 'Strength', Blinded: 'Constitution' };
     const proposedC = String(fills.condition_minor ?? '').trim();
     const condPick = MINOR.find((x) => x.toLowerCase() === proposedC.toLowerCase()) ?? (MINOR.includes(ctx.conditionMinor) ? ctx.conditionMinor : 'Frightened');
-    fills = { ...fills, condition_minor: condPick, save_stat: CONDITION_SAVE[condPick] };
+    fills = { ...fills, condition_minor: condPick, save_stat: saveStatsFor({ imposes: condPick })[0] }; // the call picked the condition from the closed list; the shared table pairs print's save stat
     // THE PICK IS KEPT (2026-10-20). This block already chooses the condition
     // from the closed MINOR list, validates the model's proposal against it, and
     // pairs print's own save stat — then discarded the choice, so every reader
@@ -1262,46 +1305,46 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     // are decided together here; the row should say so.
     pickedCondition = condPick;
   }
-  if (text.includes('{save_stat}')) { // SAVE BY EFFECT (the critic's fourth read): Prone, push or grapple → Strength; Dexterity for an area a creature dodges; poison, disease or a breath → Constitution; fear or charm → Wisdom. The Iron Bull knocked Prone on a Wisdom save.
-    const eff = text.replace(/\{save_stat\}/g, '');
-    const byEffect = /\b(?:Prone\b|pushed\b|shoved?\b|Grappled\b|Restrained\b|knocked)/.test(eff) ? (/\b(?:Cone|Emanation|Sphere|Line|Cube|each creature)\b/.test(eff) ? 'Dexterity' : 'Strength')
-      : /\b(?:Poisoned|poison|disease|diseased|breath|spores?|gas|fumes|choke|choking|suffocat)/i.test(eff) ? 'Constitution'
-      : /\b(?:Frightened|Charmed|fear|terror|dread|command|compel)/i.test(eff) ? 'Wisdom'
-      : /\b(?:Blinded|Deafened|Stunned|Paralyzed|Incapacitated)\b/.test(eff) ? 'Constitution' : null;
+  if (text.includes('{save_stat}')) {
     // THE MODEL'S PICK IS CONSULTED FIRST (owner, 2026-10-25: "metadata back from
     // the LLM over string matching"). This block used to overwrite
     // `fills.save_stat` unconditionally — zero reads of the model's own answer —
     // so the VOCAB enum it chose from was decorative. Now the pick stands unless
-    // it contradicts the one case print is decisive about: a shove, pull or
-    // knock-down is Strength (5 rows against Dexterity's 2), and a damage-dominant
-    // row is never Wisdom (the critic's Furnace Breath, 72 fire + Frightened on a
-    // Wisdom save). Everything else is the model's call, with the rule now in its
-    // own guidance. Each override traces the reason.
+    // print is decisive against it, and every override traces its reason.
+    //
+    // What the gate reads is DECLARED, not prose (owner's audit, 2026-10-25):
+    //  - the imposition comes from `imposedConditions`, the one shared reader,
+    //    which prefers the row's own record and otherwise reads print's "has the
+    //    X condition" grammar. The prose ladder this replaces answered Wisdom for
+    //    `execute`'s CR 0-2 frame, whose "one Frightened creature" is a condition
+    //    it REQUIRES of its target — bar 1's own failure living inside the gate
+    //    built to stop it. A targeting clause cannot match the imposition grammar.
+    //  - a dead `isShove` word list (`pushed|shoved?|pulled|knocked`) sat here
+    //    too: no frame carrying `{save_stat}` holds a shove verb, so it could
+    //    never fire, and the shove rule is already enforced one layer down in
+    //    A2 off the row's own `imposesMovement` flag. Deleted rather than fixed.
+    const eff = text.replace(/\{save_stat\}/g, '');
     const picked = modelSave; // NOT fills.save_stat: the condition-save block above may already have written the engine's own choice there, and the replay showed every pick - and no pick - reading as Wisdom
-    const isShove = /\b(?:pushed|shoved?|pulled|knocked)\b/.test(eff);
-    const dmgDominant = /\{avg[a-z_0-9]*\} \(\{dice[a-z_0-9]*\}\)|\d+ \(\d+d\d+/.test(eff); // every damage token the frames use: {avg} {avg_half} {avg_x2} — the first cut missed _x2 and condition-payoff (the critic's Molten Weld) slipped through on Wisdom // the damage is still a TOKEN at this point ({avg} ({dice})); the number fills later
-    // THE THIRD DECISIVE CASE: a row that imposes one minor condition and nothing
-    // else has one save that fits — the condition's own (print: Poisoned ->
-    // Constitution 24 rows; Frightened -> Wisdom 13). The condition-save block
-    // above already wrote it into fills.save_stat; a contrary model pick is an
-    // OVERRIDE with that reason, not a pick to honour. (templates.spec: "a
-    // condition aura saves by its condition, whatever the model proposed".)
-    // A frame can carry BOTH a minor condition and damage dice (condition-payoff:
-    // 59 fire AND a one-turn Frightened on failure). There the damage is the row
-    // and the condition is the rider, so the damage rule wins and the condition's
-    // own save does NOT bind — the first cut re-derived the critic's Molten Weld
-    // to Wisdom "because it imposes Frightened". A condition aura binds only when
-    // it imposes a minor condition and deals no damage (noxious-aura, gaze-single).
-    const condSave = text.includes('{condition_minor}') && !dmgDominant ? String(fills.save_stat) : null;
-    const contradicts = picked && ((isShove && picked !== 'Strength') || (dmgDominant && picked === 'Wisdom') || (condSave && picked !== condSave));
-    // A damage-dominant row with no condition word has NO by-effect answer — the
-    // ladder returns null — and the replay showed a contradicted Wisdom pick, and
-    // a missing pick, both rendering Wisdom (the template's own placeholder). print's
-    // answer for area-plus-damage is Dexterity (46 rows), so that is the fallback.
-    const fallback = condSave ?? byEffect ?? (dmgDominant ? 'Dexterity' : null);
+    // DAMAGE IS THE POINT OF THE ROW. This stays a token read, and the declared
+    // `effect` cell cannot replace it: `seal` declares effect:'condition' and
+    // carries damage dice, so the two fields answer different questions — what
+    // the row is FOR, versus whether its damage dominates the save. Every damage
+    // token the frames use is matched ({avg} {avg_half} {avg_x2}); the first cut
+    // missed _x2 and condition-payoff (the critic's Molten Weld) slipped through
+    // on Wisdom. The damage is still a TOKEN here; the number fills later.
+    const damageDominant = /\{avg[a-z_0-9]*\} \(\{dice[a-z_0-9]*\}\)|\d+ \(\d+d\d+/.test(eff);
+    // A condition AURA binds its own save — it imposes a condition and deals no
+    // damage (noxious-aura, gaze-single). When a frame carries BOTH (condition-payoff:
+    // 59 fire AND a one-turn Frightened) the damage is the row and the condition
+    // the rider, so the damage rule wins; the first cut re-derived Molten Weld to
+    // Wisdom "because it imposes Frightened".
+    const imposed = pickedCondition ?? imposedConditions({ text: eff })[0] ?? null;
+    const want = saveStatsFor({ imposes: imposed, damageDominant });
+    const contradicts = picked && want.length > 0 && !want.includes(picked);
+    const fallback = want[0] ?? null;
     if (picked && !contradicts) fills = { ...fills, save_stat: picked };
     else if (fallback) fills = { ...fills, save_stat: fallback };
-    if (picked && contradicts) saveOverride = `"${picked}" -> ${fallback ?? 'no fallback'}: ${isShove ? 'a shove is Strength in print (5 rows to 2)' : condSave && picked !== condSave ? `a ${fills.condition_minor} aura saves by its condition` : 'a damage-dominant row is never Wisdom'}`;
+    if (picked && contradicts) saveOverride = `"${picked}" -> ${fallback}: ${damageDominant && !SAVE_FOR_CONDITION[String(imposed ?? '')] ? 'a damage-dominant row saves by Dexterity or Constitution in print, never Wisdom' : damageDominant ? `the damage is the row and ${imposed} the rider, so print saves by ${want.join(' or ')}` : `a ${imposed} row saves by ${want.join(' or ')} in print`}`;
   }
   for (const [k, list] of Object.entries(VOCAB)) {
     if (!text.includes(`{${k}}`)) continue;

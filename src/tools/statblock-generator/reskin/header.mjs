@@ -199,19 +199,40 @@ export function honestAttackNames(sections, { projectile = null } = {}) {
   return changes;
 }
 
-const FLAMMABLE = ['wax', 'tallow', 'straw', 'paper', 'parchment', 'oil', 'pitch', 'hay', 'cloth', 'linen', 'kindling', 'lamp-oil', 'tinder', 'rag', 'rags'];
 // MATERIAL AFFINITY (critic, fresh ten): a body's material names its weakness —
 // read from the CONCEPT's own words as well as the model's material field; a
 // glass ox is never immune to Thunder, a hay scarecrow never resists Fire
-export const MATERIAL_VULN = { glass: 'Thunder', crystal: 'Thunder', porcelain: 'Bludgeoning', ice: 'Fire', frost: 'Fire', snow: 'Fire', wax: 'Fire', tallow: 'Fire', straw: 'Fire', hay: 'Fire', paper: 'Fire', parchment: 'Fire', oil: 'Fire', 'lamp-oil': 'Fire', pitch: 'Fire', cloth: 'Fire', rags: 'Fire', tinder: 'Fire', kindling: 'Fire' };
+export const MATERIAL_VULN = { glass: 'Thunder', crystal: 'Thunder', porcelain: 'Bludgeoning', ice: 'Fire', frost: 'Fire', snow: 'Fire', wax: 'Fire', tallow: 'Fire', straw: 'Fire', hay: 'Fire', paper: 'Fire', parchment: 'Fire', oil: 'Fire', 'lamp-oil': 'Fire', pitch: 'Fire', cloth: 'Fire', linen: 'Fire', rag: 'Fire', rags: 'Fire', tinder: 'Fire', kindling: 'Fire' }; // `linen` and `rag` arrived from a separate FLAMMABLE list that said only "burns"; one table now answers for every material (owner, 2026-10-25)
+// THE CALL NAMES THE BODY; THE TABLE ONLY SAYS WHAT THAT BODY FEARS (owner,
+// 2026-10-25: "tables might be ok if the table and the call works together
+// properly"). `material` is the identity call's own `material` field, so it is an
+// answer, not a guess — and this function used to search it and the GM's concept
+// as ONE string, looping the table in insertion order. The table therefore
+// outranked the call: a call that answered `wax` lost its Fire to any concept
+// that mentioned glass, because `glass` is declared earlier. That is a table
+// acting as a tiebreaker against a call, which CLAUDE.md forbids.
+//
+// The order is now: the call's answer decides if the table knows it; otherwise
+// the GM's own words stand in. The concept path is kept — the critic caught a
+// glass ox keeping a Thunder immunity because the call had answered `iron` — but
+// it is a fallback for an answer that carries no vulnerability, never a vote
+// against one that does. `from` reports which path spoke so the gap stays
+// countable.
+//
+// What this still cannot do: a call that answers `iron` for "a glass ox" is
+// simply wrong, and the honest fix is the identity prompt, not a scanner here.
+// The fallback masks that error instead of surfacing it.
 export function materialVulnerability(conceptText, material) {
-  const words = `${conceptText ?? ''} ${material ?? ''}`.toLowerCase();
-  for (const [m, v] of Object.entries(MATERIAL_VULN)) if (new RegExp(`\\b${m}\\b(?!-)`).test(words)) return { material: m, vulnerability: v }; // "glass-eyed" describes an eye, not a body (the lamplighter's Thunder vulnerability — critic's audit 2026-10-02)
-  return null;
+  const hit = (words, from) => {
+    for (const [m, v] of Object.entries(MATERIAL_VULN)) if (new RegExp(`\\b${m}\\b(?!-)`).test(words)) return { material: m, vulnerability: v, from }; // "glass-eyed" describes an eye, not a body (the lamplighter's Thunder vulnerability — critic's audit 2026-10-02)
+    return null;
+  };
+  const declared = String(material ?? '').trim().toLowerCase();
+  return (declared ? hit(declared, 'call') : null) ?? hit(String(conceptText ?? '').toLowerCase(), 'concept');
 }
 /** A body of a flammable material is vulnerable to Fire and never resistant to it. */
 export function honestFireDefenses(monster, { material = null, concept = '' } = {}) {
-  const hit = materialVulnerability(concept, material) ?? (FLAMMABLE.includes(String(material ?? '').toLowerCase()) ? { material, vulnerability: 'Fire' } : null);
+  const hit = materialVulnerability(concept, material); // one table, one reader — the FLAMMABLE second chance folded into MATERIAL_VULN
   if (!hit) return null;
   const V = hit.vulnerability;
   const strip = (line) => String(line ?? '').split(/,\s*/).filter((r) => r && !new RegExp(`^${V}$`, 'i').test(r)).join(', ') || undefined;
@@ -221,5 +242,5 @@ export function honestFireDefenses(monster, { material = null, concept = '' } = 
   monster.vulnerabilities = vul.join(', ');
   // an absorption trait of the same type is the same contradiction
   for (const es of Object.values(monster.sections ?? {})) for (let i = es.length - 1; i >= 0; i -= 1) if (new RegExp(`subjected to ${V} damage, it takes no damage`, 'i').test(es[i].text ?? '')) es.splice(i, 1);
-  return `a ${hit.material} body is vulnerable to ${V} and never resists, absorbs, or ignores it`;
+  return `${/^[aeiou]/i.test(hit.material) ? 'an' : 'a'} ${hit.material} body is vulnerable to ${V} and never resists, absorbs, or ignores it (named by the ${hit.from === 'call' ? "call's own material field" : "GM's words, the call having named no material the table knows"})`; // the path is in the trace because the whole point of `from` was to keep the fallback countable
 }

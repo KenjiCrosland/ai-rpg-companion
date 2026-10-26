@@ -11,7 +11,7 @@ import { pickDonor, scaleDonor, stampAttacksPerRound } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf} from './templates.mjs';
+import { NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
@@ -7053,7 +7053,6 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
     if (!imposed && !e.imposesMovement) continue;
     if (fromText) trace('save stat from print grammar:', `${sec}/${String(e.name).replace(/ \(.*\)$/, '')} imposes ${imposed} by its own text — no record on the row, so the grammar stood in (A2 gap)`);
-    const eff = e.imposesMovement && !imposed ? 'Prone' : String(imposed);
     // PRONE IN A DAMAGING AREA IS A DEXTERITY SAVE; STRENGTH IS FOR SHOVES
     // (critic's package-seven review, 2026-10-22: Glacier's Killing Cold 13d10
     // cone and Brass's Molten Exhalation 16d8 cone were both retyped CON -> STR
@@ -7064,22 +7063,24 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // condition: a row that shoves or hauls keeps Strength; a row whose point is
     // damage over an area takes Dexterity.
     //
-    // `imposesMovement` is the row's own recorded push/pull flag, so the shove
-    // half needs no new reading; the area-and-damage half reads the same two
-    // shapes valueCheck already reads off the finished text.
+    // The mapping itself now lives in ONE place — `saveStatsFor` in templates.mjs
+    // (owner's audit, 2026-10-25). This arm held the third private copy of it,
+    // written as a prose ladder over a value that is only ever a single condition
+    // NAME: `imposed` comes from the row's declared record or from print's "has
+    // the X condition" grammar, so `poison|disease|spores?|choking|suffocat` and
+    // `pushed|knocked prone` could never match anything. Dead decoration over a
+    // table. What this pass still owns is the two JUDGEMENTS the table needs —
+    // whether damage over an area is the point of the row, and whether the row
+    // shoves — the second of which is `imposesMovement`, the row's own flag.
+    //
+    // One deliberate widening: the old ladder answered for Prone, Poisoned,
+    // Frightened and Charmed and left every other imposition uncorrected. The
+    // shared table covers print's full condition list, so a Deafened or Grappled
+    // row on the wrong stat is now retyped too. The ten's Killing Wake (Deafened,
+    // 71 cold in a cone) already shipped Constitution, which the table accepts.
     const areaDmg = /each creature|Cone|Sphere|Line|Emanation|radius/i.test(e.text ?? '') && /\d+ \(\d+d\d+/.test(e.text ?? '');
-    const proneish = /\b(?:Prone\b|pushed\b|knocked prone)/.test(eff);
-    const want = proneish ? (areaDmg && !e.imposesMovement ? ['Dexterity', 'Strength'] : ['Strength', 'Dexterity'])
-      : /\b(?:Poisoned|poison|disease|spores?|choking|suffocat)/i.test(eff) ? ['Constitution']
-      // A DAMAGE-DOMINANT AREA IS NEVER A WISDOM SAVE, whatever rider it carries
-      // (critic's second read, 2026-10-25: Furnace Breath, 72 fire + Frightened,
-      // shipped on Wisdom). print: area+damage is Dexterity 46 / Constitution 29 /
-      // Wisdom 5. The fear is the rider; the fire is the row. This arm keyed on the
-      // CONDITION alone and so re-derived a breath to Wisdom — the one place gate 3
-      // (which governs template rows) could not reach, because a chassis nova is
-      // neither template nor seed.
-      : /\b(?:Frightened|Charmed)\b/.test(eff) ? (areaDmg ? ['Dexterity', 'Constitution'] : ['Wisdom', 'Charisma']) : null;
-    if (!want || want.includes(sv[1])) continue;
+    const want = saveStatsFor({ imposes: imposed, damageDominant: areaDmg, movement: !!e.imposesMovement });
+    if (!want.length || want.includes(sv[1])) continue;
     e.text = e.text.replace(sv[0], sv[0].replace(sv[1], want[0]));
     trace('save re-derived after a retype:', `${sec}/${String(e.name).replace(/ \(.*\)$/, '')} — a ${sv[1]} save for a condition the row IMPOSES, which calls for ${want.join(' or ')} (A2: a condition the row merely requires does not pick the stat)`);
   }

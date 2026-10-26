@@ -945,3 +945,105 @@ passes for the wrong reason.
   Body are the open lodge/resonant-body body-warrant item.
 Verdict: gate 3 moves forward. The template path is sampled at ~0-2 draws per
 ten; the close-out forty is where it gets measured live.
+
+## The word-list audit (owner asked: "how are we on llm/metadata gates vs regex?")
+
+Audited the gate surface rather than recalling it. Of the three gates shipped
+today, 1 and 2 were clean declared-data gates; gate 3 was 2/3 clean and the
+missing third was mine, shipped hours earlier. Three findings, all evidenced:
+
+1. **`isShove` was dead code.** `/pushed|shoved?|pulled|knocked/` in gate 3 could
+   never fire: across all 29 frames carrying `{save_stat}`, none holds a shove
+   verb, and every shove-verb frame in the catalog lacks the slot. The override
+   reason "a shove is Strength in print (5 rows to 2)" was unprintable. The shove
+   rule was already enforced one layer down in A2 off `imposesMovement`, the
+   row's own declared flag. Deleted rather than fixed, and the pre-registered
+   "three print rules" claim was really two.
+2. **A fourth copy of the condition->stat rule, and the only wrong one.**
+   `byEffect`'s prose ladder fired on exactly 2 of 29 frames, and one was a live
+   bug: `execute`'s CR 0-2 frame targets "one **Frightened** creature" — a
+   condition it REQUIRES of its target — and the ladder read the bare word as an
+   imposition and answered **Wisdom on a damage row**. Bar 1's own failure,
+   living inside the gate built to stop it, and it would have shipped on any
+   low-CR execute draw with no model pick. A2 had guarded this exact case in
+   prose ("a condition the row merely requires does not pick the stat"); the
+   templates copy had no such guard.
+3. **A2's own ladder was decoration over a table.** Its `eff` is only ever a
+   single condition NAME (from `e.imposes` or print's grammar), so
+   `poison|disease|spores?|choking|suffocat` and `pushed|knocked prone` could
+   never match anything.
+
+**Landed:** one closed-fact table + `saveStatsFor({imposes, damageDominant,
+movement})` in templates.mjs, consumed by the condition-save block, the save
+block, and A2. The imposition is read by `imposedConditions` — the one shared
+reader, declared record first, print's grammar second — so a targeting clause
+can no longer be mistaken for an imposition. Three prose word lists deleted; the
+rule has one definition. `dmgDominant` stays a token read, with the evidence for
+why the declared field cannot serve: `seal` declares `effect:'condition'` and
+carries damage dice, so `effect` answers what the row is FOR, not whether its
+damage dominates the save.
+
+**Material (owner: "tables might be ok if the table and the call works together
+properly"):** `material` IS a call field (`parsed.material` -> `conceptHouse`),
+and `materialVulnerability` searched it and the GM's concept as ONE string while
+looping the table in insertion order — so the table outranked the call, and a
+call answering `wax` lost its Fire to any concept mentioning glass. Now the
+call's answer decides when the table knows it; the concept stands in only for an
+answer carrying no vulnerability (which preserves the critic's glass-ox catch,
+where the call had answered `iron`), and `from: 'call'|'concept'` reports which
+path spoke. FLAMMABLE folded into MATERIAL_VULN (`linen`, `rag` were its only
+unique entries). Still cannot fix a call that answers `iron` for a glass ox —
+that is the identity prompt's job, and the fallback masks it; written in the code.
+
+**Two deliberate widenings to measure, not assume** (criteria in
+scratchpad/gate3b-criteria.md): the save gate now enforces the whole `want` list
+rather than only the Wisdom arm, so Strength and Charisma picks on a
+damage-dominant row are overridden too (print: STR 4 is as rare as WIS 5, so it
+is consistent — but it overrides MORE model picks than what I measured, and if
+the ten shows >2/10 sheets with an override the list should narrow); and A2 now
+answers for print's full condition list instead of only Prone/Poisoned/
+Frightened/Charmed.
+
+Suite 3,943 green, build clean. Replay: scratchpad/execfix.mjs.
+
+### The ten after the consolidation (`smoke-out/save10-2026-10-26T03-01-19`)
+
+BAR 1 **pass** — damage-dominant-on-Wisdom 0. The ten's only Wisdom save is
+  Withering Gaze (single target, 14 damage, Frightened), where Wisdom is right;
+  the area test is what separates it from a Furnace Breath.
+BAR 2 **pass**, on a shape I had not anticipated. No `execute` drew, but two
+  condition-payoff rows did, and both REQUIRE one condition and IMPOSE another:
+  Trip Attack ("one creature that has the Frightened condition... 71 Fire, and
+  the target has the Prone condition") took **Strength** from the imposed Prone,
+  not Wisdom from the required Frightened; Rime Wake the same with Dexterity.
+  That is exactly the distinction the deleted ladder could not make.
+BAR 3 **pass** — 0 overrides; the widening did not bite. Weak evidence (3
+  save-template rows in the sample), no sign of over-overriding.
+BAR 4 — 2 A2 retypes, both Constitution -> Dexterity on an area-damage row
+  imposing Prone. **Pre-existing, not from this change**: the old ladder returned
+  the same ['Dexterity','Strength'] for Prone. And the Splinterline Bulwark is
+  accidental positive evidence for the table — it ships TWO rows with identical
+  damage and an identical Prone rider, and they got different stats for the right
+  reason: the static burst Dexterity, the charge Strength (print's Centaur rule,
+  via `imposesMovement`).
+  **The tension to rule on:** the Prone arm excludes Constitution on the strength
+  of a 5-row print slice (area+damage+Prone: DEX 3 / STR 1 / WIS 1 / CON 0),
+  while the broader area+damage slice has CON at 29 rows. So a cold breath cone
+  that also knocks prone loses a print-legal Constitution. Two retypes in ten
+  sheets is the threshold I pre-registered for narrowing. Proposed, not taken:
+  when damage dominates, accept Dexterity AND Constitution (preferring Dexterity)
+  and keep rejecting Wisdom — the rule the corpus actually supports.
+BAR 5 — one material hit (`ice` -> Fire, resistance withheld). The `from` receipt
+  now reaches the trace, which was the stated point of adding it.
+Regression: 10/10 ok, no throws, 0 payoff declines, 0 rider refusals, 1 floor
+  drop, 2 "never reached the sheet".
+
+HOLISTIC — one FIX, two fix-lite:
+- **FIX (sameness, not the save gate):** Splinterline Bulwark ships Splintering
+  Lashings (Bloodied burst, 27 Bludgeoning + Prone) AND Siege Charge (charge, 27
+  Bludgeoning + Prone) — same damage, same rider, two rows. The free-row
+  decoration path produced the first. This is the plateau flaw in miniature.
+- fix-lite: Hollow Glacier Heart's "wake of killing cold" became Aberrant Ground
+  (Difficult Terrain) — a shape-fit fallback that drops the cold, the same class
+  as the previous ten's "Aura of Truth" but milder.
+- fix-lite: Brass Tyrant names a 71-Fire nova "Trip Attack".
