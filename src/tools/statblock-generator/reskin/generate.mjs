@@ -3515,7 +3515,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (wanted && DAMAGE_TYPES.includes(wanted)) e.text = e.text.split('{damage_type}').join(wanted);
       for (const [slot, menu] of Object.entries(CONDITION_MENUS)) {
         const pick2 = String(p.conditions?.[slot] ?? '').trim();
-        if (e.text.includes(`{${slot}}`) && menu.includes(pick2)) e.text = e.text.split(`{${slot}}`).join(pick2);
+        if (e.text.includes(`{${slot}}`) && menu.includes(pick2)) {
+          e.text = e.text.split(`{${slot}}`).join(pick2);
+          // THE FILL SITE DECLARES WHAT IT WROTE (2026-10-26). This was the one
+          // chassis site that imposed a condition and recorded nothing: every
+          // breath and slam with a {condition_minor} slot shipped without
+          // `imposes`, and a late pass re-read it off the finished text on 16 of
+          // 40 sheets ("record completed … the fill site that wrote it owes this
+          // field"), while A2's save-stat pass, running earlier, had to fall back
+          // to print grammar for the same rows ("A2 gap"). Every donor use of the
+          // slot is "the target has the {condition_minor} condition" — an
+          // imposition, never a requirement (donors.spec pins that) — so the
+          // record is the pick itself.
+          if (!e.imposes) e.imposes = pick2;
+        }
       }
       if (e.text.includes('{projectile}')) {
         const proj = String(p.projectile ?? '').trim();

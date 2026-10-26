@@ -183,3 +183,41 @@ zone (a `wake` placement: trailing its path; damage + slow together), payoff
 (keyed on Bloodied/wounded; stacking is a counter — bounded or refused), mark,
 sentinel, drag. Then the print-exact five from the superseded plan as pinned
 forms. Each family: skeleton from print, three blanks, bans, a replay, a ten.
+
+---
+
+## Decision 2, done by the analysis session (owner asked): the fill sites declare what they impose
+
+Opus's claim that the fit site drops `rendered.imposes` was WRONG — the return at
+generate.mjs ~4588 carries it with two fallbacks, and `renderTemplate(composed).imposes`
+is deterministic (asserted). The two stray "record completed" traces on composed rows
+were stale dev-server code (src edited seconds before a smoke launched — the rule
+in `never-edit-src-during-a-live-smoke`).
+
+The REAL debt the trace was pointing at, counted over 40 sheets: **16 on
+`template=chassis`** — the donor's own breaths and slams. Two sources:
+1. donors.mjs — 11 rows imposed in prose with no record (Swallow x8, Engulf x3:
+   Blinded+Restrained; "Entomb" in traces is Swallow renamed) and 4 hold-line
+   attacks declared Grappled while their text also restrains. Fixed in data.
+2. generate.mjs ~3518 — the ONE chassis fill site for `{condition_minor}` (14
+   donor novas: "the target has the {condition_minor} condition") wrote the pick
+   into the text and never onto the row. It now stamps `imposes`. donor-imposes.spec
+   pins that every such slot is an imposition, so the stamp is always true.
+
+imposes-grammar.spec compared a string tag to the FIRST condition the reader
+found — array-unaware, so a row declaring both read as wrong and one declaring
+half was never caught. It now compares the whole set via the one plural reader.
+Suite 3,977. Criteria: scratchpad/imposes-at-source-criteria.md.
+
+**Result (`save10-2026-10-26T17-13-27`):** BAR 1 pass — "record completed" on
+chassis rows **2 -> 0**; BAR 2 pass — A2-gap traces **1 -> 0**; no "record
+completed" of any kind on the ten. BAR 3 — ideas reaching the sheet 56% against
+a 70% bar, but: every loss is a plain model refusal ("no template holds it": the
+drake's gale-shove, the sellsword's shoulder-to-shoulder), none tied to the
+widened Restrained records (0 duplicate/containment/already-imposes traces, 0
+payoff declines), and the series across nine tens is 61 72 83 58 78 78 89 94 56
+— 58 appeared before any of today's work. **This metric moves ±15 points on
+noise at n≈18 ideas; a single ten cannot resolve a 15-point change on it. Every
+future bar on it needs two runs or a per-seat reason read.** BAR 4 untestable —
+no swallow body drew. Decoration 1 of 10 shipped rows (10%), lowest yet, same
+caveat. Holistic: no row text changed by construction; blocks read as before.

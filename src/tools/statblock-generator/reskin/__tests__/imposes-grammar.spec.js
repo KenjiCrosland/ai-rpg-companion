@@ -96,10 +96,16 @@ describe('no stored row claims an imposition its text does not make', () => {
 
   it('has tagged rows to check', () => expect(tagged.length).toBeGreaterThan(40));
 
-  it('every tag agrees with the grammar that reads it', () => {
+  // A TAG MAY NAME SEVERAL CONDITIONS (2026-10-26). The hold line's attack
+  // grapples AND restrains; Swallow blinds AND restrains. The first cut of this
+  // test compared a string tag against the FIRST condition the reader found, so
+  // a row that declared both read as a disagreement and a row that declared
+  // half was never caught. Both sides are a set now, read by the one reader.
+  const asList = (v) => (Array.isArray(v) ? v : [v]).map(String).sort().join('+');
+  it('every tag agrees with the grammar that reads it — every condition, not the first', () => {
     const wrong = tagged
-      .filter((r) => (imposedCondition({ text: r.text }) ?? null) !== r.imposes)
-      .map((r) => `[${r.src}] ${r.name}: tagged ${r.imposes}, text reads ${imposedCondition({ text: r.text })}`);
+      .filter((r) => asList(r.imposes) !== imposedConditions({ text: r.text }).sort().join('+'))
+      .map((r) => `[${r.src}] ${r.name}: tagged ${asList(r.imposes)}, text reads ${imposedConditions({ text: r.text }).sort().join('+')}`);
     expect(wrong).toEqual([]);
   });
 
@@ -108,9 +114,10 @@ describe('no stored row claims an imposition its text does not make', () => {
   // and the duplicate-mechanic gate rightly ignores it, because three self-buffs
   // are not the repetition it looks for.
   it('counts only the conditions inflicted on a target', () => {
-    const selfBuffs = tagged.filter((r) => !AFFLICTIONS.includes(r.imposes));
-    for (const r of selfBuffs) expect(imposedCondition({ text: r.text })).toBe(r.imposes);
-    expect(tagged.filter((r) => AFFLICTIONS.includes(r.imposes)).length).toBeGreaterThan(40);
+    const list = (v) => (Array.isArray(v) ? v : [v]).map(String);
+    const selfBuffs = tagged.filter((r) => !list(r.imposes).some((c) => AFFLICTIONS.includes(c)));
+    for (const r of selfBuffs) expect(imposedConditions({ text: r.text }).sort()).toEqual(list(r.imposes).sort());
+    expect(tagged.filter((r) => list(r.imposes).some((c) => AFFLICTIONS.includes(c))).length).toBeGreaterThan(40);
   });
 });
 

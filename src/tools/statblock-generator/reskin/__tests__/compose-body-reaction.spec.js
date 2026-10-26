@@ -105,6 +105,18 @@ describe('the engine assembles print\'s sentence', () => {
     expect(Object.keys(t.frames)).toEqual(['0-2', '3-5', '6-9', '10-12', '13-20', '21+']);
   });
 
+  it('the RENDERED row carries the condition as declared data — never left to be re-read off the text', () => {
+    // One stray "record completed" trace fired on a composed row (run 16-23-12)
+    // after this was declared. The chain template -> rendered -> row is
+    // deterministic, so that trace was stale code on the dev server (src edited
+    // seconds before the smoke launched), not a path that drops the field.
+    const g = G();
+    const t = composedTemplate({ family: 'body-reaction', trigger: g.trigger[0], consequence: g.consequence[1], condition: 'Deafened' });
+    const r = renderTemplate(t, ctx(8));
+    expect(r.imposes).toBe('Deafened');
+    expect(renderTemplate(composedTemplate({ family: 'body-reaction', trigger: g.trigger[0], consequence: g.consequence[0] }), ctx(8)).imposes).toBeUndefined(); // damage imposes nothing
+  });
+
   it('the effect cell follows the consequence', () => {
     const g = G();
     const eff = (i, c = null) => composedTemplate({ family: 'body-reaction', trigger: g.trigger[0], consequence: g.consequence[i], condition: c }).effect;
