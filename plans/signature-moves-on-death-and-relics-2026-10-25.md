@@ -1047,3 +1047,115 @@ HOLISTIC — one FIX, two fix-lite:
   (Difficult Terrain) — a shape-fit fallback that drops the cold, the same class
   as the previous ten's "Aura of Truth" but milder.
 - fix-lite: Brass Tyrant names a 71-Fire nova "Trip Attack".
+
+**Owner ruled yes (2026-10-26): Constitution is no longer overruled on a damage
+row.** `saveStatsFor`'s damage-dominant arms now accept Dexterity AND
+Constitution; Wisdom stays rejected (the one thing the corpus is decisive about,
+46/29/5). Strength stays acceptable only where the condition is a physical
+displacement. Effect on the last run: Killing Cold and Splintering Lashings both
+keep Constitution instead of being retyped to Dexterity — we lose the
+burst-vs-charge differentiation that retype happened to produce, and in exchange
+stop overruling a legal choice. Fewer overrides is the direction of this work.
+Replay: scratchpad/execfix.mjs, 8 cases. Suite green, build clean.
+
+## Measured: do the AI's signature ideas reach the sheet? (owner's question, 2026-10-26)
+
+70 monsters (the forty of 2026-10-25 plus three tens on today's engine). Scripts:
+scratchpad/sigrate2.mjs (rate) and scratchpad/deco.mjs (what the nearest-match
+rows did with the idea).
+
+The AI proposed **129** signature abilities at the concept stage.
+- **101 (78%) reached the statblock as a row.** The owner's hypothesis — that
+  sameness comes from ideas not being translated — is mostly NOT the cause. The
+  pipe is not leaking at that stage.
+- **38 of those 101 (38%) shipped as DECORATION**: the fit call refused every
+  template, so the engine shipped its NEAREST template into that seat with no
+  receipt. The seat is filled; the idea is gone.
+- 25 (19%) never arrived: 11 found nothing on the shelf, 11 priced out under the
+  floor, 3 had nothing legal at all.
+
+**Where the decoration lands is the finding.** Across 70 sheets the
+nearest-match slots concentrate: `weapon-lodge` **10**, then undead-fortitude 2,
+resonant-body 2, own-turn-punisher 2, and a long tail of 1s. And the ideas
+landing there are nearly all the SAME KIND of idea — a reactive one:
+
+| the AI described | shipped as |
+|---|---|
+| "whenever it is struck, loose grit shears off and goes skittering" | resonant-body |
+| "the bindings bite back at anything that presses against it" | bloodied-burst |
+| "any foe that crowds it and tries to hold it" | weapon-lodge |
+| "anyone who tries to move past him through the ground he's braced on" | own-turn-punisher |
+| "its halo of flies peels away to settle on every wounded creature" | condition-payoff |
+
+The last is the worst: a spreading multi-target effect shipped as a
+single-target damage spike. The Bulwark's is the one that produced the visible
+duplicate — a retaliation idea became a Bloodied nova, which then sat beside
+`trample` as a second 27-damage-plus-Prone row.
+
+**Conclusion: the catalog has about four retaliation shapes and the AI keeps
+inventing a fifth.** The sameness is not a translation-rate problem; it is a
+shelf-coverage problem with a specific, nameable shape. This also explains the
+critic's outstanding weapon-lodge item (×6) — that template is the catch-all
+those ideas fall into, which is why it keeps appearing on bodies that do not
+warrant it. The two items are one item.
+
+**Measurement note:** `readGapOutcomes`'s "N of M accepted picks never reached
+the sheet" is NOT a rate and must not be read as one — it traces only when
+`vetoed` is non-zero, so sheets with no loss contribute to neither side, and it
+measures concept GAP records rather than the two signature-idea seats. Summing
+it across a run gave 64% against the true 19%.
+
+## The reactive bias is the prompt's, not the AI's (2026-10-26)
+
+Owner: "the ai seems biased toward reactive abilities... maybe the problem is
+higher up than we thought." Checked rather than assumed:
+
+- The AI's own declared `trigger` tags across 129 ideas (70 sheets): **trait
+  ideas 45% `on_being_hit`; action ideas 8%.** The action seat is balanced; the
+  bias lives in one seat.
+- Print (SRD 5.2, 329 monsters, 324 traits): the "when you touch or hit it"
+  trait is **3 of 324** (Black Pudding, Mimic, Barbed Devil), confirmed by direct
+  idiom greps, not a parser miss. 2024 print moved retaliation into Emanation
+  auras. Our trait ideas were ~20x print.
+- The cause is one sentence in `buildIdeaPrompt`'s trait guidance, which banned
+  resistances and offered exactly one positive example: *"something that happens
+  to whoever touches, hits, or holds it."* Classic prompt-examples-teach-the-answer.
+- Temperature: not set anywhere in the pipeline (request body is {model,
+  messages, thinking:disabled}); the call runs at DeepSeek's default 1.0. There
+  is no knob yet. Left alone for this change so the result is attributable.
+- Decoration rows split 24 trait / 12 action from equal proposals — the seat the
+  prompt steered is the seat that fails to fit twice as often.
+
+Landed: the trait sentence now lists print's trait kinds (move / presence /
+spend-recover / sense-hide / grow stronger) and names the reactive kind last as
+the rarest in print, for corrosive, barbed or adhesive bodies only. The action
+guidance is untouched. Same-batch baseline (three save10 runs, 30 sheets):
+trait reactive 37%, decoration 31%. Criteria: scratchpad/prompt-balance-criteria.md.
+
+**Result (`save10-2026-10-26T14-41-49`, criteria in scratchpad/prompt-balance-criteria.md):**
+BAR 1 pass — trait ideas tagged reactive **37% -> 0%** (0 of 9).
+BAR 2 pass — action reactive 7% -> 10% (1 sheet; control held).
+BAR 3 pass — trait ideas spread over five kinds (defense 3, damage 2, resource 2, movement 1, condition 1).
+BAR 4 pass — decoration **31% -> 18%** of shipped rows.
+BAR 5 numerically failed (72% -> 58% reached the sheet) but the losses are 6 action : 1 trait,
+  and action floor-drops across the four same-batch runs are 4 / 2 / 1 / 4 — this run matches
+  the first baseline run exactly. Noise, not the prompt. The trait seat (the one changed) shipped 8 of 9.
+Holistic: the nine traits are nine different shapes — aura, difficult terrain x2, evasion,
+  fortitude, retaliation, gaze, false-appearance, absorption. Less samey to the eye. But
+  three do not say what the AI described, and the measurement below says why.
+
+### The next bottleneck is the FIT stage's keyword binding (2026-10-26)
+
+Across the 40 same-batch sheets, 31 trait signatures shipped. Compared the idea's
+own declared trigger to the shipped template's declared trigger (scratchpad/bindmatch.mjs):
+  bound by concept keyword:  6 DIFFER / 5 match  -> 55% wrong
+  bound by idea keyword:     2 DIFFER / 6 match  -> 25%
+  shape fit (nearest):       3 DIFFER / 9 match  -> 25%
+The bell-ghost shipped `resonant-body` in 3 of 4 runs because "bell/toll/peal" is a
+VERB_KEYS word for it — in the latest run the AI's idea was an on-HIT stacking rider
+("every blow the peal LANDS leaves a ring"), the fit call's own `because` restated that
+idea correctly, and it shipped the reactive template anyway. The Tyrant's "burns hotter
+once wounded badly" was offered bloodied-fury (exactly it), declined it, and shipped
+noxious-aura as a nearest match. The Golem's "NOT a carved statue" bound false-appearance
+on the word "statue". This is a word table outranking a call — CLAUDE.md's rule, flagged.
+The prompt fix balanced what the AI proposes; the keyword binding bends it back.
