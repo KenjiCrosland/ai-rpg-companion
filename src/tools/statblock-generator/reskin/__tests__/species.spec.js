@@ -344,7 +344,15 @@ describe('the critic\'s fifth read, and the judgements the call now owns (2026-1
     const { buildFitPrompt, parseFit, TEMPLATE_BY_ID } = require('../templates.mjs');
     const menu = [TEMPLATE_BY_ID.get('false-appearance'), TEMPLATE_BY_ID.get('charge')].filter(Boolean);
     const prompt = buildFitPrompt({ name: 'Mournhold Grieve', idea: { idea: 'it stands still among the herd', section: 'trait', trigger: 'always', effect: 'defense' }, menu, cr: 5, concept: 'a goliath stone-herder' });
-    expect(prompt).toMatch(/modifier slot of a compound/i);
+    // The compound-modifier warning ("a blood-priest has no blood sense; a
+    // stone-herder is not made of stone") guarded the KEY-WORD LABEL, which no
+    // longer nominates anything on this prompt (2026-10-26). What the test is
+    // really about survives: the call is still asked which suggestions are
+    // collisions, `wrong` is still in the contract, and `collision` is still a
+    // reason it can decline for — now phrased against the creature's words or
+    // kind rather than a label the menu no longer shows.
+    expect(prompt).toMatch(/collision \(the creature's words or kind suggest this template but it does not mean that mechanic here\)/);
+    expect(prompt).toMatch(/the GM's phrasing is context, not a vote/);
     expect(prompt).toMatch(/"wrong"/);
     // the fill is asked for whichever answer the call gives
     expect(prompt).toMatch(/fill its "you fill" slots/i);

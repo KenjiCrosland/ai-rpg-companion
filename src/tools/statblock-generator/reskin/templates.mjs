@@ -571,6 +571,62 @@ export function rankByVerb(menu, conceptText0, ideaText0 = '', askedMechanic = n
     .sort((a, b) => (wantsMech(b.t) ? 1 : 0) - (wantsMech(a.t) ? 1 : 0) || b.score - a.score || a.i - b.i);
 }
 
+/**
+ * THE FIT MENU'S ORDER, FROM THE IDEA'S OWN DECLARED STAMPS.
+ *
+ * The AI describes the signature in plain words and tags it from two closed
+ * enums — `trigger` (when it fires) and `effect` (what it does). Every template
+ * declares the same two cells. So the menu can be ordered by STAMP AGREEMENT,
+ * which is a comparison of declared fields, and never by whether one of the
+ * template's key words happens to appear in the GM's concept.
+ *
+ * Why this replaced the keyword bind (measured over four same-batch runs, 40
+ * sheets, scripts/signature-measures/fit-trigger-match.mjs): of the trait
+ * signatures that shipped, those chosen because a key word of theirs appeared in
+ * the GM's CONCEPT fired differently from the idea the AI described **6 times in
+ * 11 (55%)**; the other paths, 25%. The bell-ghost shipped `resonant-body`
+ * ("thunder damage to whoever hits IT") in 3 of 4 runs because "bell", "toll"
+ * and "peal" are its key words — while the idea was "every blow the peal LANDS
+ * leaves a ring", an on-hit effect pointing the other way. The keyword label
+ * also made the call REJECT a right template as a word collision: the brass
+ * tyrant's "burns hotter once wounded badly" was offered `bloodied-fury`,
+ * declined it, and shipped `noxious-aura` on a furnace creature.
+ *
+ * Tiers, strongest first. Trigger outranks effect because WHEN a row fires is
+ * the thing the keyword bind got wrong, and is what the measurement scores:
+ *   0  the declared mechanic the resolve call named (2026-10-23, 432/432)
+ *   1  trigger AND effect agree with the idea's tags
+ *   2  trigger agrees
+ *   3  effect agrees
+ *   4  neither
+ * Catalog order holds inside a tier, so this REORDERS and never filters: a
+ * mistagged idea costs the first seats, never a candidate, and the call may
+ * still answer `none`.
+ *
+ * NOTE this cannot fix a disagreement between the idea's tag and the template's
+ * own cell. The tyrant's idea was tagged `always/damage` and `bloodied-fury`
+ * declares `always/defense`, so it lands in tier 2 rather than tier 1 — ahead of
+ * the `save/condition` template that actually shipped, which is the measurable
+ * gain, but not first.
+ */
+export function orderByStamps(pool, idea = null, askedMechanic = null) {
+  const trig = idea?.trigger ?? null;
+  const eff = idea?.effect ?? null;
+  const tier = (t) => {
+    if (askedMechanic && t.mechanic === askedMechanic) return 0;
+    const tOk = !!trig && t.trigger === trig;
+    const eOk = !!eff && t.effect === eff;
+    if (tOk && eOk) return 1;
+    if (tOk) return 2;
+    if (eOk) return 3;
+    return 4;
+  };
+  return pool.map((t, i) => ({ t, i, k: tier(t) })).sort((a, b) => a.k - b.k || a.i - b.i).map((x) => x.t);
+}
+
+/** Does this template fire and act the way the idea said? (the menu's own mark) */
+export const stampAgrees = (t, idea) => !!idea?.trigger && t.trigger === idea.trigger && !!idea?.effect && t.effect === idea.effect;
+
 // a PAYOFF template consumes a condition another row must produce (Gristle
 // Hill's 84-damage execute keyed on Grappled with nothing on the sheet that
 // grapples, critic run three) — off the menu when the sheet imposes nothing
@@ -1470,7 +1526,24 @@ const frameOf = (t, cr) => (t.kind === 'seed' ? t.text : t.frames[bandFor(cr)]);
 /** The catalog as the model reads it: one line per template, best match first.
  *  One owner for the format — the fit call and the re-roll call show the same shelf. */
 export function templateMenuLines(menu, { cr, concept = '', idea = '' } = {}) {
-  return rankByVerb(menu, concept, idea).map(({ t, concept: cv, idea: iv }) => {
+  // TWO LABEL MODES, by what the caller actually knows.
+  //
+  // `idea` an OBJECT (the signature fit): it carries the AI's own `trigger` and
+  // `effect` tags, so each line shows the template's declared cells and marks
+  // the ones that agree. The keyword label this replaced was followed by the
+  // call and fired wrong 55% of the time — see `orderByStamps`.
+  //
+  // `idea` a STRING (the re-roll path, format-2024/generate.mjs): there is no
+  // invented idea and no tags, only the text of the row being replaced, so
+  // there are no stamps to compare and the key-word label is the only signal
+  // that path has. It keeps it, UNCHANGED and unmeasured — the 55% was measured
+  // on the signature path and the fix belongs there. Flagged: these key words
+  // read meaning out of the GM's text and the re-roll deserves its own pass.
+  const ideaObj = idea && typeof idea === 'object' ? idea : null;
+  const ranked = ideaObj ? null : rankByVerb(menu, concept, String(idea ?? ''));
+  return (ranked ? ranked.map((r) => r.t) : menu).map((t, i) => {
+    const cv = ranked ? ranked[i].concept : [];
+    const iv = ranked ? ranked[i].idea : [];
     const matched = [...cv.map((k) => `${k} (concept)`), ...iv.map((k) => `${k} (idea)`)];
     const flav = t.flavor.length ? ` — you fill: ${t.flavor.map((f) => (PREDICATE_SLOTS.has(f) ? `{${f}} (a PREDICATE, no subject and no full stop — the frame already says "Each creature in the area": answer like "has Disadvantage on attack rolls")` : SLOT_CONTRACTS[f] ? `{${f}} (${SLOT_CONTRACTS[f]})` : `{${f}}`)).join(', ')}` : '';
     const vocab = slotsOf(frameOf(t, cr)).filter((s) => VOCAB[s]).map((s) => `{${s}} ∈ ${VOCAB[s].join('/')}${VOCAB_GUIDANCE[s] ? ` — ${VOCAB_GUIDANCE[s]}` : ''}`);
@@ -1483,12 +1556,12 @@ export function templateMenuLines(menu, { cr, concept = '', idea = '' } = {}) {
     // same two-name split as area_shape: the frame carries {duration}, the choice
     // the model makes is "duration", so the menu has to name it or it is unreachable
     if (/\{duration\}/.test(frameOf(t, cr) ?? '') && t.effect === 'condition') vocab.push(`"duration" ∈ ${DURATIONS.join('/')} — how long the condition lasts`);
-    return `- ${t.id} [${SECTION_OF[t.section]}${t.gate ? `, ${t.gate}` : ''}]${matched.length ? ` VERB MATCH: ${matched.join(', ')}` : ''}: ${frameOf(t, cr).replace(/\*/g, '')}${flav}${vocab.length ? ` — choose: ${vocab.join('; ')}` : ''}`;
+    return `- ${t.id} [${SECTION_OF[t.section]}${t.gate ? `, ${t.gate}` : ''}]${ideaObj ? ` (fires: ${t.trigger}, does: ${t.effect}${stampAgrees(t, ideaObj) ? ' — matches the idea' : ''})` : (matched.length ? ` VERB MATCH: ${matched.join(', ')}` : '')}: ${frameOf(t, cr).replace(/\*/g, '')}${flav}${vocab.length ? ` — choose: ${vocab.join('; ')}` : ''}`;
   }).join('\n');
 }
 
 export function buildFitPrompt({ name, idea, menu, cr, concept = '', sheet = null, clause = null, elements = [], asked = null }) {
-  const lines = templateMenuLines(menu, { cr, concept, idea: idea.idea });
+  const lines = templateMenuLines(menu, { cr, concept, idea }); // the OBJECT: its `trigger`/`effect` tags are what mark and order the menu now
   // WHAT THE ENGINE ALREADY KNOWS, handed over instead of re-inferred (owner's
   // architecture, 2026-10-23: "the final prompt is just taking instruction after
   // we have properly sorted things out"). The identity, resolve and clause calls
@@ -1511,10 +1584,10 @@ ${askedLines.length ? `WHAT THE ENGINE HAS ALREADY CLASSIFIED — these came fro
 ${askedLines.join('\n')}
 ` : ''}TEMPLATES:
 ${lines}
-THE CLASSIFICATION DECIDES, NOT A WORD. Templates are listed in the engine's order, which is NOT a ranking of fit — a VERB MATCH marked (concept) means only that the template's key word appears in the GM's words. It nominates; it never accepts. Judge the template against the classification above and the clause, and ignore the order.
-A VERB MATCH is a WORD match, not a judgement — the engine found the template's key word in the user's words and is asking you whether it MEANS that mechanic for this creature. It does not mean it when the word sits in the modifier slot of a compound (a blood-priest has no blood sense; a stone-herder is not made of stone; a knife ball is not an assassin), when the sheet or the creature's own kind already answers it (a climb Speed answers "climbs the wall"), or when it belongs to another fiction (a living warden who guards a reef is not bound to a resting place). Name every such template in "wrong" — the engine will not use one you list there. Leave "wrong" empty when each match genuinely means its mechanic.
-A template whose match is marked (concept) may be used even if you answer none, so fill its "you fill" slots in "fills" whichever answer you give, quoting the user's own words (a phobia of chickens fills {phobia} with "chickens"; a warden of the reef fills {place} with "the reef").
-WHY NONE FITS. When you answer "none", answer "declined_because" with exactly one of: collision (a template's key word is here but does not mean that mechanic for this creature), already_answered (the sheet or the creature's own kind already does this), no_fit (nothing offered carries the idea). Answer "" when you did pick a template.
+THE CLASSIFICATION DECIDES, AND THE IDEA'S OWN TAGS ORDER THE LIST. Each template shows (fires: <when>, does: <what>) — its own declared cells — and the list is sorted by how well those agree with the tags THIS idea already carries (fires: ${idea.trigger ?? '—'}, does: ${idea.effect ?? '—'}). A template marked "matches the idea" agrees on both. That ordering is a HINT, not a verdict: it is a comparison of two labels, not a reading of your idea. Judge each template's printed rules against the classification above, the clause, and what the idea actually describes — and answer none when nothing carries it.
+WHAT THE ORDER IS NOT. It is not a ranking of fit, and nothing in the GM's wording nominates a template any more. Earlier the engine searched the GM's words for each template's key words and labelled the hits, and that label was followed: a bell-ghost whose idea was "every blow it LANDS leaves a ring" was given a template that damages whoever hits IT, three runs in four, because "bell" was one of its words. Read the rules; the GM's phrasing is context, not a vote. A template low on the list can be the right one, and the first one can be wrong.
+EVEN IF YOU ANSWER none, fill its "you fill" slots in "fills" — the engine may still use a template you declined, and your fills travel with it. Quote the user's own words (a phobia of chickens fills {phobia} with "chickens"; a warden of the reef fills {place} with "the reef").
+WHY NONE FITS. When you answer "none", answer "declined_because" with exactly one of: collision (the creature's words or kind suggest this template but it does not mean that mechanic here), already_answered (the sheet or the creature's own kind already does this), no_fit (nothing offered carries the idea). Answer "" when you did pick a template.
 A RIDER THAT MOVES THE TARGET OUT OF REACH does not belong on a row the Multiattack repeats: push the target 10 feet on the first hit and the second and third cannot land, so the creature defeats its own Multiattack. Read the sheet's Multiattack and reach before offering a push or pull rider; refuse it there (the Horseman's Saber, 2026-10-25). A REFUSAL NAMES ITS GAP. "no_fit" is not an answer on its own — say which of the offered templates comes CLOSEST ("closest"), what the rules would have to do that none of them does ("missing"), and WHICH KIND OF EFFECT that missing thing is ("missing_effect"), exactly one of: damage | condition | movement | resource | defense. Judge the effect by what the row DOES to its target, not by words that appear in passing: a row that only applies against an already-prone target is not a condition row, and a row that resists being pushed is defense, not movement. In a few plain words naming the MECHANIC, not the fiction: "pulls the creature back to where it started", "picks one target and holds the aim", "costs the creature something when it fails". Never "nothing fits" and never a restatement of the idea. These accumulate into a list of templates worth building, so a vague answer is a wasted one.
 DID THE USER ASK FOR IT? Answer "asked" with the user's OWN WORDS that ask for this template's mechanic, quoted verbatim from THE USER TYPED line above — never from THE IDEA, which is the engine's own prose and is not the user
 ${elements.length ? `WHICH OF THIS CREATURE'S OWN ELEMENTS DOES THE ROW EXPRESS? Answer "expresses" with ONE of these, copied exactly, or "" if the row expresses none of them. These were drawn from the GM's description, so naming one is a receipt even when you cannot quote the GM directly — a trait seat usually cannot. Answer "" honestly: a row that does not express any of them is decoration, and saying so is the right answer.\n${elements.map((e) => `  - ${String(e).replace(/"/g, "'")}`).join('\n')}` : ''}'s words. The few words, not a sentence. Leave it "" when the user's words never ask for it and your pick rests on the idea you were given or on the template's shape. Answering "" is not a failure and does not withdraw your pick; it tells the engine the pick is yours, not the GM's, and some seats take only what the GM asked for.

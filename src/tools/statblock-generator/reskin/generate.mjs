@@ -11,7 +11,7 @@ import { pickDonor, scaleDonor, stampAttacksPerRound } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor} from './templates.mjs';
+import { orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
@@ -4158,47 +4158,42 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         if (!ownClause) { trace('signature miss:', `${seat} — "${idea.idea}" ${tagOf(idea)} — no template on the shelf shares a verb with the concept or the idea (offered: ${pool.map((t) => t.id).join(', ')})`); return null; }
         trace('verb gate stands down:', `${seat} — no template shares a verb, but "${ownClause}" is a clause the sheet has not answered; the GM's own words are the warrant`);
       }
-      // BIND TO THE CONCEPT'S VERB (critic v3: "the lure goes to things that
-      // beckon; the Bloodied burst to things with a bell"): when the user's
-      // own words name a template's verb, the fit sees ONLY those templates —
-      // the idea supplies the fiction and the name, never the choice
-      let conceptBound = verbRanked.filter((r) => r.concept.length).map((r) => r.t);
-      // the STRONGEST concept match decides — "seal, sermon, psalm, wither"
-      // outranks "flock"; offering both let the model pick the weaker (rally)
-      if (conceptBound.length > 1) {
-        const scored = rankByVerb(conceptBound, verbText);
-        const top = scored[0].concept.length;
-        conceptBound = scored.filter((r) => r.concept.length === top).map((r) => r.t);
-      }
-      // no concept bind: the idea's own menu, plus any shelf row the IDEA's verbs name
+      // THE CONCEPT'S WORDS NO LONGER BIND THE FIT (owner's audit, 2026-10-26;
+      // plans/fit-by-stamps-not-keywords-2026-10-26.md). This block used to put
+      // every template whose own key word appeared in the GM's concept at the
+      // HEAD of the menu, and the call followed the label: measured over four
+      // same-batch runs (40 sheets), a concept-keyword pick fired differently
+      // from the idea the AI described 6 times in 11 (55%) against 25% for the
+      // other paths. The bell-ghost took `resonant-body` (thunder to whoever
+      // hits IT) in 3 of 4 runs on the words "bell/toll/peal" while its idea was
+      // "every blow it LANDS leaves a ring" — the opposite direction. The label
+      // also pushed the call to REJECT a right template as a word collision: the
+      // tyrant's "burns hotter once wounded" declined `bloodied-fury` and shipped
+      // `noxious-aura`.
+      //
+      // The order now comes from the idea's OWN declared tags against each
+      // template's declared cells (`orderByStamps`). `conceptBound` survives for
+      // the trace line below ONLY — runs stay comparable — and orders nothing.
+      const conceptBound = verbRanked.filter((r) => r.concept.length).map((r) => r.t);
+      // the idea's own words still bring a shelf template into the CANDIDATE SET
+      // (not to the front): without this the pool is only the section menu
       const ideaNamed = verbRanked.filter((r) => r.idea.length && !menu.includes(r.t)).map((r) => r.t);
-      // FORCE-BINDING IS RETIRED (critic, 2026-10-15; owner's ruling: where a
-      // judgement about meaning is needed it goes to a call, never into a key
-      // table). A key match RANKS a template first on the menu — it no longer
-      // replaces the menu, and it no longer overrules the call's own "none".
-      // Every word-collision defect of the month came from that override:
-      // "guard" -> Guarded Stance, "mimic" -> False Appearance, "stone" ->
-      // False Appearance on a goliath, "fallen order" -> "orders" -> rally
-      // (reported three times), "ooze" -> Aberrant Ground, "death" -> execute.
-      // Some verbs will now be missed; a miss shows in the trace and the
-      // coverage line instead of shipping a wrong trait.
-      let offered = conceptBound.length
-        ? [...conceptBound, ...menu.filter((t) => !conceptBound.includes(t)), ...ideaNamed.filter((t) => !conceptBound.includes(t))]
-        : [...menu, ...ideaNamed];
-      // THE DECLARED MECHANIC LEADS THE MENU (owner's architecture, 2026-10-23). The
-      // resolve call read what the GM asked a row to DO; every template declares the
-      // same field, so the match is a stamp comparison, not a word overlap. On a
-      // verbless concept ("lizardfolk ninja", "fire monk") the word list seats a
-      // mechanic-member first 12% of the time and the stamp 100% — and because this
-      // REORDERS, a misread costs the first seats, never a candidate (measured: the
-      // word-ranked pick survives the 14-cap in 432 of 432 wrong-mechanic trials).
-      if (options.askedMechanic) {
-        const lead = offered.filter((t) => t.mechanic === options.askedMechanic);
-        if (lead.length) {
-          offered = [...lead, ...offered.filter((t) => !lead.includes(t))];
-          trace('declared mechanic leads the menu:', `${seat} — ${options.askedMechanic}: ${lead.map((t) => t.id).join(', ')}`);
-        }
+      // THE SET IS EXACTLY WHAT IT WAS, only the order changes. A conceptBound
+      // template may come off the wide shelf and be in neither `menu` nor
+      // `ideaNamed`; dropping it here would make this a filter, and the whole
+      // point is that a mistagged idea costs the first seats and never a
+      // candidate. There is no cap on `offered`, so order never evicts.
+      const candidates = [...menu, ...ideaNamed.filter((t) => !menu.includes(t)), ...conceptBound.filter((t) => !menu.includes(t) && !ideaNamed.includes(t))];
+      // THE DECLARED MECHANIC STILL LEADS (owner's architecture, 2026-10-23): the
+      // resolve call read what the GM asked a row to DO and every template
+      // declares the same field, so that match is a stamp comparison too. It is
+      // tier 0 inside `orderByStamps` (measured: the word-ranked pick survives in
+      // 432 of 432 wrong-mechanic trials, and this reorders rather than filters).
+      const offered = orderByStamps(candidates, idea, options.askedMechanic ?? null);
+      if (options.askedMechanic && offered.some((t) => t.mechanic === options.askedMechanic)) {
+        trace('declared mechanic leads the menu:', `${seat} — ${options.askedMechanic}: ${offered.filter((t) => t.mechanic === options.askedMechanic).map((t) => t.id).join(', ')}`);
       }
+      trace('menu ordered by the idea\'s stamps:', `${seat} — idea fires ${idea.trigger}/does ${idea.effect}; leading: ${offered.slice(0, 3).map((t) => `${t.id} (${t.trigger}/${t.effect})`).join(', ')}`);
       if (conceptBound.length) trace('signature bound to the concept\'s verb:', `${seat} — ${conceptBound.map((t) => t.id).join(', ')} (${[...new Set(rankByVerb(conceptBound, verbText).flatMap((r) => r.concept))].join(', ')})`);
       try {
         const ownClauseForCall = closedPath ? unansweredClause() : null; // the engine names the clause; the call picks a template FOR it (the critic's prescription, 2026-10-19)
@@ -4282,6 +4277,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           } else trace('closest refused:', `${seat} — "${fit.closest}" was named closest but was never on this sheet's menu`);
         }
         const hnF = headNoun(verbText); const topC = conceptBound.length ? rankByVerb([conceptBound[0]], verbText)[0].concept : [];
+        // The call answered `none` for the WHOLE menu, and every conceptBound template
+        // was on it (the set is preserved; only the order changed on 2026-10-26), so
+        // recording them as declined is still true and the fallback shelf below filters
+        // exactly as it did before. FLAGGED for its own pass: the honest record of a
+        // `none` is now every id in `offered`, not the keyword subset — widening it
+        // would restrict the fallback shelf far more, so it needs its own measurement.
         if (!fit.template && conceptBound.length) for (const t of conceptBound) declinedT.add(t.id);
         // STAGE 2 ITEM 1: the reason rides on the record for every decline, so the
         // 50-decline sample can be drawn from runs instead of re-asked.
@@ -4355,7 +4356,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             });
           }
         }
-        if (!fit.template && conceptBound.length) trace('key match declined:', `${seat} — "${conceptBound[0].id}" was ranked first on the call's own menu for ${rankByVerb([conceptBound[0]], verbText)[0].concept.join('+')}, and the call read it as ${wrongT.has(conceptBound[0].id) ? 'a collision, not the mechanic' : 'no fit'}; the words keep their claim and nothing is forced`);
+        if (!fit.template && conceptBound.length) trace('key match declined:', `${seat} — "${conceptBound[0].id}" is keyed by the GM's ${rankByVerb([conceptBound[0]], verbText)[0].concept.join('+')} and was on the call's menu, which the call read as ${wrongT.has(conceptBound[0].id) ? 'a collision, not the mechanic' : 'no fit'}; since 2026-10-26 the words no longer seat it first — the idea's stamps order the menu — so this records a decline, not an overruled nomination`);
         // THE RE-POUR IS RETIRED WITH THE FORCE-BIND (critic, 2026-10-15). When
         // the call said none, this re-asked the SAME call with the idea rewritten
         // to "build the concept's own verb as this ability" — on a menu the key
@@ -5138,7 +5139,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // the GM's own words and said no to this one. Re-landing it here is
           // the key table winning after the call declined, the same third door
           // the library draw already had closed.
-          if (declinedT.has(r.t.id)) { trace('concept-first trait skipped:', `${r.t.id} — the GM's words key it, but the call was offered it against those words and declined`); continue; }
+          if (declinedT.has(r.t.id)) { trace('concept-first trait skipped:', `${r.t.id} — the GM's words key it, but the call was offered it on this seat's menu and declined`); continue; }
           if (r.t.id === 'guarded-stance' && guardedStanceIsIllegal(monster.ac ?? scaled.ac)) { trace('concept-first trait skipped:', `guarded-stance — ${guardedStanceWhy(monster.ac ?? scaled.ac)}; the same gate the seat's menu and the class kit use`); continue; }
           const rr = renderTemplate(r.t, ctxT, bindFills(r.t), { blind: true });
           if (!rr) { trace('concept-first trait skipped:', `${r.t.id} (the sheet cannot render it blind)`); continue; }

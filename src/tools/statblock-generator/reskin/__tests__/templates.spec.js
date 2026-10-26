@@ -270,7 +270,14 @@ describe('the catalog', () => {
     expect(ranked.find((r) => r.t.id === 'obstacle-pull').matched).toContain('beckon');
     const firstUnmatched = ranked.findIndex((r) => r.matched.length === 0);
     expect(ranked.slice(firstUnmatched).every((r) => r.matched.length === 0)).toBe(true); // every match ranks ahead of every non-match
-    expect(buildFitPrompt({ name: 'K', idea: { idea: 'the lamp lures them up', section: 'action', trigger: 'save', effect: 'condition' }, menu, cr: 7, concept: 'a lighthouse ghost that lures' })).toMatch(/- lure \[Actions\] VERB MATCH: lure \(concept\)/);
+    // THE FIT MENU NO LONGER LABELS KEY-WORD HITS (2026-10-26, plans/fit-by-stamps-not-keywords-2026-10-26.md).
+    // `rankByVerb` still ranks — the assertions above still hold, and the re-roll
+    // path still shows VERB MATCH — but the signature fit prompt shows each
+    // template's DECLARED cells against the idea's own tags instead, because the
+    // keyword label was followed by the call and fired wrong 55% of the time.
+    const lurePrompt = buildFitPrompt({ name: 'K', idea: { idea: 'the lamp lures them up', section: 'action', trigger: 'save', effect: 'condition' }, menu, cr: 7, concept: 'a lighthouse ghost that lures' });
+    expect(lurePrompt).not.toMatch(/VERB MATCH/);
+    expect(lurePrompt).toMatch(/- lure \[Actions\] \(fires: save, does: condition — matches the idea\)/);
     expect(TEMPLATES.map((t) => t.id)).not.toContain('unnerve');
     expect(TEMPLATES.find((t) => t.id === 'focus').gate).toBe('2/Day');
   });
