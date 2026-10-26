@@ -4174,7 +4174,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // The order now comes from the idea's OWN declared tags against each
       // template's declared cells (`orderByStamps`). `conceptBound` survives for
       // the trace line below ONLY — runs stay comparable — and orders nothing.
-      const conceptBound = verbRanked.filter((r) => r.concept.length).map((r) => r.t);
+      let conceptBound = verbRanked.filter((r) => r.concept.length).map((r) => r.t);
+      // NARROWED TO THE STRONGEST MATCH — restored 2026-10-26. The stamp-ordering
+      // commit dropped these four lines, which was a quiet widening: `conceptBound`
+      // still feeds `declinedT` on a `none` answer, and that set is filtered out of
+      // the fallback shelf and the seed pool below (~4911, ~4954). Without the
+      // narrowing every weak key-word match was recorded as declined, excluding more
+      // from the fallback than before, and the candidate set gained the weak matches
+      // too. The original reason stands as well: "seal, sermon, psalm, wither"
+      // outranks "flock", and offering both let the model pick the weaker (rally).
+      if (conceptBound.length > 1) {
+        const scored = rankByVerb(conceptBound, verbText);
+        const top = scored[0].concept.length;
+        conceptBound = scored.filter((r) => r.concept.length === top).map((r) => r.t);
+      }
       // the idea's own words still bring a shelf template into the CANDIDATE SET
       // (not to the front): without this the pool is only the section menu
       const ideaNamed = verbRanked.filter((r) => r.idea.length && !menu.includes(r.t)).map((r) => r.t);

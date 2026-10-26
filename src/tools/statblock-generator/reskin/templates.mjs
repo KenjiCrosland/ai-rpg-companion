@@ -247,8 +247,8 @@ const SHAPE_TAGS = {
   'life-drain': ['on_hit', 'condition'], // print's HP-maximum reduction: a rider on the hit, the effect lasting past the turn
   'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], contagion: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], spew: ['save', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'hook-rider': ['on_hit', 'movement'], riposte: ['on_being_hit', 'damage'], 'snap-shot': ['on_being_hit', 'damage'], 'ground-burst': ['save', 'damage'], 'volley-order': ['always', 'resource'], 'random-ray': ['save', 'condition'], 'blurred-form': ['always', 'defense'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'stunning-strike': ['on_hit', 'condition'], 'patient-defense': ['always', 'defense'], 'lay-on-hands': ['always', 'resource'], 'second-wind': ['always', 'resource'], 'shield-bash': ['save', 'condition'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
   'spider-climb': ['always', 'movement'], phobia: ['always', 'condition'], 'terrain-walk': ['always', 'movement'], 'aberrant-ground': ['always', 'movement'], 'faultless-tracker': ['always', 'condition'], 'web-walker': ['always', 'movement'],
-  'fire-aura': ['start_of_turn', 'damage'], 'noxious-aura': ['save', 'condition'], 'bloodied-fury': ['always', 'defense'], 'uncanny-sense': ['always', 'defense'], 'earth-glide': ['always', 'movement'], tunneler: ['always', 'movement'], berserk: ['always', 'condition'], 'shielded-mind': ['always', 'defense'], evasion: ['always', 'defense'],
-  'relentless-pursuit': ['always', 'movement'], bound: ['always', 'movement'], 'marking-light': ['always', 'condition'], 'sealed-body': ['always', 'defense'], 'warded-mending': ['start_of_turn', 'resource'], 'guarded-stance': ['always', 'defense'], 'undead-fortitude': ['always', 'defense'], mimicry: ['always', 'defense'], wail: ['once_per_fight', 'damage'], 'truth-aura': ['save', 'condition'], 'gaze-aura': ['save', 'condition'], 'charge-push': ['on_hit', 'movement'],
+  'fire-aura': ['start_of_turn', 'damage'], 'noxious-aura': ['start_of_turn', 'condition'], 'bloodied-fury': ['always', 'defense'], 'uncanny-sense': ['always', 'defense'], 'earth-glide': ['always', 'movement'], tunneler: ['always', 'movement'], berserk: ['always', 'condition'], 'shielded-mind': ['always', 'defense'], evasion: ['always', 'defense'],
+  'relentless-pursuit': ['always', 'movement'], bound: ['always', 'movement'], 'marking-light': ['always', 'condition'], 'sealed-body': ['always', 'defense'], 'warded-mending': ['start_of_turn', 'resource'], 'guarded-stance': ['always', 'defense'], 'undead-fortitude': ['always', 'defense'], mimicry: ['always', 'defense'], wail: ['once_per_fight', 'damage'], 'truth-aura': ['start_of_turn', 'condition'], 'gaze-aura': ['start_of_turn', 'condition'], 'charge-push': ['on_hit', 'movement'],
 };
 // ENGINE FAMILIES: a template that re-implements an engine the sheet already
 // carries is off the menu by construction (iron maiden x4: hook-drag beside
@@ -720,7 +720,7 @@ export const NEEDS_BODY = {
   'resonant-body': 'a body of metal, crystal, glass, or something hollow that rings when struck',
   'active-toll': 'a body that rings, tolls, or resonates',
   'heated-body': 'a body that is burning hot, molten, or wreathed in flame',
-  'fire-aura': 'a body that burns, radiates heat, or is wreathed in flame',
+  'fire-aura': 'a body that radiates its own energy into the space around it — burning heat, killing cold, searing light, or creeping rot — so that merely standing near it is harmful. Not a body that merely LOOKS cold or dark, and not a creature whose only reach is its weapon', // the frame fills {damage_type} from the sheet's own energy, so this was never a fire question; a glacier was refused the cold aura the engine's own gap record asked for (2026-10-26)
   // 2026-10-22: the first wording, 'a body that reeks, rots, or gives off fumes',
   // carried 3 of 5 misses on the held-out probe — it missed a siege engine that
   // "belches smoke" and a swarm of carrion beetles, and false-positived on a
@@ -845,8 +845,21 @@ const rolesFor = (archetype) => (archetype === 'caster' ? ['artillery', 'control
 // an honest miss and the backlog gains the template family it actually needs.
 // The non-temporal triggers (save / always / once_per_fight) interchange.
 const TEMPORAL = new Set(['on_hit', 'on_being_hit', 'start_of_turn']);
-export function triggerCompatible(want, have) {
+const PASSIVE = new Set(['always', 'start_of_turn']); // a trait's two ways of saying "no action needed"
+export function triggerCompatible(want, have, section = null) {
   if (!want) return true;
+  // A TRAIT THAT ACTS EACH TURN IS A PASSIVE TRAIT (2026-10-26). `start_of_turn`
+  // sits in TEMPORAL so that an on-hit rider can never fill a save slot, and that
+  // is right for actions and riders — but it also made `always` and
+  // `start_of_turn` mutually exclusive for TRAITS, where they are near-synonyms:
+  // print writes Fire Aura and Aberrant Ground as plain traits with no trigger at
+  // all. Measured: a trait idea the AI tagged `start_of_turn` came back with **2
+  // of 31** trait templates, every `always` trait filtered out, so the three
+  // catalog gaps in save10-2026-10-26T15-11-53 were starvation — `orderByStamps`
+  // had nothing to rank. The filter now admits both for traits and the STAMPS do
+  // the preferring, which is this engine's own division of labour: filter on what
+  // is structurally illegal, rank on what fits.
+  if (section === 'trait' && PASSIVE.has(want) && PASSIVE.has(have)) return true;
   if (TEMPORAL.has(want) || TEMPORAL.has(have)) return want === have;
   return true;
 }
@@ -971,7 +984,7 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
       && SIZES.indexOf(String(size)) < SIZES.indexOf(t.requires_size))
     && !(t.requires_row instanceof RegExp && rows.length && !rows.some((e) => t.requires_row.test(e.text ?? '')) && !(t.keys ?? []).some((k) => new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(readPhrases(String(concept ?? ''))))) // a body-plan filter: a hurled weapon needs something to throw — a thrown/ranged row on the sheet, or a weapon the USER's words name (the armor's lance; never the gong) // a body trait is a BODY's: contact damage on a Humanoid pirate queen read her name as brine (critic, new lines 2026-09-28)
     && (!section || t.section === section)
-    && triggerCompatible(trigger, t.trigger)
+    && triggerCompatible(trigger, t.trigger, t.section)
     && !(text && deniedBy(t, text).length)
     && !(REQUIRES_IMPOSED.has(t.id) && Array.isArray(imposed) && !imposed.length)
     // THE CALL DECIDES WHETHER THIS CREATURE HOLDS (owner's preference, 2026-10-17:

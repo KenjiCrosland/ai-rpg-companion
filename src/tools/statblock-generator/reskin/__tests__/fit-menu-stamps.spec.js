@@ -105,3 +105,63 @@ describe('the menu the call reads carries no keyword labels', () => {
     expect(p).toMatch(/order/i);
   });
 });
+
+/**
+ * AURA TRAITS (plans/aura-tags-match-their-frames-2026-10-26.md).
+ *
+ * Three catalog gaps in save10-2026-10-26T15-11-53 were trait ideas tagged
+ * `start_of_turn` whose menus held no template with that trigger. The cause was
+ * not the tags: `start_of_turn` is in TEMPORAL, so `triggerCompatible` demanded
+ * an exact match and a start_of_turn idea's menu came back with **2 of 31**
+ * trait templates — every `always` trait filtered out. For a TRAIT those two
+ * triggers are near-synonyms (a trait that acts each turn is a passive trait;
+ * print writes Fire Aura and Aberrant Ground as plain traits), so the filter was
+ * starving the menu and `orderByStamps` had nothing to rank.
+ *
+ * The filter now admits both for traits and the STAMPS do the preferring, which
+ * is the engine's own division: filter on what is structurally illegal, rank on
+ * what fits.
+ */
+describe('aura traits reach the menu and the stamps still prefer them', () => {
+  const { templatesFor, TEMPLATE_BY_ID, NEEDS_BODY } = require('@/tools/statblock-generator/reskin/templates.mjs');
+  const ctx = { archetype: 'brute', cr: 15, sections: {}, section: 'trait', type: 'Elemental', concept: 'a glacier heart' };
+
+  it('a start_of_turn trait idea is no longer starved to two candidates', () => {
+    const n = templatesFor({ ...ctx, trigger: 'start_of_turn' }).length;
+    expect(n).toBeGreaterThan(20); // was 2
+  });
+
+  it('an always trait idea still sees the per-turn auras, and vice versa', () => {
+    const always = templatesFor({ ...ctx, trigger: 'always' }).map((t) => t.id);
+    const perTurn = templatesFor({ ...ctx, trigger: 'start_of_turn' }).map((t) => t.id);
+    expect(always).toContain('fire-aura');
+    expect(perTurn).toContain('spider-climb');
+  });
+
+  it('a rider trigger is still exact — on_hit never admits on_being_hit', () => {
+    const { triggerCompatible } = require('@/tools/statblock-generator/reskin/templates.mjs');
+    expect(triggerCompatible('on_hit', 'on_being_hit')).toBe(false);
+    expect(triggerCompatible('on_being_hit', 'on_hit')).toBe(false);
+  });
+
+  it('every trait template whose frame fires each turn declares start_of_turn', () => {
+    for (const t of TEMPLATES.filter((x) => x.section === 'trait')) {
+      const frame = String(Object.values(t.frames ?? {})[0] ?? '');
+      if (!/starts its turn (?:within|in)/i.test(frame)) continue;
+      expect([t.id, t.trigger]).toEqual([t.id, 'start_of_turn']);
+    }
+  });
+
+  it('a per-turn condition idea leads with the condition auras', () => {
+    const menu = ['noxious-aura', 'gaze-aura', 'spider-climb', 'bloodied-fury'].map((id) => TEMPLATE_BY_ID.get(id));
+    const ordered = orderByStamps(menu, { section: 'trait', trigger: 'start_of_turn', effect: 'condition' }).map((t) => t.id);
+    expect(ordered.slice(0, 2).sort()).toEqual(['gaze-aura', 'noxious-aura']);
+  });
+
+  it('the damage aura asks for any radiating body, not only a hot one', () => {
+    const q = String(NEEDS_BODY['fire-aura']);
+    expect(q).toMatch(/cold/i);
+    expect(q).not.toMatch(/wreathed in flame/i);
+    expect(TEMPLATE_BY_ID.get('fire-aura').trigger).toBe('start_of_turn'); // unchanged
+  });
+});
