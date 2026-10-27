@@ -3,6 +3,58 @@
 **Trigger:** picking up the reskin sprint after 2026-10-21. Read this first to
 choose what to work on; each item says where its context lives.
 
+## Carried forward from the plans of 2026-10-27 (those files are deleted; this is what survived them)
+
+**The spare slot is still one family — it MOVED, it did not shrink.** The blind
+seat default and the keyword injection are gone (commit "the spare slot"), and
+the retaliation templates fell from 3 of 4 family rows to 1 — but `energy-aura`
+rose from 1 to 4 on the same ten. It reaches the menu LEGITIMATELY: it declares
+`start_of_turn/damage`, so `orderByStamps` puts it at tier 1 for any trait idea
+firing `always`/`start_of_turn` (interchangeable for traits since the aura
+re-tag). On two of four sheets the call chose it over `spider-climb`, `phobia`
+and `aberrant-ground` when the idea had asked for movement or a resource. That
+is the CALL choosing, and no gate fixes it.
+
+The cause is a thin pool: **`templatesFor` offers 10 candidates for an always-on
+trait**, and most are narrow (`undead-fortitude`, `truth-aura`, `bound`,
+`relentless-pursuit`), so for a generic "its body does something all the time"
+idea the aura is the only broadly-applicable answer. The fix is MORE always-on
+trait shapes that are not auras — senses, terrain, how it fights, what it
+ignores — the same conclusion the composed-row work reached for actions. Print
+has 105 distinct trait names and its commonest are exactly that shape: Pack
+Tactics 18, Spider Climb 14, Amphibious 31, Flyby 7, Hold Breath 6.
+
+Do not re-measure this on one ten and call it moved: at n≈10 the family share
+swings ±15 points. It needs a forty.
+
+**The signature PLUMBING is done; what is left are shelf gaps.** The plans of
+2026-10-26 (aura tags, fit-by-stamps, composed candidates, the two compose-the-row
+grammars) all landed and are deleted. Their joint conclusion, worth keeping:
+ideas now reach the fit call, the menu is ordered by what the idea DECLARES, and
+the catalog's tags match its frames. The decoration rows that remain are the
+catalog not having the shape the idea asked for — a loose-gravel body became a
+`swallow`, a stored-charge body became `weapon-lodge` — which is
+`plans/tail-build-print-memorable-mechanics-2026-10-26.md`'s work, not a
+plumbing defect. (`weapon-lodge` as the catch-all has since gone to 0 of 40 per
+the critic's forty read.)
+
+**The FORM mechanism was refused and must not be rebuilt.** The body-reaction
+plan proposed asking the call to fill a family's blank form when no template
+fits ("if none fits, fill this form instead"). The owner refused it; composed
+candidates ride the ordinary fit MENU instead, as closed options with their own
+ids (`composedCandidates`, `composedTemplate`). Anyone reaching for a
+fill-in-the-form call should read that history first.
+
+**The seat↔clause link is still word-counting.** `leadForSeat` (templates.mjs)
+matches a seat to its clause by counting shared words over three letters. It was
+replayed against the sheet that looked like a misfire and cleared — the `seats:`
+trace that seemed to contradict it is printed from a THROWAWAY `assignSeats` at
+chassis time, while `seatsT` runs later with a wider `covered` list — so this is
+debt, not a bug. The declared replacement now exists: shipped rows carry
+`clauseId` and `clause`, so whichever call runs second can name the clause an
+element came from, and the counting goes away. Do this before anything else
+leans on `leadForSeat`.
+
 ## Standing
 
 | forty | FAIL | what failed |
