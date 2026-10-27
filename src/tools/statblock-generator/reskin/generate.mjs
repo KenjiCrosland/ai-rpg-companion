@@ -5,13 +5,13 @@
  * Signature Slot) -> verify -> lint. A rename that fails to apply FAILS
  * THE BLOCK LOUDLY (owner spec: no silent fallback names).
  */
-import { verbHits, verbLines } from './route.mjs';
+import { ASKED_MECHANICS, MECHANIC_GLOSS, verbHits, verbLines } from './route.mjs';
 import { readPhrases, headNoun, piAliasesIn, piGuard, removalClauses } from './lexicon.mjs';
 import { pickDonor, scaleDonor, stampAttacksPerRound } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor} from './templates.mjs';
+import { leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
@@ -490,7 +490,7 @@ ${needsSpells ? ` "spells": { "at_will": ["<exactly 2 spells this concept would 
  "lacks": [<EVERY thing the user said the creature does NOT have, each as {"quote": "<the user's OWN WORDS, a SHORT PHRASE of one to five words — never a sentence you build yourself>", "takes": "<what the words take away: grapple | regeneration | spellcasting | flight | ranged | melee | sight | speech | hearing | part | other. A LOST SENSE IS THAT SENSE, NOT A PART: \"blind in one eye\", \"one eye gone\", \"a milky eye\" all take sight; \"deaf in one ear\" takes hearing. Answer part ONLY for a limb or appendage it fights with — a lost arm, a severed tail, a broken wing>", "costs": "<WHICH ROLL THE WOUND SPOILS, when the absence takes no whole ability away but still ought to cost the creature something. Exactly one of: sight (it cannot see well on one side) | hearing (it cannot hear well) | one_limb_attacks (a limb it fights with is gone or ruined) | all_attacks (its whole frame is impaired) | none (the absence removes an ability outright, so nothing extra is owed). A ruined EYE costs sight, never one_limb_attacks>"}. "never holds it" takes grapple; "instead of regrowing" takes regeneration; "no magic at all" takes spellcasting; "eyeless" takes sight. A PARTIAL loss keeps the sense — "blind in one eye", "half-deaf", "limps", "missing a hand" take part, never sight, hearing or flight. EVERY entry must contain a word that takes something away: "no", "not", "cannot", "never", "without", "lost", "stripped", or a word that means the absence itself — "eyeless", "mute", "blind", "deaf", "wingless", "sightless". Examples of entries: "no magic at all", "eyeless", "lost its wings", "born mute", "carries no weapons", "never holds" (so it never grapples), "instead of regrowing" (so it does not regrow or regenerate) — "never X" and "instead of X" take X away. A lack is of ANY kind: a body part, a sense, a voice, a spell list, a weapon, armour. If a phrase has none of those words it is something the creature HAS, so leave it out. Use [] when the user took nothing away>],
  "implied_class": "<the ONE class this creature trains as, if the user's words imply one: rogue|fighter|monk|paladin|cleric|mage|bard|barbarian|none. A ninja trains as a rogue, a kung fu master as a monk, a samurai or a gladiator as a fighter. Answer none for a beast, a construct, an ooze, or a person whose words name no training at all — none is the right answer more often than not>",
  "implied_class_quote": "<the user's OWN WORDS that imply it, quoted verbatim from the THE USER TYPED line above, or \"\" if you answered none>",
- "clauses": [<EVERY distinct thing the USER typed — quote from THE USER TYPED line here: "${String(userTyped ?? concept ?? '').replace(/"/g, "'")}" — never from the description above it — one object each — {"text": "<the user's words for it>", "kind": "header|descriptive|mechanical", "when": "<for a mechanical clause ONLY, the trigger the USER's words name: start_of_turn|on_being_hit|on_hit|when_bloodied|on_death|at_will|unsaid>", "when_quote": "<the user's own words that name that trigger, copied verbatim — leave empty when you answered unsaid>", "how_often": "<for a mechanical clause ONLY, the limit the USER's words name: at_will|once_per_turn|once_per_fight|per_day|recharge|unsaid>. \"once per day\" and \"twice a day\" are per_day; \"once per fight/battle/encounter\" is once_per_fight>", "how_often_quote": "<the user's own words that name that limit, copied verbatim — leave empty when you answered unsaid>", "shape": "<for a mechanical clause ONLY, what the user's words make it DO: attack|save_area|save_single|condition|heal|buff_self|buff_ally|movement|resist|unsaid>"}. Answer "unsaid" for any of the three the user did not name — guessing is worse than silence, because the engine checks the landed row against these; header = size, speed, type, a number the user set; descriptive = looks, lore, voice, name; mechanical = anything that acts in combat (a weapon, a body part that attacks, a style, a curse, an aura, a resource). Purely descriptive words are still listed, as descriptive. This list is the record of what the user asked for>],
+ "clauses": [<EVERY distinct thing the USER typed — quote from THE USER TYPED line here: "${String(userTyped ?? concept ?? '').replace(/"/g, "'")}" — never from the description above it — one object each — {"text": "<the user's words for it>", "kind": "header|descriptive|mechanical", "when": "<for a mechanical clause ONLY, the trigger the USER's words name: start_of_turn|on_being_hit|on_hit|when_bloodied|on_death|at_will|unsaid>", "when_quote": "<the user's own words that name that trigger, copied verbatim — leave empty when you answered unsaid>", "how_often": "<for a mechanical clause ONLY, the limit the USER's words name: at_will|once_per_turn|once_per_fight|per_day|recharge|unsaid>. \"once per day\" and \"twice a day\" are per_day; \"once per fight/battle/encounter\" is once_per_fight>", "how_often_quote": "<the user's own words that name that limit, copied verbatim — leave empty when you answered unsaid>", "shape": "<for a mechanical clause ONLY, what the user's words make it DO: attack|save_area|save_single|condition|heal|buff_self|buff_ally|movement|resist|unsaid>", "mechanic": "<for a mechanical clause ONLY, WHICH MECHANIC this clause asks a row to be, one of these words (the word, then what it means):\n${ASKED_MECHANICS.map((m) => `  ${m} — ${MECHANIC_GLOSS[m]}`).join('\n')}\n  or unsaid. This is not the same question as \"shape\": a hammer that hits harder against a frightened target has the shape of an attack and the mechanic of an escalate. Answer unsaid unless the user's words name it>", "mechanic_quote": "<the user's own words that name that mechanic, copied verbatim — leave empty when you answered unsaid>"}. Answer "unsaid" for any of the three the user did not name — guessing is worse than silence, because the engine checks the landed row against these; header = size, speed, type, a number the user set; descriptive = looks, lore, voice, name; mechanical = anything that acts in combat (a weapon, a body part that attacks, a style, a curse, an aura, a resource). Purely descriptive words are still listed, as descriptive. This list is the record of what the user asked for>],
  "slot_save": "<the Saving Throw stat the Signature Slot should use — the stat the concept threatens: Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma>",
  "melee_rider": "<the ENERGY type the melee attack deals as a rider — or \"none\" if this creature's damage is purely physical (a fifth of printed monsters are)>",
  "speed_shape": "<\"climber\" keeps the Climb speed; \"runner\" trades it for +10 ft. walk (a charger, a rider, a sprinter has no business on walls)>",
@@ -798,6 +798,38 @@ export function readGapOutcomes({ sections = {}, gapRecords = [], generation = n
   return { vetoed, landed: gapRecords.length - vetoed };
 }
 
+/**
+ * A FREE ROW CARRIES ITS OWN RECEIPT.
+ *
+ * `settleSheetBudgets` ranks free rows off the ROW (`receiptRank` reads
+ * `e.expresses`), so a receipt left on the SEAT is a receipt the budget cannot
+ * see. Three sites marked a row free and only one of them put the receipt where
+ * the budget looks: the ACTION seat's grant stamped `freeRow` on the row and
+ * left `expresses` on the seat, so every action free row arrived at the budget
+ * looking like decoration. Traits iterate first and the sort is stable, so the
+ * trait seat's row took the single slot every time and nothing reordered —
+ * which is why the `free-row order:` trace fired on 2 sheets out of the 32 that
+ * had two or more candidates, across the four tens of 2026-10-26/27.
+ *
+ * The brass tyrant is the case the owner read: its hammer payoff
+ * (`condition-payoff`, expressing "furnace breath that terrifies") was picked,
+ * named, and wired into the Multiattack, then evicted at ship in favour of
+ * `assassinate` — a row the call itself admitted was only its nearest match.
+ *
+ * One owner for the mark, so the omission cannot recur at a fourth site.
+ */
+export function markFreeRow(seat, { decoration = false } = {}) {
+  if (!seat) return seat;
+  seat.freeRow = true;
+  if (decoration) seat.expresses = null;
+  if (seat.row) {
+    seat.row.freeRow = true;
+    seat.row.expresses = decoration ? null : (seat.expresses ?? null);
+    if (decoration) seat.row.decoration = true;
+  }
+  return seat;
+}
+
 export function settleSheetBudgets({ sections, printExact = false, scaled = null, cr = null, generation = null, trace: traceFn = () => {} }) {
   const trace = traceFn;
   // NO NULLISH ROW SURVIVES TO SHIP. A single undefined entry in a section kills
@@ -850,6 +882,11 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   // GM's own words this row was kept on, `expresses` the element the call named,
   // `decoration` a row the call REFUSED and that claims nothing. Sort is stable,
   // so sheet order still breaks ties within a rank.
+  // NOTE, 2026-10-27: rank 0 is UNREACHABLE and always has been — no site writes
+  // `gmQuote` to a row, and no free row can carry one anyway (a row the GM's own
+  // words asked for earns clause credit and never becomes free). The live rank
+  // is element-vs-decoration. The arm is kept because it costs nothing and is
+  // right if a quoted free row ever becomes possible; flagged to the owner.
   const receiptRank = (e) => (e.gmQuote ? 0 : e.expresses ? 1 : 2);
   const ranked = [...freeRows].sort((a, b) => receiptRank(a.e) - receiptRank(b.e));
   if (freeRows.length > 1 && ranked.some(({ e }, i) => e !== freeRows[i].e)) {
@@ -1334,7 +1371,7 @@ export function groundedClauses(list, userText, trace = () => {}, lacksAnswer = 
     }
   });
   const cleaned = phrases.map((p) => p.trim().replace(/^(?:and|or|then|which|who|that)\s+/i, '').replace(/[.!?,;]$/, '').trim()).filter((p) => p && (clauseWords(p).length || /\d/.test(p))); // a bare "CR 5" or "AC 22" is a phrase too
-  const model = (Array.isArray(list) ? list : []).filter((c) => c && typeof c.text === 'string' && c.text.trim()).map((c) => ({ text: c.text.trim(), kind: /^(?:header|descriptive|mechanical)$/.test(c.kind) ? c.kind : null, polarity: /^(?:has|lacks)$/.test(c.polarity) ? c.polarity : null, when: ASK_WHEN.test(c.when) ? c.when : null, when_quote: String(c.when_quote ?? '').trim(), how_often: ASK_OFTEN.test(c.how_often) ? c.how_often : null, how_often_quote: String(c.how_often_quote ?? '').trim(), shape: ASK_SHAPE.test(c.shape) ? c.shape : null }));
+  const model = (Array.isArray(list) ? list : []).filter((c) => c && typeof c.text === 'string' && c.text.trim()).map((c) => ({ text: c.text.trim(), kind: /^(?:header|descriptive|mechanical)$/.test(c.kind) ? c.kind : null, polarity: /^(?:has|lacks)$/.test(c.polarity) ? c.polarity : null, when: ASK_WHEN.test(c.when) ? c.when : null, when_quote: String(c.when_quote ?? '').trim(), how_often: ASK_OFTEN.test(c.how_often) ? c.how_often : null, how_often_quote: String(c.how_often_quote ?? '').trim(), shape: ASK_SHAPE.test(c.shape) ? c.shape : null, mechanic: ASKED_MECHANICS.includes(String(c.mechanic)) ? String(c.mechanic) : null, mechanic_quote: String(c.mechanic_quote ?? '').trim() }));
   // THE CALL JUDGES WHETHER THE GM IS TAKING SOMETHING AWAY (audit, 2026-10-15).
   // NEG_CUE reads the GRAMMAR of negation, and English says "lacks" with
   // adjectives and verbs far more often than with "no" or "cannot": of seventeen
@@ -1472,7 +1509,7 @@ const LACK_COSTS = ['sight', 'hearing', 'one_limb_attacks', 'all_attacks', 'none
     // `shoots`, `holds` and `bane`, each of which answers on ~100% of blocks.
     let hit = null; let bestN = 0;
     for (const c of model) {
-      if (!c.when && !c.how_often && !c.shape) continue;
+      if (!c.when && !c.how_often && !c.shape && !c.mechanic) continue; // a clause that answered ONLY a mechanic is still an answer
       const n = clauseWords(c.text).filter((w) => ws.has(w)).length;
       if (n > bestN) { bestN = n; hit = c; }
     }
@@ -1480,6 +1517,7 @@ const LACK_COSTS = ['sight', 'hearing', 'one_limb_attacks', 'all_attacks', 'none
     const vouched = (q) => { const v = vetQuote(q, `${p} ${text}`, { soloLen: 4 }); return v || null; };
     const wq = hit.when ? vouched(hit.when_quote) : null;
     const oq = hit.how_often ? vouched(hit.how_often_quote) : null;
+    const mq = hit.mechanic ? vouched(hit.mechanic_quote) : null;
     // 1b, THE ASKED TAG PERSISTS (critic's ruling, 2026-10-20). The call is
     // answering ABOUT THIS CLAUSE, so the clause is its own quote: demanding a
     // second quote from inside it threw the shape away for nothing
@@ -1488,6 +1526,18 @@ const LACK_COSTS = ['sight', 'hearing', 'one_limb_attacks', 'all_attacks', 'none
     // pointed at words the GM never wrote — but silence does not.
     const wKeep = hit.when ? (wq || !String(hit.when_quote ?? '').trim()) : false;
     const oKeep = hit.how_often ? (oq || !String(hit.how_often_quote ?? '').trim()) : false;
+    // WHICH MECHANIC THIS CLAUSE ASKS FOR — the field the sheet-level
+    // `asked_mechanic` could not supply twice (owner's GM read, 2026-10-27).
+    // Measured before this landed: the sheet's one ask lands on 6 of 18 sheets
+    // and on 0 of the 4 sheets with two mechanical clauses, because that single
+    // value leads EVERY seat's menu. "furnace breath terrifies" took the slot
+    // with `fear` and the hammer seat was shown fear templates; the payoff it
+    // needed was on the menu and sat behind them. Validated by membership of the
+    // same closed list the route call uses, and by the same quote discipline:
+    // a foreign quote drops the answer, silence keeps it (1b).
+    const mKeep = hit.mechanic && ASKED_MECHANICS.includes(String(hit.mechanic)) ? (mq || !String(hit.mechanic_quote ?? '').trim()) : false;
+    if (hit.mechanic && ASKED_MECHANICS.includes(String(hit.mechanic)) && !mKeep) trace('asked field dropped:', `the call answered mechanic "${hit.mechanic}" for "${p}" but quoted "${hit.mechanic_quote}", which is not the GM's own words`);
+    if (hit.mechanic && !ASKED_MECHANICS.includes(String(hit.mechanic))) trace('asked field dropped:', `the call answered mechanic "${hit.mechanic}" for "${p}", which is not one the catalog declares`);
     if (hit.when && !wKeep) trace('asked field dropped:', `the call answered trigger "${hit.when}" for "${p}" but quoted "${hit.when_quote}", which is not the GM's own words`);
     if (hit.how_often && !oKeep) trace('asked field dropped:', `the call answered limit "${hit.how_often}" for "${p}" but quoted "${hit.how_often_quote}", which is not the GM's own words`);
     if (hit.when && wKeep && !wq) trace('the clause is its own quote:', `trigger "${hit.when}" stands on "${p}" — the call offered no separate quote and needs none (1b)`);
@@ -1496,6 +1546,7 @@ const LACK_COSTS = ['sight', 'hearing', 'one_limb_attacks', 'all_attacks', 'none
       ...(wKeep ? { askWhen: hit.when, askWhenWhy: wq || p } : {}),
       ...(oKeep ? { askOften: hit.how_often, askOftenWhy: oq || p } : {}),
       ...(hit.shape ? { askShape: hit.shape } : {}),
+      ...(mKeep ? { askMechanic: hit.mechanic, askMechanicWhy: mq || p } : {}),
     };
   };
   const kept = cleaned.map((p, i) => {
@@ -1507,7 +1558,7 @@ const LACK_COSTS = ['sight', 'hearing', 'one_limb_attacks', 'all_attacks', 'none
   // the second block's trace showed no lack line at all — so nobody could tell
   // whether the call read "has" or the clause never split). A field that an LLM
   // populates is only honest if its value is visible on the block that used it.
-  trace('clauses:', kept.map((c) => `"${c.text}" -> ${c.polarity === 'lacks' ? 'LACKS' : 'has'}${c.kind ? ` (${c.kind})` : ''}${c.head ? ', head' : ''}${c.askWhen || c.askOften || c.askShape ? ` [asked: ${[c.askWhen, c.askOften, c.askShape].filter(Boolean).join('/')}]` : ''}`).join(' | '));
+  trace('clauses:', kept.map((c) => `"${c.text}" -> ${c.polarity === 'lacks' ? 'LACKS' : 'has'}${c.kind ? ` (${c.kind})` : ''}${c.head ? ', head' : ''}${c.askWhen || c.askOften || c.askShape ? ` [asked: ${[c.askWhen, c.askOften, c.askShape].filter(Boolean).join('/')}]` : ''}${c.askMechanic ? ` [askMechanic: ${c.askMechanic}]` : ''}`).join(' | '));
   const orphan = model.filter((c) => !clauseWords(c.text).some((w) => new Set(clauseWords(text)).has(w)));
   if (orphan.length) trace('extraction:', `${orphan.length} of ${model.length} model clauses quote nothing the user typed and leave the record (${orphan.slice(0, 3).map((c) => `"${c.text}"`).join(', ')}${orphan.length > 3 ? ', …' : ''})`);
   // A STABLE ID PER CLAUSE (owner, 2026-10-22). Coverage credit matched a row's
@@ -3974,7 +4025,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // round trip. A missing or malformed answer falls back to the template's own
       // `keys`, so it can never fail a generation (2026-10-22).
       const bodyReqsT = liveBodyRequirements(ctxT);
-      const rawIdea = await callLLM(buildIdeaPrompt({ askedMechanic: options.askedMechanic ?? null, bodyRequirements: bodyReqsT, owedClause: owedClauseForIdea(), name: p.name, cr, concept: readPhrases(concept), sheetLines: sheetSoFarT, seats: seatsT, energy: options.energy ?? null, wantTrait: traitWildcardAllowed, engines: enginesT, verbs: conceptVerbs(`${options.userConcept ?? concept} ${seatsT?.action ?? ''} ${seatsT?.trait ?? ''}`) }), validateIdeaResponse);
+      const rawIdea = await callLLM(buildIdeaPrompt({ askedMechanic: options.askedMechanic ?? null, // ONE call answers both seats, so there is no seat to lead by here — the per-seat lead belongs in fitSeat. Telling this call BOTH clause asks is a separate change (see plans/the-ask-lands-2026-10-27.md).
+         bodyRequirements: bodyReqsT, owedClause: owedClauseForIdea(), name: p.name, cr, concept: readPhrases(concept), sheetLines: sheetSoFarT, seats: seatsT, energy: options.energy ?? null, wantTrait: traitWildcardAllowed, engines: enginesT, verbs: conceptVerbs(`${options.userConcept ?? concept} ${seatsT?.action ?? ''} ${seatsT?.trait ?? ''}`) }), validateIdeaResponse);
       ideasT = parseIdeas(rawIdea);
       {
         const verdicts = readBodyVerdicts(rawIdea);
@@ -4154,7 +4206,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // no verb of this concept OR this idea is on the shelf → the fit would be
       // a shape fit by construction (v2 blind read: "template variety went up,
       // template fit went down"); an honest miss, no call spent
-      const verbRanked = rankByVerb(pool, verbText, `${seatText} ${idea.idea}`, options.askedMechanic ?? null);
+      // THE LEAD IS THIS SEAT'S OWN CLAUSE, not the sheet's (owner's GM read,
+      // 2026-10-27). The route call names one `asked_mechanic` per sheet and it
+      // led every seat: "furnace breath terrifies and whose hammer finds the
+      // terrified" took `fear` from the breath, so the HAMMER seat opened with
+      // two fear templates and the `condition-payoff` it needed — which was on
+      // the menu — sat behind them. Measured before this: the sheet's ask landed
+      // on 6 of 18 sheets and on 0 of the 4 sheets with two mechanical clauses.
+      // The clause call now answers a mechanic per clause and the seat knows
+      // which clause it serves, so the two are matched here, once.
+      const askedT = leadForSeat(seatText, clauseRecord ?? [], options.askedMechanic ?? null);
+      if (askedT !== (options.askedMechanic ?? null)) trace('lead by this seat\'s own clause:', `${seat} — "${askedT}" from the clause this seat serves, not the sheet's "${options.askedMechanic ?? 'none'}"`);
+      const verbRanked = rankByVerb(pool, verbText, `${seatText} ${idea.idea}`, askedT);
       // A KEY WORD IS NO LONGER THE ONLY WARRANT (2026-10-26). `matched` is key
       // words only and the declared mechanic moved nothing but the sort, so this
       // gate was discarding the engine's own declared data: measured over the 7
@@ -4164,7 +4227,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // of them shown to the call. `gateStandsDown` reads those fields. It spends
       // no call that was not already going to be spent: the fit call is made a
       // few lines below and this gate was returning before it.
-      const declaredWarrant = gateStandsDown(pool, idea, options.askedMechanic ?? null);
+      const declaredWarrant = gateStandsDown(pool, idea, askedT);
       if (!verbRanked.some((r) => r.matched.length) && !declaredWarrant.down) {
         if (idea.section === 'rider') {
           // the rider shelf is small: a rider idea with no verb there is re-seated
@@ -4237,9 +4300,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const canT = [...(Object.values(sections).flat().some((e) => LINE_MOVE.includes(String(e?.template ?? '')) || (e?.riderTemplates ?? []).some((x) => LINE_MOVE.includes(String(x))) || /straight line/i.test(String(e?.text ?? ''))) ? ['line-move'] : [])];
       const composedT = composedCandidates(idea, { can: canT });
       if (composedT.length) trace('composed candidates on the menu:', `${seat} — ${composedT.map((t) => t.id).join(', ')} (the ${idea.family} family's options, built before the call looks)`);
-      const offered = orderByStamps([...candidates, ...composedT], idea, options.askedMechanic ?? null);
-      if (options.askedMechanic && offered.some((t) => t.mechanic === options.askedMechanic)) {
-        trace('declared mechanic leads the menu:', `${seat} — ${options.askedMechanic}: ${offered.filter((t) => t.mechanic === options.askedMechanic).map((t) => t.id).join(', ')}`);
+      const offered = orderByStamps([...candidates, ...composedT], idea, askedT);
+      if (askedT && offered.some((t) => t.mechanic === askedT)) {
+        trace('declared mechanic leads the menu:', `${seat} — ${askedT}: ${offered.filter((t) => t.mechanic === askedT).map((t) => t.id).join(', ')}`);
       }
       trace('menu ordered by the idea\'s stamps:', `${seat} — idea fires ${idea.trigger}/does ${idea.effect}; leading: ${offered.slice(0, 3).map((t) => `${t.id} (${t.trigger}/${t.effect})`).join(', ')}`);
       if (conceptBound.length) trace('signature bound to the concept\'s verb:', `${seat} — ${conceptBound.map((t) => t.id).join(', ')} (${[...new Set(rankByVerb(conceptBound, verbText).flatMap((r) => r.concept))].join(', ')})`);
@@ -4796,8 +4859,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // — print closes the row set and `freeAllowance` is 0 there.
     const takeAsFreeRow = (seat, label) => {
       if (printExact || !seat?.expresses) return false;
-      seat.freeRow = true;
-      if (seat.row) seat.row.freeRow = true; // the ship-time budget reads the mark off the row
+      markFreeRow(seat); // BOTH marks ride the row — the budget ranks off the row, never the seat
       trace('free signature row:', `"${seat.row?.name}" — ${label}, but the call names the element it expresses: "${seat.expresses}". Earns no clause credit; the budget settles on the finished sheet`);
       return true;
     };
@@ -5175,10 +5237,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             traitT = null;
           } else {
             freeRowsUsed += 1;
-            traitT.freeRow = true;
-            traitT.row.freeRow = true;
-            traitT.row.decoration = true;
-            traitT.expresses = null; traitT.row.expresses = null; // a refused template claims nothing
+            markFreeRow(traitT, { decoration: true }); // a refused template claims nothing
             trace('free signature row:', `"${traitT.row.name}" — the call's nearest after it refused every template, so it ships as DECORATION: no receipt, no element claim, counted in the metric. Earns no clause credit`);
           }
         } else if (!traitT.expresses) {
@@ -5190,8 +5249,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           traitT = null;
         } else {
           freeRowsUsed += 1;
-          traitT.freeRow = true; // the print-body gate below must not re-kill it
-          traitT.row.freeRow = true; // and the ship-time budget reads it off the row
+          markFreeRow(traitT); // the print-body gate below must not re-kill it, and the budget ranks off the row
           trace('free signature row:', `"${traitT.row.name}" — the trait seat cannot quote the GM, but the call names the element it expresses: "${traitT.expresses}". Earns no clause credit; the ${closedPath ? 'twist/class' : 'homebrew'} path allows ${freeAllowanceT} and this is number ${freeRowsUsed}`);
         }
       }

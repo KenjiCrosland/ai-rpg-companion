@@ -931,6 +931,43 @@ export function orderByStamps(pool, idea = null, askedMechanic = null) {
  * Spends no call that was not already going to be spent — the fit call is made
  * immediately after this point and the gate was returning before it.
  */
+/**
+ * THE MECHANIC THIS SEAT WAS ASKED FOR — its own clause's, not the sheet's.
+ *
+ * The route call names ONE `asked_mechanic` per sheet and it led every seat's
+ * menu (tier 0 of `orderByStamps`). On a two-clause concept that is the first
+ * clause's answer imposed on the second clause's seat: "a brass tyrant whose
+ * furnace breath terrifies and whose hammer finds the terrified" took `fear`
+ * from the breath, so the HAMMER seat was shown fear templates first and the
+ * `condition-payoff` it needed — which was on the menu — sat behind them.
+ * Measured before the fix: the sheet's ask lands on 6 of 18 sheets, and on 0 of
+ * the 4 sheets with two mechanical clauses.
+ *
+ * The clause call now answers a mechanic per clause (`askMechanic`), and the
+ * seat already knows which clause it serves (`assignSeats`). Matching is by the
+ * clause's own words, the way `askedFor` already finds a record: the seat's
+ * element text and the clause text are two phrasings of the same thing the GM
+ * typed, so the longest shared run of words decides, not an exact compare.
+ *
+ * Falls back to the sheet's value when the seat has no clause, when the matched
+ * clause declared nothing, or when there are no records — so a one-clause
+ * concept behaves exactly as before.
+ */
+export function leadForSeat(seatElement, clauseRecords = [], sheetMechanic = null) {
+  const seat = String(seatElement ?? '').toLowerCase();
+  if (!seat || !Array.isArray(clauseRecords) || !clauseRecords.length) return sheetMechanic;
+  const words = (t) => String(t ?? '').toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 3);
+  const seatWords = new Set(words(seat));
+  if (!seatWords.size) return sheetMechanic;
+  let best = null; let bestScore = 0;
+  for (const c of clauseRecords) {
+    if (!c?.askMechanic) continue;
+    const shared = words(c.text).filter((w) => seatWords.has(w)).length;
+    if (shared > bestScore) { bestScore = shared; best = c; }
+  }
+  return bestScore > 0 ? best.askMechanic : sheetMechanic;
+}
+
 export function gateStandsDown(menu, idea, askedMechanic = null) {
   const no = { down: false, because: null, ids: [] };
   if (!Array.isArray(menu) || !menu.length || !idea) return no;

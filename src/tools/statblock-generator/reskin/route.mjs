@@ -211,6 +211,53 @@ const ARCHER_NOUN = /\b(?:bows?|longbows?|shortbows?|crossbows?|arrows?|quivers?
  * The list is MECHANIC's keys in templates.mjs; it is repeated here rather than
  * imported because route.mjs is upstream of the catalog.
  */
+/**
+ * WHAT EACH MECHANIC MEANS — one line per word, derived from the templates the
+ * family actually holds.
+ *
+ * Both calls that answer a mechanic were shown the BARE list of 26 words, and
+ * the canary run showed the cost: the clause call named `harvest` for "takes
+ * their heads" (the word is in the phrase) and named nothing at all for "whose
+ * hammer finds the terrified", because no reader could know that hitting harder
+ * against an already-afflicted target is filed under `escalate` — a label
+ * covering bloodied-fury, rampage, berserk, execute, condition-payoff,
+ * exploiter, assassinate, isolation and wind-up. That is an engineering name,
+ * not a phrase anyone would map a sentence to. The sheet's ask lands on 6 of 18
+ * sheets (0 of 4 with two mechanical clauses), and an unglossed enum is one
+ * reason: the call cannot pick a word whose meaning it has to guess.
+ *
+ * Defining the terms of a closed list is not a word rule — the CALL still
+ * judges which one the GM's sentence asks for.
+ */
+export const MECHANIC_GLOSS = {
+  swallow: 'swallows a creature whole and holds it inside',
+  gaze: 'a look that afflicts whoever meets or sees it',
+  snare: 'traps or roots a creature in place where it stands',
+  grapple: 'seizes and holds a creature, or hauls it along',
+  shove: 'pushes, pulls or knocks a creature off its feet',
+  charm: 'compels, lures, taunts or calms — it chooses for them',
+  fear: 'frightens: the target flees or cannot face it',
+  dazzle: 'blinds, deafens, stuns or marks a target\'s senses',
+  charge: 'runs or leaps at them, trampling through or landing on',
+  breath: 'exhales something over an area — fire, gas, spores, cold',
+  burst: 'an explosion, a hurled thing, or a blast on its death',
+  drain: 'takes life, strength or hit points out of a creature',
+  curse: 'a lasting affliction, disease, brand or debt it lays on one target',
+  retaliate: 'something happens to whoever hits, touches or grabs it',
+  climb: 'goes where others cannot — walls, webs, earth, rough ground',
+  teleport: 'blinks, phases or vanishes from where it stood',
+  zone: 'the ground or air around it is harmful or hard to cross',
+  disguise: 'passes for something else, or is hard to make out',
+  harden: 'turns aside blows — a shell, a stance, a sealed body',
+  resist: 'shrugs off or absorbs a kind of harm entirely',
+  escalate: 'GROWS STRONGER AS THE FIGHT TURNS: harder when wounded, when enraged, when it has already felled someone, or AGAINST A TARGET THAT IS ALREADY AFFLICTED (a blow that finds the frightened, the prone, the poisoned)',
+  mend: 'heals or repairs itself or an ally',
+  command: 'orders, rallies or buffs its allies',
+  track: 'always knows where a creature is, or never loses it',
+  harvest: 'what it kills stays dead, or cannot be raised',
+  relic: 'an object it carries or guards that its power runs through',
+};
+
 export const ASKED_MECHANICS = ['swallow', 'gaze', 'snare', 'grapple', 'shove', 'charm', 'fear', 'dazzle', 'charge', 'breath', 'burst', 'drain', 'curse', 'retaliate', 'climb', 'teleport', 'zone', 'disguise', 'harden', 'resist', 'escalate', 'mend', 'command', 'track', 'harvest', 'relic'];
 
 export const EXTRA_MECHANICS = ['gaze', 'teleport', 'aura', 'breath', 'snare', 'thrown-weapon', 'grapple']; // 'summon' retired with the group templates (owner 2026-09-28): the tag opened the CR<=2 wildcard slot for a mechanic nothing renders
@@ -278,7 +325,7 @@ RULES
 - swarm, ooze, and dragon only when the BODY is that thing — a mass of many, an amorphous mass, a true dragon. lurker-phantom too: only when the body is INCORPOREAL. The drowned, the buried and the hanged are usually corpses that walk, and a corpse that drags people down by the ankles has hands and weight — pick it a body that can hold someone. A phantom drifts through a wall and cannot.
 - A concept that holds, seizes, swallows, entombs, or folds shut around prey is brute-grappler however it is built — that chassis alone carries the containment engine. A thing that traps by LOOKING harmless is lurker-trap.
 - creature_type from the concept's SUBSTANCE — what it physically is: animated objects and machines are Construct; remains or spirits of the dead are Undead; natural animals are Beast; fungus and vegetation are Plant; giants are Giant. Humanoid is the NPC type — a remade, fused, grown, or woven thing is a Monstrosity however upright it stands. Never type by vibe.
-- asked_mechanic: WHAT THE GM ASKED A ROW TO DO, one of: ${ASKED_MECHANICS.join(', ')} — with the GM's own words as "because". Answer "" when the words name no mechanic at all; never guess one because it would be cool.
+- asked_mechanic: WHAT THE GM ASKED A ROW TO DO, one of these — the word, then what it means:\n${ASKED_MECHANICS.map((m) => `    ${m} — ${MECHANIC_GLOSS[m]}`).join('\n')}\n  Answer with the WORD only — with the GM's own words as "because". Answer "" when the words name no mechanic at all; never guess one because it would be cool.
 - extras: gated add-on mechanics the concept ITSELF shows, from: ${EXTRA_MECHANICS.join(', ')} — each with its own quote. Most concepts have none. Never list what would merely be cool.
 
 WHAT ELSE DO THE WORDS NAME? Three more, each with the user's own words quoted in "because" (leave a field out if the words do not settle it):

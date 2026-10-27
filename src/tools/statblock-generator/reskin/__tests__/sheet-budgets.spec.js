@@ -1,7 +1,7 @@
 // WHOLE-SHEET BUDGETS SETTLE ON THE FINISHED SHEET (critic's package-six review,
 // 2026-10-22). Test categories 1, 9 and 10 from that review, plus the declared
 // seat-cell cap the owner's ruling asked for.
-import { settleSheetBudgets, readGapOutcomes } from '../generate.mjs';
+import { settleSheetBudgets, readGapOutcomes, markFreeRow } from '../generate.mjs';
 import { scaleDonor, pickDonor } from '../scale.mjs';
 
 const scaled = () => scaleDonor(pickDonor(8, null, 'brute'), 8, { mechanics: [] });
@@ -493,5 +493,54 @@ describe('a multiattack never ends mid-sentence', () => {
   it('leaves a plain multiattack alone', () => {
     const ok = 'The owlbear makes two Rend attacks.';
     expect(strip(ok)).toBe(ok);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// THE RECEIPT HAS TO BE ON THE ROW, OR THE BUDGET CANNOT SEE IT
+// (the brass tyrant, smoke-out/ask-lands-2026-10-27T01-26-17/01).
+//
+// The tests above hand-stamp `expresses` onto their rows, so they prove the
+// RANKING works given a receipt — and never that the pipeline puts one there.
+// It did not. The action seat's grant stamped `freeRow` on the row and left
+// `expresses` on the seat, so the tyrant's hammer payoff reached the budget
+// looking like decoration and lost the sheet's one free slot to the trait
+// seat's `assassinate` — a row the call admitted was only its nearest match.
+//
+// Replayed here at both seams: the mark itself, and the real pair as it stood
+// at ship.
+describe('a free row carries its receipt onto the row (brass tyrant)', () => {
+  const seatWithRow = (over = {}) => ({ expresses: 'furnace breath that terrifies', row: { name: 'Trip Attack', text: 'It does a thing.', template: 'condition-payoff' }, ...over });
+
+  test('the mark puts the element receipt where the budget reads it', () => {
+    const seat = seatWithRow();
+    markFreeRow(seat);
+    expect(seat.row.freeRow).toBe(true);
+    expect(seat.row.expresses).toBe('furnace breath that terrifies'); // was left on the seat
+  });
+
+  test('a refused template claims nothing, on the row as well as the seat', () => {
+    const seat = markFreeRow(seatWithRow(), { decoration: true });
+    expect(seat.row.freeRow).toBe(true);
+    expect(seat.row.decoration).toBe(true);
+    expect(seat.expresses).toBeNull();
+    expect(seat.row.expresses).toBeNull();
+  });
+
+  test('a seat whose fit produced no row is left alone', () => {
+    expect(markFreeRow({ expresses: 'a thing' }).row).toBeUndefined();
+    expect(markFreeRow(null)).toBeNull();
+  });
+
+  test("the tyrant's pair: the action seat's payoff survives, the trait decoration leaves", () => {
+    // sheet order as the engine builds it — Traits iterate before Actions
+    const trait = markFreeRow({ accepted_closest: true, expresses: 'the hammer that finds the terrified', row: { name: "Terror's Toll", text: 'It sharpens its blows.', template: 'assassinate' } }, { decoration: true }).row;
+    const action = markFreeRow(seatWithRow()).row;
+    const sections = { Traits: [trait], Actions: [action] };
+    const generation = {};
+    settleSheetBudgets({ sections, scaled: scaled(), cr: 17, generation });
+    expect(sections.Actions).toContain(action);
+    expect(sections.Traits).not.toContain(trait);
+    expect(generation.free_row_templates).toEqual(['condition-payoff']);
   });
 });
