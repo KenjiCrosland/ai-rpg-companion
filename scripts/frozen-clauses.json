@@ -2455,5 +2455,421 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "bf18e6dae4e9": {
+  "concept": "Dread Bellringer",
+  "clauses": [
+   {
+    "id": "cl_uuarwm",
+    "text": "Dread Bellringer",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "9349b619eb09": {
+  "concept": "a headless horseman who rides down the fleeing and takes their heads",
+  "clauses": [
+   {
+    "id": "cl_jqfgh1",
+    "text": "a headless horseman",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_16w7o5w",
+    "text": "rides down the fleeing",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "charge",
+    "askMechanicWhy": "rides down"
+   },
+   {
+    "id": "cl_semi2h",
+    "text": "takes their heads",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "harvest",
+    "askMechanicWhy": "takes their heads"
+   }
+  ]
+ },
+ "9b818565262b": {
+  "concept": "a bog hound that drags what it bites into the mire",
+  "clauses": [
+   {
+    "id": "cl_jdjwdb",
+    "text": "a bog hound",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_gvx94v",
+    "text": "drags what it bites into the mire",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "bites",
+    "askOften": "at_will",
+    "askOftenWhy": "drags what it bites into the mire",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "drags"
+   }
+  ]
+ },
+ "b23fa0874a99": {
+  "concept": "a gullet-worm that swallows what it seizes",
+  "clauses": [
+   {
+    "id": "cl_1t531xg",
+    "text": "a gullet-worm",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_zizkrg",
+    "text": "swallows what it seizes",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "seizes",
+    "askShape": "condition",
+    "askMechanic": "swallow",
+    "askMechanicWhy": "swallows what it seizes"
+   }
+  ]
+ },
+ "3890278000a4": {
+  "concept": "a bell-ghost whose toll deafens and whose reach finds the deafened",
+  "clauses": [
+   {
+    "id": "cl_w9o2i3",
+    "text": "a bell-ghost whose toll deafens",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "a bell-ghost whose toll deafens",
+    "askShape": "save_single",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "toll deafens"
+   },
+   {
+    "id": "cl_qc5jq8",
+    "text": "whose reach finds the deafened",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "whose reach finds the deafened",
+    "askShape": "attack",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "reach finds the deafened"
+   }
+  ]
+ },
+ "769eb8156cd6": {
+  "concept": "a lamp-eyed stalker that strikes from the dark",
+  "clauses": [
+   {
+    "id": "cl_hsuowl",
+    "text": "a lamp-eyed stalker",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1usrijg",
+    "text": "strikes from the dark",
+    "kind": "mechanical"
+   }
+  ]
+ },
+ "fc959a1adf67": {
+  "concept": "a tide-hag who charms sailors and drowns the charmed",
+  "clauses": [
+   {
+    "id": "cl_135qx1y",
+    "text": "a tide-hag",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1m6oz9s",
+    "text": "charms sailors and drowns the charmed",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "8dfb33e48027": {
+  "concept": "a slab-golem that pins a foe underfoot and grinds",
+  "clauses": [
+   {
+    "id": "cl_1h8mfw8",
+    "text": "a slab-golem",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1cwdgxz",
+    "text": "pins a foe underfoot and grinds",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "pins",
+    "askOften": "at_will",
+    "askOftenWhy": "pins a foe underfoot and grinds",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "pins a foe underfoot"
+   }
+  ]
+ },
+ "404f0539f6a7": {
+  "concept": "a carrion ape that beats the fallen",
+  "clauses": [
+   {
+    "id": "cl_froau9",
+    "text": "a carrion ape",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1hercza",
+    "text": "beats the fallen",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "88ee5368d1e4": {
+  "concept": "Gutter King",
+  "clauses": [
+   {
+    "id": "cl_1n6m73w",
+    "text": "Gutter King",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "830079c51531": {
+  "concept": "a shark-toothed hunter that smells blood and finishes the wounded",
+  "clauses": [
+   {
+    "id": "cl_1nvph28",
+    "text": "a shark-toothed hunter",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_3q4gwb",
+    "text": "smells blood and finishes the wounded",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "smells blood and finishes the wounded",
+    "askOften": "at_will",
+    "askOftenWhy": "smells blood and finishes the wounded",
+    "askShape": "attack",
+    "askMechanic": "track",
+    "askMechanicWhy": "smells blood"
+   }
+  ]
+ },
+ "277b12779a28": {
+  "concept": "a mercenary captain who leads his men from the front",
+  "clauses": [
+   {
+    "id": "cl_1z0px4r",
+    "text": "a mercenary captain",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_hdjtj9",
+    "text": "leads his men from the front",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "0534c66e07b7": {
+  "concept": "a carrion-crow king whose flock harries the dying",
+  "clauses": [
+   {
+    "id": "cl_1td7wmz",
+    "text": "a carrion-crow king whose flock harries the dying",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "56c11a041dc1": {
+  "concept": "a pit-fighting champion who presses a staggered foe",
+  "clauses": [
+   {
+    "id": "cl_8qk892",
+    "text": "a pit-fighting champion",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_iwwq4a",
+    "text": "presses a staggered foe",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "presses a staggered foe"
+   }
+  ]
+ },
+ "479b6f516835": {
+  "concept": "a lone glacier troll that regrows what you cut",
+  "clauses": [
+   {
+    "id": "cl_1c1dvzt",
+    "text": "a lone glacier troll",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1essda0",
+    "text": "regrows what you cut",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "regrows",
+    "askShape": "heal",
+    "askMechanic": "mend",
+    "askMechanicWhy": "regrows what you cut"
+   }
+  ]
+ },
+ "f1f56bc6e61f": {
+  "concept": "a hive-tyrant that drives its drones forward",
+  "clauses": [
+   {
+    "id": "cl_vi86bc",
+    "text": "a hive-tyrant",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_nfcjbj",
+    "text": "drives its drones forward",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "e38f14aaa36e": {
+  "concept": "Pumpkin King",
+  "clauses": [
+   {
+    "id": "cl_dfh027",
+    "text": "Pumpkin King",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "28673adeac80": {
+  "concept": "a bog-widow that webs a victim then drains the held",
+  "clauses": [
+   {
+    "id": "cl_pr9pwo",
+    "text": "a bog-widow",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1mbi1we",
+    "text": "webs a victim then drains the held",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "webs",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "webs a victim"
+   }
+  ]
+ },
+ "1662694429e5": {
+  "concept": "a gaol-keeper who beats the shackled",
+  "clauses": [
+   {
+    "id": "cl_1vgxgy1",
+    "text": "a gaol-keeper",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_hktibt",
+    "text": "beats the shackled",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "73bd86b6ba1b": {
+  "concept": "a mire-serpent that coils and then crushes",
+  "clauses": [
+   {
+    "id": "cl_1gtspj0",
+    "text": "a mire-serpent",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_3tm2az",
+    "text": "coils and then crushes",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "coils"
+   }
+  ]
+ },
+ "ab79c1583973": {
+  "concept": "a frost-wight that freezes a foe then shatters them",
+  "clauses": [
+   {
+    "id": "cl_1d7llax",
+    "text": "a frost-wight",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_oagorq",
+    "text": "freezes a foe then shatters them",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "freezes a foe then shatters them"
+   }
+  ]
+ },
+ "8ba2074450e0": {
+  "concept": "a sump-dredger that hauls a victim under and holds them down",
+  "clauses": [
+   {
+    "id": "cl_ym04ny",
+    "text": "a sump-dredger",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "victim",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "victim"
+   },
+   {
+    "id": "cl_z5y3wc",
+    "text": "hauls a victim under",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "victim",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "victim"
+   },
+   {
+    "id": "cl_xw62l6",
+    "text": "holds them down",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "victim",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "victim"
+   }
+  ]
  }
 }

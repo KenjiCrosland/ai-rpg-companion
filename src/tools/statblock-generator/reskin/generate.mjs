@@ -11,7 +11,7 @@ import { pickDonor, scaleDonor, stampAttacksPerRound } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor} from './templates.mjs';
+import { composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
@@ -62,6 +62,41 @@ import { renderForm, resolutionOf } from './forms.mjs';
  * printings. The call judges; the engine validates. With no imposer the payoff
  * leaves and says why.
  */
+/**
+ * A CONDITIONAL ADVANTAGE SHIPS ONLY IF SOMETHING SETS IT UP — the sibling of
+ * `payoffReachable`, and the same principle: a row may not promise a state the
+ * sheet never produces.
+ *
+ * Four grappler donors carry "Melee Attack Roll: +N (with Advantage if the
+ * target is Grappled by the creature)", which assumes the donor's OWN grapple
+ * row survives the reskin. When the signature path replaces that row, the
+ * clause dangles. The owner's name-only read of 2026-10-27 caught it on the
+ * Dread Bellringer: "Bell Slam … (with Advantage if the target is Grappled by
+ * the bellringer)" on a sheet whose other rows are a Peal and a shape-shift.
+ * Measured across the saved runs: 147 rows carry a conditional Advantage and 5
+ * of them dangle — rare, and worse to read than no pairing at all.
+ *
+ * The ROW stays (it is the creature's weapon); only the promise goes. That is
+ * the difference from `payoffReachable`, where the whole row is the payoff.
+ */
+export function advantageReachable(sections, trace = () => {}) {
+  const all = Object.values(sections ?? {}).flat().filter(Boolean);
+  const imposed = new Set(all.flatMap((e) => imposedConditions(e)));
+  const out = [];
+  for (const e of all) {
+    const t = String(e.text ?? '');
+    // print's own form is "(with Advantage if the target is X by the <name>)"
+    const m = /\s*\(with Advantage if the target is (\w+)[^)]*\)/.exec(t);
+    if (!m) continue;
+    const need = m[1][0].toUpperCase() + m[1].slice(1).toLowerCase();
+    if (imposed.has(need)) continue;
+    e.text = t.replace(m[0], '');
+    out.push({ name: e.name, need });
+    trace('advantage clause dropped:', `"${e.name}" promised Advantage against a ${need} target and nothing on the sheet imposes ${need} — the clause leaves, the row stays`);
+  }
+  return out;
+}
+
 export function payoffReachable(sections, trace = () => {}) {
   const all = Object.values(sections ?? {}).flat().filter(Boolean);
   const out = [];
@@ -4403,6 +4438,17 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // the factory now, so a banned combination cannot arrive.
       const canT = [...(Object.values(sections).flat().some((e) => LINE_MOVE.includes(String(e?.template ?? '')) || (e?.riderTemplates ?? []).some((x) => LINE_MOVE.includes(String(x))) || /straight line/i.test(String(e?.text ?? ''))) ? ['line-move'] : [])];
       const composedT = composedCandidates(idea, { can: canT });
+      // WHY NONE, WHEN THE FAMILY WAS ELIGIBLE (owner, 2026-10-27: "if we need more
+      // logging so we know how things are working under the hood that could also
+      // be helpful"). Measured over today's 294 sheets the funnel is 99 eligible
+      // trait ideas -> 61 offered -> 18 picked, and the 38 that fell out between
+      // eligible and offered were INVISIBLE: `composedCandidates` returns an
+      // empty array for three different reasons and traced none of them. Two
+      // wrong analyses came out of reading that silence.
+      if (!composedT.length && idea?.family) {
+        const why = composedReason(idea, { can: canT });
+        if (why) trace('composed candidates: none', `${seat} — the ${idea.family} family ${why}`);
+      }
       if (composedT.length) trace('composed candidates on the menu:', `${seat} — ${composedT.map((t) => t.id).join(', ')} (the ${idea.family} family's options, built before the call looks)`);
       const offered = orderByStamps([...candidates, ...composedT], idea, askedT);
       if (askedT && offered.some((t) => t.mechanic === askedT)) {
@@ -8380,6 +8426,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     const speech = (authored?.unplaced ?? []).filter((u) => u.where === 'languages' && u.text); if (speech.length) { const only = speech.some((u) => /\bonly\b/i.test(`${u.clause} ${u.text}`)); monster.languages = [only ? '' : String(monster.languages ?? '').replace(/^None$/i, ''), ...speech.map((u) => u.text)].filter(Boolean).join('; '); /* "speaks only in the language of socks" is the whole line — Common leaves (critic's step-5 read) */ trace('unplaced to Languages:', speech.map((u) => `"${u.clause}"`).join(', ')); } }
   stampAttacksPerRound(monster.sections); // renames and the citation sweep rewrite the Multiattack — re-stamp so the shipped count is the shipped sentence's
   payoffReachable(monster.sections, trace); // a payoff with no imposer on the finished sheet is a dead row
+  advantageReachable(monster.sections, trace); // and a conditional Advantage with no imposer is a dead CLAUSE
   trace('done:', `"${monster.name}" — donor ${donor.id}, CR ${cr}`);
   return monster;
 }

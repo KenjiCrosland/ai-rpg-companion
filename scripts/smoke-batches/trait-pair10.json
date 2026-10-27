@@ -1,0 +1,12 @@
+[
+  { "name": "Dread Bellringer", "description": "", "cr": "5", "rules": "2024", "canary": "CANARY — the owner's 'solid but boring' sheet. Does a pairing trait reach it now, or is it still four unrelated rows?" },
+  { "name": "", "description": "a brass tyrant whose furnace breath terrifies and whose hammer finds the terrified", "cr": "17", "rules": "2024", "canary": "CANARY — the payoff sheet must be unchanged; two new always-on traits should not displace its signature." },
+  { "name": "Gutter King", "description": "", "cr": "5", "rules": "2024", "canary": "CANARY — the owner called this 'a solid low level leader' when it got Aura of Authority from the class kit. It must not get the trait TWICE now that the catalog has it." },
+  { "name": "", "description": "a shark-toothed hunter that smells blood and finishes the wounded", "cr": "6", "rules": "2024", "canary": "FEATURE — the concept names Blood Frenzy's own fiction. It should draw the trait, and the trait should pair with whatever attack it has." },
+  { "name": "", "description": "a mercenary captain who leads his men from the front", "cr": "7", "rules": "2024", "canary": "FEATURE — the aura's own fiction, outside the class-kit path." },
+  { "name": "", "description": "a carrion-crow king whose flock harries the dying", "cr": "9", "rules": "2024", "canary": "FEATURE — both at once: allies to buff AND wounded prey to finish." },
+  { "name": "", "description": "a pit-fighting champion who presses a staggered foe", "cr": "4", "rules": "2024", "canary": "FEATURE — 'staggered' is wound-flavoured without the word blood. Does the key set reach it, or does the mechanic have to?" },
+  { "name": "", "description": "a lone glacier troll that regrows what you cut", "cr": "8", "rules": "2024", "canary": "FEATURE — NO allies and nothing about wounds. Neither new trait should appear; a solitary regenerator must not get an ally aura." },
+  { "name": "", "description": "a hive-tyrant that drives its drones forward", "cr": "12", "rules": "2024", "canary": "FEATURE — ally-aura at a higher CR, where the trait competes with auras and legendary actions." },
+  { "name": "Pumpkin King", "description": "", "cr": "10", "rules": "2024", "canary": "FEATURE — name-only, the sheet the owner called 'quite spare' at CR 10. Does a pairing trait fill the gap?" }
+]

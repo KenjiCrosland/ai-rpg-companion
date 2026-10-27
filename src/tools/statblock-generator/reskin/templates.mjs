@@ -227,6 +227,7 @@ const VOCAB = { area_shape: AREA_SHAPES, duration: DURATIONS, save_stat: SAVE_ST
 const SLOT_CONTRACTS = {
   restraint: 'a BARE NOUN, no article, naming the physical thing that holds the target and that a party could attack or cut — print writes "until the rope is destroyed" (Erinyes) and "until the web is destroyed" (Ettercap, Giant Spider): "web", "roots", "brambles", "tar", "needles", "chain". Never a condition name: the frame already supplies "the" and the word "Restrained"',
   relic: 'a noun phrase WITH its article naming a THING the creature keeps, carries or wears and that a party could attack: "its severed head", "the soul bag", "a daughter\'s carapace". 2-4 words. It must be an OBJECT — not an effect, not a place, not a creature, because the frame gives it AC and Hit Points',
+  finisher: 'a PREDICATE naming HOW the creature falls on a target that is already caught or down — no subject, no full stop, 3-6 words, lowercase: "brings the hammer down two-handed", "drives a knee into the ribs", "tightens the coils", "sets a hoof on the chest". This is the ONLY part of this row the call writes, and it is what makes one payoff read unlike another: 169 of these shipped under 147 different names and FOUR different sentences. Never name a condition, a save or a number — the frame supplies those',
   kill_consequence: 'a PREDICATE naming what becomes of the BODY — no subject, no full stop, 2-5 words, lowercase: "crumbles to dust", "loses its head", "is absorbed into the swarm". It is what the killing leaves behind, never damage and never a condition',
   wound_phrase: 'a whole noun phrase WITH its article and ending in the word "wound" — like print\'s "an infernal wound": "a tar-fouled wound", "a weeping wound". The frame later says "While wounded", "The wound closes" and "stanch the wound", so a fill that is not a wound makes nonsense of them',
 };
@@ -271,7 +272,7 @@ const fillKeepsFrame = (k, v) => {
   return true;
 };
 // flavor slots: the model's words, bounded (no digits, no rules grammar, short)
-export const FLAVOR_SLOTS = ['kill_consequence', 'relic', 'phobia', 'restraint', 'projectile', 'wound_phrase', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
+export const FLAVOR_SLOTS = ['finisher', 'kill_consequence', 'relic', 'phobia', 'restraint', 'projectile', 'wound_phrase', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
 // HOW TO CHOOSE, not just what is legal. A closed enum tells the model the legal
 // values and nothing about which one this sheet can support, and for
 // `consumed_condition` that gap WAS the defect: a payoff reads "one creature that
@@ -301,7 +302,7 @@ const SHAPE_TAGS = {
   'life-drain': ['on_hit', 'condition'], // print's HP-maximum reduction: a rider on the hit, the effect lasting past the turn
   'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], contagion: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], spew: ['save', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'hook-rider': ['on_hit', 'movement'], riposte: ['on_being_hit', 'damage'], 'snap-shot': ['on_being_hit', 'damage'], 'ground-burst': ['save', 'damage'], 'volley-order': ['always', 'resource'], 'random-ray': ['save', 'condition'], 'blurred-form': ['always', 'defense'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'stunning-strike': ['on_hit', 'condition'], 'patient-defense': ['always', 'defense'], 'lay-on-hands': ['always', 'resource'], 'second-wind': ['always', 'resource'], 'shield-bash': ['save', 'condition'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
   'spider-climb': ['always', 'movement'], phobia: ['always', 'condition'], 'terrain-walk': ['always', 'movement'], 'aberrant-ground': ['always', 'movement'], 'faultless-tracker': ['always', 'condition'], 'web-walker': ['always', 'movement'],
-  'energy-aura': ['start_of_turn', 'damage'], 'noxious-aura': ['start_of_turn', 'condition'], 'bloodied-fury': ['always', 'defense'], 'uncanny-sense': ['always', 'defense'], 'earth-glide': ['always', 'movement'], tunneler: ['always', 'movement'], berserk: ['always', 'condition'], 'shielded-mind': ['always', 'defense'], evasion: ['always', 'defense'],
+  'energy-aura': ['start_of_turn', 'damage'], 'noxious-aura': ['start_of_turn', 'condition'], 'bloodied-fury': ['always', 'defense'], 'blood-frenzy': ['always', 'damage'] /* EFFECTS has no 'buff_self': an advantage aura is this catalog's 'defense'. `ally-aura` was authored here on 2026-10-27 and REVERTED the same day — it drew 0 of 10 because three `leader` donors already carry Aura of Authority as a `rules` row and the hobgoblin kit grants it too. An EIGHTH way to ship inert, not in the plan's list of seven: a donor already carries the row. */, 'uncanny-sense': ['always', 'defense'], 'earth-glide': ['always', 'movement'], tunneler: ['always', 'movement'], berserk: ['always', 'condition'], 'shielded-mind': ['always', 'defense'], evasion: ['always', 'defense'],
   'relentless-pursuit': ['always', 'movement'], bound: ['always', 'movement'], 'marking-light': ['always', 'condition'], 'sealed-body': ['always', 'defense'], 'warded-mending': ['start_of_turn', 'resource'], 'guarded-stance': ['always', 'defense'], 'undead-fortitude': ['always', 'defense'], mimicry: ['always', 'defense'], wail: ['once_per_fight', 'damage'], 'truth-aura': ['start_of_turn', 'condition'], 'gaze-aura': ['start_of_turn', 'condition'], 'charge-push': ['on_hit', 'movement'],
 };
 // ENGINE FAMILIES: a template that re-implements an engine the sheet already
@@ -578,6 +579,29 @@ export function composedTemplate(pick) {
  *
  * `can` is the set of facts this sheet has (today: 'line-move').
  */
+/**
+ * WHY `composedCandidates` RETURNED NOTHING — the same three gates it applies,
+ * reported instead of applied (owner asked for logging under the hood,
+ * 2026-10-27).
+ *
+ * It returns an empty array for reasons that look identical from outside: the
+ * family has no grammar, the grammar is for another seat, no payload matches the
+ * idea's declared effect, or a payload's prerequisite is absent from the sheet.
+ * Today's funnel is 99 eligible trait ideas -> 61 offered, and the 38 that fell
+ * out were unattributable. Null when candidates WOULD be produced.
+ */
+export function composedReason(idea, { can = [] } = {}) {
+  const g = GRAMMARS[idea?.family];
+  if (!g) return 'has no grammar — only body-reaction and zone are composable';
+  if (g.section !== idea.section) return `composes a ${g.section} and this is the ${idea.section} seat`;
+  const payloadSlot = g.slots[g.slots.length - 1];
+  const matching = g[payloadSlot].map((_, i) => i).filter((i) => g.effect[i] === idea.effect);
+  if (!matching.length) return `has no payload that does "${idea.effect}" (it offers ${[...new Set(g.effect)].join(', ')})`;
+  const blocked = matching.filter((i) => g.requires?.[i] && !can.includes(g.requires[i]));
+  if (blocked.length === matching.length) return `needs ${[...new Set(blocked.map((i) => g.requires[i]))].join(' or ')} on the sheet and it is not there`;
+  return null;
+}
+
 export function composedCandidates(idea, { can = [] } = {}) {
   const g = GRAMMARS[idea?.family];
   if (!g || g.section !== idea.section) return [];
@@ -806,6 +830,7 @@ export const VERB_KEYS = {
   'web-walker': ['web', 'webs', 'webbing', 'silk', 'thread', 'threads', 'strand', 'strands', 'every thread', 'spider', 'weaver', 'loom'],
   'energy-aura': ['aura', 'radiates', 'radiating', 'waste heat', 'heat around', 'furnace', 'shimmers', 'wildfire', 'blaze', 'inferno', 'bonfire', 'pyre', 'flames', 'firestorm', 'scalding air', 'freezing air', 'chill around', 'crackles', 'static', 'emanates', 'wreathed in', 'halo of', 'sheds heat', 'cold around her', 'chills the air', 'chills the room', 'chill around', 'grave-cold', 'lose their warmth', 'warms nobody'],
   'noxious-aura': ['stench', 'reek', 'reeks', 'stink', 'stinks', 'miasma', 'rot', 'fumes', 'spores', 'aura of', 'presence', 'hymn', 'dirge', 'chant', 'keening', 'wail', 'drone', 'voices', 'stops hearts', 'dread presence', 'terrible to behold', 'true form', 'sickening', 'nauseating', 'foul', 'carrion', 'unclean'],
+  'blood-frenzy': ['blood', 'blood frenzy', 'smells blood', 'scents blood', 'finishes the wounded', 'preys on the weak', 'culls', 'shark', 'feeding frenzy', 'tastes blood'],
   'bloodied-fury': ['bloodied', 'wounded', 'cornered', 'fury', 'frenzy', 'rage', 'enraged', 'savage', 'when hurt', 'the more it bleeds', 'desperate', 'fights harder', 'maddened', 'goaded', 'temper', 'berserk'],
   'uncanny-sense': ['scent', 'smell', 'smells', 'sniff', 'sniffs', 'pinpoint', 'pinpoints', 'senses', 'can sense', 'detect', 'detects', 'gold', 'metal', 'ferrous', 'treasure', 'blood', 'magic', 'hunts by', 'nose', 'tastes the air'],
   'earth-glide': ['glide', 'glides', 'through stone', 'through earth', 'through the earth', 'through rock', 'through the rock', 'swims through', 'beneath the', 'without disturbing', 'passes through stone', 'moves through stone', 'earth', 'stone'],
@@ -1076,7 +1101,7 @@ export const MECHANIC = {
   // split from one bucket of 8, which was the worst in the measurement
   harden: ['shell-withdraw', 'sealed-body', 'guarded-stance', 'patient-defense'],
   resist: ['absorption', 'evasion', 'shielded-mind', 'undead-fortitude'],
-  escalate: ['bloodied-fury', 'rampage', 'berserk', 'execute', 'condition-payoff', 'exploiter', 'assassinate', 'isolation', 'wind-up'],
+  escalate: ['bloodied-fury', 'blood-frenzy', 'rampage', 'berserk', 'execute', 'condition-payoff', 'exploiter', 'assassinate', 'isolation', 'wind-up'],
   mend: ['lay-on-hands', 'second-wind', 'warded-mending'],
   command: ['rally', 'volley-order', 'herd'],
   track: ['uncanny-sense', 'faultless-tracker', 'bound', 'focus', 'feint-slip', 'slow-bolt', 'stunning-strike', 'bolt-restrain', 'bolt-drag', 'truth-aura'],
@@ -1552,7 +1577,7 @@ const shortFlavor = (s) => typeof s === 'string' && s.trim().split(/\s+/).length
  * ctx: { scaled, energy, mix, meleeName, conditionMinor, projectile, archetype, imposed, mechanics, cr, name }
  */
 // generic fills for a BLIND render (the fallback): the fiction is plain, never wrong
-const BLIND_FILLS = { kill_consequence: 'crumbles to dust', relic: 'a sealed reliquary', /* print's own: the Mummy's victim "dies and turns to dust" */ phobia: 'the thing it fears', restraint: 'binding' /* NO article: the frame reads "until the {restraint} is destroyed", and 'the binding' rendered "until the the binding" (2026-10-27) */, /* the snare's object noun: an empty slot printed "Restrained until the Restrained is destroyed" (critic's blockers audit 2026-10-03) */ douse: 'tear the brand away', projectile: 'a hurled object', wound_phrase: 'a festering wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'its whole frame tensing', lure_source: 'the creature', hook: 'its grip', terrain: 'mud', sense_target: 'moving creatures', anchor: 'its resting place', ward: 'its ward' }; // sense_target is the neutral sense: a rejected fill on a hound printed "precious metal" (the fourteen, 2026-09-28)
+const BLIND_FILLS = { finisher: 'strikes where the target cannot guard', kill_consequence: 'crumbles to dust', relic: 'a sealed reliquary', /* print's own: the Mummy's victim "dies and turns to dust" */ phobia: 'the thing it fears', restraint: 'binding' /* NO article: the frame reads "until the {restraint} is destroyed", and 'the binding' rendered "until the the binding" (2026-10-27) */, /* the snare's object noun: an empty slot printed "Restrained until the Restrained is destroyed" (critic's blockers audit 2026-10-03) */ douse: 'tear the brand away', projectile: 'a hurled object', wound_phrase: 'a festering wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'its whole frame tensing', lure_source: 'the creature', hook: 'its grip', terrain: 'mud', sense_target: 'moving creatures', anchor: 'its resting place', ward: 'its ward' }; // sense_target is the neutral sense: a rejected fill on a hound printed "precious metal" (the fourteen, 2026-09-28)
 // THE RAY TABLE is composed from library cards, never authored (critic 2026-10-01): each
 // ray takes its save and its failure clause from a bolt or pulse card already on the
 // shelf; the names are the engine's own. A band of 3-5 rolls a d4 over the first four.
@@ -2365,7 +2390,24 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
   // a 10-point hit) — the thorn-wall's brand climbed to 6d6 a turn priced as one hit
   // (critic, new lines 2026-09-28)
   const recurring = /at the start of each of its turns until/i.test(text);
-  const value = (t) => { const r = rowValue(t, perHit, { area }); const mult = (area ? AREA_TARGETS : 1) * (recurring ? 2 : 1); return mult === 1 ? r : { ...r, ev: r.ev * mult }; };
+  // THE TARGET DISCOUNT IS FOR AN AT-WILL AREA ROW, NOT FOR A NOVA (owner,
+  // 2026-10-27, on the Knife Ball for the third time: "still has the double
+  // gated blade burst" … "Recharge novas should be a little frightening").
+  //
+  // Measured over print, area damage rows as a ratio of the round they sit beside:
+  //   GATED (novas):   n=52, median 1.00x  — the FULL round, to each target
+  //   AT-WILL (auras): n=23, median 0.17x  — a sixth of it
+  //
+  // So `AREA_TARGETS` is right for an aura and wrong for a nova, and applying it
+  // to both is what kept our gated rows small: the Knife Ball's wind-up read
+  // EV 34.1 against a floor of 30.4 and so was judged "worth the trade" while
+  // dealing 22 raw against a 34 round. The EV cleared the floor ONLY because the
+  // 22 was multiplied by two targets. Refitting NOVA_CAP earlier did nothing here
+  // because the cap was never the binding constraint — this was.
+  //
+  // A nova is now valued at what it does to ONE target, which is how print prices
+  // it and how a GM reads it. NOVA_CAP and the 2.5x ceiling still bound it.
+  const value = (t) => { const r = rowValue(t, perHit, { area }); const mult = (area && !gated ? AREA_TARGETS : 1) * (recurring ? 2 : 1); return mult === 1 ? r : { ...r, ev: r.ev * mult }; };
   let v = value(text);
   if (recurring && v.hasDamage && v.avg > Math.max(1, Math.round(perHit / 2))) {
     const tick = saveDamageDiceFor(Math.max(1, Math.round(perHit / 2)));

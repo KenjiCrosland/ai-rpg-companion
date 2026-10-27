@@ -145,12 +145,12 @@ export const SHAPES = [
     cite: 'Sea Hag/Death Glare (Frightened, CR 2); Gorgon/Trample (Prone, CR 5); Succubus/Draining Kiss (Charmed, CR 4); Glabrezu/Pummel (Grappled, CR 9)',
     roles: ['skirmisher', 'controller', 'lurker', 'brute'], styles: [], cr_range: [2, 23], replaces: 'signature',
     frames: {
-      '0-2': '*{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage. *Success:* Half damage.',
-      '3-5': '*{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage. *Success:* Half damage.',
-      '6-9': '*{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage. *Success:* Half damage.',
-      '10-12': '*{save_stat} Saving Throw*: DC {dc}, one creature within 60 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage.',
-      '13-20': '*{save_stat} Saving Throw*: DC {dc}, one creature within 60 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage.',
-      '21+': '*{save_stat} Saving Throw*: DC {dc}, one creature within 60 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage, and the target has the Stunned condition until the end of its next turn. *Success:* Half damage.',
+      '0-2': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage. *Success:* Half damage.',
+      '3-5': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage. *Success:* Half damage.',
+      '6-9': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage. *Success:* Half damage.',
+      '10-12': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 60 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage.',
+      '13-20': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 60 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage.',
+      '21+': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 60 feet that has the {consumed_condition} condition. *Failure:* {avg_x2} ({dice_x2}) {damage_type} damage, and the target has the Stunned condition until the end of its next turn. *Success:* Half damage.',
     },
   },
   {
@@ -380,9 +380,29 @@ export const SHAPES = [
     frames: { '0-2': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 5-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition {duration}. *Success:* The target is immune to this creature\'s aura for 24 hours.', '3-5': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 5-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition {duration}. *Success:* The target is immune to this creature\'s aura for 24 hours.', '6-9': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 10-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition {duration}. *Success:* The target is immune to this creature\'s aura for 24 hours.', '10-12': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 10-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition {duration}. *Success:* The target is immune to this creature\'s aura for 24 hours.', '13-20': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 20-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition {duration}. *Success:* The target is immune to this creature\'s aura for 24 hours.', '21+': '*{save_stat} Saving Throw*: DC {dc}, any creature that starts its turn in a 20-foot Emanation originating from the creature. *Failure:* The target has the {condition_minor} condition {duration}. *Success:* The target is immune to this creature\'s aura for 24 hours.' },
   },
   {
-    id: 'bloodied-fury', name: 'Bloodied Fury', cite: 'Boar/Bloodied Fury (CR 1/4); Giant Boar (CR 2); Berserker/Bloodied Frenzy (CR 2); Sahuagin/Blood Frenzy (CR 1/2)',
+    id: 'bloodied-fury', name: 'Bloodied Fury', cite: 'Boar/Bloodied Fury (CR 1/4); Giant Boar (CR 2); Berserker/Bloodied Frenzy (CR 2)', // NOT the Sahuagin's Blood Frenzy, which keys on the TARGET's wounds — that is `blood-frenzy` below (the cite conflated them until 2026-10-27)
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'While Bloodied, the creature has Advantage on attack rolls.'])),
+  },
+  {
+    // A SITUATIONAL ADVANTAGE THAT NEEDS NO SETUP ROW (owner, 2026-10-27:
+    // "pairing traits with actions that provide a flavorful but situational
+    // advantage would do a lot to kill the sameyness" … "like the creature has
+    // advantage against poisoned creatures").
+    //
+    // Print's answer to that wish keys on the TARGET'S WOUNDS, not on a
+    // condition: the sahuagin has Advantage against any creature that is not at
+    // full Hit Points. That is why it works — the creature's OWN attacks create
+    // the state, so it pairs with every action on the sheet, needs no second row
+    // to set it up, and can never dangle the way a condition-keyed clause does
+    // (five such clauses dangled across the saved runs). Nothing to track: the
+    // table already knows whether it has hit something.
+    //
+    // Distinct from `bloodied-fury`, which keys on the creature's OWN Bloodied
+    // state. Print ships both, on different creatures.
+    id: 'blood-frenzy', name: 'Blood Frenzy', cite: 'Sahuagin/Blood Frenzy (CR 1/2)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature has Advantage on attack rolls against any creature that doesn\'t have all its Hit Points.'])),
   },
   {
     id: 'uncanny-sense', name: 'Uncanny Sense', cite: 'Rust Monster/Iron Scent (CR 1/2, 30 ft); Xorn/Treasure Sense (CR 5, 60 ft); Chuul/Sense Magic (CR 4, 120 ft)',
