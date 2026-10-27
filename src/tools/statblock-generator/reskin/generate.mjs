@@ -1703,6 +1703,75 @@ export function validateReskinResponse(jsonString) {
   } catch { return false; }
 }
 
+/**
+ * THE CARDS THAT ARE THESE FEATURES (step 8): a payoff template on a weapon
+ * sheet carries the Trip Attack label; the riposte seed carries Riposte; and
+ * when the feature table already landed a Trip, the template's copy leaves.
+ *
+ * Extracted from generateReskin's body 2026-10-27 so the naming rule can be
+ * replayed — it had no test of its own, and the rule it was applying was
+ * destroying names (see the measurement inside).
+ */
+/**
+ * A MECHANIC HAS ONE NAME. Owner's rule, 2026-10-27: *"unless it's mechanically
+ * different it needs the same name"*.
+ *
+ * Every row built from a given template does the SAME THING — the CR bands
+ * scale the numbers and nothing else. A `riposte` row is always "a creature
+ * within 5 feet misses it with a melee attack; it makes one melee attack back",
+ * whether the call called it "Silvered Riposte", "Iron Haft Parry",
+ * "Slipstream Lash" or "Tower Shield Riposte". Four names, one reaction: the
+ * name promises a distinctive ability and the text delivers the stock one, and
+ * a GM who has seen two of these sheets has learned nothing from the second
+ * name. Paint is not variety — the cure for sameness is a different MECHANIC
+ * reaching the sheet, which is the rest of this sprint.
+ *
+ * So each templated row converges on its TEMPLATE'S OWN name, read off the
+ * template rather than from a hand-kept list of strings (the
+ * `/^(?:Merciless Strike|Opportunist's Lash)/` regex this block used to carry
+ * would drift the next time a template was renamed, as the `energy-aura` rename
+ * of 2026-10-26 did across 21 references).
+ *
+ * "TRIP ATTACK" IS NOT ONE OF THOSE NAMES, and used to be: a payoff on a weapon
+ * sheet was renamed to it 13 times across the saved runs. The feature table's
+ * Trip Attack is a RIDER welded onto a weapon row — a Strength save that
+ * imposes Prone — never a standalone action. The brass tyrant's row was a
+ * 60-foot Dexterity save for 71 Fire damage, so the label told the GM the one
+ * thing the row certainly was not. Print agrees: no row in the 329-monster
+ * corpus is named "Trip Attack", "Riposte" or "Parry".
+ *
+ * When the style's real Trip rider IS on the sheet, the template's copy still
+ * leaves rather than standing beside it.
+ */
+export function labelFeatureRows(sections, trace = () => {}) {
+  const tripRow = Object.values(sections).flat().find((e) => e.feature === 'Trip Attack');
+  // LOCAL, like the decoration splitter in fitSeat and for the same reason:
+  // `bareName` lives in settleSheetBudgets' scope, and reaching for it here
+  // throws a ReferenceError that a surrounding try/catch swallows into a
+  // silently dropped row.
+  const bareOf = (e) => String(e?.name ?? '').replace(/ \(.*\)$/, '');
+  const gateOf = (e) => (/ \(.*\)$/.exec(String(e?.name ?? '')) ?? [''])[0];
+  const CANON = ['condition-payoff', 'exploiter', 'riposte'];
+  const canonName = new Map(CANON.map((id) => [id, TEMPLATE_BY_ID.get(id)?.name]).filter(([, n]) => n));
+  const canonOf = (e) => canonName.get(e.template) ?? ([...canonName.values()].includes(bareOf(e)) ? bareOf(e) : null);
+  for (const [secF, esF] of Object.entries(sections)) for (const e of esF.slice()) {
+    const canon = canonOf(e);
+    if (!canon) continue;
+    const isPayoff = canon !== canonName.get('riposte');
+    if (isPayoff && tripRow) {
+      esF.splice(esF.indexOf(e), 1);
+      sweepDeadName(sections, e.name, tripRow, trace);
+      trace('feature stands:', `${secF}/"${e.name}" leaves — the style's Trip Attack on ${tripRow.name} is the row (the template's payoff never ships under a style clause)`);
+      continue;
+    }
+    if (bareOf(e) === canon) continue;
+    const was = e.name;
+    e.name = `${canon}${gateOf(e)}`;
+    for (const es2 of Object.values(sections)) for (const e2 of es2) if (e2 !== e) e2.text = String(e2.text ?? '').split(bareOf({ name: was })).join(canon);
+    trace('one mechanic, one name:', `${secF}/"${was}" -> "${e.name}" — this row is ${e.template ?? canon} and does what every ${e.template ?? canon} row does; a bespoke name would promise more than the text delivers`);
+  }
+}
+
 export async function generateReskin(options, callLLM) {
   // ONE NETWORK-CLASS RETRY (2026-09-20; the never-fail asymmetry's real
   // face): ai-client retries malformed JSON but EXITS on providerError, so
@@ -5302,17 +5371,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       } else if (traitT) shipTrait(traitT);
     }
   }
-  { // THE CARDS THAT ARE THESE FEATURES (step 8): an exploiter or payoff template on a weapon sheet is a Trip Attack; the riposte seed is Riposte; when the feature table already landed a Trip, the template's copy leaves
-    const tripRow = Object.values(sections).flat().find((e) => e.feature === 'Trip Attack');
-    const weaponSheet = Object.values(sections).flat().some((e) => e.part && e.weapon);
-    for (const [secF, esF] of Object.entries(sections)) for (const e of esF.slice()) {
-      const isPayoff = ['condition-payoff', 'exploiter'].includes(e.template) || (e.library && /^(?:Merciless Strike|Opportunist's Lash)/.test(e.name ?? ''));
-      const isRiposte = e.template === 'riposte' || (e.library && /^Riposte\b/i.test(e.name ?? ''));
-      if (isPayoff && tripRow) { esF.splice(esF.indexOf(e), 1); sweepDeadName(sections, e.name, tripRow, trace); trace('feature stands:', `${secF}/"${e.name}" leaves — the style's Trip Attack on ${tripRow.name} is the row (Merciless Strike never ships under a style clause)`); continue; }
-      if (isPayoff && weaponSheet && !/^Trip Attack/.test(e.name)) { const was = e.name; e.name = `Trip Attack${(/ \(.*\)$/.exec(e.name) ?? [''])[0]}`; for (const es2 of Object.values(sections)) for (const e2 of es2) if (e2 !== e) e2.text = String(e2.text ?? '').split(was.replace(/ \(.*\)$/, '')).join('Trip Attack'); trace('feature name:', `"${was}" -> "${e.name}" — the card that is this feature takes its name`); }
-      if (isRiposte && !/^Riposte/.test(e.name)) { const was = e.name; e.name = 'Riposte'; for (const es2 of Object.values(sections)) for (const e2 of es2) if (e2 !== e) e2.text = String(e2.text ?? '').split(was).join('Riposte'); trace('feature name:', `"${was}" -> "Riposte"`); }
-    }
-  }
+  labelFeatureRows(sections, trace);
   const owedUnanswered = []; // 1e: owed clauses the repair could not answer — the checker fails on these
   const repairProse = []; // 1e: clauses the repair call judged flavour, not rules — they reach the description instead of a row
   const repairCredited = []; // 1e: clauses the repair call credited to a row already on the sheet — recorded so a credit to a generic print row stays auditable
