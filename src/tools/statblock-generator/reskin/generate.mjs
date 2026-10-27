@@ -4354,12 +4354,32 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // the idea's own words still bring a shelf template into the CANDIDATE SET
       // (not to the front): without this the pool is only the section menu
       const ideaNamed = verbRanked.filter((r) => r.idea.length && !menu.includes(r.t)).map((r) => r.t);
-      // THE SET IS EXACTLY WHAT IT WAS, only the order changes. A conceptBound
-      // template may come off the wide shelf and be in neither `menu` nor
-      // `ideaNamed`; dropping it here would make this a filter, and the whole
-      // point is that a mistagged idea costs the first seats and never a
-      // candidate. There is no cap on `offered`, so order never evicts.
-      const candidates = [...menu, ...ideaNamed.filter((t) => !menu.includes(t)), ...conceptBound.filter((t) => !menu.includes(t) && !ideaNamed.includes(t))];
+      // THE KEYWORD TABLE MAY RANK; IT MAY NOT INJECT (2026-10-27).
+      //
+      // `conceptBound` used to be spread in here, and the comment that stood in
+      // its place argued that dropping it "would make this a filter, and the
+      // whole point is that a mistagged idea costs the first seats and never a
+      // candidate". Probed against the real pool, that is not what it was doing:
+      //
+      //   idea trigger = on_being_hit  -> heated-body IN POOL   (3 candidates)
+      //   idea trigger = always        -> heated-body off-menu (10 candidates)
+      //   idea trigger = start_of_turn -> heated-body off-menu (10 candidates)
+      //
+      // `templatesFor` already admits a retaliation trait exactly when the idea
+      // declared a retaliation trigger — a DECLARED-data gate. The spread was a
+      // 39-word keyword list reaching past that gate to put the template back on
+      // the menu of a creature whose idea had asked for something else. Heated
+      // Body's list is `heat, burn, … touch, furnace, fire, … brass, iron, …
+      // spines, thorns, … lightning, storm, … acid, frost, … plague, contagion`,
+      // so every elemental, metal, spiny or diseased body bound it; "iron" and
+      // "brass" bound Resonant Body too. 379 of Heated Body's 500 shipped rows
+      // and 210 of Resonant Body's 293 arrived this way, and of today's family
+      // rows whose idea wanted a different trigger, 4 of 5 were keyword-bound.
+      //
+      // The keys still RANK the pool (`rankByVerb`) and still stand the verb gate
+      // down; what stops is a word deciding what the creature does. Meaning is a
+      // call field, never a word list (CLAUDE.md).
+      const candidates = [...menu, ...ideaNamed.filter((t) => !menu.includes(t))];
       // THE DECLARED MECHANIC STILL LEADS (owner's architecture, 2026-10-23): the
       // resolve call read what the GM asked a row to DO and every template
       // declares the same field, so that match is a stamp comparison too. It is
@@ -4380,7 +4400,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         trace('declared mechanic leads the menu:', `${seat} — ${askedT}: ${offered.filter((t) => t.mechanic === askedT).map((t) => t.id).join(', ')}`);
       }
       trace('menu ordered by the idea\'s stamps:', `${seat} — idea fires ${idea.trigger}/does ${idea.effect}; leading: ${offered.slice(0, 3).map((t) => `${t.id} (${t.trigger}/${t.effect})`).join(', ')}`);
-      if (conceptBound.length) trace('signature bound to the concept\'s verb:', `${seat} — ${conceptBound.map((t) => t.id).join(', ')} (${[...new Set(rankByVerb(conceptBound, verbText).flatMap((r) => r.concept))].join(', ')})`);
+      if (conceptBound.length) trace('keys would have bound:', `${seat} — ${conceptBound.map((t) => t.id).join(', ')} (${[...new Set(rankByVerb(conceptBound, verbText).flatMap((r) => r.concept))].join(', ')})`);
       try {
         const ownClauseForCall = closedPath ? unansweredClause() : null; // the engine names the clause; the call picks a template FOR it (the critic's prescription, 2026-10-19)
         // `element`, not `text` — assignSeats normalises these to { element, kind }.

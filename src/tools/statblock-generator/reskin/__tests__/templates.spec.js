@@ -427,10 +427,18 @@ describe('generateReskin in template mode', () => {
 });
 
 describe('the seat owes a LIST, not a row (2026-09-28)', () => {
-  test("the skulker seat owes Assassinate AND Evasion — print's 2024 Assassin carries both", () => {
+  // CORRECTED 2026-10-27. This test asserted the skulker seat owes BOTH, "print's
+  // 2024 Assassin carries both" — and print does not: that block carries Evasion,
+  // Multiattack, Shortsword, Light Crossbow and Cunning Action, no Assassinate.
+  // The ambush trait was rendered BLIND (no idea call, no fit call) for every
+  // skulker and lurker, which is where 331 of its 366 shipped rows came from.
+  // Evasion stays owed because print really does put it there.
+  test("the skulker seat owes Evasion — print's 2024 Assassin carries it; it does NOT carry an ambush trait", () => {
     const { SEAT_DEFAULT_TRAIT } = require('../templates.mjs');
     expect(Array.isArray(SEAT_DEFAULT_TRAIT.skulker)).toBe(true);
-    expect(SEAT_DEFAULT_TRAIT.skulker).toEqual(['assassinate', 'evasion']);
+    expect(SEAT_DEFAULT_TRAIT.skulker).toEqual(['evasion']);
+    expect(SEAT_DEFAULT_TRAIT.lurker).toEqual([]);
+    for (const owed of Object.values(SEAT_DEFAULT_TRAIT)) expect(owed).not.toContain('assassinate');
     for (const owed of Object.values(SEAT_DEFAULT_TRAIT)) for (const id of owed) expect(TEMPLATES.find((t) => t.id === id)).toBeDefined();
   });
   test('any burrower may erupt — the shape is gated by the Burrow speed, not by the skulker seat', () => {

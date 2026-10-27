@@ -482,13 +482,16 @@ describe("the twist seat receives its clause (the critic's prescription, 2026-10
     // either door may land it — the fit seat with the clause as its receipt, or the concept-first
     // ranking on the same words. What the critic counted is the OUTCOME: the clause earns a row.
     expect(r.rows.some((e) => e.template === 'mimicry')).toBe(true);
-    expect(r.trace).toMatch(/seat takes its clause|bound to the concept's verb: trait — mimicry/);
+    // the row assertion above is the real proof; this line only checks the seat was
+    // reached. Label changed 2026-10-27 (the keys no longer inject — mimicry
+    // declares trigger=always and is on the pool either way).
+    expect(r.trace).toMatch(/seat takes its clause|keys would have bound: trait — mimicry/);
     expect(r.trace).not.toMatch(/trait declined: "Stolen Choir"/);
   });
   test('and with a quote that names only the body (the skeleton\'s former life)', async () => {
     const r = await fitFor({ concept: 'a skeleton who was a gladiator in a former life', cr: 4, archetype: 'brute', body: 'Skeleton', template: 'false-appearance', rowName: 'Old Champion', asked: 'a skeleton' });
     expect(r.rows.some((e) => e.template === 'false-appearance')).toBe(true);
-    expect(r.trace).toMatch(/seat takes its clause: "Old Champion" is HANDED "(?:who )?was a gladiator in a former life"|bound to the concept's verb/);
+    expect(r.trace).toMatch(/seat takes its clause: "Old Champion" is HANDED "(?:who )?was a gladiator in a former life"|keys would have bound/);
   });
   test('control: a print body that asks for NOTHING still takes no row', async () => {
     const r = await fitFor({ concept: 'Owlbear', cr: 3, archetype: 'brute', body: 'Owlbear', template: 'false-appearance', rowName: 'Invented Thing' });

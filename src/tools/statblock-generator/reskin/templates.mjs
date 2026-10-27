@@ -1832,7 +1832,25 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
 // on such a seat, the default renders blind; when it fits, the fit wins.
 // a CLAIMED MECHANIC owes a trait the way a seat does (critic: both gaze concepts rendered no gaze — the action form floored; the trait form is free)
 export const MECHANIC_OWED_TRAIT = { gaze: ['gaze-aura'] };
-export const SEAT_DEFAULT_TRAIT = { phantom: [], skulker: ['assassinate', 'evasion'], trap: ['false-appearance'], warden: ['interpose'], lurker: ['assassinate'] }; // a LIST: print's composition for the seat, not one row (the 2024 Assassin carries Assassinate AND Evasion — critic, the fourteen) // keyed by style, else by family (the plain stalker seat owes Assassinate too)
+// WHAT A SEAT OWES BY PRINT — and `assassinate` never did (2026-10-27).
+// Measured across every saved run: 331 of the ambush template's 366 shipped rows
+// came from THIS table. When a skulker's or lurker's trait seat missed, the
+// engine rendered it BLIND — `{ blind: true }`, no idea call, no fit call — so
+// every lurker got the same trait whether or not the GM's words asked for an
+// ambush. That is the engine choosing a mechanic, which is the one thing it may
+// not do ([[the-call-judges-the-engine-validates]]).
+//
+// Its stated warrant was false. The comment here used to read "the 2024 Assassin
+// carries Assassinate AND Evasion"; print was checked on 2026-10-27 and the
+// 2024 Assassin carries Evasion, Multiattack, Shortsword, Light Crossbow and
+// Cunning Action — no Assassinate. Evasion STAYS owed because print really does
+// put it there; the ambush trait is removed from both seats.
+//
+// A seat that misses now ships nothing rather than a blind row. That is the
+// intended trade: a thinner skulker sheet beats 331 identical ones. The idea and
+// fit calls can still land the ambush shape whenever they want it — it is not
+// gated on any body (see class-features-need-a-class.spec.js).
+export const SEAT_DEFAULT_TRAIT = { phantom: [], skulker: ['evasion'], trap: ['false-appearance'], warden: ['interpose'], lurker: [] }; // a LIST: print's composition for the seat, not one row // keyed by style, else by family
 
 // ---------------------------------------------------------------- the two calls
 
@@ -1857,7 +1875,7 @@ ${bodyRequirements.map((r) => `- ${r.id}: ${r.needs}`).join('\n')}
 Judge the BODY, not the creature's temperament, job, mood or gear: a man with a crab's temperament is not a crab, a fierce bear is not sticky, and a poisoner is not made of metal. A thing the creature merely CARRIES or USES is not its body.
 But the concept does not have to use the requirement's words — judge what the body plainly IS. A pit of tar is sticky without the word "sticky". A thing bound to a shrine HAS a ward. A creature shaped like a chest can pass for one. Say true when the body is plainly that thing even if the concept never names it.
 Both mistakes cost something. A wrong TRUE puts a rule on the page a GM can see is nonsense \u2014 a bear that glues people to itself. A wrong FALSE takes away an ability the creature obviously should have \u2014 a mimic that isn't sticky. Weigh them evenly and answer on the body. "because" quotes the concept's OWN WORDS, and only for a true answer.
-` : ''}Return ONLY JSON: {"action": {"idea": "<2-3 plain sentences>", "section": "<action|bonus_action|reaction>", "trigger": "<...>", "effect": "<...>", "family": "<...>"}${wantTrait ? ', "trait": {"idea": "<1-2 plain sentences: a passive rule of its body or nature>", "trigger": "<...>", "effect": "<...>", "family": "<...>"}' : ''}${bodyRequirements.length ? ', "body_verdicts": [{"id": "<id copied exactly>", "means": <true|false>, "because": "<the concept\'s own words, or \\"\\">"}]' : ''}}`;
+` : ''}Return ONLY JSON: {"action": {"idea": "<2-3 plain sentences>", "section": "<action|bonus_action|reaction>", "trigger": "<...>", "effect": "<...>", "family": "<...>"}${wantTrait ? ', "trait": {"idea": "<1-2 plain sentences: a passive rule of its body or nature. In print about ONE trait IN A HUNDRED fires when the creature is hit (3 of 324). Nearly every print trait is always-on — how it senses, where it can walk, what its body is made of, how it fights, what it ignores — or it happens on its own turn. Do NOT reach for \"when something hits it, the attacker is hurt\" unless the concept is genuinely ABOUT the creature\'s surface (a body of fire, a hide of spines). A tracker, a climber, a thing that is hard to see, a thing that keeps coming: those are traits too>", "trigger": "<...>", "effect": "<...>", "family": "<...>"}' : ''}${bodyRequirements.length ? ', "body_verdicts": [{"id": "<id copied exactly>", "means": <true|false>, "because": "<the concept\'s own words, or \\"\\">"}]' : ''}}`;
 }
 
 export function validateIdeaResponse(jsonString) {

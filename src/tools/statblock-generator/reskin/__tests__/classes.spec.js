@@ -94,10 +94,13 @@ describe('the class kit lands what the words owe (2026-10-13)', () => {
     expect(ca.kit).toBe('rogue');
     expect(ca.clause).toMatch(/rogue/);
     expect(ca.text).toMatch(/takes the Dash, Disengage, or Hide action/);
-    // "stalks" asked for the ambush shape by name, so it is owed and the cap
-    // cannot turn it away. The row is "Surprise Attack" since 2026-10-27 — print's
-    // 2024 Assassin carries no Surprise Attack feature, and the owner ruled the word
-    // off bodies that cannot have a class, so one neutral name serves every body.
+    // "stalks" is a key on the ROGUE KIT's ambush row (classes.mjs: keys
+    // ['assassin','ambush','unseen','from hiding','first strike','stalks',…]), so
+    // the GM's own word earned it and the cap cannot turn it away. This is the
+    // kit path, NOT `SEAT_DEFAULT_TRAIT` — that blind default was removed on
+    // 2026-10-27 (331 of this template's 366 shipped rows came from it, on a
+    // false print claim), and this row is unaffected by its removal.
+    // The name is "Surprise Attack" since the same day.
     expect(rows(m).find((e) => /^Surprise Attack/.test(e.name ?? ''))).toBeDefined();
     expect(checkBlock(m).fails).toEqual([]);
   });

@@ -696,7 +696,11 @@ describe("print's rows stand at print's CR", () => {
     expect(m.name).toBe('Owlbear');
     const tr = lines.join('\n');
     // the seat was reached with a live fit on a print body — the line the throw used to cut off
-    expect(tr).toMatch(/signature bound to the concept's verb: trait — faultless-tracker/);
+    // label changed 2026-10-27: the keys rank and gate but no longer INJECT a
+    // template onto the menu; the row still reaches the seat off the POOL
+    // (faultless-tracker declares trigger=always and is in it), which the row
+    // assertion two lines down is the real proof of.
+    expect(tr).toMatch(/keys would have bound: trait — faultless-tracker/);
     expect(tr).not.toMatch(/gmAsked is not defined/);
     expect(rows(m).some((e) => e.template === 'faultless-tracker')).toBe(true);
   });
