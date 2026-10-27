@@ -97,6 +97,39 @@ export function advantageReachable(sections, trace = () => {}) {
   return out;
 }
 
+// THE SAME RULE FOR A WELDED PAYOFF, with the other repair. `payoffReachable`
+// drops a dead payoff ROW; a payoff RIDER owns no row — its sentence was welded
+// onto the creature's weapon attack — so dropping it would delete the attack.
+// This strips the CLAUSE and keeps the row, exactly as `advantageReachable`
+// does for a dangling "(with Advantage if the target is Frightened)".
+//
+// Both halves are DECLARED by the weld, not read back out of the finished text:
+// the condition comes from the rider's own `consumes` (the fit call's
+// `consumed_condition`) and the sentence is the very string the weld appended.
+// Comparing an engine sentence against the engine's own record of it is a fact
+// about strings — the same warrant as the duplicate-trigger guard in the weld.
+//
+// The HOST counts as an imposer here, unlike in `payoffReachable`. A payoff rider
+// on a row that imposes the condition itself is the intended combination: the
+// first hit frightens, the second finds the terrified. Conditions outlive a hit.
+export function riderPayoffReachable(sections, trace = () => {}) {
+  const all = Object.values(sections ?? {}).flat().filter(Boolean);
+  const imposed = new Set(all.flatMap((e) => imposedConditions(e)));
+  const out = [];
+  for (const e of all) {
+    if (!Array.isArray(e.riderNeeds) || !e.riderNeeds.length) continue;
+    const kept = [];
+    for (const r of e.riderNeeds) {
+      if (imposed.has(r.need)) { kept.push(r); continue; }
+      e.text = String(e.text ?? '').split(r.text).join('').replace(/\s{2,}/g, ' ').trim();
+      out.push({ name: e.name, need: r.need });
+      trace('payoff rider clause dropped:', `"${e.name}" paid off a ${r.need} target and nothing on the sheet imposes ${r.need} — the clause leaves, the attack stays`);
+    }
+    e.riderNeeds = kept;
+  }
+  return out;
+}
+
 export function payoffReachable(sections, trace = () => {}) {
   const all = Object.values(sections ?? {}).flat().filter(Boolean);
   const out = [];
@@ -5088,14 +5121,35 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // gate (the astrologer's no-save Restrained x3 a turn, fresh ten):
         // print's idiom is "once per turn" when there is no save
         let riderText = actionT.row.text.trim();
-        if (/\b(?:Restrained|Grappled|Paralyzed|Stunned|Incapacitated|Charmed)\b/.test(riderText) && !/Saving Throw/.test(riderText) && !/once per turn/i.test(riderText)) {
+        // A CONDITION THIS RIDER REQUIRES IS NOT ONE IT IMPOSES. The gate below
+        // reads a condition name out of the rider's text, which is right for a
+        // rider that inflicts a hold and wrong for a payoff rider, whose whole
+        // sentence is "If the target ALREADY HAS the Restrained condition…".
+        // Both facts are declared by the render: `consumes` is the condition the
+        // fit call required, `imposes` the one the row inflicts. A row that
+        // requires one and inflicts none has no hold to gate.
+        const requiresNotImposes = !!actionT.row?.consumes && !actionT.row?.imposes;
+        if (!requiresNotImposes && /\b(?:Restrained|Grappled|Paralyzed|Stunned|Incapacitated|Charmed)\b/.test(riderText) && !/Saving Throw/.test(riderText) && !/once per turn/i.test(riderText)) {
           riderText = `${riderText} This effect can be applied only once per turn.`;
           trace('rider gated:', `"${actionT.template}" imposes a hold with no save — once per turn`);
         }
         { const guard = /^If the target is a (\w+) or smaller creature, /i.exec(riderText); if (guard && new RegExp(`If the target is a ${guard[1]} or smaller creature, `, 'i').test(host.text)) { riderText = riderText.slice(guard[0].length); riderText = riderText.charAt(0).toUpperCase() + riderText.slice(1); } } // one size guard per row, as print writes it (the Bog Hound's Bite carried two — the critic's second species read)
         host.text = `${host.text.trim()} ${riderText}`;
-        // the welded rider's condition rides onto the HOST, which now owns it
-        { const wc = /has the (\w+) condition/.exec(riderText)?.[1] ?? (actionT.row?.imposes ?? null); if (wc && !host.imposes) imposeOn(host, wc); }
+        // A PAYOFF RIDER'S CONDITION RIDES ONTO THE HOST AS A NEED, not as `consumes`.
+        // `consumes` on a row means "drop this row if unmet", and this row is the
+        // creature's weapon attack — `riderPayoffReachable` strips the clause instead.
+        { const rc = actionT.row?.consumes; if (rc) host.riderNeeds = [...(host.riderNeeds ?? []), { need: String(rc), text: riderText }]; }
+        // the welded rider's condition rides onto the HOST, which now owns it —
+        // but ONLY a condition the rider inflicts. `requiresNotImposes` guards this
+        // for the same reason it guards the hold gate above: a payoff rider's
+        // sentence opens "If the target already has the Frightened condition", and
+        // this regex would read that requirement as an imposition and record the
+        // weapon row as a source of Frightened. That is not just a wrong field —
+        // `riderPayoffReachable` asks whether anything on the sheet imposes the
+        // condition, so a host that falsely claimed to impose its own requirement
+        // would satisfy the check by itself and the guard would never fire on any
+        // sheet (the dead-arm failure of plans/, "audit the gate you just shipped").
+        { const wc = requiresNotImposes ? null : (/has the (\w+) condition/.exec(riderText)?.[1] ?? (actionT.row?.imposes ?? null)); if (wc && !host.imposes) imposeOn(host, wc); }
         host.boundKeys = [...new Set([...(host.boundKeys ?? []), ...keysOf(actionT.because), ...userKeysFor(actionT.template ?? actionT.row?.template)])]; // the rider's provenance rides on the host (the Bog Hound read 0/1 with the drag on its Bite)
         // AND ITS TEMPLATE RIDES TOO (critic's package-six review, 2026-10-22).
         // The line above hands the host the rider's provenance, but not which
@@ -8427,6 +8481,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   stampAttacksPerRound(monster.sections); // renames and the citation sweep rewrite the Multiattack — re-stamp so the shipped count is the shipped sentence's
   payoffReachable(monster.sections, trace); // a payoff with no imposer on the finished sheet is a dead row
   advantageReachable(monster.sections, trace); // and a conditional Advantage with no imposer is a dead CLAUSE
+  riderPayoffReachable(monster.sections, trace); // and so is a welded payoff rider's "if the target already has…"
   trace('done:', `"${monster.name}" — donor ${donor.id}, CR ${cr}`);
   return monster;
 }

@@ -384,30 +384,54 @@ const LANE_WIDTH = { Tiny: '5-foot', Small: '5-foot', Medium: '5-foot', Large: '
  * and the triggers are `heated-body`'s own wording.
  */
 export const GRAMMARS = {
-  // THE PAYOFF FAMILY WAS TRIED HERE AND REVERTED, 2026-10-27. Two findings, both
-  // from the owner's read and print, say it needs a different design — not a fix:
+  // THE PAYOFF FAMILY, SECOND DESIGN — a RIDER on the creature's own attack.
   //
-  // 1. IT IS A RIDER, NOT AN ACTION. `normaliseTag` turns any action idea whose
-  //    trigger is `on_hit` into a rider ("when it hits" IS a rider on the
-  //    creature's own attack), and that is what "the hammer finds the terrified"
-  //    is. Measured over 176 payoff ideas: rider/on_hit 86, trait/always 60,
-  //    action/always 16, action/save 2. The grammar was built for `action` and so
-  //    served 2 of 176 — it offered nothing on all ten sheets of its own run.
+  // The first attempt was an ACTION grammar and served 2 of 176 payoff ideas,
+  // offering nothing across its whole run. `normaliseTag` turns any action idea
+  // whose trigger is `on_hit` into a rider ("when it hits" IS a rider), and that
+  // is what "the hammer finds the terrified" is. Measured: rider/on_hit 39
+  // (21 condition + 18 damage), trait/always 25, action 6.
   //
-  // 2. REACH IS THE WRONG AXIS. It varied 5 feet / 30 feet / each creature in
-  //    10 feet. Print's seven payoff-shaped rows (Glabrezu/Pummel, Chuul,
-  //    Behir, Kraken, Purple Worm, Remorhaz, and Swallow's kin) all name the
-  //    RELATIONSHIP instead — "one creature Grappled by the glabrezu" — and
-  //    print keys an area on a condition the target already has ZERO times. The
-  //    owner read the result and said so: "how do you tighten coils to restrain
-  //    if they aren't first tethered… a confusing ability all around."
+  // It also fixes the fiction the owner called out — "how do you tighten coils to
+  // restrain if they aren't first tethered… a confusing ability all around". The
+  // target here is the one the creature JUST HIT, so there is no tether to
+  // explain and no area keyed on a condition a stranger might have.
   //
-  // Also learned, for whoever builds it: do NOT stack a condition the consumed
-  // one already implies. The 7 print rows naming both Grappled and Prone are
-  // Swallow sequences ("the target is no longer Grappled"), never a rider adding
-  // Prone to a Restrained creature, which already has Speed 0 and gives
-  // attackers Advantage. And an area pull IS acceptable behind a save (owner's
-  // ruling the same day) — that was not the problem.
+  // The idiom is our own `isolation`, which is already this shape ("If no
+  // creature other than the creature is within 5 feet of the target, the target
+  // takes an extra …"), and print's `charge-push` lance clause. Print has no
+  // row that targets by an existing condition, and by the owner's ruling of the
+  // same day that is not an argument: use print where it exists, invent what
+  // fits where it does not.
+  //
+  // NO CONDITION STACKING. The owner: "do we really stack conditions like that?
+  // pretty sure not restrained and prone". Print's 7 rows naming both are
+  // Swallow SEQUENCES ("no longer Grappled"), never a rider piling a second
+  // condition on. So the condition payload EXTENDS the one already there instead
+  // of adding another — which is also the better fiction: the blow keeps them
+  // terrified rather than knocking them over as well.
+  payoff: {
+    section: 'rider',
+    trigger_tag: 'on_hit',
+    slots: ['consequence'],
+    skeleton: 'If the target already has the {consumed_condition} condition, {consequence}.',
+    consequence: [
+      // ONCE PER TURN IS LOAD-BEARING HERE, and it is written in rather than
+      // left to the weld. A rider is appended to a Multiattack row and riders
+      // skip the value check, so an unlimited conditional bonus multiplies by
+      // the attack count: measured +42 at CR 11 (21 x 2 attacks) against a band
+      // whose ceiling is 0.97x. The weld's own no-save-hold gate DID limit this,
+      // but only by accident — its predicate reads a condition name out of the
+      // text, and this row NAMES the condition it requires, so the limit landed
+      // for Restrained and Grappled and missed Frightened, Poisoned and Prone,
+      // which are the conditions a sheet most often imposes. Print's idiom for a
+      // repeatable conditional bonus is exactly this limit (Sneak Attack).
+      'the target takes an extra {avg_half} ({dice_half}) {damage_type} damage. This effect can be applied only once per turn',
+      "the {consumed_condition} condition on the target lasts until the end of the creature's next turn",
+      'the creature pulls the target up to 10 feet straight toward itself',
+    ],
+    effect: ['damage', 'condition', 'movement'],
+  },
   'body-reaction': {
     section: 'trait',
     trigger_tag: 'on_being_hit',
@@ -616,7 +640,7 @@ export function composedTemplate(pick) {
  */
 export function composedReason(idea, { can = [] } = {}) {
   const g = GRAMMARS[idea?.family];
-  if (!g) return 'has no grammar — only body-reaction and zone are composable';
+  if (!g) return `has no grammar — composable families are ${Object.keys(GRAMMARS).join(', ')}`;
   if (g.section !== idea.section) return `composes a ${g.section} and this is the ${idea.section} seat`;
   const payloadSlot = g.slots[g.slots.length - 1];
   const matching = g[payloadSlot].map((_, i) => i).filter((i) => g.effect[i] === idea.effect);
