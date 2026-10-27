@@ -384,6 +384,30 @@ const LANE_WIDTH = { Tiny: '5-foot', Small: '5-foot', Medium: '5-foot', Large: '
  * and the triggers are `heated-body`'s own wording.
  */
 export const GRAMMARS = {
+  // THE PAYOFF FAMILY WAS TRIED HERE AND REVERTED, 2026-10-27. Two findings, both
+  // from the owner's read and print, say it needs a different design — not a fix:
+  //
+  // 1. IT IS A RIDER, NOT AN ACTION. `normaliseTag` turns any action idea whose
+  //    trigger is `on_hit` into a rider ("when it hits" IS a rider on the
+  //    creature's own attack), and that is what "the hammer finds the terrified"
+  //    is. Measured over 176 payoff ideas: rider/on_hit 86, trait/always 60,
+  //    action/always 16, action/save 2. The grammar was built for `action` and so
+  //    served 2 of 176 — it offered nothing on all ten sheets of its own run.
+  //
+  // 2. REACH IS THE WRONG AXIS. It varied 5 feet / 30 feet / each creature in
+  //    10 feet. Print's seven payoff-shaped rows (Glabrezu/Pummel, Chuul,
+  //    Behir, Kraken, Purple Worm, Remorhaz, and Swallow's kin) all name the
+  //    RELATIONSHIP instead — "one creature Grappled by the glabrezu" — and
+  //    print keys an area on a condition the target already has ZERO times. The
+  //    owner read the result and said so: "how do you tighten coils to restrain
+  //    if they aren't first tethered… a confusing ability all around."
+  //
+  // Also learned, for whoever builds it: do NOT stack a condition the consumed
+  // one already implies. The 7 print rows naming both Grappled and Prone are
+  // Swallow sequences ("the target is no longer Grappled"), never a rider adding
+  // Prone to a Restrained creature, which already has Speed 0 and gives
+  // attackers Advantage. And an area pull IS acceptable behind a save (owner's
+  // ruling the same day) — that was not the problem.
   'body-reaction': {
     section: 'trait',
     trigger_tag: 'on_being_hit',
@@ -545,14 +569,14 @@ export function composedTemplate(pick) {
     // renderTemplate fills them and the save contract (saveStatsFor) runs on the
     // row exactly as it does for the template it came from; an ASSEMBLED frame
     // has no save clause, so the condition is written in here
-    frames: g.frames_from ? frames : Object.fromEntries(Object.entries(frames).map(([b, f]) => [b, f.replace('{condition_minor}', condition ?? '')])),
+    frames: (g.frames_from || g.keeps_condition_token) /* no grammar sets this today; the reverted payoff family did, and a rider payoff will need it too — the save contract binds its stat off the {condition_minor} token */ ? frames : Object.fromEntries(Object.entries(frames).map(([b, f]) => [b, f.replace('{condition_minor}', condition ?? '')])),
     ...(condition ? { imposes: condition } : {}), // DECLARED, not left to be re-read off the finished text
     // A COPIED FRAME KEEPS ITS {condition_minor} TOKEN ON PURPOSE — the save
     // contract binds the stat off that token (a Frightened aura saves by Wisdom,
     // a Poisoned one by Constitution), so substituting the word in would silently
     // cost the row its save stat. The call's choice therefore travels as a
     // declared FILL, which renderTemplate applies and the contract then reads.
-    ...(condition && g.frames_from ? { fills: { condition_minor: condition } } : {}),
+    ...(condition && (g.frames_from || g.keeps_condition_token) ? { fills: { condition_minor: condition } } : {}),
   };
 }
 

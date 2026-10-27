@@ -2871,5 +2871,91 @@
     "askMechanicWhy": "victim"
    }
   ]
+ },
+ "1aa4658cb3b9": {
+  "concept": "a mire-serpent that coils and then crushes what it holds",
+  "clauses": [
+   {
+    "id": "cl_1gtspj0",
+    "text": "a mire-serpent",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_11y651i",
+    "text": "coils and then crushes what it holds",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "coils and then crushes what it holds"
+   }
+  ]
+ },
+ "57757a99105d": {
+  "concept": "a frost-wight that freezes a foe and then shatters them",
+  "clauses": [
+   {
+    "id": "cl_1d7llax",
+    "text": "a frost-wight",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_fndi55",
+    "text": "freezes a foe",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "snare",
+    "askMechanicWhy": "freezes"
+   },
+   {
+    "id": "cl_1qaxqyq",
+    "text": "shatters them",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "shatters them"
+   }
+  ]
+ },
+ "dac94afe9201": {
+  "concept": "a plague-archon whose flies blind a victim and then strip them",
+  "clauses": [
+   {
+    "id": "cl_16tayw0",
+    "text": "a plague-archon whose flies blind a victim",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "flies blind a victim"
+   },
+   {
+    "id": "cl_18w5rfo",
+    "text": "strip them",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "flies blind a victim"
+   }
+  ]
+ },
+ "17ff8ceb0bce": {
+  "concept": "a bog-widow that webs a victim then hauls them in",
+  "clauses": [
+   {
+    "id": "cl_pr9pwo",
+    "text": "a bog-widow",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1g68nlt",
+    "text": "webs a victim then hauls them in",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "hauls them in"
+   }
+  ]
  }
 }
