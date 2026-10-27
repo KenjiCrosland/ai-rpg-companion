@@ -32,7 +32,7 @@ export const guardedStanceIllegalAt = (cr, ac) => {
 };
 export const guardedStanceWhyAt = (cr, ac) => `AC ${ac} already beats print's ${Number(challengeRatings?.[crKey(cr)]?.armor_class ?? 0)} at CR ${cr}, and print ships no persistent Disadvantage-to-be-hit trait (0 of 329)`;
 import { hpFormulaFor as hpFormulaForSize, saveDamageDiceFor as engineDiceFor, attackDamageDiceFor } from '../format-2024/dice.mjs';
-import { AFFLICTIONS, imposedConditions } from './author.mjs'; // one definition: the conditions a finished row imposes
+import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedConditions } from './author.mjs'; // one definition: the conditions a finished row imposes
 import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the validated condition list the authoring call answers against
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
@@ -72,6 +72,15 @@ export function payoffReachable(sections, trace = () => {}) {
     if (ok) continue;
     for (const es of Object.values(sections)) { const ix = es.indexOf(e); if (ix !== -1) es.splice(ix, 1); }
     trace('payoff declined:', `"${e.name}" needs a ${need} target and nothing on the sheet imposes ${need} — the row leaves`);
+    // AND THE ROWS THAT CITED IT LET GO (the forty of 2026-10-27, Pit Fiend).
+    // This dropper spliced the row and stopped there, so the Multiattack kept
+    // reading "It can replace one attack with a use of Merciless Strike" for a
+    // row that was no longer on the sheet — a hard checker FAIL (dangling-ref,
+    // lint:undefined-attack-ref) and an instruction a GM cannot follow. The
+    // free-row budget's dropper in `settleSheetBudgets` has always swept; this
+    // one never did, and the asymmetry only surfaced once payoffs started
+    // surviving the budget (the receipt fix, earlier the same day).
+    sweepDeadName(sections, e.name, null, trace);
     out.push({ name: e.name, need });
   }
   return out;
@@ -4497,7 +4506,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               // wanted-but-missing text keeps its own field for the gap list.
               fit = { ...fit, template: near, because: fit.because || String(idea.idea ?? '').slice(0, 160), wanted: fit.missing ?? null, name: fit.name, accepted_closest: true };
             } else trace('closest refused:', `${seat} — "${near.id}" was named closest but will not render on this sheet`);
-          } else trace('closest refused:', `${seat} — "${fit.closest}" was named closest but was never on this sheet's menu`);
+          } else trace('closest refused:', `${seat} — "${fit.closest}" was named closest but was never on this sheet's menu (a gate refused it, or the pool did not offer it for this idea's declared trigger)`);
         }
         const hnF = headNoun(verbText); const topC = conceptBound.length ? rankByVerb([conceptBound[0]], verbText)[0].concept : [];
         // The call answered `none` for the WHOLE menu, and every conceptBound template
@@ -4509,7 +4518,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         if (!fit.template && conceptBound.length) for (const t of conceptBound) declinedT.add(t.id);
         // STAGE 2 ITEM 1: the reason rides on the record for every decline, so the
         // 50-decline sample can be drawn from runs instead of re-asked.
-        if (!fit.template) trace('decline reason:', `${seat} — the call answered none and names it "${fit.declined_because ?? '(unanswered)'}"${conceptBound.length ? ` after being shown ${conceptBound.map((t) => t.id).join(', ')}, which the GM's words keyed` : ''}`);
+        if (!fit.template) trace('decline reason:', `${seat} — the call answered none and names it "${fit.declined_because ?? '(unanswered)'}"${conceptBound.length ? ` — the GM's words key ${conceptBound.map((t) => t.id).join(', ')}, which the pool did not offer for this idea's declared trigger (since 2026-10-27 the keys rank and gate but no longer inject)` : ''}`);
         // 1c, THE GAP LIST (critic's ruling, 2026-10-20). A refusal that names
         // no missing mechanic is a schema failure, not an answer: "nothing fits"
         // tells us nothing and a third of the signature misses were honest
@@ -7298,7 +7307,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // shared table covers print's full condition list, so a Deafened or Grappled
     // row on the wrong stat is now retyped too. The ten's Killing Wake (Deafened,
     // 71 cold in a cone) already shipped Constitution, which the table accepts.
-    const areaDmg = /each creature|Cone|Sphere|Line|Emanation|radius/i.test(e.text ?? '') && /\d+ \(\d+d\d+/.test(e.text ?? '');
+    // DAMAGE IS THE POINT, not merely an area that damages: a single-target
+    // damage row with no imposed condition is a damage row too, and the table had
+    // no opinion about it (the critic's Strength-save-for-71-Fire payoff).
+    const areaDmg = damageIsThePoint(e);
     const want = saveStatsFor({ imposes: imposed, damageDominant: areaDmg, movement: !!e.imposesMovement });
     if (!want.length || want.includes(sv[1])) continue;
     e.text = e.text.replace(sv[0], sv[0].replace(sv[1], want[0]));
@@ -7322,6 +7334,29 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // lint actuator (owner go, 2026-08-19): the action-passive-rider finding
   // computes its own fix ("it moves to Traits") — a validator that
   // documents a defect it could correct is worse than either option
+  // A ROW WHOSE TEXT DIDN'T FINISH ASSEMBLING LEAVES (the forty of 2026-10-27).
+  //
+  // The critic's new failure class: "The archon can command a number of Swarms
+  // at once equal." / "…each creature within 10 feet of the tyrant. Failure:"
+  // with nothing after it. Three seams, one symptom — a row a GM cannot run.
+  // The lint's deterministic surgery above cannot repair these: the missing half
+  // is not a wording slip, it is absent, and "rules text is never free" is the
+  // standing rule for exactly this. So the row goes, the sheet keeps shipping,
+  // and the trace names what left.
+  //
+  // Measured before wiring: 0 of print's 1,291 rows trip this (it may be a hard
+  // reject), against 23 of 50,811 saved generated rows — including a seam the
+  // critic had not named, a Multiattack written as "It can replace one attack
+  // with." and no row named.
+  for (const f of lint.findings.filter((x) => x.rule === 'unfinished-text' && x.loc)) {
+    const es = sections[f.loc.section] ?? [];
+    const idx = es.findIndex((e) => e.name === f.loc.entry);
+    if (idx === -1) continue;
+    const dead = es[idx];
+    es.splice(idx, 1);
+    sweepDeadName(sections, dead.name, null, trace);
+    trace('unfinished row dropped:', `${f.loc.section}/"${dead.name}" — ${f.message.replace(/^[^:]*: /, '')}; half a rule is worse than no row`);
+  }
   for (const f of lint.findings.filter((x) => x.rule === 'action-passive-rider' && x.loc)) {
     const idx = (sections[f.loc.section] ?? []).findIndex((e) => e.name === f.loc.entry);
     if (idx !== -1) {

@@ -2032,5 +2032,428 @@
     "askShape": "attack"
    }
   ]
+ },
+ "81578d636772": {
+  "concept": "A bloated, stone-crusted corpse-thing dredged up from a drowned bog, its bog-water body so sodden with tannin and corpse",
+  "clauses": [
+   {
+    "id": "cl_18glzbs",
+    "text": "A bloated",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1kwe109",
+    "text": "stone-crusted corpse-thing dredged up from a drowned bog",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_unb3aj",
+    "text": "its bog-water body so sodden with tannin",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1447gjb",
+    "text": "corpse-rot that the black ichor sweating through its granite hide eats through wood and flesh alike",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_pyikot",
+    "text": "It lumbers out of the muck to grab prey in a crushing",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_gww6nk",
+    "text": "seeping embrace",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "grab prey"
+   },
+   {
+    "id": "cl_1payu20",
+    "text": "drags the corroded remains back to a trophy-lair of half-dissolved bones and rusted trinkets",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_3973ym",
+    "text": "arranging them with unsettling",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1xzgksw",
+    "text": "almost scholarly care",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1p4vbvb",
+    "text": "Under pressure it does not flee — it turns its long dead intellect to the fight",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_1g4uh8s",
+    "text": "herding attackers into the worst ground",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_85940o",
+    "text": "picking the one whose gear its acid has already eaten thin",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_nacmvu",
+    "text": "It is possessed of alien genius (INT 17-20)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_fkirqu",
+    "text": "it is a hoarder that drags its kills back to a lair of trophies",
+    "kind": "mechanical"
+   }
+  ]
+ },
+ "a00ece6fe894": {
+  "concept": "a brass tyrant whose furnace breath terrifies and whose hammer finds the terrified",
+  "clauses": [
+   {
+    "id": "cl_3kse8p",
+    "text": "a brass tyrant whose furnace breath terrifies",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "a brass tyrant whose furnace breath terrifies",
+    "askShape": "save_area",
+    "askMechanic": "fear",
+    "askMechanicWhy": "terrifies"
+   },
+   {
+    "id": "cl_8hz48r",
+    "text": "whose hammer finds the terrified",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "whose hammer finds the terrified",
+    "askShape": "attack",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "finds the terrified"
+   }
+  ]
+ },
+ "6bca7bff424d": {
+  "concept": "a plague-bearing archon of flies",
+  "clauses": [
+   {
+    "id": "cl_1lxu63p",
+    "text": "a plague-bearing archon of flies",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "89d2aaa163be": {
+  "concept": "a bell-ghost whose toll builds to one shattering peal",
+  "clauses": [
+   {
+    "id": "cl_1pvmf22",
+    "text": "a bell-ghost whose toll builds to one shattering peal",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "6c6a9b70978f": {
+  "concept": "a dread sovereign whose gaze alone breaks the will",
+  "clauses": [
+   {
+    "id": "cl_16aq8mo",
+    "text": "a dread sovereign whose gaze alone breaks the will",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "gaze",
+    "askMechanicWhy": "gaze alone breaks the will"
+   }
+  ]
+ },
+ "d35c17cffe84": {
+  "concept": "a plain mercenary with a spear and a shield",
+  "clauses": [
+   {
+    "id": "cl_idhjrm",
+    "text": "a plain mercenary with a spear and a shield",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "a2102c61dba1": {
+  "concept": "A pale serpent woven from the frozen fibers of alpine snow-lotus, its long rope-body bound in glittering braids that hoa",
+  "clauses": [
+   {
+    "id": "cl_c2xep6",
+    "text": "A pale serpent woven from the frozen fibers of alpine snow-lotus",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1lhog4w",
+    "text": "its long rope-body bound in glittering braids that hoard a killing chill",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1369doa",
+    "text": "the Rime Serpent coils through the high passes as a warden of the peaks",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_y0le7",
+    "text": "judging trespass with cold and patient mind",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_tin1a9",
+    "text": "It opens by rearing",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "breath",
+    "askMechanicWhy": "breathing a fog of killing frost"
+   },
+   {
+    "id": "cl_4nrws9",
+    "text": "breathing a fog of killing frost that rimes flesh to the bone",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_yrufs",
+    "text": "lashes its braided length around a mark to squeeze until the cold in its weave drinks the warmth out",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1ft31jr",
+    "text": "every blow it lands is seeping chill",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1ecxk8",
+    "text": "never blunt force",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "every blow it lands",
+    "askOften": "at_will",
+    "askOftenWhy": "never blunt force",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1l9hqbv",
+    "text": "It drags the frozen dead back to a glittering cairn of trophy husks",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_1onisaq",
+    "text": "guards it fiercely",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_128oq0k",
+    "text": "but a creature of law does not fight to waste — once bloodied past reason it withdraws up the cliffs to its hoard rather",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_obu126",
+    "text": "It is fully sapient (INT 10-14)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_fkirqu",
+    "text": "it is a hoarder that drags its kills back to a lair of trophies",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "breath",
+    "askMechanicWhy": "breathing a fog of killing frost"
+   }
+  ]
+ },
+ "cc55dbda486c": {
+  "concept": "a scree-pit thing that buries what it catches and crushes what it holds",
+  "clauses": [
+   {
+    "id": "cl_66tcwv",
+    "text": "a scree-pit thing",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_gr33vs",
+    "text": "buries what it catches",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "catches",
+    "askOften": "at_will",
+    "askOftenWhy": "buries what it catches",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "catches"
+   },
+   {
+    "id": "cl_9i36ro",
+    "text": "crushes what it holds",
+    "kind": "mechanical",
+    "askWhen": "start_of_turn",
+    "askWhenWhy": "holds",
+    "askOften": "at_will",
+    "askOftenWhy": "crushes what it holds",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "holds"
+   }
+  ]
+ },
+ "2f97d532d15d": {
+  "concept": "a cathedral bell given legs, whose toll builds to one shattering peal",
+  "clauses": [
+   {
+    "id": "cl_arc00i",
+    "text": "a cathedral bell given legs",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1f51x1a",
+    "text": "whose toll builds to one shattering peal",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "whose toll builds to one shattering peal",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "whose toll builds"
+   }
+  ]
+ },
+ "192046cf3a16": {
+  "concept": "an ancient drake of the ash wastes that rules a dead valley",
+  "clauses": [
+   {
+    "id": "cl_1xfsrjh",
+    "text": "an ancient drake of the ash wastes",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_75g2k3",
+    "text": "rules a dead valley",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "90babd46cdd8": {
+  "concept": "a knife ball of lashed blades that rolls over everything",
+  "clauses": [
+   {
+    "id": "cl_wc9c4w",
+    "text": "a knife ball of lashed blades",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_xk2tbp",
+    "text": "rolls over everything",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "charge",
+    "askMechanicWhy": "rolls over everything"
+   }
+  ]
+ },
+ "907403bc0ce4": {
+  "concept": "a bog hag who curses trespassers and drowns them in the mire",
+  "clauses": [
+   {
+    "id": "cl_cl2r1l",
+    "text": "a bog hag",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_f134ij",
+    "text": "curses trespassers and drowns them in the mire",
+    "kind": "mechanical",
+    "askMechanic": "curse",
+    "askMechanicWhy": "curses trespassers"
+   }
+  ]
+ },
+ "76e0c57dbf05": {
+  "concept": "a goblin boss who shoves allies into harm's way",
+  "clauses": [
+   {
+    "id": "cl_d1betz",
+    "text": "a goblin boss",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_yww3tn",
+    "text": "shoves allies into harm's way",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "shoves allies into harm's way",
+    "askOften": "at_will",
+    "askOftenWhy": "shoves allies into harm's way",
+    "askShape": "save_single",
+    "askMechanic": "shove",
+    "askMechanicWhy": "shoves allies into harm's way"
+   }
+  ]
+ },
+ "e29e47735a5b": {
+  "concept": "a pumpkin king whose roots snare and drag",
+  "clauses": [
+   {
+    "id": "cl_261e0",
+    "text": "a pumpkin king whose roots snare",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1u9mc",
+    "text": "drag",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "drag"
+   }
+  ]
+ },
+ "9f14151162a2": {
+  "concept": "a drowned choir that sings sailors down",
+  "clauses": [
+   {
+    "id": "cl_15b3497",
+    "text": "a drowned choir",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1g5jue7",
+    "text": "sings sailors down",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "sings sailors down"
+   }
+  ]
+ },
+ "35354fae49ce": {
+  "concept": "a swarm of carrion beetles that boils over the fallen",
+  "clauses": [
+   {
+    "id": "cl_ytbk",
+    "text": "a swarm of carrion beetles",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_ss8ule",
+    "text": "boils over the fallen",
+    "kind": "descriptive"
+   }
+  ]
  }
 }

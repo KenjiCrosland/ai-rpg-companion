@@ -609,7 +609,16 @@ describe('fresh four (2026-09-28): the header rides along, the save follows the 
     expect(renderTemplate(t, ctx, { condition_minor: 'Deafened' }).text).toMatch(/^\*Constitution Saving Throw\*.*Deafened condition/);
   });
   test("a gated nova's dice never climb past print's breath scale for the CR", () => {
-    expect(NOVA_CAP(14)).toBe(71); expect(NOVA_CAP(6)).toBe(33); expect(NOVA_CAP(24)).toBe(111);
+    // RE-PINNED 2026-10-27 against print's MAXIMUM observed gated damage by CR,
+    // measured over its 69 gated damage rows: CR 6 → 40, CR 7 → 49, CR 9 → 55,
+    // CR 11 → 66. A cap is a ceiling, so it belongs at or just above that; the
+    // old low-CR arm (5.5 × CR) put CR 7 at 39 BELOW print's 49 and cut into the
+    // row's own floor, which is why our gated rows came in at 0.60x of the round
+    // they replace against print's 0.95x. CR 14 and 24 are unchanged — above
+    // CR 11 the cap is already the generous side of print.
+    expect(NOVA_CAP(14)).toBe(71); expect(NOVA_CAP(6)).toBe(41); expect(NOVA_CAP(24)).toBe(111);
+    expect(NOVA_CAP(7)).toBe(47); // print's own CR-7 maximum is 49
+    expect(NOVA_CAP(9)).toBe(58); // print's CR-9 maximum is 55
     const scaled = sheet(14, null, 'lurker'); const per = Math.round(scaled.per_hit);
     const sections = { Actions: [{ name: 'Multiattack', text: 'The creature makes three Claw attacks.' }, { name: 'Claw', text: `*Melee Attack Roll:* +9, reach 5 ft. ${per} (3d10 + 5) Slashing damage.` }] };
     const vc = valueCheck({ name: 'Saltcrack Field (2/Day)', text: '*Dexterity Saving Throw*: DC 17, one creature within 60 feet. *Failure:* 19 (3d12) Acid damage. *Success:* Half damage only.' }, { scaled, sections, section: 'Actions', cr: 14 });

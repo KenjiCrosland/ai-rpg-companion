@@ -516,6 +516,35 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     }
   }
 
+  // RULE TEXT THAT DIDN'T FINISH ASSEMBLING (the forty of 2026-10-27; critic:
+  // "three of the nine fixes are a new failure class — truncated or garbled rule
+  // text shipped on the sheet … None is a judgment call; a lint catches all
+  // three"). Three different seams, one symptom: a row a GM cannot run.
+  //
+  //   Carrion Archon — "The archon can command a number of Swarms at once equal."
+  //   Brass Tyrant   — "…each creature within 10 feet of the tyrant. Failure:"
+  //   Leviathan      — "While the leviathan can see the leviathan within 30 feet
+  //                     of itself … must move away from the leviathan."
+  //
+  // These are REJECTS, not correctables: the missing half cannot be invented by
+  // string surgery, and shipping half a rule is worse than shipping no row —
+  // "rules text is never free" is the standing rule for exactly this.
+  for (const { section, entry } of entriesOf(monster)) {
+    const raw = String(entry?.text ?? '').replace(/\*/g, '').trim();
+    if (!raw) continue;
+    const loc = { section, entry: entry.name };
+    // a save outcome with no payload: "Failure:" or "Success:" and then nothing
+    // (or straight into the next label)
+    if (/\b(Failure|Success):\s*(?:$|(?:Failure|Success):)/.test(raw)) {
+      push('unfinished-text', 'reject', `${section}/${entry.name}: a save outcome has no effect after it — "${raw.slice(-60)}"`, undefined, loc);
+    }
+    // a sentence that stops on a word that cannot end one. "equal." is the
+    // archon's; the rest are the same shape of truncation.
+    if (/\b(?:equal|equal to|than|toward|towards|within|from|of|to|the|an?|and|or|by|for|with|into|plus|up)\.?$/i.test(raw)) {
+      push('unfinished-text', 'reject', `${section}/${entry.name}: the text ends mid-sentence on "${raw.split(/\s+/).slice(-2).join(' ')}"`, undefined, loc);
+    }
+  }
+
   // Defense stacking (generated blocks only): weighted point budget — the
   // chassis HP already assumes a typical package, so surplus multiplies
   // effective HP past budget. Spend order: immunities first (identity

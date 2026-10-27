@@ -160,6 +160,67 @@ const PRECONDITION = /\bif\b[^.]*$|\balready\b\s*$|\b(?:that|which|who)\s*$|\b(?
 export const AFFLICTIONS = ['Grappled', 'Restrained', 'Prone', 'Incapacitated', 'Paralyzed', 'Stunned', 'Blinded', 'Poisoned', 'Frightened', 'Charmed', 'Deafened'];
 
 /**
+ * Is damage over an AREA the point of this row? ONE DEFINITION, EVERY READER —
+ * the same reason `imposedConditions` lives here.
+ *
+ * Two copies of this grew: the engine's save-stat pass (generate.mjs) and the
+ * checker's save-fit gate. They are the input to `saveStatsFor`, which decides
+ * whether Strength and Wisdom are allowed on a row, so a drift between them is
+ * the engine and its gate disagreeing about the same sheet — which is exactly
+ * what the forty of 2026-10-27 found when one was updated for the owner's GM
+ * read and the other was not.
+ *
+ * DECLARED FIRST, PROSE SECOND, like every reader in this file. `area` is
+ * stamped by the sites that CHOOSE the geometry (renderTemplate resolves the
+ * `{target}` clause from `area_shape`), and only about 1 row in 10 on a finished
+ * sheet is template-built — print, donor and chassis rows carry no stamp and
+ * never will, so the prose arm is not scaffolding to be removed later. What the
+ * field buys is that a shape's own geometry is no longer re-derived from the
+ * sentence the engine just wrote, and what this function buys is that there is
+ * one grammar instead of two.
+ */
+/**
+ * Is DAMAGE the point of this row? ONE DEFINITION, EVERY READER.
+ *
+ * `areaDamage` answers the narrower question the save table was built around —
+ * an area that damages. But a SINGLE-TARGET row that deals dice and imposes
+ * nothing is just as much a damage row, and the table had no opinion about it,
+ * so the model's own `save_stat` stood unchallenged. The critic's find on the
+ * forty of 2026-10-27: the Brass Tyrant's payoff carried a STRENGTH save for 71
+ * Fire damage, and both grapple-payoffs on other sheets carried DEXTERITY — the
+ * stat was tracking the condition the row REQUIRES rather than the damage it
+ * deals ("the payload has to pick, not the precondition").
+ *
+ * Print never does this. Measured over its single-target, damage-only save rows:
+ * Dexterity 11, Constitution 11, Wisdom 3, Charisma 2, Intelligence 1 —
+ * STRENGTH 0 of 28. Strength is for a shove or a haul, which is why
+ * `saveStatsFor` keeps it only for a displacement.
+ *
+ * A row that imposes a condition is unaffected: its condition still picks.
+ */
+export function damageIsThePoint(row) {
+  const t = String((typeof row === 'object' ? (row?.text ?? row?.description) : row) ?? '');
+  if (!/\d+ \(\d+d\d+/.test(t)) return false;
+  if (areaDamage(row)) return true;
+  // A PAYOFF: the condition is its PREREQUISITE, so the damage is all it does.
+  // Keyed on the declared `consumes`, not on "no condition imposed" — that wider
+  // test was a FALSE POSITIVE on a displacement row (Mirelda Sedge's Mire Sink,
+  // the balance twelve of 2026-10-27: "7 (2d6) Poison damage, and Mirelda drags
+  // the target up to 15 feet through a wall … the target emerges Prone"). Its
+  // point is the drag, Strength is print's save for a haul, and the shared
+  // reader saw no condition only because the row says "emerges Prone" rather
+  // than "has the Prone condition". A drag row is not a damage row.
+  return !!(typeof row === 'object' && row?.consumes);
+}
+
+export function areaDamage(row) {
+  const dice = /\d+ \(\d+d\d+/.test(String((typeof row === 'object' ? (row?.text ?? row?.description) : row) ?? ''));
+  if (!dice) return false;
+  if (typeof row === 'object' && row?.area != null) return !!row.area;
+  return /each creature|Cone|Sphere|Line|Emanation|radius/i.test(String(row?.text ?? row?.description ?? row ?? ''));
+}
+
+/**
  * Every condition a finished row imposes. ONE DEFINITION, EVERY READER: the
  * duplicate-mechanic gate and the engine's stripping pass each grew a private
  * copy of this grammar, so widening the exclusion here fixed neither of them

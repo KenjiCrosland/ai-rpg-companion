@@ -11,12 +11,12 @@
 // single-target with a repeat save (the Ghoul); leveled spells at will are a
 // fail only for hard control below CR 13; reach follows size before a tether.
 import { fromLegacyModel } from '../format-2024/generate.mjs';
-import { AFFLICTIONS, imposedCondition, imposedConditions } from './author.mjs'; // one definition: the conditions a finished row imposes
+import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedCondition, imposedConditions } from './author.mjs'; // one definition: the conditions a finished row imposes
 import { lintStatblock } from '../format-2024/lint.mjs';
 import { HIT_DIE_BY_SIZE } from '../format-2024/dice.mjs';
 import { WEAPONS, weaponFor, weaponProp, namesWeapon } from './weapons.mjs';
 import { cardBudget, dmgRow } from './card-budgets.mjs';
-import { NOVA_CAP, gateOf, SIZES } from './templates.mjs'; // one definition of a row's gate: the field first, the name only as print's canon/a missed-stamp signal
+import { NOVA_CAP, gateOf, SIZES, saveStatsFor } from './templates.mjs'; // one definition of a row's gate: the field first, the name only as print's canon/a missed-stamp signal
 import { CONTROL_SPELL_LEVEL, CONTROL_AT_WILL_CR, SPELL_DAMAGE_AVG, printCanonFor, nearPrintCr } from './generate.mjs';
 import { speciesFor } from './species.mjs';
 import { LINE_VERBS } from './route.mjs'; // the router's own key tables — one definition for what keys an engine (stage 1b)
@@ -406,7 +406,14 @@ function gateStructure(m, ctx, F) {
   const multi = (m.sections?.Actions ?? []).find((e) => /^Multiattack/.test(e.name ?? ''));
   if (multi) {
     const n = /makes (\w+)/i.exec(multi.text)?.[1]; const count = WORDS[n?.toLowerCase()] ?? Number(n);
-    const named = [...String(multi.text).matchAll(/\b([A-Z][\w'-]+(?: [A-Z][\w'-]+)*)\b/g)].map((x) => x[1]).filter((x) => names.includes(x));
+    // ASK THE QUESTION DIRECTLY: does the Multiattack name a row that exists?
+    // This used to harvest runs of Capitalized words and look each up, which
+    // cannot see a row name with a lowercase connector in it — "Fist of Ice"
+    // was harvested as "Fist" and "Ice", neither of which is a row, so the
+    // Glacier's Heart failed the forty of 2026-10-27 for citing a row that was
+    // right there on its sheet. Print names rows this way too (Hold Breath,
+    // Breath of the Dragon), so the old read was wrong for print as well.
+    const named = names.filter((nm) => nm && nm.length > 3 && new RegExp(`\\b${nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(String(multi.text ?? '')));
     if (count && /makes \w+ ([A-Z][\w' -]+?) attacks\b/.test(multi.text) && !named.length) F('multiattack-row', 'fail', `Multiattack names a row that does not exist: "${multi.text}"`, multi.text);
     // EVERY name in the "using A or B in any combination" list must be a row: "Slam or Mirror Slam" passed because "Slam"
     // exists and the nested "Mirror Slam" was never checked (critic's blockers audit 2026-10-03)
@@ -1236,8 +1243,74 @@ function gateReader(raw, m, ctx, F) {
     if (dealt && ['Bludgeoning', 'Piercing', 'Slashing'].includes(dealt) && /\b(?:drains?|siphons?|leech(?:es)?)\b/i.test(`${n} ${t}`) && /regains? (?:\d+ )?Hit Points|\bdrain/i.test(t)) F('type-fit', 'fail', `${sec}/${n}: a drain deals ${dealt} — a weapon type for an effect that takes no weapon`, dealt);
     const sv = /\*?(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) Saving Throw/.exec(t);
     // a condition named as a PREREQUISITE is not an imposed effect (a condition-payoff row exploits Prone; it does not cause it)
-    if (sv && !e.print) { const eff = effectOnly(t); const want = /\b(?:Prone\b|pushed\b|Grappled\b|Restrained\b|knocked prone)/.test(eff) ? (/Attack Roll/.test(t) ? ['Strength', 'Dexterity', 'Constitution'] : ['Strength', 'Dexterity']) /* print's weapon mastery topples on a Constitution save */ : /\b(?:Poisoned|poison|disease|breath|spores?|choking|suffocat)/i.test(eff) ? ['Constitution'] : /\b(?:Frightened|Charmed)\b/.test(eff) ? ['Wisdom', 'Charisma'] : null;
-      if (want && !want.includes(sv[1])) F('save-fit', 'fail', `${sec}/${n}: a ${sv[1]} save for an effect that calls for ${want.join(' or ')}`, sv[1]); }
+    // ONE DEFINITION OF WHICH SAVE A ROW TAKES (the forty of 2026-10-27).
+    //
+    // This gate kept its own ladder — a regex over the row's TEXT that read
+    // `/Frightened|Charmed/` and demanded Wisdom or Charisma. The engine's copy
+    // of that ladder was replaced on 2026-10-27 by `saveStatsFor`, a closed table
+    // keyed on the DECLARED condition, after the owner's GM read showed the old
+    // rule putting a Wisdom save on a damage row. The gate was not updated, so it
+    // spent the next forty failing the engine for obeying the ruling: the Brass
+    // Tyrant's Furnace Gasp is a 30-foot cone dealing 72 Fire that also frightens,
+    // print's save for which is Constitution or Dexterity (area+damage: DEX 46,
+    // CON 29, WIS 5, STR 4 across the corpus) — and this gate called it a FAIL
+    // because the word "Frightened" was in the text.
+    //
+    // A gate and the engine disagreeing is a sign to count the copies of the
+    // definition they share ([[a-private-copy-hides-the-fix]]). There is now one,
+    // and it is the engine's. What this gate still owns is the JUDGEMENT of
+    // whether the row is damage-dominant, which it reads from its own text.
+    if (sv && !e.print) {
+      const eff = effectOnly(t);
+      // THE TABLE SAYS WHEN IT HAS AN OPINION. `saveStatsFor` returns [] for a row
+      // it cannot judge, which is the same scoping the engine's own pass uses
+      // (generate.mjs: `if (!want.length || want.includes(sv[1])) continue`), so
+      // this gate needs no word list to decide which rows it covers. The first
+      // cut of this carried three — a Prone/Grappled/Restrained list, a
+      // poison/disease/breath list and a Frightened/Charmed list — inherited from
+      // the regex ladder it replaced. The declared condition answers all three.
+      //
+      // `imposedConditions` is the shared reader (declared record first, prose
+      // second), so the `has the X condition` regex that stood here was a second
+      // copy of a fallback it already has.
+      const imposed = imposedConditions(e)[0] ?? null;
+      // DAMAGE-DOMINANT HAS ONE DEFINITION, in author.mjs beside the other shared
+      // readers. This gate and the engine's save-stat pass each carried a copy,
+      // and they feed the same `saveStatsFor` — so a drift between them is the
+      // engine and its own gate disagreeing about a sheet, which is what the
+      // forty of 2026-10-27 found. It reads the row's declared `area` first.
+      const dmg = damageIsThePoint(e); // wider than areaDamage: a single-target damage row counts too
+      // `movement` is the ROW'S OWN FLAG, not a word hunt. A shove row that never
+      // set it falls to its condition's answer, which still allows Strength — so
+      // the worst a missing flag costs is silence, never a false failure.
+      const want = saveStatsFor({ imposes: imposed, damageDominant: dmg, movement: !!e.imposesMovement });
+      // PRINT'S WEAPON MASTERY TOPPLES ON THE WEAPON'S OWN SAVE. The table drops
+      // Strength once damage dominates (the owner's GM read, 2026-10-27); an
+      // ATTACK ROLL row that displaces is the case print writes with Strength.
+      // Read off the table rather than a word list: a condition whose own answer
+      // includes Strength is a displacement.
+      const displaces = saveStatsFor({ imposes: imposed }).includes('Strength');
+      if (want.length && /Attack Roll/.test(t) && displaces) want.push('Strength', 'Dexterity', 'Constitution');
+      // A POISON ROW SAVES BY CONSTITUTION, read off the ROW'S DECLARED TYPE
+      // (owner, 2026-10-27: "we want to retire it with a declared damage type,
+      // we don't want to rely on regex where so many edge cases have been proven
+      // to pop up").
+      //
+      // A row that deals Poison and imposes no condition has nothing for the
+      // condition table to judge, and this is the real defect underneath it: the
+      // `exploiter` frame hard-codes "Strength Saving Throw" beside whatever
+      // damage the sheet's energy gives it (the forty's Plague Archon: a Strength
+      // save for 42 (12d6) Poison). The scrape that used to answer this —
+      // `/(\w+) damage/` over the rendered sentence — could not survive the
+      // engine's own corrections: a thrown weapon keeps its weapon type, a
+      // mental shape becomes Psychic, a drain Necrotic, a spewed cloud Poison,
+      // an on-hit rider takes the host hit's type. Those decisions are made in
+      // `renderTemplate` and `drawLibraryRow`, which now stamp `damageType` on
+      // the row; print's own rows carry no stamp and are already exempt (`e.print`).
+      if (!want.length && e.damageType === 'Poison') {
+        if (sv[1] !== 'Constitution') F('save-fit', 'fail', `${sec}/${n}: a ${sv[1]} save on a row that declares Poison damage`, sv[1]);
+      } else if (want.length && !want.includes(sv[1])) F('save-fit', 'fail', `${sec}/${n}: a ${sv[1]} save for an effect that calls for ${[...new Set(want)].join(' or ')}`, sv[1]);
+    }
   }
   // alignment-fit: Unaligned is for a creature with no capacity for ethics.
   // "UNDERSTANDS … BUT CAN'T SPEAK" IS NOT SPEECH (owner's stage 1b, 2026-10-16).

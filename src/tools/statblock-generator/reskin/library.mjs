@@ -256,6 +256,7 @@ export const LIBRARY_KEYS = LIBRARY_SEEDS.map((s) => s.key);
 export const nameHash = (s) => [...String(s)].reduce((h, c) => ((h * 31) + c.charCodeAt(0)) >>> 0, 7);
 
 export function drawLibraryRow(scaled, { archetype = null, energy = null, mix = null, name = '', shapeKey = null, imposed = [], mechanics = null, cr = null, meleeName = null, rangedName = null } = {}) {
+  let spentDamageType = null; // the type this seed's frame actually spent, or null
   const hasNova = Object.values(scaled.sections ?? {}).flat()
     .some((e) => (/^Recharge/.test(e.gate ?? '') || /\(Recharge [\d–-]+\)/.test(e.name ?? '')) && /\d+ \(\d+d\d+/.test(e.text ?? ''));
   const chassisTeleports = Object.values(scaled.sections ?? {}).flat().some((e) => /teleports? up to/.test(e.text ?? ''));
@@ -301,6 +302,9 @@ export function drawLibraryRow(scaled, { archetype = null, energy = null, mix = 
     const dtype = mix === 'physical' || !energy
       ? (BY_FICTION[seed.key] ?? (seed.section === 'Bonus Actions' ? 'Bludgeoning' : 'Piercing'))
       : energy;
+    // the frame only declares a type when it actually spends one: a Frightened
+    // seed with no damage token must not carry a misleading default
+    if (text.includes('{damage_type}')) spentDamageType = dtype;
     text = text.split('{damage_type}').join(dtype);
   }
   // THE ROW CARRIES ITS SEED (critic's hold 5, 2026-10-16). A drawn row said only
@@ -309,5 +313,10 @@ export function drawLibraryRow(scaled, { archetype = null, energy = null, mix = 
   // shipped two bonus actions that both charge its next strike. The id is also
   // the row's provenance, which the review doc wants anyway (hold 3).
   // the card's own `imposes` rides onto the row: A2 reads a field, never prose
-  return { seed: seed.key, section: seed.section, row: { name: seed.name, text, library: true, seed: seed.key, ...(seed.imposes ? { imposes: seed.imposes } : {}) } };
+  // THE SEED DECLARES THE DAMAGE IT DEALS, like a template does (owner,
+  // 2026-10-27). `dtype` above is this function's own answer; a later reader
+  // scraping it back out of the sentence is the regex the owner retired.
+  // Stamped only when the seed's frame actually spends it — a Frightened seed
+  // with no damage token declares nothing rather than a misleading default.
+  return { seed: seed.key, section: seed.section, row: { name: seed.name, text, library: true, seed: seed.key, ...(spentDamageType ? { damageType: spentDamageType } : {}), ...(seed.imposes ? { imposes: seed.imposes } : {}) } };
 }

@@ -42,3 +42,40 @@ describe('payoffReachable', () => {
     expect(payoffReachable(s)).toEqual([]);
   });
 });
+
+// THE ROWS THAT CITED THE PAYOFF LET GO OF IT (the forty of 2026-10-27, #17).
+//
+// The Pit Fiend shipped a Multiattack reading "It can replace one attack with a
+// use of Merciless Strike" with no such row on the sheet. The payoff had been
+// dropped correctly — nothing on that sheet imposes Prone, so it had nothing to
+// consume — but this dropper spliced the row and never swept the citation, while
+// the free-row budget's dropper in settleSheetBudgets always has. Two hard
+// checker FAILs (dangling-ref, lint:undefined-attack-ref) and an instruction a
+// GM cannot follow.
+describe('a declined payoff takes its citations with it', () => {
+  const sheet = () => ({
+    Actions: [
+      { name: 'Multiattack', text: 'The pit fiend makes one Bite attack and two Devilish Claw attacks. It can replace one attack with a use of Merciless Strike.' },
+      { name: 'Bite', text: '*Melee Attack Roll:* +14, reach 10 ft. 22 (3d10 + 6) Piercing damage.' },
+      { name: 'Devilish Claw', text: '*Melee Attack Roll:* +14, reach 10 ft. 15 (2d8 + 6) Necrotic damage.' },
+      { name: 'Merciless Strike', text: '*Dexterity Saving Throw:* DC 21, one creature within 60 feet that has the Prone condition. *Failure:* 42 (12d6) Fire damage.', template: 'condition-payoff', consumes: 'Prone' },
+    ],
+  });
+
+  test('the row leaves AND the Multiattack stops naming it', () => {
+    const sections = sheet();
+    const out = payoffReachable(sections, () => {});
+    expect(out.map((x) => x.name)).toEqual(['Merciless Strike']);
+    expect(sections.Actions.map((e) => e.name)).not.toContain('Merciless Strike');
+    expect(JSON.stringify(sections)).not.toMatch(/Merciless Strike/); // the dangling citation
+    expect(sections.Actions.find((e) => e.name === 'Multiattack').text).toMatch(/Bite attack/); // the rest of the clause survives
+  });
+
+  test('a payoff whose condition IS imposed keeps its row and its citation', () => {
+    const sections = sheet();
+    sections.Actions.push({ name: 'Tail Sweep', text: '*Strength Saving Throw:* DC 21, each creature within 10 feet. *Failure:* The target has the Prone condition.', imposes: 'Prone' });
+    payoffReachable(sections, () => {});
+    expect(sections.Actions.map((e) => e.name)).toContain('Merciless Strike');
+    expect(sections.Actions.find((e) => e.name === 'Multiattack').text).toMatch(/Merciless Strike/);
+  });
+});

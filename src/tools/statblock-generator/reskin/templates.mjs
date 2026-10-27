@@ -33,7 +33,9 @@ export const EFFECTS = ['damage', 'condition', 'movement', 'resource', 'defense'
 const SAVE_STATS = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma'];
 const CONDITIONS = ['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned'];
 const MINOR = ['Prone', 'Poisoned', 'Deafened', 'Frightened', 'Blinded']; // Blinded joined for obscuring breaths (2026-09-28); the aura save map covers it
-const RESTRAINTS = ['Grappled', 'Restrained'];
+// RESTRAINTS (['Grappled','Restrained']) retired 2026-10-27: its only consumer was
+// the `restraint` VOCAB entry, which was asking for a condition where the frame
+// renders a destructible object. See the note on VOCAB below.
 
 // WHICH STAT A SAVE ROW ROLLS AGAINST — ONE closed fact, measured over print,
 // shared by every reader (owner, 2026-10-25: "tables might be ok if the table
@@ -201,7 +203,19 @@ export const areaClause = (shape, band, sizes = null) => {
   return form(n);
 };
 
-const VOCAB = { area_shape: AREA_SHAPES, duration: DURATIONS, save_stat: SAVE_STATS, consumed_condition: CONDITIONS, condition_minor: MINOR, restraint: RESTRAINTS, r_vuln: DAMAGE };
+// `restraint` IS AN OBJECT, NOT A CONDITION (owner's spot check, 2026-10-27:
+// the Pumpkin King's Root Snare read "the target has the Restrained condition
+// until the Restrained is destroyed (AC 15; HP 20)").
+//
+// The slot renders as the destructible THING a Restrained creature breaks out
+// of — print writes "until the rope is destroyed" (Erinyes) and "until the web
+// is destroyed" (Ettercap, Giant Spider). It was listed here against
+// RESTRAINTS = ['Grappled', 'Restrained'], so the prompt asked the model for a
+// condition name for an object slot and the ladder below replaced any real
+// answer ("a tangle of roots") with the literal string 'Restrained'. It is
+// already in FLAVOR_SLOTS, where a short bounded phrase is validated and
+// BLIND_FILLS supplies "the binding" when the call offers nothing.
+const VOCAB = { area_shape: AREA_SHAPES, duration: DURATIONS, save_stat: SAVE_STATS, consumed_condition: CONDITIONS, condition_minor: MINOR, r_vuln: DAMAGE };
 // WHAT A SLOT OWES ITS OWN FRAME. Print parameterises the QUALIFIER and keeps the
 // noun — "an infernal wound" (Bearded Devil) — which is why its frame can go on to
 // say "While wounded… The wound closes… stanch the wound". Our slot took the whole
@@ -211,6 +225,7 @@ const VOCAB = { area_shape: AREA_SHAPES, duration: DURATIONS, save_stat: SAVE_ST
 // those three references without losing print's shape, so the FILL carries the noun
 // and its own article, and the contract says so where the model can read it.
 const SLOT_CONTRACTS = {
+  restraint: 'a BARE NOUN, no article, naming the physical thing that holds the target and that a party could attack or cut — print writes "until the rope is destroyed" (Erinyes) and "until the web is destroyed" (Ettercap, Giant Spider): "web", "roots", "brambles", "tar", "needles", "chain". Never a condition name: the frame already supplies "the" and the word "Restrained"',
   relic: 'a noun phrase WITH its article naming a THING the creature keeps, carries or wears and that a party could attack: "its severed head", "the soul bag", "a daughter\'s carapace". 2-4 words. It must be an OBJECT — not an effect, not a place, not a creature, because the frame gives it AC and Hit Points',
   kill_consequence: 'a PREDICATE naming what becomes of the BODY — no subject, no full stop, 2-5 words, lowercase: "crumbles to dust", "loses its head", "is absorbed into the swarm". It is what the killing leaves behind, never damage and never a condition',
   wound_phrase: 'a whole noun phrase WITH its article and ending in the word "wound" — like print\'s "an infernal wound": "a tar-fouled wound", "a weeping wound". The frame later says "While wounded", "The wound closes" and "stanch the wound", so a fill that is not a wound makes nonsense of them',
@@ -222,7 +237,39 @@ const SLOT_CONTRACTS = {
 // exactly that, and the ladder below falls to the blind default, never to a miss).
 // What a call would catch that this does not: a fill that says "wound" and still
 // does not read as an injury ("a wound of silence"). This is the cheap half.
-const fillKeepsFrame = (k, v) => k !== 'wound_phrase' || /\bwounds?\b/i.test(String(v ?? ''));
+// A FILL IS NEVER THE CREATURE ITSELF (the forty of 2026-10-27, Trench Choir
+// Leviathan). `phobia` names the thing the creature is AFRAID OF — its frame
+// reads "While the creature can see {phobia} within 30 feet of itself … must
+// move away from {phobia}" — and the call answered "the leviathan", so the sheet
+// shipped a 542-HP monster afraid of itself and fleeing from its own position,
+// next to a row that pulls creatures toward it. The critic read the pair as
+// contradicting each other.
+//
+// Every flavor slot can take this: a `relic` the creature keeps, a `disguise` it
+// passes for, a `sense_target` it tracks. None of them is the creature. Compared
+// against the names the sheet already carries rather than a word list.
+const fillIsSelf = (v, ctx) => {
+  const val = String(v ?? '').toLowerCase().replace(/^(?:the|a|an) /, '').trim();
+  if (val.length < 3) return false;
+  return [ctx?.name, ctx?.inline].map((n) => String(n ?? '').toLowerCase().replace(/^(?:the|a|an) /, '').trim())
+    .filter((n) => n.length >= 3).some((n) => n === val || val.endsWith(` ${n}`));
+};
+const fillKeepsFrame = (k, v) => {
+  const val = String(v ?? '').trim();
+  // print writes "an infernal wound" three more times after the slot, so the
+  // fill has to be a wound
+  if (k === 'wound_phrase') return /\bwounds?\b/i.test(val);
+  // AN OBJECT SLOT REFUSES A CONDITION NAME (owner's spot check, 2026-10-27).
+  // `{restraint}` is the destructible thing a Restrained creature breaks out of
+  // — print's "until the rope is destroyed", "until the web is destroyed" — and
+  // the Pumpkin King shipped "until the Restrained is destroyed". Removing the
+  // slot's bogus condition VOCABULARY stopped the engine SUBSTITUTING one, but
+  // nothing stopped the call from answering one: "Grappled" still rendered
+  // "until the Grappled is destroyed". Checked against the declared condition
+  // list, not a word list of my own.
+  if (k === 'restraint') return !CONDITIONS.some((c) => c.toLowerCase() === val.toLowerCase());
+  return true;
+};
 // flavor slots: the model's words, bounded (no digits, no rules grammar, short)
 export const FLAVOR_SLOTS = ['kill_consequence', 'relic', 'phobia', 'restraint', 'projectile', 'wound_phrase', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
 // HOW TO CHOOSE, not just what is legal. A closed enum tells the model the legal
@@ -1295,6 +1342,28 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
   // rewrites, so the family it constitutes cannot exclude it (the lancer's
   // donor row said "throws", goldens 2026-09-22)
   const supersedesRow = (t) => t.supersedes instanceof RegExp && rows.some((e) => t.supersedes.test(e.text ?? ''));
+  // NO SHEET IMPOSES ONE CONDITION THREE WAYS (the forty of 2026-10-27, Purple
+  // Worm: Bite, Gut Plate Shear and Swallow all Restrained). Measured over the
+  // 329-block corpus: 181 blocks impose a condition on exactly one row, 11 on
+  // two, and NOT ONE on three. The checker has always failed this
+  // (`duplicate-mechanic`); the engine had no matching rule, so it shipped what
+  // the gate would reject — and on a print body two of the three rows are
+  // print's own, so the only row that can give way is ours.
+  //
+  // This is the pool, not the ship: the template leaves the MENU, the call picks
+  // something else, and the sheet keeps a full row rather than losing one late.
+  // Declared data throughout — `imposedConditions` is the one shared reader and
+  // `IMPOSES_BY_TEMPLATE` is the template's own record.
+  const imposedTwice = new Set(
+    Object.entries(rows.flatMap((e) => imposedConditions(e)).reduce((m, c) => ({ ...m, [c]: (m[c] ?? 0) + 1 }), {}))
+      .filter(([, n]) => n >= 2).map(([c]) => c),
+  );
+  const wouldBeThird = (t) => {
+    if (!imposedTwice.size) return false;
+    const d = IMPOSES_BY_TEMPLATE[t.id];
+    const all = d == null ? [] : typeof d === 'string' ? [d] : Array.isArray(d) ? d : Object.values(d).flat();
+    return [...new Set(all.filter(Boolean))].some((c) => imposedTwice.has(String(c)));
+  };
   // THE SHELF IS A DEFAULT FOR WHAT THE GM DID NOT SAY, NOT A VETO ON WHAT THEY
   // DID (critic's call, 2026-10-14: "a shape the GM's own words key exactly may
   // come from off the role's shelf. CR band, nova cap, structure and pricing
@@ -1326,6 +1395,7 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     && (!t.requires_movement || new RegExp(t.requires_movement, 'i').test(movement))
     && (!t.requires_style || t.requires_style === style) // a ward-shaped reaction needs the warden seat, not just a defender line
     && !(t.deny_types && type && t.deny_types.some((ty) => new RegExp(`^${ty}\\b`, 'i').test(String(type))))
+    && !wouldBeThird(t) // print has no block imposing one condition three ways (0 of 329)
     // A BODY-MASS REQUIREMENT, read off the DECLARED size — never off the text.
     // Fails OPEN when size is unknown, like `type` and `movement` above, so the
     // call sites that pass no size are unaffected. Only two templates declare
@@ -1482,7 +1552,7 @@ const shortFlavor = (s) => typeof s === 'string' && s.trim().split(/\s+/).length
  * ctx: { scaled, energy, mix, meleeName, conditionMinor, projectile, archetype, imposed, mechanics, cr, name }
  */
 // generic fills for a BLIND render (the fallback): the fiction is plain, never wrong
-const BLIND_FILLS = { kill_consequence: 'crumbles to dust', relic: 'a sealed reliquary', /* print's own: the Mummy's victim "dies and turns to dust" */ phobia: 'the thing it fears', restraint: 'the binding', /* the snare's object noun: an empty slot printed "Restrained until the Restrained is destroyed" (critic's blockers audit 2026-10-03) */ douse: 'tear the brand away', projectile: 'a hurled object', wound_phrase: 'a festering wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'its whole frame tensing', lure_source: 'the creature', hook: 'its grip', terrain: 'mud', sense_target: 'moving creatures', anchor: 'its resting place', ward: 'its ward' }; // sense_target is the neutral sense: a rejected fill on a hound printed "precious metal" (the fourteen, 2026-09-28)
+const BLIND_FILLS = { kill_consequence: 'crumbles to dust', relic: 'a sealed reliquary', /* print's own: the Mummy's victim "dies and turns to dust" */ phobia: 'the thing it fears', restraint: 'binding' /* NO article: the frame reads "until the {restraint} is destroyed", and 'the binding' rendered "until the the binding" (2026-10-27) */, /* the snare's object noun: an empty slot printed "Restrained until the Restrained is destroyed" (critic's blockers audit 2026-10-03) */ douse: 'tear the brand away', projectile: 'a hurled object', wound_phrase: 'a festering wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'its whole frame tensing', lure_source: 'the creature', hook: 'its grip', terrain: 'mud', sense_target: 'moving creatures', anchor: 'its resting place', ward: 'its ward' }; // sense_target is the neutral sense: a rejected fill on a hound printed "precious metal" (the fourteen, 2026-09-28)
 // THE RAY TABLE is composed from library cards, never authored (critic 2026-10-01): each
 // ray takes its save and its failure clause from a bolt or pulse card already on the
 // shelf; the names are the engine's own. A band of 3-5 rolls a d4 over the first four.
@@ -1558,6 +1628,33 @@ const IMPOSES_BY_TEMPLATE = {
   'gaze-single': { '0-2': 'Frightened', '3-5': 'Frightened', '13-20': 'Paralyzed', '21+': 'Blinded' },
 };
 
+// TWO FACTS A SHAPE DECLARES ABOUT ITS OWN DAMAGE (owner, 2026-10-27, after the
+// damage-type stamp: the two reads that remained were regexes over the
+// template's OWN frame text, deciding what kind of shape it is from its wording).
+//
+// `renderTemplate` asked its frame two questions to correct the damage type:
+// does this shape take life (so its damage is Necrotic, never a weapon type —
+// Plague Siphon shipped Piercing, the critic's fourth read), and is it an extra
+// on the creature's own hit (so it takes the HIT's type — Assassinate added
+// Bludgeoning to spear hits). Both are fixed properties of the catalog, so
+// reading them off the prose each render was a word list standing in for a
+// field, on the same path as the damage type itself.
+//
+// The sets are EXACTLY what the two regexes matched across the catalog on
+// 2026-10-27, checked band by band, so this changes no row. `warded-mending` is
+// in the first set because its frame says "regains Hit Points" — it is a heal,
+// not a drain, and whether it belongs is a separate question from whether this
+// is a field; narrowing the set would change rows and is not this change.
+// `__REGEX_WAS` keeps the retired predicates so the spec can prove the sets and
+// the prose still agree, and fails if a new shape joins one and not the other.
+const DAMAGE_FROM_LIFE = new Set(['contagion', 'seal', 'relic-object', 'warded-mending', 'drain']);
+const EXTRA_ON_OWN_HIT = new Set(['charge-push', 'isolation', 'assassinate', 'charge', 'coating']);
+export const __REGEX_WAS = {
+  drains: /regains? (?:\d+ )?Hit Points|drains?|siphon/i,
+  ridesHit: (f) => /takes an extra \{(?:avg|burst)/.test(f) && !/\{atk\}/.test(f),
+  sets: { DAMAGE_FROM_LIFE, EXTRA_ON_OWN_HIT },
+};
+
 // the condition a given template's given CR band imposes, or null
 export function imposedByFrame(id, band) {
   const d = IMPOSES_BY_TEMPLATE[id];
@@ -1588,7 +1685,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
       if (!text.includes(`{${k}}`)) continue;
       // the same ladder as a shape: a fill the bound rejects falls to the blind
       // default, never to a miss (the ledger's Delayed Brand died on its douse, fresh two)
-      const v = shortFlavor(fills[k]) && !doublesFrameVerb(text, k, fills[k]) && fillKeepsFrame(k, fills[k]) ? fills[k] : BLIND_FILLS[k];
+      const v = shortFlavor(fills[k]) && !doublesFrameVerb(text, k, fills[k]) && fillKeepsFrame(k, fills[k]) && !fillIsSelf(fills[k], ctx) ? fills[k] : BLIND_FILLS[k];
       if (!shortFlavor(v)) return null;
       const w = PREDICATE_SLOTS.has(k) ? (asPredicate(v) ?? asPredicate(BLIND_FILLS[k])) : v.trim();
       if (!w) return null;
@@ -1620,7 +1717,12 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     // below reads `imposedByFrame`; reading it here too is the same fix the body gate
     // needed when eight `needs_body` declarations were carried on one branch only.
     const seedImposes = drawn.row.imposes ?? imposedByFrame(t.id, bandFor(ctx.cr));
-    return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(seedImposes ? { imposes: seedImposes } : {}) };
+    // AND THE DECLARED DAMAGE TYPE RIDES ALONG, for the same reason `imposes`
+    // does: this branch rebuilds the row from the drawn one and anything it does
+    // not carry is lost, so a consumer would have to scrape the sentence to get
+    // it back. `drawLibraryRow` stamps the type its own fill spent (2026-10-27).
+    const seedType = drawn.row.damageType ?? null;
+    return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(seedType ? { damageType: seedType } : {}), ...(seedImposes ? { imposes: seedImposes } : {}) };
   }
   // A THROWN NAMED WEAPON KEEPS ITS OWN TYPE AND RANGE (the critic's second
   // species read: a spear hurled for Bludgeoning at 30/120). One table.
@@ -1656,9 +1758,10 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   const obscuring = t.id === 'spew' && /\b(?:ash|ashes|smoke|dust|sand|soot|cinders|spores|chaff)\b/i.test(String(ctx.concept ?? '')); // an OBSCURING breath blinds — the pyre's ash cone poisoned (critic, fresh six)
   const dtype0 = solid ?? (ctx.mix === 'physical' || !ctx.energy ? (PHYSICAL.includes(fills.damage_type) ? fills.damage_type : 'Bludgeoning') : ctx.energy);
 
+  let chosenArea = null; // the geometry this render resolved, declared on the row below
   const frameText = t.frames?.[bandFor(ctx.cr)] ?? '';
-  const drains = /regains? (?:\d+ )?Hit Points|drains?|siphon/i.test(frameText); // a DRAIN is never a weapon type (Plague Siphon dealt Piercing — the critic's fourth read)
-  const onHitRider = /takes an extra \{(?:avg|burst)/.test(frameText) && !/\{atk\}/.test(frameText); // an on-hit extra takes the HIT's type (Assassinate added Bludgeoning to spear hits)
+  const drains = DAMAGE_FROM_LIFE.has(t.id); // a DRAIN is never a weapon type (Plague Siphon dealt Piercing — the critic's fourth read)
+  const onHitRider = EXTRA_ON_OWN_HIT.has(t.id); // an on-hit extra takes the HIT's type (Assassinate added Bludgeoning to spear hits)
   // A FEAR IS NEVER A WEAPON TYPE (critic, 2026-10-14: Bloodcurdling Howl and
   // Creeping Dread both dealt Piercing). Print's Banshee wails for Psychic; a
   // dread that hurts takes the concept's energy or Psychic, never a blade's type.
@@ -1710,6 +1813,11 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     const clause = pick ? areaClause(pick, bandFor(ctx.cr), t.target_sizes ?? null) : null;
     if (!clause) return null; // a {target} frame with no declared shape cannot render
     engine.target = clause;
+    // THE SHAPE RECORDS THE GEOMETRY IT CHOSE (owner, 2026-10-27). `areaDamage`
+    // in author.mjs reads this field before it reads the sentence, so a row the
+    // engine itself shaped is never re-derived from its own wording. A single
+    // target ("one creature within 30 feet") is a shape too and declares false.
+    chosenArea = AREA_SHAPES.includes(pick);
   }
   if (/\{ranged_name\}/.test(frameOf(t, ctx.cr) ?? '') && !ctx.rangedName) return null;
   for (const [k, v] of Object.entries(engine)) text = text.split(`{${k}}`).join(v);
@@ -1811,20 +1919,31 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     const proposed = String(fills[k] ?? '').trim();
     const pick = list.find((x) => x.toLowerCase() === proposed.toLowerCase())
       ?? (k === 'condition_minor' && list.includes(ctx.conditionMinor) ? ctx.conditionMinor : null)
-      ?? ({ save_stat: 'Wisdom', consumed_condition: ctx.imposed?.[0] ?? 'Frightened', condition_minor: 'Frightened', restraint: 'Restrained', r_vuln: 'Fire' })[k];
+      ?? ({ save_stat: 'Wisdom', consumed_condition: ctx.imposed?.[0] ?? 'Frightened', condition_minor: 'Frightened', r_vuln: 'Fire' })[k]; // `restraint` is gone from here with its VOCAB entry: it is an object slot, and its blind fill is "the binding"
     if (k === 'consumed_condition') consumedPick = pick; // the model's answer, recorded on the row so a ship-time gate can check the sheet supplies it
     text = text.split(`{${k}}`).join(pick);
   }
   for (const k of FLAVOR_SLOTS) {
     if (!text.includes(`{${k}}`)) continue;
-    const v = shortFlavor(fills[k]) && !doublesFrameVerb(text, k, fills[k]) && fillKeepsFrame(k, fills[k]) ? fills[k] : BLIND_FILLS[k];
+    const v = shortFlavor(fills[k]) && !doublesFrameVerb(text, k, fills[k]) && fillKeepsFrame(k, fills[k]) && !fillIsSelf(fills[k], ctx) ? fills[k] : BLIND_FILLS[k];
     if (!shortFlavor(v)) return null;
     const w = PREDICATE_SLOTS.has(k) ? (asPredicate(v) ?? asPredicate(BLIND_FILLS[k])) : v.trim();
     if (!w) return null;
     text = text.split(`{${k}}`).join(w);
   }
   if (/\{[a-z_]+\}/.test(text)) return null;
-  return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(pickedCondition ? { imposes: pickedCondition } : {}), ...(consumedPick ? { consumes: consumedPick } : {}), ...(saveOverride ? { saveOverride } : {}) };
+  // THE ROW DECLARES THE DAMAGE IT DEALS (owner, 2026-10-27: "we want to retire
+  // it with a declared damage type, we don't want to rely on regex where so many
+  // edge cases have been proven to pop up").
+  //
+  // `dtype` is this function's own answer after every correction it makes — the
+  // thrown weapon's type, Psychic for a mental shape, Poison for a spewed cloud,
+  // Necrotic for a drain, the host hit's type for an on-hit rider. Nothing
+  // downstream could reproduce that from the rendered sentence without redoing
+  // all of it, so the reader that tried (a `/(\w+) damage/` scrape in the
+  // checker's save-fit gate) was always going to meet an edge it had not seen.
+  // Stamped here, once, by the site that decides it — the same move as `imposes`.
+  return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(chosenArea != null ? { area: chosenArea } : {}), ...(dtype ? { damageType: dtype } : {}), ...(pickedCondition ? { imposes: pickedCondition } : {}), ...(consumedPick ? { consumes: consumedPick } : {}), ...(saveOverride ? { saveOverride } : {}) };
 }
 
 // SEAT DEFAULTS (critic run four): some seats OWE a trait by print — the 2024
@@ -2141,7 +2260,28 @@ export function rowValue(text, perHit, { area = false } = {}) {
 // 14 — "a gate doesn't license unlimited dice"): young dragons breathe ~5.5x CR
 // (38-54 at CR 6-10), adults ~4x (54-66 at 13-17), ancients ~3.8x (77-91 at
 // 20-24). No nova's dice climb past this line, gate or no gate.
-export const NOVA_CAP = (cr) => Math.round(cr <= 10 ? 5.5 * cr : 4 * cr + 15);
+// A CAP IS PRINT'S CEILING, NOT PRINT'S AVERAGE (owner, 2026-10-27: novas back
+// to ~1.0x of the round they replace).
+//
+// Measured over print's 69 gated damage rows, the MAXIMUM observed by CR:
+// CR 2 → 22, CR 3 → 28, CR 5 → 31, CR 6 → 40, CR 7 → 49, CR 9 → 55, CR 11 → 66.
+// The old low-CR arm (5.5 × CR) put CR 7 at 39 against print's 49 and CR 6 at 33
+// against print's 40, so the cap was below what print actually ships and it cut
+// into the row's own FLOOR (1.3 × the Multiattack EV, which is print's 0.95x in
+// raw damage). Two bounds disagreeing, and the cruder one won: our gated rows
+// came in at a median 0.60x of their round where print sits at 0.95x.
+//
+// 5.5 × CR + 8 is the tightest fit of the four tried: never more than 3 points
+// under print's max (CR 2, 3, 7) and over it by >15% only at CR 4-5, where print's
+// sample is two rows. The floor of 18 covers the wyrmling tier, whose breath is
+// large for its CR. For contrast the old arm was under print's max at ALL ELEVEN
+// low CRs — it could never allow a nova print actually ships. Above
+// CR 11 the old arm stands — there it is already the generous side of print
+// (ours 95 at CR 20 against print's 63), and the row's own ceiling governs.
+//
+// The checker's `nova-cap` gate reads this same constant, so the engine and its
+// gate cannot drift apart on it.
+export const NOVA_CAP = (cr) => Math.round(cr <= 11 ? Math.max(18, 5.5 * cr + 8) : 4 * cr + 15);
 // ONE DEFINITION OF A ROW'S GATE (2026-10-22). Five sites used to recover a gate
 // by re-reading the row's NAME — novasOf in the checker, hasChassisNova, the late
 // nova damage cap, settleSheetBudgets, and valueCheck's own `gated` read, which
@@ -2190,7 +2330,32 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
   // an AREA nova earns its premium by TARGETS (the Adult Red's breath deals about
   // its Multiattack's damage to each creature in the cone) — its per-target
   // budget is the round's damage; a single-target nova takes 2x the round's EV
-  const budget0 = gated ? (area ? Math.max(perHit, Math.round(ma.attacks * perHit)) : Math.max(perHit, Math.round(2 * maEV))) : perHit;
+  // AN AREA NOVA PRICES AT ITS OWN FLOOR, NOT BELOW IT (owner, 2026-10-27).
+  // This arm was `ma.attacks * perHit` — one round's EV — while the floor three
+  // lines up declares 1.3x for a gated row, so an area nova was priced BELOW the
+  // minimum the same function calls acceptable, and `min(budget0, …)` then made
+  // that the ceiling. Measured against print in RAW damage, which is what a GM
+  // reads: print's gated rows sit at a median 0.95x of the round they replace,
+  // and 1.0x of the EV round renders as ~0.72x raw (the storm drake: 39 against a
+  // 54 round). 1.3x EV is print's 0.95x raw — the floor was right all along and
+  // only this arm disagreed with it.
+  const budget0 = gated ? (area ? Math.max(perHit, Math.round(floor)) : Math.max(perHit, Math.round(2 * maEV))) : perHit;
+  // NOVA_CAP IS A CEILING ON ABUSE, NOT A CUT BELOW THE ROUND (owner, 2026-10-27:
+  // "make sure our novas go back up to .95x or really 1 to 1").
+  //
+  // `budget0` two lines up already encodes print's design — an area nova's
+  // per-target budget IS the round's damage — but the CR-keyed cap then clamped
+  // it down, and the cap is miscalibrated below CR 12. Measured: print's gated
+  // rows sit at a MEDIAN 0.95x of the Multiattack round they replace (55 rows,
+  // half of them weaker than the round); ours sat at 0.60x, and our wind-up
+  // novas at 0.60x median. NOVA_CAP(5) is 28 where print's CR-5 median is 28 and
+  // a CR-5 round is ~34, so the cap cut a third of the punch off the row a GM
+  // spends a whole turn setting up ("I'd rather do the multiattack" — the Knife
+  // Ball, the owner's spot check).
+  //
+  // The cap still binds against runaway dice; it just cannot price a nova below
+  // the round it replaces. Print's own ceiling is honoured above CR 12, where
+  // NOVA_CAP is the GENEROUS side of print (ours 95 at CR 20 against print's 63).
   const budget = gated && cr != null ? Math.min(budget0, Math.max(perHit, NOVA_CAP(cr))) : budget0;
   let text = row.text; let name = row.name; const steps = [];
   // MASS effects are priced by targets whether gated or not (the hermit's each-
