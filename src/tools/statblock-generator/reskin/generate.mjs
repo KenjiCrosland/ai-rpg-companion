@@ -5255,7 +5255,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         supersedeByTrait(tt); slotYield(tt.template, tt.row);
         uniqueRowName(tt.row, tt.templateName);
         (sections[secT] = sections[secT] ?? []).unshift(tt.row);
-        if (tt.template === 'assassinate') for (const es2 of Object.values(sections)) for (const e2 of es2) if (/\(with Advantage during the first round of each combat\)/.test(e2.text ?? '')) { e2.text = e2.text.replace(/ ?\(with Advantage during the first round of each combat\)/, ''); trace('inline rider retired:', `${e2.name} — Assassinate grants the first-round Advantage now`); }
+        if (tt.template === 'assassinate') for (const es2 of Object.values(sections)) for (const e2 of es2) if (/\(with Advantage during the first round of each combat\)/.test(e2.text ?? '')) { e2.text = e2.text.replace(/ ?\(with Advantage during the first round of each combat\)/, ''); trace('inline rider retired:', `${e2.name} — Surprise Attack grants the first-round Advantage now`); }
         trace('signature template (trait):', `${tt.template} -> ${secT}/"${tt.row.name}" ("${tt.because}")`);
       };
       // OWED FIRST (critic, the fourteen): a trait the SEAT owes by print seats

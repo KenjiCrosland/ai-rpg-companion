@@ -94,8 +94,11 @@ describe('the class kit lands what the words owe (2026-10-13)', () => {
     expect(ca.kit).toBe('rogue');
     expect(ca.clause).toMatch(/rogue/);
     expect(ca.text).toMatch(/takes the Dash, Disengage, or Hide action/);
-    // "stalks" asked for Assassinate by name, so it is owed and the cap cannot turn it away
-    expect(rows(m).find((e) => /^Assassinate/.test(e.name ?? ''))).toBeDefined();
+    // "stalks" asked for the ambush shape by name, so it is owed and the cap
+    // cannot turn it away. The row is "Surprise Attack" since 2026-10-27 — print's
+    // 2024 Assassin carries no Surprise Attack feature, and the owner ruled the word
+    // off bodies that cannot have a class, so one neutral name serves every body.
+    expect(rows(m).find((e) => /^Surprise Attack/.test(e.name ?? ''))).toBeDefined();
     expect(checkBlock(m).fails).toEqual([]);
   });
 
@@ -532,7 +535,7 @@ describe('predicates for the reopened holds', () => {
   test('an on-hit extra deals the hit\'s own type', () => {
     const sheet = (riderType) => base({ name: 'Vespera Vaunt', inline: 'Vespera', type: 'Humanoid', stats: { STR: 12, DEX: 18, CON: 14, INT: 12, WIS: 12, CHA: 14 },
       sections: { Actions: [{ name: 'Shortsword', text: '*Melee Attack Roll:* +7, reach 5 ft. 12 (2d8 + 4) Slashing damage.' }],
-        Traits: [{ name: 'Assassinate', text: `During the first round of each combat, Vespera has Advantage on attack rolls. If Vespera hits a creature during that round, the target takes an extra 9 (2d8) ${riderType} damage.` }] } });
+        Traits: [{ name: 'Surprise Attack', text: `During the first round of each combat, Vespera has Advantage on attack rolls. If Vespera hits a creature during that round, the target takes an extra 9 (2d8) ${riderType} damage.` }] } });
     expect(rules(sheet('Bludgeoning'))).toContain('on-hit-type');
     expect(rules(sheet('Slashing'))).not.toContain('on-hit-type');
     expect(rules(sheet('Necrotic'))).not.toContain('on-hit-type'); // a deliberate energy stands
@@ -748,7 +751,9 @@ describe('a kit row carries the clause that fired it, and its own fiction', () =
     // the sheet. Provenance is stamped when the row fires, never re-matched.
     const rows = await paladin();
     expect(rows.find((e) => /Divine Smite/.test(e.name ?? ''))?.clause).toMatch(/smites the unclean/);
-    expect(rows.find((e) => /Lay on Hands/.test(e.name ?? ''))?.clause).toMatch(/mends her soldiers/);
+    // "Mending Touch" since 2026-10-27: the mechanic (touch a creature, restore
+    // Hit Points) needs no class, and only the Paladin's name did.
+    expect(rows.find((e) => /Mending Touch/.test(e.name ?? ''))?.clause).toMatch(/mends her soldiers/);
   });
 
   test('a row with no keys of its own still credits the class clause', async () => {

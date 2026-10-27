@@ -434,12 +434,12 @@ export const SHAPES = [
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature takes the Dodge action.'])),
   },
   {
-    id: 'lay-on-hands', name: 'Lay on Hands', invented: true, // Warded Mending's healing frame (Shield Guardian) as a touch, print's Divine Aid seat
+    id: 'lay-on-hands', name: 'Mending Touch', invented: true, // RENAMED 2026-10-27: "touches a creature and restores Hit Points" needs no class; the Paladin's name did. Print has no convention for a touch-heal. // Warded Mending's healing frame (Shield Guardian) as a touch, print's Divine Aid seat
     roles: ['defender', 'controller', 'artillery'], styles: [], cr_range: [1, 30], replaces: 'bonus-alt', gate: '2/Day',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature touches a creature within 5 feet of itself and restores {avg} ({dice}) Hit Points to it.'])),
   },
   {
-    id: 'second-wind', name: 'Second Wind', invented: true, // the same healing frame, turned on the creature itself
+    id: 'second-wind', name: 'Recovery', invented: true, // RENAMED 2026-10-27: "the creature regains Hit Points" needs no class; the Fighter's name did. // the same healing frame, turned on the creature itself
     roles: ['defender', 'brute', 'skirmisher'], styles: [], cr_range: [1, 30], replaces: 'bonus-alt', gate: '2/Day',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature regains {avg} ({dice}) Hit Points.'])),
   },
@@ -630,7 +630,14 @@ export const SHAPES = [
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Trigger:* A creature within 30 feet that the creature guards is hit by an attack roll. *Response:* The creature moves up to half its Speed toward the attacker without provoking Opportunity Attacks and makes one {melee_name} attack against it if it is within reach.'])),
   },
   {
-    id: 'assassinate', name: 'Assassinate', cite: 'Assassin/Assassinate (CR 8, 2024)',
+    id: 'assassinate', name: 'Surprise Attack', cite: 'Doppelganger/Surprise Attack (CR 3, 2024)', // was cited to "Assassin/Assassinate" — checked 2026-10-27 and print's 2024 Assassin has no such feature (Evasion, Multiattack, Shortsword, Light Crossbow, Cunning Action). The Doppelganger is print's only first-strike row.
+    // RENAMED 2026-10-27 (owner: "Assassinate should not be assassinate for
+    // non-humanoids"). 443 shipped rows, 163 of them (37%) on a body that
+    // cannot have a class — 87 Monstrosity, 60 Beast. The MECHANIC is sound on
+    // a predator: print's one ambush feature is the Doppelganger's, a
+    // Monstrosity. Only the word named a trained killer, so the name moved to
+    // print's own, which serves every body. The id and `cite` keep the old
+    // word because they point at the print row this shape was derived from.
     roles: ['lurker', 'skirmisher'], styles: [], cr_range: [2, 30], replaces: 'trait',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'During the first round of each combat, the creature has Advantage on attack rolls against any creature that hasn\'t taken a turn. If the creature hits a creature during that round, the target takes an extra {avg_half} ({dice_half}) {damage_type} damage.'])),
   },

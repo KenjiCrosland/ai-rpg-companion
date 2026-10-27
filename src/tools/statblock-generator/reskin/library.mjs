@@ -166,7 +166,10 @@ export const LIBRARY_SEEDS = [
   {
     key: 'rally', keys: ['rally', 'bolster', 'ward', 'blessing'],
     section: 'Bonus Actions', archetypes: ['defender', 'caster', 'brute'],
-    name: 'Bolstering Cry (2/Day)', dpr_frac: 0.5, // the commander THP class
+    // RENAMED 2026-10-27: 188 shipped rows, 81 (43%) on a body that cannot have
+    // a class and 76 of those Constructs — golems giving a Bolstering Cry. The
+    // mechanic needs no class, only the "Cry" did: a construct has a presence.
+    name: 'Bolstering Presence (2/Day)', dpr_frac: 0.5, // the commander THP class
     text: 'Each ally within 30 feet of the creature gains {burst} Temporary Hit Points.',
   },
   {
