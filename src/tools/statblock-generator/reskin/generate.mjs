@@ -4456,6 +4456,17 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             return null;
           }
         }
+        // A TEMPLATE'S OWN NAME ON A RESKINNED ROW IS A LEAK, and it is now
+        // countable (owner's GM read, 2026-10-27: "no template name reaches a
+        // sheet unreskinned" — Venomed Edge on a timber golem, Answering Sting on
+        // a spearman, Tolling Drain on a bell ghost). Measured over the save10
+        // runs of 2026-10-26/27: 16 of 111 templated rows (14%) shipped the
+        // template's default because the call named nothing the validator would
+        // take. Some defaults are print's own (Vile Appearance, Aberrant Ground)
+        // and read fine; the rest read as catalog furniture. Traced, not patched:
+        // the cure is the call naming the row, and a derived name here would be
+        // the engine inventing fiction.
+        if (!fit.name && rendered.name) trace('row kept the template\'s own name:', `${seat} — "${rendered.name}" is ${fit.template.id}'s default and the call named nothing usable; on a reskinned creature that reads as catalog furniture`);
         let bare = fit.name ?? rendered.name;
         // the tally distinguishes a VERB fit (the template's own verbs appear in
         // the concept/idea) from a SHAPE fit — the critic's split, made measurable

@@ -82,7 +82,14 @@ export function saveStatsFor({ imposes = null, damageDominant = false, movement 
   // Strength stays acceptable only where the condition is a physical
   // displacement, which is the reason a Strength save exists here at all
   // (print's one such row is the Centaur Trooper's Trampling Charge).
-  if (want === 'Strength') return damageDominant ? ['Dexterity', 'Constitution', 'Strength'] : ['Strength', 'Dexterity'];
+  // NO STRENGTH ON A DAMAGE-DOMINANT ROW (owner's GM read, 2026-10-27). Strength
+  // was in this list until a 67-damage poison fly-by and an 84-damage cold payoff
+  // both shipped on it: the Prone rider named the stat and the damage was
+  // ignored. print's one Strength save on an area-damage-plus-Prone row is the
+  // Centaur Trooper's Trampling Charge, which MOVES its target — and that case
+  // is the `movement` arm above, which returns Strength first. So a row that
+  // shoves or hauls keeps Strength; a row whose point is damage does not.
+  if (want === 'Strength') return damageDominant ? ['Dexterity', 'Constitution'] : ['Strength', 'Dexterity'];
   if (want === 'Wisdom') return damageDominant ? ['Dexterity', 'Constitution'] : ['Wisdom', 'Charisma'];  // the fear is the rider, the fire is the row
   if (want === 'Constitution') return damageDominant ? ['Constitution', 'Dexterity'] : ['Constitution']; // a breath that deafens may save by either; the condition's own stat leads
   return damageDominant ? ['Dexterity', 'Constitution'] : [];
@@ -1526,6 +1533,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   let saveOverride = null; // why the engine overrode the model's save_stat, for the trace
   let pickedCondition = null; // the condition this render imposes, chosen from the closed list below
   let consumedPick = null; // the condition this render REQUIRES on its target (a payoff), from the model's consumed_condition
+  let vestigialStripped = null; // a payoff's rider that would have imposed the very condition it requires — the clause is removed instead
   // the fiction ladder: the model's fill > the sheet's own noun > the blind
   // default; an empty fills object cost four signatures (critic, 2026-09-22)
   // the terrain of a FORCED bind is the concept's, not the blind default (an ice
@@ -1688,14 +1696,37 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   const modelSave = SAVE_STATS.includes(String(fills.save_stat)) ? String(fills.save_stat) : null; // the MODEL's pick, read before the engine's condition-save block below writes over it
   if (text.includes('{save_stat}') && text.includes('{condition_minor}')) {
     const proposedC = String(fills.condition_minor ?? '').trim();
-    const condPick = MINOR.find((x) => x.toLowerCase() === proposedC.toLowerCase()) ?? (MINOR.includes(ctx.conditionMinor) ? ctx.conditionMinor : 'Frightened');
-    fills = { ...fills, condition_minor: condPick, save_stat: saveStatsFor({ imposes: condPick })[0] }; // the call picked the condition from the closed list; the shared table pairs print's save stat
+    // A PAYOFF NEVER IMPOSES WHAT IT REQUIRES, AND THE CLAUSE IS STRIPPED RATHER
+    // THAN SWAPPED (owner's GM read, 2026-10-27: "strip the vestigial Prone
+    // clause"). `condition-payoff` asks its target to already HAVE a condition
+    // and then imposes a minor one, and nothing stopped both being the same: a
+    // row shipped reading "one creature that has the Prone condition … and the
+    // target has the Prone condition", which can never do anything. A2 then read
+    // that dead `imposes: Prone` and paired it with print's Strength on a row
+    // whose point was 84 Cold damage. Swapping in a DIFFERENT condition was the
+    // first cut and it was worse — it put a Poisoned rider on a cold row. A
+    // payoff's reward is its damage; the rider is optional, so where it would be
+    // vestigial the clause leaves and the row says only what it does.
+    const required = String(fills.consumed_condition ?? '').trim();
+    const named = MINOR.find((x) => x.toLowerCase() === proposedC.toLowerCase());
+    const condPick = named ?? (MINOR.includes(ctx.conditionMinor) ? ctx.conditionMinor : 'Frightened');
+    if (required && condPick.toLowerCase() === required.toLowerCase()) {
+      // the clause is this engine's own frame text, removed by its own token
+      // the whole clause, duration and all: these frames write it literally
+      // ("until the end of its next turn"), so the removal must reach the stop
+      text = text.replace(/,? and the target has the \{condition_minor\} condition[^.]*/, '');
+      vestigialStripped = required;
+    }
     // THE PICK IS KEPT (2026-10-20). This block already chooses the condition
     // from the closed MINOR list, validates the model's proposal against it, and
     // pairs print's own save stat — then discarded the choice, so every reader
     // downstream had to re-derive it from the prose. The condition and its save
-    // are decided together here; the row should say so.
-    pickedCondition = condPick;
+    // are decided together here; the row should say so. With the clause stripped
+    // there is no imposition, so the stat is left to the damage rule below.
+    if (!vestigialStripped) {
+      fills = { ...fills, condition_minor: condPick, save_stat: saveStatsFor({ imposes: condPick })[0] };
+      pickedCondition = condPick;
+    }
   }
   if (text.includes('{save_stat}')) {
     // THE MODEL'S PICK IS CONSULTED FIRST (owner, 2026-10-25: "metadata back from
