@@ -3792,6 +3792,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   }
   const card = cardBudget(cr, { legendary: !!scaled.legendary, edition: options.edition ?? null });
   const mods = Object.fromEntries(Object.entries(scaled.stats).map(([k, v]) => [k, Math.floor((v - 10) / 2)]));
+  // THE SHEET'S OWN DECLARED ASK, traced once so a measurement can read it by
+  // field name. `ask-lands.mjs` inferred it from the first "declared mechanic
+  // leads the menu" line, which became a PER-SEAT line when each seat started
+  // leading by its own clause — so the script was reading one seat's answer and
+  // reporting it as the sheet's. Parse by field name, never by position.
+  trace("the sheet's declared ask:", options.askedMechanic ? `${options.askedMechanic} — the route call's one answer for the whole concept` : 'none — the route call named no mechanic');
   const monster = {
     name: p.name, inline, /* the short form the rows use ("the marshal") — the classic card's legendary header reads it (critic's release audit 2026-10-03) */  format: '2024', cr, cr_str: ({ 0.125: '1/8', 0.25: '1/4', 0.5: '1/2' })[cr] ?? String(cr),
     xp: challengeRatings[crKey(cr)]?.XP ?? 0,
