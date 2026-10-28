@@ -2499,7 +2499,9 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
   const payoff = !!template && REQUIRES_IMPOSED.has(String(template));
   const floor = bonus ? 0.25 * attackEV : gated ? 1.3 * maEV : (payoff ? 2.0 : 0.8) * replaced; // a free row still has to DO something; a payoff doubles (Assassinate)
   const ceiling = bonus ? 1.5 * attackEV : gated ? 2.5 * maEV : (payoff ? 3.0 : 1.5) * (replaced || attackEV);
-  const area = /each creature/i.test(row.text);
+  // `let`, not `const`: the widening rung below can turn a single-target control
+  // row into an area one, and the EV closure reads this.
+  let area = /each creature/i.test(row.text);
   // an AREA nova earns its premium by TARGETS (the Adult Red's breath deals about
   // its Multiattack's damage to each creature in the cone) — its per-target
   // budget is the round's damage; a single-target nova takes 2x the round's EV
@@ -2583,6 +2585,48 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
     if (d.avg > v.avg) { const was = v.avg; text = text.replace(DMG, `${d.avg} (${d.dice})`); v = value(text); steps.push(`priced at the floor: dice ${was} → ${d.avg}${v.ev < floor ? ' (the cap binds; the cap is the price)' : ''}`); }
     else if (gated) steps.push('priced at the cap — the floor sits above the nova cap, so the cap is the price');
     priced = true;
+  }
+  // WIDEN RATHER THAN DROP (owner, 2026-10-28: "I don't particularly like seeing
+  // dead rows though so maybe we try to up the severity of abilities that get
+  // dropped for being too soft").
+  //
+  // Every rung above this one adjusts DICE, so a control row with no damage has
+  // nothing to climb and falls off the ladder — the trace even names what it
+  // needs ("needs a condition from the worth-an-attack list") and then drops it.
+  // Measured over the homebrew forty: the floor is the single biggest killer of
+  // picks the call had already accepted, 9 of 19, and the rows are all the same
+  // shape — push-prone x3, obstacle-pull x2, sensory-strike, slow-bolt — single
+  // target, no damage, a minor effect, failing by a hair (Barrow Shove EV 1.9
+  // against a floor of 7.3).
+  //
+  // WIDENING IS PRINT'S OWN ANSWER for this exact row. Print's no-damage
+  // minor-condition actions are mostly areas: Repulsion Breath (30-foot Cone,
+  // pushed + Prone — push-prone's twin), Blinding Breath (15-foot Cone, Blinded
+  // — sensory-strike's twin), Fetid Cloud, Cacophony. And the sizes are FLAT, not
+  // laddered: Repulsion Breath is a 30-foot Cone at CR 2 and at CR 22 alike, so
+  // this takes print's low end (15 feet, the Dust Mephit at CR 1/2) below CR 5
+  // and its common one (30) above.
+  //
+  // The scoring already rewards it — `area && MINOR_EFFECT` earns the same credit
+  // as a hard condition — so no pricing rule changes; the row simply stops being
+  // mispriced as a single-target effect print would never write at this cost.
+  // Print keeps "The target" singular in the failure clause, so only the target
+  // clause is rewritten. A row that DEALS damage is untouched (the dice rungs own
+  // it, and that is what excludes delayed-brand's branded tick).
+  if (v.ev < floor && !priced && !v.hasDamage && !area && !bonus && !gated && section !== 'Traits' && MINOR_EFFECT.test(text)) {
+    const span = cr != null && cr >= 5 ? 30 : 15;
+    const was = text;
+    // NO "originating from" ON A CONE. Print writes "each creature in a 30-foot
+    // Cone." and nothing more — 55 cones in the corpus, NONE carry the clause,
+    // while 33 of its 34 Emanations do. It also fixed a defect the focused ten
+    // caught: `valueCheck` runs AFTER the inline rename, so the self-reference in
+    // the inserted text never became the creature's name and the row read "a
+    // 30-foot Cone originating from the creature … pushed away from the guardian".
+    text = text.replace(/one creature(?: that the creature can see| the creature can see)? within \d+ feet/i, `each creature in a ${span}-foot Cone`);
+    if (text !== was) {
+      area = true; v = value(text);
+      steps.push(`widened to a ${span}-foot Cone (print writes this row as an area: Repulsion Breath, Blinding Breath)`);
+    }
   }
   if (v.ev < floor && !priced) steps.push(bonus ? 'a free row that does nothing (logged)' : 'still under — needs a condition from the worth-an-attack list (logged)');
   // a CONTROL row with no damage and no KO condition is print's ungated shape

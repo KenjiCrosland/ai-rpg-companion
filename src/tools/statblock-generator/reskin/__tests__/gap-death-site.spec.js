@@ -167,3 +167,47 @@ describe('the roll-up reconciles with its own count', () => {
     expect(line).toMatch(/1x the call named no template for the pick/);
   });
 });
+
+describe('the free-row budget records its evictions', () => {
+  // THE INSTRUMENT FOUND THIS ITSELF. On its first full forty, three accepted
+  // picks reported "died at an UNRECORDED drop site" and all three sat beside
+  // the free-row budget line — it keeps one free row, evicts the rest, and
+  // recorded nothing. The red dragon's condition-payoff died there.
+  it('notes the template it evicts, and why', async () => {
+    const { settleSheetBudgets } = await import('@/tools/statblock-generator/reskin/generate.mjs');
+    const drops = [];
+    const sections = {
+      Traits: [
+        { name: 'Kept Row', text: 'x', template: 'relentless-pursuit', freeRow: true },
+        { name: 'Evicted Row', text: 'y', template: 'condition-payoff', freeRow: true },
+      ],
+    };
+    settleSheetBudgets({
+      sections, scaled: { per_hit: 10 }, cr: 17,
+      noteDrop: (template, stage, why) => drops.push({ template, stage, why }),
+    });
+    const ev = drops.find((d) => d.template === 'condition-payoff');
+    expect(ev).toBeTruthy();
+    expect(ev.stage).toBe('the free-row budget');
+    expect(ev.why).toBeTruthy();
+  });
+
+  it('notes nothing when every free row fits the budget', async () => {
+    const { settleSheetBudgets } = await import('@/tools/statblock-generator/reskin/generate.mjs');
+    const drops = [];
+    settleSheetBudgets({
+      sections: { Traits: [{ name: 'Only', text: 'x', template: 'riposte', freeRow: true }] },
+      scaled: { per_hit: 10 }, cr: 5,
+      noteDrop: (template, stage) => drops.push({ template, stage }),
+    });
+    expect(drops.filter((d) => d.stage === 'the free-row budget')).toEqual([]);
+  });
+
+  it('is callable with no noteDrop at all — the default must not throw', async () => {
+    const { settleSheetBudgets } = await import('@/tools/statblock-generator/reskin/generate.mjs');
+    expect(() => settleSheetBudgets({
+      sections: { Traits: [{ name: 'A', text: 'x', template: 't1', freeRow: true }, { name: 'B', text: 'y', template: 't2', freeRow: true }] },
+      scaled: { per_hit: 10 }, cr: 5,
+    })).not.toThrow();
+  });
+});

@@ -929,7 +929,7 @@ export function markFreeRow(seat, { decoration = false } = {}) {
   return seat;
 }
 
-export function settleSheetBudgets({ sections, printExact = false, scaled = null, cr = null, generation = null, trace: traceFn = () => {} }) {
+export function settleSheetBudgets({ sections, printExact = false, scaled = null, cr = null, generation = null, noteDrop = () => {}, trace: traceFn = () => {} }) {
   const trace = traceFn;
   // NO NULLISH ROW SURVIVES TO SHIP. A single undefined entry in a section kills
   // the whole generation — about a dozen sites read `.library`, `.print` or
@@ -996,6 +996,11 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
     const sameCell = !!cell && keptCells.has(cell);
     if (keptFree.length < freeBudget && !sameCell) { keptFree.push(e); if (cell) keptCells.add(cell); continue; }
     sections[sec] = (sections[sec] ?? []).filter((x) => x !== e);
+    // THE INSTRUMENT POINTED HERE. On its first full forty, three accepted picks
+    // reported "died at an UNRECORDED drop site" and all three sat beside this
+    // line — the free-row budget keeps one row and evicts the rest, and nothing
+    // recorded it. That is exactly the silence the ledger exists to remove.
+    noteDrop(e.template ?? e.seed, 'the free-row budget', sameCell ? `a free row already fills the cell ${cell}` : `only ${freeBudget} free row(s) allowed on this sheet`);
     trace('free row over budget:', `${sec}/"${bareName(e)}" leaves at ship — ${sameCell ? `a free row already fills the declared cell ${cell}` : `this sheet's free-row budget (${freeBudget}) is spent by a row that SHIPPED`}`);
     sweepDeadName(sections, bareName(e), null, trace);
   }
@@ -2342,6 +2347,7 @@ export async function generateReskin(options, callLLM) {
   // carries only plain/warpriest/binder) — pickDonor already falls back
   // to the plain line; the drop just needs to be visible
   const POSTURE = { lurker: ['skulker'] }; // the plain line already IS this style
+  let seatsAttempted = 0;
   if (style && !body && donor.style !== style && !(POSTURE[donor.id.split('-')[0]] ?? []).includes(style)) {
     trace('style unserved:', `"${style}" has no ${donor.id.split('-')[0]} line — the plain line ships (resolve's style signal is noisy; not re-routed)`);
   }
@@ -2355,8 +2361,12 @@ export async function generateReskin(options, callLLM) {
     if (Object.values(scaled.sections).flat().some((e) => /Ranged Attack Roll/.test(e.text ?? ''))) covered.push(/\bhurl|throw|toss|lob|fling|\bdetach|\bsevered|as a weapon\b/i);
     if (Object.values(scaled.sections).flat().some((e) => e.name === 'Regeneration')) covered.push(/rekni|regrow|regenerat|heal|reform|reassembl/i);
     const seats = assignSeats(options.signatureElements ?? [], { style: scaled.style ?? null, covered });
+    if (seats) seatsAttempted = seats.packaged ? 1 : [seats.action, seats.trait].filter(Boolean).length;
     if (seats) trace('seats:', seats.packaged ? `package <- "${seats.action}"` : `action <- "${seats.action}" | trait <- "${seats.trait}"`);
   }
+  // declared here, above its only writer: the seats are assigned far upstream of
+  // the per-sheet tally that reads this (a `let` beside the other collectors put it
+  // in the temporal dead zone and threw on every sheet)
   progress('chassis', { chassis: { ac: scaled.ac, hp: scaled.hp, cr_str: String(cr), pb: scaled.pb, xp: challengeRatings[crKey(cr)]?.XP ?? 0 } });
 
   // REPAIR-AS-RETRY (owner go, 2026-08-23). The strict validator used to
@@ -5382,6 +5392,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const vc = valueCheck(drawn.row, { scaled, sections, cr, section: drawn.section, noGate: hasChassisNova(sections), template: drawn.seed ?? drawn.row?.template ?? null });
         if (vc.steps.length) { drawn.row.text = vc.text; drawn.row.name = vc.name; if (vc.gate) drawn.row.gate = vc.gate; }
         trace('value check:', `"${drawn.row.name}" EV ${vc.ev} vs floor ${vc.floor} (${vc.replaced})${vc.steps.length ? ` — ${vc.steps.join('; ')}` : ' — worth the trade'}`);
+        if (!drawn.floorWaived && vc.steps.some((st) => /still under|does nothing/.test(st))) noteDrop(drawn.seed ?? drawn.row?.template, 'the value floor', 'a seed the ladder could not lift');
         if (!drawn.floorWaived && vc.steps.some((st) => /still under|does nothing/.test(st))) { trace('signature dropped by the floor:', `"${drawn.row.name}" — a seed that cannot be lifted does not ship`); drawn = null; }
       }
       if (drawn) {
@@ -5394,6 +5405,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         trace('library seed drawn:', `${drawn.seed} -> ${drawn.section}/"${drawn.row.name}" (no template held the idea; a proven shape stands in)`);
         if (deadBareT) sweepDeadName(sections, deadBareT, drawn.row, trace);
       } else {
+        noteDrop(actionT?.template ?? actionT?.row?.template, 'no legal template or seed', 'no template held the idea and no seed is legal on this sheet');
         trace('signature dropped —', 'no template held the idea and no seed is legal on this sheet');
         sweepDeadName(sections, deadBareT || null, null, trace);
       }
@@ -7250,7 +7262,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     trace('nova capped:', `${sec}/${String(e.name)} — ${dm[1]} over the CR ${cr} ceiling ${cap}, dice to ${d.avg} (${d.dice})`);
   }
 
-  settleSheetBudgets({ sections, printExact, scaled, cr, generation: monster.generation, trace });
+  settleSheetBudgets({ sections, printExact, scaled, cr, generation: monster.generation, noteDrop, trace });
 
   // EVERY NUMBER DERIVED FROM A CAPPED VALUE RE-DERIVES AFTER THE CAP (owner's
   // stage 1, 2026-10-16). The cap above moves a row's damage; a THRESHOLD in the
@@ -8036,6 +8048,17 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
   }
   readGapOutcomes({ sections: monster.sections, gapRecords, generation: monster.generation, dropLog, trace });
+  // ONE LINE PER SHEET, FROM THE FIELDS THE ENGINE ALREADY SET. Every number here
+  // was already recorded (signature_rows, decoration_rows, expressed_rows,
+  // free_rows, gap_vetoed, gap_death_sites) and nothing printed them together, so
+  // reading a forty meant reconstructing them from prose. Four wrong numbers in
+  // one day came out of that reconstruction — a regex over trace text counted
+  // rows that had LANDED as losses, and twice compared a hard-case batch against
+  // a whole-archive mean. A tally the writer emits cannot drift from what shipped.
+  {
+    const g = monster.generation ?? {};
+    trace('signature tally:', `${seatsAttempted} seat(s) -> ${g.signature_rows ?? 0} shape(s) on the sheet · ${g.expressed_rows ?? 0} expressed, ${g.decoration_rows ?? 0} decoration, ${g.free_rows ?? 0} free · accepted picks lost: ${g.gap_vetoed ?? '0 of 0'}${g.gap_death_sites ? ` (${g.gap_death_sites})` : ''} · path ${g.pipeline?.path ?? '?'}`);
+  }
   // GUARDED STANCE IS RECONCILED AGAINST THE FINISHED AC (critic, 2026-10-21:
   // the Reedmarch Sap-Keeper shipped it). The menu filter runs while the pool is
   // built and tests `monster.ac ?? scaled.ac` — but print canon can still move the

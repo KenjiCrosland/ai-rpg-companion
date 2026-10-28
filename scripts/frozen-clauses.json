@@ -3263,5 +3263,871 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "22d8f17a20ed": {
+  "concept": "a lantern that mourns",
+  "clauses": [
+   {
+    "id": "cl_1a03g5g",
+    "text": "a lantern that mourns",
+    "kind": "mechanical"
+   }
+  ]
+ },
+ "997982ba4575": {
+  "concept": "the sound of a door closing in an empty house",
+  "clauses": [
+   {
+    "id": "cl_1w71bmo",
+    "text": "the sound of a door closing in an empty house",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "ef3d624e7103": {
+  "concept": "grief",
+  "clauses": [
+   {
+    "id": "cl_1mptz3",
+    "text": "grief",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "5a838e0919d4": {
+  "concept": "a hunger that wears the shape of a staircase",
+  "clauses": [
+   {
+    "id": "cl_1d63l1u",
+    "text": "a hunger",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_19seyzv",
+    "text": "wears the shape of a staircase",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "335c64f898a4": {
+  "concept": "a cairn-wight that cannot be harmed by steel and fears only running water",
+  "clauses": [
+   {
+    "id": "cl_16zhisc",
+    "text": "a cairn-wight",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1x23thr",
+    "text": "cannot be harmed by steel",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_uc5nun",
+    "text": "fears only running water",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "8011682805a9": {
+  "concept": "a brass automaton with no mouth, no eyes and no name",
+  "clauses": [
+   {
+    "id": "cl_13hfhno",
+    "text": "a brass automaton with no mouth",
+    "kind": "mechanical",
+    "polarity": "lacks",
+    "takes": "speech",
+    "lackQuote": "no mouth"
+   },
+   {
+    "id": "cl_9esf7m",
+    "text": "no eyes and no name",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "0b4d4662ab73": {
+  "concept": "a reef-drake that beaches ships, swallows the crew whole, spits the bones back as chum, and calls gulls to pick the wate",
+  "clauses": [
+   {
+    "id": "cl_di7knn",
+    "text": "a reef-drake",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_vrmvxk",
+    "text": "beaches ships",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "shove",
+    "askMechanicWhy": "beaches ships"
+   },
+   {
+    "id": "cl_172c5q1",
+    "text": "swallows the crew whole",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "swallow",
+    "askMechanicWhy": "swallows the crew whole"
+   },
+   {
+    "id": "cl_33f5bb",
+    "text": "spits the bones back as chum",
+    "kind": "mechanical",
+    "askShape": "save_area",
+    "askMechanic": "burst",
+    "askMechanicWhy": "spits the bones back as chum"
+   },
+   {
+    "id": "cl_1riq8a9",
+    "text": "calls gulls to pick the water clean",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "calls gulls"
+   }
+  ]
+ },
+ "c5cd17453af9": {
+  "concept": "a thresher-beast that charges in a straight line, knocks everything flat, and keeps going",
+  "clauses": [
+   {
+    "id": "cl_1v849ay",
+    "text": "a thresher-beast",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1ugpb35",
+    "text": "charges in a straight line",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "charges in a straight line",
+    "askShape": "movement",
+    "askMechanic": "charge",
+    "askMechanicWhy": "charges in a straight line"
+   },
+   {
+    "id": "cl_183uwud",
+    "text": "knocks everything flat",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "knocks everything flat",
+    "askShape": "condition",
+    "askMechanic": "shove",
+    "askMechanicWhy": "knocks everything flat"
+   },
+   {
+    "id": "cl_13e7a3s",
+    "text": "keeps going",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "keeps going",
+    "askShape": "movement",
+    "askMechanic": "charge",
+    "askMechanicWhy": "keeps going"
+   }
+  ]
+ },
+ "bd6fc582ba0b": {
+  "concept": "a bell-wraith that tolls once for fear, twice for sleep, and three times for the grave",
+  "clauses": [
+   {
+    "id": "cl_ehq2ma",
+    "text": "a bell-wraith",
+    "kind": "mechanical",
+    "askOften": "once_per_turn",
+    "askOftenWhy": "once",
+    "askShape": "save_single",
+    "askMechanic": "fear",
+    "askMechanicWhy": "tolls once for fear"
+   },
+   {
+    "id": "cl_117drvi",
+    "text": "tolls once for fear",
+    "kind": "mechanical",
+    "askOften": "once_per_turn",
+    "askOftenWhy": "once",
+    "askShape": "save_single",
+    "askMechanic": "fear",
+    "askMechanicWhy": "tolls once for fear"
+   },
+   {
+    "id": "cl_1dx8wjs",
+    "text": "twice for sleep",
+    "kind": "mechanical",
+    "askOften": "once_per_turn",
+    "askOftenWhy": "twice",
+    "askShape": "condition",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "sleep"
+   },
+   {
+    "id": "cl_1iftueb",
+    "text": "three times for the grave",
+    "kind": "mechanical",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "three times",
+    "askShape": "save_area",
+    "askMechanic": "burst",
+    "askMechanicWhy": "for the grave"
+   }
+  ]
+ },
+ "230bd834ca79": {
+  "concept": "a spore-mother who takes over the bodies of the things she kills and sends them at you",
+  "clauses": [
+   {
+    "id": "cl_1x5f05m",
+    "text": "a spore-mother",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_shlr3d",
+    "text": "takes over the bodies of the things she kills",
+    "kind": "mechanical",
+    "askWhen": "on_death",
+    "askWhenWhy": "the things she kills",
+    "askMechanic": "command",
+    "askMechanicWhy": "takes over the bodies of the things she kills"
+   },
+   {
+    "id": "cl_1rip7y9",
+    "text": "sends them at you",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "sends them at you",
+    "askShape": "attack",
+    "askMechanic": "command",
+    "askMechanicWhy": "sends them at you"
+   }
+  ]
+ },
+ "957a2348dc09": {
+  "concept": "a gaol-queen whose prisoners fight for her while she watches from behind them",
+  "clauses": [
+   {
+    "id": "cl_y6uaua",
+    "text": "a gaol-queen whose prisoners fight for her while she watches from behind them",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "a52ed980212b": {
+  "concept": "a shepherd of drowned horses who never fights alone",
+  "clauses": [
+   {
+    "id": "cl_1vfkk52",
+    "text": "a shepherd of drowned horses",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1n5e7oy",
+    "text": "never fights alone",
+    "kind": "mechanical",
+    "askShape": "buff_ally",
+    "askMechanic": "command",
+    "askMechanicWhy": "never fights alone"
+   }
+  ]
+ },
+ "ea5a2ad942d7": {
+  "concept": "a glass monk who turns every blow back on whoever struck it",
+  "clauses": [
+   {
+    "id": "cl_invj8i",
+    "text": "a glass monk",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_pmv3v8",
+    "text": "turns every blow back on whoever struck it",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "every blow",
+    "askOften": "at_will",
+    "askOftenWhy": "every",
+    "askShape": "attack",
+    "askMechanic": "retaliate",
+    "askMechanicWhy": "turns every blow back on whoever struck it"
+   }
+  ]
+ },
+ "07e90d896168": {
+  "concept": "a tithe-collector that takes something every time it is wounded",
+  "clauses": [
+   {
+    "id": "cl_vc0vml",
+    "text": "a tithe-collector",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_173kbfh",
+    "text": "takes something every time it is wounded",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "a9be4794dc57": {
+  "concept": "a sand-shrike that is only dangerous on the turn after it goes still",
+  "clauses": [
+   {
+    "id": "cl_b7rr9s",
+    "text": "a sand-shrike",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1xlmvqg",
+    "text": "is only dangerous on the turn after it goes still",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "e183f0edd6c7": {
+  "concept": "a chalk-hound that walks through walls and drags you back out through them",
+  "clauses": [
+   {
+    "id": "cl_166bg2b",
+    "text": "a chalk-hound",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1ebkvso",
+    "text": "walks through walls",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "walks through walls",
+    "askOften": "at_will",
+    "askOftenWhy": "walks through walls",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "walks through walls"
+   },
+   {
+    "id": "cl_qb1k9s",
+    "text": "drags you back out through them",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "drags you back out through them",
+    "askOften": "at_will",
+    "askOftenWhy": "drags you back out through them",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "drags you back out through them"
+   }
+  ]
+ },
+ "9bf9b0366b57": {
+  "concept": "a mire-thing that is impossible to see until it is close enough to touch you",
+  "clauses": [
+   {
+    "id": "cl_1lcriq7",
+    "text": "a mire-thing",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1bcdxhd",
+    "text": "is impossible to see until it is close enough to touch you",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "4de57f32265a": {
+  "concept": "a scaffold-spider that fights from the ceiling and never comes down",
+  "clauses": [
+   {
+    "id": "cl_qp4sm5",
+    "text": "a scaffold-spider",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_bvtrqt",
+    "text": "fights from the ceiling",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "fights from the ceiling",
+    "askOften": "at_will",
+    "askOftenWhy": "fights from the ceiling",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "fights from the ceiling"
+   },
+   {
+    "id": "cl_i9k37r",
+    "text": "never comes down",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "never comes down",
+    "askOften": "at_will",
+    "askOftenWhy": "never comes down",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "never comes down"
+   }
+  ]
+ },
+ "7a17b7135a45": {
+  "concept": "a coal-cat whose every wound makes it burn hotter",
+  "clauses": [
+   {
+    "id": "cl_fvvaz2",
+    "text": "a coal-cat whose every wound makes it burn hotter",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "18f78eb53f8f": {
+  "concept": "a rot-fly swarm that strips a corpse in a minute",
+  "clauses": [
+   {
+    "id": "cl_qwzvdi",
+    "text": "a rot-fly swarm",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_n212lq",
+    "text": "strips a corpse in a minute",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "dffef8775028": {
+  "concept": "a knot of eels in a man's coat",
+  "clauses": [
+   {
+    "id": "cl_2zlkiy",
+    "text": "a knot of eels in a man's coat",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "fb1ff5c12432": {
+  "concept": "something enormous and patient under the ice",
+  "clauses": [
+   {
+    "id": "cl_1fo4xu",
+    "text": "something enormous and patient under the ice",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "809aea4c620a": {
+  "concept": "a worm",
+  "clauses": [
+   {
+    "id": "cl_1ah53si",
+    "text": "a worm",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "936ddde9e229": {
+  "concept": "a kiln-priest whose prayers are spoken in fire",
+  "clauses": [
+   {
+    "id": "cl_1ludxqu",
+    "text": "a kiln-priest whose prayers are spoken in fire",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "edebcc9e77a9": {
+  "concept": "a saint's reliquary that heals what is loyal and withers what is not",
+  "clauses": [
+   {
+    "id": "cl_1n499vm",
+    "text": "a saint's reliquary",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1c0o5g2",
+    "text": "heals what is loyal",
+    "kind": "mechanical",
+    "askShape": "heal",
+    "askMechanic": "mend",
+    "askMechanicWhy": "heals"
+   },
+   {
+    "id": "cl_167fz3t",
+    "text": "withers what is not",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "drain",
+    "askMechanicWhy": "withers"
+   }
+  ]
+ },
+ "41dc20ef7c1e": {
+  "concept": "a tax-ghost that makes you drop what you are carrying",
+  "clauses": [
+   {
+    "id": "cl_17rky5q",
+    "text": "a tax-ghost",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1n5rsnv",
+    "text": "makes you drop what you are carrying",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "that makes you drop",
+    "askShape": "condition",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "makes you drop what you are carrying"
+   }
+  ]
+ },
+ "21840ecfc0ca": {
+  "concept": "a thing like an owlbear but grown through with brambles",
+  "clauses": [
+   {
+    "id": "cl_78i4e5",
+    "text": "a thing like an owlbear",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_kfwbim",
+    "text": "grown through with brambles",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "f03883596012": {
+  "concept": "a plague-doctor's bag that has learned to walk",
+  "clauses": [
+   {
+    "id": "cl_bfm2y7",
+    "text": "a plague-doctor's bag",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_ii79fv",
+    "text": "has learned to walk",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "walk"
+   }
+  ]
+ },
+ "26b8cdc4e29a": {
+  "concept": "two brothers who share one body and argue about who swings",
+  "clauses": [
+   {
+    "id": "cl_h6h6vb",
+    "text": "two brothers",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1uz8r3x",
+    "text": "share one body",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_137bf0k",
+    "text": "argue about who swings",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "3816a93155b5": {
+  "concept": "a duellist who only ever makes one attack, and it always lands",
+  "clauses": [
+   {
+    "id": "cl_12uzek5",
+    "text": "a duellist",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "a duellist",
+    "askOften": "once_per_turn",
+    "askOftenWhy": "only ever makes one attack",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1p3b1vv",
+    "text": "only ever makes one attack",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "only ever makes one attack",
+    "askOften": "once_per_turn",
+    "askOftenWhy": "only ever makes one attack",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_155hqwc",
+    "text": "it always lands",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "it always lands",
+    "askOften": "once_per_turn",
+    "askOftenWhy": "only ever makes one attack",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "0964a6bbefb0": {
+  "concept": "a creature that poisons everything it touches, including itself",
+  "clauses": [
+   {
+    "id": "cl_10vdr1a",
+    "text": "a creature",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1iaoz4g",
+    "text": "poisons everything it touches",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1lt6v4i",
+    "text": "including itself",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "cb2b3f3d759e": {
+  "concept": "a frost-thing whose cold makes you too frightened to run",
+  "clauses": [
+   {
+    "id": "cl_1gul3e6",
+    "text": "a frost-thing whose cold makes you too frightened to run",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "43f6ca6e456c": {
+  "concept": "a bone-choir that sings the dying into its ranks",
+  "clauses": [
+   {
+    "id": "cl_bakwmh",
+    "text": "a bone-choir",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1bvji19",
+    "text": "sings the dying into its ranks",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "sings",
+    "askOften": "at_will",
+    "askOftenWhy": "sings the dying into its ranks",
+    "askShape": "save_single",
+    "askMechanic": "curse",
+    "askMechanicWhy": "sings"
+   }
+  ]
+ },
+ "a82c64ad68e0": {
+  "concept": "a reeve of the drowned marsh who never loses a trail",
+  "clauses": [
+   {
+    "id": "cl_1jqnjo0",
+    "text": "a reeve of the drowned marsh",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_vgjo41",
+    "text": "never loses a trail",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "never loses a trail",
+    "askShape": "buff_self",
+    "askMechanic": "track",
+    "askMechanicWhy": "never loses a trail"
+   }
+  ]
+ },
+ "0934d7364970": {
+  "concept": "a hangman's rope that remembers every neck",
+  "clauses": [
+   {
+    "id": "cl_1e89q3h",
+    "text": "a hangman's rope",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1f2rzmm",
+    "text": "remembers every neck",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "a77869d16608": {
+  "concept": "a carnival barker who talks you into standing still",
+  "clauses": [
+   {
+    "id": "cl_14ldgt0",
+    "text": "a carnival barker",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_a9e1q2",
+    "text": "talks you into standing still",
+    "kind": "header"
+   }
+  ]
+ },
+ "626b558d7d68": {
+  "concept": "a barrow-guard that shoves grave-robbers back off the mound",
+  "clauses": [
+   {
+    "id": "cl_112bn32",
+    "text": "a barrow-guard",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_mqkxid",
+    "text": "shoves grave-robbers back off the mound",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "shoves",
+    "askShape": "attack",
+    "askMechanic": "shove",
+    "askMechanicWhy": "shoves"
+   }
+  ]
+ },
+ "39455cb1a6d6": {
+  "concept": "a reef-hook that hauls swimmers off their feet and holds them",
+  "clauses": [
+   {
+    "id": "cl_113jxod",
+    "text": "a reef-hook",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_16v0lnu",
+    "text": "hauls swimmers off their feet and holds them",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "hauls swimmers off their feet",
+    "askOften": "at_will",
+    "askOftenWhy": "hauls swimmers off their feet and holds them",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "hauls swimmers off their feet"
+   }
+  ]
+ },
+ "015a554fcf5b": {
+  "concept": "a chapel-lamp whose glare leaves you unable to see",
+  "clauses": [
+   {
+    "id": "cl_v1m3f0",
+    "text": "a chapel-lamp whose glare leaves you unable to see",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "ae902da30324": {
+  "concept": "a tar-wraith that drags at the legs of everything near it",
+  "clauses": [
+   {
+    "id": "cl_1j1gg1q",
+    "text": "a tar-wraith",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1taqrfj",
+    "text": "drags at the legs of everything near it",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "snare",
+    "askMechanicWhy": "drags at the legs"
+   }
+  ]
+ },
+ "59376c50fd3a": {
+  "concept": "a dune-shrike that knocks riders from the saddle",
+  "clauses": [
+   {
+    "id": "cl_1tnq6rw",
+    "text": "a dune-shrike",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1ds1pom",
+    "text": "knocks riders from the saddle",
+    "kind": "mechanical",
+    "askShape": "save_area",
+    "askMechanic": "shove",
+    "askMechanicWhy": "knocks riders from the saddle"
+   }
+  ]
+ },
+ "b6691bceb345": {
+  "concept": "a bell-keeper that marks one thief and burns them wherever they run",
+  "clauses": [
+   {
+    "id": "cl_8m3yyl",
+    "text": "a bell-keeper",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1fg2fya",
+    "text": "marks one thief",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_fkk5in",
+    "text": "burns them wherever they run",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "678a1dce1f1e": {
+  "concept": "a moor-hag that frightens trespassers off her water",
+  "clauses": [
+   {
+    "id": "cl_1wiizp",
+    "text": "a moor-hag",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_cuqa6w",
+    "text": "frightens trespassers off her water",
+    "kind": "descriptive"
+   }
+  ]
  }
 }

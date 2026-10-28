@@ -112,7 +112,14 @@ describe('the sprint run\'s fix round (2026-10-12)', () => {
     const desc = 'a hill giant archer who has no melee attack at all and shoots from the ridge';
     const m = await gen({ archetype: 'skirmisher', style: 'archer', concept: desc, userConcept: desc, cr: 7 }, json('Ridgefire Scorn', 'Giant', 7, 'archer', 'skirmisher', { size: 'Huge', extra: { clauses: [{ text: 'a hill giant archer', kind: 'mechanical' }, { text: 'has no melee attack at all', kind: 'mechanical' }, { text: 'shoots from the ridge', kind: 'descriptive' }] } }));
     expect(rows(m).some((e) => /^\*Melee Attack Roll/.test(e.text))).toBe(false);
-    expect(rows(m).find((e) => e.name === 'Multiattack').text).toMatch(/makes two \w[\w' -]* attacks\.$/);
+    // The canary's point is the LACK: no melee row survives and the Multiattack
+    // re-reads to count only the surviving mode. The trailing `$` additionally
+    // forbade print's replace clause, which was true only while this sheet had
+    // no action worth swapping in. Since the widening rung (2026-10-28) its
+    // Blinded row clears the floor instead of being dropped — EV 3 -> 27.5
+    // against a floor of 13 — so the Multiattack now cites it, which is print's
+    // own idiom. The lack, the count and the absence of melee are all still pinned.
+    expect(rows(m).find((e) => e.name === 'Multiattack').text).toMatch(/makes two \w[\w' -]* attacks\.(?: It can replace one attack with a use of [^.]+\.)?$/);
     expect(checkBlock(m).fidelity.dropped).toEqual([]);
   });
   test('a riposte asked for by name lands beside a named style; Sneak Attack binds the clause that says sneak attack', async () => {
