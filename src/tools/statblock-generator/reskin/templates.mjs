@@ -33,6 +33,39 @@ export const EFFECTS = ['damage', 'condition', 'movement', 'resource', 'defense'
 const SAVE_STATS = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma'];
 const CONDITIONS = ['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned'];
 const MINOR = ['Prone', 'Poisoned', 'Deafened', 'Frightened', 'Blinded']; // Blinded joined for obscuring breaths (2026-09-28); the aura save map covers it
+// WHICH DAMAGE EARNS FEAR. Counted over the 682 rows in srd52-monsters.json
+// that deal a damage type (2026-10-27, owner's question: "things that cause
+// physical damage don't cause frightened often yes?"). Print imposes Frightened
+// on 11 rows: SEVEN deal no damage at all, three deal Psychic, one Thunder.
+// Physical damage: 0 of 11 — while physical damage dominates every bodily
+// condition (Prone 55 rows, Grappled 38, Restrained 29, Poisoned 24). Fire,
+// Cold, Necrotic, Radiant, Lightning, Acid, Poison and Force: 0 each.
+//
+// This is a CLOSED FACT about the corpus, in the same class as the weapon table
+// and the CR math — it records what print writes, and infers nothing about what
+// the GM meant. The call still chooses the condition; this only refuses a
+// pairing print never writes. The owner's instinct also named Necrotic and
+// Radiant, which print does not support (Radiant pairs with Blinded and Prone).
+const FEAR_FROM = ['Psychic', 'Thunder'];
+
+/**
+ * May a row that DEALS `damageType` impose `condition`? Today this rules on
+ * Frightened only, which is where the corpus is emphatic (0 of 11 print rows
+ * pair it with physical damage, 0 with Fire, Cold, Necrotic, Radiant,
+ * Lightning, Acid, Poison or Force). Every other condition passes.
+ *
+ * ONE OWNER ON PURPOSE. Two places fill a condition beside damage — the
+ * template validator in `renderTemplate` and the donor chassis fill site in
+ * generate.mjs — and the donor site is the bigger of the two by far (26 of the
+ * 33 off-print rows measured were donor "Area Nova" breaths, against 1 template
+ * in the validator's whole domain). A rule with a copy in each would drift, and
+ * the first version of this fix lived only in the validator and reached almost
+ * nothing (plans/, "a private copy hides the fix").
+ *
+ * Pass a falsy `damageType` for a row that deals none: print's modal fear row
+ * deals no damage at all (7 of 11), so those are always allowed.
+ */
+export const conditionEarnedByDamage = (condition, damageType) => condition !== 'Frightened' || !damageType || FEAR_FROM.includes(damageType);
 // RESTRAINTS (['Grappled','Restrained']) retired 2026-10-27: its only consumer was
 // the `restraint` VOCAB entry, which was asking for a condition where the frame
 // renders a destructible object. See the note on VOCAB below.
@@ -303,7 +336,7 @@ const SHAPE_TAGS = {
   'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], contagion: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], spew: ['save', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'hook-rider': ['on_hit', 'movement'], riposte: ['on_being_hit', 'damage'], 'snap-shot': ['on_being_hit', 'damage'], 'ground-burst': ['save', 'damage'], 'volley-order': ['always', 'resource'], 'random-ray': ['save', 'condition'], 'blurred-form': ['always', 'defense'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'stunning-strike': ['on_hit', 'condition'], 'patient-defense': ['always', 'defense'], 'lay-on-hands': ['always', 'resource'], 'second-wind': ['always', 'resource'], 'shield-bash': ['save', 'condition'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
   'spider-climb': ['always', 'movement'], phobia: ['always', 'condition'], 'terrain-walk': ['always', 'movement'], 'aberrant-ground': ['always', 'movement'], 'faultless-tracker': ['always', 'condition'], 'web-walker': ['always', 'movement'],
   'energy-aura': ['start_of_turn', 'damage'], 'noxious-aura': ['start_of_turn', 'condition'], 'bloodied-fury': ['always', 'defense'], 'blood-frenzy': ['always', 'damage'] /* EFFECTS has no 'buff_self': an advantage aura is this catalog's 'defense'. `ally-aura` was authored here on 2026-10-27 and REVERTED the same day — it drew 0 of 10 because three `leader` donors already carry Aura of Authority as a `rules` row and the hobgoblin kit grants it too. An EIGHTH way to ship inert, not in the plan's list of seven: a donor already carries the row. */, 'uncanny-sense': ['always', 'defense'], 'earth-glide': ['always', 'movement'], tunneler: ['always', 'movement'], berserk: ['always', 'condition'], 'shielded-mind': ['always', 'defense'], evasion: ['always', 'defense'],
-  'relentless-pursuit': ['always', 'movement'], bound: ['always', 'movement'], 'marking-light': ['always', 'condition'], 'sealed-body': ['always', 'defense'], 'warded-mending': ['start_of_turn', 'resource'], 'guarded-stance': ['always', 'defense'], 'undead-fortitude': ['always', 'defense'], mimicry: ['always', 'defense'], wail: ['once_per_fight', 'damage'], 'truth-aura': ['start_of_turn', 'condition'], 'gaze-aura': ['start_of_turn', 'condition'], 'charge-push': ['on_hit', 'movement'],
+  'relentless-pursuit': ['always', 'movement'], bound: ['always', 'movement'], 'marking-light': ['always', 'condition'], 'sealed-body': ['always', 'defense'], 'warded-mending': ['start_of_turn', 'resource'], 'guarded-stance': ['always', 'defense'], 'undead-fortitude': ['always', 'defense'], mimicry: ['always', 'defense'], wail: ['once_per_fight', 'damage'], 'truth-aura': ['start_of_turn', 'condition'], 'gaze-aura': ['start_of_turn', 'condition'], 'fear-aura': ['start_of_turn', 'condition'], 'charge-push': ['on_hit', 'movement'],
 };
 // ENGINE FAMILIES: a template that re-implements an engine the sheet already
 // carries is off the menu by construction (iron maiden x4: hook-drag beside
@@ -701,7 +734,7 @@ const EXCLUDE_ON = {
   'hook-drag': ['containment'], 'hook-rider': ['containment'], 'obstacle-pull': ['containment'], reel: ['containment'], snare: ['containment'],
   'false-appearance': ['disguise'], adhesive: ['adhesive'], 'heated-body': ['contact-damage', 'aura'], 'resonant-body': ['contact-damage', 'aura'],
   // one aura per body; a sealed mind never doubles the golem's Immutable Form; warded mending never sits beside Regeneration
-  'energy-aura': ['contact-damage', 'aura'], 'noxious-aura': ['aura'], 'truth-aura': ['aura'], 'gaze-aura': ['aura'], 'charge-push': ['charge-rider'], 'sealed-body': ['immutable-form', 'shielded-mind'], 'shielded-mind': ['shielded-mind'], 'warded-mending': ['regeneration'],
+  'energy-aura': ['contact-damage', 'aura'], 'noxious-aura': ['aura'], 'truth-aura': ['aura'], 'gaze-aura': ['aura'], 'fear-aura': ['aura'], 'charge-push': ['charge-rider'], 'sealed-body': ['immutable-form', 'shielded-mind'], 'shielded-mind': ['shielded-mind'], 'warded-mending': ['regeneration'],
   // repellers, off every containment seat
   'escalating-dread': ['containment'], 'terror-pulse': ['containment'], 'push-prone': ['containment'], 'gaze-single': ['containment'],
   // ONE OF EACH FAMILY A SHEET (2026-10-22). These read the declared FAMILY above
@@ -900,6 +933,7 @@ export const VERB_KEYS = {
   mimicry: ['mimic', 'mimics', 'mimicry', 'imitates', 'imitation', 'steals voices', 'stolen voice', 'stolen voices', 'ventriloquist', 'parrot', 'magpie', 'throws its voice', 'speaks in', 'borrowed voice', 'sounds like', 'voices'],
   wail: ['wail', 'wails', 'wailing', 'keening', 'shriek', 'shrieks', 'scream', 'screams', 'hymn', 'dirge', 'stops hearts', 'stops the heart', 'banshee', 'death song', 'lament', 'voice kills', 'song kills'],
   'truth-aura': ['lie', 'lies', 'liar', 'liars', 'truth', 'speak a lie', 'no lie', 'cannot lie', 'confess', 'confession', 'honest', 'falsehood', 'false word', 'zone of truth'],
+  'fear-aura': ['terrifies', 'terrifying', 'terror', 'dread', 'dreadful', 'fear', 'fearsome', 'frightens', 'frightening', 'horrifying', 'horror', 'panic', 'unnerving', 'presence', 'aura of fear', 'quail', 'cower', 'cowers', 'flee', 'flees'],
   'gaze-aura': ['gaze', 'stare', 'stares', 'glare', 'looks at', 'looks into', 'look into', 'looked at', 'being looked at', 'meets its eyes', 'its eyes', 'reflection', 'reflections', 'visage', 'true form', 'behold', 'beheld', 'catches its eye', 'eye contact'],
   'charge-push': ['runs down', 'run down', 'rides down', 'ride down', 'off the cliff', 'off the ledge', 'off the edge', 'over the edge', 'bowls over', 'knocks off', 'shoulders aside', 'plows through', 'butts climbers off', 'off the road'],
   'faultless-tracker': ['track', 'tracks', 'tracking', 'quarry', 'hunts', 'hunted', 'pursue', 'pursues', 'pursuit', 'always knows', 'knows where', 'knows exactly where', 'unerring', 'unerringly', 'direction to', 'scent', 'trail', 'follows', 'cannot hide', 'nowhere to hide', 'tether', 'tethered', 'branded', 'marked', 'its mark', 'hound', 'bloodhound', 'stalks', 'stalk', 'from a hundred feet', 'finds them'],
@@ -1134,7 +1168,7 @@ export const MECHANIC = {
   grapple: ['snatch', 'hook-drag', 'hook-rider', 'reel', 'pull-through', 'adhesive'],
   shove: ['shield-bash', 'push-prone', 'charge-push', 'obstacle-pull', 'disarm'],
   charm: ['lure', 'aggro-curse', 'pacify'],
-  fear: ['escalating-dread', 'terror-pulse', 'phobia', 'wail'],
+  fear: ['fear-aura', 'escalating-dread', 'terror-pulse', 'phobia', 'wail'],
   dazzle: ['sensory-strike', 'reveal', 'marking-light', 'bolt-mark'],
   charge: ['trample', 'charge', 'leap', 'pounce', 'burrow-ambush', 'relentless-pursuit'],
   breath: ['spew', 'noxious-aura'],
@@ -1687,6 +1721,7 @@ const IMPOSES_BY_TEMPLATE = {
   pounce: 'Prone',
   'charge-push': 'Prone',
   'gaze-aura': 'Frightened',
+  'fear-aura': 'Frightened',
   lure: 'Charmed',
   'hook-drag': ['Grappled', 'Restrained'], // Restrained follows the grapple from 10-12 up
   'pull-through': 'Prone',   // "the target emerges Prone" — a bare condition word, no "condition" noun
@@ -1805,6 +1840,11 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   const band = bandFor(ctx.cr);
   let text = t.frames[band];
   if (!text) return null;
+  // Does this frame deal damage? Read from the frame BEFORE its engine slots are
+  // filled, because by the time the condition is validated below they are digits.
+  // It matters because print's MODAL fear row deals no damage (7 of 11), so the
+  // pairing rule below must only judge rows that actually hit for something.
+  const framesDamage = /\{avg(?:_half|_x2)?\}|\d+ \(\d+d\d+/.test(String(t.frames[band]));
   // THE WRITER RECORDS WHAT IT WROTE. The catalog declares what this frame
   // imposes, so no reader has to recover it from the rendered sentence.
   pickedCondition = imposedByFrame(t.id, band) ?? t.imposes ?? pickedCondition;
@@ -1934,6 +1974,23 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
       // ("until the end of its next turn"), so the removal must reach the stop
       text = text.replace(/,? and the target has the \{condition_minor\} condition[^.]*/, '');
       vestigialStripped = required;
+    } else if (framesDamage && !conditionEarnedByDamage(condPick, dtype)) {
+      // FEAR DOES NOT COME FROM A BLOW. See FEAR_FROM: print pairs Frightened
+      // with Psychic or Thunder damage and with nothing else, and most often
+      // with no damage at all. Ours ran the other way — 62 of 101 Frightened
+      // rows carried damage print never pairs it with (Fire 37, Bludgeoning 10,
+      // Necrotic 8, Cold 3, Lightning 2, Slashing 2).
+      //
+      // THE CLAUSE LEAVES RATHER THAN BEING SWAPPED, for the reason recorded
+      // just above — swapping put a Poisoned rider on a cold row — and for a
+      // second reason measured here: Prone is print's pairing for almost every
+      // damage type, so re-steering these rows would have turned 57 of them
+      // Prone, manufacturing the very sameness this is meant to reduce.
+      // Stripping is also what print does: a Fire row imposes nothing in 52 of
+      // its 61 rows. The row keeps its damage and its save and says only what it
+      // does.
+      text = text.replace(/,? and the target has the \{condition_minor\} condition[^.]*/, '');
+      vestigialStripped = condPick;
     }
     // THE PICK IS KEPT (2026-10-20). This block already chooses the condition
     // from the closed MINOR list, validates the model's proposal against it, and

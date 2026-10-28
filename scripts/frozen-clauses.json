@@ -2957,5 +2957,104 @@
     "askMechanicWhy": "hauls them in"
    }
   ]
+ },
+ "45202d9c3c5f": {
+  "concept": "a kenku thief who speaks only in stolen voices",
+  "clauses": [
+   {
+    "id": "cl_ys0at1",
+    "text": "a kenku thief",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_wvrkr8",
+    "text": "speaks only in stolen voices",
+    "kind": "header"
+   }
+  ]
+ },
+ "751b57ad1038": {
+  "concept": "a tentacle-faced psychic aberration that stuns minds and eats brains whose psychic scream unmakes the will",
+  "clauses": [
+   {
+    "id": "cl_1dq4b75",
+    "text": "a tentacle-faced psychic aberration",
+    "kind": "mechanical",
+    "askShape": "save_area",
+    "askMechanic": "burst",
+    "askMechanicWhy": "psychic scream"
+   },
+   {
+    "id": "cl_diul8e",
+    "text": "stuns minds and eats brains whose psychic scream unmakes the will",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "59f04da65669": {
+  "concept": "a bell-wraith whose thunderous toll deafens and terrifies",
+  "clauses": [
+   {
+    "id": "cl_qwkbu0",
+    "text": "a bell-wraith whose thunderous toll deafens and terrifies",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "ff14bff568a4": {
+  "concept": "a frost giant whose breath freezes the blood with terror",
+  "clauses": [
+   {
+    "id": "cl_1ycugu3",
+    "text": "a frost giant whose breath freezes the blood with terror",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "fear",
+    "askMechanicWhy": "freezes the blood with terror"
+   }
+  ]
+ },
+ "efd8e660e949": {
+  "concept": "a gallows-spectre whose withering gaze breaks the will",
+  "clauses": [
+   {
+    "id": "cl_wusy3m",
+    "text": "a gallows-spectre whose withering gaze breaks the will",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "a gallows-spectre whose withering gaze breaks the will",
+    "askShape": "save_single",
+    "askMechanic": "gaze",
+    "askMechanicWhy": "withering gaze breaks the will"
+   }
+  ]
+ },
+ "dfaaa8823e08": {
+  "concept": "a plague-herald whose necrotic wave fills the living with dread",
+  "clauses": [
+   {
+    "id": "cl_plbvg",
+    "text": "a plague-herald whose necrotic wave fills the living with dread",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "99917241ea9f": {
+  "concept": "a dread knight whose charge shatters courage and bone",
+  "clauses": [
+   {
+    "id": "cl_sj2x8v",
+    "text": "a dread knight whose charge shatters courage and bone",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "a dread knight whose charge shatters courage and bone",
+    "askShape": "save_area",
+    "askMechanic": "charge",
+    "askMechanicWhy": "charge"
+   }
+  ]
  }
 }

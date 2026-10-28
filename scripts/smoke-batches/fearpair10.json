@@ -1,0 +1,23 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — print-exact floor; no condition slot, must be untouched." },
+  { "name": "", "description": "a kenku thief who speaks only in stolen voices", "cr": "3", "rules": "2024",
+    "canary": "CANARY — species kit, no fear mechanic anywhere; nothing should change." },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2024",
+    "canary": "CANARY — weapon table, physical damage only. No fear to strip, and its weapon rows must stay intact." },
+
+  { "name": "", "description": "a brass tyrant whose furnace breath terrifies and whose hammer finds the terrified", "cr": "17", "rules": "2024",
+    "canary": "FEATURE — the measured offender: Furnace Breath dealt 72 Fire AND frightened on 26 rows. The clause must leave, and the payoff rider that CONSUMES Frightened must then be stripped too unless something else frightens." },
+  { "name": "", "description": "a mind flayer whose psychic scream unmakes the will", "cr": "11", "rules": "2024",
+    "canary": "FEATURE — Psychic is one of the two types print DOES pair with fear. The condition must SURVIVE here; this is the arm that proves the gate is not a blanket ban." },
+  { "name": "", "description": "a bell-wraith whose thunderous toll deafens and terrifies", "cr": "9", "rules": "2024",
+    "canary": "FEATURE — Thunder is the other licensed type, and print pairs Thunder with Deafened 2 of 2. Both should be allowed." },
+  { "name": "", "description": "a frost giant whose breath freezes the blood with terror", "cr": "12", "rules": "2024",
+    "canary": "FEATURE — Cold: print has 29 Cold rows and ZERO minor conditions. The concept ASKS for terror, so this tests whether stripping reads as a loss the GM would notice." },
+  { "name": "", "description": "a gallows-spectre whose withering gaze breaks the will", "cr": "8", "rules": "2024",
+    "canary": "FEATURE — the gaze class: a no-damage fear row is print's MODAL form (7 of 11) and must be untouched. If it ships Bludgeoning damage instead, that is the damage type bug, not this gate." },
+  { "name": "", "description": "a plague-herald whose necrotic wave fills the living with dread", "cr": "14", "rules": "2024",
+    "canary": "FEATURE — Necrotic was the owner's own guess and print does NOT support it (0 of 11). Judge whether the strip reads wrong here." },
+  { "name": "", "description": "a dread knight whose charge shatters courage and bone", "cr": "15", "rules": "2024",
+    "canary": "FEATURE — physical damage plus fear, the clearest print violation (0 of 11). The fear should leave the damage row." }
+]

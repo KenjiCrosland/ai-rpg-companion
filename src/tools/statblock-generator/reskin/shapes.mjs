@@ -541,6 +541,30 @@ export const SHAPES = [
   // (Prone/Poisoned/Deafened/Frightened; a Medusa's Petrifying Gaze earns KO
   // only as a gated bonus action with the escalation clause).
   {
+    // PRINT'S PASSIVE, AT-WILL FEAR — the form a formidable creature carries
+    // (owner, 2026-10-27: "a creature rendering fear should generally be
+    // formidable... inflicting fear as a gated action feels underpowered").
+    //
+    // Measured over print's 11 rows that impose Frightened: 6 are Actions, 2
+    // Bonus Actions, 2 Traits, 1 an attack rider — so an ACTION is print's
+    // commonest form and the owner's "fear is a rider or a trait" is not the
+    // pattern. But GATING is: only 4 of the 11 carry a Recharge or an N/Day, so
+    // 7 of 11 are at will, and the action form clusters low (median CR 3 —
+    // Quasit 1, Lion 1, Mummy 3, Doppelganger 3, Ghost 4). Print's highest-CR
+    // fear is this one, the Pit Fiend's, at CR 20.
+    //
+    // WHY IT IS NOT A DUPLICATE. `terror-pulse` is the Frightful Presence class
+    // and is a GATED ACTION (2/Day); `gaze-aura` is an at-will trait but needs
+    // "a face or form that is horrifying to look at". Neither is a non-visual
+    // at-will aura, so a creature whose terror is its breath, its voice or its
+    // sheer presence had no print-shaped passive form to carry it. This one
+    // names no organ: NEEDS_BODY has no entry for it on purpose.
+    id: 'fear-aura', duration_default: 'target_start', name: 'Fear Aura',
+    cite: 'Pit Fiend/Fear Aura (CR 20, 20 ft, Wis, Frightened); Cloaker/Moan (CR 8); Lion/Roar (CR 1)',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature emanates an aura in a 20-foot Emanation while it doesn\'t have the Incapacitated condition. *Wisdom Saving Throw*: DC {dc}, any enemy that starts its turn in the aura. *Failure:* The target has the Frightened condition {duration}.'])), // print literal, the Pit Fiend's — no sight clause, so a voice or a breath carries it
+  },
+  {
     id: 'gaze-aura', duration_default: 'target_start', name: 'Vile Appearance', cite: 'Sea Hag/Vile Appearance (CR 2, 30 ft, Wis, Frightened)',
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Wisdom Saving Throw*: DC {dc}, any creature that starts its turn within 30 feet of the creature and can see it. *Failure:* The target has the Frightened condition {duration}. *Success:* The target is immune to this creature\'s gaze for 24 hours.'])), // print literal: a gaze frightens (the barrel's took Prone on a Strength save, 2026-09-28)

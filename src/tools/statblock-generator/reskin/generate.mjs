@@ -11,7 +11,7 @@ import { pickDonor, scaleDonor, stampAttacksPerRound } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor} from './templates.mjs';
+import { composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
@@ -3634,6 +3634,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
   }
   let atWillShipped = [];
+  // THE SHEET STILL OWES THE FEAR IT DECLARED. Set when the damage-pairing gate
+  // strips a fear clause off a damaging row (see `conditionEarnedByDamage`); read
+  // after the seat-owed traits are placed, where it is paid with a no-damage fear
+  // row. Carries the damage type only so the trace can say what refused it.
+  let fearOwed = null;
   for (const es of Object.values(sections)) {
     for (const e of es) {
       // (?! Roll) — the de-flavored entry name "Melee Attack" is a
@@ -3713,6 +3718,31 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       for (const [slot, menu] of Object.entries(CONDITION_MENUS)) {
         const pick2 = String(p.conditions?.[slot] ?? '').trim();
         if (e.text.includes(`{${slot}}`) && menu.includes(pick2)) {
+          // FEAR DOES NOT COME FROM A BLOW (owner, 2026-10-27). This is the site
+          // that matters: 26 of the 33 off-print Frightened rows measured across
+          // 478 sheets were donor "Area Nova" breaths filled here — Furnace
+          // Breath dealing 72 Fire and frightening, which print never writes
+          // (see `conditionEarnedByDamage`, which owns the rule for both fill
+          // sites). The clause LEAVES rather than taking another condition: Prone
+          // is print's pairing for nearly every damage type, so re-steering would
+          // have turned 57 rows Prone and manufactured the sameness this reduces.
+          // The row keeps its damage, its area and its save.
+          if (/\d+ \(\d+d\d+/.test(e.text) && !conditionEarnedByDamage(pick2, wanted)) {
+            e.text = e.text.replace(/,? and (?:the target|it) has the \{condition_minor\} condition[^.]*?\./, '.');
+            trace('fear unearned by the damage:', `"${e.name}" would have imposed ${pick2} on a ${wanted} row — print pairs Frightened with Psychic or Thunder damage and with nothing else; the clause leaves and the row keeps its damage`);
+            // AND THE SHEET IS STILL OWED IT. Stripping alone answered nothing:
+            // the brass tyrant was typed "whose furnace breath terrifies and whose
+            // hammer finds the terrified" and lost BOTH halves — the fear left the
+            // breath, which made the payoff rider unreachable, which correctly
+            // dropped it too. Each step was print-correct and the sheet answered
+            // none of the ask (the fear-pairing ten, 2026-10-27).
+            // Print's own form is the repair, and it is the MODAL one: 7 of its 11
+            // fear rows deal no damage at all (Moan, Dreadful Glare, Fear Aura,
+            // Vile Appearance, Roar). So the condition moves to a row that deals
+            // none instead of being deleted.
+            fearOwed = { condition: pick2, refusedBy: wanted };
+            continue;
+          }
           e.text = e.text.split(`{${slot}}`).join(pick2);
           // THE FILL SITE DECLARES WHAT IT WROTE (2026-10-26). This was the one
           // chassis site that imposed a condition and recorded nothing: every
@@ -5403,6 +5433,69 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         if (!r) continue;
         trace('seat default:', `${scaled.style ?? archetype} owes ${owed} by print — it seats before the idea`);
         shipTrait({ row: { name: r.name, text: stampT(r.text), library: true, ...(r.imposes ? { imposes: r.imposes } : {}), template: owed }, templateName: r.name, section: r.section, template: owed, because: 'the seat owes it by print', owed: true });
+      }
+
+      // PAY THE FEAR THE PAIRING GATE TOOK OFF A DAMAGING ROW (2026-10-27).
+      // This is NOT the engine choosing a mechanic — the classification call
+      // itself answered `condition_minor: Frightened` for this sheet, so the fear
+      // is the call's own and only its CARRIER was wrong. Print never pairs fear
+      // with the damage that row deals, and print's answer is a row that deals
+      // none, so the condition is relocated rather than dropped. Nothing is
+      // invented and nothing is added that the call did not already ask for.
+      //
+      // `terror-pulse` FIRST, and the gaze rows only after it. All three already
+      // exist and all three impose Frightened on a Wisdom save with no damage,
+      // but the gaze rows require SIGHT — `gaze-aura` needs "a face or form that
+      // is horrifying to look at" and `gaze-single` needs "eyes, or some organ of
+      // sight" — so paying a breath-borne terror with a gaze would change the
+      // creature, and NEEDS_BODY would often veto it anyway. `terror-pulse` is
+      // print's Frightful Presence class and reads "that can see OR HEAR it", so
+      // a voice, a roar or a furnace breath carries it. Print's own non-visual
+      // fear rows are the model: Pit Fiend/Fear Aura (no sight clause),
+      // Cloaker/Moan, Lion/Roar.
+      if (fearOwed && !Object.values(sections).flat().some((e2) => imposedConditions(e2).includes('Frightened'))) {
+      //
+      // `gaze-single` is NOT on this list though it looked like a third option:
+      // its frames vary by band and it stops being a no-damage fear row above
+      // CR 10 — at CR 11 and 15 it deals damage, at 15 it imposes Paralyzed and
+      // at 21 Blinded. Paying a fear debt with it would have shipped a damaging
+      // Paralyzed gaze in place of the fear, on exactly the high-CR sheets this
+      // gate fires on most. A candidate must be a no-damage Frightened row at
+      // EVERY band; the spec checks all six rather than trusting one.
+      // THE ORDER IS PRINT'S OWN (owner, 2026-10-27: "inflicting fear as a gated
+      // action feels underpowered especially since a creature rendering fear
+      // should generally be formidable"). Measured: of print's 11 rows imposing
+      // Frightened only 4 are gated, so 7 of 11 are AT WILL, and its highest-CR
+      // fear is the Pit Fiend's Fear Aura — a trait, at will, with no sight
+      // clause. So the at-will aura leads; `terror-pulse` is print's Frightful
+      // Presence but costs an action and is 2/Day, and `gaze-aura` is at will
+      // but needs "a face or form that is horrifying to look at", which a
+      // breath-borne terror does not have. EXCLUDE_ON gives all three the `aura`
+      // tag, so a sheet that already carries an aura falls through to the action.
+        const paidWith = ['fear-aura', 'terror-pulse', 'gaze-aura'].find((id) => {
+          const ft = TEMPLATE_BY_ID.get(id);
+          return ft && templatesFor({ ...ctxT, section: ft.section, trigger: null }).some((x) => x.id === id);
+        });
+        if (!paidWith) trace('fear owed but unpayable:', `the sheet declared ${fearOwed.condition} and its ${fearOwed.refusedBy} row could not carry it, but neither gaze-aura nor gaze-single fits this body — the sheet ships without it`);
+        else {
+          const ft = TEMPLATE_BY_ID.get(paidWith);
+          const fr = renderTemplate(ft, ctxT, bindFills(ft), { blind: true });
+          if (!fr) trace('fear owed but unpayable:', `${paidWith} fits the body but rendered nothing`);
+          else {
+            // EACH CANDIDATE SHIPS TO ITS OWN SECTION. `shipTrait` hardcodes
+            // Traits (or Reactions), so sending an Actions template through it
+            // put "Horrid Display" among the traits, where it hit the 4-trait
+            // ceiling and was evicted by the concept-bound "Furnace Body" — the
+            // fear was paid and then silently lost, which is worse than not
+            // paying it. An action is also print's commoner form here: 4 of its
+            // 7 no-damage fear rows are Actions (Unsettling Visage, Dreadful
+            // Glare, Scare, Roar) against 2 traits.
+            const fearRow = { name: `${fr.name}${fr.gate ? ` (${fr.gate})` : ''}`, ...(fr.gate ? { gate: fr.gate } : {}), text: stampT(fr.text), library: true, imposes: 'Frightened', template: paidWith };
+            trace('fear moved to a row that deals no damage:', `the sheet declared ${fearOwed.condition} and a ${fearOwed.refusedBy} row cannot carry it by print — ${paidWith} carries it instead ("${fearRow.name}" in ${fr.section})`);
+            if (fr.section === 'Traits' || fr.section === 'Reactions') shipTrait({ row: fearRow, templateName: fr.name, section: fr.section, template: paidWith, because: `the sheet declared ${fearOwed.condition} and its ${fearOwed.refusedBy} damage cannot carry it by print` });
+            else (sections[fr.section] = sections[fr.section] ?? []).push(fearRow);
+          }
+        }
       }
       // a MEAT body earns its trait by a verb (review 2026-09-28): "a bear" took a
       // barbed coat the shelf fit with no word of the concept or the idea behind

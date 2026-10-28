@@ -433,12 +433,15 @@ describe('duration is a parameter on condition-effect templates', () => {
     expect(dur(renderTemplate(gaze(), ctx(9), { condition_minor: 'Blinded' }))).toBe("until the end of the creature's next turn");
   });
 
-  it('is carried by 13 templates, every one condition-effect', () => {
+  // 14 since `fear-aura` joined (2026-10-27, print's Pit Fiend Fear Aura — the
+  // at-will non-visual fear form the catalog had no shape for). The count is a
+  // ledger; the assertion that matters is the one below it.
+  it('is carried by 14 templates, every one condition-effect', () => {
     const carry = TEMPLATES.filter((t) => {
       const f = t.frames ? Object.values(t.frames).join(' ') : (t.text ?? '');
       return f.includes('{duration}');
     });
-    expect(carry).toHaveLength(13);
+    expect(carry).toHaveLength(14);
     for (const t of carry) expect(t.effect).toBe('condition');
   });
 
