@@ -1458,6 +1458,21 @@ export const LACKS_STOP = new Set(['any', 'all', 'ever', 'longer', 'able', 'just
 const imposeOn = (row, cond) => { if (row && cond) row.imposes = String(cond); return row; };
 const requireOn = (row, cond) => { if (row && cond) row.requiresCondition = String(cond); return row; };
 const unimposeOn = (row) => { if (row) delete row.imposes; return row; };
+// EVERYTHING THE WRITER RECORDED, CARRIED IN ONE MOVE (2026-10-28). A render
+// result declares what it wrote: what the row imposes, what it requires, and
+// WHEN the condition it imposed ends. Six row-building sites each copied those
+// keys ONE AT A TIME by name, so when `renderTemplate` began recording
+// `duration` every one of them dropped it — a ten shipped 17 rows imposing a
+// condition and nought carrying a duration, leaving `condition-duration` to go
+// on guessing from prose. Fills only what the site has not already decided:
+// `imposes` at the library site is chosen there, because a minor condition from
+// the fill overrules the template's own.
+const DECLARED_BY_WRITER = ['imposes', 'requiresCondition', 'duration'];
+const carryDeclared = (row, rendered) => {
+  if (!row || !rendered) return row;
+  for (const k of DECLARED_BY_WRITER) if (rendered[k] && !row[k]) row[k] = String(rendered[k]);
+  return row;
+};
 export function groundedClauses(list, userText, trace = () => {}, lacksAnswer = undefined) {
   // THE DENOMINATOR IS THE USER'S TEXT ITSELF, phrase by phrase, counted as a reader counts (critic's step-5 read: 38 automated
   // against 61 by hand): sentences, comma pieces and "but" halves are phrases; a relative clause splits only off the first
@@ -4949,7 +4964,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             bare = rendered.name;
           }
         }
-        return { row: { name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, ...(rendered.gate ? { gate: rendered.gate } : {}), text: stampT(rendered.text), library: true, template: fit.template.id, ...(rendered?.consumes ? { consumes: rendered.consumes } : {}), ...(rendered?.saveOverride ? { saveOverride: rendered.saveOverride } : {}), ...(rendered?.imposes ? { imposes: rendered.imposes } : fit.template?.imposes ? { imposes: fit.template.imposes } : {}), ...(fit.fills?.condition_minor && CONDITIONS_CLOSED.includes(fit.fills.condition_minor) ? { imposes: fit.fills.condition_minor } : {}), ...(fit.fills?.consumed_condition ? { requiresCondition: fit.fills.consumed_condition } : {}), boundKeys: [...String(fit.because ?? '').matchAll(/([a-z][a-z' -]*?):concept\b/g)].map((mm) => mm[1].trim()) /* provenance: the user's words this row binds to (step 8) */, ...(freeRowHere ? { freeRow: true } : {}), ...(decorationHere ? { decoration: true } : {}), ...(fit.accepted_closest ? { accepted_closest: true } : {}) /* the credit rule: a template the call REFUSED never buys a key bind (critic, 2026-10-22) */, ...(askedOk ? { gmQuote: String(askedOk) } : {}) /* credit rule (b): the GM quote this row was kept on, so the checker can test it lies inside ONE non-head clause */ /* the ship-time budget reads the mark off the row */ }, templateName: rendered.name, section: rendered.section, template: fit.template.id, host: fit.template.host ?? 'melee', supersedes: fit.template.supersedes ?? null, asked: askedOk, askedRaw: String(fit.asked ?? '').trim(), expresses: decorationHere ? null : (fit.expresses ?? null), /* a template the call refused claims nothing */ accepted_closest: !!fit.accepted_closest, /* the trait gate must see this, or it declines the row for want of a receipt */ elementsOffered: sigElements, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
+        return { row: carryDeclared({ name: `${bare}${rendered.gate ? ` (${rendered.gate})` : ''}`, ...(rendered.gate ? { gate: rendered.gate } : {}), text: stampT(rendered.text), library: true, template: fit.template.id, ...(rendered?.consumes ? { consumes: rendered.consumes } : {}), ...(rendered?.saveOverride ? { saveOverride: rendered.saveOverride } : {}), ...(rendered?.imposes ? { imposes: rendered.imposes } : fit.template?.imposes ? { imposes: fit.template.imposes } : {}), ...(fit.fills?.condition_minor && CONDITIONS_CLOSED.includes(fit.fills.condition_minor) ? { imposes: fit.fills.condition_minor } : {}), ...(fit.fills?.consumed_condition ? { requiresCondition: fit.fills.consumed_condition } : {}), boundKeys: [...String(fit.because ?? '').matchAll(/([a-z][a-z' -]*?):concept\b/g)].map((mm) => mm[1].trim()) /* provenance: the user's words this row binds to (step 8) */, ...(freeRowHere ? { freeRow: true } : {}), ...(decorationHere ? { decoration: true } : {}), ...(fit.accepted_closest ? { accepted_closest: true } : {}) /* the credit rule: a template the call REFUSED never buys a key bind (critic, 2026-10-22) */, ...(askedOk ? { gmQuote: String(askedOk) } : {}) /* credit rule (b): the GM quote this row was kept on, so the checker can test it lies inside ONE non-head clause */ /* the ship-time budget reads the mark off the row */ }, rendered), templateName: rendered.name, section: rendered.section, template: fit.template.id, host: fit.template.host ?? 'melee', supersedes: fit.template.supersedes ?? null, asked: askedOk, askedRaw: String(fit.asked ?? '').trim(), expresses: decorationHere ? null : (fit.expresses ?? null), /* a template the call refused claims nothing */ accepted_closest: !!fit.accepted_closest, /* the trait gate must see this, or it declines the row for want of a receipt */ elementsOffered: sigElements, because: `${fit.because}${verbs.length ? ` [verb: ${verbs.join(', ')}]` : ' [shape fit, no verb match]'}` };
       } catch (e8) {
         trace('signature fit call failed —', `${seat}: ${e8?.message ?? e8}`);
         return null;
@@ -5106,7 +5121,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (pendingWildcard) {
     if (floatingOrb) {
       const rt = TEMPLATE_BY_ID.get('random-ray'); const rr = rt ? renderTemplate(rt, ctxT, {}, { blind: true }) : null;
-      if (rr) { imposedActionT = { row: { name: rr.name /* at will: print's Beholder shoots three rays every turn; a recharge left the orb at 45 a round at CR 13 (rerun 2026-10-03) */, text: stampT(rr.text), library: true, ...(rr.imposes ? { imposes: rr.imposes } : {}), template: 'random-ray', name_locked: true }, templateName: rr.name, section: rr.section, template: 'random-ray', because: 'the floating-orb overlay imposes its rays [verb: eyestalks:concept]' }; trace('imposed nova:', 'Eye Rays — the orb\'s rays are its nova, not a fit'); }
+      if (rr) { imposedActionT = { row: carryDeclared({ name: rr.name /* at will: print's Beholder shoots three rays every turn; a recharge left the orb at 45 a round at CR 13 (rerun 2026-10-03) */, text: stampT(rr.text), library: true, ...(rr.imposes ? { imposes: rr.imposes } : {}), template: 'random-ray', name_locked: true }, rr), templateName: rr.name, section: rr.section, template: 'random-ray', because: 'the floating-orb overlay imposes its rays [verb: eyestalks:concept]' }; trace('imposed nova:', 'Eye Rays — the orb\'s rays are its nova, not a fit'); }
     }
     let actionT = imposedActionT ?? (wildcardAllowed && !printPlain ? await fitSeat('action', ideasT?.action) : null);
     // a NOVA is a whole-round ability: taken on shape alone, with no verb in the
@@ -5371,7 +5386,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const t = i < verbFirst ? shelfT[i] : shelfT[verbFirst + ((nameHash(p.name) + i) % Math.max(1, shelfT.length - verbFirst))];
         const r = renderTemplate(t, ctxT, {}, { blind: true });
         if (!r) { trace('fallback skipped:', `${t.id} (the sheet cannot render it)`); continue; }
-        const cand = { seed: t.id, section: r.section, row: { name: `${r.name}${r.gate ? ` (${r.gate})` : ''}`, ...(r.gate ? { gate: r.gate } : {}), text: r.text, library: true, ...(r.imposes ? { imposes: r.imposes } : {}), seed: t.id } }; // the row carries its shape (hold 5) — this shelf path builds its own row, so it needs the stamp drawLibraryRow does
+        const cand = { seed: t.id, section: r.section, row: carryDeclared({ name: `${r.name}${r.gate ? ` (${r.gate})` : ''}`, ...(r.gate ? { gate: r.gate } : {}), text: r.text, library: true, ...(r.imposes ? { imposes: r.imposes } : {}), seed: t.id }, r) }; // the row carries its shape (hold 5) — this shelf path builds its own row, so it needs the stamp drawLibraryRow does
         // a seed the floor cannot lift is skipped for the next one, never shipped
         const pre = valueCheck(cand.row, { scaled, sections, cr, section: cand.section });
         // the floor prices an attack's trade; a UTILITY self-buff the user's own
@@ -5504,7 +5519,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const r = renderTemplate(ot, ctxT, bindFills(ot), { blind: true });
         if (!r) continue;
         trace('seat default:', `${scaled.style ?? archetype} owes ${owed} by print — it seats before the idea`);
-        shipTrait({ row: { name: r.name, text: stampT(r.text), library: true, ...(r.imposes ? { imposes: r.imposes } : {}), template: owed }, templateName: r.name, section: r.section, template: owed, because: 'the seat owes it by print', owed: true });
+        shipTrait({ row: carryDeclared({ name: r.name, text: stampT(r.text), library: true, ...(r.imposes ? { imposes: r.imposes } : {}), template: owed }, r), templateName: r.name, section: r.section, template: owed, because: 'the seat owes it by print', owed: true });
       }
 
       // PAY THE FEAR THE PAIRING GATE TOOK OFF A DAMAGING ROW (2026-10-27).
@@ -5563,6 +5578,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // 7 no-damage fear rows are Actions (Unsettling Visage, Dreadful
             // Glare, Scare, Roar) against 2 traits.
             const fearRow = { name: `${fr.name}${fr.gate ? ` (${fr.gate})` : ''}`, ...(fr.gate ? { gate: fr.gate } : {}), text: stampT(fr.text), library: true, imposes: 'Frightened', template: paidWith };
+            carryDeclared(fearRow, fr); // the fear payment records its bound like any other written row
             trace('fear moved to a row that deals no damage:', `the sheet declared ${fearOwed.condition} and a ${fearOwed.refusedBy} row cannot carry it by print — ${paidWith} carries it instead ("${fearRow.name}" in ${fr.section})`);
             if (fr.section === 'Traits' || fr.section === 'Reactions') shipTrait({ row: fearRow, templateName: fr.name, section: fr.section, template: paidWith, because: `the sheet declared ${fearOwed.condition} and its ${fearOwed.refusedBy} damage cannot carry it by print` });
             else (sections[fr.section] = sections[fr.section] ?? []).push(fearRow);
@@ -5647,7 +5663,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           const rr = renderTemplate(r.t, ctxT, bindFills(r.t), { blind: true });
           if (!rr) { trace('concept-first trait skipped:', `${r.t.id} (the sheet cannot render it blind)`); continue; }
           trace('trait bound to the concept\'s verb (concept-first):', `${r.t.id} — ${r.concept.join('+')} in the user's words; the idea path had nothing`);
-          shipTrait({ row: { name: rr.name, text: stampT(rr.text), library: true, ...(rr.imposes ? { imposes: rr.imposes } : {}), template: r.t.id }, templateName: rr.name, section: rr.section, template: r.t.id, because: `exact concept match [verb: ${r.concept.map((k) => `${k}:concept`).join(', ')}]` });
+          shipTrait({ row: carryDeclared({ name: rr.name, text: stampT(rr.text), library: true, ...(rr.imposes ? { imposes: rr.imposes } : {}), template: r.t.id }, rr), templateName: rr.name, section: rr.section, template: r.t.id, because: `exact concept match [verb: ${r.concept.map((k) => `${k}:concept`).join(', ')}]` });
           break;
         }
       }

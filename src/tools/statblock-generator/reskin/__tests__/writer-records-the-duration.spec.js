@@ -63,3 +63,14 @@ describe('what it must not claim', () => {
     expect(r?.duration ?? null).toBeNull();
   });
 });
+
+/**
+ * AND THE ROW MUST CARRY WHAT THE WRITER RECORDED.
+ *
+ * The field above was landed and verified at THIS level — and a ten then shipped
+ * 17 rows imposing a condition with NOUGHT carrying a duration. Every
+ * row-building site in `generate.mjs` copied the render result's declared keys
+ * one at a time by name, so a newly recorded key was dropped by all six of them.
+ * `carryDeclared` is now the single carry. The gate's three arms are pinned in
+ * `checker.spec.js`, where the block harness lives.
+ */

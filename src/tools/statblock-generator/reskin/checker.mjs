@@ -793,12 +793,21 @@ function gateAdjudicability(m, ctx, F) {
       //
       // SEVERITY FOLLOWS THE EVIDENCE. With a declaration available, a row the
       // ENGINE wrote that carries neither a duration nor a bound in its text is a
-      // real gap, and `fail` is a verdict again. A PRINT row has no declaration by
-      // nature, so there it stays `soft` — which is what it was downgraded to
-      // after nought true positives, every firing a containment row bounding by a
-      // state ("while swallowed") the pattern cannot see.
-      const engineWrote = !!(e.template || e.library || e.seed) && !e.print;
-      if (impo && MUST_BE_BOUNDED.includes(impo) && !e.duration && !CONDITION_BOUNDED.test(t)) {
+      // real gap, and `fail` is a verdict again. A row with no engine stamp — the
+      // chassis's own, or a donor row the shelf copied — had no writer to record
+      // the field, so there it stays `soft`: the severity it was downgraded to
+      // after nought true positives. (A `print` row never reaches this loop at
+      // all; it is skipped above.)
+      // A CONTAINMENT ROW DECLARES THAT ITS BOUND IS A STATE (2026-10-28). The
+      // donor shelf stamps `engulf_engine` on every swallow/engulf row it copies
+      // from print, and print bounds those by the containment itself — "While
+      // swallowed, the target has the Blinded and Restrained conditions", with
+      // the exits spelled out below it — never by a clock. That stamp reaches the
+      // sheet, so the rule can be told rather than left to read: these rows ARE
+      // the whole of this gate's firing history, every one a false positive. The
+      // cure is the declaration, not a wider pattern.
+      const engineWrote = !!(e.template || e.library || e.seed);
+      if (impo && MUST_BE_BOUNDED.includes(impo) && !e.duration && !e.engulf_engine && !CONDITION_BOUNDED.test(t)) {
         F('condition-duration', engineWrote ? 'fail' : 'soft', `${sec}/${bare(e.name)}: imposes ${impo} and ${engineWrote ? 'records no duration — the row the engine wrote owes this field' : 'no bound was RECOGNISED in its text — read it before believing this; a state bound ("while swallowed") is not in the pattern'} — print bounds every ${impo} it hands out (0 of ${impo === 'Paralyzed' ? 5 : 'its'} rows bare)`, impo);
       }
     }

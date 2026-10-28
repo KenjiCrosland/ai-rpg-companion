@@ -1,0 +1,23 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — print-exact, imposes nothing. No duration field, no finding." },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2024",
+    "canary": "CANARY — plain damage rows. Nothing to record, nothing to flag." },
+  { "name": "", "description": "a brass tyrant whose furnace breath terrifies and whose hammer finds the terrified", "cr": "17", "rules": "2024",
+    "canary": "CANARY — carries fear-aura and the payoff rider; both should now record a duration." },
+
+  { "name": "", "description": "a barrow-shade whose stare roots you where you stand", "cr": "9", "rules": "2024",
+    "canary": "FEATURE — a gaze imposing a condition; the template path must record its duration key." },
+  { "name": "", "description": "a chapel-lamp whose glare leaves you unable to see", "cr": "13", "rules": "2024",
+    "canary": "FEATURE — sensory-strike, which records source_end. Verify the field reaches the sheet." },
+  { "name": "", "description": "a dread-piper whose tune unnerves everyone who hears it", "cr": "10", "rules": "2024",
+    "canary": "FEATURE — terror-pulse or fear-aura; a no-damage fear row with a bound." },
+  { "name": "", "description": "a mire-thing that swallows what it catches and digests it slowly", "cr": "11", "rules": "2024",
+    "canary": "FEATURE — the containment case that caused the false positives. Must stay SOFT, never FAIL." },
+  { "name": "", "description": "a kiln-golem that seals a victim inside its furnace chest", "cr": "13", "rules": "2024",
+    "canary": "FEATURE — a second containment shape, same requirement." },
+  { "name": "", "description": "a frost-wight whose touch locks a limb until the cold fades", "cr": "12", "rules": "2024",
+    "canary": "FEATURE — a bounded condition whose fiction names its own end; checks the field and the text agree." },
+  { "name": "", "description": "a bell-wraith whose toll deafens the living", "cr": "8", "rules": "2024",
+    "canary": "FEATURE — Deafened, a MUST_BE_BOUNDED condition rarely drawn; exercises a different branch." }
+]

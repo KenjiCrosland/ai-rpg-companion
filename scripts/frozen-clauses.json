@@ -4599,5 +4599,114 @@
     "askMechanicWhy": "drags the frightened closer"
    }
   ]
+ },
+ "b8cb2cf416bd": {
+  "concept": "a barrow-shade whose stare roots you where you stand",
+  "clauses": [
+   {
+    "id": "cl_l1k7cl",
+    "text": "a barrow-shade whose stare roots you where you stand",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "whose stare",
+    "askShape": "save_single",
+    "askMechanic": "snare",
+    "askMechanicWhy": "roots you where you stand"
+   }
+  ]
+ },
+ "e4b99c523592": {
+  "concept": "a dread-piper whose tune unnerves everyone who hears it",
+  "clauses": [
+   {
+    "id": "cl_mqdt5r",
+    "text": "a dread-piper whose tune unnerves everyone",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1gt0k4m",
+    "text": "hears it",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "1cfe5c02a940": {
+  "concept": "a mire-thing that swallows what it catches and digests it slowly",
+  "clauses": [
+   {
+    "id": "cl_1lcriq7",
+    "text": "a mire-thing",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_ceeala",
+    "text": "swallows what it catches",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "catches",
+    "askOften": "at_will",
+    "askOftenWhy": "swallows what it catches",
+    "askShape": "attack",
+    "askMechanic": "swallow",
+    "askMechanicWhy": "swallows what it catches"
+   },
+   {
+    "id": "cl_18t7x2q",
+    "text": "digests it slowly",
+    "kind": "mechanical",
+    "askWhen": "start_of_turn",
+    "askWhenWhy": "slowly",
+    "askOften": "at_will",
+    "askOftenWhy": "digests it slowly",
+    "askShape": "condition",
+    "askMechanic": "drain",
+    "askMechanicWhy": "digests it slowly"
+   }
+  ]
+ },
+ "6ceee61dcc25": {
+  "concept": "a kiln-golem that seals a victim inside its furnace chest",
+  "clauses": [
+   {
+    "id": "cl_mtkd5q",
+    "text": "a kiln-golem",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1i7327g",
+    "text": "seals a victim inside its furnace chest",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "seals a victim",
+    "askShape": "condition",
+    "askMechanic": "swallow",
+    "askMechanicWhy": "inside its furnace chest"
+   }
+  ]
+ },
+ "dfcead902075": {
+  "concept": "a frost-wight whose touch locks a limb until the cold fades",
+  "clauses": [
+   {
+    "id": "cl_ho02uj",
+    "text": "a frost-wight whose touch locks a limb until the cold fades",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "6b388a6e5b77": {
+  "concept": "a bell-wraith whose toll deafens the living",
+  "clauses": [
+   {
+    "id": "cl_5mpcq3",
+    "text": "a bell-wraith whose toll deafens the living",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
  }
 }

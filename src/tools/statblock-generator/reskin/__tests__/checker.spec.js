@@ -378,3 +378,30 @@ describe('stage 1: a sheet that breaks at the table', () => {
     expect(has(checkBlock(grappler, { userConcept: 'a templar priest with a mace' }), 'reader', 'engine-needs-key')).toBe(true);
   });
 });
+
+// A ROW SAYS WHETHER IT IS BOUNDED; THE GATE NO LONGER GUESSES. `condition-duration`
+// had nought true positives across its whole history — every firing was a
+// containment row bounding by a STATE ("While swallowed, the target has the
+// Blinded and Restrained conditions") that its pattern cannot see. Both cures are
+// declarations: `renderTemplate` records the duration key it chose, and the donor
+// shelf stamps `engulf_engine` on the print rows it copies.
+describe('condition-duration believes what the row declares', () => {
+  const grasp = (extra) => withRow('Actions', {
+    name: 'Grasp', imposes: 'Blinded',
+    text: '*Constitution Saving Throw:* DC 13, one creature the stalker can see within 30 feet. *Failure:* The target has the Blinded condition.',
+    ...extra,
+  });
+
+  test('silent when the engine row declares a duration', () => {
+    expect(has(checkBlock(grasp({ template: 'sensory-strike', library: true, duration: 'source_end' })), 'adjudicability', 'condition-duration')).toBe(false);
+  });
+  test("silent on a containment row, whose bound is the state print writes", () => {
+    expect(has(checkBlock(grasp({ rules: true, engulf_engine: true, name: 'Swallow', text: 'The stalker swallows one Medium or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions.' })), 'adjudicability', 'condition-duration')).toBe(false);
+  });
+  test('still FAILS an engine row that declares neither a duration nor a bound', () => {
+    expect(has(checkBlock(grasp({ template: 'sensory-strike', library: true })), 'adjudicability', 'condition-duration', 'fail')).toBe(true);
+  });
+  test('stays SOFT on a donor row, which had no writer to record the field', () => {
+    expect(has(checkBlock(grasp({ rules: true })), 'adjudicability', 'condition-duration', 'soft')).toBe(true);
+  });
+});
