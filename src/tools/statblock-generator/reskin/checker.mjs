@@ -767,8 +767,26 @@ function gateAdjudicability(m, ctx, F) {
       // The bound pattern and the condition list are MODULE constants (above),
       // shared with the conversion-equivalence check in gateEdition — a second
       // copy of either is how a gate and its sibling drift apart.
+      // SOFT, BECAUSE THE EVIDENCE IS INFERRED (2026-10-28). This rule has no
+      // declared duration to read — `renderTemplate` fills {duration} from the
+      // template's own `duration_default` and then discards it — so it must guess
+      // from prose, and the guess is wrong on every row that bounds a condition by
+      // a STATE rather than a clock. Measured over its whole history: it has fired
+      // in 2 runs, on Swallow, Cage, Whelm, Smother, Engulf and the Drowned
+      // Choir's One Voice. Every one bounds its condition ("While swallowed, the
+      // target has the Blinded and Restrained conditions…", with the exits spelled
+      // out below it) and every one was a false positive. Nought true positives.
+      //
+      // A verdict that cannot know should not read as a verdict: `soft` is a flag
+      // for a reviewer, which is this rule's real evidentiary weight. It returns
+      // to `fail` when rows RECORD the duration they were written with — the same
+      // move that retired the prose reader for `imposes`.
+      //
+      // Its sibling `conversion-dropped-duration` stays `fail` on purpose: that
+      // one COMPARES two texts the engine wrote (the source bounded it, the answer
+      // did not), which is evidence, not inference.
       if (impo && MUST_BE_BOUNDED.includes(impo) && !CONDITION_BOUNDED.test(t)) {
-        F('condition-duration', 'fail', `${sec}/${bare(e.name)}: imposes ${impo} and never says when it ends — print bounds every ${impo} it hands out (0 of ${impo === 'Paralyzed' ? 5 : 'its'} rows bare)`, impo);
+        F('condition-duration', 'soft', `${sec}/${bare(e.name)}: imposes ${impo} and no bound was RECOGNISED in its text — read it before believing this; a state bound ("while swallowed") is not in the pattern — print bounds every ${impo} it hands out (0 of ${impo === 'Paralyzed' ? 5 : 'its'} rows bare)`, impo);
       }
     }
     if (/^(?:Traits|Reactions)$/.test(sec) && how === 'passive' && dealsOrTargets) F('adjudicable-resolution', 'fail', `${sec}/${bare(e.name)}: deals damage or imposes a condition but states no trigger, attack roll, or save`, bare(e.name));

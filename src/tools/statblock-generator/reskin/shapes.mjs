@@ -48,7 +48,22 @@ export function bandFor(cr) {
 // heart — the party must decide to spend actions on it, and cannot one-shot it.
 // `supersedes` is the same regeneration line `warded-mending` claims, so the two
 // can never both sit on a sheet handing out the same Hit Points.
-const RELIC = (ac, hp, regen) => `The creature keeps {relic} within 30 feet of itself, a Tiny object that has AC ${ac}, HP ${hp}, and Resistance to all damage. While it is intact, the creature regains ${regen} Hit Points at the start of each of its turns.`;
+// THE FRAME DOES NOT ASSERT A SIZE IT CANNOT KNOW (2026-10-28). It used to read
+// "{relic} … , a Tiny object that has AC x" — print's own anchors are Tiny (the
+// Mummy Lord's heart) so the word was copied across. But `{relic}` is filled by
+// the call, and measured over a day's runs it answered: its granite-crusted
+// heart, its handaxe, a devoured reliquary — and also the skull-standard banner,
+// the skull standard, the drowned steed's remains, the bone sun, its ash-wrapped
+// armor and its thorn garden. Six of nine are not Tiny by any reading, and the
+// frame called each of them Tiny anyway: the critic read back "a Tiny garden".
+//
+// Tightening the slot's contract was the other option and it is the weaker one —
+// the contract already asks for something the creature "keeps, carries or wears"
+// and gives three Tiny examples, and the call still answered a garden. A frame
+// may not make a claim about an answer it has not seen. The size was never
+// load-bearing: the mechanic is an object with a statline the party can attack,
+// and "That object" carries the reference without asserting anything.
+const RELIC = (ac, hp, regen) => `The creature keeps {relic} within 30 feet of itself. That object has AC ${ac}, HP ${hp}, and Resistance to all damage. While it is intact, the creature regains ${regen} Hit Points at the start of each of its turns.`;
 
 const KILL_DENIAL = 'A creature reduced to 0 Hit Points by the creature {kill_consequence}, and it can\'t be restored to life by any means short of a *Wish* spell.';
 

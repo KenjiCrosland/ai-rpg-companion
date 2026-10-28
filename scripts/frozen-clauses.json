@@ -4208,5 +4208,261 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "f230898c5255": {
+  "concept": "a constrictor that crushes harder the longer it holds you",
+  "clauses": [
+   {
+    "id": "cl_1wedcxb",
+    "text": "a constrictor",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_125o8k5",
+    "text": "crushes harder the longer it holds you",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "crushes harder the longer it holds you"
+   }
+  ]
+ },
+ "851e136dbd86": {
+  "concept": "a gaoler that cannot attack anyone it is not already holding",
+  "clauses": [
+   {
+    "id": "cl_1ce2thf",
+    "text": "a gaoler",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_ppld9e",
+    "text": "cannot attack anyone it is not already holding",
+    "kind": "mechanical",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "already holding",
+    "polarity": "lacks",
+    "takes": "melee",
+    "lackQuote": "cannot attack anyone it is not already holding"
+   }
+  ]
+ },
+ "aac8ef02cbad": {
+  "concept": "a mire-thing whose victims sink deeper every round they stay restrained",
+  "clauses": [
+   {
+    "id": "cl_1bj8cd9",
+    "text": "a mire-thing whose victims sink deeper every round they stay restrained",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "7ecd9b57d044": {
+  "concept": "a dread-piper whose music only works on the already frightened",
+  "clauses": [
+   {
+    "id": "cl_1tnddod",
+    "text": "a dread-piper whose music only works on the already frightened",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "99bd67db7c64": {
+  "concept": "a kiln-golem that seals a swallowed victim inside its furnace chest",
+  "clauses": [
+   {
+    "id": "cl_mtkd5q",
+    "text": "a kiln-golem",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1cz2l74",
+    "text": "seals a swallowed victim inside its furnace chest",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "seals",
+    "askShape": "condition",
+    "askMechanic": "swallow",
+    "askMechanicWhy": "swallowed victim inside its furnace chest"
+   }
+  ]
+ },
+ "76e337be08ec": {
+  "concept": "a sentinel of black iron that pins one foe and ignores all others",
+  "clauses": [
+   {
+    "id": "cl_6slhx",
+    "text": "a sentinel of black iron",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1cl9qhs",
+    "text": "pins one foe",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "pins",
+    "askOften": "at_will",
+    "askOftenWhy": "pins one foe",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "pins"
+   },
+   {
+    "id": "cl_20yjj5",
+    "text": "ignores all others",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "ignores all others"
+   }
+  ]
+ },
+ "d2c1cfb70f27": {
+  "concept": "a lich who hides its soul in a thorn garden it tends",
+  "clauses": [
+   {
+    "id": "cl_1agxy4h",
+    "text": "a lich",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_j642bp",
+    "text": "hides its soul in a thorn garden it tends",
+    "kind": "mechanical",
+    "askShape": "buff_self",
+    "askMechanic": "relic",
+    "askMechanicWhy": "hides its soul"
+   }
+  ]
+ },
+ "9e7897f1b53d": {
+  "concept": "a knight whose life is bound to the banner his squire carries",
+  "clauses": [
+   {
+    "id": "cl_phpq04",
+    "text": "a knight whose life is bound to the banner his squire carries",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "581de5b49c8e": {
+  "concept": "a saint's reliquary that mends itself while its finger-bone is unbroken",
+  "clauses": [
+   {
+    "id": "cl_1n499vm",
+    "text": "a saint's reliquary",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_l3j8tz",
+    "text": "mends itself while its finger-bone is unbroken",
+    "kind": "mechanical",
+    "askShape": "resist",
+    "askMechanic": "harden",
+    "askMechanicWhy": "its finger bone is unbroken"
+   }
+  ]
+ },
+ "aaa2a2a386bf": {
+  "concept": "a bog-troll that grapples, drags under, and pins what it holds",
+  "clauses": [
+   {
+    "id": "cl_1xeoaho",
+    "text": "a bog-troll that grapples",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "that grapples",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "grapples"
+   },
+   {
+    "id": "cl_1tjq8mv",
+    "text": "drags under",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "drags under"
+   },
+   {
+    "id": "cl_48807t",
+    "text": "pins what it holds",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "pins what it holds"
+   }
+  ]
+ },
+ "5b89d7b1ccc2": {
+  "concept": "a barrow-lich whose touch locks the living in place",
+  "clauses": [
+   {
+    "id": "cl_1fasjsk",
+    "text": "a barrow-lich whose touch locks the living in place",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "snare",
+    "askMechanicWhy": "locks the living in place"
+   }
+  ]
+ },
+ "579520594c5c": {
+  "concept": "a cairn-warden that freezes trespassers where they stand",
+  "clauses": [
+   {
+    "id": "cl_1hvurpm",
+    "text": "a cairn-warden",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_12vfr6a",
+    "text": "freezes trespassers where they stand",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "freezes trespassers where they stand",
+    "askShape": "condition",
+    "askMechanic": "snare",
+    "askMechanicWhy": "freezes trespassers where they stand"
+   }
+  ]
+ },
+ "5edcf13b243e": {
+  "concept": "a scythe-horror that pins prey with two arms and carves with the others",
+  "clauses": [
+   {
+    "id": "cl_1duvzzk",
+    "text": "a scythe-horror",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_7guykd",
+    "text": "pins prey with two arms",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "pins",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "pins prey"
+   },
+   {
+    "id": "cl_gysbss",
+    "text": "carves with the others",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "carves with the others",
+    "askShape": "attack"
+   }
+  ]
  }
 }

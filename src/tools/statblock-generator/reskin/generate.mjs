@@ -3210,8 +3210,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // `condition-duration` FAIL. But a judgment nothing traces cannot be checked
     // on the next forty, which is measurement lesson 4 ("a decline must trace what
     // it saw"). Grep a run for `condition relation:` to audit the call's answers.
+    // AND THE ANSWER IS RECORDED, not just traced (2026-10-28). The call judges
+    // the relation correctly — Two-Arm Pin's condition reads as `requires` — and
+    // the fill site then left the row with NO record, which is indistinguishable
+    // from "nobody has looked". The `record completed` pass downstream sees a
+    // blank, reads the prose, and writes `imposes: Grappled` over the call's own
+    // judgement: the checker then demands an escape DC of a row that grapples
+    // nobody (print is 38 of 38 WITH one, on rows that really do grapple), and
+    // the row counts toward the "three rows impose it" tally that strips riders
+    // off others. A judged relation must look different from an unjudged one.
     for (const t of [...authored.traits, ...authored.reactions]) {
       if (!t?.condition_relation) continue;
+      if (t.condition_relation !== 'inflicts' && t.condition) requireOn(t, t.condition);
       trace('condition relation:', `"${t.name}" — the call reads its condition as ${t.condition_relation}${t.condition_relation === 'inflicts' ? ` and the row records ${t.imposes}` : ', so no condition is recorded against it'}`);
     }
     for (const t of authored.traits) { const text = renderForm({ kind: 'trait', trigger: t.trigger, effect: dmgTok(t.effect).replace(/(?:DC )?\{dc\}/g, `DC ${scaled.dc}`) /* "a 15 Charisma saving throw" — the token always carries its DC (step 7 defect 5) */.replace(/\{dmg\}/g, (() => { const d = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * 0.5))); return `${d.avg} (${d.dice})`; })()) }, '2024'); (sections.Traits = sections.Traits ?? []).unshift({ name: t.name, text, authored: true, clause: t.clause, ...(t.imposes ? { imposes: t.imposes } : {}), ...(t.flavor ? { flavor: t.flavor } : {}) }); }
@@ -8211,7 +8221,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // how much the fill sites still owe: when a forty reports none on
   // engine-written rows, the reader survives only for print's published text.
   for (const es of Object.values(monster.sections ?? {})) for (const e of (es ?? [])) {
-    if (e.imposes || e.print) continue;
+    // A ROW WHOSE RELATION THE CALL ALREADY JUDGED IS NOT BLANK. `requiresCondition`
+    // means the call looked and said this row REQUIRES its condition rather than
+    // inflicting it; re-reading the prose here would overwrite that answer with
+    // its opposite. Declared data wins over any reading of the text.
+    if (e.imposes || e.print || e.requiresCondition) continue;
     const fromText = imposedConditions({ name: e.name, text: e.text });
     if (!fromText.length) continue;
     e.imposes = fromText.length === 1 ? fromText[0] : fromText;

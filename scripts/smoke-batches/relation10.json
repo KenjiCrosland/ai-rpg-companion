@@ -1,0 +1,23 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — print-exact. Authors no traits, so the relation path must never touch it." },
+  { "name": "", "description": "a bog hound that drags fishermen under and holds them there", "cr": "1", "rules": "2024",
+    "canary": "CANARY — a REAL grapple imposition. It must still record `imposes: Grappled` AND carry an escape DC; print is 38 of 38." },
+  { "name": "", "description": "a tyrant of burning brass who rules a city of forges", "cr": "17", "rules": "2024",
+    "canary": "CANARY — the sheet that shipped the empty `Failure:` on Seismic Strike. Verify that fix too, and that nothing else truncated." },
+
+  { "name": "", "description": "A Large insectile horror. It has four scythe-arms, a spitting maw, and a shell that sheds acid. It fights by pinning prey with two arms and carving with the others.", "cr": "9", "rules": "2024",
+    "canary": "FEATURE — the exact case. Its Two-Arm Pin describes what happens WHILE a creature is grappled; the call reads that as `requires` and nothing may overwrite it with `imposes`." },
+  { "name": "", "description": "a constrictor that crushes harder the longer it holds you", "cr": "7", "rules": "2024",
+    "canary": "FEATURE — a trait predicated on an existing grapple, escalating. Must record `requires`, not `imposes`." },
+  { "name": "", "description": "a gaoler that cannot attack anyone it is not already holding", "cr": "6", "rules": "2024",
+    "canary": "FEATURE — a restriction predicated on a grapple. The condition is a precondition twice over." },
+  { "name": "", "description": "a mire-thing whose victims sink deeper every round they stay restrained", "cr": "11", "rules": "2024",
+    "canary": "FEATURE — Restrained as a precondition, not Grappled; the fix must not be grapple-specific." },
+  { "name": "", "description": "a dread-piper whose music only works on the already frightened", "cr": "8", "rules": "2024",
+    "canary": "FEATURE — Frightened as a precondition. Also crosses the payoff path." },
+  { "name": "", "description": "a kiln-golem that seals a swallowed victim inside its furnace chest", "cr": "13", "rules": "2024",
+    "canary": "FEATURE — swallow/containment, where print DOES impose and DOES carry an escape DC. The fix must not suppress a real imposition." },
+  { "name": "", "description": "a sentinel of black iron that pins one foe and ignores all others", "cr": "11", "rules": "2024",
+    "canary": "FEATURE — pins (imposes) AND ignores-others (predicated). Both relations on one sheet." }
+]
