@@ -46,7 +46,17 @@ const MINOR = ['Prone', 'Poisoned', 'Deafened', 'Frightened', 'Blinded']; // Bli
 // the GM meant. The call still chooses the condition; this only refuses a
 // pairing print never writes. The owner's instinct also named Necrotic and
 // Radiant, which print does not support (Radiant pairs with Blinded and Prone).
-const FEAR_FROM = ['Psychic', 'Thunder'];
+// NECROTIC JOINS BY THE OWNER'S RULING (2026-10-27: "necrotic in fear from is
+// fine"). Print does not attest it — 0 of its 11 Frightened rows deal Necrotic —
+// but print's whole evidence base for damaging fear is FOUR rows (Psychic 3,
+// Thunder 1), which is too thin to rule a type out, and our own fiction carries
+// it well (Toll of Dread, Knell of Dread, Harvested Trophy — 9 rows measured).
+// This is the owner's taste where print is silent, which is exactly the split
+// recorded in [[print-is-a-resource-not-a-veto]]: print rules CALIBRATION, not
+// whether a mechanic may exist. The strong half of the rule is untouched —
+// physical damage never frightens, and that rests on 11 rows against a
+// well-attested opposite pattern (Prone 55, Grappled 38, Restrained 29).
+const FEAR_FROM = ['Psychic', 'Thunder', 'Necrotic'];
 
 /**
  * May a row that DEALS `damageType` impose `condition`? Today this rules on
@@ -2109,7 +2119,40 @@ export function conceptVerbs(conceptText) {
 }
 
 export function buildIdeaPrompt({ name, cr, concept, sheetLines, seats = null, energy = null, wantTrait = true, engines = [], verbs = [], owedClause = null, bodyRequirements = [], askedMechanic = null }) {
-  return `You are inventing the SIGNATURE ability for a nearly-complete D&D monster. Everything below is already final. Describe the ability in PLAIN WORDS — what it does, when it fires, whom it affects, what limits it. NO rules grammar, NO numbers, NO dice, NO DCs, NO condition names in capitals: the engine owns every number and will pour your idea into a printed rules shape afterwards. Your job is the IDEA a fan would riot to find missing.
+  // THE REGISTER, NOT THE LENGTH (owner, 2026-10-27: "tell deepseek this is for
+  // dnd but also to use maximum creativity so then it'll be easier to match to
+  // an existing template... encourage the llm to be creative, thematic,
+  // evocative. really try to swing for the fences in terms of originality and
+  // concept but yes be aware of gaming constraints").
+  //
+  // This paragraph used to ban "rules grammar" and "condition names in capitals"
+  // outright. The call obeyed and returned narrative prose — and the FIT call
+  // then had to match that prose against templates whose cells are declared in
+  // exactly the banned terms (trigger, effect, the condition). Measured over 490
+  // sheets: of 94 seats that never got a pick, 91% had a menu OFFERED and the fit
+  // call refused every template on it, and the refused ideas ran a median of 50
+  // words because prose invites two or three mechanics at once. One of them, with
+  // ten templates on its menu, described wrenching a blade free AND hurling a
+  // handaxe at a second enemy AND leaving the first unable to strike back. The
+  // refusal was correct; the prose was what we asked for.
+  //
+  // The ban bundled two things that had to be separated. The NUMBERS stay banned
+  // — the engine owns pricing and CR math, and an invented DC is a real defect
+  // class. The VOCABULARY is now allowed, because it is the only vocabulary that
+  // makes an idea matchable to a shape.
+  //
+  // Creativity is not traded away for matchability: the owner's reason for
+  // leaving this call free stands ("I wanted the llm to be free from prejudice
+  // when creating a signature ability"). The constraint is the IDIOM, never the
+  // content. See plans/idea-register-not-length-2026-10-28.md for what to
+  // measure afterwards and when to revert.
+  return `You are inventing the SIGNATURE ability for a nearly-complete D&D 5e monster — the one ability this creature is remembered for. Everything below is already final.
+
+SWING FOR THE FENCES. Be creative, thematic and evocative; reach for the striking image and the original idea, not the safe one. Your job is the IDEA a fan would riot to find missing — the thing a GM retells after the session.
+
+BUT THINK LIKE A 5e DESIGNER WHILE YOU DO IT. This has to be something that could exist in a game and be run at a table. So say it the way the game says things: a saving throw, a condition the target gets (Frightened, Prone, Restrained, Poisoned, Blinded, Grappled), an area or an emanation, a reaction to something, a rider on its own attack, something that happens on its turn or when a creature comes close. ONE mechanic, the size of a single printed row on a stat block — not two or three joined together.
+
+NO NUMBERS: no dice, no DCs, no distances in feet, no damage amounts, no uses per day. The engine owns every number and will pour your idea into a printed rules shape afterwards — your job is the mechanic and the fiction, in the game's own language.
 THE SHEET SO FAR (${name}, CR ${cr}) — everything already on it, header and rows:
 ${sheetLines}
 CONCEPT: ${concept}
@@ -2124,7 +2167,7 @@ ${bodyRequirements.map((r) => `- ${r.id}: ${r.needs}`).join('\n')}
 Judge the BODY, not the creature's temperament, job, mood or gear: a man with a crab's temperament is not a crab, a fierce bear is not sticky, and a poisoner is not made of metal. A thing the creature merely CARRIES or USES is not its body.
 But the concept does not have to use the requirement's words — judge what the body plainly IS. A pit of tar is sticky without the word "sticky". A thing bound to a shrine HAS a ward. A creature shaped like a chest can pass for one. Say true when the body is plainly that thing even if the concept never names it.
 Both mistakes cost something. A wrong TRUE puts a rule on the page a GM can see is nonsense \u2014 a bear that glues people to itself. A wrong FALSE takes away an ability the creature obviously should have \u2014 a mimic that isn't sticky. Weigh them evenly and answer on the body. "because" quotes the concept's OWN WORDS, and only for a true answer.
-` : ''}Return ONLY JSON: {"action": {"idea": "<2-3 plain sentences>", "section": "<action|bonus_action|reaction>", "trigger": "<...>", "effect": "<...>", "family": "<...>"}${wantTrait ? ', "trait": {"idea": "<1-2 plain sentences: a passive rule of its body or nature. In print about ONE trait IN A HUNDRED fires when the creature is hit (3 of 324). Nearly every print trait is always-on — how it senses, where it can walk, what its body is made of, how it fights, what it ignores — or it happens on its own turn. Do NOT reach for \"when something hits it, the attacker is hurt\" unless the concept is genuinely ABOUT the creature\'s surface (a body of fire, a hide of spines). A tracker, a climber, a thing that is hard to see, a thing that keeps coming: those are traits too>", "trigger": "<...>", "effect": "<...>", "family": "<...>"}' : ''}${bodyRequirements.length ? ', "body_verdicts": [{"id": "<id copied exactly>", "means": <true|false>, "because": "<the concept\'s own words, or \\"\\">"}]' : ''}}`;
+` : ''}Return ONLY JSON: {"action": {"idea": "<2-3 sentences in the game\'s own language: one mechanic, striking and specific>", "section": "<action|bonus_action|reaction>", "trigger": "<...>", "effect": "<...>", "family": "<...>"}${wantTrait ? ', "trait": {"idea": "<1-2 sentences in the game\'s own language: a passive rule of its body or nature, and make it a memorable one. In print about ONE trait IN A HUNDRED fires when the creature is hit (3 of 324). Nearly every print trait is always-on — how it senses, where it can walk, what its body is made of, how it fights, what it ignores — or it happens on its own turn. Do NOT reach for \"when something hits it, the attacker is hurt\" unless the concept is genuinely ABOUT the creature\'s surface (a body of fire, a hide of spines). A tracker, a climber, a thing that is hard to see, a thing that keeps coming: those are traits too>", "trigger": "<...>", "effect": "<...>", "family": "<...>"}' : ''}${bodyRequirements.length ? ', "body_verdicts": [{"id": "<id copied exactly>", "means": <true|false>, "because": "<the concept\'s own words, or \\"\\">"}]' : ''}}`;
 }
 
 export function validateIdeaResponse(jsonString) {

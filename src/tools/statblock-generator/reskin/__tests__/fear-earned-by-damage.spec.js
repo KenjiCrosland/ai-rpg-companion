@@ -20,14 +20,20 @@ import { conditionEarnedByDamage, renderTemplate, templatesFor, TEMPLATE_BY_ID }
 import { pickDonor, scaleDonor } from '@/tools/statblock-generator/reskin/scale.mjs';
 
 describe('the rule itself', () => {
-  it('allows the two damage types print pairs with fear', () => {
+  it('allows the two damage types print pairs with fear, plus Necrotic by ruling', () => {
     expect(conditionEarnedByDamage('Frightened', 'Psychic')).toBe(true);
     expect(conditionEarnedByDamage('Frightened', 'Thunder')).toBe(true);
+    // the owner's call where print is silent (2026-10-27): print has 0 Necrotic
+    // fear rows but only FOUR damaging fear rows in total, too thin to exclude a
+    // type, and our own Toll of Dread / Knell of Dread read right
+    expect(conditionEarnedByDamage('Frightened', 'Necrotic')).toBe(true);
   });
 
   it('refuses every type print never pairs with fear', () => {
+    // Necrotic is NOT here any more — see the ruling above. The physical half of
+    // the rule is the one resting on real evidence and it stays.
     for (const d of ['Bludgeoning', 'Piercing', 'Slashing', 'Fire', 'Cold', 'Acid',
-      'Lightning', 'Necrotic', 'Poison', 'Radiant', 'Force']) {
+      'Lightning', 'Poison', 'Radiant', 'Force']) {
       expect(conditionEarnedByDamage('Frightened', d)).toBe(false);
     }
   });

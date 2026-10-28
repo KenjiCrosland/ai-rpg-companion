@@ -347,7 +347,18 @@ describe('the two calls', () => {
     expect(conceptVerbs('a lighthouse keeper\'s drowned wife who pulls anyone who follows her back down into the surf')).toEqual(expect.arrayContaining(['pull', 'follows'])); // 'follows' is the tracker's now; bare 'follow' left the lure (fresh four 2026-09-28)
     const p = buildIdeaPrompt({ name: 'X', cr: 8, concept: 'a thing', sheetLines: '- [Actions] Claw: x', seats: { action: 'a hurled skull', trait: 'bone hide', packaged: false }, wantTrait: true, engines: ['Cage'], verbs: ['hurl', 'throw'] });
     expect(p).toMatch(/THE CONCEPT'S OWN VERBS: hurl, throw/);
-    expect(p).toMatch(/PLAIN WORDS/);
+    // THE REGISTER, replacing the old "PLAIN WORDS" framing (2026-10-27). That
+    // paragraph banned rules grammar and condition names, the call obeyed and
+    // returned prose, and the fit call then had to match prose against templates
+    // declared in those very terms: 91% of seats that never got a pick had a menu
+    // OFFERED and refused. The prompt now asks for the game's idiom.
+    expect(p).toMatch(/SWING FOR THE FENCES/);
+    expect(p).toMatch(/THINK LIKE A 5e DESIGNER/);
+    expect(p).toMatch(/Frightened, Prone, Restrained/); // the vocabulary is now ALLOWED, not banned
+    expect(p).toMatch(/ONE mechanic/);
+    // but the NUMBERS ban stays word for word — the engine owns pricing and CR
+    // math, and an invented DC is its own defect class
+    expect(p).toMatch(/NO NUMBERS: no dice, no DCs/);
     expect(p).toMatch(/ENGINE IS ALREADY BUILT: Cage/);
     expect(p).not.toMatch(/Saving Throw\*: DC/);
     expect(p).toMatch(/"trait"/);

@@ -3056,5 +3056,212 @@
     "askMechanicWhy": "charge"
    }
   ]
+ },
+ "bacfcea525ae": {
+  "concept": "a troll that knits its wounds shut and keeps coming",
+  "clauses": [
+   {
+    "id": "cl_k3jn1u",
+    "text": "a troll",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_17qoj2z",
+    "text": "knits its wounds shut and keeps coming",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "knits its wounds shut and keeps coming",
+    "askShape": "heal",
+    "askMechanic": "mend",
+    "askMechanicWhy": "knits its wounds shut"
+   }
+  ]
+ },
+ "a55b05197159": {
+  "concept": "an archon wrapped in a humming shroud of biting flies",
+  "clauses": [
+   {
+    "id": "cl_1d93iv6",
+    "text": "an archon wrapped in a humming shroud of biting flies",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "17dd400b91d0": {
+  "concept": "a fever-spirit whose touch burns worse each night it returns",
+  "clauses": [
+   {
+    "id": "cl_sdcuzx",
+    "text": "a fever-spirit whose touch burns worse each night it returns",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "212466459097": {
+  "concept": "a storm that gathers over three rounds and then breaks",
+  "clauses": [
+   {
+    "id": "cl_k314kq",
+    "text": "a storm",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1qj7mih",
+    "text": "gathers over three rounds and then breaks",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "7ad954bbf7a2": {
+  "concept": "a hedge-knight with a spear and shield",
+  "clauses": [
+   {
+    "id": "cl_g4jlnq",
+    "text": "a hedge-knight with a spear and shield",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "a hedge-knight with a spear and shield",
+    "askOften": "at_will",
+    "askOftenWhy": "a hedge-knight with a spear and shield",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "9b973d9271ff": {
+  "concept": "A serpent of glassy, brine-thick flesh the color of deep water, the Acid Wyrm is a dreaming dragon that curls in translu",
+  "clauses": [
+   {
+    "id": "cl_il34ci",
+    "text": "A serpent of glassy",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1gqonec",
+    "text": "brine-thick flesh the color of deep water",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1jjw9mn",
+    "text": "the Acid Wyrm is a dreaming dragon that curls in translucent coils around whatever patch of ground it claims — sleeper's",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_160gy39",
+    "text": "frozen into its clear",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_16mosjo",
+    "text": "salt-rimed body",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_11j2kl9",
+    "text": "It does not hunt so much as patrol",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_ac8r45",
+    "text": "anything that sets foot in its territory is met first by a looping",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "anything that sets foot in its territory is met first by a looping",
+    "askOften": "at_will",
+    "askOftenWhy": "anything that sets foot in its territory is met first by a looping",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "meant to herd and test rather than kill"
+   },
+   {
+    "id": "cl_lhdceb",
+    "text": "feinting strike meant to herd",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "feinting strike meant to herd",
+    "askOften": "at_will",
+    "askOftenWhy": "feinting strike meant to herd",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "meant to herd and test rather than kill"
+   },
+   {
+    "id": "cl_tsbabf",
+    "text": "test rather than kill",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "test rather than kill",
+    "askOften": "at_will",
+    "askOftenWhy": "test rather than kill",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "meant to herd and test rather than kill"
+   },
+   {
+    "id": "cl_7wryf6",
+    "text": "its body dripping a thin acid that pits armor",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1l4jmoe",
+    "text": "sinks into wounds with every coil",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_5wbusu",
+    "text": "Once bloodied it abandons cunning entirely",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "once bloodied",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "Once bloodied it abandons cunning entirely",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "once bloodied it abandons cunning entirely and fights to the death"
+   },
+   {
+    "id": "cl_1fo02m5",
+    "text": "fights to the death",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "once bloodied",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "fights to the death",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "once bloodied it abandons cunning entirely and fights to the death"
+   },
+   {
+    "id": "cl_19uq4c5",
+    "text": "tightening loops around its home ground while its translucent hide pulses brighter each time it takes a hit",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_b7jwfj",
+    "text": "It is cunning",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "once bloodied",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "It is cunning",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "once bloodied it abandons cunning entirely and fights to the death"
+   },
+   {
+    "id": "cl_aplkb7",
+    "text": "bestial (INT 5-7)",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_1j6ax4",
+    "text": "it is a territorial guardian that defends its home ground to the death",
+    "kind": "descriptive"
+   }
+  ]
  }
 }

@@ -850,7 +850,7 @@ export function revokeUnexpressedClaims(monster, claims, trace = () => {}) {
   }
 }
 
-export function readGapOutcomes({ sections = {}, gapRecords = [], generation = null, trace = () => {} }) {
+export function readGapOutcomes({ sections = {}, gapRecords = [], generation = null, dropLog = [], trace = () => {} }) {
   if (!gapRecords.length) return { vetoed: 0, landed: 0 };
   // A RIDER THAT RODE A ROW SHIPPED. It owns no row of its own, so its template
   // is read off the host it was welded onto (`riderTemplates`) as well as off
@@ -867,11 +867,33 @@ export function readGapOutcomes({ sections = {}, gapRecords = [], generation = n
     // so counting it would silently inflate "N of M accepted picks never reached
     // the sheet" the moment those records started being kept (2026-10-22).
     if (!g.missing_unstated) { counted += 1; if (!landed) vetoed += 1; }
-    trace('[gap]', `${g.line}${g.template ? (landed ? ` [landed: ${g.template}]` : ` [VETOED AFTER ACCEPTANCE: ${g.template} never reached the sheet]`) : ' [row dropped]'}`);
+    // WHERE IT DIED, not just that it died. `dropLog` is written by each drop
+    // site; a pick with no record says so rather than saying nothing, because an
+    // undiscovered drop site has to look different from one that is covered.
+    const death = g.template ? dropLog.filter((x) => x.template === g.template).slice(-1)[0] : null;
+    const where = landed ? '' : ` — died at ${death ? `${death.stage}${death.why ? ` (${death.why})` : ''}` : 'an UNRECORDED drop site'}`;
+    trace('[gap]', `${g.line}${g.template ? (landed ? ` [landed: ${g.template}]` : ` [VETOED AFTER ACCEPTANCE: ${g.template} never reached the sheet${where}]`) : ' [row dropped]'}`);
   }
   if (generation) generation.gap_vetoed = `${vetoed} of ${counted}`;
   if (generation) generation.gap_missing_unstated = gapRecords.filter((g) => g.missing_unstated).length;
-  if (vetoed) trace('signature outcome:', `${vetoed} of ${counted} accepted signature pick(s) never reached the sheet — the seat shipped a fallback or nothing`);
+  // THE ROLL-UP NAMES THE STAGES, so a run's losses read as a list rather than
+  // needing the per-sheet traces reconstructed afterwards.
+  // EVERY VETOED PICK APPEARS HERE, so the roll-up reconciles with the count in
+  // front of it. The first cut filtered on `g.template` and a record with none
+  // — the call described a gap and named no template — counted as vetoed while
+  // vanishing from the stage list, so the Furnace Tyrant read "1 of 2 … never
+  // reached the sheet" with no stage named. That is the same silence this
+  // instrument exists to remove, reproduced inside the instrument; its own first
+  // run caught it. `deaths.length === vetoed` is pinned by spec.
+  const deaths = gapRecords.filter((g) => !g.missing_unstated && !(g.template && shipped.has(g.template)))
+    .map((g) => (g.template
+      ? (dropLog.filter((x) => x.template === g.template).slice(-1)[0]?.stage ?? 'an UNRECORDED drop site')
+      : 'the call named no template for the pick'));
+  const byStage = [...new Set(deaths)].map((st) => `${deaths.filter((x) => x === st).length}x ${st}`).join(', ');
+  if (vetoed) trace('signature outcome:', `${vetoed} of ${counted} accepted signature pick(s) never reached the sheet${byStage ? ` — ${byStage}` : ''}`);
+  if (generation && byStage) generation.gap_death_sites = byStage;
+  // the return shape is a contract two specs pin; the death sites travel on the
+  // trace and on `generation.gap_death_sites`, where the readers actually look
   return { vetoed, landed: gapRecords.length - vetoed };
 }
 
@@ -3639,6 +3661,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // after the seat-owed traits are placed, where it is paid with a no-damage fear
   // row. Carries the damage type only so the trace can say what refused it.
   let fearOwed = null;
+  // WHERE AN ACCEPTED PICK DIED. `readGapOutcomes` can already say WHICH pick
+  // never reached the sheet — "2 of 2 accepted signature pick(s) never reached
+  // the sheet" — but not where, and that gap cost a whole measurement pass: 59
+  // sheets attempted seats, never missed, and landed nothing, 98% of them with a
+  // `closest accepted` line saying "it lands rather than the row being dropped".
+  // Reconstructing the death site from the surrounding trace is archaeology, and
+  // two of my readings of it were wrong. One record at each drop site turns it
+  // into a list. Same move as `composedReason`, which overturned two predictions
+  // the day it landed.
+  //
+  // A pick with NO record reports "unrecorded", never silence: an undiscovered
+  // drop site must look different from a pick that shipped.
+  const dropLog = [];
+  const noteDrop = (template, stage, why) => { if (template) dropLog.push({ template: String(template), stage, why: String(why ?? '').slice(0, 160) }); };
   for (const es of Object.values(sections)) {
     for (const e of es) {
       // (?! Roll) — the de-flavored entry name "Melee Attack" is a
@@ -5100,6 +5136,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     const deadBareT = String(pendingWildcard?.name ?? '').replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, '');
     let riderShipped = false;
     if (actionT && actionT.section === 'Rider' && !gmAsked(actionT) && !takeAsFreeRow(actionT, 'a rider rides the user\'s own attack, so it needs the user\'s own ask')) {
+      noteDrop(actionT?.template ?? actionT?.row?.template, "the weld (a rider needs the GM's own ask)", actionT?.row?.name ?? '');
       trace('rider declined:', `"${actionT.row.name}" — a rider rides the user's own attack, so it needs the user's own ask; ${askWhy(actionT)} (the gong's bandaged concussion, 2026-10-01)`);
       actionT = null;
     }
@@ -5201,10 +5238,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         trace('signature rider:', `${actionT.template} -> ${host.name} (appended; ${actionT.because})`);
         if (deadBareT) sweepDeadName(sections, deadBareT, host, trace);
       } else if (pushOnHold) {
+        noteDrop(actionT?.template ?? actionT?.row?.template, 'the weld (a push that undoes its own row)', actionT?.row?.name ?? '');
         trace('rider refused — a push that undoes its own row:', `"${actionT.template ?? actionT.row?.template ?? '?'}" moves the target away from "${host.name}", which ${hostHolds ? `holds it ${host.imposes}` : `swings ${host.attacksPerRound}x a round`}; the slot leaves and the seat looks elsewhere`);
         wcDropped = true;
         for (const es2 of Object.values(sections)) { const ix = es2.indexOf(pendingWildcard); if (ix !== -1) es2.splice(ix, 1); }
       } else if (dupTrig) {
+        noteDrop(actionT?.template ?? actionT?.row?.template, 'the weld (duplicate trigger)', actionT?.row?.name ?? '');
         trace('rider refused — duplicate trigger:', `"${actionT.template ?? actionT.row?.template ?? '?'}" opens with "${riderTrig.slice(0, 60)}…", which "${host.name}" already carries; the slot leaves and the seat looks elsewhere`);
         wcDropped = true;
         for (const es2 of Object.values(sections)) { const ix = es2.indexOf(pendingWildcard); if (ix !== -1) es2.splice(ix, 1); }
@@ -5251,6 +5290,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         }
       }
       if (vc.steps.some((st) => /still under|does nothing/.test(st)) && actionT && actionT.section === vcSection && actionT.row.name === vcName) {
+        noteDrop(actionT.template ?? actionT.row?.template, 'the value floor', `EV under the ${actionT.section === 'Bonus Actions' ? 'bonus action' : 'attack'} it replaces`);
         trace('signature dropped by the floor:', `"${actionT.row.name}" — the ladder could not lift it; the fallback stands in`);
         actionT = null;
       }
@@ -5401,6 +5441,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           const weak = traitRows().find((e2) => e2.template && !e2.bound && !e2.kit && e2.owed !== true);
           if (!bound || !weak) { trace('trait ceiling:', `"${tt.row.name}" does not ship — ${traitRows().length} traits already, and print's ceiling for a ${materialBody ? 'material' : 'meat'} body is ${ceiling}`); return; }
           traitRows().splice(traitRows().indexOf(weak), 1);
+          noteDrop(weak.template, 'the trait ceiling', `evicted for the concept-bound "${tt.row.name}"`);
           trace('trait ceiling:', `"${weak.name}" leaves for the concept-bound "${tt.row.name}" — ${ceiling} traits is print's ceiling for this body`);
         }
         // two rows never share a name (the Carillon's action and trait were both
@@ -7994,7 +8035,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       trace('clause unresolved:', `"${e.name}" carries "${rc.slice(0, 56)}", which matches no clause on the sheet — no coverage credit by id`);
     }
   }
-  readGapOutcomes({ sections: monster.sections, gapRecords, generation: monster.generation, trace });
+  readGapOutcomes({ sections: monster.sections, gapRecords, generation: monster.generation, dropLog, trace });
   // GUARDED STANCE IS RECONCILED AGAINST THE FINISHED AC (critic, 2026-10-21:
   // the Reedmarch Sap-Keeper shipped it). The menu filter runs while the pool is
   // built and tests `monster.ac ?? scaled.ac` — but print canon can still move the
