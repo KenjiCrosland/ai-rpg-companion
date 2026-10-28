@@ -139,6 +139,26 @@ function editDistance(a, b) {
 
 /** "Monstrosity" → "Monstrosities", "Undead"/"Fey" invariant, else +s.
  *  Accepts singular or (possibly mangled) plural input. */
+/**
+ * A save outcome with no payload — "Failure:" and then nothing, or straight into
+ * the next label. Exported because the pass that STRIPS a condition clause must
+ * be able to ask, before it commits the edit, whether the strip would empty the
+ * row; a second copy of this test is how the Brass Tyrant's Seismic Strike
+ * shipped as "…each creature within 10 feet of the tyrant. *Failure:*".
+ */
+/**
+ * Conditions a row may not impose open-endedly, and the shapes that bound one.
+ * Lives here because BOTH sides need the same answer: the checker reports a 2014
+ * conversion that dropped a duration, and `validateConversionResponse` has to
+ * refuse that conversion before it ships. A second copy is how the Lich's
+ * Paralyzing Touch kept arriving as "or be paralyzed." with no end — the checker
+ * knew the rule and the gate never asked.
+ */
+export const MUST_BE_BOUNDED = ['Paralyzed', 'Stunned', 'Blinded', 'Charmed', 'Deafened', 'Petrified', 'Restrained', 'Incapacitated', 'Frightened', 'Poisoned'];
+export const CONDITION_BOUNDED = /until the (?:end|start) of|for 1 (?:minute|hour)|until (?:it|the target|cured|dispelled|this effect ends)|repeats? the (?:saving throw|save)|ending the effect|while .{0,40}(?:remains|is) within|escape DC/i;
+
+export const EMPTY_SAVE_OUTCOME = /\b(Failure|Success):\s*(?:$|(?:Failure|Success):)/;
+
 export function pluralizeCreatureType(word) {
   const base = word.trim().replace(/ies$/i, 'y').replace(/(?<!s)s$/i, '');
   const cased = base[0].toUpperCase() + base.slice(1).toLowerCase();
@@ -535,7 +555,7 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     const loc = { section, entry: entry.name };
     // a save outcome with no payload: "Failure:" or "Success:" and then nothing
     // (or straight into the next label)
-    if (/\b(Failure|Success):\s*(?:$|(?:Failure|Success):)/.test(raw)) {
+    if (EMPTY_SAVE_OUTCOME.test(raw)) {
       push('unfinished-text', 'reject', `${section}/${entry.name}: a save outcome has no effect after it — "${raw.slice(-60)}"`, undefined, loc);
     }
     // a sentence that stops on a word that cannot end one. "equal." is the

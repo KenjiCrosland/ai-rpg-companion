@@ -14,7 +14,7 @@ import printBlocks from '@/data/srd52-monsters.json';
 import { composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
-import { lintStatblock } from '../format-2024/lint.mjs';
+import { lintStatblock, EMPTY_SAVE_OUTCOME } from '../format-2024/lint.mjs';
 import { logger } from '@/util/logger.mjs';
 import { isDegradedMode } from '@/util/ai-client.mjs';
 import challengeRatings from '@/data/challengeRatings.json';
@@ -8120,10 +8120,27 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const order = [...holders].sort((a, b) => rank(a) - rank(b));
       for (const e of order.slice(2)) {
         const was = e.text;
-        e.text = String(e.text)
+        const next = String(e.text)
           .replace(new RegExp(`,? and (?:the target|it) has the ${cond} condition[^.]*\\.?`, 'i'), '.')
           .replace(new RegExp(`\\s*The target has the ${cond} condition[^.]*\\.`, 'i'), '')
           .replace(/\s{2,}/g, ' ').replace(/\.\./g, '.').trim();
+        // THE CONDITION WAS THE WHOLE ROW. This pass assumes a damage row whose
+        // rider can be shed — its own trace says "the row, its damage and its
+        // name all stay". The Brass Tyrant's Seismic Strike had no damage: the
+        // Prone rider WAS its Failure payload, so shedding it shipped "…each
+        // creature within 10 feet of the tyrant. *Failure:*" — a row a GM cannot
+        // run. Validate the edit before committing it, and when nothing is left
+        // to do, the ROW goes rather than its sentence (owner, 2026-10-28:
+        // "templates are sound and the metadata is sound, no string surgery
+        // after the fact"). `EMPTY_SAVE_OUTCOME` is the lint's own test, imported
+        // rather than copied.
+        if (EMPTY_SAVE_OUTCOME.test(next.replace(/\*/g, ''))) {
+          for (const es of Object.values(monster.sections ?? {})) { const ix = es.indexOf(e); if (ix !== -1) es.splice(ix, 1); }
+          trace('one mechanic, at most twice:', `"${e.name}" LEAVES — ${cond} was its whole payload, and a save outcome with nothing after it is not a row`);
+          sweepDeadName(monster.sections, String(e.name).replace(/ \(.*\)$/, ''), null, trace);
+          continue;
+        }
+        e.text = next;
         if (e.text === was) {
           // A SILENT DECLINE IS INVISIBLE. Leaving the row alone is right — better
           // an unstripped rider than a mangled sentence — but saying nothing meant

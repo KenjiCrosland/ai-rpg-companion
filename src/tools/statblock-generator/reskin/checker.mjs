@@ -28,6 +28,7 @@ import TABLE from '@/data/challengeRatings.json';
 import { PRINT_2014 } from './print-2014.mjs';
 import { resolutionOf, TARGET_CLAUSE, SAVE_OUTCOME } from './forms.mjs';
 import { NAME_CLAIMS_MECHANIC, mechanicUnkept } from './name-claims.mjs';
+import { MUST_BE_BOUNDED, CONDITION_BOUNDED } from '../format-2024/lint.mjs';
 import { LACKS_STOP, TEXT_GATE } from './generate.mjs';
 export const GATES = ['derivation', 'bands', 'structure', 'gates', 'headerBody', 'edition', 'donor', 'adjudicability', 'reader', 'class'];
 const crNum = (k) => (String(k).includes('/') ? Number(String(k).split('/')[0]) / Number(String(k).split('/')[1]) : Number(k));
@@ -108,8 +109,8 @@ export function attackRowsOf(m) {
 // used by the `condition-duration` gate and by the conversion-equivalence check
 // in gateEdition (2026-10-22): two copies of a bound pattern is how a gate and
 // its sibling drift apart.
-const MUST_BE_BOUNDED = ['Paralyzed', 'Stunned', 'Blinded', 'Charmed', 'Deafened', 'Petrified', 'Unconscious'];
-const CONDITION_BOUNDED = /until the (?:end|start) of|for 1 (?:minute|hour)|until (?:it|the target|the creature|this|that|cured|dispelled|removed|\w+) (?:dies|ends|is cured|is removed|recovers)|\bwhile\b|\(escape DC|repeats the save|until the (?:web|vines|grasp)/i;
+// MUST_BE_BOUNDED / CONDITION_BOUNDED now live in format-2024/lint.mjs so the
+// conversion gate can refuse a dropped duration with the same test this reports.
 
 export function novasOf(m) {
   const all = allRows(m);

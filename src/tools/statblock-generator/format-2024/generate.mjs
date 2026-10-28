@@ -26,7 +26,7 @@ import textureBanks from '@/data/texture-banks.json';
 import { chassisFor, applyArchetype } from '../chassis/chassis.mjs';
 import { HIT_DIE_BY_SIZE, hpFormulaFor, attackDamageDiceFor, saveDamageDiceFor } from './dice.mjs';
 import { slotPlanFor } from '../chassis/slot-plan.mjs';
-import { lintStatblock, avgDice, CONDITIONS, DEFENSE_WEIGHTS, SELF_REF_STOP } from './lint.mjs';
+import { lintStatblock, avgDice, CONDITIONS, DEFENSE_WEIGHTS, SELF_REF_STOP, MUST_BE_BOUNDED, CONDITION_BOUNDED } from './lint.mjs';
 import { logger } from '@/util/logger.mjs';
 import { languageCodeFor, labelsFor } from '@/components/statblock-labels.mjs';
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditNameGrade, auditTypeCorrection } from './audit.mjs';
@@ -1405,6 +1405,20 @@ export function validateConversionResponse(jsonString, model) {
     if (!Array.isArray(out) || out.length !== entries.length) return false;
     // rows match by POSITION; a drifted name ("Notched Saber" -> "Notched Saber Strike") is not a reason to reject the whole conversion — the English name is kept at splice (the duelist failed three tries and the user saw "try again", release smoke 2026-10-02)
     if (!entries.every((e, i) => out[i] && typeof out[i].text === 'string' && out[i].text.trim() !== '')) return false;
+    // A DURATION MAY NOT BE LOST IN TRANSLATION. The conversion rewrites phrasing,
+    // never content — so a condition the source BOUNDS must still be bounded in
+    // the answer. Print's 2024 Lich reads "the Paralyzed condition until the start
+    // of the lich's next turn"; the conversion kept returning "or be paralyzed."
+    // with no end, which imposes it indefinitely and is unplayable. The checker
+    // has reported exactly this (`conversion-dropped-duration`, measured 1 fire /
+    // 0 false positives) while the gate that could RETRY the call never asked.
+    // Same test, imported from lint.mjs, so the two cannot drift.
+    for (let i = 0; i < entries.length; i += 1) {
+      const src = String(entries[i]?.text ?? '');
+      if (!MUST_BE_BOUNDED.some((c) => new RegExp(`\\b${c}\\b`, 'i').test(src))) continue;
+      if (!CONDITION_BOUNDED.test(src)) continue;      // the source did not bound it either
+      if (!CONDITION_BOUNDED.test(String(out[i].text))) return false; // the answer dropped it — ask again
+    }
   }
   return true;
 }
