@@ -72,3 +72,99 @@ describe('the conversion gate', () => {
     expect(validateConversionResponse(JSON.stringify({ Actions: [] }), model(SRC_BOUNDED))).toBe(false);
   });
 });
+
+/**
+ * AND WHEN THE RETRIES ARE SPENT, THE ROW KEEPS THE SOURCE.
+ *
+ * The validator above rejects an answer that drops the bound, so the call is
+ * retried — but `callLLM` hands back the last answer once the retries are gone,
+ * and the rejected text shipped: a forty produced an Ossarch Lich whose 2014
+ * Paralyzing Touch read "or be paralyzed" with no end, against a 2024 source
+ * that bounded it to the start of the lich's next turn. A permanently paralysed
+ * character is not playable, so the choice is made per ROW.
+ */
+describe('boundKeptInConversion — one test, shared by the validator and the row mapping', () => {
+  const bounded = "the target has the Paralyzed condition until the start of the lich's next turn.";
+  const { boundKeptInConversion } = require('@/tools/statblock-generator/format-2024/generate.mjs');
+
+  it('rejects the Ossarch Lich answer, which dropped the bound', () => {
+    expect(boundKeptInConversion(bounded, 'or be paralyzed.')).toBe(false);
+  });
+  it('accepts an answer that carries the bound in 2014 idiom', () => {
+    expect(boundKeptInConversion(bounded, "be paralyzed until the start of the lich's next turn.")).toBe(true);
+  });
+  it('has nothing to keep when the source names no bounded condition', () => {
+    expect(boundKeptInConversion('18 (3d8 + 4) slashing damage.', '17 (3d8 + 4) slashing damage.')).toBe(true);
+  });
+  it('has nothing to keep when the source left it bare too — Prone self-ends', () => {
+    expect(boundKeptInConversion('the target has the Prone condition.', 'the target is knocked prone.')).toBe(true);
+  });
+  it('treats a missing answer as nothing kept, so the row falls back to the source', () => {
+    expect(boundKeptInConversion(bounded, undefined)).toBe(false);
+  });
+});
+
+/**
+ * AND THE PHRASING REWRITE MAY NOT UNDO IT.
+ *
+ * The per-row fallback above was landed and a conversion ten STILL shipped a
+ * Barrow-Lich reading "or be paralyzed" with no end. The conversion itself had
+ * kept the bound and passed its gate; `rewriteFlaggedEntries` — a second LLM
+ * pass that fixes phrasing warts — then took its answer unconditionally at both
+ * of its accept sites and dropped the duration again. Three accept points now
+ * ask the same question.
+ */
+describe('a phrasing rewrite never trades a bound for idiom', () => {
+  const { boundKeptInConversion } = require('@/tools/statblock-generator/format-2024/generate.mjs');
+  const current = 'be paralyzed until the start of the barrow-lich\'s next turn.';
+
+  it('refuses the rewrite that cost the Barrow-Lich its duration', () => {
+    expect(boundKeptInConversion(current, 'or be paralyzed.')).toBe(false);
+  });
+  it('allows a rewrite that fixes idiom and keeps the bound', () => {
+    expect(boundKeptInConversion(current, "the target is paralyzed until the start of the barrow-lich's next turn.")).toBe(true);
+  });
+  it('allows any rewrite of a row with no bound to protect', () => {
+    expect(boundKeptInConversion('Hit: 11 (2d6 + 4) slashing damage.', 'Hit: 11 (2d6 + 4) slashing damage, and the target is pushed 10 feet.')).toBe(true);
+  });
+});
+
+/**
+ * THE REAL CULPRIT WAS DETERMINISTIC, NOT THE MODEL.
+ *
+ * Three guards on the model's answer — the validator that retries, the per-row
+ * fallback, and both accept sites of the phrasing rewrite — and a conversion ten
+ * STILL shipped "or be paralyzed" with no end, twice, on the same row. It was
+ * never the model: the 2014 save gate (a hit that delivers a condition needs a
+ * save in 2014 idiom) matched the rest of the sentence with `[^.]*` and its
+ * replacement did not put the tail back, so the duration was eaten by the
+ * correction. Deterministic, which is exactly why it reproduced every run and
+ * why guarding the LLM could never catch it.
+ */
+describe('the 2014 save gate keeps the duration it finds', () => {
+  const { convertEdition } = require('@/tools/statblock-generator/format-2024/generate.mjs');
+  const base = (rows) => ({
+    name: 'Barrow Warden', format: '2024', size: 'Medium', type: 'Undead', alignment: 'Neutral Evil',
+    ac: 17, hp: 200, hp_formula: '25d8 + 75', speed: '30 ft.',
+    stats: { STR: 11, DEX: 16, CON: 16, INT: 20, WIS: 14, CHA: 16 }, saves: {}, skills: '',
+    senses: 'truesight 120 ft.; Passive Perception 12', languages: 'Common',
+    initiative_bonus: 3, initiative_score: 13, cr: 14, cr_str: '14', pb: 5, xp: 11500,
+    generation: { donor: 'caster-14' }, sections: { Actions: rows },
+  });
+  // the model's answer is irrelevant here: it is the correction that drops the tail
+  const echo = (rows) => async () => JSON.stringify({ Actions: rows.map((r) => ({ name: r.name, text: r.text })) });
+  const convert = async (rows) => {
+    const out = await convertEdition(JSON.parse(JSON.stringify(base(rows))), echo(rows), { degraded: true });
+    return Object.fromEntries((out.actions ?? []).map((a) => [a.name, String(a.description ?? '')]));
+  };
+
+  it('gates a bounded condition into a 2014 save WITHOUT losing the duration', async () => {
+    const got = await convert([{ name: 'Paralyzing Touch', text: "*Melee Attack Roll:* +10, reach 5 ft. 23 (4d8 + 5) Cold damage, and the target has the Paralyzed condition until the start of the barrow warden's next turn." }]);
+    expect(got['Paralyzing Touch']).toMatch(/saving throw or be paralyzed until the start of/i);
+  });
+
+  it('leaves a condition with no duration exactly as it was — Prone self-ends', async () => {
+    const got = await convert([{ name: 'Slam', text: '*Melee Attack Roll:* +10, reach 5 ft. 14 (2d8 + 5) Bludgeoning damage, and the target has the Prone condition.' }]);
+    expect(got.Slam).toMatch(/saving throw or be knocked prone\.$/i);
+  });
+});

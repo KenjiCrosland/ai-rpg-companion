@@ -1178,8 +1178,17 @@ export function toLegacyModel(m) {
       // `toLegacyModel` is reached through convertEdition, not before it.
       // Both idioms, and prone's "knocked" variant.
       const alt = cond === 'prone' ? '(?:knocked )?prone' : cond;
-      const clause = new RegExp(`,?\\s*and\\s+(?:the target|it)\\s+(?:has the ${cond} condition|is ${alt})[^.]*\\.?`, 'i');
-      const gated = t.replace(clause, `, and the target must succeed on a DC ${dc} ${stat} saving throw or be ${SAVE_PHRASE_2014[cond] ?? cond}.`);
+      // THE DURATION IS NOT PART OF WHAT THE GATE REPLACES (2026-10-28). `[^.]*`
+      // matched the rest of the sentence — "until the start of the barrow-lich's
+      // next turn" — and the replacement did not put it back, so every 2014 sheet
+      // where a hit delivered a bounded condition shipped it with NO END. A
+      // Barrow Warden's Paralyzing Touch read "or be paralyzed" full stop: a
+      // permanently paralysed character. It is deterministic, which is why it
+      // survived three guards on the model's answer and reproduced on every run.
+      // The tail is captured and re-emitted; a row with nothing after the
+      // condition is unaffected.
+      const clause = new RegExp(`,?\\s*and\\s+(?:the target|it)\\s+(?:has the ${cond} condition|is ${alt})([^.]*)\\.?`, 'i');
+      const gated = t.replace(clause, (_m, tail) => `, and the target must succeed on a DC ${dc} ${stat} saving throw or be ${SAVE_PHRASE_2014[cond] ?? cond}${String(tail ?? '').trimEnd()}.`);
       if (gated === t) return e; // the clause did not match: leave it rather than mangle it
       return { ...e, description: gated.replace(/\s{2,}/g, ' ').replace(/\.\./g, '.') };
     });
@@ -1391,6 +1400,18 @@ const CONVERSION_RULES = {
 - Keep the entry's SETUP sentence first (what the creature creates or does), then the save skeleton — never open with the skeleton and append the setup after the Success clause.`,
 };
 
+// DID THE CONVERSION KEEP THE BOUND? One definition, used by the validator that
+// RETRIES the call and by the row mapping that decides what to ship, so the two
+// cannot drift (the private-copy lesson). True when there was nothing to keep:
+// the source names no condition that must be bounded, or the source left it bare
+// too.
+export function boundKeptInConversion(srcText, outText) {
+  const src = String(srcText ?? '');
+  if (!MUST_BE_BOUNDED.some((c) => new RegExp(`\\b${c}\\b`, 'i').test(src))) return true;
+  if (!CONDITION_BOUNDED.test(src)) return true;
+  return CONDITION_BOUNDED.test(String(outText ?? ''));
+}
+
 export function validateConversionResponse(jsonString, model) {
   const parsed = tryParse(jsonString);
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
@@ -1414,10 +1435,7 @@ export function validateConversionResponse(jsonString, model) {
     // 0 false positives) while the gate that could RETRY the call never asked.
     // Same test, imported from lint.mjs, so the two cannot drift.
     for (let i = 0; i < entries.length; i += 1) {
-      const src = String(entries[i]?.text ?? '');
-      if (!MUST_BE_BOUNDED.some((c) => new RegExp(`\\b${c}\\b`, 'i').test(src))) continue;
-      if (!CONDITION_BOUNDED.test(src)) continue;      // the source did not bound it either
-      if (!CONDITION_BOUNDED.test(String(out[i].text))) return false; // the answer dropped it — ask again
+      if (!boundKeptInConversion(entries[i]?.text, out[i].text)) return false; // the answer dropped it — ask again
     }
   }
   return true;
@@ -1670,10 +1688,23 @@ Return ONLY a JSON object with the SAME sections, SAME entry order, SAME entry n
   if (!raw) throw new Error('Empty conversion response');
   const parsed = tryParse(raw);
 
+  // A ROW THAT LOST ITS BOUND KEEPS THE SOURCE (2026-10-28). The validator above
+  // rejects a conversion that drops the duration on a condition that must be
+  // bounded, and the call is retried — but when the retries are spent `callLLM`
+  // hands back the last answer regardless, and an Ossarch Lich shipped "or be
+  // paralyzed" with no end: a permanently paralysed character, which is not
+  // playable. So the choice is made per ROW, exactly as the translation path
+  // keeps a row's English when a number goes missing. A row left in the source
+  // dialect is a blemish; it still goes through `to2014Grammar`, which converts
+  // the phrasing deterministically.
+  const answerFor = (e, s, i) => {
+    const out = parsed[s]?.[i]?.text;
+    return boundKeptInConversion(e.text, out) ? (out ?? e.text) : e.text;
+  };
   let converted = {
     ...model,
     sections: Object.fromEntries(Object.entries(model.sections).map(([s, es]) =>
-      [s, es.map((e, i) => ({ ...e, name: target === '2014' ? String(e.name).replace(/\bBloodied\b/g, 'Wounded') : e.name, text: target === '2014' ? (/^Multiattack/.test(e.name ?? '') ? multiattack2014(e.text) : to2014Grammar(parsed[s]?.[i]?.text ?? e.text)) : (parsed[s]?.[i]?.text ?? e.text) }))])), /* the Multiattack is rendered from the 2024 row; every other row, print's included, is the conversion model's — the by-rule print conversion left 2024 idiom on the Kraken and the dragon (critic's step-8 read); the conversion-dropped-half gate watches the model */ // a 2024 term in a row NAME goes too ("Bloodied Burst" → "Wounded Burst")
+      [s, es.map((e, i) => ({ ...e, name: target === '2014' ? String(e.name).replace(/\bBloodied\b/g, 'Wounded') : e.name, text: target === '2014' ? (/^Multiattack/.test(e.name ?? '') ? multiattack2014(e.text) : to2014Grammar(answerFor(e, s, i))) : answerFor(e, s, i) }))])), /* the Multiattack is rendered from the 2024 row; every other row, print's included, is the conversion model's — the by-rule print conversion left 2024 idiom on the Kraken and the dragon (critic's step-8 read); the conversion-dropped-half gate watches the model */ // a 2024 term in a row NAME goes too ("Bloodied Burst" → "Wounded Burst")
   };
 
   let ctx2;
@@ -3026,7 +3057,14 @@ Return ONLY a JSON array in the SAME order as the entries above, no markdown fen
     if (t) {
       matched.add(t);
       const entry = (out.sections?.[t.section] ?? []).find((e) => e.name === t.entry);
-      if (entry && typeof resp.text === 'string' && resp.text.trim()) entry.text = resp.text;
+      // A PHRASING REWRITE MAY NOT DROP A BOUND (2026-10-28). This pass re-asks the
+      // model to fix phrasing warts and took its answer unconditionally, so a
+      // Barrow-Lich whose conversion HAD bounded Paralyzed came back as "or be
+      // paralyzed" with no end — the conversion gate had already passed it, and
+      // this pass undid it. The row keeps what it has rather than take a rewrite
+      // that costs it the duration; a phrasing wart is survivable, a permanent
+      // Paralyzed is not.
+      if (entry && typeof resp.text === 'string' && resp.text.trim() && boundKeptInConversion(entry.text, resp.text)) entry.text = resp.text;
     } else {
       unmatched.push(resp);
     }
@@ -3043,6 +3081,7 @@ Return ONLY a JSON array in the SAME order as the entries above, no markdown fen
     if (!entry) continue;
     // Same name normalization the assembly applies — fix-call renames were
     // bypassing it (live: "The Watcher", "The Mound-Warden" shipped).
+    if (!boundKeptInConversion(entry.text, resp.text)) continue; // same rule on the rename arm: never trade a bound for phrasing
     entry.name = resp.name.trim().replace(/^the\s+/i, '');
     entry.text = resp.text;
     const oldBase = t.entry.split(' (')[0];

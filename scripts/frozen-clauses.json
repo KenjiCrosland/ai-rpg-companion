@@ -4708,5 +4708,199 @@
     "head": true
    }
   ]
+ },
+ "8b2638b8aaa2": {
+  "concept": "A sinuous ribbon of sunlit fur and revelation, the Lindiren is a eel-slender hound of the upper courts whose pelt sheds ",
+  "clauses": [
+   {
+    "id": "cl_t6w8d4",
+    "text": "A sinuous ribbon of sunlit fur and revelation",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1y1gu3a",
+    "text": "the Lindiren is a eel-slender hound of the upper courts whose pelt sheds strands of gleaming daylight as it swims throug",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_17vfj65",
+    "text": "its glass-bright eyes reading a foe's every tactic the instant battle begins",
+    "kind": "mechanical",
+    "askWhen": "start_of_turn",
+    "askWhenWhy": "the instant battle begins",
+    "askShape": "save_single"
+   },
+   {
+    "id": "cl_9g6h5a",
+    "text": "It opens by breaking formation into harrying arcs",
+    "kind": "mechanical",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_14abu40",
+    "text": "darting in to rake with barbed foreclaws",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1d9a95d",
+    "text": "radiant bite before withdrawing in a flash of shimmering fur",
+    "kind": "mechanical",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_uzrrim",
+    "text": "always circling back to strike the wounded and the isolated",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "strike the wounded and the isolated"
+   },
+   {
+    "id": "cl_1elvo8w",
+    "text": "Driven by cold alien genius rather than mercy",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_144d0aw",
+    "text": "it fights to the death",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_xovxvo",
+    "text": "testing a failing enemy's guard like a scholar dissecting a puzzle it has already solved",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_nacmvu",
+    "text": "It is possessed of alien genius (INT 17-20)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_bqb29",
+    "text": "it is a skirmishing pack-hunter that harries",
+    "kind": "mechanical",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_f645gp",
+    "text": "withdraws",
+    "kind": "mechanical",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_194yu6c",
+    "text": "circles back",
+    "kind": "mechanical",
+    "askShape": "movement"
+   }
+  ]
+ },
+ "19d5366c96d4": {
+  "concept": "a gorgon-priest whose gaze turns the faithless to stone",
+  "clauses": [
+   {
+    "id": "cl_18zq16i",
+    "text": "a gorgon-priest whose gaze turns the faithless to stone",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "gaze",
+    "askMechanicWhy": "gaze turns the faithless to stone"
+   }
+  ]
+ },
+ "0f5348913587": {
+  "concept": "a dream-eater that holds sleepers rapt and feeds",
+  "clauses": [
+   {
+    "id": "cl_1xuu6ik",
+    "text": "a dream-eater",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_xqwwtg",
+    "text": "holds sleepers rapt and feeds",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "holds sleepers rapt"
+   }
+  ]
+ },
+ "365269940249": {
+  "concept": "a bell-wraith whose toll deafens and unnerves the living",
+  "clauses": [
+   {
+    "id": "cl_15jf8nh",
+    "text": "a bell-wraith whose toll deafens",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1br2lg6",
+    "text": "unnerves the living",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "toll deafens and unnerves"
+   }
+  ]
+ },
+ "a749b06ddc88": {
+  "concept": "a chapel-lamp whose glare blinds those who look at it",
+  "clauses": [
+   {
+    "id": "cl_1011phd",
+    "text": "a chapel-lamp whose glare blinds those",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "whose glare blinds those who look at it"
+   },
+   {
+    "id": "cl_1g2m3xz",
+    "text": "look at it",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "whose glare blinds those who look at it"
+   }
+  ]
+ },
+ "bf9cb6a27a52": {
+  "concept": "a mire-thing that swallows what it catches",
+  "clauses": [
+   {
+    "id": "cl_1lcriq7",
+    "text": "a mire-thing",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "swallow",
+    "askMechanicWhy": "swallows what it catches"
+   },
+   {
+    "id": "cl_ceeala",
+    "text": "swallows what it catches",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "swallow",
+    "askMechanicWhy": "swallows what it catches"
+   }
+  ]
+ },
+ "85095fd9ea52": {
+  "concept": "a frost-wight whose claws stun with cold",
+  "clauses": [
+   {
+    "id": "cl_1i9klob",
+    "text": "a frost-wight whose claws stun with cold",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "stun"
+   }
+  ]
  }
 }
