@@ -1,0 +1,23 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — no clauses to classify." },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2024",
+    "canary": "CANARY — already-mechanical clauses must still land as before." },
+  { "name": "Stone Golem", "description": "carved as a weeping saint", "cr": "10", "rules": "2024",
+    "canary": "CANARY — genuinely DESCRIPTIVE. Must stay descriptive; no row for a carving." },
+
+  { "name": "Air Elemental", "description": "that carries stolen voices", "cr": "5", "rules": "2024",
+    "canary": "FEATURE — the noun went undelivered; 'carries' is in no word list." },
+  { "name": "", "description": "A Large insectile horror with four scythe-arms, a spitting maw, and a shell that sheds acid", "cr": "9", "rules": "2024",
+    "canary": "FEATURE — maw and shell both came back descriptive; both should now land." },
+  { "name": "Krennik Skullstandard", "description": "riding a worg", "cr": "4", "rules": "2024",
+    "canary": "FEATURE — a mount fights too; 'riding' is in no word list." },
+  { "name": "", "description": "a cathedral-vault ooze that digests reliquaries", "cr": "9", "rules": "2024",
+    "canary": "FEATURE — 'digests' missed; an object a player could act on." },
+  { "name": "Purple Worm", "description": "that swallowed a war-band's armoury", "cr": "15", "rules": "2024",
+    "canary": "FEATURE — 'swallowed' missed; print's Swallow took the credit without delivering." },
+  { "name": "Dire Wolf", "description": "with a frost-rimed hide", "cr": "1", "rules": "2024",
+    "canary": "FEATURE — a substance on its hide; cold on touch." },
+  { "name": "", "description": "a quarry-pit thing of living scree that buries what it catches", "cr": "5", "rules": "2024",
+    "canary": "FEATURE — delivered well last time; must not regress, and must not triple-impose Restrained." }
+]

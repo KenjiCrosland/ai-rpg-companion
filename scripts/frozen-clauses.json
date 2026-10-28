@@ -4902,5 +4902,28 @@
     "askMechanicWhy": "stun"
    }
   ]
+ },
+ "bdedf593654c": {
+  "concept": "A Large insectile horror with four scythe-arms, a spitting maw, and a shell that sheds acid",
+  "clauses": [
+   {
+    "id": "cl_1p375ao",
+    "text": "A Large insectile horror with four scythe-arms",
+    "kind": "header"
+   },
+   {
+    "id": "cl_1rmhnfc",
+    "text": "a spitting maw",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_mxc6ug",
+    "text": "a shell that sheds acid",
+    "kind": "mechanical",
+    "askMechanic": "zone",
+    "askMechanicWhy": "a shell that sheds acid"
+   }
+  ]
  }
 }
