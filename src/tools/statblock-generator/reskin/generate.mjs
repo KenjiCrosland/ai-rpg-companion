@@ -1871,13 +1871,44 @@ export function labelFeatureRows(sections, trace = () => {}) {
   // silently dropped row.
   const bareOf = (e) => String(e?.name ?? '').replace(/ \(.*\)$/, '');
   const gateOf = (e) => (/ \(.*\)$/.exec(String(e?.name ?? '')) ?? [''])[0];
-  const CANON = ['condition-payoff', 'exploiter', 'riposte'];
-  const canonName = new Map(CANON.map((id) => [id, TEMPLATE_BY_ID.get(id)?.name]).filter(([, n]) => n));
-  const canonOf = (e) => canonName.get(e.template) ?? ([...canonName.values()].includes(bareOf(e)) ? bareOf(e) : null);
+  // THE RULING IS EVERY STOCK ROW, NOT A LIST OF THREE (owner, 2026-10-27:
+  // "unless it's mechanically different it needs the same name", and he refused
+  // an exception for rows the GM's own words asked for). Converging only
+  // `condition-payoff`, `exploiter` and `riposte` left every other template free
+  // to ship under a bespoke name, and one forty showed both halves of the cost:
+  // `relentless-pursuit` shipped under FOUR names ("Relentless Pursuit" twice,
+  // "Reliquary Lurch", "Skull-Trail Hunter"), and four rows carried a name that
+  // promised a mechanic the stock row does not do — `terrain-walk` as "Killing
+  // Wake", `terror-pulse` as "Giant's Tongue", `uncanny-sense` as "Hull
+  // Resonance". Paint is not variety; a different MECHANIC is.
+  //
+  // Safe to widen because all 112 templates carry a print-style name and no
+  // sheet draws the same template twice (measured on the 2026-10-28 forty), so
+  // there is no name to collide with. A print row keeps print's name, and
+  // `name_locked` still wins (the floating orb's rays).
+  const PAYOFF = ['condition-payoff', 'exploiter'];
+  const payoffNames = new Set(PAYOFF.map((id) => TEMPLATE_BY_ID.get(id)?.name).filter(Boolean));
+  // A welded payoff can carry the name without the stamp, and the Trip Attack
+  // branch below has to see it, so the name is a second way in — for the payoff
+  // ids ONLY. `isPayoff` used to mean "not riposte", which would now splice
+  // every templated row on any sheet that has a style's Trip Attack.
+  // A KIT ROW'S NAME IS DECLARED, NOT INVENTED. `classes.mjs` writes
+  // `{ template: 'coating', name: 'Divine Smite' }` and `species.mjs` writes
+  // `{ shape: 'terrain-walk', name: 'Marsh Stride' }` — the catalog names the row
+  // beside the template it renders, and both stamp `kit` on what they ship. Those
+  // names are canonical (a paladin's smite is Divine Smite) and converging them
+  // onto the template's name broke three class pins. The distinction this rule
+  // needs is exactly declared-vs-invented: "Marsh Stride" is lizardfolk's
+  // declared name for `terrain-walk` and stays, while "Killing Wake" is a
+  // renamer's invention for the same template and goes.
+  const canonOf = (e) => {
+    if (e.print || e.name_locked || e.kit) return null;
+    return TEMPLATE_BY_ID.get(e.template)?.name ?? (payoffNames.has(bareOf(e)) ? bareOf(e) : null);
+  };
   for (const [secF, esF] of Object.entries(sections)) for (const e of esF.slice()) {
     const canon = canonOf(e);
     if (!canon) continue;
-    const isPayoff = canon !== canonName.get('riposte');
+    const isPayoff = PAYOFF.includes(e.template) || payoffNames.has(bareOf(e));
     if (isPayoff && tripRow) {
       esF.splice(esF.indexOf(e), 1);
       sweepDeadName(sections, e.name, tripRow, trace);
