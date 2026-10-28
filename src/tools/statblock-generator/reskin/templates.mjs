@@ -1795,7 +1795,15 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   fills = { ...BLIND_FILLS, ...(terrainOf ? { terrain: terrainOf } : {}), ...(ctx.projectile ? { projectile: ctx.projectile } : {}), ...Object.fromEntries(Object.entries(fills).filter(([, v]) => typeof v === 'string' && v.trim())) };
   void blind;
   const { scaled } = ctx;
+  // THE DURATION THE WRITER CHOSE, kept so no reader has to recover it from the
+  // finished sentence. `durationClause` turns a key into text and the key was
+  // then thrown away — which is why `condition-duration` had to guess from prose
+  // and had to be downgraded to `soft` after nought true positives (it reads
+  // "until the end of" but not a state bound like "while swallowed"). Same move
+  // that retired the prose reader for `imposes`.
+  let boundBy = null;
   if (t.kind === 'seed') {
+    let boundByS = null;
     const drawn = drawLibraryRow(scaled, { archetype: ctx.archetype, energy: ctx.energy, mix: ctx.mix, name: ctx.name ?? '', shapeKey: t.key, imposed: ctx.imposed ?? [], mechanics: ctx.mechanics ?? null, cr: ctx.cr });
     if (!drawn || drawn.seed !== t.key) return null; // the seed was not legal on this sheet
     let text = drawn.row.text;
@@ -1819,9 +1827,11 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
       const askedS = String(fills.duration ?? '').trim();
       const ddS = t.duration_default;
       const fallbackS = (ddS && typeof ddS === 'object' ? (ddS[bandFor(ctx.cr)] ?? ddS.default) : ddS) ?? 'target_end';
-      const clauseS = durationClause(allowedS.includes(askedS) ? askedS : fallbackS);
+      const pickS = allowedS.includes(askedS) ? askedS : fallbackS;
+      const clauseS = durationClause(pickS);
       if (!clauseS) return null;
       text = text.split('{duration}').join(clauseS);
+      boundByS = pickS; // THE WRITER RECORDS WHAT IT WROTE — see the return below
     }
     if (/\{[a-z_]+\}/.test(text)) return null;
     // the drawn card's own tag, which this return used to drop on the floor
@@ -1840,7 +1850,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     // not carry is lost, so a consumer would have to scrape the sentence to get
     // it back. `drawLibraryRow` stamps the type its own fill spent (2026-10-27).
     const seedType = drawn.row.damageType ?? null;
-    return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(seedType ? { damageType: seedType } : {}), ...(seedImposes ? { imposes: seedImposes } : {}) };
+    return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(seedType ? { damageType: seedType } : {}), ...(boundByS ? { duration: boundByS } : {}), ...(seedImposes ? { imposes: seedImposes } : {}) };
   }
   // A THROWN NAMED WEAPON KEEPS ITS OWN TYPE AND RANGE (the critic's second
   // species read: a spear hurled for Bludgeoning at 30/120). One table.
@@ -1928,6 +1938,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     const clause = durationClause(pick);
     if (!clause) return null;
     engine.duration = clause;
+    boundBy = pick; // THE WRITER RECORDS WHAT IT WROTE — see the return below
   }
   if (/\{target\}/.test(frameOf(t, ctx.cr) ?? '')) {
     const allowed = (t.targets ?? []).filter((sh) => AREA_SHAPES.includes(sh) || t.target_sizes?.[sh]);
@@ -2083,7 +2094,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // all of it, so the reader that tried (a `/(\w+) damage/` scrape in the
   // checker's save-fit gate) was always going to meet an edge it had not seen.
   // Stamped here, once, by the site that decides it — the same move as `imposes`.
-  return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(chosenArea != null ? { area: chosenArea } : {}), ...(dtype ? { damageType: dtype } : {}), ...(pickedCondition ? { imposes: pickedCondition } : {}), ...(consumedPick ? { consumes: consumedPick } : {}), ...(saveOverride ? { saveOverride } : {}) };
+  return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(chosenArea != null ? { area: chosenArea } : {}), ...(boundBy ? { duration: boundBy } : {}), ...(dtype ? { damageType: dtype } : {}), ...(pickedCondition ? { imposes: pickedCondition } : {}), ...(consumedPick ? { consumes: consumedPick } : {}), ...(saveOverride ? { saveOverride } : {}) };
 }
 
 // SEAT DEFAULTS (critic run four): some seats OWE a trait by print — the 2024

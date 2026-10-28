@@ -785,8 +785,21 @@ function gateAdjudicability(m, ctx, F) {
       // Its sibling `conversion-dropped-duration` stays `fail` on purpose: that
       // one COMPARES two texts the engine wrote (the source bounded it, the answer
       // did not), which is evidence, not inference.
-      if (impo && MUST_BE_BOUNDED.includes(impo) && !CONDITION_BOUNDED.test(t)) {
-        F('condition-duration', 'soft', `${sec}/${bare(e.name)}: imposes ${impo} and no bound was RECOGNISED in its text — read it before believing this; a state bound ("while swallowed") is not in the pattern — print bounds every ${impo} it hands out (0 of ${impo === 'Paralyzed' ? 5 : 'its'} rows bare)`, impo);
+      // THE DECLARED DURATION IS READ FIRST (2026-10-28). `renderTemplate` now
+      // records the duration key it chose — `duration: 'target_end'` beside
+      // `imposes: 'Frightened'` — so a row the engine wrote says whether it is
+      // bounded instead of leaving this rule to infer it. Prose is the fallback,
+      // and only for text the engine did not write.
+      //
+      // SEVERITY FOLLOWS THE EVIDENCE. With a declaration available, a row the
+      // ENGINE wrote that carries neither a duration nor a bound in its text is a
+      // real gap, and `fail` is a verdict again. A PRINT row has no declaration by
+      // nature, so there it stays `soft` — which is what it was downgraded to
+      // after nought true positives, every firing a containment row bounding by a
+      // state ("while swallowed") the pattern cannot see.
+      const engineWrote = !!(e.template || e.library || e.seed) && !e.print;
+      if (impo && MUST_BE_BOUNDED.includes(impo) && !e.duration && !CONDITION_BOUNDED.test(t)) {
+        F('condition-duration', engineWrote ? 'fail' : 'soft', `${sec}/${bare(e.name)}: imposes ${impo} and ${engineWrote ? 'records no duration — the row the engine wrote owes this field' : 'no bound was RECOGNISED in its text — read it before believing this; a state bound ("while swallowed") is not in the pattern'} — print bounds every ${impo} it hands out (0 of ${impo === 'Paralyzed' ? 5 : 'its'} rows bare)`, impo);
       }
     }
     if (/^(?:Traits|Reactions)$/.test(sec) && how === 'passive' && dealsOrTargets) F('adjudicable-resolution', 'fail', `${sec}/${bare(e.name)}: deals damage or imposes a condition but states no trigger, attack roll, or save`, bare(e.name));
