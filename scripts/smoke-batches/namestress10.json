@@ -1,0 +1,23 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — print-exact. Print's own row names must survive untouched." },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2024",
+    "canary": "CANARY — plain weapon rows. Names must stay terse and match the weapon, not drift to flavour." },
+  { "name": "", "description": "a brass tyrant whose furnace breath terrifies and whose hammer finds the terrified", "cr": "17", "rules": "2024",
+    "canary": "CANARY — a sheet that DOES frighten. A fear-promising name here is CORRECT and must not be suppressed." },
+
+  { "name": "", "description": "a grasping thing of roots and wire that reaches for everyone who passes", "cr": "6", "rules": "2024",
+    "canary": "FEATURE — the fiction screams grapple. If the chassis grants none, no row may be called a Grasp, Grip or Snare." },
+  { "name": "", "description": "a terror of the deep barrows, dread given a shape", "cr": "9", "rules": "2024",
+    "canary": "FEATURE — pure fear fiction, likely no Frightened row. Names must not promise terror the sheet cannot deliver." },
+  { "name": "", "description": "a shouldering ram-beast that drives everything out of its way", "cr": "8", "rules": "2024",
+    "canary": "FEATURE — push/knockdown fiction. A Shove or Trip name needs an actual push in the text." },
+  { "name": "", "description": "a pinning mantis-thing that holds its prey still while it feeds", "cr": "11", "rules": "2024",
+    "canary": "FEATURE — hold fiction across two rows; the classic Two-Arm Pin / Mire Grasp shape." },
+  { "name": "", "description": "a paralysing horror whose gaze locks the limbs", "cr": "13", "rules": "2024",
+    "canary": "FEATURE — Paralyzed fiction at a CR where the chassis may not grant it." },
+  { "name": "", "description": "a blinding sun-spirit that burns the sight from those who look at it", "cr": "7", "rules": "2024",
+    "canary": "FEATURE — Blinded fiction; also tests the element rule (Radiant) beside the mechanic rule." },
+  { "name": "", "description": "a dread-piper whose tune drags the frightened closer", "cr": "10", "rules": "2024",
+    "canary": "FEATURE — fear AND pull in one concept; two mechanics a name could over-promise." }
+]

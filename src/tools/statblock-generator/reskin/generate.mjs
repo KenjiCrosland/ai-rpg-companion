@@ -549,6 +549,7 @@ ${rows.join('\n')}
 WHICH WEAPON IS IT? For every attack row you name after a weapon a person could buy — a sword, an axe, a bow, a staff — say which one in plain words under "weapons", keyed by the name you gave. The engine reads its reach, its range and its damage from print's own table, so a coined name costs nothing: "Hurlaxe" is a handaxe, "Forceful Staff" is a staff. Answer "none" for a body part, a spell, or anything no shop sells — "Thunder-Elk" is none.
 
 THE NAME MUST MATCH WHAT THE ROW DEALS. Every damage type above is the engine's and will not be changed to suit a name you pick: a row dealing Piercing is not a Stomp, a Glare or a Surge; a row dealing Bludgeoning is not a Fang, a Dart or a Blade; a row dealing Poison, Acid or Psychic is not a Bolt or a Spike. Name each attack row after the part or weapon that would deal exactly the type printed in it${typedRows.length ? ', and where you also choose a damage type below, make the name and that type agree' : ''}.
+THE NAME MUST ALSO MATCH WHAT THE ROW DOES. The same rule governs mechanics: the row's text above is the engine's and will not change to suit a name. If a name promises a hold, the row has to apply the Grappled or Restrained condition; if it promises fear, the row has to impose Frightened; if it promises a knockdown, a push or a pull, the row has to do that. These shipped and were wrong: "Mire Grasp" and "Ironshod Grip" on rows that grapple nobody, "Freezing Terror" and "Dread Thrum" on rows that frighten nobody, "Mound Shove" on a row that pushes nobody. A row that only deals damage takes a plain name for the part or weapon that deals it. Where the row does something the name could promise, name it for THAT — never for a mechanic a neighbouring row owns.
 
 Return ONLY JSON:
 {
@@ -7476,12 +7477,31 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       }
     }
     const unkept = mechanicUnkept(bareN, e.text ?? ''); if (!unkept) continue;
-    const word = claimWordIn(bareN); if (!word) continue;
     const taken = new Set(Object.values(sections).flat().map((o) => String(o.name ?? '').replace(/ \(.*\)$/, '').toLowerCase()));
-    const noun = honestNouns(e.text ?? '').find((x) => !taken.has(bareN.replace(new RegExp(`\\b${word}\\b`, 'i'), x).toLowerCase()));
-    if (!noun) continue;
-    const renamed = bareN.replace(new RegExp(`\\b${word}\\b`, 'i'), noun).replace(/\s+/g, ' ').trim();
-    if (!renamed || renamed.toLowerCase() === bareN.toLowerCase()) continue;
+    const word = claimWordIn(bareN);
+    const noun = word ? honestNouns(e.text ?? '').find((x) => !taken.has(bareN.replace(new RegExp(`\\b${word}\\b`, 'i'), x).toLowerCase())) : null;
+    let renamed = word && noun ? bareN.replace(new RegExp(`\\b${word}\\b`, 'i'), noun).replace(/\s+/g, ' ').trim() : '';
+    // WHEN THE REPAIR CANNOT BUILD AN HONEST NAME, THE TEMPLATE ALREADY HAS ONE
+    // (owner, 2026-10-28). This pass swaps the claim word for a noun the row's
+    // own text supplies, and gives up when every candidate is already taken by a
+    // neighbour — correctly, since a mangled name is worse than a wrong one. But
+    // giving up leaves the lie on the sheet: the Rotgaze Horror shipped an
+    // `adhesive` trait called "Paralysing Gaze", a sticky hide named after a
+    // paralysing stare, because the sibling `sensory-strike` row had already
+    // taken every "Gaze" spelling.
+    //
+    // Every template carries its own name (112 of 112), so where the repair has
+    // nothing to build from, that name is the honest fallback — declared data,
+    // not another reading of the prose. It fires ONLY after the repair has failed,
+    // so a flavoured name that matches its row is never touched.
+    if (!renamed || renamed.toLowerCase() === bareN.toLowerCase()) {
+      const canon = e.template ? String(TEMPLATE_BY_ID.get(e.template)?.name ?? '') : '';
+      if (!canon || taken.has(canon.toLowerCase()) || canon.toLowerCase() === bareN.toLowerCase()) continue;
+      trace('name follows content:', `${sec}/"${bareN}" promises ${unkept} the row never delivers and no honest noun was free — it takes its template's own name, "${canon}" (${e.template})`);
+      e.name = `${canon}${gate}`;
+      sweepDeadName(sections, bareN, e, trace);
+      continue;
+    }
     trace('name follows content:', `${sec}/"${bareN}" promises ${unkept} the row never delivers — "${renamed}" (the call's modifier kept, the claim word swapped for a noun the row earns)`);
     // RENAME FIRST, THEN SWEEP. sweepDeadName no-ops when any row still carries
     // the name ("a name two rows share is not dead"), so sweeping before the

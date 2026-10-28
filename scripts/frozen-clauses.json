@@ -4464,5 +4464,140 @@
     "askShape": "attack"
    }
   ]
+ },
+ "62aaf16192f7": {
+  "concept": "a grasping thing of roots and wire that reaches for everyone who passes",
+  "clauses": [
+   {
+    "id": "cl_pr39sy",
+    "text": "a grasping thing of roots and wire",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_y37d5s",
+    "text": "reaches for everyone who passes",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "reaches for everyone who passes",
+    "askOften": "at_will",
+    "askOftenWhy": "reaches for everyone who passes",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "reaches for everyone who passes"
+   }
+  ]
+ },
+ "5e9ec8b19448": {
+  "concept": "a terror of the deep barrows, dread given a shape",
+  "clauses": [
+   {
+    "id": "cl_1c1k8ub",
+    "text": "a terror of the deep barrows",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_171htcp",
+    "text": "dread given a shape",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "25b6a10c1a5d": {
+  "concept": "a shouldering ram-beast that drives everything out of its way",
+  "clauses": [
+   {
+    "id": "cl_1cjjb4j",
+    "text": "a shouldering ram-beast",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_13ouql2",
+    "text": "drives everything out of its way",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "21ce34c9b746": {
+  "concept": "a pinning mantis-thing that holds its prey still while it feeds",
+  "clauses": [
+   {
+    "id": "cl_1fapgzf",
+    "text": "a pinning mantis-thing",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_w9iky5",
+    "text": "holds its prey still while it feeds",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "holds",
+    "askOften": "at_will",
+    "askOftenWhy": "holds its prey still while it feeds",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "holds its prey still"
+   }
+  ]
+ },
+ "502a8909ba39": {
+  "concept": "a paralysing horror whose gaze locks the limbs",
+  "clauses": [
+   {
+    "id": "cl_1j0lko0",
+    "text": "a paralysing horror whose gaze locks the limbs",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "gaze",
+    "askMechanicWhy": "whose gaze locks the limbs"
+   }
+  ]
+ },
+ "5199d4163d95": {
+  "concept": "a blinding sun-spirit that burns the sight from those who look at it",
+  "clauses": [
+   {
+    "id": "cl_13iqj8m",
+    "text": "a blinding sun-spirit",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_160v0it",
+    "text": "burns the sight from those",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "burns the sight"
+   },
+   {
+    "id": "cl_1g2m3xz",
+    "text": "look at it",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "burns the sight"
+   }
+  ]
+ },
+ "ffae10d64bc1": {
+  "concept": "a dread-piper whose tune drags the frightened closer",
+  "clauses": [
+   {
+    "id": "cl_1bk9x7m",
+    "text": "a dread-piper whose tune drags the frightened closer",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "a dread-piper whose tune drags the frightened closer",
+    "askOften": "at_will",
+    "askOftenWhy": "a dread-piper whose tune drags the frightened closer",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "drags the frightened closer"
+   }
+  ]
  }
 }
