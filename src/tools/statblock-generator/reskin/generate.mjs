@@ -5451,6 +5451,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // regardless and left the rogue's owed Assassinate leaving for a
           // signature.)
           const weak = traitRows().find((e2) => e2.template && !e2.bound && !e2.kit && e2.owed !== true);
+          // BOTH ARMS OF THE CEILING RECORD, not just the eviction. The first
+          // wiring took only the arm below (a weak trait evicted for a
+          // concept-bound newcomer) and left this one — the NEWCOMER standing
+          // down — unrecorded, so Meshrin's fear-aura reported "died at an
+          // UNRECORDED drop site" on the forty that followed. A gate's arms have
+          // to be proven reachable one by one (plans/, "audit the gate you just
+          // shipped"); the instrument caught this one two hours after it shipped.
+          if (!bound || !weak) noteDrop(tt.template ?? tt.row?.template, 'the trait ceiling', `the sheet already carries ${traitRows().length} traits and this row is not concept-bound`);
           if (!bound || !weak) { trace('trait ceiling:', `"${tt.row.name}" does not ship — ${traitRows().length} traits already, and print's ceiling for a ${materialBody ? 'material' : 'meat'} body is ${ceiling}`); return; }
           traitRows().splice(traitRows().indexOf(weak), 1);
           noteDrop(weak.template, 'the trait ceiling', `evicted for the concept-bound "${tt.row.name}"`);

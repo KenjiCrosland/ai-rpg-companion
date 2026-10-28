@@ -4129,5 +4129,84 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "c1460e9ce45f": {
+  "concept": "The Frostbound Warden is a towering, thin-limbed figure of dark iron latticework that moves as a single will, though its",
+  "clauses": [
+   {
+    "id": "cl_1q6vm96",
+    "text": "The Frostbound Warden is a towering",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1bdj0h1",
+    "text": "thin-limbed figure of dark iron latticework that moves as a single will",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_2gvac4",
+    "text": "though its body is a slow collective of hand-sized iron thorns mantled in frost-moss — each thorn a tiny sapient node ch",
+    "kind": "header"
+   },
+   {
+    "id": "cl_16tlsxf",
+    "text": "It opens by raising one long arm so its thorn-flock spills forward",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1c2n8yl",
+    "text": "every shard that lands bites with the deep cold stored in its seams",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "every shard that lands",
+    "askOften": "at_will",
+    "askOftenWhy": "every shard that lands bites with the deep cold stored in its seams",
+    "askShape": "attack",
+    "askMechanic": "drain",
+    "askMechanicWhy": "sapping warmth from limbs and nerves"
+   },
+   {
+    "id": "cl_5kioss",
+    "text": "sapping warmth from limbs and nerves",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_q97v2",
+    "text": "It half-buries intruders in frost-hardened moss until they stand still",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_xka6dg",
+    "text": "simply waits",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_i7gizf",
+    "text": "it will not flee: it keeps its ground until the frost claims the field",
+    "kind": "mechanical",
+    "askWhen": "start_of_turn",
+    "askWhenWhy": "keeps its ground",
+    "askOften": "at_will",
+    "askOftenWhy": "it will not flee: it keeps its ground until the frost claims the field",
+    "askMechanic": "zone",
+    "askMechanicWhy": "until the frost claims the field"
+   },
+   {
+    "id": "cl_1x09l88",
+    "text": "warned off only by a calm and respectful greeting",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_obu126",
+    "text": "It is fully sapient (INT 10-14)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_e12zm1",
+    "text": "it is a benevolent warden sworn to protect travelers who show respect",
+    "kind": "descriptive"
+   }
+  ]
  }
 }

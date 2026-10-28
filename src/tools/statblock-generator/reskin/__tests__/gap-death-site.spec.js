@@ -211,3 +211,23 @@ describe('the free-row budget records its evictions', () => {
     })).not.toThrow();
   });
 });
+
+describe('the trait ceiling records BOTH of its arms', () => {
+  // The first wiring took only the eviction arm. The newcomer-stands-down arm
+  // went unrecorded, so Meshrin's fear-aura reported "died at an UNRECORDED drop
+  // site" on the very next forty. Each arm needs its own proof.
+  it('reports a stage for a newcomer the ceiling turns away, not just for an eviction', () => {
+    // the roll-up must account for every vetoed pick whatever arm took it
+    const t = [];
+    readGapOutcomes({
+      sections: { Traits: [{ name: 'A', template: 'kept' }] },
+      gapRecords: [{ line: 'turned away', template: 'fear-aura' }],
+      dropLog: [{ template: 'fear-aura', stage: 'the trait ceiling', why: 'the sheet already carries 4 traits and this row is not concept-bound' }],
+      trace: (l, d) => t.push(`${l} ${d}`),
+    });
+    const line = t.find((x) => x.startsWith('signature outcome:'));
+    expect(line).toMatch(/1x the trait ceiling/);
+    expect(t.join('\n')).toMatch(/died at the trait ceiling \(the sheet already carries 4 traits/);
+    expect(t.join('\n')).not.toMatch(/UNRECORDED/);
+  });
+});
