@@ -6217,5 +6217,79 @@
     "askMechanicWhy": "will not leave the ward it guards"
    }
   ]
+ },
+ "50b36f525e18": {
+  "concept": "a bog lantern that calls lost travellers into the water",
+  "clauses": [
+   {
+    "id": "cl_1qnwich",
+    "text": "a bog lantern",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_7cgsyr",
+    "text": "calls lost travellers into the water",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "calls lost travellers into the water"
+   }
+  ]
+ },
+ "2bd2be8b7431": {
+  "concept": "Meshrin — Large lizard folk, 30 feet of movement, Wields a greataxe two-handed and hurls javelins",
+  "clauses": [
+   {
+    "id": "cl_1q8jwjv",
+    "text": "Meshrin — Large lizard folk",
+    "kind": "header"
+   },
+   {
+    "id": "cl_1k2n2yx",
+    "text": "30 feet of movement",
+    "kind": "header"
+   },
+   {
+    "id": "cl_ar4c2f",
+    "text": "Wields a greataxe two-handed",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "Wields a greataxe two-handed",
+    "askOften": "at_will",
+    "askOftenWhy": "Wields a greataxe two-handed",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_a6oa64",
+    "text": "hurls javelins",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "hurls javelins",
+    "askOften": "at_will",
+    "askOftenWhy": "hurls javelins",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "7178ef24188d": {
+  "concept": "Krennik Skullstandard — riding a worg, his banner topped with a skull that terrifies those who see it",
+  "clauses": [
+   {
+    "id": "cl_1v7kayt",
+    "text": "Krennik Skullstandard — riding a worg",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_xjc341",
+    "text": "his banner topped with a skull that terrifies those who see it",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "his banner topped with a skull that terrifies those who see it",
+    "askShape": "save_single",
+    "askMechanic": "fear",
+    "askMechanicWhy": "terrifies those who see it"
+   }
+  ]
  }
 }

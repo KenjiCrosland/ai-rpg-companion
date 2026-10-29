@@ -156,6 +156,13 @@ function editDistance(a, b) {
  */
 export const MUST_BE_BOUNDED = ['Paralyzed', 'Stunned', 'Blinded', 'Charmed', 'Deafened', 'Petrified', 'Restrained', 'Incapacitated', 'Frightened', 'Poisoned'];
 export const CONDITION_BOUNDED = /until the (?:end|start) of|for 1 (?:minute|hour)|until (?:it|the target|cured|dispelled|this effect ends)|repeats? the (?:saving throw|save)|ending the effect|while .{0,40}(?:remains|is) within|escape DC/i;
+// PRINT'S PRICE FOR A FREE AURA. Every at-will Emanation control row past 10
+// feet buys the target out on a success — Pit Fiend/Fear Aura (20 ft),
+// Cloaker/Moan (60 ft), Harpy/Luring Song (300 ft), 3 of 3. It is how print can
+// hand out a 300-foot Charm at CR 1: the area is uncapped and the CONSEQUENCE is
+// not. Our own `phobia` and `contagion` frames already write this clause, so the
+// grammar is shared rather than print-only.
+export const IMMUNITY_ON_SUCCESS = /immune to (?:this|the) [^.]{0,60}?for (?:the next )?24 hours/i;
 
 export const EMPTY_SAVE_OUTCOME = /\b(Failure|Success):\s*(?:$|(?:Failure|Success):)/;
 

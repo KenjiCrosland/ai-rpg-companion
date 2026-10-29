@@ -651,10 +651,19 @@ export const SHAPES = [
     // at-will aura, so a creature whose terror is its breath, its voice or its
     // sheer presence had no print-shaped passive form to carry it. This one
     // names no organ: NEEDS_BODY has no entry for it on purpose.
+    // PRINT'S PRICE, AND THIS SHAPE'S OWN CITATIONS CARRY IT (2026-10-29).
+    // Every control aura past 10 feet in the 329 buys the target out on a
+    // success — Pit Fiend 20 ft, Sea Hag 30 ft, Cloaker 60 ft, Harpy 300 ft,
+    // 4 of 4 across Traits and Actions; only the Hezrou's 10-foot Stench goes
+    // without. This shape cited two of those rows and dropped the clause, so
+    // Krennik Skullstandard shipped a CR 4 aura that Frightens everything within
+    // 20 feet every round with no way out. The critic read that as the 2014
+    // conversion dropping a Success branch; the diff says otherwise — the 2024
+    // source never had one, and `to2014Grammar` keeps the clause when it exists.
     id: 'fear-aura', duration_default: 'target_start', name: 'Fear Aura',
     cite: 'Pit Fiend/Fear Aura (CR 20, 20 ft, Wis, Frightened); Cloaker/Moan (CR 8); Lion/Roar (CR 1)',
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
-    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature emanates an aura in a 20-foot Emanation while it doesn\'t have the Incapacitated condition. *Wisdom Saving Throw*: DC {dc}, any enemy that starts its turn in the aura. *Failure:* The target has the Frightened condition {duration}.'])), // print literal, the Pit Fiend's — no sight clause, so a voice or a breath carries it
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature emanates an aura in a 20-foot Emanation while it doesn\'t have the Incapacitated condition. *Wisdom Saving Throw*: DC {dc}, any enemy that starts its turn in the aura. *Failure:* The target has the Frightened condition {duration}. *Success:* The target is immune to this creature\'s aura for 24 hours.'])), // print literal, the Pit Fiend's — no sight clause, so a voice or a breath carries it
   },
   {
     id: 'gaze-aura', duration_default: 'target_start', name: 'Vile Appearance', cite: 'Sea Hag/Vile Appearance (CR 2, 30 ft, Wis, Frightened)',
@@ -675,14 +684,21 @@ export const SHAPES = [
   // slot for the fiction the seed used to bake in. The seeds retire.
   {
     id: 'lure', duration_default: 'source_start', name: 'Luring Presence', cite: 'Harpy/Luring Song (CR 1); Siren-class lures',
+    // THE CITATION'S OTHER HALF (2026-10-29). Print's Luring Song is a 300-foot
+    // Emanation at CR 1, and it is legal because a success buys the target out:
+    // "The target is immune to this harpy's Luring Song for 24 hours." Our
+    // Emanation bands cited that row and dropped that clause, which is why the
+    // Trench Hymn Leviathan shipped a 120-foot at-will Charm with no way out on
+    // the 10-29 forty. Every at-will control Emanation past 10 feet in the 329
+    // carries it: Pit Fiend 20 ft, Cloaker 60 ft, Harpy 300 ft — 3 of 3.
     roles: ['lurker', 'artillery', 'controller', 'skirmisher'], styles: [], cr_range: [0, 30], replaces: 'signature',
     frames: {
       '0-2': "*Wisdom Saving Throw:* DC {dc}, one creature within 30 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition {duration}, and while Charmed this way, it must move toward the creature by the safest available route on its turn.",
       '3-5': "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition {duration}, and while Charmed this way, it must move toward the creature by the safest available route on its turn.",
       '6-9': "*Wisdom Saving Throw:* DC {dc}, one creature within 60 feet that can see or hear {lure_source}. *Failure:* The target has the Charmed condition {duration}, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
-      '10-12': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice in a 60-foot Emanation originating from the creature that can see or hear {lure_source}. *Failure:* The target has the Charmed condition {duration}, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
-      '13-20': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice in a 90-foot Emanation originating from the creature that can see or hear {lure_source}. *Failure:* The target has the Charmed condition {duration}, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
-      '21+': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice in a 120-foot Emanation originating from the creature that can see or hear {lure_source}. *Failure:* The target has the Charmed condition {duration}, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions.",
+      '10-12': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice in a 60-foot Emanation originating from the creature that can see or hear {lure_source}. *Failure:* The target has the Charmed condition {duration}, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions. *Success:* The target is immune to this creature's lure for 24 hours.",
+      '13-20': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice in a 90-foot Emanation originating from the creature that can see or hear {lure_source}. *Failure:* The target has the Charmed condition {duration}, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions. *Success:* The target is immune to this creature's lure for 24 hours.",
+      '21+': "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice in a 120-foot Emanation originating from the creature that can see or hear {lure_source}. *Failure:* The target has the Charmed condition {duration}, and while Charmed this way, it must move toward the creature by the safest available route on its turn and can't take Reactions. *Success:* The target is immune to this creature's lure for 24 hours.",
     },
   },
   {

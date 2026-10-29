@@ -2,6 +2,7 @@
 // 2026-09-04): generified golden seeds, engine-priced, drawn only when
 // the wildcard dies, never the same monotony the fallback was.
 import { LIBRARY_SEEDS, drawLibraryRow } from '../library.mjs';
+import { IMMUNITY_ON_SUCCESS } from '../../format-2024/lint.mjs';
 import { pickDonor, scaleDonor } from '../scale.mjs';
 
 describe('the fallback library (2026-09-13)', () => {
@@ -10,7 +11,15 @@ describe('the fallback library (2026-09-13)', () => {
   test('every seed is vet-legal by construction: no reactions, no negation, no immunity grants, no 2014 save grammar', () => {
     for (const seed of LIBRARY_SEEDS) {
       expect(seed.section).not.toBe('Reactions'); // the Credit Due cut — Parry retirement pin
-      expect(seed.text).not.toMatch(/attack misses instead|[Ii]mmun(?:e|ity)|[Rr]esistan/);
+      // THE PIN GUARDS THE CREATURE SIDE, not the target's (narrowed 2026-10-29).
+      // What it exists to stop is a seed handing the CREATURE a damage immunity
+      // or resistance, which inflates its defensive CR for free. Print's own
+      // at-will control Emanations all buy the TARGET out on a success — "immune
+      // to this harpy's Luring Song for 24 hours" — which only weakens the row,
+      // and is now required of our Emanation seeds by `control-aoe-ungated`. So
+      // that one clause is excised before the check, by the same shared pattern
+      // the gate uses, and everything else still fails.
+      expect(String(seed.text).replace(IMMUNITY_ON_SUCCESS, '')).not.toMatch(/attack misses instead|[Ii]mmun(?:e|ity)|[Rr]esistan/);
       expect(seed.text).not.toMatch(/must (?:make|succeed on) a DC/); // 2024 skeleton only
       expect(seed.text).not.toMatch(/\breaction\b/i);
       // every number is a token or engine-derived — no authored DCs

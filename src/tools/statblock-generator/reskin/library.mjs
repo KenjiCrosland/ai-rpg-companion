@@ -67,7 +67,12 @@ export const LIBRARY_SEEDS = [
     key: 'terror-pulse', duration_default: 'target_end', imposes: 'Frightened', keys: ['terror', 'roar', 'shriek', 'presence'],
     section: 'Actions', archetypes: ['brute', 'lurker', 'defender'],
     name: 'Horrid Display (2/Day)', // the Frightful Presence class
-    text: "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice in a 30-foot Emanation originating from the creature that can see or hear it. *Failure:* The target has the Frightened condition {duration}.",
+    // PRINT'S PRICE FOR AN EMANATION (2026-10-29): every at-will control
+    // Emanation past 10 feet in the 329 buys the target out on a success — Pit
+    // Fiend 20 ft, Cloaker 60 ft, Harpy 300 ft, 3 of 3. This row is a 30-foot
+    // Emanation and shipped without it twice on the 10-29 forty (Meshrin, Rook
+    // Harrowgate), where the renamer had also broadcast it as "Dread Presence".
+    text: "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice in a 30-foot Emanation originating from the creature that can see or hear it. *Failure:* The target has the Frightened condition {duration}. *Success:* The target is immune to this creature's terror for 24 hours.",
   },
   {
     key: 'snare-bolt', duration_default: 'source_end', imposes: 'Restrained', keys: ['snare', 'web', 'bind', 'tangle'],

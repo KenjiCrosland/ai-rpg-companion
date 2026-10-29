@@ -1,0 +1,24 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — print-exact, no control row at all." },
+  { "name": "", "description": "a bog lantern that calls lost travellers into the water", "cr": "3", "rules": "2024",
+    "canary": "CANARY — lure below CR 10 is SINGLE-TARGET (\"one creature within 60 feet\"), so no Emanation and no Success clause is owed. Must stay quiet." },
+  { "name": "", "description": "a young storm drake whose breath is a rolling wall of thunder", "cr": "7", "rules": "2024",
+    "canary": "CANARY — a damaging breath, not a control row; the gate must not touch it." },
+
+  { "name": "", "description": "a leviathan of the trench whose song drowns fleets", "cr": "24", "rules": "2024",
+    "canary": "REPLAY — this is the Trench Hymn Leviathan. Drew lure's 120-foot Emanation with no way out; the critic named it as the case the rescope must decide. Must now carry print's 24-hour immunity." },
+  { "name": "", "description": "a drowned cathedral choir that sings in one voice", "cr": "10", "rules": "2024",
+    "canary": "REPLAY — drew lure at 60 feet on the forty. Emanation band, immunity owed." },
+  { "name": "", "description": "a stone giant exile who speaks only Giant and understands no Common", "cr": "9", "rules": "2024",
+    "canary": "REPLAY — Granite Exile. Drew terror-pulse as \"Dread Presence\", a 30-foot Emanation with no way out. Also the lack-honored false positive (Languages must read Giant, no Common)." },
+  { "name": "Meshrin", "description": "Large lizard folk, 30 feet of movement, Wields a greataxe two-handed and hurls javelins", "cr": "8", "rules": "2014",
+    "canary": "REPLAY — drew terror-pulse as \"Horrid Display\" on a 2014 sheet. Watch the Success branch SURVIVE the 2014 conversion; Krennik's Fear Aura lost its 24-hour immunity exactly there." },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2024",
+    "canary": "REPLAY — Rook Harrowgate. Drew terror-pulse unasked on a plain fighter; the critic flagged the pick as well as the missing immunity." },
+
+  { "name": "", "description": "a plague-bearing archon of flies that commands lesser swarms", "cr": "13", "rules": "2014",
+    "canary": "FEATURE — the Vesp Lord. A 2014 aura sheet; the Success branch must survive conversion here too." },
+  { "name": "Krennik Skullstandard", "description": "riding a worg, his banner topped with a skull that terrifies those who see it", "cr": "4", "rules": "2014",
+    "canary": "REPLAY — Krennik. His Fear Aura lost \"immune for 24 hours\" in the 2014 conversion, making it a lockdown every round at CR 4. The gate should now catch that if it recurs." }
+]

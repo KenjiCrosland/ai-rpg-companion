@@ -112,12 +112,38 @@ describe('gates', () => {
     expect(has(checkBlock(withRow('Actions', { name: 'Glare', text: '*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Paralyzed condition until the end of its next turn.' })), 'gates', 'ko-at-will', 'soft')).toBe(true);
     expect(has(checkBlock(withRow('Actions', { name: 'Glare', text: '*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Paralyzed condition. It repeats the save at the end of each of its turns, ending the effect on a success.' })), 'gates', 'ko-at-will', 'soft')).toBe(true);
   });
-  // RESCOPED 2026-10-29 to print's measured envelope. This exact row — narrow,
-  // multi-target, at will, capped at the end of the target's next turn — is the
-  // Young Copper Dragon's Slowing Breath, so it is not a finding. It fired on 6
-  // of 40 sheets on the 10-29 forty, every one legal (critic's correction).
-  test('a narrow, bounded at-will control row is print\'s own shape and stays quiet', () => { expect(has(checkBlock(withRow('Actions', { name: 'Howl', text: '*Wisdom Saving Throw*: DC 15, each creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' })), 'gates', 'control-aoe-ungated')).toBe(false); });
-  test('the same row UNBOUNDED is still a finding — print caps every one of its four', () => { expect(has(checkBlock(withRow('Actions', { name: 'Howl', text: '*Wisdom Saving Throw*: DC 15, each creature within 30 feet. *Failure:* The target has the Frightened condition.' })), 'gates', 'control-aoe-ungated', 'soft')).toBe(true); });
+  // RESCOPED 2026-10-29, SECOND PASS. The first pass capped width from the four
+  // Young metallic dragons; print caps the CONSEQUENCE instead, and splits by
+  // shape. Counted over all 21 at-will multi-target control rows in the 329:
+  // Cones 16/16 are duration-bounded or impose only a self-ending condition and
+  // 0/16 carry immunity; Emanations past 10 ft are 3/3 with the 24-hour
+  // immunity (Pit Fiend 20, Cloaker 60, Harpy 300) and all 5 are free. Width is
+  // not capped at any CR — the widest is a 300-foot Emanation at CR 1.
+  test('a bounded at-will control Cone is print\'s own shape and stays quiet', () => { expect(has(checkBlock(withRow('Actions', { name: 'Howl', text: '*Wisdom Saving Throw*: DC 15, each creature in a 30-foot Cone. *Failure:* The target has the Frightened condition until the end of its next turn.' })), 'gates', 'control-aoe-ungated')).toBe(false); });
+  test('a 90-foot Cone is quiet too — print\'s Ancient metallics are 90 ft, so width is no finding', () => { expect(has(checkBlock(withRow('Actions', { name: 'Howl', text: '*Wisdom Saving Throw*: DC 15, each creature in a 90-foot Cone. *Failure:* The target has the Frightened condition until the end of its next turn.' })), 'gates', 'control-aoe-ungated')).toBe(false); });
+  test('an UNBOUNDED Cone is a finding — 16 of print\'s 16 bound it', () => { expect(has(checkBlock(withRow('Actions', { name: 'Howl', text: '*Wisdom Saving Throw*: DC 15, each creature in a 30-foot Cone. *Failure:* The target has the Frightened condition.' })), 'gates', 'control-aoe-ungated')).toBe(true); });
+  test('a Cone imposing only Prone is quiet with no duration at all — Bronze\'s Repulsion Breath', () => { expect(has(checkBlock(withRow('Actions', { name: 'Shove Breath', text: '*Strength Saving Throw*: DC 15, each creature in a 30-foot Cone. *Failure:* The target is pushed up to 40 feet straight away from it and has the Prone condition.' })), 'gates', 'control-aoe-ungated')).toBe(false); });
+
+  // THE CASE THE RESCOPE HAS TO DECIDE (critic, 2026-10-29): the Trench Hymn
+  // Leviathan's 120-foot Emanation at CR 24. The first pass passed it as narrow
+  // because the width test never looked for a shape keyword.
+  test('a 120-foot at-will control Emanation with no way out is a finding — the Leviathan', () => {
+    const r = withRow('Actions', { name: 'Luring Presence', template: 'luring-presence', library: true, text: '*Wisdom Saving Throw*: DC 24, each creature in a 120-foot Emanation originating from it. *Failure:* The target has the Charmed condition until the end of its next turn.' });
+    expect(has(checkBlock(r), 'gates', 'control-aoe-ungated', 'fail')).toBe(true);
+  });
+  test('the same Emanation WITH print\'s 24-hour immunity is quiet — the Harpy ships 300 feet at CR 1', () => {
+    const r = withRow('Actions', { name: 'Luring Presence', template: 'luring-presence', library: true, text: '*Wisdom Saving Throw*: DC 24, each creature in a 120-foot Emanation originating from it. *Failure:* The target has the Charmed condition until the end of its next turn. *Success:* The target is immune to this creature\'s song for 24 hours.' });
+    expect(has(checkBlock(r), 'gates', 'control-aoe-ungated')).toBe(false);
+  });
+  test('a 10-foot Emanation needs no immunity — the Hezrou is print\'s one exception', () => {
+    const r = withRow('Actions', { name: 'Stench', text: '*Constitution Saving Throw*: DC 15, each creature in a 10-foot Emanation originating from it. *Failure:* The target has the Poisoned condition until the end of its next turn.' });
+    expect(has(checkBlock(r), 'gates', 'control-aoe-ungated')).toBe(false);
+  });
+  test('severity follows the evidence: a chassis row with no engine stamp is soft, not fail', () => {
+    const r = withRow('Actions', { name: 'Wail', text: '*Wisdom Saving Throw*: DC 15, each creature in a 60-foot Emanation originating from it. *Failure:* The target has the Frightened condition until the end of its next turn.' });
+    expect(has(checkBlock(r), 'gates', 'control-aoe-ungated', 'soft')).toBe(true);
+    expect(has(checkBlock(r), 'gates', 'control-aoe-ungated', 'fail')).toBe(false);
+  });
   test('hard control at will below CR 13 fails; a damage spell at will outside a replacement clause is soft', () => {
     expect(has(checkBlock(withRow('Actions', { name: 'Spellcasting', text: 'The stalker casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 12):\n\n- At Will: Hold Person' })), 'gates', 'control-at-will', 'fail')).toBe(true);
     const r = checkBlock(withRow('Actions', { name: 'Spellcasting', text: 'The stalker casts one of the following spells (spell save DC 12):\n\n- At Will: Fireball' })); expect(has(r, 'gates', 'damage-spell-at-will', 'soft')).toBe(true);
@@ -243,16 +269,25 @@ describe("the critic's blockers audit (2026-10-03)", () => {
     b.sections.Actions[1].name = 'Slam';
     expect(has(checkBlock(b), 'structure', 'multiattack-row', 'fail')).toBe(true);
   });
-  test('at-will mass control is fail when it is wide and nothing is traded for it, soft when Multiattack trades an attack (print\'s 13 breaths)', () => {
-    const row = { name: 'Tether Call', text: "*Wisdom Saving Throw*: DC 15, each creature of its choice within 120 feet that can see it. *Failure:* The target has the Charmed condition until the start of the stalker's next turn." };
+  // THE TRADING AXIS IS GONE (2026-10-29, second pass): print ships 9 of its 21
+  // at-will control rows free, including the Harpy's 300-foot Emanation at CR 1,
+  // so "nothing traded for it" was never the defect. This row stays a finding on
+  // the ground that survived measurement — it states no area at all, where all
+  // 21 of print's name a Cone or an Emanation. ("each creature of its choice" is
+  // itself 0 of 329 print rows, gated or not; that is a separate rule and the
+  // owner has not ruled on it.)
+  test('at-will mass control with no stated area is a finding whether or not Multiattack trades for it', () => {
+    const row = { name: 'Tether Call', template: 'luring-presence', library: true, text: "*Wisdom Saving Throw*: DC 15, each creature of its choice within 120 feet that can see it. *Failure:* The target has the Charmed condition until the start of the stalker's next turn." };
     const free = withRow('Actions', row);
     expect(has(checkBlock(free), 'gates', 'control-aoe-ungated', 'fail')).toBe(true);
     const traded = withRow('Actions', row);
     traded.sections.Actions[0].text = 'The stalker makes two Claw attacks. It can replace one attack with a use of Tether Call.';
-    expect(has(checkBlock(traded), 'gates', 'control-aoe-ungated', 'soft')).toBe(true);   // still soft: 120 feet, each creature of its choice — trading buys print's 30-foot Cone, not any width
-    expect(has(checkBlock(traded), 'gates', 'control-aoe-ungated', 'fail')).toBe(false);
+    expect(has(checkBlock(traded), 'gates', 'control-aoe-ungated', 'fail')).toBe(true);   // trading buys nothing here; the area is still unstated
+  });
+
+  test('a 20-foot control Emanation with no way out is a finding — print\'s Pit Fiend aura at 20 ft grants the 24-hour immunity', () => {
     const narrow = withRow('Actions', { name: 'Dread Pulse', text: '*Wisdom Saving Throw*: DC 15, each creature in a 20-foot Emanation. *Failure:* The target has the Frightened condition until the end of its next turn.' });
-    expect(has(checkBlock(narrow), 'gates', 'control-aoe-ungated')).toBe(false);   // narrow and bounded: the Young Copper Dragon's shape exactly
+    expect(has(checkBlock(narrow), 'gates', 'control-aoe-ungated')).toBe(true);
   });
   test('a ". and" join fails the punctuation rule', () => {
     const b = base(); b.sections.Actions[1].text = '*Melee Attack Roll:* +7, reach 5 ft. 20 (3d10 + 4) Cold damage. and the target has the Paralyzed condition until the start of its next turn.';
@@ -408,5 +443,25 @@ describe('condition-duration believes what the row declares', () => {
   });
   test('stays SOFT on a donor row, which had no writer to record the field', () => {
     expect(has(checkBlock(grasp({ rules: true })), 'adjudicability', 'condition-duration', 'soft')).toBe(true);
+  });
+});
+
+describe('a free control aura in Traits owes print\'s way out (2026-10-29)', () => {
+  const aura = (text, over = {}) => ({ name: 'Fear Aura', text, ...over });
+  test('a 20-foot trait aura with no immunity is a finding — Krennik at CR 4', () => {
+    const r = withRow('Traits', aura("The creature emanates an aura in a 20-foot Emanation while it doesn't have the Incapacitated condition. *Wisdom Saving Throw*: DC 13, any enemy that starts its turn in the aura. *Failure:* The target has the Frightened condition until the start of its next turn.", { template: 'fear-aura', library: true }));
+    expect(has(checkBlock(r), 'gates', 'control-aoe-ungated', 'fail')).toBe(true);
+  });
+  test('the same aura WITH print\'s 24-hour immunity is quiet — the Pit Fiend ships 20 feet at CR 20', () => {
+    const r = withRow('Traits', aura("The creature emanates an aura in a 20-foot Emanation while it doesn't have the Incapacitated condition. *Wisdom Saving Throw*: DC 13, any enemy that starts its turn in the aura. *Failure:* The target has the Frightened condition until the start of its next turn. *Success:* The target is immune to this creature's aura for 24 hours.", { template: 'fear-aura', library: true }));
+    expect(has(checkBlock(r), 'gates', 'control-aoe-ungated')).toBe(false);
+  });
+  test('it reads the 2014 printing too — that is where the defect shipped', () => {
+    const r = withRow('Traits', aura('Krennik emanates an aura in a 20-foot-radius sphere while it is not incapacitated. Any enemy that starts its turn in the aura must succeed on a DC 13 Wisdom saving throw or be frightened until the start of its next turn.', { template: 'fear-aura', library: true }));
+    expect(has(checkBlock(r), 'gates', 'control-aoe-ungated', 'fail')).toBe(true);
+  });
+  test('a 10-foot aura needs none — the Hezrou is print\'s exception', () => {
+    const r = withRow('Traits', aura('*Constitution Saving Throw*: DC 15, any creature that starts its turn in a 10-foot Emanation originating from the creature. *Failure:* The target has the Poisoned condition until the end of its next turn.', { template: 'fear-aura', library: true }));
+    expect(has(checkBlock(r), 'gates', 'control-aoe-ungated')).toBe(false);
   });
 });

@@ -3,7 +3,8 @@
 **Trigger:** work on the reskin engine's naming, slot fills, free rows, 2014
 conversion, or the reader's damage maths. Read this before re-deriving any of it.
 
-Critic's verdicts: **10 ship / 23 fix-lite / 7 fix**. Mine were 22/15/3. The gap
+Critic's verdicts, after it withdrew the Goblin Boss finding: **11 ship /
+22 fix-lite / 7 fix**. Mine were 22/15/3. The gap
 is almost entirely that the critic scores the sheet *as shipped* on three axes
 and sends a block back for any soundness 0, where I was scoring "would a GM run
 this". Its split is the one to track from here; mine was too generous about
@@ -16,7 +17,7 @@ originality 5 strong / 13 missing · soundness 6 broken · twist-became-a-rule 2
 
 | claim | verdict |
 |---|---|
-| At-will multi-target control is print-legal | **TRUE.** Young Brass (CR 6, Sleep), Copper (CR 7, Slowing), Bronze (CR 8, Repulsion), Silver (CR 9, Paralyzing) each swap a no-recharge condition-imposing 30-ft Cone into their Multiattack. `control-aoe-ungated` was wrong on all 6 sheets it fired on → retire it. |
+| At-will multi-target control is print-legal | **TRUE.** 21 such rows in the 329. `control-aoe-ungated` was wrong on all 6 sheets it fired on → **rescoped**, see below. |
 | `Fire Aura` is print's name for our "Searing Aura" | **TRUE**, print ×4 (Azer Sentinel CR 2, Salamander). |
 | `Aura of Authority` is print | **TRUE**, Hobgoblin Captain CR 3. |
 | Dazzling Burst / Sundering Shove / Resonant Body / Horrid Display / Threshold Execute / Bloodied Burst / Searing Aura / Interpose / Aura of Truth are not print names | **TRUE**, none appear in the 329. These are exactly the names colliding ×2–3 per sweep. |
@@ -45,7 +46,9 @@ Searing Aura ×2 with identical text at CR 17 and CR 20. Two names also became
 wrong for their row ("Leaden Touch" on a 30-foot cone, "Threshold Execute" on
 a lance vendetta).
 
-Not implementing either half until the owner rules.
+**Resolved: the owner ruled "split by print provenance" on 2026-10-29 and
+amended it the same hour — "but if we're augmenting it. we get to rename".
+Landed; see below.**
 
 ## Landed 2026-10-29
 
@@ -77,7 +80,12 @@ renderer already writes (`augmented: {kind, fill}`), not a text read.
 - `one-mechanic-one-name-everywhere.spec.js` rewritten to the amended ruling
   (18 tests, including both halves of the augmentation rule).
 
-**Item 8, `control-aoe-ungated` — rescoped, not retired.** Print's envelope read
+**Item 8, `control-aoe-ungated` — FIRST RESCOPE WAS WRONG; REOPENED.** Keep
+reading past this block: the width axis it describes does not exist in print and
+the replay that appeared to validate it was reading a blind test. The corrected
+envelope is in "Item 8, second pass" below.
+
+**Item 8, first pass (superseded).** Print's envelope read
 off the four rows that define it (Young Brass/Copper/Silver/Bronze dragons): all
 are 30-foot Cones swapped into Multiattack; three cap at the end of the target's
 next turn, and Bronze's Repulsion imposes only Prone, which self-ends. So the
@@ -94,7 +102,149 @@ either unbounded or wider than print ever goes.
   unbounded and over-wide cases still fire, so this is a narrowing, not a
   removal.
 
-Full suite green at each step: **157 suites, 4,332 tests.**
+Full suite green at each step: **157 suites, 4,332 tests.** Focused ten
+(`names10`): 0 FAIL, three canaries hold, `dazzling-burst` drew three times
+under three different names (Steam Gout / Searing Glare / Blinding Flash), and
+the first augmentation to land in a run — "Crevasse Clamber", with the squeeze
+clause present in both the text and the stamp.
+
+## Item 8, second pass — the envelope, measured properly (2026-10-29)
+
+The first pass built the envelope from the four **Young** metallic dragons and
+called it print. The corpus holds **21** at-will multi-target control rows, and
+two of the first pass's claims are false:
+
+- *"No wide at-will control row in the 329 at any cost."* False. Adult Brass is
+  a **60-foot Cone at CR 13**; Ancient Brass, Copper and Silver are **90-foot
+  Cones**. They were in the same query output; I stopped reading at four rows.
+- *"Replayed on the forty: 6 firings → 0."* Partly a blind test, not a
+  narrowing. `wide` tests `within (\d+) feet`, so **`120-foot Emanation` reads
+  as false** and so does `90-foot Cone`. The Trench Hymn Leviathan's 120-foot
+  Emanation at CR 24 was judged narrow by a hole, which is what the critic
+  suspected.
+
+**A CR-banded width cap fails against print.** The widest at-will control row in
+the corpus is the **Harpy's 300-foot Emanation at CR 1** (282,743 sq ft), so a
+running max sits there from CR 1 up and permits everything. Print does not cap
+the AREA of these rows; it caps the CONSEQUENCE, and the split is by shape:
+
+| shape | rows | carry the 24-hour immunity | duration-bounded | free (untraded) |
+|---|---|---|---|---|
+| Cone | 16 | **0** | 12 | 4 |
+| Emanation | 5 | **4** | 5 | **5 of 5** |
+
+Cones never carry immunity — they bound by duration, or impose only self-ending
+Prone. Emanations carry immunity-on-success for 24 hours (Harpy 300 ft, Cloaker
+60 ft, Pit Fiend 20 ft, Ghast 5 ft); the one exception is the Hezrou's 10-foot
+Emanation. That is why a 300-foot emanation is legal at CR 1: a success buys the
+target out for a day.
+
+**So the rule to build:**
+
+- Cone, at-will, multi-target control → needs a duration bound or a self-ending
+  condition. (The first pass's `bounded` test, with the width axis deleted.)
+- Emanation beyond ~10 feet → needs the 24-hour immunity-on-success.
+- No width cap at any CR.
+- The FAIL arm's message is also wrong and must be reworded: it says "print's 13
+  breaths of this shape all cost an attack" when **9 of the 21 are free**,
+  including the Harpy's.
+- Add the Leviathan's row to the unit tests — it is the case this decides.
+- This converges with a soundness bug: Krennik's Fear Aura **lost** its 24-hour
+  immunity in the 2014 conversion, so the gate and item 4's conversion fix point
+  at the same evidence.
+
+## Item 8, second pass — LANDED 2026-10-29
+
+**The gate**, shape-aware, no width axis, four arms, each with its print count in
+the message:
+
+- no stated area → finding (all 21 of print's at-will control rows name a Cone
+  or an Emanation)
+- Emanation past 10 ft with no 24-hour immunity → finding (3 of 3 past 10 ft
+  carry it)
+- condition never ends → finding (16 of 16 Cones bound it or impose only
+  self-ending Prone)
+- **a free control aura in Traits past 10 ft with no immunity → finding.** Its
+  own entry predicate, because a trait aura says "any enemy that starts its turn
+  in the aura", not "each creature", and it must read both editions. Print's
+  Traits section: of the four real control auras, every one past 10 feet grants
+  the immunity (Pit Fiend 20 ft, Sea Hag 30 ft); only the Hezrou's 10-foot
+  Stench goes without, and the Ghast's 5-foot one grants it anyway. Across both
+  sections that is **4 of 4 past 10 feet**.
+
+The trading axis is **gone**: 9 of print's 21 are free, including the Harpy's
+300-foot Charm at CR 1, so "nothing traded for it" was never the defect.
+Severity follows the evidence as elsewhere in the file — a row the engine wrote
+fails, a chassis or donor row softs.
+
+**Then the gate pointed at a real defect in three templates, and that is fixed
+too.** Each cites a print row that carries the clause and reproduced everything
+except the clause:
+
+| template | cites | was | now |
+|---|---|---|---|
+| `lure` | Harpy/Luring Song | 60/90/120-ft Emanations, no way out | print's Success clause on all three Emanation bands (the single-target bands owe nothing) |
+| `terror-pulse` | the Frightful Presence class | 30-ft Emanation, no way out | Success clause added |
+| `fear-aura` | Pit Fiend/Fear Aura, Cloaker/Moan | 20-ft aura, no way out | Success clause added |
+
+`gaze-aura` already had it; `active-toll` is correctly exempt (it deals damage
+and is Recharge-gated, as print's breaths are).
+
+**The critic's diagnosis of Krennik was wrong, and the diff proves it.** It read
+the CR 4 fear lockdown as the 2014 conversion dropping a Success branch. The two
+printings say otherwise:
+
+```
+2024 source: ...any enemy that starts its turn in the aura. Failure: The target
+             has the Frightened condition until the start of its next turn.
+2014 sheet:  ...must succeed on a DC 13 Wisdom saving throw or be frightened
+             until the start of its next turn.
+```
+
+Nothing was dropped — **it was never written**. `to2014Grammar` keeps the clause
+on every shape tested, and rendering the fixed `fear-aura` at CR 4, 13 and 24
+shows the clause present in 2024 and **surviving the conversion at every band**.
+So the conversion is not implicated here; item 4's other conversion findings
+stand on their own evidence.
+
+Verified replay: the finished gate fires on **5 of 40** (Leviathan, Granite
+Exile, Krennik, Meshrin, Rook) and 1 of 10 on each focused ten — every one a
+sheet generated *before* the template fix, and every one a true positive.
+
+Suite green throughout: **157 suites, 4,343 tests.** One pin narrowed on
+purpose: the fallback library's "no immunity grants" law guards the CREATURE
+gaining immunity or resistance (free defensive CR), not a TARGET being bought
+out of an effect, which only weakens the row; it now excises that one clause via
+the shared `IMMUNITY_ON_SUCCESS` and everything else still fails it.
+
+## Open, needs the owner: "each creature of its choice"
+
+**0 of 329 print rows use it** — not zero at-will control rows, zero rows of any
+kind, gated or not. Print never writes friendly-fire exemption that way; it
+names a Cone or an Emanation and lets the area fall where it falls. We put it on
+`lure`, `terror-pulse` and `driving-bellow` at least, so removing it is a
+catalog change across several templates and a real nerf to those rows (the
+creature would start catching its own allies). Not touched.
+
+## Accepted from the critic's second read, not yet landed
+
+- **Running max on the single-hit ceiling.** (Still owed.) CR 17–20's 43 sits below CR 13–16's
+  51; that is sampling, not a rule, and a cap must never shrink as CR rises.
+- **Rename on an augmentation `kind`, never on a slot `fill`** — already true
+  (the renderer sets `augmented` only when a kind fires, so Mimicry filled with
+  "stolen voices" keeps print's name), but nothing stops a future change from
+  widening it. Two routing tests owed.
+- **The batch check will collide with the closed exception.** The renamer
+  *forces* `condition-payoff`, `exploiter` and `riposte` to converge, so a
+  sameness check firing on its own output is incoherent. Exempt all three as
+  house vocabulary.
+- **Guarded Stance: price it, don't withdraw it.** Existence is free (owner,
+  2026-10-27); the calibration half stands. The reader should count Disadvantage
+  on melee while not Bloodied as defence (≈ −4 to hit for half the fight) and
+  let the bands judge. Folds into item 6.
+- **One sameness surface the naming split does not reach:** `Umbral Step` shipped
+  with identical text on two sheets of the focused ten. It is a library row, not
+  a templated one. The batch check is what catches this class.
 
 ## Order of work (the critic's, with my notes)
 
@@ -105,7 +255,7 @@ Full suite green at each step: **157 suites, 4,332 tests.**
    name carried (Purple Worm: "the name advertises nothing"). Batch check: no
    two sheets in a forty ship the same invented name or the same row text;
    print names and plain attack names (Bite, Claw, Rend, Slam) are exempt.
-   **Blocked on the ruling above.**
+   **LANDED 2026-10-29** — see the landed section above.
 2. **Expression judge on slot fills.** We already have the judge. Run it on
    every slot fill against the clause or idea that picked the row; on a fail
    refill once with that clause in hand; on a second fail refuse the row. The
@@ -142,10 +292,9 @@ Full suite green at each step: **157 suites, 4,332 tests.**
    15-ft cone for a "rolling wall", weapon dice and reach, Ilvareth's immunity
    line, Brass Tyrant's missing rulership, Siege Golem's unreceipted thunder,
    Molra's off-list Ray of Sickness).
-8. **Retire `control-aoe-ungated`** or rescope it to print's envelope: costs at
-   least one attack, first failure lasts until the end of the target's next
-   turn, a harsher condition needs a second failed save, and a *free* aura
-   (trait) carries immunity for 24 hours on a success.
+8. **`control-aoe-ungated`** — first rescope landed and was wrong; **reopened**
+   with the measured envelope in "Item 8, second pass" above. Shape-aware, no
+   width cap.
 
 ## Answers to the case's open questions
 

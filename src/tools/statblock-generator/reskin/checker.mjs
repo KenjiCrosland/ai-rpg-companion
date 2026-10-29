@@ -28,7 +28,7 @@ import TABLE from '@/data/challengeRatings.json';
 import { PRINT_2014 } from './print-2014.mjs';
 import { resolutionOf, TARGET_CLAUSE, SAVE_OUTCOME } from './forms.mjs';
 import { NAME_CLAIMS_MECHANIC, mechanicUnkept } from './name-claims.mjs';
-import { MUST_BE_BOUNDED, CONDITION_BOUNDED } from '../format-2024/lint.mjs';
+import { MUST_BE_BOUNDED, CONDITION_BOUNDED, IMMUNITY_ON_SUCCESS } from '../format-2024/lint.mjs';
 import { LACKS_STOP, TEXT_GATE } from './generate.mjs';
 export const GATES = ['derivation', 'bands', 'structure', 'gates', 'headerBody', 'edition', 'donor', 'adjudicability', 'reader', 'class'];
 const crNum = (k) => (String(k).includes('/') ? Number(String(k).split('/')[0]) / Number(String(k).split('/')[1]) : Number(k));
@@ -581,39 +581,80 @@ function gateGates(m, ctx, F) {
     const noGrapple = /escape DC/.test(e.text ?? '') ? String(e.text ?? '').replace(/(?:While Grappled, the target has|,? and (?:it|the target) has) the Restrained condition(?: until the grapple ends)?\.?/g, '') : String(e.text ?? ''); // only a row that grapples (an escape DC) gets the exemption // print's grapple shapes: the Giant Toad's "While Grappled…" and the Kraken's "and it has the Restrained condition until the grapple ends" // print's grapple shape (the Giant Toad, the Mimic): the escape DC is the save
     if (!e.print && /Attack Roll/.test(e.text ?? '') && !/Saving Throw/.test(e.text ?? '') && /has the (Frightened|Poisoned|Blinded|Deafened|Charmed|Stunned|Paralyzed|Restrained) condition/.test(noGrapple)) F('rider-no-save', 'soft', `${sec}/${bare(e.name)}: a ${/has the (?!Grappled\b)(\w+) condition/.exec(noGrapple)[1]} rider on every hit with no save`, bare(e.name)); // print's hit riders without a save are Grappled and Prone (critic's audit: Frightened on every hit, three times a round)
     if (!gated && sec !== 'Traits' && /each creature/i.test(e.text ?? '') && /has the \w+ condition/.test(e.text ?? '') && !/\d+ \(\d+d\d+/.test(e.text ?? '')) {
-      // print has 15 rows of this shape and NOT ONE is wide and free: the 13 dragon breaths (Sleep, Repulsion, Paralyzing)
-      // are named in Multiattack's replacement clause, so they cost an attack, and the rest are narrow emanations. A wide
-      // one taken for free is the row a GM house-rules mid-fight (the Lake That Thinks: 120 feet, every creature of its
-      // choice, Charmed and walking in) — fail (critic's blockers audit 2026-10-03)
-      const maText = (m.sections?.Actions ?? []).find((x) => /^Multiattack/.test(x.name ?? ''))?.text ?? '';
-      const traded = new RegExp(`\\b${esc(bare(e.name))}\\b`).test(maText);
-      const wide = /of (?:its|his|her|their) choice/i.test(e.text ?? '') || Number(/within (\d+) feet/.exec(e.text ?? '')?.[1] ?? 0) > 60;
-      // PRINT'S ENVELOPE, READ OFF THE FOUR ROWS THAT DEFINE IT (2026-10-29).
-      // The soft arm used to fire on EVERY row of this shape, including the one
-      // it described in its own message as "print's shape" — 6 of 40 sheets on
-      // the 10-29 forty, every one of them legal. Print's at-will multi-target
-      // control is the young metallic dragons' breath, swapped into Multiattack:
-      //   Brass/Sleep      30-ft Cone, Incapacitated until the end of its next
-      //                    turn, then repeats the save; Unconscious only on a
-      //                    SECOND failure
-      //   Copper/Slowing   30-ft Cone, "This effect lasts until the end of its
-      //                    next turn"
-      //   Silver/Paralyzing 30-ft Cone, Incapacitated to the end of its next
-      //                    turn; Paralyzed only on a second failure
-      //   Bronze/Repulsion 30-ft Cone, pushed 40 ft + Prone — no duration at
-      //                    all, because Prone self-ends (print's own 58-row rule)
-      // So the defect is not "at will and multi-target"; it is at will, multi-
-      // target AND unbounded. The bound is read from the DECLARED field first
-      // (`duration`, which the renderer records) and from the text only as the
-      // fallback, the same order `condition-duration` uses above.
+      // PRINT'S ENVELOPE, MEASURED OVER ALL 21 ROWS OF THIS SHAPE (2026-10-29,
+      // second pass). The first pass built it from the four YOUNG metallic
+      // dragons and got two things wrong, both caught by the critic:
+      //
+      //  1. It capped WIDTH. Print does not. The widest at-will multi-target
+      //     control row in the 329 is the Harpy's 300-foot Emanation at CR 1
+      //     (282,743 sq ft); a CR-banded cap built from that permits everything.
+      //  2. Its width test never saw a shape keyword, so `120-foot Emanation`
+      //     and `90-foot Cone` both read as narrow. The Trench Hymn Leviathan's
+      //     120-foot Emanation at CR 24 passed through a hole, not a rule.
+      //
+      // What print actually constrains is the CONSEQUENCE, and it splits by
+      // SHAPE — counted over every at-will (no recharge, no /Day) multi-target
+      // row that imposes a condition and deals no damage:
+      //
+      //   Cone       16 rows.  24-hour immunity: 0.  Duration-bounded or
+      //              imposing only a self-ending condition: 16 OF 16.
+      //              (Brass/Copper/Silver cap at the end of the target's next
+      //              turn and escalate only on a second failure; every Bronze
+      //              Repulsion Breath imposes Prone, which self-ends. Width
+      //              grows with age — 15 ft wyrmling, 30 young, 60 adult, 90
+      //              ancient — but Bronze stays 30 ft to CR 22, so it is a
+      //              convention, not a cap.)
+      //   Emanation   5 rows.  All 5 duration-bounded, all 5 FREE (never traded
+      //              for an attack), and past 10 feet 3 OF 3 carry the 24-hour
+      //              immunity on a success: Pit Fiend 20 ft, Cloaker 60 ft,
+      //              Harpy 300 ft. The only one without it is the Hezrou's
+      //              10-foot aura.
+      //
+      // So: 9 of the 21 are free, which also retires the old FAIL message's
+      // claim that "print's 13 breaths of this shape all cost an attack".
+      const shape = /(\d+)-foot (Cone|Line|Emanation|Cube|Sphere)/.exec(e.text ?? '');
+      const emanation = shape?.[2] === 'Emanation' && Number(shape[1]) > 10;
+      // THE DECLARED FIELD FIRST, text only as the fallback — the order
+      // `condition-duration` above already uses. A condition outside
+      // MUST_BE_BOUNDED self-ends (print's Prone, 58 rows), so it needs no clock.
       const impoHere = e.imposes ?? (/has the (\w+) condition/.exec(e.text ?? '') ?? [])[1] ?? null;
       const bounded = !!e.duration || CONDITION_BOUNDED.test(String(e.text ?? '')) || !!(impoHere && !MUST_BE_BOUNDED.includes(impoHere));
-      // TWO AXES, and print constrains both. Trading for an attack buys print's
-      // NARROW cone and nothing wider: there is no wide at-will control row in
-      // the 329 at any cost. So width is still a finding even when traded.
-      if (wide && !traded) F('control-aoe-ungated', 'fail', `${sec}/${bare(e.name)}: at-will multi-target control, no damage, no gate, and nothing traded for it — print's 13 breaths of this shape all cost an attack`, bare(e.name));
-      else if (wide) F('control-aoe-ungated', 'soft', `${sec}/${bare(e.name)}: traded for an attack as print does, but wider than print ever goes at will — print's four at-will control breaths are all 30-foot Cones`, bare(e.name));
-      else if (!bounded) F('control-aoe-ungated', 'soft', `${sec}/${bare(e.name)}: at-will multi-target control${traded ? ', traded for an attack as print does,' : ''} but the condition it imposes is unbounded — print's four all cap at the end of the target's next turn, or impose only a self-ending condition`, bare(e.name));
+      const boughtOut = IMMUNITY_ON_SUCCESS.test(String(e.text ?? ''));
+      // SEVERITY TRACKS THE EVIDENCE, as elsewhere in this file: a row the
+      // ENGINE wrote had a writer who could have recorded the field, so a gap is
+      // a verdict; a chassis or donor row had none, so it is a flag.
+      const engineWrote = !!(e.template || e.library || e.seed);
+      // A SHAPE KEYWORD IS NOT OPTIONAL: all 21 of print's at-will control rows
+      // name a Cone or an Emanation, so a bare "each creature within N feet" is
+      // a sphere with no stated geometry and 0 of 21 precedent. This is the arm
+      // that keeps the old `wide && !traded` case a finding ("each creature of
+      // its choice within 120 feet") now that the trading axis is gone — print
+      // ships 9 of its 21 for free, so FREE was never the defect.
+      if (!shape) F('control-aoe-ungated', engineWrote ? 'fail' : 'soft', `${sec}/${bare(e.name)}: at-will multi-target control with no stated area — all 21 of print's at-will control rows name a Cone or an Emanation`, bare(e.name));
+      else if (emanation && !boughtOut) F('control-aoe-ungated', engineWrote ? 'fail' : 'soft', `${sec}/${bare(e.name)}: a ${shape[1]}-foot at-will Emanation of control with no way out — print's three Emanations past 10 feet all grant immunity for 24 hours on a success (Pit Fiend 20 ft, Cloaker 60 ft, Harpy 300 ft), which is how it can hand out a 300-foot Charm at CR 1`, bare(e.name));
+      else if (!bounded) F('control-aoe-ungated', engineWrote ? 'fail' : 'soft', `${sec}/${bare(e.name)}: at-will multi-target control that never ends — 16 of print's 16 at-will control Cones either bound the condition to the end of the target's next turn or impose only a self-ending one`, bare(e.name));
+    }
+    // THE SAME PRICE, ON A TRAIT (2026-10-29). A control aura in Traits is
+    // strictly FREER than the action rows above — it costs nothing at all and
+    // fires on every enemy's turn — so print's limiter matters more there, not
+    // less. Counted over the Traits section of the 329: of the four real control
+    // auras, every one past 10 feet grants the 24-hour immunity (Pit Fiend 20 ft,
+    // Sea Hag 30 ft) and only the Hezrou's 10-foot Stench goes without; the Ghast's
+    // 5-foot Stench grants it anyway. Combined with the action rows that is 4 of 4
+    // past 10 feet (adding Cloaker 60 ft, Harpy 300 ft).
+    //
+    // This needs its own entry predicate because a trait aura does not say "each
+    // creature" — it says "any enemy that starts its turn in the aura" — and it
+    // must read both editions, since the defect that prompted it shipped on a 2014
+    // sheet ("20-foot-radius sphere ... or be frightened"). Krennik Skullstandard,
+    // CR 4, Frightening everything within 20 feet every round with no way out; it
+    // is the only firing on the 10-29 forty.
+    if (!gated && sec === 'Traits' && /[Ss]aving [Tt]hrow/.test(e.text ?? '') && /has the \w+ condition|be (?:frightened|poisoned|charmed|paralyzed)/i.test(e.text ?? '') && !/\d+ \(\d+d\d+/.test(e.text ?? '')) {
+      const g = /(\d+)-foot(?:-radius)? (?:Emanation|sphere)|within (\d+) feet/.exec(e.text ?? '');
+      const size = Number(g?.[1] ?? g?.[2] ?? 0);
+      if (size > 10 && !IMMUNITY_ON_SUCCESS.test(String(e.text ?? ''))) {
+        F('control-aoe-ungated', (e.template || e.library || e.seed) ? 'fail' : 'soft', `${sec}/${bare(e.name)}: a free ${size}-foot control aura with no way out — every print control aura past 10 feet grants immunity for 24 hours on a success (Pit Fiend 20 ft, Sea Hag 30 ft, Cloaker 60 ft, Harpy 300 ft), and a trait costs the creature nothing at all`, bare(e.name));
+      }
     }
     const atWill = /At Will:\*?\*?\s*([^\n]+)/.exec(e.text ?? '');
     if (atWill) for (const sp of atWill[1].split(',').map((x) => x.replace(/[*]/g, '').trim())) {
