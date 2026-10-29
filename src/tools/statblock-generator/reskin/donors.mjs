@@ -2186,6 +2186,110 @@ export const DONORS = [
     },
   },
   {
+    // THE CR 13-16 LEGENDARY GAP (owner's go, 2026-10-29: "where we're under we
+    // should pump up and I think it's because we're missing legendaries in the
+    // 10-16 range... mostly dragons and like a vampire/mummy lord", then "adding
+    // is better than subtracting").
+    //
+    // Measured: 10 of print's 18 blocks at CR 13-16 are legendary (56%), and a
+    // legendary block there carries 8.3 rows against 5.4 without — about three
+    // rows, which is the whole of the shortfall. Our own five forties since
+    // 2026-10-25 shipped legendaries on 22% of CR 13-16 sheets and ran 6.5 rows
+    // against print's 7.0, the one band where we sit UNDER print.
+    //
+    // The cause was the donor table, not a gate: 1 of 10 donors in the band had a
+    // Legendary Actions section (`dragon-15`), and the band had no lurker or
+    // caster chassis at all — print's Vampire routed to `lurker-8` and stretched
+    // five CRs. Print's own non-dragon legendaries at CR 13-16 are exactly two,
+    // the Vampire and the Mummy Lord, so these two donors mirror that population
+    // rather than inventing one. Nothing is removed; CR 17-20 keeps all 21 of its
+    // legendary donors.
+    //
+    // SHAPED after print's Vampire — AC under the card, Climb speed, the grave
+    // strike, the beguiling — but NUMBERED to the CR card, which is what every
+    // donor obeys (`cardBudget(13, {legendary:true})` = hp 168, dpr 145, atk 10,
+    // ac 18, dc 17). Print's own Vampire sits well under that card at AC 16 /
+    // HP 195 / +9, so copying its figures would have failed `donors.spec.js` on
+    // four counts. The lurker law is "defenses UNDER the card, paid by tech", so
+    // the AC offset is negative and hp_scale sits below 1.
+    id: 'lurker-13',
+    cite: 'composition after Vampire (CR 13) — print\'s non-dragon legendary lurker: the grave strike, the shape-shift, the beguiling',
+    legendary: true,
+    cr: 13, archetypes: ['lurker'],
+    // HP answers to BOTH laws: print's thinnest CR 13 block (170 over the spec's
+    // 11-block window) is the floor, and the legendary card is 168, so the lurker's
+    // under-card discount is paid in AC (-2) rather than in meat.
+    // hp_scale is what the HP floor reads (`cardBudget(13).hp * hp_scale` against
+    // print's thinnest CR 13 block x 0.95 = 161.5), so 0.95 came out at 160 and
+    // failed by a point and a half; 0.98 clears it and still sits under the card.
+    ac: 16, ac_offset: -2, hp: 170, hp_scale: 0.98, hp_formula: '20d8 + 80', atk: 10, dc: 17, pb: 5,
+    speed: '40 ft., Climb 40 ft.',
+    stats: { STR: 18, DEX: 20, CON: 18, INT: 17, WIS: 15, CHA: 18 },
+    // THE CHASSIS IS NOT THE VAMPIRE. Its own skills follow its own card (DEX 20,
+    // PB 5), and carry a third the Vampire has not — so when a Vampire rides this
+    // chassis, print canon still has something to install. Authoring these as
+    // print's exact pair made the derived line identical and the revision silently
+    // stopped firing, which is what `pipelines.spec.js` pins.
+    saves: ['DEX', 'CHA'], skills: 'Perception +7, Stealth +10, Acrobatics +10',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 5 ft. 26 (4d10 + 4) {damage_type} damage plus 22 (4d10) {energy_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Bonus Actions': [
+        // every lurker line pays for its under-card defenses with the family's
+        // own ambush grammar, and the reader prices it
+        { name: 'Umbral Step', rules: true, text: 'While in Dim Light or Darkness, the creature takes the Hide action.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Lunge', text: 'The creature moves up to half its Speed, and it makes one Melee Attack attack.' },
+        { name: 'Legendary Withdraw', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
+        { name: 'Legendary Dread', imposes: 'Frightened', duration: 'target_end', text: '*Wisdom Saving Throw*: DC 17, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+      ],
+    },
+  },
+  {
+    // SHAPED after print's Mummy Lord — the glare, the rotting fist, magic
+    // resistance, a spell row aboard — and NUMBERED to the card
+    // (`cardBudget(15, {legendary:true})` = hp 192, dpr 170, atk 11, ac 18,
+    // dc 18). The caster law is the glass cannon: HP under the card, the spell
+    // row present, the mind stats high.
+    id: 'caster-15',
+    cite: 'composition after Mummy Lord (CR 15) — print\'s non-dragon legendary caster: the glare, the rotting fist, the dread command',
+    legendary: true,
+    cr: 15, archetypes: ['caster'],
+    // print's thinnest CR 15 block is 184 (the spec's 12-block window), and the
+    // legendary card is 192 — so the glass-cannon discount is small here and paid
+    // mostly in AC. A legendary block already trades HP for action economy.
+    ac: 17, ac_offset: -1, hp: 187, hp_scale: 0.95, hp_formula: '22d8 + 88', atk: 11, dc: 18, pb: 5,
+    speed: '30 ft.',
+    stats: { STR: 14, DEX: 12, CON: 18, INT: 20, WIS: 19, CHA: 16 },
+    saves: ['WIS', 'INT'], skills: 'Perception +9, Religion +5',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the creature fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Magic Resistance', text: 'The creature has Advantage on saving throws against spells and other magical effects.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Hybrid Attack attacks.' },
+        { name: 'Hybrid Attack', text: '*Melee or Ranged Attack Roll:* +11, reach 5 ft. or range 120 ft. 30 (4d12 + 4) {damage_type} damage plus 27 (6d8) {energy_type} damage.' },
+        { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 18):\n\n- **At Will:** {spell_at_will}\n- **1/Day Each:** {spell_daily}' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 18, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+      'Legendary Actions': [
+        { name: 'Legendary Action Uses: 3', rules: true, text: 'Immediately after another creature\'s turn, the creature can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.' },
+        { name: 'Legendary Strike', text: 'The creature makes one Hybrid Attack attack.' },
+        { name: 'Legendary Step', text: 'The creature moves up to half its Speed without provoking Opportunity Attacks.' },
+        { name: 'Legendary Dread', imposes: 'Frightened', duration: 'target_end', text: '*Wisdom Saving Throw*: DC 18, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' },
+      ],
+    },
+  },
+  {
     id: 'dragon-15',
     cite: 'composition across the ten adult dragons (CR 13-17) — the legendary tier begins',
     legendary: true,

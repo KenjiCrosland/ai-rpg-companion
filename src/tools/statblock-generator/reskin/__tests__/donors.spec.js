@@ -387,10 +387,10 @@ describe('the mounted template line: full compositions, shape-frames as authorin
     // the caster family (corpus sweep 2026-09-02): one chassis pool for
     // both the Artillery and Controller menu entries (style PRIORS)
     const casters = D.filter((d) => (d.archetypes ?? []).includes('caster'));
-    expect(casters.length).toBe(8);
+    expect(casters.length).toBe(9);   // +caster-15, the CR 13-16 legendary gap (2026-10-29)
     expect(pdm(6, null, 'caster').id).toBe('caster-6');
     expect(pdm(3, null, 'caster').id).toBe('caster-6'); // below the floor -> lowest seat
-    expect(pdm(15, null, 'caster').id).toBe('caster-12');
+    expect(pdm(15, null, 'caster').id).toBe('caster-15');   // an exact rung exists from 2026-10-29
     expect(pdm(24, null, 'caster').id).toBe('caster-21'); // the Lich seat — a CITED legendary caster boss
     expect(pdm(5, 'warpriest', 'caster').id).toBe('caster-2-warpriest');
     expect(pdm(21, 'warpriest', 'caster').id).toBe('caster-21-warpriest');
@@ -401,7 +401,7 @@ describe('the mounted template line: full compositions, shape-frames as authorin
     // 'phantom' and 'trap' style lines, invented 17 seats (no print
     // lurker above CR 8 — the defender-like ceiling, brute playbook)
     const lurkers = D.filter((d) => (d.archetypes ?? []).includes('lurker'));
-    expect(lurkers.length).toBe(11);
+    expect(lurkers.length).toBe(12);   // +lurker-13, the CR 13-16 legendary gap (2026-10-29)
     expect(pdm(2, null, 'lurker').id).toBe('lurker-2');
     expect(pdm(5, null, 'lurker').id).toBe('lurker-5'); // the mid seat (first smoke: lurker-2 was serving CR 3-6)
     expect(pdm(12, null, 'lurker').id).toBe('lurker-8');
@@ -514,7 +514,10 @@ describe('the legendary tier picks a legendary rung (high-cr batch 2026-10-02)',
   test('from CR 17 the nearest legendary rung wins, a rung above the CR included; below 17 the highest rung at or under the CR', () => {
     expect(pd(17, 'mounted', 'skirmisher').id).toBe('skirmisher-18-mounted'); // the 13 rung carries no kit
     expect(pd(16, 'mounted', 'skirmisher').id).toBe('skirmisher-13-mounted');
-    expect(pd(17, null, 'caster').id).toBe('caster-21');
+    // caster-15 exists from 2026-10-29, so at CR 17 the NEAREST legendary rung is
+    // two CRs down rather than four up — which is the rule, and less stretching
+    expect(pd(17, null, 'caster').id).toBe('caster-15');
+    expect(pd(20, null, 'caster').id).toBe('caster-21');
     expect(pd(12, null, 'caster').id).toBe('caster-12');
     expect(pd(17, null, 'brute').id).toBe('brute-17');
     expect(pd(19, null, 'skirmisher').id).toBe('skirmisher-18');

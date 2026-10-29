@@ -6291,5 +6291,26 @@
     "askMechanicWhy": "terrifies those who see it"
    }
   ]
+ },
+ "c5a2bf41a220": {
+  "concept": "Krennik Skullstandard — riding a worg, his banner topped with a skull",
+  "clauses": [
+   {
+    "id": "cl_1v7kayt",
+    "text": "Krennik Skullstandard — riding a worg",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "charge",
+    "askMechanicWhy": "riding a worg"
+   },
+   {
+    "id": "cl_1rg75b8",
+    "text": "his banner topped with a skull",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "relic",
+    "askMechanicWhy": "his banner"
+   }
+  ]
  }
 }

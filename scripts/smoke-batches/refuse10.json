@@ -1,0 +1,24 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — print-exact, no signature seat to refuse." },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2024",
+    "canary": "CANARY — a plain fighter. Its seats should fill from the class body, not from a refused nearest." },
+
+  { "name": "Dire Wolf", "description": "with a frost-rimed hide", "cr": "1", "rules": "2024",
+    "canary": "REPLAY — wanted \"a feint that imposes disadvantage\" and landed push-prone, so Sundering Shove pushed prey AWAY from the pack (the critic's per-block note)." },
+  { "name": "", "description": "a mud-caked bog hound that drags fishermen under", "cr": "1", "rules": "2014",
+    "canary": "REPLAY — wanted \"grabs prey on a hit and drags it under\" and landed false-appearance, which is where the blind \"ordinary object\" fill came from." },
+  { "name": "Owlbear", "description": "that has learned to climb", "cr": "3", "rules": "2024",
+    "canary": "REPLAY — wanted \"grants a Climb speed\" and landed hook-rider. Spider Climb is the right answer and it did reach the sheet; watch whether it still does." },
+  { "name": "Air Elemental", "description": "that carries stolen voices", "cr": "5", "rules": "2024",
+    "canary": "REPLAY — wanted \"regains Hit Points and charges its next Slam with stolen sound\" and landed mimicry, filled blind. The call declined mimicry explicitly." },
+  { "name": "", "description": "a quarry-pit thing of living scree that buries what it catches", "cr": "5", "rules": "2014",
+    "canary": "REPLAY — wanted \"grabs a grounded target and buries it\" and landed earth-glide." },
+  { "name": "", "description": "a chapel bell-ringer's ghost that tolls for the dying", "cr": "3", "rules": "2024",
+    "canary": "REPLAY — wanted \"a mark that worsens Death Saving Throws\" and landed curse-debt." },
+
+  { "name": "", "description": "a headless horseman who rides down the fleeing and takes their heads", "cr": "11", "rules": "2024",
+    "canary": "FEATURE — the standing hard case. Its best idea has never had a template; watch whether the seat now stays empty instead of shipping a nearest." },
+  { "name": "", "description": "a stone giant exile who speaks only Giant and understands no Common", "cr": "9", "rules": "2014",
+    "canary": "FEATURE — its War Bellow (2/Day, only those who understand Giant are spared) turned the lack into a rule and was replaced by a nearest, Dread Presence." }
+]

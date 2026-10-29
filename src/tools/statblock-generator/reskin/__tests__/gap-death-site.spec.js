@@ -176,11 +176,15 @@ describe('the free-row budget records its evictions', () => {
   it('notes the template it evicts, and why', async () => {
     const { settleSheetBudgets } = await import('@/tools/statblock-generator/reskin/generate.mjs');
     const drops = [];
+    // the budget is elastic against the card's size (owner, 2026-10-29), so the
+    // card is padded to where print's own CR 17-20 cards sit (7-8 rows, p20-p80)
+    // — on a bare two-row fixture the card reads as thin and keeps both.
     const sections = {
       Traits: [
         { name: 'Kept Row', text: 'x', template: 'relentless-pursuit', freeRow: true },
         { name: 'Evicted Row', text: 'y', template: 'condition-payoff', freeRow: true },
       ],
+      Actions: Array.from({ length: 7 }, (_, i) => ({ name: `Chassis ${i + 1}`, text: '*Melee Attack Roll:* +12, reach 5 ft. 20 (4d6 + 6) Bludgeoning damage.' })),
     };
     settleSheetBudgets({
       sections, scaled: { per_hit: 10 }, cr: 17,

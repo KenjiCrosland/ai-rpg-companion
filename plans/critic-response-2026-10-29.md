@@ -217,6 +217,123 @@ gaining immunity or resistance (free defensive CR), not a TARGET being bought
 out of an effect, which only weakens the row; it now excises that one clause via
 the shared `IMMUNITY_ON_SUCCESS` and everything else still fails it.
 
+## Item 2 — the harvest, and what it says (2026-10-29)
+
+`scripts/harvest-wants.mjs` (new) reads every refused seat's `what it wanted`
+out of the trace archive and places it against the catalog by CELL
+(section/trigger/effect), which both ideas and templates already declare — so no
+reading of meaning is involved. `--since YYYY-MM-DD` limits it to runs after a
+fix landed, because a want from before is history, not a build target.
+
+**The fill was never the lever, and neither was my own gate.**
+
+- `closest accepted` put **86 rows on the 10-29 forty — 2.1 a sheet — and all 86
+  sat beside an idea the engine recorded as undelivered.** The run's own tally:
+  **78 seats → 65 shapes → 4 expressed**, with 34 of 40 sheets landing a shape
+  and expressing nothing. The blind fills follow from that, not the reverse.
+- But the decline reasons say the fallback is not the cause either. Over 3,618
+  declines in 10,134 trace files: **`no_fit` 94.8%**, unanswered 2.0%,
+  `already_answered` 1.7%, **`collision` 1.5%**. My `declined_because` gate
+  blocks the last two — about **3 rows a forty**, not the sixty I first implied.
+  It is correct and free, and it is not the lever. (The accepted-landing trace
+  now prints the reason too, so the next run prices it exactly; the archive
+  sample could under-count `collision`, since such a decline names a template
+  and may be likelier to carry a `closest`.)
+
+**The real mechanism: the menu is hard-gated by the seat's section.**
+`templatesFor` filters `t.section === section` and then `triggerCompatible`.
+Seats are assigned BEFORE the idea exists — the trace line is `signature idea
+(trait):` — so the call is told to invent a trait, invents something that is not
+one, and no template in a trait-only menu can carry it. Samples from the harvest
+(78 runs since 2026-10-26, 1,989 wants):
+
+| the call wanted | stamped | where that shape lives |
+|---|---|---|
+| a breathing save-area effect dealing Thunder damage in a cone | `trait/always/defense` | `action/save/damage` — 15 templates |
+| on a hit, grapples the target and restrains it while held under | `trait/always/movement` | `rider/on_hit/condition` — 8 + payoff grammar |
+| on a Shortsword miss, lets the creature Disengage | `trait/always/movement` | a reaction |
+| regenerates hit points each turn unless it takes Fire damage | `trait/always/movement` | `trait/*/resource` |
+
+This is consistent with every other reading: it explains the 95%, it explains why
+"landed instead" is always a same-section near-miss, and it matches the 10-26
+finding that two-thirds of wants are variants of shapes the catalog already has —
+they are in the catalog, in another section.
+
+**The compose grammars are visibly working**, which is the control for this
+reading: `trait/on_being_hit/condition` fell from 201 wants all-time to **24**
+since the `body-reaction` grammar landed on 10-26, and `trait/on_being_hit/damage`
+from 238 to 21. Serving a cell empties its want list.
+
+**Cells nothing serves, since 10-26** (no template, no grammar):
+
+| cell | wants |
+|---|---|
+| `reaction/on_being_hit/condition` | 86 |
+| `trait/always/resource` | 54 |
+| `action/always/condition` | 44 |
+| `reaction/on_being_hit/movement` | 36 |
+
+**The fork, which is the owner's:** when an idea does not fit the seat it was
+handed, either
+(a) **hold the call to the seat** — tighten the idea prompt so a trait seat gets
+    a trait, and the menu stays gated; or
+(b) **let the idea move to a seat that fits it** — the idea is good and the seat
+    is arbitrary, so re-seat rather than refuse.
+(b) is the better product answer and the larger change. Not started.
+
+One caveat on the harvest's own numbers: the `distinct` column buckets on the
+first eight normalised words, so it barely dedupes and must not be read as "how
+many arevariants". Judging that is a meaning question and belongs to a call.
+
+## Scope (b)-narrow — TRIED AND REVERTED 2026-10-29
+
+Owner's go: "let's go with b and the first narrow scope" — on a `no_fit` decline,
+try the idea against the seats still unfilled on that sheet. Built, measured on
+the same ten before and after, **reverted**. Do not rebuild it the same way.
+
+**Two real discoveries survive the revert and are the reason to read this.**
+
+1. **The trait slot loses BOTH coordinates of its cell, not one.** `parseIdeas`
+   forces the trait slot's section to `trait`, and `normaliseTag('trait','save')`
+   then flattens the TRIGGER to `always`, because no trait fires on a saving
+   throw. A call answering "a cone of bog gas on a Constitution save" arrives as
+   `trait/always/*`. That is why the harvest found cone breaths stamped
+   `trait/always/defense` while 15 templates sat in `action/save/damage`.
+2. **The trait seat's pool AND placement are both trait-specific.** `fitSeat`
+   computes `wide` as `['trait']` for a trait seat against all four non-trait
+   sections for an action seat, and the trait result then runs the trait ceiling,
+   `supersedeByTrait` and placement into Traits. So a re-seat cannot live in
+   `fitSeat`'s tail — handing that seat an action template misplaces the row
+   rather than rescuing it. (Tried first; every attempt died on an empty pool.)
+
+**Why the working version was reverted.** Moved to the action seat — which
+already fits and places all four non-trait sections — and offered the trait idea
+there when the action seat landed nothing, re-seating on the RAW trigger. It
+fired twice on the ten and the numbers moved the wrong way:
+
+| the same ten | before | after |
+|---|---|---|
+| expressed | 2 | **1** |
+| closest accepted | 14 | **22** |
+| decoration | 3 | 4 |
+
+The rise is mechanical, not noise: **every re-seat adds another fit call, and a
+call that refuses with a `closest` lands another wrong-cell nearest.** The
+re-seat multiplies the thing it was built to reduce. The trace also read
+`fitted "undefined"`, so what it landed had no `.id` — a composed or seed row the
+trace could not name.
+
+**What that implies for any future attempt.** Adding a path that can refuse is
+worthless while `closest accepted` turns every refusal into a row anyway. The
+order has to be the other way round: decide what a refusal COSTS first — the
+owner's call on card length, since 86 landings a forty is ~2 rows a sheet — and
+only then widen where ideas may land. Re-seating on top of an unconditional
+nearest-lands policy cannot help by construction.
+
+**Kept from this pass:** the `declined_because` gate (collision /
+already_answered, ~3 rows a forty, independently sound), the decline reason now
+printed on the accepted line, and `scripts/harvest-wants.mjs`.
+
 ## Open, needs the owner: "each creature of its choice"
 
 **0 of 329 print rows use it** — not zero at-will control rows, zero rows of any

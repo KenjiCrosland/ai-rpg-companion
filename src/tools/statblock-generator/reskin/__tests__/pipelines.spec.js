@@ -1065,6 +1065,40 @@ describe('a gap line always carries a build target', () => {
     return lines.join('\n');
   };
 
+  // THE CALL'S REASON DECIDES WHETHER ITS "NEAREST" LANDS (2026-10-29).
+  // `closest accepted` put 86 rows on the 10-29 forty, 2.1 a sheet, and the
+  // signature tally for that run reads 65 shapes landed for 78 seats with FOUR
+  // expressed; 34 of 40 sheets landed a shape and expressed nothing. The branch
+  // was reading a DISTANCE answer as permission: the call says "none", names a
+  // nearest out of helpfulness (the prompt asks for it on every seat), and the
+  // engine shipped it. `declined_because` is a closed enum the call already
+  // returns, so honouring it costs no extra call.
+  //
+  // Both arms are pinned here because a gate whose arms are not proven reachable
+  // has shipped dead before.
+  it('a nearest declined for collision does NOT land — the word suggests the mechanic, the row does not carry it', async () => {
+    const t = await traceFor({ template: 'none', closest: 'reel', declined_because: 'collision', missing: 'hauls a creature under the water and holds it there' });
+    expect(t).toMatch(/closest refused:.*declined it for collision/);
+    expect(t).not.toMatch(/closest accepted:/);
+  });
+
+  it('a nearest declined as already_answered does NOT land — the sheet already says it', async () => {
+    const t = await traceFor({ template: 'none', closest: 'reel', declined_because: 'already_answered', missing: 'hauls a creature under' });
+    expect(t).toMatch(/closest refused:.*declined it for already_answered/);
+    expect(t).not.toMatch(/closest accepted:/);
+  });
+
+  it('a nearest declined for no_fit still lands — nothing offered carries the mechanic, so the nearest is the honest best', async () => {
+    const t = await traceFor({ template: 'none', closest: 'reel', declined_because: 'no_fit', missing: 'hauls a creature under' });
+    expect(t).toMatch(/closest accepted:|closest refused:.*will not render|closest refused:.*never on this sheet/);
+    expect(t).not.toMatch(/declined it for (collision|already_answered)/);
+  });
+
+  it('an unparsed reason keeps the old behaviour — a fallback acts when the call FAILS, never against an answer it gave', async () => {
+    const t = await traceFor({ template: 'none', closest: 'reel', missing: 'hauls a creature under' });
+    expect(t).not.toMatch(/declined it for (collision|already_answered)/);
+  });
+
   it('never emits the old UNNAMED line', async () => {
     const t = await traceFor({ template: 'none', declined_because: 'no_fit' });
     expect(t).not.toMatch(/\[gap\] UNNAMED/);

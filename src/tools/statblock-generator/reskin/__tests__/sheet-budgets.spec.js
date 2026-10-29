@@ -7,6 +7,12 @@ import { scaleDonor, pickDonor } from '../scale.mjs';
 const scaled = () => scaleDonor(pickDonor(8, null, 'brute'), 8, { mechanics: [] });
 
 const freeTrait = (name, template) => ({ name, text: 'A creature that touches it takes 7 (2d6) Fire damage.', freeRow: true, library: true, template });
+// THE BUDGET IS ELASTIC AGAINST THE CARD'S SIZE (owner's ruling 2026-10-29), so a
+// fixture with no chassis is a THIN card and is allowed more free rows, not one.
+// Print runs 3-5 rows at CR 6-9 and 7-8 at CR 17-20 (p20-p80, Multiattack
+// excluded), so these pad the card to where print's own cards sit and the
+// budget-of-1 contract still holds. The elastic ends have their own tests below.
+const chassis = (n) => Array.from({ length: n }, (_, i) => ({ name: `Chassis ${i + 1}`, text: '*Melee Attack Roll:* +7, reach 5 ft. 12 (2d8 + 3) Bludgeoning damage.' }));
 const nova = (name, over = {}) => ({
   name: `${name} (Recharge 5-6)`,
   text: '*Dexterity Saving Throw:* DC 15, each creature in a 20-foot Emanation. *Failure:* 28 (8d6) Fire damage.',
@@ -35,7 +41,7 @@ describe('the free-row budget is counted at ship, once', () => {
   });
 
   test('a second free row in a DIFFERENT declared cell still yields to the budget of 1', () => {
-    const sections = { Traits: [freeTrait('A', 'heated-body'), freeTrait('B', 'warded-mending')] };
+    const sections = { Traits: [freeTrait('A', 'heated-body'), freeTrait('B', 'warded-mending')], Actions: chassis(3) };
     const generation = {};
     settleSheetBudgets({ sections, scaled: scaled(), cr: 8, generation });
     expect(sections.Traits).toHaveLength(1);
@@ -536,11 +542,126 @@ describe('a free row carries its receipt onto the row (brass tyrant)', () => {
     // sheet order as the engine builds it — Traits iterate before Actions
     const trait = markFreeRow({ accepted_closest: true, expresses: 'the hammer that finds the terrified', row: { name: "Terror's Toll", text: 'It sharpens its blows.', template: 'assassinate' } }, { decoration: true }).row;
     const action = markFreeRow(seatWithRow()).row;
-    const sections = { Traits: [trait], Actions: [action] };
+    const sections = { Traits: [trait], Actions: [action, ...chassis(7)] };
     const generation = {};
     settleSheetBudgets({ sections, scaled: scaled(), cr: 17, generation });
     expect(sections.Actions).toContain(action);
     expect(sections.Traits).not.toContain(trait);
     expect(generation.free_row_templates).toEqual(['condition-payoff']);
+  });
+});
+
+// THE BUDGET IS ELASTIC AGAINST PRINT'S OWN CARD SIZE (owner's ruling,
+// 2026-10-29: "we are over represented in rows compared to print. maybe we keep
+// the row if there aren't enough but drop if there are too many based on a
+// number (not median but comfortable high end)").
+//
+// Measured over all 329 blocks with Multiattack excluded, print runs (p20-p80):
+// CR 0-2 1-3 · 3-5 2-4 · 6-9 3-5 · 10-12 4-7 · 13-16 5-8 · 17-20 7-8 · 21+ 8-9.
+// The median is deliberately not the number — print's spread is wide and a
+// median cap would cut cards print prints routinely. Against that ceiling the
+// 10-29 forty is over at CR 3-5 and 17-20 and UNDER at 6-9, 10-12, 13-16 and
+// 21+, with 3 of 39 sheets below the p20 floor, which is why there is a floor.
+describe('the free-row budget answers to the card it is on', () => {
+  const free = (name, template) => ({ name, text: 'A creature that touches it takes 7 (2d6) Fire damage.', freeRow: true, library: true, template });
+  const fixed = (n, from = 1) => Array.from({ length: n }, (_, i) => ({ name: `Chassis ${from + i}`, text: '*Melee Attack Roll:* +7, reach 5 ft. 12 (2d8 + 3) Bludgeoning damage.' }));
+
+  test('a card already at print\'s high end sheds a BORROWED free row', () => {
+    // CR 8 sits in band 6-9, where print's p90 is 5 rows
+    const sections = { Traits: [{ ...free('A', 'heated-body'), accepted_closest: true }], Actions: fixed(5) };
+    const generation = {};
+    settleSheetBudgets({ sections, scaled: scaled(), cr: 8, generation });
+    expect(sections.Traits).toHaveLength(0);
+    expect(generation.free_rows).toBe(0);
+  });
+
+  test('but keeps a CHOSEN one on the same card — a long card keeps the abilities it earned', () => {
+    const sections = { Traits: [free('A', 'heated-body')], Actions: fixed(5) };
+    settleSheetBudgets({ sections, scaled: scaled(), cr: 8, generation: {} });
+    expect(sections.Traits).toHaveLength(1);
+  });
+
+  test('a thin card keeps more than one, up to print\'s low end', () => {
+    // one fixed row at CR 8 is below print's p20 of 3, so the card can afford two
+    const sections = { Traits: [free('A', 'heated-body'), free('B', 'warded-mending')], Actions: fixed(1) };
+    const generation = {};
+    settleSheetBudgets({ sections, scaled: scaled(), cr: 8, generation });
+    expect(sections.Traits).toHaveLength(2);
+  });
+
+  test('a card sitting where print sits keeps exactly one, as before', () => {
+    const sections = { Traits: [free('A', 'heated-body'), free('B', 'warded-mending')], Actions: fixed(3) };
+    const generation = {};
+    settleSheetBudgets({ sections, scaled: scaled(), cr: 8, generation });
+    expect(sections.Traits).toHaveLength(1);
+  });
+
+  test('the ceiling is per band — a CR 20 card affords a borrowed row where a CR 2 card does not', () => {
+    const borrowed = () => ({ ...free('A', 'heated-body'), accepted_closest: true });
+    const big = { Traits: [borrowed()], Actions: fixed(6) };
+    settleSheetBudgets({ sections: big, scaled: scaled(), cr: 20, generation: {} });   // p90 is 9 at CR 17-20
+    expect(big.Traits).toHaveLength(1);
+    const small = { Traits: [borrowed()], Actions: fixed(6) };
+    settleSheetBudgets({ sections: small, scaled: scaled(), cr: 2, generation: {} });  // p90 is 4 at CR 0-2
+    expect(small.Traits).toHaveLength(0);
+  });
+
+  test('Multiattack is not an ability and does not spend the card\'s room', () => {
+    const withMA = { Traits: [free('A', 'heated-body')], Actions: [{ name: 'Multiattack', text: 'It makes two Chassis 1 attacks.' }, ...fixed(4)] };
+    settleSheetBudgets({ sections: withMA, scaled: scaled(), cr: 8, generation: {} });
+    expect(withMA.Traits).toHaveLength(1);   // 4 fixed rows, not 5, so there is still room for one
+  });
+
+  test('a print-exact sheet still keeps none, whatever its size', () => {
+    const sections = { Traits: [free('A', 'heated-body')], Actions: fixed(1) };
+    settleSheetBudgets({ sections, printExact: true, scaled: scaled(), cr: 8, generation: {} });
+    expect(sections.Traits).toHaveLength(0);
+  });
+});
+
+// THE CEILING IS FOR THE BORROWED ROW (2026-10-29). The owner's complaint was
+// that a refusal borrows a stock chassis row and that reads samey; the row the
+// ceiling must shed is therefore the DECORATION one. A free row carrying the
+// GM's own quote is the best row on the card, so the ceiling never takes it.
+describe('a receipt row outranks the card-size ceiling', () => {
+  const fixed = (n) => Array.from({ length: n }, (_, i) => ({ name: `Chassis ${i + 1}`, text: '*Melee Attack Roll:* +7, reach 5 ft. 12 (2d8 + 3) Bludgeoning damage.' }));
+  const quoted = (name) => ({ name, text: 'A creature that touches it takes 7 (2d6) Fire damage.', freeRow: true, library: true, template: 'heated-body', gmQuote: 'wreathed in heat' });
+  const deco = (name) => ({ name, text: 'A creature that touches it takes 7 (2d6) Fire damage.', freeRow: true, library: true, template: 'warded-mending', decoration: true, expresses: null, accepted_closest: true });
+  // a pick the call ACCEPTED but named no element for: not a receipt row, and not
+  // a borrowed one either (the Pit Fiend lost one of these to the first cut)
+  const accepted = (name) => ({ name, text: 'A creature that touches it takes 7 (2d6) Fire damage.', freeRow: true, library: true, template: 'heated-body', expresses: null });
+
+  test('a card over print\'s high end still keeps a quoted free row', () => {
+    const sections = { Traits: [quoted('Furnace Hide')], Actions: fixed(6) };   // CR 8: p80 is 5, so the card is over
+    const generation = {};
+    settleSheetBudgets({ sections, scaled: scaled(), cr: 8, generation });
+    expect(sections.Traits.map((e) => e.name)).toEqual(['Furnace Hide']);
+  });
+
+  test('but drops the decoration row on the same card', () => {
+    const sections = { Traits: [deco('Borrowed Thing')], Actions: fixed(6) };
+    settleSheetBudgets({ sections, scaled: scaled(), cr: 8, generation: {} });
+    expect(sections.Traits).toHaveLength(0);
+  });
+
+  test('and keeps the quoted one over the borrowed one when both are offered', () => {
+    const sections = { Traits: [deco('Borrowed Thing'), quoted('Furnace Hide')], Actions: fixed(6) };
+    settleSheetBudgets({ sections, scaled: scaled(), cr: 8, generation: {} });
+    expect(sections.Traits.map((e) => e.name)).toEqual(['Furnace Hide']);
+  });
+  // THE CEILING NEVER TAKES A CHOSEN ROW (owner, 2026-10-29). The Pit Fiend's
+  // "Oath-Chain Mantle" was shed by the first cut of this budget as an
+  // accepted-but-receiptless row; under the ruling that interesting blocks are
+  // the long ones, a row the call chose rides however crowded the card is.
+  test('a crowded card keeps an accepted pick even with no receipt', () => {
+    const sections = { Traits: [accepted('Oath-Chain Mantle')], Actions: fixed(6) };
+    settleSheetBudgets({ sections, scaled: scaled(), cr: 8, generation: {} });
+    expect(sections.Traits.map((e) => e.name)).toEqual(['Oath-Chain Mantle']);
+  });
+
+  test('but the borrowed row loses to it when the card has room for exactly one', () => {
+    const sections = { Traits: [deco('Borrowed Thing'), accepted('Oath-Chain Mantle')], Actions: fixed(4) };
+    settleSheetBudgets({ sections, scaled: scaled(), cr: 8, generation: {} });
+    expect(sections.Traits.map((e) => e.name)).toEqual(['Oath-Chain Mantle']);
   });
 });

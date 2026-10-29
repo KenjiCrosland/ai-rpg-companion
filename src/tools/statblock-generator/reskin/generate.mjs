@@ -978,7 +978,48 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   // templates, which is where the sameness had moved.
   const freeRows = [];
   for (const [sec, es] of Object.entries(sections)) for (const e of es ?? []) if (e.freeRow) freeRows.push({ sec, e });
-  const freeBudget = printExact ? 0 : 1;
+  // THE BUDGET IS ELASTIC AGAINST PRINT'S OWN CARD SIZE (owner's ruling,
+  // 2026-10-29: "maybe we keep the row if there aren't enough but drop if there
+  // are too many based on a number (not median but comfortable high end)").
+  //
+  // PRINT_CARD_ROWS is a closed fact, measured over all 329 blocks with
+  // Multiattack excluded (it is not an ability): the p20 floor and the p80
+  // ceiling per CR band. The median is deliberately NOT the number — print's
+  // own spread is wide and a median cap would cut cards print prints routinely.
+  //
+  //   band    p20  median  p80  p90  max      band    p20  median  p80  p90  max
+  //   0-2      1     2      3    4    6       13-16    5     7      8   10   10
+  //   3-5      2     3      4    5    8       17-20    7     7      8    9    9
+  //   6-9      3     4      5    5    6       21+      8     9      9   10   11
+  //   10-12    4     5      7    7   10
+  //
+  // THE CEILING IS p90, NOT p80 (owner, 2026-10-29: "the more interesting blocks
+  // are the ones that have many abilities so I'm not sad they don't fully
+  // represent print here"). The ceiling's job is to stop the runaway card, not to
+  // reproduce print's distribution. At p80 it bit nearly every sheet of the
+  // budget ten; at p90 it leaves an 8-row CR 4 ghost alone (print's own CR 3-5
+  // max is 8) and still catches the 12-row CR 18 archlich that run produced.
+  //
+  // Measured against p80, the 10-29 forty was NOT uniformly over print (the
+  // sprint's standing note says it is, which was measured against the median):
+  // over at CR 3-5 and 17-20, UNDER at 6-9, 10-12, 13-16 and 21+, with 3 of 39
+  // sheets below the p20 floor. Hence a floor as well as a ceiling.
+  const band = cr == null ? null : cr <= 2 ? '0-2' : cr <= 5 ? '3-5' : cr <= 9 ? '6-9' : cr <= 12 ? '10-12' : cr <= 16 ? '13-16' : cr <= 20 ? '17-20' : '21+';
+  const PRINT_CARD_ROWS = { '0-2': [1, 4], '3-5': [2, 5], '6-9': [3, 5], '10-12': [4, 7], '13-16': [5, 10], '17-20': [7, 9], '21+': [8, 10] };
+  const freeBudget = (() => {
+    if (printExact) return 0;
+    const envelope = band ? PRINT_CARD_ROWS[band] : null;
+    if (!envelope) return 1;
+    const [floor, ceiling] = envelope;
+    // a free row is a candidate, not yet a fixture: the fixed rows are what the
+    // card carries whatever this budget decides
+    const fixed = Object.entries(sections).flatMap(([, es]) => es ?? []).filter((e) => e && !e.freeRow && !/^Multiattack/.test(String(e.name ?? ''))).length;
+    const thin = Math.max(0, floor - fixed);        // under print's low end: keep more
+    const room = Math.max(0, ceiling - fixed);      // over print's high end: keep none
+    const settled = Math.min(Math.max(1, thin), room);
+    if (settled !== 1) trace('free-row budget by card size:', `CR ${cr} sits in band ${band}, where print runs ${floor}-${ceiling} rows (p20-p90, Multiattack excluded); this card already carries ${fixed} fixed row(s), so the free-row budget is ${settled} rather than 1 — ${room === 0 ? 'the card is already at print\'s high end' : 'the card is thin and can afford more'}`);
+    return settled;
+  })();
   const cellOf = (e) => { const t = TEMPLATE_BY_ID.get(e.template ?? e.seed ?? ''); return t ? `${t.section}/${t.trigger}/${t.effect}` : null; };
   const keptCells = new Set();
   const keptFree = [];
@@ -999,7 +1040,16 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   // words asked for earns clause credit and never becomes free). The live rank
   // is element-vs-decoration. The arm is kept because it costs nothing and is
   // right if a quoted free row ever becomes possible; flagged to the owner.
-  const receiptRank = (e) => (e.gmQuote ? 0 : e.expresses ? 1 : 2);
+  // FOUR RANKS, NOT THREE (2026-10-29). The card-size ceiling below can settle at
+  // 0, so the order decides what a crowded card sheds — and "no receipt" was
+  // lumping two very different rows together. The Pit Fiend lost a pick the call
+  // AFFIRMATIVELY ACCEPTED (its tally read "accepted picks lost: 1 of 1 (1x the
+  // free-row budget)") purely because the call named no element for it, while a
+  // refused nearest on another sheet would have been treated the same. The
+  // owner's complaint is about the BORROWED row — "refusals lead to sameness
+  // because we borrow a stock row from the chassis" — and `accepted_closest` is
+  // exactly that row, stamped where the nearest lands.
+  const receiptRank = (e) => (e.gmQuote ? 0 : e.expresses ? 1 : e.accepted_closest ? 3 : 2);
   const ranked = [...freeRows].sort((a, b) => receiptRank(a.e) - receiptRank(b.e));
   if (freeRows.length > 1 && ranked.some(({ e }, i) => e !== freeRows[i].e)) {
     trace('free-row order:', `${ranked.map(({ e }) => `"${bareName(e)}" [${['quote', 'element', 'decoration'][receiptRank(e)]}]`).join(' > ')} — a receipt row is never displaced by one without`);
@@ -1007,7 +1057,31 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   for (const { sec, e } of ranked) {
     const cell = cellOf(e);
     const sameCell = !!cell && keptCells.has(cell);
-    if (keptFree.length < freeBudget && !sameCell) { keptFree.push(e); if (cell) keptCells.add(cell); continue; }
+    // THE CEILING SHEDS THE BORROWED ROW, NEVER THE RECEIPT ROW (2026-10-29).
+    // The card-size budget above can settle at 0, and a flat count would then
+    // drop a free row that carries the GM's own quote — the ceiling fighting the
+    // concept, which is the opposite of the point. `receiptRank` has already
+    // sorted these gmQuote > expresses > decoration, so one slot is always held
+    // open for a row with a receipt and only the decoration ranks answer to the
+    // card's room. On the 10-29 forty the run carried 19 decoration free rows
+    // against 4 expressed, so this still sheds most of what the ruling aimed at.
+    // THE CEILING SHEDS THE BORROWED ROW AND NOTHING ELSE (owner, 2026-10-29:
+    // "I think this is a good balance"). The thing the owner dislikes is the
+    // stock row we borrow when the call refuses — "refusals lead to sameness
+    // because we borrow a stock row from the chassis" — not a long card. So a
+    // row the call actually CHOSE keeps the budget it always had (one, or more on
+    // a thin card) however crowded the card is, and only `accepted_closest` — the
+    // stamp sitting exactly where a refused nearest lands — answers to the card's
+    // room. A card that earned its length keeps every ability it earned.
+    //
+    // This reverses an eviction made earlier the same day: the Pit Fiend's
+    // "Oath-Chain Mantle" was shed as an accepted-but-receiptless row, which the
+    // critic's read of that sheet supported ("the aura is decoration; drop it").
+    // Under this ruling the narrower rule wins and the row stays.
+    //
+    // printExact still overrides everything: print closes the row set.
+    const allowed = printExact ? 0 : receiptRank(e) === 3 ? freeBudget : Math.max(1, freeBudget);
+    if (keptFree.length < allowed && !sameCell) { keptFree.push(e); if (cell) keptCells.add(cell); continue; }
     sections[sec] = (sections[sec] ?? []).filter((x) => x !== e);
     // THE INSTRUMENT POINTED HERE. On its first full forty, three accepted picks
     // reported "died at an UNRECORDED drop site" and all three sat beside this
@@ -4762,12 +4836,36 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           trace('row composed from the family\'s own options:', `${seat} — ${fit.template.id}: the call picked it off the menu (what no printed template did: ${String(fit.missing ?? 'unstated').slice(0, 70)})`);
           fit = { ...fit, composed: fit.template.composed, wanted: fit.missing ?? null };
         }
-        if (!fit.template && fit.closest) {
+        // THE CALL ALREADY SAID WHY IT REFUSED, AND THE REASON DECIDES THIS
+        // (2026-10-29). `closest accepted` landed 86 rows across the 10-29 forty
+        // — 2.1 a sheet — and the tally says 65 shapes landed for 78 seats with
+        // **4 expressed**; 34 of 40 sheets landed a shape and expressed nothing.
+        // The mechanism was this branch: the call answers "none", names a nearest
+        // out of helpfulness, and the engine reads the distance answer as
+        // permission. The blind fills follow from it, not the reverse — the Air
+        // Elemental's {mimicked} filled blind because the idea was "regains Hit
+        // Points and charges its next Slam", which mimicry cannot say.
+        //
+        // `declined_because` is a closed enum the call already returns, so no new
+        // call and no new rule is needed — only to honour the answer:
+        //   collision        the word suggests this template but it does not mean
+        //                    the mechanic here. Landing it is exactly the error
+        //                    this field exists to report.
+        //   already_answered the sheet already does this. Landing it duplicates.
+        //   no_fit           nothing offered carries the mechanic. Here a nearest
+        //                    row is the honest best available, so it still lands.
+        // A missing/unparsed reason keeps the old behaviour: a fallback acts when
+        // the call FAILS, never against an answer it actually gave.
+        const nearBlocked = ['collision', 'already_answered'].includes(fit.declined_because);
+        if (!fit.template && fit.closest && nearBlocked) {
+          trace('closest refused:', `${seat} — "${fit.closest}" was named nearest, but the call declined it for ${fit.declined_because} ("${fit.declined_raw || fit.declined_because}") — ${fit.declined_because === 'collision' ? 'the word suggests this mechanic and the row does not carry it' : 'the sheet already answers this'}; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: ${String(fit.missing ?? 'unstated').slice(0, 70)})`);
+        }
+        if (!fit.template && fit.closest && !nearBlocked) {
           const near = pool.find((t) => t.id === fit.closest || t.key === fit.closest);
           if (near) {
             const rend = renderTemplate(near, ctxT, bindFills(near));
             if (rend) {
-              trace('closest accepted:', `${seat} — the call refused every template but named "${near.id}" as nearest; it lands rather than the row being dropped (what it wanted: ${String(fit.missing ?? 'unstated').slice(0, 80)})`);
+              trace('closest accepted:', `${seat} — the call refused every template but named "${near.id}" as nearest and declined it for ${fit.declined_because ?? '(unanswered)'}; it lands rather than the row being dropped (what it wanted: ${String(fit.missing ?? 'unstated').slice(0, 80)})`);
               // THE RECEIPT IS WHAT THE ROW CARRIES, NOT WHAT IT LACKS (2026-10-21).
               // This line used to set `because` to `fit.missing` — so an accepted
               // row documented the mechanic it does NOT have. Meshrin's thorn trait

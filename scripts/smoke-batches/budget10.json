@@ -1,0 +1,24 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — print-exact. printExact keeps the budget at 0 as it always did; print closes the row set." },
+  { "name": "", "description": "a bog lantern that calls lost travellers into the water", "cr": "2", "rules": "2024",
+    "canary": "CANARY — CR 0-2, where print runs 1-3 rows. A thin card must NOT be thinned further; if anything the budget widens." },
+
+  { "name": "", "description": "a mud-caked bog hound that drags fishermen under", "cr": "4", "rules": "2024",
+    "canary": "FEATURE — CR 3-5, the band we overrun by 0.8 (7 of 11 sheets over). Its False Appearance was a blind fill, so it should read as the borrowed row the ceiling sheds." },
+  { "name": "", "description": "a chapel bell-ringer's ghost that tolls for the dying", "cr": "4", "rules": "2024",
+    "canary": "FEATURE — CR 3-5. The ghost chassis is already row-heavy, so the ceiling should bite." },
+  { "name": "Krennik Skullstandard", "description": "riding a worg, his banner topped with a skull", "cr": "4", "rules": "2014",
+    "canary": "FEATURE — CR 3-5 on a 2014 sheet; it carried a fallback Rampage the critic called decoration." },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2024",
+    "canary": "FEATURE — CR 3-5. The gladiator body is row-heavy and its Horrid Display was unasked." },
+
+  { "name": "", "description": "a tyrant of burning brass who rules a city of forges", "cr": "17", "rules": "2024",
+    "canary": "FEATURE — CR 17-20, where we overrun print by 2.0 and 4 of 4 sheets were over. It shipped a fallback punisher the critic flagged." },
+  { "name": "Pit Fiend", "description": "who collects the oaths of dying knights", "cr": "20", "rules": "2024",
+    "canary": "FEATURE — CR 17-20. Its added Searing Aura was decoration by the engine's own label; the ceiling should take it." },
+  { "name": "", "description": "an archlich enthroned on a sun of bone whose glare sears the eyes", "cr": "18", "rules": "2014",
+    "canary": "FEATURE — CR 17-20 on a 2014 sheet. Its Radiant Aura DID express the concept, so the receipt protection must keep it even over the ceiling." },
+  { "name": "", "description": "a leviathan of the trench whose song drowns fleets", "cr": "24", "rules": "2024",
+    "canary": "FEATURE — CR 21+, where we run UNDER print (7.0 against a p80 of 9). Nothing should be shed here." }
+]
