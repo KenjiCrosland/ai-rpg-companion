@@ -5922,5 +5922,300 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "4d250a310301": {
+  "concept": "A gaunt, soot-grey thing of matted astral fur and too many jointed, claw-tipped limbs, the Trophy Climber moves like a b",
+  "clauses": [
+   {
+    "id": "cl_1bf6vr6",
+    "text": "A gaunt",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1iiv7d5",
+    "text": "soot-grey thing of matted astral fur",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_m5k27o",
+    "text": "too many jointed",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_zwc0sj",
+    "text": "claw-tipped limbs",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_8tiluh",
+    "text": "the Trophy Climber moves like a bankrupt noble picking through a ruin",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "through its pelt",
+    "askShape": "condition"
+   },
+   {
+    "id": "cl_gx0wu9",
+    "text": "it kills not with fang",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "through its pelt",
+    "askShape": "condition"
+   },
+   {
+    "id": "cl_h7ily7",
+    "text": "with the raw",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "through its pelt",
+    "askShape": "condition"
+   },
+   {
+    "id": "cl_100541",
+    "text": "flaying grief of the Astral Sea that soaks through its pelt",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "through its pelt",
+    "askShape": "condition"
+   },
+   {
+    "id": "cl_zk4iwk",
+    "text": "It opens by dropping from a ceiling onto the largest target",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "charge",
+    "askMechanicWhy": "dropping from a ceiling onto the largest target"
+   },
+   {
+    "id": "cl_f0eyr",
+    "text": "pinning them while its claws press that psychic dread straight through their skull",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "pinning them",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "pinning them"
+   },
+   {
+    "id": "cl_tef5h6",
+    "text": "out their eyes",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "pinning them",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "pinning them"
+   },
+   {
+    "id": "cl_3gwmrp",
+    "text": "every round after",
+    "kind": "mechanical",
+    "askWhen": "start_of_turn",
+    "askWhenWhy": "every round after",
+    "askShape": "movement",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "drags its stunned prize"
+   },
+   {
+    "id": "cl_jwmhqs",
+    "text": "it drags its stunned prize toward its hoard",
+    "kind": "mechanical",
+    "askWhen": "start_of_turn",
+    "askWhenWhy": "every round after",
+    "askShape": "movement",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "drags its stunned prize"
+   },
+   {
+    "id": "cl_1395ss6",
+    "text": "striking at anyone who follows",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_3t4ufy",
+    "text": "shrieking the concentrated terror of every soul it has ever collected",
+    "kind": "mechanical",
+    "askShape": "save_area",
+    "askMechanic": "fear",
+    "askMechanicWhy": "shrieking the concentrated terror"
+   },
+   {
+    "id": "cl_1paejzi",
+    "text": "Bloodied",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "bloodied",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "climbs the walls and circles"
+   },
+   {
+    "id": "cl_1ar6dfk",
+    "text": "it does not flee — it climbs the walls and circles",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "bloodied",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "climbs the walls and circles"
+   },
+   {
+    "id": "cl_1o66jha",
+    "text": "herding survivors away from its lair with pulses of the same awful memory",
+    "kind": "mechanical",
+    "askShape": "save_area",
+    "askMechanic": "fear",
+    "askMechanicWhy": "pulses of the same awful memory"
+   },
+   {
+    "id": "cl_154nlrh",
+    "text": "fighting to the death to protect the collection it clearly believes it owns",
+    "kind": "mechanical",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "fighting to the death"
+   },
+   {
+    "id": "cl_obu126",
+    "text": "It is fully sapient (INT 10-14)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_fkirqu",
+    "text": "it is a hoarder that drags its kills back to a lair of trophies",
+    "kind": "mechanical",
+    "askWhen": "on_death",
+    "askWhenWhy": "drags its kills back",
+    "askShape": "condition",
+    "askMechanic": "harvest",
+    "askMechanicWhy": "drags its kills back to a lair of trophies"
+   }
+  ]
+ },
+ "5e28bac9d5de": {
+  "concept": "a giant spider utterly at home in its own webs",
+  "clauses": [
+   {
+    "id": "cl_1gc6l1i",
+    "text": "a giant spider utterly at home in its own webs",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "0f3d77e6b777": {
+  "concept": "a drowned cathedral choir whose hymn pulls sailors off the deck",
+  "clauses": [
+   {
+    "id": "cl_1xyhj01",
+    "text": "a drowned cathedral choir whose hymn pulls sailors off the deck",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "3c6da5cc1ce0": {
+  "concept": "a bell-ringer's ghost whose tolling cracks the bones of anyone who strikes it",
+  "clauses": [
+   {
+    "id": "cl_j964o2",
+    "text": "a bell-ringer's ghost whose tolling cracks the bones of anyone",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_17ktc4q",
+    "text": "strikes it",
+    "kind": "mechanical"
+   }
+  ]
+ },
+ "c090b77a92ef": {
+  "concept": "a hydra whose severed stumps gout scalding steam instead of regrowing",
+  "clauses": [
+   {
+    "id": "cl_1m2hbx2",
+    "text": "a hydra whose severed stumps gout scalding steam instead of regrowing",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "severed stumps gout",
+    "askShape": "save_area",
+    "askMechanic": "retaliate",
+    "askMechanicWhy": "gout scalding steam",
+    "polarity": "lacks",
+    "takes": "regeneration",
+    "lackQuote": "instead of regrowing"
+   }
+  ]
+ },
+ "d0bbb17560b3": {
+  "concept": "an archlich enthroned on a sun of bone whose glare sears the eyes",
+  "clauses": [
+   {
+    "id": "cl_1ik9pnr",
+    "text": "an archlich enthroned on a sun of bone whose glare sears the eyes",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "b194cf0921ab": {
+  "concept": "a cliff-stalker that climbs sheer rock and squeezes into crevices no wider than a fist",
+  "clauses": [
+   {
+    "id": "cl_48s5r4",
+    "text": "a cliff-stalker",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_oqpiru",
+    "text": "climbs sheer rock",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "climbs sheer rock",
+    "askOften": "at_will",
+    "askOftenWhy": "climbs sheer rock",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "climbs sheer rock"
+   },
+   {
+    "id": "cl_zy5rpl",
+    "text": "squeezes into crevices no wider than a fist",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "squeezes into crevices no wider than a fist",
+    "askOften": "at_will",
+    "askOftenWhy": "squeezes into crevices no wider than a fist",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "squeezes into crevices"
+   }
+  ]
+ },
+ "791d0f500f25": {
+  "concept": "a sentinel of black iron that will not leave the ward it guards",
+  "clauses": [
+   {
+    "id": "cl_6slhx",
+    "text": "a sentinel of black iron",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_128z5te",
+    "text": "will not leave the ward it guards",
+    "kind": "mechanical",
+    "askShape": "buff_self",
+    "askMechanic": "harden",
+    "askMechanicWhy": "will not leave the ward it guards"
+   }
+  ]
  }
 }

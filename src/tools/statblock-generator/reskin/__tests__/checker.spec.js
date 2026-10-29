@@ -112,7 +112,12 @@ describe('gates', () => {
     expect(has(checkBlock(withRow('Actions', { name: 'Glare', text: '*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Paralyzed condition until the end of its next turn.' })), 'gates', 'ko-at-will', 'soft')).toBe(true);
     expect(has(checkBlock(withRow('Actions', { name: 'Glare', text: '*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Paralyzed condition. It repeats the save at the end of each of its turns, ending the effect on a success.' })), 'gates', 'ko-at-will', 'soft')).toBe(true);
   });
-  test('at-will multi-target control with no damage and no gate', () => { expect(has(checkBlock(withRow('Actions', { name: 'Howl', text: '*Wisdom Saving Throw*: DC 15, each creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' })), 'gates', 'control-aoe-ungated', 'soft')).toBe(true); });
+  // RESCOPED 2026-10-29 to print's measured envelope. This exact row — narrow,
+  // multi-target, at will, capped at the end of the target's next turn — is the
+  // Young Copper Dragon's Slowing Breath, so it is not a finding. It fired on 6
+  // of 40 sheets on the 10-29 forty, every one legal (critic's correction).
+  test('a narrow, bounded at-will control row is print\'s own shape and stays quiet', () => { expect(has(checkBlock(withRow('Actions', { name: 'Howl', text: '*Wisdom Saving Throw*: DC 15, each creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn.' })), 'gates', 'control-aoe-ungated')).toBe(false); });
+  test('the same row UNBOUNDED is still a finding — print caps every one of its four', () => { expect(has(checkBlock(withRow('Actions', { name: 'Howl', text: '*Wisdom Saving Throw*: DC 15, each creature within 30 feet. *Failure:* The target has the Frightened condition.' })), 'gates', 'control-aoe-ungated', 'soft')).toBe(true); });
   test('hard control at will below CR 13 fails; a damage spell at will outside a replacement clause is soft', () => {
     expect(has(checkBlock(withRow('Actions', { name: 'Spellcasting', text: 'The stalker casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 12):\n\n- At Will: Hold Person' })), 'gates', 'control-at-will', 'fail')).toBe(true);
     const r = checkBlock(withRow('Actions', { name: 'Spellcasting', text: 'The stalker casts one of the following spells (spell save DC 12):\n\n- At Will: Fireball' })); expect(has(r, 'gates', 'damage-spell-at-will', 'soft')).toBe(true);
@@ -244,10 +249,10 @@ describe("the critic's blockers audit (2026-10-03)", () => {
     expect(has(checkBlock(free), 'gates', 'control-aoe-ungated', 'fail')).toBe(true);
     const traded = withRow('Actions', row);
     traded.sections.Actions[0].text = 'The stalker makes two Claw attacks. It can replace one attack with a use of Tether Call.';
-    expect(has(checkBlock(traded), 'gates', 'control-aoe-ungated', 'soft')).toBe(true);
+    expect(has(checkBlock(traded), 'gates', 'control-aoe-ungated', 'soft')).toBe(true);   // still soft: 120 feet, each creature of its choice — trading buys print's 30-foot Cone, not any width
     expect(has(checkBlock(traded), 'gates', 'control-aoe-ungated', 'fail')).toBe(false);
     const narrow = withRow('Actions', { name: 'Dread Pulse', text: '*Wisdom Saving Throw*: DC 15, each creature in a 20-foot Emanation. *Failure:* The target has the Frightened condition until the end of its next turn.' });
-    expect(has(checkBlock(narrow), 'gates', 'control-aoe-ungated', 'fail')).toBe(false);
+    expect(has(checkBlock(narrow), 'gates', 'control-aoe-ungated')).toBe(false);   // narrow and bounded: the Young Copper Dragon's shape exactly
   });
   test('a ". and" join fails the punctuation rule', () => {
     const b = base(); b.sections.Actions[1].text = '*Melee Attack Roll:* +7, reach 5 ft. 20 (3d10 + 4) Cold damage. and the target has the Paralyzed condition until the start of its next turn.';

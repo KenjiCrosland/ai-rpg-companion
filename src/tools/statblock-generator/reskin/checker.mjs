@@ -588,8 +588,32 @@ function gateGates(m, ctx, F) {
       const maText = (m.sections?.Actions ?? []).find((x) => /^Multiattack/.test(x.name ?? ''))?.text ?? '';
       const traded = new RegExp(`\\b${esc(bare(e.name))}\\b`).test(maText);
       const wide = /of (?:its|his|her|their) choice/i.test(e.text ?? '') || Number(/within (\d+) feet/.exec(e.text ?? '')?.[1] ?? 0) > 60;
+      // PRINT'S ENVELOPE, READ OFF THE FOUR ROWS THAT DEFINE IT (2026-10-29).
+      // The soft arm used to fire on EVERY row of this shape, including the one
+      // it described in its own message as "print's shape" — 6 of 40 sheets on
+      // the 10-29 forty, every one of them legal. Print's at-will multi-target
+      // control is the young metallic dragons' breath, swapped into Multiattack:
+      //   Brass/Sleep      30-ft Cone, Incapacitated until the end of its next
+      //                    turn, then repeats the save; Unconscious only on a
+      //                    SECOND failure
+      //   Copper/Slowing   30-ft Cone, "This effect lasts until the end of its
+      //                    next turn"
+      //   Silver/Paralyzing 30-ft Cone, Incapacitated to the end of its next
+      //                    turn; Paralyzed only on a second failure
+      //   Bronze/Repulsion 30-ft Cone, pushed 40 ft + Prone — no duration at
+      //                    all, because Prone self-ends (print's own 58-row rule)
+      // So the defect is not "at will and multi-target"; it is at will, multi-
+      // target AND unbounded. The bound is read from the DECLARED field first
+      // (`duration`, which the renderer records) and from the text only as the
+      // fallback, the same order `condition-duration` uses above.
+      const impoHere = e.imposes ?? (/has the (\w+) condition/.exec(e.text ?? '') ?? [])[1] ?? null;
+      const bounded = !!e.duration || CONDITION_BOUNDED.test(String(e.text ?? '')) || !!(impoHere && !MUST_BE_BOUNDED.includes(impoHere));
+      // TWO AXES, and print constrains both. Trading for an attack buys print's
+      // NARROW cone and nothing wider: there is no wide at-will control row in
+      // the 329 at any cost. So width is still a finding even when traded.
       if (wide && !traded) F('control-aoe-ungated', 'fail', `${sec}/${bare(e.name)}: at-will multi-target control, no damage, no gate, and nothing traded for it — print's 13 breaths of this shape all cost an attack`, bare(e.name));
-      else F('control-aoe-ungated', 'soft', `${sec}/${bare(e.name)}: at-will multi-target control with no damage and no gate${traded ? ' (traded for an attack in Multiattack, print\'s shape)' : ''}`, bare(e.name));
+      else if (wide) F('control-aoe-ungated', 'soft', `${sec}/${bare(e.name)}: traded for an attack as print does, but wider than print ever goes at will — print's four at-will control breaths are all 30-foot Cones`, bare(e.name));
+      else if (!bounded) F('control-aoe-ungated', 'soft', `${sec}/${bare(e.name)}: at-will multi-target control${traded ? ', traded for an attack as print does,' : ''} but the condition it imposes is unbounded — print's four all cap at the end of the target's next turn, or impose only a self-ending condition`, bare(e.name));
     }
     const atWill = /At Will:\*?\*?\s*([^\n]+)/.exec(e.text ?? '');
     if (atWill) for (const sp of atWill[1].split(',').map((x) => x.replace(/[*]/g, '').trim())) {

@@ -356,6 +356,18 @@ export function printHeadCr(conceptText) {
   const b = list.find((x) => phrases.includes(lower(x)));
   return b && Number.isFinite(Number(b.cr)) ? Number(b.cr) : null;
 }
+// EVERY ROW NAME PRINT USES, across all 329 blocks, gate suffix stripped.
+// A CLOSED FACT read off the corpus, never a hand-kept list: a template whose
+// name is in here reproduces a row a GM already recognises, and the rename rule
+// below fires for it. A template whose name is NOT in here is one we invented,
+// and converging onto an invented label buys no recognition — it only collides
+// (owner's ruling 2026-10-29, after the critic counted Dazzling Burst x3,
+// Sundering Shove x3 and Resonant Body x3 in one forty, against 11 erased
+// concept names: Drowning Hymn, Siege Shoulder, Smoking Stumps, War Bellow...).
+export const PRINT_ROW_NAMES = new Set((Array.isArray(printBlocks) ? printBlocks : [])
+  .flatMap((b) => Object.values(b.sections ?? {}).flat())
+  .map((r) => String(r?.name ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase())
+  .filter(Boolean));
 // THE PRINT WINDOW: print's own numbers ride when the sheet sits within a CR of print — and for fractional print CRs within one step (1/8 ↔ 1/4), never four steps (checker sweep 2026-10-02)
 export const nearPrintCr = (cr, pcCr) => Number.isFinite(cr) && Number.isFinite(pcCr) && Math.abs(cr - pcCr) <= 1 && (pcCr >= 1 || Math.max(cr, pcCr) / Math.min(cr, pcCr) <= 2);
 export function printCanonFor(conceptText, cr) {
@@ -1892,6 +1904,14 @@ export function labelFeatureRows(sections, trace = () => {}) {
   // sheet draws the same template twice (measured on the 2026-10-28 forty), so
   // there is no name to collide with. A print row keeps print's name, and
   // `name_locked` still wins (the floating orb's rays).
+  // THE THREE ORIGINALLY-CONVERGED TEMPLATES stay converged whatever their name's
+  // provenance. They were ordered on 2026-10-27 for a reason the print-name split
+  // does not touch: every CR band renders them identically bar the numbers, so the
+  // four coats of paint ("Silvered Riposte", "Iron Haft Parry", "Slipstream Lash",
+  // "Tower Shield Riposte") were one reaction wearing four names on one sheet-set.
+  // The critic's 2026-10-29 read lists Riposte approvingly and names none of these
+  // three among the 11 concept names the broadcast erased.
+  const ALWAYS_CONVERGE = ['condition-payoff', 'exploiter', 'riposte'];
   const PAYOFF = ['condition-payoff', 'exploiter'];
   const payoffNames = new Set(PAYOFF.map((id) => TEMPLATE_BY_ID.get(id)?.name).filter(Boolean));
   // A welded payoff can carry the name without the stamp, and the Trip Attack
@@ -1907,20 +1927,36 @@ export function labelFeatureRows(sections, trace = () => {}) {
   // needs is exactly declared-vs-invented: "Marsh Stride" is lizardfolk's
   // declared name for `terrain-walk` and stays, while "Killing Wake" is a
   // renamer's invention for the same template and goes.
+  // AN AUGMENTED ROW IS NOT THE STOCK ROW (owner, 2026-10-29: "but if we're
+  // augmenting it. we get to rename"). The ruling's own test is whether the
+  // MECHANIC differs, and a row carrying one of the four boons does something
+  // the stock template does not — so it keeps the name the call gave it. The
+  // stamp is declared data the renderer already writes, not a text read.
   const canonOf = (e) => {
-    if (e.print || e.name_locked || e.kit) return null;
-    return TEMPLATE_BY_ID.get(e.template)?.name ?? (payoffNames.has(bareOf(e)) ? bareOf(e) : null);
+    if (e.print || e.name_locked || e.kit || e.augmented) return null;
+    const canon = TEMPLATE_BY_ID.get(e.template)?.name ?? (payoffNames.has(bareOf(e)) ? bareOf(e) : null);
+    if (!canon) return null;
+    // A NAME THAT OVERPROMISES STILL CONVERGES, print name or not: that half of
+    // the rule was never about recognition (the critic's "Warded Charge", a name
+    // promising a movement its text does not have).
+    return PRINT_ROW_NAMES.has(canon.toLowerCase()) || ALWAYS_CONVERGE.includes(e.template) || mechanicUnkept(bareOf(e), e.text ?? '') ? canon : null;
   };
   for (const [secF, esF] of Object.entries(sections)) for (const e of esF.slice()) {
-    const canon = canonOf(e);
-    if (!canon) continue;
+    // THE TRIP ATTACK EVICTION IS A SEPARATE RULE that happens to live in this
+    // loop; it must not inherit the naming rule's escapes. It was briefly gated
+    // behind `canon` when the print-name split landed, which silently turned the
+    // eviction off for every payoff under an invented name — i.e. all of them
+    // ("Merciless Strike"). Its own guard is the one it always had: a print,
+    // locked or kit row is never evicted.
     const isPayoff = PAYOFF.includes(e.template) || payoffNames.has(bareOf(e));
-    if (isPayoff && tripRow) {
+    if (isPayoff && tripRow && !(e.print || e.name_locked || e.kit)) {
       esF.splice(esF.indexOf(e), 1);
       sweepDeadName(sections, e.name, tripRow, trace);
       trace('feature stands:', `${secF}/"${e.name}" leaves — the style's Trip Attack on ${tripRow.name} is the row (the template's payoff never ships under a style clause)`);
       continue;
     }
+    const canon = canonOf(e);
+    if (!canon) continue;
     if (bareOf(e) === canon) continue;
     const was = e.name;
     e.name = `${canon}${gateOf(e)}`;

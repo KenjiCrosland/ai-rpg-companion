@@ -1,87 +1,111 @@
 /**
- * ONE MECHANIC, ONE NAME — FOR EVERY STOCK ROW, NOT A LIST OF THREE.
+ * ONE MECHANIC, ONE NAME — SPLIT BY WHETHER PRINT HAS THE ROW.
  *
- * The owner's ruling (2026-10-27) is "unless it's mechanically different it needs
- * the same name", with no exception for rows the GM's own words asked for.
- * `labelFeatureRows` converged only `condition-payoff`, `exploiter` and
- * `riposte`, so the 2026-10-28 forty showed both halves of what that costs:
+ * Owner's ruling, 2026-10-29, amending his own of 2026-10-27. The 10-27 rule was
+ * "unless it's mechanically different it needs the same name", widened to every
+ * stock row. The critic's read of the 10-29 forty showed the cost of the widened
+ * version: it erased 11 concept-specific names (Drowning Hymn, Siege Shoulder,
+ * Smoking Stumps, Bone Sun Brand, Scythe Pin, Mire Curse, War Bellow, Storm
+ * Retort, Thorn Seeds, Lance Vendetta, Rime Trail) and replaced them with labels
+ * that then collided — Dazzling Burst x3, Sundering Shove x3, Resonant Body x3,
+ * Horrid Display x2, Luring Presence x2, Searing Aura x2 with identical text at
+ * CR 17 and CR 20.
  *
- *   - `relentless-pursuit` shipped under FOUR names in one run — "Relentless
- *     Pursuit" twice, "Reliquary Lurch", "Skull-Trail Hunter".
- *   - four rows carried a name promising a mechanic the stock row does not do:
- *     `terrain-walk` as "Killing Wake" (it is ice-walking, it kills nothing),
- *     `terror-pulse` as "Giant's Tongue", `uncanny-sense` as "Hull Resonance".
+ * The purpose of the rule was recognition: a GM reads "Pack Tactics" and already
+ * knows it. A print name delivers that; an invented one cannot, so broadcasting
+ * it buys nothing and costs the concept its words.
  *
- * A kit row is the exception that proves the rule: its name is DECLARED beside
- * its template by `classes.mjs` / `species.mjs`, and a paladin's smite is
- * Divine Smite.
+ *   print has the row      -> print's name, every time
+ *   the engine invented it -> the name the call gave it
+ *   the name overpromises  -> converge regardless (the critic's "Warded Charge")
+ *   the row is augmented   -> its own name; it is not the stock mechanic any more
+ *
+ * `PRINT_ROW_NAMES` is read off the 329 blocks, never hand-kept: 402 names.
  */
-import { labelFeatureRows } from '@/tools/statblock-generator/reskin/generate.mjs';
+import { labelFeatureRows, PRINT_ROW_NAMES } from '@/tools/statblock-generator/reskin/generate.mjs';
 import { TEMPLATE_BY_ID } from '@/tools/statblock-generator/reskin/templates.mjs';
 
 const nameOf = (id) => TEMPLATE_BY_ID.get(id).name;
+const isPrint = (id) => PRINT_ROW_NAMES.has(nameOf(id).toLowerCase());
 const run = (rows) => { const s = { Traits: rows }; labelFeatureRows(s); return s.Traits; };
+const row = (name, template, over = {}) => ({ name, text: 'x', template, library: true, ...over });
 
-describe('a renamed stock row goes back to its template name', () => {
-  it.each([
-    ['Reliquary Lurch', 'relentless-pursuit'],
-    ['Skull-Trail Hunter', 'relentless-pursuit'],
-    ['Killing Wake', 'terrain-walk'],
-    ['Hull Resonance', 'uncanny-sense'],
-  ])('"%s" (%s) converges', (given, template) => {
-    const [row] = run([{ name: given, text: 'x', template, library: true }]);
-    expect(row.name).toBe(nameOf(template));
+describe('the print-name set is read off print, not maintained by hand', () => {
+  it('holds every print row name', () => {
+    expect(PRINT_ROW_NAMES.size).toBeGreaterThan(300);
+    for (const n of ['bite', 'rend', 'mimicry', 'spider climb', 'pack tactics', 'fear aura', 'swallow', 'trample', 'fire aura', 'aura of authority'])
+      expect(PRINT_ROW_NAMES.has(n)).toBe(true);
   });
+
+  it('does not hold the names we invented', () => {
+    for (const n of ['dazzling burst', 'sundering shove', 'resonant body', 'horrid display', 'threshold execute', 'bloodied burst', 'searing aura'])
+      expect(PRINT_ROW_NAMES.has(n)).toBe(false);
+  });
+});
+
+describe('a row reproducing a print row takes print\'s name', () => {
+  it.each([['Stolen Voices', 'mimicry'], ['Wall-Crawler', 'spider-climb'], ['Formation Fighting', 'pack-tactics']])
+    ('"%s" (%s) converges', (given, template) => {
+      expect(isPrint(template)).toBe(true);
+      expect(run([row(given, template)])[0].name).toBe(nameOf(template));
+    });
 
   it('keeps a gate suffix while renaming', () => {
-    const [row] = run([{ name: 'Skull-Trail Hunter (Recharge 5-6)', text: 'x', template: 'relentless-pursuit', library: true }]);
-    expect(row.name).toBe(`${nameOf('relentless-pursuit')} (Recharge 5-6)`);
+    expect(run([row('Wall-Crawler (Recharge 5-6)', 'spider-climb')])[0].name).toBe(`${nameOf('spider-climb')} (Recharge 5-6)`);
   });
 
-  it('is a no-op on a row already carrying its template name', () => {
-    const [row] = run([{ name: nameOf('relentless-pursuit'), text: 'x', template: 'relentless-pursuit', library: true }]);
-    expect(row.name).toBe(nameOf('relentless-pursuit'));
+  it('is a no-op on a row already carrying print\'s name', () => {
+    expect(run([row(nameOf('mimicry'), 'mimicry')])[0].name).toBe(nameOf('mimicry'));
   });
 });
 
-describe('a declared name survives', () => {
-  it("keeps a class kit's name — a paladin's smite is Divine Smite", () => {
-    const [row] = run([{ name: 'Divine Smite', text: 'x', template: 'coating', kit: 'paladin' }]);
-    expect(row.name).toBe('Divine Smite');
-  });
-  it("keeps a species kit's name — lizardfolk declare Marsh Stride for terrain-walk", () => {
-    const [row] = run([{ name: 'Marsh Stride', text: 'x', template: 'terrain-walk', kit: 'lizardfolk' }]);
-    expect(row.name).toBe('Marsh Stride');
-  });
-  it("keeps print's own name", () => {
-    const [row] = run([{ name: 'Fear Aura', text: 'x', template: 'fear-aura', print: true }]);
-    expect(row.name).toBe('Fear Aura');
-  });
-  it('keeps a name_locked row — the floating orb names its own rays', () => {
-    const [row] = run([{ name: 'Eye Rays', text: 'x', template: 'random-ray', name_locked: true }]);
-    expect(row.name).toBe('Eye Rays');
+describe('a row the engine invented keeps the name the call gave it', () => {
+  it.each([['Reliquary Lurch', 'relentless-pursuit'], ['Skull-Trail Hunter', 'relentless-pursuit'], ['Killing Wake', 'terrain-walk'], ['Hull Resonance', 'uncanny-sense']])
+    ('"%s" (%s) survives', (given, template) => {
+      expect(isPrint(template)).toBe(false);
+      expect(run([row(given, template)])[0].name).toBe(given);
+    });
+
+  it('so two sheets drawing it can read differently — the point of the amendment', () => {
+    const [a] = run([row('Drowning Hymn', 'luring-presence')]);
+    const [b] = run([row('Chorus of Screams', 'luring-presence')]);
+    expect([a.name, b.name]).toEqual(['Drowning Hymn', 'Chorus of Screams']);
   });
 });
 
-describe('the Trip Attack interaction stays scoped to the payoff templates', () => {
-  // `isPayoff` used to mean "not riposte". Widening convergence without scoping
-  // it would have spliced EVERY templated row off any sheet carrying a style's
-  // Trip Attack.
-  it('a non-payoff template survives a sheet that has a Trip Attack', () => {
-    const s = {
-      Actions: [{ name: 'Gore', text: 'x', feature: 'Trip Attack' }],
-      Traits: [{ name: 'Skull-Trail Hunter', text: 'x', template: 'relentless-pursuit', library: true }],
-    };
-    labelFeatureRows(s);
-    expect(s.Traits).toHaveLength(1);
-    expect(s.Traits[0].name).toBe(nameOf('relentless-pursuit'));
+describe('a name that promises a mechanic its text lacks converges anyway', () => {
+  it('"Warded Charge" goes back to the template name — the critic\'s name-mechanic FAIL', () => {
+    const r = { name: 'Warded Charge', template: 'relentless-pursuit', library: true, text: 'The vigil targets itself or one creature it can see within 60 feet. The target gains 20 temporary hit points.' };
+    expect(isPrint('relentless-pursuit')).toBe(false);
+    expect(run([r])[0].name).toBe(nameOf('relentless-pursuit'));
   });
-  it('a payoff row still yields to the Trip Attack', () => {
-    const s = {
-      Actions: [{ name: 'Gore', text: 'x', feature: 'Trip Attack' }],
-      Traits: [{ name: 'Merciless Strike', text: 'x', template: 'condition-payoff', library: true }],
-    };
-    labelFeatureRows(s);
-    expect(s.Traits).toHaveLength(0);
+});
+
+describe('an augmented row is not the stock mechanic', () => {
+  it('keeps its own name even when the template is print-named', () => {
+    const r = row('Crevice Crawler', 'spider-climb', { augmented: { kind: 'squeeze' } });
+    expect(isPrint('spider-climb')).toBe(true);
+    expect(run([r])[0].name).toBe('Crevice Crawler');
+  });
+
+  it('while the same template unaugmented still converges', () => {
+    expect(run([row('Crevice Crawler', 'spider-climb')])[0].name).toBe(nameOf('spider-climb'));
+  });
+});
+
+describe('the exceptions that predate the split', () => {
+  it('a kit row keeps its declared name — a paladin\'s smite is Divine Smite', () => {
+    expect(run([row('Divine Smite', 'coating', { kit: true })])[0].name).toBe('Divine Smite');
+  });
+
+  it('a print row is never touched', () => {
+    expect(run([row('Withering Touch', 'coating', { print: true })])[0].name).toBe('Withering Touch');
+  });
+
+  it('the three converged on 2026-10-27 stay converged despite invented names', () => {
+    for (const id of ['condition-payoff', 'exploiter', 'riposte']) {
+      expect(isPrint(id)).toBe(false);
+      expect(run([row('Silvered Flourish', id)])[0].name).toBe(nameOf(id));
+    }
   });
 });
