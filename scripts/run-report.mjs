@@ -10,7 +10,7 @@
  */
 import {
   readRun, modelOf, scorable, nameOf, formatOf, pathOf, expectedBare,
-  rowsOf, featureRowsOf, clausesOf, deliveredClauseIds, pickTallyOf,
+  rowsOf, featureRowsOf, isFeatureRow, clausesOf, deliveredClauseIds, pickTallyOf,
 } from './lib/run-reader.mjs';
 
 const dir = process.argv[2];
@@ -56,21 +56,29 @@ for (const { sheet } of scored) {
     else undelivered.push(`${nameOf(sheet)}: "${String(c.text).slice(0, 44)}"`);
   }
 }
-// A METRIC HAS TO SAY WHAT IT CAN SEE. The join below is sound — a row's
-// `clauseId` is the engine's own record of what it answers — but it is far too
-// SPARSE to be read as delivery: on the 2026-10-28 forty only 18% of feature
-// rows carried one and 40% carried no provenance of any kind. So the share is
-// printed as a FLOOR beside the density that bounds it, and never on its own.
-// Until the engine records the clause each row answers, the honest statement is
-// "we cannot measure this", and the checker's coverage figure is a string-match
-// proxy that credits a descriptive clause to the flavour text.
-const feats = scored.flatMap(({ sheet }) => featureRowsOf(sheet).map(({ row: r }) => r));
-const anyProv = feats.filter((r) => r.clauseId || r.clause || r.gmQuote || (r.boundKeys ?? []).length).length;
-console.log('\nCLAUSE DELIVERY  (FLOOR only — see density below before quoting it)');
+// TWO DIFFERENT QUESTIONS, COUNTED SEPARATELY (corrected 2026-10-28). The first
+// cut called 40% of rows "missing provenance" and read that as a delivery
+// ceiling. It was wrong twice: the authoring path records its clause on 100% of
+// its rows, and 11 of the 12 unrecorded TEMPLATE rows on a forty were `freeRow`
+// — rows that answer no clause BY DESIGN, inside the owner's free-row budget.
+// Counting those as missing something invented a problem. So:
+//
+//   ROWS THAT OWE A LINK — a row the fit or authoring call placed that is not a
+//   free row or decoration. This should be ~100%, and a shortfall is a real bug.
+//   CLAUSES CLAIMED — of the GM's mechanical clauses, how many a row names. This
+//   is LOWER and not a bug by itself: a clause can be answered by a chassis,
+//   donor or print row, and those paths mostly do not record what they answer
+//   (the flaw row now does). So it is a floor on delivery, never the rate.
+const owing = scored.flatMap(({ sheet }) => rowsOf(sheet).map(({ row: r }) => r))
+  .filter((r) => (isFeatureRow(r) || r.authored) && !r.freeRow && !r.decoration);
+const owingLinked = owing.filter((r) => r.clauseId || r.clause || r.gmQuote || (r.boundKeys ?? []).length);
+console.log('\nPROVENANCE  (rows that owe a clause link)');
+row('rows owing a link', owing.length);
+row('recording one', owingLinked.length, `${pct(owingLinked.length, owing.length)} — a shortfall here IS a bug`);
+for (const r of owing.filter((x) => !owingLinked.includes(x))) row('  owes and names none', '', `${r.name} (${r.template ?? (r.library ? 'library draw' : r.seed ? 'seed' : 'authored')})`);
+console.log('\nCLAUSE DELIVERY  (a FLOOR: chassis and print rows answer clauses without recording it)');
 row('mechanical clauses', mech);
-row('answered by a row that SAYS so', mechDone, `${pct(mechDone, mech)} — a floor, not the delivery rate`);
-row('feature rows recording ANY provenance', `${anyProv}/${feats.length}`, `${pct(anyProv, feats.length)} — the metric's ceiling`);
-if (anyProv / (feats.length || 1) < 0.9) console.log('     NOT A DELIVERY RATE: most rows do not record the clause they answer.');
+row('claimed by a row, exactly', mechDone, `${pct(mechDone, mech)} — floor, not the delivery rate`);
 for (const u of undelivered.slice(0, 12)) console.log(`     undelivered  ${u}`);
 if (undelivered.length > 12) console.log(`     …and ${undelivered.length - 12} more`);
 

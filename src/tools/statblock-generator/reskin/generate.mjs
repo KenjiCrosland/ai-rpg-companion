@@ -8690,6 +8690,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         name: nm,
         text: `${String(inline ?? 'the creature').charAt(0).toUpperCase()}${String(inline ?? 'the creature').slice(1)} has Disadvantage on ${test}.`,
         rules: true, flaw: true, because: c.lackQuote ?? c.text,
+        // THE ROW NAMES THE CLAUSE IT ANSWERS (2026-10-28). This site has the
+        // clause in hand — it exists because of it — and recorded only `because`,
+        // a prose note nothing can join on. So the Adult Red Dragon's "blind in
+        // one eye from an old lance" read as UNANSWERED on the forty while Sight
+        // Weakness sat on the sheet answering it. Rows the fit and authoring
+        // calls place already record this; a clause-driven chassis row owes it
+        // too, or delivery cannot be measured without matching prose.
+        ...(c.id ? { clauseId: c.id, clause: c.text } : {}),
       });
       flawLanded = true;
       trace('flaw row:', `"${nm}" — "${c.text}" removed no row, so the absence costs the creature something instead (print's grammar: 11 of 329 blocks carry one; owner's ruling 1f)`);

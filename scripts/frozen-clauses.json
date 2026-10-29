@@ -5036,5 +5036,110 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "e471a3013b19": {
+  "concept": "A Testimony Scuttler is a single bright intelligence wearing a legion of palm-sized glass crabs, each translucent carapa",
+  "clauses": [
+   {
+    "id": "cl_4v0kxh",
+    "text": "A Testimony Scuttler is a single bright intelligence wearing a legion of palm-sized glass crabs",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_ycb7hg",
+    "text": "each translucent carapace blown from the cold dreams of sleepers so that frost blooms",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_bhgx2i",
+    "text": "recedes inside it like slow breath",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_7i6c17",
+    "text": "It opens by spreading its countless bodies into a glittering skirmish line that rings the prey",
+    "kind": "mechanical",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_1pevou7",
+    "text": "withdrawing in a hiss of clicking shards",
+    "kind": "mechanical",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_1qjc6ub",
+    "text": "circling back to jab at a flank or hamstring — always striking where the target is not looking",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "always striking where the target is not looking",
+    "polarity": "lacks",
+    "takes": "sight",
+    "costs": "sight",
+    "lackQuote": "always striking where the target is not looking"
+   },
+   {
+    "id": "cl_1vc1qzp",
+    "text": "like a hunter correcting a record of misdeeds",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_13kia9d",
+    "text": "Each pinching limb pinches with a flash of cold",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1p6oqkv",
+    "text": "flash-freezing flesh to frosted ruin",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1ihyea4",
+    "text": "when bloodied it withdraws into a scuttling knot",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "when bloodied",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_1nr20g7",
+    "text": "regroups",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "when bloodied",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_ipeg8c",
+    "text": "resumes its feints rather than spend its finite bodies on a hopeless kill",
+    "kind": "mechanical",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_obu126",
+    "text": "It is fully sapient (INT 10-14)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_bqb29",
+    "text": "it is a skirmishing pack-hunter that harries",
+    "kind": "mechanical",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_f645gp",
+    "text": "withdraws",
+    "kind": "mechanical",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_194yu6c",
+    "text": "circles back",
+    "kind": "mechanical",
+    "askShape": "movement"
+   }
+  ]
  }
 }
