@@ -258,7 +258,7 @@ export const areaClause = (shape, band, sizes = null) => {
 // answer ("a tangle of roots") with the literal string 'Restrained'. It is
 // already in FLAVOR_SLOTS, where a short bounded phrase is validated and
 // BLIND_FILLS supplies "the binding" when the call offers nothing.
-const VOCAB = { area_shape: AREA_SHAPES, duration: DURATIONS, save_stat: SAVE_STATS, consumed_condition: CONDITIONS, condition_minor: MINOR, r_vuln: DAMAGE };
+const VOCAB = { shutoff_damage: DAMAGE, area_shape: AREA_SHAPES, duration: DURATIONS, save_stat: SAVE_STATS, consumed_condition: CONDITIONS, condition_minor: MINOR, r_vuln: DAMAGE };
 // WHAT A SLOT OWES ITS OWN FRAME. Print parameterises the QUALIFIER and keeps the
 // noun — "an infernal wound" (Bearded Devil) — which is why its frame can go on to
 // say "While wounded… The wound closes… stanch the wound". Our slot took the whole
@@ -267,11 +267,76 @@ const VOCAB = { area_shape: AREA_SHAPES, duration: DURATIONS, save_stat: SAVE_ST
 // — a tar-fouled foot you bandage (focused ten, 2026-10-23). The frame cannot drop
 // those three references without losing print's shape, so the FILL carries the noun
 // and its own article, and the contract says so where the model can read it.
+/**
+ * AUGMENTATIONS: A CLOSED SET OF CLAUSES AN EXISTING TRAIT CAN TAKE (2026-10-29).
+ *
+ * The owner's design. Measured on the 2026-10-29 forty: 53 templated rows across
+ * 39 sheets drew 40 DISTINCT templates, so the catalog's breadth is not the
+ * problem — but ten templates repeated, and only one of the ten had a slot. The
+ * difference shows: `terrain-walk` landed three times and reads as three
+ * different rows ("mud", "rubble, broken stone, and collapsed timber", "swamp
+ * muck, reed beds, and standing water") because `{terrain}` varies, while
+ * `push-prone` landed four times and reads as four copies.
+ *
+ * So the lever is a PARAMETER on an existing trait, not another trait. An
+ * augmented row is also genuinely different in play, which makes a distinct name
+ * honest rather than paint — the tension the one-mechanic-one-name ruling left.
+ *
+ * A CLOSED SET, not free text. Five rounds of probing established that free-text
+ * rewriting finds a new way to break every time it is constrained: it bolted on
+ * preconditions, moved an attack's damage to a MISS, wrote a trigger true of every
+ * living target. The call picks a KIND by id and fills one bounded slot; the
+ * engine writes the clause.
+ *
+ * BOTH OF THESE ARE FREE. Neither adds damage, a save or a condition, so the CR
+ * budget cannot drift — which is the same reason `death-restoration` is safe.
+ * Print's priced augmentations exist (Fire Form's "that creature takes 5 (1d10)
+ * Fire damage") and are deliberately NOT here: they need the damage ladder, and a
+ * little drift on every augmented row would not show until a forty read hot.
+ */
+const AUGMENTATIONS = {
+  // STRENGTHS FIRST (owner, 2026-10-29: "traits are strengths too... GMs actually
+  // want strong monsters"). The first cut of this set was two weaknesses, because
+  // I reasoned free == CR-negative == weakness and pointed the whole design at
+  // making creatures WORSE. Print's free augmentations are mostly BOONS: it squeezes
+  // through a 1-inch gap (8 rows), it ignores its own terrain (4), it sees in its
+  // own medium (4), it stands in a creature's space (2). None of them costs a die.
+  squeeze: {
+    cite: "Air Elemental/Air Form (CR 5); 8 print rows: \"It can move through a space as narrow as 1 inch without expending extra movement to do so.\"",
+    slot: null, priced: false,
+    writes: () => 'It can move through a space as narrow as 1 inch without expending extra movement to do so.',
+  },
+  space_hold: {
+    cite: "Air Elemental/Fire Elemental — Air Form, Fire Form (CR 5): \"It can enter a creature's space and stop there.\"",
+    slot: null, priced: false,
+    writes: () => "It can enter a creature's space and stop there.",
+  },
+  own_medium_sight: {
+    cite: 'Ghost/Ethereal Sight (CR 4); Xorn, Chuul, Rust Monster — 4 print rows: the creature sees what its own element hides',
+    slot: 'sense_target', priced: false,
+    writes: (v) => `The creature can pinpoint the location of ${v} within 60 feet of itself.`,
+  },
+  terrain_boon: {
+    // print: Adult/Ancient/Young White Dragon — Ice Walk's own second sentence
+    cite: 'White Dragon/Ice Walk (CR 6, 13, 20): "Additionally, Difficult Terrain composed of ice or snow doesn\'t cost it extra movement."',
+    slot: 'terrain', priced: false,
+    writes: (v) => `Additionally, Difficult Terrain composed of ${v} doesn't cost the creature extra movement.`,
+  },
+};
+export const AUGMENTATION_KINDS = Object.keys(AUGMENTATIONS);
+
 const SLOT_CONTRACTS = {
   restraint: 'a BARE NOUN, no article, naming the physical thing that holds the target and that a party could attack or cut — print writes "until the rope is destroyed" (Erinyes) and "until the web is destroyed" (Ettercap, Giant Spider): "web", "roots", "brambles", "tar", "needles", "chain". Never a condition name: the frame already supplies "the" and the word "Restrained"',
   relic: 'a noun phrase WITH its article naming a THING the creature keeps, carries or wears and that a party could attack: "its severed head", "the soul bag", "a daughter\'s carapace". 2-4 words. It must be an OBJECT — not an effect, not a place, not a creature, because the frame gives it AC and Hit Points',
   finisher: 'a PREDICATE naming HOW the creature falls on a target that is already caught or down — no subject, no full stop, 3-6 words, lowercase: "brings the hammer down two-handed", "drives a knee into the ribs", "tightens the coils", "sets a hoof on the chest". This is the ONLY part of this row the call writes, and it is what makes one payoff read unlike another: 169 of these shipped under 147 different names and FOUR different sentences. Never name a condition, a save or a number — the frame supplies those',
   kill_consequence: 'a PREDICATE naming what becomes of the BODY — no subject, no full stop, 2-5 words, lowercase: "crumbles to dust", "loses its head", "is absorbed into the swarm". It is what the killing leaves behind, never damage and never a condition',
+  // MEASURED, NOT GUESSED (2026-10-29). Across today's runs `{terrain}` took the
+  // concept's own words on 99 of 106 rows while `{sense_target}` managed 1 of 8 —
+  // and the difference is that "terrain" says what it wants and "sense_target"
+  // does not. These two say it.
+  mimicked: 'a BARE NOUN PHRASE naming the SOUNDS this creature copies, no article — print writes "animal sounds and humanoid voices" (Green Hag) and "simple sounds it has heard, such as a whisper or chitter" (Raven): "a child crying", "the voices of the drowned", "tolling bells"',
+  sense_target: 'a BARE NOUN PHRASE naming WHAT this creature can always find, no article — print senses a KIND of thing, not a creature: "iron and rust" (Rust Monster), "precious metals and gems" (Xorn), "magic" (Chuul). Never "creatures" and never its own name',
+  counter: 'a CLAUSE naming what someone must DO to the remains to stop it coming back — a verb and an object, 4-8 words, lowercase: "the severed head is laid to rest", "its ashes are scattered at sea", "a silvered blade is left in the grave"',
   wound_phrase: 'a whole noun phrase WITH its article and ending in the word "wound" — like print\'s "an infernal wound": "a tar-fouled wound", "a weeping wound". The frame later says "While wounded", "The wound closes" and "stanch the wound", so a fill that is not a wound makes nonsense of them',
 };
 // Does the fill keep the promise its frame already makes? The frame's own noun is a
@@ -295,8 +360,14 @@ const SLOT_CONTRACTS = {
 const fillIsSelf = (v, ctx) => {
   const val = String(v ?? '').toLowerCase().replace(/^(?:the|a|an) /, '').trim();
   if (val.length < 3) return false;
+  // BOTH DIRECTIONS (2026-10-29). The test only caught a fill that ENDS WITH the
+  // creature's name, so "Trench Sovereign Leviathan" with a `{phobia}` fill of
+  // "the leviathan" sailed through and shipped "While the leviathan can see the
+  // leviathan within 30 feet of itself" — the creature afraid of itself. The fill
+  // was the TAIL of the name, not the other way round, so the name has to be
+  // checked against the fill as well.
   return [ctx?.name, ctx?.inline].map((n) => String(n ?? '').toLowerCase().replace(/^(?:the|a|an) /, '').trim())
-    .filter((n) => n.length >= 3).some((n) => n === val || val.endsWith(` ${n}`));
+    .filter((n) => n.length >= 3).some((n) => n === val || val.endsWith(` ${n}`) || n.endsWith(` ${val}`));
 };
 const fillKeepsFrame = (k, v) => {
   const val = String(v ?? '').trim();
@@ -312,10 +383,18 @@ const fillKeepsFrame = (k, v) => {
   // "until the Grappled is destroyed". Checked against the declared condition
   // list, not a word list of my own.
   if (k === 'restraint') return !CONDITIONS.some((c) => c.toLowerCase() === val.toLowerCase());
+  // THE COUNTER IS SOMETHING DONE TO THE REMAINS, NOT A CONDITION. The frame reads
+  // "...regains all its Hit Points unless {counter}", so a bare condition name
+  // renders "unless Restrained." — the same nonsense `{restraint}` shipped before
+  // the line above was written. Checked against the declared condition list, not a
+  // word list of my own, and it must read as a CLAUSE: print's counters are
+  // "*Dispel Evil and Good* is cast on its remains" and "its remains are sprinkled
+  // with holy water", both of which have a verb.
+  if (k === 'counter') return !CONDITIONS.some((c) => c.toLowerCase() === val.toLowerCase()) && val.includes(' ');
   return true;
 };
 // flavor slots: the model's words, bounded (no digits, no rules grammar, short)
-export const FLAVOR_SLOTS = ['finisher', 'kill_consequence', 'relic', 'phobia', 'restraint', 'projectile', 'wound_phrase', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
+export const FLAVOR_SLOTS = ['mimicked', 'counter', 'finisher', 'kill_consequence', 'relic', 'phobia', 'restraint', 'projectile', 'wound_phrase', 'zone_effect', 'zone_rule', 'disguise', 'shell', 'telegraph', 'lure_source', 'hook', 'douse', 'terrain', 'sense_target', 'anchor', 'ward'];
 // HOW TO CHOOSE, not just what is legal. A closed enum tells the model the legal
 // values and nothing about which one this sheet can support, and for
 // `consumed_condition` that gap WAS the defect: a payoff reads "one creature that
@@ -345,7 +424,7 @@ const SHAPE_TAGS = {
   'life-drain': ['on_hit', 'condition'], // print's HP-maximum reduction: a rider on the hit, the effect lasting past the turn
   'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], contagion: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], spew: ['save', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'hook-rider': ['on_hit', 'movement'], riposte: ['on_being_hit', 'damage'], 'snap-shot': ['on_being_hit', 'damage'], 'ground-burst': ['save', 'damage'], 'volley-order': ['always', 'resource'], 'random-ray': ['save', 'condition'], 'blurred-form': ['always', 'defense'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'stunning-strike': ['on_hit', 'condition'], 'patient-defense': ['always', 'defense'], 'lay-on-hands': ['always', 'resource'], 'second-wind': ['always', 'resource'], 'shield-bash': ['save', 'condition'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
   'spider-climb': ['always', 'movement'], phobia: ['always', 'condition'], 'terrain-walk': ['always', 'movement'], 'aberrant-ground': ['always', 'movement'], 'faultless-tracker': ['always', 'condition'], 'web-walker': ['always', 'movement'],
-  'energy-aura': ['start_of_turn', 'damage'], 'noxious-aura': ['start_of_turn', 'condition'], 'bloodied-fury': ['always', 'defense'], 'blood-frenzy': ['always', 'damage'], 'pack-tactics': ['always', 'damage'] /* EFFECTS has no 'buff_self': an advantage aura is this catalog's 'defense'. `ally-aura` was authored here on 2026-10-27 and REVERTED the same day — it drew 0 of 10 because three `leader` donors already carry Aura of Authority as a `rules` row and the hobgoblin kit grants it too. An EIGHTH way to ship inert, not in the plan's list of seven: a donor already carries the row. */, 'uncanny-sense': ['always', 'defense'], 'earth-glide': ['always', 'movement'], tunneler: ['always', 'movement'], berserk: ['always', 'condition'], 'shielded-mind': ['always', 'defense'], evasion: ['always', 'defense'],
+  'energy-aura': ['start_of_turn', 'damage'], 'noxious-aura': ['start_of_turn', 'condition'], 'bloodied-fury': ['always', 'defense'], 'blood-frenzy': ['always', 'damage'], 'death-restoration': ['always', 'defense'], 'pack-tactics': ['always', 'damage'] /* EFFECTS has no 'buff_self': an advantage aura is this catalog's 'defense'. `ally-aura` was authored here on 2026-10-27 and REVERTED the same day — it drew 0 of 10 because three `leader` donors already carry Aura of Authority as a `rules` row and the hobgoblin kit grants it too. An EIGHTH way to ship inert, not in the plan's list of seven: a donor already carries the row. */, 'uncanny-sense': ['always', 'defense'], 'earth-glide': ['always', 'movement'], tunneler: ['always', 'movement'], berserk: ['always', 'condition'], 'shielded-mind': ['always', 'defense'], evasion: ['always', 'defense'],
   'relentless-pursuit': ['always', 'movement'], bound: ['always', 'movement'], 'marking-light': ['always', 'condition'], 'sealed-body': ['always', 'defense'], 'warded-mending': ['start_of_turn', 'resource'], 'guarded-stance': ['always', 'defense'], 'undead-fortitude': ['always', 'defense'], mimicry: ['always', 'defense'], wail: ['once_per_fight', 'damage'], 'truth-aura': ['start_of_turn', 'condition'], 'gaze-aura': ['start_of_turn', 'condition'], 'fear-aura': ['start_of_turn', 'condition'], 'charge-push': ['on_hit', 'movement'],
 };
 // ENGINE FAMILIES: a template that re-implements an engine the sheet already
@@ -629,7 +708,7 @@ export function composedTemplate(pick) {
     section: g.section, trigger: g.trigger_tag, effect: g.effect[choice],
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], gate: null, nova: false, // every role: the call already judged this body when it chose the trigger
     requires_movement: null, requires_style: null, supersedes: null, deny_types: null,
-    requires_row: null, requires_claim: null, requires_size: null, needs_body: null, owns_weapon: false,
+    requires_row: null, requires_claim: null, requires_size: null, needs_body: null, owns_weapon: false, augments: null,
     family: null, mechanic: null, targets: [], target_sizes: null, duration_default: null,
     host: null, keys: [], flavor: [],
     // a COPIED frame keeps its own {condition_minor} and {save_stat} slots, so
@@ -921,6 +1000,7 @@ export const VERB_KEYS = {
   'web-walker': ['web', 'webs', 'webbing', 'silk', 'thread', 'threads', 'strand', 'strands', 'every thread', 'spider', 'weaver', 'loom'],
   'energy-aura': ['aura', 'radiates', 'radiating', 'waste heat', 'heat around', 'furnace', 'shimmers', 'wildfire', 'blaze', 'inferno', 'bonfire', 'pyre', 'flames', 'firestorm', 'scalding air', 'freezing air', 'chill around', 'crackles', 'static', 'emanates', 'wreathed in', 'halo of', 'sheds heat', 'cold around her', 'chills the air', 'chills the room', 'chill around', 'grave-cold', 'lose their warmth', 'warms nobody'],
   'noxious-aura': ['stench', 'reek', 'reeks', 'stink', 'stinks', 'miasma', 'rot', 'fumes', 'spores', 'aura of', 'presence', 'hymn', 'dirge', 'chant', 'keening', 'wail', 'drone', 'voices', 'stops hearts', 'dread presence', 'terrible to behold', 'true form', 'sickening', 'nauseating', 'foul', 'carrion', 'unclean'],
+  'death-restoration': ['returns', 'comes back', 'reforms', 'rises again', 'cannot be killed', 'cannot truly die', 'undying', 'deathless', 'immortal', 'reborn', 'always returns', 'death is no end'],
   'blood-frenzy': ['blood', 'blood frenzy', 'smells blood', 'scents blood', 'finishes the wounded', 'preys on the weak', 'culls', 'shark', 'feeding frenzy', 'tastes blood'],
   'pack-tactics': ['formation', 'shield wall', 'ranks', 'never breaks ranks', 'fights as one', 'in formation', 'pack', 'wolf pack', 'hunts in packs', 'flanks', 'drills', 'disciplined'],
   'bloodied-fury': ['bloodied', 'wounded', 'cornered', 'fury', 'frenzy', 'rage', 'enraged', 'savage', 'when hurt', 'the more it bleeds', 'desperate', 'fights harder', 'maddened', 'goaded', 'temper', 'berserk'],
@@ -1195,7 +1275,7 @@ export const MECHANIC = {
   harden: ['shell-withdraw', 'sealed-body', 'guarded-stance', 'patient-defense'],
   resist: ['absorption', 'evasion', 'shielded-mind', 'undead-fortitude'],
   escalate: ['bloodied-fury', 'blood-frenzy', 'rampage', 'berserk', 'execute', 'condition-payoff', 'exploiter', 'assassinate', 'isolation', 'wind-up'],
-  mend: ['lay-on-hands', 'second-wind', 'warded-mending'],
+  mend: ['lay-on-hands', 'second-wind', 'warded-mending', 'death-restoration'],
   command: ['rally', 'volley-order', 'herd', 'pack-tactics'],
   track: ['uncanny-sense', 'faultless-tracker', 'bound', 'focus', 'feint-slip', 'slow-bolt', 'stunning-strike', 'bolt-restrain', 'bolt-drag', 'truth-aura'],
 };
@@ -1315,7 +1395,7 @@ export const TEMPLATES = [
   ...SHAPES.filter((s) => SECTION_BY_REPLACES[s.replaces] && SHAPE_TAGS[s.id]).map((s) => ({
     id: s.id, name: s.name, kind: 'shape', cite: s.cite,
     section: SECTION_BY_REPLACES[s.replaces], replaces: s.replaces, roles: s.roles, styles: s.styles, cr_range: s.cr_range, /* `replaces` names the SLOT the template claims — the slot-yield rule reads it (fidelity pipeline step 2) */
-    gate: s.gate ?? null, nova: s.replaces === 'nova', owns_weapon: s.owns_weapon ?? false, requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null, requires_row: s.requires_row ?? null, requires_claim: s.requires_claim ?? null, requires_size: s.requires_size ?? null, needs_body: NEEDS_BODY[s.id] ?? null, family: FAMILY[s.id] ?? null, mechanic: MECHANIC_OF[s.id] ?? null, targets: s.targets ?? null, target_sizes: s.target_sizes ?? null, duration_default: s.duration_default ?? null,
+    gate: s.gate ?? null, nova: s.replaces === 'nova', owns_weapon: s.owns_weapon ?? false, augments: s.augments ?? null, requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null, requires_row: s.requires_row ?? null, requires_claim: s.requires_claim ?? null, requires_size: s.requires_size ?? null, needs_body: NEEDS_BODY[s.id] ?? null, family: FAMILY[s.id] ?? null, mechanic: MECHANIC_OF[s.id] ?? null, targets: s.targets ?? null, target_sizes: s.target_sizes ?? null, duration_default: s.duration_default ?? null,
     host: s.host ?? HOST_BY_REPLACES[s.replaces] ?? null, // a reaction that fires a ranged row needs one on the sheet (snap-shot)
     trigger: SHAPE_TAGS[s.id][0], effect: SHAPE_TAGS[s.id][1],
     keys: [...new Set([...(VERB_KEYS[s.id] ?? []), ...(SHAPE_KEYS[s.id] ?? [])])],
@@ -1670,7 +1750,7 @@ const shortFlavor = (s) => typeof s === 'string' && s.trim().split(/\s+/).length
  * ctx: { scaled, energy, mix, meleeName, conditionMinor, projectile, archetype, imposed, mechanics, cr, name }
  */
 // generic fills for a BLIND render (the fallback): the fiction is plain, never wrong
-const BLIND_FILLS = { finisher: 'strikes where the target cannot guard', kill_consequence: 'crumbles to dust', relic: 'a sealed reliquary', /* print's own: the Mummy's victim "dies and turns to dust" */ phobia: 'the thing it fears', restraint: 'binding' /* NO article: the frame reads "until the {restraint} is destroyed", and 'the binding' rendered "until the the binding" (2026-10-27) */, /* the snare's object noun: an empty slot printed "Restrained until the Restrained is destroyed" (critic's blockers audit 2026-10-03) */ douse: 'tear the brand away', projectile: 'a hurled object', wound_phrase: 'a festering wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'its whole frame tensing', lure_source: 'the creature', hook: 'its grip', terrain: 'mud', sense_target: 'moving creatures', anchor: 'its resting place', ward: 'its ward' }; // sense_target is the neutral sense: a rejected fill on a hound printed "precious metal" (the fourteen, 2026-09-28)
+const BLIND_FILLS = { mimicked: 'animal sounds and humanoid voices', counter: 'its remains are burned and the ashes scattered', finisher: 'strikes where the target cannot guard', kill_consequence: 'crumbles to dust', relic: 'a sealed reliquary', /* print's own: the Mummy's victim "dies and turns to dust" */ phobia: 'the thing it fears', restraint: 'binding' /* NO article: the frame reads "until the {restraint} is destroyed", and 'the binding' rendered "until the the binding" (2026-10-27) */, /* the snare's object noun: an empty slot printed "Restrained until the Restrained is destroyed" (critic's blockers audit 2026-10-03) */ douse: 'tear the brand away', projectile: 'a hurled object', wound_phrase: 'a festering wound', zone_effect: 'a choking haze', zone_rule: 'has Disadvantage on attack rolls', disguise: 'an ordinary object', shell: 'its shell', telegraph: 'its whole frame tensing', lure_source: 'the creature', hook: 'its grip', terrain: 'mud', sense_target: 'moving creatures', anchor: 'its resting place', ward: 'its ward' }; // sense_target is the neutral sense: a rejected fill on a hound printed "precious metal" (the fourteen, 2026-09-28)
 // THE RAY TABLE is composed from library cards, never authored (critic 2026-10-01): each
 // ray takes its save and its failure clause from a bolt or pulse card already on the
 // shelf; the names are the engine's own. A band of 3-5 rolls a d4 over the first four.
@@ -2095,7 +2175,30 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // all of it, so the reader that tried (a `/(\w+) damage/` scrape in the
   // checker's save-fit gate) was always going to meet an edge it had not seen.
   // Stamped here, once, by the site that decides it — the same move as `imposes`.
-  return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(chosenArea != null ? { area: chosenArea } : {}), ...(boundBy ? { duration: boundBy } : {}), ...(dtype ? { damageType: dtype } : {}), ...(pickedCondition ? { imposes: pickedCondition } : {}), ...(consumedPick ? { consumes: consumedPick } : {}), ...(saveOverride ? { saveOverride } : {}) };
+  // THE AUGMENTATION IS APPENDED LAST, so it never disturbs the frame's own
+  // substitutions. The template declares which kinds it will take (`augments`),
+  // the call names one, and the engine writes the sentence — enum membership for
+  // the kind, and the kind's own slot for its fill. A kind the template does not
+  // declare is ignored rather than refused: this is a bonus clause, and a row
+  // without it is still the row.
+  let augmented = null;
+  if (Array.isArray(t.augments) && t.augments.length) {
+    const want = String(fills.augmentation ?? '').trim();
+    const kind = t.augments.includes(want) ? AUGMENTATIONS[want] : null;
+    if (kind) {
+      // A SLOTLESS KIND NEEDS NOTHING FILLED. Print's free boons are whole
+      // sentences — "It can move through a space as narrow as 1 inch" — with no
+      // variable in them, so there is nothing to validate and nothing to wait for.
+      // That also means they do not depend on the header, which the shut-off does.
+      const raw = kind.slot ? String(fills[kind.slot] ?? '').trim() : null;
+      const ok = !kind.slot ? true
+        : VOCAB[kind.slot]
+          ? VOCAB[kind.slot].find((x) => x.toLowerCase() === raw.toLowerCase())
+          : (shortFlavor(raw) && fillKeepsFrame(kind.slot, raw) && !fillIsSelf(raw, ctx) ? raw : null);
+      if (ok) { text = `${text.trimEnd()} ${kind.writes(ok === true ? null : ok)}`; augmented = { kind: want, ...(ok === true ? {} : { fill: ok }) }; }
+    }
+  }
+  return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(augmented ? { augmented } : {}), ...(chosenArea != null ? { area: chosenArea } : {}), ...(boundBy ? { duration: boundBy } : {}), ...(dtype ? { damageType: dtype } : {}), ...(pickedCondition ? { imposes: pickedCondition } : {}), ...(consumedPick ? { consumes: consumedPick } : {}), ...(saveOverride ? { saveOverride } : {}) };
 }
 
 // SEAT DEFAULTS (critic run four): some seats OWE a trait by print — the 2024
@@ -2271,6 +2374,12 @@ export function templateMenuLines(menu, { cr, concept = '', idea = '' } = {}) {
     const matched = [...cv.map((k) => `${k} (concept)`), ...iv.map((k) => `${k} (idea)`)];
     const flav = t.flavor.length ? ` — you fill: ${t.flavor.map((f) => (PREDICATE_SLOTS.has(f) ? `{${f}} (a PREDICATE, no subject and no full stop — the frame already says "Each creature in the area": answer like "has Disadvantage on attack rolls")` : SLOT_CONTRACTS[f] ? `{${f}} (${SLOT_CONTRACTS[f]})` : `{${f}}`)).join(', ')}` : '';
     const vocab = slotsOf(frameOf(t, cr)).filter((s) => VOCAB[s]).map((s) => `{${s}} ∈ ${VOCAB[s].join('/')}${VOCAB_GUIDANCE[s] ? ` — ${VOCAB_GUIDANCE[s]}` : ''}`);
+    // A TEMPLATE THAT ACCEPTS AN AUGMENTATION HAS TO SAY SO IN THE MENU, or the
+    // feature is inert — a shape added earlier this sprint shipped dead because one
+    // registration never reached the prompt and only a verification probe caught it.
+    const aug = Array.isArray(t.augments) && t.augments.length
+      ? ` — may ALSO take ONE augmentation, or none: ${t.augments.map((k) => (AUGMENTATIONS[k].slot ? `"${k}" (then fill {${AUGMENTATIONS[k].slot}})` : `"${k}" (nothing to fill)`)).join(' or ')}`
+      : '';
     // A TEMPLATE WITH A VARIABLE AREA SHAPE HAS TO SAY SO. The frame carries
     // `{target}` (an engine-filled clause, sized by band) while the choice the
     // model makes is `area_shape` — two names on purpose, so the model never sets
@@ -2280,7 +2389,7 @@ export function templateMenuLines(menu, { cr, concept = '', idea = '' } = {}) {
     // same two-name split as area_shape: the frame carries {duration}, the choice
     // the model makes is "duration", so the menu has to name it or it is unreachable
     if (/\{duration\}/.test(frameOf(t, cr) ?? '') && t.effect === 'condition') vocab.push(`"duration" ∈ ${DURATIONS.join('/')} — how long the condition lasts`);
-    return `- ${t.id} [${SECTION_OF[t.section]}${t.gate ? `, ${t.gate}` : ''}]${ideaObj ? ` (fires: ${t.trigger}, does: ${t.effect}${stampAgrees(t, ideaObj) ? ' — matches the idea' : ''})` : (matched.length ? ` VERB MATCH: ${matched.join(', ')}` : '')}: ${frameOf(t, cr).replace(/\*/g, '')}${flav}${vocab.length ? ` — choose: ${vocab.join('; ')}` : ''}`;
+    return `- ${t.id} [${SECTION_OF[t.section]}${t.gate ? `, ${t.gate}` : ''}]${ideaObj ? ` (fires: ${t.trigger}, does: ${t.effect}${stampAgrees(t, ideaObj) ? ' — matches the idea' : ''})` : (matched.length ? ` VERB MATCH: ${matched.join(', ')}` : '')}: ${frameOf(t, cr).replace(/\*/g, '')}${flav}${vocab.length ? ` — choose: ${vocab.join('; ')}` : ''}${aug}`;
   }).join('\n');
 }
 
@@ -2315,7 +2424,7 @@ WHY NONE FITS. When you answer "none", answer "declined_because" with exactly on
 A RIDER THAT MOVES THE TARGET OUT OF REACH does not belong on a row the Multiattack repeats: push the target 10 feet on the first hit and the second and third cannot land, so the creature defeats its own Multiattack. Read the sheet's Multiattack and reach before offering a push or pull rider; refuse it there (the Horseman's Saber, 2026-10-25). A REFUSAL NAMES ITS GAP. "no_fit" is not an answer on its own — say which of the offered templates comes CLOSEST ("closest"), what the rules would have to do that none of them does ("missing"), and WHICH KIND OF EFFECT that missing thing is ("missing_effect"), exactly one of: damage | condition | movement | resource | defense. Judge the effect by what the row DOES to its target, not by words that appear in passing: a row that only applies against an already-prone target is not a condition row, and a row that resists being pushed is defense, not movement. In a few plain words naming the MECHANIC, not the fiction: "pulls the creature back to where it started", "picks one target and holds the aim", "costs the creature something when it fails". Never "nothing fits" and never a restatement of the idea. These accumulate into a list of templates worth building, so a vague answer is a wasted one.
 DID THE USER ASK FOR IT? Answer "asked" with the user's OWN WORDS that ask for this template's mechanic, quoted verbatim from THE USER TYPED line above — never from THE IDEA, which is the engine's own prose and is not the user
 ${elements.length ? `WHICH OF THIS CREATURE'S OWN ELEMENTS DOES THE ROW EXPRESS? Answer "expresses" with ONE of these, copied exactly, or "" if the row expresses none of them. These were drawn from the GM's description, so naming one is a receipt even when you cannot quote the GM directly — a trait seat usually cannot. Answer "" honestly: a row that does not express any of them is decoration, and saying so is the right answer.\n${elements.map((e) => `  - ${String(e).replace(/"/g, "'")}`).join('\n')}` : ''}'s words. The few words, not a sentence. Leave it "" when the user's words never ask for it and your pick rests on the idea you were given or on the template's shape. Answering "" is not a failure and does not withdraw your pick; it tells the engine the pick is yours, not the GM's, and some seats take only what the GM asked for.
-Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "expresses": "<one of the creature's own elements listed above, copied exactly, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", "closest": "<on a refusal: the offered id that comes nearest, else \\"\\">", "missing": "<on a refusal: the mechanic none of them does, else \"\">", "missing_effect": "<on a refusal: damage | condition | movement | resource | defense, else \"\">", "name": "<2-3 words, Title Case the way print writes a row name: Dreadful Glare, Wing Attack, Cloud of Insects — every word capitalised except of/the/and/to/with>", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
+Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "expresses": "<one of the creature's own elements listed above, copied exactly, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", "closest": "<on a refusal: the offered id that comes nearest, else \\"\\">", "missing": "<on a refusal: the mechanic none of them does, else \"\">", "missing_effect": "<on a refusal: damage | condition | movement | resource | defense, else \"\">", "name": "<2-3 words, Title Case the way print writes a row name: Dreadful Glare, Wing Attack, Cloud of Insects — every word capitalised except of/the/and/to/with>", "augmentation": "<only if the chosen template offered one above: the kind's id, and put its slot in \"fills\" — otherwise \"\">", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
 }
 
 export function validateFitResponse(jsonString) {
@@ -2332,7 +2441,12 @@ export function parseFit(raw, menu, creatureName = '', elements = []) { // a com
     template: t,
     because: String(p.because ?? '').trim().slice(0, 80),
     name: nm && !/^(?:none|n\/a|null|no fit|nothing)$/i.test(nm) && nm.split(/\s+/).length <= 3 && noDigits(nm) && !(creatureName && nm.toLowerCase().includes(creatureName.toLowerCase().split(/\s+/).pop())) ? nm : null, // "none" is the model saying no fit, never a row name (a row named "none" shipped on Meshrin — the critic's third species read, rerun)
-    fills: p.fills && typeof p.fills === 'object' ? p.fills : {},
+    // THE AUGMENTATION RIDES IN `fills`, because that is what `bindFills` passes to
+    // the renderer. It was advertised in the menu and absent from the response
+    // schema, so the model had nowhere to put the answer and the feature was INERT
+    // — a ten drew five augmentable traits and augmented none of them. The same
+    // one-end-only mistake as the shape that shipped dead earlier this sprint.
+    fills: { ...(p.fills && typeof p.fills === 'object' ? p.fills : {}), ...(typeof p.augmentation === 'string' && p.augmentation.trim() ? { augmentation: p.augmentation.trim() } : {}) },
     // DID THE USER ASK FOR IT — the call's answer, not the engine's keyword
     // table (critic's hold 1 door 5, 2026-10-16). Three seats refuse a
     // template the GM never asked for; they used to decide that by running

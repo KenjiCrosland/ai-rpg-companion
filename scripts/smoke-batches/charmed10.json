@@ -1,0 +1,23 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — print-exact, no minor-condition slot in play." },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2024",
+    "canary": "CANARY — a physical fighter; the slot must not reach for Charmed here." },
+  { "name": "", "description": "a quarry-pit thing of living scree that buries what it catches", "cr": "5", "rules": "2024",
+    "canary": "CANARY — a mindless brute; Prone/Restrained territory, never Charmed." },
+
+  { "name": "", "description": "a siren of the drowned reef whose song calls sailors over the rail", "cr": "8", "rules": "2024",
+    "canary": "FEATURE — a lure; Charmed is the condition print would use." },
+  { "name": "", "description": "a dream-eater that holds sleepers rapt while it feeds", "cr": "10", "rules": "2024",
+    "canary": "FEATURE — holding someone rapt is Charmed, not Frightened." },
+  { "name": "", "description": "a carnival mesmerist who makes the crowd adore him", "cr": "6", "rules": "2024",
+    "canary": "FEATURE — adoration is Charmed; the old five-word menu had no word for it." },
+  { "name": "", "description": "a fey piper who leads children into the hollow hills", "cr": "7", "rules": "2024",
+    "canary": "FEATURE — a pied-piper lure." },
+  { "name": "", "description": "a vampire courtier who rules by invitation and never by force", "cr": "12", "rules": "2024",
+    "canary": "FEATURE — charm over violence; watch it does not default to Frightened." },
+  { "name": "", "description": "a bell-wraith whose toll fills the living with dread", "cr": "9", "rules": "2024",
+    "canary": "FEATURE — genuinely Frightened; the widened menu must not drift off it." },
+  { "name": "", "description": "a plague-choir that deafens and sickens those who hear it", "cr": "11", "rules": "2024",
+    "canary": "FEATURE — Deafened/Poisoned; the two the slot already had." }
+]

@@ -1,0 +1,23 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — print-exact, no trait slot in play at all." },
+  { "name": "", "description": "a mud-caked bog hound that drags fishermen under", "cr": "2", "rules": "2024",
+    "canary": "CANARY — CR 2. Restoration declares CR 5+, so it must NOT appear here." },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2024",
+    "canary": "CANARY — a mundane fighter; no restoration, no phobia, no sense target." },
+
+  { "name": "", "description": "a headless horseman whose body reforms unless his buried head is laid to rest", "cr": "8", "rules": "2024",
+    "canary": "FEATURE — the case the whole probe was built on. Restoration with the head as its counter." },
+  { "name": "", "description": "a pumpkin king who returns each autumn unless his gourd is smashed on holy ground", "cr": "11", "rules": "2024",
+    "canary": "FEATURE — restoration again, a different counter, a different CR band (1d6 days)." },
+  { "name": "", "description": "a barrow-lich who cannot truly die while his bone-crown lies hidden", "cr": "14", "rules": "2024",
+    "canary": "FEATURE — the 1d4-day band; the counter is an object, not an act." },
+  { "name": "", "description": "an iron-scented hound that can always smell forged metal", "cr": "6", "rules": "2024",
+    "canary": "FEATURE — the sense_target contract; print's own idiom is iron and rust, not creatures." },
+  { "name": "", "description": "a trench leviathan that recoils from open flame", "cr": "17", "rules": "2024",
+    "canary": "FEATURE — the self-fill bug's own sheet. The phobia must be flame, never the leviathan." },
+  { "name": "", "description": "a glacier-heart that walks on young sea-ice without breaking it", "cr": "15", "rules": "2024",
+    "canary": "FEATURE — terrain-walk, the 93% slot; must stay specific, not fall to rubble." },
+  { "name": "", "description": "a reliquary ooze that keeps a saint's finger-bone inside itself", "cr": "9", "rules": "2024",
+    "canary": "FEATURE — relic-object, a 100% slot; the relic must be the finger-bone." }
+]

@@ -335,7 +335,7 @@ export const SHAPES = [
   // Three print-exact grammars and one flagged invention. None carry numbers,
   // so none climb the ladder; a trait that grants a mode reads the header.
   {
-    id: 'spider-climb', name: 'Spider Climb', cite: 'Drider/Spider Climb (CR 6); Roper (CR 5); Vampire (CR 13); Black Pudding (CR 4); Giant Spider (CR 1)',
+    id: 'spider-climb', augments: ['terrain_boon', 'squeeze', 'own_medium_sight'], name: 'Spider Climb', cite: 'Drider/Spider Climb (CR 6); Roper (CR 5); Vampire (CR 13); Black Pudding (CR 4); Giant Spider (CR 1)',
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
     // NO requires_movement here. That gate was CIRCULAR: Spider Climb GRANTS the
     // climbing, so it required the very thing the trait provides. The comment it
@@ -366,7 +366,7 @@ export const SHAPES = [
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature knows the direction and distance to any creature it has damaged within the last 24 hours, as long as the two of them are on the same plane of existence.'])),
   },
   {
-    id: 'web-walker', name: 'Web Walker', cite: 'Drider/Web Walker (CR 6); Ettercap/Web Walker (CR 2) — the 2024 text folds 2014\'s Web Sense into it', // the rafter widow's "knows every thread of its web" (critic, trait-shelf run 2026-09-27)
+    id: 'web-walker', augments: ['terrain_boon', 'own_medium_sight'], name: 'Web Walker', cite: 'Drider/Web Walker (CR 6); Ettercap/Web Walker (CR 2) — the 2024 text folds 2014\'s Web Sense into it', // the rafter widow's "knows every thread of its web" (critic, trait-shelf run 2026-09-27)
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature ignores movement restrictions caused by webs, and the creature knows the location of any other creature in contact with the same web.'])),
   },
@@ -385,7 +385,7 @@ export const SHAPES = [
     // asked the gap list for its exact text; the fly archon's cold twin did the
     // same the run before. `Searing Aura` stays as the DEFAULT row name — the
     // fit call renames it per creature anyway.
-    id: 'energy-aura', name: 'Searing Aura', cite: 'Azer Sentinel/Fire Aura (CR 2, 5 ft 1d10); Fire Elemental (CR 5, 1d10); Remorhaz/Heat Aura (CR 11, 3d10); Balor (CR 19, 3d8)',
+    id: 'energy-aura', augments: ['space_hold'], name: 'Searing Aura', cite: 'Azer Sentinel/Fire Aura (CR 2, 5 ft 1d10); Fire Elemental (CR 5, 1d10); Remorhaz/Heat Aura (CR 11, 3d10); Balor (CR 19, 3d8)',
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait', deny_types: ['Humanoid'],
     frames: { '0-2': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 5 (1d10) {damage_type} damage.', '3-5': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 5 (1d10) {damage_type} damage.', '6-9': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 7 (2d6) {damage_type} damage.', '10-12': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 10 (3d6) {damage_type} damage.', '13-20': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 13 (3d8) {damage_type} damage.', '21+': 'At the end of each of the creature\'s turns, each creature in a 5-foot Emanation originating from the creature takes 16 (3d10) {damage_type} damage.' },
   },
@@ -415,7 +415,7 @@ export const SHAPES = [
     //
     // Distinct from `bloodied-fury`, which keys on the creature's OWN Bloodied
     // state. Print ships both, on different creatures.
-    id: 'blood-frenzy', name: 'Blood Frenzy', cite: 'Sahuagin/Blood Frenzy (CR 1/2)',
+    id: 'blood-frenzy', augments: ['own_medium_sight'], name: 'Blood Frenzy', cite: 'Sahuagin/Blood Frenzy (CR 1/2)',
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature has Advantage on attack rolls against any creature that doesn\'t have all its Hit Points.'])),
   },
@@ -446,12 +446,53 @@ export const SHAPES = [
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature has Advantage on an attack roll against a target if at least one of the creature\'s allies is within 5 feet of that target and the ally doesn\'t have the Incapacitated condition.'])),
   },
   {
+    // THE CREATURE COMES BACK, AND THE GM GETS A QUEST (2026-10-29). Measured over
+    // print's 324 trait rows: 32 fire on death, and 21 of those bring the CREATURE
+    // back. We shipped `death-burst` (damage on death) and `kill-denial` (the
+    // VICTIM cannot return) and nothing for the form print uses most.
+    //
+    // It cost us a measurable thing. Asked for ten abilities for a Headless
+    // Horseman, the first was "its severed head is hidden elsewhere, and until the
+    // party finds and lays it to rest its body reforms after every defeat" — and
+    // the probe could place NINE of its ten ideas nowhere, that one included.
+    //
+    // Print's grammar has two sub-forms. The plane-bound one (Barbed Devil, Deva,
+    // Djinni, Glabrezu, Rakshasa) reads "dies outside the Nine Hells … revives
+    // somewhere in the Nine Hells", which needs a home plane the concept may not
+    // have. This is the OTHER one — Guardian Naga and Lemure — where the return is
+    // conditional, because the condition is where the creature's own story lives:
+    // "unless *Dispel Evil and Good* is cast on its remains", "unless its remains
+    // are sprinkled with holy water".
+    //
+    // UNPRICED ON PURPOSE, and this is why the form is safe. The return is days
+    // later, so the fight is already over: no damage, no condition, nothing the CR
+    // budget can see. What it buys is a hook — the party has to go and deal with
+    // the remains — which is table value the arithmetic never charges for.
+    //
+    // The delay follows print's own ladder: Lemure at CR 0 takes 1d10 days,
+    // Guardian Naga at CR 10 takes 1d6, Djinni at CR 11 takes 1d4. Stronger things
+    // CR 5 AND UP, BECAUSE PRINT IS. 21 of the 22 rows sit at CR 5+ with a median
+    // of 12 — the devils, demons, nagas, genies, celestials. The one exception is the
+    // Lemure at CR 0, and one row is not a band.
+    // come back faster.
+    id: 'death-restoration', name: 'Restoration',
+    cite: 'Guardian Naga/Celestial Restoration (CR 10, 1d6 days, unless Dispel Evil and Good); Lemure/Hellish Restoration (CR 0, 1d10 days); Djinni/Elemental Restoration (CR 11, 1d4 days); 21 of print\'s 32 death-trigger traits bring the creature back',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [5, 30], replaces: 'trait',
+    frames: {
+      '3-5': 'If the creature dies, it returns to life in 1d10 days and regains all its Hit Points unless {counter}.',
+      '6-9': 'If the creature dies, it returns to life in 1d6 days and regains all its Hit Points unless {counter}.',
+      '10-12': 'If the creature dies, it returns to life in 1d6 days and regains all its Hit Points unless {counter}.',
+      '13-20': 'If the creature dies, it returns to life in 1d4 days and regains all its Hit Points unless {counter}.',
+      '21+': 'If the creature dies, it returns to life in 1d4 days and regains all its Hit Points unless {counter}.',
+    },
+  },
+  {
     id: 'uncanny-sense', name: 'Uncanny Sense', cite: 'Rust Monster/Iron Scent (CR 1/2, 30 ft); Xorn/Treasure Sense (CR 5, 60 ft); Chuul/Sense Magic (CR 4, 120 ft)',
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
     frames: { '0-2': 'The creature can pinpoint the location of {sense_target} within 30 feet of itself.', '3-5': 'The creature can pinpoint the location of {sense_target} within 60 feet of itself.', '6-9': 'The creature can pinpoint the location of {sense_target} within 60 feet of itself.', '10-12': 'The creature can pinpoint the location of {sense_target} within 60 feet of itself.', '13-20': 'The creature can pinpoint the location of {sense_target} within 120 feet of itself.', '21+': 'The creature can pinpoint the location of {sense_target} within 120 feet of itself.' },
   },
   {
-    id: 'earth-glide', name: 'Earth Glide', cite: 'Earth Elemental/Earth Glide (CR 5); Xorn (CR 5)',
+    id: 'earth-glide', augments: ['terrain_boon', 'squeeze', 'own_medium_sight'], name: 'Earth Glide', cite: 'Earth Elemental/Earth Glide (CR 5); Xorn (CR 5)',
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait', requires_movement: 'Burrow',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature can burrow through nonmagical, unworked earth and stone. While doing so, the creature doesn\'t disturb the material it moves through.'])),
   },
@@ -560,9 +601,19 @@ export const SHAPES = [
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'If damage reduces the creature to 0 Hit Points, it makes a Constitution saving throw (DC 5 plus the damage taken) unless the damage is Radiant or from a Critical Hit. On a successful save, the creature drops to 1 Hit Point instead.'])),
   },
   {
+    // WHAT IT MIMICS IS PRINT'S OWN VARIABLE (2026-10-29). Of 41 trait shapes only 9
+    // carried a slot the GM's concept could fill; the other 32 rendered fixed text
+    // with just the creature's name substituted, which is how a sheet lands the right
+    // row, in the right form, and still reads like nothing the GM typed. Swept for
+    // which of those 32 print itself varies: six are print-fixed (web-walker,
+    // evasion, berserk, tunneler, earth-glide, aberrant-ground), nine are our own
+    // inventions with no grammar to follow, and THIS is the one where print's two
+    // instances differ — the Green Hag mimics "animal sounds and humanoid voices",
+    // the Raven "simple sounds it has heard, such as a whisper or chitter". The slot
+    // is print's variable, not a new degree of freedom.
     id: 'mimicry', name: 'Mimicry', cite: 'Green Hag/Mimicry (CR 3, DC 14); Raven (CR 0, DC 10)',
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
-    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature can mimic animal sounds and humanoid voices. A creature that hears the sounds can tell they are imitations only with a successful DC {dc} Wisdom (Insight) check.'])),
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature can mimic {mimicked}. A creature that hears the sounds can tell they are imitations only with a successful DC {dc} Wisdom (Insight) check.'])),
   },
   {
     id: 'wail', name: 'Wail', invented: true, // Banshee/Wail (2024 MM, not in this corpus) = the area form of Threshold Execute (Sea Hag/Death Glare, cited there): the drowned choir "whose hymn stops hearts" (critic, fresh three)

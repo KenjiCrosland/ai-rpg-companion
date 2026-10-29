@@ -11,7 +11,7 @@ import { pickDonor, scaleDonor, stampAttacksPerRound } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage} from './templates.mjs';
+import { composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock, EMPTY_SAVE_OUTCOME } from '../format-2024/lint.mjs';
@@ -1471,6 +1471,12 @@ const DECLARED_BY_WRITER = ['imposes', 'requiresCondition', 'duration'];
 const carryDeclared = (row, rendered) => {
   if (!row || !rendered) return row;
   for (const k of DECLARED_BY_WRITER) if (rendered[k] && !row[k]) row[k] = String(rendered[k]);
+  // `augmented` is a RECORD ({kind, fill}), so it cannot ride the loop above —
+  // String() would write "[object Object]". This was the ONLY thing broken about
+  // the augmentation: the clause reached the row's TEXT and the stamp did not, so
+  // five tens were reported as zero uptake while the boon was on the sheet. The
+  // artifact was right and the instrument was wrong.
+  if (rendered.augmented && !row.augmented) row.augmented = rendered.augmented;
   return row;
 };
 export function groundedClauses(list, userText, trace = () => {}, lacksAnswer = undefined) {
@@ -4401,8 +4407,25 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (rowNames.some((n) => n === w || n.includes(w) || w.includes(n))) return true;
       return !!weaponNamed(w) || !!weaponFor(w); // a weapon it is holding
     };
-    const vetFills = (f, src) => { const hay = String(src ?? '').toLowerCase(); return Object.fromEntries(Object.entries(f ?? {}).map(([k, v]) => [k, String(v ?? '').trim()]).filter(([, v]) => v && v.length <= 40 && !/[{}]/.test(v) && v.toLowerCase().split(/[^a-z']+/).filter((w) => w.length > 2).some((w) => hay.includes(w)))); }; // a fill is the user's own noun quoted back, so one significant word of it must be in the words the call was shown
-    const readFit = (fit, menuRead, srcText) => { for (const id of fit.wrong ?? []) wrongT.add(id); const vf = vetFills(fit.fills, srcText); if (Object.keys(vf).length) for (const m of menuRead) if (!fillsT.has(m.id)) fillsT.set(m.id, vf); if ((fit.wrong ?? []).length) trace('word match declined by the call:', `${(fit.wrong ?? []).join(', ')} — the key word does not mean the mechanic here`); return fit; };
+    const vetFills = (f, src) => { const hay = String(src ?? '').toLowerCase(); return Object.fromEntries(Object.entries(f ?? {}).map(([k, v]) => [k, String(v ?? '').trim()])
+    // AN ID IS NOT A QUOTED NOUN (2026-10-29). The quote test below is why
+    // `{terrain}` takes the GM's own words on 99 of 106 rows — a fill has to be
+    // something they typed. `augmentation` is an ENUM ID chosen from a menu, so it
+    // can only pass that test by coincidence of vocabulary: a cliff-stalker that
+    // "squeezes into crevices" let "squeeze" through while a dune-burrower's
+    // "own_medium_sight" died for want of the words own/medium/sight. Four tens read
+    // zero augmentations because of it. Exempted by KEY and validated against the
+    // closed kind list instead, so nothing else is softened.
+    .filter(([k, v]) => (k === 'augmentation'
+      ? AUGMENTATION_KINDS.includes(v)
+      : v && v.length <= 40 && !/[{}]/.test(v) && v.toLowerCase().split(/[^a-z']+/).filter((w) => w.length > 2).some((w) => hay.includes(w))))); }; // a fill is the user's own noun quoted back, so one significant word of it must be in the words the call was shown
+    const readFit = (fit, menuRead, srcText) => { for (const id of fit.wrong ?? []) wrongT.add(id); const vf = vetFills(fit.fills, srcText); if (Object.keys(vf).length) for (const m of menuRead) if (!fillsT.has(m.id)) fillsT.set(m.id, vf);
+      // THE AUGMENTATION BELONGS TO THE TEMPLATE THE CALL CHOSE. The line above
+      // writes one seat's vetted fills to EVERY id it was shown, and only when that
+      // id has no entry yet — so a later seat's augmentation for a template an
+      // earlier seat merely saw is discarded. A choice about one row is pinned to
+      // the row it was made for, and overrides the broadcast.
+      if (vf.augmentation && fit.template?.id) fillsT.set(fit.template.id, { ...(fillsT.get(fit.template.id) ?? {}), ...vf }); if ((fit.wrong ?? []).length) trace('word match declined by the call:', `${(fit.wrong ?? []).join(', ')} — the key word does not mean the mechanic here`); return fit; };
     const bindFills = (tpl) => {
       const out = { ...forcedFills(tpl), ...(fillsT.get(tpl.id) ?? {}) };
       if (out.ward && wardIsCarried(out.ward)) { trace('ward refused:', `"${out.ward}" is a row or a weapon on this sheet — a ward the creature carries can never be absent, so it is no off-switch`); delete out.ward; }

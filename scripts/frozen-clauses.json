@@ -5141,5 +5141,786 @@
     "askShape": "movement"
    }
   ]
+ },
+ "56b78b6a78f7": {
+  "concept": "a siren of the drowned reef whose song calls sailors over the rail",
+  "clauses": [
+   {
+    "id": "cl_mjy1cb",
+    "text": "a siren of the drowned reef whose song calls sailors over the rail",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "a siren of the drowned reef whose song calls sailors over the rail",
+    "askOften": "at_will",
+    "askOftenWhy": "a siren of the drowned reef whose song calls sailors over the rail",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "calls sailors over the rail"
+   }
+  ]
+ },
+ "0ffcd8899e56": {
+  "concept": "a dream-eater that holds sleepers rapt while it feeds",
+  "clauses": [
+   {
+    "id": "cl_1xuu6ik",
+    "text": "a dream-eater",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_avjzh3",
+    "text": "holds sleepers rapt while it feeds",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "holds sleepers rapt"
+   }
+  ]
+ },
+ "010b5fb952d5": {
+  "concept": "a carnival mesmerist who makes the crowd adore him",
+  "clauses": [
+   {
+    "id": "cl_15nphvg",
+    "text": "a carnival mesmerist",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "makes the crowd adore him"
+   },
+   {
+    "id": "cl_2exczy",
+    "text": "makes the crowd adore him",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "makes the crowd adore him"
+   }
+  ]
+ },
+ "87d40d5f15a8": {
+  "concept": "a fey piper who leads children into the hollow hills",
+  "clauses": [
+   {
+    "id": "cl_hyiphb",
+    "text": "a fey piper",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_v1y054",
+    "text": "leads children into the hollow hills",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "leads children into the hollow hills",
+    "askOften": "at_will",
+    "askOftenWhy": "leads children into the hollow hills",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "leads children"
+   }
+  ]
+ },
+ "f4877d77963c": {
+  "concept": "a vampire courtier who rules by invitation and never by force",
+  "clauses": [
+   {
+    "id": "cl_rq2hi4",
+    "text": "a vampire courtier",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1qfipax",
+    "text": "rules by invitation",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "charm",
+    "askMechanicWhy": "rules by invitation"
+   },
+   {
+    "id": "cl_1ibvldi",
+    "text": "never by force",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "83014cb18eb9": {
+  "concept": "a bell-wraith whose toll fills the living with dread",
+  "clauses": [
+   {
+    "id": "cl_5mcg3l",
+    "text": "a bell-wraith whose toll fills the living with dread",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "6d3dca621d7a": {
+  "concept": "a plague-choir that deafens and sickens those who hear it",
+  "clauses": [
+   {
+    "id": "cl_ws7knr",
+    "text": "a plague-choir",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_c6mub8",
+    "text": "deafens and sickens those",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "deafens and sickens those",
+    "askShape": "save_area",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "deafens and sickens those who hear it"
+   },
+   {
+    "id": "cl_d5ppy5",
+    "text": "hear it",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "hear it",
+    "askShape": "save_area",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "deafens and sickens those who hear it"
+   }
+  ]
+ },
+ "dda026663e4b": {
+  "concept": "a headless horseman whose body reforms unless his buried head is laid to rest",
+  "clauses": [
+   {
+    "id": "cl_j7czo1",
+    "text": "a headless horseman whose body reforms unless his buried head is laid to rest",
+    "kind": "mechanical",
+    "askShape": "heal",
+    "askMechanic": "mend",
+    "askMechanicWhy": "body reforms",
+    "polarity": "lacks",
+    "takes": "part",
+    "costs": "sight",
+    "lackQuote": "a headless horseman"
+   }
+  ]
+ },
+ "302c6deaf64e": {
+  "concept": "a pumpkin king who returns each autumn unless his gourd is smashed on holy ground",
+  "clauses": [
+   {
+    "id": "cl_12v7nou",
+    "text": "a pumpkin king",
+    "kind": "mechanical",
+    "askShape": "resist",
+    "askMechanic": "mend",
+    "askMechanicWhy": "returns each autumn"
+   },
+   {
+    "id": "cl_wk7dlk",
+    "text": "returns each autumn unless his gourd is smashed on holy ground",
+    "kind": "mechanical",
+    "askShape": "resist",
+    "askMechanic": "mend",
+    "askMechanicWhy": "returns each autumn"
+   }
+  ]
+ },
+ "20723c3619d1": {
+  "concept": "a barrow-lich who cannot truly die while his bone-crown lies hidden",
+  "clauses": [
+   {
+    "id": "cl_1tcrvyh",
+    "text": "a barrow-lich",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_i7r61v",
+    "text": "cannot truly die while his bone-crown lies hidden",
+    "kind": "mechanical",
+    "askMechanic": "relic",
+    "askMechanicWhy": "bone crown"
+   }
+  ]
+ },
+ "a953fc2c5097": {
+  "concept": "an iron-scented hound that can always smell forged metal",
+  "clauses": [
+   {
+    "id": "cl_14mt818",
+    "text": "an iron-scented hound",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_iio6sa",
+    "text": "can always smell forged metal",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "always",
+    "askOften": "at_will",
+    "askOftenWhy": "always",
+    "askShape": "condition",
+    "askMechanic": "track",
+    "askMechanicWhy": "can always smell forged metal"
+   }
+  ]
+ },
+ "a109ca975fe5": {
+  "concept": "a trench leviathan that recoils from open flame",
+  "clauses": [
+   {
+    "id": "cl_1sjn6p",
+    "text": "a trench leviathan",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_13rpm5g",
+    "text": "recoils from open flame",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "recoils from open flame",
+    "askShape": "condition",
+    "askMechanic": "fear",
+    "askMechanicWhy": "recoils"
+   }
+  ]
+ },
+ "32bfbebdd1f2": {
+  "concept": "a glacier-heart that walks on young sea-ice without breaking it",
+  "clauses": [
+   {
+    "id": "cl_3syb6x",
+    "text": "a glacier-heart",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_p9gkui",
+    "text": "walks on young sea-ice without breaking it",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "walks on young sea-ice without breaking it",
+    "askOften": "at_will",
+    "askOftenWhy": "walks on young sea-ice without breaking it",
+    "askShape": "movement",
+    "askMechanic": "relic",
+    "askMechanicWhy": "walks on young sea-ice without breaking it",
+    "polarity": "lacks",
+    "takes": "other",
+    "lackQuote": "without breaking it"
+   }
+  ]
+ },
+ "24d36008ec6d": {
+  "concept": "a reliquary ooze that keeps a saint's finger-bone inside itself",
+  "clauses": [
+   {
+    "id": "cl_1mrura",
+    "text": "a reliquary ooze",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1xdo83j",
+    "text": "keeps a saint's finger-bone inside itself",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "keeps a saint's finger-bone inside itself",
+    "askMechanic": "relic",
+    "askMechanicWhy": "a saint's finger bone inside itself"
+   }
+  ]
+ },
+ "036519f6128f": {
+  "concept": "Ozvellith is a single emaciated fiend-body of woven black tundra-root and frozen sedge, its fibrous hide braided so tigh",
+  "clauses": [
+   {
+    "id": "cl_ujf861",
+    "text": "Ozvellith is a single emaciated fiend-body of woven black tundra-root and frozen sedge",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_4sq8ik",
+    "text": "its fibrous hide braided so tight it can knot itself into a burrowing corkscrew",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "knot itself into a burrowing corkscrew"
+   },
+   {
+    "id": "cl_fheva9",
+    "text": "unknot in a heartbeat",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "knot itself into a burrowing corkscrew"
+   },
+   {
+    "id": "cl_g9e4tt",
+    "text": "its blank white eyes weave a crawling unease that frays the mind of anything watching",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "gaze",
+    "askMechanicWhy": "frays the mind of anything watching"
+   },
+   {
+    "id": "cl_l4osxx",
+    "text": "It burrows beneath arctic crust",
+    "kind": "mechanical",
+    "askMechanic": "climb",
+    "askMechanicWhy": "burrows beneath arctic crust"
+   },
+   {
+    "id": "cl_1862jog",
+    "text": "erupts to flood one hunter's thoughts with dread and false directions",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "flood one hunter's thoughts with dread and false directions"
+   },
+   {
+    "id": "cl_1ofkf4t",
+    "text": "instantly withdraws underground to circle a wide loop",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "teleport",
+    "askMechanicWhy": "withdraws underground to circle a wide loop"
+   },
+   {
+    "id": "cl_142j9y4",
+    "text": "strike the group from a new angle",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "teleport",
+    "askMechanicWhy": "withdraws underground to circle a wide loop"
+   },
+   {
+    "id": "cl_163omzs",
+    "text": "always choosing the cunning path over the proud one",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "flood one hunter's thoughts with dread and false directions"
+   },
+   {
+    "id": "cl_1paejzi",
+    "text": "Bloodied",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "bloodied",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "does not flee for good",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "tunnels deep"
+   },
+   {
+    "id": "cl_h6bqft",
+    "text": "it does not flee for good — it tunnels deep",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "bloodied",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "does not flee for good",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "tunnels deep"
+   },
+   {
+    "id": "cl_1a63ukb",
+    "text": "waits for its pack-brood to echo",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "bloodied",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "returns harrying with renewed patience",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "returns harrying with renewed patience"
+   },
+   {
+    "id": "cl_e7i5lq",
+    "text": "returns harrying with renewed patience",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "bloodied",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "returns harrying with renewed patience",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "returns harrying with renewed patience"
+   },
+   {
+    "id": "cl_1ltcy53",
+    "text": "because its cruelty is slow",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1osjrzh",
+    "text": "it wants the hunters to lose each other before it loses them",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "flood one hunter's thoughts with dread and false directions"
+   },
+   {
+    "id": "cl_b7jwfj",
+    "text": "It is cunning",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_aplkb7",
+    "text": "bestial (INT 5-7)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_bqb29",
+    "text": "it is a skirmishing pack-hunter that harries",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "bloodied",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "returns harrying with renewed patience",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "returns harrying with renewed patience"
+   },
+   {
+    "id": "cl_f645gp",
+    "text": "withdraws",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "teleport",
+    "askMechanicWhy": "withdraws underground to circle a wide loop"
+   },
+   {
+    "id": "cl_194yu6c",
+    "text": "circles back",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "teleport",
+    "askMechanicWhy": "withdraws underground to circle a wide loop"
+   }
+  ]
+ },
+ "7ba994b8c7b1": {
+  "concept": "a duelist who punishes every miss with a counterthrust",
+  "clauses": [
+   {
+    "id": "cl_18se0ur",
+    "text": "a duelist",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "punishes every miss",
+    "askShape": "attack",
+    "askMechanic": "retaliate",
+    "askMechanicWhy": "punishes every miss",
+    "head": true
+   },
+   {
+    "id": "cl_rabn99",
+    "text": "punishes every miss with a counterthrust",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "punishes every miss",
+    "askShape": "attack",
+    "askMechanic": "retaliate",
+    "askMechanicWhy": "punishes every miss"
+   }
+  ]
+ },
+ "1969134dcb1d": {
+  "concept": "a bog troll that scents blood and heals from any wound unless it is burned",
+  "clauses": [
+   {
+    "id": "cl_jk77yk",
+    "text": "a bog troll",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_9a4lu",
+    "text": "scents blood and heals from any wound unless it is burned",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "scents blood and heals from any wound unless it is burned",
+    "askShape": "movement",
+    "askMechanic": "track",
+    "askMechanicWhy": "scents blood"
+   }
+  ]
+ },
+ "6e8802f28a4a": {
+  "concept": "a barrow-wight that preys on the wounded but recoils from holy light",
+  "clauses": [
+   {
+    "id": "cl_11awsyi",
+    "text": "a barrow-wight",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_6m2ebp",
+    "text": "preys on the wounded",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "preys on the wounded"
+   },
+   {
+    "id": "cl_tj4hg1",
+    "text": "recoils from holy light",
+    "kind": "mechanical",
+    "askShape": "resist",
+    "askMechanic": "resist",
+    "askMechanicWhy": "recoils from holy light"
+   }
+  ]
+ },
+ "7e3909782502": {
+  "concept": "a furnace-wraith wreathed in heat that guts out when doused with cold",
+  "clauses": [
+   {
+    "id": "cl_w2hlvu",
+    "text": "a furnace-wraith wreathed in heat",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_e51s07",
+    "text": "guts out when doused with cold",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "doused",
+    "askMechanic": "burst",
+    "askMechanicWhy": "guts out"
+   }
+  ]
+ },
+ "c613fe8a8a40": {
+  "concept": "a giant hunting spider utterly at home in its own webs",
+  "clauses": [
+   {
+    "id": "cl_56azfb",
+    "text": "a giant hunting spider utterly at home in its own webs",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "09559c3d978f": {
+  "concept": "a dune-burrower that swims through loose sand as easily as water",
+  "clauses": [
+   {
+    "id": "cl_8134b2",
+    "text": "a dune-burrower",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_y85jgm",
+    "text": "swims through loose sand as easily as water",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "as easily as water",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "swims through loose sand"
+   }
+  ]
+ },
+ "4c496c04c37b": {
+  "concept": "a dread-crowned lich whose terror falters in direct sunlight",
+  "clauses": [
+   {
+    "id": "cl_xyfyrh",
+    "text": "a dread-crowned lich whose terror falters in direct sunlight",
+    "kind": "mechanical",
+    "askWhen": "start_of_turn",
+    "askWhenWhy": "in direct sunlight",
+    "askShape": "condition",
+    "askMechanic": "fear",
+    "askMechanicWhy": "terror falters"
+   }
+  ]
+ },
+ "4bb0addeb44d": {
+  "concept": "a cliff-stalker that climbs sheer rock and hunts the already-bleeding",
+  "clauses": [
+   {
+    "id": "cl_48s5r4",
+    "text": "a cliff-stalker",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_oqpiru",
+    "text": "climbs sheer rock",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "climbs sheer rock"
+   },
+   {
+    "id": "cl_1axj2lo",
+    "text": "hunts the already-bleeding",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "hunts the already bleeding"
+   }
+  ]
+ },
+ "5773d2d3e307": {
+  "concept": "a dune-burrower that swims through loose sand and feels every footstep above it",
+  "clauses": [
+   {
+    "id": "cl_8134b2",
+    "text": "a dune-burrower",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "a dune-burrower",
+    "askOften": "at_will",
+    "askOftenWhy": "a dune-burrower",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "swims through loose sand"
+   },
+   {
+    "id": "cl_i289i",
+    "text": "swims through loose sand",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "swims through loose sand",
+    "askOften": "at_will",
+    "askOftenWhy": "swims through loose sand",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "swims through loose sand"
+   },
+   {
+    "id": "cl_nrbq70",
+    "text": "feels every footstep above it",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "feels every footstep above it",
+    "askOften": "at_will",
+    "askOftenWhy": "feels every footstep above it",
+    "askShape": "buff_self",
+    "askMechanic": "track",
+    "askMechanicWhy": "feels every footstep above it"
+   }
+  ]
+ },
+ "bbbd9163aace": {
+  "concept": "a smoke-thing that pours through keyholes and arrow slits",
+  "clauses": [
+   {
+    "id": "cl_9o28y9",
+    "text": "a smoke-thing",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1nz7mo7",
+    "text": "pours through keyholes and arrow slits",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "teleport",
+    "askMechanicWhy": "pours through"
+   }
+  ]
+ },
+ "da3eded5f681": {
+  "concept": "a cellar-spider at home in its own webs, which it reads like a map",
+  "clauses": [
+   {
+    "id": "cl_g7r4ns",
+    "text": "a cellar-spider at home in its own webs",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_187sw0c",
+    "text": "it reads like a map",
+    "kind": "mechanical",
+    "askMechanic": "track",
+    "askMechanicWhy": "reads like a map"
+   }
+  ]
+ },
+ "7b794da28388": {
+  "concept": "a living bonfire that stands inside its victims to burn them",
+  "clauses": [
+   {
+    "id": "cl_3t1evz",
+    "text": "a living bonfire",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1xmfb9y",
+    "text": "stands inside its victims to burn them",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "swallow",
+    "askMechanicWhy": "stands inside its victims"
+   }
+  ]
+ },
+ "257bacc6e4bb": {
+  "concept": "a cliff-stalker that climbs sheer rock and squeezes into crevices",
+  "clauses": [
+   {
+    "id": "cl_48s5r4",
+    "text": "a cliff-stalker",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_oqpiru",
+    "text": "climbs sheer rock",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "climbs sheer rock",
+    "askOften": "at_will",
+    "askOftenWhy": "climbs sheer rock",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "climbs sheer rock"
+   },
+   {
+    "id": "cl_4og4k9",
+    "text": "squeezes into crevices",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "squeezes into crevices",
+    "askOften": "at_will",
+    "askOftenWhy": "squeezes into crevices",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "squeezes into crevices"
+   }
+  ]
+ },
+ "73a9b5904429": {
+  "concept": "a mire-crawler that moves through mud as easily as open road",
+  "clauses": [
+   {
+    "id": "cl_10z5it1",
+    "text": "a mire-crawler",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_v1ij6g",
+    "text": "moves through mud as easily as open road",
+    "kind": "descriptive"
+   }
+  ]
  }
 }

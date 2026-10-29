@@ -1,0 +1,23 @@
+[
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "CANARY — print-exact, no augmentable trait to touch." },
+  { "name": "", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "5", "rules": "2024",
+    "canary": "CANARY — a plain fighter; no boon should be bolted on." },
+  { "name": "", "description": "a duelist who punishes every miss with a counterthrust", "cr": "7", "rules": "2024",
+    "canary": "CANARY — routes to riposte, which declares NO augmentation. Must stay bare." },
+
+  { "name": "", "description": "a dune-burrower that swims through loose sand and feels every footstep above it", "cr": "10", "rules": "2024",
+    "canary": "FEATURE — earth-glide; sand terrain AND own_medium_sight are both on its list." },
+  { "name": "", "description": "a smoke-thing that pours through keyholes and arrow slits", "cr": "8", "rules": "2024",
+    "canary": "FEATURE — squeeze is print's Air Form sentence; pouring through gaps is exactly it." },
+  { "name": "", "description": "a cellar-spider at home in its own webs, which it reads like a map", "cr": "6", "rules": "2024",
+    "canary": "FEATURE — web-walker with terrain_boon and own_medium_sight both available." },
+  { "name": "", "description": "a living bonfire that stands inside its victims to burn them", "cr": "11", "rules": "2024",
+    "canary": "FEATURE — energy-aura + space_hold, print's own Fire Form pairing." },
+  { "name": "", "description": "a cliff-stalker that climbs sheer rock and squeezes into crevices", "cr": "7", "rules": "2024",
+    "canary": "FEATURE — spider-climb with squeeze; two boons offered, at most one taken." },
+  { "name": "", "description": "a barrow-wight that preys on the wounded but recoils from holy light", "cr": "9", "rules": "2024",
+    "canary": "FEATURE — the weakness case. blood-frenzy + weakness_shutoff still needs the late pass; expect BARE." },
+  { "name": "", "description": "a mire-crawler that moves through mud as easily as open road", "cr": "4", "rules": "2024",
+    "canary": "FEATURE — terrain_boon on its own element, print's Ice Walk grammar." }
+]
