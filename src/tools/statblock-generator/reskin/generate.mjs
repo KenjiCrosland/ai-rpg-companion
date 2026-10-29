@@ -7048,6 +7048,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           continue;
         }
         if (e.part || e.gmArmed || e.userSet) continue; // the GM's own weapon, already its row
+        // A TEMPLATE THAT WRITES ITS OWN WEAPON IS NEVER RE-ARMED (2026-10-28).
+        // This pass rewrites a row's range, reach, damage type and NAME to the
+        // class's weapon and leaves the row's TEXT alone. A `throw-retrieve` row
+        // hurls a projectile at thrown range and has the weapon land in an
+        // unoccupied space to be picked up — so re-arming it as a longbow shipped
+        // "Longbow — Edrik hurls a handaxe. *Ranged Attack Roll:* +5, range
+        // 150/600 ft. The weapon lands in an unoccupied space...": a bow that is
+        // thrown and retrieved, at bow range, under the wrong name. It also undid
+        // the naming convergence, which had correctly called the row Hurled
+        // Weapon. The three templates that write their own weapon declare it, so
+        // this asks the declaration rather than reading the prose for a projectile.
+        if (e.template && TEMPLATE_BY_ID.get(e.template)?.owns_weapon) { trace('class weapon:', `${secW}/"${e.name}" keeps its own weapon — ${e.template} writes the projectile and its range`); continue; }
         const dmgType = (/\d+ \(\d+d\d+(?: [+-] \d+)?\) ([A-Z][a-z]+) damage/.exec(t) ?? [])[1] ?? null;
         if (dmgType && !PHYS_W.includes(dmgType)) continue; // a magic strike is the class's weapon
         const want = isMelee ? cw.melee : cw.ranged; if (!want) continue;

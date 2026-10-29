@@ -1,0 +1,72 @@
+[
+ {
+  "name": "Air Elemental",
+  "description": "that carries stolen voices",
+  "cr": "5",
+  "rules": "2024",
+  "canary": "SPINE 5 · print head + addition on an Elemental body"
+ },
+ {
+  "name": "",
+  "description": "a quarry-pit thing of living scree that buries what it catches",
+  "cr": "5",
+  "rules": "2014",
+  "canary": "SPINE 5 · homebrew one-liner"
+ },
+ {
+  "name": "",
+  "description": "a siege-engine golem of lashed timber that shoulders through walls",
+  "cr": "8",
+  "rules": "2024",
+  "canary": "SPINE 8 · homebrew one-liner"
+ },
+ {
+  "name": "",
+  "description": "a plague-bearing archon of flies that commands lesser swarms",
+  "cr": "13",
+  "rules": "2024",
+  "canary": "SPINE 13 · homebrew one-liner"
+ },
+ {
+  "name": "",
+  "description": "A Large insectile horror. It has four scythe-arms, a spitting maw, and a shell that sheds acid. It fights by pinning prey with two arms and carving with the others.",
+  "cr": "9",
+  "rules": "2024",
+  "canary": "USE CASE · paragraph naming parts: the parts become attack rows"
+ },
+ {
+  "name": "",
+  "description": "a marsh witch who curses trespassers, cr 7",
+  "cr": "auto",
+  "rules": "2024",
+  "canary": "USE CASE · the CR is in the words, not the field"
+ },
+ {
+  "name": "",
+  "description": "lizardfolk monk",
+  "cr": "5",
+  "rules": "2014",
+  "canary": "USE CASE · creature-only words, no verb: species + class, two words"
+ },
+ {
+  "name": "Krennik Skullstandard",
+  "description": "riding a worg",
+  "cr": "4",
+  "rules": "2014",
+  "canary": "USE CASE · Name + a seat verb: the mounted style"
+ },
+ {
+  "name": "",
+  "description": "a sellsword who hurls a handaxe and closes with a shortsword",
+  "cr": "5",
+  "rules": "2014",
+  "canary": "USE CASE · the weapon table: a thrown weapon's range, a blade's type"
+ },
+ {
+  "name": "Owlbear",
+  "description": "that has learned to climb",
+  "cr": "3",
+  "rules": "2014",
+  "canary": "SPINE 3 · print head + addition, 2014 conversion"
+ }
+]

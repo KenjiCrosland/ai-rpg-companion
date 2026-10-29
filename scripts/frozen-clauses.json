@@ -4925,5 +4925,116 @@
     "askMechanicWhy": "a shell that sheds acid"
    }
   ]
+ },
+ "30fd0f56b2cf": {
+  "concept": "A low, wide-bodied skitterer knuckle-walks out of rift-frost on too many chitinous legs, its shell glazed in a permanent",
+  "clauses": [
+   {
+    "id": "cl_10dcz9",
+    "text": "A low",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_c42m4o",
+    "text": "wide-bodied skitterer knuckle-walks out of rift-frost on too many chitinous legs",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_14dxikk",
+    "text": "its shell glazed in a permanent ice-sheath that creaks",
+    "kind": "mechanical",
+    "askShape": "resist",
+    "askMechanic": "harden",
+    "askMechanicWhy": "permanent ice sheath"
+   },
+   {
+    "id": "cl_1rittcr",
+    "text": "sheds cold shards with every step",
+    "kind": "mechanical",
+    "askShape": "resist",
+    "askMechanic": "harden",
+    "askMechanicWhy": "permanent ice sheath"
+   },
+   {
+    "id": "cl_da8gpi",
+    "text": "It opens by scuttling over the frozen dead in short",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "charge",
+    "askMechanicWhy": "short twitching rushes"
+   },
+   {
+    "id": "cl_12k0y7j",
+    "text": "twitching rushes to bury its blunt",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "charge",
+    "askMechanicWhy": "short twitching rushes"
+   },
+   {
+    "id": "cl_trp4k7",
+    "text": "frost-scaled forelimbs in a target's flank",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1p3d5yk",
+    "text": "keeps circling in skittering arcs each round",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_139pvmr",
+    "text": "hammering with the same limbs while its ice-rime numbs",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_390giw",
+    "text": "slows whatever it touches",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "whatever it touches",
+    "askShape": "condition",
+    "askMechanic": "drain",
+    "askMechanicWhy": "numbs and slows"
+   },
+   {
+    "id": "cl_1xs3dxk",
+    "text": "Crudely cunning and carrion-greedy",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1athti2",
+    "text": "it harries the smallest and weakest first",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_1v46sm5",
+    "text": "drags wounded prey toward the rift it came from",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "drags wounded prey"
+   },
+   {
+    "id": "cl_ibx8mu",
+    "text": "only bolts once its shell is cracked open",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "once its shell is cracked open",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_1yjb22g",
+    "text": "It is crudely sapient (INT 6-8)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1jdy2t8",
+    "text": "it is a scavenger drawn to carrion and ruin",
+    "kind": "descriptive"
+   }
+  ]
  }
 }

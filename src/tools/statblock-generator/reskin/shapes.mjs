@@ -109,7 +109,7 @@ export const SHAPES = [
     },
   },
   {
-    id: 'thrown-burst', name: 'Hurled Burst', cite: 'Giant Ape/Boulder Toss (CR 7); Storm Giant/Lightning Storm (CR 13)',
+    id: 'thrown-burst', owns_weapon: true, name: 'Hurled Burst', cite: 'Giant Ape/Boulder Toss (CR 7); Storm Giant/Lightning Storm (CR 13)',
     roles: ['skirmisher', 'artillery', 'brute'], styles: ['hurler'], cr_range: [6, 30], replaces: 'nova', gate: 'Recharge 5-6',
     frames: {
       '6-9': 'The creature hurls {projectile} at a point it can see within 90 feet. *Dexterity Saving Throw*: DC {dc}, each creature in a 5-foot-radius Sphere centered on that point. *Failure:* {avg} ({dice}) {damage_type} damage. If the target is Large or smaller, it has the Prone condition. *Success:* Half damage.',
@@ -312,7 +312,7 @@ export const SHAPES = [
     frames: { '0-2': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 3 (1d6) Thunder damage and has the Deafened condition until the end of its next turn.', '3-5': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 5 (1d10) Thunder damage and has the Deafened condition until the end of its next turn.', '6-9': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 7 (2d6) Thunder damage and has the Deafened condition until the end of its next turn.', '10-12': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 10 (3d6) Thunder damage and has the Deafened condition until the end of its next turn.', '13-20': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 10 (3d6) Thunder damage and has the Deafened condition until the end of its next turn.', '21+': 'A creature that hits the creature with a melee attack while within 5 feet of it takes 14 (4d6) Thunder damage and has the Deafened condition until the end of its next turn.' },
   },
   {
-    id: 'throw-retrieve', name: 'Hurled Weapon', invented: true, requires_row: /Ranged Attack Roll|hurls|throws|returns to/i, // something to throw: a thrown, ranged or returning row (the charger's lance) // a body with nothing to throw never draws it (the gong's Discordant Toll, critic 2026-09-29)
+    id: 'throw-retrieve', owns_weapon: true, name: 'Hurled Weapon', invented: true, requires_row: /Ranged Attack Roll|hurls|throws|returns to/i, // something to throw: a thrown, ranged or returning row (the charger's lance) // a body with nothing to throw never draws it (the gong's Discordant Toll, critic 2026-09-29)
     supersedes: /returns to (?:its|the creature's|the \w+'s) hand|Hit or Miss/i, // one lance, one physics: the chassis's returning throw leaves when this ships // the critic's v2 pick from the free-text side: hurl the weapon, Speed halved until it is recovered
     roles: ['skirmisher', 'brute', 'defender'], styles: [], cr_range: [1, 30], replaces: 'signature',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature hurls {projectile}. *Ranged Attack Roll:* {atk}, range 30/120 ft. {avg} ({dice}) {damage_type} damage. The weapon lands in an unoccupied space within 5 feet of the target; until the creature spends 5 feet of movement in that space to recover it, the creature\'s Speed is halved and it can\'t use this action.'])),
@@ -418,6 +418,32 @@ export const SHAPES = [
     id: 'blood-frenzy', name: 'Blood Frenzy', cite: 'Sahuagin/Blood Frenzy (CR 1/2)',
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature has Advantage on attack rolls against any creature that doesn\'t have all its Hit Points.'])),
+  },
+  {
+    // PRINT'S ANSWER TO FIGHTING IN FORMATION (2026-10-28). The 2026-10-28 forty
+    // shipped Vashka the Red — a hobgoblin warlord who "fights from a shield wall
+    // and never breaks ranks" — with an AUTHORED trait reading "Vashka has a
+    // bonus to its Armor Class", no number and the condition stated twice: a row
+    // a GM cannot run, and one of that run's two `fix` verdicts. The clause had
+    // nowhere to land, and "the call named no template" was the run's largest
+    // death site for accepted picks.
+    //
+    // A priced AC bonus has no calibration to borrow: print writes "+N bonus to"
+    // in NONE of its 329 blocks. What print does write, 18 times, is Pack Tactics
+    // — and one of the eighteen is the Hobgoblin Warrior, which is Vashka's own
+    // kind.
+    //
+    // ONE DEPARTURE FROM PRINT'S WORDING, AND IT IS FORCED. Print writes "allies
+    // is within 5 feet of THE CREATURE", where "the creature" means the TARGET —
+    // the sentence opened "against a creature". Our frames stamp every "the
+    // creature" with the monster's own short form, which would have turned the
+    // clause into "allies within 5 feet of Vashka" and INVERTED the mechanic: the
+    // ally has to flank the target, not stand beside its own warlord. So the
+    // target is named "that target" here. The rule is print's; only the pronoun
+    // moved.
+    id: 'pack-tactics', name: 'Pack Tactics', cite: 'Hobgoblin Warrior/Pack Tactics (CR 1/2); Hell Hound (CR 3); 18 of print\'s 329 blocks',
+    roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'trait',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature has Advantage on an attack roll against a target if at least one of the creature\'s allies is within 5 feet of that target and the ally doesn\'t have the Incapacitated condition.'])),
   },
   {
     id: 'uncanny-sense', name: 'Uncanny Sense', cite: 'Rust Monster/Iron Scent (CR 1/2, 30 ft); Xorn/Treasure Sense (CR 5, 60 ft); Chuul/Sense Magic (CR 4, 120 ft)',
@@ -840,7 +866,7 @@ export const SHAPES = [
     },
   },
   {
-    id: 'throw-recall', name: 'Throw and Recall', invented: true,
+    id: 'throw-recall', owns_weapon: true, name: 'Throw and Recall', invented: true,
     roles: ['skirmisher', 'artillery'], styles: ['hurler'], cr_range: [3, 20], replaces: 'ranged',
     frames: {
       '3-5': '*Ranged Attack Roll:* +{atk}, range 30/90 ft. {avg} ({dice}) {damage_type} damage, and {projectile} returns to the creature\'s grasp. While {projectile} is thrown and not yet returned, the creature can\'t make this attack.',
