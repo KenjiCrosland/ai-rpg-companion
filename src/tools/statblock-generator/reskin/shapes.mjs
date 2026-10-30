@@ -252,9 +252,19 @@ export const SHAPES = [
     // kinder than the Mummy's, and one save per target per day replaces three a
     // turn. Print also never puts a rest-long rider on a THREE-attack row — its
     // ceiling is two, in 8 of 9 such rows.
+    // 2026-10-30, the critic's section 2: that measurement was right, too weak,
+    // and enforced nowhere. Print has SEVEN attack rows whose rider outlasts the
+    // target's next turn, and every one lands at most once a turn — the four
+    // lycanthropes by an explicit "It can replace one attack with a Bite
+    // attack", the Cockatrice by having no Multiattack at all, and the Incubus
+    // because its curse is ONE named curse, so a second Restless Touch is a
+    // no-op. This frame had none of the three and shipped on the Dire Wolf's two
+    // Bites (CR 1) and the Adult Red Dragon's three Rends plus Pounce. It now
+    // takes print's third answer, which is also `affliction`'s and the Mummy's:
+    // re-applying is a no-op, so the repeat is harmless and the row survives.
     id: 'contagion', name: 'Contagion', cite: 'Mummy/Rotting Fist (CR 3) — the can\'t-regain-Hit-Points clause; the Poisoned-until-cured shape', requires_row: /(?:Slashing|Piercing) damage/, // a plague rides a bite or a claw, never a slam
     roles: ['skirmisher', 'brute', 'lurker'], styles: [], cr_range: [0, 20], replaces: 'melee-rider', // a plague is a disease, not a wound: no Medicine check stanches it (the rat swarm's plague bound to the bleed card, critic form-ten 2026-10-01)
-    frames: { '0-2': 'If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic. *Success:* The target is immune to this creature\'s contagion for 24 hours.', '3-5': 'If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic. *Success:* The target is immune to this creature\'s contagion for 24 hours.', '6-9': 'If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic. *Success:* The target is immune to this creature\'s contagion for 24 hours.', '10-12': 'If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic. *Success:* The target is immune to this creature\'s contagion for 24 hours.', '13-20': 'If the target is a creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic. *Success:* The target is immune to this creature\'s contagion for 24 hours.' },
+    frames: { '0-2': 'If the target is a creature and isn\'t already Poisoned by this creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic. *Success:* The target is immune to this creature\'s contagion for 24 hours.', '3-5': 'If the target is a creature and isn\'t already Poisoned by this creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic. *Success:* The target is immune to this creature\'s contagion for 24 hours.', '6-9': 'If the target is a creature and isn\'t already Poisoned by this creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic. *Success:* The target is immune to this creature\'s contagion for 24 hours.', '10-12': 'If the target is a creature and isn\'t already Poisoned by this creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic. *Success:* The target is immune to this creature\'s contagion for 24 hours.', '13-20': 'If the target is a creature and isn\'t already Poisoned by this creature, it is subjected to the following effect. *Constitution Saving Throw*: DC {dc}. *Failure:* The target has the Poisoned condition. While Poisoned this way, the target can\'t regain Hit Points. The condition lasts until the target finishes a Long Rest or is cured by the *Lesser Restoration* spell or similar magic. *Success:* The target is immune to this creature\'s contagion for 24 hours.' },
   },
   // THE FIRST TEMPLATE-BACKLOG PASS (2026-09-21): the template signature's
   // miss log asked for these on 6 of its first 17 blocks. Both are print-
@@ -820,9 +830,22 @@ export const SHAPES = [
   // THE TWO 4/4 PROPOSALS (critic run four): weapon-lodge and the Shield
   // Guardian's interpose — asked in every run of the held-out set.
   {
+    // CAPPED TO ZERO EXTRA DAMAGE, 2026-10-30 (critic's section 3: "cap it in
+    // the template, or retire the template"). It paid {avg_half} PER lodged
+    // weapon on the host's attack row, and had blown the single-target ceiling on
+    // three hosts across three sweeps — the Stone Golem, then the Purple Worm,
+    // then the Boulder Exile at 59 per Stone Club hit against print's CR 9
+    // hardest of 35. No bonus size fixes it: that club is 31 on its own, so the
+    // headroom under the cap is 4. Worse, the damage rode a TRAIT and landed on
+    // an ACTION, so every per-row check reads 31 and 14, both legal, while the
+    // table reads 59 — the checker could not have caught this.
+    // What a player remembers here was never the damage: their weapon is stuck
+    // in the thing, and someone has to spend an action hauling it out. That is
+    // kept, the disarm is now explicit, and the two-weapon cap stays so the GM
+    // tracks at most two (`a-tracked-number-is-a-table-cost`).
     id: 'weapon-lodge', name: 'Weapon Lodge', invented: true, // the mound's "knits shut around the axes": a hit weapon stays
     roles: ['brute', 'defender'], styles: [], cr_range: [1, 30], replaces: 'trait',
-    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'When a creature hits the creature with a nonmagical weapon, the weapon lodges in the creature\'s body. A lodged weapon can be pulled free by a creature within reach that succeeds on a DC {dc} Strength (Athletics) check as an action; while lodged, the creature can use it: its {melee_name} attacks deal an extra {avg_half} ({dice_half}) {damage_type} damage per lodged weapon (maximum two).'])),
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'When a creature hits the creature with a nonmagical weapon, the weapon lodges in the creature\'s body, and the attacker no longer has that weapon. The creature can have two weapons lodged in it at a time. A lodged weapon can be pulled free by a creature within reach that succeeds on a DC {dc} Strength (Athletics) check as an action.'])),
   },
   // THE DUELIST CLUSTER (wide run 2026-09-22: three reaction misses — the
   // sable notch, the scarred duelist, the coin-bought duelist): "when a blow

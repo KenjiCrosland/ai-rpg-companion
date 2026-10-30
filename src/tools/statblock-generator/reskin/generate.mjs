@@ -5407,7 +5407,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // Multiattack's own count — read ONCE there, so this needs no sentence.
       const hostRepeats = Number(host?.attacksPerRound ?? 1) >= 2;
       const pushOnHold = !!host && !dupTrig && riderMoves && (hostHolds || hostRepeats);
-      if (host && !dupTrig && !pushOnHold) {
+      // AND NO UNASKED RIDER REWRITES PRINT'S OWN ROW (critic's section 2,
+      // 2026-10-30). A rider already needs the GM's own ask OR a free-row slot,
+      // and the free-row half is the hole: the Dire Wolf's concept was "with a
+      // frost-rimed hide", and a DECORATION welded a rest-long Poisoned-and-no-
+      // healing clause onto the Bite we imported verbatim from print. The Adult
+      // Red Dragon took the same clause on its Rend. A decoration earns a row of
+      // its own; it does not get to rewrite text print wrote. A rider the GM DID
+      // ask for still rides a print row — that is the Hydra's non-regrowing
+      // stumps, and the point of the reskin. Both facts are declared: `print` is
+      // stamped by the importer, and `gmAsked` reads the row's own receipt.
+      const unaskedOnPrint = !!host && !!host.print && !dupTrig && !pushOnHold && !gmAsked(actionT);
+      if (host && !dupTrig && !pushOnHold && !unaskedOnPrint) {
         // a rider that imposes a hold on every hit of a repeatable row needs a
         // gate (the astrologer's no-save Restrained x3 a turn, fresh ten):
         // print's idiom is "once per turn" when there is no save
@@ -5461,6 +5472,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         riderShipped = true;
         trace('signature rider:', `${actionT.template} -> ${host.name} (appended; ${actionT.because})`);
         if (deadBareT) sweepDeadName(sections, deadBareT, host, trace);
+      } else if (unaskedOnPrint) {
+        noteDrop(actionT?.template ?? actionT?.row?.template, 'the weld (no receipt, and the host is print\'s own row)', actionT?.row?.name ?? '');
+        trace('rider refused — unasked on a print row:', `"${actionT.template ?? actionT.row?.template ?? '?'}" has no GM ask and "${host.name}" is print's own text; a decoration does not rewrite print (the dire wolf's frost-rimed hide took a rest-long contagion, critic 2026-10-30); the slot leaves and the seat looks elsewhere`);
       } else if (pushOnHold) {
         noteDrop(actionT?.template ?? actionT?.row?.template, 'the weld (a push that undoes its own row)', actionT?.row?.name ?? '');
         trace('rider refused — a push that undoes its own row:', `"${actionT.template ?? actionT.row?.template ?? '?'}" moves the target away from "${host.name}", which ${hostHolds ? `holds it ${host.imposes}` : `swings ${host.attacksPerRound}x a round`}; the slot leaves and the seat looks elsewhere`);
