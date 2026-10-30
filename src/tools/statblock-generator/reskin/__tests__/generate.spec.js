@@ -1405,12 +1405,16 @@ describe('the brute plumbing (2026-08-26): archetype flows loudly end to end', (
   // chassis already brings three rules traits, so the SAME sheet, the same idea
   // and the same fit ship a fourth on a Construct and refuse it on a Giant.
   const fitPrompts = [];
-  const ceilingRun = async (resolvedType, traitIdea = 'While it is wounded it fights with a blind fury that makes it more dangerous, not less.', conceptText = 'a nameless hulk of old plating') => {
+  const ceilingRun = async (resolvedType, traitIdea = 'While it is wounded it fights with a blind fury that makes it more dangerous, not less.', conceptText = 'a nameless hulk of old plating', energy = 'Acid') => {
     const lines = []; const orig = console.log; console.log = (...a) => { lines.push(a.join(' ')); };
     let m;
     try {
       m = await generateReskin(
-        { archetype: 'brute', concept: conceptText, userConcept: conceptText, cr: 12, style: 'juggernaut', mechanics: [], resolvedType },
+        // energy: 'Acid' keeps the juggernaut's own Acid Absorption, which this
+        // test counts. Without a declared energy the organ now has no warrant and
+        // is dropped (2026-10-30) — correct for a nameless hulk, but it would
+        // change the chassis composition this ceiling was calibrated against.
+        { archetype: 'brute', concept: conceptText, userConcept: conceptText, cr: 12, style: 'juggernaut', mechanics: [], resolvedType, ...(energy ? { energy } : {}) },
         async (prompt) => {
           if (prompt.startsWith('You are inventing the SIGNATURE ability')) return JSON.stringify({ action: { idea: 'It slams the ground and everything near it is thrown down.', section: 'action', trigger: 'save', effect: 'damage' }, trait: { idea: traitIdea, trigger: 'always', effect: 'defense' } });
           if (prompt.startsWith("A monster's signature ability")) { fitPrompts.push(prompt); return JSON.stringify({ template: 'bloodied-fury', because: 'wounded', name: 'Iron Fury', fills: {} }); }
@@ -1435,6 +1439,20 @@ describe('the brute plumbing (2026-08-26): archetype flows loudly end to end', (
     expect(lines.join('\n')).toMatch(/keeps its melee half only/);
     expect(Object.values(m.sections).flat().some((e) => /Melee or Ranged Attack Roll| or range \d/.test(e.text ?? ''))).toBe(false);
     expect(Object.values(m.sections).flat().some((e) => /Melee Attack Roll:.*reach \d+ ft\./.test(e.text ?? ''))).toBe(true);
+  });
+
+  test('no warrant, no organ — a chassis Absorption needs the concept to name the energy', async () => {
+    // The critic twice: "Lightning, on timber" and "Acid, on black iron", the
+    // second its own example from the earlier read. Absorption is immunity PLUS
+    // healing, the most expensive thing on a sheet, and the chassis is not a
+    // reason to have it. The re-key only fires when an energy is named; with
+    // none, the donor's hard-typed organ survived untouched — which is why the
+    // ceiling test above has to declare `energy` to keep counting it.
+    const warranted = await ceilingRun('Construct', undefined, 'a nameless hulk of old plating', 'Acid');
+    expect(warranted.traits).toContain('Acid Absorption');          // the arm that keeps it
+    const bare = await ceilingRun('Construct', undefined, 'a nameless hulk of old plating', null);
+    expect(bare.traits.some((n) => / Absorption$/.test(n))).toBe(false); // the arm that drops it
+    expect(bare.traits.length).toBeGreaterThan(0);                  // lighter, not emptier
   });
 
   test('the trait ceiling counts the whole sheet — a material body seats a fourth trait, a meat body does not', async () => {

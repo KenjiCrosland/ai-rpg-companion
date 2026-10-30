@@ -6859,6 +6859,26 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // Fire), so the absorbed type joins the immunity write — and the
     // dealt-type resistance derivation already defers to immunities.
     let absorbedEnergy = null;
+    // AND NO WARRANT MEANS NO ORGAN (critic, twice: 2026-10-28 and 2026-10-30 —
+    // "Lightning, on timber" and "Acid, on black iron", the second its own example
+    // from the earlier read). The re-key below only fires when the concept names
+    // an energy; with none, the DONOR's hard-typed organ survived untouched, so a
+    // timber siege engine ate lightning because its chassis was the Flesh Golem
+    // and a black iron warden ate acid because its chassis was the Clay Golem.
+    // Absorption is immunity plus healing — the most expensive thing on a sheet —
+    // and the chassis is not a reason to have it. The only declared fact consulted
+    // is `options.energy`, the same field the re-key already trusts.
+    //
+    // A PRINT row is exempt: print's Iron Golem has Fire Absorption and its
+    // concept need name no energy, so dropping there would break print fidelity.
+    const absorbWarranted = !!(options.energy && DAMAGE_TYPES.includes(options.energy));
+    for (let i = (sections.Traits ?? []).length - 1; i >= 0; i -= 1) {
+      const eAbs = sections.Traits[i];
+      if (!/^(\w+) Absorption$/.test(eAbs?.name ?? '') || absorbWarranted || eAbs.print || eAbs.userSet) continue;
+      trace('absorption dropped:', `"${eAbs.name}" — the concept names no energy, so the ${scaled.donor ?? 'chassis'}'s organ has no warrant (a timber ram does not eat lightning; critic 2026-10-30)`);
+      sweepDeadName(sections, eAbs.name, null, trace);
+      sections.Traits.splice(i, 1);
+    }
     for (const eAbs of sections.Traits ?? []) {
       const am = /^(\w+) Absorption$/.exec(eAbs.name ?? '');
       if (!am) continue;
