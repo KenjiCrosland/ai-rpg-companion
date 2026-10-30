@@ -6442,7 +6442,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           if (e.library || e.template) { trace('print canon yields:', `"${from}" is the seat's own row (${e.template ?? e.seed}) — print's name never lands on a template's body (the Glacier-Jarl's Great Bow carried the throw-retrieve text, critic D 2026-10-19)`); return; }
           // THE NAME IS ALREADY ON THE SHEET: decide before stamping (the chassis hybrid took the Pistol's
           // numbers, then had its rename refused — classes-eight 2026-10-19). On a closed path the row leaves.
-          if (to !== from && Object.values(monster.sections).flat().some((e3) => e3 !== e && /Attack Roll/.test(e3.text ?? '') && String(e3.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === String(to).toLowerCase())) { if (closedPath && !e.gmArmed && !e.print) extraRows.push(e); else trace('print canon attack kept:', `"${from}" stays — "${to}" is already an attack row on this sheet`); return; } // another ATTACK row: a trait that happens to share the name is not the same row (the stub's "Bite" trait, print-names pins) // the user's part keeps its name on a borrow (the hag's Nails stayed Nails, not print's Claw — step 8)
+          if (to !== from && Object.values(monster.sections).flat().some((e3) => e3 !== e && /Attack Roll/.test(e3.text ?? '') && String(e3.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === String(to).toLowerCase())) { if ((closedPath || printExact) && !e.gmArmed && !e.print) extraRows.push(e); /* EXACT IS CLOSED TOO (2026-10-29): `closedPath` is twist|class_npc, so the STRICTEST path was the one that kept a colliding chassis attack. The exact Mummy Lord shipped print's five actions plus a chassis "Desiccating Strike" at 49 damage, reading its offense at CR 21 — 8 over, on print's own CR 15 block. */ else trace('print canon attack kept:', `"${from}" stays — "${to}" is already an attack row on this sheet`); return; } // another ATTACK row: a trait that happens to share the name is not the same row (the stub's "Bite" trait, print-names pins) // the user's part keeps its name on a borrow (the hag's Nails stayed Nails, not print's Claw — step 8)
           // A WEAPON THE GM TYPED STANDS (owner's spot check, 2026-10-18): the ranged
           // rows had this guard and the melee rows did not, so "skeleton with a
           // greatsword" shipped print's Shortsword over the call's own Greatsword,
@@ -6562,7 +6562,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           if (e.library || e.template) { trace('print canon yields:', `"${String(e.name ?? '').replace(/ \(.*\)$/, '')}" is the seat's own row — print's name never lands on a template's body (see the melee loop)`); return; }
           if (i >= pc.rangedRows.length) { if (closedPath && !e.gmArmed && !e.print) extraRows.push(e); return; } // print has no row for it — see the melee loop
           const prr = pc.rangedRows[i]; const to = prr?.name; const from = String(e.name ?? '').replace(/ \(.*\)$/, '');
-          if (to && to !== from && Object.values(monster.sections).flat().some((e3) => e3 !== e && /Attack Roll/.test(e3.text ?? '') && String(e3.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === String(to).toLowerCase())) { if (closedPath && !e.gmArmed && !e.print) extraRows.push(e); else trace('print canon attack kept:', `"${from}" stays — "${to}" is already an attack row on this sheet`); return; } // decided before any stamping; attack rows only (see the melee loop)
+          if (to && to !== from && Object.values(monster.sections).flat().some((e3) => e3 !== e && /Attack Roll/.test(e3.text ?? '') && String(e3.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === String(to).toLowerCase())) { if ((closedPath || printExact) && !e.gmArmed && !e.print) extraRows.push(e); /* EXACT IS CLOSED TOO (2026-10-29): `closedPath` is twist|class_npc, so the STRICTEST path was the one that kept a colliding chassis attack. The exact Mummy Lord shipped print's five actions plus a chassis "Desiccating Strike" at 49 damage, reading its offense at CR 21 — 8 over, on print's own CR 15 block. */ else trace('print canon attack kept:', `"${from}" stays — "${to}" is already an attack row on this sheet`); return; } // decided before any stamping; attack rows only (see the melee loop)
           const gmArmed = !!(e.weapon && gmWeapons.has(e.weapon) && e.weapon !== weaponFor(String(to ?? '')));
           if (gmArmed) { e.gmArmed = true; trace('print canon yields:', `"${from}" keeps its ${e.weapon} — the GM typed it; the ${pc.name}'s ${to} prices the row but does not replace the weapon`); }
           if (prr?.range && !gmArmed) e.text = e.text.replace(/range \d+\/\d+ ft\./, `range ${prr.range} ft.`); // print's range for print's weapon (a Longbow is 150/600, not 30/90)
@@ -6875,6 +6875,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // 34% and Psychic 16% (weapon-venom users are not poison-proof), so
     // no blanket dealt-type rule. Derived from the FINAL row texts, the
     // ground truth after fills.
+    // print's legendary rows are placed before print's other rows land, so their
+    // citation check is deferred to the end of the print-canon block below
+    let deferredLegendaryCheck = null;
     const allText = Object.values(monster.sections ?? {}).flat().map((e) => e.text).join(' ');
     for (const t of ['Fire', 'Cold', 'Lightning']) {
       // dice context required: "immunity to Fire damage" in a trait is a
@@ -7045,16 +7048,21 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // rule the signature path already applies above ("a row citing X, which is
           // not on this sheet — the checker would fail it"). Print fidelity yields to
           // coherence, because a GM cannot run a reference to a row that is not there.
+          // set when print's legendary rows are placed; resolved after its rows land
           const placed = pc.legendaryRows.map((r) => { const tx = asInline(r.text).replace(/\bDC \d+\b/g, `DC ${scaled.dc}`); return { name: r.name, text: tx.charAt(0).toUpperCase() + tx.slice(1), print: true }; });
-          const legKnown = [...rowNamesOf({ sections }), ...placed.map((r) => r.name)];
-          const kept = placed.filter((r) => {
-            const d = danglingRefIn(r.text, legKnown, r.name);
-            if (d) trace('print canon legendary:', `"${r.name}" leaves — it cites "${d}", which this sheet has renamed away; a GM cannot run a reference to a row that is not there`);
-            return !d;
-          });
-          sections['Legendary Actions'] = [...uses, ...kept];
-          if (kept.length) trace('print canon legendary:', `${kept.map((r) => r.name).join(', ')} — the ${pc.name}'s own kit stands where the chassis's stood`);
-          else delete sections['Legendary Actions'];
+          // THE CHECK RUNS ON THE FINISHED SHEET, NOT THIS ONE (2026-10-29).
+          // It used to filter here, against `rowNamesOf(sections)` as the sheet
+          // stood — but print's OWN rows are installed further down this same
+          // block, so a legendary row citing one of them was dropped for naming a
+          // row that arrived a step later. The print-exact Mummy Lord lost two of
+          // its three legendary actions that way: "Glare" cites Dreadful Glare and
+          // "Necrotic Strike" cites Rotting Fist or Channel Negative Energy, and
+          // all three of those rows are on the sheet it shipped. The drop itself
+          // is right — a GM cannot run a reference to a row that is not there, and
+          // it is why `dangling-ref` stopped failing at CR 10-16 — so it moves
+          // rather than goes, to the end of the print-canon block.
+          sections['Legendary Actions'] = [...uses, ...placed];
+          deferredLegendaryCheck = { placed, name: pc.name };
         }
         // ON A CLOSED PATH THE ACTIONS ARE CLOSED TOO (forty 2026-10-19): a chassis HYBRID row ("Javelin",
         // Melee or Ranged) sat in neither rename loop — print's Hobgoblin Warrior has no hybrid — and rode
@@ -7160,6 +7168,48 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           }
         }
       }
+    }
+    // ON `exact`, PRINT'S ATTACKS ARE THE ONLY ATTACKS (2026-10-29, second pass).
+    // The first pass closed the COLLIDING case — a chassis attack whose name
+    // matched a print row — and the Mummy Lord then shipped "Wrapped Staff", a
+    // chassis attack colliding with nothing, beside print's Rotting Fist and
+    // Channel Negative Energy. Its offense still read CR 21 (8 over, on print's
+    // own CR 15 block) and it drew `attack-in-multiattack` as well, because
+    // print's Multiattack names only print's rows. The rule is the path's own:
+    // print closes the row set, so the NAME was never what mattered.
+    //
+    // Guarded two ways: only when print actually supplied an attack row (a print
+    // body with none would otherwise be left unable to attack), and never for a
+    // row the GM armed or a part they named.
+    if (printExact) {
+      const printAttacks = Object.values(sections).flat().filter((e) => e?.print && /Attack Roll/.test(e.text ?? ''));
+      if (printAttacks.length) {
+        for (const [secX, esX] of Object.entries(sections)) for (let xi = esX.length - 1; xi >= 0; xi -= 1) {
+          const e = esX[xi];
+          if (!e || e.print || e.gmArmed || e.part || !/Attack Roll/.test(e.text ?? '')) continue;
+          esX.splice(xi, 1);
+          sweepDeadName(sections, e.name, printAttacks[0], trace);
+          noteDrop(e.template ?? e.seed, 'print closes the row set', `an exact ${pcPlain?.name ?? 'print'} sheet carries print's attacks only`);
+          trace('print canon: chassis attack leaves —', `${secX}/"${e.name}" is not one of the ${pcPlain?.name ?? 'print body'}'s rows, and an exact sheet carries print's attacks only`);
+        }
+      }
+    }
+    // THE DEFERRED CITATION CHECK (2026-10-29). Print's own rows are all on the
+    // sheet now, so a legendary row that still cites something absent really is
+    // unrunnable and leaves — while one citing a row print installed above stays.
+    if (deferredLegendaryCheck) {
+      const { placed, name: pcName } = deferredLegendaryCheck;
+      const known = rowNamesOf({ sections });
+      const kept = placed.filter((r) => {
+        const d = danglingRefIn(r.text, known, r.name);
+        if (d) trace('print canon legendary:', `"${r.name}" leaves — it cites "${d}", which is not on the finished sheet; a GM cannot run a reference to a row that is not there`);
+        return !d;
+      });
+      const uses = (sections['Legendary Actions'] ?? []).filter((r) => !placed.includes(r));
+      if (kept.length) {
+        sections['Legendary Actions'] = [...uses, ...kept];
+        trace('print canon legendary:', `${kept.map((r) => r.name).join(', ')} — the ${pcName}'s own kit stands where the chassis's stood`);
+      } else delete sections['Legendary Actions'];
     }
     // THE CLASS FIGHTS WITH ITS OWN WEAPON (critic B, 2026-10-19; owner confirmed the table). The class
     // body is a print NPC block, and its weapons are that NPC's: the monk on the Assassin struck with a

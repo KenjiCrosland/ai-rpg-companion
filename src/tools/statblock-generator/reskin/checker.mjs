@@ -56,6 +56,15 @@ export function danglingRefIn(text, names, rowName = '') {
   if (!/^Multiattack/.test(String(rowName ?? ''))) {
     for (const mk of String(text ?? '').matchAll(/makes (?:one|two|three|\d+) ([A-Z][\w' -]+?) attacks?\b/g)) {
       const t = mk[1].trim();
+      // "A or B" IS PRINT'S OWN CITATION (2026-10-29). The capture class admits
+      // spaces and lowercase, so "makes one Rotting Fist or Channel Negative
+      // Energy attack" arrived as ONE name and matched no row. Print writes this
+      // in 7 rows: six Multiattacks, which the guard above already skips, and the
+      // Mummy Lord's Necrotic Strike, which this dropped from its own exact sheet.
+      // A GM can run the row if EITHER named row is present — they pick one — so
+      // a dangle is reported only when none of the alternatives is there.
+      const alts = t.split(/ or /).map((x) => x.trim()).filter(Boolean);
+      if (alts.length > 1) { if (!alts.some((a) => names.includes(a))) return t; continue; }
       if (!names.includes(t)) return t;
     }
   }

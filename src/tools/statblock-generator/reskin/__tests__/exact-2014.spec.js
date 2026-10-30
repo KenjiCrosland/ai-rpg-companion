@@ -99,3 +99,4 @@ describe('a name only the 2014 book carries', () => {
     expect(corpusEntry('Owlbear', { edition: '2014' })?.name).toBe('Owlbear');
   });
 });
+

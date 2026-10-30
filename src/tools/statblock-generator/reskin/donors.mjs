@@ -2186,6 +2186,51 @@ export const DONORS = [
     },
   },
   {
+    // THE CR 10-16 DEFENDER GAP (owner's go, 2026-10-29, after the legend12 probe).
+    // The twelve put a defender-shaped CR 15 concept on `defender-5` — a CR 5
+    // chassis stretched TEN CRs, worse than the `lurker-8`-at-CR-13 case the
+    // lurker rung was added for. Measured: the defender family had NO donor
+    // anywhere in CR 10-16 (nor did swarm, ooze or controller), while brute had 5
+    // and skirmisher 6, all at CR 13 — which is also why band concepts misroute
+    // to those archetypes.
+    //
+    // NON-LEGENDARY ON PURPOSE. Print's CR 12-16 defenders are the Rakshasa (CR
+    // 13, AC 17, HP 221), the Ice Devil (CR 14, AC 18, HP 228) and the Iron Golem
+    // (CR 16, AC 20, HP 252) — not one of them has legendary actions. Only the
+    // dragons, the Vampire and the Mummy Lord do in that band, which the two
+    // legendary rungs added above already mirror.
+    //
+    // Numbered to the plain CR 13 card (hp 210, dpr 100, atk 10, ac 18, dc 17):
+    // the defender law is AC OVER the card paid by under-card HP, so ac_offset +2
+    // at AC 20, and hp_scale 0.86 clears print's own CR 13 floor of 170.
+    id: 'defender-13',
+    cite: 'composition after Rakshasa (CR 13) and Ice Devil (CR 14) — print\'s CR 13-16 defenders: high AC, a ward, no legendary kit',
+    cr: 13, archetypes: ['defender'],
+    ac: 20, ac_offset: 2, hp: 181, hp_scale: 0.86, hp_formula: '19d10 + 76', atk: 10, dc: 17, pb: 5,
+    speed: '30 ft.',
+    stats: { STR: 20, DEX: 14, CON: 20, INT: 14, WIS: 16, CHA: 16 },
+    saves: ['CON', 'WIS'], skills: 'Athletics +10, Perception +8',
+    sections: {
+      Traits: [
+        { name: 'Magic Resistance', text: 'The creature has Advantage on saving throws against spells and other magical effects.' },
+        // the leader half's grammar, filed as print files auras — a trait
+        // `gated_on: 'aura'` is how the claim gate finds it — an ally-buff
+        // emanation ships only when the concept claims one (Hobgoblin Captain's
+        // grammar), and the defender shape law looks it up by this stamp
+        // `rules: true` as every other defender's aura carries it — a rules row is
+        // exempt from the rename pass. Without it the engine tried to rename this
+        // and threw "unrenamed entry: Aura of Authority", which took down six
+        // tests the moment this donor became reachable.
+        { name: 'Aura of Authority', rules: true, gated_on: 'aura', text: 'While in a 10-foot Emanation originating from the creature, the creature and its allies have Advantage on saving throws against being Charmed or Frightened.' },
+      ],
+      Actions: [
+        { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 10 ft. 28 (4d10 + 6) {damage_type} damage plus 22 (4d10) {energy_type} damage.' },
+        { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
+      ],
+    },
+  },
+  {
     // THE CR 13-16 LEGENDARY GAP (owner's go, 2026-10-29: "where we're under we
     // should pump up and I think it's because we're missing legendaries in the
     // 10-16 range... mostly dragons and like a vampire/mummy lord", then "adding

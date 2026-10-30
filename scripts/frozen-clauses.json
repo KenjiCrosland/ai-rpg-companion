@@ -6312,5 +6312,287 @@
     "askMechanicWhy": "his banner"
    }
   ]
+ },
+ "980417ead47b": {
+  "concept": "A Nimroval is a gaunt, spindly deep-water fey whose long hide-wrapped limbs are sheathed in black glacial ice that split",
+  "clauses": [
+   {
+    "id": "cl_16tphi3",
+    "text": "A Nimroval is a gaunt",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_i09q77",
+    "text": "spindly deep-water fey whose long hide-wrapped limbs are sheathed in black glacial ice that splits the sea air with crac",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1o7bp4o",
+    "text": "whose dim",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_s6dsvw",
+    "text": "crude mind works in the slow patient logic of tidal traps",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_96jzv3",
+    "text": "It opens a fight by striding wide",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_13em5ao",
+    "text": "slamming its frozen limbs down to stitch a web of crackling ice-channels across the ground",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "slamming its frozen limbs down to stitch a web of crackling ice-channels across the ground",
+    "askMechanic": "zone",
+    "askMechanicWhy": "ice channels across the ground"
+   },
+   {
+    "id": "cl_10dp42n",
+    "text": "paces the perimeter herding prey with lunges",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "shove",
+    "askMechanicWhy": "herding prey with lunges and hooked gestures"
+   },
+   {
+    "id": "cl_mbyib4",
+    "text": "hooked gestures toward dead ends where the charged ice bites any who cross it",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "hooked gestures toward dead ends where the charged ice bites any who cross it",
+    "askShape": "save_area",
+    "askMechanic": "zone",
+    "askMechanicWhy": "charged ice bites any who cross it"
+   },
+   {
+    "id": "cl_1wr3ufz",
+    "text": "Cornered or bloodied",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_o9cf51",
+    "text": "it does not flee",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_4akto0",
+    "text": "does not brawl honorably — it circles",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_bnr00b",
+    "text": "re-lays its frozen snares",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "re-lays its frozen snares",
+    "askMechanic": "zone",
+    "askMechanicWhy": "re lays its frozen snares"
+   },
+   {
+    "id": "cl_1omkgd2",
+    "text": "tries to walk its enemy into its own trap",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1yd9jw1",
+    "text": "regarding the whole hunt as a slow tide it fully expects to turn",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1yjb22g",
+    "text": "It is crudely sapient (INT 6-8)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1y8h5y3",
+    "text": "it is a battlefield manipulator that herds",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "shove",
+    "askMechanicWhy": "herds and traps"
+   },
+   {
+    "id": "cl_rmz9cm",
+    "text": "traps rather than brawls",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "a6b3d365ed82": {
+  "concept": "a brute of piled gravecairn stone that shoulders walls down",
+  "clauses": [
+   {
+    "id": "cl_86hab9",
+    "text": "a brute of piled gravecairn stone",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_goq1y",
+    "text": "shoulders walls down",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "4e99907a7aeb": {
+  "concept": "a hobgoblin warlord who fights from a shield wall",
+  "clauses": [
+   {
+    "id": "cl_1c2riq8",
+    "text": "a hobgoblin warlord",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1k8w91l",
+    "text": "fights from a shield wall",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "fights",
+    "askOften": "at_will",
+    "askOftenWhy": "fights",
+    "askShape": "buff_self",
+    "askMechanic": "harden",
+    "askMechanicWhy": "fights from a shield wall"
+   }
+  ]
+ },
+ "1bab8139d876": {
+  "concept": "a grave-silk stalker that hunts from the rafters of a dead city",
+  "clauses": [
+   {
+    "id": "cl_103ytuw",
+    "text": "a grave-silk stalker",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1g64r0b",
+    "text": "hunts from the rafters of a dead city",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "from the rafters"
+   }
+  ]
+ },
+ "b2d83622132e": {
+  "concept": "an assassin-saint who steps out of lamplight to kill and is gone",
+  "clauses": [
+   {
+    "id": "cl_n2fdnw",
+    "text": "an assassin-saint",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_k19l5b",
+    "text": "steps out of lamplight to kill and is gone",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "teleport",
+    "askMechanicWhy": "steps out of lamplight"
+   }
+  ]
+ },
+ "c679f67eb125": {
+  "concept": "a drowned archivist that drags readers into its flooded stacks",
+  "clauses": [
+   {
+    "id": "cl_h6qefz",
+    "text": "a drowned archivist",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_ti2h3p",
+    "text": "drags readers into its flooded stacks",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "drags readers"
+   }
+  ]
+ },
+ "edd2776b27d7": {
+  "concept": "a bog witch whose curses rot a bloodline, not a body",
+  "clauses": [
+   {
+    "id": "cl_uv7ygl",
+    "text": "a bog witch whose curses rot a bloodline",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "curse",
+    "askMechanicWhy": "curses rot a bloodline"
+   },
+   {
+    "id": "cl_161cwdq",
+    "text": "not a body",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "44560e377de5": {
+  "concept": "a cathedral archmagus who rewrites what the walls remember",
+  "clauses": [
+   {
+    "id": "cl_1dxvbrc",
+    "text": "a cathedral archmagus",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "a cathedral archmagus",
+    "askOften": "at_will",
+    "askOftenWhy": "a cathedral archmagus",
+    "askShape": "save_single"
+   },
+   {
+    "id": "cl_d0k6mu",
+    "text": "rewrites what the walls remember",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "rewrites what the walls remember",
+    "askOften": "at_will",
+    "askOftenWhy": "rewrites what the walls remember",
+    "askShape": "save_single"
+   }
+  ]
+ },
+ "b8abcf3e9674": {
+  "concept": "a plague-saint whose blessings are diseases",
+  "clauses": [
+   {
+    "id": "cl_s84mpu",
+    "text": "a plague-saint whose blessings are diseases",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "curse",
+    "askMechanicWhy": "blessings are diseases"
+   }
+  ]
+ },
+ "2963f725544a": {
+  "concept": "a knight-commander of the drowned legion who will not fall while her banner stands",
+  "clauses": [
+   {
+    "id": "cl_1vugoeq",
+    "text": "a knight-commander of the drowned legion",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_147amst",
+    "text": "will not fall while her banner stands",
+    "kind": "mechanical",
+    "askShape": "buff_self",
+    "askMechanic": "mend",
+    "askMechanicWhy": "will not fall while her banner stands"
+   }
+  ]
  }
 }

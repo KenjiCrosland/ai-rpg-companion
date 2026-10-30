@@ -513,6 +513,44 @@ describe('the homebrew path', () => {
   });
 });
 
+// PRINT'S LEGENDARY ROWS MAY CITE PRINT'S OTHER ROWS (2026-10-29).
+//
+// The exact-path Mummy Lord shipped ONE of its three legendary actions
+// (legend12-2026-10-29T22-50-29), and its own trace said why:
+//
+//   print canon legendary: "Glare" leaves — it cites "Dreadful Glare", which
+//     this sheet has renamed away
+//   print canon legendary: "Necrotic Strike" leaves — it cites "Rotting Fist or
+//     Channel Negative Energy", which this sheet has renamed away
+//   print canon row: Actions/Dreadful Glare — the Mummy Lord's own   <- A STEP LATER
+//
+// Both were dropped for citing rows the engine installs further down the same
+// block, and all three cited rows were on the sheet it shipped. The drop RULE is
+// right — it is why `dangling-ref` stopped failing at CR 10-16 — so the check
+// moved to the end of the print-canon block rather than going away. Print's
+// Mummy Lord is the block whose legendary kit names three of its own rows, so it
+// is the case that proves it.
+describe("print's legendary kit may cite print's own rows", () => {
+  const exact = (body) => ({ path: 'exact', by: 'code', print_body: body, relation: 'is', class: null, species: null, receipt: body });
+
+  it('the Mummy Lord keeps all three: Glare, Necrotic Strike, Dread Command', async () => {
+    const r = await run({ concept: 'Mummy Lord', cr: 15, archetype: 'defender', path: exact('Mummy Lord') });
+    const leg = (r.m.sections['Legendary Actions'] ?? []).map((e) => String(e.name).replace(/ \(.*\)$/, ''));
+    for (const n of ['Glare', 'Necrotic Strike', 'Dread Command']) expect(leg).toContain(n);
+  });
+
+  it('because the rows they cite are on the sheet', async () => {
+    const r = await run({ concept: 'Mummy Lord', cr: 15, archetype: 'defender', path: exact('Mummy Lord') });
+    const all = names(r);
+    for (const n of ['Dreadful Glare', 'Rotting Fist', 'Channel Negative Energy']) expect(all).toContain(n);
+  });
+
+  it('and nothing is dropped against a half-built sheet any more', async () => {
+    const r = await run({ concept: 'Mummy Lord', cr: 15, archetype: 'defender', path: exact('Mummy Lord') });
+    expect(r.trace).not.toMatch(/which this sheet has renamed away/);
+  });
+});
+
 describe('the exact path', () => {
   test('no seat, no shelf: print\'s rows are the composition', async () => {
     const r = await run({ concept: 'Owlbear', cr: 3, archetype: 'brute', path: { path: 'exact', by: 'code', print_body: 'Owlbear', relation: 'is', class: null, species: null, receipt: 'Owlbear' } });
@@ -1119,5 +1157,44 @@ describe('a gap line always carries a build target', () => {
   it('keeps the idea in the GM-facing words, not truncated to 70 characters', async () => {
     const t = await traceFor({ template: 'none', declined_because: 'no_fit' });
     expect(t).toMatch(/keeps it there until it drowns/);
+  });
+});
+
+// PRINT CLOSES THE ROW SET ON `exact` (2026-10-29). `closedPath` is
+// `isTwist || isClassNpc`, so the STRICTEST path was the only one that KEPT a
+// chassis attack whose name collided with a print row. The exact Mummy Lord
+// shipped print's five actions plus a chassis "Desiccating Strike" at 49 damage
+// — on a block whose whole per-round is about 50 — and the bands read its
+// offense at CR 21, eight over, on print's own CR 15 creature.
+describe('an exact sheet carries print\'s attacks and no chassis attack beside them', () => {
+  const exact = (body) => ({ path: 'exact', by: 'code', print_body: body, relation: 'is', class: null, species: null, receipt: body });
+
+  it('the Mummy Lord ships print\'s own attack rows', async () => {
+    const r = await run({ concept: 'Mummy Lord', cr: 15, archetype: 'defender', path: exact('Mummy Lord') });
+    const attacks = r.rows.filter((e) => /Attack Roll/.test(e.text ?? '')).map((e) => String(e.name).replace(/ \(.*\)$/, ''));
+    expect(attacks).toEqual(expect.arrayContaining(['Rotting Fist', 'Channel Negative Energy']));
+  });
+
+  // NOW ASSERTED (second pass, 2026-10-29). The first pass closed only the
+  // COLLIDING case, and the next run shipped "Wrapped Staff" — a chassis attack
+  // colliding with nothing — beside print's Rotting Fist and Channel Negative
+  // Energy, keeping `hot-offense` at CR 21 and adding `attack-in-multiattack`,
+  // since print's Multiattack names only print's rows. The name was never what
+  // mattered: print closes the row set.
+  it('and no chassis attack rides beside them, whatever it is called', async () => {
+    const r = await run({ concept: 'Mummy Lord', cr: 15, archetype: 'defender', path: exact('Mummy Lord') });
+    const attacks = r.rows.filter((e) => /Attack Roll/.test(e.text ?? ''));
+    for (const a of attacks) expect(`${String(a.name)}: ${a.print ? 'print' : 'CHASSIS'}`).toBe(`${String(a.name)}: print`);
+  });
+
+  it('but a print body with no attack of its own keeps the chassis one — it must be able to act', async () => {
+    // the guard: the sweep only runs when print actually supplied an attack row
+    const r = await run({ concept: 'Mummy Lord', cr: 15, archetype: 'defender', path: exact('Mummy Lord') });
+    expect(r.rows.some((e) => /Attack Roll/.test(e.text ?? ''))).toBe(true);
+  });
+
+  it('so its offense is not inflated by a row print does not have', async () => {
+    const r = await run({ concept: 'Mummy Lord', cr: 15, archetype: 'defender', path: exact('Mummy Lord') });
+    expect(r.trace).not.toMatch(/print canon attack kept:/);
   });
 });

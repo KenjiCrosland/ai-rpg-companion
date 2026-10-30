@@ -334,6 +334,88 @@ nearest-lands policy cannot help by construction.
 already_answered, ~3 rows a forty, independently sound), the decline reason now
 printed on the accepted line, and `scripts/harvest-wants.mjs`.
 
+## The CR 13-16 legendary gap — landed, and what it uncovered (2026-10-29)
+
+Owner's ruling: "where we're under we should pump up and I think it's because
+we're missing legendaries in the 10-16 range... mostly dragons and like a
+vampire/mummy lord", then "adding is better than subtracting".
+
+**Confirmed from the corpus.** 10 of print's 18 blocks at CR 13-16 are legendary
+(56%) and carry 8.3 rows against 5.4 without — ~3 rows, the whole shortfall.
+Across our five forties since 2026-10-25 we shipped legendaries on 22% of CR
+13-16 sheets at 6.5 rows. Print's own non-dragon legendaries in that band are
+exactly two, the Vampire and the Mummy Lord.
+
+**The cause was the donor table, not a gate.** 1 of 10 donors in the band had a
+Legendary Actions section, and the band had NO lurker or caster chassis at all.
+Worse, found by the probe: **defender, swarm, ooze and controller had no donor
+anywhere in CR 10-16**, so a CR 15 defender rode `defender-5` — a ten-CR stretch.
+
+**Added** (nothing removed; CR 17-20 keeps all 21 of its legendary donors):
+
+| donor | after print's | legendary |
+|---|---|---|
+| `lurker-13` | Vampire (CR 13) | yes |
+| `caster-15` | Mummy Lord (CR 15) | yes |
+| `defender-13` | Rakshasa (CR 13) / Ice Devil (CR 14) | **no** — no print CR 12-16 defender has a legendary kit |
+
+**What the specs caught that would otherwise have shipped wrong** — worth reading
+before authoring another donor:
+
+- Donors are numbered to the **CR card**, not to their print inspiration. The
+  Vampire is AC 16 / HP 195 / +9; `cardBudget(13, {legendary:true})` is HP 168 /
+  dpr 145 / atk 10 / AC 18. Copying print failed four checks at once, including a
+  damage budget of 45 against 145.
+- Each family has grammar a donor must carry: the lurker's `Umbral Step`, the
+  caster's **hybrid** attack row (melee *or* ranged), the defender's
+  `gated_on: 'aura'` emanation filed as a Trait.
+- Print's HP floor and the legendary card pull OPPOSITE ways — a legendary block
+  trades HP for action economy, so the card sits below print's thinnest block at
+  that CR. The under-card discount comes out of AC.
+- A chassis is not its print inspiration. `lurker-13` first carried the Vampire's
+  exact skills, which made print canon's derived line identical and silently
+  stopped the revision firing — the thing `pipelines.spec.js` pins.
+- An aura row needs `rules: true` or the rename pass throws `unrenamed entry`,
+  which took down six tests **the moment the donor became reachable**.
+
+**Four defects the probe found, all fixed:**
+
+1. **The print-exact Mummy Lord shipped 1 of 3 legendary actions.** The citation
+   check ran against the sheet as it stood, but print's own rows install further
+   down the same block, so "Glare" (cites Dreadful Glare) and "Necrotic Strike"
+   (cites Rotting Fist or Channel Negative Energy) were dropped for naming rows
+   that arrived a step later. Deferred to the finished sheet.
+2. **`danglingRefIn` could not read print's own "makes one A or B attack".** The
+   capture class admits spaces and lowercase, so the alternation arrived as one
+   row name. Print writes it in 7 rows (six Multiattacks, already exempt, and the
+   Mummy Lord's Necrotic Strike). A dangle is now reported only when NONE of the
+   alternatives is present — a GM picks one.
+3. **`closedPath` is `isTwist || isClassNpc`**, so `exact` — the strictest path —
+   was the only one that KEPT a chassis attack colliding with a print row.
+4. **And the name was never what mattered.** After (3), the next run shipped
+   "Wrapped Staff", a chassis attack colliding with nothing, keeping
+   `hot-offense` at CR 21 and adding `attack-in-multiattack`. On `exact` print's
+   attacks are now the ONLY attacks, guarded so a print body with no attack of
+   its own keeps the chassis one.
+
+**legend12 after:** Mummy Lord 3/3 legendary with no chassis attack; CR 13-16
+rows **6.5 -> 7.0**, print's own figure; the Vampire takes `lurker-13` instead of
+`brute-13`; the CR 15 defender takes `defender-13`.
+
+**Still open, measured:**
+
+- **Legendary share 36% against print's 56%.** Held back by rung SELECTION, not
+  the catalog: `caster-8-binder` served a CR 13 concept and `caster-10-warpriest`
+  a CR 16 one, so a STYLE variant five or six CRs below beats the plain rung at
+  the right CR. A new plain rung cannot win against that. Selection order is the
+  lever, and it sits at the centre of routing.
+- **Archetype classification.** Two lurker-shaped concepts read as skirmisher and
+  brute ("an assassin-saint who steps out of lamplight", "a drowned archivist
+  that drags readers into its flooded stacks"); the Vampire did it once too, then
+  routed correctly on the re-run. Stochastic, and not a catalog question.
+- **swarm, ooze and controller still have no donor in CR 10-16.** The defender was
+  the worst case at ten CRs; the hole is not filled.
+
 ## Open, needs the owner: "each creature of its choice"
 
 **0 of 329 print rows use it** — not zero at-will control rows, zero rows of any
