@@ -572,12 +572,36 @@ export const SHAPES = [
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, 'The creature can\'t shape-shift, and its thoughts can\'t be read by any means. Other creatures can communicate with it telepathically only if it allows them.'])),
   },
   {
-    id: 'relic-object', name: 'Bound Relic', invented: true, // print's own object statlines (Mummy Lord/Heart, Night Hag/Soul Bag, Erinyes/Magic Rope); the gating is warded-mending's, the statline is new
+    // THE CITATION WAS FALSE (2026-10-30). This read "print's own object
+    // statlines (Mummy Lord/Heart, Night Hag/Soul Bag, Erinyes/Magic Rope)", and
+    // print gives NONE of those three a statline: it names the object and stops.
+    // So there is no print calibration for an attackable keepsake, the shape is
+    // correctly `invented: true`, and the numbers below are ours — which is
+    // allowed (print is a resource, not a veto) but must not be dressed as
+    // print's.
+    id: 'relic-object', name: 'Bound Relic', invented: true, // print NAMES such objects (Mummy Lord/Heart, Night Hag/Soul Bag, Erinyes/Magic Rope) and gives them no statline; the gating is warded-mending's, the statline is new
     roles: ['controller', 'defender', 'lurker', 'brute', 'skirmisher', 'artillery'], styles: [], cr_range: [1, 20], replaces: 'trait', // ROLES has six; 'caster' is an archetype, not a shape role
 
     supersedes: /regains \d+ Hit Points at the start of each of its turns/,
     frames: {
       '0-2': RELIC(13, 5, 5), '3-5': RELIC(15, 10, 10), '6-9': RELIC(15, 15, 10),
+      // NOT FIXED, AND HERE IS WHY (2026-10-30). The critic found this band ships
+      // the SAME object at CR 13 and CR 20 — "AC 17, 25 hit points, and
+      // Resistance to all damage" on both the Vampire and the Sunbone Archlich,
+      // seven CRs apart. The mechanic is a choice (spend attacks on the relic or
+      // on the creature) and at CR 20 a 25-HP object dies incidentally, so there
+      // is no choice left.
+      //
+      // Splitting it into '13-16' and '17-20' was tried and reverted: SHAPES use a
+      // fixed six-band vocabulary where `13-20` is ONE band, `bandFor` resolves to
+      // those keys, and the new keys matched nothing — the frame came back
+      // undefined and every relic test failed. A static frame cannot differ
+      // across a band it shares.
+      //
+      // The real fix is a CR-derived token for the statline (there is none today:
+      // `{ac}`/`{hp}` in this file are JavaScript interpolation, not engine
+      // tokens), or a wider band vocabulary. Both are renderer changes rather
+      // than catalog edits, so this stays open and recorded.
       '10-12': RELIC(17, 20, 15), '13-20': RELIC(17, 25, 20),
     },
   },

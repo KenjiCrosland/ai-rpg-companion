@@ -1198,3 +1198,70 @@ describe('an exact sheet carries print\'s attacks and no chassis attack beside t
     expect(r.trace).not.toMatch(/print canon attack kept:/);
   });
 });
+
+// ONE RECHARGE DIE, AS PRINT HAS (2026-10-30). Counted over the 329: NOT ONE
+// block fields two Recharge-gated rows, and 86 field exactly one. The Stone
+// Golem shipped two — the signature seat took "Cratering Fists (Recharge 5-6)"
+// and print's own "Slow (Recharge 5-6)" installed afterwards, the same ordering
+// that cost the Mummy Lord its legendary rows. Print's gate stays; ours becomes
+// 1/Day, a gate print also uses, because ungating a nova hands the sheet a free
+// one every round.
+describe('a print body keeps the only Recharge die', () => {
+  const twistOn = (body) => ({ path: 'twist', by: 'call', print_body: body, relation: 'is', class: null, species: null, receipt: body });
+
+  it('converts OUR Recharge to 1/Day beside print\'s, and never print\'s own', async () => {
+    const r = await run({ concept: 'a stone golem carved as a weeping saint', cr: 10, archetype: 'brute', path: twistOn('Stone Golem') });
+    const gated = r.rows.filter((e) => /\(Recharge [\d–-]+\)/.test(String(e.name ?? '')));
+    // at most one Recharge row survives, and if one does it is print's
+    expect(gated.length).toBeLessThanOrEqual(1);
+    for (const e of gated) expect(`${e.name}: ${e.print ? 'print' : 'OURS'}`).toBe(`${e.name}: print`);
+  });
+
+  it('says so in the trace when it converts, with print\'s own count as the reason', async () => {
+    const r = await run({ concept: 'a stone golem carved as a weeping saint', cr: 10, archetype: 'brute', path: twistOn('Stone Golem') });
+    if (/one recharge die:/.test(r.trace)) expect(r.trace).toMatch(/0 of print's 329 blocks field two/);
+  });
+
+  it('leaves a homebrew sheet\'s lone Recharge alone — there is no print gate to share with', async () => {
+    const r = await run({ concept: 'a quarry-pit thing of living scree that buries what it catches', cr: 5, archetype: 'brute', path: { path: 'homebrew', by: 'call', print_body: null, relation: null, class: null, species: null, receipt: null } });
+    expect(r.trace).not.toMatch(/one recharge die:/);
+  });
+});
+
+// A ROW OBEYS THE WEAPON IT CARRIES (2026-10-30). Print keeps the weapon's die
+// SIZE and scales the COUNT — greataxe 1d12, greatsword 2d6, handaxe 3d6,
+// battleaxe 2d8, 15 of 16 weapons in the 329. The first cut covered 4 of 10
+// weapon rows on sweep-2026-10-30T02-34-52: four misses were GM-named PARTS,
+// one a print row (exempt by design), and one a javelin whose row reads "Ranged
+// Attack Roll" alone, which a melee-only test never saw.
+describe('a weapon row rolls its own weapon\'s dice', () => {
+  const dieOf = (rows, name) => {
+    const r = rows.find((e) => String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === name);
+    const d = r && /(\d+) \((\d+)d(\d+)(?:\s*([+-])\s*(\d+))?\)/.exec(String(r.text ?? ''));
+    return d ? { die: Number(d[3]), count: Number(d[2]), stated: Number(d[1]), mod: d[4] ? (d[4] === '-' ? -Number(d[5]) : Number(d[5])) : 0, reach: (/reach (\d+) ft/.exec(r.text) ?? [])[1] } : null;
+  };
+  const homebrew = { path: 'homebrew', by: 'call', print_body: null, relation: null, class: null, species: null, receipt: null };
+
+  it('a GM-named greataxe rolls d12, not the chassis die', async () => {
+    const c = 'a lizardfolk champion who wields a greataxe two-handed';
+    const r = await run({ concept: c, cr: 8, archetype: 'brute', path: homebrew });
+    const g = dieOf(r.rows, 'greataxe');
+    if (g) expect(`greataxe: d${g.die}`).toBe('greataxe: d12');
+  });
+
+  it('and whatever the die, the stated average matches it', async () => {
+    const c = 'a lizardfolk champion who wields a greataxe two-handed';
+    const r = await run({ concept: c, cr: 8, archetype: 'brute', path: homebrew });
+    for (const name of ['greataxe', 'javelin', 'mace', 'greatsword', 'handaxe', 'longsword']) {
+      const g = dieOf(r.rows, name); if (!g) continue;
+      expect(`${name}: ${g.stated}`).toBe(`${name}: ${Math.floor(g.count * (g.die + 1) / 2) + g.mod}`);
+    }
+  });
+
+  it('a thrown weapon on a RANGED-only row is covered too — the javelin the first cut missed', async () => {
+    const c = 'a lizardfolk skirmisher who hurls javelins';
+    const r = await run({ concept: c, cr: 8, archetype: 'skirmisher', path: homebrew });
+    const j = dieOf(r.rows, 'javelin');
+    if (j) expect(`javelin: d${j.die}`).toBe('javelin: d6');
+  });
+});

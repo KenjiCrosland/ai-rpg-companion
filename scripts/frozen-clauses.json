@@ -6594,5 +6594,206 @@
     "askMechanicWhy": "will not fall while her banner stands"
    }
   ]
+ },
+ "d1859589a534": {
+  "concept": "A grave-quartz war-drake of the old killing fields, Khordathar is a single long-limbed skittering dragon whose transluce",
+  "clauses": [
+   {
+    "id": "cl_mhltqo",
+    "text": "A grave-quartz war-drake of the old killing fields",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_41pkwp",
+    "text": "Khordathar is a single long-limbed skittering dragon whose translucent",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_la322d",
+    "text": "vein-riddled body has grown over centuries into a lattice of razor-edged crystal plates",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "pins the intruder beneath its crystal belly"
+   },
+   {
+    "id": "cl_yaawxq",
+    "text": "whose many-jointed legs carry it across a cursed battleground in shrill",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_10a8ad3",
+    "text": "deliberate ticks",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_mpdb31",
+    "text": "It herds its pale wingless kin across the corpse-soil like a shepherd of glass",
+    "kind": "mechanical",
+    "askShape": "buff_ally",
+    "askMechanic": "command",
+    "askMechanicWhy": "herds its pale wingless kin",
+    "polarity": "lacks",
+    "takes": "flight",
+    "lackQuote": "wingless kin"
+   },
+   {
+    "id": "cl_1g06lri",
+    "text": "raising its serrated forelegs",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1qby3x9",
+    "text": "slamming its armored mass into anything that threatens the herd",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "shove",
+    "askMechanicWhy": "slamming its armored mass into anything"
+   },
+   {
+    "id": "cl_t0z7vu",
+    "text": "pins the intruder beneath its crystal belly to grind and stamp",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1tb8vac",
+    "text": "It never flees",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_a3l6a9",
+    "text": "never toys — a wounded matriarch plants herself over the young",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_8fdckg",
+    "text": "fights until the herd is clear or she cannot stand",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "wounded",
+    "askShape": "buff_self",
+    "askMechanic": "harden",
+    "askMechanicWhy": "plants herself over the young"
+   },
+   {
+    "id": "cl_9ybemj",
+    "text": "screaming crystal-chime warnings across the field",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_obu126",
+    "text": "It is fully sapient (INT 10-14)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1b1idot",
+    "text": "it is a protective herd-beast that shields its own kind",
+    "kind": "mechanical",
+    "askShape": "buff_ally",
+    "askMechanic": "command",
+    "askMechanicWhy": "shields its own kind"
+   }
+  ]
+ },
+ "b77b09898b4a": {
+  "concept": "A grave-serpent of black chitin, its segmented coil plated like a sexton's coffin lid, it lives in the bone-walled necro",
+  "clauses": [
+   {
+    "id": "cl_8htrjn",
+    "text": "A grave-serpent of black chitin",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1d2xvq6",
+    "text": "its segmented coil plated like a sexton's coffin lid",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1vygrlb",
+    "text": "it lives in the bone-walled necropolis where it was spawned",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_16bpaz9",
+    "text": "drags its armored length along the ossuary streets with unsettling patience",
+    "kind": "mechanical",
+    "askMechanic": "zone",
+    "askMechanicWhy": "piles ossuary rubble into blind walls"
+   },
+   {
+    "id": "cl_qtccrg",
+    "text": "It fights as a brute by rewriting the ground itself: it chooses a killing field",
+    "kind": "mechanical",
+    "askMechanic": "zone",
+    "askMechanicWhy": "rewriting the ground itself"
+   },
+   {
+    "id": "cl_btownm",
+    "text": "cuts channels with its plated snout",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_119vvqd",
+    "text": "piles ossuary rubble into blind walls",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_gdr93z",
+    "text": "drives prey down the funnel with the dry clatter of its coil before crushing them beneath a single",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "drives prey down the funnel with the dry clatter of its coil"
+   },
+   {
+    "id": "cl_1oaxww3",
+    "text": "unhurried slam",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_8bs3nm",
+    "text": "When bloodied it does not flee — it retreats into the ruin it already chose",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "when bloodied",
+    "askMechanic": "retaliate",
+    "askMechanicWhy": "it does not flee"
+   },
+   {
+    "id": "cl_1nv92cd",
+    "text": "lets the hunter come to it",
+    "kind": "mechanical",
+    "askShape": "buff_self",
+    "askMechanic": "harden",
+    "askMechanicWhy": "lets the hunter come to it"
+   },
+   {
+    "id": "cl_5mep62",
+    "text": "finishes the fight on ground it has spent all day preparing",
+    "kind": "mechanical",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "finishes the fight on ground it has spent all day preparing"
+   },
+   {
+    "id": "cl_obu126",
+    "text": "It is fully sapient (INT 10-14)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1y8h5y3",
+    "text": "it is a battlefield manipulator that herds",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_rmz9cm",
+    "text": "traps rather than brawls",
+    "kind": "descriptive"
+   }
+  ]
  }
 }

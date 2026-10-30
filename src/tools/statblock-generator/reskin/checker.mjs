@@ -367,6 +367,55 @@ function gateBands(m, ctx, F) {
   // three CRs over; beyond that is fail. The CR 10 horseman at 36 sustained with HP
   // on budget is soft here, not ok — enough to get him read.
   const cr = ctx.cr; const r = dmgRead(m); const legendary = !!(m.sections?.['Legendary Actions'] ?? []).length;
+  // ONE ACTION MAY NOT OUT-HIT PRINT'S HARDEST (critic, 2026-10-30, extending its
+  // 10-29 note from attack rows to SAVE rows: "the condition-payoff and exploiter
+  // templates now deal nova damage at will, as a swap for one attack" — 63 at
+  // CR 9, 59 at CR 17, 58 at CR 20).
+  //
+  // The cap is the largest summed damage any single print row deals to ONE target
+  // in one action, per band, over all 329 — attack rolls and single-target saves
+  // together, Multiattack excluded — as a RUNNING max, because print's sample
+  // dips: CR 17-20 tops out at 43 (Balor/Lightning Blade) under CR 13-16's 51
+  // (Purple Worm/Tail Stinger). That is sampling, not a rule, and a cap that fell
+  // as CR rose would fail a CR 18 sheet for a hit a CR 15 sheet is allowed.
+  //
+  //   0-2 24 · 3-5 31 · 6-9 35 · 10-12 39 · 13-16 51 · 17-20 51 (running) · 21+ 60
+  //
+  // A gate does not excuse it — print's hardest single hits are ungated — and a
+  // print row is exempt, because print's numbers are print's calibration.
+  //
+  // THE SWARM'S BLOODIED SPLIT IS ONE ATTACK AT TWO RATES, never the sum: "90
+  // (19d8 + 5) damage, or 45 (9d8 + 5) damage if the swarm is Bloodied" is a
+  // 90 hit, not 135. `donors.spec` has stripped this since 2026-09-11 and the
+  // first cut of this gate did not, which inflated the Swarm of Unclaimed Peals
+  // by half again.
+  {
+    const CAP = { '0-2': 24, '3-5': 31, '6-9': 35, '10-12': 39, '13-16': 51, '17-20': 51, '21+': 60 };
+    const declaredRows = m.generation?.declared?.rows ?? {};   // read locally: `declaredB` below is still in its temporal dead zone here
+    const cap = CAP[cr <= 2 ? '0-2' : cr <= 5 ? '3-5' : cr <= 9 ? '6-9' : cr <= 12 ? '10-12' : cr <= 16 ? '13-16' : cr <= 20 ? '17-20' : '21+'];
+    if (cap) for (const { sec, e } of allRows(m)) {
+      const name = String(e?.name ?? '').replace(/ \(.*\)$/, '');
+      // A NUMBER THE GM TYPED IS NOT OURS TO CAP. `declared.rows` and the row's
+      // own `userSet` are how the engine records "bites for 50 damage", and
+      // `gateBands` already stands down for a declared AC or HP two findings
+      // above. The first cut of this gate failed the fixture that exists to prove
+      // that — a CR 9 snapping turtle the GM asked to bite for 50, where print's
+      // hardest is 35 — which is the gate overruling the GM, not print.
+      if (!e || e.print || e.userSet || declaredRows[name] != null || /^Multiattack/.test(name)) continue;
+      const t = String(e.text ?? '').replace(/, or \d+ \(\d+d\d+(?:\s*[+-]\s*\d+)?\)(?: \w+)? damage if [^.]{0,40}Bloodied/g, '');
+      if (!/Attack Roll/.test(t) && !/\bone creature\b|\bone target\b|\bone Humanoid\b|one (?:Tiny|Small|Medium|Large|Huge|Gargantuan) or smaller creature/.test(t)) continue;
+      let tot = 0; for (const d of t.matchAll(/(\d+) \(\d+d\d+(?:\s*[+-]\s*\d+)?\)/g)) tot += Number(d[1]);
+      // SEVERITY TRACKS THE DEGREE, as `hot-offense` does (soft up to three CRs
+      // over, fail beyond). Over print's hardest is a true statement at any
+      // margin, but 13% over is not the defect the critic found: its one-shots
+      // were 90 against 51 (1.76x) and 63 against 35 (1.80x), while a CR 5 monk's
+      // stacked unarmed strike reads 35 against 31 (1.13x) and two sheets it
+      // listed are 1.14x and 1.16x once the cap is the RUNNING max it asked for.
+      // So a quarter over is the line: beyond it the row one-shots a PC, under it
+      // the row wants a reader.
+      if (tot > cap) F('single-target-ceiling', tot >= cap * 1.25 ? 'fail' : 'soft', `${sec}/${name}: ${tot} damage to one target in one action at CR ${cr} — print's hardest in this band is ${cap} (${(tot / cap).toFixed(2)}x), and a gate does not excuse it (print's are ungated)`, String(tot));
+    }
+  }
   const pcB = ctx.print;
   const declaredB = m.generation?.declared ?? {};
   if (declaredB.ac != null || declaredB.hp != null) { F('user-set', 'ok', `user-set: ${[declaredB.ac != null ? `AC ${declaredB.ac}` : '', declaredB.hp != null ? `HP ${declaredB.hp}` : ''].filter(Boolean).join(', ')} · reads CR ${r.read}`, r.read); return; } // the user set the number; the band reports the read and stands down (Resolution 3)
@@ -503,6 +552,34 @@ function gateStructure(m, ctx, F) {
     if (/\bMelee or Melee or\b|\bRanged or Ranged\b/.test(e.text ?? '') || (ctx.legacyDoubled ?? []).includes(bare(e.name))) F('punctuation', 'fail', `${sec}/${bare(e.name)}: a doubled attack label${(ctx.legacyDoubled ?? []).includes(bare(e.name)) ? ' on the 2014 sheet' : ''}`, bare(e.name)); // "Melee or Melee or Ranged Spell Attack" on five 2014 sheets (critic's regressions brief 2026-10-04)
     if (/half as much damage|Half damage/i.test(e.text ?? '') && !/\d+ \(\d+d\d+/.test(e.text ?? '') && !/take only half damage|instead takes no damage/i.test(e.text ?? '')) F('half-no-referent', 'fail', `${sec}/${bare(e.name)}: "half as much damage" with no damage on the row`, bare(e.name));
     if (sec === 'Legendary Actions' && !/^Legendary Action Uses/.test(e.name ?? '') && /^(?:The \w+|It) can['’]t (?:take|use) this action again[^.]*\.?$/i.test(String(e.text ?? '').trim())) F('legendary-no-effect', 'fail', `${sec}/${bare(e.name)}: a legendary action with no effect, only its recharge clause`, bare(e.name));
+    // TEXT HYGIENE: THREE DEFECTS THAT A GM SEES BEFORE ANYTHING ELSE
+    // (critic, 2026-10-30: "4 of the 6 broken sheets are text bugs a lint would
+    // catch"). Each broke one of that sweep's three best ideas, which is why they
+    // are `fail` and not soft — they do not need judging, only looking at.
+    //
+    // 1. AN UNSUBSTITUTED PLACEHOLDER. The Vampire shipped "plus 13 (3d8)
+    //    {energy_type} damage" because three donors added the day before wrote a
+    //    token that exists nowhere in the engine. Nothing in a shipped row should
+    //    ever carry braces.
+    if (/\{[a-z_]+\}/.test(e.text ?? '')) F('placeholder-leak', 'fail', `${sec}/${bare(e.name)}: ships an unsubstituted ${(/\{[a-z_]+\}/.exec(e.text) ?? [''])[0]} — a GM reads the token`, bare(e.name));
+    // 2. A SENTENCE THAT STOPS MID-CLAUSE. The Purple Worm's Gullet Drag ended
+    //    "While Grappled this way," and took the run's second-best idea to
+    //    soundness 0. A SPELL LIST legitimately ends on a spell name, so a row
+    //    whose tail is a list item is exempt — five of the six rows this first
+    //    caught were Spellcasting rows, which are print's own form.
+    {
+      const t = String(e.text ?? '').trim();
+      const spellList = /\*\*(?:At Will|\d+\/Day Each):\*\*/.test(t) || /^\s*-\s/m.test(t);
+      if (t && !spellList && !/[.!?:)\]"*]$/.test(t)) F('text-truncated', 'fail', `${sec}/${bare(e.name)}: the text stops mid-clause ("…${t.slice(-34)}") — every row ends on terminal punctuation`, bare(e.name));
+    }
+    // 3. A BONUS WITH NO NUMBER — NOT HERE. Khordathar's Crystal Plating granted
+    //    "a bonus to its Armor Class", which a GM cannot apply. A regex for that
+    //    phrasing was written and removed: it is a WORD RULE, catching one form
+    //    and missing "grants it improved armor" or "makes it harder to hit", and
+    //    the owner's standing ruling puts a question about whether a rule is
+    //    applicable on the audit call, which already judges rows. Unlike the two
+    //    above — braces surviving substitution, and a sentence stopping mid-clause
+    //    — this one needs reading, not looking.
     if (/\. ,|,\s*,|\.\.(?!\.)|\s,|(?<!ft)\.\s+(?:and|plus)\b/.test(e.text ?? '')) F('punctuation', 'fail', `${sec}/${bare(e.name)}: a ". ,", ", ," or ". and" sequence in the text`, bare(e.name)); // ". and the target has the Paralyzed condition" on the lich's touch (critic's blockers audit 2026-10-03)
     const reach = /reach (\d+) ft\./.exec(e.text ?? '');
     // a REACH WEAPON is its own tether (the weapon table: halberd, glaive, pike, lance, whip all
@@ -1501,6 +1578,51 @@ export function checkBlock(raw, ctx = {}) {
     const g = gates[gate]; g.findings.push({ rule, severity, message, value });
     if (severity === 'fail') g.status = 'fail'; else if (severity === 'soft' && g.status !== 'fail') g.status = 'soft';
   };
+  // THE ENGINE'S OWN LINT WAS WRITE-ONLY (2026-10-30). `generate.mjs` records
+  // `monster.lint_findings` at ship and NOTHING read it — one reference in the
+  // whole repository, the write. So the engine detected real defects, wrote them
+  // down, and shipped anyway. On sweep-2026-10-30 that was 4 sheets of 40, and
+  // only one of the four was on anybody's list:
+  //
+  //   Owlbear (2014)     undefined-attack-ref: Rend references a "Talons" attack
+  //                      that is not defined anywhere in the statblock
+  //   Stone Golem        dual-recharge: two Recharge-gated entries; print never
+  //                      fields two
+  //   Vampire            orphan-condition-ref: "Charmed" is referenced as a state
+  //                      but nothing on the sheet applies it
+  //   Reed-Temple Warden damage-dice: "23 (3d8 + 3)" — 3d8 + 3 averages 16
+  //
+  // These are deterministic arithmetic and reference checks, so they are `fail`
+  // for the same reason the text lints are: they need looking at, not judging.
+  // Both editions are read, because the 2014 sheet keeps the 2024 model in
+  // `other_edition` and two of the four findings above sat there while shipping
+  // in both printings.
+  for (const [where, found] of [['', raw?.lint_findings], ['the 2024 model', raw?.other_edition?.lint_findings], ['the 2014 model', raw?.sheet_lint_findings]]) {
+    for (const f of (found ?? [])) {
+      const msg = String(f?.message ?? f ?? '').trim(); if (!msg) continue;
+      const rule = (/^([a-z0-9-]+):/.exec(msg) ?? [])[1] ?? String(f?.rule ?? 'engine-lint');
+      // SEVERITY BY RULE, NOT A BLANKET FAIL (2026-10-30, second pass). The first
+      // cut failed every engine finding. But the engine records them all at one
+      // level — `severity: 'audit'`, which is "worth a look" — and the level is
+      // flattened away when `lint_findings` is serialised to strings, so the
+      // promotion was mine, not the engine's.
+      //
+      // On the 10-30 forty three of four were real and one was a FALSE POSITIVE
+      // on print's own row: `orphan-condition-ref` fired on the Vampire because
+      // its Charmed comes from casting *Charm Person*, and the rule's `applyRe`
+      // only recognises explicit "has the X condition" phrasing. Failing a sheet
+      // for print's own text is worse than not checking, so that rule is soft
+      // until the spell-applied case is handled; the three whose premises are
+      // verified stay fail:
+      //   undefined-attack-ref  a GM cannot run a reference to a row that is not there
+      //   dual-recharge         0 of 329 print blocks field two; 86 field exactly one
+      //   damage-dice           arithmetic: the stated average must match its dice
+      // Anything new defaults to soft — a finding nobody has checked against print
+      // does not get to fail a sheet.
+      const VERIFIED_FAIL = ['undefined-attack-ref', 'dual-recharge', 'damage-dice'];
+      F('adjudicability')(rule, VERIFIED_FAIL.includes(rule) ? 'fail' : 'soft', `${where ? `${where}: ` : ''}${msg}`, rule);
+    }
+  }
   const servedVerbatimEarly = raw?.generation?.source === 'srd-5.1' && raw?.generation?.calls === 0;
   const safe = (gate, fn) => { try { fn(F(gate)); } catch (e) { F(gate)('checker-error', 'soft', `the gate threw: ${e?.message ?? e}`, String(e)); } };
   // A BLOCK SERVED VERBATIM FROM PRINT IS CHECKED AGAINST THE CORPUS, NOT

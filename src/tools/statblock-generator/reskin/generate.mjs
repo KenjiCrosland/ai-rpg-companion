@@ -5986,7 +5986,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         continue;
       }
       {
-        const tok = /\{damage_type(?:_2)?\}|\{condition_(?:minor|major)\}|\{save_stat\}|\{projectile\}/.exec(e.text);
+        // NO BRACE SURVIVES, RATHER THAN "NOT THESE FOUR" (2026-10-30). This was
+        // an allowlist — damage_type, condition_minor/major, save_stat,
+        // projectile — so it threw for four known tokens and was blind to every
+        // other brace, including a token that does not exist at all. Three donors
+        // authored on 2026-10-29 wrote `{energy_type}`, which the renderer has
+        // never substituted, and it shipped on the Vampire's Grave Strike.
+        //
+        // Inverting it is not a wider word rule: it asserts that substitution
+        // COMPLETED, which is a mechanical fact about the engine's own output and
+        // needs no reading of meaning. Anything still wearing braces is a bug
+        // whatever it is called.
+        const tok = /\{[a-z_0-9]+\}/.exec(e.text);
         if (tok) throw new Error(`unfilled slot in "${e.name}" — token ${tok[0]} — failing loudly per spec`);
       }
       // an Actions row that calls itself "this bonus action" (the
@@ -6092,7 +6103,71 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             if (alt) { trace('weapon refitted to the array:', `"${bareW}" read ${resolved}, but the row's +${bonus} is DEX ${dexMod} + PB ${pb} — a ${alt} is the finesse ${props.type.toLowerCase()} weapon`); fit = alt; }
           }
         }
-        if (fit && !e.part) e.weapon = fit;
+        // THE ROW OBEYS THE WEAPON IT CARRIES (2026-10-30). Stamping `e.weapon`
+        // recorded the weapon and changed nothing on the row, so a greataxe
+        // rolled d8 and a greatsword rolled d8 at reach 10 — the dice came from
+        // CR scaling and the reach from the donor, neither asking the table.
+        //
+        // Print's rule, counted over the 329: the weapon's die SIZE is kept and
+        // the COUNT scales (greataxe 1d12, greatsword 2d6, handaxe 3d6, battleaxe
+        // 2d8 — 15 of 16 weapons; the longsword is the exception at 2d10). So the
+        // engine's CR-derived AVERAGE is preserved and re-expressed in the
+        // weapon's die, which also makes the printed average agree with its dice.
+        //
+        // A row the GM armed or declared is left alone: their number is the ask.
+        if (fit && e.part) {
+          // A PART KEEPS ITS OWN `weapon` STAMP (the outer guard owns that, and a
+          // part is never evicted by a template), but it still obeys the weapon's
+          // die and reach — the GM named the weapon, not the numbers.
+          const wpP = WEAPONS[fit] ?? null;
+          if (wpP?.die && !e.userSet && !e.print) {
+            const dm = /(\d+) \((\d+)d(\d+)(?:\s*([+-])\s*(\d+))?\)/.exec(e.text ?? '');
+            if (dm && Number(dm[3]) !== wpP.die) {
+              const mod = dm[4] ? (dm[4] === '-' ? -Number(dm[5]) : Number(dm[5])) : 0;
+              const perDie = (wpP.die + 1) / 2;
+              const count = Math.max(1, Math.round((Number(dm[1]) - mod) / perDie));
+              const avg = Math.floor(count * perDie) + mod;
+              e.text = e.text.replace(dm[0], `${avg} (${count}d${wpP.die}${mod ? ` ${mod < 0 ? '-' : '+'} ${Math.abs(mod)}` : ''})`);
+              trace('weapon dice follow the weapon:', `the GM's "${bareW}" is a ${fit} (d${wpP.die}) — "${dm[0]}" becomes "${avg} (${count}d${wpP.die}${mod ? ` ${mod < 0 ? '-' : '+'} ${Math.abs(mod)}` : ''})"`);
+            }
+            const rmP = /reach (\d+) ft/.exec(e.text ?? '');
+            if (rmP && wpP.reach && Number(rmP[1]) !== wpP.reach) {
+              e.text = e.text.replace(rmP[0], `reach ${wpP.reach} ft`);
+              trace('weapon reach follows the weapon:', `the GM's "${bareW}" is a ${fit} — reach ${rmP[1]} ft becomes ${wpP.reach} ft`);
+            }
+          }
+        }
+        if (fit && !e.part) {
+          e.weapon = fit;
+          const wp = WEAPONS[fit] ?? null;
+          // A THROWN WEAPON'S ROW MAY BE RANGED-ONLY, and a weapon the GM NAMED is
+          // still that weapon (2026-10-30, measured on sweep-2026-10-30T02-34-52:
+          // 6 of 10 weapon rows still carried the wrong die — 4 were GM-named
+          // parts, 1 was a print row, and 1 was a javelin whose row reads "Ranged
+          // Attack Roll" alone, which the melee-only test never saw).
+          //
+          // Naming a mace is asking for a mace, and a mace is d6; only a declared
+          // NUMBER ("bites for 50 damage") is the GM's to keep, which is `userSet`.
+          // A print row stays exempt: print's numbers are print's calibration.
+          if (wp?.die && !e.userSet && !e.print && /(?:Melee|Ranged|Melee or Ranged) Attack Roll/.test(e.text ?? '')) {
+            const dm = /(\d+) \((\d+)d(\d+)(?:\s*([+-])\s*(\d+))?\)/.exec(e.text);
+            if (dm && Number(dm[3]) !== wp.die) {
+              const mod = dm[4] ? (dm[4] === '-' ? -Number(dm[5]) : Number(dm[5])) : 0;
+              const target = Number(dm[1]);
+              const perDie = (wp.die + 1) / 2;
+              const count = Math.max(1, Math.round((target - mod) / perDie));
+              const avg = Math.floor(count * perDie) + mod;
+              const was = dm[0];
+              e.text = e.text.replace(was, `${avg} (${count}d${wp.die}${mod ? ` ${mod < 0 ? '-' : '+'} ${Math.abs(mod)}` : ''})`);
+              trace('weapon dice follow the weapon:', `"${bareW}" is a ${fit} (d${wp.die}) — "${was}" becomes "${avg} (${count}d${wp.die}${mod ? ` ${mod < 0 ? '-' : '+'} ${Math.abs(mod)}` : ''})", print's rule of keeping the die and scaling the count`);
+            }
+            const rm = /reach (\d+) ft/.exec(e.text ?? '');
+            if (rm && Number(rm[1]) !== wp.reach && wp.reach) {
+              e.text = e.text.replace(rm[0], `reach ${wp.reach} ft`);
+              trace('weapon reach follows the weapon:', `"${bareW}" is a ${fit} — reach ${rm[1]} ft becomes ${wp.reach} ft (the table's own)`);
+            }
+          }
+        }
         else if (resolved === null && saidNone && !e.part) e.weapon = null; // resolved: no weapon — the checker reads null as the call's answer, not as unresolved
       }
       for (const es of Object.values(monster.sections ?? {})) for (const e of es) {
@@ -6490,7 +6565,22 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           if (from === to || meleeRows.some((o) => o !== e && String(o.name ?? '').replace(/ \(.*\)$/, '') === to)) return;
           const re = new RegExp(`(?<![A-Z][a-z]+ )\\b${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b(?! [A-Z][\\w'-]+)`, 'g'); // nor as the HEAD of a two-word name: "Scepter" -> "Eldritch Burst" turned the hybrid "Scepter Blast" into "Eldritch Burst Blast" (sweep 2026-10-04) // not inside a two-word ranged name: "Hurled Knife" is the ranged row's to rename (the Bandit's Multiattack read "Hurled Scimitar", day-one 2026-09-30)
           e.name = to; e.printNamed = true; e.weapon = weaponFor(to) ?? null; // print's name, print's numbers from here: the final price pass leaves it (the Green Dragon's Rend ran 15 → 24, step 7 defect 4) — and print's weapon: the stamp follows the rename, or a "Rusted Blade" renamed Shortsword still carried longsword (printplus 2026-10-18)
-          for (const es3 of Object.values(monster.sections)) for (const e3 of es3) if (e3 !== e && re.test(e3.text ?? '')) e3.text = e3.text.replace(re, to);
+          // THE ROW'S OWN TEXT COUNTS, AND /g + .test() WAS LOSING MATCHES
+          // (2026-10-30). Two faults on one line:
+          //
+          // `e3 !== e` skipped the renamed row itself — right for a row that does
+          // not name itself, wrong for a welded rider that does. The pounce rider
+          // rode a row called "Talons" and said "makes one Talons attack"; print
+          // canon renamed the row to "Rend" and the self-reference survived. The
+          // engine's own lint caught it ("Actions/Rend references a 'Talons' attack
+          // that is not defined anywhere in the statblock") and shipped it, because
+          // nothing read `lint_findings` until today.
+          //
+          // And `re` is global, so every successful `.test()` advanced `lastIndex`
+          // and the next row's test began mid-string, able to miss a match at its
+          // start. `replace` is a no-op when nothing matches, so the guard was
+          // never needed.
+          for (const es3 of Object.values(monster.sections)) for (const e3 of es3) if (e3) e3.text = String(e3.text ?? '').replace(re, to);
           e.print = true; // print's named melee row carries the flag the ranged rename already sets — one reader (the gates skip print's composition) saw the Lich's Paralyzing Touch unflagged and failed it (forty, 2026-10-18)
           trace('print canon attack:', `"${from}" -> "${to}" — the ${pc.name}'s own row`);
         });
@@ -7191,6 +7281,29 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           sweepDeadName(sections, e.name, printAttacks[0], trace);
           noteDrop(e.template ?? e.seed, 'print closes the row set', `an exact ${pcPlain?.name ?? 'print'} sheet carries print's attacks only`);
           trace('print canon: chassis attack leaves —', `${secX}/"${e.name}" is not one of the ${pcPlain?.name ?? 'print body'}'s rows, and an exact sheet carries print's attacks only`);
+        }
+      }
+    }
+    // ONE RECHARGE DIE, AS PRINT HAS (2026-10-30). Counted over the 329: NOT ONE
+    // block fields two Recharge-gated rows, and 86 field exactly one. The Stone
+    // Golem shipped two — the signature seat took "Cratering Fists (Recharge
+    // 5-6)" and print's own "Slow (Recharge 5-6)" installed afterwards, the same
+    // ordering that cost the Mummy Lord its legendary rows: a decision made
+    // before print's composition is known.
+    //
+    // Print's gate stays; OURS becomes 1/Day, which print also uses (Rampage,
+    // Nightmare Haunting) and which keeps the limit a Recharge was there to
+    // impose — ungating a nova would hand the sheet a free one every round.
+    if (printBody) {
+      const gated = Object.entries(sections).flatMap(([sec, es]) => (es ?? []).map((e) => ({ sec, e }))).filter(({ e }) => e && /\(Recharge [\d–-]+\)/.test(String(e.name ?? '')));
+      if (gated.length > 1 && gated.some(({ e }) => e.print)) {
+        for (const { sec, e } of gated) {
+          if (e.print) continue;
+          const was = String(e.name);
+          e.name = was.replace(/\(Recharge [\d–-]+\)/, '(1/Day)');
+          if (e.gate) e.gate = '1/Day';
+          for (const es2 of Object.values(sections)) for (const e2 of es2) if (e2 && e2 !== e) e2.text = String(e2.text ?? '').split(was).join(e.name);
+          trace('one recharge die:', `${sec}/"${was}" becomes "${e.name}" — the ${pcPlain?.name ?? 'print body'} already fields a Recharge row, and 0 of print's 329 blocks field two`);
         }
       }
     }
@@ -8416,9 +8529,16 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const order = [...holders].sort((a, b) => rank(a) - rank(b));
       for (const e of order.slice(2)) {
         const was = e.text;
+        // THE SENTENCE GOES, NOT HALF OF IT (2026-10-30). The second pattern
+        // matched " the target has the Restrained condition." inside the sentence
+        // "While Grappled this way, the target has the Restrained condition." —
+        // taking the predicate and leaving the subordinate clause stranded, so
+        // the Purple Worm shipped "…(escape DC 22). While Grappled this way,"
+        // and the critic scored the run's second-best idea at soundness 0. The
+        // lead-in belongs to the clause being removed, so it is consumed with it.
         const next = String(e.text)
           .replace(new RegExp(`,? and (?:the target|it) has the ${cond} condition[^.]*\\.?`, 'i'), '.')
-          .replace(new RegExp(`\\s*The target has the ${cond} condition[^.]*\\.`, 'i'), '')
+          .replace(new RegExp(`\\s*(?:While [^.,]{0,40},\\s*)?(?:The target|It) has the ${cond} condition[^.]*\\.`, 'i'), '')
           .replace(/\s{2,}/g, ' ').replace(/\.\./g, '.').trim();
         // THE CONDITION WAS THE WHOLE ROW. This pass assumes a damage row whose
         // rider can be shed — its own trace says "the row, its damage and its
@@ -8430,6 +8550,17 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // "templates are sound and the metadata is sound, no string surgery
         // after the fact"). `EMPTY_SAVE_OUTCOME` is the lint's own test, imported
         // rather than copied.
+        // AND AN EDIT THAT ENDS MID-CLAUSE IS NOT AN EDIT. The pattern above is
+        // the known orphan; this is the backstop for the ones that are not, in
+        // the same spirit as `EMPTY_SAVE_OUTCOME` — text left hanging on a comma
+        // or a connective is a row a GM cannot read, so the ROW goes rather than
+        // its sentence (owner, 2026-10-28: "no string surgery after the fact").
+        if (/[,;]$|\b(?:and|or|while|until|then)$/i.test(next.replace(/\*/g, '').trim())) {
+          for (const es of Object.values(monster.sections ?? {})) { const ix = es.indexOf(e); if (ix !== -1) es.splice(ix, 1); }
+          trace('one mechanic, at most twice:', `"${e.name}" LEAVES — shedding ${cond} left the text hanging mid-clause ("…${next.replace(/\*/g, '').trim().slice(-34)}"), and half a sentence is not a row`);
+          sweepDeadName(monster.sections, String(e.name).replace(/ \(.*\)$/, ''), null, trace);
+          continue;
+        }
         if (EMPTY_SAVE_OUTCOME.test(next.replace(/\*/g, ''))) {
           for (const es of Object.values(monster.sections ?? {})) { const ix = es.indexOf(e); if (ix !== -1) es.splice(ix, 1); }
           trace('one mechanic, at most twice:', `"${e.name}" LEAVES — ${cond} was its whole payload, and a save outcome with nothing after it is not a row`);

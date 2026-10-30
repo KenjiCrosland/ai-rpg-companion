@@ -25,37 +25,47 @@
  *   heavy     the Heavy property: Great Weapon Master's own list
  *   mastery   its 2024 mastery property
  */
+// `die` IS THE WEAPON'S DIE SIZE, and it is a closed fact (CLAUDE.md allows the
+// weapon table). Measured over the 329: print keeps the weapon's die SIZE and
+// scales the COUNT — greataxe 1d12, greatsword 2d6, battleaxe 2d8, handaxe 3d6,
+// javelin 3d6, warhammer 2d8, scimitar 1d6, 15 of 16 weapons. The one exception
+// is the longsword, which print renders 2d10 twice.
+//
+// Without this the die came from CR scaling alone, so a greataxe rolled d8 and a
+// greatsword d8 (critic, 2026-10-30). Note the maul is 2d6 in the table, so a
+// maul on d6 was always correct — the critic's "heavy weapons are d10/d12" was
+// wrong there, and the check I first wrote repeated the error.
 export const WEAPONS = {
   // ---- simple melee
-  club: { type: 'Bludgeoning', reach: 5, mastery: 'Slow' },
-  greatclub: { type: 'Bludgeoning', reach: 5, mastery: 'Push' },
-  dagger: { type: 'Piercing', reach: 5, range: '20/60', thrown: true, finesse: true, mastery: 'Vex' },
-  handaxe: { type: 'Slashing', reach: 5, range: '20/60', thrown: true, mastery: 'Vex' },
-  javelin: { type: 'Piercing', reach: 5, range: '30/120', thrown: true, mastery: 'Slow' },
-  'light hammer': { type: 'Bludgeoning', reach: 5, range: '20/60', thrown: true, mastery: 'Nick' },
-  mace: { type: 'Bludgeoning', reach: 5, mastery: 'Sap' },
-  quarterstaff: { type: 'Bludgeoning', reach: 5, mastery: 'Topple' },
-  staff: { type: 'Bludgeoning', reach: 5, mastery: 'Topple' },
-  sickle: { type: 'Slashing', reach: 5, finesse: true, mastery: 'Nick' },
-  spear: { type: 'Piercing', reach: 5, range: '20/60', thrown: true, mastery: 'Sap' },
+  club: { type: 'Bludgeoning', die: 4, reach: 5, mastery: 'Slow' },
+  greatclub: { type: 'Bludgeoning', die: 8, reach: 5, mastery: 'Push' },
+  dagger: { type: 'Piercing', die: 4, reach: 5, range: '20/60', thrown: true, finesse: true, mastery: 'Vex' },
+  handaxe: { type: 'Slashing', die: 6, reach: 5, range: '20/60', thrown: true, mastery: 'Vex' },
+  javelin: { type: 'Piercing', die: 6, reach: 5, range: '30/120', thrown: true, mastery: 'Slow' },
+  'light hammer': { type: 'Bludgeoning', die: 4, reach: 5, range: '20/60', thrown: true, mastery: 'Nick' },
+  mace: { type: 'Bludgeoning', die: 6, reach: 5, mastery: 'Sap' },
+  quarterstaff: { type: 'Bludgeoning', die: 6, reach: 5, mastery: 'Topple' },
+  staff: { type: 'Bludgeoning', die: 6, reach: 5, mastery: 'Topple' },
+  sickle: { type: 'Slashing', die: 4, reach: 5, finesse: true, mastery: 'Nick' },
+  spear: { type: 'Piercing', die: 6, reach: 5, range: '20/60', thrown: true, mastery: 'Sap' },
   // ---- martial melee
-  battleaxe: { type: 'Slashing', reach: 5, mastery: 'Topple' },
-  flail: { type: 'Bludgeoning', reach: 5, mastery: 'Sap' },
-  glaive: { type: 'Slashing', reach: 10, heavy: true, mastery: 'Graze' },
-  greataxe: { type: 'Slashing', reach: 5, heavy: true, mastery: 'Cleave' },
-  greatsword: { type: 'Slashing', reach: 5, heavy: true, mastery: 'Graze' },
-  halberd: { type: 'Slashing', reach: 10, heavy: true, mastery: 'Cleave' },
-  lance: { type: 'Piercing', reach: 10, heavy: true, mastery: 'Topple' },
-  longsword: { type: 'Slashing', reach: 5, mastery: 'Sap' },
-  maul: { type: 'Bludgeoning', reach: 5, heavy: true, mastery: 'Topple' },
-  morningstar: { type: 'Piercing', reach: 5, mastery: 'Sap' },
-  pike: { type: 'Piercing', reach: 10, heavy: true, mastery: 'Push' },
-  rapier: { type: 'Piercing', reach: 5, finesse: true, mastery: 'Vex' },
-  scimitar: { type: 'Slashing', reach: 5, finesse: true, mastery: 'Nick' },
-  shortsword: { type: 'Piercing', reach: 5, finesse: true, mastery: 'Vex' },
-  trident: { type: 'Piercing', reach: 5, range: '20/60', thrown: true, mastery: 'Topple' },
-  warhammer: { type: 'Bludgeoning', reach: 5, mastery: 'Push' },
-  whip: { type: 'Slashing', reach: 10, finesse: true, mastery: 'Slow' },
+  battleaxe: { type: 'Slashing', die: 8, reach: 5, mastery: 'Topple' },
+  flail: { type: 'Bludgeoning', die: 8, reach: 5, mastery: 'Sap' },
+  glaive: { type: 'Slashing', die: 10, reach: 10, heavy: true, mastery: 'Graze' },
+  greataxe: { type: 'Slashing', die: 12, reach: 5, heavy: true, mastery: 'Cleave' },
+  greatsword: { type: 'Slashing', die: 6, reach: 5, heavy: true, mastery: 'Graze' },
+  halberd: { type: 'Slashing', die: 10, reach: 10, heavy: true, mastery: 'Cleave' },
+  lance: { type: 'Piercing', die: 10, reach: 10, heavy: true, mastery: 'Topple' },
+  longsword: { type: 'Slashing', die: 8, reach: 5, mastery: 'Sap' },
+  maul: { type: 'Bludgeoning', die: 6, reach: 5, heavy: true, mastery: 'Topple' },
+  morningstar: { type: 'Piercing', die: 8, reach: 5, mastery: 'Sap' },
+  pike: { type: 'Piercing', die: 10, reach: 10, heavy: true, mastery: 'Push' },
+  rapier: { type: 'Piercing', die: 8, reach: 5, finesse: true, mastery: 'Vex' },
+  scimitar: { type: 'Slashing', die: 6, reach: 5, finesse: true, mastery: 'Nick' },
+  shortsword: { type: 'Piercing', die: 6, reach: 5, finesse: true, mastery: 'Vex' },
+  trident: { type: 'Piercing', die: 8, reach: 5, range: '20/60', thrown: true, mastery: 'Topple' },
+  warhammer: { type: 'Bludgeoning', die: 8, reach: 5, mastery: 'Push' },
+  whip: { type: 'Slashing', die: 4, reach: 10, finesse: true, mastery: 'Slow' },
   // ---- ranged
   dart: { type: 'Piercing', range: '20/60', thrown: true, finesse: true, mastery: 'Vex' },
   sling: { type: 'Bludgeoning', range: '30/120', launcher: true, mastery: 'Slow' },

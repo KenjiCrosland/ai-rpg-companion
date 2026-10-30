@@ -465,3 +465,180 @@ describe('a free control aura in Traits owes print\'s way out (2026-10-29)', () 
     expect(has(checkBlock(r), 'gates', 'control-aoe-ungated')).toBe(false);
   });
 });
+
+// TEXT HYGIENE (critic, 2026-10-30: "4 of the 6 broken sheets are text bugs a
+// lint would catch"). Each of these broke one of that sweep's three best ideas,
+// so each is a `fail`: they need no judging, only looking at.
+describe('a row ships readable text', () => {
+  test('an unsubstituted placeholder fails — the Vampire shipped {energy_type}', () => {
+    const r = withRow('Actions', { name: 'Grave Strike', text: '*Melee Attack Roll:* +9, reach 5 ft. 8 (1d8 + 4) Bludgeoning damage plus 13 (3d8) {energy_type} damage.' });
+    expect(JSON.stringify(checkBlock(r))).toMatch(/placeholder-leak/);
+  });
+
+  test('text that stops mid-clause fails — the Purple Worm\'s Gullet Drag', () => {
+    const r = withRow('Actions', { name: 'Gullet Drag', text: '*Strength Saving Throw:* DC 21, one creature within 60 feet. *Failure:* The target has the Grappled condition (escape DC 22). While Grappled this way,' });
+    expect(JSON.stringify(checkBlock(r))).toMatch(/text-truncated/);
+  });
+
+  test('but a Spellcasting row ending on a spell name is print\'s own form, not a truncation', () => {
+    const r = withRow('Actions', { name: 'Spellcasting', text: 'The creature casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 15):\n\n- **At Will:** *Thaumaturgy*\n- **1/Day Each:** *Spirit Guardians*' });
+    expect(JSON.stringify(checkBlock(r))).not.toMatch(/text-truncated/);
+  });
+
+  // NOT TESTED HERE: "a bonus to its Armor Class" with no number (Khordathar).
+  // That gate was written as a regex and removed — a word rule catching one
+  // phrasing while "grants it improved armor" walks past, where the owner's
+  // ruling puts applicability on the audit call. The two above stay because
+  // they ask whether substitution finished and whether a sentence ends, which
+  // are facts about the engine's own output rather than readings of meaning.
+});
+
+// THE ENGINE'S OWN LINT WAS WRITE-ONLY (2026-10-30). `generate.mjs` records
+// `monster.lint_findings` at ship; nothing read it — one reference in the whole
+// repository, the write. So the engine detected real defects, wrote them down,
+// and shipped. On sweep-2026-10-30 that was 4 sheets of 40, and 3 of the 4 were
+// on nobody's list: a dual Recharge, an orphan condition reference, and a damage
+// expression whose stated average was wrong by 6.5.
+describe('the engine\'s own lint reaches the gate', () => {
+  test('a finding on the sheet fails adjudicability', () => {
+    const r = withRow('Actions', { name: 'Rend', text: '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.' });
+    r.lint_findings = ['undefined-attack-ref: Actions/Rend references a "Talons" attack that is not defined anywhere in the statblock'];
+    expect(has(checkBlock(r), 'adjudicability', 'undefined-attack-ref', 'fail')).toBe(true);
+  });
+
+  test('a finding on the 2024 model of a 2014 sheet is read too — two of the four sat there', () => {
+    const r = withRow('Actions', { name: 'Unarmed Strike', text: '*Melee Attack Roll:* +6, reach 5 ft. 23 (3d8 + 3) Bludgeoning damage.' });
+    r.other_edition = { format: '2024', sections: r.sections, lint_findings: ['damage-dice: Actions/Unarmed Strike: "23 (3d8 + 3)" — 3d8 + 3 averages 16'] };
+    const out = JSON.stringify(checkBlock(r));
+    expect(out).toMatch(/damage-dice/);
+    expect(out).toMatch(/the 2024 model/);
+  });
+
+  test('the rule name is taken from the message, so each kind is its own finding', () => {
+    const r = withRow('Traits', { name: 'Slow', text: 'The creature casts the Slow spell.' });
+    r.lint_findings = ['dual-recharge: Two Recharge-gated entries — print never fields two'];
+    expect(has(checkBlock(r), 'adjudicability', 'dual-recharge', 'fail')).toBe(true);
+  });
+
+  test('a rule whose premise is verified fails; one with a known false positive is soft', () => {
+    const mk = (msg) => { const r = withRow('Actions', { name: 'Rend', text: '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.' }); r.lint_findings = [msg]; return checkBlock(r); };
+    // verified against print: a GM cannot run a missing reference; 0 of 329 field
+    // two Recharge rows; a stated average must match its dice
+    for (const m of ['undefined-attack-ref: cites a "Talons" attack that is not defined', 'dual-recharge: Two Recharge-gated entries', 'damage-dice: "23 (3d8 + 3)" averages 16']) {
+      const rule = /^([a-z-]+):/.exec(m)[1];
+      expect(`${rule}: ${Object.values(mk(m).gates).flatMap((g) => g.findings).find((f) => f.rule === rule)?.severity}`).toBe(`${rule}: fail`);
+    }
+  });
+
+  test('orphan-condition-ref is SOFT — it fires on print\'s own Vampire, whose Charmed comes from Charm Person', () => {
+    const r = withRow('Bonus Actions', { name: 'Charm (Recharge 5-6)', text: 'The vampire casts *Charm Person*, requiring no spell components.' });
+    r.lint_findings = ['orphan-condition-ref: "Charmed" is referenced as a state but nothing on the sheet applies it'];
+    const f = Object.values(checkBlock(r).gates).flatMap((g) => g.findings).find((x) => x.rule === 'orphan-condition-ref');
+    expect(f && f.severity).toBe('soft');
+  });
+
+  test('and anything new defaults to soft — an unchecked finding may not fail a sheet', () => {
+    const r = withRow('Actions', { name: 'Rend', text: '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.' });
+    r.lint_findings = ['some-new-rule: something nobody has measured against print'];
+    const f = Object.values(checkBlock(r).gates).flatMap((g) => g.findings).find((x) => x.rule === 'some-new-rule');
+    expect(f && f.severity).toBe('soft');
+  });
+
+  test('an empty or absent array changes nothing', () => {
+    const a = withRow('Actions', { name: 'Rend', text: '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.' });
+    const b = withRow('Actions', { name: 'Rend', text: '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.' });
+    b.lint_findings = [];
+    expect(JSON.stringify(checkBlock(a))).toBe(JSON.stringify(checkBlock(b)));
+  });
+});
+
+// ONE ACTION MAY NOT OUT-HIT PRINT'S HARDEST (critic, 2026-10-30). The cap is the
+// largest summed damage any single print row deals to ONE target in one action,
+// per band, over all 329 — attacks and single-target saves together — as a
+// RUNNING max, since print's sample dips at CR 17-20 (43) below CR 13-16 (51).
+// Replayed on sweep-2026-10-30 it matches the critic's hand-read to the unit:
+// Clapper 90 at CR 13, Merciless Strike 63 at CR 9, Opportunist's Lash 59 at
+// CR 17, Merciless Strike 58 at CR 20.
+describe('a single action answers to print\'s hardest hit', () => {
+  const atk = (avg, dice, over = {}) => ({ name: 'Clapper', text: `*Melee Attack Roll:* +10, reach 5 ft. ${avg} (${dice}) Bludgeoning damage.`, ...over });
+
+  test('an attack over the band cap fails', () => {
+    const r = withRow('Actions', atk(90, '19d8 + 5')); r.cr = 13; r.challenge_rating = 13;
+    expect(JSON.stringify(checkBlock(r, { cr: 13 }))).toMatch(/single-target-ceiling/);
+  });
+
+  test('one at the cap passes — print\'s own Purple Worm Tail Stinger is 51 at CR 13-16', () => {
+    const r = withRow('Actions', atk(51, '10d8 + 6')); r.cr = 13;
+    expect(JSON.stringify(checkBlock(r, { cr: 13 }))).not.toMatch(/single-target-ceiling/);
+  });
+
+  test('the swarm\'s Bloodied split is ONE attack at two rates, never the sum', () => {
+    // 90 or 45 is a 90 hit; summing them reads 135 and inflates by half again
+    const r = withRow('Actions', { name: 'Clapper', text: '*Melee Attack Roll:* +10, reach 5 ft. 45 (9d8 + 5) Bludgeoning damage, or 22 (4d8 + 5) Bludgeoning damage if the swarm is Bloodied.' });
+    r.cr = 13;
+    expect(JSON.stringify(checkBlock(r, { cr: 13 }))).not.toMatch(/single-target-ceiling/);
+  });
+
+  test('a SAVE row counts too — that is the critic\'s extension', () => {
+    const r = withRow('Actions', { name: 'Merciless Strike', text: '*Dexterity Saving Throw*: DC 19, one creature within 60 feet that has the Frightened condition. *Failure:* 63 (14d8) Fire damage.' });
+    r.cr = 9;
+    expect(JSON.stringify(checkBlock(r, { cr: 9 }))).toMatch(/single-target-ceiling/);
+  });
+
+  test('an AREA row does not — the cap is single-target', () => {
+    const r = withRow('Actions', { name: 'Breath', text: '*Dexterity Saving Throw*: DC 19, each creature in a 60-foot Cone. *Failure:* 63 (14d8) Fire damage.' });
+    r.cr = 9;
+    expect(JSON.stringify(checkBlock(r, { cr: 9 }))).not.toMatch(/single-target-ceiling/);
+  });
+
+  test('the cap never falls as CR rises — a CR 18 sheet is allowed what a CR 15 one is', () => {
+    const r = withRow('Actions', atk(51, '10d8 + 6')); r.cr = 18;
+    expect(JSON.stringify(checkBlock(r, { cr: 18 }))).not.toMatch(/single-target-ceiling/);
+  });
+
+  test('a marginal overage is SOFT, not fail — a CR 5 monk at 35 against 31 wants a reader, not a veto', () => {
+    const r = withRow('Actions', { name: 'Unarmed Strike', text: '*Melee Attack Roll:* +6, reach 5 ft. 23 (3d8 + 3) Bludgeoning damage. Once on each of its turns it can deal an extra 12 (2d10) Force damage.' });
+    r.cr = 5;
+    const out = checkBlock(r, { cr: 5 });
+    // a one-row fixture fails other gates (no Multiattack, no ranged option), so
+    // assert this finding's own severity rather than the sheet's verdict
+    const f = Object.values(out.gates).flatMap((g) => g.findings).find((x) => x.rule === 'single-target-ceiling');
+    expect(f && f.severity).toBe('soft');
+  });
+
+  test('a print row is exempt — print\'s numbers are print\'s calibration', () => {
+    const r = withRow('Actions', atk(90, '19d8 + 5', { print: true })); r.cr = 13;
+    expect(JSON.stringify(checkBlock(r, { cr: 13 }))).not.toMatch(/single-target-ceiling/);
+  });
+});
+
+// THE SENTENCE GOES, NOT HALF OF IT (2026-10-30). The "one mechanic, at most
+// twice" pass sheds a condition rider when three rows impose it and print never
+// fields three — correct — but its removal matched " the target has the X
+// condition." INSIDE the sentence "While Grappled this way, the target has the X
+// condition.", so the Purple Worm shipped "…(escape DC 22). While Grappled this
+// way," and the critic scored the run's second-best idea at soundness 0.
+describe('shedding a rider leaves a readable sentence', () => {
+  const shed = (text, cond) => text
+    .replace(new RegExp(`,? and (?:the target|it) has the ${cond} condition[^.]*\\.?`, 'i'), '.')
+    .replace(new RegExp(`\\s*(?:While [^.,]{0,40},\\s*)?(?:The target|It) has the ${cond} condition[^.]*\\.`, 'i'), '')
+    .replace(/\s{2,}/g, ' ').replace(/\.\./g, '.').trim();
+
+  test('the subordinate lead-in is consumed with the clause it introduces', () => {
+    const t = '*Strength Saving Throw:* DC 21, one creature within 60 feet. *Failure:* The target is pulled 30 feet and has the Grappled condition (escape DC 22). While Grappled this way, the target has the Restrained condition.';
+    expect(shed(t, 'Restrained')).toMatch(/has the Grappled condition \(escape DC 22\)\.$/);
+    expect(shed(t, 'Restrained')).not.toMatch(/While Grappled this way,$/);
+  });
+
+  test('an "and" rider still sheds as before', () => {
+    const t = '*Melee Attack Roll:* +14, reach 10 ft. 22 (3d8 + 9) Piercing damage, and the target has the Restrained condition (escape DC 22).';
+    expect(shed(t, 'Restrained')).toMatch(/Piercing damage\.$/);
+  });
+
+  test('and text left hanging on a comma or connective is caught by the backstop', () => {
+    for (const tail of ['… and has the Grappled condition. While Grappled this way,', 'The target is pulled 30 feet and', 'it is Restrained until the end of its next turn or']) {
+      expect(/[,;]$|\b(?:and|or|while|until|then)$/i.test(tail.trim())).toBe(true);
+    }
+    expect(/[,;]$|\b(?:and|or|while|until|then)$/i.test('has the Grappled condition (escape DC 22).')).toBe(false);
+  });
+});

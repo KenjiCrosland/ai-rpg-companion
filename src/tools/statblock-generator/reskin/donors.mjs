@@ -2203,6 +2203,14 @@ export const DONORS = [
     // Numbered to the plain CR 13 card (hp 210, dpr 100, atk 10, ac 18, dc 17):
     // the defender law is AC OVER the card paid by under-card HP, so ac_offset +2
     // at AC 20, and hp_scale 0.86 clears print's own CR 13 floor of 170.
+    // ONE DAMAGE COMPONENT, AND NO INVENTED TOKEN (2026-10-30). All three donors
+    // added on 2026-10-29 wrote a second component as `{energy_type}` — a token
+    // that appears NOWHERE in the engine; every other donor uses `{damage_type}`
+    // (216 uses). It shipped unsubstituted on the Vampire's Grave Strike, which
+    // the critic scored the run's best idea at soundness 0, and the component
+    // also stacked on print's own Necrotic rider for ~26 unpriced damage a round.
+    // Print writes two-component rows, but a donor has only one damage token, so
+    // a single component carrying the whole average is the honest form.
     id: 'defender-13',
     cite: 'composition after Rakshasa (CR 13) and Ice Devil (CR 14) — print\'s CR 13-16 defenders: high AC, a ward, no legendary kit',
     cr: 13, archetypes: ['defender'],
@@ -2225,7 +2233,7 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 10 ft. 28 (4d10 + 6) {damage_type} damage plus 22 (4d10) {energy_type} damage.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 10 ft. 49 (8d10 + 5) {damage_type} damage.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
     },
@@ -2282,7 +2290,7 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 5 ft. 26 (4d10 + 4) {damage_type} damage plus 22 (4d10) {energy_type} damage.' },
+        { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 5 ft. 48 (8d10 + 4) {damage_type} damage.' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Bonus Actions': [
@@ -2322,7 +2330,7 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Hybrid Attack attacks.' },
-        { name: 'Hybrid Attack', text: '*Melee or Ranged Attack Roll:* +11, reach 5 ft. or range 120 ft. 30 (4d12 + 4) {damage_type} damage plus 27 (6d8) {energy_type} damage.' },
+        { name: 'Hybrid Attack', text: '*Melee or Ranged Attack Roll:* +11, reach 5 ft. or range 120 ft. 56 (12d8 + 2) {damage_type} damage.' },
         { name: 'Spellcasting', rules: true, text: 'The creature casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 18):\n\n- **At Will:** {spell_at_will}\n- **1/Day Each:** {spell_daily}' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 18, one creature within 60 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
