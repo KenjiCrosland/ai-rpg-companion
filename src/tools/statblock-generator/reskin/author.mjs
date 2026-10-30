@@ -7,6 +7,17 @@
  */
 export const DAMAGE_TYPES = ['Acid', 'Bludgeoning', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Piercing', 'Poison', 'Psychic', 'Radiant', 'Slashing', 'Thunder'];
 export const CONDITIONS = ['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Paralyzed', 'Poisoned', 'Prone', 'Restrained', 'Stunned'];
+// A TRAIT IS A POSITIVE OR NEGATIVE PASSIVE EFFECT ON THE CREATURE (owner's
+// ruling, 2026-10-30). Measured against print's 324 traits before fixing this
+// vocabulary: 210 land on a rules word (a save or DC 90, Advantage 57, movement
+// 43, a condition 32, senses 22, damage 21), and the other 114 are capabilities
+// or limitations in plain words — Amphibious "can breathe air and water", Flyby
+// "doesn't provoke an Opportunity Attack", Siege Monster "deals double damage to
+// objects", against Immutable Form "can't shape-shift" and Limited
+// Amphibiousness "must be submerged at least once every 4 hours to avoid
+// suffocating". So a rules-WORD test would reject a third of print; the question
+// goes to the call, and the engine only checks the answer is in this list.
+export const PASSIVE_EFFECTS = ['ability', 'bonus', 'protection', 'threat', 'limitation', 'none'];
 export const STATS = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma'];
 const TARGET_OK = /^(?:one creature within \d+ feet|each creature in a \d+-foot (?:Cone|Sphere|Line|Cube|Emanation)|each creature within \d+ feet|one creature it can see within \d+ feet)$/;
 const HAS_NUMBER = /\d/;
@@ -26,10 +37,11 @@ ${clauses.map((c, i) => `${i + 1}. ${c.text}`).join('\n')}${taken.length ? `\n\n
 THE FORMS
 - attack (a weapon or body part): { "key": null, "clause", "name", "mode": "melee"|"ranged"|"both", "type": one of ${DAMAGE_TYPES.join('/')}, "rider": one of ${CONDITIONS.join('/')} or null, "flavor": optional } — up to ${attackCap} new rows.
 - save (a curse, a breath, a shove, a gaze): { "clause", "name", "stat": one of ${STATS.join('/')}, "target": "one creature within N feet" | "each creature in a N-foot Cone|Sphere|Line|Emanation", "damage": true|false, "type": one of the damage types or null, "condition": one of the conditions or null, "movement": "pushed up to N feet"|"pulled up to N feet"|null, "success": "half"|"none", "recharge": true|false }.
-- trait (a passive, a style, a resource — it costs the creature NOTHING; never write "uses its Reaction" here, that is the reaction form below): { "clause", "name", "trigger": a when/while/if clause or null, "effect": one sentence; write {dc} where a save DC belongs and {dmg} where damage belongs — never a number, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none }.
+- trait (a passive, a style, a resource — it costs the creature NOTHING; never write "uses its Reaction" here, that is the reaction form below): { "clause", "name", "trigger": a when/while/if clause or null, "effect": one sentence; write {dc} where a save DC belongs and {dmg} where damage belongs — never a number, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "passive_effect": one of ${PASSIVE_EFFECTS.join('/')} }.
 - A row that HEALS states the Hit Points as {dmg}, the action it costs, and a limit (a trigger, "1/Day", or "Recharge 5-6"): "restores hit points to the faithful" and "after minutes" are not rows a table can run.
 - reaction: { "clause", "name", "trigger": one sentence, "response": one sentence, same tokens, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none }.
 - "imposes" ON A TRAIT OR REACTION: name the condition the row involves, or null if it involves none. A row that requires one condition and inflicts another names the one it INFLICTS.
+- "passive_effect" ON A TRAIT: a trait must change what this creature CAN or CANNOT do. Name which, exactly one of: ability (it can do something other creatures cannot — breathe water, fly past without being struck at, pinpoint metal through stone) | bonus (it rolls better or hits harder under a stated circumstance) | protection (it resists, is immune to, or cannot be given something) | threat (merely standing near it, or striking it, costs the other creature something) | limitation (it CANNOT do something, or pays a price others do not — it can't shape-shift, it must submerge every few hours, it suffers in sunlight) | none. Answer NONE when the row only DESCRIBES the creature — how it waits, watches, perches, stalks, broods or looks. That is prose, not a trait, and we will drop the row: a trait with no positive and no negative effect on the creature is a line a GM cannot run (owner's ruling, 2026-10-30; shipped as the Dayvault Warden's "Patience", which said it "waits motionless on its perch, watching its prey, without taking any action").
 - "condition_relation" ON A TRAIT OR REACTION: how the row relates to that condition. Exactly one of: inflicts (the row APPLIES it to a target — the only value that hands the condition out) | requires (the target must ALREADY have it for the row to work: "a creature that has the Prone condition", "a creature it is grappling") | immune (the row says the creature CANNOT be given it) | self (it lands on THIS CREATURE, not a target) | none (no condition involved; answer null for "imposes" too). A word that merely DESCRIBES is not the condition: "a frightening ruin", "a horrifying stench", "a paralysing cold" are prose, not rules — answer none unless the row names the condition as a game effect.
 - A clause that is speech goes to "unplaced" with "where": "languages"; pure lore goes to "unplaced" with "where": "description". Never invent a clause the creator did not type. Never write "the ${String(name).toLowerCase()}" if ${name} is a person; write "${inline}".
 
@@ -80,7 +92,14 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // a trait is a RULE: it names a DC, damage, a number, a condition, or a rule verb — a sentence with none is flavor and goes to the description (the archlich's "Bound Dead of the Kingdom", check-in 2026-10-11)
   const scrubDmg = (eff) => String(eff ?? '').replace(/\s*\{dmg\}(?:\s+damage)?/g, (tok, off, whole) => (/\b(?:takes?|deals?|dealing|taking|extra|additional|plus|regains?|suffers?|an extra)\s*$/i.test(whole.slice(0, off)) ? tok : '')).replace(/\s{2,}/g, ' '); // the same rule the landing applies: a {dmg} that deals nothing is not a mechanic ("granting it {dmg} or a defensive benefit" — Meshrin, step 7 twelve)
   const MECHANIC = /\{dc\}|\{dmg\}|\d|\b(?:Advantage|Disadvantage|Resistance|Immun\w*|Vulnerab\w*|condition|saving throw|attack roll|Hit Points|Temporary|Speed|reach|range|can't|cannot|ignores?|regains?|takes? (?:no|half|extra|double|additional)|deals? (?:extra|double|additional)|Blinded|Charmed|Deafened|Frightened|Grappled|Paralyzed|Poisoned|Prone|Restrained|Stunned|Incapacitated|Invisible|Difficult Terrain|indistinguishable|motionless|rather than|counts as)\b/i;
-  const traitsAll = (Array.isArray(p.traits) ? p.traits : []).map((t) => ({ clause: str(t?.clause, 120), name: str(t?.name, 40), imposes: imposesFromRelation(t?.imposes, t?.condition_relation), condition_relation: CONDITION_RELATIONS.includes(t?.condition_relation) ? t.condition_relation : null, trigger: perTurn(clean(t?.trigger) || null, clean(t?.effect)), effect: scrubDmg(clean(t?.effect)), flavor: str(t?.flavor, 160) || null })).filter((t) => t.name && t.effect);
+  const traitsAll = (Array.isArray(p.traits) ? p.traits : []).map((t) => ({ clause: str(t?.clause, 120), name: str(t?.name, 40), imposes: imposesFromRelation(t?.imposes, t?.condition_relation), condition_relation: CONDITION_RELATIONS.includes(t?.condition_relation) ? t.condition_relation : null, trigger: perTurn(clean(t?.trigger) || null, clean(t?.effect)), effect: scrubDmg(clean(t?.effect)), flavor: str(t?.flavor, 160) || null,
+    // AN EXPLICIT "none" DROPS THE ROW; A MISSING ANSWER DOES NOT. The call saying
+    // "this only describes the creature" is an answer and we act on it. The field
+    // absent means the call failed or is an older shape, and a failed call never
+    // costs a row — the house rule's fallback direction (a word list, or here a
+    // silence, "acts as a fallback only when the call fails, never as a tiebreaker
+    // against it").
+    passive_effect: PASSIVE_EFFECTS.includes(t?.passive_effect) ? t.passive_effect : null })).filter((t) => t.name && t.effect && t.passive_effect !== 'none');
   // a trait is not a save (a prose save belongs in the save form — the wyrm's "must succeed on a DC 21 Dexterity saving throw" trait, step 7 twelve), and {dc} stands only where a DC stands ("within {dc} feet" is not a DC)
   // an unquantified heal is refused: it must carry {dmg} and a trigger or a limit (critic A8, 2026-10-18 — Heal the Faithful, Harbour-Mud Rising, Gleeful Growth, Waxen Reknitting)
   const healOk = (t) => { const tx = `${t.trigger ?? ''} ${t.effect}`; if (!/\b(?:regains?|restores?|heals?|recovers?)\b[^.]*\bhit points\b/i.test(tx)) return true; return /\{dmg\}/.test(tx) && (!!t.trigger || /\b(?:\d\/Day|Recharge|once)\b/i.test(tx)); };
