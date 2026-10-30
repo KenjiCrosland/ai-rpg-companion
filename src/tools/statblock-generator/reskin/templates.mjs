@@ -1313,6 +1313,20 @@ export const MECHANICS = Object.keys(MECHANIC);
  * broken as one that glues an owlbear.
  */
 export const NEEDS_BODY = {
+  // THE PRINT-NAMED STOCK ROWS (critic, twice: 2026-10-28 and 2026-10-30). A print
+  // name is exempt from the NAME check, not from the warrant check. Measured
+  // before writing these: print has exactly ONE Shield Bash, the Gladiator's at
+  // AC 16 (armor plus a shield), and FOURTEEN Spider Climbers — every one an ooze,
+  // a spider or other many-legged monstrosity, a lizard, a vampire, a roper or a
+  // swarm. Not one is an armored humanoid or a rigid machine. We shipped it on a
+  // warlord in lacquered plate and a timber siege golem, and Shield Bash on a
+  // drake and a scree-wight that carry no shield.
+  //
+  // Note what is NOT asked: a Climb speed. Print pairs the two 12 times in 14 and
+  // the correlation is still the wrong test, because the trait GRANTS the
+  // climbing — print's own Vampire Spawn has Spider Climb and no Climb speed.
+  'spider-climb': 'a body that could hold onto a sheer wall or hang from a ceiling — many legs, hooks, claws or clinging tendrils, suckers, a soft or boneless form, or an undead\'s unnatural grip. Not a heavy armored body, a rigid machine, or a thing of beams and plate, which a GM would see cannot cling to a ceiling',
+  'shield-bash': 'a shield it actually carries — the row slams that shield into a creature, so the creature must be described or equipped as a shield-bearer. A beast, a thing with no arms, or a fighter whose hands are full of a two-handed weapon carries none',
   'relic-object': 'something it keeps apart from its own body — a vessel, a trophy, a tool, a jar, a severed part; a creature that carries nothing and is all of one piece has no relic to bind',
   'kill-denial': 'a way of killing that destroys or keeps the body — teeth, fire, rot, a blade, something that consumes; not a death by fright or persuasion alone',
   adhesive: 'a surface that is sticky, secreting, or coated in something adhesive',

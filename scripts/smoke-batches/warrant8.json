@@ -1,0 +1,58 @@
+[
+  {
+    "name": "Vashka the Red",
+    "description": "A hobgoblin warlord in lacquered plate who fights from a shield wall and never breaks ranks.",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "REFUSE spider-climb: a warlord in lacquered plate shipped Spider Climb"
+  },
+  {
+    "name": "",
+    "description": "a siege-engine golem of lashed timber that shoulders through walls",
+    "cr": "8",
+    "rules": "2024",
+    "canary": "REFUSE spider-climb: a timber siege golem shipped Spider Climb"
+  },
+  {
+    "name": "",
+    "description": "a young storm drake whose breath is a rolling wall of thunder",
+    "cr": "7",
+    "rules": "2024",
+    "canary": "REFUSE shield-bash: a drake shipped Shield Bash"
+  },
+  {
+    "name": "",
+    "description": "a quarry-pit thing of living scree that buries what it catches",
+    "cr": "5",
+    "rules": "2014",
+    "canary": "REFUSE shield-bash: a scree-wight carrying no shield shipped Shield Bash"
+  },
+  {
+    "name": "",
+    "description": "a cathedral-vault ooze that digests reliquaries",
+    "cr": "9",
+    "rules": "2014",
+    "canary": "PASS spider-climb: an ooze; print gives Black Pudding and Ochre Jelly Spider Climb"
+  },
+  {
+    "name": "Vampire",
+    "description": "who keeps a garden of thorns",
+    "cr": "13",
+    "rules": "2014",
+    "canary": "PASS spider-climb: print's own Vampire HAS Spider Climb"
+  },
+  {
+    "name": "",
+    "description": "a sword-and-shield legionary who fights behind a tower shield",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "PASS shield-bash: an explicit shield-bearer, print's Gladiator case"
+  },
+  {
+    "name": "",
+    "description": "a giant cave spider that walks the ceiling on hooked legs",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "PASS spider-climb: a many-legged clinging body, print's Giant Spider case"
+  }
+]
