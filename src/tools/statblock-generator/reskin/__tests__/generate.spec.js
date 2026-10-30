@@ -1817,7 +1817,7 @@ describe('probe-smoke pattern fixes (2026-08-26)', () => {
   test('the rename register guidance is prompt-side only — bestial gets the anatomy line', () => {
     const scaled = scaleDonor(pickDonor(8, null, 'skirmisher'), 8);
     const plain = buildReskinPrompt(scaled, { concept: 'c' });
-    expect(plain).toMatch(/NAME REGISTER — print's name BUDGET/);
+    expect(plain).toMatch(/NAME REGISTER — the published statblocks' name BUDGET/); // the prompt says "the published statblocks", never the in-house "print" (2026-10-30)
     expect(plain).toMatch(/wall-to-wall kennings read as a generator/);
     expect(plain).toMatch(/never "Frostaxe"/);
     expect(plain).not.toMatch(/THIS creature is bestial/);

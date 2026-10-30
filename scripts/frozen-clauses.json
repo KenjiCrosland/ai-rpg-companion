@@ -6795,5 +6795,76 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "47e8527eee31": {
+  "concept": "a plague-bearer whose bite spreads a wasting sickness that will not heal",
+  "clauses": [
+   {
+    "id": "cl_y2jsky",
+    "text": "a plague-bearer whose bite spreads a wasting sickness",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "whose bite spreads",
+    "askShape": "condition",
+    "askMechanic": "curse",
+    "askMechanicWhy": "a wasting sickness that will not heal"
+   },
+   {
+    "id": "cl_1juexlv",
+    "text": "will not heal",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "whose bite spreads",
+    "askShape": "condition",
+    "askMechanic": "curse",
+    "askMechanicWhy": "a wasting sickness that will not heal"
+   }
+  ]
+ },
+ "4dae9e1244d5": {
+  "concept": "a temple warden who fights with a maul",
+  "clauses": [
+   {
+    "id": "cl_18dgj4p",
+    "text": "a temple warden",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_cl5rzb",
+    "text": "fights with a maul",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "fights with a maul",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "9b9f5c555b23": {
+  "concept": "a reed-cloister adept who flings darts and strikes unarmed",
+  "clauses": [
+   {
+    "id": "cl_1bljss3",
+    "text": "a reed-cloister adept",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_153cmx7",
+    "text": "flings darts",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "flings darts",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_f1fco3",
+    "text": "strikes unarmed",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "strikes unarmed",
+    "askShape": "attack"
+   }
+  ]
  }
 }
