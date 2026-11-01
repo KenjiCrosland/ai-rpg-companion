@@ -276,3 +276,167 @@ not done:    nothing for this item
 surprises:   none — and this confirms the roadmap's own correction that the
              `printNearAdd`/`print_text` route could never have fixed it: Unarmed Strike
              is not in the weapon table, so no re-dice reaches it. It was arithmetic.
+
+### N1 — the ceiling gate's Bloodied strip
+
+predicted:   the item-3 forty re-checked reads 0 FAIL of 40.
+measured:    **0 FAIL of 40** (was 1). The swarm now reads 53 at CR 13 — a soft at 1.04x
+             — where it read 79 and FAILED. One definition now, `stripBloodiedSplit` in
+             format-2024/lint.mjs, read by the checker; it covers all three forms and
+             every one of print's seven swarm rows strips cleanly.
+runs:        smoke-out/sweep-2026-11-01T16-53-09 (re-checked in place)
+suite:       167 suites / 4,533 tests · build clean
+commit:      (uncommitted)
+not done:    scale.mjs still holds its own copy of the pattern. It operates on tokenised
+             text it authors itself and needs a capture group the shared helper does not
+             expose, so pointing it at the helper is a separate change with its own risk;
+             flagged rather than done.
+surprises:   TWO, and print found the second.
+             1. A shared `/g` regex is stateful — `lastIndex` carries between callers, so
+                one consumer's `.test()` moves another's start. That is the fault recorded
+                in generate.mjs as "/g + .test() WAS LOSING MATCHES" (2026-10-30), so the
+                export is a FUNCTION, not a regex.
+             2. Print writes the alternate rate a THIRD way that neither copy handled:
+                the Swarm of Venomous Snakes uses EM-DASHES with the clause interposed and
+                its `plus 10 (3d6) Poison` component AFTER it — "8 (1d8 + 4) Piercing
+                damage—or 6 (1d4 + 4) Piercing damage if the swarm is Bloodied—plus 10
+                (3d6) Poison damage". Its true hit is 18; both the old pattern and my first
+                widening read 24. Also: my own test's "first damage" extractor read the
+                ATTACK BONUS on the Swarm of Piranhas ("+5 (with Advantage …)"), so the
+                test was wrong and the code was right.
+
+### N2 — trace the clamp
+
+predicted:   the trace appears on forty #29.
+measured:    fires with the right text: "swarm hit clamped: per-hit 90 -> 51 — one attack
+             may not carry a whole CR 13 round …". Verified by deterministic replay; the
+             forty will show it on #29.
+runs:        (in-process replay; forty pending)
+suite:       167 suites / 4,533 tests · build clean
+commit:      (uncommitted)
+not done:    nothing
+surprises:   my first probe passed `body: 'swarm'` and the trace did not fire. The engine
+             reads `options.bodyType`, not `body` — my probe was wrong, not the code.
+
+### N3 — the batch check's stock-name exemption
+
+predicted:   invented-name repeats reads 0 with the exemption; the sameness count is
+             unchanged (still reported).
+measured:    **0 invented-name repeats** on the forty, with **29 stock convergences**
+             listed and counted, not hidden. Byte-identical texts 0. The check did not
+             exist before — it was an ad-hoc script — so it is now part of `check-run`
+             output.
+runs:        smoke-out/sweep-2026-11-01T16-53-09
+suite:       167 suites / 4,533 tests · build clean
+commit:      (uncommitted)
+not done:    nothing
+surprises:   ONE, and it changed the instrument from names to FLAGS. Exempting print names
+             plus template names left THREE repeats that were also catalog furniture:
+             `Marsh Stride` (a species kit row), `Great Weapon Master` (a class feature)
+             and `Legendary Action Uses: 3` (a derived rules line). Each carries a DECLARED
+             flag saying so — `kit`, `feature`, `rules` — so the exemption reads the flags
+             rather than matching names against more catalogs. The flags live on whichever
+             edition the engine built, so both sides are read and unioned per name; a 2014
+             row looks unflagged on its own side, which is how those three first read as
+             inventions.
+
+### 6 — the review package carries header lines
+
+predicted:   the critic stops listing it; a lack whose subject is a header field becomes
+             gradeable.
+measured:    **40 of 40 blocks now carry a Languages line** (was 0 of 40). The lack case
+             reads, in the critic's own view: "Languages Giant" on the Crag Exile, whose
+             input was "speaks only Giant and understands no Common" — the omission of
+             Common IS the expression, per the Granite Exile ruling, and the critic can
+             now see it. Skills, Saving Throws, Resistances, Immunities, Vulnerabilities
+             and Senses print alongside it, both editions.
+runs:        rendered from smoke-out/sweep-2026-11-01T16-53-09
+suite:       167 suites / 4,533 tests · build clean
+commit:      (uncommitted)
+not done:    nothing
+surprises:   ONE: the headers were never missing from `RELEASE-for-critic-*` (20 of its
+             blocks carried Languages). They were missing from `CRITIC-blocks-*`, the
+             statblock-only package — which is the one the owner actually sent. The item
+             was real and the file named in it was not.
+
+### 5 — name-text agreement — MEASURED AND PROPOSED, NOT BUILT
+
+predicted:   the three gates' soft count on a forty falls.
+measured:    THE INSTRUMENT IS VOID: `name-mechanic`, `no-type-in-name` and `type-fit`
+             all fire **0 times** on this forty, so there is no count to move and the
+             critic's cases are not what those gates look for.
+             The real population, measured across three runs (398 engine rows): FOUR rows
+             whose name states a weapon or body part while the row is an area and not an
+             attack — and only ONE is a defect. "Grave Shard" (a Sphere of shards), "Bone
+             Shard Orbit" (an Emanation of orbiting shards) and "Fanned Darts" (a Sphere of
+             thrown darts, which is print's own `thrown-burst` shape) are all coherent; a
+             shard or a dart CAN scatter into an area. "Wasting Bite" — a bite that is a
+             10-foot aura — cannot. So a deterministic gate here is 75% false positive.
+runs:        smoke-out/sweep-2026-11-01T16-53-09, sweep-2026-10-30T02-34-52,
+             twelve-1030-2026-10-30T03-51-21
+suite:       unchanged
+commit:      —
+not done:    THE WHOLE ITEM, deliberately. Whether "shards in a sphere" is coherent while
+             "a bite that is an aura" is not is a judgement about meaning, which the house
+             rule assigns to the call — so the plan was right that this is `name_claims`
+             on the rename and wrong that the three gates could measure it. Building a
+             prompt field is a GLOBAL change to every sheet, and the measured defect rate
+             is ~1 per forty with no instrument to prove an improvement, so I am stopping
+             and proposing rather than shipping it blind before a critic package.
+             Proposal: ask the late `name follows content` pass — which already renames on
+             an ELEMENT mismatch — to also put the shape question to the call, with the
+             row's final text in hand (the rename call cannot answer it; the text does not
+             exist yet when it runs). Instrument: that one trace firing on the Wasting
+             Bite case and NOT on the three coherent ones.
+surprises:   the item's own instrument was void, which is the finding.
+
+### 3d live (spear5) — the prompt half
+
+predicted:   Cinder Knight "Piercing plus Fire"; Vestry Wyrd keeps its fire rows; the
+             living bonfire and the Hobgoblin Captain unchanged.
+measured:    5 of 5, prediction met exactly.
+               Cinder Knight    Flaming Spear  18 Piercing + 13 Fire
+               Dawnsworn Vigil  Greatsword     14 Slashing + 10 Radiant  (print's Knight shape)
+               Ashwarden Seraph Spear          12 Piercing + 9 Fire
+               Kindless Bonfire Engulf         22 Fire        <- body IS energy, unchanged
+               Hobgoblin Captain Greatsword    9 Slashing + 3 Poison <- print's own, unchanged
+runs:        smoke-out/spear5-2026-11-01T17-32-29
+suite:       167 suites / 4,533 tests · build clean
+commit:      (uncommitted)
+not done:    nothing
+surprises:   none
+
+### 1c live (twelve-1030) — the repaired rider guard
+
+predicted:   fires on the Dire Wolf, or "not reached" if no decoration rider is welded.
+measured:    **NOT REACHED, a second time.** 2 welds on the twelve, both
+             `affliction -> Bite` on the homebrew plague-bearer (#3), which is not a print
+             sheet. The Dire Wolf's action seat took `sensory-strike` as its own ROW, not a
+             rider, so nothing was offered to print's Bite. Across one forty and one twelve
+             the guard has had **0 opportunities**, not 0 correct refusals.
+             The defect it exists for is absent: 0 sheets carry the rest-long contagion.
+runs:        smoke-out/twelve-1030-2026-11-01T17-34-33
+suite:       167 suites / 4,533 tests · build clean
+commit:      (uncommitted)
+not done:    the guard is still unproven in anger. It is reachable by construction (its
+             predicate reads facts that exist at the weld) and the contagion defect it was
+             built for has not recurred, but neither fact is the same as watching it fire.
+surprises:   ONE, and it needs the owner's eye — a FAIL that is NOT mine and NOT new code.
+             `kit-lands` FAILED on the maul case (Bellbound Warden): "the fighter kit
+             landed no row on a class-NPC sheet". Diagnosis:
+               - the SAME input was clean on both 10-30 twelves, where the route answered
+                 `class=None`; this run answered `class=fighter`, so the gate newly applied.
+                 A route flip, not a code change — the current checker run on those older
+                 sheets is still clean.
+               - the gate counts rows flagged `kit: <class>` or print rows named in the
+                 kit's SRD lifts. The fighter kit has 4 rows and **0 SRD lifts**, so only a
+                 `kit`-flagged row can satisfy it.
+               - the sheet is not defective: it carries `Great Weapon Master`, flagged
+                 `feature`, and the engine traced "class kit: fighter — nothing to add —
+                 the sheet already answers it". The kit stood down BECAUSE the sheet was
+                 already answered, and the gate cannot see that.
+             So it is a latent false positive that fires whenever the route happens to name
+             a class whose kit stands down. Not fixed: it is outside my assigned items and
+             the fix touches the class-kit stand-down path I have not traced. The
+             declared-data shape would be for the stand-down to record itself, as every
+             other writer does, and the gate to read that record.

@@ -5,6 +5,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { checkBlock, checkTable, GATES } from '../src/tools/statblock-generator/reskin/checker.mjs';
+import { PRINT_ROW_NAMES } from '../src/tools/statblock-generator/reskin/generate.mjs';
+import { SHAPES } from '../src/tools/statblock-generator/reskin/shapes.mjs';
 // FROZEN CLAUSE LISTS (critic's package-seven review, 2026-10-22). The clause
 // extraction is an LLM call, so the same concept yields a different list run to
 // run and two forties score against different denominators (Caustic Scythe 5 -> 4,
@@ -45,9 +47,83 @@ const freezeFor = (block) => {
 const args = process.argv.slice(2); const dir = args.find((a) => !a.startsWith('--'));
 if (!dir) { console.error('usage: node --import ./scripts/alias-loader.mjs scripts/check-run.mjs <run-dir> [--out <path>]'); process.exit(2); }
 const out = args.includes('--out') ? args[args.indexOf('--out') + 1] : path.join('scripts', 'smoke-evidence', `CHECK-${path.basename(dir)}.md`);
+/**
+ * THE BATCH CHECK (N3, 2026-11-01). The release bar asks that no INVENTED row name
+ * repeat across a run, and that no two rows ship byte-identical text.
+ *
+ * Two closed sets are exempt, and neither is a word list:
+ *   - `PRINT_ROW_NAMES`, derived from the corpus at import. It already contains
+ *     print's generic attack names — bite, claw, rend, slam, talons — so no
+ *     separate "plain attack name" list is needed or wanted.
+ *   - the CATALOG's own template names. The owner's one-mechanic-one-name ruling
+ *     (2026-10-27) says a stock row CONVERGES on its template's name, so two
+ *     sheets both carrying `ground-burst` both call it "Shockwave". That is the
+ *     ruling working, not a repeat — it read as the forty's one name violation
+ *     until this exemption existed.
+ * The STOCK tally is reported too, so the exemption cannot hide what it exempts.
+ */
+const TEMPLATE_NAMES = new Set(SHAPES.map((t) => String(t.name ?? '').trim().toLowerCase()).filter(Boolean));
+const bareRow = (n) => String(n ?? '').replace(/ \(.*\)$/, '').trim();
+const batchNames = new Map(); const batchStock = new Map(); const batchTexts = new Map();
+const batchScan = (block, file) => {
+  // A ROW SAYS WHAT IT IS. Every piece of engine furniture carries a DECLARED
+  // flag — `print` (imported from the corpus), `kit` (a species row such as the
+  // lizardfolk's Marsh Stride), `feature` (a class feat such as Great Weapon
+  // Master), `rules` (a derived line such as "Legendary Action Uses: 3"),
+  // `library`/`template` (a catalog shape). Those names are SUPPOSED to repeat:
+  // the owner's one-mechanic-one-name ruling says a stock row converges on its
+  // catalog name. Only a name the MODEL coined can be an invented repeat.
+  //
+  // The flags live on whichever side the engine built; a 2014 sheet keeps the
+  // flagged rows under `other_edition`. So both sides are read and the flags are
+  // UNIONED per name per file, or a 2014 row would look unflagged and a kit name
+  // would read as an invention. (That is how Marsh Stride, Great Weapon Master
+  // and the legendary header first showed up as three "invented" repeats.)
+  const seen = new Map();
+  const push = (r) => {
+    const nm = bareRow(r.name); if (!nm) return;
+    const key = nm.toLowerCase();
+    const stock = !!(r.print || r.kit || r.feature || r.rules || r.library || r.template)
+      || PRINT_ROW_NAMES.has(key) || TEMPLATE_NAMES.has(key);
+    const prev = seen.get(key) ?? { nm, stock: false, text: '' };
+    seen.set(key, { nm, stock: prev.stock || stock, text: prev.text || String(r.text ?? r.description ?? '').replace(/\s+/g, ' ').trim() });
+  };
+  for (const sec of [block.sections ?? {}, (block.other_edition ?? {}).sections ?? {}]) {
+    for (const rs of Object.values(sec)) if (Array.isArray(rs)) rs.filter((r) => r && typeof r === 'object').forEach(push);
+  }
+  for (const sec of ['abilities', 'actions', 'traits', 'legendary_actions', 'reactions']) {
+    if (Array.isArray(block[sec])) block[sec].filter((r) => r && typeof r === 'object').forEach(push);
+  }
+  for (const [key, v] of seen) {
+    const bag = v.stock ? batchStock : batchNames;
+    if (!bag.has(key)) bag.set(key, new Set());
+    bag.get(key).add(file);
+    if (!v.stock && v.text.length > 60) {
+      if (!batchTexts.has(v.text)) batchTexts.set(v.text, new Set());
+      batchTexts.get(v.text).add(`${file} / ${v.nm}`);
+    }
+  }
+};
+const batchReport = () => {
+  const rep = (m) => [...m.entries()].filter(([, f]) => f.size >= 2).sort((a, b) => b[1].size - a[1].size);
+  const inv = rep(batchNames); const stock = rep(batchStock); const txt = rep(batchTexts);
+  const lines = ['', '## Batch check', '',
+    `**Invented row names repeated across sheets: ${inv.length}**` + (inv.length ? '' : ' ✓'),
+    ...inv.map(([n, f]) => `- \`${n}\` on ${f.size} sheets: ${[...f].join(', ')}`),
+    '',
+    `Stock names that converged (exempt by the one-mechanic-one-name ruling; counted, not failed): ${stock.length}`,
+    ...stock.slice(0, 8).map(([n, f]) => `- \`${n}\` ×${f.size}`),
+    '',
+    `**Byte-identical row texts across sheets: ${txt.length}**` + (txt.length ? '' : ' ✓'),
+    ...txt.map(([, f]) => `- ${[...f].join('  ==  ')}`),
+  ];
+  return lines.join('\n');
+};
+
 const results = [];
 for (const f of fs.readdirSync(dir).filter((x) => /^\d+-.*\.json$/.test(x)).sort()) {
   const raw = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); const block = raw.monster ?? raw;
+  batchScan(block, f);
   try { results.push({ file: f, ...checkBlock(block, { frozenClauses: freezeFor(block) ?? undefined }) }); } catch (e) { results.push({ file: f, name: f, cr: '?', edition: '?', donor: null, gates: Object.fromEntries(GATES.map((g) => [g, { status: 'soft', findings: [] }])), fails: [], softs: [], error: String(e?.message ?? e) }); }
 }
 let md = `# Mechanics check — ${path.basename(dir)}\n\n${checkTable(results, { title: 'Gate table' })}\n`;
@@ -57,7 +133,7 @@ for (const r of results) {
   md += `\n## ${r.name} (CR ${r.cr}${r.edition === '2014' ? ', 2014' : ''})\n${r.error ? `- checker error: ${r.error}\n` : ''}${lines.join('\n') || '- clean'}\n${floats.length ? `${floats.join('\n')}\n` : ''}`;
   if (r.read) md += `- read: def ${r.read.def} / off ${r.read.off} → ${r.read.read}; sustained ${r.read.sustained} (${r.read.attacks} × ${r.read.used?.name ?? '?'}${r.read.legendary?.avg ? ` + legendary ${r.read.legendary.name}` : ''}); nova ${r.read.nova ? `${r.read.nova.name} ${r.read.nova.avg}` : 'none'}; dmg ${r.read.dmg.toFixed(0)}\n`;
 }
-fs.mkdirSync(path.dirname(out), { recursive: true }); fs.writeFileSync(out, md); console.log(`wrote ${out}`);
+fs.mkdirSync(path.dirname(out), { recursive: true }); fs.writeFileSync(out, `${md}\n${batchReport()}\n`); console.log(`wrote ${out}`);
 console.log(`${results.filter((r) => r.fails.length).length} block(s) with a FAIL of ${results.length}`);
 // persist any newly frozen concepts, and SAY SO when a run's extraction drifted
 // from the frozen list — the denominator stays put, the drift is visible

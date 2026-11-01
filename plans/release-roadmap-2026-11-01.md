@@ -369,7 +369,8 @@ are frozen. Two bars: **release** (ship it) and **target** (the critic's "done w
 ## 5b. Order amended by the owner, 2026-11-01 — "monsters first, tidy after"
 
 After item 1 landed (1a, 1b, 1c-repaired, 1e; 1d deferred), the order is:
-**3b, 3d, 3a, 3c → ONE forty → 2 (all five retirements) → ONE forty → 1d → 4a/4b → 5 → 6 → 7.**
+~~**3b, 3d, 3a, 3c → ONE forty → 2 (all five retirements) → ONE forty → 1d → 4a/4b → 5 → 6 → 7.**~~
+**Amended again 2026-11-01 (evening), after item 3's forty — see §5c.**
 
 Two cost rules the owner's instruction implies:
 - **One forty serves two stop points.** The forty after item 3 is both item 1's
@@ -384,14 +385,81 @@ Two cost rules the owner's instruction implies:
   instrument for "does the repaired guard fire on the Dire Wolf" if that answer is
   wanted before the forty.
 
+## 5c. Order amended a second time, 2026-11-01 — the critic sees quality, not plumbing
+
+Item 3 landed and its forty (`sweep-2026-11-01T16-53-09`) read 1 FAIL of 40 — and that one
+is a checker artifact (below). The next critic read is worth more AFTER the two items the
+critic has already asked for twice, and BEFORE the two items it cannot see. Item 2 is
+behaviour-preserving by design and item 1d is a refactor: neither changes a sheet the
+critic grades, and item 2 needs two fortys of its own, so it should not sit between us
+and the next read. Item 4 regenerates every sheet, so a read before it is a read of sheets
+it will replace.
+
+**Order now: nits (below) → 6 → 5 → ONE forty → CRITIC → 2 (that forty is its BEFORE) → 4a/4b → 1d → 7.**
+
+### The three nits from the item-3 forty, first
+
+- **N1. The ceiling gate's Bloodied strip misses the two-component split.** The swarm
+  shipped `32 (6d8 + 5) Bludgeoning damage plus 21 (6d6) Necrotic damage, or 16 (3d10)
+  Bludgeoning damage plus 10 (3d6) Necrotic damage if the swarm is Bloodied`. The gate's
+  strip (`checker.mjs`, `single-target-ceiling`) matches one component before `if`, so it
+  fails to strip and sums all four: **79, a FAIL** — where the true hit is 53 = 1.04x, a
+  soft. Same class as the "135 damage" error of 2026-10-30. Widen the strip to the form
+  the engine writes (optionally `plus N (XdY) <type> damage` before `if`). Pin with the
+  swarm row above. *Instrument:* the item-3 forty re-checked reads **0 FAIL of 40**.
+- **N2. Trace the clamp.** `scale.mjs` records `hit_clamped` on the scaled body; nothing
+  in `generate.mjs` traces it, so the clamp is invisible in a sheet's trace. One line
+  where `scaled` arrives: `swarm hit clamped: per-hit 90 -> 51 …`. *Instrument:* the
+  trace appears on forty #29.
+- **N3. The batch check's stock-name exemption.** "Shockwave" shipped on two sheets, and
+  it is `ground-burst`'s own template name — the owner's one-mechanic-one-name ruling
+  (2026-10-27) says stock rows CONVERGE on the template's name, so this is the ruling
+  working, not a repeat. The §5 bar ("no invented row name repeats") must exempt
+  template names alongside print names and plain attack names; the sameness metric
+  still counts them. *Instrument:* `invented-name repeats` on the forty reads 0 with the
+  exemption, and the sameness count is unchanged.
+
+### The run ladder — cheapest instrument that answers the question
+
+In this order, and only climb when the rung below cannot answer:
+
+1. **In-process replay** (`scaleDonor`, `renderTemplate`, `valueCheck`, `checkBlock` on
+   a saved sheet; a mocked `generateReskin`) — zero API cost. Item 3 was verified almost
+   entirely here, including the four-variant swarm measurement. Default.
+2. **A targeted batch** (5–12 cases, 2–5 min) — when the question is "does this fire
+   LIVE on the case it was built for". Two are owed right now and were skipped:
+   - `spear5` for item 3d — the prompt half is only proven live (the deterministic replay
+     proved the engine backstop, not the model's answer). Predict: Cinder Knight
+     "Piercing plus Fire"; bonfire and Hobgoblin Captain unchanged.
+   - `twelve-1030` for the repaired rider guard (1c) — the forty gave it **0 chances**.
+     Predict whether it fires on the Dire Wolf, and say "not reached" if no decoration
+     rider is welded there this time either.
+3. **A forty** — only when the question is a POPULATION (equivalence of a field with the
+   text, the release bar, the critic package, a clause-rate sweep). One per stop point,
+   never per item.
+
+So before the pre-critic forty: run `spear5` and `twelve-1030`, record both, then the forty.
+
+### Then item 6, then item 5, as specified in §4 — and this forty's facts to carry
+
+- The repaired rider guard (1c) had **0 chances** on this forty: 4 welds, none onto a
+  print row. It is reachable, not proven; the next forty keeps watching.
+- `area` is declared on 5 of 10 area rows and **agrees with the text on all 5**; the other
+  5 are chassis/donor rows. No reader retires until those declare too (1b's donor-side
+  stamps, same shape as 1a's nine) — fold that into item 2's first forty, not before the
+  critic.
+- Per-clause hit rate over the last three sweeps: **75%**, 33% coin flips; the diff
+  against the previous forty is 5 lost / 6 regained. Unchanged, as expected before item 4.
+
 ## 6. For the next session, in one paragraph
 
-Start with item 1a–1e (fields, then delete readers): it is the direct answer to the owner's
-worry and it is behaviour-preserving, so it can land without a critic cycle. Then item 2 in
-order, one list at a time, each diffed on the same forty. Items 3a and 3c clear the last
-checker FAILs; 3b waits on the owner. Item 4a is a reading exercise, not code — do it before
-touching stability. Items 5 and 6 are small and the critic asked for both twice. Then the
-release forty, three times.
+Items 1 (bar 1d) and 3 are landed and measured (`ROADMAP-results-2026-11-01.md`, nine
+blocks; the forty is `sweep-2026-11-01T16-53-09`). Do the three nits in §5c first — N1 is
+the only thing standing between this forty and 0 FAIL. Then item 6 (header lines in the
+critic package) and item 5 (`name_claims`), each with its instrument; then one fresh
+forty, `check-run`, `clause-rate.mjs 3`, and the critic package via `critic-files.mjs`.
+Stop there and hand the owner the package — item 2 and item 4 wait for the critic's read.
+Keep filling the results sheet per §7, `predicted` before every run.
 
 ---
 

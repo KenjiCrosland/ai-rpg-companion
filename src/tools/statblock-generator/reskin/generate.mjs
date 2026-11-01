@@ -2295,6 +2295,12 @@ export async function generateReskin(options, callLLM) {
   const donor = pickDonor(cr, body ? null : (shootsABow && style === 'hurler' ? null : style), body ?? archetype);
   const statsAtScale = {}; // captured right after scaling — the final derivation pass measures skill surplus against it
   const scaled = scaleDonor(donor, cr, { oneAttack: body === 'swarm', movement: options.movement ?? [], mechanics: options.mechanics ?? null, dprScale: options.dprScale ?? 1, edition: options.edition ?? null, concept: readPhrases(String(options.userConcept ?? concept ?? '')) });
+  // THE CLAMP IS TRACED WHERE THE TRACER LIVES (N2, 2026-11-01). scale.mjs holds a
+  // one-attack body under print's single-target ceiling and records it as
+  // `hit_clamped`, because that module has no tracer and is given none. Without
+  // this line the clamp was invisible in a sheet's trace — a number changed by
+  // 39 points with nothing on the record to say why.
+  if (scaled.hit_clamped) trace('swarm hit clamped:', `per-hit ${scaled.hit_clamped.from} -> ${scaled.hit_clamped.to} — one attack may not carry a whole CR ${scaled.hit_clamped.cr} round; print's hardest single-target row in this band is ${scaled.hit_clamped.to} and print has no swarm above CR 3 (the round lands under budget by design)`);
   Object.assign(statsAtScale, scaled.stats);
   // THE FLOATING-ORB OVERLAY (PI follow-up 2026-10-01): floating, limbless, many-eyed
   // is a body no donor has. Keyed on the words the alias text carries (and any

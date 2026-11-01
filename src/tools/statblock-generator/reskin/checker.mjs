@@ -12,7 +12,7 @@
 // fail only for hard control below CR 13; reach follows size before a tether.
 import { fromLegacyModel } from '../format-2024/generate.mjs';
 import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedCondition, imposedConditions } from './author.mjs'; // one definition: the conditions a finished row imposes
-import { lintStatblock } from '../format-2024/lint.mjs';
+import { lintStatblock, stripBloodiedSplit } from '../format-2024/lint.mjs';
 import { HIT_DIE_BY_SIZE } from '../format-2024/dice.mjs';
 import { WEAPONS, weaponFor, weaponProp, namesWeapon } from './weapons.mjs';
 import { cardBudget, dmgRow, SINGLE_TARGET_CEILING, ceilingBandOf } from './card-budgets.mjs';
@@ -402,7 +402,7 @@ function gateBands(m, ctx, F) {
       // that — a CR 9 snapping turtle the GM asked to bite for 50, where print's
       // hardest is 35 — which is the gate overruling the GM, not print.
       if (!e || e.print || e.userSet || declaredRows[name] != null || /^Multiattack/.test(name)) continue;
-      const t = String(e.text ?? '').replace(/, or \d+ \(\d+d\d+(?:\s*[+-]\s*\d+)?\)(?: \w+)? damage if [^.]{0,40}Bloodied/g, '');
+      const t = stripBloodiedSplit(e.text); // one definition; this copy allowed ONE component before "if" and read a 53-point hit as 79
       if (!/Attack Roll/.test(t) && !/\bone creature\b|\bone target\b|\bone Humanoid\b|one (?:Tiny|Small|Medium|Large|Huge|Gargantuan) or smaller creature/.test(t)) continue;
       let tot = 0; for (const d of t.matchAll(/(\d+) \(\d+d\d+(?:\s*[+-]\s*\d+)?\)/g)) tot += Number(d[1]);
       // SEVERITY TRACKS THE DEGREE, as `hot-offense` does (soft up to three CRs

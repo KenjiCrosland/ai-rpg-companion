@@ -25,6 +25,21 @@ const render = (m) => {
   const L = [m.name, `${m.size ?? ''} ${m.type ?? m.type_and_alignment ?? ''}${m.alignment ? ', ' + m.alignment : ''}`.trim(),
     `AC ${m.ac ?? m.armor_class ?? '?'}   HP ${m.hp ?? m.hit_points ?? '?'}${m.hp_formula ? ` (${m.hp_formula})` : ''}   Speed ${m.speed ?? '?'}`,
     `STR ${stat(m,'STR')}  DEX ${stat(m,'DEX')}  CON ${stat(m,'CON')}  INT ${stat(m,'INT')}  WIS ${stat(m,'WIS')}  CHA ${stat(m,'CHA')}`,
+    // THE DEFENCE AND HEADER LINES (item 6, 2026-11-01). The critic asked for
+    // these twice and could not grade a LACK without them: "I can't check the
+    // Boulder Exile's 'understands no Common'". For a lack whose subject is a
+    // header field, the omission from the header IS the expression (the Granite
+    // Exile ruling), so a package that prints no Languages line makes that whole
+    // class ungradeable. Zero of the 40 blocks in the 2026-10-30 package carried
+    // one. Both editions are read, since a 2014 sheet names the same facts
+    // differently (`damage_resistances` against `resistances`).
+    ...[
+      ['Skills', m.skills], ['Saving Throws', m.saving_throws],
+      ['Resistances', m.resistances ?? m.damage_resistances],
+      ['Immunities', [m.immunities ?? m.damage_immunities, m.condition_immunities].filter(Boolean).join('; ')],
+      ['Vulnerabilities', m.vulnerabilities ?? m.damage_vulnerabilities],
+      ['Senses', m.senses], ['Languages', m.languages ?? 'None'],
+    ].filter(([, v]) => String(v ?? '').trim()).map(([k, v]) => `${k} ${v}`),
     `CR ${m.cr ?? m.challenge_rating ?? '?'}${m.format ? `   [${m.format} rules]` : ''}`, ''];
   let cur = null;
   for (const [sec, e] of rowsOf(m)) { if (sec !== cur) { L.push(`${sec}`); cur = sec; } L.push(`  ${e.name}. ${String(e.text ?? e.description ?? '').replace(/\*/g, '')}`); }

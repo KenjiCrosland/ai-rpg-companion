@@ -162,6 +162,41 @@ export const CONDITION_BOUNDED = /until the (?:end|start) of|for 1 (?:minute|hou
 // hand out a 300-foot Charm at CR 1: the area is uncapped and the CONSEQUENCE is
 // not. Our own `phobia` and `contagion` frames already write this clause, so the
 // grammar is shared rather than print-only.
+/**
+ * THE SWARM'S BLOODIED SPLIT — one attack at two rates, never their sum.
+ *
+ * print's seven swarms write "10 (4d4) damage, or 5 (2d4) damage if the swarm is
+ * Bloodied": a single hit priced twice, so any consumer summing a row's dice must
+ * strip the second rate first. Two live copies existed and they disagreed, which
+ * cost two false readings a fortnight apart — "135 damage" on 2026-10-30, and a
+ * CR 13 swarm read as 79 (a FAIL) where the true hit was 53 (a soft) on
+ * 2026-11-01. The second was the TWO-COMPONENT form the engine now writes once a
+ * rider rides the bite: "…32 Bludgeoning plus 21 Necrotic, or 16 Bludgeoning plus
+ * 10 Necrotic if…". The old pattern allowed one component before "if" and so
+ * matched nothing, stripping nothing.
+ *
+ * Matches both stages deliberately: `{damage_type}` while the row still carries
+ * its tokens (scale.mjs writes the split there) and a plain type word once it is
+ * rendered (the checker reads it there).
+ */
+const _RATE = String.raw`\d+ \(\d+d\d+(?:\s*[+-]\s*\d+)?\)(?: (?:\{damage_type(?:_2)?\}|\w+))? damage`;
+// print writes the alternate rate TWO ways, and the engine a third:
+//   A  ", or 45 (9d8 + 5) Necrotic damage if the swarm is Bloodied"      (trailing, comma)
+//   B  "—or 6 (1d4 + 4) Piercing damage if the swarm is Bloodied—"       (interposed, em-dash;
+//      Swarm of Venomous Snakes, whose "plus 10 (3d6) Poison" follows the clause, so a
+//      trailing-only pattern read its 18-point hit as 24)
+//   C  ", or 27 (5d8) {damage_type} damage plus 18 (4d8) {damage_type_2} damage if … Bloodied"
+//      (two components, which the engine writes once a rider rides the bite)
+const BLOODIED_SPLIT_SRC = String.raw`[,—–]\s*or ${_RATE}(?: plus ${_RATE})* if [^.—–]{0,40}Bloodied[—–]?`;
+/**
+ * A FUNCTION, NOT A SHARED /g REGEX. A global regex carries `lastIndex` between
+ * calls, so one consumer's `.test()` silently moves another's starting point —
+ * the fault recorded in generate.mjs as "/g + .test() WAS LOSING MATCHES"
+ * (2026-10-30). Each call gets a fresh pattern.
+ */
+export const stripBloodiedSplit = (text) => String(text ?? '').replace(new RegExp(BLOODIED_SPLIT_SRC, 'g'), '');
+export const hasBloodiedSplit = (text) => new RegExp(BLOODIED_SPLIT_SRC).test(String(text ?? ''));
+
 export const IMMUNITY_ON_SUCCESS = /immune to (?:this|the) [^.]{0,60}?for (?:the next )?24 hours/i;
 
 export const EMPTY_SAVE_OUTCOME = /\b(Failure|Success):\s*(?:$|(?:Failure|Success):)/;

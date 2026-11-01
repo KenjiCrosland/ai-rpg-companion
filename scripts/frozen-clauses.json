@@ -6938,5 +6938,138 @@
     "kind": "mechanical"
    }
   ]
+ },
+ "b87758e02cdb": {
+  "concept": "The Saltbreaker is a hulking, moss-crusted drake that hauls itself out of the cold black trenches on four clawed legs an",
+  "clauses": [
+   {
+    "id": "cl_qc7856",
+    "text": "The Saltbreaker is a hulking",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1vcrsiy",
+    "text": "moss-crusted drake that hauls itself out of the cold black trenches on four clawed legs",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_v9o82m",
+    "text": "one knuckled walk",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "one knuckled walk",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1mi348p",
+    "text": "its hide a cracked armor of brine-cured scales and tidal weed",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1sccsi4",
+    "text": "its eyes bright with a raider's cunning",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1ai3ori",
+    "text": "It wades into the line like a battering tide",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "It wades into the line like a battering tide",
+    "askShape": "attack",
+    "askMechanic": "charge",
+    "askMechanicWhy": "wades into the line"
+   },
+   {
+    "id": "cl_kctcop",
+    "text": "opening with a shoulder-first body check that lifts a man off his feet",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "opening with a shoulder-first body check that lifts a man off his feet",
+    "askShape": "attack",
+    "askMechanic": "shove",
+    "askMechanicWhy": "lifts a man off his feet"
+   },
+   {
+    "id": "cl_kq64eu",
+    "text": "settles into a grinding rhythm of headbutts",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "settles into a grinding rhythm of headbutts",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1ydoqm",
+    "text": "gore-hooks",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "gore-hooks",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_llt56f",
+    "text": "a lashing tail that never stops swinging",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "a lashing tail that never stops swinging",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1gsu28i",
+    "text": "Wounded",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "wounded",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "wounded it only widens its grin"
+   },
+   {
+    "id": "cl_qap2ih",
+    "text": "it only widens its grin: it circles for the enemies holding formation",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "it only widens its grin: it circles for the enemies holding formation",
+    "askShape": "condition",
+    "askMechanic": "command",
+    "askMechanicWhy": "it only widens its grin: it circles for the enemies holding formation"
+   },
+   {
+    "id": "cl_zhbqqd",
+    "text": "breaks the brave first",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "breaks the brave first",
+    "askShape": "attack",
+    "askMechanic": "shove",
+    "askMechanicWhy": "lifts a man off his feet"
+   },
+   {
+    "id": "cl_1oa131r",
+    "text": "fights to the death on the tide line it has claimed",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "fights to the death on the tide line it has claimed",
+    "askShape": "attack",
+    "askMechanic": "charge",
+    "askMechanicWhy": "wades into the line"
+   },
+   {
+    "id": "cl_f667w4",
+    "text": "because retreat is a word that belongs to the drowned",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_19nj5rq",
+    "text": "It is scheming (INT 14-16)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_17yse1c",
+    "text": "it is a frontline berserker that revels in open violence",
+    "kind": "descriptive"
+   }
+  ]
  }
 }
