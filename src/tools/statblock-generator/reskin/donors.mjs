@@ -216,7 +216,7 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 7 (1d8 + 3) {damage_type} damage. If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 4 (1d8) {damage_type} damage and, if it is Medium or smaller, has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +5, reach 5 ft. 7 (1d8 + 3) {damage_type} damage. If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 4 (1d8) {damage_type} damage and, if it is Medium or smaller, has the Prone condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +5, range 30/90 ft. 7 (1d8 + 3) {damage_type} damage.' },
         { name: 'Trampling Rush', imposes: 'Prone', text: 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Medium or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC 12. *Failure:* 10 (3d6) {damage_type} damage, and the target has the Prone condition.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
@@ -241,7 +241,7 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 9 (1d8 + 5) {damage_type} damage. If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 5 (1d10) {damage_type} damage and, if it is Large or smaller, has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +8, reach 5 ft. 9 (1d8 + 5) {damage_type} damage. If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 5 (1d10) {damage_type} damage and, if it is Large or smaller, has the Prone condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +8, range 30/90 ft. 12 (2d6 + 5) {damage_type} damage.' },
         { name: 'Trampling Rush', imposes: 'Prone', text: 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Large or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC 15. *Failure:* 27 (6d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
@@ -267,7 +267,7 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 10 ft. 17 (2d10 + 6) {damage_type} damage. If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 7 (2d6) {damage_type} damage and, if it is Large or smaller, has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +10, reach 10 ft. 17 (2d10 + 6) {damage_type} damage. If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 7 (2d6) {damage_type} damage and, if it is Large or smaller, has the Prone condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +10, range 60/180 ft. 17 (2d10 + 6) {damage_type} damage.' },
         { name: 'Trampling Rush', imposes: 'Prone', text: 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Huge or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC 17. *Failure:* 45 (10d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
@@ -294,7 +294,7 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +13, reach 10 ft. 17 (2d8 + 8) {damage_type} damage. If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 9 (2d8) {damage_type} damage and, if it is Huge or smaller, has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +13, reach 10 ft. 17 (2d8 + 8) {damage_type} damage. If the creature moved at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 9 (2d8) {damage_type} damage and, if it is Huge or smaller, has the Prone condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +13, range 60/180 ft. 24 (3d10 + 8) {damage_type} damage.' },
         { name: 'Trampling Rush', imposes: 'Prone', text: 'The creature moves up to its Speed without provoking Opportunity Attacks and can move through the spaces of Huge or smaller creatures. Each creature whose space it enters is targeted once by the following effect. *Strength Saving Throw*: DC 20. *Failure:* 63 (14d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 20, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
@@ -446,7 +446,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 14 (2d8 + 5) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +8, range 30/90 ft. 12 (2d6 + 5) {damage_type} damage. *Hit or Miss:* Immediately after the attack, {projectile} returns to the creature\'s grasp.' },
-        { name: 'Hurled Burst', text: 'The creature hurls {projectile} at a point it can see within 90 feet. *Dexterity Saving Throw*: DC 15, each creature in a 5-foot-radius Sphere centered on that point. *Failure:* 45 (10d8) {damage_type} damage. If the target is Large or smaller, it has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
+        { name: 'Hurled Burst', imposes: 'Prone', text: 'The creature hurls {projectile} at a point it can see within 90 feet. *Dexterity Saving Throw*: DC 15, each creature in a 5-foot-radius Sphere centered on that point. *Failure:* 45 (10d8) {damage_type} damage. If the target is Large or smaller, it has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one Medium or smaller creature within 30 feet. *Failure:* 7 (2d6) {damage_type} damage, and the target is pulled up to 20 feet straight toward the creature.' },
       ],
       'Bonus Actions': [
@@ -495,7 +495,7 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +5, reach 5 ft. 7 (1d8 + 3) {damage_type} damage. If the creature flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 4 (1d8) {damage_type} damage and, if it is Medium or smaller, has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +5, reach 5 ft. 7 (1d8 + 3) {damage_type} damage. If the creature flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 4 (1d8) {damage_type} damage and, if it is Medium or smaller, has the Prone condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +5, range 30/90 ft. 7 (1d8 + 3) {damage_type} damage.' },
         { name: 'Diving Attack', imposes: 'Prone', text: 'The creature flies up to its Speed without provoking Opportunity Attacks. Each creature it passes within 5 feet during this movement is targeted once by the following effect. *Strength Saving Throw*: DC 12. *Failure:* 10 (3d6) {damage_type} damage, and the target has the Prone condition.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 12, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
@@ -520,7 +520,7 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +8, reach 5 ft. 9 (1d8 + 5) {damage_type} damage. If the creature flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 5 (1d10) {damage_type} damage and, if it is Large or smaller, has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +8, reach 5 ft. 9 (1d8 + 5) {damage_type} damage. If the creature flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 5 (1d10) {damage_type} damage and, if it is Large or smaller, has the Prone condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +8, range 30/90 ft. 12 (2d6 + 5) {damage_type} damage.' },
         { name: 'Diving Attack', imposes: 'Prone', text: 'The creature flies up to its Speed without provoking Opportunity Attacks. Each creature it passes within 5 feet during this movement is targeted once by the following effect. *Strength Saving Throw*: DC 15. *Failure:* 27 (6d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
@@ -546,7 +546,7 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 10 ft. 17 (2d10 + 6) {damage_type} damage. If the creature flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 7 (2d6) {damage_type} damage and, if it is Large or smaller, has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +10, reach 10 ft. 17 (2d10 + 6) {damage_type} damage. If the creature flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 7 (2d6) {damage_type} damage and, if it is Large or smaller, has the Prone condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +10, range 60/180 ft. 17 (2d10 + 6) {damage_type} damage.' },
         { name: 'Diving Attack', imposes: 'Prone', text: 'The creature flies up to its Speed without provoking Opportunity Attacks. Each creature it passes within 5 feet during this movement is targeted once by the following effect. *Strength Saving Throw*: DC 17. *Failure:* 45 (10d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },
@@ -573,7 +573,7 @@ export const DONORS = [
       ],
       Actions: [
         { name: 'Multiattack', text: 'The creature makes three attacks, using Melee Attack or Ranged Attack in any combination.' },
-        { name: 'Melee Attack', text: '*Melee Attack Roll:* +13, reach 10 ft. 17 (2d8 + 8) {damage_type} damage. If the creature flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 9 (2d8) {damage_type} damage and, if it is Huge or smaller, has the Prone condition.' },
+        { name: 'Melee Attack', imposes: 'Prone', text: '*Melee Attack Roll:* +13, reach 10 ft. 17 (2d8 + 8) {damage_type} damage. If the creature flew at least 20 feet in a straight line toward the target immediately before the hit, the target takes an extra 9 (2d8) {damage_type} damage and, if it is Huge or smaller, has the Prone condition.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +13, range 60/180 ft. 24 (3d10 + 8) {damage_type} damage.' },
         { name: 'Diving Attack', imposes: 'Prone', text: 'The creature flies up to its Speed without provoking Opportunity Attacks. Each creature it passes within 5 feet during this movement is targeted once by the following effect. *Strength Saving Throw*: DC 20. *Failure:* 63 (14d8) {damage_type} damage, and the target has the Prone condition. *Success:* Half damage.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 20, one creature within 60 feet. *Failure:* The target has Disadvantage on attack rolls until the start of the creature\'s next turn.' },

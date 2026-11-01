@@ -11,7 +11,7 @@ import { pickDonor, scaleDonor, stampAttacksPerRound } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage} from './templates.mjs';
+import { bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock, EMPTY_SAVE_OUTCOME } from '../format-2024/lint.mjs';
@@ -1554,6 +1554,10 @@ const unimposeOn = (row) => { if (row) delete row.imposes; return row; };
 // `imposes` at the library site is chosen there, because a minor condition from
 // the fill overrules the template's own.
 const DECLARED_BY_WRITER = ['imposes', 'requiresCondition', 'duration'];
+// `area` is a RECORD ({shape, size}), so it cannot ride the String() loop above —
+// the same reason `augmented` is carried by hand below. It was declared by the
+// render and dropped here, which is why 0 of 11 area rows on the last forty
+// carried it: the `gate` disease, third sighting (declared, then not carried).
 const carryDeclared = (row, rendered) => {
   if (!row || !rendered) return row;
   for (const k of DECLARED_BY_WRITER) if (rendered[k] && !row[k]) row[k] = String(rendered[k]);
@@ -1563,6 +1567,7 @@ const carryDeclared = (row, rendered) => {
   // five tens were reported as zero uptake while the boon was on the sheet. The
   // artifact was right and the instrument was wrong.
   if (rendered.augmented && !row.augmented) row.augmented = rendered.augmented;
+  if (rendered.area != null && row.area == null) row.area = rendered.area;
   return row;
 };
 export function groundedClauses(list, userText, trace = () => {}, lacksAnswer = undefined) {
@@ -5442,7 +5447,35 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // stamped by the importer, and `gmAsked` reads the row's own receipt. A row
       // merely CLAIMED by print's name (`print_name_only`) keeps the chassis's own
       // sentence, so it is not print's text and a rider may still ride it.
-      const unaskedOnPrint = !!host && !!host.print && !host.print_name_only && !dupTrig && !pushOnHold && !gmAsked(actionT);
+      //
+      // THE FLAG CANNOT ANSWER THIS *HERE* (2026-11-01). `e.print` is stamped by
+      // the print-canon block ~1,200 lines BELOW this weld; at weld time no row
+      // carries it, the single exception being a Beholder-shaped overlay bite
+      // (0 rows of 40 on the last forty). So the guard shipped 2026-10-30 reading
+      // `host.print` never fired once — 0 firings across four saved runs, while
+      // its two siblings fired 2 and 2 and the weld itself succeeded 10 times. It
+      // was reported as verified; it was unreachable. (Fourth instance this sprint
+      // of one root cause: a decision taken before print's composition is known.)
+      //
+      // What IS known here is the print MATCH — `pcPlain`, resolved ~2,900 lines
+      // above and already read at 5606 — and that match's OWN row names, a closed
+      // fact about the corpus rather than a reading of anyone's prose. The renames
+      // have already landed by here, so a chassis row that will become print's row
+      // already carries print's name.
+      //
+      // Why the later strip does not cover this: the print-canon melee pass does
+      // remove a chassis condition clause ("print's row carries print's rider and
+      // no other"), but its pattern is the bare ", and the target has the X
+      // condition" form. A welded SAVE block — "…it is subjected to the following
+      // effect. *Constitution Saving Throw*… *Failure:* …" — is a different shape
+      // and survives it. That is exactly how the Dire Wolf shipped a rest-long
+      // contagion on print's own Bite.
+      const printRowNamesHere = !printBody || !pcPlain ? null
+        : new Set([...(pcPlain.meleeRows ?? []), ...(pcPlain.rangedRows ?? [])]
+          .map((pr) => String(pr?.name ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase()).filter(Boolean));
+      const hostIsPrintRow = !!host && !!printRowNamesHere
+        && printRowNamesHere.has(String(host.name ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase());
+      const unaskedOnPrint = !!host && hostIsPrintRow && !dupTrig && !pushOnHold && !gmAsked(actionT);
       if (host && !dupTrig && !pushOnHold && !unaskedOnPrint) {
         // a rider that imposes a hold on every hit of a repeatable row needs a
         // gate (the astrologer's no-save Restrained x3 a turn, fresh ten):
@@ -5456,7 +5489,24 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // fit call required, `imposes` the one the row inflicts. A row that
         // requires one and inflicts none has no hold to gate.
         const requiresNotImposes = !!actionT.row?.consumes && !actionT.row?.imposes;
-        if (!requiresNotImposes && /\b(?:Restrained|Grappled|Paralyzed|Stunned|Incapacitated|Charmed)\b/.test(riderText) && !/Saving Throw/.test(riderText) && !/once per turn/i.test(riderText)) {
+        // AND IT READS THE RECORD, NOT THE SENTENCE (roadmap item 1e, 2026-11-01).
+        // Both halves of this predicate were read off the rendered text where the
+        // writer already declares them: the HOLD is `row.imposes` (the catalog's
+        // `IMPOSES_BY_TEMPLATE`, complete as of item 1a), and whether the frame
+        // carries a save is a fact about OUR OWN frame, derived once at module
+        // load into `frame_save` — the same boundary read as `frame_area`.
+        // The text read survives only as a traced fallback for a row with no
+        // record at all (a chassis rider, `template=-`), which is the direction
+        // the house rule sets: a fallback for a failed writer, never a tiebreaker.
+        const HOLDS = ['Restrained', 'Grappled', 'Paralyzed', 'Stunned', 'Incapacitated', 'Charmed'];
+        const riderTmplE = TEMPLATE_BY_ID.get(actionT.template ?? actionT.row?.template ?? '');
+        const recHold = [actionT.row?.imposes].flat().filter(Boolean).map(String);
+        const holdDeclared = recHold.length ? recHold.some((c) => HOLDS.includes(c)) : null;
+        const saveDeclared = riderTmplE?.frame_save?.[bandFor(cr)] ?? null;
+        const imposesHold = holdDeclared ?? new RegExp(`\\b(?:${HOLDS.join('|')})\\b`).test(riderText);
+        const hasSave = saveDeclared ?? /Saving Throw/.test(riderText);
+        if (holdDeclared === null || saveDeclared === null) trace('rider hold gate fell back to the text:', `"${actionT.template ?? actionT.row?.template ?? '?'}" declares ${holdDeclared === null ? 'no condition record' : 'a condition'} and ${saveDeclared === null ? 'no frame' : 'a frame'} — the writer owes these fields`);
+        if (!requiresNotImposes && imposesHold && !hasSave && !/once per turn/i.test(riderText)) {
           riderText = `${riderText} This effect can be applied only once per turn.`;
           trace('rider gated:', `"${actionT.template}" imposes a hold with no save — once per turn`);
         }
@@ -5499,7 +5549,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         if (deadBareT) sweepDeadName(sections, deadBareT, host, trace);
       } else if (unaskedOnPrint) {
         noteDrop(actionT?.template ?? actionT?.row?.template, 'the weld (no receipt, and the host is print\'s own row)', actionT?.row?.name ?? '');
-        trace('rider refused — unasked on a print row:', `"${actionT.template ?? actionT.row?.template ?? '?'}" has no GM ask and "${host.name}" is print's own text; a decoration does not rewrite print (the dire wolf's frost-rimed hide took a rest-long contagion, critic 2026-10-30); the slot leaves and the seat looks elsewhere`);
+        trace('rider refused — unasked on a print row:', `"${actionT.template ?? actionT.row?.template ?? '?'}" has no GM ask and "${host.name}" is one of the ${pcPlain?.name}'s own rows; a decoration does not rewrite print (the dire wolf's frost-rimed hide took a rest-long contagion, critic 2026-10-30); the slot leaves and the seat looks elsewhere`);
       } else if (pushOnHold) {
         noteDrop(actionT?.template ?? actionT?.row?.template, 'the weld (a push that undoes its own row)', actionT?.row?.name ?? '');
         trace('rider refused — a push that undoes its own row:', `"${actionT.template ?? actionT.row?.template ?? '?'}" moves the target away from "${host.name}", which ${hostHolds ? `holds it ${host.imposes}` : `swings ${host.attacksPerRound}x a round`}; the slot leaves and the seat looks elsewhere`);
@@ -8681,9 +8731,27 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // a record whose clause had left was dropping records whose clause was intact.
     // Now each condition is reconciled on its own and the survivors are kept; the
     // record goes only when nothing in it is supported any more.
+    // AND IT ASKS THE RIGHT QUESTION (2026-11-01). This called
+    // `imposedConditions`, which answers "does this row IMPOSE this condition?"
+    // — a judgement with a deliberate `PRECONDITION` guard, there to keep out
+    // Evasion's "can't use this trait if it has the Incapacitated condition".
+    // That guard's first arm is "an `if` appears earlier in this sentence", and
+    // print's SIZE GATE is also an `if`: "if the target is Medium or smaller, it
+    // has the Prone condition". So every size-gated imposition read as imposing
+    // nothing, and this pass deleted a TRUE catalog record with it — 6 of the 8
+    // firings on sweep-2026-10-30T02-34-52 (Shield Bash x4, Carapace Slam x2).
+    // `IMPOSES_BY_TEMPLATE` already annotates three of those entries
+    // "// behind a size gate", so the catalog knew what the reader could not see.
+    //
+    // The question HERE is only "did the clause leave?", which needs no judgement
+    // at all: the condition is one of a closed list, the text is the engine's own,
+    // and a clause that was stripped no longer names it. A row that merely
+    // REQUIRES a condition records `consumes`, not `imposes`, so there is nothing
+    // for this weaker test to over-keep. The judging reader stays where judgement
+    // is wanted; it is no longer allowed to overrule the writer's own record.
     const recI = [e.imposes].flat().filter(Boolean).map(String);
-    const readI = imposedConditions({ name: e.name, text: e.text });
-    const keptI = recI.filter((c) => readI.includes(c));
+    const stillNamed = (c) => new RegExp(`\\b${c}\\b`).test(String(e.text ?? ''));
+    const keptI = recI.filter(stillNamed);
     if (keptI.length === recI.length) continue;
     if (keptI.length) {
       trace('record reconciled:', `"${e.name}" keeps ${keptI.join(', ')} and drops ${recI.filter((c) => !keptI.includes(c)).join(', ')} — only those clauses left`);

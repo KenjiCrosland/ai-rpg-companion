@@ -20,6 +20,7 @@
  * library seeds (one text each). Both are authored against print.
  */
 import { SHAPES, bandFor } from './shapes.mjs';
+export { bandFor }; // the CR band is a shared closed fact; generate.mjs reads a template's per-band declarations with it
 import { LIBRARY_SEEDS, drawLibraryRow } from './library.mjs';
 import { attackDamageDiceFor, saveDamageDiceFor } from '../format-2024/dice.mjs';
 import { readPhrases } from './lexicon.mjs';
@@ -222,6 +223,29 @@ const AREA_LADDER = {
   Line: { '0-2': 20, '3-5': 30, '6-9': 40, '10-12': 60, '13-20': 60, '21+': 90 },
 };
 export const AREA_SHAPES = Object.keys(AREA_LADDER);
+
+/**
+ * THE GEOMETRY A FRAME ALREADY STATES, read ONCE from our own catalog.
+ *
+ * Roadmap item 1b wanted `area` declared so the checker and `areaDamage` stop
+ * reading `each creature|Cone|Sphere` and `(\d+)-foot (Cone|…)` off the rendered
+ * sentence. The render only resolved a shape for templates carrying `targets` —
+ * TWO of them — while THIRTEEN state their geometry inside the frame text itself
+ * (`energy-aura` "5-foot Emanation", `wail` "30-foot Emanation", `thrown-burst`
+ * "10-foot-radius Sphere", …). So the field could never have covered more than 2
+ * of the 11 area rows on a forty.
+ *
+ * The frames are OUR OWN catalog: finite, static, and authored here. Reading them
+ * once at module load and declaring the result is the same boundary move that
+ * `gateFromName` makes on a donor's own name and `PRINT_ROW_NAMES` makes on the
+ * corpus — a fact we already hold, converted into the field consumers read. It is
+ * not inference over prose, and nothing re-derives it per generation.
+ */
+const FRAME_AREA = /(\d+)-foot(?:-long)?(?:-radius)? (Cone|Line|Emanation|Cube|Sphere)\b/i;
+export const areaOfFrame = (frameText) => {
+  const m = FRAME_AREA.exec(String(frameText ?? ''));
+  return m ? { shape: m[2].replace(/^./, (c) => c.toUpperCase()), size: Number(m[1]) } : null;
+};
 /** Print's clause for a shape at a CR band. */
 const AREA_FORM = {
   Cone: (n) => `each creature in a ${n}-foot Cone`,
@@ -239,8 +263,9 @@ const AREA_FORM = {
  * sizes it was authored with, byte for byte, and only an ADDED shape draws on
  * AREA_LADDER — where Cone and Line are well evidenced. Measured 2026-10-22.
  */
+export const areaSizeFor = (shape, band, sizes = null) => sizes?.[shape]?.[band] ?? AREA_LADDER[shape]?.[band] ?? null;
 export const areaClause = (shape, band, sizes = null) => {
-  const n = sizes?.[shape]?.[band] ?? AREA_LADDER[shape]?.[band];
+  const n = areaSizeFor(shape, band, sizes);
   const form = AREA_FORM[shape];
   if (!n || !form) return null;
   return form(n);
@@ -1409,7 +1434,7 @@ export const TEMPLATES = [
   ...SHAPES.filter((s) => SECTION_BY_REPLACES[s.replaces] && SHAPE_TAGS[s.id]).map((s) => ({
     id: s.id, name: s.name, kind: 'shape', cite: s.cite,
     section: SECTION_BY_REPLACES[s.replaces], replaces: s.replaces, roles: s.roles, styles: s.styles, cr_range: s.cr_range, /* `replaces` names the SLOT the template claims — the slot-yield rule reads it (fidelity pipeline step 2) */
-    gate: s.gate ?? null, nova: s.replaces === 'nova', owns_weapon: s.owns_weapon ?? false, augments: s.augments ?? null, requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null, requires_row: s.requires_row ?? null, requires_claim: s.requires_claim ?? null, requires_size: s.requires_size ?? null, needs_body: NEEDS_BODY[s.id] ?? null, family: FAMILY[s.id] ?? null, mechanic: MECHANIC_OF[s.id] ?? null, targets: s.targets ?? null, target_sizes: s.target_sizes ?? null, duration_default: s.duration_default ?? null,
+    gate: s.gate ?? null, nova: s.replaces === 'nova', owns_weapon: s.owns_weapon ?? false, augments: s.augments ?? null, requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null, requires_row: s.requires_row ?? null, requires_claim: s.requires_claim ?? null, requires_size: s.requires_size ?? null, needs_body: NEEDS_BODY[s.id] ?? null, frame_save: Object.fromEntries(Object.entries(s.frames ?? {}).map(([b, t]) => [b, /Saving Throw/.test(String(t))])), frame_area: Object.fromEntries(Object.entries(s.frames ?? {}).map(([b, t]) => [b, areaOfFrame(t)]).filter(([, g]) => g)), family: FAMILY[s.id] ?? null, mechanic: MECHANIC_OF[s.id] ?? null, targets: s.targets ?? null, target_sizes: s.target_sizes ?? null, duration_default: s.duration_default ?? null,
     host: s.host ?? HOST_BY_REPLACES[s.replaces] ?? null, // a reaction that fires a ranged row needs one on the sheet (snap-shot)
     trigger: SHAPE_TAGS[s.id][0], effect: SHAPE_TAGS[s.id][1],
     keys: [...new Set([...(VERB_KEYS[s.id] ?? []), ...(SHAPE_KEYS[s.id] ?? [])])],
@@ -2046,7 +2071,16 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     // in author.mjs reads this field before it reads the sentence, so a row the
     // engine itself shaped is never re-derived from its own wording. A single
     // target ("one creature within 30 feet") is a shape too and declares false.
-    chosenArea = AREA_SHAPES.includes(pick);
+    // EVERY SHAPE `areaClause` CAN RENDER IS AN AREA (fixed 2026-11-01). This read
+    // `AREA_SHAPES.includes(pick)`, which is `Object.keys(AREA_LADDER)` — Cone and
+    // Line only — so a 30-foot EMANATION declared `area: false`. Emanation reaches
+    // here through a template's own `target_sizes`, not the shared ladder. The
+    // declaration was never carried to the row, so nothing read the false value;
+    // carrying it without this fix would have made `areaDamage` answer "not an
+    // area" for every Emanation row. All three `AREA_FORM` shapes say "each
+    // creature in a …", so a rendered clause IS an area, and the geometry is
+    // declared rather than left as a bare boolean.
+    chosenArea = { shape: pick, size: areaSizeFor(pick, bandFor(ctx.cr), t.target_sizes ?? null) };
   }
   if (/\{ranged_name\}/.test(frameOf(t, ctx.cr) ?? '') && !ctx.rangedName) return null;
   for (const [k, v] of Object.entries(engine)) text = text.split(`{${k}}`).join(v);
@@ -2212,6 +2246,10 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
       if (ok) { text = `${text.trimEnd()} ${kind.writes(ok === true ? null : ok)}`; augmented = { kind: want, ...(ok === true ? {} : { fill: ok }) }; }
     }
   }
+  // a frame that STATES its geometry declares it too — 13 templates do, against
+  // 2 that take a {target} slot, which is why this field could never have covered
+  // more than 2 of the 11 area rows on a forty
+  if (chosenArea == null && t.frame_area?.[band]) chosenArea = t.frame_area[band];
   return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(augmented ? { augmented } : {}), ...(chosenArea != null ? { area: chosenArea } : {}), ...(boundBy ? { duration: boundBy } : {}), ...(dtype ? { damageType: dtype } : {}), ...(pickedCondition ? { imposes: pickedCondition } : {}), ...(consumedPick ? { consumes: consumedPick } : {}), ...(saveOverride ? { saveOverride } : {}) };
 }
 

@@ -43,8 +43,12 @@ describe('the declared geometry wins over the sentence', () => {
   test('a shape stamps the area it chose, and the reader uses it', () => {
     const ctx = { scaled: scaleDonor(pickDonor(13, null, 'brute'), 13, { mechanics: [] }), archetype: 'brute', cr: 13, imposed: [], name: 'Thing', energy: 'Fire', mix: null, concept: 'a thing that breathes fire', size: 'Large' };
     const r = renderTemplate(TEMPLATE_BY_ID.get('spew'), ctx, { area_shape: 'Cone' });
-    expect(r.area).toBe(true);
-    expect(areaDamage(r)).toBe(true);
+    // the field carries the GEOMETRY, not a bare boolean (2026-11-01): it read
+    // `AREA_SHAPES.includes(pick)` — Cone and Line only — so an Emanation declared
+    // `false`, and the record was never carried to the row so nothing caught it
+    expect(r.area).toEqual({ shape: 'Cone', size: expect.any(Number) });
+    expect(r.area.size).toBeGreaterThan(0);
+    expect(areaDamage(r)).toBe(true);   // still truthy for the one reader
   });
 
   test('a declared false beats prose that looks like an area', () => {

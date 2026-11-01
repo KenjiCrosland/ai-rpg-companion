@@ -151,8 +151,10 @@ All from `sweep-2026-10-30T02-34-52` (the last forty) unless noted.
    the flaky clauses that survive the prompt fix.
 3. **Fire as a rider — YES.** A weapon row keeps its physical type and the energy moves to
    `melee_rider` instead of being dropped. Spec in item 3d.
-4. **The `print` flag — YES, text-equality.** `print_text: true` iff the row's text equals
-   the matched print block's row. Spec in item 1c.
+4. **The `print` flag — RULED 2026-11-01, then DROPPED the same day.** The implementer
+   found both consumers run before any row carries the flag, and the rider guard had
+   never fired (0 of four runs). The guard now reads the print MATCH and its own row
+   names. `print_text` is not built; the owner ruled "drop it" on the results.
 5. **`each creature of its choice` — LEAVE IT.** Closed. Not a soundness problem; print's
    convention only. Do not remove it from `lure`, `terror-pulse`, `driving-bellow`.
 
@@ -363,6 +365,24 @@ are frozen. Two bars: **release** (ship it) and **target** (the critic's "done w
 4. A landing is "measured" only when the number was stated before the run.
 
 ---
+
+## 5b. Order amended by the owner, 2026-11-01 — "monsters first, tidy after"
+
+After item 1 landed (1a, 1b, 1c-repaired, 1e; 1d deferred), the order is:
+**3b, 3d, 3a, 3c → ONE forty → 2 (all five retirements) → ONE forty → 1d → 4a/4b → 5 → 6 → 7.**
+
+Two cost rules the owner's instruction implies:
+- **One forty serves two stop points.** The forty after item 3 is both item 1's
+  equivalence check (readers may be retired only if `area`/`imposes` fields agree with
+  the text population-wide, and the repaired rider guard must be seen to fire) and
+  item 3's "S0 = 0". Do not run a forty for item 1 alone.
+- **Item 2 gets two fortys, not ten.** The post-item-3 forty is the BEFORE for all five
+  retirements; land them; one AFTER forty; `clause-diff.mjs` between the two. If the diff
+  is not "0 lost", bisect by reverting lists one at a time against the saved AFTER —
+  no further fortys until a culprit is named.
+- A targeted twelve (`scripts/smoke-batches/twelve-1030.json`, ~5 min) is the right
+  instrument for "does the repaired guard fire on the Dire Wolf" if that answer is
+  wanted before the forty.
 
 ## 6. For the next session, in one paragraph
 

@@ -169,6 +169,21 @@ export const ALL_CONDITIONS = ['Blinded', 'Charmed', 'Deafened', 'Exhaustion', '
 // inflicts one, and both end in a noun. Reading the first as an imposition put
 // a false `imposes: Prone` on print's own Trample and made the
 // duplicate-mechanic gate fail a sheet that imposes Prone only twice.
+// A SIZE GATE IS NOT A PRECONDITION (2026-11-01). `PRECONDITION`'s first arm is
+// "an `if` appears earlier in this sentence", and it earns its keep on exactly one
+// print row — the Evasion-style "It can't use this trait if it has the
+// Incapacitated condition". Measured against the corpus, 47 of the 49 `if` clauses
+// standing before "has the X condition" are a SIZE restriction on the imposition
+// ("If the target is a Large or smaller creature, it has the Prone condition", 24
+// times; Medium 18; Huge 5) or an HP threshold, and every one of those is a real
+// imposition. So that arm was suppressing 47 true readings to catch 1.
+//
+// The restriction clause is removed from the window before the guard runs, which
+// leaves the guard's one real case intact. Both wordings are covered: print's "if
+// the target is a Large or smaller creature" and our donors' "if it is Large or
+// smaller". Closed vocabulary (print's six sizes), print's own grammar, no prose.
+const SIZE_OR_HP_GATE = /\bif\s+(?:the target|it)\s+(?:is\s+(?:an?\s+)?(?:Tiny|Small|Medium|Large|Huge|Gargantuan)\s+or\s+(?:smaller|larger)(?:\s+creature)?|has\s+\d+\s+Hit\s+Points\s+or\s+(?:fewer|less))\s*,?\s*/gi;
+const unguarded = (window) => String(window).replace(SIZE_OR_HP_GATE, '');
 const PRECONDITION = /\bif\b[^.]*$|\balready\b\s*$|\b(?:that|which|who)\s*$|\b(?:can't|cannot|never|immune to being|resistance to being)\s*$/i;
 
 // AFFLICTIONS: the conditions a row inflicts ON A TARGET, which is the subset
@@ -262,7 +277,7 @@ export function imposedConditions(row) {
   // used. The PRECONDITION guard below is what keeps Evasion's "can't use this
   // trait if it has the Incapacitated condition" out, and it still applies.
   for (const m of t.matchAll(/has the (\w+)(?: and (\w+))? conditions?/g)) {
-    if (PRECONDITION.test(t.slice(Math.max(0, m.index - 46), m.index))) continue;
+    if (PRECONDITION.test(unguarded(t.slice(Math.max(0, m.index - 46), m.index)))) continue;
     for (const c of [m[1], m[2]]) if (c && ALL_CONDITIONS.includes(c)) out.add(c);
   }
   if (out.size) return [...out];
@@ -275,7 +290,7 @@ export function imposedConditions(row) {
     // describe what CANNOT be done to the creature, the opposite of an imposition.
     const re = new RegExp(`\\b(?:is|are|becomes?|be)\\s+(?:knocked\\s+)?${c}\\b`, 'i');
     if (!re.test(t)) continue;
-    if (PRECONDITION.test(t.slice(Math.max(0, t.search(re) - 46), t.search(re)))) continue;
+    if (PRECONDITION.test(unguarded(t.slice(Math.max(0, t.search(re) - 46), t.search(re))))) continue;
     out.add(c);
   }
   return [...out];
