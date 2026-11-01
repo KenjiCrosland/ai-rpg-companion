@@ -451,6 +451,129 @@ So before the pre-critic forty: run `spear5` and `twelve-1030`, record both, the
 - Per-clause hit rate over the last three sweeps: **75%**, 33% coin flips; the diff
   against the previous forty is 5 lost / 6 regained. Unchanged, as expected before item 4.
 
+## 5d. Before the critic package — three items from the pre-critic forty (owner-agreed 2026-11-01)
+
+The pre-critic forty (`sweep-2026-11-01T17-43-19`) landed 35 of 40 (five API timeouts)
+with one FAIL and one name repeat. Both are understood; neither should reach the critic.
+**Order: P1 → P3 → P2 → ONE forty → package → stop.** Items 2 and 4 still wait.
+
+- **P1. The swarm ruling, finished: top the nova row up to the nova ceiling.** The clamp
+  (3b) holds the bite at 51 and is safe only when the sheet's second row deals damage: on
+  the 16-53 forty the swarm's Shockwave dealt 56 and the round passed; on 17-43 the fit
+  call gave it a damageless control row and the round was the bite alone — 53 against a
+  budget of 100, FAIL `under`. Measured: bite 53 + a GATED area row at the nova ceiling
+  (`min(6·CR, 55+CR)` = 68 at CR 13) reads 81 of 100, OK. So the ruling's second half
+  is implementable: when a one-attack body's round falls under budget after the clamp,
+  fill its gated nova row's damage up to the nova ceiling — never past it (that is the
+  `nova-cap` FAIL measured on 11-01). If the row deals no damage, it gains a damage
+  clause at that figure in the sheet's own energy. Lives in `settleSheetBudgets`
+  (the fit call picks that row long after `scaleDonor`), reads `scaled.hit_clamped`
+  and `e.gate`. *Instrument, in-process first:* replay on the 17-43 #29 sheet reads
+  `under` gone and `nova-cap` absent; then the forty's #29 passes with no FAIL. *Pin:*
+  a case on `swarm-one-hit.spec.js` with a damageless nova row.
+- **P2. `Iron Fist` ×2 — a naming nudge, not engineering.** A brass tyrant and a
+  blackiron warden both reached for the obvious name; the batch check (N3) now sees it.
+  This is the reskin prompt's NAME REGISTER paragraph: one sentence that a row named for
+  the creature's material alone ("Iron Fist", "Stone Slam") is the sameness the critic
+  reads, and the name should carry what the blow DOES or the creature's own element word
+  instead. No engine change, no word list. *Instrument:* the batch check's invented
+  repeats stays 0 on the forty; if it does not, report and move on — do not block the
+  package on it.
+- **P3. `kit-lands`: the stand-down records itself.** The gate counts rows flagged
+  `kit: <class>` or print rows in the kit's SRD lifts; the fighter kit has no SRD lifts,
+  and on the maul case it stood down with "nothing to add — the sheet already answers
+  it" (Great Weapon Master arrived via the FEATURE path), so the gate can never pass on
+  that sheet. A route flip exposed it. Fix in the declared-data shape every other writer
+  uses: the kit pass stamps `generation.kit_stood_down = { class, because }` when it
+  adds nothing because the sheet already answers it, and the gate reads that record and
+  stands down too (soft at most, naming the reason). No change to what the kit does.
+  *Instrument:* the maul case in `twelve-1030` re-checked reads no FAIL; a class sheet
+  where the kit really landed nothing still FAILs (pin both).
+
+Then one fresh forty — `check-run`, `clause-rate.mjs 3`, `critic-package.mjs` — and stop.
+The five timeouts were API latency; if the re-run drops sheets again, run the missing
+indices with `--only` rather than a fourth forty.
+
+## 8. The release candidate, and the program after it (owner, 2026-11-01 evening)
+
+**`rc-2026-11-01` is the fallback.** Committed and tagged at the state the critic read
+(`sweep-2026-11-01T20-03-32`): 12 ship / 25 fix-lite / 3 fix, S0 3, 37 of 40 sheets run
+without a GM patching anything. The owner's read: good enough for existing users, not
+for a broadcast; sameness better than it was, not at the sweet spot. Known and accepted
+on this tag: two checker FAILs (Spitting Maw's payoff stack; the Stone Club duplicate the
+engine detects and does not act on), the §2 text lints, the Weeping Saint at 0 of 4, and
+the one-third clause churn. **Nothing in this section is built with a `.replace` on row
+text.** That is now a hard rule, not a preference.
+
+### Why the nit-ladder stops here
+
+The critic's step-back read and this plan's §2 are the same diagnosis from two sides:
+soundness went 16 broken → 3 in a week and originality stayed flat (runnable-tonight
+2, 2, 0, 3, 2). Every fix *migrated* — Weapon Lodge through three hosts, filler from
+Fear Aura to Shield Bash to exploiter rows — because a "fill the seat" imperative over a
+finite menu takes the next-nearest template when one path closes. The best rows in
+every sweep came from the AUTHORING path (forms the model writes, numbers the engine
+prices); the broken text came from the same path's one soft spot plus the engine's
+string surgery on rows after they exist. So the lever is architectural, and it is one
+move seen from two sides:
+
+> **The engine edits fields, never sentences. Text is rendered from fields at the end.**
+
+### The program, in order
+
+**R1. The rendered-output regression suite** — the precondition for everything below,
+and the thing that would have caught "(A) or (B)" returning through 4,300 green tests.
+Over the forty's saved sheets: per-clause "was this answered" (`clause-rate.mjs`'s
+data, asserted), the batch check (N3), and the §2 text lints as build-failing checks.
+Each lint is tagged by WHAT IT READS and may never feed a generation decision:
+  - declared data, no text: duplicate row name; orphan action row (`gate`, dice,
+    `attacksPerRound`); inline-form-vs-weapon (the call's `inline` against the closed
+    table).
+  - format of engine-written text (the `placeholder-leak` class): an unfilled number
+    slot ("… feet toward"), an empty option ("(A) or (B)"), a save sentence missing its
+    DC or its Failure half.
+  - the conversion seam is NOT a lint: it is fixed by R3, which removes the transform.
+*Instrument:* the suite fails on `sweep-2026-11-01T20-03-32` for every §2 item the critic
+listed, by name, before any engine change — proving it sees them.
+
+**R2. 4a, finally — read the 21 flaky clauses.** No code. Classify each miss: the fit
+call refusing a menu it was shown (the 91% finding) · seat in the wrong section · clause
+never reaching a seat. Predict the split first. If the first class dominates, R4 fixes
+churn as a side effect and best-of-two is never bought.
+
+**R3. Edits become re-authors; the 2014 printing renders from fields.**
+  1. *Rider weld, condition strip, print's canon rider swap, the "fear unearned"
+     removal* — each becomes a re-author call: the host row's fields plus the declared
+     facts (`imposes`, `gate`, the rider's form) go to the model with a per-edit prompt
+     template, and it returns the merged row as STRUCTURE; the engine renders once. One
+     short call, only when an edit happens, whole sentence, no splice. The `[^.]*`
+     regexes retire as each site moves.
+  2. *The 2014 printing is a pure function of fields* for every form/template row —
+     stat, reach, dice, type, rider, gate are all fields already. Only a free-prose
+     trait needs a call. Krennik's seam cannot recur because nothing appends.
+  3. *The trait form returns a complete sentence the engine never touches* except to
+     substitute numbers; a save without `{dc}` is rejected by the form validator and
+     re-asked — a declared-data check, no regex.
+  *Instrument:* R1 green on a fresh forty; the count of `.replace(` over row text in
+  `generate.mjs` falls with each site, and never rises.
+
+**R4. Authoring-first for the signature seat.** Invert the dispatch: the seat tries the
+authoring forms FIRST, the template menu is the fallback. Not free prose — forms as
+today — through the same calibration passes (DC derivation, ceilings, duration bounds,
+R1's lints). This is the originality lever and the sameness fix in one: the model's
+idea stops dying at "closest accepted". *Instrument:* runnable-tonight ≥ 5 on a forty;
+per-clause rate on three sweeps; R1 green. Also retires most of item 2 (the keys
+ordering matters little once the menu is the fallback) and item 5 (a row the model
+authored and named carries its own receipt).
+
+**R5. Telemetry — regenerate vs save per concept on the live site.** The critic that
+scales. Product-side, parallel, small. Needed before any Reddit-scale broadcast.
+
+**R6. Best-of-two** only if churn survives R4; owner's "diagnose first" stands.
+
+Items 2, 1d and the old 5/6 are absorbed or deferred behind R4. The release bar in §5
+still applies to whatever ships next; `rc-2026-11-01` is what we fall back to.
+
 ## 6. For the next session, in one paragraph
 
 Items 1 (bar 1d) and 3 are landed and measured (`ROADMAP-results-2026-11-01.md`, nine

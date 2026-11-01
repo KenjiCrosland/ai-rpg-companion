@@ -7071,5 +7071,145 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "a533b26d84bc": {
+  "concept": "A mile of river-fed Underdark cave-water given one boneless will, the Pale Undertaker is a sewer-smooth eel of living po",
+  "clauses": [
+   {
+    "id": "cl_17sh58a",
+    "text": "A mile of river-fed Underdark cave-water given one boneless will",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_8n287x",
+    "text": "the Pale Undertaker is a sewer-smooth eel of living porcelain that slides up drowned shafts to nose at battlefields",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1pj0fjx",
+    "text": "lapping the dead with a scavenger's patience and a crude",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_5r4hc2",
+    "text": "nursery-rhyme cunning",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1c6wk6o",
+    "text": "It opens a fight by rearing",
+    "kind": "mechanical",
+    "askWhen": "start_of_turn",
+    "askWhenWhy": "opens a fight",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "opens a fight",
+    "askShape": "save_area",
+    "askMechanic": "burst",
+    "askMechanicWhy": "clapping its flanks"
+   },
+   {
+    "id": "cl_fl6k6h",
+    "text": "clapping its flanks",
+    "kind": "mechanical",
+    "askWhen": "start_of_turn",
+    "askWhenWhy": "opens a fight",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "opens a fight",
+    "askShape": "save_area",
+    "askMechanic": "burst",
+    "askMechanicWhy": "clapping its flanks"
+   },
+   {
+    "id": "cl_1j4ff69",
+    "text": "letting a stolen trove of pressure snap outward as a bone-thud of Force that shoves prey off ledges and against stone",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "shoves prey",
+    "askOften": "at_will",
+    "askOftenWhy": "letting a stolen trove of pressure snap outward as a bone-thud of Force that shoves prey off ledges and against stone",
+    "askShape": "save_area",
+    "askMechanic": "shove",
+    "askMechanicWhy": "shoves prey"
+   },
+   {
+    "id": "cl_13jo3kv",
+    "text": "coils and lunges to slam",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "coils and lunges to slam",
+    "askOften": "at_will",
+    "askOftenWhy": "coils and lunges to slam",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_45kf17",
+    "text": "topple anything that stands its ground",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "topple anything that stands its ground",
+    "askOften": "at_will",
+    "askOftenWhy": "topple anything that stands its ground",
+    "askShape": "condition",
+    "askMechanic": "shove",
+    "askMechanicWhy": "topple"
+   },
+   {
+    "id": "cl_1paejzi",
+    "text": "Bloodied",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "bloodied",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "Bloodied",
+    "askShape": "save_single",
+    "askMechanic": "curse",
+    "askMechanicWhy": "does not flee"
+   },
+   {
+    "id": "cl_o9cf51",
+    "text": "it does not flee",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "bloodied",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "it does not flee",
+    "askShape": "save_single",
+    "askMechanic": "curse",
+    "askMechanicWhy": "does not flee"
+   },
+   {
+    "id": "cl_1uf97rq",
+    "text": "it does not duel — it shrieks a bargain no one agreed to",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1iuh3h2",
+    "text": "toys with the weak",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "toys with the weak",
+    "askOften": "at_will",
+    "askOftenWhy": "toys with the weak",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "toys"
+   },
+   {
+    "id": "cl_1da5s3t",
+    "text": "hauls the wounded toward deep water to save for later",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1yjb22g",
+    "text": "It is crudely sapient (INT 6-8)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1jdy2t8",
+    "text": "it is a scavenger drawn to carrion and ruin",
+    "kind": "descriptive"
+   }
+  ]
  }
 }

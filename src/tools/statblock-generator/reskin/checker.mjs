@@ -631,7 +631,18 @@ function gateClass(raw, m, ctx, F) {
     const clausesK = (raw?.generation ?? m?.generation ?? raw?.other_edition?.generation)?.clauses ?? [];
     const magicTaken = clausesK.some((cl) => cl.polarity === 'lacks' && cl.takes === 'spellcasting');
     const csK = classStatsOf(pipe.class);
-    if (!kitRows.length) F('kit-lands', magicTaken && csK?.casting ? 'soft' : 'fail', `the ${pipe.class} kit landed no row on a class-NPC sheet${magicTaken && csK?.casting ? ' — its rows are magic and the GM took magic away' : ''}`, pipe.class);
+    // A KIT THAT STOOD DOWN BECAUSE THE SHEET ALREADY ANSWERS IT IS NOT A MISS
+    // (P3, 2026-11-01). This gate was unsatisfiable for any class whose kit carries
+    // no SRD lifts — the fighter's — because only a `kit`-flagged row can answer it,
+    // and a kit that adds nothing by design leaves none. It fired on the maul case
+    // the moment a route flip named the class, while the sheet carried Great Weapon
+    // Master by the FEATURE path and the engine had traced "nothing to add — the
+    // sheet already answers it". The kit pass now records that verdict
+    // (`generation.class_kit.stood_down`) and this reads it instead of inferring a
+    // miss from an absence. A kit that genuinely landed nothing still fails.
+    const kitRec = (raw?.generation ?? m?.generation ?? raw?.other_edition?.generation)?.class_kit ?? null;
+    const kitStoodDown = kitRec?.stood_down ?? null;
+    if (!kitRows.length) F('kit-lands', kitStoodDown || (magicTaken && csK?.casting) ? 'soft' : 'fail', `the ${pipe.class} kit landed no row on a class-NPC sheet${kitStoodDown === 'already_answered' ? ' — it stood down because the sheet already answers it' : kitStoodDown === 'yielded_to_existing_rows' ? ' — its rows yielded to rows already on the sheet' : ''}${magicTaken && csK?.casting ? ' — its rows are magic and the GM took magic away' : ''}`, pipe.class);
     const cs = classStatsOf(pipe.class);
     if (cs && m.stats) {
       const best = (cs.primary ?? []).reduce((a, k) => Math.max(a, Number(m.stats[k] ?? 0)), 0);

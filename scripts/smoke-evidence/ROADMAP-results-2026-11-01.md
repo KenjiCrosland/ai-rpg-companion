@@ -440,3 +440,138 @@ surprises:   ONE, and it needs the owner's eye — a FAIL that is NOT mine and N
              the fix touches the class-kit stand-down path I have not traced. The
              declared-data shape would be for the stand-down to record itself, as every
              other writer does, and the gate to read that record.
+
+### P1 — the swarm ruling finished: fill the gated nova to the ceiling
+
+predicted:   in-process replay on sweep-2026-11-01T17-43-19 #29 (bite 53, a damageless
+             gated control row): giving that row damage at NOVA_CAP(13) clears the `under`
+             FAIL and introduces no `nova-cap` and no other FAIL. Then the fresh forty's
+             #29 passes with no FAIL.
+             Using NOVA_CAP, not scale.mjs's local `novaCeil`: they disagree (67 vs 68 at
+             CR 13) and NOVA_CAP is what the late cap one block above already enforces, so
+             filling to anything else would be capped back down a line later.
+measured:    NOT BUILT — the replay the plan asked for first refuted it, twice over, and
+             then proved the whole single-row approach impossible on this sheet.
+               1. Filling the gated row to NOVA_CAP(13)=67 DOES clear `under` — the
+                  prediction held that far — but it raises `save-fit` FAIL: "a Wisdom save
+                  for an effect that calls for Dexterity or Constitution". A damaging save
+                  row takes Dex or Con; that gate is right.
+               2. Re-keying the save does not rescue it, because the row is not a blast at
+                  all. It is a `lure`: `imposes: 'Charmed'`, a 90-foot Emanation, with
+                  print's 24-hour immunity clause. Damage on a charm-lure is incoherent and
+                  there is no legal damage vehicle anywhere on the sheet.
+               3. So I searched for ANY single-row value that satisfies both gates, by
+                  rewriting the bite and re-checking:
+                      hit 53 -> 1.04x ceiling, FAIL under
+                      hit 58 -> 1.14x,          FAIL under
+                      hit 63 -> 1.24x,          FAIL under
+                      hit 68 -> 1.33x,          FAIL under AND single-target-ceiling
+                      hit 74 -> 1.45x,          FAIL single-target-ceiling
+                      hit 90 -> 1.76x,          FAIL single-target-ceiling
+                  **The window is empty.** The ceiling admits at most ~63 before it grades
+                  fail; `under` needs ~68 (print's CR 13 floor 72 x 0.95). A CR 13
+                  one-attack body cannot satisfy both gates with one damage row.
+measured (cont): So the requirement is COMPOSITION, not budget surgery: a clamped
+             one-attack body needs a SECOND DAMAGING row, and nothing in
+             `settleSheetBudgets` can create one — the gated row it would fill is whatever
+             the fit call chose, and here it chose a charm. Un-clamping is not an escape
+             either: it trades a FAIL for a FAIL.
+runs:        in-process replay on smoke-out/sweep-2026-11-01T17-43-19 #29 (no API cost)
+suite:       167 suites / 4,533 tests (unchanged — nothing landed)
+commit:      —
+not done:    THE WHOLE ITEM. The owner's ruling is sound and the arithmetic above is its
+             real requirement; it just does not live where §5d placed it.
+             Proposal, for the owner: a clamped body's SIGNATURE SEAT must deliver damage.
+             Either (a) when `scaled.hit_clamped` is set, the seat's menu is restricted to
+             templates whose frame deals damage (the frame knows — `frame_area` and the
+             dice are already declared), so a charm cannot take the only gated slot; or
+             (b) a clamped body gains a second damaging action row by construction at the
+             nova ceiling, in the sheet's own energy, with the save stat the damage calls
+             for. (a) is cheaper and uses declared data; (b) always works but adds a row
+             the GM did not ask for.
+             Until one lands, a high-CR swarm whose signature is pure control carries one
+             FAIL. It is ONE sheet of 35 and the cause is now exactly known.
+surprises:   the item's own instrument refuted it before a single line was written, which
+             is what the plan's "in-process first" rung is for. Also worth recording: the
+             gated row carried a DECLARED `area: {shape:'Emanation', size:90}` from item
+             1b, which is how its nature was identified in one read rather than by parsing
+             its sentence.
+
+### P3 — the kit stand-down records itself
+
+predicted:   the maul case re-checked reads no FAIL; a kit that genuinely landed nothing
+             still FAILs.
+measured:    both arms, by replay on the real sheet:
+               with `stood_down: 'already_answered'`  -> soft, "it stood down because the
+                 sheet already answers it"
+               with `stood_down: null` (landed nothing) -> FAIL, unchanged
+               with no record at all (an older sheet)   -> FAIL, so the default is strict
+             Also measured and pinned: the fighter kit has 4 rows and **0 SRD lifts**,
+             which is why the gate was unsatisfiable for it rather than merely unlucky.
+runs:        in-process replay on smoke-out/twelve-1030-2026-11-01T17-34-33 #09
+suite:       168 suites / 4,537 tests · build clean
+commit:      (uncommitted)
+not done:    nothing
+surprises:   ONE: `scaled.classKit` already existed and was **never carried to the
+             sheet** — the fourth "declared then not carried" of the day (after `gate`,
+             `area` and `imposes`). Half the record was built; only the carry and the
+             reason were missing.
+
+### P2 — the material-name nudge
+
+predicted:   the batch check's invented repeats stays 0 on the forty; do not block on it.
+measured:    one sentence in the prompt's NAME REGISTER paragraph, naming the failure it
+             corrects ("Iron Fist", "Stone Slam") and what to name instead. Forty pending.
+runs:        (forty next)
+suite:       168 suites / 4,537 tests · build clean
+commit:      (uncommitted)
+not done:    nothing
+surprises:   none
+
+### The pre-critic forty, second attempt
+
+predicted:   40 of 40 if the API holds (five timed out last time; §5d says re-run only the
+             missing indices with --only rather than a fourth forty).
+             0 invented-name repeats (P2). `kit-lands` soft rather than FAIL if a route
+             flip names a class again (P3). The swarm may still carry ONE `under` FAIL —
+             P1 is not built, and whether it fires depends on whether the fit call gives
+             that sheet a damaging second row; it did on 16-53 and did not on 17-43.
+             So: 0 or 1 FAIL of 40, and if it is 1 it is the swarm and the cause is known.
+measured:    **40 of 40, 0 timeouts** — the longer per-block timeout (420s) fixed it.
+             **MY PREDICTION WAS WRONG.** I said "0 or 1 FAIL, and if it is 1 it is the
+             swarm". It is **2 FAILs and neither is the swarm**: the swarm got a damaging
+             second row this run and came back soft, so P1's absence cost nothing here.
+             Two different FAILs appeared, both diagnosed and neither from this session's
+             changes:
+               1. `single-target-ceiling` — Sump Scythe Horror / Spitting Maw, 47 to one
+                  target at CR 9 against a cap of 35 (1.34x). The same row read **31** in
+                  BOTH prior fortys (18 Piercing + 13 Acid, so the energy was already a
+                  separate component there and 3d is not implicated). It is 47 now because
+                  a Grappled PAYOFF rider welded on top: "+16 if the target already has
+                  the Grappled condition" — on the row that inflicts the grapple. So 47 is
+                  genuinely reachable on turn two and the gate is right. A stacking
+                  outcome: a part row carrying an energy rider AND a payoff rider.
+               2. `duplicate-row` — Oathstone Exile, two rows named "Stone Club". Print's
+                  Stone Giant HAS a row of that name; the canon pass correctly claimed it
+                  (`print: true, weapon: club`), and a separate `push-prone` template row
+                  took the same name. P2 is exonerated: the name is print's own, not a
+                  model invention, and three prior fortys of the same sheet had no
+                  duplicate. The real fault is a DETECT-WITHOUT-ACT: the engine's
+                  `duplicate-name` pass found it and traced "identical copies are dropped;
+                  a genuinely different second ability must be renamed" — and then did not
+                  rename it. Same disease as the write-only `lint_findings` of 2026-10-30.
+             Other instruments: **0 invented-name repeats** (P2 held), 31 stock
+             convergences counted; `kit-lands` 0 firings (no route flip this run, so P3 is
+             proven by replay only); clamp traced 2; rider guard 0 firings and 0 chances,
+             a third run; coverage 37/70 (52%), concept 191/217 (88%); per-clause rate over
+             the last three sweeps **73%** (was 75% — inside the churn).
+runs:        smoke-out/sweep-2026-11-01T20-03-32
+suite:       168 suites / 4,537 tests · build clean
+commit:      (uncommitted)
+not done:    the two FAILs above are unfixed and both are outside §5d's items. The release
+             bar (0 fail-graded) is therefore NOT met on this forty.
+surprises:   that the swarm passed. P1's refutation stands as arithmetic — the window is
+             still empty when the second row deals nothing — but which of the two
+             outcomes a given run gets is the fit call's choice, so the `under` FAIL is
+             intermittent, not certain. Across three fortys it fired once.
+
