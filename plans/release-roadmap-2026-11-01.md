@@ -557,6 +557,70 @@ churn as a side effect and best-of-two is never bought.
   *Instrument:* R1 green on a fresh forty; the count of `.replace(` over row text in
   `generate.mjs` falls with each site, and never rises.
 
+**R3b. The kit is a menu, not a load-out — the empty-seat rule at the archetype level**
+(critic + owner, 2026-11-01; added after R2). R2 measured the SEAT: 70% of attempted
+seats ship a row the model refused. This is the CHASSIS: the kit rows that load before
+the seat runs — grapple/engulf, charge/trample, Dash/Disengage, Relentless Pursuit, Blood
+Frenzy, the charge rider, the seat's own nova — off the route call's mechanic GUESS. R1
+already proved one instance (the Riverwight's Whelm with nothing to grapple). Filler is
+not neutral: 10-29 traces showed asked-for rows leaving at ship because a row the engine
+itself labelled decoration had taken the budget. And a kit that always loads makes every
+roll of one concept the same sheet (owner: "lizardfolk ninja … I suspect it'll be the
+same each roll").
+
+  *Owner's guardrail, verbatim in spirit:* the templates are NOT thrown away, and this
+  must not "open things up to chaos." So the move is SELECTION, never new content:
+  - An archetype = a stat chassis (array, AC/HP/speeds, type defenses, senses,
+    Multiattack, attacks) + a small number of SLOTS (two is the working number).
+  - Each archetype has a MENU: the catalog templates that fit it today (the grappler's
+    grapple-on-hit and engulf, the rider's trample and charge, the lurker's Ambusher /
+    sneak-attack damage / Hide bonus action / Pack Tactics, the defender's Relentless
+    Pursuit…) plus **"none"**. The menu is closed: only rows that already pass the fit
+    call, the verb gate and CR calibration can be chosen, so no roll can produce a row
+    we have never vetted. That is what keeps the "pretty good block" reachable.
+  - Order: the SIGNATURE seat is authored first (it is the one that may need writing),
+    then the slots are filled from the menu, then nothing else. A slot the call leaves
+    empty stays empty.
+
+  *Who chooses — a call field, never a key table.* The critic's closing line
+  ("'sentinel', 'warden', 'guards' should be in it") is a word list deciding meaning, the
+  thing this sprint retired; not taken. The kit choice is a field on the route/identity
+  call: for each slot, which menu item (or none) and a QUOTE of the GM's words or the
+  print row that warrants it; a quote is validated the way `vetAsked` validates `asked`.
+  A choice with no quote is still allowed as FLAVOR (the horseman may trample because
+  horsemen do) — the receipt decides whether the row is *owed*, not whether it may exist.
+  Print's body rows and the blank path's synthesis remain receipts.
+
+  *Variety is the acceptance criterion, not an engine rule* (a 25% floor cannot be a
+  word rule; it is what we measure). Roll ONE concept eight times — "the headless
+  horseman", "a lizardfolk ninja" — and: no single kit row appears on every roll; the
+  bare chassis (signature + attacks, no kit) appears at least once; the archetype's
+  trope (trample for the horseman) still appears on at least a quarter of them. Every
+  roll passes the checker, so the floor never buys soundness.
+  (Replaces the earlier snapshot-test idea — a deterministic plain ask was the complaint.)
+
+  *Owner ruling, 2026-11-01: "reverse it."* 10-29's "longer is wanted" is reversed for
+  DEFAULT rows only — asked rows are never cut. A plain ask may come out as short as the
+  print block it resembles; row counts on a plain ask track print's MEDIAN for the band,
+  not the p90 the free-row budget uses.
+
+  *Measure before building, all zero-cost:*
+    1. From the 329: the fraction of NON-legendary blocks per band carrying a Recharge
+       action. Under half → a nova is not a default menu item.
+    2. From the 329: row-count median per band, against the last forty's per-band mean.
+    3. From `sweep-2026-11-01T20-03-32`: every kit/rider/nova row, with or without a
+       receipt by the rule above. The critic predicts shape-repeats halve (Relentless
+       Pursuit ×3, Faultless Tracker ×2, Blood Frenzy ×2, Dash ×3, three unwarranted
+       Swallows) with coverage unchanged, because filler never earned any.
+  *Instruments:* N3 stock-convergence count halves on a forty; coverage unchanged;
+  `decoration_rows` → 0; runnable-tonight up; the eight-roll variety criterion above on
+  two concepts (a targeted batch of 16, not a forty).
+  *Watch:* a verb-less high-CR concept ("a sentinel of black iron, AC 20, Huge") must
+  still earn the guard kit — by the call quoting "sentinel", which is the case that
+  keeps dropping; if the quote is absent the row may still load as flavor.
+  *Order:* after R3, before forty #1, so one forty measures R3 and R3b together and R4's
+  runnable-tonight baseline is taken without filler in the budget.
+
 **R4. Authoring-first for the signature seat.** Invert the dispatch: the seat tries the
 authoring forms FIRST, the template menu is the fallback. Not free prose — forms as
 today — through the same calibration passes (DC derivation, ceilings, duration bounds,
