@@ -574,6 +574,23 @@ scales. Product-side, parallel, small. Needed before any Reddit-scale broadcast.
 Items 2, 1d and the old 5/6 are absorbed or deferred behind R4. The release bar in §5
 still applies to whatever ships next; `rc-2026-11-01` is what we fall back to.
 
+### Runs for this program — two fortys, total (owner, 2026-11-01)
+
+The forty is the regression gate for a SET of changes we are confident in; a feature is
+proven by the cheapest rung that answers it (§5c's ladder). Four fortys ran in the last
+36 hours; one per stop point was right, but R1–R3 need fewer than that.
+
+| item | rung | run |
+|---|---|---|
+| R1 | none — asserts over SAVED sheets | zero API cost; must fail on `20-03-32` before any engine change |
+| R2 | none — reads traces | zero |
+| R3, each site | in-process replay on the sheet that broke (Krennik for the seam, Bog Hound for the save, the rider-weld hosts), then ONE targeted batch per site: `twelve-1030` for the weld, a six-sheet 2014 batch for the printing, `spear5` for the rider-on-weapon path | 2–5 min each |
+| R3 stop point | **forty #1** — R1 green, `.replace(` count down, critic package | one |
+| R4 | targeted twelve of the sheets whose idea died at "closest accepted" (R2 names them), then **forty #2** + critic | one |
+
+A forty that drops sheets is finished with `--only <indices>`, never re-run whole.
+No forty for R1, R2, or any single R3 site.
+
 ## 6. For the next session, in one paragraph
 
 Items 1 (bar 1d) and 3 are landed and measured (`ROADMAP-results-2026-11-01.md`, nine

@@ -575,3 +575,123 @@ surprises:   that the swarm passed. P1's refutation stands as arithmetic — the
              outcomes a given run gets is the fit call's choice, so the `under` FAIL is
              intermittent, not certain. Across three fortys it fired once.
 
+
+---
+
+# §8 program
+
+### R1 — the rendered-output regression suite
+
+predicted:   eight lint classes, each firing on the sheet the critic named in
+             `sweep-2026-11-01T20-03-32` and silent elsewhere:
+               empty-option          18 Ossuar
+               missing-number        02 Bog Hound, 30 Altar-Gnaw
+               dangling-save         02 Bog Hound
+               duplicate-row-name    32 Oathstone Exile
+               engulf-needs-grapple  36 Riverwight (and SILENT on 02, 06, 24, 35 —
+                                     the critic calls 02 and 06 warranted)
+               inline-weapon         39 Hired Handaxe
+               orphan-action-row     27 Faithless Templar
+               double-punctuation    28 Ilvareth (a row and the header line)
+             Shape: a lint MODULE of pure functions + a RUN gate (`lint-run.mjs`,
+             non-zero exit), not assertions inside `npm test`. A suite that is red on
+             committed data until R3 lands would mask every new regression, which is the
+             opposite of this item's purpose; `npm test` pins the detectors in BOTH
+             directions on the known sheets instead, and the run gate is what fails.
+             Zero API cost — it reads saved sheets only.
+measured:    **10 findings on the forty, each on exactly the sheet the critic named** —
+             prediction met, no extras:
+               missing-number          02 Bog Hound, 30 Altar-Gnaw
+               dangling-save           02 Bog Hound
+               empty-option            18 Ossuar
+               orphan-action-row       27 Faithless Templar
+               double-punctuation      28 Ilvareth (a row AND the header line)
+               duplicate-row-name      32 Oathstone Exile
+               engulf-needs-a-grapple  36 Riverwight
+               inline-weapon-collision 39 Hired Handaxe
+             Silent where the critic says the sheet is right: the four warranted engulfs
+             (02, 06, 24, 35 — it names 02 and 06 explicitly), the spell-cast actions
+             (04, 26, 40), and both print-exact sheets (21, 22) report nothing at all.
+             `scripts/lint-run.mjs` exits 1 on the forty and **0 on `twelve-1030`** — so
+             it is a gate, not a wall.
+             Five of the eight lints read DECLARED fields and no text; the three that read
+             text read our own rendered sentence for an unfilled slot (the
+             `placeholder-leak` class). No lint feeds a generation decision.
+runs:        smoke-out/sweep-2026-11-01T20-03-32, twelve-1030-2026-11-01T17-34-33
+             (saved sheets only — zero API cost)
+suite:       169 suites / 4,555 tests · build clean
+commit:      (uncommitted)
+not done:    the conversion seam is not a lint, per §8 — R3 removes the transform.
+surprises:   FOUR, all in my own detectors, and all caught by reading the output rather
+             than trusting the count.
+             1. `orphan-action-row` first fired 22 times: `T(ma)` read `.text` off a
+                `[sec, row]` TUPLE, so the "is it in the Multiattack?" check never ran.
+             2. Then 5 times: the four extras were spell-cast rows whose `rules`/`print`
+                flags sit on the 2024 side, while a 2014 sheet's flat arrays carry none.
+                Fixed by unioning flags by name across printings — the same fix N3 needed.
+             3. Then 2: print's 2024 corpus has NO "Change Shape" row (0 of 329) though
+                every 2014 dragon has one, and sheet 19 has an EMPTY 2024 side, so its
+                provenance is unknowable. The lint now stands down on a sheet with no
+                flags anywhere rather than guessing. That flag gap is an R3 finding in its
+                own right: on a bare-print 2014 sheet nothing can tell print's rows from
+                inventions.
+             4. Normalising the 2014 section words ("abilities" -> "Traits") so one defect
+                would not report twice made every 2014 row collide with its own 2024 twin:
+                `duplicate-row-name` went to **124 findings**. Rows now carry which
+                printing they came from, and duplicates are counted within one.
+             Also: my spec's own helper missed that the forty's files are zero-padded, so
+             four assertions failed against a null sheet. The helper was wrong, not the
+             lints.
+
+note:        §8's opening line says `rc-2026-11-01` is "Committed and tagged". The owner
+             reports the commit landed with NO tag (`git tag --list` is empty). Flagging
+             rather than editing the plan, in case the tag is still coming.
+
+### R2 — classify the flaky clauses (no code)
+
+predicted (written before reading a single trace): of the ~20 clauses that flip between
+             sweeps, the dominant class is **the fit call refusing a menu it was shown** —
+             `idea-register-not-length` measured 91% of seat misses that way, and the
+             critic's independent read says the same thing from the sheets ("the model's
+             idea text is frequently excellent and 'closest accepted' is where it dies").
+             Split predicted: **13–15 of 20 refusals · 2–3 wrong section · 3–4 never
+             reached a seat.** If refusals dominate, R4 fixes churn as a side effect and
+             best-of-two is never bought.
+measured:    **Refusals dominate, harder than predicted.** Across three fortys, 240
+             seats (both seats x 40 sheets x 3 runs):
+               refused the menu (`closest accepted`)   125   52%
+               a template genuinely fit                 35   14%
+               miss, nothing held it                    19    7%
+               no seat attempted (print-exact etc.)     61   25%
+             Of seats that were ATTEMPTED (179): **125 refused = 70%**, 35 fit = 20%,
+             19 missed = 11%.
+             On the 10 flaky sheets alone, 60 seats: 36 refused, 9 fit, 4 missed, 11 not
+             attempted — **73% of attempted seats refused**, against my predicted
+             13-15 of 20. The direction was right; the magnitude is worse, and it is a
+             property of the whole forty rather than of the flaky clauses specifically.
+
+             What `closest accepted` means, in the engine's own words: the fit call was
+             shown the menu, **refused every template on it**, named one as nearest, and
+             the engine shipped that nearest one anyway rather than drop the row. So on
+             seven of every ten attempted seats the model says "none of these" and a
+             stock row lands wearing the idea's name.
+
+             That one number explains both standing complaints at once:
+               - CHURN is a consequence. Which nearest-miss lands varies run to run, so a
+                 clause is answered or not by whichever template happened to be nearest.
+                 This is why a third of clauses flip without anything changing.
+               - SAMENESS is a consequence. The nearest template is drawn from a finite
+                 set, so closing one path hands the seat to the next-nearest — exactly the
+                 migration pattern the critic traced through Weapon Lodge's three hosts and
+                 Fear Aura -> Shield Bash -> exploiter rows.
+runs:        smoke-out/sweep-2026-11-01T{20-03-32,17-43-19,16-53-09} (saved traces only)
+suite:       unchanged — no code
+commit:      —
+not done:    nothing for this item. The §8 condition is met: refusals dominate, so **R4
+             addresses the cause and best-of-two should not be bought** — it would pay
+             twice for the same 70% refusal rate and keep whichever run's nearest-miss
+             happened to look better.
+surprises:   the magnitude. 91% was the earlier figure for seat MISSES; this is 70% of
+             all attempted seats, which is a different and larger claim: the common case
+             is not that the engine fails to seat a row, it is that it seats one the model
+             explicitly refused.
