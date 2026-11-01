@@ -177,3 +177,102 @@ surprises:   ONE, and it is the worst of the day. My first cut referenced `bandF
              pick with no GM quote (declined as decoration) — and I verified the final
              version by removing the import again and watching it FAIL, then restoring it.
              A test that claims to exercise a path must be shown to fail without it.
+
+### 3b — the swarm's 90 (owner ruling 1: GO)
+
+predicted:   forty #29 bite <= 51 at a soft margin, not a FAIL; `single-target-ceiling`
+             0 on the swarm; exactly one attack row and no Multiattack.
+measured:    per-band, through scaleDonor: CR 9 clamped 63->35, CR 13 clamped 90->51,
+             CR 5 clamped 36->31; CR 1/3 untouched (print's own swarm range); CR 17/20
+             already under. Hit totals after the dice snap: CR 9 at 1.03x the ceiling,
+             CR 13 at 1.04x, CR 5 at 1.10x — all SOFT, where CR 9 was 1.83x and CR 13
+             1.76x FAIL before. Forty pending.
+runs:        (forty next)
+suite:       166 suites / 4,511 tests at this point · build clean
+commit:      (uncommitted)
+not done:    THE RULING'S SECOND HALF IS NOT BUILT — the surplus is not moved, because
+             there is nowhere legal to put it. Measured on #29 through the real checker:
+               bite 90, area 67 (shipped)   -> FAIL single-target-ceiling, soft hot-offense
+               bite 50, area 67 (clamp)     -> no FAIL, soft aim-dpr + band
+               bite 50, area 108 (+surplus) -> FAIL nova-cap
+               bite 50, area 67 ungated     -> FAIL under
+             The sheet's area row is a Recharge nova and print caps nova damage per
+             use, so moving surplus there trades one FAIL for another; ungating it to
+             dodge that fails `under`. The clamp ships alone and the round lands near
+             half budget (soft `aim-dpr`/`band`). Owner's call whether that trade stands.
+surprises:   THREE.
+             1. No swarm donor HAS an area row — the plan's "create it from the swarm
+                donor's area frame" has no frame. The area row on a generated sheet is
+                the signature slot, fitted long AFTER scaleDonor, so scale.mjs could not
+                have moved anything into it even if nova-cap allowed it.
+             2. My first clamp did nothing: the budget loop that follows the per-hit seed
+                drives per-hit back UP until the round meets the card, so a clamp placed
+                before it set 51 and the loop returned 90. Moved after the loop.
+             3. `trace?.()` in scale.mjs would have thrown — scale.mjs has no tracer and
+                takes none, and optional-call does not protect an UNDECLARED identifier.
+                Same shape as 1e's unimported `bandFor`, caught the same day. The clamp
+                is recorded as a field (`hit_clamped`) instead.
+
+### 3d — fire as a rider (owner ruling 3: YES)
+
+predicted:   re-run `spear5`; the Cinder Knight ships "Piercing plus Fire"; the Vestry
+             Wyrd keeps its fire rows; the living bonfire and the Hobgoblin Captain
+             unchanged.
+measured:    deterministic replay of the Cinder Knight case through the real pipeline:
+             "18 (4d6 + 4) Piercing damage plus 13 (3d8) Fire damage" — print's Knight's
+             Greatsword shape. A purely physical concept gains no rider. Prompt now asks
+             for both halves and names the failure it corrects. spear5 re-run pending.
+runs:        (with the forty)
+suite:       166 suites / 4,514 tests at this point · build clean
+commit:      (uncommitted)
+not done:    nothing for this item
+surprises:   ONE, and it is why the plan's spec alone would not have fixed the case. Two
+             paths carry a weapon row, and the owner's own example takes the one the plan
+             did not name: a row the GM NAMES ("carries a flaming spear") becomes a PART,
+             which never reaches the damage-type block the 10-30 override lives in. The
+             part builder strips the energy component and FOLDS its damage into the
+             physical main, so the number survived and the type was erased — which is
+             exactly "no fire anywhere". Both paths are now handled; the part path is the
+             one that mattered.
+             Also caught in my own edit: setting the rider to the demoted energy makes
+             `rider === wanted`, and the "same type on both halves" collapse guard then
+             refuses to write the rider at all — the energy would have been lost exactly
+             as before. The demotion had to move to the same site as the rider move.
+
+### 3a — the Purple Worm's Swallow (64 vs 51)
+
+predicted:   the forty's `single-target-ceiling` count goes to 0 outside the swarm.
+measured:    the swallow frames spent the row budget TWICE (`{avg}` on the hit plus
+             `{avg_half}` ongoing) = 42 + 22 = 64 at CR 15. Print, all 7 Swallow rows:
+             FOUR of five damaging ones deal nothing on the hit (only the Kraken's 23),
+             and the tick is a flat constant — Behir 21 at CR 11, Purple Worm 17 at CR 15,
+             Kraken 24 at CR 23, Tarrasque 56 at CR 30. Frames rewritten to print's
+             shape: no hit clause, one band constant (0/7/14/21/21/28, running max).
+             Renders at CR 9/15/23 = 14/21/28, all inside the ceiling. Forty pending.
+runs:        (forty next)
+suite:       166 suites / 4,514 tests at this point · build clean
+commit:      (uncommitted)
+not done:    nothing for this item
+surprises:   ONE, checked because it was a regression risk: a zero-damage row could have
+             been floored out, losing the swallow engine the critic praised. `valueCheck`
+             at CR 9/15/23 gives ev 25.3/35.2/35.2 against floors 16.6/22.4/18.7 — the
+             engulf carries the value, as print intends. At CR 23 it now takes a
+             Recharge gate for being over the nova ceiling, where print's Kraken Swallow
+             is an ungated Bonus Action; noted, not chased.
+
+### 3c — `damage-dice` on kit rows
+
+predicted:   `damage-dice` 1 -> 0 on the forty.
+measured:    root cause found: the class-weapon swap folded a component in by ADDING its
+             average to the stated figure and leaving the dice untouched, so
+             "16 (3d8 + 3)" + 7 shipped as "23 (3d8 + 3)", which rolls 16.5. The dice now
+             re-solve through `attackDamageDiceFor`, the same helper the named-part fold
+             already uses: 23 with +3 becomes "24 (6d6 + 3)", which rolls 24. Forty
+             pending.
+runs:        (forty next)
+suite:       166 suites / 4,526 tests · build clean
+commit:      (uncommitted)
+not done:    nothing for this item
+surprises:   none — and this confirms the roadmap's own correction that the
+             `printNearAdd`/`print_text` route could never have fixed it: Unarmed Strike
+             is not in the weapon table, so no re-dice reaches it. It was arithmetic.

@@ -30,6 +30,23 @@ export const NOVA_USES_PER_FIGHT = { 'Recharge 4-6': 2, 'Recharge 5-6': 1, '1/Da
 export const FIGHT_ROUNDS = 3;
 export const AREA_TARGETS = 2;
 
+/**
+ * PRINT'S HARDEST SINGLE-TARGET ROW, BY BAND — one closed fact, one home.
+ *
+ * Derived from SRD 5.2 by summing every damage component of each attack row that
+ * names one target (the swarm's Bloodied split is one attack at two rates, never
+ * their sum). A RUNNING MAX is applied: print's own sample dips at CR 17-20 (43)
+ * below CR 13-16 (51), which is sampling and not a rule, and a ceiling must never
+ * fall as CR rises (the critic's own correction, 2026-10-29).
+ *
+ * Lived privately in checker.mjs as `CAP`. `scale.mjs` needs the same number to
+ * hold a one-attack body under it, and two copies of one fact is the drift this
+ * sprint's audit is about.
+ */
+export const SINGLE_TARGET_CEILING = { '0-2': 24, '3-5': 31, '6-9': 35, '10-12': 39, '13-16': 51, '17-20': 51, '21+': 60 };
+export const ceilingBandOf = (cr) => (cr <= 2 ? '0-2' : cr <= 5 ? '3-5' : cr <= 9 ? '6-9' : cr <= 12 ? '10-12' : cr <= 16 ? '13-16' : cr <= 20 ? '17-20' : '21+');
+export const singleTargetCeiling = (cr) => SINGLE_TARGET_CEILING[ceilingBandOf(cr)] ?? null;
+
 const FRACTIONAL = { 0: { hp: 3, dpr: 2 }, 0.125: { hp: 9, dpr: 4 }, 0.25: { hp: 15, dpr: 6 }, 0.5: { hp: 24, dpr: 8 } };
 const roundUp5 = (n) => Math.ceil(n / 5) * 5;
 

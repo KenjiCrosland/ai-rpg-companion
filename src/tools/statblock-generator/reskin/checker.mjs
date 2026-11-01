@@ -15,7 +15,7 @@ import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedCondition, imposedCon
 import { lintStatblock } from '../format-2024/lint.mjs';
 import { HIT_DIE_BY_SIZE } from '../format-2024/dice.mjs';
 import { WEAPONS, weaponFor, weaponProp, namesWeapon } from './weapons.mjs';
-import { cardBudget, dmgRow } from './card-budgets.mjs';
+import { cardBudget, dmgRow, SINGLE_TARGET_CEILING, ceilingBandOf } from './card-budgets.mjs';
 import { NOVA_CAP, gateOf, SIZES, saveStatsFor } from './templates.mjs'; // one definition of a row's gate: the field first, the name only as print's canon/a missed-stamp signal
 import { CONTROL_SPELL_LEVEL, CONTROL_AT_WILL_CR, SPELL_DAMAGE_AVG, printCanonFor, nearPrintCr } from './generate.mjs';
 import { speciesFor } from './species.mjs';
@@ -390,7 +390,7 @@ function gateBands(m, ctx, F) {
   // first cut of this gate did not, which inflated the Swarm of Unclaimed Peals
   // by half again.
   {
-    const CAP = { '0-2': 24, '3-5': 31, '6-9': 35, '10-12': 39, '13-16': 51, '17-20': 51, '21+': 60 };
+    const CAP = SINGLE_TARGET_CEILING; // one home for the fact; scale.mjs holds a one-attack body under the same number
     const declaredRows = m.generation?.declared?.rows ?? {};   // read locally: `declaredB` below is still in its temporal dead zone here
     const cap = CAP[cr <= 2 ? '0-2' : cr <= 5 ? '3-5' : cr <= 9 ? '6-9' : cr <= 12 ? '10-12' : cr <= 16 ? '13-16' : cr <= 20 ? '17-20' : '21+'];
     if (cap) for (const { sec, e } of allRows(m)) {

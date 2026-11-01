@@ -575,7 +575,7 @@ Return ONLY JSON:
  "languages": "<a languages line or 'None'>",
  "renames": { ${renameSkeleton} },   <- ALL of these keys, every one, none omitted. A name that claims an element must be PAID by that row's damage: "Burning X" needs Fire on the row (or the melee rider), "Rimefrost X" needs Cold. If the damage does not pay the word, drop the word, or qualify it with the true element the way the published statblocks do (the Priest\'s "Radiant Flame" deals Radiant); folklore light-compounds (witchfire, foxfire, balefire) are always legal. NAME REGISTER — the published statblocks' name BUDGET (measured from the corpus): standard rows stay terse — a plain-damage attack row is ONE weapon-noun or anatomy word (Bite, Talons, Greataxe); two words only when the row does more than plain damage (Flame Whip, Arcane Burst); utility rows take plain function names. ONLY the Signature Slot and the nova row earn a flavored name, and even there the published statblocks compress: two words, three at the absolute ceiling (Dreadful Glare, Curtain Call — never "Blade Scatter Finale"), a hyphenated compound counting as its parts. Legendary actions take the two-word flavored register, verb-forward (Pounce, Mind Jolt, Cold Gale) — never three words. One flourish on a sheet of terse names reads as a designer's touch; wall-to-wall kennings read as a generator.${mind === 'bestial' ? ' THIS creature is bestial: name its attack rows by anatomy alone (Bite, Talons, Slam, Gore) — its flavor lives in the trait and the lore, never in an attack name.' : ''} Never invent a compound word — the published statblocks write "Frost Axe", never "Frostaxe".
  "name_element": {<ONLY for a new name that contains an element word (fire/flame/burn/ember, frost/ice/rime/chill, storm/lightning/thunder/shock, venom/poison/toxic, acid/caustic, holy/radiant/sacred, necrotic) — one entry each, "<the name>": "literal|imagery". "literal" means the row really deals that damage. "imagery" means the word is folklore or metaphor and the row deals something else — "Witch-Fire" and "Fox-Fire" are the old words for a light that does not burn. Say "imagery" ONLY where the element word is half of a compound word, never where it stands on its own: "Flame Lash" is a lash of flame>},
- "damage_types": { ${damageSkeleton} },   <- REQUIRED for every attack and the area action. PHYSICAL vs ENERGY follows the BODY (in the published statblocks, melee attacks deal the limb's physical type — a bite Piercing, a slam Bludgeoning, a claw Slashing — with energy reserved for the ranged attack and the area action; ONLY a creature whose body IS energy — incorporeal, elemental, formless — deals energy with its melee). A row named after a WEAPON a person could carry deals THAT WEAPON'S type, however the creature is themed — a spear Piercing, a mace Bludgeoning, an axe Slashing — even a spear wreathed in flame: the published statblocks have 53 such rows and not one deals energy alone (the Knight's Greatsword is "Slashing plus Radiant", never Radiant). If this creature's blows carry an energy, put it on "melee_rider" below, which is the field for exactly that, and leave the weapon's own type here. A fully physical creature may answer physical for everything; never give every row the same energy — but also keep to ONE energy family across the block (the published statblocks rarely field two).${energy ? ` THIS creature's energy is ${energy} — every non-physical damage type you assign must be ${energy}.` : ''}${mix === 'physical' ? ' THIS creature deals PHYSICAL damage only — Bludgeoning, Piercing, or Slashing everywhere; no energy types anywhere on the block.' : ''}
+ "damage_types": { ${damageSkeleton} },   <- REQUIRED for every attack and the area action. PHYSICAL vs ENERGY follows the BODY (in the published statblocks, melee attacks deal the limb's physical type — a bite Piercing, a slam Bludgeoning, a claw Slashing — with energy reserved for the ranged attack and the area action; ONLY a creature whose body IS energy — incorporeal, elemental, formless — deals energy with its melee). A row named after a WEAPON a person could carry deals THAT WEAPON'S type, however the creature is themed — a spear Piercing, a mace Bludgeoning, an axe Slashing — even a spear wreathed in flame: the published statblocks have 53 such rows and not one deals energy alone (the Knight's Greatsword is "Slashing plus Radiant", never Radiant). If this creature's blows carry an energy — a flaming spear, a frost axe, a blessed mace — answer the weapon's PHYSICAL type here AND that energy on "melee_rider" below, so the row reads "Piercing damage plus Fire damage". Do NOT drop the energy to satisfy the rule: dropping it is how a cinder knight with a flaming spear ends up with no fire anywhere on its sheet. A fully physical creature may answer physical for everything; never give every row the same energy — but also keep to ONE energy family across the block (the published statblocks rarely field two).${energy ? ` THIS creature's energy is ${energy} — every non-physical damage type you assign must be ${energy}.` : ''}${mix === 'physical' ? ' THIS creature deals PHYSICAL damage only — Bludgeoning, Piercing, or Slashing everywhere; no energy types anywhere on the block.' : ''}
 ${needsSpells ? ` "spells": { "at_will": ["<exactly 2 spells this concept would cast, from ONLY this list: ${(scaled.spell_menu ?? SPELL_MENU).join(', ')}>"], "daily": ["<exactly 2 MORE from the same list, no repeats — pick by THEME: the spells must feel like this creature\'s magic. A blaster picks its SIGNATURE damage spells (Fireball, Scorching Ray, Shatter...) — the engine prices the tiers>"] },\n` : ''}${needsProjectile ? ` "projectile": "<the thing it throws, 1-3 words WITH its article (a knucklebone / its barbed anchor) — it appears mid-sentence in attack text>",\n` : ''}${engineMenu.length ? ` "defense_engine": "<what this concept's defense IS — rampart (a punishing presence: a damaging emanation and a raised wall) | punisher (it answers every blow: a counter-strike reaction). Pick ONE from: ${engineMenu.join(', ')}>",\n` : ''}${needsEngulf ? ` "engulf_style": "<how this body takes a creature in: swallow (a mouth) | engulf (an amorphous mass, a slime, a swarm) | smother (fabric, wrappings, a collapsing bulk) | whelm (water or liquid) | cage (chains, bars, ribs) | entomb (stone, earth, ice) | cocoon (web, silk, strands) — the engine names and words the ability to match>",\n` : ''} "weapons": { "<the new name you gave an attack row>": "<the mundane weapon it is, in plain words, or none>" },
  "lacks": [<EVERY thing the user said the creature does NOT have, each as {"quote": "<the user's OWN WORDS, a SHORT PHRASE of one to five words — never a sentence you build yourself>", "takes": "<what the words take away: grapple | regeneration | spellcasting | flight | ranged | melee | sight | speech | hearing | part | other. A LOST SENSE IS THAT SENSE, NOT A PART: \"blind in one eye\", \"one eye gone\", \"a milky eye\" all take sight; \"deaf in one ear\" takes hearing. Answer part ONLY for a limb or appendage it fights with — a lost arm, a severed tail, a broken wing>", "costs": "<WHICH ROLL THE WOUND SPOILS, when the absence takes no whole ability away but still ought to cost the creature something. Exactly one of: sight (it cannot see well on one side) | hearing (it cannot hear well) | one_limb_attacks (a limb it fights with is gone or ruined) | all_attacks (its whole frame is impaired) | none (the absence removes an ability outright, so nothing extra is owed). A ruined EYE costs sight, never one_limb_attacks>"}. "never holds it" takes grapple; "instead of regrowing" takes regeneration; "no magic at all" takes spellcasting; "eyeless" takes sight. A PARTIAL loss keeps the sense — "blind in one eye", "half-deaf", "limps", "missing a hand" take part, never sight, hearing or flight. EVERY entry must contain a word that takes something away: "no", "not", "cannot", "never", "without", "lost", "stripped", or a word that means the absence itself — "eyeless", "mute", "blind", "deaf", "wingless", "sightless". Examples of entries: "no magic at all", "eyeless", "lost its wings", "born mute", "carries no weapons", "never holds" (so it never grapples), "instead of regrowing" (so it does not regrow or regenerate) — "never X" and "instead of X" take X away. A lack is of ANY kind: a body part, a sense, a voice, a spell list, a weapon, armour. If a phrase has none of those words it is something the creature HAS, so leave it out. Use [] when the user took nothing away>],
  "implied_class": "<the ONE class this creature trains as, if the user's words imply one: rogue|fighter|monk|paladin|cleric|mage|bard|barbarian|none. A ninja trains as a rogue, a kung fu master as a monk, a samurai or a gladiator as a fighter. Answer none for a beast, a construct, an ooze, or a person whose words name no training at all — none is the right answer more often than not>",
@@ -3334,8 +3334,30 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         if (a.mode === 'both' && a.thrownRange && !/Melee or Ranged/.test(row.text)) row.text = row.text.replace(/\*Melee Attack Roll:\*? (\+\d+(?: \([^)]*\))?), reach (\d+) ft\./, `*Melee or Ranged Attack Roll:* $1, reach $2 ft. or range ${a.thrownRange} ft.`); // print's hybrid grammar for a thrown weapon
         row.text = (a.type ? row.text.replace(/(\d+ \(\d+d\d+(?: [+-] \d+)?\)) ([A-Z][a-z]+) damage/, `$1 ${a.type} damage`) : row.text).replace(/,? and the target has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '.').replace(/\s*If the target [^.]*has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '').replace(/\s*While (?:Grappled|Restrained)[^.]*\.?/, '').replace(/\.\.$/, '.');
         let folded = 0; const strip = (re) => { row.text = row.text.replace(re, (m0, avg) => { folded += Number(avg); return ''; }); };
-        if (/^(?:Bludgeoning|Piercing|Slashing)$/.test(a.type)) strip(/ plus (\d+) \(\d+d\d+\) (?:[A-Z][a-z]+|\{damage_type\}) damage/); // a weapon row the user named deals its weapon's damage; the chassis's energy rider belongs to the row the user gave that energy (Fire on the bull's gore)
-        strip(/ plus (\d+) \(\d+d\d+\) \{damage_type_2\} damage/); delete row.text_noRider;
+        // FIRE AS A RIDER ON A GM-NAMED WEAPON (owner's ruling, 2026-11-01). A part row
+        // folds its energy component into the physical main and deletes the token, so the
+        // DAMAGE survived and the TYPE did not: the Cinder Knight — "carries a flaming
+        // spear and a burning shield" — shipped one 32 (8d6 + 4) Piercing spear and no
+        // fire anywhere, not even a resistance. Print keeps both halves on 11 of its 53
+        // weapon-named rows (the Knight's Greatsword is "Slashing plus Radiant").
+        //
+        // So when the blow is physical and the sheet carries a WARRANTED energy, the
+        // rider slot takes that energy instead of being folded away. `options.energy` is
+        // the declared field and is already null when the Humanoid warrant failed, so no
+        // separate check is needed. The row was priced with two components, so keeping
+        // two is budget-neutral — the fold below is what re-solves when there is one.
+        const partPhys = /^(?:Bludgeoning|Piercing|Slashing)$/.test(a.type);
+        const partEnergy = partPhys && DAMAGE_TYPES.includes(String(options.energy ?? ''))
+          && !['Bludgeoning', 'Piercing', 'Slashing'].includes(String(options.energy))
+          && / plus \d+ \(\d+d\d+\) \{damage_type_2\} damage/.test(row.text) ? String(options.energy) : null;
+        if (partEnergy) {
+          row.text = row.text.replace(/\{damage_type_2\}/g, partEnergy);
+          delete row.text_noRider;
+          trace('energy rides the named weapon:', `"${a.name}" is a ${a.weapon ?? a.type}, so the blow stays ${a.type} and ${partEnergy} rides it rather than folding into the blow (print: 11 of 53 weapon rows carry an energy rider)`);
+        } else {
+          if (partPhys) strip(/ plus (\d+) \(\d+d\d+\) (?:[A-Z][a-z]+|\{damage_type\}) damage/); // a weapon row the user named deals its weapon's damage; the chassis's energy rider belongs to the row the user gave that energy (Fire on the bull's gore)
+          strip(/ plus (\d+) \(\d+d\d+\) \{damage_type_2\} damage/); delete row.text_noRider;
+        }
         if (folded) row.text = row.text.replace(/(\d+) \((\d+)d(\d+)(?: \+ (\d+))?\)/, (m0, avg, n0, d0, mod) => { const r = attackDamageDiceFor(Number(avg) + folded, Number(mod ?? 0)); return `${r.avg} (${r.dice})`; }); // the slot's WHOLE damage is the part's: the energy clause leaves and its share folds into the weapon's dice (the Ogre's Club dealt 12 of the brute's 19 a hit — canaries 2026-10-12) // the chassis's split clause is not the user's; and the stamp pass must not restore the pre-rider text over an authored row (the Wyrm's Grappled rider vanished that way)
         row.authored = true;
       }
@@ -3901,12 +3923,52 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const bare = e.name.replace(/ \(.*\)$/, '');
       let wanted = p.damage_types?.[bare]
         ?? Object.entries(p.damage_types ?? {}).find(([k]) => k.toLowerCase() === bare.toLowerCase())?.[1];
+      // FIRE AS A RIDER, NOT INSTEAD OF THE BLOW (owner's ruling, 2026-11-01:
+      // "I don't mind fire as a rider but spears should do physical damage").
+      // The weapon override ~60 lines below demotes an energy off a weapon row's
+      // MAIN slot, and the model answers that slot and `melee_rider` in the same
+      // breath: told the main must be physical, it answered Piercing and dropped
+      // the fire entirely, so the Cinder Knight — "carries a flaming spear and a
+      // burning shield" — shipped with no fire anywhere, not even a resistance.
+      // Print's shape is both: 11 of its 53 weapon-named rows carry an energy
+      // RIDER on a physical blow (the Knight's Greatsword is "Slashing plus
+      // Radiant"). So the energy MOVES to the rider slot instead of being lost.
+      //
+      // It has to happen HERE, before the `text_noRider` restore below, because
+      // that restore is what erases the rider slot from the sentence.
+      //
+      // The weapon is read from the call's OWN `weapons` answer (the field that
+      // names the mundane weapon per row), falling back to the closed table by
+      // name. `e.weapon` is not stamped until ~2,300 lines later, so it cannot
+      // answer this.
+      let riderHere = rider;
+      {
+        const wpKey = weaponNamed(String(p.weapons?.[bare] ?? '')) ?? weaponFor(bare);
+        const wpPhys = wpKey ? WEAPONS[wpKey]?.type ?? null : null;
+        const willDemote = !!wpPhys && ['Bludgeoning', 'Piercing', 'Slashing'].includes(wpPhys)
+          && DAMAGE_TYPES.includes(wanted) && !['Bludgeoning', 'Piercing', 'Slashing'].includes(wanted);
+        if (willDemote && !DAMAGE_TYPES.includes(riderHere)) {
+          if (e.text.includes('{damage_type_2}')) {
+            // the MAIN type is demoted here too, not 60 lines down, or the
+            // "same type on both halves" collapse guard below would see
+            // rider === wanted and refuse to write the rider at all — the
+            // energy would be lost exactly as before. One site decides the
+            // weapon's damage type and the rider follows from it; the later
+            // override then finds `wanted` already physical and stands down.
+            trace('energy moves to the rider:', `"${e.name}" is a ${wpKey}, so the blow is ${wpPhys} and ${wanted} rides it — print's own shape on 11 of its 53 weapon rows (the Knight's Greatsword is "Slashing plus Radiant")`);
+            riderHere = wanted;
+            wanted = wpPhys;
+          } else {
+            trace('energy dropped — no rider slot:', `"${e.name}" is a ${wpKey} and the blow must be ${wpPhys}, but this row has no rider slot to carry ${wanted}; the energy is lost rather than re-split by hand`);
+          }
+        }
+      }
       if (e.text.includes('{damage_type_2}')) {
         // "15 Necrotic plus 10 Necrotic" is not a rider, it's a split the
         // model didn't ask for — same type on both halves collapses to the
         // solver's own full-budget single clause (wisp queen, 2026-08-18)
-        if (DAMAGE_TYPES.includes(rider) && !['Bludgeoning', 'Piercing', 'Slashing'].includes(rider) && rider !== wanted) {
-          e.text = e.text.split('{damage_type_2}').join(rider);
+        if (DAMAGE_TYPES.includes(riderHere) && !['Bludgeoning', 'Piercing', 'Slashing'].includes(riderHere) && riderHere !== wanted) {
+          e.text = e.text.split('{damage_type_2}').join(riderHere);
         } else if (e.text_noRider) {
           // restore + RE-TRANSFORM: the pristine capture predates the rename
           // pass and the name substitution, so a bare restore shipped "If
@@ -7510,7 +7572,16 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // the body's rider folds into the base: print's Assassin pays 5d6 Poison for its shortsword, a monk does not
         let folded = 0; let text = t.replace(/ plus (\d+) \(\d+d\d+(?: \+ \d+)?\) [A-Z][a-z]+ damage/g, (m0, avg) => { folded += Number(avg); return ''; });
         text = text.replace(/ (?:If the target is a creature, it must make the following saving throw\.|Plus) [^]*$/i, '');
-        if (folded) text = text.replace(/(\d+) \((\d+d\d+(?: \+ \d+)?)\)/, (m0, avg, dice) => `${Number(avg) + folded} (${dice})`);
+        // THE DICE FOLLOW THE AVERAGE (roadmap item 3c, 2026-11-01). This added the
+        // folded damage to the STATED average and left the dice untouched, so a
+        // monk's Unarmed Strike shipped "23 (3d8 + 3)" — which rolls 16.5 — and the
+        // `damage-dice` gate failed it. The average is the authority here (it comes
+        // from the budget), so the dice are re-solved to match, exactly as the
+        // named-part fold a few thousand lines above already does.
+        if (folded) text = text.replace(/(\d+) \((\d+)d(\d+)(?: \+ (\d+))?\)/, (m0, avg, n0, d0, mod) => {
+          const r = attackDamageDiceFor(Number(avg) + folded, Number(mod ?? 0));
+          return `${r.avg} (${r.dice})`;
+        });
         if (props?.type) text = text.replace(/(\d+ \(\d+d\d+(?: [+-] \d+)?\)) [A-Z][a-z]+ damage/, `$1 ${props.type} damage`);
         else if (want === 'unarmed strike') text = text.replace(/(\d+ \(\d+d\d+(?: [+-] \d+)?\)) [A-Z][a-z]+ damage/, '$1 Bludgeoning damage');
         // the class's melee weapon is not thrown: the hybrid becomes the plain melee row it now is

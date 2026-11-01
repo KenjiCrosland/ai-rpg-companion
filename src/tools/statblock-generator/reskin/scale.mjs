@@ -3,7 +3,7 @@
  * business card's lines; dice re-derive from the card's summed budget so
  * sustained + amortized nova land in band TOGETHER (the whole point).
  */
-import { cardBudget, withinBudget } from './card-budgets.mjs';
+import { cardBudget, withinBudget, singleTargetCeiling } from './card-budgets.mjs';
 import { attackDamageDiceFor, saveDamageDiceFor, hpFormulaFor } from '../format-2024/dice.mjs';
 import { DONORS } from './donors.mjs';
 import { namesMelee, weaponProp } from './weapons.mjs';
@@ -330,6 +330,7 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   const novaRows = rows.filter((r) => r.e.gate && /\d+ \(\d+d\d+(?:\s*\+\s*\d+)?\) [\w{}]+ damage/.test(r.e.text));
   // iterate per-hit until in band (coarse then fine — the dice snap anyway)
   const legendaryHits = legendaryRepeat.reduce((n, r) => n + (onceOnly(r.e.text) ? 1 : 3), 0); // the DMG counts every legendary use: a cost-1 strike row fires three times a round (critic's release audit 2026-10-03 — 2014 legendaries ran 1.5–2.3× the band with Multiattack solved to the band and three strikes on top; a 2024 lurker at 18 read +8 on offense, past print's +7 ceiling). Receipt: print 2024 legendaries sit at ~1.0× the legendary card by this count (Adult Brass 126 vs 125 at CR 13)
+  let hitClamped = null; // set when a one-attack body is held under print's single-target ceiling
   let perHit = Math.max(4, Math.round(card.dpr / (attacks + legendaryHits + 1)));
   // PER-USE nova ceiling, measured against ALL printed single-entry
   // maxima (2026-08-18, the reviewer's non-dragon rider — which was
@@ -363,6 +364,38 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
     // 110% of target. Unscaled generations keep the historical stop.
     if (ok && actual >= target * 0.9 && ((scaled.dpr_scale ?? 1) >= 1 || actual <= target * 1.1)) break;
     perHit += actual < target ? 1 : -1;
+  }
+  // A ONE-ATTACK BODY CANNOT CARRY A WHOLE ROUND IN ONE HIT (owner's ruling,
+  // 2026-11-01). The swarm strip above drops the donor's Multiattack so "the
+  // solver puts the whole round into the one row" — correct for the ROUND and
+  // ruinous for the HIT: at CR 13 that is 90 against print's hardest single-target
+  // row of 51 (1.76x), which one-shots a player character. Print's own answer is
+  // that it has NO swarm above CR 3, so there is no printed peer to copy; what
+  // print does state is the per-band ceiling, and that holds whatever the body.
+  //
+  // MEASURED BEFORE CHOOSING (sweep-2026-10-30T02-34-52 #29, four variants through
+  // the real checker): clamping alone clears the `single-target-ceiling` FAIL and
+  // leaves soft `aim-dpr`/`band` (the round lands near half budget). MOVING the
+  // surplus into the sheet's area row — the ruling's second half — fails
+  // `nova-cap` instead, because that row is a Recharge nova and print caps nova
+  // damage per use; ungating it to dodge that fails `under`. So the surplus has
+  // nowhere legal to go, and the clamp ships alone. Reported to the owner.
+  // AFTER the budget loop, which is the whole point: the loop drives per-hit back
+  // UP until the round meets the card, so a clamp placed before it is simply undone
+  // (measured: it set 51 and the loop returned 90). Clamping here means the round
+  // lands under budget by construction — the soft `aim-dpr`/`band` read that the
+  // four-variant measurement showed is the cheapest of the available costs.
+  if (oneAttack && cr > 3) {
+    const ceiling = singleTargetCeiling(cr);
+    if (ceiling && perHit > ceiling) {
+      // scale.mjs has no tracer and is given none, so the clamp is recorded as a
+      // FIELD and generate.mjs traces it where the trace belongs. (`trace?.()`
+      // would have thrown here: optional-call does not protect an UNDECLARED
+      // identifier, only a nullish value — the same shape as the unimported
+      // `bandFor` caught earlier today.)
+      hitClamped = { from: perHit, to: ceiling, cr };
+      perHit = ceiling;
+    }
   }
   const dexMod = Math.floor((scaled.stats.DEX - 10) / 2);
   const strMod = Math.floor((scaled.stats.STR - 10) / 2);
@@ -483,6 +516,7 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   const conMod = Math.floor((scaled.stats.CON - 10) / 2);
   scaled.hp_formula = hpFormulaFor(scaled.hp, scaled.size ?? 'Medium', conMod);
   scaled.per_hit = perHit;
+  if (hitClamped) scaled.hit_clamped = hitClamped;
   stampAttacksPerRound(scaled.sections); // a donor that brought print's own Multiattack is stamped from it, once
   return scaled;
 }

@@ -6866,5 +6866,77 @@
     "askShape": "attack"
    }
   ]
+ },
+ "7e30f5c837ee": {
+  "concept": "A long-dead quadruped of dark pitted iron stalks the lava flats, its hollow ribcage a tuning chamber where the volcanic ",
+  "clauses": [
+   {
+    "id": "cl_1ycds5b",
+    "text": "A long-dead quadruped of dark pitted iron stalks the lava flats",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_hu3bxg",
+    "text": "its hollow ribcage a tuning chamber where the volcanic wind howls",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_a8mr3e",
+    "text": "gathers until the whole rusted frame hums with concussive force",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_8p3dyt",
+    "text": "It waits motionless among the cinders for hours",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_4oo57p",
+    "text": "lets out a shrieking metallic peal that rolls across the waste",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "burst",
+    "askMechanicWhy": "shrieking metallic peal that rolls across the waste"
+   },
+   {
+    "id": "cl_fci44o",
+    "text": "bursts a distant traveler's bones before the beast has taken a single step",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1gsu28i",
+    "text": "Wounded",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_o9cf51",
+    "text": "it does not flee",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_1n9ges1",
+    "text": "circles patiently out of sight",
+    "kind": "mechanical",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_s30knn",
+    "text": "re-aiming its keening song from yet another rise until its prey has nothing left unbroken",
+    "kind": "mechanical",
+    "askShape": "save_single"
+   },
+   {
+    "id": "cl_19nj5rq",
+    "text": "It is scheming (INT 14-16)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1vytk8h",
+    "text": "it is a patient killer that strikes from extreme range",
+    "kind": "mechanical"
+   }
+  ]
  }
 }
