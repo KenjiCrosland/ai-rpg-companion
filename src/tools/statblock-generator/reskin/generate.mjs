@@ -3381,6 +3381,50 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (/^[A-Z][a-z']{1,20}$/.test(s) && new RegExp(`(?:^|\\s)${s}(?:\\s|$)`).test(String(p.name ?? ''))) return s;
     return null;
   })();
+  // ONE FORM -> TEXT BODY FOR AN AUTHORED ROW (R4 step 1). A save, trait or
+  // reaction the model wrote into author.mjs's forms becomes a row here, and
+  // NOWHERE ELSE: `landAuthored` below lands the repair call's rows, and the
+  // signature seat (`fitSeat`) lands the row it authors when the fit call
+  // refused every template. Three times this sprint a private copy of a body
+  // like this has hidden a fix from one of its callers, so this renders and
+  // stamps and places nothing — the caller owns the section, the slot yield
+  // and the ordering.
+  //
+  // `fallbackType` is the save form's last resort for a damage type when the
+  // call named none and its own words warrant none; in the repair path it is
+  // the first authored attack's type, and a seat authoring one row has none.
+  const authoredRow = (kind, f, { fallbackType = null } = {}) => {
+    const token = (s) => String(s ?? '')
+      .replace(/(?:DC )?\{dc\}/g, `DC ${scaled.dc}`) // "a 15 Charisma saving throw" — the token always carries its DC (step 7 defect 5)
+      .replace(/\{dmg\}/g, () => { const d = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * 0.5))); return `${d.avg} (${d.dice})`; });
+    if (kind === 'save') {
+      const s = f;
+      const dice = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * (s.target.startsWith('each') ? 1.4 : 1.1))));
+      const saveType = s.type ?? (([, w] = []) => ({ fire: 'Fire', flame: 'Fire', scald: 'Fire', steam: 'Fire', burn: 'Fire', ember: 'Fire', frost: 'Cold', ice: 'Cold', cold: 'Cold', freez: 'Cold', lightning: 'Lightning', thunder: 'Thunder', sonic: 'Thunder', poison: 'Poison', venom: 'Poison', acid: 'Acid', rot: 'Necrotic', necrotic: 'Necrotic', decay: 'Necrotic', grave: 'Necrotic', radiant: 'Radiant', holy: 'Radiant', sun: 'Radiant', psychic: 'Psychic', mind: 'Psychic', force: 'Force' })[w])(/\b(fire|flame|scald|steam|burn|ember|frost|ice|cold|freez|lightning|thunder|sonic|poison|venom|acid|rot|necrotic|decay|grave|radiant|holy|sun|psychic|mind|force)/i.exec(`${s.clause} ${s.name}`.toLowerCase()) ?? []) ?? fallbackType ?? 'Bludgeoning'; // the save's own type, else a type its words warrant, else the first attack's
+      const failure = [s.damage ? `${dice.avg} (${dice.dice}) ${saveType} damage` : '', s.movement ? `the target is ${s.movement} straight ${/pushed/.test(s.movement) ? 'away from' : 'toward'} ${inlineGuessRef()}` : '', s.condition ? `the target has the ${s.condition} condition until the end of its next turn` : ''].filter(Boolean);
+      const text = renderForm({ kind: 'save', stat: s.stat, dc: scaled.dc, target: s.target, failure: `${failure[0]}${failure.length > 1 ? `, and ${failure.slice(1).join(', and ')}` : ''}.`, success: s.damage && s.success === 'half' ? 'Half damage only.' : null }, '2024');
+      // THE CONDITION THE ROW IMPOSES IS KEPT ON THE ROW (owner, 2026-10-20:
+      // "we want the llm to categorize when possible"). The authoring call
+      // already answers it, validated against author.mjs's closed CONDITIONS
+      // list — and the renderer used it for the sentence and then dropped it.
+      // Nothing downstream could tell a condition the row IMPOSES from one it
+      // merely REQUIRES, so the save pass was reading it back out of the prose.
+      // Keeping the field is what lets that matcher be deleted.
+      return { name: `${s.name}${s.recharge ? ' (Recharge 5-6)' : ''}`, text, authored: true, clause: s.clause, gate: s.recharge ? 'Recharge 5-6' : undefined, ...(s.condition ? { imposes: s.condition } : {}), ...(s.movement ? { imposesMovement: true } : {}) };
+    }
+    if (kind === 'trait') {
+      const t = f;
+      const dmgTok = (eff) => String(eff).replace(/\s*\{dmg\}(?:\s+damage)?/g, (tok, off, whole) => (/\b(?:takes?|deals?|dealing|taking|extra|additional|plus|regains?|suffers?|an extra)\s*$/i.test(whole.slice(0, off)) ? tok : '')).replace(/\s{2,}/g, ' '); // "immune to anything {dmg}" — the token only stands where damage is dealt or taken (the Vault Bull, step 6 baseline)
+      const text = renderForm({ kind: 'trait', trigger: t.trigger, effect: token(dmgTok(t.effect)) }, '2024');
+      return { name: t.name, text, authored: true, clause: t.clause, ...(t.imposes ? { imposes: t.imposes } : {}), ...(t.flavor ? { flavor: t.flavor } : {}) };
+    }
+    if (kind === 'reaction') {
+      const r = f;
+      const text = renderForm({ kind: 'reaction', trigger: r.trigger, response: token(r.response) }, '2024');
+      return { name: r.name, text, authored: true, clause: r.clause, ...(r.imposes ? { imposes: r.imposes } : {}) };
+    }
+    return null;
+  };
   const landAuthored = (authored, { repair = false } = {}) => {
     // A REPAIR ROW MAY NOT TAKE A NAME ALREADY ON THE SHEET (forty 2026-10-19: the repair named its trait
     // "Unbroken Wall" beside the seat's "Unbroken Wall"). The call is told the taken names; this is the validator.
@@ -3454,22 +3498,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     const attackNames = [...cited, ...Object.values(sections).flat().filter((e) => e.authored && /Attack Roll/.test(e.text ?? '')).map((e) => String(e.name).replace(/ \(.*\)$/, '')).filter((n) => !cited.includes(n))];
     if (ma && attackNames.length) { const count = (/makes (\w+)/.exec(ma.text) ?? [])[1] ?? 'two'; ma.text = `${ma.text.split(/\.\s*/)[0].replace(/makes (\w+) .*$/, attackNames.length === 1 ? `makes ${count} ${attackNames[0]} attacks` : `makes ${count} attacks, using ${attackNames.slice(0, -1).join(', ')} or ${attackNames.at(-1)} in any combination`)}.${(ma.text.match(/\. It can replace[^.]*\./) ?? [''])[0]}`; } // "in any combination" needs two rows (Wearwretch, Bog Hound — critic's step-5 read)
     for (const s of authored.saves) {
-      const dice = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * (s.target.startsWith('each') ? 1.4 : 1.1))));
-      const saveType = s.type ?? (([, w] = []) => ({ fire: 'Fire', flame: 'Fire', scald: 'Fire', steam: 'Fire', burn: 'Fire', ember: 'Fire', frost: 'Cold', ice: 'Cold', cold: 'Cold', freez: 'Cold', lightning: 'Lightning', thunder: 'Thunder', sonic: 'Thunder', poison: 'Poison', venom: 'Poison', acid: 'Acid', rot: 'Necrotic', necrotic: 'Necrotic', decay: 'Necrotic', grave: 'Necrotic', radiant: 'Radiant', holy: 'Radiant', sun: 'Radiant', psychic: 'Psychic', mind: 'Psychic', force: 'Force' })[w])(/\b(fire|flame|scald|steam|burn|ember|frost|ice|cold|freez|lightning|thunder|sonic|poison|venom|acid|rot|necrotic|decay|grave|radiant|holy|sun|psychic|mind|force)/i.exec(`${s.clause} ${s.name}`.toLowerCase()) ?? []) ?? authored.placed[0]?.type ?? 'Bludgeoning'; // the save's own type, else a type its words warrant, else the first attack's
-      const failure = [s.damage ? `${dice.avg} (${dice.dice}) ${saveType} damage` : '', s.movement ? `the target is ${s.movement} straight ${/pushed/.test(s.movement) ? 'away from' : 'toward'} ${inlineGuessRef()}` : '', s.condition ? `the target has the ${s.condition} condition until the end of its next turn` : ''].filter(Boolean);
-      const text = renderForm({ kind: 'save', stat: s.stat, dc: scaled.dc, target: s.target, failure: `${failure[0]}${failure.length > 1 ? `, and ${failure.slice(1).join(', and ')}` : ''}.`, success: s.damage && s.success === 'half' ? 'Half damage only.' : null }, '2024');
-      // THE CONDITION THE ROW IMPOSES IS KEPT ON THE ROW (owner, 2026-10-20:
-      // "we want the llm to categorize when possible"). The authoring call
-      // already answers it, validated against author.mjs's closed CONDITIONS
-      // list — and the renderer used it for the sentence and then dropped it.
-      // Nothing downstream could tell a condition the row IMPOSES from one it
-      // merely REQUIRES, so the save pass was reading it back out of the prose.
-      // Keeping the field is what lets that matcher be deleted.
-      const saveRow = { name: `${s.name}${s.recharge ? ' (Recharge 5-6)' : ''}`, text, authored: true, clause: s.clause, gate: s.recharge ? 'Recharge 5-6' : undefined, ...(s.condition ? { imposes: s.condition } : {}), ...(s.movement ? { imposesMovement: true } : {}) };
+      const saveRow = authoredRow('save', s, { fallbackType: authored.placed[0]?.type ?? null });
       esA.push(saveRow);
       if (s.recharge) slotYield(['nova'], saveRow);
     }
-    const dmgTok = (eff) => String(eff).replace(/\s*\{dmg\}(?:\s+damage)?/g, (tok, off, whole) => (/\b(?:takes?|deals?|dealing|taking|extra|additional|plus|regains?|suffers?|an extra)\s*$/i.test(whole.slice(0, off)) ? tok : '')).replace(/\s{2,}/g, ' '); // "immune to anything {dmg}" — the token only stands where damage is dealt or taken (the Vault Bull, step 6 baseline)
     // THE RELATION IS TRACED, OR THE EVIDENCE IS INVISIBLE (2026-10-22). The
     // `condition_relation` enum stops a row that is IMMUNE to a condition being
     // recorded as imposing it — the Drowned Choir's One Voice, which cost a false
@@ -3490,8 +3522,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (t.condition_relation !== 'inflicts' && t.condition) requireOn(t, t.condition);
       trace('condition relation:', `"${t.name}" — the call reads its condition as ${t.condition_relation}${t.condition_relation === 'inflicts' ? ` and the row records ${t.imposes}` : ', so no condition is recorded against it'}`);
     }
-    for (const t of authored.traits) { const text = renderForm({ kind: 'trait', trigger: t.trigger, effect: dmgTok(t.effect).replace(/(?:DC )?\{dc\}/g, `DC ${scaled.dc}`) /* "a 15 Charisma saving throw" — the token always carries its DC (step 7 defect 5) */.replace(/\{dmg\}/g, (() => { const d = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * 0.5))); return `${d.avg} (${d.dice})`; })()) }, '2024'); (sections.Traits = sections.Traits ?? []).unshift({ name: t.name, text, authored: true, clause: t.clause, ...(t.imposes ? { imposes: t.imposes } : {}), ...(t.flavor ? { flavor: t.flavor } : {}) }); }
-    for (const r of authored.reactions) { const text = renderForm({ kind: 'reaction', trigger: r.trigger, response: r.response.replace(/(?:DC )?\{dc\}/g, `DC ${scaled.dc}`).replace(/\{dmg\}/g, (() => { const d = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * 0.5))); return `${d.avg} (${d.dice})`; })()) }, '2024'); (sections.Reactions = sections.Reactions ?? []).push({ name: r.name, text, authored: true, clause: r.clause, ...(r.imposes ? { imposes: r.imposes } : {}) }); }
+    for (const t of authored.traits) (sections.Traits = sections.Traits ?? []).unshift(authoredRow('trait', t));
+    for (const r of authored.reactions) (sections.Reactions = sections.Reactions ?? []).push(authoredRow('reaction', r));
     if (authored.crossRef && authored.crossRef.payoffRow !== authored.crossRef.riderRow) { const pay = rowByName(authored.crossRef.payoffRow); const rid = rowByName(authored.crossRef.riderRow); if (pay && rid && new RegExp(`has the ${authored.crossRef.condition} condition`).test(rid.text) && /Attack Roll:\*? \+\d+/.test(pay.text) && !/with Advantage/.test(pay.text)) { pay.text = pay.text.replace(/(Attack Roll:\*? \+\d+)/, `$1 (with Advantage if the target has the ${authored.crossRef.condition} condition)`); requireOn(pay, authored.crossRef.condition); trace('cross-row reference:', `"${rid.name}" applies ${authored.crossRef.condition}; "${pay.name}" exploits it`); } }
     trace(repair ? 'repaired sheet:' : 'named parts landed:', `${attackNames.length} attack row(s), ${authored.saves.length} save, ${authored.traits.length} trait(s), ${authored.reactions.length} reaction(s); ${authored.unplaced.length} clause(s) unplaced`);
   };
