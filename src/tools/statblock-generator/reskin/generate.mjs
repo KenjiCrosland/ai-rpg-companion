@@ -1558,6 +1558,30 @@ const DECLARED_BY_WRITER = ['imposes', 'requiresCondition', 'duration', 'minorCl
 // the same reason `augmented` is carried by hand below. It was declared by the
 // render and dropped here, which is why 0 of 11 area rows on the last forty
 // carried it: the `gate` disease, third sighting (declared, then not carried).
+// THE WELD'S RECORD, READ BACK (roadmap R3 site 2, 2026-11-01). The weld appends
+// `" " + riderText` to the host, so the segment it owns is exactly that — removed
+// by its own declaration rather than by a pattern that has to guess the rider's
+// shape. The shape is the whole point: the Dire Wolf's Bite took a rest-long
+// contagion as a SAVE BLOCK ("…is subjected to the following effect.
+// *Constitution Saving Throw*… *Failure:*…"), and the print-canon strip's pattern
+// knew only the bare ", and the target has the X condition" form, so print's own
+// row shipped with an engine rider welded onto it.
+//
+// One definition because both the print-canon strip and the one-fact-one-home
+// shed need it, and a private copy in each is how this sprint has hidden fixes
+// from itself before. `only` restricts the drop to riders naming one condition,
+// which is what the shed asks for; without it every welded rider goes.
+export const dropWeldedRiders = (row, { only = null } = {}) => {
+  const welded = (row?.weldedRiders ?? []).filter((w) => typeof w === 'string' && w
+    && (!only || new RegExp(`\\b${only}\\b`).test(w)));
+  let text = String(row?.text ?? '');
+  const taken = [];
+  for (const w of welded) {
+    for (const seg of [` ${w}`, w]) if (text.includes(seg)) { text = text.split(seg).join(''); taken.push(w); break; }
+  }
+  return { text: text.trim(), taken };
+};
+
 export const carryDeclared = (row, rendered) => {
   if (!row || !rendered) return row;
   for (const k of DECLARED_BY_WRITER) if (rendered[k] && !row[k]) row[k] = String(rendered[k]);
@@ -5591,6 +5615,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           trace('rider gated:', `"${actionT.template}" imposes a hold with no save — once per turn`);
         }
         { const guard = /^If the target is a (\w+) or smaller creature, /i.exec(riderText); if (guard && new RegExp(`If the target is a ${guard[1]} or smaller creature, `, 'i').test(host.text)) { riderText = riderText.slice(guard[0].length); riderText = riderText.charAt(0).toUpperCase() + riderText.slice(1); } } // one size guard per row, as print writes it (the Bog Hound's Bite carried two — the critic's second species read)
+        // THE WELD DECLARES WHAT IT WELDED (roadmap R3 site 2, 2026-11-01).
+        // This line is the one place that knows a sentence was joined to a row,
+        // and it recorded nothing — so every pass downstream had to read the
+        // rider back out of the host's prose. That is why the one-fact-one-home
+        // shed cannot act on 38 of its 77 firings ("the strip has no pattern for
+        // how this row words it") and why a welded SAVE BLOCK survived the
+        // print-canon strip, whose pattern only knew the bare condition form
+        // (the Dire Wolf's rest-long contagion on print's own Bite).
+        //
+        // The exact appended string is the segment: a later drop removes what
+        // this site declared, not what a pattern guesses. And the rider's own
+        // `minorClause` rides onto the host, which now owns that clause.
+        host.weldedRiders = [...(host.weldedRiders ?? []), riderText];
+        if (typeof actionT.row?.minorClause === 'string' && !host.minorClause) host.minorClause = actionT.row.minorClause;
         host.text = `${host.text.trim()} ${riderText}`;
         // A PAYOFF RIDER'S CONDITION RIDES ONTO THE HOST AS A NEED, not as `consumes`.
         // `consumes` on a row means "drop this row if unmet", and this row is the
@@ -6751,7 +6789,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // the Dire Wolf shipped a rest-long contagion on print's own Bite.
           // A donor row carries no record, so the frame is split here instead —
           // declared data first, a boundary read of our own text as the fallback.
-          { const declared = typeof e.minorClause === 'string' ? e.minorClause : null;
+          { // a WELDED rider is print's row's worst case: the Dire Wolf's Bite took a
+            // rest-long contagion as a whole save block, which the old pattern (bare
+            // condition form only) could not see. The weld declares it now, so this
+            // removes the engine's own appended string rather than guessing its shape.
+            { const dw = dropWeldedRiders(e);
+              if (dw.taken.length) { e.text = dw.text; trace('print canon: welded rider leaves —', `"${e.name}" is the ${pc.name}'s own row, and the engine's welded "${String(dw.taken[0]).slice(0, 48)}…" is not print's rider`); }
+              e.weldedRiders = []; }
+            const declared = typeof e.minorClause === 'string' ? e.minorClause : null;
             if (declared && e.text.includes(declared)) e.text = e.text.split(declared).join('');
             else { const mc = splitMinorClause(e.text); if (mc.clause) e.text = mc.body.split('{minor_clause}').join(''); }
             delete e.minorClause; }
@@ -8765,8 +8810,17 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // the RIDER half is the shared segment — split by its own declaration,
         // restricted to the condition being shed (R3); the standalone-sentence
         // half below is a different shape and keeps its pattern for now
-        const shed = splitMinorClause(String(e.text), { only: cond });
-        const next = (shed.clause ? shed.body.split('{minor_clause}').join('') : String(e.text))
+        //
+        // DECLARED SEGMENTS FIRST (R3 site 2, 2026-11-01). A rider the WELD joined
+        // to this row is recorded by the weld, so shedding it removes the engine's
+        // own appended string — no pattern, and it reaches the shapes no pattern
+        // could: a welded save block is 38 of this pass's 77 firings' worth of
+        // "the strip has no pattern for how this row words it".
+        const dw = dropWeldedRiders(e, { only: cond });
+        const weldHere = dw.taken;
+        const base = dw.text;
+        const shed = splitMinorClause(base, { only: cond });
+        const next = (shed.clause ? shed.body.split('{minor_clause}').join('') : base)
           .replace(new RegExp(`\\s*(?:While [^.,]{0,40},\\s*)?(?:The target|It) has the ${cond} condition[^.]*\\.`, 'i'), '')
           .replace(/\s{2,}/g, ' ').replace(/\.\./g, '.').trim();
         // THE CONDITION WAS THE WHOLE ROW. This pass assumes a damage row whose
@@ -8802,10 +8856,21 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // an unstripped rider than a mangled sentence — but saying nothing meant
           // the gate could FAIL a sheet while the pass looked like it had never run,
           // which is exactly how the Guardian case stayed unexplained for a day.
-          trace('one mechanic, at most twice:', `"${e.name}" keeps its ${cond} rider — the strip has no pattern for how this row words it: ${String(e.text).slice(0, 120)}`);
+          // AND THE DECLINE IS A FIELD, NOT ONLY A TRACE (R3 site 2). This arm is
+          // 38 of the pass's 77 firings — half the time one-fact-one-home cannot
+          // act, because the condition is woven into a frame's own sentence
+          // ("While entombed, the target has the Blinded and Restrained
+          // conditions, has Total Cover…") where no cut leaves a row a GM can
+          // run. No new cut is invented here: the number is recorded so it is
+          // countable, and so the real answer — not loading a third holder at all
+          // (R3b) — has its receipt.
+          e.shed_blocked = [...new Set([...(e.shed_blocked ?? []), cond])];
+          if (monster.generation) monster.generation.shed_blocked = [...new Set([...(monster.generation.shed_blocked ?? []), `${e.name}:${cond}`])];
+          trace('one mechanic, at most twice:', `"${e.name}" keeps its ${cond} rider — the strip has no pattern for how this row words it (recorded as shed_blocked): ${String(e.text).slice(0, 120)}`);
           continue;
         }
         if (e.imposes === cond) delete e.imposes;
+        if (weldHere.length) e.weldedRiders = (e.weldedRiders ?? []).filter((w) => !weldHere.includes(w)); // the record goes with the sentence
         trace('one mechanic, at most twice:', `"${e.name}" drops its ${cond} rider — ${holders.length} rows imposed it and print has none with three; the row, its damage and its name all stay`);
       }
     }

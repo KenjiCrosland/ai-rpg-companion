@@ -761,3 +761,85 @@ surprises:   1. FOUR COPIES, NOT ONE. The plan named one print-canon strip; the 
                 Merciless Strike at 71 to one target at CR 17 against print's 51. Same
                 payoff-stack class as the RC's accepted Spitting Maw FAIL; no damage path
                 was touched here.
+
+### CORRECTION to the R3 site-1 block — the Roper's lost grapple
+The site-1 block named the one-fact-one-home shed as the cause. That was wrong, and
+the error was mine: I replayed the shed's pattern against a Roper Tentacle I typed
+from memory **with damage in it**. Print's Roper Tentacle deals NO dice damage at
+all — "*Melee Attack Roll:* +7, reach 60 ft. The target has the Grappled condition
+(escape DC 14) from one of six tentacles, and the target has the Poisoned condition
+until the grapple ends." The real cause is the print-canon row CLONE: `rowOf`
+anchors every field it reads (`type`, `rider`, `dmg`) on a damage expression, so for
+this row `pr.rider` came back EMPTY and print's grapple was never carried onto the
+clone. Measured: 18 of print's 354 melee attack rows deal no dice damage; 17 are
+flat "1 damage" critters (Bat, Rat, Cat…) and the Roper is the only one carrying
+real mechanics. Belongs with the clone's parser, not the shed. ("A probe must be fed
+real context" — fifth instance; the fabricated input was a row I was sure of.)
+
+### R3 site 2 — the weld declares what it welded; the shed reads the declaration
+predicted:   1. every welded host carries `weldedRiders`; 1-4 welds on twelve-1030.
+             2. the Dire-Wolf class (a welded SAVE BLOCK on print's own row) is
+                proven by DETERMINISTIC REPLAY only — 0 live firings expected,
+                because the case is now prevented upstream.
+             3. the shed: byte-identical on its 33 "drops"; `shed_blocked` recorded
+                on the 38 it cannot act on; 0-3 shed firings on twelve-1030.
+             4. row-text `.replace(` sites 187 -> 186.
+             5. suite green, build clean, floors unchanged.
+measured:    replay, zero cost: the shed has fired 77 times across saved runs —
+             **33 "drops its rider", 38 "keeps its rider — the strip has no pattern
+             for how this row words it", 6 "LEAVES"**. One-fact-one-home cannot act
+             on 49% of its own firings. The 38 are frame sentences where the
+             condition is woven in (Entomb, Cocoon, Smother, Gullet Armory, Caustic
+             Shell, Living Silk, Snaring Thorns…) and no cut leaves a runnable row.
+             8 welds on the last forty; the weld declared nothing.
+             `unaskedOnPrint` has fired 0 times in every saved run — that guard is
+             still dead; the Dire Wolf is clean because the rider is refused
+             upstream for want of the GM's own ask.
+
+             1. PARTLY WRONG, for a good reason. 4 weld traces (2 unique x 2
+                printings), 1 row shipping `weldedRiders`. The second did declare —
+                and was then READ AND CLEARED by the new print-canon drop, which is
+                the field working, not failing. Not "declared then not carried".
+             2. **WRONG, in the good direction — it fired LIVE.** The Vampire's
+                chassis "Thorn Lash" was becoming print's own row, and the trace
+                reads: `print canon: welded rider leaves — "Thorn Lash" is the
+                Vampire's own row, and the engine's welded "If the target is a
+                creature and isn't already Po…" is not print's rider`. It shipped as
+                `Grave Strike: … 8 (1d8 + 4) Bludgeoning plus 7 (2d6) Necrotic …
+                Grappled (escape DC 17) from one of two hands.` — print's row,
+                clean, `weldedRiders: []`, `print: true`. The Dire-Wolf class is
+                fixed structurally, not latently.
+             3. UNEXERCISED. 0 shed firings on twelve-1030, so `shed_blocked` has no
+                live evidence on this batch; the 33/38/6 replay is its warrant. The
+                33 "drops" path is unchanged in shape (declared segments are tried
+                first, then the same patterns).
+             4. WRONG: 187 -> 187. The shed's rider pattern had already retired in
+                site 1, and this site adds no cut — it adds a declaration. `[^.]*`
+                unchanged at generate 32 / templates 3. The honest instrument for
+                this site is the 38-firing number, not the pattern count.
+             5. suite 171 suites / 4570 tests · build clean. Floors: Owlbear,
+                Purple Worm, Stone Golem, Vampire, Dire Wolf, Adult Red Dragon all
+                ran; Purple Worm's grapple pair intact.
+runs:        smoke-out/twelve-1030-2026-11-02T00-27-21 (12/12 ok, 1 FAIL)
+             before: smoke-out/twelve-1030-2026-11-01T17-34-33 (1 FAIL of 12)
+suite:       171 suites / 4570 tests · build clean
+commit:      (uncommitted at hand-off)
+not done:    - the shed's whole-sentence pattern still stands. The 38 prove a
+               declaration cannot cover those rows: the condition is the frame's own
+               payload. A cut cannot fix them and I did not invent one. The real
+               answer is not loading a third holder at all — R3b — and
+               `shed_blocked` is now the field that gives R3b its receipt.
+             - the weld's size-guard dedup still reads the host's text.
+             - the Roper/clone parser (see the correction above).
+             - the 2014 printing from fields, and the trait-form `{dc}` validator:
+               R3.2 and R3.3, not started.
+surprises:   1. The shed's 49% blind rate. It has been reported as a working pass
+                since 2026-10-20; half of its firings are declines, and the decline
+                was only ever a trace line. It is now a field on the row and on
+                `generation.shed_blocked`.
+             2. The FAIL is not mine and is not new in kind: `gate-fit` on the Dire
+                Wolf — "an at-will condition action with no Multiattack to join".
+                Neither of this site's two paths touched a Dire Wolf row (no trace
+                lines on that sheet), and the previous twelve-1030 composed a
+                Multiattack where this one did not. Same 1-FAIL-of-12 rate as the
+                run before it, different sheet and gate.
