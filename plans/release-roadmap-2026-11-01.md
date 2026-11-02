@@ -621,6 +621,20 @@ same each roll").
   *Order:* after R3, before forty #1, so one forty measures R3 and R3b together and R4's
   runnable-tonight baseline is taken without filler in the budget.
 
+**R3b — CLOSED BY MEASUREMENT (2026-11-02).** Three of its premises were refuted
+before building (`ROADMAP-results-2026-11-01.md`, the R3b blocks): we are not longer
+than print in the middle bands; a Recharge nova is print's own default at CR 13+ and we
+UNDER-produce them below; and 0 of the 19 receiptless rows on forty #1 are kit loads —
+14 are `closest accepted`. What shipped: a borrowed row (`accepted_closest`) is capped
+by print's median for the band (unproven — 0 firings on the sixteen; judge on forty #2,
+and hold it behind R4 if it sheds a praised row). The horseman already rolls 4 of 8
+bare with the trope on all 8 as a rider. The variety criterion above is WRONG for a
+species+class concept: a kit the concept's own words name (the lizardfolk's Hold
+Breath, the rogue's Cunning Action) is a receipt, not a repeat — measure variety on the
+SIGNATURE, which on the ninja was `closest accepted` 4 rolls of 8. That is R4.
+Open, small: `attack-stat` on mounted knights (3 of 16 — a DEX chassis armed with a
+lance), not R4's.
+
 **R4. Authoring-first for the signature seat.** Invert the dispatch: the seat tries the
 authoring forms FIRST, the template menu is the fallback. Not free prose — forms as
 today — through the same calibration passes (DC derivation, ceilings, duration bounds,
