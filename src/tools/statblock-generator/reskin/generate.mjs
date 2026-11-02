@@ -36,7 +36,7 @@ import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedConditions } from './
 import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the validated condition list the authoring call answers against
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
-import { buildRepairPrompt, parseAuthorResponse, validateAuthorResponse } from './author.mjs';
+import { buildRepairPrompt, buildSeatPrompt, parseAuthorResponse, validateAuthorResponse } from './author.mjs';
 import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
 import { WEAPONS, weaponFor, weaponNamed, namesWeapon, weaponsIn, finesseLike } from './weapons.mjs';
@@ -4990,6 +4990,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           };
           return Object.keys(out).length ? out : null;
         })();
+        const freeAllowance = printExact ? 0 : 1; // the path's allowance for a signature row with no GM quote and no keyed verb (owner's ruling 2026-10-21); read by the R4 authoring attempt and by the receipt block below
         if (askedFor) trace('classification handed to the fit call:', Object.entries(askedFor).map(([k, v]) => `${k}=${v}`).join(' '));
         const rawFit = await callLLM(buildFitPrompt({ name: p.name, sheet: sheetSoFarT, idea, menu: offered, cr, concept: verbText, clause: ownClauseForCall, elements: sigElements, asked: askedFor }), validateFitResponse);
         let fit = readFit(parseFit(rawFit, offered, p.name, sigElements), offered, `${verbText} ${idea.idea}`);
@@ -5068,6 +5069,68 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const nearBlocked = ['collision', 'already_answered'].includes(fit.declined_because);
         if (!fit.template && fit.closest && nearBlocked) {
           trace('closest refused:', `${seat} — "${fit.closest}" was named nearest, but the call declined it for ${fit.declined_because} ("${fit.declined_raw || fit.declined_because}") — ${fit.declined_because === 'collision' ? 'the word suggests this mechanic and the row does not carry it' : 'the sheet already answers this'}; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: ${String(fit.missing ?? 'unstated').slice(0, 70)})`);
+        }
+        // R4 — THE SEAT WRITES THE ROW THE CATALOG CANNOT HOLD (owner's decisions,
+        // 2026-11-02; roadmap §8 R4). The branch below lands the template the call
+        // named NEAREST and then declined, which is how 220 recorded refusals across
+        // three runs each shipped a row the call had just said does not carry the
+        // mechanic — and every one of those 220 answered `declined_because: no_fit`,
+        // "nothing offered carries the mechanic". There is no fraction of that loss a
+        // better menu, a different order or a second pick could reach: the catalog is
+        // missing the shape. So before the nearest stands in, the seat authors the row.
+        //
+        // SURGICAL, not a literal inversion (owner's decision (a)): this fires only
+        // where the call refused, so the ~30% of seats where the call AFFIRMS a
+        // template keep the menu and are untouched.
+        //
+        // The row comes back in this function's own SEAT SHAPE (decision (b)), so it
+        // faces every gate a templated row faces — body legality, `valueCheck`'s floor
+        // and ceilings, dedup, adjudicability, the trait ceiling, the ship-time free-row
+        // budget — rather than being landed straight into `sections`. It carries no
+        // template id, which is honest: `TEMPLATE_BY_ID` lookups downstream read
+        // undefined and the template-keyed gates (the nova gate, `supersedes`,
+        // `userKeysFor`) stand down of their own accord.
+        //
+        // It is a FREE ROW and spends the path's allowance, because it quotes nothing
+        // the GM typed unless the fit call happened to give a quote. It is NOT
+        // decoration: decoration is defined as a row with no receipt that ships anyway,
+        // and this row was written to carry the idea rather than stretched to it.
+        // printExact sheets get none — print closes their row set, the same answer the
+        // nearest gets below.
+        if (!fit.template && fit.declined_because === 'no_fit') {
+          const seatKind = seat === 'trait' || idea.section === 'trait' ? 'a trait'
+            : idea.section === 'reaction' ? 'a reaction'
+              : idea.section === 'bonus_action' ? 'a bonus action' : 'an action';
+          if (freeAllowance === 0) trace('seat authoring skipped:', `${seat} — the call refused every template for no_fit, but print closes this sheet's row set, so there is nothing to author into`);
+          else if (freeRowsUsed >= freeAllowance) trace('seat authoring skipped:', `${seat} — the call refused every template for no_fit, but this sheet has already spent its one free signature row`);
+          else {
+            const takenS = Object.values(sections).flat().map((e2) => String(e2.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean);
+            const rawS = await callLLM(buildSeatPrompt({ name: p.name, inline: inlineGuessRef(), cr, sheet: sheetSoFarT, idea: String(idea.idea ?? ''), missing: String(fit.missing ?? ''), kind: seatKind, taken: takenS, lacks: (clauseRecord ?? []).filter((c) => c.polarity === 'lacks').map((c) => c.text) }), validateAuthorResponse);
+            const wrote = parseAuthorResponse(rawS, { attackCap: 0, traitSlots: 1 });
+            // the form the SEAT asked for is the only one it takes: a save in the trait
+            // seat would skip `valueCheck` (the consumer runs it on everything but
+            // Traits and Rider), and a trait in the action seat is a different seat's row
+            const form = !wrote ? null
+              : seatKind === 'a trait' ? (wrote.traits[0] ? { kind: 'trait', f: wrote.traits[0], section: 'Traits' } : null)
+                : seatKind === 'a reaction' ? (wrote.reactions[0] ? { kind: 'reaction', f: wrote.reactions[0], section: 'Reactions' } : null)
+                  : (wrote.saves[0] ? { kind: 'save', f: wrote.saves[0], section: seatKind === 'a bonus action' ? 'Bonus Actions' : 'Actions' } : null);
+            if (!form) {
+              trace('seat authored nothing:', `${seat} — the call was asked to write ${seatKind} for "${String(idea.idea ?? '').slice(0, 70)}" and ${wrote ? `wrote no row of that kind${(wrote.refused ?? []).length ? ` (refused: ${wrote.refused.map((r2) => `"${r2.name}" — ${r2.why}`).join('; ')})` : ''}${(wrote.unplaced ?? []).length ? ` (it belongs in the ${wrote.unplaced[0].where})` : ''}` : 'answered nothing parseable'}; the nearest template stands in`);
+            } else {
+              const row = authoredRow(form.kind, form.f);
+              row.text = stampT(row.text); // the model is given the inline, but "the creature" still slips through
+              const dangS = danglingRefIn(row.text, [...rowNamesOf(monster), String(row.name).replace(/ \(.*\)$/, '')], String(row.name));
+              if (dangS) trace('seat authoring refused:', `${seat} — the authored row cites "${dangS}", which is not on this sheet (the checker would fail it as a dangling reference); the nearest template stands in`);
+              else {
+                freeRowsUsed += 1;
+                row.authoredSeat = true; // the sameness metric and the gap ship-check count it as the seat's own row, not a template's
+                const authoredSeatShape = { row, templateName: null, section: form.section, template: null, host: 'melee', supersedes: null, asked: vetAsked(fit.asked, rawConceptText), askedRaw: String(fit.asked ?? '').trim(), expresses: fit.expresses ?? null, accepted_closest: false, elementsOffered: sigElements, authoredSeat: true, because: `${String(idea.idea ?? '').slice(0, 160)} [authored: the catalog held no shape for it]` };
+                markFreeRow(authoredSeatShape); // one owner for the mark; BOTH marks ride, as they do for an element-receipt row
+                trace('seat authored the row:', `${seat} — the call refused every template for no_fit ("${String(fit.missing ?? 'unstated').slice(0, 70)}") and wrote ${seatKind} instead: "${row.name}" -> ${form.section}. ${row.text.slice(0, 120)}`);
+                return authoredSeatShape;
+              }
+            }
+          }
         }
         if (!fit.template && fit.closest && !nearBlocked) {
           const near = pool.find((t) => t.id === fit.closest || t.key === fit.closest);
@@ -5246,7 +5309,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // allowance reverses three standing pins about unasked decoration (the
         // sniper's tracker trait) with no evidence behind it, so it waits for a
         // ruling of its own.
-        const freeAllowance = printExact ? 0 : 1;
+        // `freeAllowance` is declared above the fit call: the R4 authoring attempt spends
+        // the same allowance this block does, and one number cannot live in two places.
         let freeRowHere = false; // stamped onto the row below, so the ship-time budget can find it
         let decorationHere = false; // a closest-accepted row ships, but claims nothing
         // VERB PREFERENCE STANDS DOWN (critic's item 1, other half, 2026-10-22:
@@ -5540,7 +5604,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // adjudicability, body legality and the nova caps. Exact sheets are untouched
     // — print closes the row set and `freeAllowance` is 0 there.
     const takeAsFreeRow = (seat, label) => {
-      if (printExact || !seat?.expresses) return false;
+      if (printExact) return false;
+      // R4 — A ROW THE CALL WROTE CARRIES ITS OWN RECEIPT (2026-11-02). These three
+      // gates ask whether a TEMPLATE the call picked has a receipt, and an authored
+      // row has no template and no element claim, so it fell through all three and
+      // died at the first: the Bog Hound's authored pull traced "a print body takes
+      // only what the user's words ask" immediately after it was written. The receipt
+      // is the writing itself — the call was shown this seat's idea and wrote a row
+      // for it rather than stretching something else to fit. The allowance was spent
+      // and both marks set when it was authored (`fitSeat`), so this records the gate
+      // it passed and changes nothing else.
+      if (seat?.authoredSeat) { trace('free signature row:', `"${seat.row?.name}" — ${label}, but the call picked this row off no menu: it WROTE it for the idea the catalog had no shape for. Earns no clause credit; the budget settles on the finished sheet`); return true; }
+      if (!seat?.expresses) return false;
       markFreeRow(seat); // BOTH marks ride the row — the budget ranks off the row, never the seat
       trace('free signature row:', `"${seat.row?.name}" — ${label}, but the call names the element it expresses: "${seat.expresses}". Earns no clause credit; the budget settles on the finished sheet`);
       return true;
@@ -5819,7 +5894,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       { const yk = (scaled.speciesYielded ?? []).find((y) => y.shape === (actionT.template ?? actionT.row?.template)); if (yk) { const gateSuffix = (/ \(.*\)$/.exec(actionT.row.name) ?? [''])[0]; actionT.row.name = `${yk.name}${gateSuffix}`; actionT.row.kit = yk.kit; actionT.row.clause = yk.clause; actionT.row.free = true; trace('kit credited:', `the signature bound ${yk.shape}, the shape the ${yk.kit} kit yielded to the cap — the row is the kit's ("${yk.name}"), free tier`); } } // (the tortle's Bulwark Withdrawal was Shell Defense — the critic's second species read)
       (sections[actionT.section] = sections[actionT.section] ?? []).push(actionT.row);
       libraryDrawn = true;
-      trace('signature template:', `${actionT.template} -> ${actionT.section}/"${actionT.row.name}" ("${actionT.because}")`);
+      trace(actionT.authoredSeat ? 'signature authored:' : 'signature template:', `${actionT.template ?? 'no template — the seat wrote it'} -> ${actionT.section}/"${actionT.row.name}" ("${actionT.because}")`);
       spendKeys(actionT.because);
       if (deadBareT && deadBareT !== actionT.row.name.replace(/ \(.*\)$/, '')) sweepDeadName(sections, deadBareT, actionT.row, trace);
     } else if (wildcardAllowed && !printPlain && !body) { // a BODY chassis (dragon, ooze, swarm) is a complete kit — no blind fallback; a print body reaches the fallback only through the concept's own verbs (the stand-down inside: a verbless print head asks for nothing — the hermit-mage's lantern does ask, 2026-10-01): its own rows are the composition, and only a verb-bound fit adds to them (day-one 2026-09-30) — the claim gate closes the ACTION seat at CR<=2 — the fallback is that seat's, and a material body's open TRAIT seat must not reopen it (review 2026-09-28)
@@ -5978,7 +6053,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         uniqueRowName(tt.row, tt.templateName);
         (sections[secT] = sections[secT] ?? []).unshift(tt.row);
         if (tt.template === 'assassinate') for (const es2 of Object.values(sections)) for (const e2 of es2) if (/\(with Advantage during the first round of each combat\)/.test(e2.text ?? '')) { e2.text = e2.text.replace(/ ?\(with Advantage during the first round of each combat\)/, ''); trace('inline rider retired:', `${e2.name} — Surprise Attack grants the first-round Advantage now`); }
-        trace('signature template (trait):', `${tt.template} -> ${secT}/"${tt.row.name}" ("${tt.because}")`);
+        trace(tt.authoredSeat ? 'signature authored (trait):' : 'signature template (trait):', `${tt.template ?? 'no template — the seat wrote it'} -> ${secT}/"${tt.row.name}" ("${tt.because}")`);
       };
       // OWED FIRST (critic, the fourteen): a trait the SEAT owes by print seats
       // non-competitively and the idea competes for what remains — four blocks
@@ -6101,6 +6176,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             markFreeRow(traitT, { decoration: true }); // a refused template claims nothing
             trace('free signature row:', `"${traitT.row.name}" — the call's nearest after it refused every template, so it ships as DECORATION: no receipt, no element claim, counted in the metric. Earns no clause credit`);
           }
+        } else if (traitT.authoredSeat) {
+          // R4, the trait seat's half of the same rule (see `takeAsFreeRow` above):
+          // the receipt is that the call WROTE this row for the idea. Without this
+          // arm the gate read it as "no receipt of any kind" and the Stone Golem's
+          // authored Unwalled died one line after it was written. No allowance is
+          // spent here and no mark is set — `fitSeat` did both when it authored it.
+          trace('free signature row:', `"${traitT.row.name}" — the trait seat cannot quote the GM, and the call picked this row off no menu: it WROTE it for the idea the catalog had no shape for. Earns no clause credit`);
         } else if (!traitT.expresses) {
           trace('trait declined:', `"${traitT.row.name}" — no receipt of any kind: no quote, no concept key, and the call named none of this creature's own elements for it (decoration, not a signature)`);
           traitT = null;

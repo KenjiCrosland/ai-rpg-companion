@@ -22,7 +22,7 @@
  * fields whose contract follows immediately). `rider` in the routing prompt is
  * not jargon at all — it means a horseman.
  */
-import { buildRepairPrompt } from '@/tools/statblock-generator/reskin/author.mjs';
+import { buildRepairPrompt, buildSeatPrompt } from '@/tools/statblock-generator/reskin/author.mjs';
 import { buildPathPrompt } from '@/tools/statblock-generator/reskin/path.mjs';
 import { buildReskinPrompt } from '@/tools/statblock-generator/reskin/generate.mjs';
 import { buildRoutePrompt } from '@/tools/statblock-generator/reskin/route.mjs';
@@ -46,6 +46,7 @@ const PROMPTS = {
   idea: () => buildIdeaPrompt({ name: 'Bog Hound', cr: 8, concept: 'drags fishermen under', sheetLines, verbs: ['drags'] }),
   fit: () => buildFitPrompt({ name: 'Bog Hound', idea: { name: 'Drag Under', text: 'it hauls a victim under' }, menu, cr: 8, concept: 'drags fishermen under' }),
   repair: () => buildRepairPrompt({ name: 'Bog Hound', inline: 'the hound', clauses: [{ text: 'drags fishermen under' }], cr: 8, sheet: sheetLines }),
+  seat: () => buildSeatPrompt({ name: 'Bog Hound', inline: 'the hound', cr: 8, sheet: sheetLines, idea: 'it heaves backward, dragging whatever it has hold of off its feet', missing: 'a pull that drags and knocks flat in one row', kind: 'an action', taken: ['Bite'] }),
 };
 
 const textOf = (p) => String(p?.prompt ?? p ?? '');

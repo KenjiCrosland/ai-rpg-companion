@@ -22,6 +22,27 @@ export const STATS = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', '
 const TARGET_OK = /^(?:one creature within \d+ feet|each creature in a \d+-foot (?:Cone|Sphere|Line|Cube|Emanation)|each creature within \d+ feet|one creature it can see within \d+ feet)$/;
 const HAS_NUMBER = /\d/;
 
+/**
+ * THE FORMS, ONE DEFINITION (R4 step 2). Two calls author into these: the repair call below, which writes a
+ * row per unanswered clause at the end of generation, and `buildSeatPrompt`, which writes the ONE row a
+ * signature seat needs when the fit call refused every template the catalog offered. The forms are the
+ * contract `parseAuthorResponse` validates, so a second copy of this text would drift from the parser that
+ * reads it. `attackCap` of 0 omits the attack form entirely: the engine prices an attack row off one of the
+ * creature's own weapon rows, so a caller with no such row to clone must not invite one.
+ */
+export function formsSpec({ name, inline, attackCap = 2 }) {
+  return [`THE FORMS`,
+    ...(attackCap > 0 ? [`- attack (a weapon or body part): { "key": null, "clause", "name", "mode": "melee"|"ranged"|"both", "type": one of ${DAMAGE_TYPES.join('/')}, "rider": one of ${CONDITIONS.join('/')} or null, "flavor": optional } — up to ${attackCap} new rows.`] : []),
+    `- save (a curse, a breath, a shove, a gaze): { "clause", "name", "stat": one of ${STATS.join('/')}, "target": "one creature within N feet" | "each creature in a N-foot Cone|Sphere|Line|Emanation", "damage": true|false, "type": one of the damage types or null, "condition": one of the conditions or null, "movement": "pushed up to N feet"|"pulled up to N feet"|null, "success": "half"|"none", "recharge": true|false }.`,
+    `- trait (a passive, a style, a resource — it costs the creature NOTHING; never write "uses its Reaction" here, that is the reaction form below): { "clause", "name", "trigger": a when/while/if clause or null, "effect": one sentence; write {dc} where a save DC belongs and {dmg} where damage belongs — never a number, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "passive_effect": one of ${PASSIVE_EFFECTS.join('/')} }.`,
+    `- A row that HEALS states the Hit Points as {dmg}, the action it costs, and a limit (a trigger, "1/Day", or "Recharge 5-6"): "restores hit points to the faithful" and "after minutes" are not rows a table can run.`,
+    `- reaction: { "clause", "name", "trigger": one sentence, "response": one sentence, same tokens, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none }.`,
+    `- "imposes" ON A TRAIT OR REACTION: name the condition the row involves, or null if it involves none. A row that requires one condition and inflicts another names the one it INFLICTS.`,
+    `- "passive_effect" ON A TRAIT: a trait must change what this creature CAN or CANNOT do. Name which, exactly one of: ability (it can do something other creatures cannot — breathe water, fly past without being struck at, pinpoint metal through stone) | bonus (it rolls better or hits harder under a stated circumstance) | protection (it resists, is immune to, or cannot be given something) | threat (merely standing near it, or striking it, costs the other creature something) | limitation (it CANNOT do something, or pays a price others do not — it can't shape-shift, it must submerge every few hours, it suffers in sunlight) | none. Answer NONE when the row only DESCRIBES the creature — how it waits, watches, perches, stalks, broods or looks. That is prose, not a trait, and we will drop the row: a trait with no positive and no negative effect on the creature is a line a GM cannot run (owner's ruling, 2026-10-30; shipped as the Dayvault Warden's "Patience", which said it "waits motionless on its perch, watching its prey, without taking any action").`,
+    `- "condition_relation" ON A TRAIT OR REACTION: how the row relates to that condition. Exactly one of: inflicts (the row APPLIES it to a target — the only value that hands the condition out) | requires (the target must ALREADY have it for the row to work: "a creature that has the Prone condition", "a creature it is grappling") | immune (the row says the creature CANNOT be given it) | self (it lands on THIS CREATURE, not a target) | none (no condition involved; answer null for "imposes" too). A word that merely DESCRIBES is not the condition: "a frightening ruin", "a horrifying stench", "a paralysing cold" are prose, not rules — answer none unless the row names the condition as a game effect.`,
+    `- A clause that is speech goes to "unplaced" with "where": "languages"; pure lore goes to "unplaced" with "where": "description". Never invent a clause the creator did not type. Never write "the ${String(name).toLowerCase()}" if ${name} is a person; write "${inline}".`,
+  ].join('\n');
+}
 
 /** THE REPAIR PASS (step 6): the sheet exists; these clauses have no row. Same forms, same rules, new rows only. */
 export function buildRepairPrompt({ name, inline, clauses, cr, sheet, attackCap = 2, lacks = [], taken = [] }) {
@@ -34,21 +55,44 @@ ${sheet}
 THE CREATOR'S CLAUSES WITH NO ROW:
 ${clauses.map((c, i) => `${i + 1}. ${c.text}`).join('\n')}${taken.length ? `\n\nNAMES ALREADY ON THE SHEET — never reuse one, every new row needs its own name: ${taken.map((n) => `"${n}"`).join(', ')}.` : ''}${lacks.length ? `\n\nTHE CREATOR SAID IT DOES NOT HAVE: ${lacks.map((l) => `"${l}"`).join(', ')}. No row you write may grant any of these in any wording — a creature that "never holds" gets no Grappled condition, one with "no magic at all" casts nothing.` : ''}
 
-THE FORMS
-- attack (a weapon or body part): { "key": null, "clause", "name", "mode": "melee"|"ranged"|"both", "type": one of ${DAMAGE_TYPES.join('/')}, "rider": one of ${CONDITIONS.join('/')} or null, "flavor": optional } — up to ${attackCap} new rows.
-- save (a curse, a breath, a shove, a gaze): { "clause", "name", "stat": one of ${STATS.join('/')}, "target": "one creature within N feet" | "each creature in a N-foot Cone|Sphere|Line|Emanation", "damage": true|false, "type": one of the damage types or null, "condition": one of the conditions or null, "movement": "pushed up to N feet"|"pulled up to N feet"|null, "success": "half"|"none", "recharge": true|false }.
-- trait (a passive, a style, a resource — it costs the creature NOTHING; never write "uses its Reaction" here, that is the reaction form below): { "clause", "name", "trigger": a when/while/if clause or null, "effect": one sentence; write {dc} where a save DC belongs and {dmg} where damage belongs — never a number, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "passive_effect": one of ${PASSIVE_EFFECTS.join('/')} }.
-- A row that HEALS states the Hit Points as {dmg}, the action it costs, and a limit (a trigger, "1/Day", or "Recharge 5-6"): "restores hit points to the faithful" and "after minutes" are not rows a table can run.
-- reaction: { "clause", "name", "trigger": one sentence, "response": one sentence, same tokens, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none }.
-- "imposes" ON A TRAIT OR REACTION: name the condition the row involves, or null if it involves none. A row that requires one condition and inflicts another names the one it INFLICTS.
-- "passive_effect" ON A TRAIT: a trait must change what this creature CAN or CANNOT do. Name which, exactly one of: ability (it can do something other creatures cannot — breathe water, fly past without being struck at, pinpoint metal through stone) | bonus (it rolls better or hits harder under a stated circumstance) | protection (it resists, is immune to, or cannot be given something) | threat (merely standing near it, or striking it, costs the other creature something) | limitation (it CANNOT do something, or pays a price others do not — it can't shape-shift, it must submerge every few hours, it suffers in sunlight) | none. Answer NONE when the row only DESCRIBES the creature — how it waits, watches, perches, stalks, broods or looks. That is prose, not a trait, and we will drop the row: a trait with no positive and no negative effect on the creature is a line a GM cannot run (owner's ruling, 2026-10-30; shipped as the Dayvault Warden's "Patience", which said it "waits motionless on its perch, watching its prey, without taking any action").
-- "condition_relation" ON A TRAIT OR REACTION: how the row relates to that condition. Exactly one of: inflicts (the row APPLIES it to a target — the only value that hands the condition out) | requires (the target must ALREADY have it for the row to work: "a creature that has the Prone condition", "a creature it is grappling") | immune (the row says the creature CANNOT be given it) | self (it lands on THIS CREATURE, not a target) | none (no condition involved; answer null for "imposes" too). A word that merely DESCRIBES is not the condition: "a frightening ruin", "a horrifying stench", "a paralysing cold" are prose, not rules — answer none unless the row names the condition as a game effect.
-- A clause that is speech goes to "unplaced" with "where": "languages"; pure lore goes to "unplaced" with "where": "description". Never invent a clause the creator did not type. Never write "the ${String(name).toLowerCase()}" if ${name} is a person; write "${inline}".
+${formsSpec({ name, inline, attackCap })}
 
 Answer with ONE JSON object:
 { "attacks": [ ... ], "saves": [ ... ], "traits": [ ... ], "reactions": [ ... ], "crossRef": null, "answered": [ { "clause": "...", "row": "..." } ], "unplaced": [ { "clause": "...", "where": "languages"|"description", "text": "one line in the creator's register" } ] }
 
 IF THE SHEET ALREADY ANSWERS A CLAUSE, SAY SO INSTEAD OF WRITING A ROW. Read THE SHEET SO FAR above. Where one of the clauses listed below is already carried by a row that is on it — the same mechanic in different words — put it in "answered" with that row's EXACT name, and write no new row for it. The words need not match: a row reading "cannot be moved against its will" answers "holds its ground", and one reading "its wounds close over" answers "knits itself back together". Answering twice is the defect this prevents. Use [] when every clause still needs a row, and never name a row that is not on the sheet.`;
+}
+
+/**
+ * ONE ROW FOR ONE SEAT (R4, owner's decisions 2026-11-02). The fit call has been shown every template the
+ * catalog holds for this seat and answered `none` with `declined_because: no_fit` — "nothing offered carries
+ * the mechanic". Measured across three runs, 220 of 220 refusals that reached the nearest-template fallback
+ * answered exactly that, so re-asking cannot help (the clause-first retry was measured at 34 calls for 6
+ * successes and retired): the menu is missing the SHAPE. So the seat writes the row itself, into the same
+ * closed forms the repair call above uses and through the same parser.
+ *
+ * No attack form is offered: the engine prices an attack row off one of the creature's own weapon rows, and a
+ * seat has none to clone, so what a seat can hold is a save, a trait or a reaction. An empty answer is a real
+ * answer — the caller still has the nearest template to fall back on.
+ */
+export function buildSeatPrompt({ name, inline, cr, sheet, idea, missing = '', kind = 'an action', taken = [], lacks = [] }) {
+  return `You are writing ONE ability for a D&D monster — the one ability it is still missing. Write it into the closed forms below, in the creature's own register. You never write a number: no attack bonus, no damage dice, no DC — the engine prices the row.
+
+THE CREATURE: ${name} (${inline}), CR ${cr}.
+THE SHEET SO FAR (complete but for this one ability; never restate a row it already carries, and never name a row that is not on it):
+${sheet}
+
+THE ABILITY TO WRITE, in the words it was described in:
+${idea}${missing ? `\n\nWHY YOU ARE WRITING IT RATHER THAN PICKING A READY-MADE ONE — no ready-made ability could do this: ${missing}` : ''}
+
+IT IS ${kind}. Write exactly one row, of that kind, and leave the other arrays empty.${taken.length ? `\n\nNAMES ALREADY ON THE SHEET — never reuse one, the new row needs a name of its own: ${taken.map((n) => `"${n}"`).join(', ')}.` : ''}${lacks.length ? `\n\nTHE CREATOR SAID IT DOES NOT HAVE: ${lacks.map((l) => `"${l}"`).join(', ')}. The row may not grant any of these in any wording — a creature that "never holds" gets no Grappled condition, one with "no magic at all" casts nothing.` : ''}
+
+${formsSpec({ name, inline, attackCap: 0 })}
+
+Answer with ONE JSON object, the row in the one array its form belongs to:
+{ "attacks": [], "saves": [ ... ], "traits": [ ... ], "reactions": [ ... ], "crossRef": null, "unplaced": [] }
+
+IF THE ABILITY CANNOT BE WRITTEN AS ONE OF THESE FORMS — it is speech, or lore, or it needs a second row beside it to make sense — answer with every array empty and say where it belongs in "unplaced". That is a real answer and costs nothing: the sheet has a ready-made ability to fall back on, and a row that does not work at a table is worse than one that is merely close.`;
 }
 
 const CONDITION_RELATIONS = ['inflicts', 'requires', 'immune', 'self', 'none'];
