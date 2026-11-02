@@ -1147,3 +1147,77 @@ surprises:   the two refuted premises. We are not systematically longer than pri
              are double print's median at CR 0-2 and level with it in the middle bands.
              And a nova is print's own default at high CR, so removing it there would
              have been the wrong move in the name of paring.
+
+### R3b — built as one of three; the other two refuted by measurement
+predicted:   scripts/smoke-evidence/PREDICTION-r3b-2026-11-02.md, written before the run.
+             Headline: the median ceiling sheds a borrowed row on 4-9 of 16; the horseman
+             passes the variety criterion; the ninja does NOT, because its sameness is
+             `closest accepted`; 0 new FAIL classes.
+measured:    run `smoke-out/variety16-2026-11-02T03-22-29`, 16/16.
+
+             **NOT BUILT, 1 of 3 — the banded nova default.** Our non-legendary Recharge
+             rate is at or BELOW print's in every band under CR 13: 0% vs 11.4% (0-2),
+             23.5% vs 21.5% (3-5), **14.8% vs 42.9%** (6-9), 27.3% vs 38.5% (10-12),
+             33.3% vs 75.0% (13-16). We under-produce novas. Turning them off below 13
+             would strip rows print does carry.
+
+             **NOT BUILT, 2 of 3 — kit receipts.** Every one of the 19 receiptless rows
+             classified by how it arrived: **14 `closest accepted`, 1 verb-gate
+             stand-down, 4 unattributed, 0 KIT LOADS.** Fear Aura lands by
+             `closest accepted` on 4 of its 5 sheets and by the verb-gate stand-down on
+             the 5th. R3b's premise — "kit rows load off the route call's mechanic
+             guess" — does not hold on this corpus; the filler is the SEAT's nearest
+             miss, which is R2's 70% and R4's mechanism. No kit-receipt gate was built
+             for a mechanism that is not firing.
+
+             **BUILT, 3 of 3 — the row trim, and it had NO measurable effect.** A
+             borrowed row (`accepted_closest`, rank 3) is now capped by print's median
+             for the band (2/3/4/5/5/7, measured on the same basis as `PRINT_CARD_ROWS`:
+             non-legendary, Multiattack excluded). Predicted 4-9 sheds of 16; **measured
+             0.** The 4 budget evictions on the run are the pre-existing one-slot budget,
+             not the median cap — on these sheets the old budget binds first, so the
+             ceiling never became the constraint. The feared cost did not materialise
+             either: the Dire Wolf's Rime-Shedding Hide was not on this batch.
+
+             **Variety criterion — the headless horseman, 8 rolls: PASS.**
+               - no kit row on every roll: PASS (highest frequency 1 of 8).
+               - bare chassis >= 1: PASS, **4 of 8** carry no kit/template row at all.
+               - the trope on >= 2 of 8: PASS, **8 of 8** — and as print writes it, a
+                 charge RIDER welded onto the weapon row rather than a Trample row of its
+                 own, which is why it is absent from a row-name count.
+             **Variety criterion — a lizardfolk ninja, 8 rolls: FAIL AS WRITTEN, and the
+             criterion is wrong.** Four rows appear on 8 of 8: Evasion and Cunning Action
+             (`kit=rogue`), Hold Breath and Marsh Stride (`kit=lizardfolk`). Those are
+             SPECIES and CLASS kits earned by the concept's own two words. Demanding "no
+             row on every roll" here would strip a lizardfolk of Hold Breath. The owner's
+             "same each roll" on a fully-specified concept is about the SIGNATURE, and the
+             signatures split 4 `closest accepted` (rolls 11, 12, 13, 15) against 4 real
+             rows (Fangblade, Kukri, Kunai, Sensory Strike) — half the rolls' signature is
+             a refused nearest. That is R4.
+runs:        smoke-out/variety16-2026-11-02T03-22-29 (16/16, 3 FAIL, R1 lints 0 of 16)
+suite:       174 suites / 4601 tests (3 new) · build clean
+commit:      (uncommitted at hand-off)
+not done:    - the median ceiling is UNPROVEN: 0 firings. It is correct by the owner's
+               ruling and measured against print, but nothing on this batch exercised it.
+               It should be judged on the next forty, not kept on faith.
+             - `PRINT_CARD_ROWS` claims p20-p90 and its high bands are inflated against
+               print (10-12 says 7, print's p90 is 5, n=13; 13-16 says 10, print 6, n=8;
+               17-20 says 9, print 7, n=3). Left as measured: correcting it would tighten
+               the budget for ASKED rows, which the ruling did not ask for, and two
+               samples are thin. Owner's call.
+             - R3b's variety criterion needs rewriting for a species+class concept: a kit
+               the concept's own words name is a receipt, not a repeat.
+surprises:   1. **Three of R3b's premises are now refuted** — "we are longer than print
+                everywhere" (we are level in the middle bands), "a nova is not a default"
+                (it is print's own at 13+, and we under-produce below), and "kit rows load
+                off a guess" (0 of 19). What remains of R3b is one capped row class and a
+                criterion that needs rewording.
+             2. The horseman already behaves the way R3b wanted: 4 of 8 rolls bare, the
+                trope on all 8 as a rider. Nothing I built caused that — it is the state
+                of the engine after R3. The owner's "I'd love to see what a bare rider
+                chassis does" is ALREADY what it does.
+             3. The 3 FAILs are one pre-existing class, all on horseman sheets:
+                `attack-stat` — "+8 derives from DEX, but an attack row rolls STR" on
+                Grave Lance, Saddle Sword, Saber. A mounted-knight concept routes to a
+                DEX chassis and then arms it with a lance. Not touched by this work;
+                worth its own item.

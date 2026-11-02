@@ -1006,6 +1006,24 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   // sheets below the p20 floor. Hence a floor as well as a ceiling.
   const band = cr == null ? null : cr <= 2 ? '0-2' : cr <= 5 ? '3-5' : cr <= 9 ? '6-9' : cr <= 12 ? '10-12' : cr <= 16 ? '13-16' : cr <= 20 ? '17-20' : '21+';
   const PRINT_CARD_ROWS = { '0-2': [1, 4], '3-5': [2, 5], '6-9': [3, 5], '10-12': [4, 7], '13-16': [5, 10], '17-20': [7, 9], '21+': [8, 10] };
+  // A ROW NOBODY ASKED FOR TRACKS PRINT'S MEDIAN, NOT ITS p90 (owner's ruling,
+  // 2026-11-01: "reverse it" — for DEFAULT rows only; asked rows are never cut).
+  // Measured on exactly the basis of the table above (non-legendary, Multiattack
+  // excluded): medians are 2 / 3 / 4 / 5 / 5 / 7, against our own medians across
+  // three fortys of 4 / 6 / 5 / 7 / 6 / 10 — over by two at CR 0-2 and 3-5, by one
+  // at 10-12, level in the middle bands. So the envelope's ceiling still governs a
+  // row that carries the GM's quote or a named element, and only a receiptless row
+  // answers to the median.
+  //
+  // NOTE FOR THE OWNER, not acted on: the table above claims p20-p90 and is
+  // accurate at 0-2, 3-5 and 6-9, but its high bands are inflated against print —
+  // 10-12 says 7 where print's p90 is 5 (n=13), 13-16 says 10 where print is 6
+  // (n=8), 17-20 says 9 where print is 7 (n=3). Correcting those would tighten the
+  // budget for ASKED rows too, which the ruling did not ask for, and two of the
+  // three samples are thin. Left as measured.
+  const PRINT_CARD_MEDIAN = { '0-2': 2, '3-5': 3, '6-9': 4, '10-12': 5, '13-16': 5, '17-20': 7, '21+': 8 };
+  // counted once, read by both the envelope and the median ceiling below
+  const fixedRows = Object.entries(sections).flatMap(([, es]) => es ?? []).filter((e) => e && !e.freeRow && !/^Multiattack/.test(String(e.name ?? ''))).length;
   const freeBudget = (() => {
     if (printExact) return 0;
     const envelope = band ? PRINT_CARD_ROWS[band] : null;
@@ -1013,7 +1031,7 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
     const [floor, ceiling] = envelope;
     // a free row is a candidate, not yet a fixture: the fixed rows are what the
     // card carries whatever this budget decides
-    const fixed = Object.entries(sections).flatMap(([, es]) => es ?? []).filter((e) => e && !e.freeRow && !/^Multiattack/.test(String(e.name ?? ''))).length;
+    const fixed = fixedRows;
     const thin = Math.max(0, floor - fixed);        // under print's low end: keep more
     const room = Math.max(0, ceiling - fixed);      // over print's high end: keep none
     const settled = Math.min(Math.max(1, thin), room);
@@ -1080,7 +1098,29 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
     // Under this ruling the narrower rule wins and the row stays.
     //
     // printExact still overrides everything: print closes the row set.
-    const allowed = printExact ? 0 : receiptRank(e) === 3 ? freeBudget : Math.max(1, freeBudget);
+    // A RECEIPTLESS ROW IS CAPPED BY PRINT'S MEDIAN FOR THE BAND (R3b). `fixed` is
+    // what the card carries regardless, so the median leaves room for as many
+    // default rows as print's typical block of this CR has and no more. A row with
+    // a receipt (a GM quote, rank 0; a named element, rank 1) is untouched by this
+    // — that is the whole of "asked rows are never cut".
+    const medianRoom = (() => {
+      const med = band ? PRINT_CARD_MEDIAN[band] : null;
+      if (!med || printExact) return Infinity;
+      return Math.max(0, med - fixedRows);
+    })();
+    //
+    // AND IT REACHES ONLY THE BORROWED ROW. The first cut capped rank 2 as well —
+    // a row the call CHOSE but named no element for — and broke four tests that
+    // encode the owner's 10-29 ruling ("a long card keeps the abilities it
+    // earned"; "a crowded card keeps an accepted pick even with no receipt").
+    // Both rulings hold together: a chosen row keeps the budget it always had,
+    // and `accepted_closest` — the stamp sitting exactly where a refused nearest
+    // lands — answers to print's median as well as to the card's room. That is
+    // also where the rows are: 14 of the 19 receiptless rows on forty #1 are
+    // `accepted_closest`, and none is a kit load.
+    const allowed = printExact ? 0
+      : receiptRank(e) === 3 ? Math.min(freeBudget, medianRoom)
+        : Math.max(1, freeBudget);
     if (keptFree.length < allowed && !sameCell) { keptFree.push(e); if (cell) keptCells.add(cell); continue; }
     sections[sec] = (sections[sec] ?? []).filter((x) => x !== e);
     // THE INSTRUMENT POINTED HERE. On its first full forty, three accepted picks

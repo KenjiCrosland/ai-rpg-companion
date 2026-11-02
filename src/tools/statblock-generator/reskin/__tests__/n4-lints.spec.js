@@ -65,3 +65,35 @@ describe('the 2014 converter closes its own seams', () => {
       .toBe('Each creature in a 30-foot cone must make a DC 15 Dexterity saving throw, taking 28 (8d6) fire damage on a failed save, or half as much damage on a successful one.');
   });
 });
+
+// R3b — a borrowed row answers to print's MEDIAN for the band, not its p90.
+// Owner's ruling 2026-11-01 ("reverse it") applies to DEFAULT rows only, and the
+// 10-29 ruling still protects a row the call chose. The two meet at rank 3:
+// `accepted_closest` is the refused-nearest row the owner called out by name
+// ("refusals lead to sameness because we borrow a stock row from the chassis"),
+// and 14 of the 19 receiptless rows on forty #1 carry exactly that stamp.
+describe('a borrowed row tracks print\'s median', () => {
+  const { settleSheetBudgets } = require('../generate.mjs');
+  const fixed = (n) => Array.from({ length: n }, (_, i) => ({ name: `Fixed ${i + 1}`, text: `*Melee Attack Roll:* +4, reach 5 ft. 7 (1d8 + 3) Slashing damage.` }));
+  const borrowed = (name) => ({ name, text: 'The creature emanates an aura in a 20-foot Emanation. *Wisdom Saving Throw*: DC 12. *Failure:* The target has the Frightened condition.', freeRow: true, accepted_closest: true, template: 'fear-aura' });
+
+  test('a CR 2 card already at print\'s median keeps no borrowed row', () => {
+    // print's median at CR 0-2 is 2 rows (non-legendary, Multiattack excluded)
+    const sections = { Actions: [{ name: 'Multiattack', text: 'The creature makes two Claw attacks.' }, ...fixed(2)], Traits: [borrowed('Fear Aura')] };
+    settleSheetBudgets({ sections, cr: 2 });
+    expect(sections.Traits.map((e) => e.name)).not.toContain('Fear Aura');
+  });
+
+  test('a thin CR 2 card still gets one — the floor is not touched', () => {
+    const sections = { Actions: [{ name: 'Multiattack', text: 'The creature makes two Claw attacks.' }, ...fixed(1)], Traits: [borrowed('Fear Aura')] };
+    settleSheetBudgets({ sections, cr: 2 });
+    expect(sections.Traits.map((e) => e.name)).toContain('Fear Aura');
+  });
+
+  test('and a row with the GM\'s own quote is never cut by it', () => {
+    const asked = { ...borrowed('Rime-Shedding Hide'), accepted_closest: false, gmQuote: 'a frost-rimed hide' };
+    const sections = { Actions: [{ name: 'Multiattack', text: 'The creature makes two Claw attacks.' }, ...fixed(4)], Traits: [asked] };
+    settleSheetBudgets({ sections, cr: 2 });
+    expect(sections.Traits.map((e) => e.name)).toContain('Rime-Shedding Hide');
+  });
+});

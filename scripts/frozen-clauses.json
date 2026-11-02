@@ -7433,5 +7433,27 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "9997333ae136": {
+  "concept": "the headless horseman",
+  "clauses": [
+   {
+    "id": "cl_lbjos5",
+    "text": "the headless horseman",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "c5fd152b1d47": {
+  "concept": "a lizardfolk ninja",
+  "clauses": [
+   {
+    "id": "cl_1xbl1ev",
+    "text": "a lizardfolk ninja",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
  }
 }
