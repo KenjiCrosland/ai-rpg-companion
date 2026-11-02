@@ -7455,5 +7455,128 @@
     "head": true
    }
   ]
+ },
+ "1623aad7fa5b": {
+  "concept": "A squat, iron-scaled drake that scuttles sideways on six jointed crab-legs sheathed in briny, hoar-frosted plate, its co",
+  "clauses": [
+   {
+    "id": "cl_1bm2mcr",
+    "text": "A squat",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_pml48g",
+    "text": "iron-scaled drake that scuttles sideways on six jointed crab-legs sheathed in briny",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1nyk8ec",
+    "text": "hoar-frosted plate",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_rmqw15",
+    "text": "its cold-blooded metabolism bleeding a killing chill from every seam",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1ti73",
+    "text": "claw",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "on contact",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "pinning them under a claw"
+   },
+   {
+    "id": "cl_1tvinkk",
+    "text": "It opens by clattering down a ruin's rubble toward the loudest intruder",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "charge",
+    "askMechanicWhy": "clattering down a ruin's rubble toward the loudest intruder"
+   },
+   {
+    "id": "cl_4hflw8",
+    "text": "pinning them under a claw that flash-freezes flesh on contact",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "on contact",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "pinning them under a claw"
+   },
+   {
+    "id": "cl_1atpoos",
+    "text": "drags the stiffened prize back to its trophy lair",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "drags the stiffened prize"
+   },
+   {
+    "id": "cl_22r1qv",
+    "text": "guarding a midden of rime-crusted armor",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1jx1rj",
+    "text": "bones",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1b6wfs8",
+    "text": "blades it half-understands as treasure",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_12xhhj",
+    "text": "Crude",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_ikol4g",
+    "text": "cunning",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_emf4l2",
+    "text": "it does not flee — it backs into its hoard",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "drags the stiffened prize"
+   },
+   {
+    "id": "cl_d4fjt8",
+    "text": "lays down a slick coat of frozen brine",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "lays down",
+    "askShape": "save_single",
+    "askMechanic": "zone",
+    "askMechanicWhy": "a slick coat of frozen brine"
+   },
+   {
+    "id": "cl_3dumx",
+    "text": "fights to the death to keep its hoard from being looted",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1yjb22g",
+    "text": "It is crudely sapient (INT 6-8)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_fkirqu",
+    "text": "it is a hoarder that drags its kills back to a lair of trophies",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "drags its kills back to a lair of trophies"
+   }
+  ]
  }
 }

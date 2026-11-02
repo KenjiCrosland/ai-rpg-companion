@@ -3416,6 +3416,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // restriction sits in the TARGET clause, not here (1 of 10). Of its 28 non-save
   // rows that grapple, 28 carry the DC and 24 carry the size gate in the sentence,
   // which is why `riderText` keeps its own for that case.
+  // the creature's own name, for the one exemption the join's lowercasing keeps
+  // (forty #2: "…in Dim Light or Darkness, Thrust has Advantage…" — Thrust IS the
+  // Unanswered Thrust). Closed fact: the Name field and the inline the engine uses.
+  const ownNouns = () => [String(p.name ?? ''), String(options.fixedName ?? ''), inlineGuessRef()];
   const escapeDCHere = () => 8 + scaled.pb + (Number(scaled.stats?.STR) >= 0 ? Math.floor((Number(scaled.stats.STR) - 10) / 2) : 0);
   const conditionClause = (c) => (c === 'Grappled' ? `the target has the Grappled condition (escape DC ${escapeDCHere()})`
     : c === 'Prone' ? 'the target has the Prone condition'
@@ -3429,7 +3433,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const dice = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * (s.target.startsWith('each') ? 1.4 : 1.1))));
       const saveType = s.type ?? (([, w] = []) => ({ fire: 'Fire', flame: 'Fire', scald: 'Fire', steam: 'Fire', burn: 'Fire', ember: 'Fire', frost: 'Cold', ice: 'Cold', cold: 'Cold', freez: 'Cold', lightning: 'Lightning', thunder: 'Thunder', sonic: 'Thunder', poison: 'Poison', venom: 'Poison', acid: 'Acid', rot: 'Necrotic', necrotic: 'Necrotic', decay: 'Necrotic', grave: 'Necrotic', radiant: 'Radiant', holy: 'Radiant', sun: 'Radiant', psychic: 'Psychic', mind: 'Psychic', force: 'Force' })[w])(/\b(fire|flame|scald|steam|burn|ember|frost|ice|cold|freez|lightning|thunder|sonic|poison|venom|acid|rot|necrotic|decay|grave|radiant|holy|sun|psychic|mind|force)/i.exec(`${s.clause} ${s.name}`.toLowerCase()) ?? []) ?? fallbackType ?? 'Bludgeoning'; // the save's own type, else a type its words warrant, else the first attack's
       const failure = [s.damage ? `${dice.avg} (${dice.dice}) ${saveType} damage` : '', s.movement ? `the target is ${s.movement} straight ${/pushed/.test(s.movement) ? 'away from' : 'toward'} ${inlineGuessRef()}` : '', s.condition ? conditionClause(s.condition) : ''].filter(Boolean);
-      const text = renderForm({ kind: 'save', stat: s.stat, dc: scaled.dc, target: s.target, failure: `${failure[0]}${failure.length > 1 ? `, and ${failure.slice(1).join(', and ')}` : ''}.`, success: s.damage && s.success === 'half' ? 'Half damage only.' : null }, '2024');
+      const text = renderForm({ kind: 'save', stat: s.stat, dc: scaled.dc, target: s.target, failure: `${failure[0]}${failure.length > 1 ? `, and ${failure.slice(1).join(', and ')}` : ''}.`, success: s.damage && s.success === 'half' ? 'Half damage only.' : null }, '2024', { properNouns: ownNouns() });
       // THE CONDITION THE ROW IMPOSES IS KEPT ON THE ROW (owner, 2026-10-20:
       // "we want the llm to categorize when possible"). The authoring call
       // already answers it, validated against author.mjs's closed CONDITIONS
@@ -3442,13 +3446,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (kind === 'trait') {
       const t = f;
       const dmgTok = (eff) => String(eff).replace(/\s*\{dmg\}(?:\s+damage)?/g, (tok, off, whole) => (/\b(?:takes?|deals?|dealing|taking|extra|additional|plus|regains?|suffers?|an extra)\s*$/i.test(whole.slice(0, off)) ? tok : '')).replace(/\s{2,}/g, ' '); // "immune to anything {dmg}" — the token only stands where damage is dealt or taken (the Vault Bull, step 6 baseline)
-      const text = renderForm({ kind: 'trait', trigger: t.trigger, effect: token(dmgTok(t.effect)) }, '2024');
-      return { name: t.name, text, authored: true, clause: t.clause, ...(t.imposes ? { imposes: t.imposes } : {}), ...(t.flavor ? { flavor: t.flavor } : {}) };
+      const text = renderForm({ kind: 'trait', trigger: t.trigger, effect: token(dmgTok(t.effect)) }, '2024', { properNouns: ownNouns() });
+      return { name: t.name, text, authored: true, clause: t.clause, ...(t.imposes ? { imposes: t.imposes } : {}), ...(t.requiresConditionNamed ? { requiresCondition: t.requiresConditionNamed } : {}), ...(t.flavor ? { flavor: t.flavor } : {}) };
     }
     if (kind === 'reaction') {
       const r = f;
-      const text = renderForm({ kind: 'reaction', trigger: r.trigger, response: token(r.response) }, '2024');
-      return { name: r.name, text, authored: true, clause: r.clause, ...(r.imposes ? { imposes: r.imposes } : {}) };
+      const text = renderForm({ kind: 'reaction', trigger: r.trigger, response: token(r.response) }, '2024', { properNouns: ownNouns() });
+      return { name: r.name, text, authored: true, clause: r.clause, ...(r.imposes ? { imposes: r.imposes } : {}), ...(r.requiresConditionNamed ? { requiresCondition: r.requiresConditionNamed } : {}) };
     }
     return null;
   };
@@ -3544,9 +3548,83 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // nobody (print is 38 of 38 WITH one, on rows that really do grapple), and
     // the row counts toward the "three rows impose it" tally that strips riders
     // off others. A judged relation must look different from an unjudged one.
+    // A ROW MAY NOT REQUIRE A CONDITION THIS SHEET NEVER APPLIES (forty #2,
+    // 2026-11-02). The Chalk-Hound's Daubing Cling shipped "While the chalk-hound is
+    // Grappling a creature…" on a sheet whose only attack is a plain Bite — a trait
+    // whose trigger can never fire. The guard below reads the call's own declared
+    // answer (`requires` plus the condition it named), now that the name survives
+    // the parser, and `imposedConditions` is the one shared reader for what the
+    // sheet applies. The rows landing in THIS batch count too: a cross-row pair
+    // (one row applies it, another exploits it) is legitimate and arrives together.
+    {
+      const batch = [...(authored.traits ?? []), ...(authored.reactions ?? []), ...(authored.saves ?? [])];
+      const appliedHere = new Set([
+        ...Object.values(sections).flat().flatMap((e) => imposedConditions(e)),
+        ...batch.map((x) => x?.imposes).filter(Boolean),
+        ...(authored.placed ?? []).map((a) => a?.rider).filter(Boolean),
+        ...(authored.saves ?? []).map((x) => x?.condition).filter(Boolean),
+      ].map(String));
+      // AND A ROW MAY NOT MAKE SOMETHING ACT THAT THE SHEET DOES NOT DEFINE (the
+      // critic, forty #3). The Spore-Mother's puppets claw with no attack and no Hit
+      // Points, the Drowned Herdsman's horses rise with no block named, and the Vigil
+      // Reliquary halves damage onto "its ward" with no Ward Bond — three genuine
+      // surprises, each unrunnable at a table. The call now answers `acts` with the
+      // name of anything its row makes act, and the engine checks that name against
+      // the sheet's own rows. No prose is read for acting nouns: the call names it or
+      // it is null. A name that matches nothing refuses the row, and the clause goes
+      // back to the description rather than shipping a creature nobody has stats for.
+      // `sections` is the live sheet here and `monster` does not exist yet: this landing
+      // runs before it is built (the first `landAuthored(authored)` is ~100 lines above
+      // the declaration), and reaching for `rowNamesOf(monster)` threw "Cannot access
+      // 'monster' before initialization" across 56 tests. The seat's copy runs late and
+      // may read it; this one reads the sheet it is landing into.
+      const namedHere = new Set(Object.values(sections).flat().map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean).map((n) => n.toLowerCase()));
+      const actsUnknown = (x) => { const a = String(x?.acts ?? '').replace(/ \(.*\)$/, '').trim(); if (!a) return null; return [...namedHere].some((n) => n.includes(a.toLowerCase()) || a.toLowerCase().includes(n)) ? null : a; };
+      // THE REPAIR LANDING GETS THE SEAT'S GUARDS (forty #4). Three of that run's six
+      // FAILs were REPAIR-authored rows failing rules the seat already enforces: Maw
+      // Grab was a third row imposing Grappled (#11) and Unbroken Charge a third
+      // imposing Prone (#12) — `conditionsImposedTwice` runs at the menu and at the
+      // seat and not here — and Who Swings? cited two rows that do not exist (#33),
+      // which `danglingRefIn` catches at the seat and not here. Fifth instance this
+      // sprint of a rule living on one path, and the first where the OLD path was the
+      // unguarded one. Same two functions, no new logic.
+      const twiceHere = conditionsImposedTwice([
+        ...Object.values(sections).flat(),
+        ...batch.filter((x) => x?.imposes).map((x) => ({ imposes: x.imposes })),
+      ]);
+      const namesForRefs = [...Object.values(sections).flat().map((e) => String(e.name ?? '')), ...batch.map((x) => String(x?.name ?? ''))].filter(Boolean);
+      for (const k of ['traits', 'reactions']) {
+        authored[k] = (authored[k] ?? []).filter((x) => {
+          if (x?.imposes && twiceHere.has(String(x.imposes))) {
+            trace('authored row refused — a third imposition:', `"${x.name}" imposes ${x.imposes}, which two rows already impose, and no printed block imposes one condition three ways (0 of 329)`);
+            return false;
+          }
+          const want = x?.name ? String(x.name).replace(/ \(.*\)$/, '') : '';
+          const dang = danglingRefIn(String(x?.effect ?? x?.response ?? ''), [...namesForRefs, want], want);
+          if (dang) {
+            trace('authored row refused — cites a row the sheet lacks:', `"${x.name}" references "${dang}", which is no row on this sheet (the checker fails it as a dangling reference)`);
+            return false;
+          }
+          const need = x?.requiresConditionNamed;
+          if (need && !appliedHere.has(String(need))) {
+            trace('authored row refused — requires a condition nothing applies:', `"${x.name}" needs its target to have ${need}, and no row on this sheet imposes it (the sheet applies: ${[...appliedHere].join(', ') || 'nothing'}); the row's trigger could never fire`);
+            return false;
+          }
+          const act = actsUnknown(x);
+          if (act) {
+            trace('authored row refused — makes something act that the sheet never defines:', `"${x.name}" has a "${act}" act, and no row on this sheet is that thing. A table cannot run it (the Spore-Mother's puppets, the Herdsman's horses, the Reliquary's ward — critic, forty #3); the clause goes to the description`);
+            return false;
+          }
+          return true;
+        });
+      }
+    }
     for (const t of [...authored.traits, ...authored.reactions]) {
       if (!t?.condition_relation) continue;
-      if (t.condition_relation !== 'inflicts' && t.condition) requireOn(t, t.condition);
+      // THE REQUIRED CONDITION IS RECORDED ON THE ROW. This read `t.condition`, a
+      // field no trait or reaction form has ever carried, so it never once fired;
+      // the name now survives the parser as `requiresConditionNamed`.
+      if (t.requiresConditionNamed) requireOn(t, t.requiresConditionNamed);
       trace('condition relation:', `"${t.name}" — the call reads its condition as ${t.condition_relation}${t.condition_relation === 'inflicts' ? ` and the row records ${t.imposes}` : ', so no condition is recorded against it'}`);
     }
     for (const t of authored.traits) (sections.Traits = sections.Traits ?? []).unshift(authoredRow('trait', t));
@@ -4630,7 +4708,151 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     };
     const stampT = (t) => String(t).split('The creature').join(inline.charAt(0).toUpperCase() + inline.slice(1)).split('the creature').join(inline);
     const tagOf = (idea) => `[${idea.section}/${idea.trigger}/${idea.effect}]`;
+    // HOISTED ABOVE THE IDEA CALL (R7 · ANCHOR, 2026-11-02). These five are pure
+    // readers of the clause record and the sheet, and they lived ~950 lines below —
+    // after the idea call that now needs them. They are `const`, so calling them from
+    // up here threw a TDZ ReferenceError, the same class as the Owlbear/Dire Wolf
+    // "timeouts" of 2026-10-18. Everything they close over (`clauseRecord`, `pathBody`,
+    // `pathD`, `closedPath`, `sections`, `p`) is in hand well before this point, and
+    // they stay inside the same block, so `gmAsked`/`askWhy` below still see them at
+    // the seats' shared scope. Moved, not copied: re-deriving "which clauses are
+    // unanswered" is the duplicated-body class that has cost this sprint four fixes.
+    // ON THE TWIST PATH THE ASK IS THE TWIST CLAUSE: a quote that only names the creature itself
+    // ("a skeleton" on a skeleton who was a gladiator) is the body, not an ask — the seat's fit
+    // took false-appearance on it (twist-five, 2026-10-19). The body receipt and the print name
+    // are closed facts the path already holds.
+    const namesTheBodyOnly = (asked) => { if (!closedPath || !asked) return false; const a = String(asked).toLowerCase().replace(/^(?:a|an|the)\s+/, '').trim(); const body = String(pathBody ?? '').toLowerCase(); const rcpt = String(pathD?.receipt ?? '').toLowerCase().replace(/^(?:a|an|the)\s+/, '').trim(); return !!a && (body.includes(a) || a === body || (!!rcpt && rcpt.includes(a))); };
+    // …AND IT MUST POINT AT A TWIST CLAUSE — which is EVERY clause but three (critic A, 2026-10-19:
+    // the first cut asked for a clause the identity call had tagged `mechanical`, and most twists are
+    // tagged descriptive, so "carries stolen voices" and "with a frost-rimed hide" were refused and
+    // print shipped under a new name — correct and inert). The FIT CALL with a receipt is the judge
+    // of whether a clause earns a row; the tag is the identity call's reading of a phrase and gates
+    // nothing. Refused: the HEAD (the creature itself — the path already holds that body), a HEADER
+    // directive (size, speed, AC, HP, CR — the engine honours those in the header), and the NEGATIVE
+    // half of a lack (the sweep removes what it names). A clause that holds both ("stumps smoke
+    // instead of regrowing") keeps its positive half.
+    // THE HEAD CLAUSE IS OFTEN THE WHOLE PROMPT (critic A, 2026-10-19): "Dire Wolf with a frost-rimed
+    // hide" came back as ONE clause, marked head — so the twist lives INSIDE the head, and refusing
+    // the head refused the twist. What the head gives up is the BODY (the path holds it); what remains
+    // is the ask. `namesTheBodyOnly` already refuses a quote that is only the body, so the two compose.
+    // ON WORD BOUNDARIES. `indexOf` cut on SUBSTRINGS, so removing the print body
+    // "Lich" from "an archlich enthroned on a sun of bone" left "an arch enthroned
+    // on a sun of bone" — the critic's named defect, still live on the forty
+    // (sweep-2026-10-22T17-05-33). "shieldwall" minus "wall" was "shield" too.
+    const cut = (t, q) => { const s = String(t ?? ''); const needle = String(q ?? '').trim(); if (!needle) return s;
+      // A HYPHEN IS PART OF A COMPOUND, NOT A BOUNDARY (forty #3, 2026-11-02). The
+      // 10-22 fix stopped "archlich" being cut to "arch" by excluding letters on both
+      // sides — and left the hyphen, so removing the print body "priest" from "a
+      // kiln-priest whose prayers are spoken in fire" left "a kiln- whose prayers…",
+      // which was then handed to the idea call and faithfully anchored to. Excluding
+      // `-` as well keeps a compound whole in both directions: "a half-dragon" minus
+      // "dragon" and "a dragon-blooded knight" minus "dragon" both stand, and neither
+      // leaves a stump. "archlich" is still protected by the letter exclusion.
+      const bounded = new RegExp(`(?<![A-Za-z-])${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z-])`, 'i');
+      const i = s.search(bounded) >= 0 ? s.search(bounded) : -1; return (i < 0 ? s : `${s.slice(0, i)} ${s.slice(i + needle.length)}`).replace(/\s{2,}/g, ' ').replace(/^(?:a|an|the)\s+(?=with|that|who|whose)/i, '').trim(); };
+    // `forCall` HANDS THE CLAUSE OVER, it does not test it (the critic's item 3,
+    // "hand seats the clause verbatim and carry the consumed spans as metadata").
+    // The cut form exists to find what the sheet has NOT answered, and for that
+    // removing the consumed spans is right. But the same surgery was being handed
+    // to the call, which is how the retry came to aim at "Adult Red Dragon — from
+    // an old lance" (the dragon's own twist, "blind in one eye", cut out of it) and
+    // at "a marsh" (the witch cut off her own marsh). Measured on
+    // retry6-2026-10-22T15-44-26: 5 retries fired, 0 succeeded, 3 of them aimed at
+    // text like that.
+    //
+    // The BODY NAME is still cut either way — it is genuinely redundant, the call
+    // already knows what the monster is, and `namesTheBodyOnly` exists to stop a
+    // clause that is only the body. The RECEIPT is not: it is the twist itself.
+    const positiveHalf = (c, { forCall = false } = {}) => {
+      let t = String(c.text ?? '');
+      // THE LACK IS THE TWIST. This cut `lackQuote` unconditionally, and on a
+      // LACKS clause that quote is the whole point — the dragon's record is
+      // "Adult Red Dragon — blind in one eye from an old lance" (LACKS), so the
+      // clause HANDED to the call came out as "Adult Red Dragon — from an old
+      // lance". Cutting it is right for the unanswered TEST, wrong for handing
+      // over (measured: retry6-2026-10-22T15-44-26, 5 retries fired, 0 succeeded).
+      if (c.polarity === 'lacks') {
+        const q = String(c.lackQuote ?? '').trim();
+        if (!q) return forCall ? t.trim() : ''; // a whole-clause lack has no positive half to TEST, but it can still be handed over
+        if (!forCall) t = cut(t, q);
+      }
+      if (c.head) {
+        t = cut(t, pathBody ?? '');
+        if (!forCall) t = cut(t, String(pathD?.receipt ?? '').replace(/^Name field:\s*/i, ''));
+      }
+      // a handed clause must not open on punctuation a cut left behind
+      return t.replace(/^[\s\u2010-\u2015,;:-]+/, '').trim();
+    };
+    // a receipt is ANSWERED only when it names the weapon a part row already carries: "with a
+    // greatsword" beside the Greatsword row is answered, "keeps the line" beside a shield bash is not
+    const answeredByAPart = (sp) => {
+      const spW = clauseWords(sp); if (!spW.length) return false;
+      const partW = new Set(Object.values(sections).flat().filter((e) => e.part || e.feature).flatMap((e) => [...clauseWords(String(e.name ?? '')), ...clauseWords(String(e.weapon ?? ''))]));
+      return spW.every((w) => partW.has(w));
+    };
+    // ONE NORMAL FORM on both sides: vetQuote hands back the receipt with its hyphens opened
+    // ("frost rimed hide"), the clause record keeps the GM's own spelling ("frost-rimed hide")
+    const flat = (s) => String(s ?? '').toLowerCase().replace(/[\u2010-\u2015-]/g, ' ').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const asksATwistClause = (span) => {
+      if (!closedPath) return true; const sp = flat(String(span ?? '').replace(/^(?:a|an|the)\s+/i, '')); if (!sp) return false;
+      if (answeredByAPart(sp)) return false;
+      return (clauseRecord ?? []).some((c) => c.kind !== 'header' && flat(positiveHalf(c)).includes(sp)); // the HEAD is included: positiveHalf has already taken the body out of it
+    };
+    // THE SEAT RECEIVES ITS CLAUSE, AND THE CLAUSE IS THE RECEIPT (the critic's prescription,
+    // 2026-10-19). The call's job is to pick a TEMPLATE; whether the GM asked for a row is a fact the
+    // engine already holds — the clause record. So on a closed path, when the sheet still carries a
+    // twist clause no row answers, that clause IS the receipt, whatever the call quoted (or failed to
+    // quote): "carries stolen voices" was refused three packages running because the fit answered a
+    // template with no usable quote, and print shipped under a new name.
+    // One definition, two readers. The twist path asks it with the closed-path
+    // guard (the engine names the clause and the call picks a template FOR it);
+    // the clause-first retry below asks it with `anyPath`, because a homebrew or
+    // blank sheet can carry an unanswered clause too and the retry is only worth
+    // paying for when there IS one to aim at (owner's choice (c), 2026-10-22).
+    // ONE DEFINITION, TWO READERS (R7 · ANCHOR). The seats want ONE unanswered clause
+    // to hand a row; the idea call wants the WHOLE LIST, so it can be told which of the
+    // GM's asks are still open and name the one it is answering. The predicate — which
+    // clauses count, which are heads or headers or lacks, which a named part already
+    // answers — is written once here and `unansweredClause` is the first of the list.
+    const unansweredClauses = ({ anyPath = false } = {}) => {
+      if (!anyPath && !closedPath) return [];
+      const answered = new Set(Object.values(sections).flat().filter((e) => e.clause).map((e) => flat(String(e.clause))));
+      // A MECHANICAL CLAUSE FIRST. The record splits "a tar-pit horror that drags
+      // what it touches down into the black sludge" into a DESCRIPTIVE head ("a
+      // tar-pit horror") and the mechanical remainder, and this loop returned
+      // whichever came first — the head. So the retry was aimed at "a will-o-wisp"
+      // and "a bronze shrine-warden", which name a creature and ask for no rule.
+      // Measured on branch10-2026-10-22T16-09-12: 4 of 8 handed clauses were bare
+      // descriptive heads. The retry's whole value is having something actionable
+      // to aim at, so the mechanical half is preferred and the head is the
+      // fallback. Stable within each kind, so record order still decides ties.
+      const byKind = [...(clauseRecord ?? [])].sort((a, b) => (a.kind === 'mechanical' ? 0 : 1) - (b.kind === 'mechanical' ? 0 : 1));
+      const out = [];
+      for (const c of byKind) {
+        if (c.kind === 'header') continue;
+        const half = positiveHalf(c); if (!half) continue;
+        const handed = positiveHalf(c, { forCall: true }).trim() || half.trim();
+        const f = flat(half); if (!f || f.length < 4) continue;
+        if (namesTheBodyOnly(half)) continue;
+        // ...and a clause that is only the creature's OWN NAME is not answerable
+        // either. `namesTheBodyOnly` tests the PRINT body, so a homebrew NPC with
+        // no print body slipped through: the forty spent retries on "Brother
+        // Halric" and "Ilvareth Dusksong — An elf" (2026-10-22).
+        if (flat(cut(handed, String(p.name ?? ''))).length < 4) continue;
+        if (answeredByAPart(f)) continue;
+        if ([...answered].some((a) => a.includes(f) || f.includes(a))) continue;
+        out.push({ handed, mechanic: c.askMechanic ?? null, shape: c.askShape ?? null, kind: c.kind ?? null, head: !!c.head }); // the clause call's own declared answers, not a reading of the text
+      }
+      return out;
+    };
+    const unansweredClause = (opts) => (unansweredClauses(opts)[0]?.handed ?? null);
     let ideasT = null;
+    // THE OPEN ASKS, AT THE SEATS' SHARED SCOPE (R9 · F17). `openClausesT` is a `const`
+    // inside the idea call's own try block (it closes ~430 lines above the trait seat),
+    // so reading it from the seat silently saw an undeclared identifier and F17 was a
+    // no-op that the whole suite passed. Same class as the `gmAsked`/`askWhy` scope bug
+    // of 2026-10-18; caught here by checking the scope rather than trusting green.
+    let openAsksT = [];
     try {
       // 1e, THE IDEA STARTS FROM THE GM'S CLAUSE ON A PRINT BODY (critic's ruling,
       // 2026-10-20). The hydra's idea was about fanning bites when the GM had
@@ -4662,9 +4884,39 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // round trip. A missing or malformed answer falls back to the template's own
       // `keys`, so it can never fail a generation (2026-10-22).
       const bodyReqsT = liveBodyRequirements(ctxT);
-      const rawIdea = await callLLM(buildIdeaPrompt({ askedMechanic: options.askedMechanic ?? null, // ONE call answers both seats, so there is no seat to lead by here — the per-seat lead belongs in fitSeat. Telling this call BOTH clause asks is a separate change (see plans/the-ask-lands-2026-10-27.md).
+      // R7 · ANCHOR (2026-11-02). The idea call rolled fresh with nothing tying it to
+      // the GM's sentence, so a surprise was rolled rather than earned and 1 of 7
+      // survived a re-roll (the critic, forty #2) — and an idea often answered a clause
+      // the GM never typed (the tax-ghost's stealth trait for a disarm concept). The
+      // engine already knows which of the GM's asks are open: `unansweredClauses`, the
+      // same predicate the seats use to hand a clause, read here for the whole list.
+      // THE LIST IS THE GM'S ASKS, NOT EVERY OPEN CLAUSE (forty #3, 2026-11-02).
+      // `unansweredClauses` inherits a HEAD fallback from `unansweredClause`, which is
+      // right when a seat needs one clause to hand a row and wrong when the idea call
+      // needs a list: forty #3 showed the call 68 lines of which **31 were descriptive
+      // heads** — "a mud-caked bog hound", "a cairn-wight", "a reef-drake", "a hunger" —
+      // and it anchored on 16 of 78 seats. 46% noise dilutes the instruction and invites
+      // the call to name nothing. The reader keeps its full list and its ordering for the
+      // seats; the FILTER belongs here, on the clause call's own declared `kind`, which
+      // is a field and not a reading of the GM's words.
+      const openClausesT = unansweredClauses({ anyPath: true }).filter((c) => c.kind === 'mechanical' && !c.head);
+      openAsksT = openClausesT;
+      const headsDropped = unansweredClauses({ anyPath: true }).length - openClausesT.length;
+      if (openClausesT.length) trace('open asks handed to the idea call:', `${openClausesT.map((c) => `"${c.handed}"${c.mechanic ? ` [${c.mechanic}]` : ''}`).join(' · ')}${headsDropped ? ` (${headsDropped} descriptive head(s) withheld — the call is shown asks, not the creature)` : ''}`);
+      else trace('open asks handed to the idea call:', `none — the record holds no unanswered MECHANICAL clause${headsDropped ? ` (${headsDropped} descriptive head(s) withheld)` : ''}; the call rolls unanchored as before`);
+      const rawIdea = await callLLM(buildIdeaPrompt({ openClauses: openClausesT, askedMechanic: options.askedMechanic ?? null, // ONE call answers both seats, so there is no seat to lead by here — the per-seat lead belongs in fitSeat. Telling this call BOTH clause asks is a separate change (see plans/the-ask-lands-2026-10-27.md).
          bodyRequirements: bodyReqsT, owedClause: owedClauseForIdea(), name: p.name, cr, concept: readPhrases(concept), sheetLines: sheetSoFarT, seats: seatsT, energy: options.energy ?? null, wantTrait: traitWildcardAllowed, engines: enginesT, verbs: conceptVerbs(`${options.userConcept ?? concept} ${seatsT?.action ?? ''} ${seatsT?.trait ?? ''}`) }), validateIdeaResponse);
-      ideasT = parseIdeas(rawIdea);
+      ideasT = parseIdeas(rawIdea, openClausesT.map((c) => c.handed));
+      for (const seatN of ['action', 'trait']) {
+        const got = ideasT?.[seatN]; if (!got) continue;
+        if (got.clause) trace('idea anchored:', `${seatN} — "${got.idea.slice(0, 70)}" answers the GM's "${got.clause}"`);
+        // WHAT THE CALL ANSWERED, not only that it missed (forty #3). The trace said
+        // "names none of the N asks" and nothing else, so the run could not tell a call
+        // that ignored the field from one that answered something close and failed the
+        // membership check. `clauseRaw` carries the rejected value; an EMPTY one is
+        // non-compliance and must be reported, never fixed by loosening membership.
+        else trace('idea unanchored:', `${seatN} — "${got.idea.slice(0, 70)}" names none of the ${openClausesT.length} open ask(s); it answered ${got.clauseRaw ? `"${got.clauseRaw}"` : 'NOTHING (the field was absent or empty)'} and rolls as it did before R7`);
+      }
       {
         const verdicts = readBodyVerdicts(rawIdea);
         if (verdicts) {
@@ -4690,15 +4942,29 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     const spendKeys = (because) => { const m = /\[verb: ([^\]]*)\]/.exec(because ?? ''); const hn = headNoun(options.userConcept ?? concept ?? ''); consumedKeysT = m ? m[1].split(', ').filter((x) => /:concept$/.test(x)).map((x) => x.replace(/:concept$/, '')).filter((k) => !MATERIAL_NOUNS.has(k) && k !== hn && k !== `${hn}s`) : []; if (consumedKeysT.length) trace('keys spent by the action:', consumedKeysT.join(', ')); };
     // UNIQUE ROW NAMES (two "Tremor Toll (Recharge 5-6)" rows on the gong, critic
     // 2026-09-29): a shipped row that collides with a row already on the sheet takes
-    // its template's own name, or a numbered form when it has none
+    // its template's own name.
+    //
+    // THE SECOND COLLISION SITE (R9 session two, 2026-11-02). The N4 note says in plain
+    // words that BOTH collision fallbacks hand the row its template's name — the trait
+    // seat's was closed in session one and this one, which serves ACTION rows and the
+    // library draw, was not: it still minted "<name> II" (forty #4's "Sermon of the
+    // Branded Cinder II"). Print has no such name, and an engine-invented one is the
+    // engine writing fiction. Returns FALSE when there is no real name to fall back on
+    // and the caller drops the row; the library draw passes no template name at all, so
+    // a colliding seed is refused and the sheet keeps the row it already had.
     const uniqueRowName = (row, templateName) => {
       const bare = (n) => String(n ?? '').replace(/ \(.*\)$/, '').toLowerCase();
       const gate = / \((?:Recharge [\d–-]+|\d\/Day)\)$/.exec(row.name ?? '')?.[0] ?? '';
       const taken = new Set(Object.values(sections).flat().map((e) => bare(e.name)));
-      if (!taken.has(bare(row.name))) return;
-      const alt = templateName && !isPlaceholderRowName(templateName) && !taken.has(bare(templateName)) ? `${templateName}${gate}` : `${String(row.name).replace(/ \(.*\)$/, '')} II${gate}`; // a composed template's name is a placeholder, never a card name (N4)
-      trace('row renamed for uniqueness:', `"${row.name}" collides with a row on the sheet — "${alt}"`);
+      if (!taken.has(bare(row.name))) return true;
+      const alt = templateName && !isPlaceholderRowName(templateName) && !taken.has(bare(templateName)) ? `${templateName}${gate}` : null;
+      if (!alt) {
+        trace('row refused — the name is taken:', `"${row.name}" collides with a row on this sheet and there is no other name for it (${templateName ? `its template's "${templateName}" is a placeholder or also taken` : 'it carries no template name'}); the engine will not mint one`);
+        return false;
+      }
+      trace('row renamed for uniqueness:', `"${row.name}" collides with a row on the sheet — "${alt}", its template's own name`);
       row.name = alt;
+      return true;
     };
     // THE CALL'S JUDGEMENTS, KEPT FOR THE PATHS THAT BIND WITHOUT ASKING (owner,
     // 2026-10-13). The fit call answers two things beyond its pick: which word
@@ -5147,7 +5413,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           if (freeAllowance === 0) trace('seat authoring skipped:', `${seat} — the call refused every template for no_fit, but print closes this sheet's row set, so there is nothing to author into`);
           else {
             const takenS = Object.values(sections).flat().map((e2) => String(e2.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean);
-            const rawS = await callLLM(buildSeatPrompt({ name: p.name, inline: inlineGuessRef(), cr, sheet: sheetSoFarT, idea: String(idea.idea ?? ''), missing: String(fit.missing ?? ''), kind: seatKind, taken: takenS, lacks: (clauseRecord ?? []).filter((c) => c.polarity === 'lacks').map((c) => c.text) }), validateAuthorResponse);
+            const rawS = await callLLM(buildSeatPrompt({ name: p.name, inline: inlineGuessRef(), cr, sheet: sheetSoFarT, idea: String(idea.idea ?? ''), clause: String(idea.clause ?? ''), missing: String(fit.missing ?? ''), kind: seatKind, taken: takenS, lacks: (clauseRecord ?? []).filter((c) => c.polarity === 'lacks').map((c) => c.text) }), validateAuthorResponse);
             const wrote = parseAuthorResponse(rawS, { attackCap: 0, traitSlots: 1 });
             // the form the SEAT asked for is the only one it takes: a save in the trait
             // seat would skip `valueCheck` (the consumer runs it on everything but
@@ -5172,7 +5438,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               trace('seat authored nothing:', `${seat} — the call was asked to write ${seatKind} for "${String(idea.idea ?? '').slice(0, 70)}" and ${wrote ? `wrote no row of that kind${(wrote.refused ?? []).length ? ` (refused: ${wrote.refused.map((r2) => `"${r2.name}" — ${r2.why}`).join('; ')})` : ''}${(wrote.unplaced ?? []).length ? ` (it belongs in the ${wrote.unplaced[0].where})` : ''}` : 'answered nothing parseable'}; the nearest template stands in`);
             } else {
               const row = authoredRow(form.kind, form.f);
-              row.text = stampT(row.text); // the model is given the inline, but "the creature" still slips through
+              // THE ENGINE DOES NOT REWRITE AN AUTHORED SENTENCE (the critic's top line,
+              // forty #4). This stamped the creature's inline over "the creature" — and in
+              // an authored row "the creature" is usually the TARGET, so #36's best rule
+              // became "the scream senses the scream's frozen heart … and the scream cannot
+              // move away from the scream", and #08's "the hunger pinpoints the hunger's
+              // position". I added this in R4 step 2, called it a strict improvement over
+              // the repair path (which never stamped), and it is the house rule broken in
+              // one line: the engine edits fields, never sentences. Removed, not narrowed —
+              // the prompt already gives the call the inline and tells it how to refer to
+              // the creature, which is where that belongs.
+              //
+              // No lint accompanies this: a "names the creature twice" detector is refuted
+              // by print, which does it in 83 of its own sentences (the Aboleth's Probing
+              // Telepathy names it three times). The pin is a replay instead.
               const dangS = danglingRefIn(row.text, [...rowNamesOf(monster), String(row.name).replace(/ \(.*\)$/, '')], String(row.name));
               // NEVER-FAIL: A TOKEN THE ENGINE CANNOT FILL REFUSES THE ROW (forty #2,
               // 2026-11-02). The forms ask the call to write `{dc}` and `{dmg}`, which
@@ -5185,9 +5464,26 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               // given. So the engine validates its own substitution — a mechanical fact
               // about this text, no meaning read — and the nearest template stands in.
               const slotS = dangS ? null : UNFILLED_SLOT.exec(row.text);
+              // the same rule as the repair landing: a row whose trigger needs a
+              // condition nothing on this sheet applies can never fire. The seat
+              // lands ONE row, so there is no batch to count — only the sheet, plus
+              // the condition this row itself applies.
+              // the same rule as the repair landing: a row that makes an undefined thing
+              // act cannot be run. The seat lands ONE row, so the sheet plus that row's
+              // own name is the whole of what is defined.
+              const actS = (dangS || slotS) ? null : (() => {
+                const a = String(form.f.acts ?? '').replace(/ \(.*\)$/, '').trim(); if (!a) return null;
+                const known = [...rowNamesOf(monster), ...Object.values(sections).flat().map((e2) => String(e2.name ?? '').replace(/ \(.*\)$/, '')), String(row.name).replace(/ \(.*\)$/, '')].filter(Boolean).map((n) => n.toLowerCase());
+                return known.some((n) => n.includes(a.toLowerCase()) || a.toLowerCase().includes(n)) ? null : a;
+              })();
+              const needS = (dangS || slotS || actS) ? null : (form.f.requiresConditionNamed ?? null);
+              const appliesS = needS ? new Set([...Object.values(sections).flat().flatMap((e2) => imposedConditions(e2)), ...(row.imposes ? [String(row.imposes)] : [])]) : null;
+              const unmetS = needS && !appliesS.has(String(needS)) ? needS : null;
               if (dangS) trace('seat authoring refused:', `${seat} — the authored row cites "${dangS}", which is not on this sheet (the checker would fail it as a dangling reference); the nearest template stands in`);
               else if (slotS) trace('seat authoring refused:', `${seat} — the authored row still carries ${slotS[0]}, a slot this engine never substitutes (the forms ask only for {dc} and {dmg}); shipping it would fail the generation outright, so the nearest template stands in`);
-              else if (!slotS) {
+              else if (unmetS) trace('seat authoring refused:', `${seat} — the authored row needs its target to have ${unmetS} and no row on this sheet imposes it, so its trigger could never fire (the Chalk-Hound's Daubing Cling, forty #2); the nearest template stands in`);
+              else if (actS) trace('seat authoring refused:', `${seat} — the authored row makes "${actS}" act, and no row on this sheet is that thing; a table cannot run it (the Spore-Mother's puppets, forty #3); the nearest template stands in`);
+              else if (!slotS && !unmetS && !actS) {
                 freeRowsUsed += 1;
                 row.authoredSeat = true; // the sameness metric and the gap ship-check count it as the seat's own row, not a template's
                 const authoredSeatShape = { row, templateName: null, section: form.section, template: null, host: 'melee', supersedes: null, asked: vetAsked(fit.asked, rawConceptText), askedRaw: String(fit.asked ?? '').trim(), expresses: fit.expresses ?? null, accepted_closest: false, elementsOffered: sigElements, authoredSeat: true, because: `${String(idea.idea ?? '').slice(0, 160)} [authored: the catalog held no shape for it]` };
@@ -5342,6 +5638,19 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // the engine inventing fiction.
         if (!fit.name && rendered.name) trace('row kept the template\'s own name:', `${seat} — "${rendered.name}" is ${fit.template.id}'s default and the call named nothing usable; on a reskinned creature that reads as catalog furniture`);
         let bare = fit.name ?? rendered.name;
+        // A PLACEHOLDER IS NOT A NAME, AND THIS IS WHERE IT IS MINTED (forty #3,
+        // 2026-11-02). N4 closed the two COLLISION fallbacks, which is how the
+        // Rivenhearted Glacier shipped "Composed Row" — and the Drowned Seep shipped it
+        // again with no collision at all: a composed template carries `name: 'Composed
+        // Row'` as a trace label until something names the row, the call named nothing
+        // usable, and `bare` simply became the label. The critic has filed this as S0
+        // twice. A derived name here would be the engine inventing fiction (the note
+        // above), and a card reading "Composed Row" is worse than one row fewer, so the
+        // seat declines and its fallback shelf — which has real names — stands in.
+        if (isPlaceholderRowName(bare)) {
+          trace('signature miss:', `${seat} — "${fit.template.id}" rendered a row with no name: "${bare}" is the template's trace label, not a name, and the call named nothing usable. A card cannot carry it (the critic's S0, twice), and the engine will not invent one; the fallback stands in`);
+          return null;
+        }
         // the tally distinguishes a VERB fit (the template's own verbs appear in
         // the concept/idea) from a SHAPE fit — the critic's split, made measurable
         const vr = rankByVerb([fit.template], verbText, idea.idea)[0];
@@ -5505,120 +5814,6 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // asks the call, and accepts the engine's own concept-verb match as a
     // second route in: both are evidence of the same thing, and neither alone
     // was ever meant to overrule the other.
-    // ON THE TWIST PATH THE ASK IS THE TWIST CLAUSE: a quote that only names the creature itself
-    // ("a skeleton" on a skeleton who was a gladiator) is the body, not an ask — the seat's fit
-    // took false-appearance on it (twist-five, 2026-10-19). The body receipt and the print name
-    // are closed facts the path already holds.
-    const namesTheBodyOnly = (asked) => { if (!closedPath || !asked) return false; const a = String(asked).toLowerCase().replace(/^(?:a|an|the)\s+/, '').trim(); const body = String(pathBody ?? '').toLowerCase(); const rcpt = String(pathD?.receipt ?? '').toLowerCase().replace(/^(?:a|an|the)\s+/, '').trim(); return !!a && (body.includes(a) || a === body || (!!rcpt && rcpt.includes(a))); };
-    // …AND IT MUST POINT AT A TWIST CLAUSE — which is EVERY clause but three (critic A, 2026-10-19:
-    // the first cut asked for a clause the identity call had tagged `mechanical`, and most twists are
-    // tagged descriptive, so "carries stolen voices" and "with a frost-rimed hide" were refused and
-    // print shipped under a new name — correct and inert). The FIT CALL with a receipt is the judge
-    // of whether a clause earns a row; the tag is the identity call's reading of a phrase and gates
-    // nothing. Refused: the HEAD (the creature itself — the path already holds that body), a HEADER
-    // directive (size, speed, AC, HP, CR — the engine honours those in the header), and the NEGATIVE
-    // half of a lack (the sweep removes what it names). A clause that holds both ("stumps smoke
-    // instead of regrowing") keeps its positive half.
-    // THE HEAD CLAUSE IS OFTEN THE WHOLE PROMPT (critic A, 2026-10-19): "Dire Wolf with a frost-rimed
-    // hide" came back as ONE clause, marked head — so the twist lives INSIDE the head, and refusing
-    // the head refused the twist. What the head gives up is the BODY (the path holds it); what remains
-    // is the ask. `namesTheBodyOnly` already refuses a quote that is only the body, so the two compose.
-    // ON WORD BOUNDARIES. `indexOf` cut on SUBSTRINGS, so removing the print body
-    // "Lich" from "an archlich enthroned on a sun of bone" left "an arch enthroned
-    // on a sun of bone" — the critic's named defect, still live on the forty
-    // (sweep-2026-10-22T17-05-33). "shieldwall" minus "wall" was "shield" too.
-    const cut = (t, q) => { const s = String(t ?? ''); const needle = String(q ?? '').trim(); if (!needle) return s;
-      const bounded = new RegExp(`(?<![A-Za-z])${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z])`, 'i');
-      const i = s.search(bounded) >= 0 ? s.search(bounded) : -1; return (i < 0 ? s : `${s.slice(0, i)} ${s.slice(i + needle.length)}`).replace(/\s{2,}/g, ' ').replace(/^(?:a|an|the)\s+(?=with|that|who|whose)/i, '').trim(); };
-    // `forCall` HANDS THE CLAUSE OVER, it does not test it (the critic's item 3,
-    // "hand seats the clause verbatim and carry the consumed spans as metadata").
-    // The cut form exists to find what the sheet has NOT answered, and for that
-    // removing the consumed spans is right. But the same surgery was being handed
-    // to the call, which is how the retry came to aim at "Adult Red Dragon — from
-    // an old lance" (the dragon's own twist, "blind in one eye", cut out of it) and
-    // at "a marsh" (the witch cut off her own marsh). Measured on
-    // retry6-2026-10-22T15-44-26: 5 retries fired, 0 succeeded, 3 of them aimed at
-    // text like that.
-    //
-    // The BODY NAME is still cut either way — it is genuinely redundant, the call
-    // already knows what the monster is, and `namesTheBodyOnly` exists to stop a
-    // clause that is only the body. The RECEIPT is not: it is the twist itself.
-    const positiveHalf = (c, { forCall = false } = {}) => {
-      let t = String(c.text ?? '');
-      // THE LACK IS THE TWIST. This cut `lackQuote` unconditionally, and on a
-      // LACKS clause that quote is the whole point — the dragon's record is
-      // "Adult Red Dragon — blind in one eye from an old lance" (LACKS), so the
-      // clause HANDED to the call came out as "Adult Red Dragon — from an old
-      // lance". Cutting it is right for the unanswered TEST, wrong for handing
-      // over (measured: retry6-2026-10-22T15-44-26, 5 retries fired, 0 succeeded).
-      if (c.polarity === 'lacks') {
-        const q = String(c.lackQuote ?? '').trim();
-        if (!q) return forCall ? t.trim() : ''; // a whole-clause lack has no positive half to TEST, but it can still be handed over
-        if (!forCall) t = cut(t, q);
-      }
-      if (c.head) {
-        t = cut(t, pathBody ?? '');
-        if (!forCall) t = cut(t, String(pathD?.receipt ?? '').replace(/^Name field:\s*/i, ''));
-      }
-      // a handed clause must not open on punctuation a cut left behind
-      return t.replace(/^[\s\u2010-\u2015,;:-]+/, '').trim();
-    };
-    // a receipt is ANSWERED only when it names the weapon a part row already carries: "with a
-    // greatsword" beside the Greatsword row is answered, "keeps the line" beside a shield bash is not
-    const answeredByAPart = (sp) => {
-      const spW = clauseWords(sp); if (!spW.length) return false;
-      const partW = new Set(Object.values(sections).flat().filter((e) => e.part || e.feature).flatMap((e) => [...clauseWords(String(e.name ?? '')), ...clauseWords(String(e.weapon ?? ''))]));
-      return spW.every((w) => partW.has(w));
-    };
-    // ONE NORMAL FORM on both sides: vetQuote hands back the receipt with its hyphens opened
-    // ("frost rimed hide"), the clause record keeps the GM's own spelling ("frost-rimed hide")
-    const flat = (s) => String(s ?? '').toLowerCase().replace(/[\u2010-\u2015-]/g, ' ').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
-    const asksATwistClause = (span) => {
-      if (!closedPath) return true; const sp = flat(String(span ?? '').replace(/^(?:a|an|the)\s+/i, '')); if (!sp) return false;
-      if (answeredByAPart(sp)) return false;
-      return (clauseRecord ?? []).some((c) => c.kind !== 'header' && flat(positiveHalf(c)).includes(sp)); // the HEAD is included: positiveHalf has already taken the body out of it
-    };
-    // THE SEAT RECEIVES ITS CLAUSE, AND THE CLAUSE IS THE RECEIPT (the critic's prescription,
-    // 2026-10-19). The call's job is to pick a TEMPLATE; whether the GM asked for a row is a fact the
-    // engine already holds — the clause record. So on a closed path, when the sheet still carries a
-    // twist clause no row answers, that clause IS the receipt, whatever the call quoted (or failed to
-    // quote): "carries stolen voices" was refused three packages running because the fit answered a
-    // template with no usable quote, and print shipped under a new name.
-    // One definition, two readers. The twist path asks it with the closed-path
-    // guard (the engine names the clause and the call picks a template FOR it);
-    // the clause-first retry below asks it with `anyPath`, because a homebrew or
-    // blank sheet can carry an unanswered clause too and the retry is only worth
-    // paying for when there IS one to aim at (owner's choice (c), 2026-10-22).
-    const unansweredClause = ({ anyPath = false } = {}) => {
-      if (!anyPath && !closedPath) return null;
-      const answered = new Set(Object.values(sections).flat().filter((e) => e.clause).map((e) => flat(String(e.clause))));
-      // A MECHANICAL CLAUSE FIRST. The record splits "a tar-pit horror that drags
-      // what it touches down into the black sludge" into a DESCRIPTIVE head ("a
-      // tar-pit horror") and the mechanical remainder, and this loop returned
-      // whichever came first — the head. So the retry was aimed at "a will-o-wisp"
-      // and "a bronze shrine-warden", which name a creature and ask for no rule.
-      // Measured on branch10-2026-10-22T16-09-12: 4 of 8 handed clauses were bare
-      // descriptive heads. The retry's whole value is having something actionable
-      // to aim at, so the mechanical half is preferred and the head is the
-      // fallback. Stable within each kind, so record order still decides ties.
-      const byKind = [...(clauseRecord ?? [])].sort((a, b) => (a.kind === 'mechanical' ? 0 : 1) - (b.kind === 'mechanical' ? 0 : 1));
-      for (const c of byKind) {
-        if (c.kind === 'header') continue;
-        const half = positiveHalf(c); if (!half) continue;
-        const handed = positiveHalf(c, { forCall: true }).trim() || half.trim();
-        const f = flat(half); if (!f || f.length < 4) continue;
-        if (namesTheBodyOnly(half)) continue;
-        // ...and a clause that is only the creature's OWN NAME is not answerable
-        // either. `namesTheBodyOnly` tests the PRINT body, so a homebrew NPC with
-        // no print body slipped through: the forty spent retries on "Brother
-        // Halric" and "Ilvareth Dusksong — An elf" (2026-10-22).
-        if (flat(cut(handed, String(p.name ?? ''))).length < 4) continue;
-        if (answeredByAPart(f)) continue;
-        if ([...answered].some((a) => a.includes(f) || f.includes(a))) continue;
-        return handed;
-      }
-      return null;
-    };
     const gmAsked = (f) => {
       if (!!f?.asked && !namesTheBodyOnly(f.asked) && asksATwistClause(f.asked)) return true;
       if (/\[verb: [^\]]*\]/.test(f?.because ?? '') && /:concept\b/.test(f?.because ?? '') && asksATwistClause((/\[verb: ([^\]]*)\]/.exec(f.because) ?? [, ''])[1].split(',')[0].split(':')[0].trim())) return true;
@@ -5954,12 +6149,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (sup) for (const [secS, esS] of Object.entries(sections)) {
         for (let i = esS.length - 1; i >= 0; i -= 1) if (sup.test(esS[i].text ?? '')) { trace('row superseded:', `${secS}/"${esS[i].name}" leaves — "${actionT.row.name}" owns the throw now`); sweepDeadName(sections, esS[i].name, actionT.row, trace); esS.splice(i, 1); }
       }
+      if (!uniqueRowName(actionT.row, actionT.templateName)) { noteDrop(actionT.template ?? actionT.row?.template, 'the name is taken', actionT.row?.name ?? ''); actionT = null; }
+      if (actionT) {
       slotYield(actionT.template ?? actionT.row?.template, actionT.row);
-      uniqueRowName(actionT.row, actionT.templateName);
       actionT.row.boundKeys = [...new Set([...keysOf(actionT.because), ...(actionT.row.boundKeys ?? []), ...userKeysFor(actionT.template ?? actionT.row?.template)])]; // provenance (step 8): the user's words this row binds to, by the fit's reason and by the template's own keys
       { const yk = (scaled.speciesYielded ?? []).find((y) => y.shape === (actionT.template ?? actionT.row?.template)); if (yk) { const gateSuffix = (/ \(.*\)$/.exec(actionT.row.name) ?? [''])[0]; actionT.row.name = `${yk.name}${gateSuffix}`; actionT.row.kit = yk.kit; actionT.row.clause = yk.clause; actionT.row.free = true; trace('kit credited:', `the signature bound ${yk.shape}, the shape the ${yk.kit} kit yielded to the cap — the row is the kit's ("${yk.name}"), free tier`); } } // (the tortle's Bulwark Withdrawal was Shell Defense — the critic's second species read)
       (sections[actionT.section] = sections[actionT.section] ?? []).push(actionT.row);
       libraryDrawn = true;
+      }
       trace(actionT.authoredSeat ? 'signature authored:' : 'signature template:', `${actionT.template ?? 'no template — the seat wrote it'} -> ${actionT.section}/"${actionT.row.name}" ("${actionT.because}")`);
       spendKeys(actionT.because);
       if (deadBareT && deadBareT !== actionT.row.name.replace(/ \(.*\)$/, '')) sweepDeadName(sections, deadBareT, actionT.row, trace);
@@ -6036,7 +6233,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       }
       if (drawn) {
         drawn.row.text = stampT(drawn.row.text);
-        uniqueRowName(drawn.row, null);
+        if (!uniqueRowName(drawn.row, null)) { trace('library seed refused:', `${drawn.seed} — "${drawn.row.name}" is already a row on this sheet; a seed carries no other name, so the sheet keeps the row it has`); drawn = null; }
+      }
+      if (drawn) {
         (sections[drawn.section] = sections[drawn.section] ?? []).push(drawn.row);
         slotYield(drawn.seed, drawn.row); // a seed drawn into a slot evicts the chassis's row there too (the fallback is a landing — "Hurled Debris" stood beside the seed's "Hurled Weapon", step 2 probe)
         libraryDrawn = true;
@@ -6110,13 +6309,24 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // a composed template's name is a PLACEHOLDER (N4, 2026-11-02): the
           // Rivenhearted Glacier's trait shipped as "Composed Row" through this
           // very line. Fall back the way `uniqueRowName` does instead.
-          const altT = tt.templateName && !isPlaceholderRowName(tt.templateName) ? tt.templateName : `${String(tt.row.name).replace(/ \(.*\)$/, '')} II`;
-          trace('trait renamed:', `"${tt.row.name}" already names a row — the trait ships as "${altT}"${isPlaceholderRowName(tt.templateName) ? ` (its template's "${tt.templateName}" is a placeholder, not a name)` : ''}`);
+          // A COLLISION REFUSES THE ROW; IT DOES NOT MINT A NAME (forty #4). The fallback
+          // appended " II" and shipped "Sermon of the Branded Cinder II" (#28) — print
+          // has no such name, and an engine-invented one is the engine writing fiction.
+          // The template's own name stays as an alternative when it is a real name; with
+          // nothing to fall back on the trait declines and the shelf stands in. An
+          // authored row's call was handed the taken names, so a collision there is the
+          // call ignoring them.
+          const altT = tt.templateName && !isPlaceholderRowName(tt.templateName) ? tt.templateName : null;
+          if (!altT) {
+            trace('trait declined — the name is taken:', `"${tt.row.name}" already names a row on this sheet and there is no other name for it (${tt.templateName ? `its template's "${tt.templateName}" is a placeholder` : 'it carries no template name'}); the engine will not mint one, so the row leaves and the fallback stands in`);
+            return;
+          }
+          trace('trait renamed:', `"${tt.row.name}" already names a row — the trait ships as "${altT}", its template's own name`);
           tt.row.name = altT;
         }
         tt.row.bound = bound; tt.row.boundKeys = [...new Set([...keysOf(tt.because), ...(tt.row.boundKeys ?? []), ...userKeysFor(tt.template?.id ?? tt.row?.template)])];
         supersedeByTrait(tt); slotYield(tt.template, tt.row);
-        uniqueRowName(tt.row, tt.templateName);
+        if (!uniqueRowName(tt.row, tt.templateName)) { trace('trait declined — the name is taken:', `"${tt.row.name}" collides at ship and the engine will not mint a name`); return; }
         (sections[secT] = sections[secT] ?? []).unshift(tt.row);
         if (tt.template === 'assassinate') for (const es2 of Object.values(sections)) for (const e2 of es2) if (/\(with Advantage during the first round of each combat\)/.test(e2.text ?? '')) { e2.text = e2.text.replace(/ ?\(with Advantage during the first round of each combat\)/, ''); trace('inline rider retired:', `${e2.name} — Surprise Attack grants the first-round Advantage now`); }
         trace(tt.authoredSeat ? 'signature authored (trait):' : 'signature template (trait):', `${tt.template ?? 'no template — the seat wrote it'} -> ${secT}/"${tt.row.name}" ("${tt.because}")`);
@@ -6129,7 +6339,22 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const MADE_SEAT_TYPES = { warden: /^(?:Construct|Elemental|Undead|Plant|Ooze|Celestial|Fiend)\b/i, juggernaut: /^(?:Construct|Elemental|Undead|Plant|Ooze)\b/i }; // a made seat is earned by its type gate (a stone shrine-guardian is a warden by what it is)
       const seatEarned = !scaled.style || verbHits(readPhrases(String(options.userConcept ?? concept ?? ''))).some((h) => h.id === `${archetype}-${scaled.style}`) || !!(MADE_SEAT_TYPES[scaled.style]?.test(String(options.resolvedType ?? '')));
       if (!printBody && !seatEarned && owedList.length) trace('seat owes nothing:', `the ${scaled.style} line was the model's read of its quote, not a key in the words (a hermit was handed Assassinate, day-one 2026-09-30)`);
-      for (const owed of (printBody || !seatEarned) ? [] : owedList) { // a print body's row set is closed against seat-owed rows (Assassinate on a Wight, critic 2026-09-29)
+      // A DEFAULT SHIPS ONLY WHEN THE GM GAVE NOTHING TO ANCHOR TO (R9 · F17; owner,
+      // 2026-11-02). The seat default is picked by SHAPE — what fits the body and the
+      // role — so by construction it answers nothing the GM typed, and the critic has
+      // measured seat-kit traits earning 0 of 15 three reads running. It is also the
+      // most visible line on the sheet: a screenshot shows the name, the first trait
+      // and the signature, and the first trait was Fear Aura or Regeneration.
+      //
+      // Print licenses the empty slot outright: **126 of its 329 blocks carry zero
+      // traits**, the single most common answer. So when the sheet still has an
+      // unanswered ask of the GM's own — the same filtered list the idea call is handed
+      // — the slot stays empty and the seats spend it on that ask instead. With nothing
+      // left to anchor to (a blank roll, "a worm", "grief") the default is the honest
+      // filler it was built to be.
+      const anchorsOpen = openAsksT.length;
+      if (anchorsOpen && owedList.length && !printBody && seatEarned) trace('seat default withheld:', `${scaled.style ?? archetype} owes ${owedList.join(', ')} by print, and the sheet still has ${anchorsOpen} unanswered ask(s) of the GM's own — print carries zero traits on 126 of 329 blocks, so the slot stays empty rather than shipping shape-picked filler`);
+      for (const owed of (printBody || !seatEarned || anchorsOpen) ? [] : owedList) { // a print body's row set is closed against seat-owed rows (Assassinate on a Wight, critic 2026-09-29)
         if (traitT?.template === owed || Object.values(sections).flat().some((e2) => e2.template === owed)) continue;
         const ot = TEMPLATE_BY_ID.get(owed);
         if (!ot || !templatesFor({ ...ctxT, section: ot.section, trigger: null }).some((x) => x.id === owed)) continue;
@@ -8056,6 +8281,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // 2026-09-15: "Saving Throw or have..." has no colon and the
       // finder skipped every wrapper sighting)
       && !/\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e2.name) && /Saving Throw[:*]|must (?:make|succeed on) a DC \d+/.test(e2.text ?? '') && !/Attack Roll:/.test(e2.text ?? ''));
+    // AND IT MUST HAVE A NAME TO BE NAMED BY (forty #3, 2026-11-02). The Choir of the
+    // Pit shipped "It can replace one attack with a use of (A) or (B) Spellcasting to
+    // cast *Bestow Curse*" — the third appearance of an empty lettered option. The
+    // clause below only writes the (A)/(B) form when BOTH halves exist, so the half
+    // that was missing was `saveAction.name` itself: a row matched the finder's text
+    // test carrying an empty name. A row with no name cannot be offered as an option,
+    // so it is not a candidate; the clause then degrades to its single-option form,
+    // which is well-formed. The sheet lint keeps watching the output.
+    if (saveAction && !String(saveAction.name ?? '').replace(/ \(.*\)$/, '').trim()) {
+      trace('multiattack option withheld:', 'a row matched the save-action finder but carries no name, so it cannot be offered as "(A)" — the clause falls to its single-option form (the Choir of the Pit, forty #3)');
+      saveAction = null;
+    }
     const saveActionNamed = saveAction && new RegExp(`\\b${String(saveAction.name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(multi?.text ?? ''); // Multiattack already uses it every turn (the orb's Eye Rays) — no trade to offer
     if (saveActionNamed) saveAction = null;
     if (multi && !/replace one attack/.test(multi.text)) {
@@ -9485,6 +9722,36 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // adhesive and an exploiter of the Grappled. The call named what the words
       // take away; the engine knows its own mechanic's text. A lack shapes a row
       // that merely carries the clause and removes one that IS the mechanic.
+      // TWO DECLARED LACKS NOTHING ACTED ON (R9 · D12). `LACK_TAKES` has carried
+      // 'sight' and 'speech' since it was written and no arm read them, so "no eyes"
+      // and "no mouth" changed the rows and never the header. Both are enum values the
+      // clause call already answers — declared data, no prose read here.
+      //
+      // 'sight' takes the SIGHT-BASED senses only: darkvision and truesight go,
+      // blindsight and tremorsense stay, because that is how an eyeless thing perceives
+      // and print agrees (the Grimlock has blindsight and no darkvision). Forty #4's
+      // Nameless Brass earned its surprise from an authored tremorsense trait, which
+      // this must not take away.
+      //
+      // HONEST LIMIT, measured: this would NOT have fixed forty #4's #10. Its clause
+      // record reads "a brass automaton with no mouth" -> lacks/speech and "no eyes and
+      // no name" -> has, with no polarity at all — the call never declared the sight
+      // lack, so there was nothing for this arm to read. The darkvision on that sheet
+      // is the clause call's miss, not this sweep's.
+      if (c.takes === 'sight' || c.takes === 'speech') {
+        if (c.takes === 'sight') {
+          const before = String(monster.senses ?? '');
+          const after = before.split(/;\s*/).filter((part) => !/^(?:darkvision|truesight)\b/i.test(part.trim())).join('; ');
+          if (after !== before) { monster.senses = after; trace('lacks clause:', `senses "${before}" -> "${after}" — "${c.text}" takes sight, so the sight-based senses leave (blindsight and tremorsense stay: that is how an eyeless creature perceives, and print's Grimlock has one)`); }
+        } else {
+          const before = String(monster.languages ?? '');
+          if (before && !/^(?:none|—|-)$/i.test(before.trim())) {
+            monster.languages = `understands ${before} but can't speak`;
+            trace('lacks clause:', `languages "${before}" -> "${monster.languages}" — "${c.text}" takes speech (print's own form for a creature that comprehends and cannot answer)`);
+          }
+        }
+        continue;
+      }
       if (c.takes === 'grapple' || c.takes === 'regeneration') {
         const isGrap = c.takes === 'grapple';
         const impose = isGrap ? /,?\s*(?:and )?(?:the target|it|each creature)[^.]*?\bhas the Grappled condition[^.]*\.?/i : /[^.]*\b(?:regrows?|grows? (?:two|a new|back|another)|regains \d+ Hit Points at the start)\b[^.]*\.\s*/i;

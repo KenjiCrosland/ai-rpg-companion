@@ -9,7 +9,31 @@
  * Languages line or the description — owner 2026-10-04).
  */
 const cap = (s) => String(s ?? '').trim().replace(/^./, (c) => c.toUpperCase());
-const low = (s) => String(s ?? '').trim().replace(/^(The|It|Each|Any|Every|One)\b/, (w) => w.toLowerCase());
+// THE WORD AFTER THE JOIN IS LOWERCASED, FULL STOP (forty #2, 2026-11-02). This
+// carried a six-word list — The|It|Each|Any|Every|One — and a trigger/effect join
+// produces a capital from whatever the call happened to write: forty #2 shipped
+// "…takes damage from a melee attack, A memento of the attacker…", "…within reach
+// of the hushfall, That creature cannot…" and "…in a straight line, When the
+// bull's movement…". Three of four joins on that run were wrong and the list could
+// never close, because it is not a list — it is the first word of a sentence.
+//
+// Two exemptions, both CLOSED FACTS rather than readings: a word of the creature's
+// own name (forty #2's fourth case was "…in Dim Light or Darkness, Thrust has
+// Advantage…", where Thrust IS the Unanswered Thrust), and nothing else — a rules
+// term that lands here lowercase is restored by `capsFix2024`, which runs over
+// every row's text after every row has landed and exists for exactly this.
+// A PROPER NOUN IS CAPITALISED WHERE IT IS DECLARED (the critic, forty #3). The
+// first cut of this took every word of every name string, and the engine's inline
+// for a kind is "the cairn-wight" — so "the" entered the keep set and ELEVEN sheets
+// still shipped "…, The target takes…". Every one of the critic's eight mid-sentence
+// capitals was the word "The", kept by my own exemption. Reading only the words
+// that are Capitalised in the name needs no article list and no stopword list: "the
+// cairn-wight" contributes nothing, "Unanswered Thrust" still protects "Thrust".
+const low = (s, keep = []) => {
+  const t = String(s ?? '').trim();
+  const kept = new Set(keep.flatMap((k) => String(k ?? '').split(/[^A-Za-z']+/)).filter((w) => /^[A-Z]/.test(w)).map((w) => w.toLowerCase()));
+  return t.replace(/^[A-Za-z][\w']*/, (w) => (kept.has(w.toLowerCase()) ? w : w.charAt(0).toLowerCase() + w.slice(1)));
+};
 /** a prose rider-save ("each creature within 5 feet must succeed on a DC 12 Dexterity saving throw or take …") becomes the skeleton the lint requires */
 export function skeletonSave(text) {
   const VERB = { take: 'The target takes ', takes: 'The target takes ', be: 'The target is ', become: 'The target is ', becomes: 'The target is ', have: 'The target has ', has: 'The target has ' };
@@ -18,7 +42,8 @@ export function skeletonSave(text) {
 }
 const end = (s) => (s && !/[.!?]$/.test(s.trim()) ? `${s.trim()}.` : String(s ?? '').trim());
 
-export function renderForm(form, edition = '2024') {
+export function renderForm(form, edition = '2024', { properNouns = [] } = {}) {
+  const lowN = (x) => low(x, properNouns);
   const is2014 = edition === '2014';
   switch (form.kind) {
     case 'attack': {
@@ -35,15 +60,15 @@ export function renderForm(form, edition = '2024') {
         const half = /half(?: as much)? damage/i.test(form.success ?? '');
         const t14 = (x) => String(x).replace(/(\d+)-foot (Cone|Sphere|Line|Cube|Cylinder)\b/g, (m0, n, sh) => `${n}-foot ${sh.toLowerCase()}`).replace(/(\d+)-foot Emanation/g, '$1-foot radius'); // 2014 lowercases its shapes, as the grammar pass does
         let s = dmg ? `${cap(t14(form.target))} must make a DC ${form.dc} ${form.stat} saving throw, taking ${dmg[1].replace(/ ([A-Z][a-z]+) damage$/, (m0, t) => ` ${t.toLowerCase()} damage`)} on a failed save${half ? ', or half as much damage on a successful one' : ''}.`
-          : `${cap(t14(form.target))} must make a DC ${form.dc} ${form.stat} saving throw. On a failed save, ${low(end(form.failure))}`;
-        if (dmg && dmg[2].trim()) s += ` On a failed save, ${low(end(dmg[2]))}`;
-        if (form.success && !half) s += ` On a successful save, ${low(end(form.success))}`;
+          : `${cap(t14(form.target))} must make a DC ${form.dc} ${form.stat} saving throw. On a failed save, ${lowN(end(form.failure))}`;
+        if (dmg && dmg[2].trim()) s += ` On a failed save, ${lowN(end(dmg[2]))}`;
+        if (form.success && !half) s += ` On a successful save, ${lowN(end(form.success))}`;
         return s;
       }
       return `*${form.stat} Saving Throw*: DC ${form.dc}, ${form.target}. *Failure:* ${end(cap(form.failure))}${form.success ? ` *Success:* ${end(cap(form.success))}` : ''}`; // the engine's convention: the asterisk closes before the colon
     }
-    case 'trait': return skeletonSave(form.trigger ? `${cap(form.trigger).replace(/[.,]$/, '')}, ${low(end(form.effect))}` : end(cap(form.effect)));
-    case 'reaction': return skeletonSave(is2014 ? `${cap(form.trigger).replace(/[.,]$/, '')}, ${low(end(form.response))}` : `*Trigger:* ${end(cap(form.trigger))} *Response:* ${end(cap(form.response))}`);
+    case 'trait': return skeletonSave(form.trigger ? `${cap(form.trigger).replace(/[.,]$/, '')}, ${lowN(end(form.effect))}` : end(cap(form.effect)));
+    case 'reaction': return skeletonSave(is2014 ? `${cap(form.trigger).replace(/[.,]$/, '')}, ${lowN(end(form.response))}` : `*Trigger:* ${end(cap(form.trigger))} *Response:* ${end(cap(form.response))}`);
     default: throw new Error(`unknown form kind: ${form.kind}`);
   }
 }

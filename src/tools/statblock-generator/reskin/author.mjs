@@ -21,6 +21,8 @@ export const PASSIVE_EFFECTS = ['ability', 'bonus', 'protection', 'threat', 'lim
 export const STATS = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma'];
 const TARGET_OK = /^(?:one creature within \d+ feet|each creature in a \d+-foot (?:Cone|Sphere|Line|Cube|Emanation)|each creature within \d+ feet|one creature it can see within \d+ feet)$/;
 const HAS_NUMBER = /\d/;
+// print's longest trait text is 714 characters (Loathsome Limbs); 240 refused 9% of print's 324
+const RULES_TEXT_CAP = 720;
 
 /**
  * THE FORMS, ONE DEFINITION (R4 step 2). Two calls author into these: the repair call below, which writes a
@@ -34,9 +36,11 @@ export function formsSpec({ name, inline, attackCap = 2 }) {
   return [`THE FORMS`,
     ...(attackCap > 0 ? [`- attack (a weapon or body part): { "key": null, "clause", "name", "mode": "melee"|"ranged"|"both", "type": one of ${DAMAGE_TYPES.join('/')}, "rider": one of ${CONDITIONS.join('/')} or null, "flavor": optional } — up to ${attackCap} new rows.`] : []),
     `- save (a curse, a breath, a shove, a gaze): { "clause", "name", "stat": one of ${STATS.join('/')}, "target": "one creature within N feet" | "each creature in a N-foot Cone|Sphere|Line|Emanation", "damage": true|false, "type": one of the damage types or null, "condition": one of the conditions or null, "movement": "pushed up to N feet"|"pulled up to N feet"|null, "success": "half"|"none", "recharge": true|false }.`,
-    `- trait (a passive, a style, a resource — it costs the creature NOTHING; never write "uses its Reaction" here, that is the reaction form below): { "clause", "name", "trigger": a when/while/if clause or null, "effect": one sentence; write {dc} where a save DC belongs and {dmg} where damage belongs — never a number, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "passive_effect": one of ${PASSIVE_EFFECTS.join('/')} }.`,
+    `- trait (a passive, a style, a resource — it costs the creature NOTHING; never write "uses its Reaction" here, that is the reaction form below): { "clause", "name", "trigger": a when/while/if clause or null, "effect": one sentence; write {dc} where a save DC belongs and {dmg} where damage belongs — never a number, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "acts": the name of another creature or object this row makes act, or null, "mechanics": how many separate things a table must do, "passive_effect": one of ${PASSIVE_EFFECTS.join('/')} }.`,
     `- A row that HEALS states the Hit Points as {dmg}, the action it costs, and a limit (a trigger, "1/Day", or "Recharge 5-6"): "restores hit points to the faithful" and "after minutes" are not rows a table can run.`,
-    `- reaction: { "clause", "name", "trigger": one sentence, "response": one sentence, same tokens, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none }.`,
+    `- reaction: { "clause", "name", "trigger": one sentence, "response": one sentence, same tokens, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "acts": the name of another creature or object this row makes act, or null, "mechanics": how many separate things a table must do }.`,
+    `- "acts" ON A TRAIT OR REACTION: name anything OTHER than this creature that your row makes act — attack, rise, move, carry, obey — exactly as the sheet above names it, or null. A table can only run it if that thing is a row on the sheet with rules of its own; if it is not, rewrite the row so this creature does the work. (A row that raises "a spore-puppet" needs a spore-puppet on the sheet.)`,
+    `- "mechanics" ON A TRAIT OR REACTION: how many separate things the row makes a table do — count them, and answer the number. One row, one mechanic: a row that turns a blow back AND steps in front of an ally is two, a row that hides it AND heals it is two. Write the one that matters and leave the other out; we take only rows that answer 1.`,
     `- "imposes" ON A TRAIT OR REACTION: name the condition the row involves, or null if it involves none. A row that requires one condition and inflicts another names the one it INFLICTS.`,
     `- "passive_effect" ON A TRAIT: a trait must change what this creature CAN or CANNOT do. Name which, exactly one of: ability (it can do something other creatures cannot — breathe water, fly past without being struck at, pinpoint metal through stone) | bonus (it rolls better or hits harder under a stated circumstance) | protection (it resists, is immune to, or cannot be given something) | threat (merely standing near it, or striking it, costs the other creature something) | limitation (it CANNOT do something, or pays a price others do not — it can't shape-shift, it must submerge every few hours, it suffers in sunlight) | none. Answer NONE when the row only DESCRIBES the creature — how it waits, watches, perches, stalks, broods or looks. That is prose, not a trait, and we will drop the row: a trait with no positive and no negative effect on the creature is a line a GM cannot run (owner's ruling, 2026-10-30; shipped as the Dayvault Warden's "Patience", which said it "waits motionless on its perch, watching its prey, without taking any action").`,
     `- "condition_relation" ON A TRAIT OR REACTION: how the row relates to that condition. Exactly one of: inflicts (the row APPLIES it to a target — the only value that hands the condition out) | requires (the target must ALREADY have it for the row to work: "a creature that has the Prone condition", "a creature it is grappling") | immune (the row says the creature CANNOT be given it) | self (it lands on THIS CREATURE, not a target) | none (no condition involved; answer null for "imposes" too). A word that merely DESCRIBES is not the condition: "a frightening ruin", "a horrifying stench", "a paralysing cold" are prose, not rules — answer none unless the row names the condition as a game effect.`,
@@ -86,7 +90,7 @@ IF THE SHEET ALREADY ANSWERS A CLAUSE, SAY SO INSTEAD OF WRITING A ROW. Read THE
  * discrepancy between the gate and its own corpus is the owner's open question, recorded in the R4 results
  * block; this prompt follows the gate.
  */
-export function buildSeatPrompt({ name, inline, cr, sheet, idea, missing = '', kind = 'an action', taken = [], lacks = [] }) {
+export function buildSeatPrompt({ name, inline, cr, sheet, idea, missing = '', kind = 'an action', taken = [], lacks = [], clause = '' }) {
   return `You are writing ONE ability for a D&D monster — the one ability it is still missing. Write it into the closed forms below, in the creature's own register. You never write a number: no attack bonus, no damage dice, no DC — the engine prices the row.
 
 THE CREATURE: ${name} (${inline}), CR ${cr}.
@@ -94,7 +98,9 @@ THE SHEET SO FAR (complete but for this one ability; never restate a row it alre
 ${sheet}
 
 THE ABILITY TO WRITE, in the words it was described in:
-${idea}${missing ? `\n\nWHY YOU ARE WRITING IT RATHER THAN PICKING A READY-MADE ONE — no ready-made ability could do this: ${missing}` : ''}
+${idea}${clause ? `
+
+THE CLAUSE THIS ROW MUST ANSWER — the creator typed these words and nothing on the sheet answers them yet: **"${clause}"**. The row you write is for this and nothing else. A row that is good in itself and answers something else is the wrong row.` : ''}${missing ? `\n\nWHY YOU ARE WRITING IT RATHER THAN PICKING A READY-MADE ONE — no ready-made ability could do this: ${missing}` : ''}
 
 IT IS ${kind}. Write exactly one row, of that kind, and leave the other arrays empty.${taken.length ? `\n\nNAMES ALREADY ON THE SHEET — never reuse one, the new row needs a name of its own: ${taken.map((n) => `"${n}"`).join(', ')}.` : ''}${lacks.length ? `\n\nTHE CREATOR SAID IT DOES NOT HAVE: ${lacks.map((l) => `"${l}"`).join(', ')}. The row may not grant any of these in any wording — a creature that "never holds" gets no Grappled condition, one with "no magic at all" casts nothing.` : ''}
 
@@ -124,6 +130,16 @@ const CONDITION_RELATIONS = ['inflicts', 'requires', 'immune', 'self', 'none'];
 // Probed alone against 15 hand-labelled rows × 3 runs
 // (scripts/probe-condition-relation.mjs): 42/45 exact and **45/45 on the only
 // distinction the engine acts on** — inflicts vs not.
+// THE CONDITION A ROW REQUIRES IS RECORDED, NOT DISCARDED (forty #2, 2026-11-02).
+// `imposesFromRelation` correctly returns null when the call says `requires` — the
+// row does not hand the condition out — and the NAME went nowhere, so a row that
+// needs its target already Grappled left no trace of needing anything. The
+// consumer in generate.mjs read `t.condition`, a field no trait or reaction form
+// has ever carried, so `requireOn` has never once fired for an authored row: the
+// Chalk-Hound's Daubing Cling shipped requiring a grapple no row on its sheet
+// imposes, and the guard written for exactly that had nothing to read. The call's
+// answer is kept here, validated by membership like everything else.
+const requiredConditionFrom = (condition, relation) => (CONDITIONS.includes(condition) && relation === 'requires' ? condition : null);
 const imposesFromRelation = (condition, relation) => {
   if (!CONDITIONS.includes(condition)) return null;
   if (relation == null) return condition;          // older answers carry no relation: unchanged behaviour
@@ -135,7 +151,19 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   let p; try { p = JSON.parse(String(raw).replace(/^```json\s*|```\s*$/g, '').trim()); } catch { return null; }
   if (!p || typeof p !== 'object') return null;
   const str = (v, max = 80) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
-  const clean = (s) => str(s, 240).replace(/\d+ \(\d+d\d+(?: [+-] \d+)?\)/g, '{dmg}').replace(/\bDC \d+\b/g, 'DC {dc}');
+  // RULES TEXT IS NEVER AMPUTATED (forty #2, 2026-11-02). This sliced at 240
+  // characters MID-WORD and the renderer then put a full stop on the stump: the
+  // Chalk-Hound's Daubing Cling came out "…a creature pulled into an o." — 288
+  // characters of rendered text, which is exactly its 44-character trigger plus a
+  // 240-character amputation. It is invisible from the output, because the stump
+  // ends in a period like any finished sentence.
+  //
+  // The CAP was wrong too, not only the slicing. Measured against print
+  // (srd52-monsters.json, 324 trait rows): median 95, p95 362, **max 714**
+  // (Loathsome Limbs), and **28 of 324 — 9% — run past 240**. So a refusal at 240
+  // would refuse rows print itself writes. The cap is print's own longest, and a
+  // form past it is REFUSED with its reason rather than cut.
+  const clean = (s) => String(typeof s === 'string' ? s.trim() : '').replace(/\d+ \(\d+d\d+(?: [+-] \d+)?\)/g, '{dmg}').replace(/\bDC \d+\b/g, 'DC {dc}');
   const attacks = (Array.isArray(p.attacks) ? p.attacks : []).map((a) => ({
     key: attackKeys.includes(a?.key) ? a.key : null, clause: str(a?.clause, 120), name: str(a?.name, 40), mode: ['melee', 'ranged', 'both'].includes(a?.mode) ? a.mode : 'melee',
     type: DAMAGE_TYPES.includes(a?.type) ? a.type : null, rider: CONDITIONS.includes(a?.rider) ? a.rider : null, flavor: str(a?.flavor, 160) || null,
@@ -153,7 +181,7 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // a trait is a RULE: it names a DC, damage, a number, a condition, or a rule verb — a sentence with none is flavor and goes to the description (the archlich's "Bound Dead of the Kingdom", check-in 2026-10-11)
   const scrubDmg = (eff) => String(eff ?? '').replace(/\s*\{dmg\}(?:\s+damage)?/g, (tok, off, whole) => (/\b(?:takes?|deals?|dealing|taking|extra|additional|plus|regains?|suffers?|an extra)\s*$/i.test(whole.slice(0, off)) ? tok : '')).replace(/\s{2,}/g, ' '); // the same rule the landing applies: a {dmg} that deals nothing is not a mechanic ("granting it {dmg} or a defensive benefit" — Meshrin, step 7 twelve)
   const MECHANIC = /\{dc\}|\{dmg\}|\d|\b(?:Advantage|Disadvantage|Resistance|Immun\w*|Vulnerab\w*|condition|saving throw|attack roll|Hit Points|Temporary|Speed|reach|range|can't|cannot|ignores?|regains?|takes? (?:no|half|extra|double|additional)|deals? (?:extra|double|additional)|Blinded|Charmed|Deafened|Frightened|Grappled|Paralyzed|Poisoned|Prone|Restrained|Stunned|Incapacitated|Invisible|Difficult Terrain|indistinguishable|motionless|rather than|counts as)\b/i;
-  const traitsAll = (Array.isArray(p.traits) ? p.traits : []).map((t) => ({ clause: str(t?.clause, 120), name: str(t?.name, 40), imposes: imposesFromRelation(t?.imposes, t?.condition_relation), condition_relation: CONDITION_RELATIONS.includes(t?.condition_relation) ? t.condition_relation : null, trigger: perTurn(clean(t?.trigger) || null, clean(t?.effect)), effect: scrubDmg(clean(t?.effect)), flavor: str(t?.flavor, 160) || null,
+  const traitsAll = (Array.isArray(p.traits) ? p.traits : []).map((t) => ({ clause: str(t?.clause, 120), name: str(t?.name, 40), imposes: imposesFromRelation(t?.imposes, t?.condition_relation), requiresConditionNamed: requiredConditionFrom(t?.imposes, t?.condition_relation), acts: str(t?.acts, 60) || null, mechanics: Number.isFinite(Number(t?.mechanics)) ? Number(t.mechanics) : null, condition_relation: CONDITION_RELATIONS.includes(t?.condition_relation) ? t.condition_relation : null, trigger: perTurn(clean(t?.trigger) || null, clean(t?.effect)), effect: scrubDmg(clean(t?.effect)), flavor: str(t?.flavor, 160) || null,
     // AN EXPLICIT "none" DROPS THE ROW; A MISSING ANSWER DOES NOT. The call saying
     // "this only describes the creature" is an answer and we act on it. The field
     // absent means the call failed or is an older shape, and a failed call never
@@ -195,6 +223,19 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // save form, which is fields-in and rendered by the engine), `{dc}` stands only
   // where a DC stands, a heal names its amount and limit, an escalation names its
   // ceiling.
+  // A CONDITION THE GAME DOES NOT HAVE IS NOT A CONDITION (forty #4, #13). The
+  // Toll-Bell Wraith shipped "the toll-bell wraith is not subject to the sleep
+  // condition and cannot be put to sleep" — there is no sleep condition in 5e, so the
+  // sentence means nothing at a table. This reads the closed list the engine already
+  // owns (`ALL_CONDITIONS`), on the one phrase that claims a condition exists: "the X
+  // condition". Nothing is inferred about meaning — the row either names a real
+  // condition or it names none.
+  const bogusCondition = (t) => {
+    for (const m of String(`${t.trigger ?? ''} ${t.effect ?? ''} ${t.response ?? ''}`).matchAll(/\bthe ([A-Za-z]+) condition\b/g)) {
+      if (!ALL_CONDITIONS.some((c) => c.toLowerCase() === m[1].toLowerCase())) return m[1];
+    }
+    return null;
+  };
   const traitIsSave = (t) => /saving throw/i.test(`${t.trigger ?? ''} ${t.effect}`);
   const dcMisused = (t) => /\{dc\}\s+(?:feet|ft)\b|within \{dc\}/i.test(`${t.trigger ?? ''} ${t.effect}`);
   // ONE DEFINITION FOR THE VERDICT AND ITS REASON (2026-11-01). The reason was
@@ -202,7 +243,18 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // a heal or an escalation reported "no mechanic in the effect", so a trait
   // refused for carrying a saving throw lied about why. A decline that lies is
   // worse than one that is silent — it sends the next reader to the wrong gate.
-  const traitWhy = (t) => (traitIsSave(t) ? 'a trait is not a save — the save form takes stat, target and effect as fields and the engine renders the sentence'
+  const overCap = (x) => Math.max(String(x?.trigger ?? '').length, String(x?.effect ?? '').length, String(x?.response ?? '').length) > RULES_TEXT_CAP;
+  // ONE ROW, ONE MECHANIC (the critic, forty #4: four run-on traits — Shallows Shroud
+  // welded invisibility to regeneration in one 70-word sentence, Ringing Retort spliced
+  // a reflect to an intercept). The call counts its own mechanics and the engine takes
+  // only rows that answer 1. NOT a word count: print writes 714-character traits that
+  // are one mechanic. A missing answer is an older shape and passes, the way every
+  // other declared field's absence does.
+  const tooManyMechanics = (x) => (x?.mechanics != null && x.mechanics > 1 ? x.mechanics : null);
+  const traitWhy = (t) => (tooManyMechanics(t) ? `the call counts ${tooManyMechanics(t)} mechanics in one row — one row, one mechanic`
+    : bogusCondition(t) ? `it names "the ${bogusCondition(t)} condition", which is not a condition in this game`
+    : overCap(t) ? `the trigger or effect runs past ${RULES_TEXT_CAP} characters, longer than any trait print writes — it is refused rather than cut mid-word`
+    : traitIsSave(t) ? 'a trait is not a save — the save form takes stat, target and effect as fields and the engine renders the sentence'
     : dcMisused(t) ? '{dc} is written where a distance belongs, not where a DC belongs'
       : !healOk(t) ? 'heal names no amount or no limit'
         : !escalationOk(t) ? 'escalation names no amount or no ceiling'
@@ -211,7 +263,19 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   const traitOk = (t) => traitWhy(t) === null;
   const refusedTraits = traitsAll.filter((t) => !traitOk(t));
   const traits = traitsAll.filter(traitOk).slice(0, traitSlots);
-  const reactions = (Array.isArray(p.reactions) ? p.reactions : []).map((r) => ({ clause: str(r?.clause, 120), name: str(r?.name, 40), imposes: imposesFromRelation(r?.imposes, r?.condition_relation), condition_relation: CONDITION_RELATIONS.includes(r?.condition_relation) ? r.condition_relation : null, trigger: clean(r?.trigger), response: clean(r?.response) })).filter((r) => r.name && r.trigger && r.response).slice(0, 1);
+  // A REACTION'S REFUSAL CARRIES ITS REASON TOO (2026-11-02). Reactions were
+  // filtered silently on `name && trigger && response`, so a reaction dropped for
+  // any reason looked identical to a call that wrote none — the same blindness the
+  // trait refusals were given a reason for on 2026-10-25.
+  const reactionsAll = (Array.isArray(p.reactions) ? p.reactions : []).map((r) => ({ clause: str(r?.clause, 120), name: str(r?.name, 40), imposes: imposesFromRelation(r?.imposes, r?.condition_relation), requiresConditionNamed: requiredConditionFrom(r?.imposes, r?.condition_relation), acts: str(r?.acts, 60) || null, mechanics: Number.isFinite(Number(r?.mechanics)) ? Number(r.mechanics) : null, condition_relation: CONDITION_RELATIONS.includes(r?.condition_relation) ? r.condition_relation : null, trigger: clean(r?.trigger), response: clean(r?.response) }));
+  const reactionWhy = (r) => (tooManyMechanics(r) ? `the call counts ${tooManyMechanics(r)} mechanics in one row — one row, one mechanic`
+    : bogusCondition(r) ? `it names "the ${bogusCondition(r)} condition", which is not a condition in this game`
+    : !r.name ? 'the call named no row'
+    : !r.trigger || !r.response ? 'a reaction needs both a trigger and a response'
+      : overCap(r) ? `the trigger or response runs past ${RULES_TEXT_CAP} characters, longer than any reaction print writes — it is refused rather than cut mid-word`
+        : null);
+  const refusedReactions = reactionsAll.filter((r) => reactionWhy(r) !== null);
+  const reactions = reactionsAll.filter((r) => reactionWhy(r) === null).slice(0, 1);
   const crossRef = p.crossRef && typeof p.crossRef === 'object' && CONDITIONS.includes(p.crossRef.condition) ? { riderRow: str(p.crossRef.riderRow, 40), payoffRow: str(p.crossRef.payoffRow, 40), condition: p.crossRef.condition } : null;
   const answered = (Array.isArray(p.answered) ? p.answered : []).map((a) => ({ clause: str(a?.clause, 120), row: str(a?.row, 60) })).filter((a) => a.clause && a.row); // the engine checks the row is really on the sheet
   const unplaced = (Array.isArray(p.unplaced) ? p.unplaced : []).map((u) => ({ clause: str(u?.clause, 120), where: u?.where === 'languages' ? 'languages' : 'description', text: str(u?.text, 160) })).filter((u) => u.clause);
@@ -221,7 +285,7 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // `unplaced`, so a sheet that lost its ramp to escalationOk and a sheet whose
   // call never wrote one looked identical from outside. The reason rides out
   // for the caller to trace; nothing about the refusal itself changes.
-  const refused = refusedTraits.map((t) => ({ name: t.name, why: traitWhy(t) })); // one definition: the reason IS the test
+  const refused = [...refusedTraits.map((t) => ({ name: t.name, why: traitWhy(t) })), ...refusedReactions.map((r) => ({ name: r.name || '(unnamed reaction)', why: reactionWhy(r) }))]; // one definition: the reason IS the test
   // the rider slots: a rider is an attack row's condition; past the slot count, later riders fold to flavor
   let riders = 0; for (const a of attacksKept) if (a.rider) { riders += 1; if (riders > riderSlots) { a.flavor = [a.flavor, `(${a.rider})`].filter(Boolean).join(' '); a.rider = null; } }
   return { attacks: attacksKept, saves: saves.slice(0, 1), refused, traits, reactions, crossRef: crossRef && crossRef.payoffRow !== crossRef.riderRow ? crossRef : null, answered, unplaced }; // a payoff on its own rider row is pointless (the bog hound's bite, check-in 2026-10-11)

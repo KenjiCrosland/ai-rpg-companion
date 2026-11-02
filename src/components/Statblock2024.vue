@@ -114,11 +114,11 @@
               <!-- The explicit {{ ' ' }} defeats Vue's whitespace condensing,
                    which otherwise glues the name to the text ("Amphibious.The…") -->
               <p v-if="section.entries[0]" class="sb24-entry">
-                <strong><em>{{ section.entries[0].name }}.</em></strong>{{ ' ' }}<span v-html="formatText(section.entries[0].text)"></span>
+                <strong><em>{{ nameWithStop(section.entries[0].name) }}</em></strong>{{ ' ' }}<span v-html="formatText(section.entries[0].text)"></span>
               </p>
             </div>
             <p v-for="entry in section.entries.slice(1)" :key="entry.name" class="sb24-entry">
-              <strong><em>{{ entry.name }}.</em></strong>{{ ' ' }}<span v-html="formatText(entry.text)"></span>
+              <strong><em>{{ nameWithStop(entry.name) }}</em></strong>{{ ' ' }}<span v-html="formatText(entry.text)"></span>
             </p>
           </template>
           <template v-else>
@@ -207,6 +207,11 @@ import { generateGptResponse, isDegradedMode } from '@/util/ai-client.mjs';
 import { rerollEntry, rerollSection, buildContext } from '@/tools/statblock-generator/format-2024/generate.mjs';
 import { lintStatblock } from '@/tools/statblock-generator/format-2024/lint.mjs';
 
+// A ROW NAME THAT ENDS IN ITS OWN PUNCTUATION TAKES NO FULL STOP (forty #4, #33).
+// The card hard-coded `{{ name }}.` and shipped "Who Swings?." — `render.mjs` has
+// carried the guard since it was written, so the markdown was right and the card
+// was wrong. One definition per surface; this is the card's.
+const nameWithStop = (n) => { const s = String(n ?? '').trim(); return /[.!?]$/.test(s) ? s : `${s}.`; };
 const props = defineProps({
   monster: { type: Object, default: null },
   columns: { type: String, default: 'two_columns' },

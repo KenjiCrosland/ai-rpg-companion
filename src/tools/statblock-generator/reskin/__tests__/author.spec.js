@@ -113,7 +113,16 @@ describe('condition_relation gates the imposes record', () => {
     expect(read('Charmed', 'sideways')).toMatchObject({ imposes: 'Charmed', condition_relation: null });
   });
 
-  test('a condition that is not a real condition is never recorded', () => {
-    expect(read('Bewildered', 'inflicts').imposes).toBeNull();
+  // STRENGTHENED (R9 · B4, forty #4). This asserted only that the RECORD was dropped —
+  // and the row shipped anyway, carrying "the bewildered condition" in its sentence.
+  // The Toll-Bell Wraith shipped exactly that shape ("is not subject to the sleep
+  // condition"), which is meaningless at a table whatever the record says. The row is
+  // now refused with its reason; the record behaviour for a REAL condition is unchanged
+  // and every case above still holds.
+  test('a condition that is not a real condition refuses the row, not just the record', () => {
+    expect(read('Bewildered', 'inflicts')).toBeUndefined();
+    const { parseAuthorResponse } = require('../author.mjs');
+    const refused = parseAuthorResponse(one('Bewildered', 'inflicts')).refused;
+    expect(refused[0].why).toMatch(/not a condition in this game/);
   });
 });

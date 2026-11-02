@@ -1947,17 +1947,26 @@ const DETERMINISTIC_TEXT_FIXES = [
     .replace(/(-foot-wide Line) that is \d+ feet wide/gi, '$1')],
   ['success-half-only', (t) => t.replace(/(Success:\*?\s*)Half damage,? and (?:no |the (?:target|creature) (?:isn't|is not) )[^.]*\./gi, '$1Half damage only.')],
   ['entry-name-meta-paren', (t) => t], // name-level fix — handled in applyCorrections
-  ['garbled-condition-grammar', (t) => t.replace(/\bbe has the\b/g, 'have the')],
   ['grapple-restrain-linkage', (t) => t.replace(
     /(Grappled condition \(escape DC \d+\)) and the Restrained condition/g,
     '$1. Until the grapple ends, the target also has the Restrained condition')],
   ['rider-flat-bonus', (t) => t.replace(/\bplus \d+\s*\((\d+)d(\d+)\s*[+-]\s*\d+\)/g,
     (m, n, die) => `plus ${Math.floor((Number(n) * (Number(die) + 1)) / 2)} (${n}d${die})`)],
   ['ba-opener', (t) => t.replace(/^As a Bonus Action,?\s*(\w)/i, (m, c) => c.toUpperCase())],
+  // PRONE VOCABULARY IS FOR TEXT THE ENGINE WROTE (forty #4, #22). An authored row
+  // said "the larder cannot be knocked Prone or forcibly moved" and this turned it
+  // into "cannot be has the Prone condition". The garble-fixer that repairs exactly
+  // that shape — `garbled-condition-grammar` — is listed ABOVE this rule and so ran
+  // before the garble existed; it has moved below. But the real answer is not a
+  // second rewrite: an authored row carries its condition as a FIELD and the renderer
+  // writes the sentence, so the model's own idiom inside a form is not the engine's to
+  // re-word. `skipAuthored` is honoured by the applier.
   ['prone-vocab', (t) => t
     .replace(/\bfalls? Prone\b/g, 'has the Prone condition')
     .replace(/\bis knocked Prone\b/g, 'has the Prone condition')
-    .replace(/\bknocked Prone\b/g, 'has the Prone condition')],
+    .replace(/\bknocked Prone\b/g, 'has the Prone condition'), { skipAuthored: true }],
+  // the safety net runs AFTER the rule that can create the garble, not before it
+  ['garbled-condition-grammar', (t) => t.replace(/\bbe has the\b/g, 'have the')],
   ['rider-target-mismatch', (t) => {
     // On-hit riders: the saver IS the hit creature.
     let out = t.replace(/(On a hit,?\s*\*?[A-Z]\w+ Saving Throw\*?:?\s*DC \d+,\s*)one creature within \d+ feet/gi, '$1the target');
@@ -2055,10 +2064,16 @@ export function applyCorrections(monster, findings, { chassis }) {
   let out = JSON.parse(JSON.stringify(monster));
   const has = (rule) => findings.some((f) => f.rule === rule);
 
-  for (const [rule, fix] of DETERMINISTIC_TEXT_FIXES) {
+  for (const [rule, fix, opts] of DETERMINISTIC_TEXT_FIXES) {
     if (!has(rule)) continue;
     for (const entries of Object.values(out.sections ?? {})) {
-      for (const entry of entries) entry.text = fix(entry.text);
+      // A RULE MAY STAND DOWN ON A ROW THE MODEL AUTHORED (forty #4, #22). An authored
+      // row holds its condition as a FIELD and the renderer writes its sentence, so a
+      // vocabulary rewrite aimed at engine prose has nothing to correct there and can
+      // only garble it: "cannot be knocked Prone" became "cannot be has the Prone
+      // condition". Only rules that declare `skipAuthored` stand down; every other rule
+      // is unchanged on every row.
+      for (const entry of entries) { if (opts?.skipAuthored && entry.authored) continue; entry.text = fix(entry.text); }
     }
   }
 

@@ -1494,3 +1494,270 @@ surprises:   Three defects, and a 40-sheet run was the only thing that could fin
              the same shape as the third-imposition hole. The pattern across all three R4
              sessions is now unmistakable: every defect this path produced was an
              existing rule implemented in ONE path that the new path walked around.
+
+### QUALITY (R8) + ANCHOR (R7) — built, and forty #3
+predicted:   QUALITY closes the break classes the critic named; ANCHOR ties the idea to
+             the GM's clause and so moves retention. Instruments named before the run:
+             throws, FAILs against **homebrew40's own baseline of 1** (not sweep's 6),
+             closest accepted, anchored-vs-unanchored per seat, and the fit-vs-authored
+             split on anchored seats.
+measured:    `homebrew40-2026-11-02T13-47-49`, live, **40 of 40 generated, 0 THREWS.**
+
+             | | baseline 01-02-31 | forty #2 05-09-26 | **forty #3 13-47-49** |
+             |---|---|---|---|
+             | FAIL blocks | 1 | 6 | **3** |
+             | clause coverage | 54% | 51% | **60%** |
+             | closest accepted | 44 | 11 | 14 |
+             | authored on sheet | — | 25 | 25 |
+             | throws | 0 | 1 | **0** |
+
+             Clause coverage is the hard proxy for "is the GM's sentence on the page",
+             and it is above the baseline for the first time. The three FAILs are a new
+             set and none is a QUALITY class: `gate-fit` (an at-will condition action
+             with no Multiattack), `name-mechanic` (a reaction named for a Grappled it
+             does not apply), `attack-in-multiattack`. The four `grapple-no-escape` and
+             the throw are gone.
+
+             **QUALITY's guards fired three times** on live sheets — two third-imposition
+             refusals and one `requires Deafened` that nothing applied — each tracing its
+             reason and falling back to the nearest.
+
+             **ANCHOR fired on 16 of 78 seats (21%), and that is the headline failure.**
+             Asks WERE handed over on 35 of 40 sheets (5 legitimately had none), so the
+             call received the list and mostly did not name a clause back. Diagnosed, and
+             all three causes are MINE, not the model's:
+               1. **I hand over heads as well as asks.** 31 of the 68 handed lines carry
+                  no declared mechanic — "a mud-caked bog hound", "a cairn-wight", "a
+                  hunger", "a reef-drake". `unansweredClauses` inherited the head
+                  FALLBACK from `unansweredClause`, which is right when picking ONE
+                  clause for a seat to hand a row and wrong when handing over a LIST:
+                  46% of what the call was shown is noise, which dilutes the instruction
+                  and invites it to pick nothing.
+               2. **One handed clause was mangled.** "a kiln- whose prayers are spoken in
+                  fire" — `cut()` removed the print body "priest" from "a kiln-priest"
+                  and left the stump. The word-boundary fix of 2026-10-22 closed
+                  "archlich" -> "arch" but not a HYPHENATED compound. The call copied the
+                  stump back faithfully and anchored to it.
+               3. **My own trace does not record what the call answered** when membership
+                  fails — only that it matched nothing. So this run cannot separate "the
+                  call ignored the field" from "the call answered something close and the
+                  check refused it", and I had to infer from the handed strings (which
+                  are clean and copyable, so non-compliance is the likely reading). This
+                  is the "a decline must trace WHY" lesson, broken in the instrument I
+                  had just built.
+
+             **But when it anchors, it anchors on the right thing.** 14 of the 16 named a
+             real mechanical ask, and three are clauses the critic named as MISSED on
+             forty #2: "is only dangerous on the turn after it goes still" (19), "argue
+             about who swings" (33), "it always lands" (34). That is the mechanism working
+             on exactly the sheets it was built for.
+
+             **Fit-vs-authored on anchored seats** (R7's third instrument, the case for or
+             against Author): of 16 anchored seats, **11 AUTHORED, 1 took the nearest, 4
+             reached no row**. Zero fit a template. On this evidence an anchored idea does
+             NOT mostly fit the catalog — but n=16 with 46% noise in the input is too thin
+             to settle Author's fate, and the honest reading is that the split is not yet
+             measured.
+runs:        `homebrew40-2026-11-02T13-47-49` (40/40, 0 throws) · suite 177/177, 4646
+             tests · build clean · row-text `.replace(` still 187 · critic package
+             `smoke-out/CRITIC-blocks-homebrew40-forty3-2026-11-02.md`.
+commit:      uncommitted — paste-ready messages in the session report.
+not done:    **The critic has not read forty #3.** Retention against forty #2's three
+             surprises and `missed` against 23 are the critic's numbers and are NOT
+             scored here (forty #2: self-read 8/20/11, critic 3/13/23).
+
+             **QUALITY item (c) REFUSED, not built, with its number.** "A check or save
+             with no `{dc}` is refused" would refuse print: **99 of print's 107**
+             trait/reaction rows that name a check or a saving throw carry no DC (every
+             Legendary Resistance: "If the dragon fails a saving throw, it can choose to
+             succeed instead"). A tightened "requires a roll to be made" predicate still
+             catches **19 of 20**, because the matches are NEGATIONS — "without needing to
+             make an ability check" (Spider Climb, Ice Walk). Separating those is a
+             reading of meaning, so per the house rule it is proposed rather than written:
+             the trait form already asks `passive_effect`; the adjacent question is a new
+             enum on the same call — "does this row require anyone to roll?" — which the
+             engine then validates (yes -> `{dc}` must be present). One field, no new call.
+
+             **ANCHOR's three fixes, named and not built** (the brief ended at one forty):
+             hand over only clauses with a declared mechanic; fix `cut()` on hyphenated
+             bodies; trace the rejected clause value. The first is one filter and is the
+             one that should move the 21%. Whether that earns a second forty is the
+             owner's call — the kill criterion in R7 is written against retention, and
+             the critic's read of THIS forty should come first either way.
+surprises:   The anchor's failure mode was not the model. It was handed 46% noise by a
+             helper I reused correctly for the wrong shape — `unansweredClause`'s head
+             fallback is right for picking one clause and wrong for a list — and one of
+             the lines I handed it was a word-boundary stump. Reusing a predicate is not
+             the same as reusing it for the same question.
+
+### ANCHOR's three bugs + the two regressed lints + the `acts` field — and forty #4
+predicted:   with the head noise gone, the hyphen fixed and the rejected answer traced,
+             the anchor rate rises from 21% and retention gets its first fair test.
+measured:    `homebrew40-2026-11-02T18-48-33`, live, **40 of 40 generated, 0 THREWS.**
+
+             | | baseline | #2 | #3 | **#4** |
+             |---|---|---|---|---|
+             | FAIL blocks | 1 | 6 | 3 | **6** |
+             | clause coverage | 54% | 51% | 60% | **56%** |
+             | closest accepted | 44 | 11 | 14 | 20 |
+             | authored on sheet | — | 25 | 25 | 26 |
+             | throws | 0 | 1 | 0 | **0** |
+
+             **THE ANCHOR DID NOT RISE: 11 of 62 seats with asks, 18%** (forty #3: 21%).
+             Item 1a worked and is not the cause — sheet 01 now hands only "drags
+             fishermen under" with its head withheld, sheet 11 hands four asks and no
+             "a reef-drake", 22 heads withheld across the run. The `clauseRaw` instrument
+             (1c) is what answered the question, and it splits two ways:
+               **49 answered NOTHING** — the field absent or empty.
+               **20 answered a handed clause VERBATIM** — and with my own annotation
+               attached: `""drags fishermen under" — an earlier call read this as asking
+               for: grapple"`. The prompt prints `1. "<clause>" — an earlier call read
+               this as asking for: <mechanic>` and says "copying that line back exactly",
+               so the call did exactly that, and my membership check compares against the
+               bare clause. **That half is my bug, not the model's.**
+             Per the brief, EMPTY dominates (49 of 69) so this is reported as
+             non-compliance and membership is NOT loosened. The other half has a fix that
+             is TIGHTER than string membership rather than looser: have the call answer
+             the ASK'S NUMBER and validate by index, with no string matching at all.
+             Projection, labelled as one: had the 20 verbatim answers matched, the rate
+             would have been 31 of 62 — about half. The annotation cost roughly two
+             thirds of the anchors the call actually offered.
+
+             **THE FAIL REGRESSION HAS ONE CAUSE AND IT IS NOT THE SEAT.** Of forty #4's
+             six FAILs, **not one is on a seat-authored row**; three are on
+             REPAIR-authored rows, and each fails a rule the seat already enforces:
+               11 Maw Grab — the third row imposing Grappled. `conditionsImposedTwice`
+                 runs at the menu (`templatesFor`) and at the seat, and NOT at the repair
+                 landing.
+               12 Unbroken Charge — the third row imposing Prone. Same hole.
+               33 Who Swings? — cites "Committed Haymaker" and "Mistimed Backhand",
+                 neither of which exists. `danglingRefIn` runs at the seat and at the
+                 template render, and NOT on repair-authored trait text.
+             The other three are not authoring: two `attack-in-multiattack` and the
+             known-intermittent `under` on the Bone-Choir. **The guards are on the wrong
+             side of one fence** — the fifth instance this sprint of a rule implemented in
+             one path that another path walks around, and the first where the well-guarded
+             path is the new one.
+
+             **Meanwhile the seat's guards fired twice on live sheets and both were
+             right**: one dangling reference ("Marga's Shackle Flail"), and one `acts`
+             refusal — the NEW field catching "Bone-Choir" as a thing no row defines,
+             which is the Spore-Mother class the critic filed.
+
+             **The two regressed lints are closed and proven on real data**: the
+             placeholder lint fires on forty #3's saved sheet 35 ("Composed Row") and
+             **no sheet of forty #4 ships a placeholder name**; forty #3's sheet 37
+             carried "(A) or (B) Spellcasting" and **no sheet of forty #4 carries an empty
+             lettered option**.
+runs:        `homebrew40-2026-11-02T18-48-33` (40/40, 0 throws) · suite 177/177 · build
+             clean · row-text `.replace(` still 187 · critic package
+             `smoke-out/CRITIC-blocks-homebrew40-forty4-2026-11-02.md`.
+commit:      uncommitted — paste-ready messages in the session report.
+not done:    **The critic has not read forty #4.** Retention against forty #3's seven and
+             `missed` against 15 are the critic's numbers and are NOT scored here.
+
+             **Two of my own pins were vacuous and are now real.** The "Composed Row"
+             test built a fresh harness run instead of replaying the saved sheet as the
+             brief said; no composed candidate was ever offered, the fit call answered
+             `none`, the new arm never executed, and the assertion was true of a sheet
+             that could not have failed it. The `acts` keep-arm was titled "is kept" and
+             asserted refusal, so one of two arms was unproven. Both replaced: the
+             detector is pinned on the sheet that shipped the defect, the effect on the
+             run that followed, and the keep arm has its own case. A test that cannot
+             fail is worse than no test, and this is the second time this sprint I have
+             written one.
+
+             **Named, not built** (the brief ended at the forty, and the decision in front
+             of the owner is retention, not more engine work):
+               (a) the anchor's remaining half — answer the ask's NUMBER, validate by
+                   index. One field, strictly tighter than today.
+               (b) the repair landing needs the seat's two guards: `conditionsImposedTwice`
+                   and `danglingRefIn` on authored trait text. Three of six FAILs.
+               (c) still the critic's: the missing number ("up to such puppets").
+surprises:   The anchor's failure was half mine a second time, and in a new way: the call
+             obeyed my instruction literally and copied the line I rendered, annotation
+             and all. I wrote both the instruction and the checker and they disagreed. And
+             the FAIL regression inverted the sprint's pattern — for four sessions the new
+             path walked around the engine's rules; this time the engine's oldest
+             authoring path walked around the new path's guards.
+
+### R9 · RELEASE PASS, session two — and the gate, both runs
+predicted:   the remaining R9 items land and the two gate runs give the release numbers.
+measured:    `sweep-2026-11-02T20-21-41` and `homebrew40-2026-11-02T20-39-39`, live,
+             **40 of 40 and 40 of 40, 0 THROWS on both.**
+
+             | | sweep baseline | **sweep now** | homebrew40 baseline | **homebrew40 now** |
+             |---|---|---|---|---|
+             | FAIL blocks | 6 | **2** | 1 | **6** |
+             | R1 lint findings | — | 5 | — | **0** |
+             | clause coverage | 88% | 85% | 54% | — |
+             | throws | 0 | **0** | 0 | **0** |
+
+             **R1 lint: homebrew40 is 0 of 40.** Forty #4's deterministic bait is gone.
+             Sweep's 5 are `orphan-action-row` x2, `double-punctuation`,
+             `engulf-needs-a-grapple`, `inline-weapon-collision` — **none traces to R9**.
+             The one that resembled C6 was checked: it is `28-ilvareth`'s HEADER field
+             ("charmed ((with mind blank))"), the exact sheet and class R1 filed
+             originally, not the row-name "?." that C6 fixed.
+
+             **Sweep, the regression floor, is halved: 6 -> 2.** Neither survivor is on
+             the R9 list (`gate-fit`; the known-intermittent `under`).
+
+             **homebrew40 is 1 -> 6, and the composition matters: three of the six are
+             ONE new class** — `engine-needs-key` on Thorned Embrace, Clinging Grasp and
+             Quarrelsome Grip ("a grapple or engulf engine with no key in the words") —
+             plus `multiattack-row`, `attack-in-multiattack` and `under`. A grapple-engine
+             cluster on three sheets, not six unrelated defects, and **not one forty-#4
+             class recurred**.
+
+             **THE ANCHOR, the pass's clear result: 18% -> 41%** on homebrew40 (34% on
+             sweep). And the residue is now a single clean category: **every unanchored
+             seat on both runs answered NOTHING — the field absent or empty. Zero
+             near-misses, zero out-of-range.** The index answer closed the half that was
+             mine (20 of 69 on forty #4 were copies of the rendered line, annotation
+             included); what is left is the model declining to answer, which is where a
+             small selection call would earn its cost. Per the brief, NOT built.
+runs:        both above · suite 178/178, 4681 tests · build clean · row-text `.replace(`
+             **187**, unchanged · packages `CRITIC-blocks-sweep-gate-2026-11-02.md` and
+             `CRITIC-blocks-homebrew40-gate-2026-11-02.md`.
+commit:      uncommitted — paste-ready messages in the session report.
+not done:    **TWO BRIEFED ITEMS ARE AIMED AT THE WRONG PATH. Measured, not guessed.**
+
+             **F17 is correct and INERT.** `SEAT_DEFAULT_TRAIT`, the path it gates, ships
+             about **once per forty** — 1 of 40 (forty #4), 0 of 40 (forty #3), 1 of 39
+             (sweep forty #1) — and fired ZERO times across both gate runs. Also recorded
+             because it is the class that has bitten this sprint repeatedly: my first
+             version read `openClausesT` from a scope where it is not declared (a `const`
+             in a try block closing ~430 lines above the trait seat), so it was a **silent
+             no-op the whole suite passed**. Caught by checking the scope, not by green.
+
+             **THE REPETITION THE CRITIC MEASURED IS THE DONOR'S OWN COMPOSITION.** Traced
+             on forty #4's rows: Regeneration x5 and Aura of Authority x5 carry **no
+             provenance mark at all** — not template, not library, not kit, not print, not
+             authored — so they are `scaleDonor`'s chassis rows; only Fear Aura x3 is the
+             fallback shelf. The donor shelf picks the same chassis for similar concepts.
+             This also explains the Regeneration STACKING exactly: on #18 and #23 the
+             Regeneration is the chassis's and the authored heal landed beside it, so "one
+             per-turn heal per sheet" must be enforced AT SHIP across every provenance —
+             which is not how E15 was briefed. Neither rebuilt on the last pass.
+
+             **Reported, not built.** D11 is a third case the brief did not anticipate:
+             path `class_npc`, print body **Spy**, class **monk** — Cunning Action is
+             print's own row on the Spy, beside a correct monk kit, so neither table is
+             wrong and the fix is a cross-class yield rule with its own measurement.
+             `second-person` replaces `your` -> `its` but not `you`, giving "you end its
+             turn" (deciding what "you" becomes is a reading of who the sentence
+             addresses). D12's two arms are wired but **would not have fixed #10**: its
+             clause record reads "no mouth" -> lacks/speech and "no eyes and no name" ->
+             plain `has`, so the call never declared the sight lack.
+
+             **Refused with numbers** (session one): B5 — 30 of 31 library seed names are
+             not print row names, so a name rule kills the fallback shelf; C8 — 2014 has
+             no "version" idiom. **Not reached:** D9, D10, C7, H.
+
+             **The critic has not read either gate run.** Bait, surprise and retention are
+             theirs and are NOT scored here.
+surprises:   The two items that did not pay off were both aimed at paths that barely run,
+             and in both cases the evidence was one grep away from the brief that assigned
+             them. The lesson is the sprint's own, inverted: we have been measuring whether
+             a FIX works, and not whether the PATH it fixes is the one carrying the defect.

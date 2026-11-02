@@ -131,7 +131,7 @@
             <ul class="abilities">
                 <div v-if="!isEditing">
                     <li v-for="(ability, index) in editedAbilities" :key="index">
-                        <strong>{{ ability.name }}. </strong>
+                        <strong>{{ nameWithStop(ability.name) }} </strong>
                         <span v-html="mdInline(ability.description)"></span>
                     </li>
                 </div>
@@ -330,6 +330,11 @@ import StatblockSkeletonPtOne from './StatblockSkeletonPtOne.vue';
 import StatblockSkeletonPtTwo from './StatblockSkeletonPtTwo.vue';
 import StatblockAbilitiesSkeleton from './skeletons/StatblockAbilitiesSkeleton.vue';
 
+// A ROW NAME THAT ENDS IN ITS OWN PUNCTUATION TAKES NO FULL STOP (forty #4, #33).
+// The card hard-coded `{{ name }}.` and shipped "Who Swings?." — `render.mjs` has
+// carried the guard since it was written, so the markdown was right and the card
+// was wrong. One definition per surface; this is the card's.
+const nameWithStop = (n) => { const s = String(n ?? '').trim(); return /[.!?]$/.test(s) ? s : `${s}.`; };
 const props = defineProps({
     monster: {
         type: Object,

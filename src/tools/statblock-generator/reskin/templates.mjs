@@ -2389,7 +2389,7 @@ export function conceptVerbs(conceptText) {
   return [...new Set(rankByVerb(TEMPLATES, conceptText).flatMap((r) => r.concept))];
 }
 
-export function buildIdeaPrompt({ name, cr, concept, sheetLines, seats = null, energy = null, wantTrait = true, engines = [], verbs = [], owedClause = null, bodyRequirements = [], askedMechanic = null }) {
+export function buildIdeaPrompt({ name, cr, concept, sheetLines, seats = null, energy = null, wantTrait = true, engines = [], verbs = [], owedClause = null, bodyRequirements = [], askedMechanic = null, openClauses = [] }) {
   // THE REGISTER, NOT THE LENGTH (owner, 2026-10-27: "tell deepseek this is for
   // dnd but also to use maximum creativity so then it'll be easier to match to
   // an existing template... encourage the llm to be creative, thematic,
@@ -2429,6 +2429,9 @@ ${sheetLines}
 CONCEPT: ${concept}
 ${askedMechanic ? `WHAT THE GM ASKED A ROW TO DO: **${askedMechanic}**. An earlier call read this from the GM's own words, and the catalog has a shape that DOES it — so an idea serving this will be printed as that shape, and an idea that wanders will be fitted to whatever it happens to resemble instead. This is the ask; serve it in your own fiction.` : ''}
 ${owedClause ? `THE CLAUSE THIS ABILITY IS FOR — the sheet is a PRINTED creature plus what the GM added, and this is what they added. It is the whole reason this sheet is not just the printed monster, and nothing on it answers the clause yet. Invent the ability that makes THIS true of THIS creature; do not describe the creature in general: "${String(owedClause).replace(/"/g, "'")}"
+` : ''}${openClauses.length ? `THE GM'S OWN ASKS THAT NOTHING ON THE SHEET ANSWERS YET — each idea you invent must ANSWER ONE OF THESE, and must say WHICH BY ITS NUMBER in its "clause" field:
+${openClauses.map((c, i) => `${i + 1}. "${c.handed}"${c.mechanic ? ` — an earlier call read this as asking for: ${c.mechanic}` : ''}`).join('\n')}
+This is the whole point of the ability. A row that is good in itself and answers none of these is the wrong row: the GM typed these words and is waiting to see them on the page. If two seats are asked for, give them DIFFERENT numbers where there are two to give. "clause" is REQUIRED on every idea: answer the number of the ask it serves, or 0 if it serves none of them.
 ` : ''}${verbs.length ? `THE CONCEPT'S OWN VERBS: ${verbs.join(', ')} — the signature is one of these verbs made mechanical; an idea that abandons them for something the concept never said (a teleport, a mist, a generic burst) is the wrong idea however clever. ` : ''}${seats ? `BUILD THIS: the action idea builds "${seats.action}"${wantTrait && !seats.packaged ? `; the trait idea makes "${seats.trait}" true on the sheet` : ''}. ` : ''}${engines.length ? `THE SHEET'S ENGINE IS ALREADY BUILT: ${engines.join(', ')} — the concept's holding, swallowing, or caging is DONE by those rows; do not describe it again in any wording. Build the concept's OTHER face. ` : ''}The rows above already OWN their fiction — never describe another version of one; the best ideas key off a condition a row applies, or set up a state the rows exploit.${energy ? ` This creature's energy is ${energy}.` : ''}
 NOT A SIGNATURE (the wide run's biggest miss class, 12 of 48): a damage resistance or immunity, "blades only chip it", "can't be moved", "immune to its own fire", or a saving-throw bonus — those are the HEADER's to grant and the engine already derives them from type and energy. A trait idea must be a RULE that happens. In the published statblocks a trait is most often one of these — choose the one THIS concept actually implies, not the first listed: how it MOVES (through walls or earth, over water, up sheer faces, without provoking, where others cannot); what its PRESENCE does to the space around it each turn (an emanation of cold, stench, dread, light, or broken ground); what it SPENDS or RECOVERS (regeneration with a catch, a reserve it draws on, a change when Bloodied or when an ally falls); what it SENSES or how it HIDES (what it can always find, what it can pass for); how it gets STRONGER mid-fight (a condition on the target it exploits, allies beside it). What happens to whoever touches or hits it is the RAREST trait in the published statblocks — 3 of 324 — and belongs only to a body that is plainly corrosive, barbed, or adhesive; a bias toward it makes every monster the same monster. Tag each idea: "section" is action | bonus_action | reaction | rider (a clause on the creature's own attack: "when it hits, …")${wantTrait ? ' (the trait idea is always a trait)' : ''}; "trigger" is one of ${TRIGGERS.join(' | ')}; "effect" is one of ${EFFECTS.join(" | ")}; and "family" is the KIND of ability this is, one of:
 ${IDEA_FAMILIES.map((f) => `  ${f} — ${FAMILY_GLOSS[f]}`).join("\n")}
@@ -2438,7 +2441,7 @@ ${bodyRequirements.map((r) => `- ${r.id}: ${r.needs}`).join('\n')}
 Judge the BODY, not the creature's temperament, job, mood or gear: a man with a crab's temperament is not a crab, a fierce bear is not sticky, and a poisoner is not made of metal. A thing the creature merely CARRIES or USES is not its body.
 But the concept does not have to use the requirement's words — judge what the body plainly IS. A pit of tar is sticky without the word "sticky". A thing bound to a shrine HAS a ward. A creature shaped like a chest can pass for one. Say true when the body is plainly that thing even if the concept never names it.
 Both mistakes cost something. A wrong TRUE puts a rule on the page a GM can see is nonsense \u2014 a bear that glues people to itself. A wrong FALSE takes away an ability the creature obviously should have \u2014 a mimic that isn't sticky. Weigh them evenly and answer on the body. "because" quotes the concept's OWN WORDS, and only for a true answer.
-` : ''}Return ONLY JSON: {"action": {"idea": "<2-3 sentences in the game\'s own language: one mechanic, striking and specific>", "section": "<action|bonus_action|reaction>", "trigger": "<...>", "effect": "<...>", "family": "<...>"}${wantTrait ? ', "trait": {"idea": "<1-2 sentences in the game\'s own language: a passive rule of its body or nature, and make it a memorable one. In the published statblocks about ONE trait IN A HUNDRED fires when the creature is hit (3 of 324). Nearly every published trait is always-on — how it senses, where it can walk, what its body is made of, how it fights, what it ignores — or it happens on its own turn. Do NOT reach for \"when something hits it, the attacker is hurt\" unless the concept is genuinely ABOUT the creature\'s surface (a body of fire, a hide of spines). A tracker, a climber, a thing that is hard to see, a thing that keeps coming: those are traits too>", "trigger": "<...>", "effect": "<...>", "family": "<...>"}' : ''}${bodyRequirements.length ? ', "body_verdicts": [{"id": "<id copied exactly>", "means": <true|false>, "because": "<the concept\'s own words, or \\"\\">"}]' : ''}}`;
+` : ''}Return ONLY JSON: {"action": {"idea": "<2-3 sentences in the game\'s own language: one mechanic, striking and specific>", "section": "<action|bonus_action|reaction>", "trigger": "<...>", "effect": "<...>", "family": "<...>"${openClauses.length ? `, "clause": <required: the NUMBER 1-${openClauses.length} of the ask this answers, or 0 for none>` : ''}}${wantTrait ? ', "trait": {"idea": "<1-2 sentences in the game\'s own language: a passive rule of its body or nature, and make it a memorable one. In the published statblocks about ONE trait IN A HUNDRED fires when the creature is hit (3 of 324). Nearly every published trait is always-on — how it senses, where it can walk, what its body is made of, how it fights, what it ignores — or it happens on its own turn. Do NOT reach for \"when something hits it, the attacker is hurt\" unless the concept is genuinely ABOUT the creature\'s surface (a body of fire, a hide of spines). A tracker, a climber, a thing that is hard to see, a thing that keeps coming: those are traits too>", "trigger": "<...>", "effect": "<...>", "family": "<...>"}' : ''}${bodyRequirements.length ? ', "body_verdicts": [{"id": "<id copied exactly>", "means": <true|false>, "because": "<the concept\'s own words, or \\"\\">"}]' : ''}}`;
 }
 
 export function validateIdeaResponse(jsonString) {
@@ -2486,8 +2489,14 @@ export function normaliseTag(section, trigger) {
   return { section, trigger: 'always' };
 }
 
-export function parseIdeas(raw) {
+export function parseIdeas(raw, openClauses = []) {
   const p = tryParse(raw);
+  // THE CLAUSE IS VALIDATED BY MEMBERSHIP, NEVER BY WORD MATCH (R7 · ANCHOR,
+  // 2026-11-02). The call is handed the GM's open asks and copies one back; the
+  // engine checks the answer is one of the lines it handed over, exactly as it does
+  // for `family`, `section` and every other enum. An answer that matches nothing —
+  // or no answer at all — leaves `clause` null, which is today's behaviour, and the
+  // caller traces it as unanchored. Nothing here reads the GM's prose.
   const norm = (o, forced) => {
     if (!o || typeof o.idea !== 'string' || o.idea.trim().length < 20) return null;
     const section0 = forced ?? (['action', 'bonus_action', 'reaction', 'rider'].includes(String(o.section).toLowerCase()) ? String(o.section).toLowerCase() : 'action');
@@ -2499,7 +2508,23 @@ export function parseIdeas(raw) {
     // null and no grammar is offered for it.
     const family = IDEA_FAMILIES.includes(String(o.family)) ? String(o.family)
       : (section === 'trait' && trigger === 'on_being_hit' ? 'body-reaction' : null);
-    return { idea: o.idea.trim().slice(0, 400), section, trigger, effect: EFFECTS.includes(o.effect) ? o.effect : 'damage', family };
+    // THE ANSWER IS AN INDEX, NOT A STRING (forty #4). Asking the call to "copy that
+    // line back exactly" produced two failures and both were the prompt's fault: 49
+    // seats left the field out — the wording offered "or left out if it answers none",
+    // which is an invitation a model takes when unsure — and 20 copied the WHOLE
+    // rendered line, annotation included (`"drags fishermen under" — an earlier call
+    // read this as asking for: grapple`), which the membership check then refused. A
+    // number cannot carry an annotation and cannot be copied wrong, and validating it
+    // is a bounds test with no string comparison anywhere: strictly tighter than what
+    // it replaces. A string answer is still accepted for one release, so a run mid-
+    // deploy does not lose its anchors.
+    const rawAns = typeof o.clause === 'number' ? o.clause : String(o.clause ?? '').trim();
+    const clauseRaw = String(rawAns).slice(0, 160);
+    const asIndex = /^\d+$/.test(String(rawAns)) ? Number(rawAns) : null;
+    const clause = asIndex !== null
+      ? (asIndex >= 1 && asIndex <= openClauses.length ? openClauses[asIndex - 1] : null)
+      : (openClauses.includes(clauseRaw) ? clauseRaw : null);
+    return { idea: o.idea.trim().slice(0, 400), section, trigger, effect: EFFECTS.includes(o.effect) ? o.effect : 'damage', family, clause, ...(clause ? {} : { clauseRaw: clauseRaw || null }) };
   };
   return { action: norm(p?.action, null), trait: norm(p?.trait, 'trait') };
 }

@@ -496,6 +496,35 @@ indices with `--only` rather than a fourth forty.
 
 ## 8. The release candidate, and the program after it (owner, 2026-11-01 evening)
 
+### The map — read this first (owner, 2026-11-02)
+
+How a signature ability is made: (1) the GM's sentence is split into clauses; (2) an AI
+call INVENTS an idea; (3) a second call MATCHES the idea to a pre-written template; (4) a
+match renders — sound, but samey; (5) no match — before R4 the nearest template shipped
+anyway, with R4 the AI WRITES the ability into a form. The critic's finding across three
+reads: the problem is step 2, not step 5 — the idea is invented from nothing, so it
+changes on every re-roll and often answers a clause the GM never typed.
+
+| name | number | step | what it is | state |
+|---|---|---|---|---|
+| **Author** | R4 | 5 | write the ability when no template fits | built; moved the mechanism, not the outcome; parked, not on the critical path |
+| **Re-roll** | R6 | 2 | invent two ideas, keep the one that answers the clause | triggered (retention 1/7); waits behind Anchor; +1 call |
+| **Anchor** | R7 | 2 | tell the idea call WHICH GM clause it must answer, and it names it | **next**; no call |
+| **Quality** | R8 | 5 | four checks on any AI-written ability — no mid-word cut, the capital after the join, a DC on every check, no `requires` of a condition the sheet lacks | **with Anchor**; owed regardless of Author |
+| Lints / measure / plumbing | R1-R3 | — | | done |
+| Telemetry | R5 | — | regenerate-vs-save on the live site | product-side, separate |
+
+**DECIDED (owner, 2026-11-02, after forty #4):** retention 1 -> 1 -> **3 of 7**, `missed`
+25 -> 23 -> 15 -> **12**, with the anchor running at a fraction of its design. **Anchor stays.
+Author stays. Re-roll stays deferred. No more originality iterations.** The critic's own
+read: "the creativity problem is mostly solved; what's left is plumbing." What remains is
+ONE plumbing pass (R9 below) and then the release gate — and the owner does not want to
+keep iterating.
+
+| **Release pass** | R9 | all | the classified deterministic list — removals of string surgery, closed-list validations, engine-written text, data, four call fields; no new regex over prose | **next, and last before the gate** |
+| Post-release | — | — | subclass/feat fidelity rungs (SRD-idiom, not PHB lookups); a once/twice/thrice counter template family for the abstract verbs; the HP-max-drain ceiling | parked, named |
+
+
 **`rc-2026-11-01` is the fallback.** Committed and tagged at the state the critic read
 (`sweep-2026-11-01T20-03-32`): 12 ship / 25 fix-lite / 3 fix, S0 3, 37 of 40 sheets run
 without a GM patching anything. The owner's read: good enough for existing users, not
@@ -635,6 +664,22 @@ SIGNATURE, which on the ninja was `closest accepted` 4 rolls of 8. That is R4.
 Open, small: `attack-stat` on mounted knights (3 of 16 — a DEX chassis armed with a
 lance), not R4's.
 
+**R4 · AUTHOR — BUILT, MEASURED ON FORTY #2, AND NOT YET EARNING ITS KEEP (owner, 2026-11-02).**
+The critic's read of `homebrew40-2026-11-02T05-09-26`, same question, same bar as the
+baseline: **surprised 3 · plain 13 · missed 23** against 7 · 8 · 24, and **surprises
+retained across the re-roll 1 of 7**. R4 moved the mechanism (`closest accepted` 44 ->
+11; 25 authored rows on 39 sheets) and did not move the outcome. It costs ~1 call a
+sheet, sits net +1 FAIL after its fixes (the recharge ordering), and one authored row
+crashed a generation before the never-fail guard landed. Its premise was one layer too
+far downstream: the refusals were the loss of ROWS, not of originality — the authored
+rows answered the wrong clause as often as the right one because the IDEA they were
+written for was never anchored to what the GM typed. That is R7 below, and it comes
+first. **R4 stays in the code as built and is not on the critical path**; the forty
+after R7 decides it (see R7's instrument). **If R7 does not pay off, the release
+candidate is the state BEFORE R4** — `rc-2026-11-01`, with R4 switched off — not R4
+patched further. The owner is wary of R4 for exactly this reason: it made things
+temporarily worse on the number that matters.
+
 **R4. Authoring-first for the signature seat.** *Decisions made 2026-11-02, after
 the step-1 replay (220 of 220 refusals are `no_fit`): (a) SURGICAL, not literal —
 author at the `closest accepted` branch in `fitSeat` (generate.mjs ~5041), the menu
@@ -655,7 +700,143 @@ authored and named carries its own receipt).
 **R5. Telemetry — regenerate vs save per concept on the live site.** The critic that
 scales. Product-side, parallel, small. Needed before any Reddit-scale broadcast.
 
-**R6. Best-of-two** only if churn survives R4; owner's "diagnose first" stands.
+**R6 · RE-ROLL. Best-of-two — TRIGGERED, DEFERRED BEHIND R7 (owner, 2026-11-02).** Its own
+condition fired: churn survived R4 (retention 1 of 7). It goes second, not first,
+because R7 is the direct fix for the mechanism the critic named (the idea is anchored
+to nothing) and costs no call, while best-of-two is +1 idea call a sheet and only
+reduces churn if the "best" is chosen TOWARD the GM's clause — chosen for novelty, two
+rolls churn like one. **If R7 lands and retention still does not clear about half, R6 is
+next**, with the pick made by the clause receipt R7 introduces, and it is measured on
+the same number. The owner's "diagnose first" is satisfied: the diagnosis is R7's.
+
+**R7 · ANCHOR. The idea is anchored to the GM's clause — FIRST.** The idea call rolls fresh each
+time and is anchored to nothing, so a surprise is rolled, not earned, and does not
+survive a re-roll (1 of 7). The clause call already names a mechanic per GM clause and
+the engine already knows which clauses the sheet has not answered (`unansweredClause`,
+`leadForSeat`). The change: the idea call is handed the UNANSWERED clauses with their
+declared mechanics, and each idea it returns NAMES the clause it answers — a receipt
+field, validated by membership against the list, never a word match. The seat prompt
+(`buildSeatPrompt`) then names that clause as THE CLAUSE THIS ROW MUST ANSWER. No new
+call. This is also the fix for the weak-row class (the tax-ghost's stealth trait, the
+duellist's stealth trait: a decent row answering a clause the seat was not for).
+*Instruments, all read off the forty that follows:* (1) **surprises retained** against
+forty #2's three — the critic's number, the one that matters; (2) `missed` by the
+critic's read, against 23; (3) **the fit-vs-authored split per sheet** from the trace —
+did the anchored idea fit a template, or need R4 to author it? That split is the whole
+case for or against R4 and costs no extra run. *Kill criterion, stated before the run:*
+if retention does not clear about half, R7 did not pay off and the release is
+`rc-2026-11-01` with R4 off. If it does, R4 is judged by the split: mostly-fit means R4
+is a small tail that can be off for release; mostly-authored means R4 is load-bearing
+and stays.
+
+**FORTY #3, THE CRITIC'S READ, AND THE DECISION (owner, 2026-11-02 evening).**
+`homebrew40-2026-11-02T13-47-49`: **surprised 7 · plain 17 · missed 15** (baseline
+7 · 8 · 25; forty #2 3 · 13 · 23), FAIL 3, clause 60%, **retention 1 of 7 — unmoved.**
+Of 11 fix verdicts authoring owns ONE (#14 Spore-Mother); six are the concept never
+reaching the sheet, two are regressed lints, two are the seat. Of the 7 surprises, 4
+are authored rows and 2 are templates — the two "runnable tonight" sheets are a
+template and a chassis row, so BOTH organs stay. `missed` moved and two instruments
+agree (critic + frozen-clause count); retention did not. **But the anchor ran at 21%**:
+the handoff said reuse `unansweredClause`, whose head fallback is right for one clause
+and wrong for a list, so 46% of what the idea call saw was noise — the kill criterion
+was measured against a mechanism a quarter running. **Decision: ONE more iteration,
+same criterion, then final.** And the fallback is RE-READ: forty #3 beats the baseline
+on `missed` by ten sheets, matches `surprised`, loses by two FAILs — **if the next forty
+does not clear retention, the release is forty #3's state, not `rc-2026-11-01`.**
+Parked, named: Regeneration as the seat's new Fear Aura (×5, four unasked, twice
+stacked with another heal) — a seat-default receipt, R3b's territory, after this.
+
+**R9 · RELEASE PASS (owner, 2026-11-02). The critic's deterministic list, classified by
+the house rule first.** Forty #4 (`homebrew40-2026-11-02T18-48-33`, the critic's read):
+bait 27 lines on 22 sheets, **11 deterministic**, 4 authoring run-ons. "One screenshot
+sinks the sheet publicly." The owner's standing instruction for this pass: **if it needs
+string surgery it has to be justified — this is where our problems come from.** Every
+item below was classified before being listed; three are REMOVALS of existing surgery,
+none adds a regex over the GM's or the model's prose, and prompt edits lead with the
+abstract rule and put examples last or nowhere (the engine was teaching the model its
+own answer). Each deterministic class gets an R1 snapshot-lint case on the saved forty #4
+sheet that shipped it BEFORE the fix, so the critic's deterministic half becomes a suite.
+
+*A. Remove surgery.* (1) `stampT` comes OFF authored seat rows — it rewrote "the creature"
+(the target) into the monster's name: #36 "the scream cannot move away from the scream",
+#08. The repair path never stamped; the seat should not have. (2) Whatever pass rewrote
+#22's "cannot be Prone" into "cannot be **has** the Prone condition" stops running on
+rows marked `authored` — the forms carry the condition as a FIELD and the renderer writes
+the sentence; find the pass by replaying the saved sheet. (3) The collision fallback that
+mints "<name> II" (#28) is removed: a collision refuses the row and the fallback stands in.
+*B. Validate against closed facts.* (4) An authored row naming "the X condition" where X
+is not in `ALL_CONDITIONS` is refused (#13 "sleep condition"). (5) A template's own
+default name on a reskinned row is refused when the call named nothing — the 10-27 rule,
+the catalog's own `name` fields are the list (#27 "Hurled Burst"; the placeholder rule
+generalised, same site).
+*C. Engine-written text.* (6) "?." — the name punctuation (#33). (7) A Multiattack that
+"makes three attacks." naming no row (#13, #38 — second sweep). (8) "level 9 version"
+inside a 2014 block (#37).
+*D. Data.* (9) Immunity AND Absorption of one type on one sheet (#09, #10): the organ
+replaces the line, it does not sit beside it. (10) d4 stacks on weapon rows (#15 11d4,
+#40 7d4): the weapon table's die. (11) Cunning Action on a monk (#17): trace whether the
+ROUTE declared monk and the kit table handed it the rogue's feature, or the route declared
+rogue — either way declared data, fix the data. (12) The LACKS pass honours senses as it
+honours languages (#10 "no eyes" with darkvision).
+*E. Call fields — rule first, examples last.* (13) `mechanics` on the trait and reaction
+forms: how many mechanics the row contains; the engine refuses >1 (#21, #17, #22, #13 —
+four run-ons; print's 700-character traits are one mechanic, so no word count). (14) The
+anchor's `clause` becomes a REQUIRED NUMBER — the index of the ask, 0 for none — validated
+by bounds, no string matching. Forty #4: 49 blanks and 20 verbatim copies of the rendered
+line with my annotation attached; the prompt said "or left out if it answers none", which
+invited the blank. Measure the blank rate after; if it persists with the field required,
+THEN a selection call is worth its cost — not before. (15) `heals` on the trait form, and
+Regeneration as a default needs a receipt and never stacks: one per-turn heal per sheet
+(#18, #23; four sweeps). (16) The `acts` prompt rewritten: the rule, then at most one
+example.
+*F. Defaults.* (17) A default trait ships only when the GM gave nothing to anchor to (a
+blank roll, "a worm", "grief"). Print: **126 of 329 blocks carry zero traits** — an empty
+slot is print's most common answer; an unasked Regeneration is not. Seat-kit traits earn 0
+of 15 three reads running.
+*G. The repair landing gets the seat's guards.* `conditionsImposedTwice` and
+`danglingRefIn` on authored trait text — 3 of forty #4's 6 FAILs (#11, #12, #33).
+*H. Traced, fixed if data.* The legendary seat on a CR 4 cat (#23, three of four rolls);
+"a worm" with no CR at the top of the brute ladder (#27, four rolls; default mid-ladder).
+
+*Status after the first R9 session (2026-11-02, night).* **Landed, pinned on their sheets:
+A1, A2, A3 (half — see below), B4, C6, E14, G.** Suite 178/178, build clean, `.replace(`
+187. **Refused with numbers:** B5 — 30 of 31 library seed names are not print row names,
+so a name rule kills the fallback shelf; #27's real defect is the `name-mechanic` audit
+finding that fired and sat *below the confidence gate* — that gate is the lever, not a
+name rule. C8 — 2014 has no "version" idiom and the engine's 2014 Spellcasting still
+emits At-Will/N-Day lists, so dropping the parenthetical loses information and
+rewriting it invents idiom; owner's call. **Lint refused by print:** a "names the
+creature twice" detector for A1 — 83 of print's own sentences do it; the pin is a
+replay. **Found en route:** A2's true cause was ORDER (the garble-fixer ran before the
+rule that makes the garble); C6's true site is the two Vue cards (`render.mjs` has
+always guarded "?."), which is why saved JSON never showed it. **Miss, half-closed:** A3
+fixed the trait seat's " II" fallback and not `uniqueRowName` (generate.mjs ~4944), which
+still mints " II" for ACTION rows — the N4 note names BOTH sites. **Not audited:**
+`skipAuthored` went on `prone-vocab` alone; the text-rule table has other vocabulary
+rewrites that may garble an authored sentence the same way. **Not reached:** C7, D9–D12,
+E13, E15, E16, F17, H. **No gate run** — correct: a half-pass measured is a wasted forty.
+The second R9 session finishes the list, then runs both gates.
+
+*Instrument:* the R1 lint suite green on forty #4's saved sheets after the fixes (each
+class pinned on its own sheet first); then the two runs below. The critic scores with the
+new rule — fix = any one-line bait, hot out of band, or unrunnable; ship+ = a quotable
+signature or a fidelity tick — and counts bait (deterministic/model), signatures,
+fidelity, band.
+
+**R8 · QUALITY. The authored row goes through the quality layer — with R7, before the forty.**
+The critic's split, three reads running: templates are sound and same, free text is
+original and broken; three of three surprises and six of nine breaks on forty #2 were
+authored rows — and three of those breaks were REPAIR-authored rows that predate R4, so
+this is owed regardless of R4's fate. Four validations on the call's own answer, no
+meaning read: (a) **no amputation** — `parseAuthorResponse` slices `effect` at 240
+characters mid-word (Daubing Cling: 288 chars, cut to "into an o" and given a period);
+a form over the cap is REFUSED, never sliced; (b) **the splice capital** — the
+trigger/effect join lowercases the first word after it, full stop, not a longer word
+list ("A memento", "That creature", "When the bull's"); (c) **a check or save with no
+`{dc}`** is refused, beside `traitIsSave`; (d) **`condition_relation: requires` on a
+condition no row on the sheet imposes** is refused — declared data, the same shape as
+the third-imposition guard. Not in R8: "no referent" rows (other shepherds, raised
+horses) — that is meaning, and is a call field or nothing.
 
 Items 2, 1d and the old 5/6 are absorbed or deferred behind R4. The release bar in §5
 still applies to whatever ships next; `rc-2026-11-01` is what we fall back to.
@@ -734,33 +915,25 @@ No forty for R1, R2, or any single R3 site.
 
 ## 6. For the next session, in one paragraph
 
-State at 2026-11-02: R1, R2, R3 (sites 1-2, R3.2, R3.3), N4 and forty #1 are landed and
-measured; R3b is CLOSED BY MEASUREMENT (three premises refuted — see its blocks in
-`ROADMAP-results-2026-11-01.md`); **R4 IS BUILT AND MEASURED** — steps 1 and 2, the
-third-imposition hole, the grant-time counter removed and the save-stat contract handed
-to the authoring call. On the targeted twelve, `closest accepted` went 22 -> 9 and 7
-authored rows reached finished sheets. **The regression forty is `sweep.json`** (the §5
-category table is indexed to it; `homebrew40.json` is R4's originality baseline at 7
-surprised / 8 plain / 25 missed and is NOT the gate — a session already lost twenty
-minutes to that). The release bar was not met before R4: FAILs 6, clause rate 73%,
-never-answered 8, decoration 14 — all one mechanism, which R4 addresses, and forty #2 is
-what says whether it moved. **Forty #2 is the next thing**: `homebrew40` re-rolled and
-scored against 7/8/25 with the critic's one question — would the GM who typed this be
-surprised? Report `closest accepted`, authored rows on the finished sheet, and FAILs
-against 6 of 40. Two things are OPEN for the owner and named in the R4 results block:
-the `save-fit` disagreement between the engine's save-stat pass and its own checker (the
-one-line fix is refuted by print — 11 of print's own 97 such rows sit on the stat the
-table rejects), and the weak-row class the twelve showed (a 5-foot Sphere, an idea
-shipped at half) if the forty says it is a pattern and not two instances.
-The house rule stands over everything in this plan: meaning is a call field, never a word
-list (CLAUDE.md, "Meaning is a call field"); the engine edits fields, never sentences (§8).
-It binds the CRITIC's proposals too — three times this sprint the critic proposed a key
-table ("sentinel/warden/guards", "walls/siege/ram", "shell/sheds/drips") and each was
-refused and re-expressed as a quoted field on the call; expect a fourth and do the same.
-Reviewer's checks for R4, in order: the renderer was extracted not copied (grep for a
-second form->text body); every authored row passed `valueCheck` (trace); `closest
-accepted` count on the twelve against the same sheets' prior runs; no new `.replace(`
-on row text (`scripts/row-text-replaces.mjs`, 187); R1 lints green; then the forty.
+State at 2026-11-02 (night): four fortys on `homebrew40` are scored by the critic. The
+originality program is CLOSED BY DECISION — retention 1 -> 1 -> 3 of 7, `missed` 25 -> 12;
+Anchor and Author stay, Re-roll stays deferred, and the owner does not want to keep
+iterating on it. What is left is **R9, one plumbing pass**, classified by the house rule
+(no new string surgery; three removals of it) and then the gate. **The release gate is
+two runs, not one**: `sweep.json` as the regression floor (its own baseline: 19 ship / 18
+fix-lite / 3 fix on forty #1), and — the critic's point, adopted — **a forty of REAL user
+concept strings**, because `homebrew40` is the adversarial distribution by design and the
+GM who types "Orc Bloodpriest" is the real one. If the owner has the strings, that run is
+the number; if not, R5's telemetry is what gets them and `homebrew40` stands in once more.
+Go/no-go: deterministic bait at 0 on both runs (the R1 suite says so before the critic
+does), band median within ±1, FAILs at or under each run's own baseline, and the critic's
+read of the real-concept forty reading like the Bloodpriest and not the Toll-Bell Wraith.
+The release candidate is then that state; `rc-2026-11-01` is the fallback only if R9
+regresses `sweep`. Post-release, parked and named: subclass/feat fidelity (SRD idiom, not
+PHB), the counter template family for the abstract verbs, the HP-max-drain ceiling. The
+implementer reports mechanism numbers and the R1 suite; the critic scores. Meaning is a
+call field, never a word list; the engine edits fields, never sentences — and the
+substitution bug that topped forty #4's list is what breaking that rule looks like.
 
 ---
 
