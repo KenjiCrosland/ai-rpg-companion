@@ -736,14 +736,27 @@ No forty for R1, R2, or any single R3 site.
 
 State at 2026-11-02: R1, R2, R3 (sites 1-2, R3.2, R3.3), N4 and forty #1 are landed and
 measured; R3b is CLOSED BY MEASUREMENT (three premises refuted — see its blocks in
-`ROADMAP-results-2026-11-01.md`); R4's step-1 replay is done. **The regression forty is
-`sweep.json`** (the §5 category table is indexed to it; `homebrew40.json` is R4's
-originality baseline at 7 surprised / 8 plain / 25 missed and is NOT the gate — a
-session already lost twenty minutes to that). The release bar is not met: FAILs 6,
-clause rate 73%, never-answered 8, decoration 14 — all one mechanism, which R4
-addresses. Build R4 per its decisions above, replay-test on the dire wolf / bog hound /
-owlbear / stone golem ideas, run a targeted twelve, stop before forty #2. Forty #2 is
-`homebrew40` re-rolled and scored against 7/8/25 with the critic's one question.
+`ROADMAP-results-2026-11-01.md`); **R4 IS BUILT AND MEASURED** — steps 1 and 2, the
+third-imposition hole, the grant-time counter removed and the save-stat contract handed
+to the authoring call. On the targeted twelve, `closest accepted` went 22 -> 9 and 7
+authored rows reached finished sheets. **The regression forty is `sweep.json`** (the §5
+category table is indexed to it; `homebrew40.json` is R4's originality baseline at 7
+surprised / 8 plain / 25 missed and is NOT the gate — a session already lost twenty
+minutes to that). The release bar was not met before R4: FAILs 6, clause rate 73%,
+never-answered 8, decoration 14 — all one mechanism, which R4 addresses, and forty #2 is
+what says whether it moved. **Forty #2 is the next thing**: `homebrew40` re-rolled and
+scored against 7/8/25 with the critic's one question — would the GM who typed this be
+surprised? Report `closest accepted`, authored rows on the finished sheet, and FAILs
+against 6 of 40. Two things are OPEN for the owner and named in the R4 results block:
+the `save-fit` disagreement between the engine's save-stat pass and its own checker (the
+one-line fix is refuted by print — 11 of print's own 97 such rows sit on the stat the
+table rejects), and the weak-row class the twelve showed (a 5-foot Sphere, an idea
+shipped at half) if the forty says it is a pattern and not two instances.
+The house rule stands over everything in this plan: meaning is a call field, never a word
+list (CLAUDE.md, "Meaning is a call field"); the engine edits fields, never sentences (§8).
+It binds the CRITIC's proposals too — three times this sprint the critic proposed a key
+table ("sentinel/warden/guards", "walls/siege/ram", "shell/sheds/drips") and each was
+refused and re-expressed as a quoted field on the call; expect a fourth and do the same.
 Reviewer's checks for R4, in order: the renderer was extracted not copied (grep for a
 second form->text body); every authored row passed `valueCheck` (trace); `closest
 accepted` count on the twelve against the same sheets' prior runs; no new `.replace(`

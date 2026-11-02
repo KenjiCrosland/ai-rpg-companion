@@ -130,7 +130,7 @@ describe('the four ideas the step-1 replay named', () => {
     const row = rows.find((r) => r.name === 'Unwalled');
     expect(row).toBeTruthy();
     expect(row.section).toBe('Traits');
-    expect(row.freeRow).toBe(true);        // it spends the path's one free signature row
+    expect(row.freeRow).toBe(true);        // marked free, so settleSheetBudgets ranks it on the finished sheet
     expect(row.decoration).toBeUndefined(); // but it is NOT decoration: it was written to carry the idea
   }, 30000);
 });
@@ -170,6 +170,85 @@ describe('the branch itself', () => {
     expect(trace).toMatch(/free signature row: "Unwalled"/);        // and it passed the receipt gate
     expect(trace).toMatch(/trait ceiling: "Unwalled" does not ship/); // and print's ceiling is what stopped it
     expect(rows.find((r) => r.name === 'Unwalled')).toBeUndefined();
+  }, 30000);
+
+  test('an authored save that grapples carries the escape DC and no timer — the four frames of forty #2', async () => {
+    // FOUR of forty #2's six FAILs were this one sentence, every one an authored save
+    // row: Drowning Roar, Coat Lash, Heartbriar Hook, Hooked Lash, each
+    // `grapple-no-escape`. The save form wrote "the target has the Grappled condition
+    // until the end of its next turn" — no escape DC, and a timer Grappled does not
+    // have. Measured against print before the fix: of its 10 save rows that grapple,
+    // 10 carry an escape DC and 0 carry a timer.
+    const concept = 'a chalk-hound that hooks you and will not let go';
+    const { rows, trace } = await run({
+      concept, cr: 4, archetype: 'brute', name: 'Chalk Hound', type: 'Monstrosity',
+      ideas: { action: { idea: 'It hooks a victim and holds on.', section: 'action', trigger: 'save', effect: 'condition' } },
+      fit: { ...REFUSED, missing: 'a seize that holds rather than a shove' },
+      seatRow: { saves: [{ clause: 'hooks you and will not let go', name: 'Heartbriar Hook', stat: 'Strength', target: 'one creature within 5 feet', damage: false, type: null, condition: 'Grappled', movement: null, success: 'none', recharge: false }] },
+    });
+    expect(trace).toMatch(/seat authored the row:.*Heartbriar Hook/);
+    const row = rows.find((r) => /^Heartbriar Hook/.test(r.name));
+    expect(row).toBeTruthy();
+    expect(row.text).toMatch(/has the Grappled condition \(escape DC \d+\)/); // the checker's grapple-no-escape
+    expect(row.text).not.toMatch(/Grappled condition until/);                   // Grappled has no timer
+  }, 30000);
+
+  test('the condition clause has one body — the repair path\'s rider keeps print\'s own shapes', async () => {
+    const { renderForm } = require('@/tools/statblock-generator/reskin/forms.mjs');
+    // a guard on the shared clause, not a second copy of it: Prone takes no timer,
+    // an ordinary condition takes one, and only Grappled takes a DC. If someone edits
+    // `conditionClause`, the Grappled frame above and this fail together.
+    expect(renderForm({ kind: 'save', stat: 'Strength', dc: 13, target: 'one creature within 5 feet', failure: 'the target has the Prone condition.' }, '2024'))
+      .toMatch(/\*Failure:\* The target has the Prone condition\./);
+  });
+
+  test('NEVER-FAIL: an authored row carrying a slot the engine cannot fill is refused, not shipped', async () => {
+    // THE ONE GENERATION THAT THREW ON FORTY #2. The storm drake's authored trait
+    // wrote `{condition}` — the forms ask for `{dc}` and `{dmg}`, and the call
+    // generalised — nothing substitutes it, and it reached the ship-time guard:
+    // "unfilled slot in Thunderwake Aura — failing loudly per spec". A failed
+    // generation is worse than any gate failure, so the seat validates its own
+    // substitution and the nearest template stands in.
+    const concept = 'a young storm drake whose breath is a rolling wall of thunder';
+    const { trace, rows, m } = await run({
+      concept, cr: 7, archetype: 'brute', name: 'Storm Drake', type: 'Dragon',
+      ideas: { trait: { idea: 'The air within reach of the drake is alive with static.', section: 'trait', trigger: 'always', effect: 'threat' } },
+      fit: { ...REFUSED, missing: 'a moving wall of thunder' },
+      seatRow: { traits: [{ clause: 'rolling wall of thunder', name: 'Thunderwake Aura', trigger: 'When a creature ends its turn within 10 feet of the drake', effect: 'that creature takes {dmg} Thunder damage and has the {condition} condition until the end of its next turn', imposes: null, condition_relation: 'none', passive_effect: 'threat' }] },
+    });
+    expect(m).toBeTruthy();                                   // the generation did not throw
+    expect(trace).toMatch(/seat authoring refused:.*still carries \{condition\}/);
+    expect(rows.find((r) => r.name === 'Thunderwake Aura')).toBeUndefined();
+    for (const r of rows) expect(r.text ?? '').not.toMatch(/\{[a-z_0-9]+\}/); // nothing reached the sheet wearing braces
+  }, 30000);
+
+  test('both seats can author on one sheet — the allowance is settled on the finished sheet, not at grant', async () => {
+    // THE COUNTER THE CRITIC REMOVED, and that the first wiring of this attempt put
+    // back. It refused a seat whose sheet had already spent `freeRowsUsed`, which on
+    // the live twelve (r4-twelve-2026-11-02T04-46-44) fired 5 times of 22 — every one
+    // the TRAIT seat, forbidden because the ACTION seat had authored first. Nothing
+    // else in generate.mjs compares that counter; `settleSheetBudgets` ranks free rows
+    // on the finished sheet. So two authored rows must be able to REACH the budget,
+    // and the budget is what decides whether both stay.
+    const concept = 'a bog hound that drags fishermen under and whose hide steams';
+    const { trace, rows } = await run({
+      concept, cr: 4, archetype: 'brute', name: 'Bog Hound', type: 'Monstrosity',
+      ideas: {
+        action: { idea: 'It heaves backward, dragging whatever it has hold of off its feet.', section: 'action', trigger: 'save', effect: 'movement' },
+        trait: { idea: 'Its hide steams, so standing beside it is its own punishment.', section: 'trait', trigger: 'always', effect: 'threat' },
+      },
+      fit: { ...REFUSED, missing: 'a shape the catalog does not hold' },
+      seatRow: {
+        saves: [{ clause: 'drags fishermen under', name: 'Heave Under', stat: 'Strength', target: 'one creature within 5 feet', damage: true, type: 'Bludgeoning', condition: null, movement: 'pulled up to 15 feet', success: 'none', recharge: false }],
+        traits: [{ clause: 'whose hide steams', name: 'Steaming Hide', trigger: 'While a creature is within 5 feet of the hound', effect: 'that creature takes {dmg} Fire damage at the start of its turn', imposes: null, condition_relation: 'none', passive_effect: 'threat' }],
+      },
+    });
+    expect(trace).not.toMatch(/already spent its one free signature row/); // the counter is gone
+    expect(trace).toMatch(/seat authored the row: action/);
+    expect(trace).toMatch(/seat authored the row: trait/);               // the trait seat got its attempt
+    // both reached the finished-sheet budget; it decides what stays, and it is traced
+    expect(trace).toMatch(/free-row budget/);
+    expect(rows.filter((r) => r.authoredSeat).length).toBeGreaterThanOrEqual(1);
   }, 30000);
 
   test('the authored row may not impose a condition the sheet already imposes twice — the Quarry Scree frame', async () => {

@@ -161,3 +161,49 @@ describe('a damage row never saves by Strength unless it displaces', () => {
     expect(damageIsThePoint({ text: 'The creature can climb difficult surfaces without needing to make an ability check.' })).toBe(false);
   });
 });
+
+/**
+ * THE SEAT PROMPT AND THE TABLE DO NOT DRIFT (2026-11-02).
+ *
+ * `buildSeatPrompt` tells the authoring call which stat a save takes, because the
+ * first live run of the R4 path shipped a Strength save for 18 (4d8) Bludgeoning in
+ * an Emanation and failed the checker's `save-fit` gate on it. That gate reads
+ * `saveStatsFor`. A prompt stating the rule in prose and a table enforcing it in code
+ * are two copies of one fact, so each clause of the prose is checked against the
+ * table here — if someone edits either, this fails rather than the next forty.
+ */
+describe('the seat prompt states the table, clause by clause', () => {
+  const { buildSeatPrompt } = require('@/tools/statblock-generator/reskin/author.mjs');
+  const { saveStatsFor } = require('@/tools/statblock-generator/reskin/templates.mjs');
+  const text = buildSeatPrompt({ name: 'X', inline: 'it', cr: 5, sheet: '', idea: 'i', kind: 'an action' });
+
+  test('the block is in the prompt at all', () => {
+    expect(text).toMatch(/THE SAVE'S STAT\./);
+  });
+
+  test('damage: the prompt says Dexterity or Constitution, and the table agrees — for every condition that could ride along', () => {
+    expect(text).toMatch(/the row deals damage — Dexterity, or Constitution/);
+    for (const c of [null, 'Prone', 'Grappled', 'Restrained', 'Poisoned', 'Blinded', 'Deafened', 'Stunned', 'Paralyzed', 'Frightened', 'Charmed']) {
+      const want = saveStatsFor({ imposes: c, damageDominant: true, movement: false });
+      expect(want).not.toContain('Strength'); // the prompt's "not Strength"
+      expect(want).not.toContain('Wisdom');   // the prompt's "not Wisdom"
+      expect(want.every((w) => ['Dexterity', 'Constitution'].includes(w))).toBe(true);
+    }
+  });
+
+  test('movement: the prompt says Strength, and the table leads with it', () => {
+    expect(text).toMatch(/moving the target, a shove or a pull or a haul — Strength/);
+    expect(saveStatsFor({ movement: true })[0]).toBe('Strength');
+  });
+
+  test('a condition with no damage: each stat the prompt names is the one the table leads with', () => {
+    expect(text).toMatch(/Strength for Prone, Grappled or Restrained; Constitution for Poisoned, Blinded, Deafened, Stunned or Paralyzed; Wisdom for Frightened or Charmed/);
+    const says = { Prone: 'Strength', Grappled: 'Strength', Restrained: 'Strength', Poisoned: 'Constitution', Blinded: 'Constitution', Deafened: 'Constitution', Stunned: 'Constitution', Paralyzed: 'Constitution', Frightened: 'Wisdom', Charmed: 'Wisdom' };
+    for (const [cond, stat2] of Object.entries(says)) expect(saveStatsFor({ imposes: cond, damageDominant: false, movement: false })[0]).toBe(stat2);
+  });
+
+  test('neither damage nor a condition: the prompt leaves it open and the table has no opinion', () => {
+    expect(text).toMatch(/the row does none of those — whichever stat its own fiction asks for/);
+    expect(saveStatsFor({ imposes: null, damageDominant: false, movement: false })).toEqual([]);
+  });
+});

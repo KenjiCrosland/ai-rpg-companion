@@ -1377,3 +1377,120 @@ surprises:   The two FAILs were not in the branch I wrote. One was a hole in a g
              class templates almost never produce. Both were invisible until a path
              existed that produces that shape — which is the argument for running the
              twelve rather than reasoning about it.
+
+### Forty #2 — R4 measured on `homebrew40`, and three defects it alone could find
+predicted:   the three fixes land, then forty #2 says whether R4 moved the number the
+             critic asked about. **Instrument corrected first, and it matters**: the
+             handoff said "FAILs against 6 of 40", but **6 is `sweep`'s number**.
+             `homebrew40`'s own prior run (`homebrew40-2026-11-02T01-02-31`) is
+             **1 FAIL of 40, clause coverage 105/196 = 54%, closest accepted 44**.
+             `sweep` is 6 FAILs at 88%. Likewise §6's "clause rate 73%" is
+             `clause-rate.mjs` across sweeps, a third instrument. Scored against
+             homebrew40's own baseline, forty #2's bar for FAILs is **1, not 6** — any
+             new FAIL is a regression, and read against 6 it would have looked like a win.
+measured:    `homebrew40-2026-11-02T05-09-26`, live, 39 of 40 generated (one THREW — see
+             below).
+
+             **The branch, against the same batch's prior run:**
+               closest accepted      44 -> **11**
+               no_fit refusals       44 -> 55
+               authored              —  -> 44
+               authored ON the sheet —  -> **25**
+               skipped at grant      —  -> **0** (the counter removal, confirmed live)
+               refused by a guard    —  -> 1 (third imposition) + 0 slot/dangling
+             The trait seat now authors behind the action seat on the same sheet, which
+             the grant-time counter had made impossible: 25 authored rows on 39 sheets
+             against 7 on 12 before.
+
+             **The critic's one question — would the GM who typed this be surprised?**
+             Read over all 39 sheets (mine, not the critic's — see the caveat):
+               **8 surprised / 20 plain / 11 missed**, against the baseline 7 / 8 / 25.
+             The movement is **missed 25 -> 11**, which is the bucket with an objective
+             definition ("the concept's own sentence absent from the page") and the one
+             R4 was aimed at. Surprised is flat (7 -> 8). Sheets moved from MISSED into
+             PLAIN, not into SURPRISED: R4 gets the GM's sentence onto the page, it does
+             not yet make the page delightful.
+               surprised: 03 Stitch-Troll, 11 Reef-Shelf Hog (3 of 4 clauses), 12
+                 Fieldbreaker Bull, 15 Gaol-Queen (Convict Hurl IS the idea), 18
+                 Wound-Ledger (authored Memento Repossessed is the concept verbatim), 21
+                 Silt-Veiled Drowner (authored: "Invisible to any creature farther than
+                 its reach" — the clause as one clean mechanic), 29 Vowbound Reliquary
+                 (both halves), 35 Weeping Sac-Beast (poisons ITSELF, mechanically)
+               still missed: 04 "through walls" with no Siege Monster (the critic's own
+                 forty-#1 example, unchanged), 09 neither steel nor water, 10 a breath
+                 weapon on a thing with no mouth (named in the baseline, unchanged), 13
+                 no three-toll structure, 14 no body-takeover, 22 "never comes down" with
+                 only a melee bite, 23 no escalation on being wounded, 30 the authored
+                 row went to stealth and the disarm is absent, 33 the argument is a name
+                 not a mechanic, 34 "only ever makes one attack" beside three (named in
+                 the baseline, unchanged), 38 no tracking mechanic
+             CAVEAT, stated because it bounds the comparison: the 7/8/25 baseline is the
+             CRITIC's read and this is mine. Two readers, one question. The `missed`
+             bucket is the least subjective of the three and it is the one that moved;
+             `surprised` vs `plain` is where two readers would differ most.
+
+             **`check-run`: FAIL 1 -> 6 of 39, clean 24 -> 17, clause 54% -> 51%.** A
+             gate regression, and FOUR of the six are one mechanism I introduced:
+               4x `grapple-no-escape` — Drowning Roar, Coat Lash, Heartbriar Hook,
+                 Hooked Lash, every one an authored SAVE row, every one the sentence
+                 "the target has the Grappled condition until the end of its next
+                 turn". FIXED. The engine already knew: `riderText` on the attack path
+                 carries the escape DC with a comment citing the corpus, and
+                 `authoredRow` could not see it because it lives inside `landAuthored`.
+                 The fourth duplicated body this sprint to hide a fix, and the one step
+                 1 left behind. Measured against print before writing it: of print's 10
+                 save rows that grapple, **10 carry an escape DC and 0 carry a timer**;
+                 the size restriction sits in the target clause (1 of 10), which is why
+                 `riderText` keeps its own for the attack case. One `conditionClause`
+                 now, read by both.
+               1x `dual-recharge` + its own grapple FAIL (Reef-Shelf Hog) — NOT FIXED,
+                 pre-existing ordering. The one-nova guard DID fire and strip the gate
+                 (traced), and then `valueCheck` re-gated the row because its EV was over
+                 the ceiling. R4 made it reachable; the fix is an ordering question
+                 between two passes and belongs to the owner.
+               1x `alignment-fit` (Unaligned Monstrosity, INT 12) and 1x `under` (Bone-
+                 Choir HP band at CR 16) — neither has anything to do with R4; the
+                 roadmap already records `under` as intermittent.
+
+             **AND ONE GENERATION THREW, which is worse than any FAIL.** Sheet 02, the
+             storm drake: the authored trait wrote `{condition}` in its effect, nothing
+             substitutes it, and it reached the ship-time guard — "unfilled slot in
+             Thunderwake Aura — failing loudly per spec". The forms ask for `{dc}` and
+             `{dmg}`; the call generalised and invented a third. This violates the
+             standing never-fail rule, and R4 is the only path that can produce it (a
+             template's slots are the engine's own). FIXED: `UNFILLED_SLOT` is one
+             pattern read by the ship-time guard and by the seat, and the seat refuses
+             any authored row still wearing braces — the nearest stands in. Replay-pinned
+             on the exact frame, with an assertion that no row on the sheet wears braces.
+runs:        `homebrew40-2026-11-02T05-09-26` (39/40 + 1 throw, pre-fix) · suite 175/175,
+             4620 tests · build clean · row-text `.replace(` still 187.
+commit:      uncommitted — paste-ready messages at the end of the session report.
+not done:    **The three fixes above landed AFTER this forty, so none of them is measured
+             yet.** Forty #2 as run is the pre-fix state. What the fixes predict on a
+             re-roll, stated before it runs: FAILs 6 -> 2 (the four grapple rows carry
+             their escape DC; `dual-recharge` and `alignment-fit`/`under` remain), 0
+             throws, and no change to the 8/20/11 read — none of the three touches which
+             mechanic a row expresses. A re-roll is the cheapest check and it is the
+             owner's call whether to spend it.
+
+             Open for the owner, unchanged and now joined by a third:
+               (a) `save-fit` — the engine's save-stat pass vs its own checker; print
+                   refutes the one-line fix (11 of print's own 97 such rows).
+               (b) the weak-row class — forty #2 adds evidence it is real: 30 Assessor
+                   Revenant authored a stealth trait for a disarm concept, 34 authored a
+                   stealth trait for a duellist, 06 Hushfall authored a vague reaction.
+                   The call writes a row that is fine in isolation and answers a
+                   DIFFERENT clause than the seat was for. That is a prompt question
+                   (name the clause the row must answer), not plumbing.
+               (c) `dual-recharge` — the one-nova guard runs before `valueCheck` re-gates.
+             Also noted, one line, not fixed: `low()` in forms.mjs lowercases only
+             The|It|Each|Any|Every|One, so the Hushfall's authored reaction reads "…within
+             reach of the hushfall, That creature cannot…". A closed grammar list, one word.
+surprises:   Three defects, and a 40-sheet run was the only thing that could find any of
+             them: one needed an authored save to choose Grappled (4 sheets), one needed
+             the call to invent a token (1 sheet, fatal), one needed an over-ceiling
+             authored nova beside a chassis nova (1 sheet). None is reachable from the
+             twelve, and the first two were holes in rules the engine already owned —
+             the same shape as the third-imposition hole. The pattern across all three R4
+             sessions is now unmistakable: every defect this path produced was an
+             existing rule implemented in ONE path that the new path walked around.

@@ -162,6 +162,10 @@ export const CONDITION_MENUS = {
   condition_minor: ['Prone', 'Poisoned', 'Deafened', 'Frightened'],
   condition_major: ['Blinded', 'Restrained', 'Stunned'],
 };
+// A SLOT THAT NEVER GOT SUBSTITUTED, in one place (forty #2, 2026-11-02). The
+// ship-time guard throws on this and the signature seat refuses an authored row
+// for it; two copies of the pattern would let one of them drift.
+const UNFILLED_SLOT = /\{[a-z_0-9]+\}/;
 const DAMAGE_TYPES = ['Acid', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Poison', 'Psychic', 'Radiant', 'Thunder', 'Bludgeoning', 'Piercing', 'Slashing'];
 
 const RULES_NAME = /^(Multiattack|Legendary Resistance|Legendary Action Uses|Spellcasting)/;
@@ -3393,6 +3397,29 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // `fallbackType` is the save form's last resort for a damage type when the
   // call named none and its own words warrant none; in the repair path it is
   // the first authored attack's type, and a seat authoring one row has none.
+  // ONE CLAUSE FOR A CONDITION A ROW APPLIES (forty #2, 2026-11-02). The save
+  // form's failure clause carried its own, poorer copy of this: "the target has
+  // the {condition} condition until the end of its next turn" for every condition
+  // alike. On Grappled that is wrong twice — Grappled has no timer, it ends when
+  // the grappler lets go or the target escapes, and it needs the escape DC that
+  // tells a table how — and it cost FOUR of forty #2's six FAILs, every one an
+  // authored save row: Drowning Roar, Coat Lash, Heartbriar Hook, Hooked Lash,
+  // each `grapple-no-escape`.
+  //
+  // The engine already knew. `riderText` below, on the attack path, carries the
+  // escape DC with a comment citing the corpus — and `authoredRow` could not see
+  // it, because it lives inside `landAuthored`. The fourth duplicated body this
+  // sprint to hide a fix from one of its callers, and the one step 1 left behind.
+  //
+  // Measured against print before writing it (srd52-monsters.json): of print's 10
+  // save rows that grapple, **10 carry an escape DC and 0 carry a timer**; the size
+  // restriction sits in the TARGET clause, not here (1 of 10). Of its 28 non-save
+  // rows that grapple, 28 carry the DC and 24 carry the size gate in the sentence,
+  // which is why `riderText` keeps its own for that case.
+  const escapeDCHere = () => 8 + scaled.pb + (Number(scaled.stats?.STR) >= 0 ? Math.floor((Number(scaled.stats.STR) - 10) / 2) : 0);
+  const conditionClause = (c) => (c === 'Grappled' ? `the target has the Grappled condition (escape DC ${escapeDCHere()})`
+    : c === 'Prone' ? 'the target has the Prone condition'
+      : `the target has the ${c} condition until the end of its next turn`);
   const authoredRow = (kind, f, { fallbackType = null } = {}) => {
     const token = (s) => String(s ?? '')
       .replace(/(?:DC )?\{dc\}/g, `DC ${scaled.dc}`) // "a 15 Charisma saving throw" — the token always carries its DC (step 7 defect 5)
@@ -3401,7 +3428,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const s = f;
       const dice = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * (s.target.startsWith('each') ? 1.4 : 1.1))));
       const saveType = s.type ?? (([, w] = []) => ({ fire: 'Fire', flame: 'Fire', scald: 'Fire', steam: 'Fire', burn: 'Fire', ember: 'Fire', frost: 'Cold', ice: 'Cold', cold: 'Cold', freez: 'Cold', lightning: 'Lightning', thunder: 'Thunder', sonic: 'Thunder', poison: 'Poison', venom: 'Poison', acid: 'Acid', rot: 'Necrotic', necrotic: 'Necrotic', decay: 'Necrotic', grave: 'Necrotic', radiant: 'Radiant', holy: 'Radiant', sun: 'Radiant', psychic: 'Psychic', mind: 'Psychic', force: 'Force' })[w])(/\b(fire|flame|scald|steam|burn|ember|frost|ice|cold|freez|lightning|thunder|sonic|poison|venom|acid|rot|necrotic|decay|grave|radiant|holy|sun|psychic|mind|force)/i.exec(`${s.clause} ${s.name}`.toLowerCase()) ?? []) ?? fallbackType ?? 'Bludgeoning'; // the save's own type, else a type its words warrant, else the first attack's
-      const failure = [s.damage ? `${dice.avg} (${dice.dice}) ${saveType} damage` : '', s.movement ? `the target is ${s.movement} straight ${/pushed/.test(s.movement) ? 'away from' : 'toward'} ${inlineGuessRef()}` : '', s.condition ? `the target has the ${s.condition} condition until the end of its next turn` : ''].filter(Boolean);
+      const failure = [s.damage ? `${dice.avg} (${dice.dice}) ${saveType} damage` : '', s.movement ? `the target is ${s.movement} straight ${/pushed/.test(s.movement) ? 'away from' : 'toward'} ${inlineGuessRef()}` : '', s.condition ? conditionClause(s.condition) : ''].filter(Boolean);
       const text = renderForm({ kind: 'save', stat: s.stat, dc: scaled.dc, target: s.target, failure: `${failure[0]}${failure.length > 1 ? `, and ${failure.slice(1).join(', and ')}` : ''}.`, success: s.damage && s.success === 'half' ? 'Half damage only.' : null }, '2024');
       // THE CONDITION THE ROW IMPOSES IS KEPT ON THE ROW (owner, 2026-10-20:
       // "we want the llm to categorize when possible"). The authoring call
@@ -3437,7 +3464,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     } // fresh: a repair on a sheet that authored nothing — the signature path still runs and the slot stays // one landing for the main answer and the repair pass (step 6)
     const esA = sections.Actions ?? (sections.Actions = []);
     const rowByName = (n) => Object.values(sections).flat().find((e) => String(e.name ?? '').replace(/ \(.*\)$/, '') === n);
-    const riderText = (c) => (c === 'Prone' ? ', and the target has the Prone condition.' : c === 'Grappled' ? `. If the target is a ${cr >= 5 ? 'Large' : 'Medium'} or smaller creature, it has the Grappled condition (escape DC ${8 + scaled.pb + (Number(scaled.stats?.STR) >= 0 ? Math.floor((Number(scaled.stats.STR) - 10) / 2) : 0)}).` : `, and the target has the ${c} condition until the end of its next turn.`); // print never applies Grappled without its escape DC (0 of 2 corpora; critic's step-5 read)
+    const riderText = (c) => (c === 'Grappled' ? `. If the target is a ${cr >= 5 ? 'Large' : 'Medium'} or smaller creature, it has the Grappled condition (escape DC ${escapeDCHere()}).` : `, and ${conditionClause(c)}.`); // print never applies Grappled without its escape DC (0 of 2 corpora; critic's step-5 read) — and an ATTACK row carries the size gate in its sentence (print: 24 of 28), which a save row does not (1 of 10), so this arm keeps its own
     for (const a of authored.placed) {
       let row = a.key ? rowByName(a.name) : null;
       if (!row && repair && rowByName(a.name)) { trace('repair:', `"${a.name}" is already a row — the repaired copy leaves`); continue; }
@@ -5101,8 +5128,23 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           const seatKind = seat === 'trait' || idea.section === 'trait' ? 'a trait'
             : idea.section === 'reaction' ? 'a reaction'
               : idea.section === 'bonus_action' ? 'a bonus action' : 'an action';
+          // THE ALLOWANCE IS NOT SPENT HERE EITHER (the critic's package-six review,
+          // 2026-10-22, which this block had quietly reversed). The first wiring of
+          // this attempt refused a seat whose sheet had already spent its one free
+          // row, counting against `freeRowsUsed` at GRANT — which is precisely the
+          // counter the critic had removed from the receipt block ~270 lines below,
+          // and for the same reason: nothing releases it when the granted row is
+          // vetoed later, and `freeRowsUsed` is now a trace counter with no other
+          // comparison anywhere in this file. Measured on the twelve
+          // (r4-twelve-2026-11-02T04-46-44): it fired 5 times of 22, and every one
+          // was the TRAIT seat forbidden to try because the ACTION seat had authored
+          // first — so a sheet could hold at most one authored row and the order of
+          // the seats decided which. `settleSheetBudgets` ranks free rows on the
+          // FINISHED sheet and keeps what fits, the way the row cap and the AC filter
+          // already do; it is the only thing that should be refusing a second one.
+          // Only an EXACT print sheet still refuses here: print closes the row set,
+          // so there is no finished sheet on which a free row could fit.
           if (freeAllowance === 0) trace('seat authoring skipped:', `${seat} — the call refused every template for no_fit, but print closes this sheet's row set, so there is nothing to author into`);
-          else if (freeRowsUsed >= freeAllowance) trace('seat authoring skipped:', `${seat} — the call refused every template for no_fit, but this sheet has already spent its one free signature row`);
           else {
             const takenS = Object.values(sections).flat().map((e2) => String(e2.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean);
             const rawS = await callLLM(buildSeatPrompt({ name: p.name, inline: inlineGuessRef(), cr, sheet: sheetSoFarT, idea: String(idea.idea ?? ''), missing: String(fit.missing ?? ''), kind: seatKind, taken: takenS, lacks: (clauseRecord ?? []).filter((c) => c.polarity === 'lacks').map((c) => c.text) }), validateAuthorResponse);
@@ -5132,8 +5174,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               const row = authoredRow(form.kind, form.f);
               row.text = stampT(row.text); // the model is given the inline, but "the creature" still slips through
               const dangS = danglingRefIn(row.text, [...rowNamesOf(monster), String(row.name).replace(/ \(.*\)$/, '')], String(row.name));
+              // NEVER-FAIL: A TOKEN THE ENGINE CANNOT FILL REFUSES THE ROW (forty #2,
+              // 2026-11-02). The forms ask the call to write `{dc}` and `{dmg}`, which
+              // `authoredRow` substitutes — and the storm drake's authored trait wrote
+              // `{condition}`, which nothing substitutes, so it reached the ship-time
+              // guard and THREW: "unfilled slot in Thunderwake Aura". A generation that
+              // fails is worse than any gate failure (the owner's standing rule: every
+              // organ degrades honestly rather than failing the generation), and the
+              // call may invent any token it likes by generalising from the two it was
+              // given. So the engine validates its own substitution — a mechanical fact
+              // about this text, no meaning read — and the nearest template stands in.
+              const slotS = dangS ? null : UNFILLED_SLOT.exec(row.text);
               if (dangS) trace('seat authoring refused:', `${seat} — the authored row cites "${dangS}", which is not on this sheet (the checker would fail it as a dangling reference); the nearest template stands in`);
-              else {
+              else if (slotS) trace('seat authoring refused:', `${seat} — the authored row still carries ${slotS[0]}, a slot this engine never substitutes (the forms ask only for {dc} and {dmg}); shipping it would fail the generation outright, so the nearest template stands in`);
+              else if (!slotS) {
                 freeRowsUsed += 1;
                 row.authoredSeat = true; // the sameness metric and the gap ship-check count it as the seat's own row, not a template's
                 const authoredSeatShape = { row, templateName: null, section: form.section, template: null, host: 'melee', supersedes: null, asked: vetAsked(fit.asked, rawConceptText), askedRaw: String(fit.asked ?? '').trim(), expresses: fit.expresses ?? null, accepted_closest: false, elementsOffered: sigElements, authoredSeat: true, because: `${String(idea.idea ?? '').slice(0, 160)} [authored: the catalog held no shape for it]` };
@@ -6379,7 +6433,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // COMPLETED, which is a mechanical fact about the engine's own output and
         // needs no reading of meaning. Anything still wearing braces is a bug
         // whatever it is called.
-        const tok = /\{[a-z_0-9]+\}/.exec(e.text);
+        const tok = UNFILLED_SLOT.exec(e.text);
         if (tok) throw new Error(`unfilled slot in "${e.name}" — token ${tok[0]} — failing loudly per spec`);
       }
       // an Actions row that calls itself "this bonus action" (the

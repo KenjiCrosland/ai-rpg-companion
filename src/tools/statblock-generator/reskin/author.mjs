@@ -74,6 +74,17 @@ IF THE SHEET ALREADY ANSWERS A CLAUSE, SAY SO INSTEAD OF WRITING A ROW. Read THE
  * No attack form is offered: the engine prices an attack row off one of the creature's own weapon rows, and a
  * seat has none to clone, so what a seat can hold is a save, a trait or a reaction. An empty answer is a real
  * answer — the caller still has the nearest template to fall back on.
+ *
+ * THE SAVE-STAT BLOCK MIRRORS `saveStatsFor` (templates.mjs), which is the table the checker's `save-fit`
+ * gate enforces, because the first live run of this path shipped the Arrears Collector's Crushing Ledger — a
+ * Strength save for 18 (4d8) Bludgeoning in an Emanation — and failed on it. One sentence of the handoff's
+ * wording is deliberately NOT here: "a magical or mental effect saves by the faculty it attacks". Published
+ * monsters do write those that way (11 of the 97 published rows that save, damage and impose nothing sit on
+ * Strength, Wisdom or Intelligence — the Gold Dragon's Weakening Breath, the Sea Hag's Death Glare, the
+ * Aboleth's Consume Memories), but those rows are EXEMPT from the gate (`e.print`) and ours are not. Telling
+ * the call to write them that way would produce exactly the failure this block exists to prevent. The
+ * discrepancy between the gate and its own corpus is the owner's open question, recorded in the R4 results
+ * block; this prompt follows the gate.
  */
 export function buildSeatPrompt({ name, inline, cr, sheet, idea, missing = '', kind = 'an action', taken = [], lacks = [] }) {
   return `You are writing ONE ability for a D&D monster — the one ability it is still missing. Write it into the closed forms below, in the creature's own register. You never write a number: no attack bonus, no damage dice, no DC — the engine prices the row.
@@ -88,6 +99,12 @@ ${idea}${missing ? `\n\nWHY YOU ARE WRITING IT RATHER THAN PICKING A READY-MADE 
 IT IS ${kind}. Write exactly one row, of that kind, and leave the other arrays empty.${taken.length ? `\n\nNAMES ALREADY ON THE SHEET — never reuse one, the new row needs a name of its own: ${taken.map((n) => `"${n}"`).join(', ')}.` : ''}${lacks.length ? `\n\nTHE CREATOR SAID IT DOES NOT HAVE: ${lacks.map((l) => `"${l}"`).join(', ')}. The row may not grant any of these in any wording — a creature that "never holds" gets no Grappled condition, one with "no magic at all" casts nothing.` : ''}
 
 ${formsSpec({ name, inline, attackCap: 0 })}
+
+THE SAVE'S STAT. Published monsters pair a save with the stat whose faculty the effect attacks, and the same pairings are held to here:
+- the row deals damage — Dexterity, or Constitution. Not Strength and not Wisdom, whatever condition rides along with the damage.
+- the row's whole effect is moving the target, a shove or a pull or a haul — Strength.
+- the row applies a condition and deals no damage — Strength for Prone, Grappled or Restrained; Constitution for Poisoned, Blinded, Deafened, Stunned or Paralyzed; Wisdom for Frightened or Charmed.
+- the row does none of those — whichever stat its own fiction asks for.
 
 Answer with ONE JSON object, the row in the one array its form belongs to:
 { "attacks": [], "saves": [ ... ], "traits": [ ... ], "reactions": [ ... ], "crossRef": null, "unplaced": [] }
