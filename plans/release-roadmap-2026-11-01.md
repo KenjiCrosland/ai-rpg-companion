@@ -638,6 +638,61 @@ scales. Product-side, parallel, small. Needed before any Reddit-scale broadcast.
 Items 2, 1d and the old 5/6 are absorbed or deferred behind R4. The release bar in §5
 still applies to whatever ships next; `rc-2026-11-01` is what we fall back to.
 
+### The critic's read of forty #1 (2026-11-02) — what it changes
+
+`sweep-2026-11-02T01-24-00`: **19 ship / 18 fix-lite / 3 fix** (11-01: 12/25/3) ·
+S 22 clean / 16 nits / 2 broken (13/24/3) · shape repeats **31 -> 19**, 18 kinds -> 7 ·
+runnable-tonight 2 · traits earning their row **15 of 34**. R3 shows: "the
+garbled-sentence class is nearly gone."
+
+**The number R3b needed.** *"Slot-fill traits earn 10 of 11; seat-kit traits earn 0
+of 15."* Fear Aura on 6 sheets, 5 unasked (Vampire, Red Dragon, Brass Tyrant, Peals,
+Krennik) — the seat's default trait is the sameness stack. R3b stays next and now
+carries its instrument: **traits-earning 15/34 -> >= 25/34**, Fear Aura unasked 5 -> 0.
+
+**Refused, with the finding kept.** The critic's §3 — "shoulders through walls" ->
+Siege Monster, "a shell that sheds acid" -> the acid aura — is right that these are
+not closest-accepted misses, and wrong that they are "key-table entries
+(walls/siege/ram; shell/sheds/drips)". That is a word list deciding meaning (the
+third such proposal this sprint). Both are print's own rows, and R3b's receipt — the
+call quotes the GM's words for the mechanic it claims — LOADS them by the same rule
+that unloads Fear Aura. So §3 is R3b's acceptance test, not a separate item: on a
+re-roll of the forty, the Scaffold Ram carries Siege Monster and the Broodmare its
+acid shell, each with the quote on the row.
+
+**N4 — zero-cost, before R3b** (saved sheets only; no API):
+  - lint: a row shipping a template's DEFAULT name ("Composed Row", "Trait", "Row")
+    — the Rivenhearted Glacier, S0.
+  - batch check: the same invented name carrying DIFFERENT rules across sheets
+    (Sundering Shove: a 30-ft cone on the Scaffold Ram, single-target on the Stone
+    Golem) — worse than byte-identical, and currently passes.
+  - converter: "On a failed save, Until the start…" x2 — the `*Failure:*` label swap
+    keeps the next word's capital; same closed lowercasing rule as the reaction fix.
+    And the Vampire's Bite "…on a failed save. On a failed save, plus 13 (3d8)…" —
+    a welded rider re-labelled by the converter; lint the doubled label.
+  - MEASUREMENT GAP: the single-target ceiling fired on one of the three exploiter
+    rows the critic found (Broodmare 54 at CR 9) and missed two (Glacier 54 at CR 15
+    against 51; Leviathan 63 at CR 24 against 58). Find out why before trusting the
+    gate's zero on any forty.
+  Instrument: each lint fires on the named sheet of `sweep-2026-11-02T01-24-00`
+  before any engine change.
+
+**Parked, named.** Krennik is the worg again (the mount merged into the rider; head
+ask missing — a repeat). The Red Dragon's Harrowing Presence inverts "blind in one
+eye" for the third time. The sellsword's handaxe text on the Shortsword row, seventh
+sweep. These are R4-era: a seat that authors first does not reach for them.
+
+**R4's baseline is set.** `homebrew40-2026-11-02T01-02-31`, the critic's one
+question — would the GM who typed this be surprised? — **7 surprised / 8 plain / 25
+missed** of 40. The 25 are the concept's own sentence absent from the page ("only
+dangerous the turn after it goes still", "only ever makes one attack" beside a
+three-attack Multiattack, "no mouth" with a breath weapon). Forty #2 re-rolls this
+batch after R4; the bar moves when a sheet leaves the third bucket for the first.
+
+Order from here: **N4 -> R3b -> targeted sixteen (two concepts x eight rolls) ->
+R4 -> twelve of the closest-accepted sheets -> forty #2 on `homebrew40` + the critic's
+surprise question again.**
+
 ### Runs for this program — two fortys, total (owner, 2026-11-01)
 
 The forty is the regression gate for a SET of changes we are confident in; a feature is
