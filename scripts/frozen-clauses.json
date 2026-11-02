@@ -7281,5 +7281,86 @@
     "askShape": "attack"
    }
   ]
+ },
+ "c3fefe685cef": {
+  "concept": "a bell-wraith whose thunderous toll deafens everything in the chapel",
+  "clauses": [
+   {
+    "id": "cl_d8p8cw",
+    "text": "a bell-wraith whose thunderous toll deafens everything in the chapel",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "ff09b5881d8b": {
+  "concept": "an aboleth-spawn that breathes air and water and climbs sheer stone",
+  "clauses": [
+   {
+    "id": "cl_18xqzkm",
+    "text": "an aboleth-spawn",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1uwsqsm",
+    "text": "breathes air and water",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_1kphusg",
+    "text": "climbs sheer stone",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "climbs",
+    "askOften": "at_will",
+    "askOftenWhy": "climbs",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "climbs sheer stone"
+   }
+  ]
+ },
+ "0ecac3c6e284": {
+  "concept": "a reliquary abbot whose litany mends the faithful once a day",
+  "clauses": [
+   {
+    "id": "cl_15w7c77",
+    "text": "a reliquary abbot whose litany mends the faithful once a day",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "2a10f1ec8c30": {
+  "concept": "a gaol-keeper who shackles a victim and drags them to the pit",
+  "clauses": [
+   {
+    "id": "cl_1vgxgy1",
+    "text": "a gaol-keeper",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_3rh4x",
+    "text": "shackles a victim",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "shackles a victim",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "shackles a victim"
+   },
+   {
+    "id": "cl_18tv4dm",
+    "text": "drags them to the pit",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "drags them",
+    "askShape": "movement",
+    "askMechanic": "shove",
+    "askMechanicWhy": "drags them"
+   }
+  ]
  }
 }

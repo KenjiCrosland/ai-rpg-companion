@@ -16,6 +16,7 @@ import { hintsBlock, HINT_VERDICTS_FIELD, readPhrases } from '../reskin/lexicon.
 import { templatesFor, renderTemplate, rankByVerb, valueCheck, templateMenuLines, parseFit } from '../reskin/templates.mjs';
 import { LINES } from '../reskin/route.mjs';
 import { canWear, canShield } from '../reskin/classes.mjs';
+import { IMMUNITY_ON_SUCCESS, EDITION_TERMS_2024_TO_2014 } from './lint.mjs'; // one definition: Krennik's own 24-hour immunity clause, read by the lint already
 import { imposedCondition } from '../reskin/author.mjs'; // one definition: the condition a finished row imposes // 4a: armour proficiency is a closed fact from the rules
 import { seedLeakTokens, rollNameBans, TYPE_ESSENCES } from './concept-seeds.mjs';
 import spec from '@/data/archetype-chassis-spec.json';
@@ -1405,6 +1406,37 @@ const CONVERSION_RULES = {
 // cannot drift (the private-copy lesson). True when there was nothing to keep:
 // the source names no condition that must be bounded, or the source left it bare
 // too.
+// NOTHING MAY BE LOST IN TRANSLATION, NOT ONLY A DURATION (roadmap R3.2,
+// 2026-11-01). `boundKeptInConversion` catches one dropped clause: an unbounded
+// condition. Krennik's Fear Aura lost a DIFFERENT one — "the target is immune to
+// this creature's aura for 24 hours" — so a CR 4 sheet frightened everything
+// within 20 feet every round, forever. The duration was intact, so the existing
+// gate passed it.
+//
+// WHAT THIS MAY COUNT IS NARROW ON PURPOSE. The first cut counted "save
+// branches", and 18 of 122 form rows on the saved runs tripped it — every one a
+// FALSE POSITIVE, because 2014 compresses both branches into one sentence
+// ("taking 11 (2d10) piercing damage on a failed save, or half as much on a
+// successful one") and writes a condition-only save as a negative ("must succeed
+// on a DC 14 Constitution saving throw or be blinded"). A guard with that false
+// positive rate is worse than the bug: it keeps the 2024 text, so a 2014 sheet
+// ships 2024 idiom. So this counts only what is unambiguous in BOTH idioms —
+// the 24-hour immunity clause (Krennik's own, read by the lint's existing
+// `IMMUNITY_ON_SUCCESS`, not a private copy), the damage expressions, and the
+// escape DCs.
+const countIn = (t) => {
+  const s = String(t ?? '');
+  return {
+    immunity: IMMUNITY_ON_SUCCESS.test(s) ? 1 : 0,
+    dice: [...s.matchAll(/\d+ \(\d+d\d+(?: ?[+-] ?\d+)?\)/g)].length,
+    escapes: [...s.matchAll(/escape DC \d+/gi)].length,
+  };
+};
+export function structureKeptInConversion(srcText, outText) {
+  const a = countIn(srcText); const b = countIn(outText);
+  return b.immunity >= a.immunity && b.dice >= a.dice && b.escapes >= a.escapes;
+}
+
 export function boundKeptInConversion(srcText, outText) {
   const src = String(srcText ?? '');
   if (!MUST_BE_BOUNDED.some((c) => new RegExp(`\\b${c}\\b`, 'i').test(src))) return true;
@@ -1650,6 +1682,8 @@ export function to2014Grammar(text) {
   t = t.replace(/(\d+)-foot (Cone|Sphere|Line|Cube|Cylinder)\b/g, (m0, n, shape) => `${n}-foot ${shape.toLowerCase()}`).replace(/(\d+)-foot Emanation/g, '$1-foot radius');
   t = t.replace(LOWER_TYPES, (m0, ty) => `${ty.toLowerCase()} damage`);
   t = t.replace(/\bHit Points\b/g, 'hit points').replace(/\bTemporary Hit Points\b/g, 'temporary hit points');
+  // the edition's own vocabulary, from the table the checker's gate reads (R3.2)
+  for (const [from, to] of EDITION_TERMS_2024_TO_2014) t = t.split(from).join(to);
   return t.replace(/\s{2,}/g, ' ').trim();
 }
 export async function convertEdition(monster, callLLM, { degraded = false } = {}) {
@@ -1697,9 +1731,24 @@ Return ONLY a JSON object with the SAME sections, SAME entry order, SAME entry n
   // keeps a row's English when a number goes missing. A row left in the source
   // dialect is a blemish; it still goes through `to2014Grammar`, which converts
   // the phrasing deterministically.
+  // A ROW WE WROTE FROM A FORM IS NOT TRANSLATED — IT IS RENDERED (roadmap R3.2,
+  // 2026-11-01). Its 2024 sentence is already in our own closed idiom, and
+  // `to2014Grammar` converts that idiom deterministically, clause for clause.
+  // Sending it to the model buys nothing and risks everything: the model is what
+  // dropped Krennik's "immune for 24 hours". So the call's answer is used only
+  // for a row whose prose the model actually wrote — a free-prose trait.
+  //
+  // The test is the row's own DECLARED origin, not a reading of its words: the
+  // catalog stamps `template`/`library`, the importer stamps `print`, and the
+  // kit, feature and rules rows stamp themselves.
+  const FROM_A_FORM = ['template', 'library', 'print', 'printNamed', 'kit', 'feature', 'rules'];
+  const renderedFromForm = (e) => FROM_A_FORM.some((k) => e?.[k]);
   const answerFor = (e, s, i) => {
+    if (renderedFromForm(e)) return e.text; // `to2014Grammar` runs on it below
     const out = parsed[s]?.[i]?.text;
-    return boundKeptInConversion(e.text, out) ? (out ?? e.text) : e.text;
+    if (!boundKeptInConversion(e.text, out)) return e.text;
+    if (!structureKeptInConversion(e.text, out)) return e.text; // Krennik's seam
+    return out ?? e.text;
   };
   let converted = {
     ...model,

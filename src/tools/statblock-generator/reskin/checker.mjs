@@ -28,7 +28,7 @@ import TABLE from '@/data/challengeRatings.json';
 import { PRINT_2014 } from './print-2014.mjs';
 import { resolutionOf, TARGET_CLAUSE, SAVE_OUTCOME } from './forms.mjs';
 import { NAME_CLAIMS_MECHANIC, mechanicUnkept } from './name-claims.mjs';
-import { MUST_BE_BOUNDED, CONDITION_BOUNDED, IMMUNITY_ON_SUCCESS } from '../format-2024/lint.mjs';
+import { MUST_BE_BOUNDED, CONDITION_BOUNDED, IMMUNITY_ON_SUCCESS, EDITION_TERMS_2024_TO_2014 } from '../format-2024/lint.mjs';
 import { LACKS_STOP, TEXT_GATE } from './generate.mjs';
 export const GATES = ['derivation', 'bands', 'structure', 'gates', 'headerBody', 'edition', 'donor', 'adjudicability', 'reader', 'class'];
 const crNum = (k) => (String(k).includes('/') ? Number(String(k).split('/')[0]) / Number(String(k).split('/')[1]) : Number(k));
@@ -792,7 +792,7 @@ function gateEdition(raw, m, ctx, F) {
     // the mark rides on the 2014 shape (`raw`); the 2024 model it was read into may not carry it
     if ((m.generation ?? raw.generation)?.conversion === 'failed') F('conversion-failed', 'fail', 'the 2014 conversion call failed — the sheet ships 2024 phrasing in 2014 furniture', 'failed');
     // and the vocabulary it leaked: reaction grammar, Advantage (2014 writes it lowercase), the spell-list labels, the condition idiom
-    for (const w of ['Trigger:', 'Response:', 'Advantage', 'Disadvantage', 'At Will:', '/Day Each']) if (texts.includes(w)) F('vocab-2024-in-2014', 'fail', `2024 "${w}" in a 2014 block`, w);
+    for (const w of ['Trigger:', 'Response:', ...EDITION_TERMS_2024_TO_2014.map(([from]) => from)]) if (texts.includes(w)) F('vocab-2024-in-2014', 'fail', `2024 "${w}" in a 2014 block`, w);
     if (/\bhas the [A-Z]\w+ condition\b/.test(texts)) F('vocab-2024-in-2014', 'fail', '2024 "has the X condition" in a 2014 block (2014: "is stunned", "is prone")', 'condition');
     for (const w of ['Attack Roll:', 'Saving Throw*:', '*Failure:*', 'Failure:', 'Bloodied', 'Emanation', 'Hit or Miss', 'Success: Half']) if (texts.includes(w)) F('vocab-2024-in-2014', 'fail', `2024 "wording in a 2014 block: "${w}"`, w);
     // a 2024 row with a half-damage success whose 2014 row lost the clause (the dragon's Noxious Miasma, check-in 2026-10-11)

@@ -197,6 +197,23 @@ const BLOODIED_SPLIT_SRC = String.raw`[,—–]\s*or ${_RATE}(?: plus ${_RATE})*
 export const stripBloodiedSplit = (text) => String(text ?? '').replace(new RegExp(BLOODIED_SPLIT_SRC, 'g'), '');
 export const hasBloodiedSplit = (text) => new RegExp(BLOODIED_SPLIT_SRC).test(String(text ?? ''));
 
+// THE EDITION'S OWN VOCABULARY, IN ONE TABLE (roadmap R3.2, 2026-11-01). These
+// are closed facts about how the two printings word the same rule — not a reading
+// of anyone's meaning. The checker's `vocab-2024-in-2014` gate had the list
+// inline and the 2014 renderer did not have it at all, so the renderer could ship
+// a term the gate then failed. One table, both readers: they cannot disagree.
+//
+// Why this is needed now: R3.2 stops sending a row we wrote from a form to the
+// conversion call (the call is what dropped Krennik's "immune for 24 hours"), and
+// the model had been silently fixing these four terms on the way past. Making the
+// printing deterministic made that invisible repair visible.
+export const EDITION_TERMS_2024_TO_2014 = [
+  ['Advantage', 'advantage'],
+  ['Disadvantage', 'disadvantage'],
+  ['At Will:', 'At will:'],
+  ['/Day Each', '/day each'],
+];
+
 export const IMMUNITY_ON_SUCCESS = /immune to (?:this|the) [^.]{0,60}?for (?:the next )?24 hours/i;
 
 export const EMPTY_SAVE_OUTCOME = /\b(Failure|Success):\s*(?:$|(?:Failure|Success):)/;

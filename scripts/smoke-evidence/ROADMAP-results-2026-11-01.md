@@ -843,3 +843,97 @@ surprises:   1. The shed's 49% blind rate. It has been reported as a working pas
                 lines on that sheet), and the previous twelve-1030 composed a
                 Multiattack where this one did not. Same 1-FAIL-of-12 rate as the
                 run before it, different sheet and gate.
+
+### R3.2 — a row we wrote from a form is rendered for 2014, not translated
+predicted:   (written before any code) the plan's premise is "stat, reach, dice, type,
+             rider, gate are all fields already" — I expected to confirm that and render
+             the 2014 attack frame from those fields.
+measured:    **THE PREMISE IS FALSE.** Of the 27 attack rows on sweep-2026-11-01T20-03-32,
+             every one carries `name`, `text`, `attacksPerRound` and (23) `weapon` — and
+             NOT ONE carries bonus, reach, range, dice or damage type as a field. Those
+             exist only inside the sentence. So R3.2 as written cannot be done without
+             first creating the fields at every site that writes an attack sentence.
+             What the 2014 printing actually is: an LLM re-write PER ROW, then
+             `to2014Grammar` as a deterministic cleanup, with the 2024 text kept only when
+             `boundKeptInConversion` catches a lost duration. That call is what dropped
+             Krennik's Fear Aura immunity. So the change made is the one the plan's own
+             sentence asks for — "only a free-prose trait needs a call":
+               - a row declaring a catalog origin (`template`/`library`/`print`/
+                 `printNamed`/`kit`/`feature`/`rules`) is NOT sent to the call; its 2024
+                 sentence is already our own closed idiom and `to2014Grammar` converts it
+                 clause for clause. A declared-field test, no reading of words.
+               - `structureKeptInConversion`: a conversion may not reduce the 24-hour
+                 immunity clause, the damage expressions or the escape DCs. Krennik's own
+                 clause is read by the lint's existing `IMMUNITY_ON_SUCCESS`, not a copy.
+             Replay over 24 saved printing pairs / 122 form rows: the deterministic render
+             LOSES structure against our own 2024 text on **0 rows**. It differs from the
+             saved 2014 on 2: Ossuar's Paralyzing Touch (see surprises) and the Stone Club
+             duplicate-name artifact already accepted on the RC.
+             Batch: 6/6 ok, **0 FAIL of 6**, 0 printing-structure losses, and 0 occurrences
+             of 2024 vocabulary anywhere in the six 2014 blocks. The Harpy's Luring Song
+             carries "immune to this harpy's song for the next 24 hours" in BOTH printings
+             — Krennik's exact clause, on the floor case chosen for it.
+runs:        smoke-out/printing6-2026-11-02T00-53-46 (after) ·
+             smoke-out/printing6-2026-11-02T00-48-54 (before the dialect table, 3 FAIL)
+suite:       172 suites / 4580 tests · build clean
+commit:      (uncommitted at hand-off)
+not done:    attack rows still do not DECLARE bonus/reach/dice/type. Until they do, the
+             2014 printing is "parse our own closed idiom once, render the other idiom" at
+             one seam rather than a pure function of fields. The fields belong at the sites
+             that write the sentence (donor scale, authored repair, print-canon clone and
+             rename) — that is the real R3.2 and it is not done.
+surprises:   1. I SHIPPED A REGRESSION INTO THE FIRST RUN AND THE BATCH CAUGHT IT. Making
+                form rows deterministic produced 3 FAILs of 6, two of them mine:
+                `vocab-2024-in-2014` for "Disadvantage", "At Will:" and "/Day Each". The
+                conversion CALL had been silently fixing those four terms on the way past,
+                and `to2014Grammar` never knew them. Fixed by one shared table
+                (`EDITION_TERMS_2024_TO_2014`) that the renderer applies and the checker's
+                own gate now reads — the gate had the list inline, so the renderer could
+                ship a term the gate then failed. Re-run: 0 FAIL of 6.
+             2. MY FIRST STRUCTURE GUARD WAS WORSE THAN THE BUG. Counting "save branches"
+                tripped on 18 of 122 form rows, every one a FALSE POSITIVE: 2014 compresses
+                both branches into one sentence ("taking 11 (2d10) piercing damage on a
+                failed save, or half as much on a successful one") and writes a
+                condition-only save as a negative ("must succeed on a DC 14 Constitution
+                saving throw or be blinded"). A false positive there KEEPS the 2024 text,
+                so a 2014 sheet would ship 2024 idiom. Narrowed to the three counts that
+                are unambiguous in both idioms: 18 -> 1, and that 1 is the Stone Club
+                duplicate-name artifact, not a conversion drop.
+             3. THE CONVERSION CALL HAS BEEN REPAIRING ROWS, AND THIS REMOVES THE REPAIR.
+                Ossuar's Paralyzing Touch is `… 15 (3d6 + 5) Cold damage, and the target has
+                the Paralyzed condition until the start of Ossuar's next turn` — a no-save
+                Paralyzed on every hit. The 2014 twin had a DC 19 Constitution save the
+                model ADDED. So the two printings disagreed on the rules, which is the very
+                thing printing-equivalence exists to stop; making 2014 deterministic makes
+                them agree and EXPOSES the 2024 fault. The no-save hold is the hold gate's
+                business, not the converter's, and it is now visible on both printings.
+
+### R3.3 — the trait form is judged by its declared effect, not by a word list
+predicted:   the plan asks for "a save without `{dc}` rejected by the form validator". I
+             expected to find that missing and add it.
+measured:    it was already there and STRICTER than the plan describes — `traitOk` refuses
+             any trait whose text contains "saving throw" at all. What I found instead, by
+             measuring the gate against print: `MECHANIC`, the word list deciding whether a
+             trait has a mechanical effect, **refuses 67 of print's own 324 trait rows —
+             20.7%**: Amphibious ("The dragon can breathe air and water"), Spider Climb,
+             the Bugbear Stalker's Abduct, the Aboleth's Probing Telepathy. The form
+             already asks the model that same question as a field (`passive_effect`), so
+             the list was a second, worse answer overruling a declared one — §2's class D,
+             inside the authoring path the whole program is trying to widen.
+             Changed: the declared answer decides; an explicit `none` still drops the row;
+             `MECHANIC` runs only where the call answered nothing (the house rule's
+             fallback-on-failure direction). The three soundness tests stay.
+             Live: the aboleth-spawn shipped BOTH Amphibious and Spider Climb.
+             Also: the refusal REASON was computed separately from the test and had
+             drifted — every refusal that was not a heal or an escalation reported "no
+             mechanic in the effect", so a trait refused for carrying a saving throw lied
+             about why. One definition now: the reason IS the test.
+runs:        smoke-out/printing6-2026-11-02T00-53-46 (sheet 04)
+suite:       172 suites / 4580 tests (10 new in trait-form-declared.spec.js) · build clean
+commit:      (uncommitted at hand-off)
+not done:    a trait may still state a BARE damage number instead of `{dmg}` and be kept,
+             so the engine cannot rescale it. Print writes literal numbers in traits
+             ("Regeneration 15"), so print does not settle this one and I did not guess.
+surprises:   the plan's R3.3 was aimed at a gate that already existed, while the real fault
+             in the same function was a word list refusing a fifth of print's traits. Found
+             by probing the function with print's own rows rather than by reading it.

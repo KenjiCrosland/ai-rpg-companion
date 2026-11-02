@@ -114,7 +114,40 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // without these verbs. The audit cannot repair an authored row (rewrites touch
   // `entry.model` only), so refusing here is the only gate it has.
   const escalationOk = (t) => { const tx = `${t.trigger ?? ''} ${t.effect}`; if (!/\b(?:increases?|grows?|stacks?|doubles?|escalates?|compounds?)\b[^.]*\b(?:each|every) time\b|\b(?:each|every) time\b[^.]*\b(?:increases?|grows?|stacks?|doubles?)\b/i.test(tx)) return true; return /\{dmg\}/.test(tx) && /\b(?:to a maximum of|up to|at most|maximum)\b/i.test(tx); };
-  const traitOk = (t) => { const tx = `${t.trigger ?? ''} ${t.effect}`; return MECHANIC.test(tx) && healOk(t) && escalationOk(t) && !/saving throw/i.test(tx) && !/\{dc\}\s+(?:feet|ft)\b|within \{dc\}/i.test(tx); };
+  // THE DECLARED ANSWER DECIDES, AND THE WORD LIST IS THE FALLBACK (roadmap R3.3,
+  // 2026-11-01; measured against print). `MECHANIC` was the gate on whether a
+  // trait has a mechanical effect at all — and it refuses **67 of print's own 324
+  // trait rows, 21%**: Amphibious ("The dragon can breathe air and water"),
+  // Spider Climb, the Bugbear Stalker's Abduct, the Aboleth's Probing Telepathy.
+  // Not one of those carries a word on the list, and every one of them changes
+  // what the creature can do.
+  //
+  // The form already asks the model that exact question — `passive_effect`, one of
+  // ability/bonus/protection/threat/limitation/none — so the word list was a
+  // second, worse answer overruling a declared one (§2's class D). An explicit
+  // `none` still drops the row: that is the call saying "this only describes the
+  // creature", and we act on it. `MECHANIC` now runs ONLY where the call answered
+  // nothing, which is the direction the house rule sets for a failed call.
+  //
+  // The other three tests stay, because each is a specific SOUNDNESS rule rather
+  // than a reading of meaning: a trait is not a save (a prose save belongs in the
+  // save form, which is fields-in and rendered by the engine), `{dc}` stands only
+  // where a DC stands, a heal names its amount and limit, an escalation names its
+  // ceiling.
+  const traitIsSave = (t) => /saving throw/i.test(`${t.trigger ?? ''} ${t.effect}`);
+  const dcMisused = (t) => /\{dc\}\s+(?:feet|ft)\b|within \{dc\}/i.test(`${t.trigger ?? ''} ${t.effect}`);
+  // ONE DEFINITION FOR THE VERDICT AND ITS REASON (2026-11-01). The reason was
+  // computed separately from the test and had drifted: every refusal that was not
+  // a heal or an escalation reported "no mechanic in the effect", so a trait
+  // refused for carrying a saving throw lied about why. A decline that lies is
+  // worse than one that is silent — it sends the next reader to the wrong gate.
+  const traitWhy = (t) => (traitIsSave(t) ? 'a trait is not a save — the save form takes stat, target and effect as fields and the engine renders the sentence'
+    : dcMisused(t) ? '{dc} is written where a distance belongs, not where a DC belongs'
+      : !healOk(t) ? 'heal names no amount or no limit'
+        : !escalationOk(t) ? 'escalation names no amount or no ceiling'
+          : !t.passive_effect && !MECHANIC.test(`${t.trigger ?? ''} ${t.effect}`) ? 'the call named no passive effect and the sentence states no rule'
+            : null);
+  const traitOk = (t) => traitWhy(t) === null;
   const refusedTraits = traitsAll.filter((t) => !traitOk(t));
   const traits = traitsAll.filter(traitOk).slice(0, traitSlots);
   const reactions = (Array.isArray(p.reactions) ? p.reactions : []).map((r) => ({ clause: str(r?.clause, 120), name: str(r?.name, 40), imposes: imposesFromRelation(r?.imposes, r?.condition_relation), condition_relation: CONDITION_RELATIONS.includes(r?.condition_relation) ? r.condition_relation : null, trigger: clean(r?.trigger), response: clean(r?.response) })).filter((r) => r.name && r.trigger && r.response).slice(0, 1);
@@ -127,7 +160,7 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // `unplaced`, so a sheet that lost its ramp to escalationOk and a sheet whose
   // call never wrote one looked identical from outside. The reason rides out
   // for the caller to trace; nothing about the refusal itself changes.
-  const refused = refusedTraits.map((t) => ({ name: t.name, why: !escalationOk(t) ? 'escalation names no amount or no ceiling' : !healOk(t) ? 'heal names no amount or no limit' : 'no mechanic in the effect' }));
+  const refused = refusedTraits.map((t) => ({ name: t.name, why: traitWhy(t) })); // one definition: the reason IS the test
   // the rider slots: a rider is an attack row's condition; past the slot count, later riders fold to flavor
   let riders = 0; for (const a of attacksKept) if (a.rider) { riders += 1; if (riders > riderSlots) { a.flavor = [a.flavor, `(${a.rider})`].filter(Boolean).join(' '); a.rider = null; } }
   return { attacks: attacksKept, saves: saves.slice(0, 1), refused, traits, reactions, crossRef: crossRef && crossRef.payoffRow !== crossRef.riderRow ? crossRef : null, answered, unplaced }; // a payoff on its own rider row is pointless (the bog hound's bite, check-in 2026-10-11)
