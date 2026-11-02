@@ -1901,6 +1901,67 @@ export function imposedByFrame(id, band) {
   return d[band] ?? null;
 }
 
+// THE RIDER CLAUSE IS A SEGMENT OF THE FRAME, NOT A SENTENCE TO CUT BACK OUT
+// (roadmap R3, 2026-11-01: "the engine edits fields, never sentences; text is
+// rendered from fields at the end").
+//
+// Our own frames write a minor-condition rider in ONE closed shape — ", and the
+// target has the <condition> condition<how long>." — 67 of them across shapes
+// and donors. Four sites then cut it back out of the FINISHED sentence with
+// `[^.]*` patterns, and each one was a different near-miss of the same string:
+// the payoff-vestigial strip and the fear-unearned strip matched only "the
+// target" (never "it"), and print-canon's matched only the bare condition form,
+// which is how the Dire Wolf shipped a rest-long contagion on print's own Bite —
+// a welded SAVE block is a different shape and survived the cut.
+//
+// So the clause is split off the frame ONCE, before any fill, and the frame
+// carries a `{minor_clause}` token in its place. Keeping the rider means filling
+// that token; dropping it means filling it with nothing. No reader cuts prose.
+// This is a boundary read of our OWN catalog at render time, the same warrant as
+// `frame_save` and `frame_area` — never a read of anyone's meaning.
+//
+// FOUR COPIES, NOT ONE (found while converting the first, 2026-11-01). The same
+// cut lives at the authored-row repair, the print-canon clone, the print-canon
+// rename and the one-fact-one-home shed — written four times, each with its own
+// near-miss ("the target" only at two of them, a `cond` filter at the fourth).
+// One definition, every reader: `only` restricts the split to a named condition,
+// which is what the shed needs and what the other three must not have.
+const MINOR_CLAUSE_SHAPE = /,? and (?:the target|it) has the (\{condition_minor\}|[A-Z][a-z]+) condition[^.]*(?=\.|$)/;
+export const splitMinorClause = (frame, { only = null } = {}) => {
+  const text = String(frame ?? '');
+  const m = MINOR_CLAUSE_SHAPE.exec(text);
+  const miss = { body: text, clause: null, condition: null, hasToken: false };
+  if (!m) return miss;
+  if (only && String(m[1]).toLowerCase() !== String(only).toLowerCase()) return miss;
+  // A GRAPPLE PAIR IS ONE FACT, NOT A RIDER (measured against print, 2026-11-01).
+  // Print writes 52 rows in this shape and 10 of them are the SECOND half of a
+  // grapple: "The target has the Grappled condition (escape DC 16), and it has
+  // the Restrained condition until the grapple ends" — the Behir, Chain Devil,
+  // Couatl, Kraken, Marilith, Purple Worm, Remorhaz, Roc, Roper, Salamander. The
+  // trailing clause is bound to the hold its own sentence just imposed; cut it
+  // and the grapple does nothing. Two of the four patterns this replaces cut it
+  // (the Roper's Poisoned half and the Purple Worm's Restrained half), so this
+  // is a fault they shared, not a new restriction. The test is positional and
+  // closed: does the same sentence already impose a condition before this clause?
+  //
+  // `only` BYPASSES IT, and that is the whole distinction: the guard stops a
+  // BLIND cut (print canon and the authored repair take whatever rider they
+  // find), while a caller passing `only` has already decided that this named
+  // condition has too many homes on the sheet and is shedding it on purpose.
+  // Keeping the guard there regressed the Roper: step 1 refused the pair, and
+  // the shed's second pattern — a whole-sentence cut this site has not reached
+  // yet — then took the Poisoned half and left a dangling "and". Caught by
+  // replaying print's own row, not by the batch.
+  const sentence = text.slice(Math.max(text.lastIndexOf('.', m.index) + 1, 0), m.index);
+  if (!only && /has the [A-Za-z{}_]+ condition/.test(sentence)) return miss;
+  return {
+    body: `${text.slice(0, m.index)}{minor_clause}${text.slice(m.index + m[0].length)}`,
+    clause: m[0],
+    condition: m[1],
+    hasToken: m[1] === '{condition_minor}',
+  };
+};
+
 export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   let saveOverride = null; // why the engine overrode the model's save_stat, for the trace
   let pickedCondition = null; // the condition this render imposes, chosen from the closed list below
@@ -2097,12 +2158,23 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     text = text.replace(/ damage\. \*Success:\* Half damage\.$/, ' damage, and the target has the Prone condition. *Success:* Half damage only.');
     if (text !== was) pickedCondition = 'Prone'; // this line WROTE the rider, so this line records it
   }
+  // the clause comes off the frame here — after `stomping`, which WRITES one, and
+  // after `obscuring`, which retypes the frame's own Poisoned rider
+  const minor = splitMinorClause(text);
+  let minorKeep = !!minor.clause;
+  text = minor.body;
   // THE SAVE FOLLOWS THE CONDITION on a condition aura (critic fresh four: Stench
   // is Con on the toad and became Wis on the kilnblight — the stat drifted to the
   // caster's spell stat). Print: Poisoned/Deafened = Constitution, Frightened =
   // Wisdom, Prone = Strength. Engine-owned; the model's proposal is overruled.
   const modelSave = SAVE_STATS.includes(String(fills.save_stat)) ? String(fills.save_stat) : null; // the MODEL's pick, read before the engine's condition-save block below writes over it
-  if (text.includes('{save_stat}') && text.includes('{condition_minor}')) {
+  // the token may be the row's WHOLE point ("*Failure:* The target has the
+  // {condition_minor} condition") rather than a rider clause — noxious-aura and
+  // the gazes. Those were never strippable (the old `,? and the target has…`
+  // pattern could not match them either), but this block still decides their
+  // condition and their save, so it reads the token wherever it sits.
+  const hasMinorToken = minor.hasToken || text.includes('{condition_minor}');
+  if (text.includes('{save_stat}') && hasMinorToken) {
     const proposedC = String(fills.condition_minor ?? '').trim();
     // A PAYOFF NEVER IMPOSES WHAT IT REQUIRES, AND THE CLAUSE IS STRIPPED RATHER
     // THAN SWAPPED (owner's GM read, 2026-10-27: "strip the vestigial Prone
@@ -2122,7 +2194,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
       // the clause is this engine's own frame text, removed by its own token
       // the whole clause, duration and all: these frames write it literally
       // ("until the end of its next turn"), so the removal must reach the stop
-      text = text.replace(/,? and the target has the \{condition_minor\} condition[^.]*/, '');
+      minorKeep = false;
       vestigialStripped = required;
     } else if (framesDamage && !conditionEarnedByDamage(condPick, dtype)) {
       // FEAR DOES NOT COME FROM A BLOW. See FEAR_FROM: print pairs Frightened
@@ -2139,7 +2211,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
       // Stripping is also what print does: a Fire row imposes nothing in 52 of
       // its 61 rows. The row keeps its damage and its save and says only what it
       // does.
-      text = text.replace(/,? and the target has the \{condition_minor\} condition[^.]*/, '');
+      minorKeep = false;
       vestigialStripped = condPick;
     }
     // THE PICK IS KEPT (2026-10-20). This block already chooses the condition
@@ -2186,7 +2258,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     // 59 fire AND a one-turn Frightened) the damage is the row and the condition
     // the rider, so the damage rule wins; the first cut re-derived Molten Weld to
     // Wisdom "because it imposes Frightened".
-    const imposed = pickedCondition ?? imposedConditions({ text: eff })[0] ?? null;
+    const imposed = pickedCondition ?? imposedConditions({ text: eff.split('{minor_clause}').join(minorKeep ? minor.clause : '') })[0] ?? null; // the rider is a field now, so the save read is handed the sentence that WILL print
     const want = saveStatsFor({ imposes: imposed, damageDominant });
     const contradicts = picked && want.length > 0 && !want.includes(picked);
     const fallback = want[0] ?? null;
@@ -2194,6 +2266,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     else if (fallback) fills = { ...fills, save_stat: fallback };
     if (picked && contradicts) saveOverride = `"${picked}" -> ${fallback}: ${damageDominant && !SAVE_FOR_CONDITION[String(imposed ?? '')] ? 'a damage-dominant row saves by Dexterity or Constitution in print, never Wisdom' : damageDominant ? `the damage is the row and ${imposed} the rider, so print saves by ${want.join(' or ')}` : `a ${imposed} row saves by ${want.join(' or ')} in print`}`;
   }
+  text = text.split('{minor_clause}').join(minorKeep ? minor.clause : ''); // the rider rides, or it does not — the VOCAB loop below fills its {condition_minor}
   for (const [k, list] of Object.entries(VOCAB)) {
     if (!text.includes(`{${k}}`)) continue;
     const proposed = String(fills[k] ?? '').trim();
@@ -2250,7 +2323,12 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // 2 that take a {target} slot, which is why this field could never have covered
   // more than 2 of the 11 area rows on a forty
   if (chosenArea == null && t.frame_area?.[band]) chosenArea = t.frame_area[band];
-  return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(augmented ? { augmented } : {}), ...(chosenArea != null ? { area: chosenArea } : {}), ...(boundBy ? { duration: boundBy } : {}), ...(dtype ? { damageType: dtype } : {}), ...(pickedCondition ? { imposes: pickedCondition } : {}), ...(consumedPick ? { consumes: consumedPick } : {}), ...(saveOverride ? { saveOverride } : {}) };
+  // THE ROW CARRIES THE CLAUSE IT RENDERED, so a later pass that must drop the
+  // rider (print's own row carries print's rider and no other; fear unearned by
+  // the damage) removes a segment THIS writer declared instead of pattern-matching
+  // the finished sentence. Read back off the final text so every fill is in it.
+  const minorClauseText = minorKeep ? splitMinorClause(text).clause : null;
+  return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(minorClauseText ? { minorClause: minorClauseText } : {}), ...(augmented ? { augmented } : {}), ...(chosenArea != null ? { area: chosenArea } : {}), ...(boundBy ? { duration: boundBy } : {}), ...(dtype ? { damageType: dtype } : {}), ...(pickedCondition ? { imposes: pickedCondition } : {}), ...(consumedPick ? { consumes: consumedPick } : {}), ...(saveOverride ? { saveOverride } : {}) };
 }
 
 // SEAT DEFAULTS (critic run four): some seats OWE a trait by print — the 2024

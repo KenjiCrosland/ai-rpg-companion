@@ -7211,5 +7211,75 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "8895e2678ba1": {
+  "concept": "Roper",
+  "clauses": [
+   {
+    "id": "cl_1b4dr4",
+    "text": "Roper",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "6995350742f6": {
+  "concept": "a dire wolf with a frost-rimed hide",
+  "clauses": [
+   {
+    "id": "cl_1op65hm",
+    "text": "a dire wolf with a frost-rimed hide",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "1919d996b383": {
+  "concept": "a bog hound that drags what it bites into the water",
+  "clauses": [
+   {
+    "id": "cl_jdjwdb",
+    "text": "a bog hound",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_qf7cyv",
+    "text": "drags what it bites into the water",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "bites",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "drags"
+   }
+  ]
+ },
+ "3f47147698df": {
+  "concept": "a glacier revenant that pins a victim in ice and then shatters it",
+  "clauses": [
+   {
+    "id": "cl_efvqiz",
+    "text": "a glacier revenant",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_17rvzpj",
+    "text": "pins a victim in ice",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "pins",
+    "askShape": "condition",
+    "askMechanic": "snare",
+    "askMechanicWhy": "pins a victim in ice"
+   },
+   {
+    "id": "cl_38r2hd",
+    "text": "shatters it",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
  }
 }

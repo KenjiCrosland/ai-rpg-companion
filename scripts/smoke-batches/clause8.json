@@ -1,0 +1,19 @@
+[
+  { "name": "Purple Worm", "description": "", "cr": "auto", "rules": "2024", "mode": "exact",
+    "canary": "FLOOR — print's grapple PAIR. 'it has the Grappled condition (escape DC 19), and it has the Restrained condition until the grapple ends' must ship WHOLE. Two of the four patterns R3 replaced cut the second half." },
+  { "name": "Roper", "description": "", "cr": "auto", "rules": "2024", "mode": "exact",
+    "canary": "FLOOR — the same pair in the 'and THE TARGET has the Poisoned condition until the grapple ends' form, which the old print-canon pattern DID match and did cut." },
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "mode": "exact",
+    "canary": "FLOOR — print-exact, no condition clause anywhere; must be byte-identical to the regression floor." },
+
+  { "name": "", "description": "a dire wolf with a frost-rimed hide", "cr": "3", "rules": "2024",
+    "canary": "FEATURE — print canon: the Dire Wolf's Bite is print's own row and carries print's Prone rider and no other. A chassis condition clause must leave. (The rest-long contagion that shipped here is a WELD fault, R3's next site, not this one.)" },
+  { "name": "", "description": "a bog hound that drags what it bites into the water", "cr": "4", "rules": "2024",
+    "canary": "FEATURE — a grapple the ENGINE writes, not print. Its hold must survive, and only a vestigial rider may leave." },
+  { "name": "", "description": "a brass tyrant whose furnace breath terrifies and whose hammer finds the terrified", "cr": "17", "rules": "2024",
+    "canary": "FEATURE — fear unearned by the damage: the clause leaves the 72-Fire breath, and the sheet is still owed the fear on a damageless row. This is the site converted from a cut to a field." },
+  { "name": "", "description": "a mind flayer whose psychic scream unmakes the will", "cr": "11", "rules": "2024",
+    "canary": "FEATURE — the other arm: Psychic IS one of print's two licensed pairings, so the condition must SURVIVE. Proves the field drop is not a blanket ban." },
+  { "name": "", "description": "a glacier revenant that pins a victim in ice and then shatters it", "cr": "10", "rules": "2024",
+    "canary": "FEATURE — a payoff that CONSUMES a condition. Its vestigial rider (imposing what it requires) must not print, and nothing may claim it did." }
+]

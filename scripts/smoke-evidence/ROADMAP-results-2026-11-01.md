@@ -695,3 +695,69 @@ surprises:   the magnitude. 91% was the earlier figure for seat MISSES; this is 
              all attempted seats, which is a different and larger claim: the common case
              is not that the engine fails to seat a row, it is that it seats one the model
              explicitly refused.
+
+### R3 site 1 — the minor-condition rider becomes a declared segment
+predicted:   row-text `.replace(` sites 190 -> 187; `[^.]*` patterns generate 36 -> 32,
+             templates 3 -> 3 (two retired, one added as the single shared definition).
+             Equivalence over every row of sweep-2026-11-01T20-03-32, old pattern chain
+             vs the new splitter: 0 divergences on the ", and the target has the X
+             condition" form; 1-6 rows SHORTER on the ", and it has the X condition"
+             form (two of the four old copies read "the target" only); 0 required
+             conditions ("one creature that has the X condition") touched by either;
+             ~700-900 rows scanned.
+measured:    sites 190 -> 187. `[^.]*` generate 36 -> 32, templates 3 -> 3, as predicted.
+             406 rows scanned (125 in 2024 `sections`, 146 in the 2014 flat keys, 135 in
+             `other_edition.sections`) — the prediction of 700-900 was ~2x high; the
+             forty's sheets average ten rows across three printings, not twenty.
+             405 of 406 agree with the old print-canon pattern. 1 divergence, and it is
+             the fix: the Purple Worm's Bite KEEPS print's "…, and it has the Restrained
+             condition until the grapple ends". 0 required conditions touched.
+             Floors: Owlbear print-exact — unchanged (Rend +7, 14 (2d8 + 5) Slashing,
+             HP 59, AC 13, print's array). Purple Worm grapple pair — unchanged, whole.
+             Feature arms on the targeted eight: brass tyrant — the fear LEFT the 71-Fire
+             breath and is paid on a damageless Fear Aura (the repair arm fires);
+             mind flayer — Deafened SURVIVES on a Psychic damage row (not a blanket ban);
+             bog hound and glacier revenant — their own grapple + Restrained pairs intact;
+             glacier revenant — no vestigial rider printed and nothing claims one did.
+runs:        smoke-out/clause8-2026-11-02T00-03-45 (8 sheets, 8/8 ok, 1 FAIL)
+             replay: scratchpad equivalence over smoke-out/sweep-2026-11-01T20-03-32
+suite:       170 suites / 4565 tests · build clean
+commit:      (uncommitted at hand-off)
+not done:    - the PRECONDITION half of the print-canon strip ("If the target … has the X
+               condition") is still a pattern; it is a payoff's `consumes`, a field the row
+               already declares. Marked TODO at the site.
+             - the one-fact-one-home shed's SECOND pattern still cuts a whole SENTENCE
+               ("(?:The target|It) has the X condition[^.]*\."). That is the §8 violation
+               with teeth — see surprises.
+             - the Dire Wolf's welded contagion on print's Bite is NOT fixed by this site
+               and was not expected to be: a welded save block is a weld fault (next site).
+surprises:   1. FOUR COPIES, NOT ONE. The plan named one print-canon strip; the same cut
+                lives at the authored-row repair, the print-canon clone, the print-canon
+                rename and the one-fact-one-home shed — each with its own near-miss
+                ("the target" only at two of them, a `cond` filter at the fourth). All
+                four read one definition now; the shed's difference is a parameter.
+             2. PRINT OVERRULED THE UNIFICATION. Of print's 52 rows carrying the rider
+                shape, 10 are the SECOND HALF OF A GRAPPLE — "The target has the Grappled
+                condition (escape DC 16), and it has the Restrained condition until the
+                grapple ends" (Behir, Chain Devil, Couatl, Kraken, Marilith, Purple Worm,
+                Remorhaz, Roc, Roper, Salamander). Cutting that clause kills the grapple.
+                Two of the four old patterns were ALREADY cutting it (the Roper's Poisoned
+                half, the Purple Worm's Restrained half) — a pre-existing fault, not a new
+                restriction. The splitter refuses a clause bound to a hold its own sentence
+                imposed, unless the caller NAMES the condition (`only`), which is the shed
+                deciding deliberately rather than cutting blind.
+             3. I INTRODUCED A REGRESSION AND THE REPLAY CAUGHT IT. With the pair guard on
+                at the shed, step 1 refused the pair and the shed's untouched second
+                pattern then took the Poisoned half and left a dangling "and". Found by
+                replaying print's own Roper row, not by the batch. Fixed by the `only`
+                bypass; both shed paths now byte-match the old output.
+             4. THE ROPER SHIPS BROKEN, AND IT IS NOT THIS SITE. On the batch its Tentacle
+                lost print's WHOLE grapple sentence, so Reel pulls "each creature Grappled
+                by it" with nothing that grapples (R1's `engulf-needs-a-grapple` class on a
+                print-exact sheet). Proved pre-existing: for cond=Grappled the old and new
+                step 1 are identical no-ops and the shed's second pattern removes the
+                sentence. This is the strongest argument for the next site.
+             5. The batch's 1 FAIL is `single-target-ceiling` — the brass tyrant's
+                Merciless Strike at 71 to one target at CR 17 against print's 51. Same
+                payoff-stack class as the RC's accepted Spitting Maw FAIL; no damage path
+                was touched here.

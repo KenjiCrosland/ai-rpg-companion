@@ -11,7 +11,7 @@ import { pickDonor, scaleDonor, stampAttacksPerRound } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage} from './templates.mjs';
+import { bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock, EMPTY_SAVE_OUTCOME } from '../format-2024/lint.mjs';
@@ -1553,12 +1553,12 @@ const unimposeOn = (row) => { if (row) delete row.imposes; return row; };
 // on guessing from prose. Fills only what the site has not already decided:
 // `imposes` at the library site is chosen there, because a minor condition from
 // the fill overrules the template's own.
-const DECLARED_BY_WRITER = ['imposes', 'requiresCondition', 'duration'];
+const DECLARED_BY_WRITER = ['imposes', 'requiresCondition', 'duration', 'minorClause']; // `minorClause` is the rider segment the writer printed, so a later drop removes what it declared instead of pattern-matching prose (roadmap R3) — and it is carried HERE because four fields before it were declared and never carried
 // `area` is a RECORD ({shape, size}), so it cannot ride the String() loop above —
 // the same reason `augmented` is carried by hand below. It was declared by the
 // render and dropped here, which is why 0 of 11 area rows on the last forty
 // carried it: the `gate` disease, third sighting (declared, then not carried).
-const carryDeclared = (row, rendered) => {
+export const carryDeclared = (row, rendered) => {
   if (!row || !rendered) return row;
   for (const k of DECLARED_BY_WRITER) if (rendered[k] && !row[k]) row[k] = String(rendered[k]);
   // `augmented` is a RECORD ({kind, fill}), so it cannot ride the loop above —
@@ -3338,7 +3338,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       } else {
         if (a.part) { row.part = true; if (a.weapon) row.weapon = a.weapon; }
         if (a.mode === 'both' && a.thrownRange && !/Melee or Ranged/.test(row.text)) row.text = row.text.replace(/\*Melee Attack Roll:\*? (\+\d+(?: \([^)]*\))?), reach (\d+) ft\./, `*Melee or Ranged Attack Roll:* $1, reach $2 ft. or range ${a.thrownRange} ft.`); // print's hybrid grammar for a thrown weapon
-        row.text = (a.type ? row.text.replace(/(\d+ \(\d+d\d+(?: [+-] \d+)?\)) ([A-Z][a-z]+) damage/, `$1 ${a.type} damage`) : row.text).replace(/,? and the target has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '.').replace(/\s*If the target [^.]*has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '').replace(/\s*While (?:Grappled|Restrained)[^.]*\.?/, '').replace(/\.\.$/, '.');
+        row.text = (a.type ? row.text.replace(/(\d+ \(\d+d\d+(?: [+-] \d+)?\)) ([A-Z][a-z]+) damage/, `$1 ${a.type} damage`) : row.text).replace(/\s*If the target [^.]*has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '').replace(/\s*While (?:Grappled|Restrained)[^.]*\.?/, '').replace(/\.\.$/, '.');
+        { const mc = splitMinorClause(row.text); if (mc.clause) row.text = mc.body.split('{minor_clause}').join(''); } // the rider is a declared segment (R3), not a cut at the next full stop
         let folded = 0; const strip = (re) => { row.text = row.text.replace(re, (m0, avg) => { folded += Number(avg); return ''; }); };
         // FIRE AS A RIDER ON A GM-NAMED WEAPON (owner's ruling, 2026-11-01). A part row
         // folds its energy component into the physical main and deletes the token, so the
@@ -4051,7 +4052,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // have turned 57 rows Prone and manufactured the sameness this reduces.
           // The row keeps its damage, its area and its save.
           if (/\d+ \(\d+d\d+/.test(e.text) && !conditionEarnedByDamage(pick2, wanted)) {
-            e.text = e.text.replace(/,? and (?:the target|it) has the \{condition_minor\} condition[^.]*?\./, '.');
+            // THE CLAUSE IS A FIELD (roadmap R3, 2026-11-01): the rider is split
+            // off our own frame and dropped by filling its token with nothing,
+            // rather than cut out of the finished sentence with `[^.]*`.
+            { const mc = splitMinorClause(e.text); if (mc.clause) e.text = mc.body.split('{minor_clause}').join(''); }
             trace('fear unearned by the damage:', `"${e.name}" would have imposed ${pick2} on a ${wanted} row — print pairs Frightened with Psychic or Thunder damage and with nothing else; the clause leaves and the row keeps its damage`);
             // AND THE SHEET IS STILL OWED IT. Stripping alone answered nothing:
             // the brass tyrant was typed "whose furnace breath terrifies and whose
@@ -6588,7 +6592,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               if ((pc.exact || pc.borrowOnly) && nearPrintCr(cr, pc.cr) && pr.dmg) clone.text = clone.text.replace(/\d+ \(\d+d\d+(?: [+-] \d+)?\)/, printExprWithSheetMod(pr.dmg, clone.text, scaled.pb)); // an exact body at print's CR: the added row deals print's own dice, not the chassis's (the Pit Fiend's Devilish Claw read 21 or 26 by the donor's roll — sprint run 2026-10-12)
               if (pr.rider && /^plus \d+ \(/.test(pr.rider)) clone.text = clone.text.replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\) (?:[A-Z][a-z]+) damage)/, `$1 ${pr.rider.replace(/\.$/, '')}`); // print's own split pays the name (Radiant Horn: Piercing plus Radiant; the Pit Fiend's Fiery Mace: Force plus Fire)
               // the clone is print's row: the chassis's condition clause leaves before print's rider is applied (the Lich's Paralyzing Touch knocked Prone on the caster chassis — critic's regressions brief 2026-10-04)
-              clone.text = clone.text.replace(/,? and (?:the target|it) has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '.').replace(/\s*If the target [^.]*has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '').replace(/\.\.$/, '.').replace(/\s+$/, '');
+              { const declaredC = typeof clone.minorClause === 'string' ? clone.minorClause : null;
+                if (declaredC && clone.text.includes(declaredC)) clone.text = clone.text.split(declaredC).join('');
+                else { const mc = splitMinorClause(clone.text); if (mc.clause) clone.text = mc.body.split('{minor_clause}').join(''); }
+                delete clone.minorClause; }
+              clone.text = clone.text.replace(/\s*If the target [^.]*has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '').replace(/\.\.$/, '.').replace(/\s+$/, '');
               if (pr.rider && !/^plus \d+ \(/.test(pr.rider)) clone.text = `${clone.text.trim().replace(/[.,]$/, '')}${/^(?:and|or|plus)\b/i.test(pr.rider) ? ',' : '.'} ${asInline(pr.rider)}`;
               const sec = Object.entries(monster.sections).find(([, es]) => es.includes(base))?.[0] ?? 'Actions';
               monster.sections[sec].splice(monster.sections[sec].indexOf(base) + 1, 0, clone);
@@ -6734,7 +6742,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             }
           }
           // print's row carries print's rider and no other: the chassis's condition clause leaves (the Lich's Paralyzing Touch poisoned and its Eldritch Burst grew a rider on the caster chassis — critic's regressions brief 2026-10-04)
-          e.text = e.text.replace(/,? and (?:the target|it) has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '.').replace(/\s*If the target [^.]*has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '').replace(/\.\.$/, '.').replace(/\s+$/, ''); // the chassis rider may still carry its {condition_minor} token here
+          // THE RIDER IS A DECLARED SEGMENT (roadmap R3, 2026-11-01). The row the
+          // writer rendered records the very clause it printed (`minorClause`),
+          // so this drops a segment the engine declared rather than matching a
+          // shape in prose — and the near-misses go with the pattern: the old
+          // one read only the BARE condition form, which is how a welded save
+          // block ("…*Constitution Saving Throw*… *Failure:*…") survived it and
+          // the Dire Wolf shipped a rest-long contagion on print's own Bite.
+          // A donor row carries no record, so the frame is split here instead —
+          // declared data first, a boundary read of our own text as the fallback.
+          { const declared = typeof e.minorClause === 'string' ? e.minorClause : null;
+            if (declared && e.text.includes(declared)) e.text = e.text.split(declared).join('');
+            else { const mc = splitMinorClause(e.text); if (mc.clause) e.text = mc.body.split('{minor_clause}').join(''); }
+            delete e.minorClause; }
+          e.text = e.text.replace(/\s*If the target [^.]*has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '').replace(/\.\.$/, '.').replace(/\s+$/, ''); // TODO R3 next site: the PRECONDITION half is a payoff's `consumes`, a field the row already declares
           if (pr.rider && /^plus \d+ \(/.test(pr.rider) && !/ plus \d+ \(/.test(e.text)) e.text = e.text.replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\) (?:Bludgeoning|Piercing|Slashing) damage)/, `$1 ${pr.rider.replace(/\.$/, '')}`); // a "plus N (XdY) T damage" clause is the damage line's own, no period before it (the Wight's Necrotic Sword)
           else if (pr.rider) e.text = `${e.text.trim().replace(/[.,]$/, '')}${/^(?:and|or|plus)\b/i.test(pr.rider) ? ',' : '.'} ${asInline(pr.rider)}`;
           e.print = true; // print's row, whatever its name already was: the flag is provenance, not a rename receipt (classes-eight, 2026-10-19)
@@ -8741,8 +8762,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // the Purple Worm shipped "…(escape DC 22). While Grappled this way,"
         // and the critic scored the run's second-best idea at soundness 0. The
         // lead-in belongs to the clause being removed, so it is consumed with it.
-        const next = String(e.text)
-          .replace(new RegExp(`,? and (?:the target|it) has the ${cond} condition[^.]*\\.?`, 'i'), '.')
+        // the RIDER half is the shared segment — split by its own declaration,
+        // restricted to the condition being shed (R3); the standalone-sentence
+        // half below is a different shape and keeps its pattern for now
+        const shed = splitMinorClause(String(e.text), { only: cond });
+        const next = (shed.clause ? shed.body.split('{minor_clause}').join('') : String(e.text))
           .replace(new RegExp(`\\s*(?:While [^.,]{0,40},\\s*)?(?:The target|It) has the ${cond} condition[^.]*\\.`, 'i'), '')
           .replace(/\s{2,}/g, ' ').replace(/\.\./g, '.').trim();
         // THE CONDITION WAS THE WHOLE ROW. This pass assumes a damage row whose
