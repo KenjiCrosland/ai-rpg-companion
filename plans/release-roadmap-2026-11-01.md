@@ -635,7 +635,15 @@ SIGNATURE, which on the ninja was `closest accepted` 4 rolls of 8. That is R4.
 Open, small: `attack-stat` on mounted knights (3 of 16 — a DEX chassis armed with a
 lance), not R4's.
 
-**R4. Authoring-first for the signature seat.** Invert the dispatch: the seat tries the
+**R4. Authoring-first for the signature seat.** *Decisions made 2026-11-02, after
+the step-1 replay (220 of 220 refusals are `no_fit`): (a) SURGICAL, not literal —
+author at the `closest accepted` branch in `fitSeat` (generate.mjs ~5041), the menu
+stays for a template the call affirmed (the ~30% that work); (b) SEAT SHAPE — the
+authored row returns in `fitSeat`'s seat shape (~5332) so it passes the seat's own
+`valueCheck`, never through `landAuthored` directly; (c) the form->text renderer is
+EXTRACTED from `landAuthored` into one shared function as the session's first commit,
+repair-path tests unchanged — never copied. Trigger: `declined_because: no_fit`;
+the nearest stays as the fallback only when authoring returns nothing.* Invert the dispatch: the seat tries the
 authoring forms FIRST, the template menu is the fallback. Not free prose — forms as
 today — through the same calibration passes (DC derivation, ceilings, duration bounds,
 R1's lints). This is the originality lever and the sameness fix in one: the model's
@@ -726,13 +734,20 @@ No forty for R1, R2, or any single R3 site.
 
 ## 6. For the next session, in one paragraph
 
-Items 1 (bar 1d) and 3 are landed and measured (`ROADMAP-results-2026-11-01.md`, nine
-blocks; the forty is `sweep-2026-11-01T16-53-09`). Do the three nits in §5c first — N1 is
-the only thing standing between this forty and 0 FAIL. Then item 6 (header lines in the
-critic package) and item 5 (`name_claims`), each with its instrument; then one fresh
-forty, `check-run`, `clause-rate.mjs 3`, and the critic package via `critic-files.mjs`.
-Stop there and hand the owner the package — item 2 and item 4 wait for the critic's read.
-Keep filling the results sheet per §7, `predicted` before every run.
+State at 2026-11-02: R1, R2, R3 (sites 1-2, R3.2, R3.3), N4 and forty #1 are landed and
+measured; R3b is CLOSED BY MEASUREMENT (three premises refuted — see its blocks in
+`ROADMAP-results-2026-11-01.md`); R4's step-1 replay is done. **The regression forty is
+`sweep.json`** (the §5 category table is indexed to it; `homebrew40.json` is R4's
+originality baseline at 7 surprised / 8 plain / 25 missed and is NOT the gate — a
+session already lost twenty minutes to that). The release bar is not met: FAILs 6,
+clause rate 73%, never-answered 8, decoration 14 — all one mechanism, which R4
+addresses. Build R4 per its decisions above, replay-test on the dire wolf / bog hound /
+owlbear / stone golem ideas, run a targeted twelve, stop before forty #2. Forty #2 is
+`homebrew40` re-rolled and scored against 7/8/25 with the critic's one question.
+Reviewer's checks for R4, in order: the renderer was extracted not copied (grep for a
+second form->text body); every authored row passed `valueCheck` (trace); `closest
+accepted` count on the twelve against the same sheets' prior runs; no new `.replace(`
+on row text (`scripts/row-text-replaces.mjs`, 187); R1 lints green; then the forty.
 
 ---
 
