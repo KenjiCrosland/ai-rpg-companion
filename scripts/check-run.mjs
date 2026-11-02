@@ -65,6 +65,24 @@ const out = args.includes('--out') ? args[args.indexOf('--out') + 1] : path.join
 const TEMPLATE_NAMES = new Set(SHAPES.map((t) => String(t.name ?? '').trim().toLowerCase()).filter(Boolean));
 const bareRow = (n) => String(n ?? '').replace(/ \(.*\)$/, '').trim();
 const batchNames = new Map(); const batchStock = new Map(); const batchTexts = new Map();
+// WHAT MAY NOT DIFFER between two rows that share a name — the MECHANIC, never
+// the numbers. A stock name is SUPPOSED to repeat with its own sheet's numbers
+// (the one-mechanic-one-name ruling), so dice, attack bonus, DC and area SIZE are
+// all excluded: every creature's Bite has its own. What may not differ is the kind
+// of thing the row is — does it ask a save or roll an attack, does it hit an area
+// or one creature, which conditions does it hand out. The first cut compared the
+// numbers too and flagged `bite` on 9 sheets, which is the ruling working.
+const rowShape = (t) => {
+  const s = String(t ?? '');
+  return JSON.stringify({
+    kind: /Attack Roll/i.test(s) ? 'attack' : /Saving Throw/i.test(s) ? 'save' : 'other',
+    save: /\*?(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) Saving Throw/i.exec(s)?.[1] ?? null,
+    reach: /\b(Cone|Sphere|Line|Cube|Cylinder|Emanation)\b/i.exec(s)?.[1]?.toLowerCase()
+      ?? (/\bone creature\b|\bone target\b/i.test(s) ? 'single' : null),
+    conds: [...new Set([...s.matchAll(/has the (\w+) condition/g)].map((x) => x[1]))].sort().join(',') || null,
+  });
+};
+const batchShapes = new Map();
 const batchScan = (block, file) => {
   // A ROW SAYS WHAT IT IS. Every piece of engine furniture carries a DECLARED
   // flag — `print` (imported from the corpus), `kit` (a species row such as the
@@ -85,8 +103,8 @@ const batchScan = (block, file) => {
     const key = nm.toLowerCase();
     const stock = !!(r.print || r.kit || r.feature || r.rules || r.library || r.template)
       || PRINT_ROW_NAMES.has(key) || TEMPLATE_NAMES.has(key);
-    const prev = seen.get(key) ?? { nm, stock: false, text: '' };
-    seen.set(key, { nm, stock: prev.stock || stock, text: prev.text || String(r.text ?? r.description ?? '').replace(/\s+/g, ' ').trim() });
+    const prev = seen.get(key) ?? { nm, stock: false, text: '', template: null };
+    seen.set(key, { nm, stock: prev.stock || stock, template: prev.template || r.template || r.seed || null, text: prev.text || String(r.text ?? r.description ?? '').replace(/\s+/g, ' ').trim() });
   };
   for (const sec of [block.sections ?? {}, (block.other_edition ?? {}).sections ?? {}]) {
     for (const rs of Object.values(sec)) if (Array.isArray(rs)) rs.filter((r) => r && typeof r === 'object').forEach(push);
@@ -98,6 +116,30 @@ const batchScan = (block, file) => {
     const bag = v.stock ? batchStock : batchNames;
     if (!bag.has(key)) bag.set(key, new Set());
     bag.get(key).add(file);
+    // ONE NAME, ONE MECHANIC (N4, 2026-11-02). The owner's ruling says a stock row
+    // converges on its catalog name, and the byte-identical check above watches the
+    // opposite failure — the same text twice. Between them sits the one the critic
+    // found and this report PASSED: "Sundering Shove" shipped a 30-foot cone on the
+    // Scaffold Ram and a single-target shove on the Stone Golem. Same name, two
+    // rules, is worse than the same text twice: a GM who learns one row learns the
+    // wrong thing about the other. Compared by STRUCTURE — the save stat, the DC,
+    // the dice, the target shape — not by wording, which may differ freely.
+    // ONE TEMPLATE, ONE MECHANIC — keyed on the TEMPLATE, never on the name. The
+    // ruling says a catalog row converges on its catalog name; it does not license
+    // two MECHANICS under one template. `push-prone` defines a single-target shove
+    // and shipped as "Sundering Shove" twice — a 30-foot Cone on the Scaffold Ram,
+    // "one creature within 5 feet" on the Stone Golem (critic, forty #1).
+    //
+    // Keying on the NAME instead flagged `bite` on 9 sheets and `slam` on 5, which
+    // is the ruling working as designed: an anatomy row takes its body's own
+    // mechanic (a dire wolf's Bite knocks Prone, a purple worm's grapples) and
+    // those names are not a template's promise. `template` is declared on the row,
+    // so this reads a field rather than guessing from the name.
+    if (v.template && v.text.length > 40) {
+      const tk = `${v.template} as "${v.nm}"`;
+      if (!batchShapes.has(tk)) batchShapes.set(tk, new Map());
+      batchShapes.get(tk).set(file, rowShape(v.text));
+    }
     if (!v.stock && v.text.length > 60) {
       if (!batchTexts.has(v.text)) batchTexts.set(v.text, new Set());
       batchTexts.get(v.text).add(`${file} / ${v.nm}`);
@@ -116,6 +158,15 @@ const batchReport = () => {
     '',
     `**Byte-identical row texts across sheets: ${txt.length}**` + (txt.length ? '' : ' ✓'),
     ...txt.map(([, f]) => `- ${[...f].join('  ==  ')}`),
+    '',
+    ...(() => {
+      const split = [...batchShapes.entries()]
+        .filter(([, byFile]) => byFile.size >= 2 && new Set([...byFile.values()]).size > 1)
+        .sort((a, b) => b[1].size - a[1].size);
+      return [`**One template, two mechanics across sheets: ${split.length}**` + (split.length ? '' : ' ✓'),
+        ...split.flatMap(([n, byFile]) => [`- \`${n}\` on ${byFile.size} sheets, ${new Set([...byFile.values()]).size} different rules:`,
+          ...[...byFile.entries()].map(([f, sh]) => `    - ${f}: ${sh}`)])];
+    })(),
   ];
   return lines.join('\n');
 };

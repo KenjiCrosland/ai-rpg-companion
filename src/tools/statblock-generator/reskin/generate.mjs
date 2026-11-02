@@ -11,7 +11,7 @@ import { pickDonor, scaleDonor, stampAttacksPerRound } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause} from './templates.mjs';
+import { bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock, EMPTY_SAVE_OUTCOME } from '../format-2024/lint.mjs';
@@ -2061,6 +2061,11 @@ export function labelFeatureRows(sections, trace = () => {}) {
     const canon = canonOf(e);
     if (!canon) continue;
     if (bareOf(e) === canon) continue;
+    // AND NOT WHEN THE ROW NO LONGER DOES WHAT THE TEMPLATE DOES (N4, 2026-11-02).
+    // The value ladder may widen a single-target row to a Cone — print-shaped, and
+    // it records `widened` at the site that does it. Naming such a row for its
+    // template promises the template's mechanic, which this row no longer has.
+    if (e.widened) { trace('one mechanic, one name — declined:', `${secF}/"${e.name}" keeps its own name: the value ladder widened it to an area, so it no longer does what every ${e.template ?? canon} row does`); continue; }
     const was = e.name;
     e.name = `${canon}${gateOf(e)}`;
     for (const es2 of Object.values(sections)) for (const e2 of es2) if (e2 !== e) e2.text = String(e2.text ?? '').split(bareOf({ name: was })).join(canon);
@@ -4592,7 +4597,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const gate = / \((?:Recharge [\d–-]+|\d\/Day)\)$/.exec(row.name ?? '')?.[0] ?? '';
       const taken = new Set(Object.values(sections).flat().map((e) => bare(e.name)));
       if (!taken.has(bare(row.name))) return;
-      const alt = templateName && !taken.has(bare(templateName)) ? `${templateName}${gate}` : `${String(row.name).replace(/ \(.*\)$/, '')} II${gate}`;
+      const alt = templateName && !isPlaceholderRowName(templateName) && !taken.has(bare(templateName)) ? `${templateName}${gate}` : `${String(row.name).replace(/ \(.*\)$/, '')} II${gate}`; // a composed template's name is a placeholder, never a card name (N4)
       trace('row renamed for uniqueness:', `"${row.name}" collides with a row on the sheet — "${alt}"`);
       row.name = alt;
     };
@@ -5684,7 +5689,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // THE VALUE CHECK — the row must be worth the attack it replaces
       if (hasChassisNova(sections) && / \(Recharge [\d–-]+\)$/.test(actionT.row.name ?? '') && !TEMPLATE_BY_ID.get(actionT.template ?? actionT.row?.template)?.nova) { actionT.row.name = actionT.row.name.replace(/ \(Recharge [\d–-]+\)$/, ''); actionT.row.gate = undefined; trace('one nova:', `"${actionT.row.name}" arrived gated on a sheet whose chassis already carries a Recharge nova — the gate leaves and the row prices at the ceiling (the wyrm's Shattering Ice Snare, step 7)`); }
       const vc = valueCheck(actionT.row, { scaled, sections, cr, section: actionT.section, noGate: hasChassisNova(sections), template: actionT.template ?? actionT.row?.template ?? null });
-      if (vc.steps.length) { actionT.row.text = vc.text; actionT.row.name = vc.name; if (vc.gate) actionT.row.gate = vc.gate; }
+      if (vc.steps.length) { actionT.row.text = vc.text; actionT.row.name = vc.name; if (vc.gate) actionT.row.gate = vc.gate; if (vc.widened) actionT.row.widened = true; } // the rename reads `widened` (N4)
       const vcSection = actionT.section; const vcName = actionT.row.name; // what the floor judged, so a re-slot is recognisable below
       trace('value check:', `"${actionT.row.name}" EV ${vc.ev} vs floor ${vc.floor} (${vc.replaced})${vc.steps.length ? ` — ${vc.steps.join('; ')}` : ' — worth the trade'}`);
       // THE FLOOR BLOCKS (critic run two: a dead disarm shipped past the floor
@@ -5889,8 +5894,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // "Funeral Peal"): on a collision the trait takes its template's own name
         const bareT = tt.row.name.replace(/ \(.*\)$/, '').toLowerCase();
         if (Object.values(sections).flat().some((e2) => String(e2.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === bareT)) {
-          trace('trait renamed:', `"${tt.row.name}" already names a row — the trait ships as "${tt.templateName}"`);
-          tt.row.name = tt.templateName;
+          // a composed template's name is a PLACEHOLDER (N4, 2026-11-02): the
+          // Rivenhearted Glacier's trait shipped as "Composed Row" through this
+          // very line. Fall back the way `uniqueRowName` does instead.
+          const altT = tt.templateName && !isPlaceholderRowName(tt.templateName) ? tt.templateName : `${String(tt.row.name).replace(/ \(.*\)$/, '')} II`;
+          trace('trait renamed:', `"${tt.row.name}" already names a row — the trait ships as "${altT}"${isPlaceholderRowName(tt.templateName) ? ` (its template's "${tt.templateName}" is a placeholder, not a name)` : ''}`);
+          tt.row.name = altT;
         }
         tt.row.bound = bound; tt.row.boundKeys = [...new Set([...keysOf(tt.because), ...(tt.row.boundKeys ?? []), ...userKeysFor(tt.template?.id ?? tt.row?.template)])];
         supersedeByTrait(tt); slotYield(tt.template, tt.row);

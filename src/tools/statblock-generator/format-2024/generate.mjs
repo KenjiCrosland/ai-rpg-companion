@@ -1648,6 +1648,16 @@ export function multiattack2014(text) {
       : `makes ${combo[1]} attacks, using ${list(names, 'or')}`;
   return to2014Grammar(t.replace(combo[0], rep));
 }
+// THE ONE CLOSED LOWERCASING RULE for this converter (N4, 2026-11-02). 2024 writes
+// a label and 2014 writes a clause, so a word that opened a sentence now sits mid
+// sentence: "*Failure:* Until the start of its next turn…" became "On a failed
+// save, Until the start of its next turn…" (the Bog Hound and the Nave Choir on
+// forty #1). Only a determiner or pronoun is lowered — a proper noun keeps its
+// capital, which is why "Vashka", "Ilvareth" and "Each creature" all survive the
+// reaction recomposition that uses the same list.
+const LOWERABLE = ['A', 'An', 'The', 'It', 'Any', 'Another', 'One', 'Each', 'Someone', 'Something', 'That', 'This', 'Until', 'While', 'If', 'They'];
+const uncap = (x) => { const w = String(x).trim(); const first = w.split(/\s+/)[0]; return LOWERABLE.includes(first) ? `${first.toLowerCase()}${w.slice(first.length)}` : w; };
+
 export function to2014Grammar(text) {
   let t = String(text ?? '');
   // a damage-plus-condition save converted as "taking X on a failed save, and is poisoned … on a failed save" (Grandmother Ash's Ash Choke, step 6): the condition is its own sentence
@@ -1673,6 +1683,19 @@ export function to2014Grammar(text) {
   t = t.replace(/\*?Success:\*?\s*Half damage(?: only)?\.?/g, 'On a successful save, half as much damage.');
   t = t.replace(/\*?Success:\*?\s*/g, 'On a successful save, ');
   t = t.replace(/\*?Failure:\*?\s*/g, 'On a failed save, ');
+  // AND A DOUBLED LABEL IS A SEAM, NOT A SENTENCE. A welded rider that was itself a
+  // save block gave the Vampire's Bite "…on a failed save. On a failed save, plus
+  // 13 (3d8) necrotic damage" — the converter labelled both halves. The second
+  // label folds into the first clause, which is how print writes a split.
+  // ONLY A DAMAGE CONTINUATION FOLDS. The second label is correct when the clause
+  // after it is a sentence of its own — "…on a failed save. On a failed save, the
+  // target is also poisoned…" is how 2014 writes a damage-plus-condition save, and
+  // the first cut of this collapse destroyed it (Grandmother's Ash Choke, caught by
+  // its own test). The seam is narrower: the second clause continues the FIRST
+  // clause's damage expression ("plus 13 (3d8) Necrotic damage"), which is the
+  // welded rider's own grammar and belongs inside the damage phrase.
+  t = t.replace(/ on a failed save\.\s*On a failed save,\s*(?=plus \d+ \()/gi, ' on a failed save, ');
+  t = t.replace(/On a failed save,\s*On a failed save,\s*/gi, 'On a failed save, ');
   t = t.replace(/\*?Hit or Miss:\*?\s*/g, '');
   // a row that reaches AND throws is "Melee or Ranged": one warpriest sword printed "Melee Spell Attack: … reach 5 ft. or range 120 ft."
   // the 2024 lead-in folds into the save's subject even when the save already reads 2014 (the mounted nova on the conversion path)
@@ -1698,14 +1721,18 @@ export function to2014Grammar(text) {
   // (The fields themselves are not carried onto the row — the sixth instance of
   // "declared then not carried" this sprint — so this reads the labels the engine
   // wrote. When the fields ride, this becomes a render and the read goes.)
-  const LOWERABLE = ['A', 'An', 'The', 'It', 'Any', 'Another', 'One', 'Each', 'Someone', 'Something', 'That', 'This'];
-  const uncap = (x) => { const w = String(x).trim(); const first = w.split(/\s+/)[0]; return LOWERABLE.includes(first) ? `${first.toLowerCase()}${w.slice(first.length)}` : w; };
   t = t.replace(/\bTrigger:\s*([^]*?)\s*Response:\s*([^]*)$/, (m0, trig, resp) => {
     const lead = uncap(String(trig).replace(/\.$/, ''));
     const body = uncap(resp);
     if (!lead) return body;
     return `When ${lead}, ${body}`;
   });
+  // EVERY PATH THAT WRITES THE CLAUSE LANDS HERE. `canonSave2014` composes its own
+  // "On a failed save, …" before the label swaps above ever run, so lowercasing at
+  // each swap site missed two of its own cases on forty #1 ("On a failed save,
+  // Until the start of…", "On a failed save, While within the aura…"). One pass,
+  // after all of them, with the one closed list.
+  t = t.replace(/(On a (?:failed|successful) save, )(\S+)/g, (m0, lead, next) => `${lead}${uncap(next)}`);
   // the edition's own vocabulary, from the table the checker's gate reads (R3.2)
   for (const [from, to] of EDITION_TERMS_2024_TO_2014) t = t.split(from).join(to);
   return t.replace(/\s{2,}/g, ' ').trim();

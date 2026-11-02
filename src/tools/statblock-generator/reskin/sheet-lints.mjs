@@ -1,3 +1,4 @@
+import { isPlaceholderRowName } from './templates.mjs';
 /**
  * LINTS OVER A FINISHED SHEET — the §8 R1 layer.
  *
@@ -111,6 +112,14 @@ export const SHEET_LINTS = [
       }
       return out;
     },
+  },
+  {
+    rule: 'placeholder-row-name',
+    reads: 'declared data (the name field) against the catalog\'s own placeholder list',
+    why: "a row shipped a template's placeholder name instead of a name — the Rivenhearted Glacier's trait read \"Composed Row\" (critic's S0, forty #1)",
+    run: (rows) => rows
+      .filter(({ r }) => isPlaceholderRowName(r.name))
+      .map(({ ed, sec, r }) => `${sec}/${r.name}: a template's placeholder name shipped as a row name (ed ${ed})`),
   },
   {
     rule: 'duplicate-row-name',

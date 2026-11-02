@@ -1927,6 +1927,17 @@ export function imposedByFrame(id, band) {
 // One definition, every reader: `only` restricts the split to a named condition,
 // which is what the shed needs and what the other three must not have.
 const MINOR_CLAUSE_SHAPE = /,? and (?:the target|it) has the (\{condition_minor\}|[A-Z][a-z]+) condition[^.]*(?=\.|$)/;
+// A PLACEHOLDER IS NOT A NAME (N4, 2026-11-02). A composed template is built at
+// request time and carries `name: 'Composed Row'` until something names the row —
+// a label for a trace, never for a card. The Rivenhearted Glacier shipped a trait
+// called "Composed Row" (critic's S0, forty #1): its own name "Killing Wake"
+// collided with a row already on the sheet, and BOTH collision fallbacks hand the
+// row its template's name, which for a composed template is this placeholder.
+// Declared here so the two rename sites and the sheet lint read one list.
+export const PLACEHOLDER_ROW_NAMES = ['Composed Row', 'Composed', 'Trait', 'Row', 'Action', 'Reaction', 'Bonus Action'];
+export const isPlaceholderRowName = (n) => PLACEHOLDER_ROW_NAMES
+  .some((p) => p.toLowerCase() === String(n ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase());
+
 export const splitMinorClause = (frame, { only = null } = {}) => {
   const text = String(frame ?? '');
   const m = MINOR_CLAUSE_SHAPE.exec(text);
@@ -2941,5 +2952,12 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
     steps.push(`a nova already stands — kept ungated, dice to ${v.avg} at the ceiling`);
   } else if (!forceUngated && v.ev > ceiling && !gated && section !== 'Traits' && !controlOnly) { name = `${name} (Recharge 5-6)`; gateChosen = 'Recharge 5-6'; steps.push('over the ceiling — gated Recharge 5-6'); }
   else if (v.ev > ceiling && !gated && section !== 'Traits' && controlOnly) steps.push('over the ceiling but a control row (no damage, no KO) — print leaves these ungated');
-  return { text, name, ev: Math.round(v.ev * 10) / 10, floor: Math.round(floor * 10) / 10, replaced: label, steps, gate: gateChosen };
+  // THE LADDER RECORDS WHEN IT CHANGED THE MECHANIC (N4, 2026-11-02). Widening a
+  // single-target row to a Cone is a print-shaped repair of its value, but it makes
+  // the row no longer do what its template does — and the one-mechanic-one-name
+  // rename then handed it the template's name anyway. "Sundering Shove" shipped as
+  // a 30-foot Cone on the Scaffold Ram and as "one creature within 5 feet" on the
+  // Stone Golem: one name, two rules, which is worse for a GM than two names.
+  // Declared here, at the site that did it, so the rename can read a field.
+  return { text, name, ev: Math.round(v.ev * 10) / 10, floor: Math.round(floor * 10) / 10, replaced: label, steps, gate: gateChosen, ...(area && /each creature in a \d+-foot/.test(text) && !/each creature in a \d+-foot/.test(row.text ?? '') ? { widened: true } : {}) };
 }

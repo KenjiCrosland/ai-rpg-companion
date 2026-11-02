@@ -1035,3 +1035,115 @@ surprises:   1. **I RAN THE WRONG FORTY FIRST.** I ran `homebrew40` — forty ho
              3. The clause rate going DOWN rather than flat (73% here against the
                 critic's >= 90% "done when") is the clearest argument yet that R4 is the
                 next item and nothing else is.
+
+### N4 — the critic's four findings from forty #1
+predicted:   each lint fires on the named sheet of `sweep-2026-11-02T01-24-00` before any
+             engine change; no API.
+measured:    all four, and two of them were not what the critic said they were.
+
+             1. **`placeholder-row-name` — new lint, fires on sheet 14 (both printings).**
+                Root cause traced, not guessed: the glacier's trait was named "Killing
+                Wake", that name already belonged to a row, and BOTH collision fallbacks
+                hand the row its template's name — which for a composed template is the
+                literal placeholder `'Composed Row'`. Fixed at both sites by one shared
+                list (`PLACEHOLDER_ROW_NAMES`), falling back to `"<name> II"` as
+                `uniqueRowName` already did. Lint total on the saved forty 4 -> 6.
+             2. **`One template, two mechanics` — new batch check, fires on exactly one
+                finding: `push-prone as "Sundering Shove"`,** a 30-foot Cone on the
+                Scaffold Ram against "one creature within 5 feet" on the Stone Golem.
+                Keyed on the TEMPLATE, not the name: the first cut keyed on the name and
+                flagged `bite` on 9 sheets and `slam` on 5, which is the
+                one-mechanic-one-name ruling working as designed — an anatomy row takes
+                its own body's mechanic. Numbers are excluded for the same reason.
+                CAUSE, and it is an interaction, not a bug in either half: the value
+                ladder widens an over-value single-target row to a Cone (print-shaped —
+                Repulsion Breath, Blinding Breath), and then the one-mechanic-one-name
+                rename hands the widened row its template's name, promising a mechanic it
+                no longer has. Fixed by the writer recording what it wrote: `valueCheck`
+                returns `widened`, and the rename declines a widened row and traces why.
+             3. **converter seams: 3 in the saved forty, 0 surviving the fix.** Replayed
+                over all 143 2014 rows.
+                  - "On a failed save, Until the start…" / "…While within the aura…" —
+                    the label becomes a clause, so its next word is no longer
+                    sentence-initial. Fixed as ONE post-pass after every path that can
+                    write the clause: lowercasing at each swap site missed both of these,
+                    because `canonSave2014` composes its own clause before those sites
+                    run. Same closed determiner list as the reaction fix (`uncap`),
+                    hoisted to module scope — so "Vashka pushes the target" keeps its
+                    capital.
+                  - the Vampire's Bite doubled label ("…on a failed save. On a failed
+                    save, plus 13 (3d8) necrotic damage"). Folded.
+             4. **THE CEILING DID NOT MISS THEM.** The critic reported "the single-target
+                ceiling missed two of three exploiter rows". It graded all FOUR: the
+                Broodmare's 54 at CR 9 is **1.54x** the cap -> `fail`; the Glacier's 54 at
+                CR 15 is **1.06x**, the Leviathan's 63 at CR 24 is **1.05x**, and the
+                Peals' 53 at CR 13 is **1.04x** -> `soft`. The 1.25x threshold is a
+                documented, print-measured decision ("beyond it the row one-shots a PC,
+                under it the row wants a reader"). No bug. **Owner ruling if you want it
+                tighter — I did not change a graded threshold on a critic's mis-read**,
+                and `the-verdict-is-the-threshold` says a soft finding is review noise.
+runs:        no API. Replays over smoke-out/sweep-2026-11-02T01-24-00 only.
+suite:       174 suites / 4598 tests (9 new in n4-lints.spec.js) · build clean
+commit:      (uncommitted at hand-off)
+not done:    - "until the brambles is destroyed" — the `{restraint}` fill does not agree
+               with its verb. Pre-existing grammar nit, not N4's scope.
+             - the ceiling's 1.25x threshold is unchanged, pending the owner.
+surprises:   1. I SHIPPED A TOO-BROAD FIX AND THE SUITE CAUGHT IT. My first doubled-label
+                collapse destroyed Grandmother's Ash Choke — "…on a failed save. On a
+                failed save, the target is also poisoned…" is the CORRECT 2014 form for a
+                damage-plus-condition save, and it has had its own test since step 6.
+                Narrowed to a damage continuation ("plus N (XdY)"), which is the welded
+                rider's own grammar.
+             2. AND MY OWN DETECTOR HAD THE SAME FAULT. After the fix the replay still
+                reported one surviving seam — the Vampire's Grave Binding — which is that
+                same legitimate form. The instrument was over-broad, not the engine.
+                Corrected, then 0.
+             3. Two of the critic's four findings were mis-stated (the ceiling "missed"
+                rows it graded soft; "Sundering Shove" is not an invented-name collision
+                but a template whose row was widened after it rendered). Both were still
+                worth the trip: one produced a real gate, the other a real fix.
+
+### R3b, step 1 — the three measurements the plan requires before building
+predicted:   (the plan's own conditions) if print's non-legendary Recharge rate is under
+             half, a nova is not a default; our row counts sit above print's median
+             everywhere; and most engine-loaded kit rows carry no receipt.
+measured:    all three against `src/data/srd52-monsters.json` and forty #1. Two of the
+             three premises are WRONG, and R3b gets smaller because of it.
+
+             1. **Nova as a default — the answer is BANDED, not no.** Print's
+                non-legendary blocks carrying a `(Recharge N-N)` action:
+                  0-2 **11%** (20/175) · 3-5 **22%** (14/65) · 6-9 **43%** (15/35) ·
+                  10-12 **38%** (5/13) · 13-16 **75%** (6/8) · 17-20 **67%** (2/3).
+                So a nova is NOT a default below CR 13 and IS one at 13+. The plan's
+                "under half -> not a default" resolves to a band rule, not a deletion.
+             2. **Row counts are NOT long across the board.** Print's median per band
+                (non-legendary): 2 · 4 · 5 · 6 · 6 · 8. Ours on forty #1: 4 · 4 · 5 · 7 ·
+                6 · 10. We MATCH print at 3-5, 6-9 and 13-16; we are over at **0-2 (4 vs
+                2, double)**, 10-12 (7 vs 6) and 17-20 (10 vs 8). Caveat stated plainly:
+                our per-band n is 4, 11, 11, 4, 4, 1 — the 17-20 figure is one sheet.
+                "Track print's median" is therefore a LOW-CR fix, not a whole-sheet diet.
+             3. **Receipt rate: 67 engine-loaded rows on forty #1, 48 with a receipt,
+                19 (28%) without.** Not "most", as the critic's read implied — but the 19
+                are exactly the rows it named: Fear Aura x2, Sundering Shove x2,
+                Opportunist's Lash x2, Tenacious Hide, Brine-Slick Hide, Leaping Pounce,
+                Shield Wall Shove, Unison Hymn, Deafening Echo Lash, Flickering Ward,
+                Engulfing Fly-Crown, Plague Burst, Rime-Shedding Hide, Final Toll.
+                My test is GENEROUS (`gmQuote || clause || bound || expresses || asked`);
+                R3b's stricter rule — a quote of the GM's own words — would score more of
+                these as receiptless, so 28% is a floor, not a ceiling.
+runs:        no API.
+suite:       174 suites / 4598 tests · build clean
+commit:      (uncommitted at hand-off)
+not done:    R3b is NOT built. These are its preconditions, and they redefine it:
+             (a) the nova default becomes a band rule (off below 13, on at 13+) rather
+                 than a receipt question;
+             (b) row-count trimming is a 0-2 band fix (4 -> 2), not a global diet;
+             (c) the work is the 19 receiptless rows, and the single biggest win is
+                 Fear Aura — the critic's own "5 of 19 non-earning traits".
+             Instrument when it is built: receiptless engine rows 19 -> <= 5; traits
+             earning 15/34 -> >= 25/34; Fear Aura unasked 5 -> 0; the eight-roll variety
+             criterion on two concepts.
+surprises:   the two refuted premises. We are not systematically longer than print — we
+             are double print's median at CR 0-2 and level with it in the middle bands.
+             And a nova is print's own default at high CR, so removing it there would
+             have been the wrong move in the name of paring.
