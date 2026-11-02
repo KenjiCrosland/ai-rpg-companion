@@ -937,3 +937,101 @@ not done:    a trait may still state a BARE damage number instead of `{dmg}` and
 surprises:   the plan's R3.3 was aimed at a gate that already existed, while the real fault
              in the same function was a word list refusing a fifth of print's traits. Found
              by probing the function with print's own rows rather than by reading it.
+
+### Forty #1 — the R3 stop point
+predicted:   see scripts/smoke-evidence/PREDICTION-forty1-2026-11-02.md, written before
+             the run. Headline predictions: FAILs 2-7 with a NEW `vocab-2024-in-2014`
+             class · R1 sheet lints 8-14 · clause rate 82-90%, never-answered 0-3 ·
+             R3.3 shows up as >= 1 trait the old word list refused · 'welded rider leaves'
+             0-3 · print's grapple pairs 100% intact · decoration_rows <= 2 · 40/40.
+measured:    run `smoke-out/sweep-2026-11-02T01-24-00`, 40/40, no sheet dropped, so no
+             `--only` was needed.
+
+             1. **checker: 6 blocks with a FAIL of 40** (the RC's forty: 2). In range, and
+                the new class was the predicted one — but half of it is MINE:
+                  - 3 blocks x `vocab-2024-in-2014`, "Trigger:" and "Response:" in a 2014
+                    block (Bone-Sun Archlich, Black Iron Sentinel, Ilvareth). R3.2 stopped
+                    sending a form row to the conversion call; the call had been rewriting
+                    our 2024 reaction labels into 2014 prose, and the converter had no
+                    rule for them. I had left Trigger:/Response: out of the shared table
+                    for want of evidence. **Fixed**: the converter recomposes the engine's
+                    own two labelled halves into one 2014 sentence ("When <trigger>,
+                    <response>"), lowercasing the first word only for a closed set of
+                    determiners so a proper noun keeps its capital (Vashka, Ilvareth).
+                    PROVED BY REPLAY, not another forty: over all 131 2014-bound rows of
+                    this run, 28 carried a gated 2024 term before conversion and
+                    **0 survive it**. 6 new tests pin the real rows.
+                  - 1 x `condition-duration` (the Vampire's Grave Binding: imposes
+                    Restrained, records no duration). NOT mine: the `snare` template's
+                    bound is a STATE ("until the brambles is destroyed"), which is not in
+                    the DURATIONS enum, so `boundBy` is never recorded. The RC's forty had
+                    **11** engine rows imposing with no declared duration and this one has
+                    **10** — what is new is that this run composed a snare row (0 on the
+                    RC) and the gate caught it. Pre-existing gap, exposed by composition.
+                  - 1 x `single-target-ceiling` (Opportunist's Lash, 54 to one target at
+                    CR 9 against print's 35) — the payoff-stack class already accepted on
+                    the RC as the Spitting Maw.
+                  - 1 x `bands under` (53 a round at CR 13 against print's 72-126).
+                After the vocab fix the standing FAIL set is those three pre-existing
+                classes. **Not re-run: the release bar is 0 and this forty does not meet
+                it.**
+             2. **R1 sheet lints: 10 -> 4.** Same batch as the RC, so this one IS
+                comparable. Gone: `empty-option` (Ossuar's "(A) or (B)"), `missing-number`
+                x2, `dangling-save`, `duplicate-row-name` (Stone Club), 
+                `engulf-needs-a-grapple` (the Riverwight's Whelm). Remaining:
+                `double-punctuation` 1, `inline-weapon-collision` 2, `orphan-action-row` 1.
+                Predicted 8-14 — WRONG, better than predicted. I am not claiming the whole
+                drop: these sheets recompose run to run, and only `duplicate-row-name` and
+                the two text-format classes have a mechanism in R3's work.
+             3. **per-clause hit rate: 73% (131/179) over 3 sweeps. BAR MISS** (release
+                >= 85%, target >= 90%). Clauses never answered in any of 3 sweeps:
+                **8 of 61. BAR MISS** (release <= 2). Predicted 82-90% and 0-3 — WRONG,
+                and this is the weakest number on the sheet. It is also exactly what R2
+                diagnosed: 70% of attempted seats ship a row the model refused, so the
+                clause rate cannot move until R4 inverts the dispatch. R3 was plumbing.
+             4. **R3.3 landed as rows: 16 trait rows across the two printings** (~8 unique)
+                that the old word list would have refused — Spider Climb x3 (Owlbear,
+                Vampire, Vaultseep Rot), Amphibious x2 (Ancient Gold Dragon, Trench-Dirge
+                Leviathan), the Hydra's Reactive Heads, the Goblin Boss's Nimble Escape,
+                Ilvareth's Misty Step. Every one is print's own wording. Prediction
+                confirmed.
+             5. **'print canon: welded rider leaves' fired 4 times** (predicted 0-3, over
+                in the good direction). Site 2 is live on the regression forty.
+             6. **print's grapple pairs: 1 of 1 intact** — the Purple Worm's Bite ships
+                "Grappled (escape DC …), and it has the Restrained condition until the
+                grapple ends", whole. This is the site-1 regression risk cleared on the
+                only forty that can test it; `homebrew40` has no print-bodied sheet.
+             7. **decoration_rows: 14, against a release bar of <= 2. BAR MISS** — but
+                the RC's forty was **15**, so R3.3's extra traits did NOT make it worse.
+                This is a standing bar miss, not a regression.
+runs:        smoke-out/sweep-2026-11-02T01-24-00 (forty #1) ·
+             smoke-out/homebrew40-2026-11-02T01-02-31 (see surprises 1) ·
+             critic package: smoke-out/CRITIC-blocks-2026-11-02.md (40 blocks)
+suite:       173 suites / 4589 tests · build clean
+commit:      (uncommitted at hand-off)
+not done:    - the release bar is NOT met: FAILs 6 (bar 0), clause rate 73% (bar 85%),
+               never-answered 8 (bar 2), decoration_rows 14 (bar 2). Three of the four
+               are R4's business, not R3's.
+             - reaction rows do not carry `trigger`/`response` as fields, so the 2014
+               recomposition reads the engine's own labels instead of rendering from the
+               form's answer. SIXTH instance of "declared then not carried" this sprint.
+             - the snare's state bound is not declarable as a duration.
+surprises:   1. **I RAN THE WRONG FORTY FIRST.** I ran `homebrew40` — forty homebrew
+                one-liners — when the release bar's per-category table in §5 is indexed to
+                `sweep.json` (Owlbear 21, Goblin Boss 22, Ancient Gold Dragon 19, the
+                Weeping Saint 9, the black-iron sentinel 25, Ilvareth 28, Meshrin 37).
+                `homebrew40` exercises ONE of the ten categories and contains no
+                print-bodied sheet at all, so it could not test the grapple pairs site 1
+                put at risk, nor any print-exact floor. ~20 minutes of API wasted, and I
+                nearly reported its "10 -> 2 lint drop" as a win against a forty with
+                different sheets. Its own numbers (1 FAIL of 40, 2 lints, 11 decoration
+                rows) stand only as a homebrew-category sample.
+             2. The conversion call had been papering over MORE than the four vocabulary
+                terms found on the six-sheet batch — it was also rewriting the reaction
+                form's labels. Each term the model silently fixed becomes visible only
+                when determinism removes it, so the honest expectation for R3.2 is a tail
+                of these, found one forty at a time. Two rounds now: four terms on six
+                sheets, two labels on forty.
+             3. The clause rate going DOWN rather than flat (73% here against the
+                critic's >= 90% "done when") is the clearest argument yet that R4 is the
+                next item and nothing else is.

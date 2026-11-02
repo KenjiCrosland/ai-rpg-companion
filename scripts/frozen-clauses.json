@@ -7362,5 +7362,76 @@
     "askMechanicWhy": "drags them"
    }
   ]
+ },
+ "28ca606686b2": {
+  "concept": "A slender, crystalline eel-thing whose body is a single faceted spine of living dream-stone, herded by the sleeping mind",
+  "clauses": [
+   {
+    "id": "cl_9pmm9c",
+    "text": "A slender",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1cpqgm6",
+    "text": "crystalline eel-thing whose body is a single faceted spine of living dream-stone",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1u0b4ty",
+    "text": "herded by the sleeping minds of drowned islanders who press it into violence whenever its kin are threatened",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_jdxroy",
+    "text": "It opens by coiling out of the dark",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_2f2u0w",
+    "text": "loosing a shriek that heats its crystal scales white-hot",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "loosing a shriek that heats its crystal scales white-hot",
+    "askShape": "save_single",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "loosing a shriek"
+   },
+   {
+    "id": "cl_1vkk1l7",
+    "text": "slams into prey in a bull-rush of molten-edged fins that latch and brand",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "latch and brand",
+    "askShape": "attack",
+    "askMechanic": "curse",
+    "askMechanicWhy": "latch and brand"
+   },
+   {
+    "id": "cl_1qwtl8t",
+    "text": "It shields its herd by interposing its searing body between threat and kin",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_uz853f",
+    "text": "fights far past the point of blood because every wound it takes is a sleeper's nightmare it must discharge before it can",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "far past the point of blood",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "every wound it takes is a sleeper's nightmare it must discharge before it can rest"
+   },
+   {
+    "id": "cl_19nj5rq",
+    "text": "It is scheming (INT 14-16)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1b1idot",
+    "text": "it is a protective herd-beast that shields its own kind",
+    "kind": "descriptive"
+   }
+  ]
  }
 }

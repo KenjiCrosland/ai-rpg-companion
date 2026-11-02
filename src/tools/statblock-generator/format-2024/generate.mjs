@@ -1682,6 +1682,30 @@ export function to2014Grammar(text) {
   t = t.replace(/(\d+)-foot (Cone|Sphere|Line|Cube|Cylinder)\b/g, (m0, n, shape) => `${n}-foot ${shape.toLowerCase()}`).replace(/(\d+)-foot Emanation/g, '$1-foot radius');
   t = t.replace(LOWER_TYPES, (m0, ty) => `${ty.toLowerCase()} damage`);
   t = t.replace(/\bHit Points\b/g, 'hit points').replace(/\bTemporary Hit Points\b/g, 'temporary hit points');
+  // A 2024 REACTION IS TWO LABELLED HALVES; 2014 WRITES ONE SENTENCE (R3.2,
+  // measured on forty #1, 2026-11-02). Our reaction form answers `trigger` and
+  // `response` as fields and the engine writes "Trigger: … Response: …" — 2024
+  // idiom. The conversion CALL used to rewrite that into prose; R3.2 stopped
+  // sending a form row to the call, so three sheets shipped 2024 labels in a 2014
+  // block (Vashka's Riposte, the Black Iron Sentinel's Interpose, Protective
+  // Magic on two casters) and the checker's own `vocab-2024-in-2014` gate failed
+  // them. Recomposed here from the engine's own closed labels.
+  //
+  // The first word of the trigger is lowercased ONLY when it is a determiner or
+  // pronoun — "A creature within 5 feet…" becomes "a creature…", while "Vashka
+  // is hit by an attack roll" and "Ilvareth is hit…" keep their capital. That is
+  // a closed grammar fact about our own frames, not a judgement about the words.
+  // (The fields themselves are not carried onto the row — the sixth instance of
+  // "declared then not carried" this sprint — so this reads the labels the engine
+  // wrote. When the fields ride, this becomes a render and the read goes.)
+  const LOWERABLE = ['A', 'An', 'The', 'It', 'Any', 'Another', 'One', 'Each', 'Someone', 'Something', 'That', 'This'];
+  const uncap = (x) => { const w = String(x).trim(); const first = w.split(/\s+/)[0]; return LOWERABLE.includes(first) ? `${first.toLowerCase()}${w.slice(first.length)}` : w; };
+  t = t.replace(/\bTrigger:\s*([^]*?)\s*Response:\s*([^]*)$/, (m0, trig, resp) => {
+    const lead = uncap(String(trig).replace(/\.$/, ''));
+    const body = uncap(resp);
+    if (!lead) return body;
+    return `When ${lead}, ${body}`;
+  });
   // the edition's own vocabulary, from the table the checker's gate reads (R3.2)
   for (const [from, to] of EDITION_TERMS_2024_TO_2014) t = t.split(from).join(to);
   return t.replace(/\s{2,}/g, ' ').trim();
