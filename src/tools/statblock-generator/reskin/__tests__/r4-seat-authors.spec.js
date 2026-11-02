@@ -172,6 +172,31 @@ describe('the branch itself', () => {
     expect(rows.find((r) => r.name === 'Unwalled')).toBeUndefined();
   }, 30000);
 
+  test('the authored row may not impose a condition the sheet already imposes twice — the Quarry Scree frame', async () => {
+    // THE FRAME THAT PRODUCED THE FAIL, replayed. On the first live twelve
+    // (r4-twelve-2026-11-02T04-46-44) this sheet shipped Restrained on Slam, on
+    // Entomb AND on the authored "Pitfall Snare": `duplicate-mechanic`, "3 rows
+    // impose Restrained; print has no block with three (0 of 329)". The rule was
+    // enforced as a MENU filter, and an authored row reaches no menu. A rarely
+    // triggered guard cannot be proven by a clean run, so this replays the frame and
+    // requires the refusal.
+    const concept = 'a quarry-pit thing of living scree that buries what it catches';
+    const { trace, rows } = await run({
+      concept, cr: 5, archetype: 'brute', style: 'grappler', name: 'Quarry Scree', type: 'Ooze',
+      ideas: { action: { idea: 'It pulls the target down into a pit and pins it there.', section: 'action', trigger: 'save', effect: 'condition' } },
+      fit: { ...REFUSED, missing: 'a pull into a pit that pins the target there' },
+      seatRow: { saves: [{ clause: 'buries what it catches', name: 'Pitfall Snare', stat: 'Dexterity', target: 'one creature within 30 feet', damage: false, type: null, condition: 'Restrained', movement: null, success: 'none', recharge: false }] },
+    });
+    // the grappler chassis declares Restrained on two rows (its grapple row and its
+    // swallow row). Count the DECLARED records, which is what the rule reads — the
+    // prose differs ("has the Restrained condition" vs "has the Blinded and
+    // Restrained conditions") and a text count read one of the two.
+    const restrained = rows.filter((r) => [].concat(r.imposes ?? []).includes('Restrained'));
+    expect(restrained.length).toBeGreaterThanOrEqual(2);
+    expect(trace).toMatch(/seat authoring refused:.*imposes Restrained, which two rows on this sheet already impose/);
+    expect(rows.find((r) => /^Pitfall Snare/.test(r.name))).toBeUndefined();
+  }, 30000);
+
   test('the seat takes only the form its own section asked for', async () => {
     // the TRAIT seat is offered a save: it is not a trait, so the nearest stands in
     const { trace } = await run({ ...golemCase, fit: { ...REFUSED, missing: 'passage through solid stone' }, seatRow: { saves: [{ clause: 'c', name: 'Wrong Form', stat: 'Strength', target: 'one creature within 5 feet', damage: true, type: 'Bludgeoning', condition: null, movement: null, success: 'none', recharge: false }] } });

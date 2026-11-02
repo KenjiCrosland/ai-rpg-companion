@@ -11,7 +11,7 @@ import { pickDonor, scaleDonor, stampAttacksPerRound } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName} from './templates.mjs';
+import { conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock, EMPTY_SAVE_OUTCOME } from '../format-2024/lint.mjs';
@@ -5114,7 +5114,19 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               : seatKind === 'a trait' ? (wrote.traits[0] ? { kind: 'trait', f: wrote.traits[0], section: 'Traits' } : null)
                 : seatKind === 'a reaction' ? (wrote.reactions[0] ? { kind: 'reaction', f: wrote.reactions[0], section: 'Reactions' } : null)
                   : (wrote.saves[0] ? { kind: 'save', f: wrote.saves[0], section: seatKind === 'a bonus action' ? 'Bonus Actions' : 'Actions' } : null);
-            if (!form) {
+            // NO SHEET IMPOSES ONE CONDITION THREE WAYS, and an authored row reaches no
+            // menu (2026-11-02). The rule is enforced as a MENU filter in `templatesFor`
+            // — print has 0 of 329 blocks with three — so this path walked straight past
+            // it, and the first live run of the twelve shipped the Quarry Scree with
+            // Restrained on Slam, Entomb AND the authored Pitfall Snare: a
+            // `duplicate-mechanic` FAIL the checker had always failed. The set comes from
+            // `conditionsImposedTwice`, the same definition the menu filter uses, read off
+            // the rows' declared `imposes` records. The nearest template stands in, which
+            // is where this seat was headed anyway.
+            const thirdCond = form && (form.kind === 'save' ? form.f.condition : form.f.imposes);
+            if (thirdCond && conditionsImposedTwice(Object.values(sections).flat()).has(String(thirdCond))) {
+              trace('seat authoring refused:', `${seat} — the authored row imposes ${thirdCond}, which two rows on this sheet already impose, and no printed block imposes one condition three ways (0 of 329); the nearest template stands in`);
+            } else if (!form) {
               trace('seat authored nothing:', `${seat} — the call was asked to write ${seatKind} for "${String(idea.idea ?? '').slice(0, 70)}" and ${wrote ? `wrote no row of that kind${(wrote.refused ?? []).length ? ` (refused: ${wrote.refused.map((r2) => `"${r2.name}" — ${r2.why}`).join('; ')})` : ''}${(wrote.unplaced ?? []).length ? ` (it belongs in the ${wrote.unplaced[0].where})` : ''}` : 'answered nothing parseable'}; the nearest template stands in`);
             } else {
               const row = authoredRow(form.kind, form.f);

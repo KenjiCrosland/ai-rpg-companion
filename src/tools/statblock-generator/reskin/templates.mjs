@@ -1563,6 +1563,24 @@ export function liveBodyRequirements(ctx = {}) {
   return [...out.values()];
 }
 
+/**
+ * THE CONDITIONS THIS SHEET ALREADY IMPOSES TWICE — one definition (2026-11-02).
+ * Measured over the 329-block corpus: 181 blocks impose a condition on exactly one
+ * row, 11 on two, and NOT ONE on three, which the checker fails as
+ * `duplicate-mechanic`. `templatesFor` uses this to withhold a template that would
+ * be the third, and the signature seat's authoring attempt uses it to refuse a row
+ * it just wrote for the same reason — an authored row reaches no menu, so the menu
+ * filter could not see it, and the Quarry Scree shipped a third Restrained row on
+ * the first run of that path. `imposedConditions` is the shared reader; this is
+ * declared data throughout.
+ */
+export function conditionsImposedTwice(rows) {
+  return new Set(
+    Object.entries((rows ?? []).flatMap((e) => imposedConditions(e)).reduce((m, c) => ({ ...m, [c]: (m[c] ?? 0) + 1 }), {}))
+      .filter(([, n]) => n >= 2).map(([c]) => c),
+  );
+}
+
 export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '', concept = '', size = '', holds = null, bodyVerdicts = null, shapes = null, shapeCap = SHAPE_MENU_CAP, diagnose = null } = {}) {
   const band = bandFor(cr);
   const rows = Object.values(sections).flat();
@@ -1591,10 +1609,7 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
   // something else, and the sheet keeps a full row rather than losing one late.
   // Declared data throughout — `imposedConditions` is the one shared reader and
   // `IMPOSES_BY_TEMPLATE` is the template's own record.
-  const imposedTwice = new Set(
-    Object.entries(rows.flatMap((e) => imposedConditions(e)).reduce((m, c) => ({ ...m, [c]: (m[c] ?? 0) + 1 }), {}))
-      .filter(([, n]) => n >= 2).map(([c]) => c),
-  );
+  const imposedTwice = conditionsImposedTwice(rows);
   const wouldBeThird = (t) => {
     if (!imposedTwice.size) return false;
     const d = IMPOSES_BY_TEMPLATE[t.id];
