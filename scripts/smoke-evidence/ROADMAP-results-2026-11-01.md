@@ -1279,3 +1279,101 @@ not done:    **R4 ITSELF IS NOT BUILT.** Two things to carry:
 surprises:   220 of 220 refusals are `no_fit`. I expected a mix, and a mix would have
                 meant some of the loss was fixable by ordering or by a better menu. There
                 is no such fraction: the menu is simply missing the mechanic every time.
+
+### R4 — BUILT. Steps 1 and 2 landed; the twelve run and analysed
+predicted:   authoring at the `closest accepted` branch converts refusals into
+             authored rows. Instrument named before the run: `closest accepted`
+             on the twelve against the same sheets' prior runs (**22 across 11 of
+             the 12 — every one of them 2 of 2 seats**, from
+             `sweep-2026-11-02T01-24-00` 02/06/07/09/20/26/39,
+             `homebrew40-2026-11-02T01-02-31` 25/30/34,
+             `variety16-2026-11-02T03-22-29` 12).
+measured:    `r4-twelve-2026-11-02T04-46-44`, live, 12 of 12 generated, no errors.
+
+             **22 `no_fit` refusals reached the branch. 9 authored, 7 reached the
+             finished sheet, 9 still took the nearest, 5 were skipped for want of
+             the sheet's one free row, 0 refused by the dangling-ref pre-check.**
+             `closest accepted` 22 -> 9 on the same sheets.
+
+             The seven that shipped, each stamped `authoredSeat` on the row:
+               02 Bog Hound   Surging Mire — STR DC 13, each creature within 5 ft,
+                              pulled 5 ft toward it and Prone (the step-1 block's
+                              own bog-hound idea, and it is in the Multiattack)
+               03 Stone Golem Tears That Never Dry — regains 17 (5d6) at the start
+                              of its turns, scaled by creatures it has marked
+               05 Quarry Scree Pitfall Snare — DEX DC 14, Restrained  [SEE FAIL 1]
+               06 Sellsword   Humming Arc — DEX DC 15, each creature in a 5-foot
+                              Sphere, Prone  [see "weak rows" below]
+               08 Leviathan   Skull-Plow Sweep — STR DC 24, 60-ft Line, pushed 20
+                              ft and Prone
+               10 Arrears Collector Crushing Ledger (Recharge 5-6) — STR DC 13,
+                              15-ft Emanation, 18 (4d8) Bludgeoning  [SEE FAIL 2]
+               11 Drowned Coat Ribbons of Eels — on a solid hit it moves half its
+                              Speed without provoking, re-forming behind its prey
+
+             Two authored rows were written and then correctly lost downstream:
+               04 Hydra — `print canon: chassis row leaves … is the seat's nova,
+                 not the Hydra's`. Print closes the action set on a print body. The
+                 twist was still carried, by a composed zone trait.
+               07 Mire Mother — `dead wildcard name swept`: the authored trait cited
+                 "Mire Hex", which was on the sheet when the row was written and
+                 dropped later.
+
+             `check-run`: **2 FAIL of 12 (17%)**, against a standing 6 of 40 (15%)
+             on the 11-02 forty — so at the standing rate, but BOTH are on authored
+             rows, so both are attributable:
+               1. Quarry Scree `duplicate-mechanic` — 3 rows impose Restrained.
+                  ROOT CAUSE FOUND AND FIXED (commit "an authored row cannot be a
+                  third imposition"): the rule is a MENU filter in `templatesFor`
+                  and an authored row reaches no menu, so a guard shipped on
+                  2026-10-27 had a hole. `conditionsImposedTwice` is now one
+                  exported definition read by both. Replay-pinned on the exact frame.
+               2. Arrears Collector `save-fit` — a Strength save for 18 (4d8)
+                  Bludgeoning in an Emanation. **NOT FIXED — it needs the owner,
+                  and the obvious fix is refuted by print.** See below.
+runs:        `r4-twelve-2026-11-02T04-46-44` (12/12) · suite 175/175, 4611 tests ·
+             build clean · row-text `.replace(` still 187.
+commit:      9236c3f (step 1), f22bbc3 (step 2), 76288d1 (the third-imposition hole)
+not done:    **forty #2** — stopped before it, as ordered.
+
+             **The `save-fit` FAIL, and the measurement that refuses the one-line
+             fix.** The engine's own save-stat pass (generate.mjs ~8370) returns
+             early on `if (!imposed && !e.imposesMovement) continue;` — so a row
+             that deals area damage and imposes NOTHING never reaches
+             `saveStatsFor`. The checker's `save-fit` gate does reach that shape and
+             fails it, so the engine and its own gate disagree about this one row
+             class, which is the defect the gate's own comment at checker.mjs:1480
+             names. Moving the guard is one line.
+             **Measured against print first (97 such rows in srd52-monsters.json):
+             11 of them, 11%, sit on a stat `saveStatsFor` rejects** — the Gold
+             Dragon's Weakening Breath (Strength), the Sea Hag's Death Glare and the
+             Satyr's Mockery (Wisdom), the Aboleth's Consume Memories
+             (Intelligence). Print writes a magical or mental effect's save by the
+             faculty it attacks, not by the damage. So the early return is
+             protecting print, not dead code, and removing it would retype rows
+             print writes that way. It also acts on the ABSENCE of a record, which
+             is the direction the house rule forbids. Left for the owner with three
+             options: (a) accept the gate's verdict and have the authoring call be
+             told the save-stat contract as a closed fact in its prompt; (b) narrow
+             the checker's gate to exempt a row with no imposition, matching the
+             engine; (c) leave both and accept the FAIL.
+
+             **Weak rows, 2 of 7 — a quality class, not a defect.** Humming Arc took
+             "each creature in a 5-foot Sphere" (print writes no 5-foot Sphere) and
+             Pitfall Snare dropped the "pulls down into a pit" half of its own idea.
+             The target menu in the forms accepts any N, and nothing tells the
+             authoring call print's own geometries. A candidate for the next cycle;
+             neither is a FAIL.
+
+             **ONE AUTHORED ROW PER SHEET, and the action seat gets first refusal.**
+             5 of the 22 refusals traced `seat authoring skipped: … already spent
+             its one free signature row`. The allowance is `printExact ? 0 : 1`,
+             which R4 inherits rather than changes — but it means the trait seat can
+             never author on a sheet where the action seat did. Measured, not
+             assumed; it is the owner's ruling to revisit, not mine.
+surprises:   The two FAILs were not in the branch I wrote. One was a hole in a guard
+             shipped nine days earlier that only an authored row can walk through;
+             the other is the engine disagreeing with its own checker about a row
+             class templates almost never produce. Both were invisible until a path
+             existed that produces that shape — which is the argument for running the
+             twelve rather than reasoning about it.
