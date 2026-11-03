@@ -521,7 +521,8 @@ read: "the creativity problem is mostly solved; what's left is plumbing." What r
 ONE plumbing pass (R9 below) and then the release gate — and the owner does not want to
 keep iterating.
 
-| **Release pass** | R9 | all | the classified deterministic list — removals of string surgery, closed-list validations, engine-written text, data, four call fields; no new regex over prose | **next, and last before the gate** |
+| Release pass | R9 | all | the classified deterministic list | **done**: two sessions, both gates run, the critic has read both |
+| **Hold items** | R10 | 5 | the three classes the critic holds release for — referents, polarity, unpriced riders — plus the lint cases the R1 suite is still missing | **next; then the gate decides** |
 | Post-release | — | — | subclass/feat fidelity rungs (SRD-idiom, not PHB lookups); a once/twice/thrice counter template family for the abstract verbs; the HP-max-drain ceiling | parked, named |
 
 
@@ -746,6 +747,103 @@ does not clear retention, the release is forty #3's state, not `rc-2026-11-01`.*
 Parked, named: Regeneration as the seat's new Fear Aura (×5, four unasked, twice
 stacked with another heal) — a seat-default receipt, R3b's territory, after this.
 
+**R10 · THE HOLD (the critic's read of both gate runs, 2026-11-02 night).** The critic
+scored both fortys on a new, user-grounded rule — four questions a Patreon GM asks: *does
+it run tonight* (in band with unpriced rows counted, no row needing a missing number,
+referent or trigger, no self-contradiction); *did they get what they typed* (per clause:
+rule / name-only / missing / **contradicted**, contradiction worse than absence); *would
+they keep it* (a signature they could not write in five minutes, or a "they remembered"
+fidelity tick); *how many tweaks before running*. Verdicts: Keeper · Runs · Tweak · Fix.
+This replaces the ship/fix-lite/fix scale and the six-category bait taxonomy, which
+become an untallied lint list at the bottom of each read.
+
+**The two gate runs, on that rule:** `sweep-2026-11-02T20-21-41` **14 Keeper / 11 Runs /
+10 Tweak / 5 Fix**, three of the five Fixes one phrase from clean; fixtures held, shape
+repeats 21 -> 15. `homebrew40-2026-11-02T20-39-39` **6 / 11 / 12 / 11**, retention 3 of 8
+with three of the five losses regressed INTO contradictions; surprised 10 / plain 18 /
+missed 12 (flat). The critic's own sentence: "the authoring is fine where it fires" —
+the originality work is done. What stands between the sheets and release is narrow and
+counted: **17 of homebrew40's 23 Tweak/Fix verdicts are two classes**, plus six
+calibration misses a GM cannot see. The critic holds release for three patterns and
+lets two be post-release; the owner agrees.
+
+*Release reading:* sweep is the closer proxy for what GMs actually type and is close on
+its own terms; homebrew40 is the adversarial floor by design. **The gate after R10 is the
+real-concept forty if the owner can supply strings** (`scripts/smoke-batches/real40.json`);
+if not, release ships on sweep's numbers with homebrew40 as the known floor.
+
+*The three holds, each classified against the house rule first — none adds a regex over
+the GM's or the model's prose:*
+
+**H1. Missing referents — 10 of 80 rows.** Every name a row relies on must resolve to
+something on the sheet. We hold the creature half (`acts`, which caught ~2 of the 10);
+the critic's list is wider, and each item is a declared-data check: a **sense** the row
+cites must be on the Senses line (H10 "tremorsense it lacks"); a **spell** named in an
+option must be on the spell list (G26 Ray of Sickness); a **damage phrase** must carry
+its die — the `{dmg}` token or a number (H30 "extra Necrotic damage"; G32 "Regrowth" with
+no number); a save **area** must have an origin (G09 "10-foot Sphere" with none); a
+**roll** must name what is rolled (H16 "roll DC 15"); a **grapple** a row requires must
+be applied by a row (G36 Cage — the `requires` guard, extended to grapples named in
+prose only where the form DECLARED one). Each refuses the row with its reason at both
+landings. Build as one reader, `referentsOf(row, sheet)`, so the lint and the engine
+share it.
+
+**H2. Polarity flips — 7 contradictions, the worst class because the sheet LOOKS like it
+answered.** "only ever makes one attack" -> three; "too frightened to RUN" -> Frightened
+(which forbids approaching, the opposite); "talks you into standing STILL" -> lured
+toward; "poisons everything INCLUDING ITSELF" -> "cannot harm itself"; "takes something
+when IT IS wounded" -> drains when it hits; "watches from BEHIND them" -> front line.
+The critic names the words — only / never / no / including / instead of / behind — and
+that list must NOT become a parser rule (CLAUDE.md, "Meaning is a call field"). The
+expression is checked as two declared fields compared by equality: the idea call,
+which now names the clause it answers by number, also answers `subject` (who the
+clause is about: self / target / allies / others) and `polarity` (grants / forbids /
+restricts / inverts-on-self); the author and fit calls answer the same two for the row
+they produce; the engine refuses a row whose pair differs from its clause's pair, traced
+as a contradiction. "The receipt is not the expression" — this is the expression check,
+as fields. Pin on the seven sheets.
+
+**H3. Unpriced kit riders — 6 invisible misses, the only class that makes the tool look
+bad AT THE TABLE.** `valueCheck` prices damage and not riders. Print-calibrated ceilings,
+measured against the 329 before each is set: stun-on-hit every turn (H17, H21, G33) ->
+a use limit below the CR where print fields it at will; Dodge every turn (H17, G33) and
+permanent melee Disadvantage (G40 Guarded Stance) -> count defensively or cap; a
+Disadvantage rider on every hit (G27) -> once per turn; HP-max drain (H18) -> one attack
+a turn; Regeneration counts defensively and never stacks with another per-turn heal (the
+gate traced the stack: the chassis's Regeneration beside an authored heal — enforce AT
+SHIP across every provenance); no Legendary Resistance or legendary actions below CR 10
+unless asked (H23, the CR 4 cat). Also: the recharge AoE table reads +10 over 2024
+breath at CR 11-17 on four sheets — key it to print's breath by CR.
+
+**H4. The lint cases the R1 suite is still missing.** The suite said 0 findings on
+homebrew40; the critic hand-listed a dozen. Each becomes a case on the sheet that
+shipped it, BEFORE any fix: the 2014 reaction renderer writing "When  X. ,  Y" (G18,
+G28, G39 — `renderForm`'s 2014 branch keeps a trailing stop before the comma); a doubled
+Languages line (H10); "- At will:" inlined in 2014 Spellcasting (G15, G18, G28, G40);
+double space after "Failure:" (G04, G17); the legendary-uses paragraph missing in 2014
+frames (G11, G15, G19); d4 stacks on weapon rows (R9's D10, now a lint: the weapon
+table's die); a leading flavor sentence on a 2024 row (G35). Format of engine-written
+text, every one.
+
+*Not in R10, by the critic's own call and the owner's:* pattern 1, unasked seat defaults
+(~30 rows — the gate traced it to the donor's own composition, not any default path;
+post-release, and it is the sameness work); pattern 8, the counter/trigger template
+family (tolls N times, when X dies, remembers — 8 concepts, 5 rolls running;
+post-release); pattern 7, plain-noun inflation ("a worm" -> CR 24 legendary: anchor a
+bare noun to its print CR); pattern 6, the species/class pass being inconsistent (the
+same kit on one sheet and absent on another — R3b's territory). R9's unreached D9, C7
+and H fold in only where they overlap: D9 is H1's immunity-and-absorption check, C7 is
+in H4's lint list, H's legendary cat is H3.
+
+*Instruments:* the R1 suite green on both gate runs' saved sheets for every H4 class
+(each must fail before its fix); **referent refusals and polarity refusals traced and
+counted on the next run**; `valueCheck` traces for every rider it now prices; band
+reported BY PATH (exact / twist / homebrew / class NPC), because the median hid the
+class kits running hot. Then the gate: the real-concept forty if it exists, else sweep +
+homebrew40, scored by the critic on the four questions. **Go when:** sweep holds at or
+above 14 Keepers with Fix <= 5, homebrew40's contradictions fall from 7 toward 0 and its
+invisible calibration misses hit 0, and nothing on the R1 suite fires.
+
 **R9 · RELEASE PASS (owner, 2026-11-02). The critic's deterministic list, classified by
 the house rule first.** Forty #4 (`homebrew40-2026-11-02T18-48-33`, the critic's read):
 bait 27 lines on 22 sheets, **11 deterministic**, 4 authoring run-ons. "One screenshot
@@ -913,27 +1011,61 @@ proven by the cheapest rung that answers it (§5c's ladder). Four fortys ran in 
 A forty that drops sheets is finished with `--only <indices>`, never re-run whole.
 No forty for R1, R2, or any single R3 site.
 
+## 5d. Fable's note for whoever plans next (2026-11-02, last of the context)
+
+Five things the plan cannot say for itself.
+
+1. **Sweep is the release number; homebrew40 is the floor.** Do not let a session score
+   release against homebrew40 again — it is adversarial by construction (one-liners with
+   no cultural prior) and the real user types "Orc Bloodpriest". The real-concept forty
+   is the gate if the owner supplies strings; sweep stands in if not. Read FAILs against
+   each run's OWN baseline. A session lost twenty minutes to this once and a verdict
+   nearly flipped direction on it a second time.
+
+2. **The critic's four questions are the scale now.** Keeper / Runs / Tweak / Fix,
+   grounded in a GM's evening. The old ship/fix-lite/fix numbers are not comparable
+   backward; the bait taxonomy is an untallied lint list. Retention across re-rolls is a
+   sub-metric of "would they keep it", not a kill criterion any more — it is 3 of 8 and
+   the originality work is declared done.
+
+3. **Three sprint lessons that are memories, repeated because they recur.** The
+   implementer never scores the critic's question (8/20/11 vs 3/13/23 on the same
+   sheets). Measure the PATH before the fix (F17, E15). A test that cannot fail is
+   worse than none (twice). A new session should expect Opus to do the first two well
+   and still drift on the third — ask for the failing-before-fix evidence by name.
+
+4. **Where the sameness actually lives, for post-release.** Not in any default-trait
+   path: the donor shelf picks the same chassis for similar concepts, and those rows
+   carry no provenance mark at all. The fix is donor diversity or a receipt on chassis
+   traits at ship — R3b's territory, and the biggest remaining lever on "plain".
+
+5. **Two reframes the critic gave that are worth more than any item here.** The
+   fidelity line under the header — one sentence naming what was honoured — turns
+   silent correctness into the thing a grognard respects, and the lint that produces it
+   is the one that catches the monk with Cunning Action. And the deterministic half of
+   every review should be a lint the engine runs before the critic opens the file; the
+   critic's time is for the model's contribution. Both are cheap, both are post-gate.
+
 ## 6. For the next session, in one paragraph
 
-State at 2026-11-02 (night): four fortys on `homebrew40` are scored by the critic. The
-originality program is CLOSED BY DECISION — retention 1 -> 1 -> 3 of 7, `missed` 25 -> 12;
-Anchor and Author stay, Re-roll stays deferred, and the owner does not want to keep
-iterating on it. What is left is **R9, one plumbing pass**, classified by the house rule
-(no new string surgery; three removals of it) and then the gate. **The release gate is
-two runs, not one**: `sweep.json` as the regression floor (its own baseline: 19 ship / 18
-fix-lite / 3 fix on forty #1), and — the critic's point, adopted — **a forty of REAL user
-concept strings**, because `homebrew40` is the adversarial distribution by design and the
-GM who types "Orc Bloodpriest" is the real one. If the owner has the strings, that run is
-the number; if not, R5's telemetry is what gets them and `homebrew40` stands in once more.
-Go/no-go: deterministic bait at 0 on both runs (the R1 suite says so before the critic
-does), band median within ±1, FAILs at or under each run's own baseline, and the critic's
-read of the real-concept forty reading like the Bloodpriest and not the Toll-Bell Wraith.
-The release candidate is then that state; `rc-2026-11-01` is the fallback only if R9
-regresses `sweep`. Post-release, parked and named: subclass/feat fidelity (SRD idiom, not
-PHB), the counter template family for the abstract verbs, the HP-max-drain ceiling. The
-implementer reports mechanism numbers and the R1 suite; the critic scores. Meaning is a
-call field, never a word list; the engine edits fields, never sentences — and the
-substitution bug that topped forty #4's list is what breaking that rule looks like.
+State at 2026-11-02 (late): R9 is done — two sessions, both gates run, the critic has
+read both on a new user-grounded rule (Keeper / Runs / Tweak / Fix; four questions a GM
+asks). **Sweep 14 Keeper / 11 / 10 / 5 Fix is close to releasable on its own terms;
+homebrew40 6 / 11 / 12 / 11 is not, for a NARROW reason** — 17 of its 23 Tweak/Fix are
+two classes, missing referents and polarity flips, plus six calibration misses a GM
+cannot see. The originality work is finished ("the authoring is fine where it fires");
+the anchor runs at 34-41% with every miss a clean blank. **Next is R10, the hold: three
+classes and the missing lint cases**, each classified against the house rule before it is
+built — referents as declared-data checks, polarity as two call fields compared by
+equality (NEVER a word list over only/never/including), riders as print-calibrated
+ceilings. Then the gate: the real-concept forty if the owner supplies strings, else sweep
++ homebrew40. Post-release, named: unasked seat defaults (the donor's own composition —
+the sameness work), the counter/trigger template family, plain-noun CR inflation, the
+species/class pass's inconsistency. Two lessons from R9 are memories now: a test that
+cannot fail is worse than none, and MEASURE THE PATH BEFORE THE FIX — F17 and E15 were
+correct and inert because the defect lived on a different path, and the evidence was one
+grep away. The implementer reports mechanism numbers and the R1 suite; the critic scores.
+Meaning is a call field, never a word list; the engine edits fields, never sentences.
 
 ---
 

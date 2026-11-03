@@ -95,10 +95,21 @@ describe('every lint declares what it reads', () => {
 });
 
 (have ? describe : describe.skip)('the whole forty', () => {
-  it('reports exactly the ten findings the critic listed, and no more', () => {
+  // OPENED FROM A CLOSED WORLD (R10 · H4, 2026-11-02). This asserted "exactly ten
+  // findings and no more", which was true when the suite held eight classes and is
+  // false the moment a class is added: the four R10 classes find real defects on this
+  // same forty (doubled spaces after a label, a 2024 spell bullet inside a 2014
+  // Spellcasting block). The strength worth keeping is that the ORIGINAL ten are all
+  // still found — a regression in any first-generation detector fails here — so the
+  // assertion is now per-rule and the total is reported, not pinned.
+  it('still finds every one of the original ten the critic listed', () => {
     const all = fs.readdirSync(RUN).filter((x) => /^\d+-.*\.json$/.test(x))
       .flatMap((f) => lintSheet(JSON.parse(fs.readFileSync(path.join(RUN, f), 'utf8'))));
-    expect(all).toHaveLength(10);
+    const ORIGINAL = ['empty-option', 'missing-number', 'dangling-save', 'duplicate-row-name', 'engulf-needs-a-grapple', 'inline-weapon-collision', 'orphan-action-row', 'double-punctuation'];
+    const byRule = all.reduce((m, f) => ({ ...m, [f.rule]: (m[f.rule] ?? 0) + 1 }), {});
+    const originalCount = ORIGINAL.reduce((n, r) => n + (byRule[r] ?? 0), 0);
+    expect(originalCount).toBe(10);
+    expect(all.length).toBeGreaterThanOrEqual(10);
   });
 
   it('reads every row of both printings', () => {

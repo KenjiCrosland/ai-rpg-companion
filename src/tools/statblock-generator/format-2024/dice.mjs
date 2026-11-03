@@ -44,12 +44,21 @@ export function attackDamageDiceFor(avg, mod) {
   // ±1 closeness tolerance the LARGER die wins — officials write "4d6 + 9",
   // not "6d4 + 9" (live finding) — while low-CR budgets (avg ≈ mod) still
   // fall to d4/d6 to avoid overshooting.
+  // AND PRINT NEVER STACKS MORE THAN THREE d4 ON AN ATTACK ROW (R10, 2026-11-02).
+  // Measured over the corpus: 99 attack rows use d4 and the largest is **3d4** — the
+  // Bugbear Warrior's Light Hammer, the Hobgoblin Warrior's Longbow, the Vampire
+  // Familiar's Umbral Dagger. The gate runs shipped 7d4 (a cane), 4d4 and 4d4: a GM who
+  // plays does not roll seven d4 for a club. A d4 candidate past print's own maximum is
+  // simply not offered, so the next die up wins on closeness instead. Closed fact from
+  // print, no judgement.
+  const D4_MAX = 3;
   const candidates = [];
   for (const die of [8, 6, 4]) {
     const per = (die + 1) / 2;
     const n = Math.max(1, Math.round((avg - mod) / per));
     const actual = Math.floor(n * per) + mod;
     if (actual < 1) continue;
+    if (die === 4 && n > D4_MAX) continue;
     const dice = mod === 0 ? `${n}d${die}` : mod > 0 ? `${n}d${die} + ${mod}` : `${n}d${die} - ${-mod}`;
     candidates.push({ dice, avg: actual, diff: Math.abs(actual - avg) });
   }

@@ -9722,36 +9722,26 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // adhesive and an exploiter of the Grappled. The call named what the words
       // take away; the engine knows its own mechanic's text. A lack shapes a row
       // that merely carries the clause and removes one that IS the mechanic.
-      // TWO DECLARED LACKS NOTHING ACTED ON (R9 · D12). `LACK_TAKES` has carried
-      // 'sight' and 'speech' since it was written and no arm read them, so "no eyes"
-      // and "no mouth" changed the rows and never the header. Both are enum values the
-      // clause call already answers — declared data, no prose read here.
-      //
-      // 'sight' takes the SIGHT-BASED senses only: darkvision and truesight go,
-      // blindsight and tremorsense stay, because that is how an eyeless thing perceives
-      // and print agrees (the Grimlock has blindsight and no darkvision). Forty #4's
-      // Nameless Brass earned its surprise from an authored tremorsense trait, which
-      // this must not take away.
-      //
-      // HONEST LIMIT, measured: this would NOT have fixed forty #4's #10. Its clause
-      // record reads "a brass automaton with no mouth" -> lacks/speech and "no eyes and
-      // no name" -> has, with no polarity at all — the call never declared the sight
-      // lack, so there was nothing for this arm to read. The darkvision on that sheet
-      // is the clause call's miss, not this sweep's.
-      if (c.takes === 'sight' || c.takes === 'speech') {
-        if (c.takes === 'sight') {
-          const before = String(monster.senses ?? '');
-          const after = before.split(/;\s*/).filter((part) => !/^(?:darkvision|truesight)\b/i.test(part.trim())).join('; ');
-          if (after !== before) { monster.senses = after; trace('lacks clause:', `senses "${before}" -> "${after}" — "${c.text}" takes sight, so the sight-based senses leave (blindsight and tremorsense stay: that is how an eyeless creature perceives, and print's Grimlock has one)`); }
-        } else {
-          const before = String(monster.languages ?? '');
-          if (before && !/^(?:none|—|-)$/i.test(before.trim())) {
-            monster.languages = `understands ${before} but can't speak`;
-            trace('lacks clause:', `languages "${before}" -> "${monster.languages}" — "${c.text}" takes speech (print's own form for a creature that comprehends and cannot answer)`);
-          }
-        }
-        continue;
-      }
+      // THE 'sight' AND 'speech' LACK ARMS ARE REVERTED (R10, 2026-11-02). R9 wired
+      // them because `LACK_TAKES` had carried both values since it was written with no
+      // arm reading them. Measured on the two gate runs: they fired THREE times and all
+      // three were defects, two of them on the critic's own list.
+      //   G15 Adult Red Dragon — "blind in one eye from an old lance" was declared
+      //     `takes: sight`, and the arm stripped the whole senses clause: "darkvision
+      //     120 ft., blindsight 60 ft.; Passive Perception 23" -> "Passive Perception
+      //     23". Blind in one eye is not blind, and the split was on ";" so blindsight
+      //     went with the darkvision it shared a clause with.
+      //   G32 Gormak — "understands no Common" was declared `takes: speech`, and a
+      //     stone giant who "speaks only Giant" was made mute. A lack of comprehension
+      //     is not a lack of speech.
+      //   H10 Unnamed Brass — applied twice: "Understands the languages of its creator
+      //     but can't speak" -> "understands Understands … but can't speak but can't
+      //     speak" (the critic's "Languages line doubled").
+      // The enum is too coarse to act on: the call puts `sight` on partial blindness and
+      // `speech` on a comprehension gap, and telling those from "no eyes" and "no mouth"
+      // is a reading of meaning — a call field or nothing (CLAUDE.md). Nothing is lost
+      // that was working: before R9 these values were inert, and inert beat wrong 3 of 3.
+      // Reinstate only behind a field that distinguishes total from partial.
       if (c.takes === 'grapple' || c.takes === 'regeneration') {
         const isGrap = c.takes === 'grapple';
         const impose = isGrap ? /,?\s*(?:and )?(?:the target|it|each creature)[^.]*?\bhas the Grappled condition[^.]*\.?/i : /[^.]*\b(?:regrows?|grows? (?:two|a new|back|another)|regains \d+ Hit Points at the start)\b[^.]*\.\s*/i;

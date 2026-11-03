@@ -114,6 +114,45 @@ export const SHEET_LINTS = [
     },
   },
   {
+    // R10 · H4. Four classes the critic hand-listed that this suite did not catch, each
+    // reproduced on the gate-run sheet that shipped it before its writer was fixed.
+    // All four are FORMAT OF ENGINE-WRITTEN TEXT — no reading of the GM's or the
+    // model's prose.
+    rule: 'd4-stack',
+    reads: "print's own maximum for a die, against engine-written damage",
+    why: 'print uses d4 on 99 attack rows and never more than 3d4 (Bugbear Light Hammer, Hobgoblin Longbow, Vampire Familiar Umbral Dagger); the gate runs shipped 7d4 on a cane and 4d4 twice — nobody who plays rolls seven d4 for a club',
+    run: (rows) => rows.filter(({ r }) => /Attack Roll|Weapon Attack/.test(TEXT(r)) && [...TEXT(r).matchAll(/\((\d+)d4\b/g)].some((m) => Number(m[1]) > 3))
+      .map(({ sec, r }) => `${sec}/${BARE(r.name)}: ${(TEXT(r).match(/\d+ \(\d+d4[^)]*\)/) ?? [''])[0]} — print's largest d4 attack row is 3d4`),
+  },
+  {
+    rule: 'at-will-inline',
+    reads: 'format of engine-written text',
+    why: 'a 2014 Spellcasting block carried the 2024 bullet inline — "- **At Will:**" inside a one-paragraph 2014 row (four sheets on the gate sweep)',
+    // `ed` is 'a'/'b' (active/other printing), not an edition name — the 2014 idiom is
+    // read off the row itself: a 2014 Spellcasting row says "to hit with spell attacks"
+    // and never carries a 2024 bullet.
+    run: (rows) => rows.filter(({ r }) => /-\s*\*\*At Will:\*\*|-\s*At will:/.test(TEXT(r)) && /Weapon Attack:|to hit with spell attacks/.test(TEXT(r)))
+      .map(({ sec, r }) => `${sec}/${BARE(r.name)}: a 2024 spell bullet survived into a 2014 block`),
+  },
+  {
+    rule: 'double-space-label',
+    reads: 'format of engine-written text',
+    why: 'two substitutions met at a label and left a doubled space — "*Failure:*  28 (8d6)" (two sheets on the gate sweep)',
+    // RAW text, not TEXT(): the shared reader collapses whitespace, so a doubled space
+    // is normalised away before any lint can see it (this one found nothing until it
+    // stopped using it).
+    run: (rows) => rows.filter(({ r }) => /(?:Failure|Success|Trigger|Response):\*?  /.test(String(r?.text ?? '')))
+      .map(({ sec, r }) => `${sec}/${BARE(r.name)}: a doubled space after a label`),
+  },
+  // REFUSED, NOT BUILT: 'leading-flavor-sentence' (R10 · H4, 2026-11-02). The critic
+  // named one row — the Well Drowned Thing's Drowning Crush, a flavour sentence before a
+  // save skeleton. A predicate for "prose, then a starred label" fires **6 times on the
+  // gate sweep and 5 are print's own grammar**: Fear Aura reads "The pit fiend emanates
+  // an aura in a 20-foot Emanation…" on three sheets, and Pouncing Slam's and
+  // Splintering Throw's leading sentences ARE their mechanics. Telling a flavour opener
+  // from a mechanical one is a reading of meaning, so it is a call field or nothing
+  // (CLAUDE.md) — not a tuned regex. One row is not worth a lint that is wrong 5 times.
+  {
     rule: 'placeholder-row-name',
     reads: 'declared data (the name field) against the catalog\'s own placeholder list',
     why: "a row shipped a template's placeholder name instead of a name — the Rivenhearted Glacier's trait read \"Composed Row\" (critic's S0, forty #1)",
