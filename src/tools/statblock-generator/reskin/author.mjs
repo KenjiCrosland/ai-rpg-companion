@@ -243,6 +243,21 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
     }
     return null;
   };
+  // PRINT NEVER WRITES "the first time each turn" (0 of 329, measured 2026-11-03).
+  // It is not a style nit: the phrase means the row fires once on EVERY creature's
+  // turn, so at a four-player table it resolves five times a round. The gate forty
+  // shipped Brother Halric's Blood-Sworn Radiance — an area of damage plus a heal,
+  // on every creature's turn, at CR 3. Print's once-a-round idiom is "once on each of
+  // ITS turns", which names whose turn it is; `perTurn` above already writes that one.
+  // The row is refused, never rewritten (the critic's top line, forty #4).
+  const firstTimeEachTurn = (x) => /\bthe first time each turn\b/i.test(`${x?.trigger ?? ''} ${x?.effect ?? ''} ${x?.response ?? ''}`);
+  // AND NO PRINT ROW BOTH DEALS DAMAGE AND HEALS (0 of 329). `heals` is the call's own
+  // declared field and `{dmg}` is the engine's own token, so this reads no meaning off
+  // prose. Halric's row did both in one pulse; print splits them across rows.
+  // TWO tokens, not one: a heal writes its own amount as `{dmg}` too ("it regains {dmg}
+  // Hit Points"), so testing for the token's presence refused every heal on the sheet.
+  // The pair is what print never does — damage dealt AND hit points restored in one row.
+  const damagesAndHeals = (x) => x?.heals === true && (`${x?.effect ?? ''} ${x?.response ?? ''}`.match(/\{dmg\}/g) ?? []).length >= 2;
   const traitIsSave = (t) => /saving throw/i.test(`${t.trigger ?? ''} ${t.effect}`);
   const dcMisused = (t) => /\{dc\}\s+(?:feet|ft)\b|within \{dc\}/i.test(`${t.trigger ?? ''} ${t.effect}`);
   // ONE DEFINITION FOR THE VERDICT AND ITS REASON (2026-11-01). The reason was
@@ -260,6 +275,8 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   const tooManyMechanics = (x) => (x?.mechanics != null && x.mechanics > 1 ? x.mechanics : null);
   const traitWhy = (t) => (tooManyMechanics(t) ? `the call counts ${tooManyMechanics(t)} mechanics in one row — one row, one mechanic`
     : bogusCondition(t) ? `it names "the ${bogusCondition(t)} condition", which is not a condition in this game`
+    : firstTimeEachTurn(t) ? 'it fires "the first time each turn", which print never writes (0 of 329) — on every creature\'s turn is five times a round at a four-player table'
+    : damagesAndHeals(t) ? 'it deals damage and heals in one row, which no printed block does (0 of 329)'
     : overCap(t) ? `the trigger or effect runs past ${RULES_TEXT_CAP} characters, longer than any trait print writes — it is refused rather than cut mid-word`
     : traitIsSave(t) ? 'a trait is not a save — the save form takes stat, target and effect as fields and the engine renders the sentence'
     : dcMisused(t) ? '{dc} is written where a distance belongs, not where a DC belongs'
@@ -279,6 +296,8 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
     : bogusCondition(r) ? `it names "the ${bogusCondition(r)} condition", which is not a condition in this game`
     : !r.name ? 'the call named no row'
     : !r.trigger || !r.response ? 'a reaction needs both a trigger and a response'
+      : firstTimeEachTurn(r) ? 'it fires "the first time each turn", which print never writes (0 of 329)'
+      : damagesAndHeals(r) ? 'it deals damage and heals in one row, which no printed block does (0 of 329)'
       : overCap(r) ? `the trigger or response runs past ${RULES_TEXT_CAP} characters, longer than any reaction print writes — it is refused rather than cut mid-word`
         : null);
   const refusedReactions = reactionsAll.filter((r) => reactionWhy(r) !== null);
@@ -357,6 +376,16 @@ const PRECONDITION = /\bif\b[^.]*$|\balready\b\s*$|\b(?:that|which|who)\s*$|\b(?
 // a row reading "the hull has the Invisible condition" is a self-buff, and
 // three of those are not the repetition the gate is looking for.
 export const AFFLICTIONS = ['Grappled', 'Restrained', 'Prone', 'Incapacitated', 'Paralyzed', 'Stunned', 'Blinded', 'Poisoned', 'Frightened', 'Charmed', 'Deafened'];
+// THE CONDITIONS THAT TAKE A TURN AWAY. Print never puts one of these on a Bonus
+// Action: 0 of 329 blocks, measured 2026-11-03, where 15 bonus actions DO impose a
+// condition (Behir/Swallow, Cloaker/Moan, Pirate Captain's Charm) and not one of them
+// denies a turn. The gate forty shipped the Mirebind Witch stunning a target 60 feet
+// away as a bonus action, every turn, with no limit — the critic's hottest sheet.
+// NOT a ceiling on turn-denial itself: print imposes these at will from an ACTION 16
+// times below CR 10 (Ghoul/Claw at CR 1, Harpy/Luring Song at CR 1, Chuul at CR 4),
+// which is why the proposed "recharge or X/day below CR 10" rule was refused twice.
+// The bonus action is the part print never does.
+export const TURN_DENIAL = ['Stunned', 'Paralyzed', 'Incapacitated'];
 
 /**
  * Is damage over an AREA the point of this row? ONE DEFINITION, EVERY READER —

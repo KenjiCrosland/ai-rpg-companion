@@ -32,7 +32,7 @@ export const guardedStanceIllegalAt = (cr, ac) => {
 };
 export const guardedStanceWhyAt = (cr, ac) => `AC ${ac} already beats print's ${Number(challengeRatings?.[crKey(cr)]?.armor_class ?? 0)} at CR ${cr}, and print ships no persistent Disadvantage-to-be-hit trait (0 of 329)`;
 import { hpFormulaFor as hpFormulaForSize, saveDamageDiceFor as engineDiceFor, attackDamageDiceFor, D4_MAX } from '../format-2024/dice.mjs';
-import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedConditions } from './author.mjs'; // one definition: the conditions a finished row imposes
+import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedConditions, TURN_DENIAL } from './author.mjs'; // one definition: the conditions a finished row imposes
 import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the validated condition list the authoring call answers against
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
@@ -5490,7 +5490,16 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // the rows' declared `imposes` records. The nearest template stands in, which
             // is where this seat was headed anyway.
             const thirdCond = form && (form.kind === 'save' ? form.f.condition : form.f.imposes);
-            if (thirdCond && conditionsImposedTwice(Object.values(sections).flat()).has(String(thirdCond))) {
+            // A BONUS ACTION DOES NOT DENY A TURN (the critic's hottest sheet, gate forty
+            // 2026-11-03). The Mirebind Witch stunned a creature 60 feet away as a bonus
+            // action, every turn, no limit, at CR 7 — an action-economy miss the value check
+            // cannot see because it prices damage, not tempo. Both halves are DECLARED: the
+            // condition is a validated enum on the call's own save form, and the section is
+            // the seat's own placement. Print: 0 of 329. The nearest template stands in.
+            const denies = form && form.section === 'Bonus Actions' && TURN_DENIAL.includes(String(form.kind === 'save' ? form.f.condition : form.f.imposes));
+            if (denies) {
+              trace('seat authoring refused:', `${seat} — the authored row imposes ${form.kind === 'save' ? form.f.condition : form.f.imposes} as a bonus action, and no printed block denies a turn from a Bonus Action (0 of 329); the nearest template stands in`);
+            } else if (thirdCond && conditionsImposedTwice(Object.values(sections).flat()).has(String(thirdCond))) {
               trace('seat authoring refused:', `${seat} — the authored row imposes ${thirdCond}, which two rows on this sheet already impose, and no printed block imposes one condition three ways (0 of 329); the nearest template stands in`);
             } else if (!form) {
               trace('seat authored nothing:', `${seat} — the call was asked to write ${seatKind} for "${String(idea.idea ?? '').slice(0, 70)}" and ${wrote ? `wrote no row of that kind${(wrote.refused ?? []).length ? ` (refused: ${wrote.refused.map((r2) => `"${r2.name}" — ${r2.why}`).join('; ')})` : ''}${(wrote.unplaced ?? []).length ? ` (it belongs in the ${wrote.unplaced[0].where})` : ''}` : 'answered nothing parseable'}; the nearest template stands in`);

@@ -1,3 +1,4 @@
+import { parseAuthorResponse, TURN_DENIAL } from '@/tools/statblock-generator/reskin/author.mjs';
 /**
  * R9 · RELEASE PASS — the critic's deterministic list from forty #4
  * (`homebrew40-2026-11-02T18-48-33`), each item pinned on the sheet that shipped it.
@@ -385,5 +386,84 @@ describe('H3 — the defensive posture is priced, not removed', () => {
     expect(defensivePostureMult(load(HB, '17'))).toBe(1.6); // Pane-Ascetic
     expect(defensivePostureMult(load(SW, '40'))).toBe(1.6); // Brother Halric, Guarded Stance
     expect(defensivePostureMult(load(HB, '21'))).toBe(1);   // Drowned Silence, no posture row
+  });
+});
+
+describe("R11 — an authored row declares an economy print would recognise", () => {
+  // The critic's hottest class on the gate forty of 2026-11-03: 5 of the 7 invisible
+  // calibration misses were rows the engine authored new, landing the concept and
+  // shipping with no action-economy price. Each rule below is a COUNT from print, and
+  // the two the critic proposed that print REFUTED are pinned as refusals, not rules.
+  const print = corpus();
+  const rows = (sec) => print.flatMap((m) => (m.sections?.[sec] ?? []).map((e) => ({ m, e })));
+  const DENY = /has the (?:Stunned|Paralyzed|Incapacitated) condition/;
+
+  it('print never denies a turn from a Bonus Action, though it does impose conditions there', () => {
+    const bonus = rows('Bonus Actions');
+    expect(bonus.filter(({ e }) => /has the \w+ condition/.test(String(e.text ?? ''))).length).toBe(15);
+    expect(bonus.filter(({ e }) => DENY.test(String(e.text ?? ''))).length).toBe(0);
+  });
+
+  it('…but print DOES deny a turn at will from an action, so no CR ceiling is set', () => {
+    // the rule "stun is recharge or X/day below CR 10" was proposed twice and refused
+    // twice: print's Ghoul paralyzes at CR 1 with DC 10 and no limit.
+    const LIM = /\(Recharge|\/Day|Once per|once per turn|once on each of|Recharges/i;
+    const unlimited = print.flatMap((m) => Object.entries(m.sections ?? {})
+      .filter(([sec]) => sec !== 'Reactions')
+      .flatMap(([, es]) => (es ?? []).map((e) => ({ cr: m.cr, e }))))
+      .filter(({ e }) => DENY.test(String(e.text ?? '')) && !LIM.test(`${e.name ?? ''} ${e.text ?? ''}`));
+    expect(unlimited.filter((x) => x.cr < 10).length).toBe(16);
+  });
+
+  it('print never writes "the first time each turn", and never damages and heals in one row', () => {
+    const all = print.flatMap((m) => Object.values(m.sections ?? {}).flat()).filter(Boolean);
+    expect(all.filter((e) => /first time (?:each|on each of)/i.test(String(e.text ?? ''))).length).toBe(0);
+    expect(all.filter((e) => /\btakes? \d+ \(\d+d\d+\)/.test(String(e.text ?? '')) && /regains \d+/.test(String(e.text ?? ''))).length).toBe(0);
+  });
+
+  it("refuses Brother Halric's trait — it fires on every creature's turn AND heals", () => {
+    // replayed from smoke-out/sweep-2026-11-03T16-53-32/40-brother-halric.json
+    const got = parseAuthorResponse(JSON.stringify({
+      traits: [{
+        clause: 'blood-sworn', name: 'Blood-Sworn Radiance', heals: true, mechanics: 1, passive_effect: 'other',
+        trigger: 'While he is Bloodied, the first time each turn he takes damage',
+        effect: 'each creature of his choice within 15 feet takes {dmg} Radiant damage, and a creature of his choice within 15 feet regains {dmg} Hit Points',
+      }],
+    }));
+    expect(got.traits).toHaveLength(0);
+    expect(got.refused.map((r) => r.why).join(' ')).toMatch(/first time each turn/);
+  });
+
+  it('a trait that heals without dealing damage still lands', () => {
+    // the refusal is the PAIR, not the heal: print splits them across rows, it does not ban either
+    const got = parseAuthorResponse(JSON.stringify({
+      traits: [{
+        clause: 'mends', name: 'Grave-Wax Mending', heals: true, mechanics: 1, passive_effect: 'other',
+        trigger: 'At the start of each of its turns', effect: 'it regains {dmg} Hit Points',
+      }],
+    }));
+    expect(got.refused).toHaveLength(0);
+    expect(got.traits).toHaveLength(1);
+  });
+});
+
+describe('R11 — the bonus-action guard reads declared data, not prose', () => {
+  it("the Mirebind Witch's row declares the condition the guard keys on", () => {
+    // replayed from smoke-out/sweep-2026-11-03T16-53-32/26-mirebind-witch.json, the
+    // sheet the critic called hottest. The guard in generateReskin needs two facts and
+    // both are declared: the condition (a validated enum on the save form) and the
+    // section (the seat's own placement). Neither is read off the rendered sentence.
+    const got = parseAuthorResponse(JSON.stringify({
+      saves: [{ clause: 'binds', name: 'Waxen Likeness', stat: 'Constitution', target: 'one creature within 60 feet', condition: 'Stunned' }],
+    }));
+    expect(got.saves[0].condition).toBe('Stunned');
+    expect(TURN_DENIAL).toContain(got.saves[0].condition);
+  });
+
+  it('a bonus action imposing a condition print DOES field there is untouched', () => {
+    const got = parseAuthorResponse(JSON.stringify({
+      saves: [{ clause: 'holds', name: 'Quick Grapple', stat: 'Strength', target: 'one creature within 5 feet', condition: 'Grappled' }],
+    }));
+    expect(TURN_DENIAL).not.toContain(got.saves[0].condition);
   });
 });
