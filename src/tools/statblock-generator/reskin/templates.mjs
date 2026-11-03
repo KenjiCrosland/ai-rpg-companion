@@ -2761,7 +2761,25 @@ export function rowValue(text, perHit, { area = false } = {}) {
 //
 // The checker's `nova-cap` gate reads this same constant, so the engine and its
 // gate cannot drift apart on it.
-export const NOVA_CAP = (cr) => Math.round(cr <= 11 ? Math.max(18, 5.5 * cr + 8) : 4 * cr + 15);
+// ABOVE CR 11 THE CAP IS PRINT'S OWN, NOT A LINE (R10 · H3, 2026-11-03). The old
+// formula kept climbing — `4 * cr + 15` — while print PLATEAUS: its recharge-gated area
+// rows measure, by CR, 66 at 11 · 55 at 13 · 54 at 14 · 56 at 15 · 60 at 16 · 66 at 17 ·
+// 63 at 20, and only climb again at 21-24 (67 · 82 · 88 · 91). So the cap sat 12 to 32
+// points over print's own maximum from CR 13 up, which is the critic's "recharge AoE is
+// about +10 at CR 11-17" (Reefwrack 67@13, Glacier 71@15, Brass Tyrant 72@17).
+//
+// At or below CR 11 the old curve is within +1..+8 of print's maxima and is left alone:
+// it is a ceiling on abuse, not a cut below the round (owner, 2026-10-27). Above it the
+// ceiling is print's observed plateau, then print's own climb at the top of the ladder.
+// Numbers only — nothing here reads a word.
+export const NOVA_CAP = (cr) => {
+  const n = Number(cr);
+  if (!Number.isFinite(n)) return 18;
+  if (n <= 11) return Math.round(Math.max(18, 5.5 * n + 8));
+  if (n <= 20) return 66;   // print's maximum anywhere in CR 12-20
+  if (n <= 22) return 82;   // print: 67 at 21, 82 at 22
+  return 91;                // print: 88 at 23, 91 at 24
+};
 // ONE DEFINITION OF A ROW'S GATE (2026-10-22). Five sites used to recover a gate
 // by re-reading the row's NAME — novasOf in the checker, hasChassisNova, the late
 // nova damage cap, settleSheetBudgets, and valueCheck's own `gated` read, which

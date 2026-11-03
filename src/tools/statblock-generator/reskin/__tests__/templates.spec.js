@@ -634,7 +634,15 @@ describe('fresh four (2026-09-28): the header rides along, the save follows the 
     // row's own floor, which is why our gated rows came in at 0.60x of the round
     // they replace against print's 0.95x. CR 14 and 24 are unchanged — above
     // CR 11 the cap is already the generous side of print.
-    expect(NOVA_CAP(14)).toBe(71); expect(NOVA_CAP(6)).toBe(41); expect(NOVA_CAP(24)).toBe(111);
+    // RE-KEYED TO PRINT ABOVE CR 11 (R10 · H3, 2026-11-03). The old curve kept climbing
+    // where print plateaus, so the cap sat 12-32 points over print's own maximum from
+    // CR 13 up — the critic's "recharge AoE is about +10 at CR 11-17". Measured maxima:
+    // 66 at 11 · 55 at 13 · 54 at 14 · 56 at 15 · 60 at 16 · 66 at 17 · 63 at 20, then
+    // 67 · 82 · 88 · 91 at 21-24.
+    expect(NOVA_CAP(14)).toBe(66); // was 71, against print's 54
+    expect(NOVA_CAP(24)).toBe(91); // was 111, against print's 91
+    expect(NOVA_CAP(17)).toBe(66); // print's CR-17 maximum exactly
+    expect(NOVA_CAP(6)).toBe(41);  // at or below CR 11 the old curve stands (print: 40)
     expect(NOVA_CAP(7)).toBe(47); // print's own CR-7 maximum is 49
     expect(NOVA_CAP(9)).toBe(58); // print's CR-9 maximum is 55
     const scaled = sheet(14, null, 'lurker'); const per = Math.round(scaled.per_hit);

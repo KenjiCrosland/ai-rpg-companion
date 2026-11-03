@@ -179,6 +179,43 @@ function crByBand(value, min, max) {
   return found;
 }
 const stepCR = (k, delta) => { const i = CRS.indexOf(k); return CRS[Math.max(0, Math.min(CRS.length - 1, i + delta))]; };
+// A FREE EVERY-TURN DEFENSIVE POSTURE IS WORTH EFFECTIVE HIT POINTS (R10 · H3, owner's
+// ruling 2026-11-03: "keep the abilities, raise the number — the GM asked for a monk").
+//
+// print's 1,291 rows contain **no monster that takes the Dodge action**, so there is no
+// corpus tier to copy — and that is true of the Dodge ONLY. The two riders measured
+// beside it are print's own and are NOT priced here; see the note below. The
+// number comes from the arithmetic instead: Disadvantage turns a hit chance p into p²,
+// so the damage a creature takes falls to p of what it was and its effective Hit Points
+// rise by 1/p. Across print's own typical hit chances — 55% to 65% of an attack bonus
+// against an AC of its CR — that is **1.54x to 1.82x**. 1.6 is the middle of that band.
+//
+// It stacks with a resistance multiplier because both are real: a monk that dodges AND
+// resists is harder to kill than one that only resists. The shapes are read by their
+// DECLARED template id, never from the row's words.
+//
+// TWO RIDERS WERE MEASURED AND ARE DELIBERATELY NOT PRICED (R10 · H3, 2026-11-03), so
+// nobody prices them later on the critic's note alone:
+//   stun on a hit — print puts unlimited turn-denial on an attack row from CR 1 up: the
+//     Ghoul's Claw paralyzes on a DC 10 save with NO per-turn limit, the Ghast's the
+//     same at CR 2, and the Lich's Paralyzing Touch gives no save at all. Our rows are
+//     TIGHTER than print's: "once on each of its turns when it hits" plus a save, and
+//     the Reedmarch Kin's DC 14 at CR 5 is exactly print's Otyugh DC at CR 5.
+//     (An earlier measurement here reported "0 attack rows stun" and was WRONG: it
+//     searched `Stunned` only and missed `Paralyzed`, which is strictly worse. 54 print
+//     rows impose Stunned, Paralyzed or Incapacitated.)
+//   Disadvantage on a hit — print's Ettin Morningstar does exactly this at CR 4,
+//     unlimited, on every hit; the Fire Giant and Mimic also carry it. 3 print rows.
+// What the critic saw on those sheets is three such hits a round STACKING with an aura
+// and a crit range, which is a whole-sheet read and not a row-level price.
+const FREE_DEFENSIVE_POSTURE = new Set(['patient-defense', 'guarded-stance']);
+// BOTH PRINTINGS ARE READ. A 2014-active sheet keeps its rows under `other_edition`, so
+// reading `sections` alone missed every 2014 monk (the Reedmarch Kin and Brother Halric
+// measured a multiplier of 1 with a Patient Defense row sitting right there). Same
+// reason `rowsOfSheet` reads the twin.
+export const defensivePostureMult = (m) => ([...Object.values(m?.sections ?? {}), ...Object.values(m?.other_edition?.sections ?? {})].flat()
+  .some((r) => FREE_DEFENSIVE_POSTURE.has(String(r?.template ?? ''))) ? 1.6 : 1);
+
 export function effectiveHp(m, cr) {
   const def = `${m.resistances ?? ''}`; const imm = `${m.immunities ?? ''}`;
   const bps = (x) => /Bludgeoning/i.test(x) && /Piercing/i.test(x) && /Slashing/i.test(x);
@@ -187,7 +224,7 @@ export function effectiveHp(m, cr) {
   let mult = 1;
   if (wide(imm)) mult = cr <= 4 ? 2 : cr <= 10 ? 2 : cr <= 16 ? 1.5 : 1.25;
   else if (wide(def)) mult = cr <= 4 ? 2 : cr <= 10 ? 1.5 : cr <= 16 ? 1.25 : 1;
-  return Math.round(Number(m.hp) * mult);
+  return Math.round(Number(m.hp) * mult * defensivePostureMult(m));
 }
 export function dmgRead(m) {
   const s = sustainedOf(m);

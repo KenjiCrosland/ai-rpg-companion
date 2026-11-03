@@ -64,7 +64,11 @@ describe('the free-row budget is counted at ship, once', () => {
   });
 
   test('a row with no freeRow mark is never touched', () => {
-    const sections = { Traits: [{ name: 'Legendary Resistance (3/Day)', text: 'It succeeds instead.' }] };
+    // FIXTURE DECOUPLED (R10 · H3, 2026-11-03). This used "Legendary Resistance (3/Day)"
+    // as an arbitrary unmarked row, and the new legendary floor removes exactly that at
+    // CR 8 (print: 1 of its 32 Legendary Resistance blocks sits under CR 10). The test
+    // is about the FREE-ROW BUDGET not touching unmarked rows, so it takes a plain trait.
+    const sections = { Traits: [{ name: 'Stone Hide', text: 'Its hide is stone.' }] };
     settleSheetBudgets({ sections, scaled: scaled(), cr: 8, generation: {} });
     expect(sections.Traits).toHaveLength(1);
   });

@@ -16,6 +16,13 @@ import { applyCorrections } from '@/tools/statblock-generator/format-2024/genera
 import { generateReskin, renameKeysOf } from '@/tools/statblock-generator/reskin/generate.mjs';
 import { pickDonor, scaleDonor } from '@/tools/statblock-generator/reskin/scale.mjs';
 
+// ONE CORPUS READ FOR THE FILE. Three tests here each re-read and re-parsed the 329
+// monsters, and the whole statblock suite went from ~45s to over 300s. Memoised.
+let _corpus = null;
+const corpus = () => { if (!_corpus) { const a = JSON.parse(fs.readFileSync('src/data/srd52-monsters.json', 'utf8')); _corpus = Array.isArray(a) ? a : Object.values(a).flat(); } return _corpus; };
+let _printRows = null;
+const allPrintRows = () => { if (!_printRows) _printRows = corpus().flatMap((m) => Object.values(m.sections ?? {}).flat()); return _printRows; };
+
 const FOUR = 'smoke-out/homebrew40-2026-11-02T18-48-33';
 const sheet = (n) => {
   const f = fs.readdirSync(FOUR).find((x) => x.startsWith(`${String(n).padStart(2, '0')}-`) && x.endsWith('.json'));
@@ -165,5 +172,218 @@ describe('G — the repair landing refuses what the seat refuses', () => {
     const prone = rowsOf(sheet(12)).filter((r) => [].concat(r.imposes ?? []).includes('Prone'));
     expect(prone.length).toBeGreaterThanOrEqual(3);
     expect(rowsOf(sheet(33)).find((r) => r.name === 'Who Swings?').text).toMatch(/Committed Haymaker|Mistimed Backhand/);
+  });
+});
+
+/**
+ * R10 · H1 — WITHDRAWN AND REBUILT AT THE DECLARED FIELD (owner's catch, 2026-11-03:
+ * "is this string matching? looks like string matching"). It was. `referentsOf` read
+ * finished prose for a Sphere with no origin and for "its tremorsense" — class D in §2's
+ * table, meaning read off engine-written text where a declared field exists. Both checks
+ * had reached 0 false positives on print's 1,291 rows, which is exactly why they looked
+ * safe: a clean corpus is necessary and not sufficient. The test is whether a declared
+ * answer already exists.
+ *
+ * The Sphere's declared answer is `TARGET_OK`, the save form's own target enum, which
+ * was accepting "each creature in a 10-foot Sphere". It no longer does.
+ */
+describe('H1 — a Sphere target carries its origin, refused at the enum', () => {
+  const { parseAuthorResponse } = require('@/tools/statblock-generator/reskin/author.mjs');
+  const save = (target) => JSON.parse(JSON.stringify(parseAuthorResponse(JSON.stringify({
+    saves: [{ clause: 'c', name: 'Snare', stat: 'Strength', target, damage: false, type: null, condition: 'Restrained', movement: null, success: 'none', recharge: false }],
+  }))));
+
+  test('an origin-less Sphere is not an accepted target — it falls back, it does not ship (G09)', () => {
+    expect(save('each creature in a 10-foot Sphere').saves[0].target).not.toBe('each creature in a 10-foot Sphere');
+  });
+
+  test('a Sphere that says where it is centred is accepted', () => {
+    expect(save('each creature in a 10-foot Sphere centered on a point within 60 feet').saves[0].target)
+      .toBe('each creature in a 10-foot Sphere centered on a point within 60 feet');
+  });
+
+  test('a Cone, Line or Emanation needs no origin — they come from the creature by convention', () => {
+    for (const t of ['each creature in a 60-foot Cone', 'each creature in a 30-foot Line', 'each creature in a 20-foot Emanation']) {
+      expect(save(t).saves[0].target).toBe(t);
+    }
+  });
+
+  // Recorded so nobody rebuilds them as predicates over prose: the sense check ("within
+  // its tremorsense range", H10) wants a `senses` field on the forms naming what a row
+  // leans on; "a phrase that deals or restores states an amount" (H30, G32) and "a DC
+  // belongs to a roll" (H16) were measured at 75 false positives on print and want the
+  // same treatment. All three are proposed, none is built.
+});
+
+/**
+ * R10 · H3 (one piece) — one per-turn heal a sheet, at ship, across every provenance.
+ * Measured first: **4 printed blocks carry one per-turn heal and not one carries two.**
+ * The critic found the stack twice and the gate traced it to the CHASSIS's Regeneration
+ * sitting beside an authored or templated heal, so no single-provenance guard can see it.
+ */
+describe('H3 — one per-turn heal a sheet', () => {
+  const { settleSheetBudgets } = require('@/tools/statblock-generator/reskin/generate.mjs');
+  const run = (rows) => {
+    const sections = { Traits: rows.map((r) => ({ ...r })) }; const lines = [];
+    settleSheetBudgets({ sections, scaled: { pb: 3 }, cr: 7, trace: (a, b) => lines.push(`${a} ${b}`) });
+    return { left: sections.Traits.map((r) => r.name), trace: lines.join('\n') };
+  };
+
+  test('which rows heal is DECLARED: the call answers `heals`, and print is known by its own row name', () => {
+    const { parseAuthorResponse } = require('@/tools/statblock-generator/reskin/author.mjs');
+    const t = (h) => JSON.stringify({ traits: [{ clause: 'c', name: 'Tithe', trigger: 'At the start of each of its turns', effect: 'it regains {dmg} Hit Points', imposes: null, condition_relation: 'none', acts: null, heals: h, mechanics: 1, passive_effect: 'ability' }] });
+    expect(parseAuthorResponse(t(true)).traits[0].heals).toBe(true);
+    expect(parseAuthorResponse(t(undefined)).traits[0].heals).toBe(false);
+  });
+
+  test('print carries no block with two per-turn heals', () => {
+    const list = corpus();
+    const PERTURN = /regains? \d+[^.]{0,40}(?:at the start of each of (?:its|the)|each turn|every turn)|\bRegeneration\b/i;
+    const two = list.filter((m) => Object.values(m.sections ?? {}).flat().filter((r) => PERTURN.test(String(r.text ?? '')) || /^Regeneration/.test(String(r.name ?? ''))).length >= 2);
+    expect(two.map((m) => m.name)).toEqual([]);
+  });
+
+  test("the row that answers the GM stays; the chassis's filler leaves — the gate's own case", () => {
+    const { left, trace } = run([
+      { name: 'Regeneration', text: 'The ledger regains 10 Hit Points at the start of each of its turns.' },
+      { name: "Debtor's Tithe", text: 'It regains 7 (2d6) Hit Points at the start of each of its turns.', heals: true, clause: 'takes something every time it is wounded', authored: true },
+    ]);
+    expect(left).toEqual(["Debtor's Tithe"]);
+    expect(trace).toMatch(/second per-turn heal removed: "Regeneration" leaves/);
+  });
+
+  test("print's own row outranks an unreceipted addition", () => {
+    expect(run([
+      { name: 'Regeneration', text: 'The troll regains 15 Hit Points at the start of each of its turns.', print: true },
+      { name: 'Knitting Rime', text: 'It regains 5 Hit Points at the start of each of its turns.', heals: true, authored: true },
+    ]).left).toEqual(['Regeneration']);
+  });
+
+  test('one heal alone is untouched, and an exact print sheet is never touched', () => {
+    expect(run([{ name: 'Regeneration', text: 'regains 10 Hit Points at the start of each of its turns.' }]).left).toEqual(['Regeneration']);
+    const sections = { Traits: [{ name: 'Regeneration', text: 'regains 10 Hit Points at the start of each of its turns.' }, { name: 'Second', text: 'regains 5 Hit Points at the start of each of its turns.', heals: true }] };
+    settleSheetBudgets({ sections, printExact: true, scaled: { pb: 3 }, cr: 7 });
+    expect(sections.Traits).toHaveLength(2);
+  });
+});
+
+/**
+ * R10 · H3 — the ceilings a GM cannot see. Each measured against print BEFORE it was
+ * set, and each reading declared data: a CR is a number, `Legendary Resistance` and
+ * `Regeneration` are print's own row names, `Legendary Actions` is a section, a row that
+ * answers the GM carries a `clause`, and the nova cap compares numbers.
+ */
+describe('H3 — legendary machinery starts at CR 10', () => {
+  const { settleSheetBudgets } = require('@/tools/statblock-generator/reskin/generate.mjs');
+  const LR = { name: 'Legendary Resistance (3/Day)', text: 'If it fails a saving throw, it can choose to succeed instead.' };
+  const run = (cr, traits, la) => {
+    const sections = { Traits: traits.map((r) => ({ ...r })), ...(la ? { 'Legendary Actions': la.map((r) => ({ ...r })) } : {}) };
+    settleSheetBudgets({ sections, scaled: { pb: 2 }, cr });
+    return { traits: sections.Traits.map((r) => r.name), la: (sections['Legendary Actions'] ?? []).map((r) => r.name) };
+  };
+
+  test("print's floor: 32 blocks carry Legendary Resistance and exactly one sits below CR 10", () => {
+    const list = corpus();
+    const crOf = (m) => { const c = String(m.challenge_rating ?? m.cr ?? ''); return c.includes('/') ? Number(c.split('/')[0]) / Number(c.split('/')[1]) : Number(c); };
+    const withLR = list.filter((m) => Object.values(m.sections ?? {}).flat().some((r) => /^Legendary Resistance/.test(String(r.name ?? ''))));
+    expect(withLR).toHaveLength(32);
+    expect(withLR.filter((m) => crOf(m) < 10).map((m) => m.name)).toEqual(['Unicorn']);
+  });
+
+  test('a CR 4 sheet loses unasked Legendary Resistance and its legendary actions — the Coal-Cat', () => {
+    expect(run(4, [LR], [{ name: 'Pounce' }, { name: 'Ember Step' }])).toEqual({ traits: [], la: [] });
+  });
+
+  test('but a row the GM asked for is kept at any CR — print keeps the Unicorn at CR 5', () => {
+    expect(run(4, [{ ...LR, clause: 'a legendary coal-cat' }], null).traits).toEqual(['Legendary Resistance (3/Day)']);
+  });
+
+  test('and CR 10 and up is untouched', () => {
+    expect(run(13, [LR], [{ name: 'Pounce' }])).toEqual({ traits: ['Legendary Resistance (3/Day)'], la: ['Pounce'] });
+  });
+});
+
+describe('H3 — the nova cap is print\'s plateau, not a line', () => {
+  const { NOVA_CAP } = require('@/tools/statblock-generator/reskin/templates.mjs');
+  // print's recharge-gated area maxima by CR: 66 @11 · 55 @13 · 54 @14 · 56 @15 · 60 @16
+  // · 66 @17 · 63 @20 · 67 @21 · 82 @22 · 88 @23 · 91 @24. The old curve (4*cr + 15) ran
+  // 12-32 over those from CR 13 up.
+  test('no CR from 12 up is capped above print\'s own maximum anywhere in its band', () => {
+    for (const [cr, printMax] of [[13, 55], [14, 54], [15, 56], [16, 60], [17, 66], [20, 63]]) {
+      expect(NOVA_CAP(cr)).toBeLessThanOrEqual(66); // print's maximum across CR 12-20
+      expect(NOVA_CAP(cr)).toBeGreaterThanOrEqual(printMax - 12); // and never cuts below the round
+    }
+    expect(NOVA_CAP(22)).toBe(82);
+    expect(NOVA_CAP(24)).toBe(91);
+  });
+
+  test('at or below CR 11 the old curve stands — it is a ceiling on abuse, not a cut', () => {
+    expect(NOVA_CAP(6)).toBe(41);
+    expect(NOVA_CAP(11)).toBe(69);
+  });
+});
+
+/**
+ * R10 · H3 — a free every-turn defensive posture counts as effective Hit Points.
+ * Owner's ruling, 2026-11-03: "keep the abilities, raise the number — the GM asked for a
+ * monk." So Patient Defense and Guarded Stance stay on the sheet and the band reads the
+ * truth about them, which is the critic's own ask ("in band with the unpriced rows
+ * counted" — the invisible check the user cannot do).
+ */
+describe('H3 — the defensive posture is priced, not removed', () => {
+  const { effectiveHp, defensivePostureMult } = require('@/tools/statblock-generator/reskin/checker.mjs');
+
+  const printRows = () => {
+    const list = corpus();
+    return list.flatMap((m) => Object.values(m.sections ?? {}).flat());
+  };
+
+  test('print offers no tier to copy for the DODGE — hence the arithmetic', () => {
+    expect(printRows().filter((r) => /Dodge/i.test(String(r.text ?? '')))).toHaveLength(0);
+  });
+
+  // THE OTHER TWO RIDERS ARE PRINT'S OWN AND ARE NOT PRICED. Recorded here because an
+  // earlier measurement in this very file claimed "0 attack rows stun" — it searched
+  // `Stunned` alone and missed `Paralyzed`, which is strictly worse, and I nearly built
+  // a ceiling on it. 54 print rows impose Stunned, Paralyzed or Incapacitated.
+  test('print DOES put unlimited turn-denial on an attack row, from CR 1 up', () => {
+    const turnDenial = printRows().filter((r) => /Attack Roll/.test(String(r.text ?? '')) && /\b(Stunned|Paralyzed)\b/.test(String(r.text ?? '')));
+    expect(turnDenial.map((r) => r.name).sort()).toEqual(['Bite', 'Claw', 'Claw', 'Paralyzing Touch', 'Umbral Dagger']);
+    // the Ghoul's Claw: DC 10, no per-turn limit at all. Ours is once per turn WITH a save.
+    expect(turnDenial.some((r) => /DC 10/.test(String(r.text ?? '')))).toBe(true);
+  });
+
+  test('and print puts Disadvantage on a hit, unlimited — the Ettin at CR 4', () => {
+    const dis = printRows().filter((r) => /Attack Roll/.test(String(r.text ?? '')) && /Disadvantage/.test(String(r.text ?? '')));
+    expect(dis).toHaveLength(3);
+  });
+
+  // Disadvantage turns a hit chance p into p², so damage taken falls to p of itself and
+  // effective Hit Points rise by 1/p: 1.54x at 65%, 1.82x at 55%. 1.6 is the middle of
+  // print's own typical band.
+  test('1.6x, and it stacks with a resistance because both are real', () => {
+    const base = { hp: 120, resistances: '', immunities: '' };
+    expect(effectiveHp({ ...base, sections: { Traits: [{ name: 'Stone Hide' }] } }, 10)).toBe(120);
+    expect(effectiveHp({ ...base, sections: { 'Bonus Actions': [{ name: 'Patient Defense', template: 'patient-defense' }] } }, 10)).toBe(192);
+    expect(effectiveHp({ ...base, resistances: 'Bludgeoning, Piercing, Slashing', sections: { 'Bonus Actions': [{ name: 'Patient Defense', template: 'patient-defense' }] } }, 10)).toBe(288);
+  });
+
+  test('read by DECLARED template id, never by the row\'s words', () => {
+    expect(defensivePostureMult({ sections: { Traits: [{ name: 'Patient Defense', text: 'It takes the Dodge action.' }] } })).toBe(1);
+    expect(defensivePostureMult({ sections: { Traits: [{ name: 'Anything At All', template: 'patient-defense' }] } })).toBe(1.6);
+  });
+
+  test('both printings are read — a 2014-active sheet keeps its rows under other_edition', () => {
+    expect(defensivePostureMult({ other_edition: { sections: { 'Bonus Actions': [{ name: 'Patient Defense', template: 'patient-defense' }] } } })).toBe(1.6);
+  });
+
+  test('the three sheets the critic called hot now read 1.6, and a control reads 1', () => {
+    const fs2 = fs;
+    const load = (dir, n) => { const f = fs2.readdirSync(dir).find((x) => x.startsWith(`${n}-`) && x.endsWith('.json')); const j = JSON.parse(fs2.readFileSync(`${dir}/${f}`, 'utf8')); return j.monster ?? j; };
+    const SW = 'smoke-out/sweep-2026-11-02T20-21-41'; const HB = 'smoke-out/homebrew40-2026-11-02T20-39-39';
+    expect(defensivePostureMult(load(SW, '33'))).toBe(1.6); // Reedmarch Kin, 2014
+    expect(defensivePostureMult(load(HB, '17'))).toBe(1.6); // Pane-Ascetic
+    expect(defensivePostureMult(load(SW, '40'))).toBe(1.6); // Brother Halric, Guarded Stance
+    expect(defensivePostureMult(load(HB, '21'))).toBe(1);   // Drowned Silence, no posture row
   });
 });

@@ -948,6 +948,64 @@ export function markFreeRow(seat, { decoration = false } = {}) {
 
 export function settleSheetBudgets({ sections, printExact = false, scaled = null, cr = null, generation = null, noteDrop = () => {}, trace: traceFn = () => {} }) {
   const trace = traceFn;
+  // LEGENDARY MACHINERY STARTS AT CR 10 (R10 · H3, 2026-11-03). Measured over the
+  // corpus: Legendary Resistance appears on 32 blocks and legendary actions on 30, and
+  // **exactly one of each sits below CR 10** — the Unicorn, at CR 5, print's single
+  // named exception. The critic's Coal-Cat shipped Legendary Resistance 3/Day, three
+  // legendary actions AND Regeneration 20 at CR 4: a party of 4th-level characters
+  // cannot kill it without cold damage, and nothing on the sheet tells the GM that.
+  //
+  // Declared data only: the CR is a number, `Legendary Resistance` is print's own row
+  // name (the same kind of closed fact as `Regeneration` above), `Legendary Actions` is
+  // a section, and a row that answers the GM carries a `clause`. A row the GM asked for
+  // is kept at any CR — the Unicorn case is exactly "the GM asked for a legendary CR 5".
+  if (!printExact && Number.isFinite(Number(cr)) && Number(cr) < 10) {
+    const asked = (name) => Object.values(sections ?? {}).flat().some((e) => String(e?.name ?? '').startsWith(name) && e?.clause);
+    const lrRows = Object.entries(sections ?? {}).flatMap(([sec, es]) => (es ?? []).map((e) => ({ sec, e })))
+      .filter(({ e }) => /^Legendary Resistance/.test(String(e?.name ?? '')) && !e?.clause);
+    const laSection = (sections ?? {})['Legendary Actions'] ?? [];
+    for (const { sec, e } of lrRows) {
+      const es = sections[sec]; const ix = es.indexOf(e); if (ix !== -1) es.splice(ix, 1);
+      noteDrop(e.template ?? null, 'legendary machinery below CR 10', String(e.name ?? ''));
+      trace('legendary resistance removed:', `"${e.name}" leaves — CR ${cr} is below print's floor for it (1 of print's 32 sits under CR 10: the Unicorn at CR 5) and the GM asked for no such thing`);
+    }
+    if (laSection.length && !laSection.some((e) => e?.clause) && !asked('Legendary')) {
+      trace('legendary actions removed:', `${laSection.length} legendary action(s) leave — CR ${cr} is below print's floor (1 of print's 30 sits under CR 10) and the GM asked for none`);
+      noteDrop(null, 'legendary machinery below CR 10', laSection.map((e) => String(e?.name ?? '')).join(', '));
+      delete sections['Legendary Actions'];
+    }
+  }
+  // ONE PER-TURN HEAL A SHEET (R10 · H3, 2026-11-03). Measured over the corpus: **4
+  // printed blocks carry one per-turn heal and NOT ONE carries two** — the same shape
+  // as "no block imposes one condition three ways". The critic found the stack twice
+  // (H18, H23) and the gate traced the mechanism: the heal is the CHASSIS's Regeneration
+  // and the second one was authored or templated beside it, so no guard that reads a
+  // single provenance can see it. This runs at ship over every row whatever wrote it.
+  //
+  // Which one stays is decided by receipt, not by provenance: a row that answers the
+  // GM (it carries a `clause`) or that is print's own outranks one that answers nobody.
+  // With two receipts the first stays, so the sheet never loses both.
+  if (!printExact) {
+    // WHICH ROWS HEAL IS DECLARED, NOT MATCHED (owner's catch, 2026-11-03: "is this
+    // string matching?"). The first cut regexed "regains N … at the start of each of its
+    // turns" out of finished prose — class D, meaning read off engine text. Two closed
+    // answers replace it: an authored row carries `heals`, a boolean the call now
+    // answers on the trait and reaction forms; a print or chassis row is identified by
+    // print's own row name, `Regeneration`, which is a closed fact about the corpus.
+    const healsPerTurn = Object.entries(sections ?? {}).flatMap(([sec, es]) => (es ?? []).map((e) => ({ sec, e })))
+      .filter(({ e }) => e?.heals === true || /^Regeneration\b/.test(String(e?.name ?? '')));
+    if (healsPerTurn.length > 1) {
+      const rank = ({ e }) => (e.clause ? 0 : e.print ? 1 : 2);
+      const keep = [...healsPerTurn].sort((a, b) => rank(a) - rank(b))[0];
+      for (const { sec, e } of healsPerTurn) {
+        if (e === keep.e) continue;
+        const es = sections[sec]; const ix = es.indexOf(e);
+        if (ix !== -1) es.splice(ix, 1);
+        noteDrop(e.template ?? null, 'one per-turn heal a sheet', String(e.name ?? ''));
+        trace('second per-turn heal removed:', `"${e.name}" leaves — "${keep.e.name}" already heals every turn and no printed block carries two (0 of 329). ${keep.e.clause ? `"${keep.e.name}" answers the GM's "${String(keep.e.clause).slice(0, 40)}"` : keep.e.print ? `"${keep.e.name}" is print's own row` : 'neither answers the GM, so the first stays'}`);
+      }
+    }
+  }
   // NO NULLISH ROW SURVIVES TO SHIP. A single undefined entry in a section kills
   // the whole generation — about a dozen sites read `.library`, `.print` or
   // `.name` off a row with no guard, and the forty
@@ -3447,12 +3505,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const t = f;
       const dmgTok = (eff) => String(eff).replace(/\s*\{dmg\}(?:\s+damage)?/g, (tok, off, whole) => (/\b(?:takes?|deals?|dealing|taking|extra|additional|plus|regains?|suffers?|an extra)\s*$/i.test(whole.slice(0, off)) ? tok : '')).replace(/\s{2,}/g, ' '); // "immune to anything {dmg}" — the token only stands where damage is dealt or taken (the Vault Bull, step 6 baseline)
       const text = renderForm({ kind: 'trait', trigger: t.trigger, effect: token(dmgTok(t.effect)) }, '2024', { properNouns: ownNouns() });
-      return { name: t.name, text, authored: true, clause: t.clause, ...(t.imposes ? { imposes: t.imposes } : {}), ...(t.requiresConditionNamed ? { requiresCondition: t.requiresConditionNamed } : {}), ...(t.flavor ? { flavor: t.flavor } : {}) };
+      return { name: t.name, text, authored: true, clause: t.clause, ...(t.heals ? { heals: true } : {}), ...(t.imposes ? { imposes: t.imposes } : {}), ...(t.requiresConditionNamed ? { requiresCondition: t.requiresConditionNamed } : {}), ...(t.flavor ? { flavor: t.flavor } : {}) };
     }
     if (kind === 'reaction') {
       const r = f;
       const text = renderForm({ kind: 'reaction', trigger: r.trigger, response: token(r.response) }, '2024', { properNouns: ownNouns() });
-      return { name: r.name, text, authored: true, clause: r.clause, ...(r.imposes ? { imposes: r.imposes } : {}), ...(r.requiresConditionNamed ? { requiresCondition: r.requiresConditionNamed } : {}) };
+      return { name: r.name, text, authored: true, clause: r.clause, ...(r.heals ? { heals: true } : {}), ...(r.imposes ? { imposes: r.imposes } : {}), ...(r.requiresConditionNamed ? { requiresCondition: r.requiresConditionNamed } : {}) };
     }
     return null;
   };

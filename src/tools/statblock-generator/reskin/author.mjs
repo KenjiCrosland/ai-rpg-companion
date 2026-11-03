@@ -19,7 +19,13 @@ export const CONDITIONS = ['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grap
 // goes to the call, and the engine only checks the answer is in this list.
 export const PASSIVE_EFFECTS = ['ability', 'bonus', 'protection', 'threat', 'limitation', 'none'];
 export const STATS = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma'];
-const TARGET_OK = /^(?:one creature within \d+ feet|each creature in a \d+-foot (?:Cone|Sphere|Line|Cube|Emanation)|each creature within \d+ feet|one creature it can see within \d+ feet)$/;
+// A SPHERE OR CUBE TARGET CARRIES ITS ORIGIN (R10 · H1, 2026-11-03). This enum accepted
+// "each creature in a 10-foot Sphere" and the sheet shipped it (G09): print always says
+// where a Sphere is centred, while a Cone, Line or Emanation comes from the creature by
+// convention and needs nothing. The first fix for this read the RENDERED row for a
+// Sphere with no "centered on" — which is class D, meaning read off engine text where a
+// declared field exists. The declared field is this one, so the refusal belongs here.
+const TARGET_OK = /^(?:one creature within \d+ feet|each creature in a \d+-foot (?:Cone|Line|Emanation)|each creature in a \d+-foot (?:Sphere|Cube) centered on a point within \d+ feet|each creature within \d+ feet|one creature it can see within \d+ feet)$/;
 const HAS_NUMBER = /\d/;
 // print's longest trait text is 714 characters (Loathsome Limbs); 240 refused 9% of print's 324
 const RULES_TEXT_CAP = 720;
@@ -36,10 +42,11 @@ export function formsSpec({ name, inline, attackCap = 2 }) {
   return [`THE FORMS`,
     ...(attackCap > 0 ? [`- attack (a weapon or body part): { "key": null, "clause", "name", "mode": "melee"|"ranged"|"both", "type": one of ${DAMAGE_TYPES.join('/')}, "rider": one of ${CONDITIONS.join('/')} or null, "flavor": optional } — up to ${attackCap} new rows.`] : []),
     `- save (a curse, a breath, a shove, a gaze): { "clause", "name", "stat": one of ${STATS.join('/')}, "target": "one creature within N feet" | "each creature in a N-foot Cone|Sphere|Line|Emanation", "damage": true|false, "type": one of the damage types or null, "condition": one of the conditions or null, "movement": "pushed up to N feet"|"pulled up to N feet"|null, "success": "half"|"none", "recharge": true|false }.`,
-    `- trait (a passive, a style, a resource — it costs the creature NOTHING; never write "uses its Reaction" here, that is the reaction form below): { "clause", "name", "trigger": a when/while/if clause or null, "effect": one sentence; write {dc} where a save DC belongs and {dmg} where damage belongs — never a number, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "acts": the name of another creature or object this row makes act, or null, "mechanics": how many separate things a table must do, "passive_effect": one of ${PASSIVE_EFFECTS.join('/')} }.`,
+    `- trait (a passive, a style, a resource — it costs the creature NOTHING; never write "uses its Reaction" here, that is the reaction form below): { "clause", "name", "trigger": a when/while/if clause or null, "effect": one sentence; write {dc} where a save DC belongs and {dmg} where damage belongs — never a number, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "acts": the name of another creature or object this row makes act, or null, "heals": true if it restores this creature Hit Points every round for free, "mechanics": how many separate things a table must do, "passive_effect": one of ${PASSIVE_EFFECTS.join('/')} }.`,
     `- A row that HEALS states the Hit Points as {dmg}, the action it costs, and a limit (a trigger, "1/Day", or "Recharge 5-6"): "restores hit points to the faithful" and "after minutes" are not rows a table can run.`,
-    `- reaction: { "clause", "name", "trigger": one sentence, "response": one sentence, same tokens, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "acts": the name of another creature or object this row makes act, or null, "mechanics": how many separate things a table must do }.`,
+    `- reaction: { "clause", "name", "trigger": one sentence, "response": one sentence, same tokens, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "acts": the name of another creature or object this row makes act, or null, "heals": true if it restores this creature Hit Points every round for free, "mechanics": how many separate things a table must do }.`,
     `- "acts" ON A TRAIT OR REACTION: name anything OTHER than this creature that your row makes act — attack, rise, move, carry, obey — exactly as the sheet above names it, or null. A table can only run it if that thing is a row on the sheet with rules of its own; if it is not, rewrite the row so this creature does the work. (A row that raises "a spore-puppet" needs a spore-puppet on the sheet.)`,
+    `- "heals" ON A TRAIT OR REACTION: true if the row gives this creature Hit Points back on its own, every round, with no action spent; false otherwise. A one-off heal, a heal that costs an action, and a heal on another creature are all false.`,
     `- "mechanics" ON A TRAIT OR REACTION: how many separate things the row makes a table do — count them, and answer the number. One row, one mechanic: a row that turns a blow back AND steps in front of an ally is two, a row that hides it AND heals it is two. Write the one that matters and leave the other out; we take only rows that answer 1.`,
     `- "imposes" ON A TRAIT OR REACTION: name the condition the row involves, or null if it involves none. A row that requires one condition and inflicts another names the one it INFLICTS.`,
     `- "passive_effect" ON A TRAIT: a trait must change what this creature CAN or CANNOT do. Name which, exactly one of: ability (it can do something other creatures cannot — breathe water, fly past without being struck at, pinpoint metal through stone) | bonus (it rolls better or hits harder under a stated circumstance) | protection (it resists, is immune to, or cannot be given something) | threat (merely standing near it, or striking it, costs the other creature something) | limitation (it CANNOT do something, or pays a price others do not — it can't shape-shift, it must submerge every few hours, it suffers in sunlight) | none. Answer NONE when the row only DESCRIBES the creature — how it waits, watches, perches, stalks, broods or looks. That is prose, not a trait, and we will drop the row: a trait with no positive and no negative effect on the creature is a line a GM cannot run (owner's ruling, 2026-10-30; shipped as the Dayvault Warden's "Patience", which said it "waits motionless on its perch, watching its prey, without taking any action").`,
@@ -181,7 +188,7 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // a trait is a RULE: it names a DC, damage, a number, a condition, or a rule verb — a sentence with none is flavor and goes to the description (the archlich's "Bound Dead of the Kingdom", check-in 2026-10-11)
   const scrubDmg = (eff) => String(eff ?? '').replace(/\s*\{dmg\}(?:\s+damage)?/g, (tok, off, whole) => (/\b(?:takes?|deals?|dealing|taking|extra|additional|plus|regains?|suffers?|an extra)\s*$/i.test(whole.slice(0, off)) ? tok : '')).replace(/\s{2,}/g, ' '); // the same rule the landing applies: a {dmg} that deals nothing is not a mechanic ("granting it {dmg} or a defensive benefit" — Meshrin, step 7 twelve)
   const MECHANIC = /\{dc\}|\{dmg\}|\d|\b(?:Advantage|Disadvantage|Resistance|Immun\w*|Vulnerab\w*|condition|saving throw|attack roll|Hit Points|Temporary|Speed|reach|range|can't|cannot|ignores?|regains?|takes? (?:no|half|extra|double|additional)|deals? (?:extra|double|additional)|Blinded|Charmed|Deafened|Frightened|Grappled|Paralyzed|Poisoned|Prone|Restrained|Stunned|Incapacitated|Invisible|Difficult Terrain|indistinguishable|motionless|rather than|counts as)\b/i;
-  const traitsAll = (Array.isArray(p.traits) ? p.traits : []).map((t) => ({ clause: str(t?.clause, 120), name: str(t?.name, 40), imposes: imposesFromRelation(t?.imposes, t?.condition_relation), requiresConditionNamed: requiredConditionFrom(t?.imposes, t?.condition_relation), acts: str(t?.acts, 60) || null, mechanics: Number.isFinite(Number(t?.mechanics)) ? Number(t.mechanics) : null, condition_relation: CONDITION_RELATIONS.includes(t?.condition_relation) ? t.condition_relation : null, trigger: perTurn(clean(t?.trigger) || null, clean(t?.effect)), effect: scrubDmg(clean(t?.effect)), flavor: str(t?.flavor, 160) || null,
+  const traitsAll = (Array.isArray(p.traits) ? p.traits : []).map((t) => ({ clause: str(t?.clause, 120), name: str(t?.name, 40), imposes: imposesFromRelation(t?.imposes, t?.condition_relation), requiresConditionNamed: requiredConditionFrom(t?.imposes, t?.condition_relation), acts: str(t?.acts, 60) || null, heals: t?.heals === true, mechanics: Number.isFinite(Number(t?.mechanics)) ? Number(t.mechanics) : null, condition_relation: CONDITION_RELATIONS.includes(t?.condition_relation) ? t.condition_relation : null, trigger: perTurn(clean(t?.trigger) || null, clean(t?.effect)), effect: scrubDmg(clean(t?.effect)), flavor: str(t?.flavor, 160) || null,
     // AN EXPLICIT "none" DROPS THE ROW; A MISSING ANSWER DOES NOT. The call saying
     // "this only describes the creature" is an answer and we act on it. The field
     // absent means the call failed or is an older shape, and a failed call never
@@ -267,7 +274,7 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // filtered silently on `name && trigger && response`, so a reaction dropped for
   // any reason looked identical to a call that wrote none — the same blindness the
   // trait refusals were given a reason for on 2026-10-25.
-  const reactionsAll = (Array.isArray(p.reactions) ? p.reactions : []).map((r) => ({ clause: str(r?.clause, 120), name: str(r?.name, 40), imposes: imposesFromRelation(r?.imposes, r?.condition_relation), requiresConditionNamed: requiredConditionFrom(r?.imposes, r?.condition_relation), acts: str(r?.acts, 60) || null, mechanics: Number.isFinite(Number(r?.mechanics)) ? Number(r.mechanics) : null, condition_relation: CONDITION_RELATIONS.includes(r?.condition_relation) ? r.condition_relation : null, trigger: clean(r?.trigger), response: clean(r?.response) }));
+  const reactionsAll = (Array.isArray(p.reactions) ? p.reactions : []).map((r) => ({ clause: str(r?.clause, 120), name: str(r?.name, 40), imposes: imposesFromRelation(r?.imposes, r?.condition_relation), requiresConditionNamed: requiredConditionFrom(r?.imposes, r?.condition_relation), acts: str(r?.acts, 60) || null, heals: r?.heals === true, mechanics: Number.isFinite(Number(r?.mechanics)) ? Number(r.mechanics) : null, condition_relation: CONDITION_RELATIONS.includes(r?.condition_relation) ? r.condition_relation : null, trigger: clean(r?.trigger), response: clean(r?.response) }));
   const reactionWhy = (r) => (tooManyMechanics(r) ? `the call counts ${tooManyMechanics(r)} mechanics in one row — one row, one mechanic`
     : bogusCondition(r) ? `it names "the ${bogusCondition(r)} condition", which is not a condition in this game`
     : !r.name ? 'the call named no row'
@@ -390,6 +397,23 @@ export const AFFLICTIONS = ['Grappled', 'Restrained', 'Prone', 'Incapacitated', 
  *
  * A row that imposes a condition is unaffected: its condition still picks.
  */
+// `referentsOf` IS WITHDRAWN (R10 · H1, 2026-11-03, owner's catch: "is this string
+// matching? looks like string matching"). It was — class D in §2's table, meaning read
+// off engine-written text where a declared field exists, three times over:
+//   the Sphere origin  -> the declared field is `TARGET_OK` above, which was accepting
+//                         an origin-less Sphere. Refused there now; the form cannot
+//                         produce one, so no reader is needed.
+//   the sense check    -> "within its tremorsense range" was matched out of the finished
+//                         prose. No field declares which senses a row leans on, so the
+//                         honest build is to ASK — a `senses` field on the trait and
+//                         reaction forms, naming any sense the row relies on, validated
+//                         against the header. Proposed, not built.
+//   the amount and DC  -> already refused in this session at 75 false positives on
+//                         print; they want the same treatment, a field at the call.
+// Two further checks had reached 0 false positives on print's 1,291 rows, which is why
+// they looked safe. A clean corpus is necessary and not sufficient: the test is whether
+// a DECLARED answer already exists, and for two of these it did.
+
 export function damageIsThePoint(row) {
   const t = String((typeof row === 'object' ? (row?.text ?? row?.description) : row) ?? '');
   if (!/\d+ \(\d+d\d+/.test(t)) return false;
