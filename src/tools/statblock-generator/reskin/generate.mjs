@@ -31,7 +31,7 @@ export const guardedStanceIllegalAt = (cr, ac) => {
   return !!(Number(ac) && par && Number(ac) > par);
 };
 export const guardedStanceWhyAt = (cr, ac) => `AC ${ac} already beats print's ${Number(challengeRatings?.[crKey(cr)]?.armor_class ?? 0)} at CR ${cr}, and print ships no persistent Disadvantage-to-be-hit trait (0 of 329)`;
-import { hpFormulaFor as hpFormulaForSize, saveDamageDiceFor as engineDiceFor, attackDamageDiceFor } from '../format-2024/dice.mjs';
+import { hpFormulaFor as hpFormulaForSize, saveDamageDiceFor as engineDiceFor, attackDamageDiceFor, D4_MAX } from '../format-2024/dice.mjs';
 import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedConditions } from './author.mjs'; // one definition: the conditions a finished row imposes
 import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the validated condition list the authoring call answers against
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
@@ -6846,8 +6846,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               const perDie = (wpP.die + 1) / 2;
               const count = Math.max(1, Math.round((Number(dm[1]) - mod) / perDie));
               const avg = Math.floor(count * perDie) + mod;
+              // PRINT'S OWN CEILING STOPS THE RESTAMP (the gate forty, 2026-11-03): past
+              // `D4_MAX` the die stops following the weapon, because print has no such row
+              // and the dice the budget already chose are the honest ones.
+              if (wpP.die === 4 && count > D4_MAX) trace('weapon dice keep the budget\'s die:', `the GM's "${bareW}" is a ${fit} (d4), but ${count}d4 passes print's largest d4 attack row (${D4_MAX}d4) — "${dm[0]}" stands`);
+              else {
               e.text = e.text.replace(dm[0], `${avg} (${count}d${wpP.die}${mod ? ` ${mod < 0 ? '-' : '+'} ${Math.abs(mod)}` : ''})`);
               trace('weapon dice follow the weapon:', `the GM's "${bareW}" is a ${fit} (d${wpP.die}) — "${dm[0]}" becomes "${avg} (${count}d${wpP.die}${mod ? ` ${mod < 0 ? '-' : '+'} ${Math.abs(mod)}` : ''})"`);
+              }
             }
             const rmP = /reach (\d+) ft/.exec(e.text ?? '');
             if (rmP && wpP.reach && Number(rmP[1]) !== wpP.reach) {
@@ -6877,8 +6883,15 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               const count = Math.max(1, Math.round((target - mod) / perDie));
               const avg = Math.floor(count * perDie) + mod;
               const was = dm[0];
+              // PRINT'S OWN CEILING STOPS THE RESTAMP (the gate forty, 2026-11-03): the rule
+              // below is print's "keep the die, scale the count", and print stops counting at
+              // `D4_MAX`. The forty shipped a 4d4 Dart and an earlier one a 7d4 cane; a GM does
+              // not roll seven d4 for a club. The budget's own dice stand instead.
+              if (wp.die === 4 && count > D4_MAX) trace('weapon dice keep the budget\'s die:', `"${bareW}" is a ${fit} (d4), but ${count}d4 passes print's largest d4 attack row (${D4_MAX}d4) — "${was}" stands`);
+              else {
               e.text = e.text.replace(was, `${avg} (${count}d${wp.die}${mod ? ` ${mod < 0 ? '-' : '+'} ${Math.abs(mod)}` : ''})`);
               trace('weapon dice follow the weapon:', `"${bareW}" is a ${fit} (d${wp.die}) — "${was}" becomes "${avg} (${count}d${wp.die}${mod ? ` ${mod < 0 ? '-' : '+'} ${Math.abs(mod)}` : ''})", print's rule of keeping the die and scaling the count`);
+              }
             }
             const rm = /reach (\d+) ft/.exec(e.text ?? '');
             if (rm && Number(rm[1]) !== wp.reach && wp.reach) {

@@ -7578,5 +7578,128 @@
     "askMechanicWhy": "drags its kills back to a lair of trophies"
    }
   ]
+ },
+ "3359b0fa6653": {
+  "concept": "The Hoarfrost Bailiff is a horse-sized fiend grown from frozen churned mud and the discarded armor of a routed army, its",
+  "clauses": [
+   {
+    "id": "cl_160himi",
+    "text": "The Hoarfrost Bailiff is a horse-sized fiend grown from frozen churned mud",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_z39zot",
+    "text": "the discarded armor of a routed army",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1oflgf2",
+    "text": "its hide a crust of black ice over a body that weeps a numbing brine from joints and knuckles",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_w8qg4s",
+    "text": "it is smart enough to remember every man who ran",
+    "kind": "mechanical",
+    "askMechanic": "track",
+    "askMechanicWhy": "remember every man who ran"
+   },
+   {
+    "id": "cl_jik533",
+    "text": "It stalks the old field in a low",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_14ggusl",
+    "text": "silent crouch",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_cpqyz6",
+    "text": "springs the last twenty paces",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "charge",
+    "askMechanicWhy": "springs the last twenty paces"
+   },
+   {
+    "id": "cl_1s2yc2j",
+    "text": "slams prey down with ice-shod hooves so the frozen venom in its skin seeps through the wound",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "shove",
+    "askMechanicWhy": "slams prey down"
+   },
+   {
+    "id": "cl_rss2lm",
+    "text": "locks the victim's legs",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "seeps through the wound",
+    "askShape": "condition",
+    "askMechanic": "snare",
+    "askMechanicWhy": "locks the victim's legs"
+   },
+   {
+    "id": "cl_1gsu28i",
+    "text": "Wounded",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "seeps through the wound",
+    "askShape": "condition",
+    "askMechanic": "snare",
+    "askMechanicWhy": "locks the victim's legs"
+   },
+   {
+    "id": "cl_o9cf51",
+    "text": "it does not flee",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "wounded",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "does not flee"
+   },
+   {
+    "id": "cl_izly4",
+    "text": "it circles downwind",
+    "kind": "mechanical",
+    "askMechanic": "track",
+    "askMechanicWhy": "harries the same quarry"
+   },
+   {
+    "id": "cl_1utwbml",
+    "text": "harries the same quarry for hours",
+    "kind": "mechanical",
+    "askMechanic": "track",
+    "askMechanicWhy": "harries the same quarry"
+   },
+   {
+    "id": "cl_h49bft",
+    "text": "patient and cruel",
+    "kind": "mechanical",
+    "askMechanic": "track",
+    "askMechanicWhy": "harries the same quarry"
+   },
+   {
+    "id": "cl_jsf5jv",
+    "text": "herding it toward the cold dead ground where the rest of its kind wait",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "herding it toward the cold dead ground"
+   },
+   {
+    "id": "cl_obu126",
+    "text": "It is fully sapient (INT 10-14)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_19f4v0u",
+    "text": "it is a relentless ambush predator",
+    "kind": "descriptive"
+   }
+  ]
  }
 }

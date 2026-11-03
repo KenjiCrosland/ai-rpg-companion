@@ -39,6 +39,19 @@ export function hpFormulaFor(targetHp, size, conMod = 0) {
  * made the attack roll). Returns the dice and their exact floor-average —
  * the skeleton prints that average, not the raw budget.
  */
+/**
+ * PRINT'S LARGEST d4 ATTACK ROW IS 3d4 (R10, 2026-11-02; re-sited 2026-11-03).
+ * Measured over the corpus: 99 attack rows use d4 and the largest is 3d4 — the
+ * Bugbear Warrior's Light Hammer, the Hobgoblin Warrior's Longbow, the Vampire
+ * Familiar's Umbral Dagger. A closed fact from print, so it lives in one place:
+ * `attackDamageDiceFor` declines to OFFER a bigger d4 candidate, and the two
+ * weapon-die restamps in the reskin path decline to FORCE one. The first cut set
+ * it only here, and the gate forty then shipped a 4d4 Dart — print's own rule of
+ * "keep the weapon's die and scale the count" runs on a later pass that this
+ * function never sees, which is exactly the row the d4-stack lint names.
+ */
+export const D4_MAX = 3;
+
 export function attackDamageDiceFor(avg, mod) {
   // House die is d8; smaller dice only when meaningfully closer. Within a
   // ±1 closeness tolerance the LARGER die wins — officials write "4d6 + 9",
@@ -51,7 +64,6 @@ export function attackDamageDiceFor(avg, mod) {
   // plays does not roll seven d4 for a club. A d4 candidate past print's own maximum is
   // simply not offered, so the next die up wins on closeness instead. Closed fact from
   // print, no judgement.
-  const D4_MAX = 3;
   const candidates = [];
   for (const die of [8, 6, 4]) {
     const per = (die + 1) / 2;
