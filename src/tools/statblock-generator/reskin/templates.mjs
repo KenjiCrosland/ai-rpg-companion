@@ -1640,14 +1640,32 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
   const onStyle = (t) => !style || t.styles.length === 0 || t.styles.includes(style);
   // the off-shelf ones are APPENDED, never mixed in: a longer menu must not
   // reorder a pick the shelf already had (the re-roll's own reel pin)
-  const rest = (t) => (true
-    && (!(EXCLUDE_ON[t.id] ?? []).some((fam) => engines.has(fam)) || supersedesRow(t))
-    && cr >= t.cr_range[0] && cr <= t.cr_range[1]
-    && (t.kind !== 'shape' || t.frames[band])
-    && (!t.requires_movement || new RegExp(t.requires_movement, 'i').test(movement))
-    && (!t.requires_style || t.requires_style === style) // a ward-shaped reaction needs the warden seat, not just a defender line
-    && !(t.deny_types && type && t.deny_types.some((ty) => new RegExp(`^${ty}\\b`, 'i').test(String(type))))
-    && !wouldBeThird(t) // print has no block imposing one condition three ways (0 of 329)
+  // WHICH FILTER WITHHELD A TEMPLATE (2026-11-03). This was one short-circuit `&&`
+  // expression, and the diagnostic below reported every failure among it as the
+  // single word `legality` — 3,815 of 5,650 same-seat rejections across ten runs,
+  // the largest category of "why the idea's template was not on the menu" and by
+  // construction unlabelled. The gap log could not answer "why are simple
+  // action/save/condition templates being lost?" because the answer was discarded on
+  // the last line, in the very function whose comment says only it holds the context.
+  //
+  // Same predicates, same order, same short-circuit: `restFail` returns the NAME of
+  // the first check a template fails, or null when it passes all of them, and `rest`
+  // reads that as a boolean. Every predicate is a pure read, so stopping at the first
+  // failure is exactly what the `&&` chain did. No behaviour change.
+  const REST_CHECKS = [
+    ['engine-family', (t) => (!(EXCLUDE_ON[t.id] ?? []).some((fam) => engines.has(fam)) || supersedesRow(t))
+    ],
+    ['cr-range', (t) => cr >= t.cr_range[0] && cr <= t.cr_range[1]
+    ],
+    ['band-frame', (t) => (t.kind !== 'shape' || t.frames[band])
+    ],
+    ['movement', (t) => (!t.requires_movement || new RegExp(t.requires_movement, 'i').test(movement))
+    ],
+    ['requires-style', (t) => (!t.requires_style || t.requires_style === style) // a ward-shaped reaction needs the warden seat, not just a defender line
+    ],
+    ['deny-type', (t) => !(t.deny_types && type && t.deny_types.some((ty) => new RegExp(`^${ty}\\b`, 'i').test(String(type))))
+    ],
+    ['condition-three-ways', (t) => !wouldBeThird(t) // print has no block imposing one condition three ways (0 of 329)
     // A BODY-MASS REQUIREMENT, read off the DECLARED size — never off the text.
     // Fails OPEN when size is unknown, like `type` and `movement` above, so the
     // call sites that pass no size are unaffected. Only two templates declare
@@ -1656,13 +1674,19 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     // CORRELATION is not a requirement, so the test is whether a GM would read a
     // contradiction (a Tiny body trampling a Medium one), not whether every
     // print instance happens to satisfy it (2026-10-22).
-    && !(t.requires_size && size && SIZES.indexOf(String(size)) >= 0
+    ],
+    ['size', (t) => !(t.requires_size && size && SIZES.indexOf(String(size)) >= 0
       && SIZES.indexOf(String(size)) < SIZES.indexOf(t.requires_size))
-    && !(t.requires_row instanceof RegExp && rows.length && !rows.some((e) => t.requires_row.test(e.text ?? '')) && !(t.keys ?? []).some((k) => new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(readPhrases(String(concept ?? ''))))) // a body-plan filter: a hurled weapon needs something to throw — a thrown/ranged row on the sheet, or a weapon the USER's words name (the armor's lance; never the gong) // a body trait is a BODY's: contact damage on a Humanoid pirate queen read her name as brine (critic, new lines 2026-09-28)
-    && (!section || t.section === section)
-    && triggerCompatible(trigger, t.trigger, t.section)
-    && !(text && deniedBy(t, text).length)
-    && !(REQUIRES_IMPOSED.has(t.id) && Array.isArray(imposed) && !imposed.length)
+    ],
+    ['requires-row', (t) => !(t.requires_row instanceof RegExp && rows.length && !rows.some((e) => t.requires_row.test(e.text ?? '')) && !(t.keys ?? []).some((k) => new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(readPhrases(String(concept ?? ''))))) // a body-plan filter: a hurled weapon needs something to throw — a thrown/ranged row on the sheet, or a weapon the USER's words name (the armor's lance; never the gong) // a body trait is a BODY's: contact damage on a Humanoid pirate queen read her name as brine (critic, new lines 2026-09-28)
+    ],
+    ['section', (t) => (!section || t.section === section)
+    ],
+    ['trigger', (t) => triggerCompatible(trigger, t.trigger, t.section)
+    ],
+    ['denied-clause', (t) => !(text && deniedBy(t, text).length)
+    ],
+    ['needs-imposed', (t) => !(REQUIRES_IMPOSED.has(t.id) && Array.isArray(imposed) && !imposed.length)
     // THE CALL DECIDES WHETHER THIS CREATURE HOLDS (owner's preference, 2026-10-17:
     // calls and keywords returned from the LLM over deterministic gates). The
     // route call answers `holds` with the GM's own words as its receipt, and
@@ -1671,7 +1695,8 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     // Ledger Hook" anyway, which the checker then failed for having no key
     // (gate-2026-10-17T19-30-16). The answer decides where the row LANDS, not
     // only where it is reported. A null answer leaves the word list deciding.
-    && !(NEEDS_ENGINE_KEY.has(t.id) && (holds === null ? !engineKeyOk(concept) : !holds))
+    ],
+    ['engine-key', (t) => !(NEEDS_ENGINE_KEY.has(t.id) && (holds === null ? !engineKeyOk(concept) : !holds))
     // IS IT TRUE OF THIS BODY? The template DECLARES what it needs in plain words
     // (NEEDS_BODY) and the CALL judges it, exactly as `holds` is judged above —
     // that one body question, generalised to the other 41. A verdict of false
@@ -1683,7 +1708,8 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     // its own right (house rule: a word list "acts as a fallback only when the
     // call fails or errors — never as a tiebreaker against it"). A null answer
     // leaves the word list deciding, the same concession `holds` makes.
-    && !(t.needs_body && (() => {
+    ],
+    ['body-verdict', (t) => !(t.needs_body && (() => {
       const v = bodyVerdicts ? bodyVerdicts[t.id] : undefined;
       if (typeof v === 'boolean') return !v;
       // UNANSWERED. A failed call must not silently strip 41 templates, so the
@@ -1704,11 +1730,19 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     // anatomy or arcane tech needs that claim in the GM's words or on the sheet
     // — the match keys are deliberately loose ("retreat", "shadow", "step") and
     // an idea-level verb must not buy a shell. Narrower than keys, by design.
-    && !(t.requires_claim instanceof RegExp && !t.requires_claim.test(String(concept ?? '')) && !rows.some((e) => t.requires_claim.test(`${e.name ?? ''} ${e.text ?? ''}`)))
+    ],
+    ['requires-claim', (t) => !(t.requires_claim instanceof RegExp && !t.requires_claim.test(String(concept ?? '')) && !rows.some((e) => t.requires_claim.test(`${e.name ?? ''} ${e.text ?? ''}`)))
     // a rider needs its host row on the sheet (a ranged rider was offered to a phantom with no ranged row)
-    && !(t.host && rows.length && !rows.some((e) => (t.host === 'ranged' ? /Ranged Attack Roll/ : /Melee Attack Roll/).test(e.text ?? '')))
-    && !(t.nova && hasNova)
-    && !owned.has(t.name.toLowerCase()));
+    ],
+    ['host-row', (t) => !(t.host && rows.length && !rows.some((e) => (t.host === 'ranged' ? /Ranged Attack Roll/ : /Melee Attack Roll/).test(e.text ?? '')))
+    ],
+    ['nova-taken', (t) => !(t.nova && hasNova)
+    ],
+    ['owned', (t) => !owned.has(t.name.toLowerCase())
+    ],
+  ];
+  const restFail = (t) => { for (const [name, ok] of REST_CHECKS) { if (!ok(t)) return name; } return null; };
+  const rest = (t) => restFail(t) === null;
   // the ROLE FILTER NO LONGER EXCLUDES on a slot that named its shape: the
   // shape-matched templates are appended across roles, after the shelf and the
   // key-asked ones, so a pick the shelf already had keeps its order (the
@@ -1726,7 +1760,9 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     diagnose.sameSeatRejected = TEMPLATES
       .filter((t) => t.section === section && t.trigger === trigger)
       .filter((t) => !(onShelf(t) && onStyle(t) && rest(t)))
-      .map((t) => `${t.id}:${!onShelf(t) ? 'role' : !onStyle(t) ? 'style' : 'legality'}`);
+      // `legality` was a catch-all for nineteen separate predicates; it now names the
+      // one that fired, so the gap log is a ranked list of gates instead of one word.
+      .map((t) => `${t.id}:${!onShelf(t) ? 'role' : !onStyle(t) ? 'style' : restFail(t) ?? 'legality'}`);
   }
   const onShelfList = TEMPLATES.filter((t) => onShelf(t) && onStyle(t) && rest(t));
   const askedList = TEMPLATES.filter((t) => !(onShelf(t) && onStyle(t)) && askedFor(t) && rest(t));

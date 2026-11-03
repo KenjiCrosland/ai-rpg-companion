@@ -16,6 +16,7 @@ import {
   validateNamingResponse,
 } from '../format-2024/generate.mjs';
 import { validateRouteResponse } from '../reskin/route.mjs';
+import { validateIdentityResponse } from '../format-2024/generate.mjs';
 import { validatePathResponse } from '../reskin/path.mjs';
 
 // ROUTE-CALL MOCKS (two calls since 2026-09-21): the route reply names a
@@ -265,17 +266,25 @@ describe('StatblockGenerator 2024 flow', () => {
       wrapper.unmount();
     });
 
-    test('auto + concept: resolve call first, then generation', async () => {
+    // A THIN CONCEPT IS EXPANDED BEFORE IT IS ROUTED (owner, 2026-11-03). "Gloom
+    // Stalker" is two significant words, which is all the router used to get — and on
+    // "Pumpkin King" that produced brute 6 times of 6 and the Clay Golem composition
+    // filling five of six rows. So at three significant words or fewer, and when the
+    // name is not a print creature, the identity call runs FIRST and the route call
+    // reads its expansion: the blank roll's order, and the SAME TWO CALLS reversed, so
+    // the count below is unchanged at five. The brass-bull test further down covers a
+    // concept too long to be thin and still asserts route-first.
+    test('auto + a THIN concept: the identity call expands it, then routing reads the expansion', async () => {
       mockLLM({ resolvedArchetype: 'lurker' });
       const wrapper = mountGenerator();
       await wrapper.find('input#monsterName').setValue('Gloom Stalker');
       await setCR(wrapper, '4');
       await generate(wrapper);
 
-      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(5); // route + path (beside it, shadow) + identity + flavor + naming
-      expect(aiClient.generateGptResponse.mock.calls[0][1]).toBe(validateRouteResponse); // the route call runs first
-      expect(aiClient.generateGptResponse.mock.calls[1][1]).toBe(validatePathResponse); // the path call rides beside it
-      expect(aiClient.generateGptResponse.mock.calls[2][1]).toBe(validateArchetypeResponse);
+      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(5); // identity (expansion) + route + path + flavor + naming — no extra call
+      expect(aiClient.generateGptResponse.mock.calls[0][1]).toBe(validateIdentityResponse); // the expansion runs first
+      expect(aiClient.generateGptResponse.mock.calls[1][1]).toBe(validateRouteResponse); // then the route, on the expanded text
+      expect(aiClient.generateGptResponse.mock.calls[2][1]).toBe(validatePathResponse); // the path call rides beside it
       expect(aiClient.generateGptResponse.mock.calls[3][1]).toBe(validateFlavorResponse);
       const saved = savedMonsters().Uncategorized[0];
       expect(saved.archetype).toBe('lurker');

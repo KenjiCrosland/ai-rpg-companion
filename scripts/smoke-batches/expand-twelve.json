@@ -1,0 +1,14 @@
+[
+  { "name": "Pumpkin King", "description": "", "cr": "10", "rules": "2024", "canary": "TARGET · the owner's case — 6 of 6 were brute-9-juggernaut before" },
+  { "name": "Pumpkin King", "description": "", "cr": "10", "rules": "2024", "canary": "TARGET · same again, to see the spread" },
+  { "name": "", "description": "lizardfolk shadow monk", "cr": "6", "rules": "2024", "canary": "TARGET · the owner's second case — thin, in the lore field" },
+  { "name": "The King of Cats", "description": "", "cr": "8", "rules": "2024", "canary": "TARGET · thin, hookless title" },
+  { "name": "Gloom Stalker", "description": "", "cr": "4", "rules": "2024", "canary": "TARGET · thin — the spec's own case" },
+  { "name": "Bell-Founder's Widow", "description": "", "cr": "5", "rules": "2014", "canary": "TARGET · thin, 2014 render" },
+  { "name": "Ogre", "description": "", "cr": "2", "rules": "2024", "canary": "CONTROL · thin BUT a print creature — must keep route-first, exact path" },
+  { "name": "Owlbear", "description": "", "cr": "3", "rules": "2024", "canary": "CONTROL · thin BUT print — exact path untouched" },
+  { "name": "Purple Worm", "description": "", "cr": "15", "rules": "2024", "canary": "CONTROL · thin BUT print — exact path untouched" },
+  { "name": "Dire Wolf", "description": "with a frost-rimed hide", "cr": "1", "rules": "2024", "canary": "CONTROL · print head + twist, not thin — route-first" },
+  { "name": "", "description": "a mud-caked bog hound that drags fishermen under", "cr": "1", "rules": "2014", "canary": "CONTROL · not thin — route-first, unchanged" },
+  { "name": "", "description": "a scaffold-spider that fights from the ceiling and never comes down", "cr": "7", "rules": "2024", "canary": "CONTROL · not thin — route-first, unchanged" }
+]

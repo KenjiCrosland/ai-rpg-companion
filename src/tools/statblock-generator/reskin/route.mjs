@@ -26,6 +26,28 @@ import { DONORS } from './donors.mjs';
 /** The shelf, in the order the model sees it. `role` is the menu label the saved monster records. */
 export const LINES = [
   // ---- brute: hits hard up close, soaks damage, easy to hit
+  // THE PLAIN BRUTE IS OVER-PICKED AND THIS IS NOT THE FIX (measured and REVERTED,
+  // 2026-11-03). The diagnosis stands: across 2,881 sheets brute is chosen 40.2% of the
+  // time against a 20.8% share of the shelf (1.93x) while skirmisher, with the most
+  // lines (7), is chosen at 0.55x — and it is the CALL choosing, not a fallback (16
+  // fallback notes in ~400 sheets, 4 to brute, zero "plain line by type").
+  //
+  // The attempted fix rewrote this blurb to demand positive evidence and added a rule
+  // preferring a styled line. A focused twelve (route-brute-2026-11-03T21-11-36) says it
+  // is WORSE. The five controls held perfectly — Ogre, Hill Giant, the stone-fist quarry
+  // brute and the regenerating troll all stayed brute — but all seven hookless targets
+  // left brute and FOUR of them went to `defender-leader`, whose signature is an aura
+  // for allies a solo monster does not have. Aura of Authority went from 2 of 40 sheets
+  // on the gate forty to 4 of 12 here, a 6.7x rise in exactly the unasked default row
+  // the critic keeps naming. The King of Cats came out as three melee attacks plus an
+  // allies aura: a brute with an irrelevant row bolted on.
+  //
+  // What the run actually shows: for a concept with no mechanical hook ("a pumpkin
+  // king"), the archetype label is not what makes the block dull — there is nothing to
+  // build from, so every chassis yields a generic sheet. Moving the label only changes
+  // which generic sheet. The owner's good artillery Pumpkin King differs by ACTION-TYPE
+  // VARIETY (spellcasting, a ranged attack, a self-escalating frighten, a reaction),
+  // which is the slot plan's business, not the shelf's. Fix it there or not at all.
   { id: 'brute', family: 'brute', style: null, blurb: 'a plain bruiser — big weapon or big limbs, stands and trades, no trick', exemplars: 'Ogre, Hill Giant, Minotaur' },
   { id: 'brute-charger', family: 'brute', style: 'charger', blurb: 'runs prey down — a straight rush that hits hardest at the end, gores, tramples the prone', exemplars: 'Gorgon, Rhinoceros, Triceratops' },
   { id: 'brute-grappler', family: 'brute', style: 'grappler', blurb: 'a solid BODY that seizes and holds — jaws, coils, tentacles, a maw or cage that swallows, engulfs, smothers, or drags prey inside itself (a ghost that pulls you under is lurker-phantom)', exemplars: 'Roper, Giant Constrictor Snake, Otyugh, Purple Worm', implies: ['grapple', 'engulf'] },

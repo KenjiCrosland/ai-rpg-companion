@@ -1287,9 +1287,82 @@ async function generateStatblockEngine(edition) {
               return dispatchPath(pathFields, read);
             } catch (e) { logger.warn('[path] call failed:', e?.message ?? e); return dispatchPath(pathFields, null); }
           };
-          // CALL 1 — ROUTE
+          // A NAME ON ITS OWN IS EXPANDED BEFORE IT IS ROUTED (owner, 2026-11-03).
+          // "Pumpkin King" in the Name box with nothing in the textarea gave the route
+          // call two words, and `king` is the only one with a mechanical reading — so it
+          // routed to brute 6 times out of 6 (pumpkin-six-2026-11-03T22-27-06), drew
+          // `brute-9-juggernaut` 5 of those 6, and the Clay Golem composition then filled
+          // FIVE of the six rows: an Absorption trait with the energy re-skinned, Siege
+          // Monster, Multiattack, a slam and a Recharge 5-6 blast. Every Pumpkin King was
+          // a recoloured Stone Golem, which is exactly what the owner reported seeing.
+          //
+          // So this path runs the two calls in the BLANK ROLL's order — identity first,
+          // route second, on the expanded text — because a name with no description is in
+          // the same position as an empty form: there is almost nothing for the router to
+          // read. It is the SAME TWO CALLS, reversed, so it costs nothing extra.
+          //
+          // What it gives up: the prose is no longer conditioned on the chassis, which the
+          // two-call split was partly for ("words and block agree from the start"). With
+          // only a name, routing correctly matters more than prose-chassis agreement — the
+          // trade the blank path already makes one block below.
+          //
+          // THINNESS IS THE TRIGGER, NOT WHICH BOX IT WAS TYPED IN (owner, 2026-11-03:
+          // "lizardfolk shadow monk… is basically using the lore field as a place to jot
+          // down a short concept and should be expanded just as much as a short name").
+          // The first cut keyed on "the Name box is filled and the textarea is empty",
+          // which read a WHOLE CONCEPT typed into the name box as a bare name and broke
+          // eight tests — "A brass bull that charges down anyone who enters its pen" is
+          // not a name needing expansion.
+          //
+          // `significantWords` is the file's existing definition of a concept too thin to
+          // read, already the gate for `engineKeyOk` and for the body-verdict fallback at
+          // three words or fewer. One definition, not a private copy.
+          //
+          // A PRINT NAME KEEPS TODAY'S ORDER. "Ogre" needs no expansion: the exact and
+          // twist paths compose it from print, and engine words would only get in the way.
+          // DECIDING THE ORDER MAY NEVER FAIL THE SHEET. Both helpers are lazy-loaded, and
+          // a caller can have the engine module mocked or tree-shaken to something that
+          // does not carry them — which is exactly what happened here first: the 2024-flow
+          // spec mocks reskin/generate.mjs down to `generateReskin` alone, so `printHeadCr`
+          // was undefined, the call threw, and generation died before its first LLM call.
+          // Any failure here falls back to today's route-first order.
+          let expandFirst = false;
+          try {
+            const [gen, tpl] = await Promise.all([import('./reskin/generate.mjs'), import('./reskin/templates.mjs')]);
+            if (typeof tpl?.significantWords === 'function') {
+              const thin = tpl.significantWords(userConcept).length <= 3;
+              const printHead = typeof gen?.printHeadCr === 'function'
+                && Number.isFinite(gen.printHeadCr(readPhrases(monsterName.value.trim() || userConcept)));
+              expandFirst = thin && !printHead;
+              if (thin && printHead) logger.log('[concept] thin but a print creature — keeping route-first:', userConcept);
+            }
+          } catch (e) {
+            logger.warn('[concept] could not decide the call order — keeping route-first:', e?.message ?? e);
+          }
+          let routeText = userConcept;
+          if (expandFirst) {
+            // CALL 1 — IDENTITY, unconditioned (`line: null`, which the prompt already
+            // tolerates): it answers creature_type, material, size, movement, attack_mode
+            // and signature_mechanic, which is the expansion this path needs.
+            try {
+              const rawX = await generateGptResponse(
+                buildIdentityPrompt(readPhrases(userConcept), '', { cr, archetype: givenArchetype, line: null, resolvedType: null }),
+                validateIdentityResponse,
+                2,
+              );
+              readProse(parseGenerationResponse(rawX), { blank: false });
+              const parts = [userConcept, conceptIdentity, conceptHouse ? `its body is ${conceptHouse}` : null, conceptAttackMode, conceptSignature]
+                .map((x) => String(x ?? '').trim()).filter(Boolean);
+              if (parts.length > 1) { routeText = parts.join(' — '); logger.log('[concept] thin concept expanded before routing:', routeText.slice(0, 300)); }
+              else logger.log('[concept] expansion added nothing — routing on the words as typed');
+            } catch (e) {
+              // NEVER-FAIL: a failed expansion falls back to today's order, not to nothing.
+              logger.warn('[concept] expansion call failed — routing on the name alone:', e?.message ?? e);
+            }
+          }
+          // CALL 1 — ROUTE (CALL 2 on the expand-first path)
           // a shadow decision may never delay the sheet: twenty seconds, then it is recorded as FAILED (timed out) and the route's own read stands
-          const routedP = routeOn(userConcept); // the route call is issued first; the path call rides beside it
+          const routedP = routeOn(routeText); // the route call is issued first; the path call rides beside it
           const pathCapped = Promise.race([pathOn(), new Promise((res) => setTimeout(() => res({ path: null, by: 'call', failed: true, print_body: null, relation: null, class: null, species: null, receipt: 'the path call did not answer within 20 s' }), 20_000))]);
           const [routedRaw, pathDecided] = await Promise.all([routedP, pathCapped]); // name — description, once (the route quoted "Flying speed of 60ft Flying speed of 60f" from the doubled text)
           conceptPath = pathDecided; logger.log(pathLine(conceptPath, userConcept));
@@ -1302,8 +1375,10 @@ async function generateStatblockEngine(edition) {
             if (Number.isFinite(headCr)) { cr = crNumberFor(headCr); logger.log('[concept] cr from print:', `${headCr} — a print creature heads the words and the user set none`); }
             else { const ladder = crFromWords(`${monsterName.value ?? ''} ${monsterDescription.value ?? ''}`); cr = ladder; logger.log('[concept] cr from the words:', `${ladder} — the user set none and no print name heads the words; a fixed ladder, never the model's read (critic form-ten 2026-10-01)`); }
           }
-          // CALL 2 — IDENTITY, conditioned on the routed line
-          try {
+          // CALL 2 — IDENTITY, conditioned on the routed line. SKIPPED when the name was
+          // already expanded above: that was this same call, and running it twice would
+          // cost a second call for no new field.
+          if (!expandFirst) try {
             const raw = await generateGptResponse(
               buildIdentityPrompt(readPhrases(userConcept), readPhrases(monsterDescription.value), { cr, archetype: givenArchetype, line: conceptLine, resolvedType }),
               validateIdentityResponse,

@@ -134,16 +134,22 @@ export const SHEET_LINTS = [
     run: (rows) => rows.filter(({ r }) => /-\s*\*\*At Will:\*\*|-\s*At will:/.test(TEXT(r)) && /Weapon Attack:|to hit with spell attacks/.test(TEXT(r)))
       .map(({ sec, r }) => `${sec}/${BARE(r.name)}: a 2024 spell bullet survived into a 2014 block`),
   },
-  {
-    rule: 'double-space-label',
-    reads: 'format of engine-written text',
-    why: 'two substitutions met at a label and left a doubled space — "*Failure:*  28 (8d6)" (two sheets on the gate sweep)',
-    // RAW text, not TEXT(): the shared reader collapses whitespace, so a doubled space
-    // is normalised away before any lint can see it (this one found nothing until it
-    // stopped using it).
-    run: (rows) => rows.filter(({ r }) => /(?:Failure|Success|Trigger|Response):\*?  /.test(String(r?.text ?? '')))
-      .map(({ sec, r }) => `${sec}/${BARE(r.name)}: a doubled space after a label`),
-  },
+  // PULLED, HAVING BEEN BUILT: 'double-space-label' (R10 · H4, built 2026-11-02, pulled
+  // 2026-11-03). It was the most frequent finding in the whole suite by five times —
+  // **148 hits, 26.7 per 100 sheets across 555 sheets and 14 rolls** — and not one of
+  // them is visible to anyone. The doubled space collapses in every path a GM reads:
+  // the 2024 card renders through `v-html` with no pre-wrap, the 2014 card's ability
+  // span is `white-space: pre-line` (which collapses space runs and keeps only
+  // newlines), and the markdown, Foundry and Improved Initiative exports all render as
+  // HTML or markdown, which collapse too.
+  //
+  // The tell was in the rule's own note: it had to read RAW `r.text` because the shared
+  // `TEXT()` reader normalises whitespace — the same normalisation every renderer does.
+  // A defect that only exists before normalisation is a storage artifact, and a lint
+  // whose top class is invisible makes every run read dirtier than it is: it alone took
+  // the 11-03 gate forty from 4 findings to 17. Fixing the CAUSE would mean another
+  // row-text substitution for a change no one can see, which is the opposite of the
+  // standing rule on string surgery. Measured and removed rather than tuned.
   // REFUSED, NOT BUILT: 'leading-flavor-sentence' (R10 · H4, 2026-11-02). The critic
   // named one row — the Well Drowned Thing's Drowning Crush, a flavour sentence before a
   // save skeleton. A predicate for "prose, then a starred label" fires **6 times on the
@@ -194,43 +200,25 @@ export const SHEET_LINTS = [
       return w ? [`header/inline: "${sheet.inline}" is the weapon "${w}" — its own rows will read as the weapon's`] : [];
     },
   },
-  {
-    rule: 'orphan-action-row',
-    reads: 'declared data (`gate`, `print`, `rules`) plus dice presence',
-    why: 'a full action that deals no damage, has no limit, and the Multiattack cannot swap to — nobody will ever spend an action on it',
-    run: (rows) => {
-      const out = [];
-      // PROVENANCE MUST BE KNOWABLE OR THIS LINT STANDS DOWN. A bare-print 2014
-      // sheet carries NO engine flags anywhere and an empty 2024 side, so nothing
-      // on it can be told from an invention — and print's 2024 corpus cannot vouch
-      // for a 2014-era row either (it has no "Change Shape" row at all, 0 of 329,
-      // though every 2014 dragon has one). Judging such a sheet produced two false
-      // positives on the Ancient Gold Dragon, which the critic grades "ship, print".
-      // The flag gap is the R3 finding; refusing to guess is this lint's job.
-      if (!rows.some(({ r }) => r.print || r.rules || r.library || r.template)) return out;
-      for (const secs of [rows]) {
-        const actions = secs.filter(({ sec, ed }) => sec === 'Actions' && ed === (secs.some((x) => x.ed === 'a' && x.sec === 'Actions') ? 'a' : secs.some((x) => x.ed === 'b') ? 'b' : 'c'));
-        const ma = actions.find(({ r }) => /^Multiattack/.test(BARE(r.name)));
-        const maT = ma ? TEXT(ma.r) : '';
-        for (const { sec, r } of actions) {
-          const n = BARE(r.name);
-          if (!n || /^Multiattack/.test(n)) continue;
-          // print's own furniture and derived lines stand alone. The NAME is checked
-          // as well as the flag because a bare-print 2014 sheet has an EMPTY 2024
-          // side, so its rows carry no provenance at all — which is how print's own
-          // Weakening Breath and Change Shape on the Ancient Gold Dragon first read
-          // as orphans. (That flag gap is itself an R3 finding: on such a sheet no
-          // consumer can tell print's rows from inventions.)
-          if (r.print || r.rules || PRINT_ROW_NAMES.has(n.toLowerCase())) continue;
-          if (DICE.test(TEXT(r))) continue;        // it deals damage, so it is worth an action
-          if (GATED(r)) continue;                  // a limited-use row is worth an action
-          if (maT.includes(n)) continue;           // the Multiattack can swap to it
-          out.push(`${sec}/${n}: a full action with no damage, no limit, and no Multiattack swap`);
-        }
-      }
-      return out;
-    },
-  },
+  // PULLED (one of the R1 suite's original ten, pulled 2026-11-03). PRINT SHIPS 38. An Action with no
+  // damage, no use limit and no Multiattack swap is print's ordinary control action:
+  // Harpy/Luring Song (CR 1), Ghost/Etherealness (CR 4), Doppelganger/Read Thoughts,
+  // Imp/Invisibility, Nalfeshnee/Teleport, Oni/Shape-Shift. The premise — "nobody will
+  // ever spend an action on it" — is false, and print says so 38 times.
+  //
+  // The rule only looked right because it excused print's rows BY NAME
+  // (`PRINT_ROW_NAMES`), so an invented row of the identical shape read as a defect
+  // while print's read as fine. That is a novelty test, not a defect test. On the 11-03
+  // gate forty it flagged the Vess Drowned Choir's "One Voice" — a lure in exactly the
+  // Luring Song shape, and the row the critic named that sheet's KEEPER.
+  //
+  // Its one true positive was Grunn's orphan Cage, and that row's defect was a DANGLING
+  // REFERENT (it required a grapple nothing applied), already fixed by the `requires`
+  // guard. The shape was never the problem. Generalising a shape from one named instance
+  // without measuring print first is the same error that produced
+  // 'leading-flavor-sentence' (5 of 6 hits were print's own grammar) and
+  // 'double-space-label' (invisible after normalisation) — three in one feature.
+
 ];
 
 /** Every finding on one sheet, as `{ rule, reads, message }`. */

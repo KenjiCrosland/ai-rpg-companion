@@ -47,7 +47,6 @@ describe('every lint declares what it reads', () => {
     [32, 'duplicate-row-name'],
     [36, 'engulf-needs-a-grapple'],
     [39, 'inline-weapon-collision'],
-    [27, 'orphan-action-row'],
     [28, 'double-punctuation'],
   ])('sheet %i -> %s', (ix, rule) => {
     expect(rulesOn(ix)).toContain(rule);
@@ -70,14 +69,12 @@ describe('every lint declares what it reads', () => {
   it('a spell-cast action is not an orphan', () => {
     // Spellcasting and Etherealness are full actions with no damage and no gate, and
     // they are worth an action; they carry `rules`/`print` and are exempt
-    for (const ix of [4, 26, 40]) expect(rulesOn(ix)).not.toContain('orphan-action-row');
   });
 
   it('a bare-print sheet is not judged for orphans at all', () => {
     // #19 carries NO engine flags and an empty 2024 side, so provenance is unknowable;
     // print's 2024 corpus has no "Change Shape" row (0 of 329) though every 2014
     // dragon has one, so the name set cannot vouch for it either
-    expect(rulesOn(19)).not.toContain('orphan-action-row');
   });
 
   it('the two print-exact sheets are clean', () => {
@@ -102,14 +99,20 @@ describe('every lint declares what it reads', () => {
   // Spellcasting block). The strength worth keeping is that the ORIGINAL ten are all
   // still found — a regression in any first-generation detector fails here — so the
   // assertion is now per-rule and the total is reported, not pinned.
-  it('still finds every one of the original ten the critic listed', () => {
+  it('still finds every one of the original ten the critic listed, less the one print refuted', () => {
     const all = fs.readdirSync(RUN).filter((x) => /^\d+-.*\.json$/.test(x))
       .flatMap((f) => lintSheet(JSON.parse(fs.readFileSync(path.join(RUN, f), 'utf8'))));
-    const ORIGINAL = ['empty-option', 'missing-number', 'dangling-save', 'duplicate-row-name', 'engulf-needs-a-grapple', 'inline-weapon-collision', 'orphan-action-row', 'double-punctuation'];
+    // 'orphan-action-row' left this list 2026-11-03: print ships 38 Actions with no
+    // damage, no limit and no Multiattack swap (Harpy/Luring Song, Ghost/Etherealness),
+    // so the shape is not a defect. See the refusal note in sheet-lints.mjs.
+    const ORIGINAL = ['empty-option', 'missing-number', 'dangling-save', 'duplicate-row-name', 'engulf-needs-a-grapple', 'inline-weapon-collision', 'double-punctuation'];
     const byRule = all.reduce((m, f) => ({ ...m, [f.rule]: (m[f.rule] ?? 0) + 1 }), {});
     const originalCount = ORIGINAL.reduce((n, r) => n + (byRule[r] ?? 0), 0);
-    expect(originalCount).toBe(10);
-    expect(all.length).toBeGreaterThanOrEqual(10);
+    // NINE, not ten: the tenth was sheet 27's orphan-action-row, and print ships 38
+    // Actions of that shape. A refuted detector losing its hit is not a regression —
+    // the nine below are each a distinct, visible defect and all must stay found.
+    expect(originalCount).toBe(9);
+    expect(all.length).toBeGreaterThanOrEqual(9);
   });
 
   it('reads every row of both printings', () => {
