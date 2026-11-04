@@ -42,11 +42,12 @@ export function formsSpec({ name, inline, attackCap = 2 }) {
   return [`THE FORMS`,
     ...(attackCap > 0 ? [`- attack (a weapon or body part): { "key": null, "clause", "name", "mode": "melee"|"ranged"|"both", "type": one of ${DAMAGE_TYPES.join('/')}, "rider": one of ${CONDITIONS.join('/')} or null, "flavor": optional } — up to ${attackCap} new rows.`] : []),
     `- save (a curse, a breath, a shove, a gaze): { "clause", "name", "stat": one of ${STATS.join('/')}, "target": "one creature within N feet" | "each creature in a N-foot Cone|Sphere|Line|Emanation", "damage": true|false, "type": one of the damage types or null, "condition": one of the conditions or null, "movement": "pushed up to N feet"|"pulled up to N feet"|null, "success": "half"|"none", "recharge": true|false }.`,
-    `- trait (a passive, a style, a resource — it costs the creature NOTHING; never write "uses its Reaction" here, that is the reaction form below): { "clause", "name", "trigger": a when/while/if clause or null, "effect": one sentence; write {dc} where a save DC belongs and {dmg} where damage belongs — never a number, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "acts": the name of another creature or object this row makes act, or null, "heals": true if it restores this creature Hit Points every round for free, "mechanics": how many separate things a table must do, "passive_effect": one of ${PASSIVE_EFFECTS.join('/')} }.`,
+    `- trait (a passive, a style, a resource — it costs the creature NOTHING; never write "uses its Reaction" here, that is the reaction form below): { "clause", "name", "trigger": a when/while/if clause or null, "effect": one sentence; write {dc} where a save DC belongs and {dmg} where damage belongs — never a number, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "acts": the name of another creature or object this row makes act, or null, "heals": true if it restores this creature Hit Points every round for free, "mechanics": how many separate things a table must do, "quantities": how many numbers the row promises, "passive_effect": one of ${PASSIVE_EFFECTS.join('/')} }.`,
     `- A row that HEALS states the Hit Points as {dmg}, the action it costs, and a limit (a trigger, "1/Day", or "Recharge 5-6"): "restores hit points to the faithful" and "after minutes" are not rows a table can run.`,
-    `- reaction: { "clause", "name", "trigger": one sentence, "response": one sentence, same tokens, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "acts": the name of another creature or object this row makes act, or null, "heals": true if it restores this creature Hit Points every round for free, "mechanics": how many separate things a table must do }.`,
+    `- reaction: { "clause", "name", "trigger": one sentence, "response": one sentence, same tokens, "imposes": one of ${CONDITIONS.join('/')} or null, "condition_relation": one of inflicts/requires/immune/self/none, "acts": the name of another creature or object this row makes act, or null, "heals": true if it restores this creature Hit Points every round for free, "mechanics": how many separate things a table must do, "quantities": how many numbers the row promises }.`,
     `- "acts" ON A TRAIT OR REACTION: name anything OTHER than this creature that your row makes act — attack, rise, move, carry, obey — exactly as the sheet above names it, or null. A table can only run it if that thing is a row on the sheet with rules of its own; if it is not, rewrite the row so this creature does the work. (A row that raises "a spore-puppet" needs a spore-puppet on the sheet.)`,
     `- "heals" ON A TRAIT OR REACTION: true if the row gives this creature Hit Points back on its own, every round, with no action spent; false otherwise. A one-off heal, a heal that costs an action, and a heal on another creature are all false.`,
+    `- "quantities" ON A TRAIT OR REACTION: how many separate NUMBERS the row needs a table to know — every damage amount, every distance or area size, every bonus or penalty. Count them and answer the number. Then WRITE every one of them: {dmg} for damage the engine should fill, {dc} for a save DC, and a literal number for a distance or an area ("a 15-foot Emanation", "within 30 feet"). A row that promises a number and does not write it cannot be run at a table and is refused — "gains Temporary Hit Points" with no amount, "an Emanation" with no size, "deals extra Fire damage" with no amount. If the row needs no numbers at all, answer 0.`,
     `- "mechanics" ON A TRAIT OR REACTION: how many separate things the row makes a table do — count them, and answer the number. One row, one mechanic: a row that turns a blow back AND steps in front of an ally is two, a row that hides it AND heals it is two. Write the one that matters and leave the other out; we take only rows that answer 1.`,
     `- "imposes" ON A TRAIT OR REACTION: name the condition the row involves, or null if it involves none. A row that requires one condition and inflicts another names the one it INFLICTS.`,
     `- "passive_effect" ON A TRAIT: a trait must change what this creature CAN or CANNOT do. Name which, exactly one of: ability (it can do something other creatures cannot — breathe water, fly past without being struck at, pinpoint metal through stone) | bonus (it rolls better or hits harder under a stated circumstance) | protection (it resists, is immune to, or cannot be given something) | threat (merely standing near it, or striking it, costs the other creature something) | limitation (it CANNOT do something, or pays a price others do not — it can't shape-shift, it must submerge every few hours, it suffers in sunlight) | none. Answer NONE when the row only DESCRIBES the creature — how it waits, watches, perches, stalks, broods or looks. That is prose, not a trait, and we will drop the row: a trait with no positive and no negative effect on the creature is a line a GM cannot run (owner's ruling, 2026-10-30; shipped as the Dayvault Warden's "Patience", which said it "waits motionless on its perch, watching its prey, without taking any action").`,
@@ -188,7 +189,7 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // a trait is a RULE: it names a DC, damage, a number, a condition, or a rule verb — a sentence with none is flavor and goes to the description (the archlich's "Bound Dead of the Kingdom", check-in 2026-10-11)
   const scrubDmg = (eff) => String(eff ?? '').replace(/\s*\{dmg\}(?:\s+damage)?/g, (tok, off, whole) => (/\b(?:takes?|deals?|dealing|taking|extra|additional|plus|regains?|suffers?|an extra)\s*$/i.test(whole.slice(0, off)) ? tok : '')).replace(/\s{2,}/g, ' '); // the same rule the landing applies: a {dmg} that deals nothing is not a mechanic ("granting it {dmg} or a defensive benefit" — Meshrin, step 7 twelve)
   const MECHANIC = /\{dc\}|\{dmg\}|\d|\b(?:Advantage|Disadvantage|Resistance|Immun\w*|Vulnerab\w*|condition|saving throw|attack roll|Hit Points|Temporary|Speed|reach|range|can't|cannot|ignores?|regains?|takes? (?:no|half|extra|double|additional)|deals? (?:extra|double|additional)|Blinded|Charmed|Deafened|Frightened|Grappled|Paralyzed|Poisoned|Prone|Restrained|Stunned|Incapacitated|Invisible|Difficult Terrain|indistinguishable|motionless|rather than|counts as)\b/i;
-  const traitsAll = (Array.isArray(p.traits) ? p.traits : []).map((t) => ({ clause: str(t?.clause, 120), name: str(t?.name, 40), imposes: imposesFromRelation(t?.imposes, t?.condition_relation), requiresConditionNamed: requiredConditionFrom(t?.imposes, t?.condition_relation), acts: str(t?.acts, 60) || null, heals: t?.heals === true, mechanics: Number.isFinite(Number(t?.mechanics)) ? Number(t.mechanics) : null, condition_relation: CONDITION_RELATIONS.includes(t?.condition_relation) ? t.condition_relation : null, trigger: perTurn(clean(t?.trigger) || null, clean(t?.effect)), effect: scrubDmg(clean(t?.effect)), flavor: str(t?.flavor, 160) || null,
+  const traitsAll = (Array.isArray(p.traits) ? p.traits : []).map((t) => ({ clause: str(t?.clause, 120), name: str(t?.name, 40), imposes: imposesFromRelation(t?.imposes, t?.condition_relation), requiresConditionNamed: requiredConditionFrom(t?.imposes, t?.condition_relation), acts: str(t?.acts, 60) || null, heals: t?.heals === true, mechanics: Number.isFinite(Number(t?.mechanics)) ? Number(t.mechanics) : null, quantities: Number.isFinite(Number(t?.quantities)) ? Number(t.quantities) : null, condition_relation: CONDITION_RELATIONS.includes(t?.condition_relation) ? t.condition_relation : null, trigger: perTurn(clean(t?.trigger) || null, clean(t?.effect)), effect: scrubDmg(clean(t?.effect)), flavor: str(t?.flavor, 160) || null,
     // AN EXPLICIT "none" DROPS THE ROW; A MISSING ANSWER DOES NOT. The call saying
     // "this only describes the creature" is an answer and we act on it. The field
     // absent means the call failed or is an older shape, and a failed call never
@@ -258,6 +259,29 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // Hit Points"), so testing for the token's presence refused every heal on the sheet.
   // The pair is what print never does — damage dealt AND hit points restored in one row.
   const damagesAndHeals = (x) => x?.heals === true && (`${x?.effect ?? ''} ${x?.response ?? ''}`.match(/\{dmg\}/g) ?? []).length >= 2;
+  // A ROW STATES EVERY NUMBER IT PROMISES (the critic's top Fix cause all week,
+  // 2026-11-03). Four rows across one forty and the Pumpkin set promised a quantity and
+  // never gave it: the Hydra's Knitting Flesh "gains Temporary Hit Points" with no
+  // amount; Cracked Candleflare's "an Emanation" with no size AND "fiercer while
+  // Bloodied" with no number; Ember Regrowth's "extra Fire damage" with no amount.
+  //
+  // THE CALL COUNTS, THE ENGINE CHECKS — the `mechanics` contract, applied to numbers.
+  // A word list was the alternative and was refused: two of those three rows DO carry a
+  // number elsewhere ("10 (3d6) Fire damage"), so "does this row contain a number" passes
+  // all three, and catching them by prose would mean a verb list for every way English
+  // promises a quantity — the same open-ended list that let "recharges" walk past
+  // `danglingRefIn` for weeks.
+  //
+  // Counting is on EXPRESSIONS, not digits: "10 (3d6) Fire damage" is one quantity and
+  // three numerals. A missing answer passes, as every other declared field's does.
+  const quantitiesStated = (x) => (String(`${x?.trigger ?? ''} ${x?.effect ?? ''} ${x?.response ?? ''}`)
+    .replace(/\d+\s*\(\d+d\d+(?:\s*[+-]\s*\d+)?\)/g, '#')  // a filled damage expression
+    .replace(/\{dmg\}|\{dc\}/g, '#')                        // an unfilled engine slot
+    .replace(/\d+d\d+/g, '#')
+    .replace(/\b\d+(?:-foot|\s*feet|\s*ft\.)/g, '#')
+    .replace(/\b\d+\b/g, '#')
+    .match(/#/g) ?? []).length;
+  const quantitiesOk = (x) => !Number.isFinite(Number(x?.quantities)) || Number(x.quantities) <= quantitiesStated(x);
   const traitIsSave = (t) => /saving throw/i.test(`${t.trigger ?? ''} ${t.effect}`);
   const dcMisused = (t) => /\{dc\}\s+(?:feet|ft)\b|within \{dc\}/i.test(`${t.trigger ?? ''} ${t.effect}`);
   // ONE DEFINITION FOR THE VERDICT AND ITS REASON (2026-11-01). The reason was
@@ -275,6 +299,7 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   const tooManyMechanics = (x) => (x?.mechanics != null && x.mechanics > 1 ? x.mechanics : null);
   const traitWhy = (t) => (tooManyMechanics(t) ? `the call counts ${tooManyMechanics(t)} mechanics in one row — one row, one mechanic`
     : bogusCondition(t) ? `it names "the ${bogusCondition(t)} condition", which is not a condition in this game`
+    : !quantitiesOk(t) ? `the call counts ${t.quantities} number(s) the row promises and only ${quantitiesStated(t)} are written — a promised amount, area or bonus with no number cannot be run`
     : firstTimeEachTurn(t) ? 'it fires "the first time each turn", which print never writes (0 of 329) — on every creature\'s turn is five times a round at a four-player table'
     : damagesAndHeals(t) ? 'it deals damage and heals in one row, which no printed block does (0 of 329)'
     : overCap(t) ? `the trigger or effect runs past ${RULES_TEXT_CAP} characters, longer than any trait print writes — it is refused rather than cut mid-word`
@@ -291,11 +316,12 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   // filtered silently on `name && trigger && response`, so a reaction dropped for
   // any reason looked identical to a call that wrote none — the same blindness the
   // trait refusals were given a reason for on 2026-10-25.
-  const reactionsAll = (Array.isArray(p.reactions) ? p.reactions : []).map((r) => ({ clause: str(r?.clause, 120), name: str(r?.name, 40), imposes: imposesFromRelation(r?.imposes, r?.condition_relation), requiresConditionNamed: requiredConditionFrom(r?.imposes, r?.condition_relation), acts: str(r?.acts, 60) || null, heals: r?.heals === true, mechanics: Number.isFinite(Number(r?.mechanics)) ? Number(r.mechanics) : null, condition_relation: CONDITION_RELATIONS.includes(r?.condition_relation) ? r.condition_relation : null, trigger: clean(r?.trigger), response: clean(r?.response) }));
+  const reactionsAll = (Array.isArray(p.reactions) ? p.reactions : []).map((r) => ({ clause: str(r?.clause, 120), name: str(r?.name, 40), imposes: imposesFromRelation(r?.imposes, r?.condition_relation), requiresConditionNamed: requiredConditionFrom(r?.imposes, r?.condition_relation), acts: str(r?.acts, 60) || null, heals: r?.heals === true, mechanics: Number.isFinite(Number(r?.mechanics)) ? Number(r.mechanics) : null, quantities: Number.isFinite(Number(r?.quantities)) ? Number(r.quantities) : null, condition_relation: CONDITION_RELATIONS.includes(r?.condition_relation) ? r.condition_relation : null, trigger: clean(r?.trigger), response: clean(r?.response) }));
   const reactionWhy = (r) => (tooManyMechanics(r) ? `the call counts ${tooManyMechanics(r)} mechanics in one row — one row, one mechanic`
     : bogusCondition(r) ? `it names "the ${bogusCondition(r)} condition", which is not a condition in this game`
     : !r.name ? 'the call named no row'
     : !r.trigger || !r.response ? 'a reaction needs both a trigger and a response'
+      : !quantitiesOk(r) ? `the call counts ${r.quantities} number(s) the row promises and only ${quantitiesStated(r)} are written — a promised amount, area or bonus with no number cannot be run`
       : firstTimeEachTurn(r) ? 'it fires "the first time each turn", which print never writes (0 of 329)'
       : damagesAndHeals(r) ? 'it deals damage and heals in one row, which no printed block does (0 of 329)'
       : overCap(r) ? `the trigger or response runs past ${RULES_TEXT_CAP} characters, longer than any reaction print writes — it is refused rather than cut mid-word`

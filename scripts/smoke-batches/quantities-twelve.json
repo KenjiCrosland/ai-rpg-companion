@@ -1,0 +1,14 @@
+[
+  { "name": "Hydra", "description": "whose stumps smoke instead of regrowing", "cr": "8", "rules": "2024", "canary": "TARGET · produced Knitting Flesh (temp HP, no amount)" },
+  { "name": "Pumpkin King", "description": "", "cr": "10", "rules": "2024", "canary": "TARGET · produced Cracked Candleflare and Ember Regrowth" },
+  { "name": "Pumpkin King", "description": "", "cr": "10", "rules": "2024", "canary": "TARGET · second roll of the same" },
+  { "name": "", "description": "a thing that grows stronger every time it is wounded", "cr": "9", "rules": "2024", "canary": "TARGET · escalation — invites an unstated bonus" },
+  { "name": "", "description": "a lantern-wight whose flame flares out when it is struck", "cr": "7", "rules": "2024", "canary": "TARGET · the Candleflare shape — invites an unsized Emanation" },
+  { "name": "", "description": "a bog-thing that knits itself shut faster than you can cut it", "cr": "6", "rules": "2024", "canary": "TARGET · the temp-HP shape" },
+  { "name": "", "description": "a mud-caked bog hound that drags fishermen under", "cr": "1", "rules": "2014", "canary": "CONTROL · its authored rows were fine" },
+  { "name": "", "description": "a scaffold-spider that fights from the ceiling and never comes down", "cr": "7", "rules": "2024", "canary": "CONTROL · authored rows were fine" },
+  { "name": "Owlbear", "description": "that has learned to climb", "cr": "3", "rules": "2014", "canary": "CONTROL · print twist" },
+  { "name": "Vashka the Red", "description": "A hobgoblin warlord in lacquered plate who fights from a shield wall", "cr": "6", "rules": "2024", "canary": "CONTROL · a Keeper two runs ago" },
+  { "name": "", "description": "a chapel bell-ringer's ghost that tolls for the dying", "cr": "5", "rules": "2024", "canary": "CONTROL · authored rows were fine" },
+  { "name": "Krennik Skullstandard", "description": "a goblin standard-bearer who rides a worg", "cr": "4", "rules": "2014", "canary": "CONTROL · authored a Reaction last run" }
+]

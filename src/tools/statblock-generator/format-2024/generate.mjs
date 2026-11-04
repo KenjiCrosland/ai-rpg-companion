@@ -1721,9 +1721,20 @@ export function to2014Grammar(text) {
   // (The fields themselves are not carried onto the row — the sixth instance of
   // "declared then not carried" this sprint — so this reads the labels the engine
   // wrote. When the fields ride, this becomes a render and the read goes.)
-  t = t.replace(/\bTrigger:\s*([^]*?)\s*Response:\s*([^]*)$/, (m0, trig, resp) => {
-    const lead = uncap(String(trig).replace(/\.$/, ''));
-    const body = uncap(resp);
+  // THE LABELS CARRY THEIR OWN EMPHASIS MARKS (the critic, 2026-11-03: "the 2014
+  // reaction renderer still prints 'When X. , Y'. It hit four sheets this roll and does
+  // every roll"). The engine writes `*Trigger:* … *Response:* …`, and this pattern
+  // matched `Trigger:` INSIDE those asterisks, so the capture kept them: the trigger came
+  // out as "* … roll. *", which ends in an asterisk, so `replace(/\.$/, '')` never struck
+  // the full stop. A later emphasis strip then removed the asterisks and left the two
+  // artifacts together — a doubled space where the `* ` had been, and ". ," where the
+  // unstripped stop met the comma this line adds. Reproduced on exactly the four sheets
+  // the critic named (sweep-2026-11-03T23-14-10: #18, #23, #25, #28 — Protective Magic,
+  // Riposte, Interpose, Protective Magic). The marks are now consumed and both halves are
+  // trimmed, so the stop is struck from the text it is actually on.
+  t = t.replace(/\*{0,2}\s*\bTrigger:\s*\*{0,2}\s*([^]*?)\s*\*{0,2}\s*Response:\s*\*{0,2}\s*([^]*)$/, (m0, trig, resp) => {
+    const lead = uncap(String(trig).trim().replace(/\.$/, '').trim());
+    const body = uncap(String(resp).trim());
     if (!lead) return body;
     return `When ${lead}, ${body}`;
   });

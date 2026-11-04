@@ -5556,6 +5556,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
                 const authoredSeatShape = { row, templateName: null, section: form.section, template: null, host: 'melee', supersedes: null, asked: vetAsked(fit.asked, rawConceptText), askedRaw: String(fit.asked ?? '').trim(), expresses: fit.expresses ?? null, accepted_closest: false, elementsOffered: sigElements, authoredSeat: true, because: `${String(idea.idea ?? '').slice(0, 160)} [authored: the catalog held no shape for it]` };
                 markFreeRow(authoredSeatShape); // one owner for the mark; BOTH marks ride, as they do for an element-receipt row
                 trace('seat authored the row:', `${seat} — the call refused every template for no_fit ("${String(fit.missing ?? 'unstated').slice(0, 70)}") and wrote ${seatKind} instead: "${row.name}" -> ${form.section}. ${row.text.slice(0, 120)}`);
+                // THE DECLARED COUNT RIDES OUT (2026-11-04). `quantities` gated the row in
+                // `parseAuthorResponse` and was then dropped, so a clean run could not be
+                // told from an unanswered field — the twelve of 2026-11-04T00-18-29 shipped
+                // 9 authored rows with 0 refusals and no way to know which. The seventh
+                // "declared then not carried" this sprint; traced rather than guessed at.
+                trace('authored row numbers:', `"${row.name}" — the call declared ${form.f?.quantities ?? '(unanswered)'} number(s) promised`);
                 return authoredSeatShape;
               }
             }

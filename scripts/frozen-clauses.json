@@ -7701,5 +7701,121 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "9b095e0dc26e": {
+  "concept": "A ghulvar is a long, glass-clear eel-shape of dense brine that sways upright in the black water and thinks, coldly and e",
+  "clauses": [
+   {
+    "id": "cl_1c1mkjl",
+    "text": "A ghulvar is a long",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_15w39bn",
+    "text": "glass-clear eel-shape of dense brine that sways upright in the black water and thinks",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1wyyxhl",
+    "text": "coldly and endlessly",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1b5xcxj",
+    "text": "about what it has already killed",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "drags its kills back"
+   },
+   {
+    "id": "cl_djn99n",
+    "text": "It never strikes to eat — its bite is only to wound",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_miybg2",
+    "text": "injecting a burning venom-acid from glands along its jaw that keeps prey alive",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "injecting",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_gy00r5",
+    "text": "screaming as it is hauled down",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "hauled",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "hauled"
+   },
+   {
+    "id": "cl_11e6h3e",
+    "text": "every round after the first lash it circles",
+    "kind": "mechanical",
+    "askOften": "once_per_turn",
+    "askOftenWhy": "every round after the first lash",
+    "askShape": "attack",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "every round after the first lash it circles re bites"
+   },
+   {
+    "id": "cl_w1jd5t",
+    "text": "re-bites",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "bite",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1vxe8io",
+    "text": "drowns its victim in its own dissolving wounds",
+    "kind": "mechanical",
+    "askOften": "once_per_turn",
+    "askOftenWhy": "every round after the first lash",
+    "askShape": "attack",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "every round after the first lash it circles re bites"
+   },
+   {
+    "id": "cl_1g7zp82",
+    "text": "Cornered or bloodied it does not break off — it retreats into its trench-larder of skeletal trophies",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_vqebb9",
+    "text": "watching with translucent patience",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_518src",
+    "text": "ambushes the pursuer from a lightless angle the moment the pursuit commits",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "the moment the pursuit commits",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "the moment",
+    "askShape": "attack",
+    "askMechanic": "charge",
+    "askMechanicWhy": "ambushes the pursuer"
+   },
+   {
+    "id": "cl_19nj5rq",
+    "text": "It is scheming (INT 14-16)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_fkirqu",
+    "text": "it is a hoarder that drags its kills back to a lair of trophies",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "drags its kills back"
+   }
+  ]
  }
 }

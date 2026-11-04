@@ -44,6 +44,33 @@ export const AREA_TARGETS = 2;
  * sprint's audit is about.
  */
 export const SINGLE_TARGET_CEILING = { '0-2': 24, '3-5': 31, '6-9': 35, '10-12': 39, '13-16': 51, '17-20': 51, '21+': 60 };
+/**
+ * PRINT'S HARDEST SINGLE-TARGET **SAVE** ROW, BY BAND (the critic, 2026-11-03).
+ *
+ * The ceiling above is derived from print's ATTACK rows, and the checker was applying it
+ * to save rows too — so a single-target save row at CR 13-16 was judged against 51 when
+ * print's hardest is 27. Print keeps a focused save row softer than a hit in every band
+ * but the last, which makes sense: the target gets a save.
+ *
+ * Measured the same way (sum every damage component of a row that deals damage, names
+ * one target, and resolves by a saving throw rather than an attack roll). 43 rows:
+ *   0-2   n=4   5, 5, 7, 13
+ *   3-5   n=12  6, 8, 9, 10, 13, 13, 15, 16, 17, 18, 18, 24
+ *   6-9   n=4   9, 14, 15, 29
+ *   10-12 n=7   10, 14, 20, 20, 21, 28, 31
+ *   13-16 n=7   15, 17, 19, 22, 24, 25, 27
+ *   17-20 n=2   10, 36            <- TWO ROWS. Thin, and the running max carries it.
+ *   21+   n=7   24, 31, 33, 33, 47, 56, 60
+ *
+ * A RUNNING MAX is applied for the same reason the attack table needs one, and the 17-20
+ * sample is why: at n=2 a band's own maximum is sampling, not a rule.
+ *
+ * The margin discipline is unchanged — over print is a true statement at any margin, and
+ * the 1.25x severity line still separates "one-shots a PC" from "wants a reader".
+ */
+export const SINGLE_TARGET_SAVE_CEILING = { '0-2': 13, '3-5': 24, '6-9': 29, '10-12': 31, '13-16': 31, '17-20': 36, '21+': 60 };
+/** The ceiling a row answers to: a save row is held to print's save rows, a hit to print's hits. */
+export const ceilingFor = (cr, { save = false } = {}) => (save ? SINGLE_TARGET_SAVE_CEILING : SINGLE_TARGET_CEILING)[ceilingBandOf(cr)] ?? null;
 export const ceilingBandOf = (cr) => (cr <= 2 ? '0-2' : cr <= 5 ? '3-5' : cr <= 9 ? '6-9' : cr <= 12 ? '10-12' : cr <= 16 ? '13-16' : cr <= 20 ? '17-20' : '21+');
 export const singleTargetCeiling = (cr) => SINGLE_TARGET_CEILING[ceilingBandOf(cr)] ?? null;
 

@@ -467,3 +467,56 @@ describe('R11 — the bonus-action guard reads declared data, not prose', () => 
     expect(TURN_DENIAL).not.toContain(got.saves[0].condition);
   });
 });
+
+describe('R12 — a row states every number it promises (the critic, 2026-11-03)', () => {
+  // The top Fix cause all week: four rows across one forty and the Pumpkin set promised
+  // a quantity and never gave it. These are the real rows, verbatim from
+  // sweep-2026-11-03T23-14-10 (#07 Hydra) and pumpkin-ten-2026-11-03T23-04-17 (#04, #07),
+  // with the engine's tokens restored to their pre-fill form.
+  //
+  // A word list was refused as the implementation: two of the three rows DO carry a
+  // number elsewhere ("10 (3d6) Fire damage"), so "does this row contain a number"
+  // passes all three. The call counts what it promised; the engine counts what is
+  // written. Counting is on EXPRESSIONS, not digits — "10 (3d6)" is one quantity.
+  const trait = (t) => parseAuthorResponse(JSON.stringify({ traits: [{ clause: 'c', mechanics: 1, passive_effect: 'other', ...t }] }));
+
+  it("refuses the Hydra's Knitting Flesh — temporary Hit Points with no amount", () => {
+    const got = trait({ name: 'Knitting Flesh', quantities: 1, trigger: 'When the hydra takes Slashing or Piercing damage', effect: 'the hydra gains Temporary Hit Points as its flesh knits furiously shut' });
+    expect(got.traits).toHaveLength(0);
+    expect(got.refused[0].why).toMatch(/counts 1 number\(s\).*only 0 are written/);
+  });
+
+  it("refuses Ember Regrowth — 'extra Fire damage' with no amount, beside one that has it", () => {
+    const got = trait({ name: 'Ember Regrowth', quantities: 2, trigger: 'While standing on soil at the start of its turn', effect: 'its vine attacks deal extra Fire damage, and a creature that starts its turn within reach takes {dmg} Fire damage' });
+    expect(got.traits).toHaveLength(0);
+    expect(got.refused[0].why).toMatch(/only 1 are written/);
+  });
+
+  it('refuses Cracked Candleflare — an Emanation with no size', () => {
+    const got = parseAuthorResponse(JSON.stringify({ reactions: [{ clause: 'c', name: 'Cracked Candleflare', mechanics: 1, quantities: 3, trigger: 'When a creature within reach hits the pumpkin king with a melee attack', response: 'each creature in an Emanation originating from the pumpkin king makes a {dc} Dexterity Saving Throw, taking {dmg} Fire damage on a failure, and the flare is fiercer while Bloodied' }] }));
+    expect(got.reactions).toHaveLength(0);
+    expect(got.refused[0].why).toMatch(/counts 3 number\(s\).*only 2 are written/);
+  });
+
+  it('keeps a row that states every number it promised', () => {
+    const got = trait({ name: 'Ember Coat', quantities: 1, trigger: 'At the start of each of its turns', effect: 'a creature within 5 feet takes {dmg} Fire damage' });
+    expect(got.refused).toHaveLength(0);
+    expect(got.traits).toHaveLength(1);
+  });
+
+  it('counts a filled damage expression as ONE quantity, not three numerals', () => {
+    // "10 (3d6)" is 10, 3 and 6 to a digit scan; it is one number to a GM.
+    const got = trait({ name: 'Filled', quantities: 1, trigger: 'At the start of each of its turns', effect: 'a creature within 5 feet takes 10 (3d6) Fire damage' });
+    expect(got.traits).toHaveLength(1);
+  });
+
+  it('a missing count passes, as every other declared field does when absent', () => {
+    const got = trait({ name: 'Old Shape', trigger: 'When hit', effect: 'the king gains Temporary Hit Points' });
+    expect(got.traits).toHaveLength(1);
+  });
+
+  it('answering 0 on a row that needs no numbers passes', () => {
+    const got = trait({ name: 'No Numbers', quantities: 0, trigger: null, effect: 'The king cannot have the Frightened condition' });
+    expect(got.traits).toHaveLength(1);
+  });
+});

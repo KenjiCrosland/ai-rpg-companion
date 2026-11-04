@@ -40,3 +40,37 @@ describe('a 2014 printing carries no 2024 vocabulary', () => {
     expect(to2014Grammar(plain)).toBe(plain);
   });
 });
+
+describe("the 2014 reaction sentence (the critic, 2026-11-03: \"When X. ,  Y\")", () => {
+  // The engine writes `*Trigger:* … *Response:* …`, and the converter matched `Trigger:`
+  // INSIDE those asterisks — so the captured trigger ended in "*", the trailing-stop
+  // strip never fired, and a later emphasis strip left both artifacts at once: a doubled
+  // space where "* " had been, and ". ," where the kept stop met the added comma.
+  // Reproduced on exactly the four sheets the critic named in
+  // sweep-2026-11-03T23-14-10 (#18, #23, #25, #28) — these are their stored rows.
+  const CASES = [
+    ['#18 Protective Magic', '*Trigger:* The osseo-solar lich is hit by an attack roll. *Response:* The osseo-solar lich casts *Shield* in response, gaining a +5 bonus to AC.'],
+    ['#23 Riposte', '*Trigger:* A creature within 5 feet of Vashka misses it with a melee attack roll. *Response:* Vashka makes one Longsword attack against that creature.'],
+    ['#25 Interpose', '*Trigger:* A creature within 5 feet of the sentinel that it guards is hit by an attack roll. *Response:* The attack hits the sentinel instead.'],
+    ['#28 Protective Magic', '*Trigger:* Ilvareth is hit by an attack roll. *Response:* Ilvareth casts *Shield* in response.'],
+  ];
+
+  it.each(CASES)('%s renders with no ". ," and no doubled space', (_name, row) => {
+    const out = to2014Grammar(row);
+    expect(out).not.toMatch(/\.\s+,/);
+    expect(out).not.toMatch(/\S {2,}\S/);
+    expect(out).toMatch(/^When \S/);
+    expect(out).not.toMatch(/Trigger:|Response:/);
+  });
+
+  it('lowercases the determiner, which the asterisk used to block', () => {
+    // `uncap` only lowercases a leading determiner or pronoun; with the asterisk
+    // captured, the first "word" was "*" and every trigger kept its capital.
+    expect(to2014Grammar(CASES[1][1])).toMatch(/^When a creature within 5 feet/);
+    expect(to2014Grammar(CASES[0][1])).toMatch(/^When the osseo-solar lich/);
+  });
+
+  it('a proper name keeps its capital', () => {
+    expect(to2014Grammar(CASES[3][1])).toMatch(/^When Ilvareth is hit/);
+  });
+});

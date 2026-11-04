@@ -15,7 +15,7 @@ import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedCondition, imposedCon
 import { lintStatblock, stripBloodiedSplit } from '../format-2024/lint.mjs';
 import { HIT_DIE_BY_SIZE } from '../format-2024/dice.mjs';
 import { WEAPONS, weaponFor, weaponProp, namesWeapon } from './weapons.mjs';
-import { cardBudget, dmgRow, SINGLE_TARGET_CEILING, ceilingBandOf } from './card-budgets.mjs';
+import { cardBudget, dmgRow, SINGLE_TARGET_CEILING, SINGLE_TARGET_SAVE_CEILING, ceilingBandOf } from './card-budgets.mjs';
 import { NOVA_CAP, gateOf, SIZES, saveStatsFor } from './templates.mjs'; // one definition of a row's gate: the field first, the name only as print's canon/a missed-stamp signal
 import { CONTROL_SPELL_LEVEL, CONTROL_AT_WILL_CR, SPELL_DAMAGE_AVG, printCanonFor, nearPrintCr } from './generate.mjs';
 import { speciesFor } from './species.mjs';
@@ -86,7 +86,20 @@ export function danglingRefIn(text, names, rowName = '') {
   // consecutive particles ("Toll of the Crossing") captured only "Toll", and the
   // bare verb "use" was not in the alternation at all ("It can use Weighing
   // Pan"). Particles may now repeat inside the run, and "use" joins "uses".
-  for (const ref of String(text ?? '').matchAll(/(?:use of|uses?|cast) ((?:[A-Z][\w'-]*)(?:(?: (?:of|the|and|in|to|from|at|on|with|upon))* [A-Z][\w'-]*){0,3})/g)) {
+  // A THIRD DOOR: "recharges X" (the critic, 2026-11-03). The Osseo-Solar Lich's
+  // authored Soul-Fed Halo read "recharges Skeletal Radiance immediately" and the sheet
+  // had no such row — eleven rows, none of them that. It joins the alternation rather
+  // than getting its own scan, so it inherits every guard above: REF_SKIP, the
+  // "stat block" idiom, and the particle-aware title-case run.
+  //
+  // Measured before adding, both ways. Across every saved run, this verb is the ONLY
+  // citation shape the two existing doors miss — `resets`, `triggers`, `activates`,
+  // `repeats`, `refreshes`, "regains the use of" and "grants the use of" produce zero
+  // misses, so this is the whole gap and not the next one in a queue. And print has 0
+  // rows matching "recharges <TitleCase>" at all, so it costs no false refusal there
+  // (print writes "recharges after a Short or Long Rest", where the next word is
+  // lowercase and the pattern does not fire).
+  for (const ref of String(text ?? '').matchAll(/(?:use of|uses?|cast|recharges?) ((?:[A-Z][\w'-]*)(?:(?: (?:of|the|and|in|to|from|at|on|with|upon))* [A-Z][\w'-]*){0,3})/g)) {
     const target = ref[1].trim();
     if (REF_SKIP.test(target)) continue;
     if (/\bcast\b/.test(ref[0])) continue;
@@ -442,6 +455,17 @@ function gateBands(m, ctx, F) {
       const t = stripBloodiedSplit(e.text); // one definition; this copy allowed ONE component before "if" and read a 53-point hit as 79
       if (!/Attack Roll/.test(t) && !/\bone creature\b|\bone target\b|\bone Humanoid\b|one (?:Tiny|Small|Medium|Large|Huge|Gargantuan) or smaller creature/.test(t)) continue;
       let tot = 0; for (const d of t.matchAll(/(\d+) \(\d+d\d+(?:\s*[+-]\s*\d+)?\)/g)) tot += Number(d[1]);
+      // A SAVE ROW ANSWERS TO PRINT'S SAVE ROWS (the critic, 2026-11-03). `cap` above is
+      // derived from print's ATTACK rows, and holding a save row to it judged a CR 13-16
+      // focused save against 51 when print's hardest is 27 — print keeps a save row
+      // softer than a hit in every band but the last, because the target gets a save.
+      // Measured: 214 of our 750 single-target save rows sit over print's save ceiling,
+      // 90 of them invisible to the attack ceiling, the worst at 1.58x (49 at CR 13
+      // against print's 31). The critic's own two examples are NOT among them — the
+      // Banshee's Undertow is CR 24, where both ceilings are 60, and the swarm's Knell is
+      // an attack row — so this is the gap their principle names, not their instances.
+      const isSaveRow = /Saving Throw/.test(t) && !/Attack Roll/.test(t);
+      const rowCap = isSaveRow ? (SINGLE_TARGET_SAVE_CEILING[ceilingBandOf(cr)] ?? cap) : cap;
       // SEVERITY TRACKS THE DEGREE, as `hot-offense` does (soft up to three CRs
       // over, fail beyond). Over print's hardest is a true statement at any
       // margin, but 13% over is not the defect the critic found: its one-shots
@@ -450,7 +474,7 @@ function gateBands(m, ctx, F) {
       // listed are 1.14x and 1.16x once the cap is the RUNNING max it asked for.
       // So a quarter over is the line: beyond it the row one-shots a PC, under it
       // the row wants a reader.
-      if (tot > cap) F('single-target-ceiling', tot >= cap * 1.25 ? 'fail' : 'soft', `${sec}/${name}: ${tot} damage to one target in one action at CR ${cr} — print's hardest in this band is ${cap} (${(tot / cap).toFixed(2)}x), and a gate does not excuse it (print's are ungated)`, String(tot));
+      if (tot > rowCap) F('single-target-ceiling', tot >= rowCap * 1.25 ? 'fail' : 'soft', `${sec}/${name}: ${tot} damage to one target in one action at CR ${cr} — print's hardest ${isSaveRow ? 'single-target SAVE row' : 'single hit'} in this band is ${rowCap} (${(tot / rowCap).toFixed(2)}x), and a gate does not excuse it (print's are ungated)`, String(tot));
     }
   }
   const pcB = ctx.print;

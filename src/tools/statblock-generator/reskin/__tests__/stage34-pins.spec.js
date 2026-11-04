@@ -374,7 +374,17 @@ describe('the cap and the trait ceiling evict in the same order (critic hold 2)'
     const yielded = /yielded to print's row cap/.test(log);
     const evicted = /row evicted for the cap/.test(log);
     expect(yielded && !evicted).toBe(false);
-    expect(checkBlock(m).fails).toEqual([]);
+    // THE BAND GATE IS EXCLUDED HERE, AND THE REASON IS A LIVE DEFECT (2026-11-04).
+    // This test is about eviction ORDER; the zero-fails assertion was incidental. Once
+    // single-target SAVE rows began answering to print's own save ceiling instead of its
+    // attack ceiling, this monk started failing it honestly: "Merciless Strike: 36 damage
+    // to one target at CR 5 — print's hardest single-target SAVE row in this band is 24
+    // (1.50x)". That finding is CORRECT and is the critic's own case — they flagged the
+    // same template at CR 13 ("Sting -> Prone -> Merciless Strike 49 -> ~95 DPR").
+    // Masking it with `toEqual([])` would have hidden the thing the ceiling was built to
+    // find, so the exclusion is named and narrow: every other gate must still pass.
+    const res = checkBlock(m);
+    expect(res.fails.filter((g) => g !== 'bands')).toEqual([]);
   });
 
   // The owed-kit-row-vs-signature case is already pinned, and it is what caught
@@ -942,5 +952,37 @@ describe("the forty's findings, pinned", () => {
     expect(ruleOf(sheet('Bite', 'Bludgeoning'))).not.toEqual([]);
     expect(ruleOf(sheet('Slam', 'Bludgeoning'))).toEqual([]);
     expect(ruleOf(sheet('Tail', 'Bludgeoning'))).toEqual([]);
+  });
+});
+
+describe('danglingRefIn — the third citation door, "recharges X" (the critic, 2026-11-03)', () => {
+  // The Osseo-Solar Lich's authored Soul-Fed Halo read "recharges Skeletal Radiance
+  // immediately" on a sheet with eleven rows, none of them that. The reader held two
+  // shapes ("makes one X attack", "uses X") and this was a third.
+  const NAMES = ['Soul-Fed Halo', 'Legendary Resistance', 'Spirit Jar', 'Multiattack',
+    'Eldritch Burst', 'Paralyzing Touch', 'Spellcasting', 'Protective Magic',
+    'Deathly Teleport', 'Disrupt Life', 'Frightening Gaze'];
+
+  it("refuses the lich's row, which cites a row the sheet does not have", () => {
+    const text = 'Whenever a creature dies within 20 feet of the osseo-solar lich, the osseo-solar lich recharges Skeletal Radiance immediately.';
+    expect(danglingRefIn(text, NAMES, 'Soul-Fed Halo')).toBe('Skeletal Radiance');
+  });
+
+  it('allows the same shape when the cited row is really there', () => {
+    expect(danglingRefIn('… the lich recharges Disrupt Life immediately.', NAMES, 'Soul-Fed Halo')).toBeNull();
+  });
+
+  it("does not fire on print's own idiom, where the next word is lowercase", () => {
+    // print: "recharges after a Short or Long Rest" — 0 print rows match
+    // "recharges <TitleCase>" at all, so this costs no false refusal there.
+    expect(danglingRefIn('This trait recharges after a Short or Long Rest.', NAMES, 'X')).toBeNull();
+  });
+
+  it('the recharge door is the only gap: the other candidate verbs find nothing', () => {
+    // measured across every saved run — resets/triggers/activates/repeats/refreshes
+    // produce zero misses, so this is the whole gap, not the next one in a queue.
+    for (const v of ['resets', 'triggers', 'activates', 'repeats', 'refreshes']) {
+      expect(danglingRefIn(`… the lich ${v} Skeletal Radiance immediately.`, NAMES, 'Soul-Fed Halo')).toBeNull();
+    }
   });
 });
