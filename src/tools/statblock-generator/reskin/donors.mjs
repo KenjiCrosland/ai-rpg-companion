@@ -698,6 +698,19 @@ export const DONORS = [
       ],
     },
   },
+  // A HIGH-CR AREA NOVA USES PRINT'S HIGH-CR CONE (2026-11-04). brute-13, brute-17 and
+  // brute-17-juggernaut shipped a 30-foot Cone, which is print's size for CR 5-12, so a
+  // CR 17 brute's nova covered the area of a CR 8 one. Raised to 60, which is the only
+  // NON-DRAGON precedent print offers above CR 12: the Iron Golem's Poison Breath at
+  // CR 16 is a 60-foot Cone.
+  //
+  // NOT 90. Print's 90-foot cones are ancient dragons, and the dragon donors already
+  // carry print's banding exactly (dragon-2 15, dragon-8 30, dragon-15 60, dragon-22 90)
+  // — so that part was never broken. brute-21 keeps its 60 for the same reason: print's
+  // only non-dragon cone above CR 16 is the Tarrasque's 150 at CR 30, n=1, which is no
+  // basis for a band. Our aggregate cone median read 30 at CR 13+ only because brute
+  // novas outnumber dragon breaths 40% to 7% of sheets, not because the dragons were wrong.
+
   {
     id: 'brute-13',
     invented: true, // no printed plain brute at 13 outside dragons; card + sweep composition
@@ -711,7 +724,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +10, reach 10 ft. 45 (9d8 + 5) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +10, range 60/240 ft. 38 (8d8 + 2) {damage_type} damage.' },
-        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 17, each creature in a 60-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 17, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
     },
@@ -1003,7 +1016,7 @@ export const DONORS = [
       Actions: [
         { name: 'Multiattack', text: 'The creature makes two Melee Attack attacks.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 58 (13d8) {damage_type} damage.' },
-        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 19, each creature in a 30-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 19, each creature in a 60-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Legendary Actions': [
@@ -1079,7 +1092,7 @@ export const DONORS = [
         { name: 'Multiattack', text: 'The creature makes two attacks, using Melee Attack or Ranged Attack in any combination.' },
         { name: 'Melee Attack', text: '*Melee Attack Roll:* +12, reach 10 ft. 46 (9d8 + 6) {damage_type} damage.' },
         { name: 'Ranged Attack', text: '*Ranged Attack Roll:* +12, range 60/240 ft. 39 (6d10 + 6) {damage_type} damage.' },
-        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 19, each creature in a 30-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
+        { name: 'Area Nova', text: '*Constitution Saving Throw*: DC 19, each creature in a 60-foot Cone. *Failure:* 55 (10d10) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage only.', gate: 'Recharge 5-6' },
         { name: 'Signature Slot', wildcard_slot: true, text: '*{save_stat} Saving Throw*: DC 19, one creature within 30 feet. *Failure:* The target has Disadvantage on its next attack roll before the start of the creature\'s next turn.' },
       ],
       'Legendary Actions': [
