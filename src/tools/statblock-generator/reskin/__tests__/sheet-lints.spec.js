@@ -13,7 +13,7 @@
  * of this item's purpose.
  */
 import fs from 'node:fs';
-import { multiattackCitations, multiattackSpells } from '../checker.mjs';
+import { citesGenericAttacks, multiattackCitations, multiattackSpells } from '../checker.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
 let _c = null;
 const corpus = () => { if (!_c) { _c = Array.isArray(printBlocks) ? printBlocks : Object.values(printBlocks).flat(); } return _c; };
@@ -186,6 +186,10 @@ describe('the Multiattack citation rules, surveyed against all 178 print Multiat
     ['"a use of" is its own door, never a row named "a use"', 'It makes two attacks, using Javelin or Morningstar in any combination. It can replace one with a use of Roar.', [['Javelin', 'Morningstar'], ['Roar']]],
     ['the single-name list form, which has no comma and no "and"', 'The hydra makes two Bite attacks.', [['Bite']]],
     ['a replace clause naming a trait, after a lowercase 2014 pair', 'It makes two attacks: one with its bite and one with its claws. It can replace one attack with a use of Spellcasting.', [['bite'], ['claws'], ['Spellcasting']]],
+    ['the name slot LOWERCASED — "two bite attacks" over a row named Bite', 'The hydra makes two bite attacks.', [['bite']]],
+    ['"it can use X or Y" is the same clause as "uses X or Y"', 'The glass riposte makes three attacks: it can use Shardblade or Mirror Step in any combination.', [['Shardblade', 'Mirror Step']]],
+    ['a TYPE word is never a row name', 'The cradle seer makes two ranged attacks.', []],
+    ['print\'s generic 2014 idiom names no row either', 'The guard makes two melee attacks.', []],
   ])('%s', (_label, text, expected) => {
     expect(multiattackCitations(text)).toEqual(expected);
   });
@@ -209,6 +213,16 @@ describe('the Multiattack citation rules, surveyed against all 178 print Multiat
     ['a Multiattack naming nothing to roll', ['Claw'], 'The sorrow makes two attacks.', 'multiattack-cites-nothing'],
   ])('the lint catches %s', (_l, attacks, ma, rule) => {
     expect(lintSheet(sheetOf(attacks, ma)).map((h) => h.rule)).toContain(rule);
+  });
+
+  it('the generic form is NOT "names nothing to roll" — print writes it and so do we', () => {
+    // "makes two melee attacks" cites no row BY DESIGN and tells a GM exactly what to
+    // roll; reading "ranged" as a row name reported a dangling row called "ranged".
+    for (const g of ['The guard makes two melee attacks.', 'The seer makes two ranged attacks.', 'It makes three unarmed attacks.']) {
+      expect(citesGenericAttacks(g)).toBe(true);
+      expect(lintSheet(sheetOf(['Claw'], g)).filter((h) => /^multiattack/.test(h.rule))).toEqual([]);
+    }
+    expect(citesGenericAttacks('The sorrow makes two attacks.')).toBe(false);
   });
 
   it('a set of alternatives is satisfied by ANY of its names, so a partial sheet is clean', () => {

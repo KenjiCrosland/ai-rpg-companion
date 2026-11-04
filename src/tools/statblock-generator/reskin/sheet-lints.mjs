@@ -24,7 +24,7 @@ import { isPlaceholderRowName } from './templates.mjs';
  */
 import { weaponFor } from './weapons.mjs';
 import { PRINT_ROW_NAMES } from './generate.mjs';
-import { multiattackCitations, multiattackSpells } from './checker.mjs';
+import { citesGenericAttacks, multiattackCitations, multiattackSpells } from './checker.mjs';
 
 const BARE = (n) => String(n ?? '').replace(/ \(.*\)$/, '').trim();
 const TEXT = (r) => String(r?.text ?? r?.description ?? '').replace(/\s+/g, ' ').trim();
@@ -82,7 +82,9 @@ export const SHEET_LINTS = [
     rule: 'multiattack-cites-nothing',
     reads: 'format of engine-written text',
     why: 'a Multiattack that names no attack a GM can roll — "The sorrow makes two attacks." Print does this 0 of 178 times, and an unreadable sentence must not read as clean',
-    run: (rows) => rows.filter(({ r }) => /^Multiattack/.test(BARE(r.name)) && TEXT(r) && !multiattackCitations(TEXT(r)).length)
+    // "makes two melee attacks" names no row BY DESIGN — print's 2014 idiom, and what
+    // our own converter writes. It tells a GM exactly what to roll, so it is not this.
+    run: (rows) => rows.filter(({ r }) => /^Multiattack/.test(BARE(r.name)) && TEXT(r) && !multiattackCitations(TEXT(r)).length && !citesGenericAttacks(TEXT(r)))
       .map(({ sec, r }) => `${sec}/${BARE(r.name)}: names no attack to roll — "${TEXT(r).slice(0, 60)}"`),
   },
   {

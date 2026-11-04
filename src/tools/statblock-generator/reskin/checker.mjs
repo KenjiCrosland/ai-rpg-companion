@@ -70,6 +70,13 @@ export const rowNamesOf = (m) => allRows(m).map(({ e }) => bare(e.name));
  * times. The caller must treat an empty result as unreadable rather than as resolved —
  * the mistake that let `recharges` sit unnoticed for weeks.
  */
+// THE GENERIC FORM NAMES A TYPE, NOT A ROW. print's 2014 idiom is "makes two melee
+// attacks", and our own converter writes it on purpose — so these words must never be
+// read as a row name ("makes two ranged attacks" reported a dangling row named
+// "ranged"), and a Multiattack built on them is NOT one that names nothing to roll. One
+// definition, shared by the reader and the lint that asks whether anything was read.
+export const GENERIC_ATTACK_WORD = '(?:melee|ranged|weapon|spell|unarmed)';
+export const citesGenericAttacks = (text) => new RegExp(`makes (?:one|two|three|four|five|six|\\d+) (?:${GENERIC_ATTACK_WORD} )+attacks?\\b`, 'i').test(String(text ?? ''));
 const CITE_NAME = "[A-Z][\\w'-]*(?:(?: (?:of|the|and|or|in|to|from|at|on|with|upon))* [A-Z][\\w'-]*){0,3}";
 export function multiattackCitations(text) {
   const t = String(text ?? ''); const sets = [];
@@ -87,6 +94,13 @@ export function multiattackCitations(text) {
   // stepped over Devilish Claw entirely, which is the same half-a-predicate fault as the
   // original. Re-validated on print after widening: still 0 false positives.
   for (const m of t.matchAll(new RegExp(`(?:makes|and|,)\\s+(?:one|two|three|four|five|six|\\d+)\\s+(?:other\\s+)?(${CITE_NAME})\\s+attacks?\\b`, 'g'))) push(m[1]);
+  // AND THE SAME SLOT LOWERCASED. "The hydra makes two bite attacks" over a row named
+  // "Bite" read as NOTHING, and because an empty read is itself a finding, a sheet whose
+  // citation was perfectly rollable reported "names no attack to roll". Our own 2014
+  // converter lowercases, so this is not a print curiosity. Admitted only BETWEEN the
+  // count and the word "attacks" — a closed slot, the same argument as `with its` below —
+  // and `other` is excluded because the Tarrasque's "three other attacks" names no row.
+  for (const m of t.matchAll(new RegExp(`(?:makes|and|,)\\s+(?:one|two|three|four|five|six|\\d+)\\s+(?!other\\b)(?!${GENERIC_ATTACK_WORD}\\b)([a-z][\\w'-]*(?:\\s+[a-z][\\w'-]*)?)\\s+attacks?\\b`, 'g'))) push(m[1]);
   for (const m of t.matchAll(new RegExp(`as many\\s+(${CITE_NAME})\\s+attacks?\\b`, 'g'))) push(m[1]);
   // THE LIST RUNS PAST TWO. "using Hurled Scythe, Eldritch Burst, or Paralyzing Touch in
   // any combination" is three alternatives, and a two-slot pattern read only the first —
@@ -118,7 +132,9 @@ export function multiattackCitations(text) {
   // the dangling check as a finding.
   for (const m of t.matchAll(/(?:one|two|three|four|\d+)\s+with\s+(?!a use of\b)(?:its|his|her|their|the)?\s*([A-Za-z][\w'-]*(?:\s+(?:of|the)\s+[A-Za-z][\w'-]*|\s+(?!and\b|or\b|in\b)[A-Za-z][\w'-]*)?)/g)) push(m[1]);
   for (const m of t.matchAll(new RegExp(`a use of\\s+(${CITE_NAME})(?:\\s+or\\s+(${CITE_NAME}))?`, 'g'))) push(m[1], m[2]);
-  for (const m of t.matchAll(new RegExp(`uses\\s+(?:either\\s+)?(${CITE_NAME})(?:\\s+or\\s+(${CITE_NAME}))?`, 'g'))) push(m[1], m[2]);
+  // "it can use X or Y" is the same clause as "uses X or Y" (live: the glass riposte's
+  // "makes three attacks: it can use Shardblade or Mirror Step", read as nothing).
+  for (const m of t.matchAll(new RegExp(`(?:uses|can use)\\s+(?:either\\s+)?(${CITE_NAME})(?:\\s+or\\s+(${CITE_NAME}))?`, 'g'))) push(m[1], m[2]);
   return sets;
 }
 /** Spells a Multiattack cites by name — "Spellcasting to cast *Ray of Sickness*". */
