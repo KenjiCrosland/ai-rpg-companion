@@ -7817,5 +7817,117 @@
     "askMechanicWhy": "drags its kills back"
    }
   ]
+ },
+ "b6630a50dd4f": {
+  "concept": "A proud sentinel of a drowned coast, this corpse-climber was raised by a forgotten oath and clings to its rusted beat wi",
+  "clauses": [
+   {
+    "id": "cl_mloebi",
+    "text": "A proud sentinel of a drowned coast",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_10jils",
+    "text": "this corpse-climber was raised by a forgotten oath",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "this corpse-climber was raised by a forgotten oath",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_li7ze",
+    "text": "clings to its rusted beat with eight spindled limbs of grave-iron",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1fvw93f",
+    "text": "its hollow chest split by a seam of storm-light that flares when it recalls a duty it can no longer name",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1ooksec",
+    "text": "It opens by scuttling down the sea-cliffs to cut off intruders",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "scuttling",
+    "askOften": "at_will",
+    "askOftenWhy": "It opens by scuttling down the sea-cliffs to cut off intruders",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "scuttling down the sea cliffs"
+   },
+   {
+    "id": "cl_1m74zbs",
+    "text": "fights every round by hurling foes off the rocks with its heavier forelimbs",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "hurling foes",
+    "askShape": "attack",
+    "askMechanic": "shove",
+    "askMechanicWhy": "hurling foes off the rocks"
+   },
+   {
+    "id": "cl_jggef1",
+    "text": "raking them with radiant barbs that leave smoking wounds",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "raking them",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_717lwv",
+    "text": "all the while scheming in a voice like grinding chain to divide",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_65o683",
+    "text": "isolate its prey",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "divide and isolate its prey"
+   },
+   {
+    "id": "cl_1tb8vac",
+    "text": "It never flees",
+    "kind": "mechanical",
+    "askShape": "resist",
+    "askMechanic": "resist",
+    "askMechanicWhy": "never flees"
+   },
+   {
+    "id": "cl_2j5wve",
+    "text": "treating any wound as an insult to its post",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "raking them",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_afss84",
+    "text": "growing more calculating as its light dims",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_jryy91",
+    "text": "preferring to bait one target away from the group before finishing it with a surgical embrace",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "charm",
+    "askMechanicWhy": "bait one target away from the group"
+   },
+   {
+    "id": "cl_19nj5rq",
+    "text": "It is scheming (INT 14-16)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_saog3",
+    "text": "it is a proud sentinel bound to an ancient oath it no longer remembers",
+    "kind": "descriptive"
+   }
+  ]
  }
 }

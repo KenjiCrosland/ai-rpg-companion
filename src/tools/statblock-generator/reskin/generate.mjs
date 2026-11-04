@@ -946,6 +946,25 @@ export function markFreeRow(seat, { decoration = false } = {}) {
   return seat;
 }
 
+/**
+ * THE ENABLER SENTENCE, ONE DEFINITION (2026-11-04). `escapeDCHere`, `conditionClause`
+ * and `riderText` were closures inside `generateReskin`, so the ship-time enabler below
+ * could only have used them by copying — and a second copy of a shared definition is the
+ * drift this file has been bitten by repeatedly. Hoisted instead; the in-scope versions
+ * now delegate, so every existing call site keeps its behaviour exactly.
+ *
+ * Print's own numbers are in here: a Grappled rider never ships without its escape DC
+ * (27 of 27 print attack rows carry one), and an ATTACK row carries the size gate in its
+ * own sentence where a save row does not (print: 24 of 28 against 1 of 10).
+ */
+export const escapeDCFor = (scaled) => 8 + scaled.pb + (Number(scaled?.stats?.STR) >= 0 ? Math.floor((Number(scaled.stats.STR) - 10) / 2) : 0);
+export const conditionClauseFor = (c, scaled) => (c === 'Grappled' ? `the target has the Grappled condition (escape DC ${escapeDCFor(scaled)})`
+  : c === 'Prone' ? 'the target has the Prone condition'
+    : `the target has the ${c} condition until the end of its next turn`);
+export const riderTextFor = (c, scaled, cr) => (c === 'Grappled'
+  ? `. If the target is a ${cr >= 5 ? 'Large' : 'Medium'} or smaller creature, it has the Grappled condition (escape DC ${escapeDCFor(scaled)}).`
+  : `, and ${conditionClauseFor(c, scaled)}.`);
+
 export function settleSheetBudgets({ sections, printExact = false, scaled = null, cr = null, generation = null, noteDrop = () => {}, trace: traceFn = () => {} }) {
   const trace = traceFn;
   // LEGENDARY MACHINERY STARTS AT CR 10 (R10 · H3, 2026-11-03). Measured over the
@@ -1245,6 +1264,64 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
       trace('one nova at ship:', `"${beforeName}" un-gated to "${e.name}" — "${bareName(keepNova)}" already carries this sheet's Recharge nova${vc.steps.length ? ` (${vc.steps.join('; ')})` : ''}`);
     }
   }
+  // A PAYOFF GETS ITS ENABLER AT SHIP (owner's design, 2026-11-04; the critic's
+  // effect-claim item). A row that declares `requiresCondition` needs some row on the
+  // sheet to impose that condition, or its trigger can never fire. BOTH authoring paths
+  // already check this — and both check it when the row lands, while the budget settles
+  // AFTERWARDS. The gate forty's Anvilcloud Drake is the proof: the action seat authored
+  // "Anvil Breath", a 60-foot Line that knocked Prone; the trait seat then authored
+  // "Storm-Charge Corona", which requires Prone, and its check PASSED because Anvil
+  // Breath was on the sheet; the free-row budget (1) then evicted Anvil Breath and
+  // Corona shipped with nothing causing Prone. The check was right, the ordering wrong.
+  //
+  // So the enabler is supplied HERE, on the finished sheet, as a RIDER on an existing
+  // attack rather than a new row — the owner's call, and it costs no row slot, so the
+  // eviction that caused the defect cannot recur.
+  //
+  // PRINT CHOOSES THE HOST, not us. Of print's 65 attack rows imposing Grappled, Prone
+  // or Restrained: 62 are MELEE, and 61 name a body part (Tentacle, Bite, Claws, Grab,
+  // Pincer, Tail) rather than a manufactured weapon. The four weapon exceptions are
+  // knock-down cases (Battleaxe, Tree Club) or flexible things (Flame Whip, Chain), so
+  // the rule splits by condition: a HOLD needs a body part, a knock-down does not.
+  //
+  // AND `holds` DECIDES WHETHER IT MAY GRAB AT ALL — the route call's own answer
+  // (owner's ruling, 2026-10-17), not a word list. An incorporeal thing is routed
+  // lurker-phantom and answers false, so it never gains a grip here.
+  //
+  // Conditions print never rides on an attack get no rider: Stunned appears 0 times in
+  // print's attack riders, which matches the turn-denial findings elsewhere in this file.
+  // Those rows are left for the caller's own refusal rather than enabled cheaply.
+  {
+    const RIDEABLE_HOLD = ['Grappled', 'Restrained'];           // print: 27 and 10, body-part hosts
+    const RIDEABLE_FALL = ['Prone'];                            // print: 37, a weapon host is fine
+    const RIDEABLE_OTHER = ['Poisoned'];                        // print: 15 on a hit, no save
+    const allRows = () => Object.entries(sections ?? {}).flatMap(([sec, es]) => (es ?? []).map((e) => ({ sec, e })));
+    const imposedNow = () => new Set(allRows().flatMap(({ e }) => imposedConditions(e)));
+    const holds = generation?.holds;
+    for (const { e } of allRows()) {
+      const need = e?.requiresCondition ? String(e.requiresCondition) : null;
+      if (!need || imposedNow().has(need)) continue;
+      const rideable = [...RIDEABLE_HOLD, ...RIDEABLE_FALL, ...RIDEABLE_OTHER].includes(need);
+      if (!rideable) { trace('payoff left unenabled:', `"${e.name}" requires ${need}, which no row imposes — and print never rides ${need} on an attack, so no enabler is added here`); continue; }
+      if (RIDEABLE_HOLD.includes(need) && holds === false) { trace('payoff left unenabled:', `"${e.name}" requires ${need}, and the route call answered holds=false for this creature — it has no grip to give`); continue; }
+      // the host: a melee attack; a HOLD additionally needs a body part, never a weapon
+      const hosts = allRows().filter(({ e: h }) => /Melee Attack Roll|Melee Weapon Attack/.test(String(h?.text ?? ''))
+        && !/^Multiattack/.test(String(h?.name ?? '')) && !h?.print && !h?.userSet);
+      const host = (RIDEABLE_HOLD.includes(need)
+        ? hosts.find(({ e: h }) => !weaponFor(String(h.name ?? '').replace(/ \(.*\)$/, '')))
+        : hosts[0])?.e ?? null;
+      if (!host) { trace('payoff left unenabled:', `"${e.name}" requires ${need} and no ${RIDEABLE_HOLD.includes(need) ? 'body-part melee row' : 'melee row'} on this sheet can carry the rider`); continue; }
+      if (new RegExp(`has the ${need} condition`).test(String(host.text ?? ''))) continue;
+      const rider = riderTextFor(need, scaled, Number(cr));
+      // ONE SUBSTITUTION, and it is the only text surgery this enabler does: a rider has
+      // to join the host's sentence, so the trailing stop comes off and print's clause
+      // goes on. `riderText` already supplies its own leading "." for the Grappled form.
+      host.text = `${String(host.text ?? '').trimEnd().replace(/\.$/, '')}${rider}`;
+      host.imposes = host.imposes ?? need; // the record the next reader uses, not the text
+      trace('payoff enabled at ship:', `"${e.name}" requires ${need} and nothing imposed it; "${host.name}" now carries print's own rider so the payoff can fire`);
+    }
+  }
+
 }
 
 export function elementFused(rename) {
@@ -3478,10 +3555,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // (forty #2: "…in Dim Light or Darkness, Thrust has Advantage…" — Thrust IS the
   // Unanswered Thrust). Closed fact: the Name field and the inline the engine uses.
   const ownNouns = () => [String(p.name ?? ''), String(options.fixedName ?? ''), inlineGuessRef()];
-  const escapeDCHere = () => 8 + scaled.pb + (Number(scaled.stats?.STR) >= 0 ? Math.floor((Number(scaled.stats.STR) - 10) / 2) : 0);
-  const conditionClause = (c) => (c === 'Grappled' ? `the target has the Grappled condition (escape DC ${escapeDCHere()})`
-    : c === 'Prone' ? 'the target has the Prone condition'
-      : `the target has the ${c} condition until the end of its next turn`);
+  const escapeDCHere = () => escapeDCFor(scaled); // one definition, hoisted above settleSheetBudgets
+  const conditionClause = (c) => conditionClauseFor(c, scaled); // one definition, hoisted
   const authoredRow = (kind, f, { fallbackType = null } = {}) => {
     const token = (s) => String(s ?? '')
       .replace(/(?:DC )?\{dc\}/g, `DC ${scaled.dc}`) // "a 15 Charisma saving throw" — the token always carries its DC (step 7 defect 5)
@@ -3526,7 +3601,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     } // fresh: a repair on a sheet that authored nothing — the signature path still runs and the slot stays // one landing for the main answer and the repair pass (step 6)
     const esA = sections.Actions ?? (sections.Actions = []);
     const rowByName = (n) => Object.values(sections).flat().find((e) => String(e.name ?? '').replace(/ \(.*\)$/, '') === n);
-    const riderText = (c) => (c === 'Grappled' ? `. If the target is a ${cr >= 5 ? 'Large' : 'Medium'} or smaller creature, it has the Grappled condition (escape DC ${escapeDCHere()}).` : `, and ${conditionClause(c)}.`); // print never applies Grappled without its escape DC (0 of 2 corpora; critic's step-5 read) — and an ATTACK row carries the size gate in its sentence (print: 24 of 28), which a save row does not (1 of 10), so this arm keeps its own
+    const riderText = (c) => riderTextFor(c, scaled, cr); // one definition, hoisted above settleSheetBudgets
     for (const a of authored.placed) {
       let row = a.key ? rowByName(a.name) : null;
       if (!row && repair && rowByName(a.name)) { trace('repair:', `"${a.name}" is already a row — the repaired copy leaves`); continue; }

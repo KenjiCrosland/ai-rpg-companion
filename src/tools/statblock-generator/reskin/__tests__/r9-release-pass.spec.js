@@ -1,3 +1,4 @@
+import { settleSheetBudgets } from '@/tools/statblock-generator/reskin/generate.mjs';
 import { parseAuthorResponse, TURN_DENIAL } from '@/tools/statblock-generator/reskin/author.mjs';
 /**
  * R9 · RELEASE PASS — the critic's deterministic list from forty #4
@@ -518,5 +519,81 @@ describe('R12 — a row states every number it promises (the critic, 2026-11-03)
   it('answering 0 on a row that needs no numbers passes', () => {
     const got = trait({ name: 'No Numbers', quantities: 0, trigger: null, effect: 'The king cannot have the Frightened condition' });
     expect(got.traits).toHaveLength(1);
+  });
+});
+
+describe('R13 — a payoff gets its enabler at ship (the critic\'s effect-claim item)', () => {
+  // Both authoring paths already refuse a row whose required condition nothing imposes
+  // — and both check it when the row LANDS, while the budget settles afterwards. The
+  // gate forty's Anvilcloud Drake proves the ordering bug: the action seat authored
+  // "Anvil Breath" (a 60-foot Line that knocked Prone), the trait seat then authored
+  // "Storm-Charge Corona" (requires Prone) and its check PASSED, and the free-row
+  // budget then evicted Anvil Breath — so Corona shipped with nothing causing Prone.
+  //
+  // The enabler is a RIDER on an existing attack, so it costs no row slot and that
+  // eviction cannot recur. Print chooses the host: of its 65 attack rows imposing
+  // Grappled/Prone/Restrained, 62 are melee and 61 name a body part.
+  const sheet = (need, hostName, holds) => ({
+    sections: {
+      Traits: [{ name: 'Payoff', requiresCondition: need, authored: true, text: `It exploits a ${need} target.` }],
+      Actions: [
+        { name: 'Multiattack', text: 'It makes two attacks.' },
+        { name: hostName, text: '*Melee Attack Roll:* +7, reach 5 ft. 11 (2d6 + 4) Slashing damage.' },
+      ],
+    },
+    scaled: { pb: 3, stats: { STR: 18 } }, cr: 7, generation: { holds },
+  });
+  const run = (need, host, holds) => {
+    const m = sheet(need, host, holds);
+    settleSheetBudgets({ ...m, trace: () => {} });
+    return m.sections.Actions[1].text;
+  };
+
+  it("replays the Drake: Corona's Prone arrives on the Talons", () => {
+    const m = {
+      sections: {
+        Traits: [{ name: 'Storm-Charge Corona', requiresCondition: 'Prone', authored: true, text: 'each creature within 10 feet that has the Prone condition takes 9 (2d8) Thunder damage.' }],
+        Actions: [{ name: 'Multiattack', text: 'The drake makes two Talons attacks.' },
+          { name: 'Talons', text: '*Melee Attack Roll:* +7, reach 5 ft. 11 (2d6 + 4) Slashing damage.' }],
+      },
+      scaled: { pb: 3, stats: { STR: 18 } }, cr: 7, generation: { holds: null },
+    };
+    settleSheetBudgets({ ...m, trace: () => {} });
+    expect(m.sections.Actions[1].text).toMatch(/has the Prone condition/);
+    expect(m.sections.Actions[1].imposes).toBe('Prone');
+  });
+
+  it('a Grappled rider carries the size gate and the escape DC, as print does 27 of 27', () => {
+    expect(run('Grappled', 'Tentacle', true)).toMatch(/If the target is a Large or smaller creature, it has the Grappled condition \(escape DC 15\)\./);
+  });
+
+  it('holds=false gives no grip — the route call decides, not a word list', () => {
+    expect(run('Grappled', 'Tentacle', false)).not.toMatch(/Grappled/);
+  });
+
+  it('a sword cannot hold, but it can knock down — print splits these', () => {
+    expect(run('Grappled', 'Greatsword', true)).not.toMatch(/Grappled/);   // 61 of 65 print hosts are body parts
+    expect(run('Prone', 'Greatsword', true)).toMatch(/has the Prone condition/); // print's Battleaxe, Tree Club
+  });
+
+  it('a condition print never rides on an attack gets no rider', () => {
+    // print: Stunned appears 0 times as an attack rider, matching the turn-denial findings
+    expect(run('Stunned', 'Tentacle', true)).not.toMatch(/Stunned/);
+  });
+
+  it('does nothing when the condition already has a source', () => {
+    const m = sheet('Prone', 'Claw', true);
+    m.sections.Actions[1].text += ' If the target is a Large or smaller creature, it has the Prone condition.';
+    const before = m.sections.Actions[1].text;
+    settleSheetBudgets({ ...m, trace: () => {} });
+    expect(m.sections.Actions[1].text).toBe(before);
+  });
+
+  it('does nothing to a row with no declared requirement', () => {
+    const m = sheet('Prone', 'Claw', true);
+    delete m.sections.Traits[0].requiresCondition;
+    const before = m.sections.Actions[1].text;
+    settleSheetBudgets({ ...m, trace: () => {} });
+    expect(m.sections.Actions[1].text).toBe(before);
   });
 });
