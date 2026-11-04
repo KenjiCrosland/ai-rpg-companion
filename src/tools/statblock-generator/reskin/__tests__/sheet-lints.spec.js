@@ -13,6 +13,10 @@
  * of this item's purpose.
  */
 import fs from 'node:fs';
+import { multiattackCitations, multiattackSpells } from '../checker.mjs';
+import printBlocks from '@/data/srd52-monsters.json';
+let _c = null;
+const corpus = () => { if (!_c) { _c = Array.isArray(printBlocks) ? printBlocks : Object.values(printBlocks).flat(); } return _c; };
 import path from 'node:path';
 import { lintSheet, rowsOfSheet, SHEET_LINTS } from '@/tools/statblock-generator/reskin/sheet-lints.mjs';
 
@@ -119,5 +123,98 @@ describe('every lint declares what it reads', () => {
     const rows = rowsOfSheet(sheetFor(2));
     expect(rows.length).toBeGreaterThan(4);
     expect(new Set(rows.map((x) => x.ed)).size).toBeGreaterThan(1);
+  });
+});
+
+describe('the Multiattack citation rules, surveyed against all 178 print Multiattacks', () => {
+  // A regex lint invites false positives, so this is specified against print rather than
+  // against intuition. Print's 178 Multiattacks fall into nine grammars: "makes N <Name>
+  // attack" (69), + a replace clause (35), "makes N attacks, using <A> or <B>" (27), the
+  // LIST form "and N <Y> attack" (20), + "and uses <X>" (16), using+replace (8), the
+  // Hydra's "as many Bite attacks as it has heads", the Marilith, and the Tarrasque's
+  // "one Bite attack and three other attacks".
+  const corpusMultiattacks = () => corpus().flatMap((m) => {
+    const rows = Object.values(m.sections ?? {}).flat().filter(Boolean);
+    const ma = rows.find((r) => /^Multiattack/.test(String(r.name ?? '')));
+    return ma ? [{ m, ma, rows }] : [];
+  });
+
+  it('extracts 245 citation sets from print, at ZERO false positives', () => {
+    const all = corpusMultiattacks();
+    expect(all.length).toBe(178);
+    let sets = 0; const fp = [];
+    for (const { m, ma, rows } of all) {
+      const names = rows.map((r) => String(r.name ?? '').replace(/ \(.*\)$/, ''));
+      const spells = rows.map((r) => String(r.text ?? '')).join(' ');
+      for (const set of multiattackCitations(ma.text)) {
+        sets += 1;
+        const lc = names.map((n) => n.toLowerCase());
+        const ok = set.some((x0) => { const x = String(x0).toLowerCase();
+          return lc.includes(x) || lc.some((n) => n.startsWith(x) || x.startsWith(n))
+            || new RegExp(`\\*${x0.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i').test(spells); });
+        if (!ok) fp.push(`${m.name}: ${set.join('|')}`);
+      }
+    }
+    // 249 sets from 178 rows. The figure is a "does the reader read" sanity check, not a
+    // target: it moved 245 -> 249 when print's tenth grammar ("makes two Javelin or
+    // Morningstar attacks") was covered, which the survey caught because three print
+    // Multiattacks were yielding NO citation at all.
+    expect(sets).toBeGreaterThan(245); // a reader that reads; the exact count moves as grammars are covered
+    expect(fp).toEqual([]);           // the gate: nothing legitimate is flagged
+  });
+
+  it('no print Multiattack cites a spell it cannot cast, and none names no attack', () => {
+    for (const { ma, rows } of corpusMultiattacks()) {
+      const lists = rows.map((r) => String(r.text ?? '')).join(' ');
+      for (const sp of multiattackSpells(ma.text)) expect(lists).toMatch(new RegExp(sp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'));
+      expect(multiattackCitations(ma.text).length).toBeGreaterThan(0);
+    }
+  });
+
+  // the four print grammars most likely to trip a regex — pinned individually
+  it.each([
+    ["the Tarrasque's \"three other attacks\" — `other` is lowercase, never a name", 'The tarrasque makes one Bite attack and three other attacks, using Claw or Tail in any combination.', [['Bite'], ['Claw', 'Tail']]],
+    ['the Hydra\'s "as many Bite attacks as it has heads"', 'The hydra makes as many Bite attacks as it has heads.', [['Bite']]],
+    ["print's tenth grammar: the alternation inside the name slot", 'The bugbear makes two Javelin or Morningstar attacks.', [['Javelin', 'Morningstar']]],
+    ['the 2014 lowercase form, which a capital-only capture read as nothing', 'It then makes three attacks: one with its bite and two with its claws.', [['bite'], ['claws']]],
+    ["the Aboleth's \"uses either A or B\" — grouped, either satisfies", 'The aboleth makes two Tentacle attacks and uses either Consume Memories or Dominate Mind if available.', [['Tentacle'], ['Consume Memories', 'Dominate Mind']]],
+    ['a comma-led middle item is read, not stepped over', 'The pit fiend makes one Bite attack, two Devilish Claw attacks, and one Fiery Mace attack.', [['Bite'], ['Devilish Claw'], ['Fiery Mace']]],
+    // THE EDGE CASES THE SURVEY TURNED UP, each one a real sheet before it was a test.
+    ['an "and"-joined pair in the name slot stays one set', 'The marilith makes three Longsword attacks and one Tail attack.', [['Longsword'], ['Tail']]],
+    ['a THREE-item Oxford list is one set, and the "or" is not part of the last name', 'The sun-crowned makes three attacks, using Hurled Scythe, Eldritch Burst, or Paralyzing Touch in any combination.', [['Hurled Scythe', 'Eldritch Burst', 'Paralyzing Touch']]],
+    ['the possessive is not always "its", and the name carries its particles', 'Maura makes two attacks: one with her Fistful of Shards and one with her Hurled Lantern.', [['Fistful of Shards'], ['Hurled Lantern']]],
+    ['"a use of" is its own door, never a row named "a use"', 'It makes two attacks, using Javelin or Morningstar in any combination. It can replace one with a use of Roar.', [['Javelin', 'Morningstar'], ['Roar']]],
+    ['the single-name list form, which has no comma and no "and"', 'The hydra makes two Bite attacks.', [['Bite']]],
+    ['a replace clause naming a trait, after a lowercase 2014 pair', 'It makes two attacks: one with its bite and one with its claws. It can replace one attack with a use of Spellcasting.', [['bite'], ['claws'], ['Spellcasting']]],
+  ])('%s', (_label, text, expected) => {
+    expect(multiattackCitations(text)).toEqual(expected);
+  });
+
+  it('a bare "makes two attacks." yields NOTHING, which is a finding and not a pass', () => {
+    // print does this 0 of 178 times; ours did it twice in 2,991
+    expect(multiattackCitations('The sorrow makes two attacks.')).toEqual([]);
+  });
+
+  it('reads the off-list spell the archlich offered', () => {
+    expect(multiattackSpells('a use of (A) Scouring Volley or (B) Spellcasting to cast *Ray of Sickness*.')).toEqual(['Ray of Sickness']);
+  });
+
+  // THE TWO LIVE DEFECTS THE SURVEY FOUND, replayed at the lint so neither can return
+  // silently. Both were read off real sheets, not invented: the pit fiend's is the
+  // critic's own finding, still present in the 2026-11-04 sweep.
+  const sheetOf = (attacks, ma) => ({ sections: { Actions: [{ name: 'Multiattack', text: ma },
+    ...attacks.map((a) => ({ name: a, text: 'Melee Weapon Attack: +7 to hit, reach 5 ft. Hit: 10 (2d6 + 3) piercing damage.' }))] } });
+  it.each([
+    ['a cited attack row the sheet lacks', ['Bite', 'Devilish Claw'], 'The pit fiend makes one Bite attack, two Devilish Claw attacks, and one Fiery Mace attack.', 'multiattack-dangling-cite'],
+    ['a Multiattack naming nothing to roll', ['Claw'], 'The sorrow makes two attacks.', 'multiattack-cites-nothing'],
+  ])('the lint catches %s', (_l, attacks, ma, rule) => {
+    expect(lintSheet(sheetOf(attacks, ma)).map((h) => h.rule)).toContain(rule);
+  });
+
+  it('a set of alternatives is satisfied by ANY of its names, so a partial sheet is clean', () => {
+    // print writes "using Claw or Tail in any combination" and a GM picks one; flagging
+    // the set because one member is absent would fail print 27 times.
+    const sh = sheetOf(['Hurled Scythe'], 'It makes three attacks, using Hurled Scythe, Eldritch Burst, or Paralyzing Touch in any combination.');
+    expect(lintSheet(sh).filter((h) => /^multiattack/.test(h.rule))).toEqual([]);
   });
 });

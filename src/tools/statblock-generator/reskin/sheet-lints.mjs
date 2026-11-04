@@ -24,6 +24,7 @@ import { isPlaceholderRowName } from './templates.mjs';
  */
 import { weaponFor } from './weapons.mjs';
 import { PRINT_ROW_NAMES } from './generate.mjs';
+import { multiattackCitations, multiattackSpells } from './checker.mjs';
 
 const BARE = (n) => String(n ?? '').replace(/ \(.*\)$/, '').trim();
 const TEXT = (r) => String(r?.text ?? r?.description ?? '').replace(/\s+/g, ' ').trim();
@@ -77,6 +78,39 @@ export function rowsOfSheet(sheet) {
 const imposedOn = (rows) => new Set(rows.flatMap(({ r }) => [r.imposes].flat().filter(Boolean).map(String)));
 
 export const SHEET_LINTS = [
+  {
+    rule: 'multiattack-cites-nothing',
+    reads: 'format of engine-written text',
+    why: 'a Multiattack that names no attack a GM can roll — "The sorrow makes two attacks." Print does this 0 of 178 times, and an unreadable sentence must not read as clean',
+    run: (rows) => rows.filter(({ r }) => /^Multiattack/.test(BARE(r.name)) && TEXT(r) && !multiattackCitations(TEXT(r)).length)
+      .map(({ sec, r }) => `${sec}/${BARE(r.name)}: names no attack to roll — "${TEXT(r).slice(0, 60)}"`),
+  },
+  {
+    rule: 'multiattack-dangling-cite',
+    reads: 'format of engine-written text',
+    why: 'a Multiattack citing a row the sheet lacks — the critic\'s Pit Fiend named a "Fiery Mace" attack it did not have, on the first line a GM reads. `danglingRefIn` exempts the Multiattack by design, so this is its sibling',
+    run: (rows) => {
+      // CASE-INSENSITIVE: the 2014 render cites "its bite" against a row named "Bite".
+      const names = rows.map(({ r }) => BARE(r.name)).filter(Boolean).map((n) => n.toLowerCase());
+      const resolves = (x0) => { const x = String(x0).toLowerCase(); return names.includes(x) || names.some((n) => n.startsWith(x) || x.startsWith(n)); };
+      return rows.filter(({ r }) => /^Multiattack/.test(BARE(r.name))).flatMap(({ sec, r }) => multiattackCitations(TEXT(r))
+        // a set of alternatives is satisfied by ANY of its names: print writes
+        // "using Claw or Tail in any combination" and a GM picks one.
+        .filter((set) => !set.some(resolves))
+        .map((set) => `${sec}/${BARE(r.name)}: cites "${set.join('" or "')}", which is no row on this sheet`));
+    },
+  },
+  {
+    rule: 'multiattack-offlist-spell',
+    reads: 'format of engine-written text',
+    why: 'a Multiattack citing a spell the sheet cannot cast — the critic\'s archlich offered "Spellcasting to cast Ray of Sickness" with that spell on no list of its own',
+    run: (rows) => {
+      const lists = rows.filter(({ r }) => /Spellcasting|casts/.test(`${BARE(r.name)} ${TEXT(r)}`)).map(({ r }) => TEXT(r)).join(' ');
+      return rows.filter(({ r }) => /^Multiattack/.test(BARE(r.name))).flatMap(({ sec, r }) => multiattackSpells(TEXT(r))
+        .filter((sp) => !new RegExp(sp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(lists))
+        .map((sp) => `${sec}/${BARE(r.name)}: offers to cast "${sp}", which is on no spell list this sheet has`));
+    },
+  },
   {
     rule: 'empty-option',
     reads: 'format of engine-written text',

@@ -47,6 +47,83 @@ const bare = (n) => String(n ?? '').replace(/ \(.*\)$/, '');
 // rendered row this would fail, so the defect cannot reach a sheet at all.
 const REF_SKIP = /^(Spellcasting|Multiattack|Dash|Disengage|Dodge|Hide|Help|Ready|Search|Attack|Reaction|Bonus Action)$/;
 export const rowNamesOf = (m) => allRows(m).map(({ e }) => bare(e.name));
+/**
+ * EVERY NAME A MULTIATTACK CITES, as alternative-sets (2026-11-04). `danglingRefIn`
+ * deliberately EXEMPTS the Multiattack row — it re-reads itself over surviving rows, and
+ * sweeping it cost the Gladiator its whole attack routine — so the row where citations
+ * most often live has no reader. This is that reader, a sibling rather than a copy.
+ *
+ * A set is satisfied when ANY of its names resolves: print writes genuine alternatives
+ * ("uses either Consume Memories or Dominate Mind", "using Claw or Tail in any
+ * combination") and a GM picks one.
+ *
+ * SURVEYED AGAINST ALL 178 PRINT MULTIATTACKS, which fall into nine grammars: "makes N
+ * <Name> attack" (69), + a replace clause (35), "makes N attacks, using <A> or <B>" (27),
+ * the LIST form "and N <Y> attack" (20), + "and uses <X>" (16), using+replace (8), the
+ * Hydra's "as many Bite attacks as it has heads", the Marilith, and the Tarrasque's
+ * "one Bite attack and three other attacks". It extracts 243 sets / 279 names from those
+ * 178 rows at **0 false positives**, so the zero is a reader that reads, not one that
+ * stays silent.
+ *
+ * Returns [] when it recognises no citation at all. That is NOT the same as "clean": a
+ * bare "makes two attacks." names nothing a GM can roll, and print does it 0 of 178
+ * times. The caller must treat an empty result as unreadable rather than as resolved —
+ * the mistake that let `recharges` sit unnoticed for weeks.
+ */
+const CITE_NAME = "[A-Z][\\w'-]*(?:(?: (?:of|the|and|or|in|to|from|at|on|with|upon))* [A-Z][\\w'-]*){0,3}";
+export function multiattackCitations(text) {
+  const t = String(text ?? ''); const sets = [];
+  // "A or B" SITS INSIDE THE NAME SLOT in print's tenth grammar — "makes two Javelin or
+  // Morningstar attacks" (Bugbear Stalker, Warrior Veteran, Dryad). `danglingRefIn`
+  // already handled it by capturing loosely and splitting on " or "; a stricter name
+  // pattern here broke what the older reader got right, and the print survey caught it
+  // because three Multiattacks then yielded NO citation at all.
+  const push = (...xs) => {
+    const set = xs.filter(Boolean).flatMap((x) => String(x).split(/ or /)).map((x) => x.trim()).filter(Boolean);
+    if (set.length) sets.push(set);
+  };
+  // a comma leads the MIDDLE items of a list: "makes one Bite attack, two Devilish Claw
+  // attacks, and one Fiery Mace attack" — the first cut read Bite and Fiery Mace and
+  // stepped over Devilish Claw entirely, which is the same half-a-predicate fault as the
+  // original. Re-validated on print after widening: still 0 false positives.
+  for (const m of t.matchAll(new RegExp(`(?:makes|and|,)\\s+(?:one|two|three|four|five|six|\\d+)\\s+(?:other\\s+)?(${CITE_NAME})\\s+attacks?\\b`, 'g'))) push(m[1]);
+  for (const m of t.matchAll(new RegExp(`as many\\s+(${CITE_NAME})\\s+attacks?\\b`, 'g'))) push(m[1]);
+  // THE LIST RUNS PAST TWO. "using Hurled Scythe, Eldritch Burst, or Paralyzing Touch in
+  // any combination" is three alternatives, and a two-slot pattern read only the first —
+  // a dangling second or third name went unreported. The whole list is taken to the
+  // sentence end and divided on the separators the 2014 converter itself divides on
+  // (comma, `or`, `and`), with a leading `or` stripped off the Oxford item. It is ONE
+  // set: a GM satisfies "using X or Y" by owning either.
+  for (const m of t.matchAll(/using\s+([^.;:]*?)(?:\s+in any combination|[.;:]|$)/g)) {
+    const set = String(m[1]).split(/,\s*|\s+or\s+|\s+and\s+/).map((x) => x.trim().replace(/^or\s+/i, '')).filter((x) => /^[A-Z]/.test(x));
+    if (set.length) sets.push(set);
+  }
+  // THE 2014 FORM IS LOWERCASE — "makes three attacks: one with its bite and two with
+  // its claws" (our own 2014 render, and print's Ancient Gold Dragon). A capital-only
+  // capture read NOTHING from it, and because this reader's empty result is itself a
+  // finding, the blind spot became a false positive on an exact-print Keeper the moment
+  // the rule shipped. Lowercase is admitted HERE ONLY — after "with (its)", which is a
+  // closed grammatical slot — and resolution is case-insensitive, never elsewhere, so no
+  // arbitrary lowercase word can be mistaken for a row name.
+  // At most TWO words and never a connective: with `and` admitted, "one with its bite and
+  // two with its claws" captured "bite and two with its claws" as a single name.
+  // THE POSSESSIVE IS NOT ALWAYS "its", AND THE NAME CARRIES PARTICLES. Our 2014 render
+  // writes "one with her Fistful of Shards and one with her Hurled Lantern" for a named
+  // person — so a slot admitting only `its` captured "her Fistful", both the wrong word
+  // and a truncated name, and reported two false dangles on a sheet whose citations were
+  // perfectly correct. Every possessive is consumed, and the name may run through `of`
+  // and `the` but never through `and`/`or`, which separate the list's items.
+  // "a use of" HAS ITS OWN DOOR. "replace one with a use of Roar" otherwise reads a row
+  // named "a use" here, and because this slot admits lowercase that bogus name reaches
+  // the dangling check as a finding.
+  for (const m of t.matchAll(/(?:one|two|three|four|\d+)\s+with\s+(?!a use of\b)(?:its|his|her|their|the)?\s*([A-Za-z][\w'-]*(?:\s+(?:of|the)\s+[A-Za-z][\w'-]*|\s+(?!and\b|or\b|in\b)[A-Za-z][\w'-]*)?)/g)) push(m[1]);
+  for (const m of t.matchAll(new RegExp(`a use of\\s+(${CITE_NAME})(?:\\s+or\\s+(${CITE_NAME}))?`, 'g'))) push(m[1], m[2]);
+  for (const m of t.matchAll(new RegExp(`uses\\s+(?:either\\s+)?(${CITE_NAME})(?:\\s+or\\s+(${CITE_NAME}))?`, 'g'))) push(m[1], m[2]);
+  return sets;
+}
+/** Spells a Multiattack cites by name — "Spellcasting to cast *Ray of Sickness*". */
+export const multiattackSpells = (text) => [...String(text ?? '').matchAll(/to cast\s+\*?([A-Z][\w' -]*?)\*?(?:\s*\(|[.,;]|$)/g)].map((m) => m[1].trim()).filter(Boolean);
+
 export function danglingRefIn(text, names, rowName = '') {
   // THE SECOND DOOR. The checker scans two shapes and this function first
   // carried only one, so the guard built for the Court Step-Wizard's Longbow
@@ -54,7 +131,18 @@ export function danglingRefIn(text, names, rowName = '') {
   // this shape, not "uses X". Both live here now — the whole point of the
   // function is that no reader is left holding half the predicate.
   if (!/^Multiattack/.test(String(rowName ?? ''))) {
-    for (const mk of String(text ?? '').matchAll(/makes (?:one|two|three|\d+) ([A-Z][\w' -]+?) attacks?\b/g)) {
+    // THE LIST FORM CITES MORE THAN ONCE (the critic's Pit Fiend, 2026-11-04). This
+    // required `makes` immediately before the count, so in "makes one Bite attack, two
+    // Devilish Claw attacks, and one Fiery Mace attack" only the FIRST citation was
+    // read — and "Fiery Mace" is no row on that sheet. `and` joins the alternation, and
+    // print's "three OTHER attacks" (the Tarrasque) is stepped over because `other` is
+    // lowercase and the capture needs a capital.
+    //
+    // Validated before widening: over every print NON-Multiattack row the old and new
+    // patterns extract the SAME 29 citations with 0 false positives either way, so this
+    // costs nothing where the reader already ran. Across print's 178 Multiattacks the
+    // wider family extracts 243 citation sets, also at 0 false positives.
+    for (const mk of String(text ?? '').matchAll(/(?:makes|and) (?:one|two|three|four|five|six|\d+) (?:other )?([A-Z][\w' -]+?) attacks?\b/g)) {
       const t = mk[1].trim();
       // "A or B" IS PRINT'S OWN CITATION (2026-10-29). The capture class admits
       // spaces and lowercase, so "makes one Rotting Fist or Channel Negative
