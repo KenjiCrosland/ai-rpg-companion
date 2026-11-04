@@ -13,7 +13,7 @@
  * of this item's purpose.
  */
 import fs from 'node:fs';
-import { citesGenericAttacks, multiattackCitations, multiattackSpells } from '../checker.mjs';
+import { citesGenericAttacks, multiattackAttackClauses, multiattackCitations, multiattackSpells, repairMultiattackAttackList } from '../checker.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
 let _c = null;
 const corpus = () => { if (!_c) { _c = Array.isArray(printBlocks) ? printBlocks : Object.values(printBlocks).flat(); } return _c; };
@@ -230,5 +230,151 @@ describe('the Multiattack citation rules, surveyed against all 178 print Multiat
     // the set because one member is absent would fail print 27 times.
     const sh = sheetOf(['Hurled Scythe'], 'It makes three attacks, using Hurled Scythe, Eldritch Burst, or Paralyzing Touch in any combination.');
     expect(lintSheet(sh).filter((h) => /^multiattack/.test(h.rule))).toEqual([]);
+  });
+});
+
+// EVERY CASE BELOW IS A REAL SHEET, copied verbatim with its own row list — the engine's
+// saved runs live in a gitignored smoke-out/, so the ones that actually failed are
+// committed here as fixtures rather than invented. Provenance is on each row: a repair
+// proven only against hand-written input is proven against the author's imagination.
+const FAILING = [
+  { label: 'the Pit Fiend, nine runs running (10-19 … 11-04): print\'s Multiattack rides a print body, the Fiery Mace row is shed',
+    text: 'The pit fiend makes one Bite attack, two Devilish Claw attacks, and one Fiery Mace attack. It can replace one attack with a use of (A) Oathbound Chains or (B) Spellcasting to cast *Bestow Curse*.',
+    rows: ['Legendary Resistance', 'Diabolical Restoration', 'Fear Aura', 'Magic Resistance', 'Multiattack', 'Bite', 'Devilish Claw', 'Spellcasting', 'Oathbound Chains', 'Hellfire Spellcasting'],
+    attacks: ['Bite', 'Devilish Claw'],
+    want: 'The pit fiend makes two Bite attacks and two Devilish Claw attacks. It can replace one attack with a use of (A) Oathbound Chains or (B) Spellcasting to cast *Bestow Curse*.',
+    total: 4 },
+  { label: 'the same sheet under its other subject line ("The fiend", sweep 11-01)',
+    text: 'The fiend makes one Bite attack, two Devilish Claw attacks, and one Fiery Mace attack. It can replace one attack with a use of Spellcasting to cast *Hold Person*.',
+    rows: ['Legendary Resistance', 'Diabolical Restoration', 'Fear Aura', 'Magic Resistance', 'Multiattack', 'Bite', 'Devilish Claw', 'Hellfire Burst', 'Spellcasting', 'Hellfire Spellcasting'],
+    attacks: ['Bite', 'Devilish Claw'],
+    want: 'The fiend makes two Bite attacks and two Devilish Claw attacks. It can replace one attack with a use of Spellcasting to cast *Hold Person*.',
+    total: 4 },
+];
+
+describe('the Multiattack attack list, repaired from its validated elements', () => {
+  const resolverFor = (rows) => (c) => rows.some((n) => n.toLowerCase() === String(c).toLowerCase());
+
+  it.each(FAILING.map((f) => [f.label, f]))('repairs %s', (_l, f) => {
+    const got = repairMultiattackAttackList(f.text, resolverFor(f.rows), f.attacks[0]);
+    expect(got).not.toBeNull();
+    expect(got.text).toBe(f.want);
+    expect(got.dropped).toEqual(['Fiery Mace']);
+    // THE COUNT IS THE DAMAGE BUDGET'S DIVISOR: 1+2+1 attacks must stay 4, or the sheet
+    // is silently repriced by a repair that was only meant to fix a name.
+    expect(got.total).toBe(f.total);
+    expect(multiattackAttackClauses(got.text).reduce((n, c) => n + c.count, 0)).toBe(f.total);
+  });
+
+  it('leaves a sheet whose citations all resolve completely untouched', () => {
+    // the 10-27 Pit Fiend DOES carry a Fiery Mace row; its dangling cite is "Merciless
+    // Strike" in the `a use of` slot, which is not the attack list and not this repair's.
+    const t = 'The pit fiend makes one Bite attack, two Devilish Claw attacks, and one Fiery Mace attack. It can replace one attack with a use of Merciless Strike.';
+    expect(repairMultiattackAttackList(t, resolverFor(['Bite', 'Fiery Mace', 'Devilish Claw']), 'Bite')).toBeNull();
+  });
+
+  it('re-points rather than empties when EVERY clause is dead', () => {
+    // a Multiattack naming no attack at all is worse than one naming the wrong row
+    const got = repairMultiattackAttackList('The hound makes two Fiery Mace attacks.', resolverFor(['Bite']), 'Bite');
+    expect(got.text).toBe('The hound makes two Bite attacks.');
+    expect(got.total).toBe(2);
+  });
+
+  it('declines when every clause is dead and the sheet has no attack to re-point at', () => {
+    expect(repairMultiattackAttackList('It makes two Fiery Mace attacks.', resolverFor(['Fear Aura']), null)).toBeNull();
+  });
+
+  it('cannot help the two sheets that name nothing at all, and says so by declining', () => {
+    // homebrew40 07-hollowing-sorrow and 38-marsh-reeve: "The sorrow makes two attacks."
+    // There is no element to validate, so this is a generation defect, not a repair case.
+    for (const [t, rows] of [['The sorrow makes two attacks.', ['Sorrowful Strike']], ['The reeve makes two attacks.', ['Wading Strike']]]) {
+      expect(multiattackAttackClauses(t)).toEqual([]);
+      expect(repairMultiattackAttackList(t, resolverFor(rows), rows[0])).toBeNull();
+    }
+  });
+
+  it('keeps the lowercase 2014 list readable, and repairs it in place', () => {
+    const got = repairMultiattackAttackList('The hydra makes two bite attacks.', resolverFor(['Fang']), 'Fang');
+    expect(got.text).toBe('The hydra makes two Fang attacks.');
+  });
+
+  it('the repaired sentence passes the lint that found it', () => {
+    const f = FAILING[0];
+    const sheet = { sections: { Actions: [{ name: 'Multiattack', text: f.want },
+      ...f.attacks.map((a) => ({ name: a, text: 'Melee Attack Roll: +14, reach 10 ft. Hit: 22 (4d6 + 8) piercing damage.' }))] } };
+    expect(lintSheet(sheet).filter((h) => /^multiattack/.test(h.rule))).toEqual([]);
+  });
+});
+
+// AND THE REPAIR IS SPECIFIED AGAINST PRINT, NOT AGAINST ONE RECURRING SHEET. The real
+// failures over 3,200 saved runs are dominated by a single malformed Pit Fiend, so the
+// fixtures above prove the repair on ONE instance of the grammar it claims to cover.
+// print supplies the variety: take its own Multiattacks, delete a row the sentence cites,
+// and require the repair to drop that clause, preserve the total, and leave a sentence
+// whose every citation resolves. The deletion is the controlled variable; the grammar is
+// real. Same discipline as the 178-row reader gate above.
+describe('the repair, against print\'s own Multiattacks with a row deleted', () => {
+  const maOf = (m) => {
+    const rows = Object.values(m.sections ?? {}).flat().filter(Boolean);
+    const ma = rows.find((r) => /^Multiattack/.test(String(r.name ?? '')));
+    return ma ? { rows, text: String(ma.text ?? '').replace(/\s+/g, ' ') } : null;
+  };
+  const bare = (r) => String(r.name ?? '').replace(/ \(.*\)$/, '');
+
+  it('redistributes the count on every multi-clause case, 47 of them, losing none', () => {
+    let cases = 0;
+    for (const m of corpus()) {
+      const got = maOf(m); if (!got) continue;
+      const clauses = multiattackAttackClauses(got.text);
+      if (clauses.length < 2) continue;
+      const total = clauses.reduce((n, c) => n + c.count, 0);
+      for (const victim of [...new Set(clauses.map((c) => c.name))]) {
+        cases += 1;
+        const keep = got.rows.map(bare).filter((n) => n.toLowerCase() !== victim.toLowerCase());
+        const resolves = (c) => keep.some((n) => n.toLowerCase() === String(c).toLowerCase());
+        const fixed = repairMultiattackAttackList(got.text, resolves, keep[0]);
+        expect(fixed).not.toBeNull();                                          // a cited row vanished; the sentence must change
+        expect(fixed.dropped.map((d) => d.toLowerCase())).toContain(victim.toLowerCase());
+        const after = multiattackAttackClauses(fixed.text);
+        expect(after.reduce((n, c) => n + c.count, 0)).toBe(total);             // the budget's divisor survives
+        for (const c of after) expect(resolves(c.name)).toBe(true);             // nothing dangles afterwards
+        expect(fixed.text).not.toMatch(/\band and\b|\bmakes and\b|attack attack|undefined| {2}/);
+      }
+    }
+    expect(cases).toBe(47);
+  });
+
+  it('re-points the single-clause cases at a live attack instead of emptying them', () => {
+    let cases = 0;
+    for (const m of corpus()) {
+      const got = maOf(m); if (!got) continue;
+      const clauses = multiattackAttackClauses(got.text);
+      if (clauses.length !== 1) continue;
+      const attacks = got.rows.filter((r) => /Attack Roll/.test(String(r.text ?? '')) && !/^Multiattack/i.test(String(r.name ?? ''))).map(bare);
+      const target = attacks.find((n) => n.toLowerCase() !== clauses[0].name.toLowerCase());
+      if (!target) continue;
+      cases += 1;
+      const resolves = (c) => String(c).toLowerCase() !== clauses[0].name.toLowerCase()
+        && got.rows.map(bare).some((n) => n.toLowerCase() === String(c).toLowerCase());
+      const fixed = repairMultiattackAttackList(got.text, resolves, target);
+      expect(fixed).not.toBeNull();
+      expect(fixed.text).toContain(target);
+      expect(multiattackAttackClauses(fixed.text).reduce((n, c) => n + c.count, 0)).toBe(clauses[0].count);
+    }
+    expect(cases).toBe(11);
+  });
+
+  it('and declines on ALL 178 when nothing has been deleted', () => {
+    // the blast radius, proven on print rather than only on our saved runs: a repair that
+    // rewrites correct text is a regression no finding would ever report.
+    let seen = 0;
+    for (const m of corpus()) {
+      const got = maOf(m); if (!got) continue;
+      seen += 1;
+      const names = got.rows.map(bare);
+      const resolves = (c) => names.some((n) => n.toLowerCase() === String(c).toLowerCase());
+      expect(repairMultiattackAttackList(got.text, resolves, names[0])).toBeNull();
+    }
+    expect(seen).toBe(178);
   });
 });

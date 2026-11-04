@@ -138,6 +138,69 @@ export function multiattackCitations(text) {
   return sets;
 }
 /** Spells a Multiattack cites by name — "Spellcasting to cast *Ray of Sickness*". */
+/** THE ATTACK LIST, AS ELEMENTS RATHER THAN AS PROSE. The reader above answers "what
+ *  does this cite"; this answers "what are its parts" — each clause's count, its name and
+ *  its span — which is what a repair needs. print's grammars #1 and #4 ("makes one Bite
+ *  attack, two Devilish Claw attacks, and one Fiery Mace attack") are 89 of its 178 and
+ *  carried 9 of the 10 dangling citations we found over 3,200 sheets. Both cases are the
+ *  same shape, so one parse serves both. A TYPE word and the Tarrasque's `other` are
+ *  excluded here for the same reason they are excluded above: neither names a row. */
+const COUNT_WORD = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
+const WORD_FOR = ['', 'one', 'two', 'three', 'four', 'five', 'six'];
+export function multiattackAttackClauses(text) {
+  const t = String(text ?? '');
+  const re = new RegExp(`(?:makes|and|,)\\s+(one|two|three|four|five|six|\\d+)\\s+(?!other\\b)(?!${GENERIC_ATTACK_WORD}\\b)(${CITE_NAME}|[a-z][\\w'-]*(?:\\s+[a-z][\\w'-]*)?)\\s+attacks?\\b`, 'g');
+  return [...t.matchAll(re)].map((m) => {
+    // THE NAME SLOT MAY HOLD AN ALTERNATION, and it is a SET — print's tenth grammar,
+    // "makes two Javelin or Morningstar attacks" (Bugbear Stalker, Dryad, Oni, Warrior
+    // Veteran). Read as one name it resolves to nothing, and a repair then "fixed" four
+    // CORRECT print sheets into "makes two Multiattack attacks". Split on " or " only:
+    // `and` belongs to names print actually uses ("Gorge and Glut" is one row).
+    const names = m[2].trim().split(/ or /).map((x) => x.trim()).filter(Boolean);
+    return {
+      count: COUNT_WORD[String(m[1]).toLowerCase()] ?? Number(m[1]),
+      names, name: names[0], start: m.index, end: m.index + m[0].length,
+    };
+  }).filter((c) => Number.isFinite(c.count) && c.count > 0);
+}
+/** Rewrite the attack list from its VALIDATED elements. A clause none of whose names the
+ *  sheet carries is dropped and its count moves to a surviving clause, so the total the
+ *  damage budget was priced against is preserved — the count in this sentence IS the
+ *  per-round divisor (`nAtk`, generate.mjs), which is why this is arithmetic the engine
+ *  owns rather than a question for a call. A surviving clause keeps only the alternatives
+ *  that resolve, so "two Javelin or Morningstar attacks" over a shed Morningstar becomes
+ *  "two Javelin attacks" rather than being dropped whole. Everything outside the list
+ *  (the subject, a replace clause) is kept verbatim. Returns null when nothing needs it.
+ *
+ *  `fallback` must be a LIVE ATTACK ROW: it is used only when every clause is dead
+ *  ("makes two Fiery Mace attacks" over a sheet with no Fiery Mace), because a
+ *  Multiattack with no attack to roll is worse than one naming a different row. */
+export function repairMultiattackAttackList(text, resolves, fallback = null) {
+  const t = String(text ?? '');
+  const clauses = multiattackAttackClauses(t);
+  if (!clauses.length) return null;
+  const alive = (c) => c.names.some((n) => resolves(n));
+  const dead = clauses.filter((c) => !alive(c));
+  const stale = clauses.filter((c) => alive(c) && c.names.some((n) => !resolves(n)));
+  if (!dead.length && !stale.length) return null;
+  let live = clauses.filter(alive);
+  if (!live.length) {
+    if (!fallback) return null;
+    live = [{ ...dead[0], names: [fallback] }];
+    dead.splice(0, 1);
+  }
+  const moved = dead.reduce((n, c) => n + c.count, 0);
+  const kept = live.map((c, i) => ({ ...c, count: c.count + (i === 0 ? moved : 0) }));
+  const parts = kept.map((c) => {
+    const label = c.names.filter((n) => resolves(n));
+    return `${WORD_FOR[c.count] ?? c.count} ${(label.length ? label : c.names).join(' or ')} attack${c.count > 1 ? 's' : ''}`;
+  });
+  const list = parts.length === 1 ? parts[0]
+    : parts.length === 2 ? parts.join(' and ')
+      : `${parts.slice(0, -1).join(', ')}, and ${parts.at(-1)}`;
+  const out = `${t.slice(0, clauses[0].start)}makes ${list}${t.slice(clauses.at(-1).end)}`;
+  return out === t ? null : { text: out, dropped: dead.flatMap((c) => c.names), total: kept.reduce((n, c) => n + c.count, 0) };
+}
 export const multiattackSpells = (text) => [...String(text ?? '').matchAll(/to cast\s+\*?([A-Z][\w' -]*?)\*?(?:\s*\(|[.,;]|$)/g)].map((m) => m[1].trim()).filter(Boolean);
 
 export function danglingRefIn(text, names, rowName = '') {

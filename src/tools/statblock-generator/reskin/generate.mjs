@@ -40,7 +40,7 @@ import { buildRepairPrompt, buildSeatPrompt, parseAuthorResponse, validateAuthor
 import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
 import { WEAPONS, weaponFor, weaponNamed, namesWeapon, weaponsIn, finesseLike } from './weapons.mjs';
-import { effectOnly, danglingRefIn, rowNamesOf } from './checker.mjs';
+import { effectOnly, danglingRefIn, repairMultiattackAttackList, rowNamesOf } from './checker.mjs';
 import { matcherPath, bodyForClass, bodyForPerson } from './path.mjs';
 import { classStats } from './classes.mjs';
 import { capsFix2024, applyCorrections as applyTextFixes, DETERMINISTIC_TEXT_RULES } from '../format-2024/generate.mjs'; // the 2024 caps pass, shared with the lint's fixer (2026-10-17) // one prerequisite stripper, shared with save-fit (stage 1b); one dangling-reference scan, shared with the checker (2026-10-16)
@@ -2036,6 +2036,28 @@ function dropDeadMultiattackCites(sections, trace) {
   const liveAttacks = Object.values(sections).flat()
     .filter((e) => /Attack Roll|Weapon Attack|Spell Attack/.test(e.text ?? '') && !/^Multiattack/i.test(e.name ?? ''))
     .map((e) => String(e.name ?? '').replace(/\s*\(.*\)$/, '')).filter(Boolean);
+  // AND THE ATTACK LIST IS REWRITTEN FROM ITS VALIDATED ELEMENTS (owner, 2026-11-04).
+  // The combination form above is ONE of print's ten grammars (27 of 178), and the list
+  // form — "makes one Bite attack, two Devilish Claw attacks, and one Fiery Mace attack"
+  // — is the biggest (89 of 178). It carried 8 of the 10 dangling citations found over
+  // 3,200 saved sheets, the same Pit Fiend in nine runs: print's own Multiattack rides a
+  // print body verbatim, the Fiery Mace row is then renamed or shed, and this pass could
+  // not read the grammar print wrote it in. Because the clause carries a COUNT, a dead
+  // clause does not have to be patched or dropped blindly — its count moves to a
+  // surviving clause, so the total stays what the damage budget priced (`nAtk` below).
+  // Not a call: the count is CR math, and a stochastic count would unprice the sheet.
+  for (const es of Object.values(sections)) for (const ma of es) {
+    if (!/^Multiattack/i.test(ma.name ?? '')) continue;
+    const names = live();
+    const resolves = (c) => names.some((n) => n.toLowerCase() === String(c).toLowerCase());
+    const fixed = repairMultiattackAttackList(ma.text ?? '', resolves, liveAttacks[0] ?? null);
+    if (!fixed) continue;
+    const why = fixed.dropped.length
+      ? `${fixed.dropped.map((d) => `"${d}"`).join(', ')} ${fixed.dropped.length === 1 ? 'is' : 'are'} not on this sheet`
+      : 'an alternative it offered is not on this sheet'; // a pruned alternation drops no clause, so it reports nothing to drop
+    trace('multiattack list re-read:', `${why}, so the list now reads "${fixed.text.slice(0, 90)}" — still ${fixed.total} attack${fixed.total === 1 ? '' : 's'}, the total the round was priced against`);
+    ma.text = fixed.text;
+  }
   if (liveAttacks.length) {
     for (const es of Object.values(sections)) for (const e of es) {
       if (/^Multiattack/i.test(e.name ?? '')) continue;
