@@ -201,6 +201,75 @@ export function repairMultiattackAttackList(text, resolves, fallback = null) {
   const out = `${t.slice(0, clauses[0].start)}makes ${list}${t.slice(clauses.at(-1).end)}`;
   return out === t ? null : { text: out, dropped: dead.flatMap((c) => c.names), total: kept.reduce((n, c) => n + c.count, 0) };
 }
+/** THE REPLACE CLAUSE, VALIDATED LIKE THE LIST. print writes it three ways and no more:
+ *  "a use of (A) X or (B) Y" (10 rows, all adult dragons), "a use of Z" (27 rows), and
+ *  no clause at all (69 of its 178 Multiattacks). The engine's writer already refuses to
+ *  emit the lettered form unless both halves exist — but it validates at WRITE time, and
+ *  a later pass can shed the row it named, which strands the letter: today's Pit Fiend
+ *  shipped "a use of (A) or (B) Spellcasting to cast *Bestow Curse*" with no Actions row
+ *  left matching the finder at all. 7 of 139 lettered rows over 3,200 saved sheets, so
+ *  this re-reads the clause last, against the rows that actually survived, and degrades
+ *  to the next print form down rather than leaving a letter with nothing behind it.
+ *
+ *  "Spellcasting to cast *Hold Person*" cites the Spellcasting ROW; the spell rides with
+ *  it, which is why the row name is taken before the "to cast" tail. */
+// A TRAILING PARENTHETICAL IS NOT PART OF THE ROW NAME. print's Vampire writes "a use of
+// Bite (Bat or Vampire Form Only)" and names its row the same way, so print resolves it
+// and a print-only gate passes — but we rename that row to plain "Bite", and the first
+// cut therefore read the cite as dead and DELETED a correct clause from every vampire.
+// Row names are stripped the same way everywhere (`live()` in generate.mjs); the cite
+// must be too. Caught on the saved sheets, which is why both corpora are measured.
+export const replaceClauseRowOf = (opt) => String(opt ?? '').replace(/\s+to cast\b.*$/i, '').replace(/[*]/g, '').replace(/\s*\([^)]*\)\s*$/, '').trim();
+// A LEADING POSSESSIVE IS NOT PART OF THE ROW NAME — our 2014 printing writes "or ITS
+// Spellcasting to cast *ray of sickness*", the converter's own documented form, so
+// "its Spellcasting" failed to resolve and a correct option was dropped off four sheets.
+// But the prefix is only ever stripped as a FALLBACK: a row may genuinely begin with one
+// of these words, and stripping first deleted the clause citing "The Fen's Claim" (sweep
+// 11-04) by looking for a row called "Fen's Claim". Exact name wins; `the` is not in the
+// list at all, because our converter never writes it and print's rows do.
+const optionResolves = (opt, resolves) => {
+  const base = replaceClauseRowOf(opt);
+  if (!base) return false;
+  if (resolves(base)) return true;
+  const bare = base.replace(/^(?:its|his|her|their)\s+/i, '').trim();
+  return bare !== base && !!bare && resolves(bare);
+};
+export function repairReplaceClause(text, resolves) {
+  const t = String(text ?? '');
+  const m = /\s*It can replace one attack with a use of ([^.]*?)\.(?=\s|$)/.exec(t);
+  if (!m) return null;
+  // THE OPTIONS ARE A SET, AND THE LETTERS ARE OPTIONAL. Our 2014 printing drops the
+  // scaffold letters — "a use of Fever Blight or Spellcasting to cast *ray of sickness*"
+  // — so reading the body as ONE cite deleted correct clauses off the 2014 sheets. And a
+  // row name can itself contain " or " inside a parenthetical (print's Vampire: "Bite
+  // (Bat or Vampire Form Only)"), so those spans are masked before the split and restored
+  // after. Third time an alternation read as a single name has caused a defect here.
+  const lettered = /\((?:A|B|C)\)/.test(m[1]);
+  let opts;
+  if (lettered) {
+    // THE LETTERS ARE THE DELIMITERS. Stripping them first and splitting on " or " fails
+    // the very case this exists for: "(A) or (B) Spellcasting" strips to "or Spellcasting",
+    // whose leading `or` cannot split, so the whole body read as one cite named
+    // "or Spellcasting" and the clause was dropped instead of degrading to its survivor.
+    opts = m[1].split(/\((?:A|B|C)\)/).slice(1).map((x) => x.replace(/^\s*or\s+/, '').replace(/\s+or\s*$/, '').trim());
+  } else {
+    // UNLETTERED, which is what our 2014 printing writes ("a use of Fever Blight or
+    // Spellcasting to cast *ray of sickness*" — the scaffold letters are dropped there).
+    // A row name can hold " or " inside a parenthetical (print's Vampire: "Bite (Bat or
+    // Vampire Form Only)"), so those spans are masked across the split and restored after.
+    const held = [];
+    const masked = m[1].replace(/\([^)]*\)/g, (p0) => ` \u0001${held.push(p0) - 1}\u0001 `);
+    opts = masked.split(/\s+or\s+/).map((x) => x.replace(/\u0001(\d+)\u0001/g, (_, i) => held[Number(i)]).replace(/\s+/g, ' ').trim());
+  }
+  const live = opts.filter((o) => optionResolves(o, resolves));
+  if (live.length === opts.length && opts.every(Boolean)) return null;
+  const pair = lettered ? `(A) ${live[0]} or (B) ${live[1]}` : `${live[0]} or ${live[1]}`;
+  const clause = live.length >= 2 ? `It can replace one attack with a use of ${pair}.`
+    : live.length === 1 ? `It can replace one attack with a use of ${live[0]}.`
+      : null; // nothing left to trade for: print's commonest Multiattack carries no clause
+  const out = `${t.slice(0, m.index)}${clause ? ` ${clause}` : ''}${t.slice(m.index + m[0].length)}`.replace(/\s+$/, '');
+  return out === t ? null : { text: out, dropped: opts.filter((o) => !live.includes(o)).map((o) => replaceClauseRowOf(o) || '(empty)'), form: live.length };
+}
 export const multiattackSpells = (text) => [...String(text ?? '').matchAll(/to cast\s+\*?([A-Z][\w' -]*?)\*?(?:\s*\(|[.,;]|$)/g)].map((m) => m[1].trim()).filter(Boolean);
 
 export function danglingRefIn(text, names, rowName = '') {

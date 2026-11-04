@@ -40,7 +40,7 @@ import { buildRepairPrompt, buildSeatPrompt, parseAuthorResponse, validateAuthor
 import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
 import { WEAPONS, weaponFor, weaponNamed, namesWeapon, weaponsIn, finesseLike } from './weapons.mjs';
-import { effectOnly, danglingRefIn, repairMultiattackAttackList, rowNamesOf } from './checker.mjs';
+import { effectOnly, danglingRefIn, repairMultiattackAttackList, repairReplaceClause, rowNamesOf } from './checker.mjs';
 import { matcherPath, bodyForClass, bodyForPerson } from './path.mjs';
 import { classStats } from './classes.mjs';
 import { capsFix2024, applyCorrections as applyTextFixes, DETERMINISTIC_TEXT_RULES } from '../format-2024/generate.mjs'; // the 2024 caps pass, shared with the lint's fixer (2026-10-17) // one prerequisite stripper, shared with save-fit (stage 1b); one dangling-reference scan, shared with the checker (2026-10-16)
@@ -2057,6 +2057,21 @@ function dropDeadMultiattackCites(sections, trace) {
       : 'an alternative it offered is not on this sheet'; // a pruned alternation drops no clause, so it reports nothing to drop
     trace('multiattack list re-read:', `${why}, so the list now reads "${fixed.text.slice(0, 90)}" — still ${fixed.total} attack${fixed.total === 1 ? '' : 's'}, the total the round was priced against`);
     ma.text = fixed.text;
+  }
+  // AND THE REPLACE CLAUSE IS RE-READ THE SAME WAY (owner, 2026-11-04). The writer
+  // refuses to offer a lettered option unless both halves exist, but it checks at WRITE
+  // time and a later pass can shed the row it named — today's Pit Fiend shipped "a use of
+  // (A) or (B) Spellcasting to cast *Bestow Curse*" with no Actions row left matching the
+  // finder at all. 7 of 139 lettered rows over 3,200 saved sheets. print writes this
+  // clause three ways and no more, so a dead half degrades to the next form down:
+  // lettered -> single option -> no clause (print's commonest Multiattack has none).
+  for (const es of Object.values(sections)) for (const e of es) {
+    const names = live();
+    const resolves = (c) => names.some((n) => n.toLowerCase() === String(c).toLowerCase());
+    const fixed = repairReplaceClause(e.text ?? '', resolves);
+    if (!fixed) continue;
+    trace('replacement clause re-read:', `${fixed.dropped.map((d) => `"${d}"`).join(', ')} ${fixed.dropped.length === 1 ? 'is' : 'are'} not on this sheet, so the clause ${fixed.form === 0 ? 'leaves entirely — print\'s commonest Multiattack carries none' : `falls to its ${fixed.form === 1 ? 'single-option' : 'lettered'} form: "${fixed.text.slice(-70)}"`}`);
+    e.text = fixed.text;
   }
   if (liveAttacks.length) {
     for (const es of Object.values(sections)) for (const e of es) {

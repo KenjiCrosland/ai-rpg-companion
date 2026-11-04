@@ -1761,3 +1761,84 @@ surprises:   The two items that did not pay off were both aimed at paths that ba
              and in both cases the evidence was one grep away from the brief that assigned
              them. The lesson is the sprint's own, inverted: we have been measuring whether
              a FIX works, and not whether the PATH it fixes is the one carrying the defect.
+
+### R10 — a high-CR area nova uses print's high-CR cone
+predicted:   "cones cap at 30 ft. where print reaches 90" — stated before measuring.
+measured:    **the premise was wrong and is withdrawn.** The dragon donors were already
+             print-exact (15/30/60/90). The median read 30 because brute novas are ~40%
+             of sheets and dragon breaths ~7% — composition, not calibration. The real
+             gap was **three brute literals**: `brute-13`, `brute-17`, `brute-17-juggernaut`
+             at 30 ft., raised to 60. Iron Golem (CR 16) is print's only non-dragon
+             precedent above CR 12, so 60 is where print puts it.
+runs:        smoke-out/sweep-2026-11-03T23-14-10
+suite:       178 suites · build clean
+commit:      9dcdf74 statblock: a high-CR area nova uses print's high-CR cone
+not done:    the cone keys to the DONOR's CR, not the sheet's — a CR 15 sheet drew
+             `brute-9-juggernaut`'s 30-ft cone. Found while fixing this; still open.
+surprises:   four of the eleven findings reported that day dissolved the same way
+             (AC curve, idea loss, save rows, shared donor body). See the memory
+             `a-mean-across-archetypes-is-composition`.
+
+### R13 — a payoff gets its enabler at ship, as a rider
+predicted:   the enabler path cannot be hit reliably in the wild (owner: "we can only
+             validate that the plumbing works"), so the instrument is a focused run,
+             not a rate.
+measured:    plumbing validated. Holds gate on HOLD conditions and require a body-part
+             host; `Stunned` is excluded because print rides it **0 times**; the rider
+             is a single substitution on an existing attack, never a new row and never
+             an eviction (owner's ruling: "a gm can remove a row if they want").
+             Enabler helpers hoisted to module scope so the ship path and the authoring
+             path share ONE definition rather than a private copy each.
+runs:        smoke-out/sweep-2026-11-04T05-51-49 (the gate forty, 40/40, 0 throws)
+             evidence: CHECK- and LINT- for that run, CRITIC-2026-11-04-gate.md
+suite:       178 suites · build clean
+commit:      08655f0 statblock: a payoff gets its enabler at ship, as a rider
+not done:    the lower rungs of the ladder (template insert, then refusal) — only the
+             rider rung is built.
+surprises:   `damagesAndHeals` refused EVERY heal on the first cut: a heal writes its
+             own amount as `{dmg}`, so the refusal needs two tokens. Caught by the
+             over-reach guard written beside it, not by the forty.
+
+### R14 — the Multiattack reader, and the attack list repaired from validated elements
+predicted:   the citation lint is a regex lint, so it was specified against print's
+             corpus rather than intuition; the bar set before building was **0 false
+             positives on all 178 print Multiattacks and all 3,200 saved sheets**, with
+             `Fiery Mace`, `Ray of Sickness` and a bare "makes two attacks." still caught.
+measured:    bar met. Print's 178 Multiattacks fall into **ten** grammars, all covered.
+
+             | | before | after |
+             |---|---|---|
+             | findings over 3,200 saved sheets | 25 | **12** |
+             | of those, false positives | **13** (unmeasured at first) | **0** |
+             | after the repair runs | — | **4** |
+             | Multiattack rows repaired | — | 8 |
+             | lint-clean rows rewritten | — | **0** of 2,979 |
+
+             **13 of the 15 "names nothing" findings were the reader's own blind spots**,
+             not defects: a lowercase name slot ("makes two bite attacks" over a row
+             named Bite — our own 2014 converter lowercases), "it can use" vs "uses",
+             and print's generic idiom ("makes two ranged attacks"), which the reader
+             then mistook for a row named "ranged". I had reported 0 false positives
+             before measuring that class; the claim was only ever tested on the
+             dangling class, and it was wrong.
+
+             The repair reads the list as ELEMENTS (count, name SET, span) and moves a
+             dead clause's count to a survivor, so the total stays what `nAtk` priced
+             the round against — arithmetic the engine owns, not a question for a call.
+runs:        3,200 saved sheets across every 2026-10/11 run dir; print corpus
+suite:       178 suites / 4,770 tests · build clean
+commit:      3ce7747, 4cce0ab, 95bcbd1
+not done:    the 4 remaining findings, each out of this repair's scope and left visible
+             to the lint: 2 sheets that name no attack at all (a generation defect — no
+             element to validate), 1 dangling `a use of` cite in a replace clause, 1
+             pre-10-11 converter artifact. The `a use of` case sits on the same sheet
+             family as the empty lettered option "(A) or (B)" and probably wants fixing
+             with it.
+surprises:   **the no-op gate over print caught a bug that would have shipped.** Print's
+             tenth grammar puts an alternation INSIDE the name slot ("makes two Javelin
+             or Morningstar attacks"); read as one name it resolves to nothing, and the
+             first cut "repaired" four CORRECT print sheets — Bugbear Stalker, Warrior
+             Veteran, Dryad, Oni — into things like "makes two Multiattack attacks".
+             The owner asked why the tests only used one malformed Pit Fiend; the answer
+             was that the real failures are dominated by that one sheet, and moving the
+             gate onto print's own 58 drop-one cases is what exposed it.

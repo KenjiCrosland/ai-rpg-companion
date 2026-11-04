@@ -13,7 +13,7 @@
  * of this item's purpose.
  */
 import fs from 'node:fs';
-import { citesGenericAttacks, multiattackAttackClauses, multiattackCitations, multiattackSpells, repairMultiattackAttackList } from '../checker.mjs';
+import { citesGenericAttacks, multiattackAttackClauses, multiattackCitations, multiattackSpells, repairMultiattackAttackList, repairReplaceClause, replaceClauseRowOf } from '../checker.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
 let _c = null;
 const corpus = () => { if (!_c) { _c = Array.isArray(printBlocks) ? printBlocks : Object.values(printBlocks).flat(); } return _c; };
@@ -376,5 +376,86 @@ describe('the repair, against print\'s own Multiattacks with a row deleted', () 
       expect(repairMultiattackAttackList(got.text, resolves, names[0])).toBeNull();
     }
     expect(seen).toBe(178);
+  });
+});
+
+// THE REPLACE CLAUSE. print writes it three ways and no more: lettered (10 rows, all
+// adult dragons), a single option (24 rows), or absent (69 of its 178 Multiattacks). The
+// engine's writer already refuses the lettered form unless both halves exist, but it
+// checks at WRITE time and a later pass can shed the row it named — 7 of 139 lettered
+// rows over 3,200 saved sheets stranded a letter with nothing behind it.
+describe('the replace clause, re-read against the rows that survived', () => {
+  const resolverFor = (rows) => (c) => rows.some((n) => n.toLowerCase() === String(c).toLowerCase());
+  const maOf = (m) => {
+    const rows = Object.values(m.sections ?? {}).flat().filter(Boolean);
+    return rows.map((r) => ({ rows, text: String(r.text ?? '').replace(/\s+/g, ' ') }))
+      .filter((x) => /It can replace one attack with a use of/.test(x.text));
+  };
+  const bare = (r) => String(r.name ?? '').replace(/ \(.*\)$/, '');
+
+  it('leaves all 34 of print\'s replace clauses exactly as print wrote them', () => {
+    let seen = 0;
+    for (const m of corpus()) for (const { rows, text } of maOf(m)) {
+      seen += 1;
+      expect(repairReplaceClause(text, resolverFor(rows.map(bare)))).toBeNull();
+    }
+    expect(seen).toBe(34);
+  });
+
+  it('degrades to the next print form down when one lettered half is shed, 20 cases', () => {
+    let seen = 0;
+    for (const m of corpus()) for (const { rows, text } of maOf(m)) {
+      const halves = /a use of \(A\) (.*?) or \(B\) (.*?)\.$/.exec(text);
+      if (!halves) continue;
+      for (const h of [1, 2]) {
+        seen += 1;
+        const victim = replaceClauseRowOf(halves[h]);
+        const keep = rows.map(bare).filter((n) => n.toLowerCase() !== victim.toLowerCase());
+        const fixed = repairReplaceClause(text, resolverFor(keep));
+        expect(fixed).not.toBeNull();
+        expect(fixed.text).not.toMatch(/\((?:A|B|C)\)/);          // no letter left with nothing behind it
+        expect(fixed.text).toMatch(/a use of/);                   // the surviving half is still offered
+        expect(fixed.text).not.toMatch(new RegExp(victim.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'));
+      }
+    }
+    expect(seen).toBe(20);
+  });
+
+  // THE REAL SHEETS, verbatim. The engine's own writer had already been fixed once for
+  // this defect (forty #3, the Choir of the Pit) by checking the name at write time; both
+  // of these shipped AFTER that fix, which is what showed the check belongs at the end.
+  it.each([
+    ['the Choir of the Pit (homebrew40 11-02)', 'The choir makes two Dirge Note attacks. It can replace one attack with a use of (A) or (B) Spellcasting to cast *Bestow Curse*.',
+      ['Multiattack', 'Dirge Note', 'Spellcasting'],
+      'The choir makes two Dirge Note attacks. It can replace one attack with a use of Spellcasting to cast *Bestow Curse*.'],
+    ['the Ossuary Sun-Lich (sweep 10-21)', 'The sun-lich makes three attacks, using Eldritch Burst or Paralyzing Touch in any combination. It can replace one attack with a use of (A) or (B) Spellcasting to cast *Guiding Bolt*.',
+      ['Multiattack', 'Eldritch Burst', 'Paralyzing Touch', 'Spellcasting'],
+      'The sun-lich makes three attacks, using Eldritch Burst or Paralyzing Touch in any combination. It can replace one attack with a use of Spellcasting to cast *Guiding Bolt*.'],
+  ])('repairs %s', (_l, text, rows, want) => {
+    expect(repairReplaceClause(text, resolverFor(rows)).text).toBe(want);
+  });
+
+  it('drops the clause entirely when nothing it offers survives', () => {
+    // the 10-27 Pit Fiend's "a use of Merciless Strike" over a sheet with no such row.
+    // print's commonest Multiattack carries no replace clause at all, so this is a form
+    // print itself writes 69 times — not a hole in the sheet.
+    const got = repairReplaceClause('The fiend makes two Bite attacks. It can replace one attack with a use of Merciless Strike.', resolverFor(['Bite']));
+    expect(got.text).toBe('The fiend makes two Bite attacks.');
+    expect(got.form).toBe(0);
+  });
+
+  // EVERY ONE OF THESE WAS A BUG I SHIPPED INTO THE FUNCTION AND THE CORPORA CAUGHT.
+  // They are regressions, not hypotheticals: each deleted correct text off real sheets.
+  it.each([
+    ["print's Vampire: a form restriction in parentheses is not part of the row name",
+      'The vampire makes three Dead Hand attacks. It can replace one attack with a use of Bite (Bat or Vampire Form Only).', ['Dead Hand', 'Bite']],
+    ['our 2014 printing: "or ITS Spellcasting", the converter\'s documented form',
+      'The seer makes three attacks. It can replace one attack with a use of Rot Gaze or its Spellcasting to cast *ray of sickness*.', ['Rot Gaze', 'Spellcasting']],
+    ['a row whose name genuinely BEGINS with an article — "The Fen\'s Claim" (sweep 11-04)',
+      'The crone makes three Arcane Burst attacks. It can replace one attack with a use of The Fen\'s Claim.', ['Arcane Burst', "The Fen's Claim"]],
+    ['the unlettered pair our 2014 printing writes, both halves live',
+      'The midwife makes three attacks. It can replace one attack with a use of Fever Blight or Spellcasting to cast *ray of sickness*.', ['Fever Blight', 'Spellcasting']],
+  ])('does not touch %s', (_l, text, rows) => {
+    expect(repairReplaceClause(text, resolverFor(rows))).toBeNull();
   });
 });
