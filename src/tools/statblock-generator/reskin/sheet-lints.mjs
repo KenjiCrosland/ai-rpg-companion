@@ -26,6 +26,7 @@ import { weaponFor } from './weapons.mjs';
 import { PRINT_ROW_NAMES } from './generate.mjs';
 import { citesGenericAttacks, multiattackCitations, multiattackSpells } from './checker.mjs';
 
+const RULES_NOUN = new Set(['grapple', 'grappled', 'condition', 'effect', 'spell', 'curse', 'petrification', 'disease', 'charm', 'possession', 'restraint']); // the grapple IS the condition, not a thing on the sheet
 const BARE = (n) => String(n ?? '').replace(/ \(.*\)$/, '').trim();
 const TEXT = (r) => String(r?.text ?? r?.description ?? '').replace(/\s+/g, ' ').trim();
 const DICE = /\d+ \(\d+d\d+/;
@@ -107,11 +108,48 @@ export const SHEET_LINTS = [
     reads: 'format of engine-written text',
     why: 'a Multiattack citing a spell the sheet cannot cast — the critic\'s archlich offered "Spellcasting to cast Ray of Sickness" with that spell on no list of its own',
     run: (rows) => {
-      const lists = rows.filter(({ r }) => /Spellcasting|casts/.test(`${BARE(r.name)} ${TEXT(r)}`)).map(({ r }) => TEXT(r)).join(' ');
+      // THE CITING ROW IS NOT A SPELL LIST. "a use of (B) Spellcasting to cast *Ray of
+      // Sickness*" contains the word "Spellcasting", so the Multiattack was swept into
+      // its own list of lists and every spell it named was trivially "available" — the
+      // rule could not fail. It reported nothing on the 11-04 archlich, whose Ray of
+      // Sickness is on none of its three lists (critic, 2026-11-04). A list is a row
+      // that OFFERS spells: print's Spellcasting row, or a row that casts one by name.
+      const lists = rows.filter(({ r }) => !/^Multiattack/.test(BARE(r.name))
+        && (/^Spellcasting/.test(BARE(r.name)) || /casts one of the following|At will:|\d\/[Dd]ay|\bcasts\b/.test(TEXT(r))))
+        .map(({ r }) => TEXT(r)).join(' ');
       return rows.filter(({ r }) => /^Multiattack/.test(BARE(r.name))).flatMap(({ sec, r }) => multiattackSpells(TEXT(r))
         .filter((sp) => !new RegExp(sp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(lists))
         .map((sp) => `${sec}/${BARE(r.name)}: offers to cast "${sp}", which is on no spell list this sheet has`));
     },
+  },
+  {
+    rule: 'save-without-its-numbers',
+    reads: 'format of engine-written text',
+    why: 'a row whose effect turns on a save but names neither the ability nor a DC — the critic\'s Collateral Word, which a GM cannot roll. print invokes a save 3 times in prose and names both every time',
+    run: (rows) => rows.filter(({ r }) => /\bon a (?:failed|successful) save\b|\bfails? the save\b|\bsucceeds? on the save\b/i.test(TEXT(r))
+      && !/\b(?:Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) Saving Throw/i.test(TEXT(r)) && !/\bDC \d+/.test(TEXT(r)))
+      .map(({ sec, r }) => `${sec}/${BARE(r.name)}: turns on a save but names neither the ability nor a DC`),
+  },
+  {
+    rule: 'effect-cites-nothing',
+    reads: 'format of engine-written text',
+    why: 'an effect that ends when an OBJECT is destroyed, where the row never says the object exists — the critic\'s Weeping Snare, "until the mortar is destroyed" on a sheet with no mortar. print does this 0 of 5 times: its row name carries the object (Web Strand, Entangling Rope)',
+    run: (rows) => rows.flatMap(({ sec, r }) => {
+      const t = TEXT(r);
+      const out = [];
+      for (const m of t.matchAll(/until the ([a-z][a-z' -]{2,24}?) (?:is destroyed|is removed|breaks)/g)) {
+        const head = m[1].trim().split(/\s+/).pop();
+        // "until the grapple ends" is RULES VOCABULARY, not an object: the grapple IS the
+        // Grappled condition the row imposes. print writes it 10 times, so a check that
+        // treats it as an undeclared object fails print before it reaches us.
+        if (RULES_NOUN.has(head.toLowerCase())) continue;
+        const before = t.slice(0, m.index);
+        const seen = new RegExp(`\\b${head.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        if (seen.test(before) || seen.test(BARE(r.name))) continue;
+        out.push(`${sec}/${BARE(r.name)}: ends when "the ${m[1].trim()}" is destroyed, and the row never says there is one`);
+      }
+      return out;
+    }),
   },
   {
     rule: 'empty-option',

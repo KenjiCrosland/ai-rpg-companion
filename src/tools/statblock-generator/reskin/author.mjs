@@ -282,7 +282,14 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
     .replace(/\b\d+\b/g, '#')
     .match(/#/g) ?? []).length;
   const quantitiesOk = (x) => !Number.isFinite(Number(x?.quantities)) || Number(x.quantities) <= quantitiesStated(x);
-  const traitIsSave = (t) => /saving throw/i.test(`${t.trigger ?? ''} ${t.effect}`);
+  // A SAVE'S OUTCOME IS A SAVE TOO (critic, 2026-11-04). This tested for the words
+  // "saving throw", so a row that skipped the form and wrote only its RESULT slipped
+  // through: the gate forty's Pit Fiend shipped "Collateral Word", whose effect turns on
+  // "on a failed save" while naming neither the ability nor a DC — a GM cannot run it.
+  // The outcome phrasings are the same defect as the form and refuse for the same
+  // reason: a trait is not a save. 1 of 523 authored rows in the saved runs, and it is
+  // that row, so the widening refuses the defect and nothing else.
+  const traitIsSave = (t) => /saving throw|\bon a (?:failed|successful) save\b|\bfails? the save\b|\bsucceeds? on the save\b/i.test(`${t.trigger ?? ''} ${t.effect}`);
   const dcMisused = (t) => /\{dc\}\s+(?:feet|ft)\b|within \{dc\}/i.test(`${t.trigger ?? ''} ${t.effect}`);
   // ONE DEFINITION FOR THE VERDICT AND ITS REASON (2026-11-01). The reason was
   // computed separately from the test and had drifted: every refusal that was not

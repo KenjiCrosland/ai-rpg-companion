@@ -19,6 +19,8 @@ let _c = null;
 const corpus = () => { if (!_c) { _c = Array.isArray(printBlocks) ? printBlocks : Object.values(printBlocks).flat(); } return _c; };
 import path from 'node:path';
 import { lintSheet, rowsOfSheet, SHEET_LINTS } from '@/tools/statblock-generator/reskin/sheet-lints.mjs';
+import * as SHAPES from '@/tools/statblock-generator/reskin/shapes.mjs';
+import { ceilingFor } from '@/tools/statblock-generator/reskin/card-budgets.mjs';
 
 const RUN = 'smoke-out/sweep-2026-11-01T20-03-32';
 const sheetFor = (ix) => {
@@ -300,8 +302,12 @@ describe('the Multiattack attack list, repaired from its validated elements', ()
 
   it('the repaired sentence passes the lint that found it', () => {
     const f = FAILING[0];
+    // the Spellcasting row carries the spell the clause offers, as a real sheet does —
+    // without it the off-list-spell rule fires, correctly: this fixture only passed
+    // before because that rule swept the citing Multiattack into its own list of lists.
     const sheet = { sections: { Actions: [{ name: 'Multiattack', text: f.want },
-      ...f.attacks.map((a) => ({ name: a, text: 'Melee Attack Roll: +14, reach 10 ft. Hit: 22 (4d6 + 8) piercing damage.' }))] } };
+      ...f.attacks.map((a) => ({ name: a, text: 'Melee Attack Roll: +14, reach 10 ft. Hit: 22 (4d6 + 8) piercing damage.' })),
+      { name: 'Spellcasting', text: 'The fiend casts one of the following spells (spell save DC 21): At will: *Bestow Curse*, *Fireball*' }] } };
     expect(lintSheet(sheet).filter((h) => /^multiattack/.test(h.rule))).toEqual([]);
   });
 });
@@ -457,5 +463,133 @@ describe('the replace clause, re-read against the rows that survived', () => {
       'The midwife makes three attacks. It can replace one attack with a use of Fever Blight or Spellcasting to cast *ray of sickness*.', ['Fever Blight', 'Spellcasting']],
   ])('does not touch %s', (_l, text, rows) => {
     expect(repairReplaceClause(text, resolverFor(rows))).toBeNull();
+  });
+});
+
+// A RULE MUST NOT BE SATISFIED BY THE ROW IT IS JUDGING. `multiattack-offlist-spell`
+// built its list of spell lists from every row mentioning "Spellcasting" — which includes
+// the Multiattack writing "a use of (B) Spellcasting to cast *Ray of Sickness*". The
+// cited spell was therefore always "available", and the rule reported nothing in 3,200
+// sheets. The critic found the archlich by reading it. Print stays at 0 findings.
+describe('the off-list spell rule cannot be satisfied by the row it judges', () => {
+  const sheetOf = (rows) => ({ sections: { Actions: rows } });
+  const ARCHLICH_MA = 'The archlich makes three attacks, using Eldritch Burst or Paralyzing Touch. It can replace one attack with a use of (A) Scouring Volley or (B) Spellcasting to cast *Ray of Sickness*.';
+  // the 11-04 archlich's three real lists, verbatim — Ray of Sickness is on none of them
+  const ARCHLICH_SC = 'The archlich casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 19): - **At will:** *Detect Magic*, *Detect Thoughts*, *Dispel Magic*, *Fireball*, *Invisibility*, *Lightning Bolt*, *Mage Hand*, *Prestidigitation* **2/day each:** *Animate Dead*, *Dimension Door*, *Plane Shift* **1/day each:** *Chain Lightning*, *Finger of Death*, *Power Word Kill*, *Scrying*';
+
+  it('flags the 11-04 archlich, whose Ray of Sickness is on none of its three lists', () => {
+    const hits = lintSheet(sheetOf([
+      { name: 'Multiattack', text: ARCHLICH_MA },
+      { name: 'Eldritch Burst', text: 'Melee Attack Roll: +12, reach 5 ft. Hit: 18 (4d6 + 4) force damage.' },
+      { name: 'Paralyzing Touch', text: 'Melee Attack Roll: +12, reach 5 ft. Hit: 10 (3d6) cold damage.' },
+      { name: 'Scouring Volley', text: 'Dexterity Saving Throw: DC 19, each creature in a 60-foot Cone. Failure: 33 (6d10) radiant damage.' },
+      { name: 'Spellcasting', text: ARCHLICH_SC },
+    ]));
+    expect(hits.map((h) => h.rule)).toContain('multiattack-offlist-spell');
+    expect(hits.find((h) => h.rule === 'multiattack-offlist-spell').message).toMatch(/Ray of Sickness/);
+  });
+
+  it('and clears the same sheet once the spell is on a list', () => {
+    const hits = lintSheet(sheetOf([
+      { name: 'Multiattack', text: ARCHLICH_MA },
+      { name: 'Eldritch Burst', text: 'Melee Attack Roll: +12, reach 5 ft. Hit: 18 (4d6 + 4) force damage.' },
+      { name: 'Paralyzing Touch', text: 'Melee Attack Roll: +12, reach 5 ft. Hit: 10 (3d6) cold damage.' },
+      { name: 'Scouring Volley', text: 'Dexterity Saving Throw: DC 19, each creature in a 60-foot Cone. Failure: 33 (6d10) radiant damage.' },
+      { name: 'Spellcasting', text: `${ARCHLICH_SC} **1/day each:** *Ray of Sickness*` },
+    ]));
+    expect(hits.map((h) => h.rule)).not.toContain('multiattack-offlist-spell');
+  });
+
+  it('no print sheet is flagged', () => {
+    const flagged = corpus().flatMap((m) => lintSheet(m).filter((h) => h.rule === 'multiattack-offlist-spell').map(() => m.name));
+    expect(flagged).toEqual([]);
+  });
+});
+
+// THE CRITIC'S EFFECT-CLAIM ITEM, the two halves that were not the enabler. Both are
+// format checks on our OWN output — a row judged against itself, not prose read for
+// meaning — and both are specified against print before anything else.
+describe('an effect must carry the numbers and the things it claims', () => {
+  const sheetOf = (rows) => ({ sections: { Actions: rows } });
+
+  it('flags a save with neither an ability nor a DC — the critic\'s Collateral Word', () => {
+    // verbatim from sweep-2026-11-04 #17. 1 of 523 authored rows in the saved runs.
+    const t = 'A creature within 5 feet of the pit fiend speaks a promise, plea, or vow aloud, casts a spell with a verbal component, surrenders, or calls for aid, on a failed save, the utterance turns to slag.';
+    expect(lintSheet(sheetOf([{ name: 'Collateral Word', text: t }])).map((h) => h.rule)).toContain('save-without-its-numbers');
+  });
+
+  it.each([
+    ['a named ability and a DC', '*Wisdom Saving Throw*: DC 21, each creature in a 20-foot Emanation. *Failure:* The target has the Frightened condition until the end of its next turn.'],
+    ['a DC in prose', 'The target must succeed on a DC 17 Strength save or be pushed 10 feet.'],
+  ])('and does not flag a save that states %s', (_l, text) => {
+    expect(lintSheet(sheetOf([{ name: 'Thing', text }])).map((h) => h.rule)).not.toContain('save-without-its-numbers');
+  });
+
+  it('flags an effect ending on an object the row never establishes — the Weeping Snare', () => {
+    const t = '*Strength Saving Throw*: DC 17, one creature the golem can see within 120 feet. *Failure:* 17 (5d6) Bludgeoning damage, and the target has the Restrained condition until the mortar is destroyed (AC 15; HP 20).';
+    expect(lintSheet(sheetOf([{ name: 'Weeping Snare (1/Day)', text: t }])).map((h) => h.rule)).toContain('effect-cites-nothing');
+  });
+
+  it.each([
+    ['the row introduces the object, which is what the snare frame now does', '*Strength Saving Throw*: DC 17, one creature within 120 feet. *Failure:* 17 (5d6) Bludgeoning damage, and the target is caught in mortar and has the Restrained condition until the mortar is destroyed (AC 15; HP 20).'],
+    ['the row NAME carries it, which is how print does it (Web Strand, Entangling Rope)', '*Dexterity Saving Throw*: DC 13, one creature. *Failure:* The target has the Restrained condition until the web is destroyed (AC 10; HP 5).'],
+    ['"until the grapple ends" is rules vocabulary — print writes it 10 times', '*Melee Attack Roll:* +9, reach 10 ft. 14 (2d8 + 5) Bludgeoning damage, and the target has the Grappled condition (escape DC 15) until the grapple ends.'],
+  ])('and does not flag it when %s', (_l, text) => {
+    const name = /web is destroyed/.test(text) ? 'Web Strand' : 'Thing';
+    expect(lintSheet(sheetOf([{ name, text }])).map((h) => h.rule)).not.toContain('effect-cites-nothing');
+  });
+
+  it('neither rule flags any print sheet', () => {
+    const flagged = corpus().flatMap((m) => lintSheet(m)
+      .filter((h) => h.rule === 'save-without-its-numbers' || h.rule === 'effect-cites-nothing')
+      .map((h) => `${m.name}: ${h.message}`));
+    expect(flagged).toEqual([]);
+  });
+
+  it('every band of the snare frame introduces its object, for every fill it gets', () => {
+    // the 6 bands shipped "until the {restraint} is destroyed" and relied on print's
+    // convention that the ROW NAME names the object — but our names are coined
+    // separately, so "Weeping Snare" + fill "mortar" left it unestablished.
+    const frames = JSON.stringify(SHAPES).match(/[^"]*until the \{restraint\} is destroyed[^"]*/g) ?? [];
+    expect(frames.length).toBe(6);
+    for (const f of frames) expect(f).toMatch(/caught in \{restraint\}/);
+    for (const fill of ['mortar', 'brambles', 'roots', 'chain', 'noose', 'web']) {
+      for (const f of frames) {
+        const text = f.replace(/\{restraint\}/g, fill).replace(/\{dc\}/g, '17')
+          .replace(/\{avg_half\} \(\{dice_half\}\) \{damage_type\}/, '17 (5d6) Bludgeoning').replace(/\{r_vuln\}/g, 'Fire');
+        expect(lintSheet(sheetOf([{ name: 'Weeping Snare (1/Day)', text }])).map((h) => h.rule)).not.toContain('effect-cites-nothing');
+      }
+    }
+  });
+});
+
+describe('the condition-payoff template deals print\'s ordinary save amount', () => {
+  it('and never double it', () => {
+    // print's four cited payoffs sit WELL under the single-target save ceiling:
+    // Glabrezu/Pummel 15 of 29 at CR 9, Gorgon/Trample 16 of 24 at CR 5,
+    // Succubus/Draining Kiss 13 of 24 at CR 4, Sea Hag/Death Glare 13 of 13 at CR 2.
+    // Ours doubled it ({avg_x2}) and shipped "Merciless Strike: 49" against a ceiling
+    // of 31 at CR 13 (critic, 2026-11-04). It was the only template using that token.
+    const src = JSON.stringify(SHAPES);
+    const i = src.indexOf('"condition-payoff"');
+    expect(i).toBeGreaterThan(-1);
+    const seg = src.slice(i, i + 3000);
+    expect(seg).not.toMatch(/\{avg_x2\}|\{dice_x2\}/);
+    expect((seg.match(/\{avg\} \(\{dice\}\)/g) ?? []).length).toBe(6);
+  });
+
+  it('and print\'s own payoff rows are all under the save ceiling, which is why', () => {
+    const want = { 'Sea Hag': 'Death Glare', Gorgon: 'Trample', Succubus: 'Draining Kiss', Glabrezu: 'Pummel' };
+    let seen = 0;
+    for (const m of corpus()) {
+      const w = want[m.name]; if (!w) continue;
+      for (const r of Object.values(m.sections ?? {}).flat().filter(Boolean)) {
+        if (!String(r.name).startsWith(w)) continue;
+        const d = /(\d+) \(\d+d\d+(?: *[+-] *\d+)?\)/.exec(String(r.text ?? '')); if (!d) continue;
+        seen += 1;
+        expect(Number(d[1])).toBeLessThanOrEqual(ceilingFor(Number(m.cr), { save: true }));
+      }
+    }
+    expect(seen).toBe(4);
   });
 });
