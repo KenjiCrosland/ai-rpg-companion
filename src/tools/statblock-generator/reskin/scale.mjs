@@ -17,7 +17,19 @@ export function pickDonor(cr, style = null, archetype) {
   const mine = DONORS.filter((d) => (d.archetypes ?? []).includes(archetype));
   const pool = mine.filter((d) => (style ? d.style === style : !d.style));
   const fallback = mine.filter((d) => !d.style);
-  const from = (list) => list.filter((d) => d.cr <= cr).sort((a, b) => b.cr - a.cr)[0] ?? list[0];
+  // WHEN NOTHING SITS AT OR BELOW THE TARGET, TAKE THE NEAREST RUNG — not the first in
+  // the array (critic, 2026-11-05). A CR 4 regenerator brute found no regenerator at or
+  // below 4 and fell through to `list[0]`, which is `brute-17-regenerator`: a thirteen-rung
+  // jump that carried Regeneration 20 onto 85 Hit Points, so a level-4 party netting about
+  // 15 damage a round could not kill it. It shipped on 6 of 6 rolls of that concept.
+  //
+  // The style had cheaper rungs all along — brute-5-regenerator and brute-10-regenerator —
+  // and array order was the only reason the 17 won. Nearest-by-CR picks the 5, a gap of
+  // one, and keeps the style the concept asked for rather than dropping to a styleless
+  // body. Ties break downward, since scaling a donor UP adds rows and scaling it DOWN
+  // removes them, and the smaller sheet is the safer error at a low CR.
+  const from = (list) => list.filter((d) => d.cr <= cr).sort((a, b) => b.cr - a.cr)[0]
+    ?? list.slice().sort((a, b) => Math.abs(a.cr - cr) - Math.abs(b.cr - cr) || a.cr - b.cr)[0];
   // THE LEGENDARY TIER (high-cr batch 2026-10-02): from CR 17 a sheet carries the
   // kit, so the pick prefers a legendary rung — the nearest one, a rung above the
   // CR included (a CR 17 mounted skirmisher scaled the kit-less 13 rung up while
