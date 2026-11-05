@@ -1905,3 +1905,47 @@ surprises:   **I speculated the three shapes were being starved and that was wro
              lowercase `cone` (so print's own dragon breaths read as over-ceiling), and
              then `within \d+ feet of` over-excluded single-target rows like Ground
              Eruption. The checker's 3 is the authority, not my 4%.
+
+### GATE 2026-11-05 — both fortys, on fd82d5a
+predicted:   `PREDICTIONS-2026-11-05-gate.md`, written before launch and unedited. Headline:
+             single-target saves over print's ceiling 0, the `single-target-ceiling` FAIL
+             class falls from 3, all Multiattack lints and `empty-option` 0,
+             `multiattack-offlist-spell` non-zero (lint only, no repair built), FAILs not
+             rising above the previous gate's 7 and 3.
+measured:    `sweep-2026-11-05T07-45-32` and `homebrew40-2026-11-05T15-02-18`,
+             **40 of 40 and 40 of 40, 0 throws.**
+
+             | | sweep | homebrew40 |
+             |---|---|---|
+             | sheet lints | 5 | 1 |
+             | checker FAILs | **3** (was 7) | 8 (was 3) |
+             | single-target saves over ceiling | **0 of 16** | **0 of 11** |
+
+             **The `single-target-ceiling` class is eliminated** — 3 of sweep's 7 last
+             gate to 0, and 0 of 27 single-target save rows across both fortys. sweep's
+             4 FAIL lines are the fewest of any gate this sprint bar 11-03 16:53 (2).
+runs:        smoke-out/sweep-2026-11-05T07-45-32, smoke-out/homebrew40-2026-11-05T15-02-18
+suite:       178 suites / 4,851 tests · build clean
+commit:      fd82d5a and the eleven before it
+not done:    `multiattack-offlist-spell` fires once on sweep and nothing repairs it — the
+             lint is correct, no repair was built. And ONE punctuation defect is mine with
+             the cause UNIDENTIFIED: the Landing Maw shipped "…in any combination.. It can
+             replace one attack with a Bite attack", 1 sheet of 40 and 0 across the 3,279
+             before this night, so it came from the Multiattack repairs — but it does not
+             reproduce from either repair in isolation, so what shipped is a GUARD at
+             their exit, not a fix at the cause.
+surprises:   **homebrew40's FAILs rose 3 -> 8, which the predictions said would surprise
+             me.** Attributed row by row rather than accepted: one is the punctuation
+             above; `duplicate-mechanic: 3 rows impose Prone` is three CHASSIS rows on a
+             trampler donor, one of which (Relentless Stride) describes the creature
+             righting ITSELF and imposes nothing, so that FAIL is partly a checker false
+             positive; the remainder are families present in the previous gate.
+
+             **Seven homebrew40 blocks timed out on the first attempt and it was the
+             machine idling, not the engine.** Elapsed times told it: sheets 1-16 all
+             26-37s, then slow sheets interleaved with fast ones from 17 on, the slow ones
+             clustering near 950s (about 15 minutes of wall clock). Four of the six
+             timed-out concepts completed in ~30s on re-run. Held awake with
+             `caffeinate -dimsu`, the same code gave 40 of 40 and zero timeouts. I had
+             called it a release blocker and a possible code hang; the owner named the
+             cause. Re-run directory `homebrew40-2026-11-05T08-05-49` should be ignored.

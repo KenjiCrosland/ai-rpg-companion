@@ -8035,5 +8035,147 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "f709872d1a32": {
+  "concept": "A low, long-bodied quadruped hauls itself along the storm-blasted cliffs on knuckles of cracking hide, its seams split w",
+  "clauses": [
+   {
+    "id": "cl_10dcz9",
+    "text": "A low",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1xebs7f",
+    "text": "long-bodied quadruped hauls itself along the storm-blasted cliffs on knuckles of cracking hide",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1c14vud",
+    "text": "its seams split wide to show veins of molten rock that bleed a black",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "curse",
+    "askMechanicWhy": "bleed a black heatless rot wherever it lies"
+   },
+   {
+    "id": "cl_1499nq4",
+    "text": "heatless rot wherever it lies",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "curse",
+    "askMechanicWhy": "bleed a black heatless rot wherever it lies"
+   },
+   {
+    "id": "cl_d3cukg",
+    "text": "it is a single surly predator that memorizes every deer-trail",
+    "kind": "mechanical",
+    "askMechanic": "track",
+    "askMechanicWhy": "memorizes every deer trail and smuggler's path"
+   },
+   {
+    "id": "cl_1a39fgb",
+    "text": "smuggler's path across its ground",
+    "kind": "mechanical",
+    "askMechanic": "track",
+    "askMechanicWhy": "memorizes every deer trail and smuggler's path"
+   },
+   {
+    "id": "cl_1ko3vde",
+    "text": "waits there with a patience no animal should own",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_fk0m4q",
+    "text": "It opens by stalking downwind",
+    "kind": "mechanical",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_159c650",
+    "text": "slamming a molten-veined forelimb into its prey",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "into its prey",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_ecsa9k",
+    "text": "searing cold necrosis through the wound",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "through the wound",
+    "askShape": "attack",
+    "askMechanic": "drain",
+    "askMechanicWhy": "searing cold necrosis"
+   },
+   {
+    "id": "cl_1k8qvan",
+    "text": "circles and pins the wounded thing against rock",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "pins the wounded thing against rock"
+   },
+   {
+    "id": "cl_1hzmirm",
+    "text": "dragging its burning hide across the flesh until the prey stops moving",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_sjyza0",
+    "text": "It never flees: bloodied",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_14abpr2",
+    "text": "it plants itself across the only approach to its den",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1fo02m5",
+    "text": "fights to the death",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "bloodied",
+    "askShape": "buff_self",
+    "askMechanic": "harden",
+    "askMechanicWhy": "plants itself across the only approach to its den"
+   },
+   {
+    "id": "cl_10r8vhk",
+    "text": "scheming even as it bleeds",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1cftjub",
+    "text": "giving ground only to draw intruders onto the slick",
+    "kind": "mechanical",
+    "askShape": "save_area",
+    "askMechanic": "zone",
+    "askMechanicWhy": "giving ground only to draw intruders onto the slick"
+   },
+   {
+    "id": "cl_87ognr",
+    "text": "split stone where its veins run hottest",
+    "kind": "mechanical",
+    "askShape": "save_area",
+    "askMechanic": "zone",
+    "askMechanicWhy": "split stone where its veins run hottest"
+   },
+   {
+    "id": "cl_19nj5rq",
+    "text": "It is scheming (INT 14-16)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1j6ax4",
+    "text": "it is a territorial guardian that defends its home ground to the death",
+    "kind": "mechanical",
+    "askMechanic": "track",
+    "askMechanicWhy": "memorizes every deer trail and smuggler's path"
+   }
+  ]
  }
 }

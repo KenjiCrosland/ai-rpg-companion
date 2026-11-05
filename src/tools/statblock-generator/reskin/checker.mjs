@@ -199,7 +199,8 @@ export function repairMultiattackAttackList(text, resolves, fallback = null) {
     : parts.length === 2 ? parts.join(' and ')
       : `${parts.slice(0, -1).join(', ')}, and ${parts.at(-1)}`;
   const out = `${t.slice(0, clauses[0].start)}makes ${list}${t.slice(clauses.at(-1).end)}`;
-  return out === t ? null : { text: out, dropped: dead.flatMap((c) => c.names), total: kept.reduce((n, c) => n + c.count, 0) };
+  const tidy = tidyStops(out);
+  return tidy === t ? null : { text: tidy, dropped: dead.flatMap((c) => c.names), total: kept.reduce((n, c) => n + c.count, 0) };
 }
 /** THE REPLACE CLAUSE, VALIDATED LIKE THE LIST. print writes it three ways and no more:
  *  "a use of (A) X or (B) Y" (10 rows, all adult dragons), "a use of Z" (27 rows), and
@@ -219,6 +220,21 @@ export function repairMultiattackAttackList(text, resolves, fallback = null) {
 // cut therefore read the cite as dead and DELETED a correct clause from every vampire.
 // Row names are stripped the same way everywhere (`live()` in generate.mjs); the cite
 // must be too. Caught on the saved sheets, which is why both corpora are measured.
+// A REPAIR HANDS BACK A CLEAN SENTENCE. The Landing Maw shipped "…in any combination..
+// It can replace one attack with a Bite attack." — a doubled period, 1 sheet of 40, and
+// zero in the 3,279 sheets before tonight, so it came from this night's Multiattack
+// repairs. It does NOT reproduce from either repair in isolation (two replace clauses, a
+// trailing sentence, a dropped clause: all come back single-period), so this is a GUARD
+// at the exit rather than a fix at the cause — the cause is still unidentified and that
+// is worth saying rather than implying the hole is closed.
+//
+// Only punctuation we could have doubled is touched: a repeated stop, a stop before a
+// comma, a space before either. Nothing else in the sentence moves.
+const tidyStops = (t) => String(t ?? '')
+  .replace(/\.\s*\.(?=\s|$)/g, '.')
+  .replace(/\.\s*,/g, ',')
+  .replace(/\s+([.,])/g, '$1')
+  .replace(/\s{2,}/g, ' ');
 export const replaceClauseRowOf = (opt) => String(opt ?? '').replace(/\s+to cast\b.*$/i, '').replace(/[*]/g, '').replace(/\s*\([^)]*\)\s*$/, '').trim();
 // A LEADING POSSESSIVE IS NOT PART OF THE ROW NAME — our 2014 printing writes "or ITS
 // Spellcasting to cast *ray of sickness*", the converter's own documented form, so
@@ -268,7 +284,8 @@ export function repairReplaceClause(text, resolves) {
     : live.length === 1 ? `It can replace one attack with a use of ${live[0]}.`
       : null; // nothing left to trade for: print's commonest Multiattack carries no clause
   const out = `${t.slice(0, m.index)}${clause ? ` ${clause}` : ''}${t.slice(m.index + m[0].length)}`.replace(/\s+$/, '');
-  return out === t ? null : { text: out, dropped: opts.filter((o) => !live.includes(o)).map((o) => replaceClauseRowOf(o) || '(empty)'), form: live.length };
+  const tidy = tidyStops(out);
+  return tidy === t ? null : { text: tidy, dropped: opts.filter((o) => !live.includes(o)).map((o) => replaceClauseRowOf(o) || '(empty)'), form: live.length };
 }
 export const multiattackSpells = (text) => [...String(text ?? '').matchAll(/to cast\s+\*?([A-Z][\w' -]*?)\*?(?:\s*\(|[.,;]|$)/g)].map((m) => m[1].trim()).filter(Boolean);
 

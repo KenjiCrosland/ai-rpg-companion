@@ -946,3 +946,34 @@ describe('the payoff seed stands down when the sheet already uses its own condit
     expect(src).toMatch(/seed\.key === 'phase-slip' && chassisTeleports/);
   });
 });
+
+// A REPAIR HANDS BACK A CLEAN SENTENCE. The Landing Maw shipped "…in any combination..
+// It can replace one attack with a Bite attack." in the 2026-11-05 homebrew40 gate —
+// 1 sheet of 40, and zero in the 3,279 sheets before that night, so it came from the
+// Multiattack repairs. It does not reproduce from either repair in isolation, so the
+// guard sits at their exit and the cause is still open.
+describe('a Multiattack repair never leaves doubled punctuation', () => {
+  const resolverFor = (rows) => (c) => rows.some((n) => n.toLowerCase() === String(c).toLowerCase());
+
+  it('cleans the exact sentence that shipped', () => {
+    const t = 'The landing maw makes three attacks, using Slam, Bite, or Ravenous Hunger in any combination.. It can replace one attack with a use of Gone.';
+    const got = repairReplaceClause(t, resolverFor(['Slam', 'Bite', 'Ravenous Hunger']));
+    expect(got.text).not.toMatch(/\.\s*\./);
+    expect(got.text).toBe('The landing maw makes three attacks, using Slam, Bite, or Ravenous Hunger in any combination.');
+  });
+
+  it.each([
+    ['a doubled stop', 'The fiend makes one Bite attack, two Claw attacks, and one Gone attack..'],
+    ['a stop before a comma', 'The fiend makes one Bite attack., two Claw attacks, and one Gone attack.'],
+    ['a space before a stop', 'The fiend makes one Bite attack, two Claw attacks, and one Gone attack .'],
+  ])('and the list repair cleans %s', (_l, t) => {
+    const got = repairMultiattackAttackList(t, resolverFor(['Bite', 'Claw']), 'Bite');
+    expect(got).not.toBeNull();
+    expect(got.text).not.toMatch(/\.\s*\.|\.\s*,|\s+[.,]/);
+  });
+
+  it('and leaves a correct sentence untouched', () => {
+    const t = 'The dragon makes three Rend attacks. It can replace one attack with a use of (A) Sleep Breath or (B) Spellcasting to cast *Scorching Ray*.';
+    expect(repairReplaceClause(t, resolverFor(['Rend', 'Sleep Breath', 'Spellcasting']))).toBeNull();
+  });
+});
