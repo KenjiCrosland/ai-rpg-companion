@@ -1468,11 +1468,30 @@ export const TEMPLATES = [
     duration_default: seed.duration_default ?? null, // a seed declares its own default too, or the frame path's choice never reaches it
     needs_body: NEEDS_BODY[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? NEEDS_BODY[seed.key] ?? null,
     family: FAMILY[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? FAMILY[seed.key] ?? null,
-    trigger: /When (?:the creature|it) hits\b/i.test(seed.text) ? 'on_hit'
+    // A SEED MAY DECLARE ITS OWN CELL (owner's ruling, 2026-11-05, option b).
+    //
+    // These two lines are a word rule deciding meaning, and the meaning they decide
+    // builds the MENU: `templatesFor` offers templates by cell, so whatever these regexes
+    // say a row does is what the engine will look for it under. The `effect` line reads
+    // condition > damage > movement in that order, off the row's own prose.
+    //
+    // What that cost (homebrew40 #30, 2026-11-05). `disarm` is "the target drops the held
+    // object" — no "damage", no "condition" — so it filed as `movement`, correctly. The
+    // moment a damage term was added so it could clear the value floor, /damage/ matched
+    // and the row silently REFILED as `save/damage`, leaving the movement shelf without
+    // its disarm. Print's ordinary shape is "damage AND an effect" — 140 of its 146
+    // action-cost save rows carry damage or a condition — so a taxonomy with one slot per
+    // row, inferred from prose, cannot describe print's own monsters: every row we repair
+    // toward print's grammar gets refiled away from the cell that should hold it.
+    //
+    // So a seed declares `trigger` and `effect` when it knows them, and the inference
+    // stays as the fallback for the rows that never declared anything. Nothing existing
+    // moves; a row that wants damage and its own shelf can now have both.
+    trigger: seed.trigger ?? (/When (?:the creature|it) hits\b/i.test(seed.text) ? 'on_hit'
       : /\*Trigger:\*|hits the creature|is hit by|takes damage/i.test(seed.text) ? 'on_being_hit'
       : /at the start of each of (?:its|the creature's) turns/i.test(seed.text) ? 'start_of_turn' // the recurring idiom; "until the start of its next turn" is a duration
-      : /Saving Throw/.test(seed.text) ? 'save' : 'always',
-    effect: /condition/.test(seed.text) ? 'condition' : /damage/.test(seed.text) ? 'damage' : 'movement',
+      : /Saving Throw/.test(seed.text) ? 'save' : 'always'),
+    effect: seed.effect ?? (/condition/.test(seed.text) ? 'condition' : /damage/.test(seed.text) ? 'damage' : 'movement'),
     text: seed.text, ...(seed.imposes ? { imposes: seed.imposes } : {}), keys: [...new Set([seed.key, ...(seed.keys ?? []), ...(VERB_KEYS[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? [])])], flavor: slotsOf(seed.text).filter((x) => FLAVOR_SLOTS.includes(x)),
   })),
 ];
@@ -3063,7 +3082,25 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
   // (Assassinate); a row that needs a condition the sheet must first impose prices at 2× the attack
   // it replaces, ceiling 3×, and the ladder below carries it there.
   const payoff = !!template && REQUIRES_IMPOSED.has(String(template));
-  const floor = bonus ? 0.25 * attackEV : gated ? 1.3 * maEV : (payoff ? 2.0 : 0.8) * replaced; // a free row still has to DO something; a payoff doubles (Assassinate)
+  // A DEFENSIVE OR UTILITY FREE ROW IS NOT PRICED BY DAMAGE (owner's ruling, 2026-11-05:
+  // "We need to price those defensive and utility rows differently").
+  //
+  // The 0.25 floor existed so a free row still had to DO something, and it measured that
+  // in damage — so three rows that do exactly what they promise scored EV 0 and were
+  // dropped in all 20 contexts of the 2026-11-05 audit: `interpose` (a reaction that
+  // shields an ally), `patient-defense` (the SRD Monk feature) and `self-invisibility`.
+  // Print ships rows of this shape; pricing them by offense asks a Dodge to deal damage.
+  //
+  // The split is DECLARED, not read off the text: a free row whose template declares
+  // `effect: damage` keeps the damage floor, because a row promising damage and
+  // delivering none is the defect the floor was built for (`riposte`, `snap-shot`,
+  // `ward-retaliation`, `own-turn-punisher` all declare damage and all clear it). A free
+  // row declaring `defense`, `resource` or `movement` does something by declaration, so
+  // the floor stands down and only the CEILING governs it — a free row still may not be
+  // worth more than an attack.
+  const freeDecl = bonus && template ? BY_ID.get(String(template)) : null; // BY_ID is this module's own map; TEMPLATE_BY_ID is only its export alias and is not a binding in here
+  const freeUtility = !!freeDecl && freeDecl.effect !== 'damage';
+  const floor = freeUtility ? 0 : bonus ? 0.25 * attackEV : gated ? 1.3 * maEV : (payoff ? 2.0 : 0.8) * replaced; // a free row still has to DO something; a payoff doubles (Assassinate)
   const ceiling = bonus ? 1.5 * attackEV : gated ? 2.5 * maEV : (payoff ? 3.0 : 1.5) * (replaced || attackEV);
   // `let`, not `const`: the widening rung below can turn a single-target control
   // row into an area one, and the EV closure reads this.

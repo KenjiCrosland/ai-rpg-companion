@@ -99,7 +99,25 @@ export const LIBRARY_SEEDS = [
     key: 'disarm', keys: ['disarm', 'twist', 'strip'],
     section: 'Actions', archetypes: ['skirmisher', 'defender'],
     name: 'Disarming Twist', // print's disarm idiom
-    text: "*Strength Saving Throw:* DC {dc}, one creature within 5 feet that is holding a weapon or another object. *Failure:* The target drops the held object, which lands in its space.",
+    // DAMAGE AND THE EFFECT, WHICH IS PRINT'S GRAMMAR, AND THE CELL DECLARED SO THE
+    // DAMAGE DOES NOT MOVE IT (owner's rulings, 2026-11-05: "in dnd a disarming attack
+    // has damage ... even then a 1d4 is usable", then option b — a seed declares its own
+    // cell rather than having one inferred from its prose).
+    //
+    // Bare, this row scored EV 0 against the value floor in all 20 contexts of that day's
+    // template audit, and EV 0 is UNLIFTABLE: the ladder raises a row by scaling the dice
+    // it already has, so a row with no damage term has nothing to scale and is dropped
+    // with a fallback standing in. That is how the Ledger Ghaunt shipped "Forfeit the
+    // Burden" — a Strength save for plain bludgeoning under a forfeiture name — while the
+    // disarm the GM asked for was picked and discarded (homebrew40 #30, and subjectflip12
+    // rolls 09 and 12). Print agrees with the floor here: 140 of its 146 action-cost save
+    // rows carry damage or a condition, and the one bare disarm precedent is the Rust
+    // Monster's Antennae at CR 1/2.
+    //
+    // `effect: 'movement'` is declared because the damage term would otherwise refile this
+    // row as `save/damage` and empty the movement shelf of the only disarm on it.
+    trigger: 'save', effect: 'movement',
+    text: "*Strength Saving Throw:* DC {dc}, one creature within 5 feet that is holding a weapon or another object. *Failure:* {burst} {damage_type} damage, and the target drops the held object, which lands in its space.",
   },
   // ——— forced movement ———
   {
