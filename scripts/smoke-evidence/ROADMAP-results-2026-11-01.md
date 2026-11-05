@@ -1842,3 +1842,66 @@ surprises:   **the no-op gate over print caught a bug that would have shipped.**
              The owner asked why the tests only used one malformed Pit Fiend; the answer
              was that the real failures are dominated by that one sheet, and moving the
              gate onto print's own 58 drop-one cases is what exposed it.
+
+### RELEASE FORTY — both runs, against predictions locked before the run
+predicted:   see `PREDICTIONS-2026-11-04-release-forty.md`, written before launch and
+             unedited. Headline: all Multiattack lints 0, `save-without-its-numbers` 0,
+             `effect-cites-nothing` 0, and `multiattack-offlist-spell` NON-ZERO because
+             the lint was fixed but no repair was built for it.
+measured:    `sweep-2026-11-05T00-31-57` and `homebrew40-2026-11-05T00-51-36`,
+             **40 of 40 and 40 of 40, 0 THROWS on both.** Every prediction held.
+
+             | | sweep | homebrew40 |
+             |---|---|---|
+             | sheet-lint findings | 4 | 1 |
+             | checker FAIL blocks | 7 of 40 | 3 of 40 |
+
+             sweep's 4: `at-will-inline`, `double-punctuation` (the header field R1
+             already filed), `inline-weapon-collision`, and ONE
+             `multiattack-offlist-spell` — on sheet #18 again, exactly as predicted.
+             homebrew40's 1: `missing-number` on a temporary-hit-points trait.
+
+             **Zero** dangling Multiattack cites, empty options, cites-nothing,
+             saves-without-numbers or unintroduced referents across all 80 sheets.
+
+             The ceiling class is now the dominant FAIL: **3 of sweep's 7** are
+             `single-target-ceiling` (Ground Eruption 36>24, Opportunist's Lash 42>31,
+             Ring the Dying Over 56>31). None is `condition-payoff`, which confirms the
+             rescale was ~3% of that class. `Opportunist's Lash` has appeared in three
+             separate measurements and is the next real lever.
+runs:        smoke-out/sweep-2026-11-05T00-31-57, smoke-out/homebrew40-2026-11-05T00-51-36
+suite:       178 suites / 4,791 tests · build clean
+commit:      8f8ca7f and the three before it
+not done:    **THREE OF TODAY'S FOUR FIXES ARE UNPROVEN IN-PIPELINE.** Across 80 sheets
+             the forty produced 0 `requiresCondition` payoffs, 0 object-end rows and 0
+             `condition-payoff` rows, so the enabler, the snare frame and the rescale
+             were never exercised. Only #17's Multiattack repair is confirmed live, and
+             it is confirmed textually: "makes one Bite attack, two Devilish Claw
+             attacks, and one Fiery Mace attack … (A) or (B) Spellcasting" became "makes
+             two Bite attacks and two Devilish Claw attacks … a use of Spellcasting",
+             four attacks preserved. A targeted twelve is the only honest instrument for
+             the other three.
+surprises:   **I speculated the three shapes were being starved and that was wrong.**
+             Their corpus rates are 1.3% / 0.8% / 0.3%, so the expected count in 80
+             sheets is about one, and zero is unremarkable. A forty cannot exercise a 1%
+             path; that is a property of the instrument, not a bug.
+
+             **A premise of mine, refuted before it was built.** I claimed 30-47% of
+             sheets bypass the repair pass because `dropDeadMultiattackCites` takes
+             `sections` and many sheets ship with `sections` empty. Measured: flat-only
+             sheets carry a dangling cite in 1 of 1,497 (0.07%) against 9 of 1,608
+             (0.56%) for sections sheets — **8x BETTER, not worse.** Mechanism confirms
+             it: those sheets are 2014-PRIMARY, their 2024 printing sits in
+             `other_edition.sections`, and the flat arrays are built from the repaired
+             rows by the 2014 conversion. Nothing bypasses anything.
+
+             homebrew40's `dangling-ref` FAIL on the Ringmaster is a **checker false
+             positive**: the Multiattack cites "Come One, Come All", which IS a row; the
+             comma truncates the extractor's capture. Review noise by the standing rule,
+             1 of 80, left unfixed.
+
+             Two of my own measurement filters were wrong in opposite directions this
+             run: the area filter matched capitalised `Cone` but not the 2014 printing's
+             lowercase `cone` (so print's own dragon breaths read as over-ceiling), and
+             then `within \d+ feet of` over-excluded single-target rows like Ground
+             Eruption. The checker's 3 is the authority, not my 4%.

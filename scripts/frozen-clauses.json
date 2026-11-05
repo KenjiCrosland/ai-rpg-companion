@@ -7929,5 +7929,111 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "b1bb162fec92": {
+  "concept": "A single hunched, crablike fungal horror, its armored carapace furred with pale mycelium and its seven jointed legs clat",
+  "clauses": [
+   {
+    "id": "cl_1nuwdgs",
+    "text": "A single hunched",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_i6t6ri",
+    "text": "crablike fungal horror",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_wk2qi3",
+    "text": "its armored carapace furred with pale mycelium",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1h58uoh",
+    "text": "its seven jointed legs clattering over ruined flagstones",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1ehvb8p",
+    "text": "it is a sapient old thing that has learned patience across an age of collapse",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "a cornered one",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "a cornered one is the most dangerous thing"
+   },
+   {
+    "id": "cl_12wbbst",
+    "text": "It opens by scuttling sideways",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_hnb17m",
+    "text": "slamming a wickedly spined claw into the nearest foe",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_15j095q",
+    "text": "every round after it wades deeper into the fray",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1ylaka8",
+    "text": "its shell flaring with a searing inner glow so that each blow",
+    "kind": "mechanical",
+    "askShape": "buff_self"
+   },
+   {
+    "id": "cl_1i4r564",
+    "text": "grapple it lands burns with blistering radiance",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "each blow and grapple it lands",
+    "askOften": "at_will",
+    "askOftenWhy": "each blow",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_ol293i",
+    "text": "any who strike it bare-handed pay for it",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "any who strike it",
+    "askOften": "at_will",
+    "askOftenWhy": "any who strike it",
+    "askShape": "condition",
+    "askMechanic": "retaliate",
+    "askMechanicWhy": "pay for it"
+   },
+   {
+    "id": "cl_h5pja7",
+    "text": "It does not toy with prey and never flees",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_1aynnsf",
+    "text": "fighting to the death with a ruin-born fury",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_eua4w6",
+    "text": "so that a cornered one is the most dangerous thing in the chamber",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_obu126",
+    "text": "It is fully sapient (INT 10-14)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_17yse1c",
+    "text": "it is a frontline berserker that revels in open violence",
+    "kind": "descriptive"
+   }
+  ]
  }
 }
