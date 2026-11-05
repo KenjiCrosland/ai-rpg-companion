@@ -390,7 +390,35 @@ describe('the audit faults a free row and the row is re-authored, never dropped'
 
   test('an empty answer is declined, and the row survives', async () => {
     const { rows, trace } = await drive({ findings: AC_FINDING, fix: {} });
-    expect(trace).toMatch(/free row repair declined:.*wrote no row/);
+    expect(trace).toMatch(/free row repair declined:.*held no row of any kind/);
+    expect(rows.find((r) => r.name === 'Lacquered Line')).toBeTruthy();
+  }, 30000);
+
+  // THE SHAPE IS OFTEN THE DEFECT (sweep 2026-11-05T21-20-56: 6 of 7 calls declined with
+  // "wrote no row of the kind this row is"). Vashka's `The Wall Holds` sat in Traits and
+  // read "When an ally within 5 feet is hit by an attack, Vashka interposes his shield …
+  // as a reaction" — and the audit's complaint was that shape. Asked for a trait, the
+  // call answered with a reaction, and the first cut threw it away.
+  test('a repair that answers with another kind is taken, and the row moves to its section', async () => {
+    const { m, rows, trace } = await drive({ findings: AC_FINDING,
+      // the reaction form takes `response`, not `effect` — the parser named that itself
+      // when the first fixture got it wrong, which is the trace this change added
+      fix: { reactions: [{ clause: 'who fights in formation', name: 'Lacquered Line', trigger: 'When an ally within 5 feet of Vashka is hit by an attack', response: 'Vashka interposes her shield and the attacker has Disadvantage on that attack roll', imposes: null, condition_relation: 'none' }] } });
+    expect(trace).toMatch(/free row moved:.*Traits -> Reactions/);
+    expect(trace).toMatch(/free row repaired:/);
+    expect((m.sections.Traits ?? []).some((e) => e.name === 'Lacquered Line')).toBe(false);
+    expect((m.sections.Reactions ?? []).some((e) => e.name === 'Lacquered Line')).toBe(true);
+    const row = rows.find((r) => r.name === 'Lacquered Line');
+    expect(row.freeRowRepaired).toBe(true);           // repaired and relocated, never dropped
+  }, 30000);
+
+  // A PARSER REFUSAL IS NAMED. `parseAuthorResponse` drops a trait whose effect reads
+  // like a save; the first cut reported that identically to an empty answer, which is how
+  // the kind bug above stayed invisible for a whole forty.
+  test('a refusal from the parser is traced with its reason', async () => {
+    const { rows, trace } = await drive({ findings: AC_FINDING,
+      fix: { traits: [{ clause: 'who fights in formation', name: 'Lacquered Line', trigger: 'While Vashka is within 5 feet of an ally', effect: 'each of them has Advantage on saving throws against being moved', imposes: null, condition_relation: 'none', passive_effect: 'threat' }] } });
+    expect(trace).toMatch(/free row repair declined:.*a trait is not a save/);
     expect(rows.find((r) => r.name === 'Lacquered Line')).toBeTruthy();
   }, 30000);
 

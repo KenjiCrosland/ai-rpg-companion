@@ -9451,11 +9451,37 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // and declined every repair — the first cut of this block did exactly that.
             // Taking the form the ROW's own section calls for also keeps a save out of a
             // trait slot, the same reason the seat path checks it.
-            const form = !wrote ? null
-              : t.sec === 'Traits' ? (wrote.traits?.[0] ? { kind: 'trait', f: wrote.traits[0] } : null)
-                : t.sec === 'Reactions' ? (wrote.reactions?.[0] ? { kind: 'reaction', f: wrote.reactions[0] } : null)
-                  : (wrote.saves?.[0] ? { kind: 'save', f: wrote.saves[0] } : null);
-            if (!form) { trace('free row repair declined:', `"${t.row.name}" — the call wrote no row of the kind this row is, so the standing text keeps its place (a flagged row still beats no row)`); continue; }
+            // THE REPAIR MAY RESHAPE THE ROW, BECAUSE THE SHAPE IS OFTEN THE DEFECT
+            // (sweep 2026-11-05T21-20-56). The first cut asked for the kind matching the
+            // row's CURRENT section and read only that array — and 6 of its 7 calls
+            // declined with "wrote no row of the kind this row is". Vashka's `The Wall
+            // Holds` shows why: it sat in Traits reading "When an ally within 5 feet is
+            // hit by an attack, Vashka interposes his shield … as a reaction", and the
+            // audit's complaint WAS that shape. Asked for a trait, the call correctly
+            // answered with a reaction, and the engine threw it away. Pinning the kind to
+            // the section guaranteed a decline for exactly the rows most in need of one.
+            //
+            // So: the section's own kind is preferred, and any other kind is accepted and
+            // the row MOVES to where that kind belongs. The row count does not change, so
+            // the free-row budget settled above still holds.
+            const asTrait = () => (wrote.traits?.[0] ? { kind: 'trait', f: wrote.traits[0], section: 'Traits' } : null);
+            const asReaction = () => (wrote.reactions?.[0] ? { kind: 'reaction', f: wrote.reactions[0], section: 'Reactions' } : null);
+            const asSave = () => (wrote.saves?.[0] ? { kind: 'save', f: wrote.saves[0], section: t.sec === 'Bonus Actions' ? 'Bonus Actions' : 'Actions' } : null);
+            const order = t.sec === 'Traits' ? [asTrait, asReaction, asSave]
+              : t.sec === 'Reactions' ? [asReaction, asTrait, asSave]
+                : [asSave, asReaction, asTrait];
+            const form = !wrote ? null : (order.map((g) => g()).find(Boolean) ?? null);
+            if (!form) {
+              // AND A PARSER REFUSAL IS NAMED, NOT SILENT. `parseAuthorResponse` drops a
+              // row it cannot accept — a trait whose effect reads like a save, an
+              // unquantified heal — and reports why in `refused`. The first cut never
+              // printed it, so a refused answer and an empty one read identically.
+              const why = (wrote?.refused ?? []).length ? wrote.refused.map((r2) => `"${r2.name}" — ${r2.why}`).join('; ')
+                : (wrote?.unplaced ?? []).length ? `it belongs in the ${wrote.unplaced[0].where}`
+                  : wrote ? 'the answer held no row of any kind' : 'the answer did not parse';
+              trace('free row repair declined:', `"${t.row.name}" — ${why}; the standing text keeps its place (a flagged row still beats no row)`);
+              continue;
+            }
             const cand = authoredRow(form.kind, form.f);
             // THE ENGINE VALIDATES WHAT THE CALL JUDGED. Same three refusals the seat
             // authoring path makes, because a repair can strand exactly what authoring
@@ -9471,6 +9497,15 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             t.row.text = built;
             if (cand.imposes) t.row.imposes = cand.imposes;
             t.row.freeRowRepaired = true;
+            if (form.section !== t.sec) {
+              const from = monster.sections?.[t.sec] ?? [];
+              const ix = from.indexOf(t.row);
+              if (ix >= 0) {
+                from.splice(ix, 1);
+                (monster.sections[form.section] = monster.sections[form.section] ?? []).push(t.row);
+                trace('free row moved:', `"${t.row.name}" ${t.sec} -> ${form.section} — the repair answered with ${form.kind === 'trait' ? 'a trait' : form.kind === 'reaction' ? 'a reaction' : 'an action'}, and being the wrong shape for its section was the defect`);
+              }
+            }
             trace('free row repaired:', `"${t.row.name}": "${was.slice(0, 70)}" -> "${built.slice(0, 90)}"`);
           }
         }

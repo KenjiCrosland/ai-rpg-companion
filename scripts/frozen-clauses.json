@@ -8177,5 +8177,119 @@
     "askMechanicWhy": "memorizes every deer trail and smuggler's path"
    }
   ]
+ },
+ "5c7fb0fd064a": {
+  "concept": "A Hraldin is a gaunt giant of black basalt-veined hide whose joints weep a slick volcanic tar, walking the ash plains on",
+  "clauses": [
+   {
+    "id": "cl_26bnnq",
+    "text": "A Hraldin is a gaunt giant of black basalt-veined hide whose joints weep a slick volcanic tar",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_r4s3iv",
+    "text": "walking the ash plains on limbs so long",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_14fzis5",
+    "text": "thin it seems to be wading through the air",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_98bykw",
+    "text": "it keeps its oath-posture even when no one is left to relieve it",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_h73ed3",
+    "text": "It opens by hurling a fistful of searing pitch that splashes and clings",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "It opens by hurling a fistful of searing pitch that splashes and clings",
+    "askOften": "at_will",
+    "askOftenWhy": "It opens by hurling a fistful of searing pitch that splashes and clings",
+    "askShape": "attack",
+    "askMechanic": "burst",
+    "askMechanicWhy": "It opens by hurling a fistful of searing pitch that splashes and clings"
+   },
+   {
+    "id": "cl_2aw0to",
+    "text": "strides in to smash",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "strides in to smash",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "strides in to smash"
+   },
+   {
+    "id": "cl_1lozly",
+    "text": "pin with those impossibly long arms",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_jfd2md",
+    "text": "slicking the ground around itself so that prey cannot circle or flee",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "slicking the ground around itself so that prey cannot circle or flee",
+    "askOften": "at_will",
+    "askOftenWhy": "slicking the ground around itself so that prey cannot circle or flee",
+    "askShape": "save_area",
+    "askMechanic": "zone",
+    "askMechanicWhy": "slicking the ground around itself so that prey cannot circle or flee"
+   },
+   {
+    "id": "cl_699697",
+    "text": "When bloodied it does not run — it plants its tar-anchored feet",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "when bloodied",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "When bloodied it does not run — it plants its tar-anchored feet",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "When bloodied it does not run — it plants its tar-anchored feet"
+   },
+   {
+    "id": "cl_1paw7lr",
+    "text": "lowers its narrow head",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1xlrh8z",
+    "text": "grinds the intruder into the waste with the joyless patience of a guard that has forgotten the gate",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "grinds the intruder into the waste with the joyless patience of a guard that has forgotten the gate",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "grinds the intruder into the waste with the joyless patience of a guard that has forgotten the gate"
+   },
+   {
+    "id": "cl_nmwjbm",
+    "text": "not the duty",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "when bloodied",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "not the duty",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "not the duty"
+   },
+   {
+    "id": "cl_obu126",
+    "text": "It is fully sapient (INT 10-14)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_saog3",
+    "text": "it is a proud sentinel bound to an ancient oath it no longer remembers",
+    "kind": "descriptive"
+   }
+  ]
  }
 }
