@@ -98,6 +98,58 @@ IF THE SHEET ALREADY ANSWERS A CLAUSE, SAY SO INSTEAD OF WRITING A ROW. Read THE
  * discrepancy between the gate and its own corpus is the owner's open question, recorded in the R4 results
  * block; this prompt follows the gate.
  */
+/**
+ * ONE FREE ROW, RE-AUTHORED AGAINST WHAT THE AUDIT SAID (owner's ruling, 2026-11-05).
+ *
+ * A free row is a row nothing in the GM's words asked for — the engine offered it. The
+ * owner ruled such a row is a FEATURE and is to be REPAIRED, not evicted: *"a free row
+ * provides pleasant surprises. As long as it's sound and makes sense within the action
+ * economy and is not a dead row it should go in. Repair call is fine, we may as well add
+ * flavor which could prevent a new block generation."* A repair call is cheap; a GM who
+ * finds the block flat and regenerates it is not.
+ *
+ * Why this is a re-AUTHOR and not a rewrite. The audit already has a rewrite actuator,
+ * but it carries a rewrite only for principle 4 — copy-editing seams — so the defects
+ * that prompted the ruling never get one: Vashka's Lacquered Line gave allies "the same
+ * bonus to AC that Vashka's armor and shield provide" (a number the GM cannot compute),
+ * and an Ordained Exile trait answered every speaker "with a Boulder attack" (unlimited,
+ * no action cost). Those are principles 1-2.
+ *
+ * Sending it back through THESE forms is what fixes them, rather than any instruction to
+ * be careful: the model writes no numbers here — the engine prices every `{dmg}` and
+ * `{dc}` — so an uncomputable bonus cannot survive the round trip, and a form carries its
+ * own action economy, so an effect must declare what it costs. The three tests in the
+ * ruling map onto the forms: sound (the engine's numbers), action economy (the form's
+ * kind and gate), not a dead row (the row must still be worth choosing).
+ *
+ * The row KEEPS ITS NAME. A name/text mismatch is the audit's rename actuator's job, and
+ * it already works — nine sheets on the 2026-11-05 sweep took an audit rename.
+ */
+export function buildFreeRowFixPrompt({ name, inline, cr, sheet, row, problems = [], kind = 'an action', taken = [], lacks = [] }) {
+  return `You are REPAIRING one ability of a D&D monster. The sheet below is finished, and one row on it does not work at a table. Rewrite that ONE row into the closed forms below, keeping what makes it interesting. You never write a number: no attack bonus, no damage dice, no DC — the engine prices every row.
+
+THE CREATURE: ${name} (${inline}), CR ${cr}.
+THE SHEET AS IT STANDS (every other row stays exactly as it is; never name a row that is not on it):
+${sheet}
+
+THE ROW TO REPAIR — it is called **"${row.name}"** and currently reads:
+${row.text}
+
+WHAT IS WRONG WITH IT:
+${problems.map((x) => `- ${x}`).join('\n')}
+
+KEEP THE NAME "${row.name}" EXACTLY. Keep the idea — this row exists because it was a nice surprise on this creature, and a GM who likes it should still get it. Change only what makes it unrunnable.
+
+THREE TESTS YOUR REPAIR MUST PASS:
+1. SOUND. Everything a GM needs is on the row. No bonus, radius, duration or amount that the GM would have to work out from somewhere else — if a number is needed, use the form's token and let the engine write it.
+2. THE ACTION ECONOMY. The row costs something real. A trait that hands out a free attack whenever a condition is met, with no action and no limit, is the defect this test exists to catch — if an effect should fire often, gate it (a recharge, once per turn, or the creature's action).
+3. NOT A DEAD ROW. It must be worth choosing on the creature's turn, or worth having as a passive. A row a GM would never pick is as bad as one they cannot run.
+
+IT IS ${kind}. Write exactly one row, of that kind, and leave the other arrays empty.${taken.length ? `\n\nNAMES ALREADY ON THE SHEET — the repaired row keeps "${row.name}" and must not take any other: ${taken.map((n) => `"${n}"`).join(', ')}.` : ''}${lacks.length ? `\n\nTHE CREATOR SAID IT DOES NOT HAVE: ${lacks.map((l) => `"${l}"`).join(', ')}. The repaired row may not grant any of these in any wording.` : ''}
+
+${formsSpec({ name, inline, attackCap: 0 })}`;
+}
+
 export function buildSeatPrompt({ name, inline, cr, sheet, idea, missing = '', kind = 'an action', taken = [], lacks = [], clause = '' }) {
   return `You are writing ONE ability for a D&D monster — the one ability it is still missing. Write it into the closed forms below, in the creature's own register. You never write a number: no attack bonus, no damage dice, no DC — the engine prices the row.
 

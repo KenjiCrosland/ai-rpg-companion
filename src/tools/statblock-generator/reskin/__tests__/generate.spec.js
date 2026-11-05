@@ -1077,7 +1077,13 @@ describe('pre-freeze batch (2026-08-25): splice alignment, cross-ref lint, movem
 });
 
 describe('twenty-smoke prerequisites (2026-08-25): the four must-fixes', () => {
-  test('audit rewrites are blocked on chassis rows, allowed on model-written entries', async () => {
+  // NAMED FOR BOTH ARMS, ASSERTING ONE (corrected 2026-11-05). This test's name claimed
+  // the allowed arm too and never exercised it, which is how `entry.model` — a flag no
+  // site in this repo sets — went unnoticed as the condition that blocked 100% of audit
+  // rewrites. The allowed arm now lives in r4-seat-authors.spec.js, on a row carrying
+  // production's own `authoredSeat` stamp. This one keeps the blocked arm, which is what
+  // it actually proves.
+  test('an audit rewrite is blocked on a chassis row', async () => {
     const m = await generateReskin({ archetype: 'skirmisher', concept: 'x', cr: 8 }, async (prompt) => {
       if (prompt.startsWith('You are auditing')) {
         return JSON.stringify({ findings: [

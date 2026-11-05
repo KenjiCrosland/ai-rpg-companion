@@ -46,7 +46,7 @@ const mainAnswer = (name, type, cr, archetype, style = null, over = {}) => {
  * Drive one sheet. `ideas` is the idea call's answer, `fit` the fit call's, `seatRow`
  * the authoring call's. Returns the monster, the trace, and every prompt sent.
  */
-const run = async ({ concept, cr, archetype, style = null, name, type, ideas, fit, seatRow }) => {
+const run = async ({ concept, cr, archetype, style = null, name, type, ideas, fit, seatRow, audit = null, freeRowFix = null }) => {
   const lines = []; const prompts = []; const orig = console.log;
   console.log = (...a) => { lines.push(a.join(' ')); };
   let m;
@@ -56,7 +56,8 @@ const run = async ({ concept, cr, archetype, style = null, name, type, ideas, fi
       if (prompt.startsWith(IDEA)) return JSON.stringify(ideas);
       if (prompt.startsWith(FIT)) return JSON.stringify(fit);
       if (prompt.startsWith(SEAT)) return JSON.stringify({ attacks: [], saves: [], traits: [], reactions: [], crossRef: null, unplaced: [], ...seatRow });
-      if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
+      if (prompt.startsWith('You are auditing')) return JSON.stringify(audit ?? { findings: [] });
+      if (prompt.startsWith('You are REPAIRING one ability')) return JSON.stringify({ attacks: [], saves: [], traits: [], reactions: [], crossRef: null, unplaced: [], ...(freeRowFix ?? {}) });
       if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
       return mainAnswer(name, type, cr, archetype, style);
     });
@@ -281,5 +282,121 @@ describe('the branch itself', () => {
     const { trace } = await run({ ...golemCase, fit: { ...REFUSED, missing: 'passage through solid stone' }, seatRow: { saves: [{ clause: 'c', name: 'Wrong Form', stat: 'Strength', target: 'one creature within 5 feet', damage: true, type: 'Bludgeoning', condition: null, movement: null, success: 'none', recharge: false }] } });
     expect(trace).toMatch(/seat authored nothing:.*wrote no row of that kind/);
     expect(trace).not.toMatch(/seat authored the row:/);
+  }, 30000);
+});
+
+// THE AUDIT'S REWRITE REACHES A ROW THE SEAT WROTE (2026-11-05). The rewrite gate read
+// `entry.model`, which NO site in this repo sets — 0 of 484 rows across the 2026-11-05
+// sweep and homebrew40 carried it — so `!entry.model` held for every row and the gate
+// blocked 100% of audit rewrites (27 of them; `audit rewrite:` on 0 sheets). A test in
+// generate.spec.js was NAMED for both arms and asserted only the blocked one, so nothing
+// caught it. The owner's ruling is that a flagged free row is repaired rather than
+// dropped, and this rewrite is the repair — it rides a call already made.
+//
+// Both arms are pinned here, on rows carrying the stamps PRODUCTION writes, never a
+// fabricated flag: a seat-authored row is rewritable, the chassis row beside it is not.
+//
+// SCOPE, measured the same day: the actuator carries a rewrite only for PRINCIPLE 4 —
+// copy-editing seams — so this unblocks copy-edits on model-written rows and nothing
+// more. The mechanical defects on free rows that prompted the ruling (an AC bonus the
+// GM cannot compute; a trait granting an unlimited free attack) are principles 1-2 and
+// carry no rewrite by design, so they are NOT fixed by this gate.
+describe('the audit may rewrite a row the model wrote, and only such a row', () => {
+  const seatIdea = 'The frost-rimed hide sheds a crawling rime, so while the wolf is within reach of a creature that creature is slowed by the cold.';
+  const driveWithAudit = (findings) => run({
+    concept: 'Dire Wolf with a frost-rimed hide', cr: 1, archetype: 'skirmisher', name: 'Dire Wolf', type: 'Beast',
+    ideas: { trait: { idea: seatIdea, section: 'trait', trigger: 'always', effect: 'threat' } },
+    fit: { ...REFUSED, missing: 'a passive that costs a creature something merely for standing beside it' },
+    seatRow: { traits: [{ clause: 'with a frost-rimed hide', name: 'Crawling Rime', trigger: 'While a creature is within 5 feet of the wolf', effect: 'that creature takes {dmg} Cold damage at the start of its turn', imposes: null, condition_relation: 'none', passive_effect: 'threat' }] },
+    audit: { findings },
+  });
+
+  test('a seat-authored row takes the rewrite', async () => {
+    const { rows, trace } = await driveWithAudit([
+      // principle 4 is the ONLY principle whose rewrite the actuator carries
+      // (audit.mjs: the judgment layer's best work is copy-editing fill seams).
+      // A mechanical finding offers no rewrite by design — see the note below.
+      { entry: 'Crawling Rime', section: 'Traits', principle: 4, confidence: 'high', issue: 'awkward seam',
+        span: 'at the start of its turn', rewrite: 'at the start of each of its turns' },
+    ]);
+    const row = rows.find((r) => r.name === 'Crawling Rime');
+    expect(row.authoredSeat).toBe(true);            // the stamp production writes, not a fixture flag
+    expect(row.text).toMatch(/at the start of each of its turns/);
+    expect(trace).toMatch(/audit rewrite:/);
+    expect(trace).not.toMatch(/audit rewrite blocked/);
+  }, 30000);
+
+  test('a chassis row on the same sheet still refuses it, and says which kind it is', async () => {
+    const { rows, trace } = await driveWithAudit([
+      // principle 4 is the ONLY principle whose rewrite the actuator carries
+      // (audit.mjs: the judgment layer's best work is copy-editing fill seams).
+      // A mechanical finding offers no rewrite by design — see the note below.
+      { entry: 'Crawling Rime', section: 'Traits', principle: 4, confidence: 'high', issue: 'awkward seam',
+        span: 'at the start of its turn', rewrite: 'at the start of each of its turns' },
+    ]);
+    // every row that is NOT model-written must be untouched by a rewrite; the seat's is
+    const protectedRows = rows.filter((r) => !r.authored && !r.authoredSeat && !/^Multiattack/.test(r.name ?? ''));
+    expect(protectedRows.length).toBeGreaterThan(0);
+    expect(trace).toMatch(/audit rewrite:.*Crawling Rime/);
+    expect(protectedRows.some((r) => /at the start of each of its turns/.test(String(r.text ?? '')))).toBe(false);
+  }, 30000);
+});
+
+// A FLAGGED FREE ROW IS REPAIRED, NOT EVICTED (owner's ruling, 2026-11-05). The audit's
+// own rewrite actuator fires only for principle 4 (copy-editing), so the defects measured
+// on free rows over the 2026-11-05 sweep and homebrew40 — an AC bonus the GM cannot
+// compute, a trait granting an unlimited free attack — were never offered one and shipped
+// as flagged. The repair sends the row back through the AUTHORING FORMS, where the model
+// writes no numbers, so an uncomputable bonus cannot survive the round trip.
+describe('the audit faults a free row and the row is re-authored, never dropped', () => {
+  const seatIdea = 'Her lacquered line holds: while she stands beside an ally neither of them can be shoved, and the pair are harder to hit.';
+  const drive = ({ findings, fix }) => run({
+    concept: 'Vashka the Red, a knight who fights in formation', cr: 1, archetype: 'skirmisher', name: 'Vashka the Red', type: 'Humanoid',
+    ideas: { trait: { idea: seatIdea, section: 'trait', trigger: 'always', effect: 'threat' } },
+    fit: { ...REFUSED, missing: 'a passive that rewards standing beside an ally' },
+    seatRow: { traits: [{ clause: 'who fights in formation', name: 'Lacquered Line', trigger: 'While Vashka is within 5 feet of an ally', effect: 'neither can be moved against their will', imposes: null, condition_relation: 'none', passive_effect: 'threat' }] },
+    audit: { findings },
+    freeRowFix: fix,
+  });
+  // the real finding, from sweep 23-vashka-the-red: principle 2, so NO rewrite is offered
+  const AC_FINDING = [{ entry: 'Lacquered Line', section: 'Traits', principle: 2, confidence: 'high',
+    issue: 'The block never states the numeric bonus to AC', span: 'moved against their will' }];
+
+  test('the repair call fires, keeps the name, and takes the re-authored text', async () => {
+    const { rows, trace } = await drive({ findings: AC_FINDING,
+      // the repair the forms can actually express: no AC number exists as a token, so a
+      // sound answer trades the uncomputable bonus for something the engine can state.
+      // This is the round trip doing the work — not an instruction to be careful.
+      fix: { traits: [{ clause: 'who fights in formation', name: 'Lacquered Line', trigger: 'While Vashka is within 5 feet of an ally', effect: 'each of them has Resistance to Bludgeoning damage', imposes: null, condition_relation: 'none', passive_effect: 'protection' }] } });
+    expect(trace).toMatch(/free row repair:.*Lacquered Line/);
+    expect(trace).toMatch(/free row repaired:/);
+    const row = rows.find((r) => r.name === 'Lacquered Line');
+    expect(row).toBeTruthy();                                  // repaired, never evicted — the owner's ruling
+    expect(row.freeRow).toBe(true);
+    expect(row.freeRowRepaired).toBe(true);
+    expect(row.text).toMatch(/Resistance to Bludgeoning damage/);
+    expect(row.text).not.toMatch(/same bonus to AC/);           // the uncomputable number is gone
+  }, 30000);
+
+  test('a repair carrying an unsubstituted token is refused and the standing row keeps its place', async () => {
+    const { rows, trace } = await drive({ findings: AC_FINDING,
+      fix: { traits: [{ clause: 'who fights in formation', name: 'Lacquered Line', trigger: 'While Vashka is within 5 feet of an ally', effect: 'each of them gains a {bonus} bonus to AC', imposes: null, condition_relation: 'none', passive_effect: 'protection' }] } });
+    expect(trace).toMatch(/free row repair declined:.*\{bonus\}/);
+    const row = rows.find((r) => r.name === 'Lacquered Line');
+    expect(row).toBeTruthy();                                  // still there: a flagged row beats no row
+    expect(row.text).not.toMatch(/\{bonus\}/);
+    expect(row.freeRowRepaired).toBeUndefined();
+  }, 30000);
+
+  test('an empty answer is declined, and the row survives', async () => {
+    const { rows, trace } = await drive({ findings: AC_FINDING, fix: {} });
+    expect(trace).toMatch(/free row repair declined:.*wrote no row/);
+    expect(rows.find((r) => r.name === 'Lacquered Line')).toBeTruthy();
+  }, 30000);
+
+  test('no call is made when the audit faults nothing on a free row', async () => {
+    const { trace, prompts } = await drive({ findings: [], fix: null });
+    expect(prompts.filter((q) => q.startsWith('You are REPAIRING one ability'))).toHaveLength(0);
+    expect(trace).not.toMatch(/free row repair/);
   }, 30000);
 });

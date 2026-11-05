@@ -36,7 +36,7 @@ import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedConditions, TURN_DENI
 import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the validated condition list the authoring call answers against
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
-import { buildRepairPrompt, buildSeatPrompt, parseAuthorResponse, validateAuthorResponse } from './author.mjs';
+import { buildFreeRowFixPrompt, buildRepairPrompt, buildSeatPrompt, parseAuthorResponse, validateAuthorResponse } from './author.mjs';
 import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
 import { WEAPONS, weaponFor, weaponNamed, namesWeapon, weaponsIn, finesseLike } from './weapons.mjs';
@@ -9244,8 +9244,33 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // renamed Mobility Trait out of existence (Wolf-Born Skirmish).
         // Rewrites may only touch MODEL-written text; engine-authored rows
         // are priced composition the audit has no license to edit.
-        if (entry && !entry.model) {
-          trace('audit rewrite blocked —', `"${f.loc.entry}" is engine-authored chassis text`);
+        //
+        // AND THE PASS-THROUGH ARM HAD NEVER FIRED (2026-11-05). `entry.model`
+        // is set by NO site in this repo — 0 of 484 shipped rows carry it — so
+        // `!entry.model` was true for every row and this gate blocked 100% of
+        // audit rewrites: 27 of them across the 2026-11-05 sweep and homebrew40,
+        // `audit rewrite:` on 0 sheets. The flag came from the format-2024
+        // design; the reskin path marks provenance differently, so the condition
+        // could never be satisfied here.
+        //
+        // The owner's ruling (2026-11-05) is that a flagged free row is REPAIRED,
+        // not dropped — "a free row provides pleasant surprises … we may as well
+        // add flavor which could prevent a new block generation" — and the repair
+        // it needs is this rewrite, which the audit already supplies at no extra
+        // call. So the arm reads the stamps this path actually writes.
+        //
+        // An ALLOW-list, not a block-list. Of those 27 blocked rewrites, 20 were
+        // unstamped chassis rows, 5 were print's own rows and 1 was priced
+        // catalog composition — all four classes the gate exists to protect, and
+        // a block-list would have re-opened the 2026-08-25 deletion on the
+        // chassis rows. Exactly ONE was model-written (Vashka's `Lacquered Line`,
+        // whose real defect — "the same bonus to AC that Vashka's armor and
+        // shield provide" — a GM cannot compute). So this is worth ~1 row per two
+        // forties, not the ~10 it first looked like; the honest number is here so
+        // the next reader does not re-derive it.
+        const modelWritten = !!(entry && (entry.model || entry.authored || entry.authoredSeat));
+        if (entry && !modelWritten) {
+          trace('audit rewrite blocked —', `"${f.loc.entry}" is engine-authored (${entry.print || entry.printNamed ? "print's own row" : entry.template || entry.library || entry.seed || entry.kit ? 'priced catalog composition' : 'chassis text'}); only a row the model wrote may be rewritten`);
           continue;
         }
         if (entry && entry.text.includes(f.span)) {
@@ -9358,6 +9383,97 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           }
         }
         if (applied) trace('audit rename:', `"${old}" -> "${fresh}"`);
+      }
+
+      // A FLAGGED FREE ROW IS REPAIRED, NOT EVICTED (owner's ruling, 2026-11-05).
+      //
+      // A free row is one nothing in the GM's words asked for. The owner ruled such a
+      // row is a FEATURE — *"a free row provides pleasant surprises. As long as it's
+      // sound and makes sense within the action economy and is not a dead row it should
+      // go in. Repair call is fine, we may as well add flavor which could prevent a new
+      // block generation."* A repair call is cheap; a GM who finds the block flat and
+      // regenerates it is not.
+      //
+      // WHY A SEPARATE CALL RATHER THAN THE AUDIT'S OWN REWRITE. The rewrite actuator
+      // above carries a rewrite only for principle 4 — copy-editing seams — and that
+      // boundary is deliberate. The defects measured on free rows over the 2026-11-05
+      // sweep and homebrew40 are principles 1-2 and so are never offered one:
+      // Vashka's `Lacquered Line` gave allies "the same bonus to AC that Vashka's armor
+      // and shield provide" (a number the GM cannot compute) and an Ordained Exile trait
+      // answered every speaker "with a Boulder attack" (unlimited, no action cost).
+      // Widening the actuator would have loosened that boundary for every row on every
+      // sheet; this touches free rows only, and only when the audit names one.
+      //
+      // The repair goes back through the AUTHORING FORMS, which is what actually fixes
+      // these: the model writes no numbers there — the engine prices every `{dmg}` and
+      // `{dc}` — so an uncomputable bonus cannot survive the round trip, and a form
+      // declares its own action economy. Same prompt family, same parser, same pricing
+      // as the seat and the clause repair.
+      //
+      // Bounded: free rows only (never print, never priced catalog composition, never
+      // chassis), at most 2 rows, one call, inside the audit's own try — a repair that
+      // fails leaves the row exactly as it was, because generation never fails. It runs
+      // BEFORE the last-word pass (`dropDeadMultiattackCites` and the single-target save
+      // cap), so a repaired row's citations and save damage are re-checked downstream.
+      {
+        const freeFlagged = [];
+        for (const f of findings) {
+          // THE OTHER TWO ACTUATORS OWN THEIR FINDINGS. A finding carrying a `rewrite`
+          // was spliced above (or refused there); one carrying a `rename` was answered by
+          // the rename loop — nine sheets on the 2026-11-05 sweep took an audit rename,
+          // and re-authoring the TEXT of a row whose only fault was its NAME would throw
+          // away a correct row to fix a problem already fixed.
+          if (f.rewrite != null || f.rename) continue;
+          const sec = f.loc?.section; const nm = f.loc?.entry; if (!sec || !nm) continue;
+          const row = (monster.sections?.[sec] ?? []).find((e) => String(e.name ?? '') === nm);
+          if (!row || !row.freeRow) continue;
+          if (row.print || row.printNamed) continue; // print's own row is a closed fact
+          const seen = freeFlagged.find((x) => x.row === row);
+          if (seen) { seen.problems.push(f.message); continue; }
+          freeFlagged.push({ sec, row, problems: [f.message] });
+        }
+        const toFix = freeFlagged.slice(0, 2);
+        if (toFix.length) {
+          const kindOf = (sec) => (sec === 'Traits' ? 'a trait' : sec === 'Reactions' ? 'a reaction' : 'an action');
+          const sheetText = Object.entries(monster.sections ?? {}).flatMap(([sec, es]) => (es ?? []).filter(Boolean).map((e) => `${sec} / ${e.name}: ${e.text}`)).join('\n');
+          const takenNow = Object.values(monster.sections ?? {}).flat().filter(Boolean).map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean);
+          const lacksNow = clauseRecord.filter((c) => c.polarity === 'lacks').map((c) => c.text);
+          for (const t of toFix) {
+            trace('free row repair:', `"${t.row.name}" — the audit faults it (${t.problems.map((x) => String(x).slice(0, 70)).join(' | ')}); re-authored through the forms rather than evicted (the owner's ruling: a free row is repaired)`);
+            const rawF = await callLLM(buildFreeRowFixPrompt({
+              name: p.name, inline: inlineGuessRef(), cr, sheet: sheetText, row: { name: String(t.row.name), text: String(t.row.text ?? '') },
+              problems: t.problems, kind: kindOf(t.sec), taken: takenNow.filter((n) => n !== String(t.row.name).replace(/ \(.*\)$/, '')), lacks: lacksNow,
+            }), validateAuthorResponse);
+            const wrote = parseAuthorResponse(rawF, { attackKeys: [], attackCap: 0, traitSlots: 1 });
+            // THE ENGINE BUILDS AND PRICES THE SENTENCE, as it does for the seat: the
+            // parser hands back FIELDS, and `authoredRow` composes the text and writes
+            // every number. Reading a `text` off the parse instead got an empty string
+            // and declined every repair — the first cut of this block did exactly that.
+            // Taking the form the ROW's own section calls for also keeps a save out of a
+            // trait slot, the same reason the seat path checks it.
+            const form = !wrote ? null
+              : t.sec === 'Traits' ? (wrote.traits?.[0] ? { kind: 'trait', f: wrote.traits[0] } : null)
+                : t.sec === 'Reactions' ? (wrote.reactions?.[0] ? { kind: 'reaction', f: wrote.reactions[0] } : null)
+                  : (wrote.saves?.[0] ? { kind: 'save', f: wrote.saves[0] } : null);
+            if (!form) { trace('free row repair declined:', `"${t.row.name}" — the call wrote no row of the kind this row is, so the standing text keeps its place (a flagged row still beats no row)`); continue; }
+            const cand = authoredRow(form.kind, form.f);
+            // THE ENGINE VALIDATES WHAT THE CALL JUDGED. Same three refusals the seat
+            // authoring path makes, because a repair can strand exactly what authoring
+            // can: an unsubstituted token the renderer would ship raw, and a citation to
+            // a row this sheet does not carry.
+            const built = String(cand.text ?? '').trim();
+            const slot = built.match(/\{[a-z_]+\}/i);
+            const dang = danglingRefIn(built, [...rowNamesOf(monster), String(t.row.name).replace(/ \(.*\)$/, '')], String(t.row.name));
+            if (!built) { trace('free row repair declined:', `"${t.row.name}" — the repaired row came back empty`); continue; }
+            if (slot) { trace('free row repair declined:', `"${t.row.name}" — the repair still carries ${slot[0]}, a token this engine never substitutes; the standing text keeps its place`); continue; }
+            if (dang) { trace('free row repair declined:', `"${t.row.name}" — the repair cites "${dang}", which is no row on this sheet; the standing text keeps its place`); continue; }
+            const was = String(t.row.text ?? '');
+            t.row.text = built;
+            if (cand.imposes) t.row.imposes = cand.imposes;
+            t.row.freeRowRepaired = true;
+            trace('free row repaired:', `"${t.row.name}": "${was.slice(0, 70)}" -> "${built.slice(0, 90)}"`);
+          }
+        }
       }
     } catch (e2) {
       trace('audit skipped —', e2?.message ?? e2);
