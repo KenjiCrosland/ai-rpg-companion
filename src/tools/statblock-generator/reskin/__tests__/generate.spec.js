@@ -5451,7 +5451,7 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
         // the call REFUSES every template and names a nearest
         // a refusal names its gap: template "none", plus `closest` (which must be
         // on this seat's POOL) and `missing`
-        if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify({ template: 'none', closest: 'exploiter', missing: 'a wave of scalding water that lingers', because: 'nothing holds it', name: 'Scalding Spill', expresses: 'a cauldron brim-full of scalding bog-water' });
+        if (prompt.startsWith("A monster's signature ability has been described")) return JSON.stringify({ template: 'none', closest: 'thrown-burst', missing: 'a wave of scalding water that lingers', because: 'nothing holds it', name: 'Scalding Spill', expresses: 'a cauldron brim-full of scalding bog-water' }); // `closest` was 'exploiter' until 2026-11-05: the payoff seed now stands down on a sheet that already closes its own loop, and this donor (brute-8-grappler) ships Swallow — "one Medium or smaller creature it is grappling". The subject here is the DECORATION path, so any template on the seat's pool serves; a thrown burst matches the cauldron's own spill.
         if (prompt.startsWith('You are repairing') || prompt.startsWith('You are completing')) return JSON.stringify({});
         if (prompt.startsWith('You are auditing')) return JSON.stringify({ findings: [] });
         return answer(Object.assign(fullAnswer(brute, 'Kettlewright', {}), { type: 'Construct' }));

@@ -914,3 +914,35 @@ describe('the library payoff seed rewards the condition and climbs the ladder', 
     expect(t).not.toMatch(/also has the\s+condition/);
   });
 });
+
+// A SHEET THAT ALREADY CLOSES ITS LOOP DOES NOT GET A SECOND PAYOFF (owner, 2026-11-05:
+// "any creature template where there is a loop payoff is not needed and too much").
+// Measured: of 1,209 sheets imposing a condition, 476 (39%) already have a row that
+// consumes it — Swallow 66, Whelm 35, Fling 21, Smother 17, the engulf family the
+// grappler chassis ship with. The remaining 733 are the ones worth having it on.
+describe('the payoff seed stands down when the sheet already uses its own condition', () => {
+  const base = { per_hit: 40, dc: 16, atk: 9, stats: { STR: 18 }, striker_stat: 'STR', cr: 8 };
+  const CLAW = { name: 'Claw', text: 'Melee Attack Roll: +9. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 15).' };
+  const opts = { archetype: 'brute', energy: 'Cold', mix: 'both', name: 'X', shapeKey: 'exploiter', imposed: ['Grappled'], cr: 8 };
+  const drawOn = (rows) => drawLibraryRow({ ...base, sections: { Actions: rows } }, opts);
+
+  it('draws the payoff when a condition is on the page with nothing using it', () => {
+    expect(drawOn([CLAW])?.seed).toBe('exploiter');
+  });
+
+  it.each([
+    ['Whelm', 'The creature whelms one Medium or smaller creature it is grappling. While whelmed, the target has the Blinded and Restrained conditions.'],
+    ['Swallow', 'The creature swallows one Large or smaller creature it is grappling.'],
+    ['Smother', 'The creature smothers one Medium or smaller creature it is grappling.'],
+    ['a source-bound payoff', 'Strength Saving Throw: DC 16, one creature within 30 feet that is Grappled by the creature. Failure: 20 (4d8) damage.'],
+  ])('stands down when %s already closes the loop', (_l, text) => {
+    expect(drawOn([CLAW, { name: 'Closer', text }])?.seed).not.toBe('exploiter');
+  });
+
+  it('and the existing teleport precedent still holds — this follows the same law', () => {
+    // "the chassis already delivering the mechanic beats the claim" (phase-slip, 2026-09-15)
+    const src = fs.readFileSync(path.join(__dirname, '..', 'library.mjs'), 'utf8');
+    expect(src).toMatch(/seed\.rewardsCondition && loopClosed/);
+    expect(src).toMatch(/seed\.key === 'phase-slip' && chassisTeleports/);
+  });
+});

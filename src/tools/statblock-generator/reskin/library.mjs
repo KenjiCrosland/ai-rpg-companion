@@ -281,12 +281,28 @@ export function drawLibraryRow(scaled, { archetype = null, energy = null, mix = 
   const hasNova = Object.values(scaled.sections ?? {}).flat()
     .some((e) => (/^Recharge/.test(e.gate ?? '') || /\(Recharge [\d–-]+\)/.test(e.name ?? '')) && /\d+ \(\d+d\d+/.test(e.text ?? ''));
   const chassisTeleports = Object.values(scaled.sections ?? {}).flat().some((e) => /teleports? up to/.test(e.text ?? ''));
+  // A SHEET THAT ALREADY CLOSES ITS LOOP DOES NOT NEED A SECOND PAYOFF (owner,
+  // 2026-11-05: "we already have payoffs baked into our grapplers ... any creature
+  // template where there is a loop payoff is not needed and too much"). Same law as the
+  // teleport line above: the chassis already delivering the mechanic beats the claim.
+  //
+  // Measured over 3,279 saved sheets: 1,209 impose a condition and 476 of them (39%)
+  // already have a row that consumes it — Swallow 66, Whelm 35, Fling 21, Smother 17,
+  // the engulf family the grappler chassis ship with. On those, this seed is a third row
+  // on one mechanic. It also removes a redundancy that already shipped: Opportunist's
+  // Lash itself closes the loop 28 times, so on some sheets it was doubling up.
+  //
+  // The 733 LOOP-FREE sheets are the ones worth having it — a grab with no follow-up, a
+  // Frightened aura that leads nowhere. The condition is on the page doing nothing.
+  const closers = /\bit is grappling\b|\b(?:swallowed|engulfed|caged|entombed|smothered|whelmed)\b|\b(?:Grappled|Restrained|Poisoned|Prone|Frightened|Blinded|Stunned) (?:by|of) the\b/i;
+  const loopClosed = Object.values(scaled.sections ?? {}).flat().some((e) => closers.test(String(e?.text ?? '')));
   const legal = (seed) => !((seed.nova || seed.key === 'thrown-burst') && hasNova)
     && !(seed.needsImposed && !imposed.length)
     && !(seed.requiresMechanic && !(Array.isArray(mechanics) && mechanics.includes(seed.requiresMechanic)))
     // the chassis already delivering the mechanic beats the claim (the
     // Gutterwretch drew a second teleport beside Flickerstep, 2026-09-15)
     && !(seed.key === 'phase-slip' && chassisTeleports)
+    && !(seed.rewardsCondition && loopClosed) // the sheet already does something with its own condition
     // DOMINANCE (critic 2026-09-15, the Ledgerhorn's Overbalance: a
     // 0-damage prone action on a sheet whose Gore and Steam Vent both
     // prone already): a pure-control seed never draws into a sheet
