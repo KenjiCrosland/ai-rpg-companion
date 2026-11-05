@@ -810,6 +810,9 @@ function handleFolderMove() {
   if (!targetFolder) return;
 
   const currentMonsterName = monsters.value[activeFolder.value][activeMonsterIndex.value].name;
+  // the same identity rule as the generate path below: two sheets may share a name, so
+  // the row to re-select after the move is this OBJECT, not the first one named like it
+  const movedMonster = monsters.value[activeFolder.value][activeMonsterIndex.value];
   const previousActiveFolder = activeFolder.value;
 
   // Create folder if new
@@ -847,7 +850,10 @@ function handleFolderMove() {
   for (const key of QUOTA_FIELDS) {
     if (stored[key] !== undefined) dataToStore[key] = stored[key];
   }
-  const newIndex = monsters.value[activeFolder.value].findIndex(m => m.name === currentMonsterName);
+  const movedIdentity = monsters.value[activeFolder.value].indexOf(movedMonster);
+  const newIndex = movedIdentity !== -1
+    ? movedIdentity
+    : monsters.value[activeFolder.value].findIndex(m => m.name === currentMonsterName);
   selectMonster(activeFolder.value, newIndex);
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
 
@@ -1838,7 +1844,21 @@ async function saveGeneratedMonster(finalMonster) {
     monsters.value[folderName].push(finalMonster);
   }
   monsters.value[folderName] = sortMonstersByCR(folderName);
-  const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
+  // IDENTITY, NOT NAME (owner, 2026-11-05: "if I generate two headless horsemans at the
+  // same cr the first one displays"). The sheet is pushed, the list is re-sorted, and the
+  // index was then recovered by NAME — so `findIndex` returned the FIRST monster with
+  // that name and the card showed the older sheet while the new one saved correctly. At
+  // the same CR the two land adjacent after the sort, which is why comparing variants of
+  // one creature is exactly the workflow that broke it. Caught by the critic on the
+  // 11-05 gate as #21 showing #03's Owlbear, with both sheets right in storage.
+  //
+  // `finalMonster` is the object this function just placed in the array, in BOTH the
+  // replace and the append branch, and a sort moves references rather than copying them,
+  // so its position is recoverable exactly. The name search stays as a fallback only.
+  const byIdentity = monsters.value[folderName].indexOf(finalMonster);
+  const newIndex = byIdentity !== -1
+    ? byIdentity
+    : monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
   // display-only: the form keeps what the user typed (the write-back
   // here is how the Grave-Hurler Vulture named itself 3 rolls running)
   selectMonster(folderName, newIndex, { fillForm: false });
