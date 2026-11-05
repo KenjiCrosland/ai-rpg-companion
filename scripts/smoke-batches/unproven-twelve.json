@@ -1,0 +1,16 @@
+[
+  { "name": "", "description": "a cellar-spider that pins intruders in sheet-web until they cut themselves free", "cr": "2", "rules": "2024", "canary": "SNARE · object-end row must INTRODUCE its object ('caught in web ... until the web is destroyed')" },
+  { "name": "", "description": "a gallows-keeper that flings weighted cords to bind anyone who runs", "cr": "7", "rules": "2014", "canary": "SNARE · 2014 printing, object must still be introduced" },
+  { "name": "", "description": "a bramble-warden whose thorn-roots hold trespassers fast where they stand", "cr": "11", "rules": "2024", "canary": "SNARE · higher band frame" },
+  { "name": "", "description": "a deep-trapper that throws resin nets over its prey", "cr": "15", "rules": "2014", "canary": "SNARE · top band, 2014" },
+
+  { "name": "", "description": "a duelist who lands a killing thrust on anyone already terrified of him", "cr": "5", "rules": "2024", "canary": "CONDITION-PAYOFF · damage must sit UNDER print's single-target save ceiling (24 at CR 5)" },
+  { "name": "", "description": "a bone-render that savages prey already knocked flat", "cr": "9", "rules": "2014", "canary": "CONDITION-PAYOFF · ceiling 29 at CR 9" },
+  { "name": "", "description": "an executioner that finishes creatures already held fast", "cr": "13", "rules": "2024", "canary": "CONDITION-PAYOFF · ceiling 31 at CR 13 — this is the Merciless Strike 49 case" },
+  { "name": "", "description": "a sea-hag who drains the charmed dry with a kiss", "cr": "4", "rules": "2014", "canary": "CONDITION-PAYOFF · print's own Succubus/Sea Hag register" },
+
+  { "name": "", "description": "a storm-drake whose crackling corona only burns creatures lying prone beneath it", "cr": "7", "rules": "2024", "canary": "ENABLER · payoff needs Prone; a melee row must gain print's Prone rider" },
+  { "name": "", "description": "a mire-thing that crushes whatever it has already dragged under", "cr": "8", "rules": "2014", "canary": "ENABLER · payoff needs Grappled; needs a body-part host, holds should be true" },
+  { "name": "", "description": "a chapel-horror that feeds only on the frightened", "cr": "11", "rules": "2024", "canary": "ENABLER · Frightened is NOT rideable — expect a traced refusal, not a bad rider" },
+  { "name": "", "description": "a pit-warden that tears at anything restrained in its coils", "cr": "16", "rules": "2014", "canary": "ENABLER · payoff needs Restrained, a HOLD condition" }
+]

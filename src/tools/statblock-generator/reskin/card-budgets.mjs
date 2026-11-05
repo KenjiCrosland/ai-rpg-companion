@@ -72,6 +72,29 @@ export const SINGLE_TARGET_SAVE_CEILING = { '0-2': 13, '3-5': 24, '6-9': 29, '10
 /** The ceiling a row answers to: a save row is held to print's save rows, a hit to print's hits. */
 export const ceilingFor = (cr, { save = false } = {}) => (save ? SINGLE_TARGET_SAVE_CEILING : SINGLE_TARGET_CEILING)[ceilingBandOf(cr)] ?? null;
 export const ceilingBandOf = (cr) => (cr <= 2 ? '0-2' : cr <= 5 ? '3-5' : cr <= 9 ? '6-9' : cr <= 12 ? '10-12' : cr <= 16 ? '13-16' : cr <= 20 ? '17-20' : '21+');
+// ONE DEFINITION OF "THIS SAVE HITS ONE CREATURE", shared by every writer. `per_hit` is
+// the round's budget and a save frame spends it whole — correct for a cone, where print
+// gates 68% of its area saves behind a Recharge so the CR math amortises them to about a
+// third, and wrong for "one creature within 60 feet", which 95% of print's single-target
+// saves deliver AT WILL, every round. The Merciless Strike shipped 65 at CR 13 and 66 at
+// CR 16 against print's hardest single-target save of 31: an area-sized number, at one
+// target, every turn.
+//
+// This lives HERE because two writers compute that damage — renderTemplate (the catalog
+// frames) and drawLibraryRow (the `{burst}` seeds) — and the first fix went into only one
+// of them, so the live run still shipped 66. A private copy hides the fix.
+const AREA_SHAPE = /each creature|all creatures|Emanation|Cone|Sphere|Cube|Cylinder|\d+-foot[- ][Ll]ine/i;
+export const isSingleTargetSave = (text) => /Saving Throw/i.test(String(text ?? ''))
+  && /\bone (?:creature|Large|Huge|Medium|Small|target)/i.test(String(text ?? ''))
+  && !AREA_SHAPE.test(String(text ?? ''));
+/** The per-row damage budget a save frame may spend, clamped to print's measured ceiling
+ *  when the frame names ONE creature. A ceiling, not a target: print's own payoffs sit
+ *  lower still (Glabrezu/Pummel 15 of an allowed 29). */
+export const capSingleTargetSave = (per, text, cr) => {
+  if (!isSingleTargetSave(text)) return per;
+  const cap = ceilingFor(Number(cr), { save: true });
+  return Number.isFinite(cap) && cap > 0 ? Math.min(per, cap) : per;
+};
 export const singleTargetCeiling = (cr) => SINGLE_TARGET_CEILING[ceilingBandOf(cr)] ?? null;
 
 const FRACTIONAL = { 0: { hp: 3, dpr: 2 }, 0.125: { hp: 9, dpr: 4 }, 0.25: { hp: 15, dpr: 6 }, 0.5: { hp: 24, dpr: 8 } };

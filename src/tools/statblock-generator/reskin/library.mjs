@@ -29,6 +29,7 @@
 //   for the creature").
 
 import { saveDamageDiceFor } from '../format-2024/dice.mjs';
+import { capSingleTargetSave } from './card-budgets.mjs';
 
 export const LIBRARY_SEEDS = [
   // ——— control ———
@@ -296,7 +297,10 @@ export function drawLibraryRow(scaled, { archetype = null, energy = null, mix = 
     text = text.split('{imposed_bound}').join(boundForm(pick)).split('{imposed_condition}').join(pick);
   }
   if (seed.dpr_frac) {
-    const { avg, dice } = saveDamageDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * seed.dpr_frac)));
+    // THE SEED PATH CLAMPS TOO. This is the writer that actually shipped the Merciless
+    // Strike's 66 at CR 16 — a condition-payoff row reaches a sheet as a LIBRARY row,
+    // not through renderTemplate, so a clamp placed only there changed nothing live.
+    const { avg, dice } = saveDamageDiceFor(capSingleTargetSave(Math.max(3, Math.round((scaled.per_hit ?? 6) * seed.dpr_frac)), text, cr ?? scaled.cr));
     text = text.split('{burst}').join(`${avg} (${dice})`);
     // A SEED'S OWN FICTION BEATS THE SLOT'S DEFAULT (critic, 2026-10-14:
     // Bloodcurdling Howl and Creeping Dread both dealt Piercing — the seed path

@@ -41,6 +41,7 @@ import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
 import { WEAPONS, weaponFor, weaponNamed, namesWeapon, weaponsIn, finesseLike } from './weapons.mjs';
 import { effectOnly, danglingRefIn, repairMultiattackAttackList, repairReplaceClause, rowNamesOf } from './checker.mjs';
+import { capSingleTargetSave, ceilingFor, isSingleTargetSave } from './card-budgets.mjs';
 import { matcherPath, bodyForClass, bodyForPerson } from './path.mjs';
 import { classStats } from './classes.mjs';
 import { capsFix2024, applyCorrections as applyTextFixes, DETERMINISTIC_TEXT_RULES } from '../format-2024/generate.mjs'; // the 2024 caps pass, shared with the lint's fixer (2026-10-17) // one prerequisite stripper, shared with save-fit (stage 1b); one dangling-reference scan, shared with the checker (2026-10-16)
@@ -3600,7 +3601,15 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       .replace(/\{dmg\}/g, () => { const d = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * 0.5))); return `${d.avg} (${d.dice})`; });
     if (kind === 'save') {
       const s = f;
-      const dice = engineDiceFor(Math.max(3, Math.round((scaled.per_hit ?? 6) * (s.target.startsWith('each') ? 1.4 : 1.1))));
+      // THE AUTHORED SAVE CLAMPS TOO — the third writer of save damage, after the
+      // catalog frames and the library seeds. It already knew an area from a single
+      // target (1.4x the budget against 1.1x), but it never answered to print's ceiling,
+      // so an authored free row shipped "one creature within 10 feet … 49 (14d6)" at
+      // CR 13 against print's 31 (unproven-twelve, third run — the last row standing
+      // after the other two writers were fixed). The target phrase is handed to the one
+      // shared reader rather than re-deciding "is this an area" a third time.
+      const wantSave = Math.max(3, Math.round((scaled.per_hit ?? 6) * (s.target.startsWith('each') ? 1.4 : 1.1)));
+      const dice = engineDiceFor(capSingleTargetSave(wantSave, `Saving Throw ${s.target}`, cr));
       const saveType = s.type ?? (([, w] = []) => ({ fire: 'Fire', flame: 'Fire', scald: 'Fire', steam: 'Fire', burn: 'Fire', ember: 'Fire', frost: 'Cold', ice: 'Cold', cold: 'Cold', freez: 'Cold', lightning: 'Lightning', thunder: 'Thunder', sonic: 'Thunder', poison: 'Poison', venom: 'Poison', acid: 'Acid', rot: 'Necrotic', necrotic: 'Necrotic', decay: 'Necrotic', grave: 'Necrotic', radiant: 'Radiant', holy: 'Radiant', sun: 'Radiant', psychic: 'Psychic', mind: 'Psychic', force: 'Force' })[w])(/\b(fire|flame|scald|steam|burn|ember|frost|ice|cold|freez|lightning|thunder|sonic|poison|venom|acid|rot|necrotic|decay|grave|radiant|holy|sun|psychic|mind|force)/i.exec(`${s.clause} ${s.name}`.toLowerCase()) ?? []) ?? fallbackType ?? 'Bludgeoning'; // the save's own type, else a type its words warrant, else the first attack's
       const failure = [s.damage ? `${dice.avg} (${dice.dice}) ${saveType} damage` : '', s.movement ? `the target is ${s.movement} straight ${/pushed/.test(s.movement) ? 'away from' : 'toward'} ${inlineGuessRef()}` : '', s.condition ? conditionClause(s.condition) : ''].filter(Boolean);
       const text = renderForm({ kind: 'save', stat: s.stat, dc: scaled.dc, target: s.target, failure: `${failure[0]}${failure.length > 1 ? `, and ${failure.slice(1).join(', and ')}` : ''}.`, success: s.damage && s.success === 'half' ? 'Half damage only.' : null }, '2024', { properNouns: ownNouns() });
@@ -9755,6 +9764,31 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         }
       }
       dropDeadMultiattackCites(monster.sections ?? {}, trace); // last word: every rename and every addition has landed by here
+      // AND A SINGLE-TARGET SAVE OBEYS PRINT'S CEILING, wherever its number came from.
+      // FOUR writers compute save damage — the catalog frames, the library seeds, the
+      // authored save form, and a downstream re-price that rescales finished dice — and
+      // the unproven-twelve found them one at a time, each only after the previous was
+      // fixed: 3 rows over the line, then 7, then 1, then "Merciless Strike 65" again on
+      // a row whose own writer already clamped. Clamping a budget cannot hold an
+      // invariant a later pass rewrites, and capping it beside the nova cap was too
+      // early — that pass runs before the template rows land. It belongs HERE, on the
+      // same "last word" as the citation re-read, against the finished sentence.
+      //
+      // print's line, measured: an AREA save may deal 66 at this band because 68% of
+      // print's area saves are Recharge-gated and the CR math amortises them to about a
+      // third, while 95% of its single-target saves are AT WILL — 31 every round is the
+      // harder row. A ceiling, not a target: print's own payoffs sit at 13-16.
+      for (const es of Object.values(monster.sections ?? {})) for (const e of (es ?? [])) {
+        const t = String(e?.text ?? '');
+        if (!isSingleTargetSave(t)) continue;
+        const dm = /(\d+) \((\d+d\d+(?:\s*\+\s*\d+)?)\)/.exec(t); if (!dm) continue;
+        const cap = ceilingFor(Number(monster.cr ?? cr), { save: true });
+        if (!Number.isFinite(cap) || Number(dm[1]) <= cap) continue;
+        const d = engineDiceFor(cap);
+        e.text = t.replace(dm[0], `${d.avg} (${d.dice})`);
+        if (e.text_noRider) e.text_noRider = String(e.text_noRider).replace(dm[0], `${d.avg} (${d.dice})`);
+        trace('single-target save capped:', `"${e.name}" ${dm[1]} -> ${d.avg} — it targets "one creature", and print's hardest single-target save row at CR ${monster.cr ?? cr} is ${cap}`);
+      }
     }
     if (scaled.species) { // the species' header lines land after the directives and print's speed, so a user-set walk and print's own modes stand; a user's vulnerability outranks the species' resistance
       const sp = scaled.species;

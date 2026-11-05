@@ -25,7 +25,7 @@ import { LIBRARY_SEEDS, drawLibraryRow } from './library.mjs';
 import { attackDamageDiceFor, saveDamageDiceFor } from '../format-2024/dice.mjs';
 import { readPhrases } from './lexicon.mjs';
 import { weaponProp } from './weapons.mjs';
-import { AREA_TARGETS } from './card-budgets.mjs';
+import { AREA_TARGETS, capSingleTargetSave } from './card-budgets.mjs';
 import { imposedConditions } from './author.mjs'; // ONE reader for the condition a row imposes: the declared record first, print's grammar second
 
 export const SECTION_OF = { trait: 'Traits', action: 'Actions', bonus_action: 'Bonus Actions', reaction: 'Reactions', rider: 'Rider' }; // Rider = a clause appended to the melee attack row
@@ -2115,7 +2115,21 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // sheet already carries for requires_size, so nothing new is read
   if (text.includes('{lane_width}')) text = text.split('{lane_width}').join(LANE_WIDTH[String(ctx.size ?? '').trim()] ?? '10-foot'); // `t.imposes` so a template BUILT at request time can declare its own condition: the static map is keyed by id, a composed row has no entry, and its Deafened had to be recovered from the finished text downstream ("record completed", 2026-10-26)
   if (projWeaponRange) text = text.replace(/range \d+\/\d+ ft\./, `range ${projWeaponRange} ft.`);
-  const per = Math.max(3, Math.round(scaled.per_hit ?? 6));
+  // A SINGLE-TARGET SAVE IS NOT A BREATH WEAPON (critic's #06, confirmed by the
+  // unproven-twelve 2026-11-05). `per_hit` is the round's damage budget, and a save
+  // frame spends it whole — which is right for a cone, where four characters split it
+  // and each halves it on a success, and WRONG for "one creature within 60 feet". The
+  // Merciless Strike shipped 65 at CR 13 against print's hardest single-target save row
+  // of 31, and 66 at CR 16: one failed save removing a character outright. 47 of the
+  // catalog's 87 save frames are single-target, so this is the budget's bug and not one
+  // template's — rescaling condition-payoff's token alone took 130 to 65 and left it
+  // over the line.
+  //
+  // print's ceiling is a MEASURED closed fact (SINGLE_TARGET_SAVE_CEILING, n recorded
+  // per band), so the clamp never makes a row gentler than print's hardest; it only
+  // stops us exceeding it. print's own payoffs sit lower still — Glabrezu/Pummel 15 of
+  // 29 at CR 9 — so this is a ceiling, not a target.
+  const per = capSingleTargetSave(Math.max(3, Math.round(scaled.per_hit ?? 6)), text, Number(ctx.cr));
   // an ATTACK-ROLL frame prices like the chassis's attack rows — dice plus the striker's mod (print's Hill
   // Giant hurls a boulder for 20 (3d10 + 4); the hollow lancer's lance flew for 18 (4d8), goldens 2026-10-03);
   // a save frame stays dice-only

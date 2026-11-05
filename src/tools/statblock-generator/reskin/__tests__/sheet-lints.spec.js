@@ -20,7 +20,8 @@ const corpus = () => { if (!_c) { _c = Array.isArray(printBlocks) ? printBlocks 
 import path from 'node:path';
 import { lintSheet, rowsOfSheet, SHEET_LINTS } from '@/tools/statblock-generator/reskin/sheet-lints.mjs';
 import * as SHAPES from '@/tools/statblock-generator/reskin/shapes.mjs';
-import { ceilingFor } from '@/tools/statblock-generator/reskin/card-budgets.mjs';
+import { capSingleTargetSave, ceilingFor, isSingleTargetSave } from '@/tools/statblock-generator/reskin/card-budgets.mjs';
+import { renderTemplate } from '@/tools/statblock-generator/reskin/templates.mjs';
 
 const RUN = 'smoke-out/sweep-2026-11-01T20-03-32';
 const sheetFor = (ix) => {
@@ -591,5 +592,102 @@ describe('the condition-payoff template deals print\'s ordinary save amount', ()
       }
     }
     expect(seen).toBe(4);
+  });
+});
+
+// A SINGLE-TARGET SAVE IS NOT A BREATH WEAPON. `per_hit` is the round's budget and a
+// save frame spent it whole — right for a cone that four characters split and each
+// halves, wrong for "one creature within 60 feet". The unproven-twelve of 2026-11-05
+// shipped Merciless Strike at 65 (CR 13), 66 (CR 16) and 42 (CR 8) against print's
+// hardest single-target save rows of 31, 31 and 29 — one failed save removing a
+// character. 47 of the catalog's 87 save frames are single-target, so the earlier
+// token rescale on condition-payoff alone took 130 to 65 and left it over the line.
+describe('a single-target save row is clamped to print\'s measured ceiling', () => {
+  const templates = Object.values(SHAPES).flat().filter((x) => x && typeof x === 'object' && x.id);
+  const FILLS = { consumed_condition: 'Grappled', condition_minor: 'Prone', save_stat: 'Strength', finisher: 'drives the axe down two-handed', damage_type: 'Bludgeoning', r_vuln: 'Fire', restraint: 'web' };
+  const ctxFor = (cr, perHit) => ({ cr, concept: 'an executioner that finishes the held', scaled: { per_hit: perHit, dc: 17, atk: 10, stats: { STR: 20 }, striker_stat: 'STR' } });
+  const dmgOf = (out) => { const d = /(\d+) \(\d+d\d+(?: *[+-] *\d+)?\)/.exec(String(out?.text ?? '')); return d ? Number(d[1]) : null; };
+
+  it.each([[5, 30], [8, 45], [13, 70], [16, 72], [20, 90]])('clamps condition-payoff at CR %i even when the budget is %i', (cr, perHit) => {
+    const cp = templates.find((x) => x.id === 'condition-payoff');
+    const got = dmgOf(renderTemplate(cp, ctxFor(cr, perHit), FILLS));
+    expect(got).not.toBeNull();
+    expect(got).toBeLessThanOrEqual(ceilingFor(cr, { save: true }));
+  });
+
+  it('leaves an AREA frame on its full budget — a breath weapon is still a breath weapon', () => {
+    const area = templates.find((x) => x.id === 'spew');
+    const got = dmgOf(renderTemplate(area, ctxFor(13, 70), FILLS));
+    expect(got).toBeGreaterThan(ceilingFor(13, { save: true }) * 1.5); // nowhere near the single-target line
+  });
+
+  it('holds for every template that has a single-target save frame, at every band', () => {
+    // the 12: swallow, gaze-single, snare, reel, condition-payoff, execute, seal,
+    // shield-bash, lure, hook-drag, pull-through, burrow-ambush
+    let checked = 0;
+    for (const t of templates) {
+      if (!t.frames) continue;
+      for (const [cr, perHit] of [[2, 20], [5, 30], [8, 45], [13, 70], [16, 72], [20, 90]]) {
+        const lo = Array.isArray(t.cr_range) ? t.cr_range[0] : 0;
+        const hi = Array.isArray(t.cr_range) ? t.cr_range[1] : 30;
+        if (cr < lo || cr > hi) continue;
+        let out; try { out = renderTemplate(t, ctxFor(cr, perHit), FILLS); } catch { continue; }
+        const text = String(out?.text ?? '');
+        if (!/Saving Throw/.test(text)) continue;
+        if (/each creature|all creatures|Emanation|Cone|Sphere|Cube|Cylinder|\d+-foot[- ][Ll]ine/.test(text)) continue;
+        if (!/\bone (?:creature|Large|Huge|Medium|Small|target)/.test(text)) continue;
+        const got = dmgOf(out); if (got === null) continue;
+        checked += 1;
+        expect(got).toBeLessThanOrEqual(ceilingFor(cr, { save: true }));
+      }
+    }
+    expect(checked).toBeGreaterThan(20); // the sweep must actually reach these frames
+  });
+});
+
+// THE CLAMP MUST LIVE IN ONE PLACE. The first cut put it in renderTemplate only, and the
+// live run still shipped 66 at CR 16 — because a condition-payoff row reaches a sheet as
+// a LIBRARY row (`{burst}` seed), not through the catalog frames. Two writers, one fix,
+// no effect. These texts are verbatim from unproven-twelve-2026-11-05T01-29-41.
+describe('the single-target save clamp has one definition and both writers use it', () => {
+  const REAL = [
+    ['CR 13 oathbroken headsman', 13, 'The oathbroken headsman drives the axe down two-handed. *Dexterity Saving Throw*: DC 17, one creature within 60 feet that has the Grappled condition. *Failure:* 65 (10d12) Bludgeoning damage, and the target has the Prone condition. *Success:* Half damage.'],
+    ['CR 8 fen-brute', 8, 'The fen-brute bears down on the sunken mass. *Dexterity Saving Throw*: DC 15, one creature within 30 feet that has the Grappled condition. *Failure:* 42 (12d6) Acid damage. *Success:* Half damage.'],
+    ['CR 16 pit-warden', 16, 'The pit-warden hooks its claws into the coils\' prey. *Constitution Saving Throw*: DC 18, one creature within 60 feet that has the Restrained condition. *Failure:* 66 (12d10) Bludgeoning damage, and the target has the Poisoned condition. *Success:* Half damage.'],
+  ];
+
+  it.each(REAL)('clamps the %s row that actually shipped', (_l, cr, text) => {
+    expect(isSingleTargetSave(text)).toBe(true);
+    const cap = ceilingFor(cr, { save: true });
+    expect(capSingleTargetSave(200, text, cr)).toBe(cap);   // a huge budget is cut to print's line
+    expect(capSingleTargetSave(10, text, cr)).toBe(10);     // a small one is left alone
+  });
+
+  it.each([
+    ['a cone keeps its budget', 'The drake exhales thunder. *Constitution Saving Throw*: DC 15, each creature in a 15-foot Cone. *Failure:* 42 (12d6) Thunder damage. *Success:* Half damage.'],
+    ['an Emanation keeps its budget', '*Wisdom Saving Throw*: DC 21, each creature in a 20-foot Emanation. *Failure:* 22 (4d10) Psychic damage.'],
+    ['a line keeps its budget', '*Dexterity Saving Throw*: DC 18, each creature in a 60-foot Line. *Failure:* 55 (10d10) Lightning damage.'],
+  ])('%s — an area save is NOT a single-target save', (_l, text) => {
+    expect(isSingleTargetSave(text)).toBe(false);
+    expect(capSingleTargetSave(200, text, 13)).toBe(200);
+  });
+
+  it('and an attack row is untouched, since the ceiling it answers to is different', () => {
+    const atk = '*Melee Attack Roll:* +10, reach 5 ft. 44 (6d12 + 5) Slashing damage.';
+    expect(isSingleTargetSave(atk)).toBe(false);
+    expect(capSingleTargetSave(200, atk, 13)).toBe(200);
+  });
+
+  it('BOTH writers route their save damage through the shared helper', () => {
+    // the structural guard: this is the regression that made the first fix inert
+    // THREE writers compute save damage: the catalog frames (templates.mjs), the
+    // library seeds (library.mjs) and the authored save form (generate.mjs). Each one
+    // was found by a live run AFTER the previous was fixed, so all three are asserted.
+    for (const f of ['templates.mjs', 'library.mjs', 'generate.mjs']) {
+      const src = fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+      expect(src).toMatch(/capSingleTargetSave/);
+      // and neither keeps its own copy of the decision
+      if (f !== 'generate.mjs') expect(src).not.toMatch(/each creature\|all creatures\|Emanation\|Cone\|Sphere/);
+    }
   });
 });
