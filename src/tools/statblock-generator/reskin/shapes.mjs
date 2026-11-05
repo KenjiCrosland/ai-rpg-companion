@@ -172,16 +172,16 @@ export const SHAPES = [
     },
   },
   {
-    id: 'condition-payoff', name: 'Merciless Strike', composing: true, // the shape's print-register name — "Condition Payoff" is a design term and reached a page (fresh ten, 2026-09-22)
+    id: 'condition-payoff', name: 'Merciless Strike', composing: true, gate: 'Recharge 5-6', rewardsCondition: true, // the shape's print-register name — "Condition Payoff" is a design term and reached a page (fresh ten, 2026-09-22)
     cite: 'Sea Hag/Death Glare (Frightened, CR 2); Gorgon/Trample (Prone, CR 5); Succubus/Draining Kiss (Charmed, CR 4); Glabrezu/Pummel (Grappled, CR 9)',
     roles: ['skirmisher', 'controller', 'lurker', 'brute'], styles: [], cr_range: [2, 23], replaces: 'signature',
     frames: {
-      '0-2': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet that has the {consumed_condition} condition. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
-      '3-5': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet that has the {consumed_condition} condition. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
-      '6-9': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet that has the {consumed_condition} condition. *Failure:* {avg} ({dice}) {damage_type} damage. *Success:* Half damage.',
-      '10-12': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 60 feet that has the {consumed_condition} condition. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage.',
-      '13-20': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 60 feet that has the {consumed_condition} condition. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the {condition_minor} condition until the end of its next turn. *Success:* Half damage.',
-      '21+': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 60 feet that has the {consumed_condition} condition. *Failure:* {avg} ({dice}) {damage_type} damage, and the target has the Stunned condition until the end of its next turn. *Success:* Half damage.',
+      '0-2': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet. *Failure:* {avg} ({dice}) {damage_type} damage. If the target already has the {consumed_condition} condition, it also has the {condition_minor} condition until the end of its next turn. *Success:* Half damage.',
+      '3-5': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet. *Failure:* {avg} ({dice}) {damage_type} damage. If the target already has the {consumed_condition} condition, it also has the {condition_minor} condition until the end of its next turn. *Success:* Half damage.',
+      '6-9': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 30 feet. *Failure:* {avg_base} ({dice_base}) {damage_type} damage, or {avg_up} ({dice_up}) {damage_type} damage if the target already has the {consumed_condition} condition. *Success:* Half damage.',
+      '10-12': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 60 feet. *Failure:* {avg_base} ({dice_base}) {damage_type} damage, or {avg_up} ({dice_up}) {damage_type} damage if the target already has the {consumed_condition} condition. *Success:* Half damage.',
+      '13-20': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 60 feet. *Failure:* {avg_base} ({dice_base}) {damage_type} damage, or {avg_up} ({dice_up}) {damage_type} damage if the target already has the {consumed_condition} condition. *Success:* Half damage.',
+      '21+': 'The creature {finisher}. *{save_stat} Saving Throw*: DC {dc}, one creature within 60 feet. *Failure:* {avg_base} ({dice_base}) {damage_type} damage, or {avg_up} ({dice_up}) {damage_type} damage if the target already has the {consumed_condition} condition. *Success:* Half damage.',
     },
   },
   {

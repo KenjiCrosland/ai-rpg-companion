@@ -25,7 +25,7 @@ import { LIBRARY_SEEDS, drawLibraryRow } from './library.mjs';
 import { attackDamageDiceFor, saveDamageDiceFor } from '../format-2024/dice.mjs';
 import { readPhrases } from './lexicon.mjs';
 import { weaponProp } from './weapons.mjs';
-import { AREA_TARGETS, capSingleTargetSave } from './card-budgets.mjs';
+import { AREA_TARGETS, capSingleTargetSave, rewardFor } from './card-budgets.mjs';
 import { imposedConditions } from './author.mjs'; // ONE reader for the condition a row imposes: the declared record first, print's grammar second
 
 export const SECTION_OF = { trait: 'Traits', action: 'Actions', bonus_action: 'Bonus Actions', reaction: 'Reactions', rider: 'Rider' }; // Rider = a clause appended to the melee attack row
@@ -1977,6 +1977,14 @@ export function imposedByFrame(id, band) {
 // near-miss ("the target" only at two of them, a `cond` filter at the fourth).
 // One definition, every reader: `only` restricts the split to a named condition,
 // which is what the shed needs and what the other three must not have.
+// THE TAIL SHAPE STAYS EXACTLY AS NARROW AS IT WAS. A first cut at the stepped payoff
+// widened this — `and` optional, `also` admitted — to catch the reward clause, and that
+// moved the match EARLIER in print's grapple sentence: ", it has the Grappled condition
+// (escape DC 22), and it has the Restrained condition until the grapple ends" matched at
+// the Grappled half, so the guard below saw no imposition before it and split a pair it
+// has always refused. The conditional reward has its own shape instead
+// (CONDITIONAL_RIDER_SHAPE), which is the right place for it: that clause is a whole
+// sentence, not a tail. Caught by the grapple-pair test, which is why it exists.
 const MINOR_CLAUSE_SHAPE = /,? and (?:the target|it) has the (\{condition_minor\}|[A-Z][a-z]+) condition[^.]*(?=\.|$)/;
 // A PLACEHOLDER IS NOT A NAME (N4, 2026-11-02). A composed template is built at
 // request time and carries `name: 'Composed Row'` until something names the row —
@@ -1989,8 +1997,26 @@ export const PLACEHOLDER_ROW_NAMES = ['Composed Row', 'Composed', 'Trait', 'Row'
 export const isPlaceholderRowName = (n) => PLACEHOLDER_ROW_NAMES
   .some((p) => p.toLowerCase() === String(n ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase());
 
+// A CONDITIONAL REWARD IS ONE UNIT, TRIGGER AND EFFECT TOGETHER. The shape above is a
+// TAIL that may be dropped without harming its sentence — that is the whole contract the
+// `{minor_clause}` token rests on. A stepped payoff's reward is not a tail: cut its
+// effect and the frame keeps "If the target already has the Prone condition." — a
+// trigger with nothing behind it, which is worse than the rider it removed. So the
+// conditional sentence is matched WHOLE and travels as one segment: keeping it keeps
+// both halves, dropping it drops the sentence and leaves the damage clause clean.
+const CONDITIONAL_RIDER_SHAPE = /\s*If the target already has the (?:\{consumed_condition\}|[A-Z][a-z]+) condition, (?:the target|it) (?:also )?has the (\{condition_minor\}|[A-Z][a-z]+) condition[^.]*(?=\.|$)\.?/;
 export const splitMinorClause = (frame, { only = null } = {}) => {
   const text = String(frame ?? '');
+  const cond = CONDITIONAL_RIDER_SHAPE.exec(text);
+  if (cond && !(only && String(cond[1]).toLowerCase() !== String(only).toLowerCase())) {
+    return {
+      body: `${text.slice(0, cond.index)}{minor_clause}${text.slice(cond.index + cond[0].length)}`,
+      clause: cond[0],
+      condition: cond[1],
+      hasToken: cond[1] === '{condition_minor}',
+      conditional: true, // the reward's trigger rides inside the clause, so a reader must not look for it in the body
+    };
+  }
   const m = MINOR_CLAUSE_SHAPE.exec(text);
   const miss = { body: text, clause: null, condition: null, hasToken: false };
   if (!m) return miss;
@@ -2015,7 +2041,22 @@ export const splitMinorClause = (frame, { only = null } = {}) => {
   // yet — then took the Poisoned half and left a dangling "and". Caught by
   // replaying print's own row, not by the batch.
   const sentence = text.slice(Math.max(text.lastIndexOf('.', m.index) + 1, 0), m.index);
-  if (!only && /has the [A-Za-z{}_]+ condition/.test(sentence)) return miss;
+  // A CONDITIONAL REWARD IS NOT A GRAPPLE PAIR (owner's redesign, 2026-11-05). The guard
+  // above reads "this sentence already imposed a condition, so the trailing clause is
+  // bound to it" — true for print's ten grapple rows, and FALSE for a stepped payoff,
+  // whose first half is a TRIGGER rather than an imposition: "If the target already has
+  // the Prone condition, it also has the Frightened condition until the end of its next
+  // turn." Without this distinction the split refused, so the rider was never lifted out
+  // of the frame: nothing declared `imposes`, and a payoff whose reward matched its own
+  // trigger printed "already has the Prone condition, it also has the Prone condition".
+  //
+  // The test is positional and closed, like the guard it narrows: the preceding half is
+  // a trigger only when it is an `if` clause reading `already has the … condition`. No
+  // frame in the catalog, the library or the donors wrote that phrase before today, so
+  // this admits the new shape and nothing else — print's grapple pairs say "The target
+  // has the Grappled condition", never "if … already has".
+  const isConditionalTrigger = /\bif\b[^.]*\balready has the\b/i.test(sentence);
+  if (!only && !isConditionalTrigger && /has the [A-Za-z{}_]+ condition/.test(sentence)) return miss;
   return {
     body: `${text.slice(0, m.index)}{minor_clause}${text.slice(m.index + m[0].length)}`,
     clause: m[0],
@@ -2037,6 +2078,24 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   const terrainOf = (TERRAIN_OF.find(([re]) => re.test(String(ctx.concept ?? ''))) ?? [])[1];
   fills = { ...BLIND_FILLS, ...(terrainOf ? { terrain: terrainOf } : {}), ...(ctx.projectile ? { projectile: ctx.projectile } : {}), ...Object.fromEntries(Object.entries(fills).filter(([, v]) => typeof v === 'string' && v.trim())) };
   void blind;
+  // A REWARD MUST BE AN UPGRADE, NOT A SECOND LABEL (owner's spot check, 2026-11-05:
+  // "restrained to prone is kind of underwhelming"). A stepped payoff rewards a target
+  // it finds already afflicted, and the first cut only required the reward to DIFFER
+  // from the trigger — so it offered Prone to a Restrained creature, which gives a GM
+  // nothing: the attackers already have Advantage, the target already has speed 0, and
+  // it cannot stand up while Restrained.
+  //
+  // print attests which condition upgrades into which (CONDITION_ESCALATION, counts in
+  // card-budgets.mjs), and every pair it writes is strictly worse than its trigger. The
+  // model's proposal is kept when print attests it and corrected when it does not, so
+  // Restrained now rewards Petrified — print's own pairing, reached the way print
+  // reaches it, by a second failure rather than a first. A trigger print never upgrades
+  // (Prone, Frightened, Blinded, Deafened) gets NO condition reward and the frame falls
+  // back to its damage step, which is better than inventing a weak pair.
+  if (t?.rewardsCondition && fills.consumed_condition) {
+    const up = rewardFor(fills.consumed_condition, fills.condition_minor, MINOR);
+    if (up !== fills.condition_minor) fills = { ...fills, condition_minor: up ?? '' };
+  }
   const { scaled } = ctx;
   // THE DURATION THE WRITER CHOSE, kept so no reader has to recover it from the
   // finished sentence. `durationClause` turns a key into text and the key was
@@ -2130,6 +2189,16 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // stops us exceeding it. print's own payoffs sit lower still — Glabrezu/Pummel 15 of
   // 29 at CR 9 — so this is a ceiling, not a target.
   const per = capSingleTargetSave(Math.max(3, Math.round(scaled.per_hit ?? 6)), text, Number(ctx.cr));
+  // A STEPPED ROW'S TWO AMOUNTS. print writes a base and a larger amount conditional on
+  // the target's state in 11 rows — the Mimic's "7 (1d8 + 3)—or 12 (2d8 + 3) if the
+  // target is Grappled", the Chimera's 11 or 18, the Blood Hawk's 4 or 6 — and the step
+  // sits at 1.5-1.7x. `{avg_up}` is print's single-target ceiling and `{avg_base}` is
+  // about 60% of it, so a stepped frame rewards the setup without the base ever being
+  // the whole budget. Both are clamped by construction, so a stepped frame cannot
+  // reintroduce the 65-at-CR-13 the cap exists to stop.
+  const stepUpAvg = capSingleTargetSave(Math.max(3, Math.round(scaled.per_hit ?? 6)), text, Number(ctx.cr));
+  const stepUp = saveDamageDiceFor(stepUpAvg);
+  const stepBase = saveDamageDiceFor(Math.max(3, Math.round(stepUpAvg * 0.6)));
   // an ATTACK-ROLL frame prices like the chassis's attack rows — dice plus the striker's mod (print's Hill
   // Giant hurls a boulder for 20 (3d10 + 4); the hollow lancer's lance flew for 18 (4d8), goldens 2026-10-03);
   // a save frame stays dice-only
@@ -2162,7 +2231,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     : drains && PHYSICAL.includes(dtype0) ? (ctx.energy && !PHYSICAL.includes(ctx.energy) ? ctx.energy : 'Necrotic')
     : onHitRider && PHYSICAL.includes(dtype0) ? (ctx.energy && !PHYSICAL.includes(ctx.energy) ? ctx.energy : (ctx.meleeType && PHYSICAL.includes(ctx.meleeType) ? ctx.meleeType : dtype0))
     : dtype0; // a spewed cloud is never a weapon type: it takes the concept's energy or Poison (Noxious Spew dealt Piercing from a cloud of ash — the critic's species read)
-  const engine = { ray_table: t.id === 'random-ray' ? composeRayTable(bandFor(ctx.cr)) : '', /* first: the composed table carries {dc} and damage slots the keys below fill */ dc: String(scaled.dc), atk: `+${scaled.atk}`, avg: String(full.avg), dice: full.dice, avg_half: String(half.avg), dice_half: half.dice, avg_x2: String(dbl.avg), dice_x2: dbl.dice, damage_type: dtype, melee_name: ctx.meleeName ?? 'Slam', ranged_name: ctx.rangedName ?? '' };
+  const engine = { ray_table: t.id === 'random-ray' ? composeRayTable(bandFor(ctx.cr)) : '', /* first: the composed table carries {dc} and damage slots the keys below fill */ dc: String(scaled.dc), atk: `+${scaled.atk}`, avg: String(full.avg), dice: full.dice, avg_half: String(half.avg), dice_half: half.dice, avg_x2: String(dbl.avg), dice_x2: dbl.dice, avg_base: String(stepBase.avg), dice_base: stepBase.dice, avg_up: String(stepUp.avg), dice_up: stepUp.dice, damage_type: dtype, melee_name: ctx.meleeName ?? 'Slam', ranged_name: ctx.rangedName ?? '' };
   // NOTHING INVENTED (2026-10-16). This default used to read `?? 'Longbow'`, so
   // a ranged-host template on a sheet with NO ranged attack rendered a weapon
   // the creature does not have: the Court Step-Wizard shipped "Missed Step

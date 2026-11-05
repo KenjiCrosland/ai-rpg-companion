@@ -576,7 +576,14 @@ describe('the condition-payoff template deals print\'s ordinary save amount', ()
     expect(i).toBeGreaterThan(-1);
     const seg = src.slice(i, i + 3000);
     expect(seg).not.toMatch(/\{avg_x2\}|\{dice_x2\}/);
-    expect((seg.match(/\{avg\} \(\{dice\}\)/g) ?? []).length).toBe(6);
+    // the redesign (owner, 2026-11-05): the two low bands keep a flat amount and step a
+    // CONDITION; the four above them step the DAMAGE, base to ceiling at print's 1.6x
+    expect((seg.match(/\{avg\} \(\{dice\}\)/g) ?? []).length).toBe(2);
+    expect((seg.match(/\{avg_base\} \(\{dice_base\}\)/g) ?? []).length).toBe(4);
+    expect((seg.match(/\{avg_up\} \(\{dice_up\}\)/g) ?? []).length).toBe(4);
+    expect(seg).toMatch(/"gate":"Recharge 5-6"/);                 // gated, as print gates half its own payoffs
+    expect(seg).toMatch(/"rewardsCondition":true/);               // and it rewards the condition, never requires it
+    expect(seg).not.toMatch(/that has the \{consumed_condition\} condition/); // no targeting requirement left
   });
 
   it('and print\'s own payoff rows are all under the save ceiling, which is why', () => {

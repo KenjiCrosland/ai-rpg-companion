@@ -63,7 +63,10 @@ describe('the call\'s clause is what varies the sentence', () => {
 
   test('the rules half of the sentence is untouched — the engine still owns it', () => {
     const t = render({ finisher: 'drives a knee into the ribs' });
-    expect(t).toMatch(/Dexterity Saving Throw.*DC \d+, one creature within \d+ feet that has the Frightened condition/);
+    // the payoff REWARDS the condition instead of requiring it (owner's redesign,
+    // 2026-11-05): the target clause is now bare and the condition moved into the step
+    expect(t).toMatch(/Dexterity Saving Throw.*DC \d+, one creature within \d+ feet\./);
+    expect(t).toMatch(/if the target already has the Frightened condition/);
     expect(t).toMatch(/\d+ \(\d+d\d+\) Fire damage/);
   });
 

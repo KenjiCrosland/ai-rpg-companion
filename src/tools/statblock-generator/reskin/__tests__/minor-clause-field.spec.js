@@ -40,23 +40,33 @@ describe('the minor-condition rider is a declared segment, not a sentence to cut
   });
 
   test('a row that keeps its rider DECLARES the clause it printed', () => {
+    // CR 5, not 10: the payoff's reward is a CONDITION step in the low bands and a
+    // DAMAGE step above them (owner's redesign, 2026-11-05), so the rider this test is
+    // about only exists at the low bands now.
     const t = TEMPLATES.find((x) => x.id === 'condition-payoff');
-    const ctx = { scaled: sheet(10, null, 'brute'), archetype: 'brute', cr: 10, energy: 'Fire', mix: 'both', meleeName: 'Slam', imposed: ['Restrained'], name: 'X' };
+    const ctx = { scaled: sheet(5, null, 'brute'), archetype: 'brute', cr: 5, energy: 'Fire', mix: 'both', meleeName: 'Slam', imposed: ['Restrained'], name: 'X' };
     const row = renderTemplate(t, ctx, { consumed_condition: 'Restrained', condition_minor: 'Prone', finisher: 'brings the hammer down' });
     expect(row).toBeTruthy();
     expect(row.minorClause).toBeTruthy();                       // the field is the point of this test
     expect(row.text).toContain(row.minorClause);                 // and it is the very text that printed
     expect(row.minorClause).toMatch(/has the \w+ condition/);
     expect(row.minorClause).not.toMatch(/\{/);                   // every fill is in it
+    expect(row.imposes).toBe('Prone');                           // and the reward is declared, not left to a reader
+    // the reward travels WITH its trigger: a conditional rider is one segment, because
+    // cutting its effect alone would leave "If the target already has …" with nothing
+    expect(row.minorClause).toMatch(/If the target already has the Restrained condition/);
   });
 
-  test('a payoff never imposes what it requires: the clause does not print, and no field claims it did', () => {
+  test('a payoff never rewards the condition it keys on: the clause does not print, and no field claims it did', () => {
     const t = TEMPLATES.find((x) => x.id === 'condition-payoff');
-    const ctx = { scaled: sheet(10, null, 'brute'), archetype: 'brute', cr: 10, energy: 'Fire', mix: 'both', meleeName: 'Slam', imposed: ['Prone'], name: 'X' };
+    const ctx = { scaled: sheet(5, null, 'brute'), archetype: 'brute', cr: 5, energy: 'Fire', mix: 'both', meleeName: 'Slam', imposed: ['Prone'], name: 'X' };
     const row = renderTemplate(t, ctx, { consumed_condition: 'Prone', condition_minor: 'Prone', finisher: 'brings the hammer down' });
     expect(row).toBeTruthy();
-    expect(row.text).toMatch(/that has the Prone condition/);     // the requirement stays
-    expect(row.text).not.toMatch(/and the target has the Prone condition/); // the vestigial rider does not
+    // the payoff now REWARDS the condition instead of requiring it, so the nonsense this
+    // guards against reads "If the target already has the Prone condition, it also has
+    // the Prone condition" — the reward must not be the trigger
+    expect(row.text).not.toMatch(/already has the Prone condition/);
+    expect(row.text).not.toMatch(/also has the Prone condition/);
     expect(row.minorClause).toBeUndefined();                      // nothing declares a rider that never printed
     expect(row.imposes).toBeUndefined();
     expect(row.text).not.toMatch(/ ,|,\.|\.\./);                  // and the sentence closed cleanly

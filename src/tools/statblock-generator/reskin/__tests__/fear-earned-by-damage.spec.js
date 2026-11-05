@@ -107,9 +107,12 @@ describe('the donor chassis fill site — the one that matters', () => {
 });
 
 describe('the template validator', () => {
+  // CR 5, not 13: the payoff steps a CONDITION in the low bands and DAMAGE above them
+  // (owner's redesign, 2026-11-05), so the rider this validator acts on lives at the low
+  // bands now. The subject of these tests is the fear gate, not the band.
   const ctx = (energy, mix = null) => ({
-    scaled: scaleDonor(pickDonor(13, null, 'brute'), 13, { mechanics: [] }),
-    archetype: 'brute', cr: 13, imposed: ['Restrained'], conditionMinor: 'Frightened',
+    scaled: scaleDonor(pickDonor(5, null, 'brute'), 5, { mechanics: [] }),
+    archetype: 'brute', cr: 5, imposed: ['Restrained'], conditionMinor: 'Frightened',
     name: 'X', inline: 'it', energy, mix, meleeType: 'Bludgeoning', concept: 'c', size: 'Large',
   });
   const payoff = () => TEMPLATE_BY_ID.get('condition-payoff');

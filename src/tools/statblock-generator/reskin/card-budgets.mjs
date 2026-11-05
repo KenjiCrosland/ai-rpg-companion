@@ -72,6 +72,68 @@ export const SINGLE_TARGET_SAVE_CEILING = { '0-2': 13, '3-5': 24, '6-9': 29, '10
 /** The ceiling a row answers to: a save row is held to print's save rows, a hit to print's hits. */
 export const ceilingFor = (cr, { save = false } = {}) => (save ? SINGLE_TARGET_SAVE_CEILING : SINGLE_TARGET_CEILING)[ceilingBandOf(cr)] ?? null;
 export const ceilingBandOf = (cr) => (cr <= 2 ? '0-2' : cr <= 5 ? '3-5' : cr <= 9 ? '6-9' : cr <= 12 ? '10-12' : cr <= 16 ? '13-16' : cr <= 20 ? '17-20' : '21+');
+// WHAT A CONDITION UPGRADES INTO, measured off print (2026-11-05). A stepped payoff
+// rewards an already-afflicted target with a worse condition, and "worse" is not a
+// judgement call — print pairs them, and every pair it writes is a strict escalation:
+//
+//   Grappled      -> Restrained    4x  (Crocodile, Giant Crocodile, Giant Octopus, Roper)
+//   Restrained    -> Petrified     4x  (Basilisk, Cockatrice, Gorgon, Medusa — First/Second Failure)
+//   Poisoned      -> Paralyzed     3x  (Chuul, Phase Spider, Vampire Familiar)
+//   Poisoned      -> Unconscious   2x  (Homunculus, Pseudodragon)
+//   Incapacitated -> Paralyzed     4x  (the Silver Dragons — First/Second Failure)
+//   Charmed       -> Incapacitated 1x  (Harpy/Luring Song)
+//
+// NOTHING in print escalates into Prone, and that is the point: Prone on a Restrained
+// target adds nothing a GM can use — the attackers already have Advantage and the target
+// already has speed 0 and cannot stand. A reward must give the table something new.
+//
+// A trigger with no print escalation (Prone, Frightened, Blinded, Deafened) gets NO
+// condition reward; its frame falls back to the damage step rather than inventing a weak
+// pair. Print never upgrades those either.
+export const CONDITION_ESCALATION = {
+  Grappled: ['Restrained'],
+  Restrained: ['Petrified'],
+  Poisoned: ['Paralyzed', 'Unconscious'],
+  Incapacitated: ['Paralyzed'],
+  Charmed: ['Incapacitated'],
+};
+/** The condition a payoff may reward for finding its target already afflicted, or null
+ *  when print attests no escalation from it. `proposed` wins when print attests it.
+ *  NOT YET WIRED: reaching Petrified or Paralyzed needs print's First Failure / Second
+ *  Failure frame, and the `{condition_minor}` slot promises a MILD rider on purpose —
+ *  its vocabulary is Prone/Poisoned/Deafened/Frightened/Blinded and the save-stat
+ *  binding and the fear gate both lean on that. Kept here, measured, for that work. */
+export const escalationFrom = (trigger, proposed = null) => {
+  const up = CONDITION_ESCALATION[String(trigger ?? '')] ?? null;
+  if (!up) return null;
+  return up.includes(String(proposed ?? '')) ? String(proposed) : up[0];
+};
+// WHAT A CONDITION ALREADY GIVES YOU. "Restrained to Prone is kind of underwhelming"
+// (owner, 2026-11-05) — and it is not a matter of taste: Restrained is already Speed 0
+// with Advantage to attackers, and a Restrained creature cannot stand up, so Prone hands
+// the table nothing it did not have. print never escalates INTO Prone either.
+//
+// So a reward is refused when the trigger SUBSUMES it, and the next mild condition that
+// adds something new is used instead. This is narrower than the escalation map above and
+// it fits inside the slot's existing promise, which is why it is what ships today.
+const SUBSUMES = {
+  Restrained: ['Prone'],            // Speed 0, Advantage to attackers, cannot stand
+  Paralyzed: ['Prone', 'Blinded'],  // Speed 0 and incapable; sight is moot
+  Stunned: ['Prone'],
+  Unconscious: ['Prone', 'Blinded', 'Deafened'],
+  Petrified: ['Prone', 'Blinded', 'Poisoned'],
+  Incapacitated: [],
+  Blinded: ['Prone'],               // attackers already have Advantage
+};
+/** A mild reward the trigger does not already provide, or null when none of them adds
+ *  anything. `order` is the slot's own vocabulary, so the caller keeps one list. */
+export const rewardFor = (trigger, proposed, order) => {
+  const trig = String(trigger ?? '');
+  const dead = new Set([trig, ...(SUBSUMES[trig] ?? [])]);
+  const want = String(proposed ?? '');
+  if (want && !dead.has(want) && order.includes(want)) return want;
+  return order.find((c) => !dead.has(c)) ?? null;
+};
 // ONE DEFINITION OF "THIS SAVE HITS ONE CREATURE", shared by every writer. `per_hit` is
 // the round's budget and a save frame spends it whole — correct for a cone, where print
 // gates 68% of its area saves behind a Recharge so the CR math amortises them to about a

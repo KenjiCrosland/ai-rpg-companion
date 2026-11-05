@@ -50,29 +50,34 @@ describe('no Strength save on a damage-dominant row', () => {
   });
 });
 
-describe('a payoff row never imposes what it requires', () => {
+describe('a payoff row never rewards the condition it keys on', () => {
   const payoff = () => TEMPLATE_BY_ID.get('condition-payoff');
+  // CR 5: the payoff steps a CONDITION in the low bands and DAMAGE above them (owner's
+  // redesign, 2026-11-05), and it REWARDS the keyed condition rather than requiring it,
+  // so the nonsense guarded against here now reads "If the target already has the Prone
+  // condition, it also has the Prone condition".
 
-  it('the imposed condition differs from the required one, so no clause is dead', () => {
-    // the real case: the call named Prone as the condition the sheet supplies
-    const r = renderTemplate(payoff(), ctx(15), { consumed_condition: 'Prone', condition_minor: 'Prone' });
+  it('the rewarded condition differs from the keyed one, so no clause is dead', () => {
+    const r = renderTemplate(payoff(), ctx(5), { consumed_condition: 'Prone', condition_minor: 'Prone' });
     const text = plain(r.text);
-    const required = (/that has the (\w+) condition/.exec(text) ?? [])[1];
-    const imposedInText = [...text.matchAll(/the target has the (\w+) condition/g)].map((m) => m[1]);
-    expect(required).toBe('Prone');
-    for (const c of imposedInText) expect(c).not.toBe(required);
+    const keyed = (/already has the (\w+) condition/.exec(text) ?? [])[1];
+    const rewarded = [...text.matchAll(/(?:it )?also has the (\w+) condition/g)].map((m) => m[1]);
+    for (const c of rewarded) expect(c).not.toBe(keyed ?? 'Prone');
     if (r.imposes) expect(r.imposes).not.toBe('Prone');
+    expect(text).not.toMatch(/ ,|,\.|\.\./);                      // and the sentence closed cleanly
   });
 
-  it('a payoff whose required condition is NOT the proposed minor one is untouched', () => {
-    const r = renderTemplate(payoff(), ctx(15), { consumed_condition: 'Frightened', condition_minor: 'Poisoned' });
+  it('a payoff whose keyed condition is NOT the proposed reward is untouched', () => {
+    const r = renderTemplate(payoff(), ctx(5), { consumed_condition: 'Frightened', condition_minor: 'Poisoned' });
     const text = plain(r.text);
-    expect(text).toMatch(/that has the Frightened condition/);
-    if (/the target has the (\w+) condition/.test(text)) expect(r.imposes).toBe('Poisoned');
+    if (/also has the (\w+) condition/.test(text)) {
+      expect(text).toMatch(/already has the Frightened condition/);
+      expect(r.imposes).toBe('Poisoned');
+    }
   });
 
   it('the save stat follows the row, not the dead clause: 84 Cold is not Strength', () => {
-    const r = renderTemplate(payoff(), ctx(15), { consumed_condition: 'Prone', condition_minor: 'Prone' });
+    const r = renderTemplate(payoff(), ctx(5), { consumed_condition: 'Prone', condition_minor: 'Prone' });
     expect(plain(r.text)).not.toMatch(/Strength Saving Throw/);
   });
 });
