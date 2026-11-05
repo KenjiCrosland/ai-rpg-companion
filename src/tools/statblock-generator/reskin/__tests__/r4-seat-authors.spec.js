@@ -428,3 +428,50 @@ describe('the audit faults a free row and the row is re-authored, never dropped'
     expect(trace).not.toMatch(/free row repair/);
   }, 30000);
 });
+
+// A NEAREST THAT TURNS THE CLAUSE AROUND IS NOT USED (the critic's §3, homebrew40
+// 2026-11-05). Three sheets on one forty shipped a closest-accepted row whose subject was
+// the opposite party from the clause's, and the first breaks the monster outright: the
+// coin-hoarding Ledger Ghaunt got a row making IT flee carried coin, and almost every
+// party carries coin. The critic's rule is to compare the clause's actor with the row's
+// subject before a closest-accepted row ships and fall back to ABSENCE on a mismatch —
+// the owner's standing negation ruling.
+//
+// Whose thing it is cannot be read off the text ("the creature" in an authored sentence is
+// usually the TARGET), so it is a field on the fit call and the engine only reads the enum.
+describe('a closest-accepted row whose subject is flipped is refused', () => {
+  const ghoul = (fitExtra) => run({
+    concept: 'Ledger Ghaunt, a ghost that hoards the coin of its debtors', cr: 1, archetype: 'skirmisher', name: 'Ledger Ghaunt', type: 'Undead',
+    ideas: { trait: { idea: 'It hoards the coin of those who died owing it, and will not be parted from a single piece.', section: 'trait', trigger: 'always', effect: 'threat' } },
+    fit: { ...REFUSED, missing: 'a passive that makes the creature covet an object', ...fitExtra },
+    seatRow: {}, // the seat writes nothing, so the flow reaches the closest-accepted branch
+  });
+
+  test('the seat stays empty and the trace says why', async () => {
+    const { trace } = await ghoul({ closest_subject: 'flipped' });
+    expect(trace).toMatch(/closest refused — subject flipped/);
+    expect(trace).not.toMatch(/closest accepted:/);
+  }, 30000);
+
+  test('the gate is specific: it does not fire when the call answers "same"', async () => {
+    const { trace } = await ghoul({ closest_subject: 'same' });
+    expect(trace).not.toMatch(/closest refused — subject flipped/);
+  }, 30000);
+
+  test('and it does not fire when the call leaves the field unanswered', async () => {
+    // a model that ignores the field must cost nothing: the nearest lands as before
+    const { trace } = await ghoul({});
+    expect(trace).not.toMatch(/closest refused — subject flipped/);
+  }, 30000);
+
+  test('the field is ADVERTISED in the fit prompt, so it cannot go inert', async () => {
+    // the inert-feature bug recorded in parseFit: a field the prompt never asks for has
+    // nowhere to be answered, and the whole gate then reads as "the model never says
+    // flipped". Both ends are asserted — the schema line and the teaching prose.
+    const { prompts } = await ghoul({ closest_subject: 'same' });
+    const fitPrompt = prompts.find((q) => q.startsWith(FIT));
+    expect(fitPrompt).toBeTruthy();
+    expect(fitPrompt).toMatch(/"closest_subject"/);
+    expect(fitPrompt).toMatch(/flipped/);
+  }, 30000);
+});

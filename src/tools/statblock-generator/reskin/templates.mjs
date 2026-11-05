@@ -1590,7 +1590,7 @@ export function conditionsImposedTwice(rows) {
   );
 }
 
-export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '', concept = '', size = '', holds = null, bodyVerdicts = null, shapes = null, shapeCap = SHAPE_MENU_CAP, diagnose = null } = {}) {
+export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '', concept = '', size = '', holds = null, bodyVerdicts = null, shapes = null, shapeCap = SHAPE_MENU_CAP, diagnose = null, gmAsked = false } = {}) {
   const band = bandFor(cr);
   const rows = Object.values(sections).flat();
   // A FEATURE ALREADY ON A ROW IS OWNED (critic, 2026-10-14: Rruzhk's Open Hand
@@ -1773,8 +1773,33 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
       // one that fired, so the gap log is a ranked list of gates instead of one word.
       .map((t) => `${t.id}:${!onShelf(t) ? 'role' : !onStyle(t) ? 'style' : restFail(t) ?? 'legality'}`);
   }
+  // ROLE IS A TASTE FILTER, AND TASTE DOES NOT OVERRULE AN ASK (owner's ruling,
+  // 2026-11-05: "lets not role gate if the gm is asking for something...but we want to
+  // keep gating when the gm doesn't ask for specific abilities or modifications").
+  //
+  // `askedList` below already lifted role and style for an asked template — the
+  // mechanism was right and its TRIGGER was a word list. `askedFor` matches the GM's
+  // text against each template's `keys`, and a GM who typed "makes you drop what you are
+  // carrying" got no disarm, because `disarm.keys` holds disarm/twist/strip/weapon/
+  // snatch/steal/pluck/wrench/knock away/take and not "drop". The whole chain downstream
+  // was then correct on a false premise: the lurker's action menu held 12 templates and
+  // none disarmed, the fit call answered no_fit truthfully, the seat authored a
+  // substitute, and the trait seat reached for `phobia` — the critic's §3 subject flip
+  // that breaks the monster (#30 Ledger Ghaunt, homebrew40 2026-11-05).
+  //
+  // Adding "drop" to the key list would fix that one sheet and is the move the house
+  // rule forbids. So the lift keys off something that judges nothing: the IDEA CALL has
+  // already said whether this seat's idea answers a clause the GM typed (`idea.clause`,
+  // traced as "idea anchored"). When it does, the GM is asking, and every legal template
+  // is shown regardless of role or style — the call picks, as it always did. When the
+  // idea is unanchored the engine is inventing a row, and role and style still apply,
+  // which is the half of the ruling that keeps a caster from being offered a shove.
+  //
+  // Legality (`rest`) is never lifted: CR range, engine family, movement and denials are
+  // renderability, not taste. And the lift APPENDS, so a pick the shelf already had
+  // keeps its order — the re-roll's reel pin holds.
   const onShelfList = TEMPLATES.filter((t) => onShelf(t) && onStyle(t) && rest(t));
-  const askedList = TEMPLATES.filter((t) => !(onShelf(t) && onStyle(t)) && askedFor(t) && rest(t));
+  const askedList = TEMPLATES.filter((t) => !(onShelf(t) && onStyle(t)) && (gmAsked || askedFor(t)) && rest(t));
   if (!wantShape) return [...onShelfList, ...askedList];
   const already = new Set([...onShelfList, ...askedList].map((t) => t.id));
   const byShape = TEMPLATES.filter((t) => !already.has(t.id) && wantShape.has(`${t.trigger}/${t.effect}`) && rest(t)).slice(0, shapeCap);
@@ -2809,7 +2834,9 @@ WHY NONE FITS. When you answer "none", answer "declined_because" with exactly on
 A RIDER THAT MOVES THE TARGET OUT OF REACH does not belong on a row the Multiattack repeats: push the target 10 feet on the first hit and the second and third cannot land, so the creature defeats its own Multiattack. Read the sheet's Multiattack and reach before offering a push or pull rider; refuse it there (the Horseman's Saber, 2026-10-25). A REFUSAL NAMES ITS GAP. "no_fit" is not an answer on its own — say which of the offered templates comes CLOSEST ("closest"), what the rules would have to do that none of them does ("missing"), and WHICH KIND OF EFFECT that missing thing is ("missing_effect"), exactly one of: damage | condition | movement | resource | defense. Judge the effect by what the row DOES to its target, not by words that appear in passing: a row that only applies against an already-prone target is not a condition row, and a row that resists being pushed is defense, not movement. In a few plain words naming the MECHANIC, not the fiction: "pulls the creature back to where it started", "picks one target and holds the aim", "costs the creature something when it fails". Never "nothing fits" and never a restatement of the idea. These accumulate into a list of templates worth building, so a vague answer is a wasted one.
 DID THE USER ASK FOR IT? Answer "asked" with the user's OWN WORDS that ask for this template's mechanic, quoted verbatim from THE USER TYPED line above — never from THE IDEA, which is the engine's own prose and is not the user
 ${elements.length ? `WHICH OF THIS CREATURE'S OWN ELEMENTS DOES THE ROW EXPRESS? Answer "expresses" with ONE of these, copied exactly, or "" if the row expresses none of them. These were drawn from the GM's description, so naming one is a receipt even when you cannot quote the GM directly — a trait seat usually cannot. Answer "" honestly: a row that does not express any of them is decoration, and saying so is the right answer.\n${elements.map((e) => `  - ${String(e).replace(/"/g, "'")}`).join('\n')}` : ''}'s words. The few words, not a sentence. Leave it "" when the user's words never ask for it and your pick rests on the idea you were given or on the template's shape. Answering "" is not a failure and does not withdraw your pick; it tells the engine the pick is yours, not the GM's, and some seats take only what the GM asked for.
-Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "expresses": "<one of the creature's own elements listed above, copied exactly, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", "closest": "<on a refusal: the offered id that comes nearest, else \\"\\">", "missing": "<on a refusal: the mechanic none of them does, else \"\">", "missing_effect": "<on a refusal: damage | condition | movement | resource | defense, else \"\">", "name": "<2-3 words, Title Case the way the published statblocks write a row name: Dreadful Glare, Wing Attack, Cloud of Insects — every word capitalised except of/the/and/to/with>", "augmentation": "<only if the chosen template offered one above: the kind's id, and put its slot in \"fills\" — otherwise \"\">", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
+WHO DOES THE CLAUSE'S THING, AND WHO DOES THE TEMPLATE'S? A refused template still ships as the nearest match, and the commonest way that goes wrong is that the nearest one turns the clause around — it acts on the CREATURE where the clause acts on its victims, or the reverse. Live examples, all three shipped: a ghost that "hoards coin" got a row making the GHOST flee carried coin, which cripples it because almost every party carries coin; a hag who "takes over the bodies of things she kills" got rejuvenation for HERSELF instead of raising the dead; a wight afraid of running water got a row that FRIGHTENS OTHERS. So on a refusal, answer "closest_subject" about the id you named in "closest": "same" when its effect lands on whoever the clause says it lands on, "flipped" when the clause's doer and the template's doer are opposite parties, and "" when the clause draws no such distinction. Judge the template's own rules text, not its name. A "flipped" nearest is not used at all, so answer honestly rather than helpfully — absence is better than a monster that turns its own trick on itself.
+
+Return ONLY JSON: {"template": "<id from the list, or none>", "because": "<the words of the idea the template carries>", "asked": "<the user's own words asking for this, or \"\">", "expresses": "<one of the creature's own elements listed above, copied exactly, or \"\">", "declined_because": "<collision | already_answered | no_fit, or \"\" when you picked one>", "closest": "<on a refusal: the offered id that comes nearest, else \\"\\">", "missing": "<on a refusal: the mechanic none of them does, else \"\">", "missing_effect": "<on a refusal: damage | condition | movement | resource | defense, else \"\">", "closest_subject": "<on a refusal naming a closest: same | flipped, else \"\">", "name": "<2-3 words, Title Case the way the published statblocks write a row name: Dreadful Glare, Wing Attack, Cloud of Insects — every word capitalised except of/the/and/to/with>", "augmentation": "<only if the chosen template offered one above: the kind's id, and put its slot in \"fills\" — otherwise \"\">", "fills": {"<slot>": "<value>"}, "wrong": ["<ids whose word match does not mean its mechanic here>"]}`;
 }
 
 export function validateFitResponse(jsonString) {
@@ -2876,6 +2903,16 @@ export function parseFit(raw, menu, creatureName = '', elements = []) { // a com
     // back to its existing closest/decoration path. A composed row is NOT
     // decoration — it carries the idea — so this is checked before that path.
     closest: String(p.closest ?? '').trim().slice(0, 40) || null,
+    // WHOSE THING IT IS — the call's answer, validated against a closed pair and
+    // nothing else (the critic's §3, homebrew40 2026-11-05). A nearest template that
+    // acts on the creature where the clause acts on its victims ships a monster that
+    // turns its own trick on itself; `generate.mjs` drops such a nearest and leaves the
+    // seat empty, which is the owner's standing negation ruling. Anything but an exact
+    // "flipped" reads as no answer and the nearest lands as it did before, so a model
+    // that ignores the field costs nothing — and `closest_subject` is in the schema
+    // line above as well, because a field advertised in the prompt and missing from
+    // this return is the inert-feature bug recorded two comments up.
+    closest_subject: ['same', 'flipped'].includes(String(p.closest_subject ?? '').trim().toLowerCase()) ? String(p.closest_subject).trim().toLowerCase() : null,
     missing: String(p.missing ?? '').trim().slice(0, 120) || null,
     // the EFFECT AXIS is the call's answer too, validated against the catalog's
     // own closed list. My own classification of these from the gap text measured

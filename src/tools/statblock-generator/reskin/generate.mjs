@@ -5252,7 +5252,15 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // Wolf line listed zone-seed as both offered AND rejected:role (critic,
       // 2026-10-21). Anything that reached the menu is therefore filtered out below.
       const menuDiag = {};
-      const menu = templatesFor({ ...ctxT, diagnose: menuDiag, section: idea.section, trigger: idea.trigger, text: `${options.userConcept ?? concept} ${idea.idea}`, imposed: imposedT, shapes: shapesT }).filter(legalT);
+      // THE GM IS ASKING, SO TASTE STANDS DOWN (owner's ruling, 2026-11-05). `idea.clause`
+      // is the idea call's own answer that this seat answers a clause the GM typed — the
+      // "idea anchored" trace. On an anchored seat every legal template is shown, role
+      // and style included, because a filter meant to keep a caster from being offered a
+      // shove must not hide the disarm a GM explicitly asked for. Unanchored, the engine
+      // is inventing and both filters still apply. See `templatesFor` for the #30 chain.
+      const gmAsked = !!idea?.clause;
+      const menu = templatesFor({ ...ctxT, diagnose: menuDiag, section: idea.section, trigger: idea.trigger, text: `${options.userConcept ?? concept} ${idea.idea}`, imposed: imposedT, shapes: shapesT, gmAsked }).filter(legalT);
+      if (gmAsked) trace('menu: taste stands down —', `${seat} answers the GM's "${String(idea.clause).slice(0, 60)}", so role and style do not filter the menu (legality still does); ${menu.length} template(s) offered`);
       // a CONCEPT verb must string-match the user's own words; the seat element is
       // the model's prose and counts as idea-level (the binder "rationalized"
       // wither/bloodied as concept verbs, critic run six)
@@ -5265,7 +5273,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // tag only orders the menu it is shown. Before this the section menu was
       // the whole race: the troll's Weapon Lodge and the keeper's Marking Bolt
       // (seven of her words) missed on a tag the model chose
-      const wide = (seat === 'trait' ? ['trait'] : ['action', 'bonus_action', 'reaction', 'rider']).flatMap((sec) => templatesFor({ ...ctxT, section: sec, trigger: null, text: verbText, imposed: imposedT, shapes: shapesT })).filter(legalT);
+      const wide = (seat === 'trait' ? ['trait'] : ['action', 'bonus_action', 'reaction', 'rider']).flatMap((sec) => templatesFor({ ...ctxT, section: sec, trigger: null, text: verbText, imposed: imposedT, shapes: shapesT, gmAsked })).filter(legalT);
       let pool = [...menu, ...wide.filter((t) => !menu.some((m) => m.id === t.id))];
       if (seat === 'trait' && consumedKeysT.length) { // a card whose only match was the action's spent verb is off the trait race
         const spent = pool.filter((t) => rankByVerb([t], rawConceptText, rawIdeaText)[0].matched.length && !rankByVerb([t], verbText, idea.idea)[0].matched.length);
@@ -5688,7 +5696,32 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             }
           }
         }
-        if (!fit.template && fit.closest && !nearBlocked) {
+        // A NEAREST THAT TURNS THE CLAUSE AROUND IS NOT USED (the critic's §3, homebrew40
+        // 2026-11-05). A refused template still ships as the nearest match, and the
+        // commonest way that goes wrong is the SUBJECT: the row acts on the creature
+        // where the clause acts on its victims, or the reverse. Three shipped on one
+        // forty, and the first breaks the monster outright:
+        //   #30 Ledger Ghaunt — a coin-hoarding ghost got a row making IT flee carried
+        //       coin; almost every party carries coin, so it cripples itself.
+        //   #14 Spore-Mother — "takes over the bodies of things she kills" became
+        //       rejuvenation for HER, not raising the dead.
+        //   #09 Cairn-Wight — a fear of running water became a row that frightens OTHERS.
+        //
+        // The critic's rule: check the clause's actor against the row's subject before a
+        // closest-accepted row ships, and on a mismatch fall back to ABSENCE — which is
+        // the owner's standing negation ruling, so no new decision rides on it.
+        //
+        // NOT A WORD RULE. Whose thing it is cannot be read off the text — "the creature"
+        // in an authored sentence is usually the TARGET, which is the exact trap that
+        // produced "the scream senses the scream's frozen heart". So the question is a
+        // field on the fit call, which has already read both the clause and the
+        // template's rules text: `closest_subject` answers same | flipped. The engine only
+        // compares the enum; it never inspects a subject itself.
+        const flipped = !fit.template && fit.closest && String(fit.closest_subject ?? '').toLowerCase() === 'flipped';
+        if (flipped) {
+          trace('closest refused — subject flipped:', `${seat} — the call named "${fit.closest}" nearest and judged its subject FLIPPED against the clause (${String(fit.missing ?? 'unstated').slice(0, 70)}); a row that turns the clause around is worse than no row, so the seat stays empty (the critic's §3, homebrew40 2026-11-05)`);
+        }
+        if (!fit.template && fit.closest && !nearBlocked && !flipped) {
           const near = pool.find((t) => t.id === fit.closest || t.key === fit.closest);
           if (near) {
             const rend = renderTemplate(near, ctxT, bindFills(near));
