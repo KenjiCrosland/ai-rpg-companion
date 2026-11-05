@@ -29,7 +29,9 @@
 //   for the creature").
 
 import { saveDamageDiceFor } from '../format-2024/dice.mjs';
-import { capSingleTargetSave } from './card-budgets.mjs';
+import { capSingleTargetSave, escalateFrom } from './card-budgets.mjs';
+
+const MINOR_REWARDS = ['Prone', 'Poisoned', 'Deafened', 'Frightened', 'Blinded']; // the mild pool, same list the catalog's {condition_minor} slot accepts
 
 export const LIBRARY_SEEDS = [
   // ——— control ———
@@ -222,13 +224,26 @@ LIBRARY_SEEDS.push(
     text: 'The creature charges its next strike: the first time it hits with an attack before the end of its next turn, the target takes an extra {burst} {damage_type} damage.',
   },
   {
-    key: 'exploiter', keys: ['exploit', 'opportunist', 'predator', 'finish'],
+    key: 'exploiter', keys: ['exploit', 'opportunist', 'predator', 'finish', 'punish', 'crush', 'batter', 'savage', 'execute', 'break'],
     section: 'Actions', archetypes: ['lurker', 'skirmisher', 'brute', 'defender'],
-    name: "Opportunist's Lash", dpr_frac: 0.8, needsImposed: true,
+    name: "Opportunist's Lash", dpr_frac: 0.8, needsImposed: true, rewardsCondition: true,
     // the pure-interlock seed (owner: "conditionals unique to a
     // creature — X BY THE CREATURE"): only drawable when this sheet
     // actually imposes a condition; the slot renders source-bound
-    text: '*Strength Saving Throw:* DC {dc}, one creature within 30 feet that is {imposed_bound}. *Failure:* {burst} {damage_type} damage. *Success:* Half damage.',
+    //
+    // IT REWARDS THE CONDITION, IT NO LONGER REQUIRES IT (owner's redesign, 2026-11-05).
+    // This seed read "one creature ... that is {imposed_bound}", so it was dead whenever
+    // the hold did not land first — the same fault the condition-payoff TEMPLATE had,
+    // and this is the row that actually ships: the signature seat goes to the library
+    // path on 11 of 12 sheets, so the template redesign could not reach a sheet while
+    // this seed stayed as it was. Now it hits anyone and escalates on a target the sheet
+    // has already afflicted, with the rung chosen off print's ladder.
+    // THE TRIGGER STAYS SOURCE-BOUND. print binds a payoff to its OWN hold — the
+    // Glabrezu's "one creature Grappled by the glabrezu", the Mimic's "if the target is
+    // Grappled by the mimic" — so the reward fires on what THIS creature did, never on
+    // an ally's grapple. Dropping `{imposed_bound}` for a bare "has the X condition"
+    // made it broader than print; the shelf's own test caught it.
+    text: '*Strength Saving Throw:* DC {dc}, one creature within 30 feet. *Failure:* {burst} {damage_type} damage. If the target is already {imposed_bound}, it also has the {escalated_condition} condition until the end of its next turn. *Success:* Half damage.',
   },
   {
     key: 'blighted-ground', keys: ['blight', 'scorch', 'corrupt', 'floor'],
@@ -295,6 +310,17 @@ export function drawLibraryRow(scaled, { archetype = null, energy = null, mix = 
   if (text.includes('{imposed_bound}') || text.includes('{imposed_condition}')) {
     const pick = imposed[0] ?? 'Prone';
     text = text.split('{imposed_bound}').join(boundForm(pick)).split('{imposed_condition}').join(pick);
+    // THE RUNG COMES OFF PRINT'S LADDER, not off the seed's wording: one step up from
+    // whatever this sheet already imposes, mild below the bands where print's own
+    // single-target saves take a turn away and severe at or above them. When no rung
+    // applies the escalation sentence leaves whole rather than printing a half clause —
+    // the same rule the template's conditional rider follows.
+    if (text.includes('{escalated_condition}')) {
+      const rung = escalateFrom(pick, MINOR_REWARDS, { severe: Number(cr ?? scaled.cr ?? 0) >= 10 });
+      text = rung
+        ? text.split('{escalated_condition}').join(rung)
+        : text.replace(/ If the target is already [^.]*, it also has the \{escalated_condition\} condition until the end of its next turn\./, '');
+    }
   }
   if (seed.dpr_frac) {
     // THE SEED PATH CLAMPS TOO. This is the writer that actually shipped the Merciless

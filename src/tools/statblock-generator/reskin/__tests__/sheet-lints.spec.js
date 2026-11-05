@@ -22,6 +22,7 @@ import { lintSheet, rowsOfSheet, SHEET_LINTS } from '@/tools/statblock-generator
 import * as SHAPES from '@/tools/statblock-generator/reskin/shapes.mjs';
 import { capSingleTargetSave, ceilingFor, isSingleTargetSave } from '@/tools/statblock-generator/reskin/card-budgets.mjs';
 import { renderTemplate } from '@/tools/statblock-generator/reskin/templates.mjs';
+import { drawLibraryRow } from '@/tools/statblock-generator/reskin/library.mjs';
 
 const RUN = 'smoke-out/sweep-2026-11-01T20-03-32';
 const sheetFor = (ix) => {
@@ -576,11 +577,14 @@ describe('the condition-payoff template deals print\'s ordinary save amount', ()
     expect(i).toBeGreaterThan(-1);
     const seg = src.slice(i, i + 3000);
     expect(seg).not.toMatch(/\{avg_x2\}|\{dice_x2\}/);
-    // the redesign (owner, 2026-11-05): the two low bands keep a flat amount and step a
-    // CONDITION; the four above them step the DAMAGE, base to ceiling at print's 1.6x
-    expect((seg.match(/\{avg\} \(\{dice\}\)/g) ?? []).length).toBe(2);
-    expect((seg.match(/\{avg_base\} \(\{dice_base\}\)/g) ?? []).length).toBe(4);
-    expect((seg.match(/\{avg_up\} \(\{dice_up\}\)/g) ?? []).length).toBe(4);
+    // the redesign (owner, 2026-11-05), second pass: every band is a flat amount plus a
+    // CONDITION step. The damage step went because it made the row a button no GM
+    // presses — gated, replacing a 62-damage attack round with 31 and imposing nothing.
+    // print's answer is the condition, not the number: its high-CR single-target saves
+    // take a turn away and do not compete on damage.
+    expect((seg.match(/\{avg\} \(\{dice\}\)/g) ?? []).length).toBe(6);
+    expect(seg).not.toMatch(/\{avg_base\}|\{avg_up\}/);
+    expect((seg.match(/already has the \{consumed_condition\} condition/g) ?? []).length).toBe(6);
     expect(seg).toMatch(/"gate":"Recharge 5-6"/);                 // gated, as print gates half its own payoffs
     expect(seg).toMatch(/"rewardsCondition":true/);               // and it rewards the condition, never requires it
     expect(seg).not.toMatch(/that has the \{consumed_condition\} condition/); // no targeting requirement left
@@ -696,5 +700,217 @@ describe('the single-target save clamp has one definition and both writers use i
       // and neither keeps its own copy of the decision
       if (f !== 'generate.mjs') expect(src).not.toMatch(/each creature\|all creatures\|Emanation\|Cone\|Sphere/);
     }
+  });
+});
+
+// THE PAYOFF'S REWARD SCALES WITH THE BAND, and its declared field must equal its
+// printed text. `condition_minor` is validated in three places with three fallbacks —
+// the reward choice, the pick-and-strip block, and the VOCAB fill loop — and unifying
+// only the first two shipped a row whose `imposes` said Restrained while its sentence
+// printed Frightened. That disagreement is the regression this pins.
+describe('the condition payoff rewards what the band calls for', () => {
+  const templates = Object.values(SHAPES).flat().filter((x) => x && typeof x === 'object' && x.id);
+  const cp = () => templates.find((x) => x.id === 'condition-payoff');
+  const MILD = ['Prone', 'Poisoned', 'Deafened', 'Frightened', 'Blinded'];
+  const SEVERE = ['Restrained', 'Incapacitated', 'Paralyzed', 'Blinded'];
+  const render = (cr, trigger) => renderTemplate(cp(), {
+    scaled: { per_hit: cr * 5, dc: 14 + Math.floor(cr / 4), atk: 10, stats: { STR: 18 }, striker_stat: 'STR' },
+    archetype: 'brute', cr, energy: 'Cold', mix: 'both', meleeName: 'Slam', imposed: [trigger], name: 'X',
+    concept: 'a horror that finishes the helpless',
+  }, { consumed_condition: trigger, condition_minor: 'Prone', save_stat: 'Strength', finisher: 'bears down', damage_type: 'Cold' });
+  const rewardOf = (t) => (/also has the (\w+) condition/.exec(String(t ?? '')) ?? [])[1] ?? null;
+
+  it.each([[2, 'Grappled'], [5, 'Restrained'], [9, 'Poisoned']])('at CR %i the reward is mild', (cr, trigger) => {
+    const row = render(cr, trigger);
+    const inText = rewardOf(row.text);
+    if (!inText) return;                                  // the fear gate may strip it; that is its own test
+    expect(MILD).toContain(inText);
+    expect(row.imposes).toBe(inText);                     // THE FIELD EQUALS THE TEXT
+  });
+
+  // THE REWARD IS A RUNG, NOT A PICK. A flat severe pool returned Restrained almost
+  // every time and never reached Paralyzed at all (owner, 2026-11-05: "I thought the
+  // point of this was escalating conditions"). The reward is now one step up the ladder
+  // from the condition the target actually has.
+  it.each([
+    ['Grappled', 'Restrained'],      // print: Crocodile, Giant Octopus, Roper
+    ['Poisoned', 'Paralyzed'],       // print: Chuul, Phase Spider, Vampire Familiar
+    ['Incapacitated', 'Paralyzed'],  // print: the Silver Dragons
+    ['Charmed', 'Incapacitated'],    // print: Harpy/Luring Song
+    ['Restrained', 'Paralyzed'],     // OURS: print's own step is Petrified, which needs the two-failure frame
+    ['Prone', 'Restrained'],         // OURS, by severity
+  ])('already %s escalates to %s', (trigger, want) => {
+    const row = render(16, trigger);
+    expect(rewardOf(row.text)).toBe(want);
+    expect(row.imposes).toBe(want);
+  });
+
+  it('Paralyzed is REACHABLE — a flat pool never got there', () => {
+    const reached = new Set(['Restrained', 'Poisoned', 'Incapacitated', 'Stunned']
+      .map((trig) => rewardOf(render(16, trig).text)).filter(Boolean));
+    expect([...reached]).toContain('Paralyzed');
+  });
+
+  it.each([[13, 'Grappled'], [16, 'Restrained'], [20, 'Poisoned'], [24, 'Grappled']])('at CR %i the reward takes a turn away', (cr, trigger) => {
+    // print's single-target saves at CR 13+ impose Paralyzed, Incapacitated, Restrained
+    // or Blinded and do not compete on damage; a mild rider on a gated row is a button
+    // no GM presses when a full attack round deals twice as much.
+    const row = render(cr, trigger);
+    const inText = rewardOf(row.text);
+    expect(inText).not.toBeNull();
+    expect(SEVERE).toContain(inText);
+    expect(row.imposes).toBe(inText);                     // THE FIELD EQUALS THE TEXT
+    expect(inText).not.toBe(trigger);                     // and it is never the condition it keys on
+  });
+
+  it('the mild pool is untouched for the other templates that share the slot', () => {
+    // gaze-single, bloodied-burst, noxious-aura and truth-aura must not gain the severe
+    // pool: only a template declaring `rewardsCondition` draws from it.
+    for (const id of ['gaze-single', 'bloodied-burst', 'noxious-aura', 'truth-aura']) {
+      const t = templates.find((x) => x.id === id);
+      if (!t) continue;
+      expect(t.rewardsCondition).toBeFalsy();
+    }
+  });
+
+  it('and the save stat follows the rewarded condition, as print pairs them', () => {
+    const row = render(16, 'Restrained');
+    const inText = rewardOf(row.text);
+    const save = (/\*(\w+) Saving Throw\*/.exec(String(row.text)) ?? [])[1];
+    const expected = { Restrained: ['Strength', 'Dexterity'], Incapacitated: ['Constitution'], Paralyzed: ['Constitution'], Blinded: ['Constitution'] }[inText];
+    expect(expected).toContain(save);
+  });
+});
+
+// THE ESCALATION SHELF — the model picks the shape, the engine owns every number and
+// rule (owner, 2026-11-05: "create a format for a model to fill out and exploit").
+describe('a payoff escalates in one of four shapes', () => {
+  const templates = Object.values(SHAPES).flat().filter((x) => x && typeof x === 'object' && x.id);
+  const cp = () => templates.find((x) => x.id === 'condition-payoff');
+  const run = (cr, trigger, escalation) => renderTemplate(cp(), {
+    scaled: { per_hit: cr * 5, dc: 14 + Math.floor(cr / 4), atk: 10, stats: { STR: 18 }, striker_stat: 'STR' },
+    archetype: 'brute', cr, energy: 'Psychic', mix: 'both', meleeName: 'Slam', imposed: [trigger],
+    name: 'X', inline: 'the headsman', concept: 'a horror that finishes the helpless',
+  }, { consumed_condition: trigger, condition_minor: 'Prone', save_stat: 'Strength', finisher: 'bears down', damage_type: 'Psychic', ...(escalation ? { escalation } : {}) });
+  const amounts = (t) => [...String(t ?? '').matchAll(/(\d+) \(\d+d\d+(?: *[+-] *\d+)?\)/g)].map((m) => Number(m[1]));
+
+  it('damage: print\'s two-step amount, a REPLACEMENT not an addition', () => {
+    // an additive extra put 31 + 32 = 63 on an afflicted target against a ceiling of 31.
+    // print's Mimic deals "7 (1d8 + 3)—or 12 (2d8 + 3)", never 7 plus 12.
+    const row = run(16, 'Frightened', 'damage');
+    expect(row.text).toMatch(/damage, or \d+ \(\d+d\d+\) \w+ damage if the target already has the Frightened condition/);
+    const a = amounts(row.text);
+    expect(a).toHaveLength(2);
+    expect(Math.max(...a)).toBeLessThanOrEqual(ceilingFor(16, { save: true }));
+    expect(a[0]).toBeLessThan(a[1]);                       // the step goes up
+    expect(row.imposes).toBeFalsy();                       // no condition is imposed, so nothing is declared
+  });
+
+  it('exhaustion: one level, and only in the bands print uses it', () => {
+    expect(run(16, 'Restrained', 'exhaustion').text).toMatch(/it gains 1 Exhaustion level/);
+    // print writes it at CR 11 and 17 (both Sphinxes); below CR 10 the shape is refused
+    // and the row falls back to the condition rung rather than failing
+    const low = run(5, 'Grappled', 'exhaustion');
+    expect(low.text).not.toMatch(/Exhaustion/);
+    expect(low.imposes).toBeTruthy();
+  });
+
+  it('mark: bounded in duration AND to one target at a time', () => {
+    // 0 print rows grant Advantage against a named target; it ships on the owner's call,
+    // bounded both ways because Advantage for a minute, stacking across allies, is
+    // permanent inside a fight
+    const t = run(13, 'Grappled', 'mark').text;
+    expect(t).toMatch(/has Advantage on attack rolls against it until the end of .*'s next turn/);
+    expect(t).toMatch(/only one target marked this way at a time/);
+    expect(t).not.toMatch(/1 minute|for a minute/);
+  });
+
+  it('and an answer off the shelf degrades to the ladder instead of failing the row', () => {
+    for (const asked of ['nonsense', '', 'EXHAUSTION!!', null]) {
+      const row = run(16, 'Grappled', asked);
+      expect(row.imposes).toBe('Restrained');              // the print-attested rung from Grappled
+    }
+  });
+
+  it('no shape ever exceeds print\'s single-target ceiling', () => {
+    for (const cr of [2, 5, 9, 13, 16, 20]) {
+      for (const shape of [null, 'condition', 'damage', 'exhaustion', 'mark']) {
+        const a = amounts(run(cr, 'Grappled', shape).text);
+        if (!a.length) continue;
+        expect(Math.max(...a)).toBeLessThanOrEqual(ceilingFor(cr, { save: true }));
+      }
+    }
+  });
+});
+
+// A CHOICE THE MENU NEVER OFFERS IS UNREACHABLE. `escalation` was registered in VOCAB,
+// but VOCAB is read off the FRAME's own tokens — and the escalation has no token, since
+// the engine rewrites the reward clause from the shape. So the model was never asked,
+// every row degraded to the condition rung, and three of the four shapes could not ship.
+// templates.mjs carries a comment warning about precisely this, from an earlier shape
+// that went dead the same way this sprint. This test is the guard that was missing.
+describe('the escalation choice reaches the prompt', () => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'templates.mjs'), 'utf8');
+
+  it('is pushed into the template menu for a payoff', () => {
+    expect(src).toMatch(/if \(t\.rewardsCondition\) vocab\.push\(/);
+  });
+
+  it('and names every shape the band allows, so the model can pick one', () => {
+    const line = (src.split('\n').find((l) => /t\.rewardsCondition\) vocab\.push/.test(l)) ?? '');
+    expect(line).toMatch(/escalationShapesFor\(cr\)/);   // the band gates exhaustion, not a literal list
+    expect(line).toMatch(/Exhaustion/);
+    expect(line).toMatch(/Advantage/);
+  });
+
+  it('and the engine still owns the numbers, which the menu says out loud', () => {
+    const line = (src.split('\n').find((l) => /t\.rewardsCondition\) vocab\.push/.test(l)) ?? '');
+    expect(line).toMatch(/engine writes every number/i);
+  });
+});
+
+// THE SHIPPING ROW IS THE LIBRARY SEED, NOT THE TEMPLATE. `generation.signature` reads
+// "library" on 11 of 12 sheets of the payoff-twelve, so the catalog template's redesign
+// could not reach a sheet while this seed still REQUIRED its condition ("one creature
+// ... that is {imposed_bound}") — the same dead-on-arrival fault, on the row that
+// actually lands. It now rewards instead, with the rung off print's ladder.
+describe('the library payoff seed rewards the condition and climbs the ladder', () => {
+  const draw = (cr, imposed) => drawLibraryRow(
+    { per_hit: cr * 5, dc: 14 + Math.floor(cr / 4), atk: 10, stats: { STR: 18 }, striker_stat: 'STR', cr },
+    { archetype: 'brute', energy: 'Cold', mix: 'both', name: 'X', shapeKey: 'exploiter', imposed, cr },
+  );
+  const textOf = (d) => String(d?.row?.text ?? '');
+  const rungOf = (t) => (/also has the (\w+) condition/.exec(t) ?? [])[1] ?? null;
+
+  it('no longer requires the condition to have landed', () => {
+    const t = textOf(draw(8, ['Grappled']));
+    expect(t).toMatch(/one creature within 30 feet\./);     // bare target
+    expect(t).not.toMatch(/that is (?:Grappled|Restrained|being)/); // no requirement
+    expect(t).toMatch(/If the target is already Grappled by the creature/); // source-bound, as print binds it
+  });
+
+  it.each([
+    [5, 'Grappled', 'Prone'],
+    [8, 'Restrained', 'Poisoned'],
+    [16, 'Grappled', 'Restrained'],
+    [16, 'Restrained', 'Paralyzed'],
+    [20, 'Poisoned', 'Paralyzed'],
+  ])('at CR %i on %s it escalates to %s', (cr, imposed, want) => {
+    expect(rungOf(textOf(draw(cr, [imposed])))).toBe(want);
+  });
+
+  it('and its damage obeys print\'s single-target save ceiling', () => {
+    for (const cr of [2, 5, 8, 13, 16, 20]) {
+      const d = /(\d+) \(\d+d\d+(?: *[+-] *\d+)?\)/.exec(textOf(draw(cr, ['Grappled'])));
+      if (!d) continue;
+      expect(Number(d[1])).toBeLessThanOrEqual(ceilingFor(cr, { save: true }));
+    }
+  });
+
+  it('drops the escalation sentence whole when no rung applies', () => {
+    // a half clause ("...it also has the  condition") is worse than no clause
+    const t = textOf(draw(8, ['Petrified']));
+    expect(t).not.toMatch(/\{escalated_condition\}/);
+    expect(t).not.toMatch(/also has the\s+condition/);
   });
 });

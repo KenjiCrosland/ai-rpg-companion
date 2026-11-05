@@ -66,7 +66,7 @@ describe('the call\'s clause is what varies the sentence', () => {
     // the payoff REWARDS the condition instead of requiring it (owner's redesign,
     // 2026-11-05): the target clause is now bare and the condition moved into the step
     expect(t).toMatch(/Dexterity Saving Throw.*DC \d+, one creature within \d+ feet\./);
-    expect(t).toMatch(/if the target already has the Frightened condition/);
+    expect(t).toMatch(/If the target already has the Frightened condition/);
     expect(t).toMatch(/\d+ \(\d+d\d+\) Fire damage/);
   });
 

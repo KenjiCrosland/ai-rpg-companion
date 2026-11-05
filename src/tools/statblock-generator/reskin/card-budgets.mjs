@@ -108,32 +108,98 @@ export const escalationFrom = (trigger, proposed = null) => {
   if (!up) return null;
   return up.includes(String(proposed ?? '')) ? String(proposed) : up[0];
 };
-// WHAT A CONDITION ALREADY GIVES YOU. "Restrained to Prone is kind of underwhelming"
-// (owner, 2026-11-05) — and it is not a matter of taste: Restrained is already Speed 0
-// with Advantage to attackers, and a Restrained creature cannot stand up, so Prone hands
-// the table nothing it did not have. print never escalates INTO Prone either.
+// THE LADDER A PAYOFF CLIMBS. The point of this row is escalation: it finds a target
+// already afflicted and makes it worse, so the reward must be a step UP from the
+// specific condition the target has — not merely "something severe that is not
+// redundant", which is what a flat pool gives (it returns Restrained almost every time
+// and never reaches Paralyzed at all).
 //
-// So a reward is refused when the trigger SUBSUMES it, and the next mild condition that
-// adds something new is used instead. This is narrower than the escalation map above and
-// it fits inside the slot's existing promise, which is why it is what ships today.
-const SUBSUMES = {
+// print attests these, with counts:
+//   Grappled      -> Restrained    4x  Crocodile, Giant Crocodile, Giant Octopus, Roper
+//   Poisoned      -> Paralyzed     3x  Chuul, Phase Spider, Vampire Familiar
+//   Poisoned      -> Unconscious   2x  Homunculus, Pseudodragon
+//   Incapacitated -> Paralyzed     4x  the Silver Dragons (First/Second Failure)
+//   Charmed       -> Incapacitated 1x  Harpy/Luring Song
+//   Restrained    -> Petrified     4x  Basilisk, Cockatrice, Gorgon, Medusa
+//
+// Restrained's own print step is PETRIFIED, and we cannot write it yet: print only ever
+// reaches Petrified through First Failure / Second Failure, a frame shape this catalog
+// does not have. So Restrained climbs to Paralyzed here, which is marked below as OURS
+// rather than print's — it is the next rung by what the condition takes away (Paralyzed
+// is Incapacitated plus Speed 0 plus auto-failed Strength and Dexterity saves plus
+// critical hits within 5 feet), and it keeps the row escalating instead of stalling.
+//
+// The three rungs print does not attest are marked the same way. Each is the next step
+// by severity, never a sideways move, and never the condition the target already has.
+const ESCALATION = {
+  // print-attested
+  Grappled: 'Restrained',
+  Poisoned: 'Paralyzed',
+  Incapacitated: 'Paralyzed',
+  Charmed: 'Incapacitated',
+  // OURS, by severity, where print attests no step (or attests one we cannot write yet)
+  Restrained: 'Paralyzed',    // print's own is Petrified, which needs the two-failure frame
+  Prone: 'Restrained',        // Speed 0 and Advantage to attackers is strictly more than Prone
+  Frightened: 'Incapacitated',
+  Blinded: 'Incapacitated',
+  Deafened: 'Blinded',
+  Stunned: 'Paralyzed',
+  Paralyzed: 'Unconscious',
+};
+// THE SHELF OF ESCALATIONS a payoff can reward with (owner, 2026-11-05: "we can get
+// creative with this ... create a format for a model to fill out"). The call judges WHICH
+// escalation suits the creature; every number and every rule below is the engine's.
+//
+// grounding, measured:
+//   condition  — the ladder above, print-attested rung by rung
+//   exhaustion — print writes it 3 times, and twice as exactly this shape: the Sphinx of
+//                Lore (CR 11) and Sphinx of Valor (CR 17), "the target gains 1 Exhaustion
+//                level". Gated to CR 10+ because that is where print puts it, and because
+//                Exhaustion stacks — it is the one shape that escalates across rounds.
+//   damage     — the two-step rows, 11 of them: Mimic 7 or 12, Chimera 11 or 18.
+//   mark       — NO print precedent (0 rows grant Advantage against a named target). It
+//                ships because the owner asked for it, bounded two ways: it lasts only to
+//                the end of the creature's next turn, and the creature may hold ONE mark
+//                at a time (owner's constraint). Advantage for a minute, stacking across
+//                allies, would be permanent inside a fight.
+export const ESCALATION_SHAPES = ['condition', 'exhaustion', 'damage', 'mark'];
+/** Which shapes a payoff may use at this CR. `condition` is always available; exhaustion
+ *  waits for the band print uses it in. */
+export const escalationShapesFor = (cr) => ESCALATION_SHAPES.filter((x) => x !== 'exhaustion' || Number(cr) >= 10);
+/** The reward clause for a shape, numbers supplied. Returns null for `condition`, which
+ *  the frame already writes and the minor-clause machinery already declares. */
+export const escalationClause = (shape, { inline = 'the creature', damageType = 'Force', extra = null } = {}) => ({
+  exhaustion: 'it gains 1 Exhaustion level',
+  damage: extra ? `it takes an extra ${extra} ${damageType} damage` : null,
+  mark: `${inline} has Advantage on attack rolls against it until the end of ${inline}'s next turn, and ${inline} can have only one target marked this way at a time`,
+}[String(shape)] ?? null);
+export const SEVERE_CONDITIONS = ['Restrained', 'Incapacitated', 'Paralyzed', 'Unconscious', 'Blinded'];
+/** The condition a payoff imposes on a target it finds already afflicted: one rung up
+ *  the ladder from `trigger`. `severe` is false below the CRs where print's own
+ *  single-target saves take a turn away, and there the step stays inside the mild pool.
+ *  Returns null when no rung applies, and the frame then prints damage alone. */
+export const escalateFrom = (trigger, mild, { severe = false } = {}) => {
+  const trig = String(trigger ?? '');
+  const up = ESCALATION[trig] ?? null;
+  if (severe) return up && up !== trig ? up : null;
+  // A FINISHED TARGET HAS NO NEXT RUNG. Petrified is a statue and Unconscious is down;
+  // adding Deafened to either is a line a GM reads twice and ignores, and print escalates
+  // neither. The clause leaves instead (spot-checked 2026-11-05: "already Petrified, it
+  // also has the Deafened condition").
+  if (TERMINAL.includes(trig)) return null;
+  // below the severe bands a payoff stays mild: print's low-CR payoffs impose
+  // Frightened, Charmed and Prone, none of which is an escalation of anything
+  return mild.find((c) => c !== trig && !SUBSUMES_MILD(trig).includes(c)) ?? null;
+};
+const TERMINAL = ['Petrified', 'Unconscious']; // nothing escalates a statue or a body on the floor
+const SUBSUMES_MILD = (trig) => ({
   Restrained: ['Prone'],            // Speed 0, Advantage to attackers, cannot stand
-  Paralyzed: ['Prone', 'Blinded'],  // Speed 0 and incapable; sight is moot
+  Paralyzed: ['Prone', 'Blinded'],
   Stunned: ['Prone'],
   Unconscious: ['Prone', 'Blinded', 'Deafened'],
   Petrified: ['Prone', 'Blinded', 'Poisoned'],
-  Incapacitated: [],
-  Blinded: ['Prone'],               // attackers already have Advantage
-};
-/** A mild reward the trigger does not already provide, or null when none of them adds
- *  anything. `order` is the slot's own vocabulary, so the caller keeps one list. */
-export const rewardFor = (trigger, proposed, order) => {
-  const trig = String(trigger ?? '');
-  const dead = new Set([trig, ...(SUBSUMES[trig] ?? [])]);
-  const want = String(proposed ?? '');
-  if (want && !dead.has(want) && order.includes(want)) return want;
-  return order.find((c) => !dead.has(c)) ?? null;
-};
+  Blinded: ['Prone'],
+}[trig] ?? []);
 // ONE DEFINITION OF "THIS SAVE HITS ONE CREATURE", shared by every writer. `per_hit` is
 // the round's budget and a save frame spends it whole — correct for a cone, where print
 // gates 68% of its area saves behind a Recharge so the CR math amortises them to about a

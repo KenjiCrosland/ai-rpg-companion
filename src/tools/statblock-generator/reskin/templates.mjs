@@ -25,7 +25,7 @@ import { LIBRARY_SEEDS, drawLibraryRow } from './library.mjs';
 import { attackDamageDiceFor, saveDamageDiceFor } from '../format-2024/dice.mjs';
 import { readPhrases } from './lexicon.mjs';
 import { weaponProp } from './weapons.mjs';
-import { AREA_TARGETS, capSingleTargetSave, rewardFor } from './card-budgets.mjs';
+import { AREA_TARGETS, ESCALATION_SHAPES, SEVERE_CONDITIONS, capSingleTargetSave, escalateFrom, escalationClause, escalationShapesFor } from './card-budgets.mjs';
 import { imposedConditions } from './author.mjs'; // ONE reader for the condition a row imposes: the declared record first, print's grammar second
 
 export const SECTION_OF = { trait: 'Traits', action: 'Actions', bonus_action: 'Bonus Actions', reaction: 'Reactions', rider: 'Rider' }; // Rider = a clause appended to the melee attack row
@@ -283,7 +283,7 @@ export const areaClause = (shape, band, sizes = null) => {
 // answer ("a tangle of roots") with the literal string 'Restrained'. It is
 // already in FLAVOR_SLOTS, where a short bounded phrase is validated and
 // BLIND_FILLS supplies "the binding" when the call offers nothing.
-const VOCAB = { shutoff_damage: DAMAGE, area_shape: AREA_SHAPES, duration: DURATIONS, save_stat: SAVE_STATS, consumed_condition: CONDITIONS, condition_minor: MINOR, r_vuln: DAMAGE };
+const VOCAB = { shutoff_damage: DAMAGE, area_shape: AREA_SHAPES, duration: DURATIONS, save_stat: SAVE_STATS, consumed_condition: CONDITIONS, condition_minor: MINOR, r_vuln: DAMAGE, escalation: ESCALATION_SHAPES };
 // WHAT A SLOT OWES ITS OWN FRAME. Print parameterises the QUALIFIER and keeps the
 // noun — "an infernal wound" (Bearded Devil) — which is why its frame can go on to
 // say "While wounded… The wound closes… stanch the wound". Our slot took the whole
@@ -1125,6 +1125,15 @@ export function rankByVerb(menu, conceptText0, ideaText0 = '', askedMechanic = n
   const hit = (t, words, raw) => (t.keys ?? []).filter((k) => !(SENSE_DENY[k] && SENSE_DENY[k].test(String(raw ?? ''))) && (k.includes(' ') ? String(raw ?? '').toLowerCase().includes(k) : words.some((w) => sameStem(w, stem(k)))));
   const rawAll = String(conceptText0 ?? '');
   const wantsMech = (t) => !!askedMechanic && t.mechanic === askedMechanic;
+  // NOT ORDERED BY WHETHER THE TRIGGER EXISTS, and the attempt is recorded because the
+  // measurement looked convincing. Over 3,279 saved sheets, 76 imposed a condition and
+  // got an escalate row keyed on something else against 41 where the payoff landed, so
+  // ordering the payoff first inside the mechanic group looked like the lever. Built and
+  // measured on a batch of 12 concepts each carrying a hold AND an escalation intent:
+  // 5 of the 6 sheets that imposed a condition had an EARLY imposer the ordering could
+  // see, and the payoff still landed on 1. The seat goes elsewhere or the fit call
+  // declines; the menu's order was never the constraint. Reverted rather than left
+  // inert (owner, 2026-11-05: "if it's not working?").
   return menu.map((t, i) => { const denied = TEMPLATE_DENY[t.id]?.test(rawAll); const concept = denied ? [] : hit(t, c, conceptText); const idea = denied ? [] : hit(t, d, ideaText).filter((k) => !concept.includes(k)); return { t, i, concept, idea, matched: [...concept, ...idea], score: concept.length * 2 + idea.length }; })
     .sort((a, b) => (wantsMech(b.t) ? 1 : 0) - (wantsMech(a.t) ? 1 : 0) || b.score - a.score || a.i - b.i);
 }
@@ -2069,7 +2078,8 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   let saveOverride = null; // why the engine overrode the model's save_stat, for the trace
   let pickedCondition = null; // the condition this render imposes, chosen from the closed list below
   let consumedPick = null; // the condition this render REQUIRES on its target (a payoff), from the model's consumed_condition
-  let vestigialStripped = null; // a payoff's rider that would have imposed the very condition it requires — the clause is removed instead
+  let vestigialStripped = null;
+  let escalationShape = null; // which rung shape this render used, for the trace and the row // a payoff's rider that would have imposed the very condition it requires — the clause is removed instead
   // the fiction ladder: the model's fill > the sheet's own noun > the blind
   // default; an empty fills object cost four signatures (critic, 2026-09-22)
   // the terrain of a FORCED bind is the concept's, not the blind default (an ice
@@ -2078,6 +2088,27 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   const terrainOf = (TERRAIN_OF.find(([re]) => re.test(String(ctx.concept ?? ''))) ?? [])[1];
   fills = { ...BLIND_FILLS, ...(terrainOf ? { terrain: terrainOf } : {}), ...(ctx.projectile ? { projectile: ctx.projectile } : {}), ...Object.fromEntries(Object.entries(fills).filter(([, v]) => typeof v === 'string' && v.trim())) };
   void blind;
+  // ONE POOL, READ BY ALL THREE VALIDATORS. `condition_minor` is checked in three places
+  // with three fallbacks — the reward choice below, the pick-and-strip block, and the
+  // final VOCAB fill loop — and unifying only the first two shipped a row whose
+  // `imposes` field said Restrained while its sentence printed Frightened, because the
+  // fill loop fell back to the mild list. A declared field contradicting the printed
+  // text is worse than either being wrong alone, so the pool is defined ONCE here and
+  // every site reads it through `poolFor`.
+  //
+  // WHY A SEVERE POOL AT ALL: every single-target save row print writes at CR 13+ takes
+  // a turn away rather than competing on damage — Mummy Lord/Dreadful Glare Paralyzed
+  // (15), Adult Gold Dragon/Banish Incapacitated (17), Kraken/Swallow Restrained (23),
+  // Solar/Blinding Gaze Blinded (21). A gated payoff trading one attack for 31 damage
+  // and Disadvantage is a button no GM presses up there (owner, 2026-11-05). Below CR 10
+  // the mild pool is right: print's own payoffs there are Frightened, Charmed and Prone.
+  // `MINOR` stays untouched for the four other templates on this slot and the 14 donor
+  // frames; only a payoff, and only at CR 10+, draws from the severe list.
+  const condPool = (t?.rewardsCondition && Number(ctx.cr) >= 10) ? SEVERE_CONDITIONS : MINOR;
+  // the model does not choose a payoff's reward at all: the LADDER does, off the
+  // condition the target already has. The pool above is what the three validators will
+  // accept, and `escalateFrom` picks the rung inside it.
+  const poolFor = (slot) => (slot === 'condition_minor' ? condPool : VOCAB[slot]);
   // A REWARD MUST BE AN UPGRADE, NOT A SECOND LABEL (owner's spot check, 2026-11-05:
   // "restrained to prone is kind of underwhelming"). A stepped payoff rewards a target
   // it finds already afflicted, and the first cut only required the reward to DIFFER
@@ -2093,8 +2124,52 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // (Prone, Frightened, Blinded, Deafened) gets NO condition reward and the frame falls
   // back to its damage step, which is better than inventing a weak pair.
   if (t?.rewardsCondition && fills.consumed_condition) {
-    const up = rewardFor(fills.consumed_condition, fills.condition_minor, MINOR);
+    // THE POOL IS PER-TEMPLATE, NOT GLOBAL. `MINOR` stays mild for the four other
+    // templates that use this slot and for the 14 donor frames; a payoff draws from the
+    // SEVERE pool at the CRs where print's own single-target saves do, because up there
+    // a mild rider on a gated row is a button no GM presses — print's high-CR saves take
+    // a turn away (Paralyzed, Incapacitated, Restrained, Blinded) and do not compete on
+    // damage. Below CR 10 the mild pool is right: print's payoffs there are Frightened,
+    // Charmed and Prone.
+    const up = escalateFrom(fills.consumed_condition, MINOR, { severe: Number(ctx.cr) >= 10 });
     if (up !== fills.condition_minor) fills = { ...fills, condition_minor: up ?? '' };
+  }
+  // THE ESCALATION'S SHAPE IS THE CALL'S TO JUDGE, its numbers and rules the engine's
+  // (owner, 2026-11-05). A payoff's frame writes the CONDITION shape, and that shape is
+  // declared and stripped by the minor-clause machinery. The other three replace the
+  // reward clause HERE, before that split runs, so they never enter it — they impose no
+  // condition, so `imposes` stays null for them, which is the honest answer.
+  //
+  // An out-of-band answer degrades to the condition rung rather than failing the row:
+  // exhaustion is refused below CR 10 (print writes it at 11 and 17), and anything not
+  // on the shelf is ignored.
+  if (t?.rewardsCondition) {
+    const allowed = escalationShapesFor(ctx.cr);
+    const asked = String(fills.escalation ?? '').trim().toLowerCase();
+    const shape = allowed.includes(asked) ? asked : 'condition';
+    if (shape === 'damage') {
+      // print's two-step amount is a REPLACEMENT, not an addition: the Mimic deals "7
+      // (1d8 + 3)—or 12 (2d8 + 3)", never 7 plus 12. An additive extra put 31 + 32 = 63
+      // on an afflicted target against a ceiling of 31, so the damage shape swaps the
+      // whole Failure half for the stepped form, whose upper amount IS the ceiling
+      // ({avg_up}) and whose base is about 60% of it.
+      escalationShape = shape;
+      t = { ...t, frames: Object.fromEntries(Object.entries(t.frames ?? {}).map(([b, f]) => [b,
+        String(f).replace(
+          /\{avg\} \(\{dice\}\) \{damage_type\} damage\. If the target already has the \{consumed_condition\} condition, it also has the \{condition_minor\} condition until the end of its next turn\./,
+          '{avg_base} ({dice_base}) {damage_type} damage, or {avg_up} ({dice_up}) {damage_type} damage if the target already has the {consumed_condition} condition.',
+        )])) };
+    } else if (shape !== 'condition') {
+      const clause = escalationClause(shape, {
+        inline: String(ctx.inline ?? 'the creature'),
+        damageType: String(fills.damage_type ?? 'Force'),
+      });
+      if (clause) {
+        escalationShape = shape;
+        t = { ...t, frames: Object.fromEntries(Object.entries(t.frames ?? {}).map(([b, f]) => [b,
+          String(f).replace(/it also has the \{condition_minor\} condition until the end of its next turn\./, `${clause}.`)])) };
+      }
+    }
   }
   const { scaled } = ctx;
   // THE DURATION THE WRITER CHOSE, kept so no reader has to recover it from the
@@ -2333,8 +2408,8 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     // payoff's reward is its damage; the rider is optional, so where it would be
     // vestigial the clause leaves and the row says only what it does.
     const required = String(fills.consumed_condition ?? '').trim();
-    const named = MINOR.find((x) => x.toLowerCase() === proposedC.toLowerCase());
-    const condPick = named ?? (MINOR.includes(ctx.conditionMinor) ? ctx.conditionMinor : 'Frightened');
+    const named = condPool.find((x) => x.toLowerCase() === proposedC.toLowerCase());
+    const condPick = named ?? (condPool.includes(ctx.conditionMinor) ? ctx.conditionMinor : condPool[0] ?? 'Frightened');
     if (required && condPick.toLowerCase() === required.toLowerCase()) {
       // the clause is this engine's own frame text, removed by its own token
       // the whole clause, duration and all: these frames write it literally
@@ -2412,11 +2487,13 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     if (picked && contradicts) saveOverride = `"${picked}" -> ${fallback}: ${damageDominant && !SAVE_FOR_CONDITION[String(imposed ?? '')] ? 'a damage-dominant row saves by Dexterity or Constitution in print, never Wisdom' : damageDominant ? `the damage is the row and ${imposed} the rider, so print saves by ${want.join(' or ')}` : `a ${imposed} row saves by ${want.join(' or ')} in print`}`;
   }
   text = text.split('{minor_clause}').join(minorKeep ? minor.clause : ''); // the rider rides, or it does not — the VOCAB loop below fills its {condition_minor}
-  for (const [k, list] of Object.entries(VOCAB)) {
+  for (const [k] of Object.entries(VOCAB)) {
     if (!text.includes(`{${k}}`)) continue;
+    const list = poolFor(k); // the payoff's severe pool at CR 10+, VOCAB's own list otherwise
     const proposed = String(fills[k] ?? '').trim();
     const pick = list.find((x) => x.toLowerCase() === proposed.toLowerCase())
       ?? (k === 'condition_minor' && list.includes(ctx.conditionMinor) ? ctx.conditionMinor : null)
+      ?? (k === 'condition_minor' ? list[0] : null) // the blind default follows the pool, not the mild list
       ?? ({ save_stat: 'Wisdom', consumed_condition: ctx.imposed?.[0] ?? 'Frightened', condition_minor: 'Frightened', r_vuln: 'Fire' })[k]; // `restraint` is gone from here with its VOCAB entry: it is an object slot, and its blind fill is "the binding"
     if (k === 'consumed_condition') consumedPick = pick; // the model's answer, recorded on the row so a ship-time gate can check the sheet supplies it
     text = text.split(`{${k}}`).join(pick);
@@ -2689,6 +2766,14 @@ export function templateMenuLines(menu, { cr, concept = '', idea = '' } = {}) {
     // same two-name split as area_shape: the frame carries {duration}, the choice
     // the model makes is "duration", so the menu has to name it or it is unreachable
     if (/\{duration\}/.test(frameOf(t, cr) ?? '') && t.effect === 'condition') vocab.push(`"duration" ∈ ${DURATIONS.join('/')} — how long the condition lasts`);
+    // AND A PAYOFF'S ESCALATION, for the same reason, with the same two-name split: the
+    // frame carries no token for it because the engine REWRITES the reward clause from
+    // the shape, so the menu is the only place the choice can be offered. Added after
+    // the shelf shipped unreachable — `escalation` was registered in VOCAB, but VOCAB is
+    // read off the frame's own tokens, so the model was never asked and every row
+    // degraded to the condition rung. The warning three comments up is about exactly
+    // this failure, from an earlier shape this sprint; it happened again.
+    if (t.rewardsCondition) vocab.push(`"escalation" ∈ ${escalationShapesFor(cr).join('/')} — what finding the target ALREADY afflicted adds: a worse condition (the engine picks the rung), 1 Exhaustion level, a bigger damage step, or marking it for Advantage. The engine writes every number and duration`);
     return `- ${t.id} [${SECTION_OF[t.section]}${t.gate ? `, ${t.gate}` : ''}]${ideaObj ? ` (fires: ${t.trigger}, does: ${t.effect}${stampAgrees(t, ideaObj) ? ' — matches the idea' : ''})` : (matched.length ? ` VERB MATCH: ${matched.join(', ')}` : '')}: ${frameOf(t, cr).replace(/\*/g, '')}${flav}${vocab.length ? ` — choose: ${vocab.join('; ')}` : ''}${aug}`;
   }).join('\n');
 }
