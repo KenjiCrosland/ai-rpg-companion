@@ -241,18 +241,27 @@ describe('the Multiattack citation rules, surveyed against all 178 print Multiat
 // saved runs live in a gitignored smoke-out/, so the ones that actually failed are
 // committed here as fixtures rather than invented. Provenance is on each row: a repair
 // proven only against hand-written input is proven against the author's imagination.
+// THE DIVISOR, READ THE WAY THE ENGINE READS IT. `nAtk` (generate.mjs) takes
+// `makes (\w+)` off the FINISHED Multiattack sentence and maps the number word. Both of
+// print's Multiattack shapes open that way — "makes one Bite attack, …" and "makes four
+// attacks, using Bite or Devilish Claw in any combination" — so this is the one reading
+// that is true of a repair's output whichever form it chose. The map is a deliberate
+// mirror of the engine's, cap and default included: a test helper that reads further than
+// the engine would pass while the engine mispriced the sheet.
+const divisorOf = (t) => ({ one: 1, two: 2, three: 3, four: 4 }[(/makes (\w+)/i.exec(String(t ?? '')) ?? [])[1]?.toLowerCase()] ?? 1);
+
 const FAILING = [
   { label: 'the Pit Fiend, nine runs running (10-19 … 11-04): print\'s Multiattack rides a print body, the Fiery Mace row is shed',
     text: 'The pit fiend makes one Bite attack, two Devilish Claw attacks, and one Fiery Mace attack. It can replace one attack with a use of (A) Oathbound Chains or (B) Spellcasting to cast *Bestow Curse*.',
     rows: ['Legendary Resistance', 'Diabolical Restoration', 'Fear Aura', 'Magic Resistance', 'Multiattack', 'Bite', 'Devilish Claw', 'Spellcasting', 'Oathbound Chains', 'Hellfire Spellcasting'],
     attacks: ['Bite', 'Devilish Claw'],
-    want: 'The pit fiend makes two Bite attacks and two Devilish Claw attacks. It can replace one attack with a use of (A) Oathbound Chains or (B) Spellcasting to cast *Bestow Curse*.',
+    want: 'The pit fiend makes four attacks, using Bite or Devilish Claw in any combination. It can replace one attack with a use of (A) Oathbound Chains or (B) Spellcasting to cast *Bestow Curse*.',
     total: 4 },
   { label: 'the same sheet under its other subject line ("The fiend", sweep 11-01)',
     text: 'The fiend makes one Bite attack, two Devilish Claw attacks, and one Fiery Mace attack. It can replace one attack with a use of Spellcasting to cast *Hold Person*.',
     rows: ['Legendary Resistance', 'Diabolical Restoration', 'Fear Aura', 'Magic Resistance', 'Multiattack', 'Bite', 'Devilish Claw', 'Hellfire Burst', 'Spellcasting', 'Hellfire Spellcasting'],
     attacks: ['Bite', 'Devilish Claw'],
-    want: 'The fiend makes two Bite attacks and two Devilish Claw attacks. It can replace one attack with a use of Spellcasting to cast *Hold Person*.',
+    want: 'The fiend makes four attacks, using Bite or Devilish Claw in any combination. It can replace one attack with a use of Spellcasting to cast *Hold Person*.',
     total: 4 },
 ];
 
@@ -267,7 +276,12 @@ describe('the Multiattack attack list, repaired from its validated elements', ()
     // THE COUNT IS THE DAMAGE BUDGET'S DIVISOR: 1+2+1 attacks must stay 4, or the sheet
     // is silently repriced by a repair that was only meant to fix a name.
     expect(got.total).toBe(f.total);
-    expect(multiattackAttackClauses(got.text).reduce((n, c) => n + c.count, 0)).toBe(f.total);
+    // AND THE DIVISOR IS READ THE WAY THE ENGINE READS IT (2026-11-05). `nAtk` takes
+    // `makes (\w+)` off the finished sentence, which is true of BOTH of print's forms;
+    // summing counted clauses is true of only one, and would have reported 0 attacks for
+    // the pool form the repair now writes — a passing test asserting an unpriced sheet.
+    expect(divisorOf(got.text)).toBe(f.total);
+    expect(got.form).toBe('pool');
   });
 
   it('leaves a sheet whose citations all resolve completely untouched', () => {
@@ -329,7 +343,7 @@ describe('the repair, against print\'s own Multiattacks with a row deleted', () 
   };
   const bare = (r) => String(r.name ?? '').replace(/ \(.*\)$/, '');
 
-  it('redistributes the count on every multi-clause case, 47 of them, losing none', () => {
+  it('preserves the count on every multi-clause case, 47 of them, losing none', () => {
     let cases = 0;
     for (const m of corpus()) {
       const got = maOf(m); if (!got) continue;
@@ -343,9 +357,22 @@ describe('the repair, against print\'s own Multiattacks with a row deleted', () 
         const fixed = repairMultiattackAttackList(got.text, resolves, keep[0]);
         expect(fixed).not.toBeNull();                                          // a cited row vanished; the sentence must change
         expect(fixed.dropped.map((d) => d.toLowerCase())).toContain(victim.toLowerCase());
-        const after = multiattackAttackClauses(fixed.text);
-        expect(after.reduce((n, c) => n + c.count, 0)).toBe(total);             // the budget's divisor survives
-        for (const c of after) expect(resolves(c.name)).toBe(true);             // nothing dangles afterwards
+        // THE ARITHMETIC TOTAL IS THE CONTRACT, NOT THE ENGINE'S READING OF IT. An
+        // earlier cut of this test asserted the divisor was unchanged by the repair and
+        // failed on 2 of 47: it never was unchanged, by either path, because `nAtk` reads
+        // `makes (\w+)` — the FIRST clause of a counted list, not its sum. Print's own
+        // Pit Fiend prices as 1 attack. So the invariant to hold the repair to is that it
+        // carries the whole count, and the pool form's merit is that the engine then
+        // reads that true count instead of one clause of it.
+        expect(fixed.total).toBe(total);
+        if (fixed.form === 'pool' && total <= 4) expect(divisorOf(fixed.text)).toBe(total);
+        // and nothing dangles afterwards — read with the citation reader, which knows all
+        // ten grammars, rather than the counted-clause reader, which knows one
+        for (const set of multiattackCitations(fixed.text)) expect(set.some((n) => resolves(n))).toBe(true);
+        // print writes both shapes; the repair must land on one of them and never invent
+        // a third. A pool of one row is not a form print writes.
+        if (fixed.form === 'pool') expect(fixed.text).toMatch(/makes \w+ attacks, using .+ or .+ in any combination/);
+        else expect(multiattackAttackClauses(fixed.text).length).toBeGreaterThan(0);
         expect(fixed.text).not.toMatch(/\band and\b|\bmakes and\b|attack attack|undefined| {2}/);
       }
     }
@@ -384,6 +411,107 @@ describe('the repair, against print\'s own Multiattacks with a row deleted', () 
       expect(repairMultiattackAttackList(got.text, resolves, names[0])).toBeNull();
     }
     expect(seen).toBe(178);
+  });
+});
+
+// THE POOL FORM IS CONFINED TO THE ONE CASE THAT ASKED FOR IT (owner, 2026-11-05:
+// "make sure this doesn't interfere with the other multiattack forms"). print writes
+// Multiattack ten ways; the repair now has two possible outputs, and the risk of a second
+// output is that it leaks onto a grammar that was already correct. Each test below is one
+// boundary of that confinement.
+describe('print\'s pool form is written only where a counted clause died whole', () => {
+  const maOf = (m) => {
+    const rows = Object.values(m.sections ?? {}).flat().filter(Boolean);
+    const ma = rows.find((r) => /^Multiattack/.test(String(r.name ?? '')));
+    return ma ? { rows, text: String(ma.text ?? '').replace(/\s+/g, ' ') } : null;
+  };
+  const bare = (r) => String(r.name ?? '').replace(/ \(.*\)$/, '');
+  const resolverFor = (rows) => (c) => rows.some((n) => n.toLowerCase() === String(c).toLowerCase());
+
+  it('never reaches print\'s own pool-form Multiattacks, even with a pooled row deleted', () => {
+    // the pool form is 36 of print's 178 Multiattacks (the counted list is 141). It
+    // parses to NO counted clauses, which is what keeps it out of this repair — the
+    // combination loop in generate.mjs owns it, and owned it before today.
+    let pools = 0;
+    for (const m of corpus()) {
+      const got = maOf(m); if (!got) continue;
+      if (!/in any combination/i.test(got.text)) continue;
+      pools += 1;
+      // the TARRASQUE is print's one hybrid: "makes one Bite attack and three other
+      // attacks, using Claw or Tail in any combination" — a counted clause and a pool
+      // clause in one sentence. Named rather than filtered out, because it is the exact
+      // shape that could grow a second pool.
+      const hybrid = m.name === 'Tarrasque';
+      expect(multiattackAttackClauses(got.text).length).toBe(hybrid ? 1 : 0);
+      for (const victim of multiattackCitations(got.text).flat()) {
+        const keep = got.rows.map(bare).filter((n) => n.toLowerCase() !== victim.toLowerCase());
+        const fixed = repairMultiattackAttackList(got.text, resolverFor(keep), keep[0]);
+        if (!hybrid) { expect(fixed).toBeNull(); continue; }
+        // whatever it does to the hybrid, it never writes a second pool
+        if (fixed) expect(fixed.text.match(/in any combination/gi)).toHaveLength(1);
+      }
+    }
+    expect(pools).toBe(36);
+  });
+
+  it('leaves a pruned alternation in its counted shape — a pool of one is not print\'s form', () => {
+    // print's tenth grammar, "makes two Javelin or Morningstar attacks" (Bugbear Stalker,
+    // Dryad, Oni, Warrior Veteran). No clause dies; one alternative is shed. The counted
+    // shape is still right, and "makes two attacks, using Javelin in any combination"
+    // would be a sentence print never writes.
+    const got = repairMultiattackAttackList('The stalker makes two Javelin or Morningstar attacks.', resolverFor(['Javelin']), 'Javelin');
+    expect(got.form).toBe('counted');
+    expect(got.text).toBe('The stalker makes two Javelin attacks.');
+    expect(got.text).not.toMatch(/in any combination/);
+  });
+
+  it('keeps the counted shape when the surviving rows collapse to one name', () => {
+    // two clauses, two dead names, one survivor: the count still moves, because a
+    // one-row pool is not a form print writes.
+    const got = repairMultiattackAttackList('The fiend makes one Bite attack and two Fiery Mace attacks.', resolverFor(['Bite']), 'Bite');
+    expect(got.form).toBe('counted');
+    expect(got.text).toBe('The fiend makes three Bite attacks.');
+    expect(got.total).toBe(3);
+  });
+
+  it('keeps the counted shape on the all-dead fallback and on the single-clause re-point', () => {
+    for (const t of ['The hound makes two Fiery Mace attacks.', 'The hound makes one Fiery Mace attack.']) {
+      const got = repairMultiattackAttackList(t, resolverFor(['Bite']), 'Bite');
+      expect(got.form).toBe('counted');
+      expect(got.text).not.toMatch(/in any combination/);
+    }
+  });
+
+  it('is idempotent: its own output is not a repair case', () => {
+    const r = resolverFor(['Bite', 'Devilish Claw']);
+    const once = repairMultiattackAttackList('The pit fiend makes one Bite attack, two Devilish Claw attacks, and one Fiery Mace attack.', r, 'Bite');
+    expect(once.form).toBe('pool');
+    expect(repairMultiattackAttackList(once.text, r, 'Bite')).toBeNull();
+  });
+
+  it('writes a sentence the lints accept, and that still cites its rows', () => {
+    const r = resolverFor(['Bite', 'Devilish Claw']);
+    const got = repairMultiattackAttackList('The pit fiend makes one Bite attack, two Devilish Claw attacks, and one Fiery Mace attack.', r, 'Bite');
+    // the pool form names rows, so it must NOT read as the vague "makes four attacks"
+    // that the generic-attack lint exists to catch
+    expect(citesGenericAttacks(got.text)).toBe(false);
+    expect(multiattackCitations(got.text)).toEqual([['Bite', 'Devilish Claw']]);
+    const sheet = { sections: { Actions: [{ name: 'Multiattack', text: got.text },
+      { name: 'Bite', text: 'Melee Attack Roll: +14, reach 10 ft. 18 (3d6 + 8) Piercing damage.' },
+      { name: 'Devilish Claw', text: 'Melee Attack Roll: +14, reach 10 ft. 26 (4d8 + 8) Necrotic damage.' }] } };
+    expect(lintSheet(sheet).filter((h) => /^multiattack/.test(h.rule))).toEqual([]);
+  });
+
+  it('only four print monsters can reach this repair at all', () => {
+    // a counted list naming three distinct rows is the only shape a body with two attack
+    // rows cannot fill. Measured 2026-11-05; if this number moves, the scope moved.
+    const three = [];
+    for (const m of corpus()) {
+      const got = maOf(m); if (!got) continue;
+      const names = new Set(multiattackAttackClauses(got.text).flatMap((c) => c.names));
+      if (names.size >= 3) three.push(m.name);
+    }
+    expect(three.sort()).toEqual(['Barbed Devil', 'Chimera', 'Medusa', 'Pit Fiend']);
   });
 });
 

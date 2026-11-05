@@ -189,6 +189,56 @@ export function repairMultiattackAttackList(text, resolves, fallback = null) {
     live = [{ ...dead[0], names: [fallback] }];
     dead.splice(0, 1);
   }
+  // A SHED ROW BECOMES PRINT'S POOL FORM, NOT A DOUBLED ROW (owner, 2026-11-05).
+  // Moving a dead clause's count onto a survivor preserves the divisor but writes a
+  // sheet print never wrote: print's Pit Fiend makes "one Bite, two Devilish Claw, one
+  // Fiery Mace" and a shed Fiery Mace left us "makes TWO BITE attacks and two Devilish
+  // Claw attacks". print writes the same round a second way — "makes four attacks, using
+  // Bite or Devilish Claw in any combination" — a form it uses on 36 of its 178
+  // Multiattacks, and one that names only the rows the sheet carries while keeping the
+  // count intact. (The counted list is commoner at 141; the point is not that the pool
+  // form is dominant but that it is print's OWN way of saying this round without
+  // committing a per-row count it no longer has the rows for.)
+  //
+  // WHAT THIS DOES TO PRICING, STATED HONESTLY. `nAtk` (generate.mjs) reads
+  // `makes (\w+)` off the finished sentence, which on a COUNTED LIST captures only the
+  // FIRST clause: print's Pit Fiend prices as 1 attack, not 4. So neither repair leaves
+  // that reading alone — the count-moving path below took it 1 -> 2, and the pool form
+  // takes it 1 -> 4, the true total. It is inert on every case this repair has actually
+  // reached, because `atkRows` excludes `print` rows: on a print body `best` is 0 and the
+  // re-pricing block never runs. That `nAtk` reads one clause instead of the total is a
+  // SEPARATE, pre-existing defect (it also misreads print's Clay Golem, Marilith and
+  // Medusa); it is not fixed here, because fixing it reprices sheets and that needs its
+  // own measurement.
+  //
+  // Measured 2026-11-05: over the two current forties print's own Multiattack rode 18
+  // print bodies and exactly ONE needed this repair — the Pit Fiend, 4 for 4 whenever it
+  // rolls. Only four print monsters can reach it at all (Barbed Devil, Chimera, Medusa,
+  // Pit Fiend): they are the only ones whose counted list names three distinct rows, so
+  // they are the only ones a body with two attack rows cannot fill.
+  //
+  // The gate is narrow on purpose. A clause must have died WHOLE (a pruned alternation
+  // keeps its counted shape — "two Javelin or Morningstar attacks" over a shed
+  // Morningstar is still "two Javelin attacks", not a pool of one), and two distinct rows
+  // must survive, because a one-row pool is not a form print writes. Everything else
+  // falls through to the count-moving path below, the all-dead fallback included.
+  // AND NOT ONTO A SENTENCE THAT ALREADY CARRIES A POOL. print's Tarrasque is its one
+  // hybrid — "makes one Bite attack and three other attacks, using Claw or Tail in any
+  // combination" — where a counted clause and a pool clause share one sentence (the
+  // `other` exclusion in the clause reader is what keeps "three other attacks" out of
+  // the counted list). It cannot reach the branch below today, because its single clause
+  // dying leaves one fallback name and the gate needs two. But a sheet with two counted
+  // clauses and a pool tail would get a SECOND "in any combination" spliced in front of
+  // the first. The phrase is print's own marker for the form and the engine already keys
+  // on it (the combination loop, generate.mjs), so one pool per sentence is the rule.
+  const pooled = [...new Set(live.flatMap((c) => c.names).filter((n) => resolves(n)))];
+  if (dead.length && pooled.length >= 2 && !/in any combination/i.test(t)) {
+    const total = clauses.reduce((n, c) => n + c.count, 0);
+    const pool = pooled.length === 2 ? pooled.join(' or ') : `${pooled.slice(0, -1).join(', ')}, or ${pooled.at(-1)}`;
+    const out = `${t.slice(0, clauses[0].start)}makes ${WORD_FOR[total] ?? total} attack${total > 1 ? 's' : ''}, using ${pool} in any combination${t.slice(clauses.at(-1).end)}`;
+    const tidy = tidyStops(out);
+    return tidy === t ? null : { text: tidy, dropped: dead.flatMap((c) => c.names), total, form: 'pool' };
+  }
   const moved = dead.reduce((n, c) => n + c.count, 0);
   const kept = live.map((c, i) => ({ ...c, count: c.count + (i === 0 ? moved : 0) }));
   const parts = kept.map((c) => {
@@ -200,7 +250,7 @@ export function repairMultiattackAttackList(text, resolves, fallback = null) {
       : `${parts.slice(0, -1).join(', ')}, and ${parts.at(-1)}`;
   const out = `${t.slice(0, clauses[0].start)}makes ${list}${t.slice(clauses.at(-1).end)}`;
   const tidy = tidyStops(out);
-  return tidy === t ? null : { text: tidy, dropped: dead.flatMap((c) => c.names), total: kept.reduce((n, c) => n + c.count, 0) };
+  return tidy === t ? null : { text: tidy, dropped: dead.flatMap((c) => c.names), total: kept.reduce((n, c) => n + c.count, 0), form: 'counted' };
 }
 /** THE REPLACE CLAUSE, VALIDATED LIKE THE LIST. print writes it three ways and no more:
  *  "a use of (A) X or (B) Y" (10 rows, all adult dragons), "a use of Z" (27 rows), and

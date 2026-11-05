@@ -2056,7 +2056,7 @@ function dropDeadMultiattackCites(sections, trace) {
     const why = fixed.dropped.length
       ? `${fixed.dropped.map((d) => `"${d}"`).join(', ')} ${fixed.dropped.length === 1 ? 'is' : 'are'} not on this sheet`
       : 'an alternative it offered is not on this sheet'; // a pruned alternation drops no clause, so it reports nothing to drop
-    trace('multiattack list re-read:', `${why}, so the list now reads "${fixed.text.slice(0, 90)}" — still ${fixed.total} attack${fixed.total === 1 ? '' : 's'}, the total the round was priced against`);
+    trace('multiattack list re-read:', `${why}, so the list ${fixed.form === 'pool' ? "takes print's pool form" : 'now reads'} "${fixed.text.slice(0, 90)}" — still ${fixed.total} attack${fixed.total === 1 ? '' : 's'}, the total the round was priced against${fixed.form === 'pool' ? ', and no row is doubled to hold it' : ''}`);
     ma.text = fixed.text;
   }
   // AND THE REPLACE CLAUSE IS RE-READ THE SAME WAY (owner, 2026-11-04). The writer
