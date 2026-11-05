@@ -442,6 +442,17 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
       if (v?.means === false) rejectedCues.set(k, true);
     }
   }
+  // THE CALL'S VERDICT HAS TO REACH THE GUARD THAT NEEDS IT (critic, 2026-11-05). The
+  // shifter guard below read `verbHits` RAW, so a cue the call had already rejected still
+  // let the line through: "a hunger that wears the shape of a staircase" matched the key
+  // `wears the shape` and drew print's Werewolf — Shape-Shift, "its true humanoid form",
+  // and a Bite that curses Humanoids — onto a staircase, on 6 of 6 rolls.
+  //
+  // The key list cannot separate the senses and should not try: it holds BOTH "wears the
+  // shape" (one fixed form, a disguise) and "wears other faces" (many forms). The prompt
+  // above already asks for exactly this judgement — "false if it is a figure of speech, a
+  // thing it carries or wears" — and the answer was being computed and then ignored.
+  const vettedHits = (t) => verbHits(t).filter((h) => !rejectedCues.has(h.key));
   let firstKnown = null;
   let bodyVetoed = false;
   for (const k of picks) {
@@ -456,7 +467,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
     if (line.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} is not a made or risen guardian`); continue; }
     if (line.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} sets traps; it is not one`); continue; }
     if (line.id === 'lurker-phantom' && noPhantom()) { notes.push(`${id}: ${noPhantomWhy()}`); continue; }
-    if (line.id === 'skirmisher-shifter' && !verbHits(text).some((h) => h.id === 'skirmisher-shifter')) { notes.push(`${id}: a shifter is named by its words (shape-shifts, turns into, a were-) — none here`); continue; } // a mind flayer with a sword drew a Beast Bite (critic-ten 2026-10-01)
+    if (line.id === 'skirmisher-shifter' && !vettedHits(text).some((h) => h.id === 'skirmisher-shifter')) { notes.push(`${id}: a shifter is named by its words (shape-shifts, turns into, a were-) — ${verbHits(text).some((h) => h.id === 'skirmisher-shifter') ? 'the call read the one here as a shape it WEARS, not a form it changes into' : 'none here'}`); continue; } // a mind flayer with a sword drew a Beast Bite (critic-ten 2026-10-01); a staircase "wearing a shape" drew the werewolf kit until the verdict was honoured (2026-11-05)
     if (line.id === 'skirmisher-archer' && noBow(text)) { notes.push(`${id}: ${shootsA === null ? 'no bow, arrow or shot in the words' : 'the call reads no shot of its own'}`); continue; }
     // CASTING IS A MECHANIC ENGINE (the critic's fourth read): a caster line needs a magic word in the GM's own words. "Knight" and "duelist" carried none and drifted to the warpriest on two prompts in five.
     if (!family && line.family === 'caster' && noMagic(text)) { notes.push(`${id}: ${castsAnswer === null ? 'a caster line needs a magic word in the words — none here' : 'the call reads no worked magic in these words'}`); continue; }
@@ -476,7 +487,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
       if (line.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType)) continue;
       if (line.id === 'lurker-phantom' && noPhantom()) continue;
       if (line.id === 'swarm' && noMass(text)) continue;
-      if (line.id === 'skirmisher-shifter' && !verbHits(text).some((h) => h.id === 'skirmisher-shifter')) continue;
+      if (line.id === 'skirmisher-shifter' && !vettedHits(text).some((h) => h.id === 'skirmisher-shifter')) continue; // the rank fallback honours the call's verdict too, or the line walks back in the door the guard above just shut
       if (line.id === 'skirmisher-archer' && noBow(text)) continue;
       if (!family && line.family === 'caster' && noMagic(text)) continue; // casting is a mechanic engine: it never comes back on rank either (the critic's fourth read)
       chosen = line; notes.push(`${line.id}: taken on rank — its quote was not found, no hard veto`); break;
