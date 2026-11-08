@@ -116,7 +116,18 @@ export const LIBRARY_SEEDS = [
     //
     // `effect: 'movement'` is declared because the damage term would otherwise refile this
     // row as `save/damage` and empty the movement shelf of the only disarm on it.
-    trigger: 'save', effect: 'movement',
+    // `dpr_frac` IS WHAT FILLS {burst}, AND WITHOUT IT THE ROW CANNOT RENDER AT ALL.
+    // The seed path substitutes the damage token only inside `if (seed.dpr_frac)`, and
+    // `renderTemplate` returns null on any leftover `{token}` — so the first cut of this
+    // repair added the damage term and no fraction, which took disarm OFF every menu:
+    // "menu pruned: action — disarm (the sheet cannot render them)" on all 12 sheets of
+    // floorfix12, against 0 of 12 before. It was picked and shipping the night before.
+    //
+    // 0.8 is the floor for an ungated action (0.8x the attack it replaces), so the row
+    // clears on merit rather than by exemption and the disarm itself is the upside. The
+    // neighbours bracket it: a small recurring tick is 0.25 (`delayed-brand`), print's
+    // Life Drain grammar 0.6 (`drain`), a gated nova 1.0-1.2 (`thrown-burst`, `wind-up`).
+    trigger: 'save', effect: 'movement', dpr_frac: 0.8,
     text: "*Strength Saving Throw:* DC {dc}, one creature within 5 feet that is holding a weapon or another object. *Failure:* {burst} {damage_type} damage, and the target drops the held object, which lands in its space.",
   },
   // ——— forced movement ———

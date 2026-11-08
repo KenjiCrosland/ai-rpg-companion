@@ -5,6 +5,16 @@
  * undefined referents), counterplay absences, self-contradictions, meta
  * vocabulary, and unresolvable-at-the-table entries.
  *
+ * CAPITALIZATION IS NOT REPORTED (owner's ruling, 2026-11-06). Principle 4 used to
+ * ask for "a lowercase word starting a sentence", and that became the judge's single
+ * largest finding class: ~20 of the 27 audit rewrites blocked across the 2026-11-05
+ * sweep and homebrew40 were lowercase-start reports. They were its own artifact — the
+ * judge lowercases the first word when it quotes a span, and `verifyAuditFindings`
+ * normalizes case on purpose so a good finding is not dropped for it, so the quote
+ * matched and the report stood. Measured the same day: 0 of 484 shipped rows start
+ * lowercase, because `capsFix2024` runs before the audit. With MAX_MERGED_FINDINGS at
+ * 6 per block, that noise was crowding out real findings.
+ *
  * Guardrails that make a nondeterministic judge safe to merge:
  * - Gate (owner call, option c): CR >= 5 or Legendary Actions only — the
  *   model doesn't fumble simple monsters, and the long tail lives in
@@ -91,10 +101,11 @@ Audit against these principles:
    "as written", schema or instruction fragments), orphaned sentences detached
    from their entry, stray characters, or UI text. ALSO flag garbled or
    ungrammatical text: doubled words ("the swarm swarm"), broken or
-   half-deleted sentences, subject-verb disagreements, a lowercase word
-   starting a sentence, or a capitalized word mid-sentence that is not a
-   defined game term (conditions, damage types, action names are correctly
-   capitalized — never flag those). ${is2014
+   half-deleted sentences, or subject-verb disagreements. Do NOT report
+   capitalization of any kind — not a lowercase word starting a sentence, not a
+   capitalized word mid-sentence. A deterministic pass fixes those before ship
+   and your findings are capped, so a capitalization report costs a slot a real
+   defect needed. ${is2014
     ? 'Also flag 2024-format markers ("Attack Roll:", "*Failure:*", "*Success:*") — this block uses the classic 2014 phrasing throughout, and that phrasing is CORRECT here; never flag "must succeed on a DC X ... saving throw" forms.'
     : 'Also flag 2014-format save phrasing ("must succeed on a DC X ... saving throw or").'}
 

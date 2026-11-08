@@ -26,8 +26,21 @@ const norm = (s) => String(s ?? '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').r
 const read = (dir) => [...readRun(dir)].map(({ sheet }) => {
   let f = null; try { f = checkBlock(sheet).fidelity; } catch { /* unscorable contributes nothing */ }
   const dropped = new Set((f?.dropped ?? []).map(norm).filter(Boolean));
-  const asked = new Set((f?.credits ?? []).map((c) => norm(c.clause)).filter(Boolean));
-  for (const d of dropped) asked.add(d);
+  // ONLY A RULE REQUEST COUNTS (owner's ruling, 2026-11-06). The extraction already
+  // judges each clause `mechanical` or `descriptive`, and a descriptive one is owed no
+  // row — "keeps a garden of thorns" is colour, and the engine is right not to build a
+  // rule for it. Counting it as a miss marked correct behaviour wrong: of the six clauses
+  // this script reported as NEVER answered across three sweeps, one was descriptive.
+  //
+  // The watchdog this gives up, stated plainly: a real rule request MISLABELLED as colour
+  // now disappears from the rate instead of showing up as a miss. The owner accepted that
+  // trade on the understanding the mislabel rate gets measured separately — this number is
+  // meant to be "what a user actually experiences" (the roadmap's own words for it), and a
+  // clause the user never asked to be mechanical does not belong in it.
+  const isAsk = (c) => String(c?.kind ?? 'mechanical') !== 'descriptive';
+  const asked = new Set((f?.credits ?? []).filter(isAsk).map((c) => norm(c.clause)).filter(Boolean));
+  const descriptive = new Set((f?.credits ?? []).filter((c) => !isAsk(c)).map((c) => norm(c.clause)).filter(Boolean));
+  for (const d of dropped) if (!descriptive.has(d)) asked.add(d); // a dropped descriptive clause is not a miss
   const answered = new Set([...asked].filter((c) => !dropped.has(c)));
   return { name: nameOf(sheet), asked, answered };
 });

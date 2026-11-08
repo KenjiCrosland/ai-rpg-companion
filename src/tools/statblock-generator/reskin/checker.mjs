@@ -1505,7 +1505,21 @@ export function fidelityOf(m, raw, ctx) {
     if (styleWord && words(styleWord).some((k) => ws.some((w) => w.startsWith(k.slice(0, 4)) || k.startsWith(w.slice(0, 4))))) return true;
     return false;
   };
-  const covered = clauses.filter(present); const dropped = clauses.filter((c) => !present(c)).map((c) => c.text);
+  // A FLAW ROW HONOURS THE LACK — AND NOW COVERAGE ACTUALLY SEES IT (2026-11-06).
+  // The 1f ruling's own comment below says "a lack answered that way is honoured, and
+  // coverage credits it", and it never did: `flawFor` was defined FIFTEEN LINES AFTER
+  // this one, so coverage was computed without it and the credit was recorded afterwards
+  // onto a clause already in `dropped`. The Adult Red Dragon's "blind in one eye from an
+  // old lance" therefore reported `by=lacks/flaw row` AND `DROPPED` in the same pass —
+  // its `Sight Weakness` is exactly the row the ruling asked for. One clause of the
+  // sweep's six "never answered", counted against the release bar for three runs.
+  const flawRows = rows.filter(({ e }) => e.flaw);
+  const flawFor = (c) => flawRows.some(({ e }) => {
+    const because = words(String(e.because ?? ''));
+    return because.length > 0 && because.every((w) => words(c.text).includes(w));
+  });
+  const honoured = (c) => present(c) || (c.polarity === 'lacks' && flawFor(c));
+  const covered = clauses.filter(honoured); const dropped = clauses.filter((c) => !honoured(c)).map((c) => c.text);
   const clauseWords = new Set([...clauses.flatMap((c) => words(c.text)), ...words(ctx?.userConcept ?? '')]); // a row traces to the user's WORDS, not only to the clause list
   const printRowNames = new Set(printNamed ? [...(ctx.print.meleeRows ?? []), ...(ctx.print.rangedRows ?? []), ...(ctx.print.traits ?? []), ...(ctx.print.rulesRows ?? []), ...(ctx.print.legendaryRows ?? [])].map((r) => String(r.name ?? '').replace(/ \(.*\)$/, '').toLowerCase()) : []);
   const traced = rows.filter(({ e }) => e.kit || e.feature || e.part || (printNamed && (e.print || printRowNames.has(String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase()))) || words(`${e.name} ${e.text}`).some((w) => clauseWords.has(w))); // a kit, feature or part row IS the user's (the seven's concept share fell as the rows' wording changed — the critic's third species read)
@@ -1518,12 +1532,7 @@ export function fidelityOf(m, raw, ctx) {
   // authors one line in print's grammar that costs the creature something. A
   // lack answered that way is honoured, and coverage credits it; a lack with
   // neither a removal nor a flaw row is still the defect this gate was built for.
-  const flawRows = rows.filter(({ e }) => e.flaw);
-  const flawFor = (c) => flawRows.some(({ e }) => {
-    const because = words(String(e.because ?? ''));
-    return because.length > 0 && because.every((w) => words(c.text).includes(w));
-  });
-  for (const c of clauses) if (c.polarity === 'lacks' && flawFor(c)) credit(c, 'lacks', 'flaw row'); // (c): a flaw row honours the lack (1f) — the red dragon's Sight Weakness has read 0/1 for three packages
+  for (const c of clauses) if (c.polarity === 'lacks' && flawFor(c)) credit(c, 'lacks', 'flaw row'); // defined above, with coverage, so the credit and the count agree // (c): a flaw row honours the lack (1f) — the red dragon's Sight Weakness has read 0/1 for three packages
   const brokenLacks = clauses.filter((c) => c.polarity === 'lacks' && !present(c) && !flawFor(c)).map((c) => c.text);
   // THE CREDITED-BY COLUMN (critic's package-seven review): per clause, the row
   // and path that bought it, or "—". "Then anyone can check a credit at a glance."

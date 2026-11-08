@@ -1,0 +1,86 @@
+[
+  {
+    "name": "",
+    "description": "a tax-ghost that makes you drop what you are carrying",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "DISARM roll 1 — damage term + declared cell: the row must ship WITH its drop effect and clear the floor"
+  },
+  {
+    "name": "",
+    "description": "a duelist who strips the blade from your hand before you can raise it",
+    "cr": "9",
+    "rules": "2024",
+    "canary": "DISARM roll 1 — damage term + declared cell: the row must ship WITH its drop effect and clear the floor"
+  },
+  {
+    "name": "",
+    "description": "a troll that wrenches weapons away and flings them into the bog",
+    "cr": "7",
+    "rules": "2024",
+    "canary": "DISARM roll 1 — damage term + declared cell: the row must ship WITH its drop effect and clear the floor"
+  },
+  {
+    "name": "",
+    "description": "a shield-sworn guard who steps between an ally and the blow",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "FREE DEFENSIVE roll 1 — the value floor must not price a declared defensive/utility free row by damage"
+  },
+  {
+    "name": "",
+    "description": "a lizardfolk monk who braces and turns aside what comes",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "FREE DEFENSIVE roll 1 — the value floor must not price a declared defensive/utility free row by damage"
+  },
+  {
+    "name": "",
+    "description": "a cutpurse spirit that winks out of sight between strikes",
+    "cr": "4",
+    "rules": "2024",
+    "canary": "FREE DEFENSIVE roll 1 — the value floor must not price a declared defensive/utility free row by damage"
+  },
+  {
+    "name": "",
+    "description": "a tax-ghost that makes you drop what you are carrying",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "DISARM roll 2 — damage term + declared cell: the row must ship WITH its drop effect and clear the floor"
+  },
+  {
+    "name": "",
+    "description": "a duelist who strips the blade from your hand before you can raise it",
+    "cr": "9",
+    "rules": "2024",
+    "canary": "DISARM roll 2 — damage term + declared cell: the row must ship WITH its drop effect and clear the floor"
+  },
+  {
+    "name": "",
+    "description": "a troll that wrenches weapons away and flings them into the bog",
+    "cr": "7",
+    "rules": "2024",
+    "canary": "DISARM roll 2 — damage term + declared cell: the row must ship WITH its drop effect and clear the floor"
+  },
+  {
+    "name": "",
+    "description": "a shield-sworn guard who steps between an ally and the blow",
+    "cr": "6",
+    "rules": "2024",
+    "canary": "FREE DEFENSIVE roll 2 — the value floor must not price a declared defensive/utility free row by damage"
+  },
+  {
+    "name": "",
+    "description": "a lizardfolk monk who braces and turns aside what comes",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "FREE DEFENSIVE roll 2 — the value floor must not price a declared defensive/utility free row by damage"
+  },
+  {
+    "name": "",
+    "description": "a cutpurse spirit that winks out of sight between strikes",
+    "cr": "4",
+    "rules": "2024",
+    "canary": "FREE DEFENSIVE roll 2 — the value floor must not price a declared defensive/utility free row by damage"
+  }
+]
