@@ -2962,6 +2962,26 @@ export { BY_ID as TEMPLATE_BY_ID };
 // derived from the sheet — never guessed — and an under row climbs the
 // ladder: add the half clause, raise the dice to the attack's budget, then log
 // that it still needs a condition. An over row gets a Recharge gate.
+// THE GATED FLOOR, MEASURED OFF PRINT RATHER THAN OFF ITS HOTTEST ROWS (owner's ruling,
+// 2026-11-07). This was 1.3x the round, from a note reading "print prices breaths and
+// bursts at 1.5-2.5x the Multiattack". Measuring print's gated action rows directly —
+// each row's damage against its OWN monster's round (best attack x Multiattack count) —
+// says otherwise:
+//
+//     breaths (n=50):        p25 0.86   median 1.02   p75 1.17   p90 1.57
+//     other gated (n=14):    p25 0.50   median 0.85   p75 1.00   p90 1.10
+//     all gated (n=64):      p10 0.71   p25 0.85   median 1.00   p75 1.09   p90 1.40
+//
+// 1.5-2.5x is the p90-and-above of BREATHS only — the composition error this sprint keeps
+// finding. At 1.3x the floor rejected 55 of print's own 64 gated damage rows (86%),
+// including about half its dragon breaths, so our gated rows were measured against a bar
+// print does not meet. 0.85 is print's p25 for breaths and its median for everything else
+// gated: most of print's shapes pass, without calibrating to the bottom decile (the
+// Vrock's Spores sit at 0.13x).
+//
+// The CEILING is still 2.5x and is NOT measured off this — print's breaths reach p90 1.57,
+// so the ceiling is loose by roughly 60% and is flagged, not changed, here.
+const GATED_FLOOR = 0.85;
 const P_FAIL = 0.55; const P_HIT = 0.65;
 const WORTH_AN_ATTACK = /\b(?:Restrained|Grappled|Charmed|Paralyzed|Stunned|Incapacitated|Petrified)\b|can't regain Hit Points.{0,40}(?:1 minute|repeat)|drops to 0 Hit Points|it dies\b/; // a threshold kill is the payload (the Wail climbed to 104 dice because its kill clause read as nothing, fresh three)
 const MINOR_EFFECT = /\b(?:Frightened|Deafened|Blinded|Poisoned|Prone)\b|Disadvantage|pulled|pushed|Speed is (?:halved|0)/;
@@ -3123,7 +3143,7 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
   const gatedControl = gated && !!row.imposes;
   const floor = freeUtility ? 0
     : bonus ? 0.25 * attackEV
-      : gated ? (gatedControl ? 0.8 * attackEV : 1.3 * maEV)
+      : gated ? (gatedControl ? 0.8 * attackEV : GATED_FLOOR * maEV)
         : (payoff ? 2.0 : 0.8) * replaced; // a free row still has to DO something; a payoff doubles (Assassinate)
   const ceiling = bonus ? 1.5 * attackEV : gated ? 2.5 * maEV : (payoff ? 3.0 : 1.5) * (replaced || attackEV);
   // `let`, not `const`: the widening rung below can turn a single-target control

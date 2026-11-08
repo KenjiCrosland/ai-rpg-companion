@@ -61,7 +61,13 @@ describe('the catalog', () => {
     // is a single target's, where one die step is ~3 points, and the old -0.5
     // slack was tighter than the dice granularity: the row prices AT the floor
     // and lands 0.09 under it. The assertion still requires near-floor pricing.
-    expect(gatedNova.ev).toBeGreaterThanOrEqual(1.3 * maEV - 3);
+    // AND THE FLOOR IT CLIMBS TO IS 0.85x, NOT 1.3x (owner's ruling, 2026-11-07). The
+    // comment above already had print's number — "print pays a nova the FULL round per
+    // target (n=52, median 1.00x)" — while the floor demanded 1.3x. Measuring print's
+    // gated action rows against their own round: breaths p25 0.86 / median 1.02, other
+    // gated median 0.85, and 55 of 64 print rows (86%) sat BELOW 1.3x. The 1.5-2.5x the
+    // old note cited is the p90-and-above of breaths alone.
+    expect(gatedNova.ev).toBeGreaterThanOrEqual(0.85 * maEV - 3);
     expect(gatedNova.ev).toBeLessThanOrEqual(2.5 * maEV + 0.65 * per * 2); // an already-gated row may sit over the ceiling; it is never double-gated
     expect(gatedNova.name).toBe('Toll (Recharge 5-6)'); // already gated — never double-gated
     // on an area nova, Deafened is a hit's worth, not a quarter

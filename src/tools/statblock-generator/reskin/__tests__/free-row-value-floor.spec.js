@@ -135,3 +135,36 @@ describe('a gated row that declares a condition is held to one attack, not the r
     expect(p.ev).toBeLessThan(p.floor);
   });
 });
+
+// THE GATED FLOOR IS PRINT'S, NOT ITS HOTTEST ROWS' (owner's ruling, 2026-11-07).
+// Measured by taking each of print's gated action rows and comparing its damage with its
+// OWN monster's round (best attack x Multiattack count): breaths p25 0.86 / median 1.02,
+// every other gated row median 0.85, all gated p25 0.85. At the old 1.3x, 55 of print's
+// 64 gated damage rows (86%) sat below our floor — including about half its dragon
+// breaths — so our gated rows answered to a bar print itself does not meet. The 1.5-2.5x
+// the old comment cited is the p90-and-above of breaths alone.
+describe('the gated floor sits where print sits', () => {
+  it('is 0.85x the round, and the constant is the single definition', () => {
+    const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'templates.mjs'), 'utf8');
+    expect(src).toMatch(/const GATED_FLOOR = 0\.85;/);
+    // one definition: the floor expression reads the constant, never a literal
+    expect(src).toMatch(/gatedControl \? 0\.8 \* attackEV : GATED_FLOOR \* maEV/);
+    expect(src).not.toMatch(/1\.3 \* maEV/);
+  });
+
+  it('a gated damage row at print\'s median clears it', () => {
+    const { valueCheck, multiattackShape } = require('../templates.mjs');
+    const { pickDonor, scaleDonor } = require('../scale.mjs');
+    const cr = 9; const scaled = scaleDonor(pickDonor(cr, null, 'brute'), cr);
+    const sections = scaled.sections;
+    // print's median gated row deals about its monster's whole ROUND, and the round is
+    // RAW damage (best attack x Multiattack count), not an EV-weighted figure — an
+    // earlier cut of this test used 0.65 x per-hit x attacks, which lands the row exactly
+    // ON the floor and then fails on floating point.
+    const perHit = Math.max(3, Math.round(scaled.per_hit ?? 6));
+    const round = perHit * multiattackShape(sections).attacks;
+    const row = { name: 'Toll (Recharge 5-6)', text: `*Constitution Saving Throw*: DC 15, each creature within 15 feet. *Failure:* ${round} (2d8) Thunder damage. *Success:* Half damage only.` };
+    const vc = valueCheck(row, { scaled, sections, cr, section: 'Actions' });
+    expect(vc.ev).toBeGreaterThanOrEqual(vc.floor);
+  });
+});
