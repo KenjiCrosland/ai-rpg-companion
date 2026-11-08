@@ -1136,11 +1136,16 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   // GM's own words this row was kept on, `expresses` the element the call named,
   // `decoration` a row the call REFUSED and that claims nothing. Sort is stable,
   // so sheet order still breaks ties within a rank.
-  // NOTE, 2026-10-27: rank 0 is UNREACHABLE and always has been — no site writes
-  // `gmQuote` to a row, and no free row can carry one anyway (a row the GM's own
-  // words asked for earns clause credit and never becomes free). The live rank
-  // is element-vs-decoration. The arm is kept because it costs nothing and is
-  // right if a quoted free row ever becomes possible; flagged to the owner.
+  // RANK 0, 2026-11-08: now reachable, and the parenthetical above was FALSE when
+  // it was written. "A row the GM's own words asked for earns clause credit and
+  // never becomes free" was an assertion, not an enforced rule — the seat-authoring
+  // site marked every authored row free whether or not its seat carried a GM clause,
+  // and 7 of 34 evictions across three fortys dropped a clause the sheet then owed.
+  // That site now holds the invariant (a clause-bound row is not free at all, and
+  // answers only to the card ceiling), so the rule is true by construction rather
+  // than by claim. `clause` joins the top rank for any free row that still carries
+  // one by another route — a keyed seed, say — because the GM's ask outranks a
+  // surprise wherever the two ever meet. `gmQuote` stays: still unwritten, still free.
   // FOUR RANKS, NOT THREE (2026-10-29). The card-size ceiling below can settle at
   // 0, so the order decides what a crowded card sheds — and "no receipt" was
   // lumping two very different rows together. The Pit Fiend lost a pick the call
@@ -1150,10 +1155,10 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   // owner's complaint is about the BORROWED row — "refusals lead to sameness
   // because we borrow a stock row from the chassis" — and `accepted_closest` is
   // exactly that row, stamped where the nearest lands.
-  const receiptRank = (e) => (e.gmQuote ? 0 : e.expresses ? 1 : e.accepted_closest ? 3 : 2);
+  const receiptRank = (e) => ((e.gmQuote || e.clause) ? 0 : e.expresses ? 1 : e.accepted_closest ? 3 : 2);
   const ranked = [...freeRows].sort((a, b) => receiptRank(a.e) - receiptRank(b.e));
   if (freeRows.length > 1 && ranked.some(({ e }, i) => e !== freeRows[i].e)) {
-    trace('free-row order:', `${ranked.map(({ e }) => `"${bareName(e)}" [${['quote', 'element', 'decoration'][receiptRank(e)]}]`).join(' > ')} — a receipt row is never displaced by one without`);
+    trace('free-row order:', `${ranked.map(({ e }) => `"${bareName(e)}" [${['clause', 'element', 'decoration', 'borrowed'][receiptRank(e)]}]`).join(' > ')} — a receipt row is never displaced by one without`);
   }
   for (const { sec, e } of ranked) {
     const cell = cellOf(e);
@@ -5709,10 +5714,34 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               else if (unmetS) trace('seat authoring refused:', `${seat} — the authored row needs its target to have ${unmetS} and no row on this sheet imposes it, so its trigger could never fire (the Chalk-Hound's Daubing Cling, forty #2); the nearest template stands in`);
               else if (actS) trace('seat authoring refused:', `${seat} — the authored row makes "${actS}" act, and no row on this sheet is that thing; a table cannot run it (the Spore-Mother's puppets, forty #3); the nearest template stands in`);
               else if (!slotS && !unmetS && !actS) {
-                freeRowsUsed += 1;
+                // THE GM'S ASK IS NOT A FREE ROW (owner's ruling, 2026-11-08). The free-row
+                // budget exists for pleasant surprises; a row written to answer something the
+                // GM typed is not a surprise, so it does not compete for that one slot. The
+                // rank site 4,500 lines up already ASSERTED this invariant — "a row the GM's
+                // own words asked for earns clause credit and never becomes free" — and this
+                // site broke it, marking every seat-authored row free whether or not its seat
+                // carried a clause. Measured over three fortys (2026-11-08): 34 free-row
+                // evictions, 7 of which dropped a clause the shipped sheet then owed — the
+                // largest single measured contributor to the 73% per-clause hit rate.
+                //
+                // `idea.clause` is the engine's OWN record that this seat answers a GM ask:
+                // the menu reads the same field to stand taste down (`gmAsked` at the menu
+                // site). The row keeps the clause so both the budget and the credit
+                // accounting read it off the row, never off the seat — a receipt left on the
+                // seat is a receipt the budget cannot see, which is how this whole family of
+                // bugs started. A clause-bound row now counts in `fixedRows`, which tightens
+                // the room left for a BORROWED row (`accepted_closest`) — the only rank the
+                // card ceiling sheds, per the owner's 2026-10-29 ruling that a row the call
+                // actually CHOSE keeps its slot however crowded the card is. So the honest
+                // cost is one row longer on the sheets this touches, plus a nearest-match row
+                // shed a little more often; it is NOT that a crowded card evicts the surprise.
+                const answersGM = !!idea?.clause;
+                if (!answersGM) freeRowsUsed += 1;
                 row.authoredSeat = true; // the sameness metric and the gap ship-check count it as the seat's own row, not a template's
+                if (answersGM) row.clause = row.clause ?? idea.clause;
                 const authoredSeatShape = { row, templateName: null, section: form.section, template: null, host: 'melee', supersedes: null, asked: vetAsked(fit.asked, rawConceptText), askedRaw: String(fit.asked ?? '').trim(), expresses: fit.expresses ?? null, accepted_closest: false, elementsOffered: sigElements, authoredSeat: true, because: `${String(idea.idea ?? '').slice(0, 160)} [authored: the catalog held no shape for it]` };
-                markFreeRow(authoredSeatShape); // one owner for the mark; BOTH marks ride, as they do for an element-receipt row
+                if (answersGM) trace('authored row answers the GM:', `${seat} — "${row.name}" was written for "${String(idea.clause).slice(0, 70)}", so it is NOT a free row and never competes for the free-row slot; the card ceiling still governs it`);
+                else markFreeRow(authoredSeatShape); // one owner for the mark; BOTH marks ride, as they do for an element-receipt row
                 trace('seat authored the row:', `${seat} — the call refused every template for no_fit ("${String(fit.missing ?? 'unstated').slice(0, 70)}") and wrote ${seatKind} instead: "${row.name}" -> ${form.section}. ${row.text.slice(0, 120)}`);
                 // THE DECLARED COUNT RIDES OUT (2026-11-04). `quantities` gated the row in
                 // `parseAuthorResponse` and was then dropped, so a clean run could not be

@@ -115,22 +115,53 @@ Decide on the count.
 
 ### 1d. A clause-bound row outranks a decoration in the free-row budget (critic §6, #17)
 
-**Measured:** `generate.mjs:1152 receiptRank = (e) => (e.gmQuote ? 0 : e.expresses ? 1 :
-e.accepted_closest ? 3 : 2)`. `clause` is not consulted. On #17 Pit Fiend the budget (1) kept
-`Scorched Iron Plate` [template, `expresses`, rank 1] and evicted `Harvest the Sworn` [authored,
-`clause` + `clauseId`, no `expresses`, rank 2] — the row that answered "collects the oaths of
-dying knights", the GM's own clause (trace 180: `free row over budget: Actions/"Harvest the
-Sworn" leaves at ship`). The comment above the rank says rank 0 (`gmQuote`) "is UNREACHABLE and
-always has been — no site writes gmQuote". A clause binding IS the GM's ask.
+**MEASURED 2026-11-08 (three fortys T03/T05/T09, 120 sheets) — and the first measurement of
+this was WRONG; the corrected figures are below.** 34 `free row over budget` evictions. 26 of
+them evicted a **seat-authored** row, which I first reported as "26 evicted a GM-asked row" —
+that conflated "no template fit this seat's mechanic" with "answers something the GM typed".
+Split properly by what the seat carried: **5** on a seat holding the GM's clause (`taste stands
+down` fired), **9** handed a clause by `gmAsked`'s third tier (whose own trace says it "buys no
+coverage credit"), **12** with no clause at all — correctly budget-governed free rows.
 
-**Do:** `(e.gmQuote || e.clause) ? 0 : ...`. One token. The rank's own comment already argues
-for it ("a receipt row must never be displaced by a row that has none").
+**The decisive number** (`checkBlock(sheet).fidelity.dropped`, the exact list `clause-rate.mjs`
+scores the 85% bar against): of the 34 evictions, **7 dropped a clause the shipped sheet then
+owed**; 6 were credited anyway by another row; 13 carried no clause. So the prize is **7 of the
+39 current misses — 73% -> 78%**, not the "up to 26 of 39" first claimed. The seven:
+#16 Molten Decree ("rules a city of forges"), #17 The Ledger's Due and #17 Harvest the Sworn
+("collects the oaths of dying knights", two sweeps), #20 Drowning Song ("song drowns fleets"),
+#12 Spore Choke ("commands lesser swarms"), #30 Engulf the Consecrated ("digests reliquaries"),
+#39 Outlasted Steel ("closes with a shortsword").
 
-**Predict:** on #17 the oath row stays and the fire aura leaves. Count across the saved fortys
-how often `free row over budget` evicted a `clause`-bound row in favour of a row without one —
-that is the prize, and it is also a direct contributor to the clause hit rate.
+The rank site's own comment asserted the invariant this breaks: *"a row the GM's own words asked
+for earns clause credit and never becomes free."* It was a claim, not a rule — `generate.mjs`'s
+seat-authoring site marked every authored row free regardless. A rule held past its evidence, in
+its own words.
+
+**LANDED (owner approved 2026-11-08).** One site, because the other three `markFreeRow` calls
+already sit behind `!gmAsked(...)`: at the seat-authoring site a seat carrying `idea.clause` (the
+same field the menu reads to stand taste down) no longer marks its row free, stamps the clause on
+the row, and does not spend the allowance. The plan's original one-token rank fix landed too
+(`(e.gmQuote || e.clause) ? 0`) for any free row that still carries a clause by another route.
+
+**Honest cost, corrected:** the card ceiling sheds only `accepted_closest` (owner, 2026-10-29:
+"a row the call actually CHOSE keeps the budget it always had however crowded the card is"). So a
+clause row counting as fixed does NOT evict a chosen free row — it tightens the room left for a
+borrowed one. Cost is one row longer on the 7-13 affected sheets of 120 (6-11%), plus a
+nearest-match row shed a little more often. My first write-up of this claimed "a crowded card
+sheds the surprise rather than the ask"; that was wrong and is corrected in the code comment.
+
+**Still open, with its number:** 2 of the 7 were the `handed` tier, which this fix does not
+reach (no `idea.clause` at authoring time; the clause arrives later at the print-body gate).
+Worth 2 hits over three sweeps. Deliberately not bundled — exempting tier 3 means calling a
+handed clause a receipt, which contradicts its own trace, and that is an owner question.
 
 ### 1e. Print's attack list is locked on a print body (critic §2b, #17 and #01)
+
+**MEASURED 2026-11-08 (Fable, same three fortys) — exposure is 8 sheets of 120, as predicted
+bounded.** `print canon attack:` lines vs print's attack rows: **Pit Fiend 3 of 3 sheets short**
+(mapped 1, 2, 2 of 3 — Fiery Mace never arrives); **Skeleton twist 2 of 2 short** (#38, mapped 1
+of Shortsword+Shortbow); Owlbear (Rend, 1) and Goblin Boss (2) are whole. **Dire Wolf 3 of 3
+ship "makes two Bite attacks"**; print's Dire Wolf has Bite and no Multiattack.
 
 Two mechanisms, one principle.
 

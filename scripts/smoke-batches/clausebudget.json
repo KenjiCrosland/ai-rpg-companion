@@ -1,0 +1,87 @@
+[
+  {
+    "name": "Dire Wolf",
+    "description": "with a frost-rimed hide",
+    "cr": "1",
+    "rules": "2024",
+    "canary": "#1 CONTROL - print head plus a free row: the budget still governs a surprise"
+  },
+  {
+    "name": "Stone Golem",
+    "description": "carved as a weeping saint",
+    "cr": "10",
+    "rules": "2024",
+    "canary": "#9 TIE - two clause rows (Bound Sorrow’s Mend vs Grave Mortar Bind), both must land"
+  },
+  {
+    "name": "",
+    "description": "a drowned cathedral choir that sings in one voice",
+    "cr": "10",
+    "rules": "2014",
+    "canary": "#10 TIE - \"sings in one voice\": the clause row must not be evicted"
+  },
+  {
+    "name": "",
+    "description": "a plague-bearing archon of flies that commands lesser swarms",
+    "cr": "13",
+    "rules": "2024",
+    "canary": "#12 COST A HIT - \"commands lesser swarms\" dropped when Spore Choke left"
+  },
+  {
+    "name": "",
+    "description": "a tyrant of burning brass who rules a city of forges",
+    "cr": "17",
+    "rules": "2024",
+    "canary": "#16 COST A HIT - \"rules a city of forges\" dropped when Molten Decree left"
+  },
+  {
+    "name": "Pit Fiend",
+    "description": "who collects the oaths of dying knights",
+    "cr": "20",
+    "rules": "2024",
+    "canary": "#17 COST A HIT - \"collects the oaths of dying knights\": Harvest the Sworn must stay"
+  },
+  {
+    "name": "",
+    "description": "a leviathan of the trench whose song drowns fleets",
+    "cr": "24",
+    "rules": "2024",
+    "canary": "#20 COST A HIT - \"song drowns fleets\" dropped when Drowning Song left"
+  },
+  {
+    "name": "Owlbear",
+    "description": "",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "#21 CONTROL - print exact: budget 0, no free row, unchanged from print"
+  },
+  {
+    "name": "",
+    "description": "A Large insectile horror. It has four scythe-arms, a spitting maw, and a shell that sheds acid. It fights by pinning prey with two arms and carving with the others.",
+    "cr": "9",
+    "rules": "2024",
+    "canary": "#24 CONTROL - three never/coin-flip clauses, watch the card length"
+  },
+  {
+    "name": "",
+    "description": "a cathedral-vault ooze that digests reliquaries",
+    "cr": "9",
+    "rules": "2014",
+    "canary": "#30 COST A HIT - \"digests reliquaries\" dropped when Engulf the Consecrated left"
+  },
+  {
+    "name": "",
+    "description": "",
+    "cr": "4",
+    "rules": "2024",
+    "role": "brute",
+    "canary": "#36 CONTROL - a thin CR 4 card: the elastic budget must still open up"
+  },
+  {
+    "name": "",
+    "description": "a sellsword who hurls a handaxe and closes with a shortsword",
+    "cr": "5",
+    "rules": "2014",
+    "canary": "#39 COST A HIT - \"closes with a shortsword\" dropped when Outlasted Steel left"
+  }
+]

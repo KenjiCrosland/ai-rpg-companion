@@ -669,3 +669,57 @@ describe('a receipt row outranks the card-size ceiling', () => {
     expect(sections.Traits.map((e) => e.name)).toEqual(['Oath-Chain Mantle']);
   });
 });
+
+// THE GM'S ASK IS NOT A FREE ROW (owner's ruling, 2026-11-08). Measured over three
+// fortys: 34 free-row evictions, 7 of which dropped a clause the shipped sheet then
+// owed — the largest single measured contributor to the 73% per-clause hit rate. The
+// Pit Fiend is the case: "Harvest the Sworn", written for "collects the oaths of dying
+// knights", was evicted at ship so that "Scorched Iron Plate" — a decoration the audit
+// then judged to express nothing — could take the single slot.
+describe("a row that answers the GM's clause does not compete for the free-row slot", () => {
+  // the shape the authoring site now produces: clause-bound rows are NOT marked free
+  const clauseRow = (name, clause) => ({ name, text: 'The target must succeed on a DC 13 Constitution saving throw or have the Poisoned condition.', clause, authoredSeat: true });
+
+  test('a clause-bound row survives a budget of 1 alongside a free row, and the free row still lands', () => {
+    const sections = { Actions: [clauseRow('Harvest the Sworn', 'collects the oaths of dying knights')], Traits: [freeTrait('Scorched Iron Plate', 'heated-body')] };
+    const generation = {};
+    settleSheetBudgets({ sections, scaled: scaled(), cr: 8, generation });
+    expect(sections.Actions.map((e) => e.name)).toEqual(['Harvest the Sworn']);
+    expect(sections.Traits.map((e) => e.name)).toEqual(['Scorched Iron Plate']);
+    expect(generation.free_rows).toBe(1); // the clause row is not counted as a free one
+  });
+
+  test('two clause-bound rows both survive — the budget of 1 does not pick between GM asks', () => {
+    const sections = { Traits: [clauseRow("Bound Sorrow's Mend", 'regains hit points each turn'), clauseRow('Grave Mortar Bind', 'binds its victims in mortar')] };
+    settleSheetBudgets({ sections, scaled: scaled(), cr: 8, generation: {} });
+    expect(sections.Traits.map((e) => e.name)).toEqual(["Bound Sorrow's Mend", 'Grave Mortar Bind']);
+  });
+
+  // WHAT THE CARD CEILING ACTUALLY SHEDS (owner, 2026-10-29: "a row the call actually
+  // CHOSE keeps the budget it always had however crowded the card is, and only
+  // `accepted_closest` answers to the card's room"). So a clause-bound row counting as
+  // fixed does NOT evict a chosen free row — it tightens the room left for a BORROWED
+  // one. Asserted here because the first draft of this test assumed the ceiling was a
+  // flat row cap, which would have made the ruling above false.
+  test('a clause-bound row consumes card room, so a crowded card sheds the BORROWED row and keeps both the ask and the chosen surprise', () => {
+    // CR 2 sits in band 0-2, where print's median is 2 rows and its p90 ceiling is 4
+    const borrowed = { ...freeTrait('Nearest Match', 'resonant-body'), accepted_closest: true };
+    const sections = {
+      Actions: [clauseRow('A', 'ask one'), clauseRow('B', 'ask two'), clauseRow('C', 'ask three')],
+      Traits: [freeTrait('Chosen Surprise', 'heated-body'), borrowed],
+    };
+    settleSheetBudgets({ sections, scaled: scaled(), cr: 2, generation: {} });
+    expect(sections.Actions.map((e) => e.name)).toEqual(['A', 'B', 'C']);
+    expect(sections.Traits.map((e) => e.name)).toEqual(['Chosen Surprise']);
+  });
+
+  test('and where a clause DOES ride a free row, it outranks an element and a decoration', () => {
+    const el = { ...freeTrait('Element', 'resonant-body'), expresses: 'a body of scorched iron' };
+    const cl = { ...freeTrait('Asked For', 'heated-body'), clause: 'vents scalding steam' };
+    const sections = { Traits: [el, cl] };
+    const lines = [];
+    settleSheetBudgets({ sections, scaled: scaled(), cr: 2, generation: {}, trace: (a, b) => lines.push(`${a} ${b}`) });
+    expect(sections.Traits.map((e) => e.name)).toEqual(['Asked For']);
+    expect(lines.join(' | ')).toMatch(/free-row order: "Asked For" \[clause\] > "Element" \[element\]/);
+  });
+});
