@@ -9524,7 +9524,22 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           if (f.rewrite != null || f.rename) continue;
           const sec = f.loc?.section; const nm = f.loc?.entry; if (!sec || !nm) continue;
           const row = (monster.sections?.[sec] ?? []).find((e) => String(e.name ?? '') === nm);
-          if (!row || !row.freeRow) continue;
+          // AND A ROW THE REPAIR ARM WROTE IS AS MUCH OURS AS A FREE ROW (the critic's
+          // §2a, gate of 2026-11-08). Their #16 Forge Sovereign — the best rulership row
+          // in ten rolls — deals 18 (4d8) Fire to each creature of its choice with no
+          // action, no bonus action and no frequency, so a GM reads it as free and at
+          // will. The audit flagged it ("The trait depends on an undefined...") and
+          // nothing acted, because this selection read `freeRow` only and that row is
+          // stamped `authored` + `clause` by the CLAUSE-REPAIR arm, which answers a clause
+          // the GM typed and so is never a free row.
+          //
+          // Measured across the three saved forties before widening: 3 audit findings on
+          // an authored non-free row — Siege Frame, Forge Sovereign, Four Scythe-Arms —
+          // about 1 a forty. At that size the plan's smaller option is the right one: widen
+          // the selection, rather than rework the authoring refusal to demand an economy.
+          // Every existing refusal still stands (print, template, library, kit, chassis),
+          // and the cap of 2 rows a sheet is unchanged.
+          if (!row || !(row.freeRow || row.authored)) continue;
           if (row.print || row.printNamed) continue; // print's own row is a closed fact
           const seen = freeFlagged.find((x) => x.row === row);
           if (seen) { seen.problems.push(f.message); continue; }
@@ -9537,7 +9552,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           const takenNow = Object.values(monster.sections ?? {}).flat().filter(Boolean).map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean);
           const lacksNow = clauseRecord.filter((c) => c.polarity === 'lacks').map((c) => c.text);
           for (const t of toFix) {
-            trace('free row repair:', `"${t.row.name}" — the audit faults it (${t.problems.map((x) => String(x).slice(0, 70)).join(' | ')}); re-authored through the forms rather than evicted (the owner's ruling: a free row is repaired)`);
+            trace('row repair:', `"${t.row.name}" [${t.row.freeRow ? 'free row' : 'authored'}] — the audit faults it (${t.problems.map((x) => String(x).slice(0, 70)).join(' | ')}); re-authored through the forms rather than evicted (the owner's ruling: a flagged row is repaired)`);
             const rawF = await callLLM(buildFreeRowFixPrompt({
               name: p.name, inline: inlineGuessRef(), cr, sheet: sheetText, row: { name: String(t.row.name), text: String(t.row.text ?? '') },
               problems: t.problems, kind: kindOf(t.sec), taken: takenNow.filter((n) => n !== String(t.row.name).replace(/ \(.*\)$/, '')), lacks: lacksNow,

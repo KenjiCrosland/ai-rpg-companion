@@ -1,0 +1,7 @@
+[
+  { "canary": "KNIFE BALL 1 · the reported bug: a thin concept must not be laundered into a swarm", "name": "knife ball", "description": "", "cr": "3", "rules": "2024" },
+  { "canary": "KNIFE BALL 2 · the GM got it twice, so it rolls twice", "name": "knife ball", "description": "", "cr": "3", "rules": "2024" },
+  { "canary": "KNIFE BALL 3 · same concept, higher CR", "name": "knife ball", "description": "", "cr": "8", "rules": "2024" },
+  { "canary": "CONTROL 1 · a GM who types the swarm still gets one", "name": "swarm of rust beetles", "description": "", "cr": "2", "rules": "2024" },
+  { "canary": "CONTROL 2 · the GM's own mass, in the GM's own words", "name": "rolling mass of knives", "description": "that pours down a corridor", "cr": "5", "rules": "2024" }
+]

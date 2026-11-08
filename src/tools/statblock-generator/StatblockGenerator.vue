@@ -1233,14 +1233,23 @@ async function generateStatblockEngine(edition) {
     conceptRejectedCanon = rejectedCanon(parsed?.hint_verdicts, hintText);
     if (verdicts.length) logger.log('[concept] hints:', verdicts.map((h) => `${h.cue}→${h.field} ${h.accepted ? '✓' : '✗'}${h.because ? ` ("${h.because.slice(0, 40)}")` : ''}`).join(' | '));
   };
-  const routeOn = async (text) => {
+  // `gmWords` is what the GM actually typed. It is NOT always `text`: a thin
+  // concept is EXPANDED before routing (identity prose, body, attack mode,
+  // signature) so the route call has something to read. That expansion must never
+  // become the GM's evidence — `chooseLine` vets every yes/no answer by requiring
+  // the call's quote to appear in `rawText`, and if `rawText` carries the model's
+  // own prose the vet checks the model against itself. "knife ball" expanded to a
+  // sentence about a mass of blades, the swarm answer quoted that sentence, the vet
+  // passed, and the GM got a Swarm of Knife Balls (2026-11-08). The call still READS
+  // the expansion; only the GM's own words can CONFIRM it.
+  const routeOn = async (text, gmWords = null) => {
     try {
       for (const h of piAliasesIn(text)) logger.log('[route] pi alias:', `"${h.matched}" → "${h.text}"`);
       const raw = await generateGptResponse(buildRoutePrompt(readPhrases(text), { cr, menuRole: givenArchetype }), validateRouteResponse, 2); // the rewritten concept is the only text the route reads (PI alias spec 2026-10-01)
       // STEP 7: the PARSE comes back here, the CHOICE is made after the path
       // call resolves, so chooseLine knows which pipeline it is routing for.
       // Both calls still race — the path is known with no added latency.
-      return { parsed: parseGenerationResponse(raw), text: readPhrases(text), rawText: text };
+      return { parsed: parseGenerationResponse(raw), text: readPhrases(text), rawText: gmWords ?? text };
     } catch (e) {
       logger.warn('[route] call failed:', e?.message ?? e);
       return null;
@@ -1368,7 +1377,7 @@ async function generateStatblockEngine(edition) {
           }
           // CALL 1 — ROUTE (CALL 2 on the expand-first path)
           // a shadow decision may never delay the sheet: twenty seconds, then it is recorded as FAILED (timed out) and the route's own read stands
-          const routedP = routeOn(routeText); // the route call is issued first; the path call rides beside it
+          const routedP = routeOn(routeText, userConcept); // the route call is issued first; the path call rides beside it
           const pathCapped = Promise.race([pathOn(), new Promise((res) => setTimeout(() => res({ path: null, by: 'call', failed: true, print_body: null, relation: null, class: null, species: null, receipt: 'the path call did not answer within 20 s' }), 20_000))]);
           const [routedRaw, pathDecided] = await Promise.all([routedP, pathCapped]); // name — description, once (the route quoted "Flying speed of 60ft Flying speed of 60f" from the doubled text)
           conceptPath = pathDecided; logger.log(pathLine(conceptPath, userConcept));

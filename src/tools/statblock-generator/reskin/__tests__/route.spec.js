@@ -253,6 +253,35 @@ describe('the new lines\' first read (critic, new-lines 2026-09-28)', () => {
     expect(hermit.line).toBe('skirmisher');
     expect(hermit.notes.join(' | ')).toMatch(/swarm: a swarm is a mass of many — no mass in the words/);
     expect(chooseLine({ picks: [{ line: 'swarm', because: 'a murder of crows' }], creature_type: 'Beast' }, { text: 'a murder of crows that follows a hermit' }).line).toBe('swarm');
+    // 2026-11-08 — THE SWARM OF KNIFE BALLS. A thin concept is expanded before
+    // routing, so `text` is the model's own identity prose while `rawText` is the
+    // two words the GM typed. Neither arm of the swarm guard may read the expansion:
+    // the call's quote has to land in the GM's words, and when the quote fails the
+    // word table has to read the GM's words too. Both arms are replayed here on the
+    // sentence that actually shipped the bug.
+    const expanded = 'knife ball — a roiling mass of animated blades that rolls as one body';
+    const laundered = chooseLine(
+      { picks: [{ line: 'swarm', because: 'a roiling mass of animated blades' }], is_a_swarm: { yes: true, because: 'a roiling mass of animated blades' }, creature_type: 'Construct' },
+      { text: expanded, rawText: 'knife ball' },
+    );
+    expect(laundered.body).not.toBe('swarm');
+    expect(laundered.notes.join(' | ')).toMatch(/is_a_swarm refused: the call answered yes but quoted/);
+    // and with no answer at all, the fallback table reads "knife ball", not the prose
+    const byTable = chooseLine({ picks: [{ line: 'swarm', because: 'rolls as one body' }], creature_type: 'Construct' }, { text: expanded, rawText: 'knife ball' });
+    expect(byTable.body).not.toBe('swarm');
+    expect(byTable.notes.join(' | ')).toMatch(/swarm: a swarm is a mass of many — no mass in the words/);
+    // WHY THE CALLER MUST PASS THE GM'S WORDS: hand the expansion in as `rawText`
+    // too — the shape the pipeline actually had — and the vet checks the model
+    // against its own sentence and calls it the GM's. This asserts the laundering
+    // so that a caller ever passing the expansion as `rawText` again is a test failure.
+    const selfEvidenced = chooseLine(
+      { picks: [{ line: 'swarm', because: 'a roiling mass of animated blades' }], is_a_swarm: { yes: true, because: 'a roiling mass of animated blades' }, creature_type: 'Construct' },
+      { text: expanded, rawText: expanded },
+    );
+    expect(selfEvidenced.body).toBe('swarm');
+    expect(selfEvidenced.notes.join(' | ')).toMatch(/is_a_swarm: on the GM's own words/);
+    // the GM who DOES type the mass still gets the swarm, expansion or not
+    expect(chooseLine({ picks: [{ line: 'swarm', because: 'a mass of knives' }], creature_type: 'Construct' }, { text: expanded, rawText: 'a rolling mass of knives' }).body).toBe('swarm');
     const kobold = chooseLine({ picks: [{ line: 'lurker-trap', because: 'a kobold trapmaker' }], creature_type: 'Humanoid' }, { text: 'a kobold trapmaker' });
     expect(kobold.line).toBe('lurker');
     expect(kobold.notes.join(' | ')).toMatch(/lurker-trap: a Humanoid sets traps; it is not one/);

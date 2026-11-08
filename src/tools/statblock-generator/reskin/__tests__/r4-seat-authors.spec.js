@@ -368,7 +368,7 @@ describe('the audit faults a free row and the row is re-authored, never dropped'
       // sound answer trades the uncomputable bonus for something the engine can state.
       // This is the round trip doing the work — not an instruction to be careful.
       fix: { traits: [{ clause: 'who fights in formation', name: 'Lacquered Line', trigger: 'While Vashka is within 5 feet of an ally', effect: 'each of them has Resistance to Bludgeoning damage', imposes: null, condition_relation: 'none', passive_effect: 'protection' }] } });
-    expect(trace).toMatch(/free row repair:.*Lacquered Line/);
+    expect(trace).toMatch(/row repair: "Lacquered Line" \[free row\]/);
     expect(trace).toMatch(/free row repaired:/);
     const row = rows.find((r) => r.name === 'Lacquered Line');
     expect(row).toBeTruthy();                                  // repaired, never evicted — the owner's ruling
@@ -474,4 +474,36 @@ describe('a closest-accepted row whose subject is flipped is refused', () => {
     expect(fitPrompt).toMatch(/"closest_subject"/);
     expect(fitPrompt).toMatch(/flipped/);
   }, 30000);
+});
+
+// A ROW THE REPAIR ARM WROTE IS AS MUCH OURS AS A FREE ROW (the critic's §2a, gate of
+// 2026-11-08). Their #16 Forge Sovereign deals 18 (4d8) Fire to each creature of its choice
+// with no action, no bonus action and no frequency — a GM reads it as free and at will. The
+// audit flagged it and nothing acted, because the repair's selection read `freeRow` only
+// and the clause-repair arm stamps `authored` + `clause` (never `freeRow`, because it
+// answers a clause the GM typed). Measured across three forties before widening: 3 such
+// findings — Siege Frame, Forge Sovereign, Four Scythe-Arms — about 1 a forty.
+describe('the repair reaches an authored row that is not a free row', () => {
+  const sel = (row) => !!(row.freeRow || row.authored); // the widened predicate, verbatim
+
+  it('selects an authored non-free row — the #16 shape', () => {
+    expect(sel({ authored: true, clause: 'rules a city of forges' })).toBe(true);
+  });
+
+  it('still selects a free row', () => {
+    expect(sel({ freeRow: true, expresses: 'a furnace-heat aura' })).toBe(true);
+  });
+
+  it('and still refuses every row that is neither', () => {
+    // print, chassis and the catalog keep their immunity: those are priced composition
+    for (const row of [{ print: true }, { template: 'fear-aura' }, { library: true }, { kit: true }, {}]) {
+      expect(sel(row)).toBe(false);
+    }
+  });
+
+  it('the pipeline uses that predicate and names the row kind in its trace', () => {
+    const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'generate.mjs'), 'utf8');
+    expect(src).toMatch(/!\(row\.freeRow \|\| row\.authored\)/);
+    expect(src).toMatch(/\[\$\{t\.row\.freeRow \? 'free row' : 'authored'\}\]/);
+  });
 });

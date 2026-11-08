@@ -431,8 +431,14 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
     return null;
   };
   const shootsA = vet('shoots'); const swarmA = vet('is_a_swarm'); const holdsA = vet('holds');
-  const noBow = (t) => (shootsA === null ? !ARCHER_NOUN.test(String(t ?? '')) : !shootsA);
-  const noMass = (t) => (swarmA === null ? !SWARM_WORDS.test(String(t ?? '')) : !swarmA);
+  // A word table is the FALLBACK for what the GM meant, so it reads what the GM
+  // WROTE — `rawText` — and not `text`, which on a thin concept is the expansion
+  // written for the call to read. Both arms have to agree on whose words count:
+  // vetting the answer against the GM while the fallback reads the model's prose
+  // just moves the laundering one branch over (2026-11-08, the Swarm of Knife Balls).
+  const gmText = String(rawText ?? text ?? '');
+  const noBow = () => (shootsA === null ? !ARCHER_NOUN.test(gmText) : !shootsA);
+  const noMass = () => (swarmA === null ? !SWARM_WORDS.test(gmText) : !swarmA);
   const rejectedCues = new Map();
   {
     const real = new Set(verbHits(text).map((h) => h.key));
@@ -459,7 +465,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
     const id = lineIdOf(k?.line);
     const line = id ? BY_ID.get(id) : null;
     if (!line) { notes.push(`${String(k?.line ?? '?').slice(0, 30)}: not on the shelf`); continue; }
-    if (line.id === 'swarm' && noMass(text)) { notes.push(`${id}: a swarm is a mass of many — ${swarmA === null ? 'no mass in the words' : 'the call reads one creature, not a mass'}`); bodyVetoed = true; continue; } // before the family seed: a vetoed swarm must not seed itself
+    if (line.id === 'swarm' && noMass()) { notes.push(`${id}: a swarm is a mass of many — ${swarmA === null ? 'no mass in the words' : 'the call reads one creature, not a mass'}`); bodyVetoed = true; continue; } // before the family seed: a vetoed swarm must not seed itself
     firstKnown = firstKnown ?? line;
     if (family && line.family !== family) { notes.push(`${id}: outside the user's ${menuRole} role`); continue; }
     if (!evidenceIn(k?.because, text)) { notes.push(`${id}: quote not found in the input ("${String(k?.because ?? '').slice(0, 40)}")`); continue; }
@@ -468,7 +474,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
     if (line.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} sets traps; it is not one`); continue; }
     if (line.id === 'lurker-phantom' && noPhantom()) { notes.push(`${id}: ${noPhantomWhy()}`); continue; }
     if (line.id === 'skirmisher-shifter' && !vettedHits(text).some((h) => h.id === 'skirmisher-shifter')) { notes.push(`${id}: a shifter is named by its words (shape-shifts, turns into, a were-) — ${verbHits(text).some((h) => h.id === 'skirmisher-shifter') ? 'the call read the one here as a shape it WEARS, not a form it changes into' : 'none here'}`); continue; } // a mind flayer with a sword drew a Beast Bite (critic-ten 2026-10-01); a staircase "wearing a shape" drew the werewolf kit until the verdict was honoured (2026-11-05)
-    if (line.id === 'skirmisher-archer' && noBow(text)) { notes.push(`${id}: ${shootsA === null ? 'no bow, arrow or shot in the words' : 'the call reads no shot of its own'}`); continue; }
+    if (line.id === 'skirmisher-archer' && noBow()) { notes.push(`${id}: ${shootsA === null ? 'no bow, arrow or shot in the words' : 'the call reads no shot of its own'}`); continue; }
     // CASTING IS A MECHANIC ENGINE (the critic's fourth read): a caster line needs a magic word in the GM's own words. "Knight" and "duelist" carried none and drifted to the warpriest on two prompts in five.
     if (!family && line.family === 'caster' && noMagic(text)) { notes.push(`${id}: ${castsAnswer === null ? 'a caster line needs a magic word in the words — none here' : 'the call reads no worked magic in these words'}`); continue; }
     chosen = line; quotedPick = true; // the call's pick, with its quote found in the GM's words — 4b step 3 reads this
@@ -486,9 +492,9 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
       if (line.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)) continue;
       if (line.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType)) continue;
       if (line.id === 'lurker-phantom' && noPhantom()) continue;
-      if (line.id === 'swarm' && noMass(text)) continue;
+      if (line.id === 'swarm' && noMass()) continue;
       if (line.id === 'skirmisher-shifter' && !vettedHits(text).some((h) => h.id === 'skirmisher-shifter')) continue; // the rank fallback honours the call's verdict too, or the line walks back in the door the guard above just shut
-      if (line.id === 'skirmisher-archer' && noBow(text)) continue;
+      if (line.id === 'skirmisher-archer' && noBow()) continue;
       if (!family && line.family === 'caster' && noMagic(text)) continue; // casting is a mechanic engine: it never comes back on rank either (the critic's fourth read)
       chosen = line; notes.push(`${line.id}: taken on rank — its quote was not found, no hard veto`); break;
     }
@@ -525,7 +531,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
       && !(l.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType))
       && !(l.id === 'lurker-phantom' && noPhantom()) // the override obeys the body vetoes too (the kuo-toa went phantom on a verb, 2026-10-01)
       && !(l.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType))
-      && !(l.id === 'skirmisher-archer' && noBow(text))
+      && !(l.id === 'skirmisher-archer' && noBow())
       // THE CASTER GATE HOLDS ON THE OVERRIDE TOO (critic, 2026-10-14: the gate
       // refused the warpriest line for want of a magic word, and then "smites"
       // put it back). Casting is a mechanic engine; a verb cannot conjure it.
