@@ -66,12 +66,23 @@ a point within \d+ feet` for Sphere/Cube; the comment at :24 says an Emanation "
 creature by definition." Print writes the anchor every time: "in a 20-foot Emanation originating
 from the creature" (every Emanation row in the corpus).
 
-**Do:** where the seat renders a save row's target (the path `parseAuthorResponse` → `authoredRow`
-in generate.mjs ~3598), when the target is a Cone, Line or Emanation and the text lacks
-`originating from`, append ` originating from {inline}` — the creature's inline, which that
-renderer already has. Do NOT change `TARGET_OK` to require the phrase from the model; the engine
-owns the anchor the way it owns `{dc}`. This fixes every seat-authored Cone/Line/Emanation, not
-one sheet, and the 2014 converter's "sphere" wording then reads anchored.
+**Do:** anchor the **Emanation only.** This item as first written said "Cone, Line or
+Emanation"; print refused two of the three when Opus measured it before building (2026-11-08):
+
+    Emanation: 33 of 34 mentions carry "originating from"   -> anchor it
+    Cone:       0 of 55                                      -> leave alone
+    Line:       0 of 24                                      -> leave alone
+
+"each creature in a 60-foot Cone" is print's own complete form, and anchoring cones would have
+made 55 print-shaped rows unlike print. Landed in `forms.mjs renderForm` (not `authoredRow`),
+so one change covers both printings and every authored caller: an Emanation target without
+`originating from` gets ` originating from {anchor}`, where `anchor` is an optional form field
+the save caller fills with the creature's inline — no anchor, no change, so no other caller
+moved. The 2014 branch then renders its own aura idiom, "each creature within 10 feet of the
+sentinel", instead of the centreless "10-foot radius" that shipped on #25. Do NOT change
+`TARGET_OK` to require the phrase from the model; the engine owns the anchor the way it owns
+`{dc}`. Measured scope: 11 of 11 authored area rows across the three saved forties shipped with
+no anchor — ~3-4 a forty. Tests: `emanation-anchor.spec.js`, which pins print's three rates.
 
 **Predict:** `condition-duration`/adjudicability findings about an unanchored area on authored
 rows → 0. Grep the three saved fortys for seat-authored Emanation/Cone rows lacking

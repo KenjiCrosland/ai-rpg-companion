@@ -55,10 +55,41 @@ export function renderForm(form, edition = '2024', { properNouns = [] } = {}) {
       return `*${label} Attack Roll:* +${form.bonus}, ${where} ${dmg}${rider === '.' ? '.' : rider}`;
     }
     case 'save': {
+      // AN EMANATION NAMES WHAT IT COMES FROM; A CONE AND A LINE DO NOT (the critic's
+      // §2a, gate of 2026-11-08). Their #25 was the Black Iron Sentinel's Iron Root:
+      // "Each creature in a 10-foot-radius sphere must succeed on a DC 16 Strength saving
+      // throw" — an area with no centre, which a GM cannot place. The 2024 twin was no
+      // better ("each creature in a 10-foot Emanation"), so the 2014 converter did not
+      // drop the anchor: it was never written. The authoring form (`TARGET_OK`) accepts a
+      // bare Cone/Line/Emanation while REQUIRING "centered on a point" for a Sphere,
+      // because its comment reasoned an Emanation "comes from the creature by definition".
+      // Print disagrees for one of the three and agrees for the other two:
+      //
+      //   Emanation: 33 of 34 mentions carry "originating from"  -> ANCHOR IT
+      //   Cone:       0 of 55                                     -> leave alone
+      //   Line:       0 of 24                                     -> leave alone
+      //
+      // So this anchors an Emanation only; anchoring cones would have made 55 print-shaped
+      // rows unlike print. Measured on 3 saved forties: 11 of 11 authored area rows ship
+      // with no anchor, so this is ~3-4 rows a forty, not one sheet.
+      //
+      // `form.anchor` is the creature's inline, supplied by the caller. With no anchor the
+      // behaviour is exactly what it was, so every other caller is untouched.
+      const target = form.anchor && /\d+-foot Emanation\b/.test(String(form.target)) && !/originating from/i.test(String(form.target))
+        ? String(form.target).replace(/(\d+-foot Emanation)\b/, `$1 originating from ${form.anchor}`)
+        : form.target;
+      form = { ...form, target };
       if (is2014) {
         const dmg = /^(\d+ \(\d+d\d+(?: [+-] \d+)?\) \w+ damage)[.,]?\s*(?:and\s+)?([^]*)$/.exec(String(form.failure).trim());
         const half = /half(?: as much)? damage/i.test(form.success ?? '');
-        const t14 = (x) => String(x).replace(/(\d+)-foot (Cone|Sphere|Line|Cube|Cylinder)\b/g, (m0, n, sh) => `${n}-foot ${sh.toLowerCase()}`).replace(/(\d+)-foot Emanation/g, '$1-foot radius'); // 2014 lowercases its shapes, as the grammar pass does
+        // 2014 HAS ITS OWN AURA IDIOM, and it carries the anchor: "each creature within
+        // 10 feet of the sentinel". The old conversion wrote "a 10-foot radius" — a shape
+        // with no centre, which is what shipped on the critic's #25. An unanchored
+        // Emanation still falls back to the radius wording, because there is nothing to
+        // name; with an anchor the idiomatic form is available and is used.
+        const t14 = (x) => String(x).replace(/(\d+)-foot (Cone|Sphere|Line|Cube|Cylinder)\b/g, (m0, n, sh) => `${n}-foot ${sh.toLowerCase()}`)
+          .replace(/in a (\d+)-foot Emanation originating from ([^,.]+)/g, 'within $1 feet of $2')
+          .replace(/(\d+)-foot Emanation/g, '$1-foot radius'); // 2014 lowercases its shapes, as the grammar pass does
         let s = dmg ? `${cap(t14(form.target))} must make a DC ${form.dc} ${form.stat} saving throw, taking ${dmg[1].replace(/ ([A-Z][a-z]+) damage$/, (m0, t) => ` ${t.toLowerCase()} damage`)} on a failed save${half ? ', or half as much damage on a successful one' : ''}.`
           : `${cap(t14(form.target))} must make a DC ${form.dc} ${form.stat} saving throw. On a failed save, ${lowN(end(form.failure))}`;
         if (dmg && dmg[2].trim()) s += ` On a failed save, ${lowN(end(dmg[2]))}`;
