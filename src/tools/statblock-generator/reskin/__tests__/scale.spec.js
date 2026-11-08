@@ -55,12 +55,19 @@ describe('the chassis gains print\'s Multiattack when it is scaled to CR 5+', ()
   const bare = DONORS.filter((d) => !(d.sections?.Actions ?? []).some((e) => /^Multiattack/.test(e.name ?? '')));
   const maOf = (d, cr, opts = {}) => (scaleDonor(d, cr, { mechanics: [], ...opts }).sections?.Actions ?? []).find((e) => /^Multiattack/.test(e.name ?? '')) ?? null;
 
-  test('every donor with none gains one at CR 7, and the swarms never do', () => {
+  test('every donor with none gains one at CR 7 — swarms included, above their band', () => {
     expect(bare.length).toBeGreaterThan(0);
     for (const d of bare) {
-      const ma = maOf(d, 7);
-      if ((d.archetypes ?? []).includes('swarm')) expect(ma).toBeNull();
-      else expect(ma?.text).toMatch(/^The creature makes two /);
+      // CR 7 is past the band print's swarms occupy (all seven are CR 0.25-3), so the
+      // swarm exemption no longer applies here — see the CR-bound test below
+      expect(maOf(d, 7)?.text).toMatch(/^The creature makes two /);
+    }
+  });
+
+  test('and a swarm asked for one attack still gets none, at any CR', () => {
+    // the identity flag is the caller's to set; when it is set the strip is absolute
+    for (const d of DONORS.filter((x) => (x.archetypes ?? []).includes('swarm'))) {
+      for (const cr of [1, 3, 7, 13]) expect(maOf(d, cr, { stripMultiattack: true })).toBeNull();
     }
   });
 
@@ -82,14 +89,22 @@ describe('the chassis gains print\'s Multiattack when it is scaled to CR 5+', ()
     expect(maOf(d, 7).text).toBe('The creature makes two Melee Attack attacks.');
   });
 
-  test('a swarm chassis never GAINS one, and oneAttack still strips an inherited one', () => {
+  // THE SWARM RULE IS CR-BOUND (owner's ruling, 2026-11-08). All seven of print's swarms
+  // are CR 0.25-3 and each makes one attack; print has no swarm above CR 3 and no ooze
+  // above CR 4, so above there the corpus has no opinion. Holding the rule past its
+  // evidence made a high-CR swarm unpriceable — one attack cannot reach a CR 13 card of
+  // 100 without breaching the single-target ceiling of 51 — so it shipped `under` every
+  // time. `stripMultiattack` now carries the identity half of the old `oneAttack` flag,
+  // and the clamp keeps the safety half at every CR.
+  test('a swarm keeps one attack through CR 3 and may carry a Multiattack above it', () => {
     for (const d of DONORS.filter((x) => (x.archetypes ?? []).includes('swarm'))) {
-      const inLibrary = (d.sections?.Actions ?? []).some((e) => /^Multiattack/.test(e.name ?? ''));
-      // without the flag, an inherited Multiattack is pre-existing behaviour and stays;
-      // what must never happen is a swarm with none ACQUIRING one from the CR floor
-      if (!inLibrary) expect(maOf(d, 13)).toBeNull();
-      // with the flag, every swarm is single-attack, which is what the checker enforces
-      expect(maOf(d, 13, { oneAttack: true })).toBeNull();
+      // through the band print measured, the strip holds and nothing is acquired
+      expect(maOf(d, 3, { oneAttack: true, stripMultiattack: true })).toBeNull();
+      // above it the identity flag is off, so an inherited Multiattack survives and a
+      // swarm chassis with none gains one at the CR floor like any other body
+      const above = maOf(d, 13, { oneAttack: true, stripMultiattack: false });
+      expect(above).not.toBeNull();
+      expect(above.text).toMatch(/makes (two|three) /);
     }
   });
 

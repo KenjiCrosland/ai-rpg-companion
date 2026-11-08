@@ -3967,7 +3967,14 @@ describe('batch-two critic round (2026-09-14): the replacement clause, priced da
     // one attack. The law here is the VOICE: a swarm's rows say "the swarm", never
     // "the cathedral gargoyles makes", which is a plural subject on a singular
     // verb. Asserted on the row that exists.
-    expect((m.sections.Actions ?? []).some((e) => /^Multiattack/.test(e.name ?? ''))).toBe(false);
+    // A SWARM ABOVE CR 3 NOW CARRIES A MULTIATTACK (owner's ruling, 2026-11-08: all seven
+    // of print's swarms are CR 0.25-3, so the one-attack rule stops where its evidence
+    // stops). This test's subject is the swarm's VOICE, and the Multiattack gives that
+    // more to check rather than less — it is the sentence most likely to read "the
+    // gargoyles makes".
+    const maS = (m.sections.Actions ?? []).find((e) => /^Multiattack/.test(e.name ?? ''));
+    expect(maS).toBeTruthy();
+    expect(maS.text).toMatch(/^The swarm makes /); // singular subject, agreeing verb
     const swarmRows = Object.values(m.sections).flat().filter((e) => /\bthe swarm\b/i.test(e.text ?? ''));
     expect(swarmRows.length).toBeGreaterThan(0); // it speaks as "the swarm"
     expect(JSON.stringify(m.sections)).not.toMatch(/the cathedral gargoyles makes/);

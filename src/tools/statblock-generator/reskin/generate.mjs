@@ -2540,7 +2540,30 @@ export async function generateReskin(options, callLLM) {
   }
   const donor = pickDonor(cr, body ? null : (shootsABow && style === 'hurler' ? null : style), body ?? archetype);
   const statsAtScale = {}; // captured right after scaling — the final derivation pass measures skill surplus against it
-  const scaled = scaleDonor(donor, cr, { oneAttack: body === 'swarm', movement: options.movement ?? [], mechanics: options.mechanics ?? null, dprScale: options.dprScale ?? 1, edition: options.edition ?? null, concept: readPhrases(String(options.userConcept ?? concept ?? '')) });
+  // ONE ATTACK IS A LOW-CR FACT, AND ONE DEFINITION SERVES EVERY READER (owner's ruling,
+  // 2026-11-08). All seven of print's swarms are CR 0.25-3, so "a swarm makes one attack"
+  // is measured entirely inside that band — print has no swarm above CR 3 and no ooze
+  // above CR 4, so above there the corpus has no answer and this was extrapolating.
+  //
+  // THREE pieces were coupled to it and all three now read this one flag: `scaleDonor`
+  // strips the donor's Multiattack (scale.mjs), it CLAMPS the single hit to the
+  // single-target ceiling above CR 3 (scale.mjs, whose own comment accepts that "the
+  // round lands under budget by construction"), and generate.mjs strips the Multiattack
+  // again below. Together they made a high-CR swarm impossible to price: the sweep's CR
+  // 13 bell swarm dealt 53 against a band of 72-126 and failed `under`, and could not be
+  // fixed inside the rule, because print's hardest single hit in that band is 51 — one
+  // attack cannot reach 72 without breaching the ceiling. The two constraints
+  // contradicted each other for every swarm above CR 3. Its other FAIL, `gate-fit` ("an
+  // at-will condition action with no Multiattack to join"), had the same cause.
+  //
+  // Identity does not ride on the attack count. Print's swarm is the `Swarm` trait
+  // (occupies another creature's space, moves through any opening large enough for a Tiny
+  // creature, can't regain Hit Points), resistance to Bludgeoning/Piercing/Slashing, and
+  // the BLOODIED SPLIT on its attack — "20 (4d8 + 2) Necrotic damage, or 11 (2d8 + 2) if
+  // the swarm is Bloodied". It weakens as you thin it, and that reads the same across two
+  // attacks as one. The `swarm-9` and `swarm-17` rungs already carry a Multiattack.
+  const swarmOneAttack = body === 'swarm' && Number(cr) <= 3;
+  const scaled = scaleDonor(donor, cr, { oneAttack: body === 'swarm', stripMultiattack: swarmOneAttack, movement: options.movement ?? [], mechanics: options.mechanics ?? null, dprScale: options.dprScale ?? 1, edition: options.edition ?? null, concept: readPhrases(String(options.userConcept ?? concept ?? '')) });
   // THE CLAMP IS TRACED WHERE THE TRACER LIVES (N2, 2026-11-01). scale.mjs holds a
   // one-attack body under print's single-target ceiling and records it as
   // `hit_clamped`, because that module has no tracer and is given none. Without
@@ -3106,11 +3129,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // no Multiattack — a swarm is already many bodies, so the many-ness is the
   // damage, not a second roll. swarm-9 and swarm-17 inherited a brute's
   // "makes two Melee Attack attacks" from the donor table.
-  if (body === 'swarm') {
+  if (swarmOneAttack) { // the same flag scaleDonor read: one definition, three readers
     for (const [sec, es] of Object.entries(scaled.sections ?? {})) {
       for (let i = es.length - 1; i >= 0; i -= 1) {
         if (!/^Multiattack/.test(String(es[i]?.name ?? ''))) continue;
-        trace('swarm multiattack off:', `"${es[i].name}" leaves — print's seven swarms all make one attack`);
+        trace('swarm multiattack off:', `"${es[i].name}" leaves — print's seven swarms are all CR 0.25-3 and every one makes a single attack`);
         es.splice(i, 1);
       }
     }

@@ -92,7 +92,7 @@ export function stampAttacksPerRound(sections) {
   }
 }
 
-export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null, dprScale = 1, edition = null, concept = '', oneAttack = false } = {}) {
+export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = [], mechanics = null, dprScale = 1, edition = null, concept = '', oneAttack = false, stripMultiattack = null } = {}) {
   const card = cardBudget(cr, { legendary: !!legendary, edition }); // a 2014 sheet prices against the DMG table (2026-10-02)
   const scaled = JSON.parse(JSON.stringify(donor));
   // A GATE IN THE NAME BECOMES THE FIELD, ONCE, HERE (2026-10-22). Most donor
@@ -121,7 +121,14 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   // dice are priced for two attacks and the round lands at half budget (a CR 13
   // swarm shipped 45 a round against print's 72–126). Stripping it here lets the
   // solver put the whole round into the one row.
-  if (oneAttack) {
+  // TWO RULES WORE ONE FLAG (2026-11-08). `oneAttack` both STRIPPED the Multiattack and
+  // enabled the single-hit CLAMP below, and those are different things: the strip is a
+  // body's identity ("print's swarms make one attack", measured on seven swarms all CR
+  // 0.25-3), while the clamp is safety for any creature left with a single hit, and must
+  // not lift just because the identity rule stops. Bounding the flag alone gave a CR 5
+  // swarm one UNCLAMPED attack of 52 against a ceiling of 31. `stripMultiattack` carries
+  // the identity half; `oneAttack` keeps the clamp.
+  if (stripMultiattack ?? oneAttack) {
     for (const es of Object.values(scaled.sections ?? {})) {
       for (let i = es.length - 1; i >= 0; i -= 1) if (/^Multiattack/.test(String(es[i]?.name ?? ''))) es.splice(i, 1);
     }
@@ -139,11 +146,22 @@ export function scaleDonor(donor, cr, { legendary = donor.legendary, movement = 
   // It lands HERE, beside the swarm strip and before the per-hit solve, so the
   // round is priced for the attack count the sheet actually makes. A swarm is
   // exempt by construction: oneAttack and this branch are exclusive.
-  else if (cr >= 5 && !(donor.archetypes ?? []).includes('swarm')) {
-    // the swarm exemption is STRUCTURAL, not a flag: print's seven swarms each
+  else if (cr >= 5) {
+    // THE SWARM EXEMPTION WAS CR-BOUND ALL ALONG (owner's ruling, 2026-11-08). This
+    // branch used to exclude a swarm chassis outright, because "print's seven swarms each
     // make exactly one attack and the checker hard-fails a swarm that carries a
-    // Multiattack, so a swarm chassis must never gain one even when the caller
-    // forgets `oneAttack`.
+    // Multiattack". Both halves were true and both were measured on swarms that are ALL
+    // CR 0.25-3 — print has no swarm above CR 3 and no ooze above CR 4. The reached state
+    // is now unreachable anyway: this branch only runs at CR >= 5, which is past the band
+    // the rule was measured in, and `stripMultiattack` (the caller's identity flag) has
+    // already returned false to get here. The checker's `swarm-multiattack` gate carries
+    // the same CR bound, so the two still agree.
+    //
+    // Why it matters: one attack cannot reach a CR 13 card of 100 without breaching the
+    // single-target ceiling of 51, so a high-CR swarm was unpriceable by construction and
+    // shipped `under` every time. Identity stays where print actually puts it — the
+    // `Swarm` trait, Bludgeoning/Piercing/Slashing resistance, and the Bloodied split on
+    // the attack, which reads the same across two rolls as one.
     const esA = scaled.sections?.Actions ?? [];
     const hasMa = esA.some((e) => /^Multiattack/.test(String(e?.name ?? '')));
     const atk = esA.filter((e) => /Attack Roll/.test(String(e?.text ?? ''))).map((e) => String(e.name));

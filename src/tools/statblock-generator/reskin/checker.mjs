@@ -956,7 +956,28 @@ function gateStructure(m, ctx, F) {
     if (!/Medium/i.test(m.size ?? '') && !large) F('swarm-size', 'fail', `a swarm sized ${m.size} (print: Medium, Bats alone Large)`, m.size);
     // a hard fail now the engine strips it (critic: "should be structural, not
     // soft"); print's seven swarms all make exactly one attack
-    if (multi) F('swarm-multiattack', 'fail', 'a swarm with a Multiattack (all seven print swarms make one attack)', multi.text);
+    //
+    // AND THE GATE STOPS WHERE ITS EVIDENCE STOPS (owner's ruling, 2026-11-08). Those
+    // seven swarms are ALL CR 0.25-3; print has no swarm above CR 3 and no ooze above
+    // CR 4, so above there the corpus has no opinion and this gate was extrapolating
+    // from a band it never measured. It also made a high-CR swarm unpriceable: the CR 13
+    // bell swarm dealt 53 against a card of 100 and failed `under`, and one attack cannot
+    // reach 72 without breaching the single-target ceiling of 51 — the two rules
+    // contradicted each other for every swarm above CR 3, and this gate is the one that
+    // forbade the way out. The swarm's identity is its `Swarm` trait, its physical
+    // resistances and the Bloodied split on its attack, none of which count rolls.
+    // THE CR READ MUST NOT SILENTLY SKIP THE GATE. `cr` here is `ctx.cr`, which some
+    // callers do not supply — `Number(undefined) <= 3` is false, so a bare CR bound
+    // turned this gate OFF everywhere rather than bounding it. Read the sheet's own CR
+    // as a fallback and FIRE when it cannot be read, so an unknown CR keeps the
+    // pre-existing protection instead of losing it.
+    // READ CR OFF THE SHEET, NOT OFF `cr` — that identifier belongs to another function
+    // here, and referencing it threw a ReferenceError the gate's try/catch turned into a
+    // soft `checker-error`, which silently disabled this whole block. Second
+    // not-in-scope slip of the day (after TEMPLATE_BY_ID for BY_ID); the build catches
+    // neither, and a swallowed throw is quieter than a crash.
+    const swarmCr = Number(m.cr ?? String(m.cr_str ?? '').replace(/[^\d./].*$/, '').replace(/^1\/2$/, '0.5').replace(/^1\/[48]$/, '0.25'));
+    if (multi && (!Number.isFinite(swarmCr) || swarmCr <= 3)) F('swarm-multiattack', 'fail', `a swarm at CR ${Number.isFinite(swarmCr) ? swarmCr : '?'} with a Multiattack (all seven print swarms are CR 0.25-3 and make one attack)`, multi.text);
   }
 }
 // A CONDITION NAMED AS A PREREQUISITE IS NOT AN IMPOSED EFFECT — a

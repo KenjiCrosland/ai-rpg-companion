@@ -92,8 +92,19 @@ describe('structure', () => {
   // the Multiattack is a FAIL now, not a soft (critic's notes, 2026-10-15,
   // flagged soft twice): print's seven swarms all make exactly one attack, and
   // the engine strips the donor's inherited "makes two Melee Attack attacks"
-  test('a swarm that is not Medium fails; a swarm with a Multiattack fails', () => {
-    const r = checkBlock(base({ type: 'Swarm of Tiny Beasts', size: 'Large' })); expect(has(r, 'structure', 'swarm-size', 'fail')).toBe(true); expect(has(r, 'structure', 'swarm-multiattack', 'fail')).toBe(true);
+  // THE MULTIATTACK HALF IS CR-BOUND (owner's ruling, 2026-11-08): all seven of print's
+  // swarms are CR 0.25-3, print has no swarm above CR 3 and no ooze above CR 4, so the
+  // gate stops where its evidence stops. Holding it past that made a high-CR swarm
+  // unpriceable — one attack cannot reach a CR 13 card of 100 without breaching the
+  // single-target ceiling of 51 — and this gate was what forbade the way out. The size
+  // half is unchanged. The fixture is CR 5, so it now passes the Multiattack half.
+  test('a swarm that is not Medium fails; its Multiattack fails only at CR 3 and below', () => {
+    const r = checkBlock(base({ type: 'Swarm of Tiny Beasts', size: 'Large' }));
+    expect(has(r, 'structure', 'swarm-size', 'fail')).toBe(true);
+    expect(has(r, 'structure', 'swarm-multiattack', 'fail')).toBe(false); // CR 5: above print's swarm band
+    // and inside the band the gate still bites
+    const low = checkBlock(base({ type: 'Swarm of Tiny Beasts', size: 'Medium', cr: 2, cr_str: '2' }));
+    expect(has(low, 'structure', 'swarm-multiattack', 'fail')).toBe(true);
     expect(has(checkBlock(base({ type: 'Swarm of Tiny Beasts', size: 'Large', monsterDescription: 'a vast swarm of rats' })), 'structure', 'swarm-size')).toBe(false);
   });
   test('reach beyond the size with no tether word: soft within ten feet, fail beyond', () => {
