@@ -155,7 +155,15 @@ function editDistance(a, b) {
  * knew the rule and the gate never asked.
  */
 export const MUST_BE_BOUNDED = ['Paralyzed', 'Stunned', 'Blinded', 'Charmed', 'Deafened', 'Petrified', 'Restrained', 'Incapacitated', 'Frightened', 'Poisoned'];
-export const CONDITION_BOUNDED = /until the (?:end|start) of|for 1 (?:minute|hour)|until (?:it|the target|cured|dispelled|this effect ends)|repeats? the (?:saving throw|save)|ending the effect|while .{0,40}(?:remains|is) within|escape DC/i;
+// A BREAKABLE OBJECT IS A BOUND, AND IT IS PRINT'S OWN (2026-11-08). The sweep's Vampire
+// shipped "has the Restrained condition until the brambles is destroyed (AC 15; HP 20;
+// Vulnerability to Fire damage...)" and this gate failed it for recording no duration.
+// That is print's phrasing verbatim, three times: the Ettercap's Web Strand and the Giant
+// Spider's Web both read "until the web is destroyed (AC 10; HP 5; ...)", and the Erinyes'
+// Entangling Rope "until the rope is destroyed". An escape the party can attack is a
+// better bound than a clock, and it is the one print reaches for on a snare.
+// `is|are` both, because the object may be plural ("the brambles are destroyed").
+export const CONDITION_BOUNDED = /until the \w+(?: \w+)? (?:is|are) destroyed|until the (?:end|start) of|for 1 (?:minute|hour)|until (?:it|the target|cured|dispelled|this effect ends)|repeats? the (?:saving throw|save)|ending the effect|while .{0,40}(?:remains|is) within|escape DC/i;
 // PRINT'S PRICE FOR A FREE AURA. Every at-will Emanation control row past 10
 // feet buys the target out on a success — Pit Fiend/Fear Aura (20 ft),
 // Cloaker/Moan (60 ft), Harpy/Luring Song (300 ft), 3 of 3. It is how print can

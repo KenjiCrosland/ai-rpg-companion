@@ -8291,5 +8291,154 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "46302beec57c": {
+  "concept": "A pale serpent of glass-smooth hide, its coils so porcelain-slick that light slides off it and dust will not cling — a c",
+  "clauses": [
+   {
+    "id": "cl_ttvbva",
+    "text": "A pale serpent of glass-smooth hide",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_pyhbxp",
+    "text": "its coils so porcelain-slick that light slides off it",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_cqfoog",
+    "text": "dust will not cling — a creature of the high passes that learned to think like the mountain: patient",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1wn1e",
+    "text": "high",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1bocd35",
+    "text": "fond of narrow ways",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_n12zz8",
+    "text": "It opens a fight by choosing the ground first",
+    "kind": "mechanical",
+    "askWhen": "start_of_turn",
+    "askWhenWhy": "opens a fight",
+    "askShape": "condition",
+    "askMechanic": "zone",
+    "askMechanicWhy": "must come at it along a single fatal lane"
+   },
+   {
+    "id": "cl_czxzni",
+    "text": "coiling across ledges",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1baptcq",
+    "text": "scree so that prey must come at it along a single fatal lane",
+    "kind": "mechanical",
+    "askWhen": "start_of_turn",
+    "askWhenWhy": "opens a fight",
+    "askShape": "condition",
+    "askMechanic": "zone",
+    "askMechanicWhy": "must come at it along a single fatal lane"
+   },
+   {
+    "id": "cl_1n9kp25",
+    "text": "striking downslope to drive panic into the rock-face where it wants the herd to run",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "striking downslope",
+    "askShape": "condition",
+    "askMechanic": "fear",
+    "askMechanicWhy": "drive panic"
+   },
+   {
+    "id": "cl_19xklcg",
+    "text": "Its bite carries a cold unmaking — a withering that numbs",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "its bite carries",
+    "askShape": "attack",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "numbs and rots"
+   },
+   {
+    "id": "cl_6jkq0a",
+    "text": "rots at once",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "its bite carries",
+    "askShape": "attack",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "numbs and rots"
+   },
+   {
+    "id": "cl_1fp2oyh",
+    "text": "drawn from glands chilled in the thin high air —",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_13qf7yo",
+    "text": "it does not brawl: any round it is not striking",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "any round it is not striking",
+    "askShape": "condition",
+    "askMechanic": "snare",
+    "askMechanicWhy": "shifting its coils to close another exit",
+    "polarity": "lacks",
+    "takes": "melee",
+    "lackQuote": "it does not brawl"
+   },
+   {
+    "id": "cl_1in3oqd",
+    "text": "it is shifting its coils to close another exit",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1j88y6y",
+    "text": "only when bleeding",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "when bleeding and truly cornered",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "does it commit to kill rather than herd"
+   },
+   {
+    "id": "cl_ue91wm",
+    "text": "truly cornered does it commit to kill rather than herd",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "when bleeding and truly cornered",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "does it commit to kill rather than herd"
+   },
+   {
+    "id": "cl_19nj5rq",
+    "text": "It is scheming (INT 14-16)",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1y8h5y3",
+    "text": "it is a battlefield manipulator that herds",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "it is a battlefield manipulator that herds",
+    "askShape": "save_single",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "herds and traps"
+   },
+   {
+    "id": "cl_rmz9cm",
+    "text": "traps rather than brawls",
+    "kind": "descriptive"
+   }
+  ]
  }
 }

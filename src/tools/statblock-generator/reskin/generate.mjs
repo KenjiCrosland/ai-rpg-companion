@@ -6435,6 +6435,18 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           trace('fallback floor waived:', `${t.id} — a self-buff the user's words ask for is its own worth (print: the Imp's Invisibility)`);
           cand.floorWaived = true;
         }
+        // AND THE SHELF GETS THE SEAT'S GUARD TOO (sweep 2026-11-08T03-08-42). Krennik
+        // Skullstandard shipped THREE rows imposing Prone — Standard Lance, Ride-Down and
+        // the shelf's own Opportunist's Lash — and print has no block imposing one
+        // condition three ways (0 of 329). The guard fired on this very sheet, refusing a
+        // MENU candidate for exactly that, and the shelf then landed the third itself.
+        // `conditionsImposedTwice` runs at the menu, at the seat and at the repair
+        // landing; this is the sixth instance this sprint of a rule living on one path,
+        // and the fourth door it has had to be added to. Same function, no new logic.
+        if (cand.row?.imposes && conditionsImposedTwice(Object.values(sections).flat()).has(String(cand.row.imposes))) {
+          trace('fallback skipped — a third imposition:', `${t.id} imposes ${cand.row.imposes}, which two rows on this sheet already impose, and no printed block imposes one condition three ways (0 of 329)`);
+          continue;
+        }
         const seedKeys = rankByVerb([t], fbVerbText, '')[0]?.concept ?? []; if (seedKeys.length) cand.row.boundKeys = seedKeys; // the keys the USER's words matched are the row's provenance — the Kobold's Vanish covered nothing (canaries 2026-10-12)
         drawn = cand;
       }

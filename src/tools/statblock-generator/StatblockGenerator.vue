@@ -1555,7 +1555,23 @@ async function generateStatblockEngine(edition) {
           themes: conceptThemes ?? null, // the call's own read of the creature's substance, for the alias guard
           rejectedCanon: conceptRejectedCanon,
           typeSource: conceptTypeSource, // 'user' | 'inferred' | null — the call's field, not a word read
-          userConcept: baseConcept, // the user's own words — the verb the signature must serve (the identity prose is the model's)
+          // THE MODEL'S OWN PROSE IS NOT A REQUEST (owner's ruling, 2026-11-08: "don't
+          // grade something we don't need a grade for"). `baseConcept` falls back to the
+          // SYNTHESIS on a blank roll, so passing it here told the engine its own
+          // invented description was the user's words — and the engine then extracted
+          // "clauses" from it and graded itself against them. Sweep 2026-11-08 #36: the
+          // synthesis wrote "it does not brawl: any round it is not striking, it is
+          // shifting its coils to close another exit", the extractor filed "does not
+          // brawl" as a LACKS clause, and `lack-honored` failed the sheet for carrying a
+          // Bite — reporting "the GM asked for an absence" when the GM asked for nothing.
+          // The same loop once deleted a sheet's only attack row (the Prismabound Warden,
+          // patched then with a keep-the-last-attack guard rather than at the cause).
+          //
+          // `concept` below still carries the synthesis, so generation is unchanged — it
+          // is only the GRADING inputs (the clause record, removals, `asked` receipts)
+          // that must see an empty hand, because on a blank roll there is nothing the GM
+          // asked for and no words of theirs a row could quote.
+          userConcept: userConcept || '', // the user's OWN words, and nothing stands in for them
           material: conceptHouse, // the body's material — fire defenses derive from it (wax is vulnerable, never resistant)
           // THE 2014 LINE is the DMG table itself (2026-10-02): `edition`
           // above makes the card read challengeRatings.json for HP, AC,
