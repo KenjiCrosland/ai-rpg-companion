@@ -3100,7 +3100,31 @@ export function valueCheck(row, { scaled, sections, section, cr = null, noGate =
   // worth more than an attack.
   const freeDecl = bonus && template ? BY_ID.get(String(template)) : null; // BY_ID is this module's own map; TEMPLATE_BY_ID is only its export alias and is not a binding in here
   const freeUtility = !!freeDecl && freeDecl.effect !== 'damage';
-  const floor = freeUtility ? 0 : bonus ? 0.25 * attackEV : gated ? 1.3 * maEV : (payoff ? 2.0 : 0.8) * replaced; // a free row still has to DO something; a payoff doubles (Assassinate)
+  // A GATED ROW WHOSE WHOLE POINT IS THE CONDITION PRICES AS AN ATTACK, NOT A ROUND
+  // (owner's ruling, 2026-11-07). The gated floor asks 1.3x the whole Multiattack, and a
+  // qualifying condition credits `P_FAIL * perHit` — ONE attack — so a control row with
+  // no damage could never clear its floor by arithmetic, however good the condition.
+  //
+  // Print ships exactly that row: of its 81 gated action rows, 10 (12%) impose a
+  // condition and deal NO damage, and they are iconic — the Gorgon's Petrifying Breath,
+  // the Doppelganger's Unsettling Visage, the Dust Mephit's Blinding Breath, the
+  // Ettercap's Web Strand, the Aboleth's Dominate Mind, the Dretch's Fetid Cloud. Ours
+  // were dropped and a fallback stood in: `pacify` (Incapacitated) read EV 18 and
+  // `terror-pulse` (Frightened) EV 18, both against a floor of 54 at CR 9.
+  //
+  // The gate IS the price of such a row — print pays for it in frequency, not damage —
+  // so a gated row that declares a condition is held to one attack's worth rather than
+  // the round's. The CEILING is untouched: it may still grow to nova size if it also
+  // deals damage, which is the other 80% of print's gated rows.
+  //
+  // Read off DECLARED data, never the text: `row.imposes` is the condition the row says
+  // it applies, and the condition in a TARGETING frame ("one creature that is Grappled")
+  // is a prerequisite rather than a payload — the mistake `rowValue` records above.
+  const gatedControl = gated && !!row.imposes;
+  const floor = freeUtility ? 0
+    : bonus ? 0.25 * attackEV
+      : gated ? (gatedControl ? 0.8 * attackEV : 1.3 * maEV)
+        : (payoff ? 2.0 : 0.8) * replaced; // a free row still has to DO something; a payoff doubles (Assassinate)
   const ceiling = bonus ? 1.5 * attackEV : gated ? 2.5 * maEV : (payoff ? 3.0 : 1.5) * (replaced || attackEV);
   // `let`, not `const`: the widening rung below can turn a single-target control
   // row into an area one, and the EV closure reads this.

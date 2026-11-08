@@ -91,3 +91,42 @@ describe('the value floor does not price a free defensive row by damage', () => 
     expect(p.floor).toBeGreaterThan(0);
   });
 });
+
+// A GATED CONTROL ROW PRICES AS AN ATTACK, NOT A ROUND (owner's ruling, 2026-11-07).
+// The gated floor asks 1.3x the whole Multiattack and a qualifying condition credits one
+// attack, so a control row with no damage could never clear it by arithmetic. Print ships
+// that row anyway: 10 of its 81 gated action rows impose a condition and deal NO damage —
+// the Gorgon's Petrifying Breath, the Doppelganger's Unsettling Visage, the Dust Mephit's
+// Blinding Breath, the Ettercap's Web Strand, the Aboleth's Dominate Mind. The gate is the
+// price of such a row; print pays in frequency, not damage.
+describe('a gated row that declares a condition is held to one attack, not the round', () => {
+  const SECTION = { action: 'Actions', bonus_action: 'Bonus Actions', reaction: 'Reactions' };
+  const price = (id, cr = 9, archetype = 'brute') => {
+    const { TEMPLATES, renderTemplate, valueCheck } = require('../templates.mjs');
+    const { pickDonor, scaleDonor } = require('../scale.mjs');
+    const t = TEMPLATES.find((x) => x.id === id); if (!t) return null;
+    const scaled = scaleDonor(pickDonor(cr, null, archetype), cr);
+    const ctx = { scaled, sections: scaled.sections, archetype, style: null, cr, movement: '', size: 'Medium',
+      energy: null, mix: null, meleeName: 'Slam', rangedName: null, conditionMinor: 'Prone', projectile: null, holds: null };
+    const row = renderTemplate(t, ctx, {}); if (!row?.text) return null;
+    const vc = valueCheck(row, { scaled, sections: scaled.sections, cr, section: SECTION[t.section], template: t.id });
+    return { imposes: row.imposes ?? null, gate: row.gate ?? null, ev: vc.ev ?? 0, floor: vc.floor ?? 0, ceiling: vc.ceiling };
+  };
+
+  it.each([['pacify', 'Incapacitated'], ['terror-pulse', 'Frightened']])(
+    '%s declares %s and a gate, so it clears on the condition', (id, cond) => {
+      const p = price(id);
+      expect(p).toBeTruthy();
+      expect(p.imposes).toBe(cond);          // DECLARED, not read off the text
+      expect(p.gate).toBeTruthy();           // the gate is what pays for it
+      expect(p.ev).toBeGreaterThanOrEqual(p.floor);
+    });
+
+  it('a gated row that declares NO condition still answers to the nova floor', () => {
+    // `zone-seed` is gated and imposes nothing — it must not ride this stand-down
+    const p = price('zone-seed');
+    if (!p) return;
+    expect(p.imposes).toBeNull();
+    expect(p.ev).toBeLessThan(p.floor);      // still under, correctly: it owes damage
+  });
+});
