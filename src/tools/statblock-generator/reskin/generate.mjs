@@ -41,6 +41,7 @@ import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
 import { WEAPONS, weaponFor, weaponNamed, namesWeapon, weaponsIn, finesseLike } from './weapons.mjs';
 import { effectOnly, danglingRefIn, repairMultiattackAttackList, repairReplaceClause, rowNamesOf } from './checker.mjs';
+import { lintSheet, sheetCanCast } from './sheet-lints.mjs'; // the sheet lints, reachable from the pipeline since 2026-11-08 (the critic's §2a)
 import { capSingleTargetSave, ceilingFor, isSingleTargetSave } from './card-budgets.mjs';
 import { matcherPath, bodyForClass, bodyForPerson } from './path.mjs';
 import { classStats } from './classes.mjs';
@@ -2069,7 +2070,12 @@ function dropDeadMultiattackCites(sections, trace) {
   for (const es of Object.values(sections)) for (const e of es) {
     const names = live();
     const resolves = (c) => names.some((n) => n.toLowerCase() === String(c).toLowerCase());
-    const fixed = repairReplaceClause(e.text ?? '', resolves);
+    // AND AN OPTION IS DEAD BY ITS SPELL TOO (the critic's §2a, gate of 2026-11-08). "a
+    // use of Spellcasting to cast *Hold Person*" names a row the sheet HAS, so it resolved
+    // and shipped with the spell on none of the sheet's lists — two of the critic's four
+    // Fixes. The predicate is `sheetCanCast`, which reads the offlist LINT's own list
+    // definition, so the rule that reports and the repair that acts cannot disagree.
+    const fixed = repairReplaceClause(e.text ?? '', resolves, (sp) => sheetCanCast({ sections }, sp));
     if (!fixed) continue;
     trace('replacement clause re-read:', `${fixed.dropped.map((d) => `"${d}"`).join(', ')} ${fixed.dropped.length === 1 ? 'is' : 'are'} not on this sheet, so the clause ${fixed.form === 0 ? 'leaves entirely — print\'s commonest Multiattack carries none' : `falls to its ${fixed.form === 1 ? 'single-option' : 'lettered'} form: "${fixed.text.slice(-70)}"`}`);
     e.text = fixed.text;
@@ -9019,6 +9025,30 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
   }
   const lint = lintStatblock(monster, { edition: '2024' });
+  // THE SHEET LINTS WERE NEVER WIRED IN (critic's gate of 2026-11-08, their §2a). Every
+  // rule in `sheet-lints.mjs` was correct and unreachable: `grep -rl "lintSheet("` finds
+  // the module itself and `scripts/lint-run.mjs`, and nothing else. So the pipeline's
+  // `lint:` trace has only ever been `lintStatblock`'s findings, which carry no
+  // `multiattack-offlist-spell` rule at all — and the sheet reported "lint: 0 findings"
+  // while the offline linter found five on the same forty, two of them the critic's two
+  // Fixes (#18 Ossuar offers "Hold Person", #26 Marshena offers "(B) ... Ray of
+  // Sickness", neither spell on any list those sheets carry).
+  //
+  // Third dead path of this sprint and the same shape as the other two: the audit's
+  // rewrite arm behind a flag no site sets (2026-11-05), and the duplicate-condition
+  // guard on three doors of four (2026-11-07). A rule that cannot be reached is worse
+  // than no rule, because the trace says 0 and reads as clean.
+  //
+  // It runs HERE, after the replacement clause is written and the multiattack re-reads
+  // have settled, so what it reads is what ships. Findings merge into the same list the
+  // trace prints and the audit's confidence gate reads.
+  try {
+    const sheetHits = lintSheet(monster);
+    if (sheetHits.length) {
+      lint.findings.push(...sheetHits.map((h) => ({ rule: h.rule, severity: 'audit', message: h.message, reads: h.reads })));
+      trace('sheet lint:', sheetHits.map((h) => `${h.rule}: ${h.message}`).join(' | '));
+    }
+  } catch (e) { trace('sheet lint skipped:', String(e?.message ?? e)); } // never fails generation
   // lint actuator (owner go, 2026-08-19): the action-passive-rider finding
   // computes its own fix ("it moves to Traits") — a validator that
   // documents a defect it could correct is worse than either option

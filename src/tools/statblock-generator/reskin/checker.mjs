@@ -300,7 +300,15 @@ const optionResolves = (opt, resolves) => {
   const bare = base.replace(/^(?:its|his|her|their)\s+/i, '').trim();
   return bare !== base && !!bare && resolves(bare);
 };
-export function repairReplaceClause(text, resolves) {
+// AN OPTION MAY BE DEAD BY ITS SPELL, NOT ONLY BY ITS ROW (the critic's §2a, gate of
+// 2026-11-08). "a use of Spellcasting to cast *Hold Person*" names a row the sheet HAS, so
+// `optionResolves` passes it — and the spell is on none of that sheet's lists, which is a
+// clause a GM cannot run. Two of the critic's four Fixes were this (#18 Ossuar offers Hold
+// Person, #26 Marshena offers Ray of Sickness). `castable` is optional: when it is not
+// given the behaviour is exactly what it was, so every existing caller and every pin on
+// this function is untouched. The predicate itself comes from `sheetCanCast`, which reads
+// the lint's own list definition — the lint reports and this repairs, and they must agree.
+export function repairReplaceClause(text, resolves, castable = null) {
   const t = String(text ?? '');
   const m = /\s*It can replace one attack with a use of ([^.]*?)\.(?=\s|$)/.exec(t);
   if (!m) return null;
@@ -327,7 +335,15 @@ export function repairReplaceClause(text, resolves) {
     const masked = m[1].replace(/\([^)]*\)/g, (p0) => ` \u0001${held.push(p0) - 1}\u0001 `);
     opts = masked.split(/\s+or\s+/).map((x) => x.replace(/\u0001(\d+)\u0001/g, (_, i) => held[Number(i)]).replace(/\s+/g, ' ').trim());
   }
-  const live = opts.filter((o) => optionResolves(o, resolves));
+  // the spell rides with the row: "Spellcasting to cast *X*" is live only if the row
+  // resolves AND the sheet can actually cast X
+  const spellOf = (o) => (/\bto cast\b/i.test(o) ? (multiattackSpells(o)[0] ?? null) : null);
+  const live = opts.filter((o) => {
+    if (!optionResolves(o, resolves)) return false;
+    if (!castable) return true;
+    const sp = spellOf(o);
+    return !sp || castable(sp);
+  });
   if (live.length === opts.length && opts.every(Boolean)) return null;
   const pair = lettered ? `(A) ${live[0]} or (B) ${live[1]}` : `${live[0]} or ${live[1]}`;
   const clause = live.length >= 2 ? `It can replace one attack with a use of ${pair}.`
@@ -335,7 +351,11 @@ export function repairReplaceClause(text, resolves) {
       : null; // nothing left to trade for: print's commonest Multiattack carries no clause
   const out = `${t.slice(0, m.index)}${clause ? ` ${clause}` : ''}${t.slice(m.index + m[0].length)}`.replace(/\s+$/, '');
   const tidy = tidyStops(out);
-  return tidy === t ? null : { text: tidy, dropped: opts.filter((o) => !live.includes(o)).map((o) => replaceClauseRowOf(o) || '(empty)'), form: live.length };
+  // a dropped option reports the SPELL when the spell was what failed, so the trace names
+  // the actual defect rather than the row that was fine
+  const why = (o) => (castable && optionResolves(o, resolves) && spellOf(o) && !castable(spellOf(o))
+    ? `${replaceClauseRowOf(o)} to cast ${spellOf(o)}` : replaceClauseRowOf(o) || '(empty)');
+  return tidy === t ? null : { text: tidy, dropped: opts.filter((o) => !live.includes(o)).map(why), form: live.length };
 }
 export const multiattackSpells = (text) => [...String(text ?? '').matchAll(/to cast\s+\*?([A-Z][\w' -]*?)\*?(?:\s*\(|[.,;]|$)/g)].map((m) => m[1].trim()).filter(Boolean);
 

@@ -23,7 +23,6 @@ import { isPlaceholderRowName } from './templates.mjs';
  * 2026-11-01 — not something to patch with another `.replace`.
  */
 import { weaponFor } from './weapons.mjs';
-import { PRINT_ROW_NAMES } from './generate.mjs';
 import { citesGenericAttacks, multiattackCitations, multiattackSpells } from './checker.mjs';
 
 const RULES_NOUN = new Set(['grapple', 'grappled', 'condition', 'effect', 'spell', 'curse', 'petrification', 'disease', 'charm', 'possession', 'restraint']); // the grapple IS the condition, not a thing on the sheet
@@ -114,11 +113,9 @@ export const SHEET_LINTS = [
       // rule could not fail. It reported nothing on the 11-04 archlich, whose Ray of
       // Sickness is on none of its three lists (critic, 2026-11-04). A list is a row
       // that OFFERS spells: print's Spellcasting row, or a row that casts one by name.
-      const lists = rows.filter(({ r }) => !/^Multiattack/.test(BARE(r.name))
-        && (/^Spellcasting/.test(BARE(r.name)) || /casts one of the following|At will:|\d\/[Dd]ay|\bcasts\b/.test(TEXT(r))))
-        .map(({ r }) => TEXT(r)).join(' ');
+      const lists = spellListTextOf(rows);
       return rows.filter(({ r }) => /^Multiattack/.test(BARE(r.name))).flatMap(({ sec, r }) => multiattackSpells(TEXT(r))
-        .filter((sp) => !new RegExp(sp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(lists))
+        .filter((sp) => !spellOnLists(sp, lists))
         .map((sp) => `${sec}/${BARE(r.name)}: offers to cast "${sp}", which is on no spell list this sheet has`));
     },
   },
@@ -296,6 +293,23 @@ export const SHEET_LINTS = [
 ];
 
 /** Every finding on one sheet, as `{ rule, reads, message }`. */
+// THE SPELL-LIST READER, SHARED WITH THE REPAIR (2026-11-08). This lint found the defect
+// and could only report it; `repairReplaceClause` now drops the dead option, and the two
+// must agree about what "on a list" means or the sheet will be failed for a clause the
+// repair thought was fine. One definition, two readers — the lesson of the free-row floor
+// (a private copy hides the fix).
+//
+// A list is a row that OFFERS spells: print's Spellcasting row, or a row that casts one by
+// name. The CITING Multiattack is excluded — "a use of (B) Spellcasting to cast *Ray of
+// Sickness*" contains the word "Spellcasting", so sweeping it in made every spell it named
+// trivially available and the rule could not fail (critic, 2026-11-04).
+export const spellListTextOf = (rows) => rows.filter(({ r }) => !/^Multiattack/.test(BARE(r.name))
+  && (/^Spellcasting/.test(BARE(r.name)) || /casts one of the following|At will:|\d\/[Dd]ay|\bcasts\b/.test(TEXT(r))))
+  .map(({ r }) => TEXT(r)).join(' ');
+export const spellOnLists = (spell, lists) => new RegExp(String(spell).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(lists);
+/** Can this sheet cast the named spell? The repair's predicate, built on the lint's reader. */
+export const sheetCanCast = (sheet, spell) => spellOnLists(spell, spellListTextOf(rowsOfSheet(sheet)));
+
 export function lintSheet(sheet) {
   const rows = rowsOfSheet(sheet);
   const all = SHEET_LINTS.flatMap((l) => (l.run(rows, sheet) ?? []).map((message) => ({ rule: l.rule, reads: l.reads, message })));
