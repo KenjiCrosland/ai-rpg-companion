@@ -123,10 +123,15 @@ describe('a gated row that declares a condition is held to one attack, not the r
     });
 
   it('a gated row that declares NO condition still answers to the nova floor', () => {
-    // `zone-seed` is gated and imposes nothing — it must not ride this stand-down
-    const p = price('zone-seed');
-    if (!p) return;
+    // `zone` ("Sustained Zone") is gated 1/Day and imposes nothing, so it must NOT ride
+    // the stand-down — it owes damage like print's other 80% of gated rows. An earlier
+    // cut of this test used `zone-seed` as the control and then that row was fixed
+    // (ungated, damage on entry), which is exactly how a control case rots: pick one that
+    // is still in the state being asserted.
+    const p = price('zone');
+    expect(p).toBeTruthy();
+    expect(p.gate).toBeTruthy();
     expect(p.imposes).toBeNull();
-    expect(p.ev).toBeLessThan(p.floor);      // still under, correctly: it owes damage
+    expect(p.ev).toBeLessThan(p.floor);
   });
 });

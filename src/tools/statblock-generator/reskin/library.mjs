@@ -140,8 +140,13 @@ export const LIBRARY_SEEDS = [
   {
     key: 'herd', keys: ['herd', 'drive', 'command'],
     section: 'Actions', archetypes: ['defender', 'brute', 'caster'],
-    name: 'Driving Bellow (2/Day)', // area forced-move, gated
-    text: "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice in a 30-foot Emanation originating from the creature. *Failure:* The target immediately moves up to half its Speed in a direction of the creature's choice, using the safest available route.",
+    // UNGATED AND CARRYING A LITTLE DAMAGE (2026-11-07). Gated it read 6 against 54 at
+    // CR 9 — the nova floor — and was dropped every time. Print's precedent for area
+    // forced movement is the bronze dragons' Repulsion Breath: bare, and AT WILL. Ungated
+    // this reaches ~78% of the floor on the movement credit alone (13 of 17 at CR 9), so
+    // a small fraction closes it rather than turning a herding bellow into a nova.
+    name: 'Driving Bellow', dpr_frac: 0.3, // area forced-move, at will like print's Repulsion Breath
+    text: "*Wisdom Saving Throw:* DC {dc}, each creature of the creature's choice in a 30-foot Emanation originating from the creature. *Failure:* {burst} {damage_type} damage, and the target immediately moves up to half its Speed in a direction of the creature's choice, using the safest available route.",
   },
   {
     key: 'hook-drag', imposes: 'Grappled', retired: true, // promoted to a shape (shapes.mjs) 2026-09-22
@@ -166,7 +171,11 @@ export const LIBRARY_SEEDS = [
   {
     key: 'delayed-brand', keys: ['brand', 'ember', 'fuse', 'venom'],
     section: 'Actions', archetypes: ['caster', 'lurker', 'skirmisher'],
-    name: 'Lingering Brand', dpr_frac: 0.25, // print's tick is SMALL: Fire Form 1d10 beside a 10-point hit (CR 5) — 0.6 of the round minted 6d6 a turn, uncapped (critic, new lines 2026-09-28) // the delayed-tick class
+    // 0.25 PRICED IT AS A TICK BESIDE A HIT; IT IS THE WHOLE ROW (2026-11-07). At that
+    // fraction it read EV 4 against a floor of 7 and was dropped in all 20 contexts of
+    // the template audit. 0.5 clears it while staying under print's own per-tick ceiling
+    // — the note below is why the number is small in the first place, and it stays small.
+    name: 'Lingering Brand', dpr_frac: 0.5, // print's tick is SMALL: Fire Form 1d10 beside a 10-point hit (CR 5) — 0.6 of the round minted 6d6 a turn, uncapped (critic, new lines 2026-09-28) // the delayed-tick class
     text: "*Constitution Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target is branded: it takes {burst} {damage_type} damage at the start of each of its turns until it uses its action to {douse}.",  // dilemma rows are DoT-until-action (Fire Elemental grammar, critic 2026-09-22): a single tick never binds
   },
   {
@@ -185,14 +194,29 @@ export const LIBRARY_SEEDS = [
   {
     key: 'zone', keys: ['fog', 'murk', 'cloud', 'field'],
     section: 'Actions', archetypes: ['caster', 'lurker'],
-    name: 'Clinging Murk (2/Day)', // the Fog Cloud / obscuring-zone class
-    text: "The creature fills a 15-foot-radius Sphere centered on a point it can see within 60 feet. The area is Lightly Obscured and Difficult Terrain until the start of the creature's next turn.",
+    // UNGATED, WHICH IS THE WHOLE FIX HERE (2026-11-07). Gated, this priced against the
+    // nova floor (1.3x the Multiattack) and read 13 against 30 at CR 5, so it was dropped
+    // and a fallback stood in. At will it clears on its own merits — 26 against 9 at CR 5,
+    // 46 against 17 at CR 9 — because an obscuring, difficult-terrain zone is worth an
+    // action, not a round. Print's bare area control is at will too (the copper dragons'
+    // Slowing Breath, the bronze dragons' Repulsion Breath, every CR from 1 to 22).
+    name: 'Clinging Murk', dpr_frac: 0.5, // the Fog Cloud / obscuring-zone class
+    // AND IT BITES, WHICH IS PRINT'S DAMAGING-ZONE GRAMMAR (2026-11-07). Obscured plus
+    // Difficult Terrain credits nothing in the value model — no damage, no condition — so
+    // ungating alone left it at EV 0 against a floor of 6. Print's zones that cost an
+    // action deal damage on entry or at the start of a turn there (the Blighted Ground
+    // class), so it does that now at half a hit.
+    text: "The creature fills a 15-foot-radius Sphere centered on a point it can see within 60 feet. The area is Lightly Obscured and Difficult Terrain until the start of the creature's next turn. A creature that enters the area or starts its turn there takes {burst} {damage_type} damage.",
   },
   {
     key: 'reveal', keys: ['reveal', 'light', 'outline', 'expose'],
     section: 'Actions', archetypes: ['caster', 'defender'],
-    name: 'Unveiling Glow (2/Day)', // the Faerie Fire class
-    text: "*Dexterity Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* Until the end of the creature's next turn, the target sheds dim light in a 10-foot radius, it can't benefit from the Invisible condition, and attack rolls against it have Advantage.",
+    // UNGATED AND CARRYING DAMAGE (2026-11-07). Gated it read 5 against 54 at CR 9. Its
+    // only credited value is the Advantage it grants attackers (a quarter of an attack),
+    // so even at will it reached a third of the floor. Print pairs damage with an effect
+    // on 96% of its action-cost save rows; this is one of them.
+    name: 'Unveiling Glow', dpr_frac: 0.6, // the Faerie Fire class
+    text: "*Dexterity Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* {burst} {damage_type} damage, and until the end of the creature's next turn the target sheds dim light in a 10-foot radius, it can't benefit from the Invisible condition, and attack rolls against it have Advantage.",
   },
   {
     key: 'self-invisibility', keys: ['invisible', 'invisibility', 'vanish', 'vanishes', 'unseen', 'turn invisible'], // "can turn invisible once per day" (form-ten 2026-10-01); print: the Imp's "casts Invisibility on itself"
