@@ -7468,9 +7468,31 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // a body whose ONLY attack is a HYBRID is still a body with an attack (print's Mage: Arcane
           // Burst, Melee or Ranged). The first cut skipped it, so print's Multiattack cited a row that
           // never landed — "three Arcane Burst attacks" on a sheet with no attack row (classes-eight, 2026-10-19)
-          if (printBody && (pc.exact || pc.borrowOnly) && (printNearAdd || isTwist || isClassNpc) && (pc.meleeRows ?? []).length && meleeRows.length === 0) {
+          // PRINT'S ATTACK LIST IS LOCKED ON A PRINT BODY (owner's ruling, 2026-11-08).
+          // The critic asked where the Pit Fiend's Fiery Mace leaves. It never arrives:
+          // the twist wrote two attack rows, the rename pass below pairs them
+          // POSITIONALLY with print's (`pc.meleeRows[i]`), and print's third row is
+          // simply never visited — then print's three-name Multiattack is pasted over a
+          // sheet carrying two. The pool form (2026-11-05) made that sentence print-shaped
+          // and hid the gap; it stays as the repair for a row shed LATER in the pipeline,
+          // and is no longer the answer to a row print has that nobody wrote.
+          //
+          // Because the pairing is positional, the unmapped print rows are always the
+          // TAIL — so this is the block that already adds print's rows when the chassis
+          // carried NONE, generalised from "none" to "fewer than print has". `addFrom` is
+          // where the add-back starts: 0 when the chassis has no melee row (today's
+          // behaviour, every path it already served), and `meleeRows.length` on the two
+          // paths the ruling names. Measured exposure (three fortys, 120 sheets): Pit
+          // Fiend 3 of 3 sheets short, mapping 1, 2, 2 of print's 3.
+          //
+          // NEVER BORROW, NEVER HOMEBREW (the ruling's own scope). A borrow or class-NPC
+          // sheet with a partial list keeps it: `addFrom` runs past the end, so the loop
+          // adds nothing and the gate's existing arms are untouched.
+          const lockPrintList = pc.exact || isTwist;
+          const addFrom = meleeRows.length === 0 ? 0 : (lockPrintList ? meleeRows.length : (pc.meleeRows ?? []).length);
+          if (printBody && (pc.exact || pc.borrowOnly) && (printNearAdd || isTwist || isClassNpc) && (pc.meleeRows ?? []).length > addFrom) {
             const pbDiffPM = Number.isFinite(pc.pb) ? scaled.pb - pc.pb : 0;
-            for (const pr of pc.meleeRows) {
+            for (const pr of pc.meleeRows.slice(addFrom)) {
               if (!pr.text || !Number.isFinite(pr.bonus)) continue;
               const already = Object.values(monster.sections).flat().find((e) => String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === pr.name.toLowerCase());
               if (already) {
@@ -7485,7 +7507,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               const bonusM = printNearAdd ? pr.bonus + pbDiffPM : Number(scaled.atk ?? pr.bonus + pbDiffPM);
               const tx = asInline(pr.text).replace(/(Attack Roll:\*? )\+\d+/, `$1+${bonusM}`).replace(/\bDC (\d+)\b/g, (m0, d) => `DC ${printNearAdd ? Number(d) + pbDiffPM : scaled.dc}`);
               (monster.sections.Actions = monster.sections.Actions ?? []).push({ name: pr.name, text: tx.charAt(0).toUpperCase() + tx.slice(1), print: true, weapon: weaponFor(pr.name) ?? null });
-              trace('print canon row:', `Actions/${pr.name} — the ${pc.name}'s own melee row, added (the chassis carried none to rename)`);
+              trace('print canon row:', `Actions/${pr.name} — the ${pc.name}'s own melee row, added (${addFrom === 0 ? 'the chassis carried none to rename' : `print names ${pc.meleeRows.length} attack rows and the sheet wrote ${meleeRows.length}, so print's list is locked and this one was never written`})`);
             }
           }
         }
@@ -7623,6 +7645,31 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           const printMa = asInline(String(pc.multiattack));
           if (ma && pc.last) { const was = ma.text; ma.text = printMa; if (ma.text !== was) trace('print canon multiattack:', `"${ma.text}" — the ${pc.name}'s own`); }
           else if (!ma && pc.last) { (monster.sections.Actions = monster.sections.Actions ?? []).unshift({ name: 'Multiattack', text: printMa, print: true }); trace('print canon multiattack:', `"${printMa}" — the ${pc.name}'s own, added (the chassis carried none; the Owlbear makes two Rend attacks — canaries 2026-10-12)`); }
+        }
+        // AND WHERE PRINT MAKES ONE ATTACK, THE SHEET MAKES ONE (the other half of the
+        // 2026-11-08 ruling, critic #01). The gate above writes print's Multiattack only
+        // `&& pc.multiattack`; when print has NONE, nothing touched the chassis's own, so
+        // the Dire Wolf shipped "makes two Bite attacks" over print's verbatim Bite —
+        // +5, 8 (1d10 + 3), print's Prone rider — for 16 damage a round against print's 8
+        // at the very same CR. Print makes one attack here as a FACT about this creature,
+        // not as a rule about low CR.
+        //
+        // GATED ON PRINT'S CR, WHICH IS THE WHOLE SAFETY OF IT. Print's attack COUNT may
+        // only govern where print's NUMBERS already govern. The exposure list handed to
+        // this build also named the Skeleton (3 of 3 sheets, print's Skeleton has no
+        // Multiattack) — and that would have been a bad strip: those sheets are CR 6 on a
+        // `brute-5` donor, borrowing only the Skeleton's row NAMES, and their "two attacks,
+        // using Greatsword or Shortbow in any combination" is the pool form a CR 6 brute is
+        // priced for. Print's CR 1/4 Skeleton says nothing about a CR 6 one. `nearPrintCr`
+        // is the line between the two cases: Dire Wolf CR 1 on print's CR 1 passes, the
+        // Skeleton at CR 6 against print's 1/4 does not. Measured exposure after that
+        // correction: the Dire Wolf alone, 3 of 3 sheets.
+        else if (printBody && (pc.exact || isTwist) && !pc.multiattack && nearPrintCr(cr, pc.cr)) {
+          const ma = Object.values(monster.sections).flat().find((o) => /^Multiattack/.test(o.name ?? ''));
+          if (ma) {
+            for (const [secX, esX] of Object.entries(monster.sections)) { const ix = esX.indexOf(ma); if (ix >= 0) esX.splice(ix, 1); }
+            trace('print canon multiattack:', `"${String(ma.text ?? '').slice(0, 80)}" leaves — the ${pc.name} makes ONE attack at its own CR (print names no Multiattack) and the sheet carries print's own row numbers`);
+          }
         }
         const rangedRows = Object.values(monster.sections).flat().filter((e) => /Ranged Attack Roll/.test(e.text ?? ''));
         const RANGED_WORD = /\b(?:bow|bows|longbow|shortbow|crossbow|crossbows|sling|slings|arrow|arrows|bolt|bolts|dart|darts|javelin|javelins|spear|spears|throw|throws|thrown|hurl|hurls|hurled|fling|flings|shoot|shoots|shot|ranged|pistol|musket|firearm|gun|guns|rifle|breath|spit|spits|spews?)\b/i;
@@ -8566,17 +8613,41 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     const acts = sections.Actions ?? [];
     for (let i = acts.length - 1; i >= 0; i -= 1) {
       const e2 = acts[i];
-      if (!(e2.library || e2.wildcard)) continue;
+      // AN AUTHORED ROW IS THE MODEL'S ROW TOO (2026-11-08). The scope note above says
+      // "model/library rows only; donor-authored control is the chassis's business", and a
+      // SEAT-AUTHORED row is the model's by that reading — but it was excluded, so the gate
+      // question was never asked of it. It only started to matter when the print-list strip
+      // above began removing Multiattacks: BOTH Dire Wolf control rows measured on the
+      // fortys are seat-authored, not library. The two existing arms keep their exact
+      // scope (an authored row is excluded from each, so nothing that shipped before
+      // changes); only the new restore arm reads the wider set.
+      if (!(e2.library || e2.wildcard || e2.authoredSeat)) continue;
       const t = e2.text ?? '';
       if (/\d+ \(\d+d\d+/.test(t) || KO.test(t) || /Attack Roll:/.test(t)) continue;
       const framed = /Saving Throw[:*]|must (?:make|succeed on) a DC \d+/.test(t);
       if (framed) {
         const hasMa = Object.values(sections).flat().some((x) => /^Multiattack/.test(x.name ?? '')); // a row sheds its limit TO JOIN a Multiattack: with none to join, the limit stays (an at-will 30-foot Frightened pulse on a CR 3 hermit — the critic's fourth read)
-        if (/ \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(e2.name) && hasMa) {
+        const gatedNow = / \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(e2.name);
+        if (gatedNow && hasMa && !e2.authoredSeat) {
           e2.name = e2.name.replace(/ \((?:Recharge [\d–-]+|\d\/Day)\)$/, ''); e2.gate = undefined;
           trace('dead control row:', `"${e2.name}" sheds its gate — no damage, no KO condition; it joins the Multiattack menu instead`);
+        } else if (!gatedNow && !hasMa) {
+          // AND THE INVERSE, WHICH THIS BLOCK ALWAYS OWED. The shed arm's comment says "a
+          // row sheds its limit TO JOIN a Multiattack: with none to join, the limit stays"
+          // — but a row that never CARRIED a limit has none to keep, and an at-will
+          // no-damage condition action on a sheet with no Multiattack is a whole action
+          // spent to impose a condition with no attack to take instead. That is exactly
+          // what the checker's `gate-fit` fails ("an at-will condition action with no
+          // Multiattack to join — a shed use limit needs one"), and print's answer to the
+          // shape is a Recharge. Two frames reach it: the Dire Wolf's authored control row,
+          // which the print-list strip above now leaves without a Multiattack (measured:
+          // 1 of 3 forty sheets would have turned FAIL), and a sheet that never had a
+          // Multiattack at all — a live FAIL before this (printlist roll 03, "Frost
+          // Shoulder Shove").
+          e2.name = `${e2.name} (Recharge 5-6)`; e2.gate = 'Recharge 5-6';
+          trace('dead control row:', `"${e2.name}" takes a Recharge — an at-will condition action with no Multiattack to join is a whole action for a condition, and print gates that shape`);
         }
-      } else {
+      } else if (!e2.authoredSeat) { // unchanged scope: a frame-less library/wildcard row still moves
         acts.splice(i, 1);
         (sections['Bonus Actions'] = sections['Bonus Actions'] ?? []).push(e2);
         trace('dead control row:', `"${e2.name}" moves to Bonus Actions — no damage, no save, no KO condition`);

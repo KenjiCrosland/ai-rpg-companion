@@ -1,0 +1,86 @@
+[
+  {
+    "name": "Dire Wolf",
+    "description": "with a frost-rimed hide",
+    "cr": "1",
+    "rules": "2024",
+    "canary": "DIRE WOLF roll 1 - one Bite, no Multiattack, and any at-will condition action must carry a Recharge (0 gate-fit FAILs)"
+  },
+  {
+    "name": "Dire Wolf",
+    "description": "with a frost-rimed hide",
+    "cr": "1",
+    "rules": "2024",
+    "canary": "DIRE WOLF roll 2 - one Bite, no Multiattack, and any at-will condition action must carry a Recharge (0 gate-fit FAILs)"
+  },
+  {
+    "name": "Dire Wolf",
+    "description": "with a frost-rimed hide",
+    "cr": "1",
+    "rules": "2024",
+    "canary": "DIRE WOLF roll 3 - one Bite, no Multiattack, and any at-will condition action must carry a Recharge (0 gate-fit FAILs)"
+  },
+  {
+    "name": "Dire Wolf",
+    "description": "with a frost-rimed hide",
+    "cr": "1",
+    "rules": "2024",
+    "canary": "DIRE WOLF roll 4 - one Bite, no Multiattack, and any at-will condition action must carry a Recharge (0 gate-fit FAILs)"
+  },
+  {
+    "name": "Dire Wolf",
+    "description": "with a frost-rimed hide",
+    "cr": "1",
+    "rules": "2024",
+    "canary": "DIRE WOLF roll 5 - one Bite, no Multiattack, and any at-will condition action must carry a Recharge (0 gate-fit FAILs)"
+  },
+  {
+    "name": "Dire Wolf",
+    "description": "with a frost-rimed hide",
+    "cr": "1",
+    "rules": "2024",
+    "canary": "DIRE WOLF roll 6 - one Bite, no Multiattack, and any at-will condition action must carry a Recharge (0 gate-fit FAILs)"
+  },
+  {
+    "name": "Pit Fiend",
+    "description": "who collects the oaths of dying knights",
+    "cr": "20",
+    "rules": "2024",
+    "canary": "PIT FIEND roll 1 - all three print attack rows; chasing a roll that writes TWO melee rows to exercise the tail add-back"
+  },
+  {
+    "name": "Pit Fiend",
+    "description": "who collects the oaths of dying knights",
+    "cr": "20",
+    "rules": "2024",
+    "canary": "PIT FIEND roll 2 - all three print attack rows; chasing a roll that writes TWO melee rows to exercise the tail add-back"
+  },
+  {
+    "name": "Pit Fiend",
+    "description": "who collects the oaths of dying knights",
+    "cr": "20",
+    "rules": "2024",
+    "canary": "PIT FIEND roll 3 - all three print attack rows; chasing a roll that writes TWO melee rows to exercise the tail add-back"
+  },
+  {
+    "name": "Pit Fiend",
+    "description": "who collects the oaths of dying knights",
+    "cr": "20",
+    "rules": "2024",
+    "canary": "PIT FIEND roll 4 - all three print attack rows; chasing a roll that writes TWO melee rows to exercise the tail add-back"
+  },
+  {
+    "name": "Pit Fiend",
+    "description": "who collects the oaths of dying knights",
+    "cr": "20",
+    "rules": "2024",
+    "canary": "PIT FIEND roll 5 - all three print attack rows; chasing a roll that writes TWO melee rows to exercise the tail add-back"
+  },
+  {
+    "name": "Pit Fiend",
+    "description": "who collects the oaths of dying knights",
+    "cr": "20",
+    "rules": "2024",
+    "canary": "PIT FIEND roll 6 - all three print attack rows; chasing a roll that writes TWO melee rows to exercise the tail add-back"
+  }
+]

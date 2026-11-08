@@ -157,17 +157,60 @@ handed clause a receipt, which contradicts its own trace, and that is an owner q
 
 ### 1e. Print's attack list is locked on a print body (critic §2b, #17 and #01)
 
-**MEASURED 2026-11-08 (Fable, same three fortys) — exposure is 8 sheets of 120, as predicted
-bounded.** `print canon attack:` lines vs print's attack rows: **Pit Fiend 3 of 3 sheets short**
-(mapped 1, 2, 2 of 3 — Fiery Mace never arrives); **Skeleton twist 2 of 2 short** (#38, mapped 1
-of Shortsword+Shortbow); Owlbear (Rend, 1) and Goblin Boss (2) are whole. **Dire Wolf 3 of 3
-ship "makes two Bite attacks"**; print's Dire Wolf has Bite and no Multiattack.
+**MEASURED 2026-11-08 (Fable, three fortys T03/T05/T09, 120 sheets) — exposure is bounded, both
+mechanisms listed below with indices. READY FOR OPUS; 1d landed first and moved this file's line
+numbers by ~35, corrected here.**
+
+*Missing print attack row (mechanism #17):* `print canon attack:` lines vs print's attack rows —
+**Pit Fiend #17, 3 of 3 sheets short** (mapped 1, 2, 2 of 3; Fiery Mace never arrives);
+**Skeleton twist #38, 2 of 2 short** (mapped 1 of Shortsword + Shortbow). Owlbear (Rend) and
+Goblin Boss (Scimitar, Shortbow) are whole.
+
+*Chassis Multiattack on a print body that has none (mechanism #01):* **the Dire Wolf alone,
+3 of 3** ("makes two Bite attacks" over print's verbatim Bite — +5, 8 (1d10 + 3), print's Prone
+rider — so 16 damage a round against print's 8 at the same CR). Three false leads were on the
+first exposure list and are refuted:
+- **Skeleton #38 was NOT a defect.** Those sheets are CR 6 on a `brute-5` donor borrowing only
+  the Skeleton's row NAMES; their "two attacks, using Greatsword or Shortbow in any combination"
+  is the pool form a CR 6 brute is priced for. Print's CR 1/4 Skeleton says nothing about a CR 6
+  one, and stripping it would have under-priced three sheets. **This is why the landed gate
+  requires `nearPrintCr(cr, pc.cr)`: print's attack COUNT may only govern where print's NUMBERS
+  already govern.** Dire Wolf CR 1 on print's CR 1 passes; Skeleton CR 6 against 1/4 does not.
+- **Vampire #11** DOES have one — print's row is `Multiattack (Vampire Form Only)`, which
+  `printCanonFor` already matches with `/^Multiattack\b/i`. The bare-name detector was at fault.
+- **Spy #33** has none in print, but that sheet is a `class_npc` path, outside the ruling's scope.
+
+**LANDED 2026-11-08 (Opus).** Mechanism #17: the block that already added print's melee rows
+when the chassis carried NONE is generalised from "none" to "fewer than print names" — because
+the rename pass pairs positionally, the unmapped print rows are always the TAIL, so the add-back
+is `pc.meleeRows.slice(addFrom)` with `addFrom = 0` when the chassis has no melee row (today's
+behaviour on every path it already served) and `meleeRows.length` on `pc.exact || isTwist`. A
+borrow or class-NPC sheet with a partial list keeps it: `addFrom` runs past the end and the loop
+adds nothing. Mechanism #01: an `else if` on the Multiattack paste gate strips the chassis
+Multiattack when `printBody && (pc.exact || isTwist) && !pc.multiattack && nearPrintCr(cr, pc.cr)`.
+New spec `print-attack-list.spec.js` asserts the corpus data and both gates, including the
+Skeleton refusal. 4931 tests pass, build clean.
+
+**Anchors, as of the 1d landing:** the mapping trace `print canon attack:` is at
+`generate.mjs:7591`; the paste gate is at **7612**:
+`if ((pc.exact || (pc.borrowOnly && nearPrintCr(cr, pc.cr))) && pc.multiattack)`. Note the
+`borrowOnly` arm — it already pastes print's Multiattack onto a near-CR BORROW. The ruling says
+never borrow for the lock: add the missing-row step and the strip-when-absent step under
+`pc.exact || pathD.path === 'twist'` ONLY, and leave the borrow arm as it is. Do not refactor the
+gate's shape to make the two paths look alike.
+
+**Replay sheets:** `smoke-out/sweep-2026-11-08T05-42-47/17-pit-fiend.json` (Mace absent),
+`smoke-out/sweep-2026-11-08T09-06-59/01-dire-wolf.json` (two Bites), and `.../38-formation-drill-
+skeleton.json` (both mechanisms on one sheet: one of two attack rows, plus a Multiattack print
+lacks). Twelve after landing: #01, #17, #38 × 2 rolls each, plus #21 Owlbear (exact no-op),
+#22 Goblin Boss (whole list, must not change), #11 Vampire (has a Multiattack — must keep it),
+and one borrow sheet (unchanged).
 
 Two mechanisms, one principle.
 
 **#01 Dire Wolf, two Bites (8 of 10 rolls).** Print's Dire Wolf: `Pack Tactics | Bite`, **no
 Multiattack**. The twist ran print canon for defenses, array and speed (trace 98-132) but
-`generate.mjs:7577` writes print's Multiattack only `&& pc.multiattack` — when print has none,
+`generate.mjs:7612` writes print's Multiattack only `&& pc.multiattack` — when print has none,
 nothing touches the donor's `makes two Bite attacks`, so it ships. **Do:** in the same block,
 when the body is print's and `pc.multiattack` is absent, remove the chassis Multiattack (print
 makes one attack here by fact, not by rule). Trace it. Predict: the Dire Wolf ships one Bite;
@@ -184,7 +227,7 @@ twist/exact paths print's attack list is locked and the authored row only adds a
 wants the Fiery Mace. The pool form stays as the repair for a row genuinely shed LATER in the
 pipeline; it is no longer the answer to a row print has that the twist never wrote.
 
-**Do:** in the print-canon attack block (generate.mjs ~7470-7580, where `print canon attack:`
+**Do:** in the print-canon attack block (generate.mjs ~7500-7625, where `print canon attack:`
 maps the twist's rows onto print's names), after the mapping and BEFORE `print canon
 multiattack:` is written: for every print attack row in `pc.meleeRows`/`pc.rangedRows` that no
 twist row was mapped onto, add print's own row — name, text, numbers — stamped `print: true`
