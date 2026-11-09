@@ -32,7 +32,7 @@ export const guardedStanceIllegalAt = (cr, ac) => {
 };
 export const guardedStanceWhyAt = (cr, ac) => `AC ${ac} already beats print's ${Number(challengeRatings?.[crKey(cr)]?.armor_class ?? 0)} at CR ${cr}, and print ships no persistent Disadvantage-to-be-hit trait (0 of 329)`;
 import { hpFormulaFor as hpFormulaForSize, saveDamageDiceFor as engineDiceFor, attackDamageDiceFor, D4_MAX } from '../format-2024/dice.mjs';
-import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedConditions, TURN_DENIAL } from './author.mjs'; // one definition: the conditions a finished row imposes
+import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedConditions, TURN_DENIAL, KO_CONDITIONS } from './author.mjs'; // one definition: the conditions a finished row imposes
 import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the validated condition list the authoring call answers against
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
@@ -598,7 +598,7 @@ Return ONLY JSON:
  "renames": { ${renameSkeleton} },   <- ALL of these keys, every one, none omitted. A name that claims an element must be PAID by that row's damage: "Burning X" needs Fire on the row (or the melee rider), "Rimefrost X" needs Cold. If the damage does not pay the word, drop the word, or qualify it with the true element the way the published statblocks do (the Priest\'s "Radiant Flame" deals Radiant); folklore light-compounds (witchfire, foxfire, balefire) are always legal. NAME REGISTER — the published statblocks' name BUDGET (measured from the corpus): standard rows stay terse — a plain-damage attack row is ONE weapon-noun or anatomy word (Bite, Talons, Greataxe); two words only when the row does more than plain damage (Flame Whip, Arcane Burst); utility rows take plain function names. A row named for the creature's MATERIAL alone — "Iron Fist", "Stone Slam", "Bronze Kick" — is the sameness a reader notices first: two different iron creatures both reach for it. Name the row for what the blow DOES, or for this creature's own element, and leave its material to the body above. ONLY the Signature Slot and the nova row earn a flavored name, and even there the published statblocks compress: two words, three at the absolute ceiling (Dreadful Glare, Curtain Call — never "Blade Scatter Finale"), a hyphenated compound counting as its parts. Legendary actions take the two-word flavored register, verb-forward (Pounce, Mind Jolt, Cold Gale) — never three words. One flourish on a sheet of terse names reads as a designer's touch; wall-to-wall kennings read as a generator.${mind === 'bestial' ? ' THIS creature is bestial: name its attack rows by anatomy alone (Bite, Talons, Slam, Gore) — its flavor lives in the trait and the lore, never in an attack name.' : ''} Never invent a compound word — the published statblocks write "Frost Axe", never "Frostaxe".
  "name_element": {<ONLY for a new name that contains an element word (fire/flame/burn/ember, frost/ice/rime/chill, storm/lightning/thunder/shock, venom/poison/toxic, acid/caustic, holy/radiant/sacred, necrotic) — one entry each, "<the name>": "literal|imagery". "literal" means the row really deals that damage. "imagery" means the word is folklore or metaphor and the row deals something else — "Witch-Fire" and "Fox-Fire" are the old words for a light that does not burn. Say "imagery" ONLY where the element word is half of a compound word, never where it stands on its own: "Flame Lash" is a lash of flame>},
  "damage_types": { ${damageSkeleton} },   <- REQUIRED for every attack and the area action. PHYSICAL vs ENERGY follows the BODY (in the published statblocks, melee attacks deal the limb's physical type — a bite Piercing, a slam Bludgeoning, a claw Slashing — with energy reserved for the ranged attack and the area action; ONLY a creature whose body IS energy — incorporeal, elemental, formless — deals energy with its melee). A row named after a WEAPON a person could carry deals THAT WEAPON'S type, however the creature is themed — a spear Piercing, a mace Bludgeoning, an axe Slashing — even a spear wreathed in flame: the published statblocks have 53 such rows and not one deals energy alone (the Knight's Greatsword is "Slashing plus Radiant", never Radiant). If this creature's blows carry an energy — a flaming spear, a frost axe, a blessed mace — answer the weapon's PHYSICAL type here AND that energy on "melee_rider" below, so the row reads "Piercing damage plus Fire damage". Do NOT drop the energy to satisfy the rule: dropping it is how a cinder knight with a flaming spear ends up with no fire anywhere on its sheet. A fully physical creature may answer physical for everything; never give every row the same energy — but also keep to ONE energy family across the block (the published statblocks rarely field two).${energy ? ` THIS creature's energy is ${energy} — every non-physical damage type you assign must be ${energy}.` : ''}${mix === 'physical' ? ' THIS creature deals PHYSICAL damage only — Bludgeoning, Piercing, or Slashing everywhere; no energy types anywhere on the block.' : ''}
-${needsSpells ? ` "spells": { "at_will": ["<exactly 2 spells this concept would cast, from ONLY this list: ${(scaled.spell_menu ?? SPELL_MENU).join(', ')}>"], "daily": ["<exactly 2 MORE from the same list, no repeats — pick by THEME: the spells must feel like this creature\'s magic. A blaster picks its SIGNATURE damage spells (Fireball, Scorching Ray, Shatter...) — the engine prices the tiers>"] },\n` : ''}${needsProjectile ? ` "projectile": "<the thing it throws, 1-3 words WITH its article (a knucklebone / its barbed anchor) — it appears mid-sentence in attack text>",\n` : ''}${engineMenu.length ? ` "defense_engine": "<what this concept's defense IS — rampart (a punishing presence: a damaging emanation and a raised wall) | punisher (it answers every blow: a counter-strike reaction). Pick ONE from: ${engineMenu.join(', ')}>",\n` : ''}${needsEngulf ? ` "engulf_style": "<how this body takes a creature in: swallow (a mouth) | engulf (an amorphous mass, a slime, a swarm) | smother (fabric, wrappings, a collapsing bulk) | whelm (water or liquid) | cage (chains, bars, ribs) | entomb (stone, earth, ice) | cocoon (web, silk, strands) — the engine names and words the ability to match>",\n` : ''} "weapons": { "<the new name you gave an attack row>": "<the mundane weapon it is, in plain words, or none>" },
+${needsSpells ? ` "spells": { "at_will": ["<exactly 2 spells this concept would cast, from ONLY this list: ${(scaled.spell_menu ?? SPELL_MENU).join(', ')}>"], "daily": ["<exactly 2 MORE from the same list, no repeats — pick by THEME: the spells must feel like this creature\'s magic. A blaster picks its SIGNATURE damage spells (Fireball, Scorching Ray, Shatter...) — the engine prices the tiers>"] },\n` : ''}${needsProjectile ? ` "projectile": "<the thing it throws, 1-3 words WITH its article (a knucklebone / its barbed anchor) — it appears mid-sentence in attack text>",\n "projectile_supply": "<\"single\" if this is ONE object the creature must get back to throw again (its barbed anchor, its lantern skull), or \"ambient\" if it has endless supply of them (rocks, tar, coins, webs, javelins, spines it regrows) — a creature with endless ammunition needs no clause returning it>",\n` : ''}${engineMenu.length ? ` "defense_engine": "<what this concept's defense IS — rampart (a punishing presence: a damaging emanation and a raised wall) | punisher (it answers every blow: a counter-strike reaction). Pick ONE from: ${engineMenu.join(', ')}>",\n` : ''}${needsEngulf ? ` "engulf_style": "<how this body takes a creature in: swallow (a mouth) | engulf (an amorphous mass, a slime, a swarm) | smother (fabric, wrappings, a collapsing bulk) | whelm (water or liquid) | cage (chains, bars, ribs) | entomb (stone, earth, ice) | cocoon (web, silk, strands) — the engine names and words the ability to match>",\n` : ''} "weapons": { "<the new name you gave an attack row>": "<the mundane weapon it is, in plain words, or none>" },
  "lacks": [<EVERY thing the user said the creature does NOT have, each as {"quote": "<the user's OWN WORDS, a SHORT PHRASE of one to five words — never a sentence you build yourself>", "takes": "<what the words take away: grapple | regeneration | spellcasting | flight | ranged | melee | sight | speech | hearing | part | other. A LOST SENSE IS THAT SENSE, NOT A PART: \"blind in one eye\", \"one eye gone\", \"a milky eye\" all take sight; \"deaf in one ear\" takes hearing. Answer part ONLY for a limb or appendage it fights with — a lost arm, a severed tail, a broken wing>", "costs": "<WHICH ROLL THE WOUND SPOILS, when the absence takes no whole ability away but still ought to cost the creature something. Exactly one of: sight (it cannot see well on one side) | hearing (it cannot hear well) | one_limb_attacks (a limb it fights with is gone or ruined) | all_attacks (its whole frame is impaired) | none (the absence removes an ability outright, so nothing extra is owed). A ruined EYE costs sight, never one_limb_attacks>"}. "never holds it" takes grapple; "instead of regrowing" takes regeneration; "no magic at all" takes spellcasting; "eyeless" takes sight. A PARTIAL loss keeps the sense — "blind in one eye", "half-deaf", "limps", "missing a hand" take part, never sight, hearing or flight. EVERY entry must contain a word that takes something away: "no", "not", "cannot", "never", "without", "lost", "stripped", or a word that means the absence itself — "eyeless", "mute", "blind", "deaf", "wingless", "sightless". Examples of entries: "no magic at all", "eyeless", "lost its wings", "born mute", "carries no weapons", "never holds" (so it never grapples), "instead of regrowing" (so it does not regrow or regenerate) — "never X" and "instead of X" take X away. A lack is of ANY kind: a body part, a sense, a voice, a spell list, a weapon, armour. If a phrase has none of those words it is something the creature HAS, so leave it out. Use [] when the user took nothing away>],
  "implied_class": "<the ONE class this creature trains as, if the user's words imply one: rogue|fighter|monk|paladin|cleric|mage|bard|barbarian|none. A ninja trains as a rogue, a kung fu master as a monk, a samurai or a gladiator as a fighter. Answer none for a beast, a construct, an ooze, or a person whose words name no training at all — none is the right answer more often than not>",
  "implied_class_quote": "<the user's OWN WORDS that imply it, quoted verbatim from the THE USER TYPED line above, or \"\" if you answered none>",
@@ -4598,8 +4598,32 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // SINGULAR signature projectile (its barbed anchor, a skull);
           // print giants throw rocks with no return — the supply is the
           // mountain
-          if (/\b(?:slab|stone|rock|boulder|rubble|debris|chunk|shard|brick|ic(?:e|icle))s?\b/i.test(proj)) {
+          // AMBIENT AMMUNITION NEVER BOOMERANGS, AND A WORD LIST CANNOT TELL (owner,
+          // 2026-11-09: "anything that isn't magical and the monster doesn't conceivably have a
+          // cache of ammunition for — or has potentially unlimited ammunition for — does not need
+          // to return; the return to grasp should be an exception rather than the rule").
+          //
+          // The 2026-09-15 Cliff Troll ruling is right and stays: a SINGLE signature object has
+          // to come back or it is thrown once and gone (its lantern skull), while ambient supply
+          // needs no clause (the mountain is full of slabs). What was wrong is how the engine
+          // told them apart — a word list of ambient nouns (slab|stone|rock|boulder|rubble|…),
+          // which leaked exactly as a word list does. Measured over the week's fortys: the clause
+          // shipped 28 times, on a TAR CLOD, tossed COINS, a spider's WEB and Meshrin's mundane
+          // JAVELIN — none of them in the list, every one of them unlimited. Print writes the
+          // clause 4 times in 1291 rows.
+          //
+          // Whether a creature has an endless supply of the thing it throws is a judgement about
+          // the fiction, so it is a CALL FIELD (CLAUDE.md): the same call that names the
+          // projectile says whether that projectile is one object or ambient ammunition. The word
+          // list survives only as the fallback for an unanswered field — a failed call never
+          // costs a sheet.
+          const supply = String(p.projectile_supply ?? '').trim().toLowerCase();
+          const ambient = supply === 'ambient' || (!['single', 'ambient'].includes(supply)
+            && /\b(?:slab|stone|rock|boulder|rubble|debris|chunk|shard|brick|ic(?:e|icle)|clod|coin|web|dart|bolt|arrow|spine|quill|mud|tar|sand|ash|ember|dung|refuse|scrap)s?\b/i.test(proj));
+          if (ambient) {
+            const before = e.text;
             e.text = e.text.replace(/\s*\*?Hit or Miss:\*?\s*Immediately after the attack, [^.]*returns to [^.]*\.\s*/, ' ').replace(/\s+$/, '');
+            if (e.text !== before) trace('returning clause dropped:', `"${e.name}" throws ${proj} — ${supply === 'ambient' ? 'the call says the supply is ambient' : `no answer from the call, and the words read as ambient ammunition`}; print writes a returning weapon 4 times in 1291 rows and never for ammunition the creature has endlessly`);
           }
         }
       }
@@ -8428,7 +8452,34 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           {
             const bareR = r.name.replace(/ \(.*\)$/, ''); const nearHere = (pc.exact || pc.borrowOnly) && nearPrintCr(cr, pc.cr);
             const same = Object.values(sections).flat().find((o) => String(o.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === bareR.toLowerCase());
-            if (same && nearHere && !same.print && !same.library && / \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(r.name) && /Saving Throw/.test(r.text ?? '') && /\d+ \(\d+d\d+/.test(r.text ?? '')) {
+            // AND NOT ONLY A NOVA (critic's release ruling, 2026-11-09). This rule was gated to
+            // print rows carrying a Recharge/X-Day gate, so print's UNGATED rules rows lost the
+            // name collision and the sheet kept the engine's row instead: the Purple Worm's
+            // Swallow — print's Bonus Action, a Strength save on a grappled target — has shipped
+            // for three consecutive sweeps as an Action with a Dexterity save on "a creature the
+            // worm hit this turn", because the engine's own `swallow` TEMPLATE wrote a row of
+            // that name into Actions first. 1e locked print's attack list; this is the same
+            // principle for the rows print keeps in Actions, Bonus Actions and Reactions.
+            //
+            // `pc.rulesRows` carries each row's own `section`, so the collision winner also
+            // returns to print's section rather than keeping the template's.
+            // (Measured correction to the handoff: print's Goblin Boss has NO Redirect Attack —
+            // Multiattack, Scimitar, Shortbow, Nimble Escape is the whole block — so nothing was
+            // shed there; that claim was a 2014 feature remembered into 5.2.)
+            const printWins = same && nearHere && !same.print && !same.library;
+            if (printWins && !/ \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(r.name)) {
+              const pbU = Number.isFinite(pc.pb) ? scaled.pb - pc.pb : 0;
+              const txU = asInline(r.text).replace(/\bDC (\d+)\b/g, (m0, d) => `DC ${Number(d) + pbU}`);
+              const wasSec = Object.entries(sections).find(([, es]) => es.includes(same))?.[0] ?? 'Actions';
+              same.text = txU.charAt(0).toUpperCase() + txU.slice(1); same.name = r.name; same.print = true; same.rules = true;
+              if (r.section && r.section !== wasSec) {
+                const from = sections[wasSec]; if (from) from.splice(from.indexOf(same), 1);
+                (sections[r.section] = sections[r.section] ?? []).push(same);
+              }
+              trace('print canon row:', `${r.section}/"${r.name}" — print's own row takes the name back from the engine's${r.section !== wasSec ? ` and returns to ${r.section} (was ${wasSec})` : ''}`);
+              continue;
+            }
+            if (printWins && / \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(r.name) && /Saving Throw/.test(r.text ?? '') && /\d+ \(\d+d\d+/.test(r.text ?? '')) {
               const pbD = Number.isFinite(pc.pb) ? scaled.pb - pc.pb : 0;
               const txP = asInline(r.text).replace(/\bDC (\d+)\b/g, (m0, d) => `DC ${Number(d) + pbD}`);
               same.text = txP.charAt(0).toUpperCase() + txP.slice(1); same.name = r.name; same.print = true; same.rules = true;
@@ -8757,7 +8808,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // (an obscuring zone) becomes a Bonus Action. Model/library rows only;
   // donor-authored control is the chassis's business.
   {
-    const KO = /\b(?:Paralyzed|Stunned|Incapacitated|Unconscious|Petrified|Restrained|Grappled)\b/;
+    const KO = KO_CONDITIONS; // one definition, in author.mjs — the checker's gate-fit reads the same list (2026-11-09)
     const acts = sections.Actions ?? [];
     for (let i = acts.length - 1; i >= 0; i -= 1) {
       const e2 = acts[i];
@@ -8834,6 +8885,30 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (saveAction && !String(saveAction.name ?? '').replace(/ \(.*\)$/, '').trim()) {
       trace('multiattack option withheld:', 'a row matched the save-action finder but carries no name, so it cannot be offered as "(A)" — the clause falls to its single-option form (the Choir of the Pit, forty #3)');
       saveAction = null;
+    }
+    // AN AREA ROW OFFERED AS A SWAP FOR ONE ATTACK MAY NOT OUT-DAMAGE IT (critic's release
+    // ruling, 2026-11-09). "It can replace one attack with a use of X" is a trade a GM makes
+    // every round, so when X hits an area for more than the attack it replaces, the round's
+    // damage multiplies instead of swapping: Gormak's Shattered Ground dealt 38 to everything
+    // within 10 feet in place of a 30 attack (sustained 106 at CR 9, band 57-62), the Barrow
+    // Duelist's Barrow Sweep 28 + Prone in place of 21 (77 at CR 6, band 33-38).
+    //
+    // PRINT'S WARRANT, measured over all 329 blocks before building this: of print's 24 at-will
+    // "replace one attack with X" rows, **0** are an area effect whose damage reaches the attack
+    // they replace. Print puts area damage behind a Recharge and keeps its at-will replace rows
+    // as CONTROL — Prone, Frightened, a grapple. So the fix is print's own shape, not a new
+    // ceiling: such a row takes Recharge 5-6 and stays in the clause (the dragons do exactly
+    // this — "a use of (A) Sleep Breath", and Sleep Breath is Recharge 5-6).
+    if (saveAction && !/\((?:Recharge [\d–-]+|\d\/Day)\)/.test(saveAction.name ?? '')) {
+      const t = String(saveAction.text ?? '');
+      const isArea = /\b(?:Cone|Line|Emanation|Sphere|Cube|Cylinder)\b|each creature (?:within|in)/i.test(t);
+      const dmg = (t.match(/\d+ \(\d+d\d+(?: \+ \d+)?\)/g) ?? []).reduce((a, p) => a + (Number(/^(\d+)/.exec(p)?.[1]) || 0), 0);
+      const atk = Math.max(0, ...Object.values(sections).flat().filter((e2) => /Attack Roll/.test(e2.text ?? '')).map((e2) => Number(/(\d+) \(\d+d\d+/.exec(e2.text ?? '')?.[1]) || 0));
+      if (isArea && dmg > 0 && atk > 0 && dmg >= atk) {
+        saveAction.name = `${String(saveAction.name).replace(/ \(.*\)$/, '')} (Recharge 5-6)`;
+        saveAction.gate = 'Recharge 5-6';
+        trace('area swap gated:', `"${saveAction.name}" deals ${dmg} to an area in place of a ${atk} attack — print offers no at-will area swap that out-damages the attack it replaces (0 of its 24), so it takes print's Recharge`);
+      }
     }
     const saveActionNamed = saveAction && new RegExp(`\\b${String(saveAction.name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(multi?.text ?? ''); // Multiattack already uses it every turn (the orb's Eye Rays) — no trade to offer
     if (saveActionNamed) saveAction = null;
@@ -10540,6 +10615,28 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       }
       for (const [secL, esL] of Object.entries(monster.sections ?? {})) for (const e of esL.slice()) {
         if (/^(?:Multiattack|Legendary Action Uses)\b/.test(e.name ?? '')) continue;
+        // THE ROW THAT EXPRESSES THE ABSENCE IS NOT A CAPABILITY THE ABSENCE REMOVES
+        // (owner's priority, 2026-11-09: a GM nerfing a monster is the likelier ask).
+        //
+        // This removal deletes any row whose NAME carries a lacked word, which is right for a
+        // capability ("Blinding Gaze" on a creature with no eyes) and wrong for the row the seat
+        // just wrote BECAUSE of the lack. The Adult Red Dragon's "blind in one eye" authored
+        // "Ruined-Eye Glare" / "Lance-Scarred Blind Side" / "Ruined Eye's Vigil" — and each was
+        // deleted for containing "eye".
+        //
+        // The cost is not the row; it is what the deletion does next. The flaw-row builder below
+        // stands down when a lack already removed something (`before !== after`), reasoning that
+        // the lack cost the creature a row — so deleting the lack's OWN row suppresses
+        // `Sight Weakness` too, and the sheet ships with no trace of the ask. Measured over 18
+        // saved fortys carrying this sheet: **deleted-a-row 6, and all 6 shipped no flaw row and
+        // FAILed `lack-honored`; the 11 that deleted nothing all shipped the flaw row and passed**
+        // — a perfect correlation, and the one standing FAIL on the crafted forty all week.
+        //
+        // A row stamped with THIS clause is the lack expressed. `row.clause` is already there
+        // (the 2026-11-08 "GM's ask is not a free row" landing stamps it), so this reads data the
+        // engine wrote rather than judging prose.
+        const ownsThisLack = !!e.clause && (() => { const cw = clauseWords(c.text); return cw.length > 0 && cw.every((w) => clauseWords(e.clause).includes(w)); })();
+        if (ownsThisLack) { trace('lacks clause:', `${secL}/"${e.name}" STAYS — the seat wrote it for "${c.text}", so its name carrying that word is the lack expressed, not a capability the lack removes`); continue; }
         const nameHit = clauseWords(e.name).some((w) => lacked.includes(w));
         const magicHit = magic && !/Attack Roll/.test(e.text ?? '') && /\bcasts?\b|Spellcasting|\bspells?\b/i.test(`${e.name} ${e.text}`);
         // A MAGICAL ATTACK IS MAGIC TOO (critic, 2026-10-14: "no magic at all"

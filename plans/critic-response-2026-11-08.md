@@ -664,6 +664,154 @@ fill had run, so it rendered the raw key or, with an empty fill, "condition ,.".
 five CR bands, and the spec now uses the CHECKER'S own punctuation regex — mine lacked `\s,` and
 read the defect as clean. Suite 4954, build clean; uncommitted alongside this note.
 
+### 7.9c — THE RELEASE LIST (critic's ruling on sweep `05-57-15` + GM forty `06-25-17`, reviewed by Fable 2026-11-09)
+
+The critic's ruling: **not shippable on this sweep; the list is three items, all deterministic.**
+Fable verified every premise below against print and the saved sheets. Where the critic was wrong
+the correction is stated with its number. Items 12–17 are PRE-RELEASE and replace items 1–11's
+"then the forty" step. Then one `sweep` + one `typed40`, then the critic once more.
+
+**THE RELEASE GATE, REPLACED (adopted from the critic, 2026-11-09).** The 85% per-clause bar is
+retired as a *release gate* and kept as a post-release target. (The critic's "114 + 12 = 85.1%" is
+off by one — the never-clause misses are **11**, one clause is 0/2 — so the four never-clauses
+reach **84.5%**, not 85; the bar needs one coin-flip too.) The gate that holds the button:
+**0 sheets hot ≥ +1.5 CR under a read that multiplies AoE by 2 targets · 0 authored rows citing
+a missing row / event / precondition · 0 print attack, bonus-action or reaction rows re-diced,
+renamed or shed on the exact/twist paths · checker FAILs ≤ 1 of 40 · the deterministic stuck
+list at 0.** Coin flips are variety per the owner's ruling; they do not gate.
+
+| # | item | the evidence (measured) | do | verify |
+|---|---|---|---|---|
+| 12 | **Print's Bonus Actions and Reactions are locked on a print body, the way 1e locked its attacks** (the surviving half of the critic's A-ii) | Purple Worm #13: print's Swallow (a Bonus Action, STR save, a grappled target) rewritten as a replace-attack DEX save on **3 of 3 frozen sweeps**; Goblin Boss #22 shed print's Redirect Attack (a Reaction). 1e's lock covers `pc.meleeRows`/`rangedRows` only. **Dropped from this item (owner, 2026-11-09): the "a weapon named as the cause of a wound" call field.** Measured: 80 inputs, 9 name a weapon, **8 of 9 are the creature's weapon**; the Red Dragon's lance is 1 of 80 and 1 roll in 6 on its own sheet. A new field for that is an exception, not a rule — it goes in the release notes as a known edge case. | extend 1e's lock: on exact/twist, print's Bonus Action and Reaction rows ride verbatim at the sheet's DC/PB, stamped `print`, and a chassis row that would displace one leaves. Same gate, same trace shape (`print canon row:`). Never borrow/homebrew. | replay `smoke-out/sweep-2026-11-09T05-57-15/13-*.json`: Swallow is print's Bonus Action, stamped print, 0 re-reads. #22: Redirect Attack present. Owlbear/Goblin Boss exact sheets byte-identical. |
+| 13 | **At-will area damage inside a Multiattack is bounded by the attack it replaces, or it is Recharge 5–6** (the critic's B) | **Print: 24 at-will "replace one attack with X" rows; 0 are AoE with damage ≥ the attack replaced** — exactly the critic's prediction. Ours: Gormak #32 Shattered Ground 38 to everything within 10 ft replacing a 30 attack (→ ~106 DPR at CR 9, band 57–62); Barrow Duelist #38 Barrow Sweep 28 + Prone replacing 21 (→ ~77 at CR 6, band 33–38). **Our gate is blind to this**: `checker.mjs:504` `sustained = attack × count + rays + aura` prices an at-will AoE replace row at zero, which is why the critic reads 3 hot and we read 0. | engine: a replace-clause row that targets an area carries damage ≤ the attack it replaces, else it takes Recharge 5–6 (print's own shape: area damage behind Recharge, at-will replace rows are control — Prone, Frightened, grapple). Checker: price an at-will AoE replace row at avg × 2 targets in `sustained` so the gate sees what the critic sees. | replay #32 and #38 saved sheets: both read inside band. Then one forty: hot ≥ +1.5 = 0. Print no-op: the 24 print rows unchanged. |
+| 14 | **The citation arm matches normalised names and refuses events and preconditions too** (the critic's C + our §3 of the typed40 package) | `dangS` at `generate.mjs:5771` matches cited names literally. Three failure shapes measured this week: (i) **near-miss name** — "use its Umbral Step bonus action" when the row is "Umbral Step" (#20, reads fine to a GM, matcher too literal); (ii) **missing row** — Thornback's "Eruptive Ambush" (typed40 03-38-20), Pup-Bonded Warg's "Bite" (sweep 05-34-07); (iii) **undefined event / precondition** — Krennik #34 "a creature that has witnessed his standard break" (no standard, no break, "near" has no distance); Rotbark #36 Rootfeed triggers on Grappled/Restrained/Prone with no row imposing any — **and the same arm refused Mother Ash's trait for exactly that**, so it is inconsistent between sheets. 3 of 7 fortys carry one. | two moves at ONE arm: (1) normalise before matching — strip `(bonus action|action|reaction|trait)` and the creature's own name from a cited phrase, then match row names, so (i) ships as written; (2) then refuse hard, and widen what counts as a citation: a row, an **event** (must be a row on the sheet, a condition, a state — Bloodied / 0 HP / start-end of turn — or a defined game event), a **precondition** (the Mother Ash arm applied to every sheet). | replay: #20 ships unchanged; Thornback (03-38-20 sheet) refused or rewritten; Krennik #34 refused; Rotbark #36 refused the way Mother Ash was. One pass each. |
+| 15 | **The lack-removal pass skips the row it just authored for the lack** (the critic's A-i, our sweep §3) | #15, all three frozen sweeps: `lacks asked: "blind in one eye"` → the seat authors "Ruined-Eye Glare" / "Lance-Scarred Blind Side" → `lacks clause: … leaves` (`generate.mjs:10509`) deletes it for mentioning the eye → checker: no `flaw` row → `lack-honored` FAIL. The one rule in all three frozen sweeps. The sheet also keeps print's senses (blindsight 60, darkvision 120) — a half-blind dragon reads fully sighted. | the pass that removes rows for a lack must skip a row stamped `flaw` or authored FOR that lack (the seat knows which clause it wrote for — `idea.clause`), and the lack should touch the senses line where it names a sense. | roll #15 three times: the flaw row survives 3/3; `lack-honored` 0/3. |
+| 16 | **`asked: legendary` is a call field** (the critic's "first call field to build"; our lexicon ruling) | Thornback #33 "an ankheg but legendary, boss fight for level 5": extraction files `"legendary" -> mechanical [asked: once_per_fight/save_area, askMechanic: burst]` — read as a BURST because `ASK_OFTEN` (`generate.mjs:1690`) has no value for legendary tempo. 0 of 2 rolls carry Legendary Resistance or legendary actions. The single most common GM adjective for "boss". | add `legendary` to the ask enum; the engine answers it with Legendary Resistance (3/Day) + legendary actions from the chassis (print's machinery from CR 10 is already gated — the Unicorn exception at CR 5 is print's own). Same seam for `slow`/`fast` (a HEADER clause — one prompt example: "'slow' is a header clause: Speed 20"). | three rolls of #33: LR + legendary actions 3/3. |
+| 17 | **A seat row is stamped with the clause it answers, not a neighbour's** (the Corrosive Drip finding) | #24: "a shell that sheds acid" reads NEVER on `clause-rate` (0/3). The row **landed** — Corrosive Drip, a 5-ft acid Emanation at end of turn — but the energy-aura seat stamped it `clause: "carving with the others"` (the scythe-arm clause), so the checker's "a GM quote on Corrosive Drip that does not lie inside this clause — no credit" is CORRECT by its rules. The critic read this as a checker fix; it is the engine's attribution at the seat (`generate.mjs:6984` / `9081`). | the seat that lands a row stamps `idea.clause` — the clause the seat was built for — never a clause inferred afterwards from word overlap. | replay #24: "a shell that sheds acid" credited; "carving with the others" not falsely credited. Expect the never list to drop to 3. |
+
+**STATUS 2026-11-09 (Opus) — 15, 13, 12 and HALF of 14 landed; 4972 tests pass, build clean.**
+
+- **15 done.** The chain measured: over 18 saved fortys carrying #15, **6 deleted the authored flaw
+  row and all 6 FAILed `lack-honored`; the 11 that deleted nothing all shipped `Sight Weakness` and
+  passed.** The pass now keeps a row stamped with THIS lack's clause (`row.clause`, already written
+  by the 11-08 landing). 5 tests. **Separate finding, not fixed:** print's dragon senses say
+  "blind**sight**" and the checker's generic presence test matches the clause's WORDS, so "blind in
+  one eye" can read as honoured because the sheet says blindsight — that hides the defect; own item.
+- **13 done, both halves.** Print's warrant confirmed exactly as the critic predicted: **24 at-will
+  replace-an-attack rows across 329 blocks, 0** AoE reaching the attack they replace. Engine: such a
+  row takes Recharge 5-6 (print's own shape). Checker: `sustained` now prices the swap at ×2 targets
+  — **the critic's "hot tail that did not exist on the last two gates" existed; our gate priced it
+  at zero.** Gormak 30→106, Barrow 21→77; Owlbear/Purple Worm/Brass Tyrant unchanged. 2 tests.
+- **14 half done.** The near-miss name: "use its Umbral Step bonus action" resolves to the row
+  "Umbral Step". One normaliser shared by both citation readers; #20 goes 2 FAILs → 0, a genuinely
+  missing row still refuses twice, print's 329 blocks stay at 0. 8 tests. (`dangling-use-ref`'s own
+  capture eats the word "action" and leaves "…bonus", so the bare word is strippable too.)
+  **NOT done:** the event case (Krennik's "witnessed his standard break") and the precondition case
+  (Rotbark's Grappled/Restrained/Prone with no row imposing one — the predicate exists but lives in
+  the AUTHORING chain, so template rows slip past; it needs to run at ship time as a sheet lint).
+- **12 done, and two handoff claims corrected.** Print's Goblin Boss has **no Redirect Attack** —
+  Multiattack, Scimitar, Shortbow, Nimble Escape is the whole block; that was a 2014 feature
+  remembered into 5.2, so nothing was shed. And the Purple Worm's Swallow is **not an unlocked print
+  row**: the engine's own `swallow` TEMPLATE writes a row of that name into Actions first, and the
+  existing same-name rule was gated to print NOVAS only. Widened to any print rules row at print's
+  CR, and the winner returns to print's own section.
+- **16 POST-RELEASE (owner, 2026-11-09): "a GM won't ask for legendary actions below CR 10."** The
+  only evidence was Thornback at CR 8 — and that input ("an ankheg but legendary, boss fight for
+  level 5") is one Fable wrote for `typed40`, not a GM's. `asked: legendary` stays a call field to
+  build later; at CR 10+ the chassis machinery already fires.
+- **17 DIAGNOSIS CHANGED, not built.** Corrosive Drip is not mis-stamped: it was SEATED for
+  "carving with the others" and happens to answer "a shell that sheds acid". The engine's
+  provenance is accurate; what is missing is a row answering a SECOND clause. `answersAlso` already
+  exists (`generate.mjs:6985`, the repair call's "this clause is already answered by row X") and did
+  not fire here. The fix is on that path — ask the repair call about owed clauses a shipped row
+  expresses — not at the seat.
+
+### 18. The returning-weapon clause is a magic-weapon exception (PRE-RELEASE, owner's find 2026-11-09)
+
+**Measured.** Print writes a returning clause **4 times in 1291 rows**, and all four are a weapon
+dealing ELEMENTAL damage — which is how print marks it magical: Ice Devil's Ice Spear (Cold),
+Salamander's Flame Spear (Fire), Solar's Flying Sword (Radiant), Merfolk's Ocean Spear (Cold). **No
+mundane thrown weapon returns.** Ours writes it **28 times** across the week's fortys, because it is
+hard-coded into four donor rows (`skirmisher-8/13/18-hurler` and a hybrid) as
+`*Hit or Miss:* Immediately after the attack, {projectile} returns to the creature's grasp.` — so
+every hurler carries it by construction and the projectile is then swapped to whatever the concept
+named: a tar clod, tossed coins, a spider's web, Meshrin's mundane javelin. Owner: *"anything that
+isn't magical and the monster doesn't conceivably have a cache of ammunition for does not need to
+return — the return to grasp should be an exception rather than the rule."*
+
+**A second bug rides it:** the clause lands on Harl's **Shortsword**, a MELEE row ("a handaxe returns
+to Harl's grasp") — the critic measured 7 of 7.
+
+**Do:** the gate is the DAMAGE TYPE, not `thrown` (the weapon table has `thrown` on 14 weapons, and
+it is the wrong signal — print's javelin is thrown and does not return). The clause survives only
+where the row deals a non-physical damage type, and only on the thrown row. Strip it from the donor
+rows and add it on that condition, so it is an exception by construction.
+
+**LANDED 2026-11-09 (Opus) — as a CALL FIELD, and the 2026-09-15 ruling stands.** A first cut keyed
+the clause on ELEMENTAL damage (print's 4 of 4 are magic weapons) and the suite refused it: the
+Cliff Troll ruling of 2026-09-15 says a SINGLE signature object must come back or it is thrown once
+and gone (its lantern skull, Bludgeoning). That ruling is right. What was wrong is how the engine
+told ambient from singular — a word list of nouns (slab|stone|rock|boulder|rubble|…) that missed a
+tar clod, tossed coins, a web and a mundane javelin. Whether a creature has endless supply of what
+it throws is a judgement about the fiction, so the reskin call now answers
+**`projectile_supply: "single" | "ambient"`** beside `projectile`, and the clause is dropped on
+`ambient`. The word list survives ONLY as the fallback for an unanswered field (widened with the
+four misses), because a failed call never costs a sheet.
+
+**Still open — the melee half (the critic's 7/7).** Harl's *Shortsword* carries "a handaxe returns
+to Harl's grasp". All four donor rows that carry the clause are Ranged or Melee-or-Ranged, so the
+clause starts on the right row: the defect is the RENAME, which gave the thrown row the melee name
+("hurls a handaxe and closes with a shortsword" assigned backwards). Fix at the rename mapping, not
+at the clause.
+
+**Verify when the melee half lands:** replay #37 Meshrin (Javelin keeps no clause), #39 Harl (the
+clause rides the Handaxe row), #22 Clockwork Spider (the web loses it), #39 Skarn's Coin Toss. Print
+no-op: the four print rows keep theirs. Then one forty: 0 returning clauses on ambient ammunition.
+
+**Same-day if there is the hour (deterministic, 3 of 3 on every spot check, not blockers):** Cunning
+Action on monks → Step of the Wind (14/14; SRD 5.2 monk); the returning-weapon clause attaches to the
+THROWN weapon, not the second slot (Harl's Shortsword says "a handaxe returns", 7/7; Meshrin's Javelin
+is right); "Spitting Maw" renders melee (6/6 — the name promises ranged); a CR floor on death riders
+(Dust-Death Bite "short of a Wish" on a CR 1 beast — print puts these at CR 13+); Great Weapon Master
+is a PC feat, not SRD 5.2 (3/40).
+
+**NOT built — the critic's item E as written.** Their §5 says four sheets show "the matcher returns
+a print head and class_npc swaps the chassis." The traces: **1 of 4** (Vell — matcher twist Pirate
+Captain, call Gladiator). Skritch, Mother Ash and Big Bob all read `the matcher would have said
+homebrew` — the matcher found NOTHING, so no head was overridden. That is a matcher-reach problem
+("goblin boss", "hag midwife", a giant who throws boulders are invisible to `printCanonFor`), a
+different item, post-release. Build only E's verified half, folded into item 12: when the matcher
+DOES hold a print head, class_npc adds a class row to that body and never swaps the chassis.
+
+**Other corrections to the critic's two documents, for the record:** "hot tail that did not exist
+on the last two gates" — it existed; our gate was blind to it (item 13), the same two SOFT hots
+appear on all three frozen sweeps. "Corrosive Drip is a checker fix" — engine attribution (item
+17). #12 Big Bob "the role word won" — the call chose homebrew-caster and the matcher agreed; a
+wizard giant, yes, but not by that mechanism. Everything else they stated that we could check
+held: A-ii's 53-a-hit, Krennik's event, Mind Flayer INT 4 / CHA 4 / Languages None, the stuck
+list, B's print expectation of ~0 (it is 0).
+
+**Known gaps to ship with, agreed with the critic:** a weapon named as what WOUNDED the creature can be read as its weapon (the Red Dragon's lance — 1 of 80 inputs, 1 of 6 rolls; owner declined a call field for it 2026-11-09); the two-noun compound ("vampire pirate",
+"owlbear zombie" — 2 of 40 typed inputs; release note: *type the base monster, describe the
+mashup*); the Beholder's stated CR (but see the critic's §4 — the −7 is a PI alias carrying the
+NAME and not the creature; the cheap fix is the label follows the body, post-release); the 15
+coin-flip clauses; the two unverified arms (replay them against saved sheets — if the Pit Fiend
+shape no longer exists, BUILD the input that forces it rather than wait).
+
+**THE NERF PATH LEADS (owner, 2026-11-09: "a GM wanting to nerf a monster is more likely in
+general").** Measured across 440 sheets / 11 fortys: 9 distinct lacks asks, the common shapes
+honoured 6–7 of 7 ("no magic at all", "instead of regrowing", "understands no Common", "lost a
+hand"); 19 refusals, mostly correct ("scary", "haunted suit of armor" are not absences). Two gaps:
+**(a) the lack pass deleted 4 authored flaw rows this week — all four on #15** (item 15: the one
+recurring FAIL, and it is a nerf); **(b) "only X" is not read as a lack of everything else**
+("speaks only Giant" refused 5×, "speaks only the old tongue" 1×) — but both sheets shipped RIGHT
+via a sibling clause, so post-release. **Test-set finding:** `typed40` carries only 2 nerf inputs
+in 40 ("lost a hand", "it does not brawl"); when inputs are next revised (after the frozen window),
+nerfs should be a quarter of the GM forty.
+
+**Order for Opus:** **15** → 13 → 14 → 12 → 16 → 17 → same-day list → `npx jest … --silent` →
+`npm run build` → `sweep` → `typed40` → both to the critic with this section's table.
+
 **The critic's "GM lexicon" — NOT built as written, and here is why.** They propose a
 deterministic table before the call: slow → Speed 20, legendary → LR + legendary actions, etc.
 That is a word list deciding what the GM meant, which the owner's 2026-10-16 ruling forbids. The

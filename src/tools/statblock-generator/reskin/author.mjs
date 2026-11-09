@@ -460,6 +460,25 @@ const PRECONDITION = /\bif\b[^.]*$|\balready\b\s*$|\b(?:that|which|who)\s*$|\b(?
 // describe a creature's own state rather than something done to a target —
 // a row reading "the hull has the Invisible condition" is a self-buff, and
 // three of those are not the repetition the gate is looking for.
+// THE CONDITIONS THAT TAKE A CREATURE OUT OF THE FIGHT, ONE DEFINITION (2026-11-09).
+// The engine's dead-control block and the checker's `gate-fit` rule each carried their own copy
+// of this list, and they disagreed: the engine SKIPS a KO condition (a row that grapples or
+// paralyses is worth an action by itself), the checker had no such exclusion — so it failed a
+// grapple-and-drag row on three `typed40` runs running (Death Roll, Reel In, Debtor's Pin, all
+// three imposing Grappled, all three ours rather than print's).
+//
+// Print's warrant for the shape: of 329 blocks, exactly 3 carry an at-will no-damage condition
+// action on a sheet with no Multiattack — the Brass Dragon Wyrmling's Sleep Breath, the Harpy's
+// Luring Song, the Homunculus's Bite — and ALL THREE impose a KO condition. Those rows do not
+// fail the live gate, because a print row carries `print: true` and the rule skips it; they DO
+// fail when print is scored as a sheet, which is how this was measured and how the release bar's
+// print no-op check reads print.
+//
+// It lives here because `author.mjs` imports nothing and already owns the condition vocabulary
+// (`AFFLICTIONS`, `CONDITIONS`), and both readers already import it. `sheet-lints.mjs` was the
+// first attempt and is wrong: it imports FROM the checker, so the checker cannot import it back.
+export const KO_CONDITIONS = /\b(?:Paralyzed|Stunned|Incapacitated|Unconscious|Petrified|Restrained|Grappled)\b/;
+
 export const AFFLICTIONS = ['Grappled', 'Restrained', 'Prone', 'Incapacitated', 'Paralyzed', 'Stunned', 'Blinded', 'Poisoned', 'Frightened', 'Charmed', 'Deafened'];
 // THE CONDITIONS THAT TAKE A TURN AWAY. Print never puts one of these on a Bonus
 // Action: 0 of 329 blocks, measured 2026-11-03, where 15 bonus actions DO impose a

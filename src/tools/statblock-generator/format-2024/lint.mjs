@@ -783,8 +783,21 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       const OK_REFS = new Set(['spellcasting', 'multiattack', 'dash', 'disengage', 'dodge', 'hide', 'help', 'ready', 'search', 'attack', 'reaction', 'bonus action', 'action', 'legendary action']); // "use its Reaction to…" is the leader's print idiom, not a row reference (high-cr batch 2026-10-02)
       const ownBase = entry.name.split(' (')[0].toLowerCase();
       for (const m of entry.text.matchAll(/\buses? (?:its |the )?([A-Z][\w' -]+?)(?:\s+(?:action|reaction))?(?=[.,;]|\s+(?:if|to|again|twice|three|or|while|on|against|and|as|instead)\b)/g)) {
+        // A CITED ROW MAY BE NAMED WITH ITS KIND (critic's release ruling + our §3, 2026-11-09).
+        // A GM writes "it can immediately use its Umbral Step bonus action" — the row is "Umbral
+        // Step", it sits under Bonus Actions, and nobody reading the card is confused. Both of
+        // these readers matched the captured phrase literally, so the trailing kind word made the
+        // citation dangle: #20 Thin-Seam Prowler FAILed twice on one row for a sheet that is
+        // correct. One of the three citation shapes measured this week (3 of 7 fortys carry one);
+        // the other two — a row that genuinely is not there, and a trigger naming an event or
+        // precondition nothing produces — still refuse, and must.
+        // `bonus` alone is in the list because THIS capture's own optional group eats the word
+        // "action" and leaves it: "use its Umbral Step bonus action to…" captures "Umbral Step
+        // bonus". The possessive strip above already removes "Molten Crown's AC bonus", so a
+        // trailing bare "bonus" here is always the kind word and never part of a row's name.
+        const STRIP_KIND = /\s+(?:bonus\s+action|legendary\s+action|reaction|action|attack|trait|feature|bonus|twice|once|three\s+times|stat\s+block)$/i;
         for (const refRaw of m[1].split(/\s+or\s+/)) {
-          const ref = refRaw.trim().replace(/\s*\(.*$/, '').replace(/'s\b.*$/, '').replace(/\s+(?:stat block|twice|three times)$/i, '').toLowerCase(); // possessive strip: "Molten Crown's AC bonus" refs Molten Crown (FP 2026-09-01)
+          const ref = refRaw.trim().replace(/\s*\(.*$/, '').replace(/'s\b.*$/, '').replace(STRIP_KIND, '').replace(STRIP_KIND, '').toLowerCase(); // twice: "its Umbral Step bonus action" sheds "action" then "bonus" // possessive strip: "Molten Crown's AC bonus" refs Molten Crown (FP 2026-09-01)
           if (!ref || OK_REFS.has(ref) || /stat block/i.test(refRaw)) continue;
           const resolvedElsewhere = allEntries.some((x) => x.entry !== entry && x.entry.name.split(' (')[0].toLowerCase() === ref);
           // Self-mentions are official (reuse-restriction prose inside the
@@ -1265,7 +1278,9 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       // business, not entry-reference resolution's.
       if (/^\s+stat(?:istics|\s+block)\b/i.test(entry.text.slice(ref.index + ref[0].length))) continue;
       for (const part of ref[1].split(/ or /)) {
-        const name = part.replace(/^\([A-C]\)\s*/, '').replace(/'s\b.*$/, '').replace(/\s+(?:action|attack|twice|once)$/, '').trim();
+        // the same normalisation as `dangling-use-ref` above: a cited row may carry its kind
+        const KIND = /\s+(?:bonus\s+action|legendary\s+action|reaction|action|attack|trait|feature|bonus|twice|once|three\s+times)$/i; // bare `bonus` for the same reason as STRIP_KIND above
+        const name = part.replace(/^\([A-C]\)\s*/, '').replace(/'s\b.*$/, '').replace(KIND, '').replace(KIND, '').trim();
         if (!name || !/^[A-Z]/.test(name) || /^(?:Spellcasting|Multiattack|Reaction|Bonus Action|Legendary Action|Action)$/i.test(name)) continue; // "use its Reaction to…" is the leader's print idiom (checker 2026-10-02)
         if (!entryNames.some((n) => n === name || n.startsWith(name))) {
           push('undefined-attack-ref', 'reject', `${where} references a use of "${name}", which is not defined anywhere in the statblock — rewrite the reference to name a real entry`, undefined, loc);

@@ -11,7 +11,7 @@
 // single-target with a repeat save (the Ghoul); leveled spells at will are a
 // fail only for hard control below CR 13; reach follows size before a tether.
 import { fromLegacyModel } from '../format-2024/generate.mjs';
-import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedCondition, imposedConditions } from './author.mjs'; // one definition: the conditions a finished row imposes
+import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedCondition, imposedConditions, KO_CONDITIONS } from './author.mjs'; // one definition: the conditions a finished row imposes
 import { lintStatblock, stripBloodiedSplit } from '../format-2024/lint.mjs';
 import { HIT_DIE_BY_SIZE } from '../format-2024/dice.mjs';
 import { WEAPONS, weaponFor, weaponProp, namesWeapon } from './weapons.mjs';
@@ -501,7 +501,35 @@ export function sustainedOf(m) {
   // and this read it as zero because it is not an attack row. It fires once a round.
   const aura = allRows(m).filter(({ e }) => !/Attack Roll/.test(e.text ?? '') && !/\((?:Recharge [\d–-]+|\d\/Day)\)/.test(e.name ?? '') && /\b(?:starts|ends) its turn within|enters (?:the|a) [^.]{0,40}for the first time|moves within \d+ feet/i.test(e.text ?? ''))
     .map(({ e }) => (String(e.text).match(/\d+ \(\d+d\d+(?: \+ \d+)?\)/g) ?? []).reduce((a, p) => a + avgOf(p), 0)).reduce((a, b) => a + b, 0);
-  const sustained = (used?.avg ?? 0) * attacks + rays + aura;
+  // AN AT-WILL AREA ROW INSIDE THE MULTIATTACK IS NOT FREE (critic's release ruling, 2026-11-09).
+  // The Multiattack's "It can replace one attack with a use of X" lets a GM trade one attack for
+  // X every round, and when X is an area effect the round's damage multiplies instead of swapping.
+  // This read priced it at ZERO — it is not an attack row and not an aura — which is why the
+  // critic measured 3 hot sheets on sweep 3 and our gate measured none:
+  //   Gormak #32   Shattered Ground  38 to everything within 10 ft, replacing a 30 attack  (CR 9, band 57-62)
+  //   Barrow #38   Barrow Sweep      28 + Prone within 10 ft, replacing a 21 attack        (CR 6, band 33-38)
+  // Two targets is the conservative read the critic used; print's own area rows are priced the
+  // same way elsewhere in this file. PRINT'S WARRANT, measured before trusting the rule: of
+  // print's 24 at-will "replace one attack with X" rows across 329 blocks, **0** are an area
+  // effect whose damage reaches the attack they replace — print puts area damage behind a
+  // Recharge and keeps its at-will replace rows as control (Prone, Frightened, a grapple).
+  const replaceAoE = (() => {
+    const multi = allRows(m).find(({ e }) => /^Multiattack/.test(e.name ?? ''));
+    if (!multi) return 0;
+    const cited = [...String(multi.e.text ?? '').matchAll(/replace (?:one|two) attacks? with (?:a use of |one use of )?(?:\(A\) )?([A-Z][\w' -]+?)(?: or| \(|\.|,|$)/g)].map((x) => x[1].trim());
+    let worst = 0;
+    for (const name of cited) {
+      const row = allRows(m).find(({ e }) => String(e.name ?? '').replace(/ \(.*\)$/, '') === name);
+      if (!row || /\((?:Recharge [\d–-]+|\d\/Day)\)/.test(row.e.name ?? '')) continue; // a gated row is a nova, priced below
+      const t = String(row.e.text ?? '');
+      if (!/\b(?:Cone|Line|Emanation|Sphere|Cube|Cylinder)\b|each creature (?:within|in)/i.test(t)) continue;
+      const dmg = (t.match(/\d+ \(\d+d\d+(?: \+ \d+)?\)/g) ?? []).reduce((a, p) => a + avgOf(p), 0);
+      // it REPLACES one attack, so only the excess over that attack is new damage, doubled for a second target
+      worst = Math.max(worst, Math.max(0, dmg * 2 - (used?.avg ?? 0)));
+    }
+    return worst;
+  })();
+  const sustained = (used?.avg ?? 0) * attacks + rays + aura + replaceAoE;
   const legUses = Number(m.legendary_uses ?? 3);
   const legendary = (m.sections?.['Legendary Actions'] ?? []).filter((e) => !/^Legendary Action Uses/.test(e.name ?? '')).map((e) => {
     const ref = /makes (one|two|\d+) ([A-Z][\w' -]+?) attacks?/.exec(e.text ?? '');
@@ -1841,6 +1869,10 @@ function gateReader(raw, m, ctx, F) {
   {
     const hasMa = rows.some(({ e }) => /^Multiattack/.test(e.name ?? ''));
     if (!hasMa) for (const { sec, e } of rows) { const t = String(e.text ?? ''); if (sec !== 'Actions' || e.print || / \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(e.name ?? '')) continue;
+      // A KO CONDITION IS WORTH THE ACTION BY ITSELF — which is why the engine's own
+      // dead-control block skips it. This rule did not, and failed a grapple-and-drag row on
+      // three `typed40` runs. One definition now, in `author.mjs`.
+      if (KO_CONDITIONS.test(t)) continue;
       if (/Saving Throw/.test(t) && /\bhas the [A-Z]\w+ condition\b/.test(t) && !/\d+ \(\d+d\d+/.test(t)) F('gate-fit', 'fail', `${sec}/${bare(e.name)}: an at-will condition action with no Multiattack to join — a shed use limit needs one`, bare(e.name)); }
   }
   // type-fit and save-fit
