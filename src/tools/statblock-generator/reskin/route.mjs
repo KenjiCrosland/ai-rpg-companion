@@ -353,11 +353,12 @@ RULES
 WHAT ELSE DO THE WORDS NAME? Three more, each with the user's own words quoted in "because" (leave a field out if the words do not settle it):
 - "shoots": true only when this creature's own attack is a BOW, CROSSBOW, SLING or a thrown shot at range — a sniper, an archer. False for one that merely watches from a distance, and false when its ranged power is magic or a breath.
 - "is_a_swarm": true only when the creature IS a mass of many small things acting as one body. False for a creature that COMMANDS or is accompanied by animals, and false for one that merely resembles a crowd.
+- "swarm_of": ONLY when is_a_swarm is true — the plural noun for the many small things, as a GM would read it on the card: "funeral bells", "rats", "stinging flies". Print names every swarm "Swarm of <this>". Omit it otherwise.
 - "holds": true only when it HOLDS, seizes, swallows, entombs or folds shut around prey — a containment engine that keeps hold of a creature. Crushing someone against stones is impact, not holding; a creature that withdraws into its own shell holds nobody.
 
 DOES THIS CREATURE WORK MAGIC? ("casts") True when the words name magic outright ("casts", "spells", "hexes") and ALSO when the KIND implies it: a cleric, a crusader who smites, a chaplain who blesses, a druid, a warlock. False for a plain warrior however armoured, false for a title alone, and false for a creature whose uncanny power is its BODY rather than a worked art — a fey piper's music, a gaze, a breath weapon. Quote the user's words that settle it in "because"; set "implied_by_kind" when nothing in the words says magic but the kind does.
 
-Return ONLY JSON, no markdown: {"shoots": {"yes": false, "because": ""}, "is_a_swarm": {"yes": false, "because": ""}, "holds": {"yes": false, "because": ""}, "casts": {"yes": true, "because": "<the user's own words>", "implied_by_kind": false}, "bane": {"what": "<a damage type or a weapon material, or omit>", "because": "<the user's own words that say so>"}, "cue_verdicts": [{"key": "<a key word listed above, copied exactly>", "means": true, "because": "<the words that settle it>"}], "picks": [{"line": "<id from the shelf>", "because": "<phrase copied from the concept>"}], "cr": "<the Challenge Rating this creature reads as, 0 to 30 (e.g. 5, or 1/2) — the published statblock's own CR for a published creature; otherwise the tier a table meets it at — village and folklore threats read 1 to 8, only world-enders read 17 or more>", "creature_type": "<one of: ${TYPES.join(', ')}>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan — the body these words describe>", "asked_mechanic": {"mechanic": "<one from the list, or \"\">", "because": "<the user's own words>"}, "extras": [{"mechanic": "<one of the list>", "because": "<phrase copied from the concept>"}]}`;
+Return ONLY JSON, no markdown: {"shoots": {"yes": false, "because": ""}, "is_a_swarm": {"yes": false, "because": ""}, "swarm_of": "<the plural noun, only when is_a_swarm is true>", "holds": {"yes": false, "because": ""}, "casts": {"yes": true, "because": "<the user's own words>", "implied_by_kind": false}, "bane": {"what": "<a damage type or a weapon material, or omit>", "because": "<the user's own words that say so>"}, "cue_verdicts": [{"key": "<a key word listed above, copied exactly>", "means": true, "because": "<the words that settle it>"}], "picks": [{"line": "<id from the shelf>", "because": "<phrase copied from the concept>"}], "cr": "<the Challenge Rating this creature reads as, 0 to 30 (e.g. 5, or 1/2) — the published statblock's own CR for a published creature; otherwise the tier a table meets it at — village and folklore threats read 1 to 8, only world-enders read 17 or more>", "creature_type": "<one of: ${TYPES.join(', ')}>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan — the body these words describe>", "asked_mechanic": {"mechanic": "<one from the list, or \"\">", "because": "<the user's own words>"}, "extras": [{"mechanic": "<one of the list>", "because": "<phrase copied from the concept>"}]}`;
 }
 
 function tryParse(raw) {
@@ -693,6 +694,12 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
     role: chosen ? (chosen.role ?? (chosen.body ? null : chosen.family)) : null,
     style: chosen?.style ?? null,
     body: chosen?.body ?? null,
+    // THE SWARM'S OWN NOUN, from the call that already judged it a swarm (critic gate 2,
+    // 2026-11-08). The engine used to pluralise the last word of whatever name it had,
+    // which titled a sheet "Swarm of Peal of the Dyings". Only carried when the line IS
+    // the swarm line; the engine keeps its own fallback for an empty answer.
+    swarmOf: chosen?.body === 'swarm' && typeof parsed?.swarm_of === 'string' && parsed.swarm_of.trim() && parsed.swarm_of.trim().length <= 40
+      ? parsed.swarm_of.trim().replace(/^(?:a|an|the)\s+/i, '') : null,
     mechanics,
     resolvedType,
     notes,

@@ -1086,6 +1086,7 @@ async function generateStatblockEngine(edition) {
   let conceptSignature = null;
   let conceptStyle = null;
   let conceptBody = null;
+  let conceptSwarmOf = null;
   let conceptEnergy = null;
   let conceptMix = null;
   let conceptRejectedCanon = []; // canon cues the resolve REJECTED on the sentence (lexical hints)
@@ -1262,6 +1263,7 @@ async function generateStatblockEngine(edition) {
       conceptLine = route.line;
       conceptStyle = route.style;
       conceptBody = route.body;
+      conceptSwarmOf = route.swarmOf ?? null; // the swarm's own noun, for the name stamp
       conceptMechanics = route.mechanics;
       conceptBane = route.bane ?? null;
       conceptHolds = route.holds ?? null; // the GM's own undoing, as the route call read it
@@ -1554,6 +1556,7 @@ async function generateStatblockEngine(edition) {
           // outrank the role at pickDonor; kill switch
           // statblock-reskin-bodies='0'
           bodyType: conceptBody ?? null,
+          swarmOf: conceptSwarmOf ?? null,
           energy: userConcept ? conceptEnergy : rolledEnergy,
           mix: userConcept ? conceptMix : rolledMix,
           caster: caster.value,

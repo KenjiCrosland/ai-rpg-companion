@@ -77,7 +77,98 @@ export function rowsOfSheet(sheet) {
 /** The conditions the sheet DECLARES it imposes, from `imposes` records only. */
 const imposedOn = (rows) => new Set(rows.flatMap(({ r }) => [r.imposes].flat().filter(Boolean).map(String)));
 
+// A STATE WORD IS A RULE ONLY IF THE SHEET DEFINES IT (critic gate 2, 2026-11-08, #29
+// Rotting Toll: "rots the wounded … takes necrotic damage if it is wounded", with nothing
+// anywhere saying what wounded means — Bloodied? any damage at all?).
+//
+// MEASURED BEFORE BUILDING, because the obvious rule ("never key on a state word") fails
+// print TWICE: the Bearded Devil's Infernal Glaive and the Horned Devil's Infernal Tail
+// both read "While wounded, the target loses …". The difference is that print's row
+// DEFINES the state in its own first sentence ("The target receives an infernal wound")
+// and then references it. So the rule is definition, not vocabulary: a state word must be
+// a game term the GM already tracks (Bloodied, 0 Hit Points) or be given a meaning on the
+// sheet. Print: 0 of 1291 rows fail that. The forty: 1 (#29).
+// LOWERCASE, because a capitalised one is part of a NAME, not a rule key: #29's
+// Multiattack cites the row "Peal for the Dying" and was flagged for "Dying". Print's two
+// state-word rows both write it lowercase ("While wounded"), and every state a GM already
+// tracks is a capitalised game term (Bloodied), so case is the signal here.
+const STATE_WORD = /\b(wounded|dying|weakened|injured)\b/;
+const DEFINES_STATE = /\bBloodied\b|\b0 Hit Points\b|\breceives? an?\b|\bgains? an?\b|\bhas an?\b|\bis marked\b|\bwound\b/i;
+export function undefinedStateIn(rowText) {
+  const t = String(rowText ?? '');
+  const hit = STATE_WORD.exec(t);
+  if (!hit) return null;
+  // THE DEFINITION MUST BE IN THIS ROW. A first cut also excused the row when the SHEET
+  // mentioned Bloodied anywhere, and that silenced the very row this was built for: #29
+  // sits on a swarm whose halving clause says "Bloodied", which defines nothing about
+  // "wounded". Print's two state-word rows define the state in their own first sentence,
+  // so the row is the right scope and print stays at 0.
+  if (DEFINES_STATE.test(t)) return null;
+  return hit[1];
+}
+
+// A ROW MAY NOT CONTRADICT A TRAIT ON ITS OWN SHEET (critic gate 2, #29: "the swarm
+// regains Hit Points equal to the damage dealt", two lines under a Swarm trait reading
+// "can't regain Hit Points or gain Temporary Hit Points").
+//
+// SUBJECT-AWARE, AND THAT IS THE WHOLE OF IT. A first pass flagged three cases and two
+// were wrong, both the same way: print's Aboleth (Mucus Cloud curses THE TARGET so it
+// can't regain) and the forty's Pit Fiend (its Bite riders THE TARGET). A forbiddance
+// aimed at a target says nothing about the creature's own healing. Print, with the
+// subject test: 0 of 329 blocks contradict themselves. The forty: 1.
+const FORBIDS_SELF_HEAL = /can't regain Hit Points/i;
+// THE SUBJECT IS THE WORDS DIRECTLY BEFORE THE VERB, NOT THE WHOLE SENTENCE. Reading the
+// sentence was too crude in both directions: #29's one sentence names the victim ("a
+// wounded creature … the creature takes 24 (7d6) Necrotic damage") AND the healer ("the
+// swarm regains Hit Points"), so a sentence-level "does this mention a target" test
+// silenced the real defect. Clauses, then the subject of the clause that heals.
+const REGAINS = /\bregains?\b[^.;]{0,40}?Hit Points/i;
+const clausesOf = (t) => String(t ?? '').split(/(?<=\.)\s+|,\s*(?:and\s+|or\s+)?|;\s*/);
+const subjectIsTarget = (clause) => /\b(?:the\s+)?target\b|\bthe creature\b|\bit is cursed\b/i.test(String(clause ?? '').split(/\bregains?\b|\bcan't regain\b/i)[0] ?? '');
+const sentencesOf = (t) => String(t ?? '').split(/(?<=\.)\s+/);
+/** The trait text that forbids THIS creature from healing, or null. */
+// THE TWO SIDES READ DIFFERENT SCOPES, AND BOTH REASONS ARE MEASURED.
+// A FORBIDDANCE reads the whole SENTENCE, because print writes it with a PRONOUN pointing
+// back at a target named earlier: the Aboleth's Mucus Cloud ends "...the target can breathe
+// air and water, and IT can't regain Hit Points unless it is underwater". Clause scope read
+// "it" as the aboleth and flagged print.
+// A HEAL reads the CLAUSE, because #29 names the victim and the healer in ONE sentence
+// ("a wounded creature ... the creature takes 24 (7d6) Necrotic damage, and the swarm
+// regains Hit Points"), so sentence scope silenced the defect this was built for.
+export function selfHealForbiddenBy(rows) {
+  for (const { r } of rows) {
+    for (const sen of sentencesOf(TEXT(r))) {
+      if (FORBIDS_SELF_HEAL.test(sen) && !/\btarget\b|\bthe cursed creature\b/i.test(sen)) return { name: BARE(r.name), sentence: sen.trim() };
+    }
+  }
+  return null;
+}
+export function contradictsSelfHeal(rowText, rows) {
+  const forbid = selfHealForbiddenBy(rows);
+  if (!forbid) return null;
+  for (const cl of clausesOf(rowText)) {
+    if (REGAINS.test(cl) && !subjectIsTarget(cl) && !FORBIDS_SELF_HEAL.test(cl)) return forbid;
+  }
+  return null;
+}
+
 export const SHEET_LINTS = [
+  {
+    rule: 'undefined-state-word',
+    reads: 'meaning of engine-written text',
+    why: 'a row keyed on "wounded" or "dying" with nothing saying what it means — a GM cannot run it. Print either uses Bloodied / 0 Hit Points or defines the state in the row itself (Bearded Devil, Horned Devil); 0 of 1291 print rows fail this',
+    run: (rows) => {
+      return rows.filter(({ r }) => !r.print && undefinedStateIn(TEXT(r)))
+        .map(({ sec, r }) => `${sec}/${BARE(r.name)}: keys on "${undefinedStateIn(TEXT(r))}", which the row never defines — print uses Bloodied or 0 Hit Points, or defines the state in the row`);
+    },
+  },
+  {
+    rule: 'contradicts-own-trait',
+    reads: 'meaning of engine-written text',
+    why: 'a row that heals the creature on a sheet whose own trait says it cannot — the critic\'s #29, where the swarm regains Hit Points two lines under "can\'t regain Hit Points". Subject-aware: a forbiddance aimed at a TARGET is not this. Print: 0 of 329',
+    run: (rows) => rows.filter(({ r }) => !r.print && contradictsSelfHeal(TEXT(r), rows))
+      .map(({ sec, r }) => { const f = contradictsSelfHeal(TEXT(r), rows); return `${sec}/${BARE(r.name)}: regains Hit Points, but "${f.name}" on this sheet says "${f.sentence.slice(0, 60)}"`; }),
+  },
   {
     rule: 'multiattack-cites-nothing',
     reads: 'format of engine-written text',

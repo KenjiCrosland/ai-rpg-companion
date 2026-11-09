@@ -256,6 +256,33 @@ is unchanged.
 
 ### 1f. The creature noun wins over the occupation (critic §2b, #04)
 
+**MEASURED 2026-11-08 (three fortys, 120 sheets) — THE DIAGNOSIS IN THIS ITEM IS REFUTED.**
+It says "the engine chose between them by fixed precedence (class over route)". It does not:
+the engine honours the path call, and **the path call itself flips.** Same input
+("a chapel bell-ringer's ghost that tolls for the dying") three times:
+
+| run | the path call decided | Priest-kit rows |
+|---|---|---|
+| T03 | **twist on the Ghost** (right) | 0 |
+| T05 | class_npc on the Priest (the defect) | 1 |
+| T09 | **twist on the Ghost** (right) | 0 |
+
+The route is stable and right all three times (`lurker-phantom type=Undead`).
+
+**The route TYPE is not the discriminator this item proposes.** class_npc + a non-Humanoid
+route type is 4 of 120 sheets — and **3 of the 4 are Brother Halric**, whom this item itself
+says rightly gets the Priest (his description is empty; the route guessed `type=Undead` from
+nothing, and the engine already overrode it to ship `Medium humanoid`). So the rule as written
+would break 3 sheets to fix 1. What actually separates #04 from Halric is the route's STYLE
+(`phantom` vs `leader`), not the type.
+
+**Recommendation:** this is a PROMPT fix, which is also what the item's own title says — the
+path prompt should rank a creature noun in the GM's words above an occupation, and the trace
+already shows the call quoting its key (`class cleric — "bell-ringer" (call)`). Do NOT add an
+engine precedence rule. Exposure is **1 defect in 120 sheets**, a coin flip on one concept, so
+by [[the-verdict-is-the-threshold]] this is the lowest-value item remaining.
+
+
 **Measured:** `[path] class_npc — class cleric — "bell-ringer"` and `[route] lurker-phantom
 type=Undead`. Trace 121: `[path] decides: class_npc on the Priest · class cleric (the matcher
 would have said homebrew)`. The Priest body shipped: Mace, Divine Aid, Spirit Guardians, STR 16,
@@ -268,6 +295,19 @@ rightly gets the Priest because nothing else was named. Measure first: how many 
 have a class path AND a non-Humanoid route type.
 
 ### 1g. A target's state is a mechanical clause (critic §2e, #29)
+
+**MEASURED 2026-11-08 (three fortys; 117 sheets carry a clauses line, the other 3 are the bare
+Ancient Gold Dragon, which has no clauses by design).** Clauses naming a target's state
+(dying/wounded/Bloodied/at 0 Hit Points): **7 filed mechanical, 2 filed descriptive** — so the
+classification is already right 78% of the time. The two misses:
+- #17 "collects the oaths of dying knights" (T03)
+- #29 "ring themselves over the dying" (T05)
+
+**Prize: 2 clauses over three sweeps**, and note the direction — a clause mislabelled
+descriptive is EXCLUDED from the hit rate, so fixing the label moves these from invisible into
+the denominator and can make the published rate look worse before it looks better. Still worth
+the one prose example (no regex), but it is not a rate win.
+
 
 **Measured:** `"ring themselves over the dying" -> has (descriptive)`. The trait seat then took
 `fear-aura` as closest-accepted for "an aura that chips away at wounded creatures". The
@@ -285,6 +325,19 @@ rate): a mechanical clause mislabelled descriptive now vanishes from the score i
 counting as a miss, so this misclassification is invisible to the bar until the label is right.
 
 ### 1h. A formation trait (critic §2f, Vashka 9 of 10 bare)
+
+**MEASURED 2026-11-08 (three fortys) — THE PREMISE HOLDS, AND THIS IS THE BEST REMAINING
+LEVER.** Ally-adjacency clauses are classified correctly: **8 mechanical, 1 descriptive.** The
+engine knows they are rule requests and has nothing to answer them with — a missing template,
+exactly as this item says. Cross-referenced against `clause-rate.mjs 3`, these are the clauses
+and their miss counts:
+- #23 Vashka "fights from a shield wall" — 1 of 3 (**2 misses**)
+- #23 Vashka "never breaks ranks" — 1 of 3 (**2 misses**)
+- #10 Drowned Choir "sings in one voice" — 1 of 2 (**1 miss**)
+
+**Prize: 5 of the 39 misses** behind the 73% rate — more than 1f (1) and 1g (2) combined, and
+the second-largest measured lever after 1d. Build this one next.
+
 
 The subject-flip gate (2026-11-06) correctly refused `slow-bolt` for the shield-wall idea and
 nothing replaced it. The missing shape is an adjacent-ally buff: *while an ally is within 5 feet,
@@ -350,3 +403,174 @@ the fix count reads 0.
   `cr` in a checker block). A swallowed ReferenceError inside a try/catch reads as a soft
   `checker-error`, not a crash. Run the gate on a fixture and assert it FIRED, not just that it
   did not throw.
+
+---
+
+## 7. Gate 2 response — critic's read of sweep T23-27-58 (2026-11-08, Fable)
+
+Critic's counts: **14 Keeper / 21 Runs / 3 Tweak / 2 Fix** (prior gate 10/18/8/4). The §2a defect
+classes are at 0 of 40; the claim held for what it named. Eleven concept rows landed that had been
+missing for rolls — the payoff of 1d, bigger than the 73→78 clause-rate move shows.
+
+Every number below is measured on `smoke-out/sweep-2026-11-08T23-27-58/` (traces + JSON) unless
+marked *(critic)*. Six of six of the critic's checkable specifics verified exactly.
+
+### 7.0 One attribution to correct before building
+
+The critic wrote that both Fixes sit "on rows that 1d protected". **They do not.** Both are
+**free signature rows** — the trait seat authored them, could not quote the GM, and the budget of
+one KEPT them (traces: `free signature row: "Chorus of the Dying Breath"`, `free signature row:
+"Rotting Toll"`). 1d's protected rows on those sheets are "Peal for the Dying" (#29) and nothing on
+#05. The critic had no traces, so the guess was reasonable; the consequence is that the fix lives in
+the **authored-row resolver**, not in 1d, and governs all 27 seat-authored rows that shipped this
+forty, free or protected.
+
+### 7a. Authored-row rigor — the critic's three checks, plus two from §3b (CLOSES BOTH FIXES)
+
+**Population:** 27 seat-authored rows shipped. **Hits, measured with renames followed and dice
+checked per PHRASE** (a first pass read 0/0/0 because it matched trace names against shipped names
+and tested dice per sentence — the HP die in "regains 9 (2d8) Hit Points, its Slam deals extra
+Thunder damage" hid the die-less phrase):
+
+| check | hits / 27 | rows |
+|---|---|---|
+| 1. a damage phrase with no die | 1 | #05 Chorus: "deals extra Thunder damage" |
+| 2. a target-state word with no threshold | 1 | #29 Rotting Toll: "wounded" |
+| 3. the row contradicts a trait on the sheet | 1 | #29 Rotting Toll regains HP; Swarm says it can't |
+| 4. an always-on damage aura with no save and no immunity *(critic §3b)* | 1 | #10 Airless Antiphon |
+| 5. an off-turn triggered attack that costs no Reaction *(critic §3b)* | 1 | #15 Scar-Socket Vigil |
+
+(A #17 hit on check 3 was my regex: "can't regain Hit Points" there is a rider on the TARGET.)
+
+**Where:** the seat-authoring refusal chain (`generate.mjs` ~5695-5710) already refuses a dangling
+ref, an unfilled slot, an unmet condition and an undefined actor. These are five more arms of the
+same gate — a row the call wrote is asked the same questions a template is asked. House rule: the
+CALL answers them. Checks 1 and 2 are declared data the author schema already has or nearly has
+(`quantities`, `when_bloodied`): a bare "extra X damage" is a promised number not declared → the
+resolver prices it or refuses; a state word must resolve to Bloodied / 0 Hit Points by the call's
+own field, never a word table. Check 3 goes to the AUDIT, which already reads the whole sheet and
+already carries an `element_claims` contract — add a `contradicts` ask per authored row ("does this
+row's effect contradict a trait on this sheet? quote both or null"). Checks 4–5 are print facts:
+print's free auras carry a save and 24-hour immunity; an attack made outside the creature's turn is
+a Reaction. **Predict:** the two Fixes → Runs; 5 of 27 authored rows change; no template row moves.
+
+**Opus notes for 7a.** (i) The refusal chain's existing arms are `dangS` / `slotS` / `unmetS` /
+`actS` at ~5695-5710; add the five beside them with the same trace shape (`seat authoring
+refused:` names the arm and the words). (ii) Prefer REFUSE-then-REPAIR over a text patch: a bare
+"extra X damage" is a promised quantity the author call did not declare (`quantities` is already
+in `parseAuthorResponse`); send the row back through the repair call asking for the die, as the
+free-row repair already does. (iii) Check 2 resolves by the call: the author schema's `when` enum
+already carries `when_bloodied`; a state word with no declared threshold is refused, not mapped
+by a table. (iv) Check 3 is the audit's: extend `element_claims` (audit.mjs:205-230) with a
+`contradicts` ask per authored row — "does this row's effect contradict a trait on this sheet?
+quote BOTH spans or null" — and act on a quoted pair the way `element claim revoked` acts. (v)
+Checks 4–5 are print facts, so they are engine validation, not word rules: an always-on damage
+aura without a save + 24-hour immunity gets print's clause (`conditionClauseFor` / the aura
+template's own grammar); an attack that fires outside the creature's turn is moved to Reactions
+with a `Trigger:`/`Response:` frame. Replay sheets: `smoke-out/sweep-2026-11-08T23-27-58/05-*.json`,
+`29-*.json`, `10-*.json`, `15-*.json`. Follow renames when reading traces: the trace says "Chorus
+of the Dying Breath" and "Rotting Toll" are the names the seat wrote, and the audit may rename
+again.
+
+### 7b. Q1 answered — an execute row is not a nova
+
+A gate is an **explicit use-limit token** (Recharge N–M, X/Day, "can't use again until…"), nothing
+read from effect text. Print has both forms: Bodak's Death Gaze at-will, Banshee's Wail 1/Day.
+**Do:** drop `\bdrops to 0 Hit Points\b` from `TEXT_GATE` (`generate.mjs:1709`); the checker's
+`novasOf` and the engine's one-nova rule then share one predicate. Exposure: 1 in 160 (#31).
+
+### 7c. Q2 answered — a handed clause protects a row IF the row states the clause's effect
+
+12 handed rows shipped this forty. **Do:** reuse the audit's `element_claims` contract with the
+handed clause as the claim; if the audit quotes the words of THAT ROW carrying it, stamp the row
+clause-bound (not free, as 1d does for `idea.clause`); if null, it is a decoration near a clause
+and the budget may take it. Prize measured 2026-11-08: 2 of the 7 clause-costing evictions across
+three fortys. "Buys no coverage credit" stays true as a scoring fact.
+
+### 7d. 1h — the formation template (the critic's shape; 5 of 39 misses)
+
+One trait template, `effect: 'defense'`, Pack Tactics' grammar:
+*"[Name]. While [X] is within 5 feet of an ally that doesn't have the Incapacitated condition,
+[effect]."* Effects, print-shaped, chosen by the fit call from a short declared list: +2 AC ·
+can't be moved against its will and can't be knocked Prone · Advantage on saves vs Charmed and
+Frightened · shares a Resistance with the adjacent ally. Never adds damage (Pack Tactics / Aura of
+Authority are print's offensive side). Keys are the library's existing `keys` mechanism (rank and
+gate; the call decides) — not a new word table. *(critic)* "never breaks ranks" trips the LACKS
+reader; check that before extraction. Test case: Vashka #23, 10 of 11 bare.
+
+### 7e. 1e's siblings — print's other lines on a print body (measured this forty)
+
+| line | twist/exact sheets drifting from print | examples |
+|---|---|---|
+| **saving throws** | **14 of 15** | Goblin Boss gets DEX +4 (print lists none); Vampire loses DEX/WIS/CHA proficiency; Pit Fiend loses DEX, gains STR/CON |
+| senses | 3 of 15 | Pit Fiend truesight → darkvision; Lich truesight → darkvision 60; Stone Golem 120 → 60 |
+| print Bonus Action / Reaction rows rewritten | 2 | Purple Worm "Swallow" (now a replace-attack DEX save); Lich "Protective Magic" |
+
+**Saves is the largest fidelity gap on the whole forty.** `printCanonFor` (`generate.mjs:490`)
+returns skills, immunities, resistances and vulnerabilities — **not saves** — so the donor's
+proficient saves leak onto every print body.
+
+**Opus notes for 7e-saves (pre-release item 2).** Print's `saves` map is the FULL six-ability map
+with proficiency folded in where print lists one (Vampire `{STR:4, DEX:9, CON:9, INT:3, WIS:7,
+CHA:9}` against stats 18/18/18/17/15/18 → DEX/CON/CHA proficient; Dire Wolf's map equals its
+mods → no proficient save). So the datum to carry is WHICH abilities are proficient: derive it as
+`saves[k] - mod(stats[k]) === pb` on print's own block, return it as `pc.saveProfs`, and apply it
+where `print canon skills:` applies — on the SAME gate (exact, and twist/borrow at print's CR via
+`printNearAdd`), recomputing the sheet's `saves` from the sheet's own mods + PB. A twist at a far
+CR keeps print's proficiency SET with the sheet's numbers. Never on homebrew. Predict first: list
+the 14 sheets above and what each should read; the twelve must show Goblin Boss with no listed
+save and Vampire with DEX/WIS/CHA. **Do:** return `saves` and apply them where skills are
+applied; `print canon senses:` ran on only 2 exact sheets — extend to twist; lock print's Bonus
+Action and Reaction rows the way 1e locked attacks. This also closes the critic's #22 regression
+(4th gate) and #13 Swallow (§3a).
+
+### 7f. The swarm name: "Swarm of Peal of the Dyings"
+
+`generate.mjs:3118`: `${bare}s` pluralises the LAST word of whatever the name is. **Do not** grow
+the pluraliser. The route call already answers `is_a_swarm` with a quote; ask it for the swarm's
+noun as a field (`swarm_of: "funeral bells"`) and build "Swarm of <that>". One token on a call we
+already make; `${bare}s` stays as the fallback when the field is empty.
+
+### 7g. Small, from §3d — after the above
+
+#39 the advantage rider rides BOTH Handaxe and Shortsword (and "a handaxe returns" rides the
+Shortsword, 6/6) — the T05 dedupe matched within one row, not across two; #06 "5-foot-long,
+5-foot-wide line" — measure print's shortest Line before bounding (print has none that short,
+*(recalled)*); #28 "may"/"can" and the `((with mind blank))` leak are prose.
+
+### 7h. Not a defect: the "Name.Text" gap in the smoke dumps
+
+53 rendered rows read "Scar-Socket Vigil.When…" in the `.md` files. `Statblock2024.vue:117,121`
+inserts `{{ ' ' }}` after the name on both entry paths; the smoke's `innerText` dump drops it.
+Verify once in the browser; do not build.
+
+### 7.9 RELEASE SPLIT (owner + Fable, 2026-11-08) — WHAT OPUS DOES NOW
+
+**Pre-release, in this order, then stop and run the forty.** About a day. Each is visible to a GM in
+the first ten seconds of reading a sheet, or makes our own gate honest.
+
+| # | item | why pre-release | size | done when |
+|---|---|---|---|---|
+| 1 | **7a** authored-row rigor — the five checks | the two Fixes; a die-less damage, a swarm that heals under a trait saying it can't | 5 of 27 authored rows this forty | #05 Chorus and #29 Rotting Toll replayed through the refusal chain: priced/refused; 0 template rows change; the twelve shows the five checks firing only on authored rows |
+| 2 | **7e-saves** print's saving throws on a print body | 14 of 15 twist/exact sheets ship wrong saves; "Vampire" with no DEX/WIS/CHA proficiency breaks the print promise | one field on `printCanonFor` + apply where skills apply | Goblin Boss #22 lists no save; Vampire #11 reads DEX/WIS/CHA +9/+7/+9; Pit Fiend #17 reads print's; borrow/homebrew sheets unchanged |
+| 3 | **7f** the swarm name | the sheet's TITLE reads "Swarm of Peal of the Dyings" | one field (`swarm_of`) on the route call; `${bare}s` stays as fallback | #29 reads "Swarm of Funeral Bells" (or the call's noun); "a swarm of rats" still reads "Swarm of Rats" |
+| 4 | **7b** `TEXT_GATE` drops "drops to 0 Hit Points" | makes the gate's FAIL count honest | one token | #31 Thunder Dive: no `two-novas`; `print-attack-list.spec.js` gains the Bodak/Banshee fact |
+
+Then: `npx jest … --silent` → `npm run build` → a twelve built from #05, #29, #10, #15 (7a), #11,
+#17, #22, #13 (7e), #29 twice (7f), #31 (7b), + one homebrew and one borrow control (unchanged) →
+`check-run.mjs` → **the forty** (sweep 2 of 3). Hand the forty to the critic with the §2-style
+table. Do NOT start anything below until the owner has read that forty.
+
+**Post-release (do not build before the forty above):** 7d formation (5 misses; a missing row,
+never a wrong one — Vashka ships a playable Gladiator), 7c handed clauses (2 hits), 7e senses (3
+sheets) and Bonus/Reaction locks (2 sheets), 7g small regressions, 1f (prompt fix, 1 in 120), 1g
+(2 clauses, moves them INTO the denominator). 7h is not a defect (verify once in the browser).
+
+**The bar, stated honestly for whoever reads this next.** The roadmap's 85% over three sweeps is
+probably not reachable pre-release from measured levers: 78 now; 7d ≈ +3.5, 7c ≈ +1.4 → ~83; the
+rest is the 39% of clauses that coin-flip between runs, which nothing in this plan targets. The
+owner's call is whether release means 85 or means "0 Fix on the critic's read + items 1–4 landed";
+Fable recommends the second. **The one thing to hold release for is `typed40`** — every number here
+is measured on forty writer's sentences; "knife ball" (two words) hit a bug four fortys never saw.
+Build it from the owner's saved concepts (`userConcept` on saved sheets), run once, read it. If it
+is ugly, that is the pre-release work; if it is fine, ship.

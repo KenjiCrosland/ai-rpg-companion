@@ -41,7 +41,7 @@ import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
 import { WEAPONS, weaponFor, weaponNamed, namesWeapon, weaponsIn, finesseLike } from './weapons.mjs';
 import { effectOnly, danglingRefIn, repairMultiattackAttackList, repairReplaceClause, rowNamesOf } from './checker.mjs';
-import { lintSheet, sheetCanCast } from './sheet-lints.mjs'; // the sheet lints, reachable from the pipeline since 2026-11-08 (the critic's §2a)
+import { lintSheet, sheetCanCast, undefinedStateIn, contradictsSelfHeal } from './sheet-lints.mjs'; // the sheet lints, reachable from the pipeline since 2026-11-08 (the critic's §2a)
 import { capSingleTargetSave, ceilingFor, isSingleTargetSave } from './card-budgets.mjs';
 import { matcherPath, bodyForClass, bodyForPerson } from './path.mjs';
 import { classStats } from './classes.mjs';
@@ -486,8 +486,25 @@ export function printCanonFor(conceptText, cr) {
   const remainder = !!pick && wordsOf(String(conceptText ?? '').replace(/\s(?:but|except|only)\s.*$/i, '').replace(/,\s*cr\s*\d+(?:\/\d+)?\s*$/i, '')).some((w) => !nameWords.has(w) && !nameWords.has(w.replace(/s$/, '')) && (aliasOf(w, conceptText) ?? '').toLowerCase() !== lower(pick));
   const addsSeat = !!pick && verbLines(String(conceptText ?? '').toLowerCase().replace(lower(pick), ' ')).length > 0; // any print pick: "an ancient treant … crushes" names the grappler seat on a head-word borrow too (checker 2026-10-02)
   const multiattack = (pick.sections?.Actions ?? []).find((a) => /^Multiattack\b/i.test(a?.name ?? ''))?.text ?? null; // a form suffix is still print's Multiattack — the Vampire's "(Vampire Form Only)" kept the chassis's three strikes (twist-ten, 2026-10-19) // print's own Multiattack: on an exact body its count and names stand (the Pit Fiend made two, print makes four — critic's step-8 read)
+  // `saveProfs`: WHICH abilities print is proficient in, not the numbers (critic gate 2,
+  // 2026-11-08). Print stores `saves` as the FULL six-ability map with proficiency already
+  // folded in — the Vampire reads {STR 4, DEX 9, CON 9, INT 3, WIS 7, CHA 9} against stats
+  // 18/18/18/17/15/18, so DEX/CON/WIS/CHA are the proficient four and STR/INT are bare
+  // mods. Carrying the NUMBERS would be wrong at any other CR; carrying the SET lets the
+  // sheet recompute from its own stats and PB, exactly as `skills` already does. Measured
+  // before building: 14 of 15 twist/exact sheets on the 11-08 forty shipped saves that
+  // differ from print, because this field was simply never returned.
+  const saveProfs = (() => {
+    const sv = pick.saves; const st = pick.stats; const pbp = Number(pick.pb);
+    if (!sv || !st || !Number.isFinite(pbp)) return null;
+    const out = Object.keys(sv).filter((k) => {
+      const mod = Math.floor((Number(st[k] ?? 10) - 10) / 2);
+      return Number.isFinite(Number(sv[k])) && Number(sv[k]) - mod >= pbp;
+    });
+    return out.length ? out : [];
+  })();
   // `skills`: print's own line lands with print's array on a print body (critic C, 2026-10-19)
-  return { multiattack, name: pick.name, last, traits, skills: pick.skills ?? null, immunities: pick.immunities ?? null, resistances: pick.resistances ?? null, vulnerabilities: pick.vulnerabilities ?? null, melee, meleeRows, ranged, rangedRows, modes, senses, rulesRows, legendaryRows: (pick.sections?.['Legendary Actions'] ?? []).map((a) => ({ name: a.name, text: String(a.text ?? '') })), stats: pick.stats ?? null, exact: !!exactPhrase && !npcHead && !addsSeat && !remainder, addsSeat, headIsPrint: !!exactPhrase, /* a whole print name heads the concept ("a swarm of rats that carries plague" is the Swarm of Rats at CR 1/4, not the route's 10) */ borrowOnly: (!!exactPhrase && !npcHead && (addsSeat || remainder)) || (headOnly && !exactPhrase) || npcHead, speedBase: /^(\d+) ft/.exec(String(pick.speed ?? ''))?.[1] ?? null, modeSpeeds: [...String(pick.speed ?? '').matchAll(/\b(Fly|Swim|Climb|Burrow) (\d+) ft\./g)].map((m) => [m[1], Number(m[2])]), type: String(pick.type ?? ''), languages: String(pick.languages ?? 'None').replace(/, And /g, ', and '), /* the corpus parser dropped "Languages None" lines — an absent field IS print's None (the Owlbear spoke Common, critic form-ten 2026-10-01) */ nameIsPrint: !!exactPhrase && !headOnly, shootsAtRange: (pick.sections?.Actions ?? []).some((a) => /Ranged Attack Roll/.test(a?.text ?? '')), cr: Number(pick.cr), hp: Number(pick.hp), ac: Number(pick.ac), atk: Number(pick.derived?.max_attack_bonus ?? NaN), dc: Number(pick.derived?.max_dc ?? NaN), /* SPELLCASTING AT ALL, wherever print keeps it (owner, 2026-10-17). `casts`
+  return { multiattack, name: pick.name, last, traits, saveProfs, skills: pick.skills ?? null, immunities: pick.immunities ?? null, resistances: pick.resistances ?? null, vulnerabilities: pick.vulnerabilities ?? null, melee, meleeRows, ranged, rangedRows, modes, senses, rulesRows, legendaryRows: (pick.sections?.['Legendary Actions'] ?? []).map((a) => ({ name: a.name, text: String(a.text ?? '') })), stats: pick.stats ?? null, exact: !!exactPhrase && !npcHead && !addsSeat && !remainder, addsSeat, headIsPrint: !!exactPhrase, /* a whole print name heads the concept ("a swarm of rats that carries plague" is the Swarm of Rats at CR 1/4, not the route's 10) */ borrowOnly: (!!exactPhrase && !npcHead && (addsSeat || remainder)) || (headOnly && !exactPhrase) || npcHead, speedBase: /^(\d+) ft/.exec(String(pick.speed ?? ''))?.[1] ?? null, modeSpeeds: [...String(pick.speed ?? '').matchAll(/\b(Fly|Swim|Climb|Burrow) (\d+) ft\./g)].map((m) => [m[1], Number(m[2])]), type: String(pick.type ?? ''), languages: String(pick.languages ?? 'None').replace(/, And /g, ', and '), /* the corpus parser dropped "Languages None" lines — an absent field IS print's None (the Owlbear spoke Common, critic form-ten 2026-10-01) */ nameIsPrint: !!exactPhrase && !headOnly, shootsAtRange: (pick.sections?.Actions ?? []).some((a) => /Ranged Attack Roll/.test(a?.text ?? '')), cr: Number(pick.cr), hp: Number(pick.hp), ac: Number(pick.ac), atk: Number(pick.derived?.max_attack_bonus ?? NaN), dc: Number(pick.derived?.max_dc ?? NaN), /* SPELLCASTING AT ALL, wherever print keeps it (owner, 2026-10-17). `casts`
     means casting-PRIMARY and is pinned false for the unicorn and the hag, which
     cast in print and fight in melee — so it cannot answer "does this body cast".
     Print keeps Spellcasting in `rulesRows`, which neither `casts` nor
@@ -1706,7 +1723,18 @@ const MECH_OPEN = /^(?:wields?|throws?|hurls?|bites?|claws?|swipes?|breathes?|ca
 // or a death-burst carries its limit in its TEXT, so a CR 13 swarm shipped a
 // 91 (14d12) burst in a 30-foot emanation: uncapped, and read as "nova none".
 // One definition, imported by the checker, so the two cannot drift.
-export const TEXT_GATE = /\bthe first time [^.]*\bin a fight\b|\bthe first time [^.]*\bis Bloodied\b|\bwhen (?:it|the \w+) dies\b|\bdrops to 0 Hit Points\b/i;
+// "DROPS TO 0 HIT POINTS" IS AN EFFECT, NOT A USE LIMIT (critic's ruling, gate 2,
+// 2026-11-08). A gate is an explicit use-limit TOKEN — Recharge N–M, X/Day, "can't use
+// again until…" — and nothing read out of effect text. An execute's threshold says when
+// the row KILLS, not how often it may be used, and print prints both forms: the Bodak's
+// Death Gaze is at-will, the Banshee's Wail is 1/Day. The engine's one-nova rule read
+// only the name and un-gated the drake's "Thunder Dive (1/Day)"; the checker read this
+// phrase and reported two novas on the same sheet — two copies of one predicate
+// disagreeing, which is the whole reason this constant is shared. Of print's 8 rows
+// carrying the phrase, every one that is really gated carries its gate in its NAME
+// (Ghost's Possession (Recharge 6), Sea Hag's Death Glare (Recharge 5-6)); the rest are
+// triggers on attack rows and traits that no reader should have been pricing as novas.
+export const TEXT_GATE = /\bthe first time [^.]*\bin a fight\b|\bthe first time [^.]*\bis Bloodied\b|\bwhen (?:it|the \w+) dies\b/i;
 
 // THE NEGATION IS NOT THE RECEIPT (critic's hold 2, 2026-10-16). Every lack
 // phrase contains one — "no", "not", "cannot", "never" — so with the negation
@@ -3116,8 +3144,15 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // receipt. A name that already says swarm anywhere is left alone.
   if (body === 'swarm' && p.name && !/\bswarm\b/i.test(String(p.name))) {
     const bare = String(p.name).replace(/^(?:a|an|the)\s+/i, '').trim();
-    const plural = /(?:s|es)$/i.test(bare) ? bare : (/(?:[^aeiou]y)$/i.test(bare) ? `${bare.slice(0, -1)}ies` : `${bare}s`);
-    trace('swarm name stamped:', `"${p.name}" -> "Swarm of ${plural}" — print names all seven of its swarms "Swarm of X", and the rules text says "the swarm"`);
+    // THE CALL NAMES THE MANY, NOT THE PLURALISER (critic gate 2, 2026-11-08). `${bare}s`
+    // pluralises the LAST WORD of the creature's whole name, which titled a sheet "Swarm
+    // of Peal of the Dyings" — the row name "Peal for the Dying" with an s on the end. The
+    // route call already judged this a swarm on the GM's own words; `swarm_of` asks it for
+    // the plural noun in the same breath. The pluraliser stays as the fallback for an
+    // unanswered field, which is the house rule's direction: a failed call never costs a sheet.
+    const plural = String(options.swarmOf ?? '').trim()
+      || (/(?:s|es)$/i.test(bare) ? bare : (/(?:[^aeiou]y)$/i.test(bare) ? `${bare.slice(0, -1)}ies` : `${bare}s`));
+    trace('swarm name stamped:', `"${p.name}" -> "Swarm of ${plural}" — ${options.swarmOf ? "the route call named the many" : "pluralised from the name (the call named no noun)"}; print names all seven of its swarms "Swarm of X", and the rules text says "the swarm"`);
     p.name = `Swarm of ${plural}`;
   }
   // SWARM TYPE STAMP (critic 2026-09-11; MOVED below the resolvedType stamp 2026-09-11 — the Sewer Choir was stamped and then reverted by it): print swarms are
@@ -5706,14 +5741,27 @@ Return ONLY JSON with EXACTLY these corrected pieces:
                 const known = [...rowNamesOf(monster), ...Object.values(sections).flat().map((e2) => String(e2.name ?? '').replace(/ \(.*\)$/, '')), String(row.name).replace(/ \(.*\)$/, '')].filter(Boolean).map((n) => n.toLowerCase());
                 return known.some((n) => n.includes(a.toLowerCase()) || a.toLowerCase().includes(n)) ? null : a;
               })();
-              const needS = (dangS || slotS || actS) ? null : (form.f.requiresConditionNamed ?? null);
+              // A STATE WORD THE ROW NEVER DEFINES, AND A ROW THAT CONTRADICTS THIS SHEET
+              // (critic gate 2, 2026-11-08). Both arms of the same idea as the four above:
+              // a row a GM cannot run is refused before it lands, and the nearest template
+              // stands in. The predicates live in `sheet-lints.mjs`, so the engine refuses
+              // on exactly what the checker reports — one definition, both readers. Each is
+              // measured at 0 of print's 329 blocks; see the comments there for why the
+              // obvious shape of each was wrong (print keys on "wounded" twice, and the
+              // Aboleth forbids its TARGET's healing with a pronoun).
+              const stateS = (dangS || slotS || actS) ? null : undefinedStateIn(row.text);
+              const contraS = (dangS || slotS || actS || stateS) ? null
+                : contradictsSelfHeal(row.text, [...Object.values(sections).flat(), ...(row ? [row] : [])].map((r2) => ({ sec: 'Traits', r: r2 })));
+              const needS = (dangS || slotS || actS || stateS || contraS) ? null : (form.f.requiresConditionNamed ?? null);
               const appliesS = needS ? new Set([...Object.values(sections).flat().flatMap((e2) => imposedConditions(e2)), ...(row.imposes ? [String(row.imposes)] : [])]) : null;
               const unmetS = needS && !appliesS.has(String(needS)) ? needS : null;
               if (dangS) trace('seat authoring refused:', `${seat} — the authored row cites "${dangS}", which is not on this sheet (the checker would fail it as a dangling reference); the nearest template stands in`);
               else if (slotS) trace('seat authoring refused:', `${seat} — the authored row still carries ${slotS[0]}, a slot this engine never substitutes (the forms ask only for {dc} and {dmg}); shipping it would fail the generation outright, so the nearest template stands in`);
               else if (unmetS) trace('seat authoring refused:', `${seat} — the authored row needs its target to have ${unmetS} and no row on this sheet imposes it, so its trigger could never fire (the Chalk-Hound's Daubing Cling, forty #2); the nearest template stands in`);
+              else if (stateS) trace('seat authoring refused:', `${seat} — the authored row keys on "${stateS}" and never says what it means; a GM has no threshold to read (print writes Bloodied or 0 Hit Points, or defines the state in the row). The nearest template stands in`);
+              else if (contraS) trace('seat authoring refused:', `${seat} — the authored row heals the creature, and "${contraS.name}" on this sheet says "${String(contraS.sentence).slice(0, 60)}"; the two cannot both be true. The nearest template stands in`);
               else if (actS) trace('seat authoring refused:', `${seat} — the authored row makes "${actS}" act, and no row on this sheet is that thing; a table cannot run it (the Spore-Mother's puppets, forty #3); the nearest template stands in`);
-              else if (!slotS && !unmetS && !actS) {
+              else if (!slotS && !unmetS && !actS && !stateS && !contraS) {
                 // THE GM'S ASK IS NOT A FREE ROW (owner's ruling, 2026-11-08). The free-row
                 // budget exists for pleasant surprises; a row written to answer something the
                 // GM typed is not a surprise, so it does not compete for that one slot. The
@@ -8004,6 +8052,25 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // PRINT'S SKILLS LAND WITH PRINT'S ARRAY (critic C, 2026-10-19): print's Vampire has
       // Perception +7, Stealth +9; the sheet shipped the lurker chassis's Stealth +14. The line is
       // print's at print's CR, each bonus shifted by the PB difference like every other print number.
+      // PRINT'S SAVING THROWS, THE SAME WAY AND ON THE SAME GATE AS ITS SKILLS (critic
+      // gate 2, 2026-11-08). The donor's proficient saves were leaking onto every print
+      // body: print's Goblin Boss is proficient in nothing and shipped DEX +4 (the
+      // critic flagged it four gates running); print's Vampire is proficient in DEX, CON,
+      // WIS and CHA and shipped none of them. The SET is print's, the NUMBERS are this
+      // sheet's own mod + PB — so a twist at another CR keeps print's proficiencies with
+      // its own arithmetic. A non-proficient ability is written as the bare mod, which is
+      // what the renderer reads to decide the line shows nothing.
+      if (printBody && Array.isArray(pcPlain?.saveProfs) && nearPrintCr(cr, pcPlain.cr) && monster.stats) {
+        const pbS = Number(monster.pb ?? scaled.pb ?? 2);
+        const modS = (k) => Math.floor((Number(monster.stats[k] ?? 10) - 10) / 2);
+        const want = Object.fromEntries(Object.keys(monster.stats).map((k) => [k, modS(k) + (pcPlain.saveProfs.includes(k) ? pbS : 0)]));
+        const was = Object.entries(want).filter(([k, v]) => Number(monster.saves?.[k] ?? modS(k)) !== v);
+        if (was.length) {
+          trace('print canon saves:', `${pcPlain.saveProfs.length ? `proficient in ${pcPlain.saveProfs.join(', ')}` : 'proficient in nothing'} — the ${pcPlain.name}'s own set, at this sheet's stats and PB ${pbS} (changed ${was.map(([k]) => k).join(', ')})`);
+          monster.saves = want;
+          if (monster.other_edition) monster.other_edition.saves = { ...want };
+        }
+      }
       if (printBody && pcPlain?.skills && nearPrintCr(cr, pcPlain.cr) && monster.stats) {
         // print's skill NAMES and proficiency TIER are print's; the bonus derives from THIS sheet's
         // stat and PB, the way the engine's own skills pass derives every other one — overwriting

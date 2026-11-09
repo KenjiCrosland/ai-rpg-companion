@@ -422,7 +422,18 @@ export function danglingRefIn(text, names, rowName = '') {
   // rows matching "recharges <TitleCase>" at all, so it costs no false refusal there
   // (print writes "recharges after a Short or Long Rest", where the next word is
   // lowercase and the pattern does not fire).
-  for (const ref of String(text ?? '').matchAll(/(?:use of|uses?|cast|recharges?) ((?:[A-Z][\w'-]*)(?:(?: (?:of|the|and|in|to|from|at|on|with|upon))* [A-Z][\w'-]*){0,3})/g)) {
+  // THE CONNECTOR LIST IS A CLOSED FACT, AND IT WAS SHORT (critic gate 2, 2026-11-08).
+  // The capture joins capitalised words with lowercase connectors, and `for` was missing —
+  // so a Multiattack citing "Peal for the Dying" was read as citing "Peal", a row no sheet
+  // has, and the gate reported a dangling ref on a correct sheet twice in two runs. Print
+  // never exercised it: of print's 430 row names only `after` appears beyond the original
+  // list ("Phantasms (Recharge after a Short or Long Rest)", inside a gate the bare-name
+  // strip removes anyway). Our own names use for/over/under/beneath/through/into/by.
+  // MEASURED BEFORE WIDENING: across print's 1291 rows the widened list changes 0
+  // citations, and across four fortys (1559 rows) it changes exactly 1 — the Peal, from
+  // "not a row" to the row it is. Widening cannot over-capture here because a citation is
+  // generated from the row's own name.
+  for (const ref of String(text ?? '').matchAll(/(?:use of|uses?|cast|recharges?) ((?:[A-Z][\w'-]*)(?:(?: (?:of|the|and|in|to|from|at|on|with|upon|for|over|under|beneath|through|into|by|after|against))* [A-Z][\w'-]*){0,3})/g)) {
     const target = ref[1].trim();
     if (REF_SKIP.test(target)) continue;
     if (/\bcast\b/.test(ref[0])) continue;

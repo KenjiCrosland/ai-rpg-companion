@@ -1,0 +1,87 @@
+[
+  {
+    "name": "Air Elemental",
+    "description": "that carries stolen voices",
+    "cr": "5",
+    "rules": "2024",
+    "canary": "7a - the air elemental: a free/authored row may not promise damage with no die"
+  },
+  {
+    "name": "",
+    "description": "a swarm of funeral bells that ring themselves over the dying",
+    "cr": "13",
+    "rules": "2024",
+    "canary": "7a+7f - the bells: no \"wounded\" without a threshold, no heal under a no-heal trait, and the NAME must read \"Swarm of <noun>\""
+  },
+  {
+    "name": "",
+    "description": "a swarm of funeral bells that ring themselves over the dying",
+    "cr": "13",
+    "rules": "2024",
+    "canary": "7a+7f roll 2 - same"
+  },
+  {
+    "name": "",
+    "description": "a drowned cathedral choir that sings in one voice",
+    "cr": "10",
+    "rules": "2014",
+    "canary": "7a - Airless Antiphon: an always-on damage aura (watch the save/immunity)"
+  },
+  {
+    "name": "Adult Red Dragon",
+    "description": "blind in one eye from an old lance",
+    "cr": "17",
+    "rules": "2014",
+    "canary": "7a - Scar-Socket Vigil: an off-turn free attack (watch the Reaction cost)"
+  },
+  {
+    "name": "Goblin Boss",
+    "description": "",
+    "cr": "auto",
+    "rules": "2014",
+    "canary": "7e - Goblin Boss: print is proficient in NOTHING, so the Saving Throws line must be absent"
+  },
+  {
+    "name": "Vampire",
+    "description": "who keeps a garden of thorns",
+    "cr": "13",
+    "rules": "2014",
+    "canary": "7e - Vampire: print is proficient in DEX, CON, WIS, CHA"
+  },
+  {
+    "name": "Pit Fiend",
+    "description": "who collects the oaths of dying knights",
+    "cr": "20",
+    "rules": "2024",
+    "canary": "7e - Pit Fiend: print is proficient in DEX and WIS; all three attack rows still ship"
+  },
+  {
+    "name": "Purple Worm",
+    "description": "that swallowed a war-band's armoury",
+    "cr": "15",
+    "rules": "2024",
+    "canary": "7e - Purple Worm: print is proficient in STR and CON"
+  },
+  {
+    "name": "",
+    "description": "a young storm drake whose breath is a rolling wall of thunder",
+    "cr": "7",
+    "rules": "2024",
+    "canary": "7b - the drake: an execute is not a nova, so no two-novas and Thunder Dive keeps its gate"
+  },
+  {
+    "name": "",
+    "description": "",
+    "cr": "4",
+    "rules": "2024",
+    "role": "brute",
+    "canary": "CONTROL homebrew - no print body: saves untouched, no swarm, no lint"
+  },
+  {
+    "name": "Owlbear",
+    "description": "",
+    "cr": "3",
+    "rules": "2024",
+    "canary": "CONTROL exact - Owlbear: byte-identical to print"
+  }
+]

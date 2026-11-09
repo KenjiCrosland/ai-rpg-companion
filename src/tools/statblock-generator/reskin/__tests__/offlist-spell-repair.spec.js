@@ -91,7 +91,11 @@ describe("the critic's two off-list Fixes, on their own sheets", () => {
 describe('the sheet lints are reachable from the pipeline', () => {
   it('generate.mjs calls lintSheet and merges its findings', () => {
     const src = readFileSync(require('path').join(__dirname, '..', 'generate.mjs'), 'utf8');
-    expect(src).toMatch(/import \{ lintSheet, sheetCanCast \} from '\.\/sheet-lints\.mjs'/);
+    // the MEMBERS matter, not the whole list: 2026-11-08 added two more predicates to
+    // this import (undefinedStateIn, contradictsSelfHeal) and pinning the exact line
+    // failed a test that cares only that the pipeline reads the shared lints
+    expect(src).toMatch(/import \{[^}]*\blintSheet\b[^}]*\} from '\.\/sheet-lints\.mjs'/);
+    expect(src).toMatch(/import \{[^}]*\bsheetCanCast\b[^}]*\} from '\.\/sheet-lints\.mjs'/);
     expect(src).toMatch(/lintSheet\(monster\)/);
     expect(src).toMatch(/lint\.findings\.push\(\.\.\.sheetHits/);
   });
