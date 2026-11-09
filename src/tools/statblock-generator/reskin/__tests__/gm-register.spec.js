@@ -68,11 +68,27 @@ describe('item 7 — print\'s spell list carries print\'s CR, one-sidedly', () =
 });
 
 describe('item 8 — the engine\'s own text', () => {
-  test('a non-damaging ray leaves no "condition ,." behind', () => {
+  // THE CHECKER'S OWN REGEX, because mine was narrower and that is how this defect survived
+  // two "fixes": `\s,` (a space before a comma) is in the checker's pattern and was not in the
+  // detector I verified with, so "condition ,." read clean to me and FAILed the gate three runs
+  // running. One pattern, shared, and the render is tested with the fill EMPTY — the state that
+  // actually shipped.
+  const CHECKER_PUNCT = /\. ,|,\s*,|\.\.(?!\.)|\s,|(?<!ft)\.\s+(?:and|plus)\b/;
+  test('the composed ray table resolves its own {duration} and trips no punctuation rule', () => {
     for (const band of ['3-5', '6-9', '10-12', '13-20', '21+']) {
       const t = composeRayTable(band);
-      expect(t).not.toMatch(/,\s*\./);
-      expect(t).toMatch(/Saving Throw/);     // the table is really being composed
+      expect(t).toMatch(/Saving Throw/);                 // the table is really being composed
+      expect(t).not.toMatch(CHECKER_PUNCT);
+      expect(t).not.toMatch(/\{duration\}|target_end/); // neither the token nor its raw key
+    }
+  });
+  test('and the rendered row is clean whether the call fills duration or not', () => {
+    const t = TEMPLATE_BY_ID.get('random-ray');
+    const ctx = { cr: 13, scaled: { cr: 13, dc: 17, pb: 5, per_hit: 20, stats: { STR: 14, DEX: 20, CON: 18, INT: 18, WIS: 16, CHA: 16 }, sections: {}, ac: 18, hp: 180 }, sections: {}, archetype: 'lurker', name: 'Orb', type: 'Aberration', imposed: [] };
+    for (const fills of [{ duration: 'target_end' }, {}]) {
+      const txt = String(renderTemplate(t, ctx, fills)?.text ?? '');
+      expect(txt).not.toMatch(CHECKER_PUNCT);
+      expect(txt).toMatch(/Restrained condition until the end of its next turn/);
     }
   });
   test('only a body made of its element may share a space', () => {

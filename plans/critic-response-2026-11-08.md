@@ -616,9 +616,53 @@ already present); Vexmoor (#05) unchanged.
 
 **Then:** commit 5–10 together → `typed40` → `sweep` (sweep 2 of 3).
 
+**STATUS 2026-11-09 — 5–10 committed as `f867440`.** Six-sheet verification: Krug is a twist on
+the Ogre at print's Speed 40 / HP 68; both goblin-wizard rolls read CR-3 spells (item 7 closes the
+critic's #15); the three caster controls are unchanged. **Item 10 fired 0 of 6 rolls** — every
+class NPC stood on its class's own block, so the species-body arm is proven by its ingredients
+(`bodyForClass('mage')` lends Spellcasting; cleric → Priest; druid → null, declined) and by the
+suite, not in the pipeline. **Three landed arms now wait on a specific roll:** 1e's tail add-back
+(fired once on roll 9 of 9), 7a's two refusal arms (never yet), item 10 (never yet). If the next
+two fortys show no species-body class NPC, item 10 is unverified, not working — say so. Also: a
+Mage-bodied goblin wizard carries no goblin kit (no Nimble Escape), so the critic's "goblin kit ✗"
+stands on that roll; item 10 is what makes the species-body roll shippable.
+
 **Correction to the note above:** item 9 does NOT unblock Pip (#25). The refusal is `species
 "kobold" has no kit` — the SPECIES kit table in `species.mjs`, a separate list. Kobold stays a
 post-release species-kit entry.
+
+### 11. The checker's `gate-fit` lacks the engine's KO exclusion (PRE-RELEASE, cheap, print-verified)
+
+**Measured 2026-11-09 across three `typed40` runs:** `gate-fit` fired on all three, each time on a
+different at-will grapple-and-drag row — Death Roll (#40), Reel In, Debtor's Pin. The engine's own
+restore arm (`generate.mjs:8760`, `const KO = /Paralyzed|Stunned|Incapacitated|Unconscious|
+Petrified|Restrained|Grappled/`) SKIPS KO conditions, so it never gates these rows; the checker's
+rule (`checker.mjs:~1829`) has no such exclusion and fails them. Two copies of one predicate,
+disagreeing — the recurring shape of this week.
+
+**Print's warrant:** exactly **3** rows in 329 blocks are at-will condition actions on a sheet
+with no Multiattack and no use gate — Brass Dragon Wyrmling / Sleep Breath, Harpy / Luring Song,
+Homunculus / Bite — and **all three are KO conditions.** The checker rule FAILs them today; print
+prints them. So the exclusion clears 3 print false positives and the 3 typed40 rows together.
+
+**Do:** move `KO` to a shared module both readers import (`sheet-lints.mjs` already plays this
+role for `undefinedStateIn` / `contradictsSelfHeal`), and make `gate-fit` skip a row whose imposed
+condition matches it. One definition. Test: the three print rows pass; a non-KO at-will condition
+action with no Multiattack (the Dire Wolf's Fur-Bristled Lunge shape) still fails; `print-attack-
+list.spec.js`'s existing gate-fit tests stay green.
+
+**NOT a fix:** the Beholder's `under` (reads CR 8 at a typed 13) recurs on all three runs and is
+the stated-CR ruling (§0b of `post-release-2026-11-09.md`) — the owner's call on the ruler, not a
+build. The other eleven FAIL rules across the three runs each appear once or twice on a different
+sheet; that is the stochastic tail, not a backlog.
+
+**Status of the Eye Rays `punctuation` FAIL (recurred on all three runs):** the item-8a fix
+addressed a DIFFERENT instance and was verified on the composer, not the shipped path — the real
+cause was the `{duration}` token inside the composed `ray_table`, substituted AFTER the duration
+fill had run, so it rendered the raw key or, with an empty fill, "condition ,.". Fixed in
+`composeRayTable` (the table resolves its own token), verified clean in BOTH fill states across all
+five CR bands, and the spec now uses the CHECKER'S own punctuation regex — mine lacked `\s,` and
+read the defect as clean. Suite 4954, build clean; uncommitted alongside this note.
 
 **The critic's "GM lexicon" — NOT built as written, and here is why.** They propose a
 deterministic table before the call: slow → Speed 20, legendary → LR + legendary actions, etc.

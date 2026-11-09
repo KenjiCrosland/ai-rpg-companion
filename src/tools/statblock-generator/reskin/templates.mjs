@@ -1923,6 +1923,19 @@ export function composeRayTable(band) {
     // to run the monster. Same strip, same place, both ends.
     if (!r.damage) clause = clause.replace(/\{avg[a-z_0-9]*\} \(\{dice[a-z_0-9]*\}\) \{?[A-Za-z_]+\}? damage(?:,? and )?/g, '').replace(/^\s*[,.]\s*/, '').replace(/\s*,\s*(?:and\s*)?$/, '').replace(/^the target/i, 'The target');
     if (r.damage && !/\{avg/.test(clause)) clause = `{avg_half} ({dice_half}) ${r.damage} damage, and ${clause.charAt(0).toLowerCase()}${clause.slice(1)}`; // a damaging ray whose card carries no damage clause (the Shoving Ray's push-prone) leads with the damage
+    // THE TABLE RESOLVES ITS OWN {duration} (the GM-register forty, 2026-11-09). The ray
+    // frames carry "has the X condition {duration}", and this table is substituted into the row
+    // as the `ray_table` ENGINE slot — AFTER the {duration} fill has already run on the frame.
+    // So the token inside the table never reached `durationClause`: it rendered the raw key
+    // ("condition target_end.") or, when the call left the fill empty, "condition ,." — which
+    // shipped on the Cynosure's Restrained, Blinded and Paralyzed rays three runs running. A
+    // first fix of mine tidied a trailing comma in the damage strip and I verified it on the
+    // composer's own output, which is exactly where this defect is invisible.
+    //
+    // The table's conditions are all one-turn in print's own shape, and `random-ray` declares
+    // `duration_default: null` (so the frame path's fallback is `target_end` too) — the table
+    // writes that clause itself rather than leaving a token for a pass that has already gone by.
+    clause = clause.split('{duration}').join(DURATION_FORMS.target_end).replace(/\s+([.,])/g, '$1').replace(/\s*,\s*(?:and\s*)?$/, '');
     if (!/[.!?]$/.test(clause)) clause = `${clause}.`;
     return `${i + 1} — ${r.name}: *${stat} Saving Throw*: DC {dc}. *Failure:* ${clause}`;
   }).join(' ');
