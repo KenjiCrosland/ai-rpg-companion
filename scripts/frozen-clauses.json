@@ -8440,5 +8440,845 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "54b77f3a6fcc": {
+  "concept": "Grask Ironjaw — orc war chief",
+  "clauses": [
+   {
+    "id": "cl_6p2blz",
+    "text": "Grask Ironjaw — orc war chief",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "c95c865eb5c2": {
+  "concept": "Sister Maudra — cleric of the drowned god",
+  "clauses": [
+   {
+    "id": "cl_15iahn1",
+    "text": "Sister Maudra — cleric of the drowned god",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "2a24c4453056": {
+  "concept": "Captain Vell — pirate captain, lost a hand to a shark, hates the sea",
+  "clauses": [
+   {
+    "id": "cl_rkjnem",
+    "text": "Captain Vell — pirate captain",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_g78yfr",
+    "text": "lost a hand to a shark",
+    "kind": "mechanical",
+    "polarity": "lacks",
+    "takes": "part",
+    "costs": "one_limb_attacks",
+    "lackQuote": "lost a hand"
+   },
+   {
+    "id": "cl_1u5smtl",
+    "text": "hates the sea",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "6b5779faed13": {
+  "concept": "Thessaly Nightbloom — elf ranger, twin shortswords",
+  "clauses": [
+   {
+    "id": "cl_1wnp9pw",
+    "text": "Thessaly Nightbloom — elf ranger",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_zwii56",
+    "text": "twin shortswords",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "49c50dcd1f5b": {
+  "concept": "Lord Vexmoor — necromancer BBEG, raises the party's fallen allies",
+  "clauses": [
+   {
+    "id": "cl_1d5ett8",
+    "text": "Lord Vexmoor — necromancer BBEG",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "drain",
+    "askMechanicWhy": "Lord Vexmoor — necromancer BBEG"
+   },
+   {
+    "id": "cl_yhda4",
+    "text": "raises the party's fallen allies",
+    "kind": "mechanical",
+    "askMechanic": "mend",
+    "askMechanicWhy": "raises"
+   }
+  ]
+ },
+ "7bc38f84c211": {
+  "concept": "Bramblejack",
+  "clauses": [
+   {
+    "id": "cl_14ow68u",
+    "text": "Bramblejack",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "20c07bb560f6": {
+  "concept": "Krug — ogre",
+  "clauses": [
+   {
+    "id": "cl_mwdb9a",
+    "text": "Krug — ogre",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "80257787367c": {
+  "concept": "Mother Ash — hag midwife",
+  "clauses": [
+   {
+    "id": "cl_2zpkl0",
+    "text": "Mother Ash — hag midwife",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "0e78ca4c1ed7": {
+  "concept": "Dervish Kal — fast, two scimitars, hit and run",
+  "clauses": [
+   {
+    "id": "cl_ph5ljt",
+    "text": "Dervish Kal — fast",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "Dervish Kal — fast",
+    "askShape": "movement",
+    "askMechanic": "climb",
+    "askMechanicWhy": "Dervish Kal — fast"
+   },
+   {
+    "id": "cl_1wyju6n",
+    "text": "two scimitars",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "two scimitars",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1a93wol",
+    "text": "hit and run",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "hit and run",
+    "askShape": "movement"
+   }
+  ]
+ },
+ "51a35b925558": {
+  "concept": "The Pale Warden — guardian of the crypt door",
+  "clauses": [
+   {
+    "id": "cl_5mhnxl",
+    "text": "The Pale Warden — guardian of the crypt door",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "126d6ad7cd25": {
+  "concept": "Zarnak — basically a xenomorph",
+  "clauses": [
+   {
+    "id": "cl_7t4k0y",
+    "text": "Zarnak — basically a xenomorph",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "aa1f8317c687": {
+  "concept": "big bob — giant who throws boulders",
+  "clauses": [
+   {
+    "id": "cl_1j2lesu",
+    "text": "big bob — giant",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_zjyjd",
+    "text": "throws boulders",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "burst",
+    "askMechanicWhy": "throws boulders"
+   }
+  ]
+ },
+ "311310350b3b": {
+  "concept": "lizard folk shadow monk",
+  "clauses": [
+   {
+    "id": "cl_6zlrm9",
+    "text": "lizard folk shadow monk",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "2d62a04c5c3c": {
+  "concept": "goblin wizard",
+  "clauses": [
+   {
+    "id": "cl_gmrx04",
+    "text": "goblin wizard",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "2352c528beac": {
+  "concept": "vampire pirate",
+  "clauses": [
+   {
+    "id": "cl_yniunf",
+    "text": "vampire pirate",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "vampire pirate",
+    "askShape": "heal",
+    "askMechanic": "drain",
+    "askMechanicWhy": "vampire pirate"
+   }
+  ]
+ },
+ "4a2d633bd027": {
+  "concept": "owlbear zombie",
+  "clauses": [
+   {
+    "id": "cl_mh8zda",
+    "text": "owlbear zombie",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "owlbear zombie"
+   }
+  ]
+ },
+ "2e5a9a0b1f06": {
+  "concept": "A floating orb with one great central eye and a crown of eyestalks that each loose a different ray",
+  "clauses": [
+   {
+    "id": "cl_qi9oaj",
+    "text": "A floating orb with one great central eye",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_lx10jo",
+    "text": "a crown of eyestalks",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_8pwd7n",
+    "text": "each loose a different ray",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "a different ray"
+   }
+  ]
+ },
+ "cb667336e917": {
+  "concept": "A tentacle-faced psychic aberration that stuns minds and eats brains",
+  "clauses": [
+   {
+    "id": "cl_1nyrma9",
+    "text": "A tentacle-faced psychic aberration",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_49n1pv",
+    "text": "stuns minds and eats brains",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "stuns minds"
+   }
+  ]
+ },
+ "8dfae67cef4e": {
+  "concept": "a six-legged panther with two tentacles whose image appears a few feet from where it stands",
+  "clauses": [
+   {
+    "id": "cl_1b2g59m",
+    "text": "a six-legged panther with two tentacles whose image appears a few feet from where it stands",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "a six-legged panther with two tentacles whose image appears a few feet from where it stands",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "f0022b7373e0": {
+  "concept": "haunted suit of armor",
+  "clauses": [
+   {
+    "id": "cl_11s6qru",
+    "text": "haunted suit of armor",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "21fd58ef9643": {
+  "concept": "clockwork spider",
+  "clauses": [
+   {
+    "id": "cl_104c6x2",
+    "text": "clockwork spider",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "a998b3b1b426": {
+  "concept": "Orrin Blackwell — Orrin was the village's blacksmith until the war took his sons. He made a pact with something under th",
+  "clauses": [
+   {
+    "id": "cl_16ewtug",
+    "text": "Orrin Blackwell — Orrin was the village's blacksmith until the war took his sons",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_hcedaf",
+    "text": "He made a pact with something under the forge",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1n4v2k4",
+    "text": "now his hammer glows when he's angry",
+    "kind": "mechanical",
+    "askWhen": "when_bloodied",
+    "askWhenWhy": "when he's angry",
+    "askOften": "at_will",
+    "askOftenWhy": "now his hammer glows when he's angry",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "his hammer glows when he's angry"
+   },
+   {
+    "id": "cl_1epebus",
+    "text": "He protects the village",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_z0ml46",
+    "text": "the villagers are afraid of him",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_p0v89h",
+    "text": "He fights with the hammer",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "He fights with the hammer",
+    "askOften": "at_will",
+    "askOftenWhy": "He fights with the hammer",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1542hc0",
+    "text": "can heat metal armor with a touch",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "with a touch",
+    "askShape": "save_single",
+    "askMechanic": "curse",
+    "askMechanicWhy": "heat metal armor with a touch"
+   },
+   {
+    "id": "cl_iirwo2",
+    "text": "Loyal to the party if they help the village",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "d776fcc6ce21": {
+  "concept": "Queen Ysolde the Unburied — Ancient queen of the barrow kings, dead 400 years, woke when the players took the crown. She",
+  "clauses": [
+   {
+    "id": "cl_h6pbec",
+    "text": "Queen Ysolde the Unburied — Ancient queen of the barrow kings",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1dcyn1q",
+    "text": "dead 400 years",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_13qyv78",
+    "text": "woke when the players took the crown",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_ezy2uy",
+    "text": "She commands the wights in the barrow",
+    "kind": "mechanical",
+    "askShape": "buff_ally",
+    "askMechanic": "command",
+    "askMechanicWhy": "commands the wights"
+   },
+   {
+    "id": "cl_1ng5pmn",
+    "text": "Cold aura",
+    "kind": "mechanical",
+    "askShape": "save_area",
+    "askMechanic": "zone",
+    "askMechanicWhy": "cold aura"
+   },
+   {
+    "id": "cl_77znm2",
+    "text": "regenerates unless hit with fire",
+    "kind": "mechanical",
+    "askShape": "heal",
+    "askMechanic": "mend",
+    "askMechanicWhy": "regenerates"
+   },
+   {
+    "id": "cl_1sagrj5",
+    "text": "speaks only the old tongue",
+    "kind": "header"
+   },
+   {
+    "id": "cl_10y3ms",
+    "text": "AC 17",
+    "kind": "header"
+   },
+   {
+    "id": "cl_17ybq4v",
+    "text": "about 150 hp",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1rpgtd",
+    "text": "She wants the crown back and will bargain",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "607feed543f2": {
+  "concept": "Pip — A kobold who was raised by a green dragon and thinks he IS a dragon. Wears homemade wings. Breathes a little poiso",
+  "clauses": [
+   {
+    "id": "cl_1stkc59",
+    "text": "Pip — A kobold",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1lzcrwn",
+    "text": "was raised by a green dragon",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_15fu4qs",
+    "text": "thinks he IS a dragon",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1rvk0eg",
+    "text": "Wears homemade wings",
+    "kind": "mechanical",
+    "askShape": "movement"
+   },
+   {
+    "id": "cl_1vbd6aa",
+    "text": "Breathes a little poison gas (he practices)",
+    "kind": "mechanical",
+    "askShape": "save_area",
+    "askMechanic": "breath",
+    "askMechanicWhy": "breathes a little poison gas"
+   },
+   {
+    "id": "cl_ix5kp1",
+    "text": "Extremely confident",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1s5zd2b",
+    "text": "The party's first recurring villain",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_le5h3",
+    "text": "He should be funny",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_59c9dt",
+    "text": "actually a little dangerous in a group",
+    "kind": "mechanical",
+    "askShape": "save_area",
+    "askMechanic": "breath",
+    "askMechanicWhy": "breathes a little poison gas"
+   }
+  ]
+ },
+ "1a14f1fd2917": {
+  "concept": "The Hollow Cardinal — Leader of the Church of the Empty Throne. A human priest whose faith was hollowed out and filled b",
+  "clauses": [
+   {
+    "id": "cl_xfa2dh",
+    "text": "The Hollow Cardinal — Leader of the Church of the Empty Throne",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_p830a8",
+    "text": "A human priest whose faith was hollowed out",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1rd69ww",
+    "text": "filled by an Aberration from beyond the stars",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_rd8gcr",
+    "text": "Looks normal until his face splits open",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_16ntrxs",
+    "text": "Casts divine spells",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "Casts divine spells",
+    "askOften": "at_will",
+    "askOftenWhy": "Casts divine spells",
+    "askShape": "save_single"
+   },
+   {
+    "id": "cl_rvv7nx",
+    "text": "they come out wrong - healing that hurts",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1h02rm5",
+    "text": "light that blinds",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "light that blinds"
+   },
+   {
+    "id": "cl_m9b84u",
+    "text": "Has a retinue of brainwashed acolytes",
+    "kind": "mechanical",
+    "askShape": "buff_ally",
+    "askMechanic": "command",
+    "askMechanicWhy": "retinue of brainwashed acolytes"
+   },
+   {
+    "id": "cl_d21djp",
+    "text": "Wants to open the throne room door at the bottom of the cathedral",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "bb6df8e7809e": {
+  "concept": "Grizzelda — swamp witch npc, sells potions, secretly a hag. if the pcs attack her she reveals her true form. claws, curs",
+  "clauses": [
+   {
+    "id": "cl_pd0yke",
+    "text": "Grizzelda — swamp witch npc",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_134lbwh",
+    "text": "sells potions",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_x7e7jg",
+    "text": "secretly a hag",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_32q4nk",
+    "text": "if the pcs attack her she reveals her true form",
+    "kind": "mechanical",
+    "askShape": "buff_self",
+    "askMechanic": "disguise",
+    "askMechanicWhy": "reveals her true form"
+   },
+   {
+    "id": "cl_1keo6s",
+    "text": "claws",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1cpvqqp",
+    "text": "curses",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "curse",
+    "askMechanicWhy": "curses"
+   },
+   {
+    "id": "cl_15qy1i2",
+    "text": "can turn invisible",
+    "kind": "mechanical",
+    "askShape": "movement",
+    "askMechanic": "teleport",
+    "askMechanicWhy": "turn invisible"
+   },
+   {
+    "id": "cl_v8bx6s",
+    "text": "has a cauldron that she can summon things from 1/day",
+    "kind": "mechanical",
+    "askShape": "save_area",
+    "askMechanic": "burst",
+    "askMechanicWhy": "summon things"
+   }
+  ]
+ },
+ "34b424af67a0": {
+  "concept": "Shadowfang — the druid's wolf companion, bigger than a normal wolf, has a scar over one eye and shadows seem to follow i",
+  "clauses": [
+   {
+    "id": "cl_jo2fjr",
+    "text": "Shadowfang — the druid's wolf companion",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_czliux",
+    "text": "bigger than a normal wolf",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_cyyin9",
+    "text": "has a scar over one eye",
+    "kind": "mechanical"
+   },
+   {
+    "id": "cl_1upcvse",
+    "text": "shadows seem to follow it",
+    "kind": "mechanical",
+    "askShape": "buff_self",
+    "askMechanic": "disguise",
+    "askMechanicWhy": "shadows seem to follow it"
+   },
+   {
+    "id": "cl_z6x1b8",
+    "text": "Should be tougher than a dire wolf",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "863bdee2fa92": {
+  "concept": "CR 8 brute, two attacks, grapples",
+  "clauses": [
+   {
+    "id": "cl_fhz9a5",
+    "text": "CR 8 brute",
+    "kind": "header"
+   },
+   {
+    "id": "cl_9sxfmf",
+    "text": "two attacks",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1o3o5g",
+    "text": "grapples",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "grapples",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "grapples"
+   }
+  ]
+ },
+ "68d1f4b573b8": {
+  "concept": "owlbear but CR 8",
+  "clauses": [
+   {
+    "id": "cl_1hjzsc8",
+    "text": "owlbear",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_18hqf",
+    "text": "CR 8",
+    "kind": "header"
+   }
+  ]
+ },
+ "7e0ec72e8416": {
+  "concept": "a troll but weak to cold instead of fire",
+  "clauses": [
+   {
+    "id": "cl_k3jn1u",
+    "text": "a troll",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_k3u1lu",
+    "text": "weak to cold instead of fire",
+    "kind": "header"
+   }
+  ]
+ },
+ "ecf1ce9f9e55": {
+  "concept": "goblin boss with a heavy crossbow",
+  "clauses": [
+   {
+    "id": "cl_1112hv6",
+    "text": "goblin boss with a heavy crossbow",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "goblin boss with a heavy crossbow",
+    "askOften": "at_will",
+    "askOftenWhy": "goblin boss with a heavy crossbow",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "43e160e80306": {
+  "concept": "Thornback — an ankheg but legendary, boss fight for level 5",
+  "clauses": [
+   {
+    "id": "cl_1osnvf5",
+    "text": "Thornback — an ankheg",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_10lsxtn",
+    "text": "legendary",
+    "kind": "mechanical",
+    "askOften": "once_per_fight",
+    "askOftenWhy": "legendary",
+    "askShape": "save_area",
+    "askMechanic": "burst",
+    "askMechanicWhy": "legendary"
+   },
+   {
+    "id": "cl_1ojku2n",
+    "text": "boss fight for level 5",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "9228cffb7b05": {
+  "concept": "AC 18 HP 200 hits hard, slow",
+  "clauses": [
+   {
+    "id": "cl_1bzaaow",
+    "text": "AC 18 HP 200 hits hard",
+    "kind": "header"
+   },
+   {
+    "id": "cl_23qbl",
+    "text": "slow",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "slow",
+    "askShape": "movement"
+   }
+  ]
+ },
+ "4bbfe1963bf7": {
+  "concept": "a drgon",
+  "clauses": [
+   {
+    "id": "cl_juqrp5",
+    "text": "a drgon",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "ebf2fe31fefa": {
+  "concept": "big scary tree thing",
+  "clauses": [
+   {
+    "id": "cl_9chk44",
+    "text": "big scary tree thing",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "811409ceb48a": {
+  "concept": "what would a CR 4 swamp monster look like",
+  "clauses": [
+   {
+    "id": "cl_14cm5mj",
+    "text": "what would a CR 4 swamp monster look like",
+    "kind": "header"
+   }
+  ]
+ },
+ "a06da4ef7bd6": {
+  "concept": "the thing that's been killing my players' horses",
+  "clauses": [
+   {
+    "id": "cl_nij9n5",
+    "text": "the thing that's been killing my players' horses",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "dc6dedac7307": {
+  "concept": "Skarn the Tollkeeper",
+  "clauses": [
+   {
+    "id": "cl_1mwzph3",
+    "text": "Skarn the Tollkeeper",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "873cb03f3a93": {
+  "concept": "sewer alligator",
+  "clauses": [
+   {
+    "id": "cl_iwukxz",
+    "text": "sewer alligator",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
  }
 }

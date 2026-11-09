@@ -47,6 +47,18 @@ export function printNameOf(text, { edition = '2024' } = {}) {
   if (edition === '2014') { const h14 = CORPUS_2014.find((b) => norm(b.name) === t); if (h14) return h14.name; }
   return null;
 }
+// A JOB OR FOLK WORD IS A PRINT BLOCK, AND BOTH LOOKUPS MUST KNOW IT (2026-11-09).
+// These two lived in `generate.mjs`, which imports THIS file — so `corpusEntry` could not see
+// them and had a second, poorer idea of what a print name is: `printCanonFor('kobold')` returns
+// Kobold Warrior while `corpusEntry('Kobold')` returned "not in the corpus", and the GM-register
+// forty paid for it — Pip's bio asked for the one thing a kobold has (Pack Tactics, "dangerous
+// in a group") and the species kit was refused. Moved DOWN here, where both readers can import
+// one definition; `generate.mjs` re-exports them so every existing caller is unchanged.
+export const hagFor = (text) => (/\b(?:sea|coast|coastal|tide|tidal|salt|shore|ocean|reef|harbou?r)\b/i.test(String(text ?? '')) ? 'Sea Hag' : /\b(?:night|dreams?|nightmares?|ethereal|sleep|sleeping)\b/i.test(String(text ?? '')) ? 'Night Hag' : 'Green Hag'); // a hag is a print hag by context: forest and bog are the Green Hag's (critic's step-8 read)
+export const PRINT_ALIAS = { /* hag, hags, crone resolve by context through hagFor */ archlich: 'Lich', demilich: 'Lich', /* the Lich's own kin by prefix (critic's release audit 2026-10-03: an archlich routed as a ghost) */ kobold: 'Kobold Warrior', kobolds: 'Kobold Warrior', goblin: 'Goblin Warrior', goblins: 'Goblin Warrior', hobgoblin: 'Hobgoblin Warrior', hobgoblins: 'Hobgoblin Warrior', bugbear: 'Bugbear Warrior', bugbears: 'Bugbear Warrior', gnoll: 'Gnoll Warrior', gnolls: 'Gnoll Warrior', sahuagin: 'Sahuagin Warrior', /* the renamed 2024 commons (a kobold got no Pack Tactics, critic form-ten 2026-10-01) */ archer: 'Scout', archers: 'Scout', bowman: 'Scout', bowmen: 'Scout', huntsman: 'Scout', ranger: 'Scout', crossbowman: 'Bandit', brigand: 'Bandit', footpad: 'Bandit', outlaw: 'Bandit', highwayman: 'Bandit', soldier: 'Warrior Infantry', 'foot soldier': 'Warrior Infantry', infantryman: 'Warrior Infantry', veteran: 'Warrior Veteran', mercenary: 'Warrior Veteran', 'sellsword': 'Warrior Veteran', wizard: 'Mage', sorcerer: 'Mage', warlock: 'Mage', cleric: 'Priest', /* monk: no longer an alias — the class table owns the word, and print's Priest is a cleric-shaped NPC, not a martial artist (landing two, 2026-10-14) */ thief: 'Spy', rogue: 'Spy', burglar: 'Spy', guardsman: 'Guard', sentry: 'Guard', watchman: 'Guard', paladin: 'Knight', cavalier: 'Knight', peasant: 'Commoner', villager: 'Commoner', farmer: 'Commoner', zealot: 'Cultist', brawler: 'Tough', bruiser: 'Tough', thug: 'Tough', duelist: 'Gladiator', champion: 'Gladiator' };
+/** the print block a bare job/folk word names, resolving a hag by context; null when the word is nobody's */
+export const printAliasFor = (word, text = '') => (/^(?:hag|hags|crone)$/i.test(String(word ?? '').trim()) ? hagFor(text) : (PRINT_ALIAS[String(word ?? '').trim().toLowerCase()] ?? null));
+
 export function corpusEntry(name, { edition = '2024' } = {}) {
   const n = stripArticle(name); if (!n) return null;
   const exact = CORPUS.find((b) => norm(b.name) === n); if (exact) return exact;
@@ -55,7 +67,14 @@ export function corpusEntry(name, { edition = '2024' } = {}) {
   // tail names — a closed-fact lookup (the longest corpus name the answer contains as whole words — tail or head), not a
   // reading of the GM's words; probe 2026-10-19: "Cave Troll" was refused and the troll went homebrew
   const within = CORPUS.filter((b) => new RegExp(`(?:^| )${norm(b.name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?: |$)`).test(n)).sort((a, b) => b.name.length - a.name.length);
-  return within[0] ?? null;
+  if (within[0]) return within[0];
+  // THE OTHER DIRECTION, which this function never had: the name may be the HEAD of a print
+  // block rather than contain one. 2024 renamed the commons with a role suffix, so a GM (or the
+  // call) says "Kobold" where print says "Kobold Warrior". `printAliasFor` is the same closed
+  // fact `printCanonFor` reads, so the two lookups now agree instead of disagreeing.
+  const aliased = printAliasFor(n, name);
+  if (aliased) { const hit = CORPUS.find((b) => norm(b.name) === norm(aliased)); if (hit) return hit; }
+  return null;
 }
 /** a print body whose block is a person — an NPC stat block or a folk; a class word outranks it (the brief's precedence) */
 export const isPersonBody = (name) => { const e = corpusEntry(name); return !!e && /^(?:Humanoid|Fey)\b/i.test(e.type) && !/dragon/i.test(e.name); };

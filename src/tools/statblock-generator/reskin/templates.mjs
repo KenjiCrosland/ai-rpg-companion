@@ -334,6 +334,13 @@ const AUGMENTATIONS = {
   space_hold: {
     cite: "Air Elemental/Fire Elemental — Air Form, Fire Form (CR 5): \"It can enter a creature's space and stop there.\"",
     slot: null, priced: false,
+    // ONLY A BODY MADE OF ITS ELEMENT MAY STAND IN YOUR SQUARE (the GM-register forty,
+    // 2026-11-09). `energy-aura` declares this augmentation, and the call picked it for a dead
+    // queen's Grave-Rime Aura (#24) and a dragon's Scalding Ash Wake (#35) — two sheets where a
+    // solid creature announced it could share a space. Print writes the clause exactly twice,
+    // on the Air Elemental and the Fire Elemental, both of the Elemental type; an Ooze earns it
+    // the same way (Amorphous). A closed fact about bodies, not taste.
+    needs_type: /^(?:Elemental|Ooze)\b/i,
     writes: () => "It can enter a creature's space and stop there.",
   },
   own_medium_sight: {
@@ -1909,7 +1916,12 @@ export function composeRayTable(band) {
     let clause = (/\*Failure:\*\s*([^]*?)(?:\s*\*Success:\*[^]*)?$/.exec(src ?? '')?.[1] ?? '').trim();
     clause = clause.replace(/, and the creature regains Hit Points[^.]*\./, '.').replace(/\{burst\}/g, '{avg_half} ({dice_half})').replace(/\{damage_type\}/g, r.damage ?? '{damage_type}');
     // a random table wants rows of roughly equal worth: a CONDITION ray carries no damage clause (Dread Ray was 45 + Paralyzed beside four bare conditions, critic 2026-10-01)
-    if (!r.damage) clause = clause.replace(/\{avg[a-z_0-9]*\} \(\{dice[a-z_0-9]*\}\) \{?[A-Za-z_]+\}? damage(?:,? and )?/g, '').replace(/^\s*[,.]\s*/, '').replace(/^the target/i, 'The target');
+    // THE TRAILING HALF OF THE SAME CLEANUP (the GM-register forty, 2026-11-09). Stripping the
+    // damage expression already tidied a comma LEFT BEHIND IN FRONT of the clause; the comma
+    // left behind AFTER it was not, so three of the Cynosure's six eye rays shipped "The target
+    // has the Restrained condition ,." — the engine's own punctuation, on the line a GM reads
+    // to run the monster. Same strip, same place, both ends.
+    if (!r.damage) clause = clause.replace(/\{avg[a-z_0-9]*\} \(\{dice[a-z_0-9]*\}\) \{?[A-Za-z_]+\}? damage(?:,? and )?/g, '').replace(/^\s*[,.]\s*/, '').replace(/\s*,\s*(?:and\s*)?$/, '').replace(/^the target/i, 'The target');
     if (r.damage && !/\{avg/.test(clause)) clause = `{avg_half} ({dice_half}) ${r.damage} damage, and ${clause.charAt(0).toLowerCase()}${clause.slice(1)}`; // a damaging ray whose card carries no damage clause (the Shoving Ray's push-prone) leads with the damage
     if (!/[.!?]$/.test(clause)) clause = `${clause}.`;
     return `${i + 1} — ${r.name}: *${stat} Saving Throw*: DC {dc}. *Failure:* ${clause}`;
@@ -2572,7 +2584,11 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   if (Array.isArray(t.augments) && t.augments.length) {
     const want = String(fills.augmentation ?? '').trim();
     const kind = t.augments.includes(want) ? AUGMENTATIONS[want] : null;
-    if (kind) {
+    // A KNOWN WRONG BODY DECLINES IT; AN UNKNOWN BODY DOES NOT (corrected 2026-11-09 — the
+    // first cut tested `ctx.type ?? ''` and so blocked every caller that passes no type,
+    // including the augmentation suite's own fixture). A missing answer never costs a row.
+    if (kind?.needs_type && String(ctx.type ?? '').trim() && !kind.needs_type.test(String(ctx.type))) { /* a body-shaped clause on the wrong body: declined, the row stands without it */ }
+    else if (kind) {
       // A SLOTLESS KIND NEEDS NOTHING FILLED. Print's free boons are whole
       // sentences — "It can move through a space as narrow as 1 inch" — with no
       // variable in them, so there is nothing to validate and nothing to wait for.

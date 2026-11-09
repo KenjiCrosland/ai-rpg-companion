@@ -561,6 +561,92 @@ Then: `npx jest … --silent` → `npm run build` → a twelve built from #05, #
 `check-run.mjs` → **the forty** (sweep 2 of 3). Hand the forty to the critic with the §2-style
 table. Do NOT start anything below until the owner has read that forty.
 
+### 7.9b — ADDED 2026-11-09 after the GM-register forty (`typed40`, critic read 4 / 19 / 7 / 10)
+
+The crafted forty reads 14/21/3/2; the GM-register forty reads **4 Keeper / 19 Runs / 7 Tweak /
+10 Fix**, and the critic's verdict is *not yet*. Seven of the ten Fixes are two rules plus one
+scaling bug. Every specific below was verified on the run's JSON and traces (9 of 9 checked).
+Items 5–9 join the pre-release list; items 1–4 above are landed.
+
+| # | item | the evidence | do |
+|---|---|---|---|
+| 5 | **B. A print body in the GM's words stands unless the call quotes why not** | #30 "owlbear but CR 8" → homebrew "Larder Stalker" (no owlbear); #07 "Krug \| ogre" → CR 2 homebrew Giant, Speed 50, Club 6; #03 "pirate captain" → Gladiator. `printCanonFor` finds Owlbear / Ogre / Pirate Captain exact on all three; the path CALL said homebrew/class and wins by design. 3 Fix + 3 Tweak-R of 40; 0 of 160 on sweep. | in `path.mjs`/the Vue's decide step: when the matcher returns `exact`/`twist` and the call says otherwise, require `assembly_receipt` to quote the GM's words that overrule it (the field exists); no quote → the print body stands. **Plus (critic):** a ROLE word is a tiebreaker, never an override of a mechanical noun — #12 "giant who throws boulders" + role artillery → a wizard giant with a Force Boulder. |
+| 6 | **A. The call's quote opens a bane; the regex is the fallback** | #31 "a troll but weak to cold instead of fire": route read `bane: cold`; `WEAKNESS_FRAME` (`unless\|except\|only`) refused it; shipped Regeneration stops on Acid or Fire AND Vulnerabilities "Cold, Fire" — dropped, then contradicted. The frame was RIGHT 3 of 4 times this forty (#06, #08, #22 asked no weakness; the call volunteered one). | `route.mjs` ~678: `asked = WEAKNESS_FRAME.test(gm words) \|\| evidenceIn(parsed.bane.because, gm words)` — the call's own quote, vetted against the GM's words, is the second door; the regex stays for a quoteless answer. Then make sure the bane REPLACES print's (not adds): the troll must lose Fire. |
+| 7 | **Spell list scaled to CR** | #15 "goblin wizard" CR 3 ships Fireball ×2 and Cone of Cold 1/day. | the class-NPC spell list is a print body's (Mage CR 6); scale the list to the sheet's CR — print's Apprentice/Mage/Archmage ladder is the closed fact; a CR 3 caster's top spell is 2nd level. |
+| 8 | **Deterministic text bugs** | #18 ",." ×6 where "until the end of its next turn" should be; #24 and #35 "It can enter a creature's space and stop there." (an Air Form sentence) welded into auras; #33 a trait cites "Eruptive Ambush", a row not on the sheet (the checker's dangling-ref should have fired — trait-row citations are exempt; measure before widening). | find the template that renders the empty duration and the aura paste; both are engine text, not model prose. |
+| 9 | **One print lookup, not two** | `printCanonFor('kobold')` → Kobold Warrior exact; `path.mjs` `corpusEntry('Kobold')` → "not in the corpus". Pip (#25) lost the kobold kit — his bio's one mechanical ask ("dangerous in a group" = Pack Tactics) — to a private copy. `corpusEntry` matches a print name INSIDE the phrase, never the typed head noun against print's role-suffixed names. | make `corpusEntry` delegate to the same head-noun resolution `printCanonFor` uses (one definition). Also fixes the species direction for goblin/elf/hag asks. |
+
+**STATUS 2026-11-09 (Fable, after Opus landed 5–9 and re-ran `typed40`).** Four of five
+verified on the re-run; one regression, caused by item 9, blocks the commit until item 10 lands.
+
+| # | verified on `typed40-2026-11-09T01-59-58` |
+|---|---|
+| 5 | #07 "Krug \| ogre" → **twist on the Ogre**; #30 "owlbear but CR 8" → **twist on the Owlbear, named Owlbear**, CR 8. The line is `exact=true`, measured: 2 of 200 sheets change (both the critic's Fixes); the broad rule would have changed 25. |
+| 6 | #31 troll → **Vulnerabilities "Cold"**, Regeneration stops on **Cold**. Both halves. The frame stayed (right 3 of 4 on the first run); the second door is the call's `stated` field, still vetted by `evidenceIn`; a named weakness now outranks one read off a material. |
+| 7 | landed one-sided after the suite caught a two-sided first cut that would have stripped Power Word Kill from the CR 24 archlich on print's CR 21 Lich. Withholds only when print's CR is more than one ABOVE the sheet's. |
+| 8 | #18 Eye Rays: 0 punctuation artefacts. `space_hold` gated to Elemental/Ooze (print's exact warrant) — after a first cut that also blocked an ABSENT type was caught by the augmentation suite. |
+| 9 | `corpusEntry('Goblin')` → Goblin Warrior; both print lookups agree. **And it caused item 10.** |
+
+### 10. A class NPC on a SPECIES body still gets the class's defining row (PRE-RELEASE, blocks the commit of 5–9)
+
+**What happened.** "goblin wizard" (#15) first shipped the Mage body with Fireball ×2 at CR 3 (too
+strong — item 7). After item 9 the path call's `Goblin Warrior` body is ACCEPTED instead of
+refused, and `generate.mjs:2439` uses the class's own print block only when the call names NO
+body (`!pathD.print_body`). The mage kit's rows are lifts FROM the Mage block (Protective Magic,
+Misty Step) that need a Spellcasting row to attach to — the trace reads *"the sheet carries no row
+it could refer to"* and *"nothing to add — the sheet already answers it"*. Result: a goblin with
+Nimble Escape and Shadowmeld and **no magic at all**. Before: too strong, but a wizard. Now: not a
+wizard. Worse, on the same input.
+
+**Scope, measured on the re-run:** 12 class-NPC sheets; the goblin wizard is the ONLY caster
+without a Spellcasting row and the only one standing on a species body (Maudra, Grizzelda, Vexmoor,
+Mother Ash, the Cardinal all carry one). So this is the species-body case specifically, which
+item 9 makes common — and which is exactly what the critic wanted: a goblin AND a wizard.
+
+**Do:** when `pathD.path === 'class_npc'` and `pathD.print_body` is a species/folk body (not the
+class's own block), lift the class's **defining row** from `bodyForClass(pathD.class, cr)` onto
+the sheet — Spellcasting for mage/cleric/druid/warlock, the martial classes' equivalent where one
+exists — scaled by item 7's rule (print's CR more than one above → the chassis's list stands).
+One lift, at the kit site that already traces `class kit:`. Do NOT revert item 9: item 5 reads
+through the same lookup and Krug/Owlbear depend on it.
+
+**Replay:** `smoke-out/typed40-2026-11-09T01-59-58/15-*.json` → Spellcasting present, scaled to
+CR 3, Nimble Escape kept. Controls: Maudra (#02) and Grizzelda (#27) unchanged (class body, row
+already present); Vexmoor (#05) unchanged.
+
+**Then:** commit 5–10 together → `typed40` → `sweep` (sweep 2 of 3).
+
+**Correction to the note above:** item 9 does NOT unblock Pip (#25). The refusal is `species
+"kobold" has no kit` — the SPECIES kit table in `species.mjs`, a separate list. Kobold stays a
+post-release species-kit entry.
+
+**The critic's "GM lexicon" — NOT built as written, and here is why.** They propose a
+deterministic table before the call: slow → Speed 20, legendary → LR + legendary actions, etc.
+That is a word list deciding what the GM meant, which the owner's 2026-10-16 ruling forbids. The
+traces show the right seam: the extraction ALREADY files these as clauses — `"slow" -> mechanical
+[asked: at_will/movement]`, `"legendary" -> mechanical [asked: once_per_fight/save_area,
+askMechanic: burst]`. "slow" was read as a movement ROW (hence Trample) when the schema's own
+HEADER kind lists speed; "legendary" was read as a burst because the `asked` enum has no value for
+legendary tempo. So the lexicon's rows become **call fields**: one HEADER example in the prompt
+("'slow' is a header clause: Speed 20"), and a `legendary` value in the ask enum that the engine
+answers with Legendary Resistance + legendary actions. Same for "heavy crossbow" (the weapon table
+already knows it; the fill dropped "heavy"), "curses" (askMechanic: curse exists — #27 got a
+bludgeoning bolt, so the SEAT is the fault, not the reading), "commands/leads" (Aura of
+Authority). Post-release unless the forty after items 5–9 says otherwise.
+
+**Post-release additions from this forty (critic §3–§6, verified):** species kits goblin (no
+darkvision/Nimble Escape, #15), elf (0 of 13), hag (#08), kobold (#25 — item 9 unblocks it);
+ranger → rogue kit (#04; Hunter's Mark + Evasion are SRD); necromancer → Archmage with no
+necromancy (#05; Animate Dead, Finger of Death are SRD); the PI alias should carry a CHASSIS
+(Beholder → artillery/controller with legendary tempo; Mind Flayer → caster-controller INT 19
+telepathy; Displacer Beast → Large skirmisher — today all three route to a lurker, hence DEX 20 /
+Stealth on a floating eye); "(with Advantage during the first round)" inside the attack bonus ×3;
+bio mechanical hints land 22 of 35 — nouns arrive, adjectives-that-are-mechanics do not, which is
+the call-field work above. Gladiator ×3 / Priest ×3 / Mage ×3 bodies on the class path.
+
+**Re-run `typed40` after items 5–9, then `sweep` (sweep 2 of 3).** The critic's hold list is A,
+B, spell scaling and the Cynosure text — items 5, 6, 7, 8.
+
 **Post-release (do not build before the forty above):** 7d formation (5 misses; a missing row,
 never a wrong one — Vashka ships a playable Gladiator), 7c handed clauses (2 hits), 7e senses (3
 sheets) and Bonus/Reaction locks (2 sheets), 7g small regressions, 1f (prompt fix, 1 in 120), 1g

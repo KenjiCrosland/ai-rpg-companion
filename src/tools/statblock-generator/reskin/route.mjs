@@ -326,12 +326,12 @@ ${cr != null ? `Challenge Rating: ${cr}\n` : ''}${family ? `The combat role is F
 THE SHELF (id — what it plays like — printed exemplars):
 ${shelf}${WEAKNESS_FRAME.test(readPhrases(String(text ?? ''))) ? `
 
-A WEAKNESS CLAUSE — the words say this creature's healing or wholeness FAILS under some condition ("unless", "only", "except"). Answer "bane" with what actually stops it, and quote the user's words that say so. A bane is a damage type (Acid, Fire, Cold, Lightning, Thunder, Poison, Necrotic, Radiant, Psychic, Force) or a weapon material the rules know (silver, adamantine, cold iron). Read what the words MEAN: "unless the blade was silvered" is silver, not slashing; "only holy light closes the wounds" is Radiant. Leave "bane" out if the words name no such thing.` : ''}${(() => {
+A WEAKNESS CLAUSE — the words say this creature's healing or wholeness FAILS under some condition ("unless", "only", "except"). Answer "bane" with what actually stops it, and quote the user's words that say so. Also answer "stated": true ONLY if the user's own words NAME this as the weakness — "weak to cold", "only silver hurts it", "unless burned" — and false if you worked it out from what the creature IS (a bramble creature probably burns; a clockwork thing probably shorts). A worked-out weakness is a good guess and still not what the user asked for. A bane is a damage type (Acid, Fire, Cold, Lightning, Thunder, Poison, Necrotic, Radiant, Psychic, Force) or a weapon material the rules know (silver, adamantine, cold iron). Read what the words MEAN: "unless the blade was silvered" is silver, not slashing; "only holy light closes the wounds" is Radiant. Leave "bane" out if the words name no such thing.` : ''}${(() => {
     const hits = verbHits(text).filter((h) => h.cls !== 'noun');
     if (!hits.length) return '';
     return `${false ? `
 
-A WEAKNESS CLAUSE — the words say this creature's healing or wholeness FAILS under some condition ("unless", "only", "except"). Answer "bane" with what actually stops it, and quote the user's words that say so. A bane is a damage type (Acid, Fire, Cold, Lightning, Thunder, Poison, Necrotic, Radiant, Psychic, Force) or a weapon material the rules know (silver, adamantine, cold iron). Read what the words MEAN: "unless the blade was silvered" is silver, not slashing; "only holy light closes the wounds" is Radiant. Leave "bane" out if the words name no such thing.` : ''}
+A WEAKNESS CLAUSE — the words say this creature's healing or wholeness FAILS under some condition ("unless", "only", "except"). Answer "bane" with what actually stops it, and quote the user's words that say so. Also answer "stated": true ONLY if the user's own words NAME this as the weakness — "weak to cold", "only silver hurts it", "unless burned" — and false if you worked it out from what the creature IS (a bramble creature probably burns; a clockwork thing probably shorts). A worked-out weakness is a good guess and still not what the user asked for. A bane is a damage type (Acid, Fire, Cold, Lightning, Thunder, Poison, Necrotic, Radiant, Psychic, Force) or a weapon material the rules know (silver, adamantine, cold iron). Read what the words MEAN: "unless the blade was silvered" is silver, not slashing; "only holy light closes the wounds" is Radiant. Leave "bane" out if the words name no such thing.` : ''}
 
 KEY WORDS THE ENGINE FOUND — say what each MEANS here ("cue_verdicts"). For each, answer "means": true if the word really names that chassis's mechanic for THIS creature, false if it is a figure of speech, a thing it carries or wears, or something done TO it. English hides these: "flies into a rage" is anger, not flight; a winged HELMET is not wings; "charges a fee" is not a charge; "grows back" is healing, not a plant.
 A key marked (body) decides WHAT THE CREATURE IS MADE OF — a swarm of many, an amorphous mass, a true dragon, an incorporeal spirit. Answer false unless the body really is that thing: a waterlogged corpse that DRAGS people down by the ankles has hands and weight, so "drowned" does not make it an incorporeal spirit; a man with a crab's temperament is not a crab.
@@ -358,7 +358,7 @@ WHAT ELSE DO THE WORDS NAME? Three more, each with the user's own words quoted i
 
 DOES THIS CREATURE WORK MAGIC? ("casts") True when the words name magic outright ("casts", "spells", "hexes") and ALSO when the KIND implies it: a cleric, a crusader who smites, a chaplain who blesses, a druid, a warlock. False for a plain warrior however armoured, false for a title alone, and false for a creature whose uncanny power is its BODY rather than a worked art — a fey piper's music, a gaze, a breath weapon. Quote the user's words that settle it in "because"; set "implied_by_kind" when nothing in the words says magic but the kind does.
 
-Return ONLY JSON, no markdown: {"shoots": {"yes": false, "because": ""}, "is_a_swarm": {"yes": false, "because": ""}, "swarm_of": "<the plural noun, only when is_a_swarm is true>", "holds": {"yes": false, "because": ""}, "casts": {"yes": true, "because": "<the user's own words>", "implied_by_kind": false}, "bane": {"what": "<a damage type or a weapon material, or omit>", "because": "<the user's own words that say so>"}, "cue_verdicts": [{"key": "<a key word listed above, copied exactly>", "means": true, "because": "<the words that settle it>"}], "picks": [{"line": "<id from the shelf>", "because": "<phrase copied from the concept>"}], "cr": "<the Challenge Rating this creature reads as, 0 to 30 (e.g. 5, or 1/2) — the published statblock's own CR for a published creature; otherwise the tier a table meets it at — village and folklore threats read 1 to 8, only world-enders read 17 or more>", "creature_type": "<one of: ${TYPES.join(', ')}>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan — the body these words describe>", "asked_mechanic": {"mechanic": "<one from the list, or \"\">", "because": "<the user's own words>"}, "extras": [{"mechanic": "<one of the list>", "because": "<phrase copied from the concept>"}]}`;
+Return ONLY JSON, no markdown: {"shoots": {"yes": false, "because": ""}, "is_a_swarm": {"yes": false, "because": ""}, "swarm_of": "<the plural noun, only when is_a_swarm is true>", "holds": {"yes": false, "because": ""}, "casts": {"yes": true, "because": "<the user's own words>", "implied_by_kind": false}, "bane": {"what": "<a damage type or a weapon material, or omit>", "because": "<the user's own words that say so>", "stated": false}, "cue_verdicts": [{"key": "<a key word listed above, copied exactly>", "means": true, "because": "<the words that settle it>"}], "picks": [{"line": "<id from the shelf>", "because": "<phrase copied from the concept>"}], "cr": "<the Challenge Rating this creature reads as, 0 to 30 (e.g. 5, or 1/2) — the published statblock's own CR for a published creature; otherwise the tier a table meets it at — village and folklore threats read 1 to 8, only world-enders read 17 or more>", "creature_type": "<one of: ${TYPES.join(', ')}>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan — the body these words describe>", "asked_mechanic": {"mechanic": "<one from the list, or \"\">", "because": "<the user's own words>"}, "extras": [{"mechanic": "<one of the list>", "because": "<phrase copied from the concept>"}]}`;
 }
 
 function tryParse(raw) {
@@ -673,9 +673,28 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
     // "Fire" on the words "bog troll", and "Fire" on "briars"
     // (bane-2026-10-17T14-16-54). A verbatim quote is not a weakness clause, so
     // the same frame that decides whether to ask decides whether to listen.
-    const asked = WEAKNESS_FRAME.test(readPhrases(String(rawText ?? text ?? '')));
+    // TWO DOORS, AND THE FRAME IS NO LONGER THE ONLY ONE (the GM-register forty, 2026-11-09).
+    // `WEAKNESS_FRAME` is `unless|except|only`, and a GM who types "a troll but weak to cold
+    // instead of fire" uses none of them — the clearest weakness clause on that forty was
+    // refused as "a question nobody asked", and the troll shipped print's Acid-or-Fire key.
+    //
+    // THE FRAME STAYS, because it was RIGHT three times out of four on the same run: Bramblejack,
+    // Mother Ash and the Clockwork Spider asked for no weakness and the call volunteered one
+    // (fire for brambles, lightning for clockwork). Deleting it would have shipped three
+    // invented vulnerabilities to buy one real one.
+    //
+    // So the second door is the CALL'S OWN JUDGEMENT, not a longer word list: `stated` asks
+    // whether the GM's words NAME the weakness or whether the call worked it out from what the
+    // creature is. A `stated` answer still has to survive `evidenceIn` below — the quote must
+    // really be in the GM's words — so a call that says "stated" and quotes its own inference
+    // is refused exactly as it is today.
+    const gmWords = readPhrases(String(rawText ?? text ?? ''));
+    const framed = WEAKNESS_FRAME.test(gmWords);
+    const stated = parsed?.bane?.stated === true;
+    const asked = framed || stated;
     const what = asked ? String(parsed?.bane?.what ?? '').trim() : '';
-    if (!asked && parsed?.bane?.what) notes.push(`bane refused: the words carry no weakness clause, so "${String(parsed.bane.what).slice(0, 20)}" answers a question nobody asked`);
+    if (!asked && parsed?.bane?.what) notes.push(`bane refused: the words carry no weakness clause and the call did not claim one, so "${String(parsed.bane.what).slice(0, 20)}" is a guess from what the creature is, not the GM's ask`);
+    else if (!framed && stated) notes.push(`bane: the call says the GM named it — no "unless/except/only" in the words, so the quote below is the whole of the evidence`);
     const why = String(parsed?.bane?.because ?? '').trim();
     if (what && BANE_OK.test(what)) {
       if (why && evidenceIn(why, rawText ?? text)) {

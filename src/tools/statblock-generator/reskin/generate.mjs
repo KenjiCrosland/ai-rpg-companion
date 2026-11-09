@@ -43,7 +43,8 @@ import { WEAPONS, weaponFor, weaponNamed, namesWeapon, weaponsIn, finesseLike } 
 import { effectOnly, danglingRefIn, repairMultiattackAttackList, repairReplaceClause, rowNamesOf } from './checker.mjs';
 import { lintSheet, sheetCanCast, undefinedStateIn, contradictsSelfHeal } from './sheet-lints.mjs'; // the sheet lints, reachable from the pipeline since 2026-11-08 (the critic's §2a)
 import { capSingleTargetSave, ceilingFor, isSingleTargetSave } from './card-budgets.mjs';
-import { matcherPath, bodyForClass, bodyForPerson } from './path.mjs';
+import { matcherPath, bodyForClass, bodyForPerson, hagFor, PRINT_ALIAS, printAliasFor } from './path.mjs';
+export { hagFor, PRINT_ALIAS }; // one definition, in path.mjs (2026-11-09); re-exported so every caller and test is unchanged
 import { classStats } from './classes.mjs';
 import { capsFix2024, applyCorrections as applyTextFixes, DETERMINISTIC_TEXT_RULES } from '../format-2024/generate.mjs'; // the 2024 caps pass, shared with the lint's fixer (2026-10-17) // one prerequisite stripper, shared with save-fit (stage 1b); one dangling-reference scan, shared with the checker (2026-10-16)
 import { tailNamesKind } from './print-names.mjs';
@@ -344,10 +345,8 @@ export function assignSeats(signatureElements = [], { style = null, covered = []
 const PRINT_BOILER = /^(?:Magic Resistance|Legendary Resistance|Amphibious|Water Breathing|Hold Breath|Illumination|\w+ Restoration|Spellcasting|Swarm)\b/;
 // the NPC half by alias: the SRD has Scout, Bandit, Guard, Knight, Mage, Priest,
 // Spy… but no "Archer" — users type the job, print names the block
-export const hagFor = (text) => (/\b(?:sea|coast|coastal|tide|tidal|salt|shore|ocean|reef|harbou?r)\b/i.test(String(text ?? '')) ? 'Sea Hag' : /\b(?:night|dreams?|nightmares?|ethereal|sleep|sleeping)\b/i.test(String(text ?? '')) ? 'Night Hag' : 'Green Hag'); // a hag is a print hag by context: forest and bog are the Green Hag's (critic's step-8 read)
 const printExprWithSheetMod = (expr, rowText, pb) => { const m = /^(\d+) \((\d+)d(\d+)(?: ([+-]) (\d+))?\)$/.exec(String(expr)); const atk = Number(/Attack Roll:\*? \+(\d+)/.exec(String(rowText))?.[1]); if (!m || !Number.isFinite(atk)) return expr; const flat = atk - Number(pb); const n = Number(m[2]); const d = Number(m[3]); const avg = Math.floor(n * (d + 1) / 2) + flat; return `${avg} (${n}d${d}${flat ? ` ${flat < 0 ? '-' : '+'} ${Math.abs(flat)}` : ''})`; }; // print's dice, the sheet's modifier
-const aliasOf = (w, text) => (/^(?:hag|hags|crone)$/.test(String(w ?? '')) ? hagFor(text) : PRINT_ALIAS[w]);
-export const PRINT_ALIAS = { /* hag, hags, crone resolve by context through hagFor */ archlich: 'Lich', demilich: 'Lich', /* the Lich's own kin by prefix (critic's release audit 2026-10-03: an archlich routed as a ghost) */ kobold: 'Kobold Warrior', kobolds: 'Kobold Warrior', goblin: 'Goblin Warrior', goblins: 'Goblin Warrior', hobgoblin: 'Hobgoblin Warrior', hobgoblins: 'Hobgoblin Warrior', bugbear: 'Bugbear Warrior', bugbears: 'Bugbear Warrior', gnoll: 'Gnoll Warrior', gnolls: 'Gnoll Warrior', sahuagin: 'Sahuagin Warrior', /* the renamed 2024 commons (a kobold got no Pack Tactics, critic form-ten 2026-10-01) */ archer: 'Scout', archers: 'Scout', bowman: 'Scout', bowmen: 'Scout', huntsman: 'Scout', ranger: 'Scout', crossbowman: 'Bandit', brigand: 'Bandit', footpad: 'Bandit', outlaw: 'Bandit', highwayman: 'Bandit', soldier: 'Warrior Infantry', 'foot soldier': 'Warrior Infantry', infantryman: 'Warrior Infantry', veteran: 'Warrior Veteran', mercenary: 'Warrior Veteran', 'sellsword': 'Warrior Veteran', wizard: 'Mage', sorcerer: 'Mage', warlock: 'Mage', cleric: 'Priest', /* monk: no longer an alias — the class table owns the word, and print's Priest is a cleric-shaped NPC, not a martial artist (landing two, 2026-10-14) */ thief: 'Spy', rogue: 'Spy', burglar: 'Spy', guardsman: 'Guard', sentry: 'Guard', watchman: 'Guard', paladin: 'Knight', cavalier: 'Knight', peasant: 'Commoner', villager: 'Commoner', farmer: 'Commoner', zealot: 'Cultist', brawler: 'Tough', bruiser: 'Tough', thug: 'Tough', duelist: 'Gladiator', champion: 'Gladiator' };
+const aliasOf = (w, text) => printAliasFor(w, text); // the shared reader in path.mjs
 // the CR a print name at the head of the words carries — for the form's blank-CR
 // read alone (printCanonFor refuses a Beast head in a long concept on purpose:
 // "a wolf that eats the stars" keeps its seats; "a swarm of rats that carries
@@ -2447,8 +2446,35 @@ export async function generateReskin(options, callLLM) {
   const isTwist = pathD?.path === 'twist';
   const isClassNpc = pathD?.path === 'class_npc';
   const closedPath = isTwist || isClassNpc; // the two decided print-body paths share the twist tightenings: no shelf, no floor, no chassis nova, one receipted seat
+  // A WHOLE PRINT NAME IN THE GM'S WORDS IS A FACT, NOT A JUDGEMENT (the GM-register forty,
+  // 2026-11-09). "Krug | ogre" shipped a CR 2 homebrew Giant with Speed 50 and a 6-damage club;
+  // "owlbear but CR 8" shipped "Larder Stalker" with no Rend and no Beak. In both the matcher
+  // held the creature — `printCanonFor` returns Ogre and Owlbear with `exact: true` — and the
+  // path CALL said homebrew, which discards the matcher's read. The call even quoted its
+  // warrant: "ogre". Quoting the creature's own name as the reason to abandon it is no reason.
+  //
+  // THE LINE IS `exact`, AND IT WAS MEASURED, because the obvious rules both fail. "A print
+  // body always stands" changes 25 sheets of 200 across five fortys, most of which nobody
+  // complained about and several where the call is right: "a cathedral-vault ooze" matches Gray
+  // Ooze on the generic word *ooze*, "a templar priest" matches Priest on *priest*, "goblin
+  // wizard" matches Mage through a job alias. Those are categories, and the call is the right
+  // judge of them. "The receipt must say more than the name" catches only 1 of the 3.
+  // `exact` means the GM's words ARE the creature's whole printed name — Ogre, Owlbear — and it
+  // separates the two cases perfectly: 2 of 200 sheets change, both of them the critic's Fixes,
+  // and every one of the 20 category matches is untouched.
+  //
+  // The call still decides HOW to use the body (twist, exact, class NPC); it no longer gets to
+  // decide that a creature the GM named by name is not on the sheet. ("vampire pirate" is NOT
+  // reachable this way — `printCanonFor` returns null on the two-noun phrase, so the
+  // Keel-Captain stays open; a print head inside a compound concept is its own question.)
   const canonFromPath = (c) => {
     if (!pathD) return undefined; // no decision: the matcher's read stands
+    const named = printCanonFor(options.userConcept ?? concept, c);
+    const callDropsNamed = named?.exact && String(pathBody ?? '').toLowerCase() !== String(named.name).toLowerCase();
+    if (callDropsNamed) {
+      trace('[path] print name stands:', `the GM typed the ${named.name} by name, and the call answered ${pathD.path}${pathBody ? ` on the ${pathBody}` : ' with no print body'} — a whole print name is a closed fact, so the ${named.name} is the body and the call's assembly rides on it`);
+      return { ...named, exact: pathD.path === 'exact' || !pathBody, borrowOnly: !(pathD.path === 'exact' || !pathBody), headIsPrint: true, nameIsPrint: true, npcHead: pathD.path === 'class_npc', addsSeat: false, remainder: pathD.path !== 'exact' && !!pathBody, fromPath: pathD.path };
+    }
     if (!pathBody) return null;
     const rec = printCanonFor(pathBody, c); if (!rec) return null;
     const exact = pathD.path === 'exact';
@@ -4097,6 +4123,31 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         if (r.template === 'guarded-stance' && acBeatsPrint) { trace('class kit:', `guarded-stance yields — ${guardedStanceWhy()}`); continue; }
         // print's caster features refer to the Spellcasting row by name; without
         // it they refer to nothing (a dangling reference the gates would catch)
+        // A SPECIES BODY DOES NOT CARRY THE CLASS'S ROW, SO THE CLASS'S OWN BLOCK LENDS IT
+        // (the GM-register forty, 2026-11-09). "goblin wizard" used to stand on print's Mage
+        // and inherit Spellcasting with it. Once `corpusEntry` learned that "Goblin" is the
+        // Goblin Warrior (item 9), the call's species body is ACCEPTED — and the class body is
+        // chosen only when the call names none — so the mage kit arrived at a goblin with no
+        // Spellcasting to hang on, traced "the sheet carries no row it could refer to", and
+        // shipped a wizard with no magic. Worse than the Fireball it replaced.
+        //
+        // The kit already DECLARES what it needs (`requiresRow`), and `bodyForClass` already
+        // knows which print block is the class's — so the lift is those two facts meeting. The
+        // row comes from print at the nearest CR and is re-DC'd to this sheet; item 7's rule
+        // still governs its content, so a CR 3 wizard gets a CR 3 list, not the Mage's.
+        if (r.requiresRow && isClassNpc && pathD?.print_body && !Object.values(sections).flat().some((e2) => r.requiresRow.test(String(e2.name ?? '').replace(/ \(.*\)$/, '')))) {
+          const ownBlock = bodyForClass(ck.cls.key, cr);
+          const ownPc = ownBlock && String(ownBlock).toLowerCase() !== String(pathD.print_body).toLowerCase() ? printCanonFor(ownBlock, cr) : null;
+          const lend = (ownPc?.rulesRows ?? []).find((x) => r.requiresRow.test(String(x.name ?? '').replace(/ \(.*\)$/, '')));
+          if (lend) {
+            const named = /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability/.exec(lend.text)?.[1];
+            const K = { Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON', Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' };
+            const dcL = named && scaled.stats ? 8 + scaled.pb + Math.floor(((scaled.stats[K[named]] ?? 10) - 10) / 2) : scaled.dc;
+            const txL = asInline(lend.text).replace(/\bDC \d+\b/g, `DC ${dcL}`);
+            (sections.Actions = sections.Actions ?? []).push({ name: String(lend.name).replace(/ \(.*\)$/, ''), text: txL.charAt(0).toUpperCase() + txL.slice(1), kit: ck.cls.key, clause: ck.clause, rules: true, print: true });
+            trace('class kit:', `${String(lend.name)} lent by the ${ownBlock} — this sheet stands on the ${pathD.print_body}, a body that carries no ${String(lend.name).toLowerCase()}, and a ${ck.cls.key} without it is not a ${ck.cls.key}`);
+          }
+        }
         if (r.requiresRow && !Object.values(sections).flat().some((e2) => r.requiresRow.test(String(e2.name ?? '').replace(/ \(.*\)$/, '')))) { trace('class kit:', `${r.kind === 'row' ? r.name : r.template} — the sheet carries no row it could refer to (${r.requiresRow})`); continue; }
         let row = null;
         if (r.kind === 'row') row = { name: r.name, text: r.text, section: r.section, gate: r.gate ?? null, why: r.source };
@@ -7871,7 +7922,17 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       }
     }
     const vulBefore = monster.vulnerabilities; const fd = honestFireDefenses(monster, { material: options.material ?? null, concept: options.userConcept ?? concept });
-    if (fd && !VULN_CUE.test(String(options.userConcept ?? concept ?? ''))) { monster.vulnerabilities = vulBefore; trace('defenses by material:', `${fd} — the resistance is withheld; the vulnerability is the GM's to type (the Frostmaw carried a Fire vulnerability nobody typed — the critic's second species read)`); }
+    // AN INFERRED VULNERABILITY YIELDS TO A NAMED ONE (the GM-register forty, 2026-11-09).
+    // "a troll but weak to cold instead of fire" shipped **Vulnerabilities Cold, Fire**: the
+    // header clause honoured the Cold the GM typed, and this block then added Fire because the
+    // call's `material` field read an ice body — two engine sources, both heard, and the GM's
+    // own "instead of" ignored. `VULN_CUE` matching is what KEEPS the material reading here, so
+    // a GM who names a weakness was the one case that got both. A weakness the GM named (the
+    // accepted bane, or a vulnerability already on the sheet) outranks one read off a material.
+    const namedVuln = String(options.bane?.what ?? '').trim() || String(vulBefore ?? '').split(/,\s*/)[0] || '';
+    const fdFightsNamed = !!fd && !!namedVuln && !new RegExp(`\\b${namedVuln.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(String(fd));
+    if (fd && fdFightsNamed) { monster.vulnerabilities = vulBefore; trace('defenses by material:', `${fd} — WITHHELD: the GM named ${namedVuln} as the weakness, and a vulnerability read off the material does not get to stand beside it`); }
+    else if (fd && !VULN_CUE.test(String(options.userConcept ?? concept ?? ''))) { monster.vulnerabilities = vulBefore; trace('defenses by material:', `${fd} — the resistance is withheld; the vulnerability is the GM's to type (the Frostmaw carried a Fire vulnerability nobody typed — the critic's second species read)`); }
     else if (fd) trace('defenses by material:', fd);
   }
   // Languages: the model answered 'None' on four of six Horsemen. A
@@ -8334,6 +8395,26 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // and print's rules rows in the other sections, at the sheet's own DC
         for (const r of pc.rulesRows ?? []) {
           const sameRules = Object.values(sections).flat().find((e) => String(e.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === String(r.name).replace(/ \(.*\)$/, '').toLowerCase());
+          // PRINT'S SPELL LIST IS PRINT'S CR, TOO (the GM-register forty, 2026-11-09). "goblin
+          // wizard" at CR 3 stands on print's Mage — a CR 6 block — and this pasted the Mage's
+          // list verbatim: Fireball twice a day and Cone of Cold at CR 3, which is a level-3
+          // party wiped by invisible heat the gate cannot see, because a spell list carries no
+          // dice the bands can read. Print has no CR 3 wizard to borrow from, so there is
+          // nothing to scale TO; the chassis's own list is already built for the sheet's CR, and
+          // keeping it is the honest answer. Same rule as print's saves, skills and dice: print's
+          // numbers govern where print's CR governs. A caster at or near print's CR is unchanged.
+          // ONE-SIDED, AND THE SUITE CAUGHT THE FIRST CUT (corrected 2026-11-09). A two-sided
+          // `nearPrintCr` also withheld print's list from a sheet ABOVE print's CR — and that
+          // direction is the rule's whole purpose: the CR 24 archlich standing on print's CR 21
+          // Lich SHOULD read Power Word Kill rather than the caster chassis's Ray of Sickness
+          // (the comment below, and `sweep-fixes.spec.js`). The defect is the other way round:
+          // a list too strong for the sheet, which is what put Fireball ×2 and Cone of Cold on
+          // a CR 3 goblin wizard standing on the CR 6 Mage. So withhold only when print's CR is
+          // more than one above the sheet's.
+          if (sameRules && /^Spellcasting$/i.test(r.name) && Number.isFinite(Number(pc.cr)) && Number.isFinite(Number(cr)) && Number(pc.cr) - Number(cr) > 1) {
+            trace('print canon: spell list withheld —', `the ${pc.name}'s list is written for CR ${pc.cr} and this sheet is CR ${cr} — too strong to paste (a CR 3 wizard with the Mage's Fireball); the chassis's own list, which is built for this CR, stands`);
+            continue;
+          }
           if (sameRules && /^Spellcasting$/i.test(r.name)) { // print's spell list is print's identity: on the caster chassis the Lich carried Ray of Sickness and Blight, not Finger of Death and Power Word Kill (critic's regressions brief 2026-10-04)
             const named0 = /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability/.exec(r.text)?.[1]; const K0 = { Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON', Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' };
             const dc0 = named0 && scaled.stats ? 8 + scaled.pb + Math.floor(((scaled.stats[K0[named0]] ?? 10) - 10) / 2) : scaled.dc;
