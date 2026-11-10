@@ -1,0 +1,62 @@
+[
+ {
+  "canary": "the save-fit FAIL case: a bare brute whose repaired row chose a Strength save for 6d6",
+  "name": "",
+  "description": "",
+  "cr": "4",
+  "rules": "2024",
+  "role": "brute"
+ },
+ {
+  "canary": "the other save-fit case (pre-existing, no repair)",
+  "name": "",
+  "description": "a templar priest with a mace and no magic at all",
+  "cr": "6",
+  "rules": "2024"
+ },
+ {
+  "canary": "the save-fit FAIL case: a bare brute whose repaired row chose a Strength save for 6d6",
+  "name": "",
+  "description": "",
+  "cr": "4",
+  "rules": "2024",
+  "role": "brute"
+ },
+ {
+  "canary": "the other save-fit case (pre-existing, no repair)",
+  "name": "",
+  "description": "a templar priest with a mace and no magic at all",
+  "cr": "6",
+  "rules": "2024"
+ },
+ {
+  "canary": "the save-fit FAIL case: a bare brute whose repaired row chose a Strength save for 6d6",
+  "name": "",
+  "description": "",
+  "cr": "4",
+  "rules": "2024",
+  "role": "brute"
+ },
+ {
+  "canary": "the other save-fit case (pre-existing, no repair)",
+  "name": "",
+  "description": "a templar priest with a mace and no magic at all",
+  "cr": "6",
+  "rules": "2024"
+ },
+ {
+  "canary": "the save-fit FAIL case: a bare brute whose repaired row chose a Strength save for 6d6",
+  "name": "",
+  "description": "",
+  "cr": "4",
+  "rules": "2024",
+  "role": "brute"
+ },
+ {
+  "canary": "the other save-fit case (pre-existing, no repair)",
+  "name": "",
+  "description": "a templar priest with a mace and no magic at all",
+  "cr": "6",
+  "rules": "2024"
+ }
+]

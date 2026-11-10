@@ -134,6 +134,17 @@ IF THE SHEET ALREADY ANSWERS A CLAUSE, SAY SO INSTEAD OF WRITING A ROW. Read THE
  * The row KEEPS ITS NAME. A name/text mismatch is the audit's rename actuator's job, and
  * it already works — nine sheets on the 2026-11-05 sweep took an audit rename.
  */
+// THE SAVE'S STAT PAIRINGS, shared by both prompts that can write a save row (2026-11-10).
+// This lived only in the seat prompt. The repair prompt had no save guidance at all, which cost
+// nothing while 87% of repairs were declined — and the moment they started landing, the sweep
+// forty came back with a repaired "Broken-Ground Slam" rolling a STRENGTH save for 6d6 in a cone
+// and the checker's save-fit FAIL on it. One copy, read by both.
+const SAVE_STAT_RULES = `THE SAVE'S STAT. Published monsters pair a save with the stat whose faculty the effect attacks, and the same pairings are held to here:
+- the row deals damage — Dexterity, or Constitution. Not Strength and not Wisdom, whatever condition rides along with the damage.
+- the row's whole effect is moving the target, a shove or a pull or a haul — Strength.
+- the row applies a condition and deals no damage — Strength for Prone, Grappled or Restrained; Constitution for Poisoned, Blinded, Deafened, Stunned or Paralyzed; Wisdom for Frightened or Charmed.
+- the row does none of those — whichever stat its own fiction asks for.`;
+
 export function buildFreeRowFixPrompt({ name, inline, cr, sheet, row, problems = [], kind = 'an action', taken = [], lacks = [] }) {
   // THE ARRAY IS NAMED, NOT THE PROSE KIND (2026-11-10). Probed in-pipeline: 5 of 6 repair
   // answers came back in a shape the parser cannot read, and the sheets shipped the faulty row —
@@ -169,6 +180,8 @@ IT IS ${kind}, so the repaired row goes in the "${arr}" array. Write exactly one
 
 ${formsSpec({ name, inline, attackCap: 0 })}
 
+${SAVE_STAT_RULES}
+
 Answer with ONE JSON object in exactly this shape — the row INSIDE its array. Never a bare row object, and never a key that is not one of these four: "action", "actions", "row" and "ability" are not keys here.
 { "attacks": [], "saves": [ ... ], "traits": [ ... ], "reactions": [ ... ], "crossRef": null, "unplaced": [] }
 
@@ -191,11 +204,7 @@ IT IS ${kind}. Write exactly one row, of that kind, and leave the other arrays e
 
 ${formsSpec({ name, inline, attackCap: 0 })}
 
-THE SAVE'S STAT. Published monsters pair a save with the stat whose faculty the effect attacks, and the same pairings are held to here:
-- the row deals damage — Dexterity, or Constitution. Not Strength and not Wisdom, whatever condition rides along with the damage.
-- the row's whole effect is moving the target, a shove or a pull or a haul — Strength.
-- the row applies a condition and deals no damage — Strength for Prone, Grappled or Restrained; Constitution for Poisoned, Blinded, Deafened, Stunned or Paralyzed; Wisdom for Frightened or Charmed.
-- the row does none of those — whichever stat its own fiction asks for.
+${SAVE_STAT_RULES}
 
 Answer with ONE JSON object, the row in the one array its form belongs to:
 { "attacks": [], "saves": [ ... ], "traits": [ ... ], "reactions": [ ... ], "crossRef": null, "unplaced": [] }

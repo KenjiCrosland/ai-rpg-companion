@@ -9726,5 +9726,42 @@
     "askMechanicWhy": "will not wash off"
    }
   ]
+ },
+ "a08bc704c3a8": {
+  "concept": "a wind-dancer monk whose body is living air",
+  "clauses": [
+   {
+    "id": "cl_173yskh",
+    "text": "a wind-dancer monk whose body is living air",
+    "kind": "mechanical",
+    "askShape": "resist",
+    "askMechanic": "harden",
+    "askMechanicWhy": "a wind-dancer monk whose body is living air"
+   }
+  ]
+ },
+ "5fea29e8c732": {
+  "concept": "a cult priest whose flesh has become a mass of watching eyes",
+  "clauses": [
+   {
+    "id": "cl_hvodva",
+    "text": "a cult priest whose flesh has become a mass of watching eyes",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "a mass of watching eyes"
+   }
+  ]
+ },
+ "14831ea23c7c": {
+  "concept": "a clockwork chaplain of brass and prayer-gears",
+  "clauses": [
+   {
+    "id": "cl_13q9qq5",
+    "text": "a clockwork chaplain of brass and prayer-gears",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
  }
 }

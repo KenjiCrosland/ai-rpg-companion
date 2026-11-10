@@ -7579,6 +7579,24 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // print's alignment heads with print's name, exact or borrowed, unless the GM named one
           if (pc.alignment && String(monster.alignment ?? '') !== pc.alignment && !/\b(?:lawful|chaotic|neutral|good|evil|unaligned)\b/i.test(String(options.userConcept ?? concept ?? ''))) { trace('print canon alignment:', `${monster.alignment} -> ${pc.alignment} — the ${pc.name}'s (the Kobold printed Chaotic Neutral — the critic's second species read)`); monster.alignment = pc.alignment; }
           if (reclass2024) { /* traced above */ }
+          // A CLASS-NPC BLOCK IS A BODY, NOT A KIND (2026-11-10, the owner's spot check of the
+          // Funeral Bell Wraith). The class-NPC path stands a concept on the nearest print NPC
+          // block, and every one of those blocks is a Humanoid — so borrowing one was overwriting
+          // whatever the creature actually is. Measured over 360 sheets: 16 flips, every single one
+          // TO Humanoid and every single one on this path — an Elemental and a Construct onto the
+          // Spy and the Priest, an Undead and an Aberration onto the Priest, two Fey onto the Mage
+          // and the Priest. Never once the other way.
+          //
+          // The guard that already exists for this says so out loud — "the Priest is a Humanoid and
+          // the concept reads Undead ... so the print body stands down" — and was inert in 16 of 16:
+          // it printed and the type flipped anyway. The cost is not cosmetic, because the
+          // type-driven immunity stamp runs downstream of here: a chapel ghost shipped Medium
+          // Humanoid with NO immunities line at all, where print gives every incorporeal undead
+          // resistance to all physical damage and immunity to Necrotic and Poison.
+          //
+          // Print's type still rules where print IS the creature — an exact body and a twist are
+          // untouched, and a type the GM actually named still wins below.
+          else if (pc.npcHead && pc.type && String(monster.type ?? '') !== pc.type) { trace('print canon type:', `${monster.type} stays — the ${pc.name} is the class's BODY on this path, not this creature's kind (print's own NPC blocks are all Humanoid)`); }
           else if (pc.type && String(monster.type ?? '') !== pc.type && !(userType && userType.toLowerCase() !== pc.type.toLowerCase())) { trace('print canon type:', `${monster.type} -> ${pc.type} — the ${pc.name}'s (a Unicorn printed Fey, 2026-10-01)`); monster.type = pc.type; }
           else if (userType && userType.toLowerCase() !== pc.type.toLowerCase()) trace('print canon type:', `${monster.type} stays — the words say ${userType} ("a dire wolf but undead", 2026-10-01)`);
           if (pc.nameIsPrint && String(monster.name ?? '') !== pc.name) { trace('print canon name:', `"${monster.name}" -> "${pc.name}" — a whole print name is the creature's name (the Goblin Boss shipped as Krag the Iron Standard, 2026-10-01)`); monster.name = pc.name;

@@ -1,0 +1,10 @@
+[
+  { "canary": "the spot check: a chapel ghost must be Medium UNDEAD with print's undead immunities (was Humanoid, none)", "name": "", "description": "a chapel bell-ringer's ghost that tolls for the dying", "cr": "3", "rules": "2024" },
+  { "canary": "second roll of the same ghost", "name": "", "description": "a chapel bell-ringer's ghost that tolls for the dying", "cr": "3", "rules": "2024" },
+  { "canary": "the Elemental -> Humanoid case (5 of 16): must stay Elemental", "name": "", "description": "a wind-dancer monk whose body is living air", "cr": "5", "rules": "2024" },
+  { "canary": "the Aberration -> Humanoid case (3 of 16): must stay Aberration", "name": "", "description": "a cult priest whose flesh has become a mass of watching eyes", "cr": "4", "rules": "2024" },
+  { "canary": "the Construct -> Humanoid case: must stay Construct", "name": "", "description": "a clockwork chaplain of brass and prayer-gears", "cr": "4", "rules": "2024" },
+  { "canary": "CONTROL — a real humanoid cleric: Humanoid stands, nothing changes", "name": "", "description": "a templar priest with a mace and no magic at all", "cr": "6", "rules": "2024" },
+  { "canary": "CONTROL — a human necromancer: Humanoid stands", "name": "Lord Vexmoor", "description": "necromancer BBEG, raises the party's fallen allies", "cr": "12", "rules": "2024" },
+  { "canary": "CONTROL — an exact print body keeps print's type (the fix must not touch exact)", "name": "", "description": "unicorn", "cr": "5", "rules": "2024" }
+]
