@@ -2,6 +2,7 @@
 
 Forward-dated implementation notes for work that isn't being done now but will need to be done when a specific feature lands. Each file describes:
 
+- **[`human-spot-check-2026-11-09.md`](human-spot-check-2026-11-09.md)** — the human review page per run (`scripts/review-html.mjs`): clean block, provenance tags, DPR calculator, receipts, trace, Keeper/Runs/Tweak/Fix with export. Trigger: owner wants to read a forty; build before the next run.
 - The trigger — the feature or change that makes the plan relevant.
 - The problem the plan exists to solve.
 - The recommended approach, with enough detail that a future session can act on it without rebuilding context.

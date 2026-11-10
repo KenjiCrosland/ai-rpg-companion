@@ -54,6 +54,14 @@ Code may:
 **If a fix seems to need a new word rule, stop and propose it to the owner
 instead of writing it.**
 
+**Never widen an existing word list, either — not even one labelled "fallback."**
+(Owner's ruling, 2026-11-09.) A list that is already doing the call's job is a
+bad decision in place; adding the four words it missed this week is how it
+becomes the rule again. When you find one, replace it with a call field. The
+fallback for an unanswered field is the **conservative default** — for an
+exception (a returning weapon, a Recharge, a condition rider) that means the
+exception does not happen — never a list that guesses the answer.
+
 Why: prompts are short, and keyword tables fail exactly where they are. Two words
 like "lizardfolk ninja" or "fire monk" carry no verb to match, and an idiom fools
 them outright — "flies into an unstoppable rage" routed a berserker to the winged

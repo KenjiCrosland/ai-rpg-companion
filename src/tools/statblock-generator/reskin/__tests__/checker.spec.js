@@ -246,8 +246,20 @@ describe('one axis under print is a fail only when the block is underpowered (th
     hot.sections.Actions[1].text = '*Melee Attack Roll:* +7, reach 10 ft. 42 (7d10 + 4) Slashing damage.'; hot.sections.Actions[0].text = 'The beast makes two Claw attacks.';
     const r1 = checkBlock(hot); expect(r1.read.read).toBeGreaterThan(5); // precondition: damage carries the read
     expect(has(r1, 'bands', 'under', 'soft')).toBe(true); expect(has(r1, 'bands', 'under', 'fail')).toBe(false);
-    const weak = base({ hp: lowHp, hp_formula: hot.hp_formula }); weak.sections.Actions[1].text = '*Melee Attack Roll:* +7, reach 10 ft. 9 (2d4 + 4) Slashing damage.';
-    const r2 = checkBlock(weak); expect(r2.read.read).toBeLessThan(4);
+    // THE FIXTURE'S "WEAK" HAD TO GET WEAKER when the ruler was recalibrated (2026-11-09). At 90%
+    // of print's floor and 18 damage a round, this block is a thin CR 5 — print's own CR 5 spread is
+    // 75-228 HP and 11-55 damage, so it sits inside one band and just under the other, and reading
+    // it CR 4 is correct. Against the 2014 DMG column it read far lower, which is what made the old
+    // fixture "underpowered". A block that IS underpowered is well under BOTH floors: half print's
+    // HP and under its damage floor.
+    const weakHp = Math.round(c.hp[0] * 0.5);
+    const weak = base({ hp: weakHp, hp_formula: `${Math.round(weakHp / 6)}d10 + ${weakHp - Math.floor(Math.round(weakHp / 6) * 5.5)}` });
+    weak.sections.Actions[1].text = '*Melee Attack Roll:* +7, reach 10 ft. 5 (1d6 + 2) Slashing damage.';
+    // the read's NUMBER moved when the defensive ruler was recalibrated against print's own
+    // HP-by-CR (2026-11-09): this weak block now reads 4 where it read lower against the 2014 DMG
+    // column. What the test is for — a soft when damage carries the read, a fail when nothing does —
+    // is asserted on the lines either side and is unchanged. Pin the relationship, not the constant.
+    const r2 = checkBlock(weak); expect(r2.read.read).toBeLessThan(r1.read.read);
     expect(has(r2, 'bands', 'under', 'fail')).toBe(true);
   });
 });

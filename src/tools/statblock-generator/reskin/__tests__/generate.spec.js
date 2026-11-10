@@ -757,7 +757,15 @@ describe('the Gambler batch (2026-08-19): projectile subsystem, three guard fals
     });
     const all = Object.values(m.sections).flat().map((e) => e.text).join(' ');
     expect(all).not.toMatch(/\{projectile\}/);
-    expect(all).toMatch(/a knucklebone returns to the knucklebone gambler's grasp/);
+    // THE FILL IS WHAT THIS TEST IS FOR, and the projectile fills every slot that has one:
+    // "hurls a knucklebone at a point it can see within 90 feet".
+    expect(all).toMatch(/hurls a knucklebone at a point/);
+    // The returning clause is NO LONGER among those slots unless the call says the projectile is a
+    // single object the creature must recover (owner's ruling 2026-11-09 — the ambient word list
+    // was removed rather than widened, so the clause needs a positive `projectile_supply:
+    // "single"`). A gambler with one knucklebone is not the fiction; this fixture answers nothing,
+    // so the clause drops. The clause's own contract is pinned in the Cliff Troll test below.
+    expect(all).not.toMatch(/returns to the knucklebone gambler's grasp/);
   });
 
   test('a missing projectile fails validation with its own reason', () => {
@@ -4479,11 +4487,16 @@ describe('the Cliff Troll letter (2026-09-15): four mechanisms', () => {
 
 
   test('ambient stone never boomerangs; a singular signature projectile still returns', async () => {
-    const withProj = (projectile) => {
+    const withProj = (projectile, supply) => {
       const { renameKeysOf: rk } = require('../generate.mjs');
       const { pickDonor: pd, scaleDonor: sd } = require('../scale.mjs');
       const full = JSON.parse(answer());
       full.projectile = projectile;
+      // THE CLAUSE NEEDS A POSITIVE ANSWER (owner's ruling 2026-11-09). The ambient word list is
+      // gone: `projectile_supply: "single"` is the only thing that keeps a returning clause, so
+      // the signature-object case declares it and the ambient case says nothing. A third case
+      // below leaves the field absent, which must also drop — the conservative default.
+      if (supply) full.projectile_supply = supply;
       full.renames = {};
       full.damage_types = {};
       rk(sd(pd(8, 'hurler', 'skirmisher'), 8)).forEach((k) => {
@@ -4492,13 +4505,18 @@ describe('the Cliff Troll letter (2026-09-15): four mechanisms', () => {
       });
       return generateReskin({ archetype: 'skirmisher', style: 'hurler', concept: 'x', cr: 8 }, async () => JSON.stringify(full));
     };
-    const slab = await withProj('a sheared slab');
+    const slab = await withProj('a sheared slab', 'ambient');
     const slabRow = Object.values(slab.sections).flat().find((e) => /a sheared slab/.test(e.text ?? ''));
     expect(slabRow).toBeTruthy();
     expect(slabRow.text).not.toMatch(/returns to/);
-    const skull = await withProj('its lantern skull');
+    const skull = await withProj('its lantern skull', 'single');
     const skullRow = Object.values(skull.sections).flat().find((e) => /its lantern skull/.test(e.text ?? ''));
     expect(skullRow.text).toMatch(/returns to/);
+    // and with the field unanswered, the exception does not happen — a list would have guessed
+    const quiet = await withProj('its barbed anchor');
+    const quietRow = Object.values(quiet.sections).flat().find((e) => /its barbed anchor/.test(e.text ?? ''));
+    expect(quietRow).toBeTruthy();
+    expect(quietRow.text).not.toMatch(/returns to/);
   });
 });
 

@@ -715,6 +715,12 @@ list at 0.** Coin flips are variety per the owner's ruling; they do not gate.
   row**: the engine's own `swallow` TEMPLATE writes a row of that name into Actions first, and the
   existing same-name rule was gated to print NOVAS only. Widened to any print rules row at print's
   CR, and the winner returns to print's own section.
+- **12 — one guard to add (Fable's audit, 2026-11-09).** `printWins` checks `!same.print &&
+  !same.library` and not whether the engine row is the GM's: a row carrying `clause`, `gmQuote` or
+  `authoredSeat` would be overwritten by print's same-named row on exact/twist. Measured: 16
+  collisions in 440 sheets, **0 GM-stamped** — zero exposure this week, but the hole is real and
+  the GM's words win. Add `&& !same.clause && !same.gmQuote && !same.authoredSeat` and trace the
+  stand-down.
 - **16 POST-RELEASE (owner, 2026-11-09): "a GM won't ask for legendary actions below CR 10."** The
   only evidence was Thornback at CR 8 — and that input ("an ankheg but legendary, boss fight for
   level 5") is one Fable wrote for `typed40`, not a GM's. `asked: legendary` stays a call field to
@@ -758,6 +764,20 @@ it throws is a judgement about the fiction, so the reskin call now answers
 `ambient`. The word list survives ONLY as the fallback for an unanswered field (widened with the
 four misses), because a failed call never costs a sheet.
 
+**OWNER'S RULING 2026-11-09 — THE WORD LIST GOES, NOT WIDENS.** "Why are we relying on a word
+list for 18. I don't like that. Can we make it a hard rule not to expand bad decisions?" Yes, and
+it is now in CLAUDE.md. For Opus, the fix at `generate.mjs` (the `projectile_supply` block):
+- the clause stays ONLY when the call answers `single`; `ambient`, blank, or off-enum all drop it.
+  An exception needs a positive answer — print writes it 4 times in 1291 rows, so "no clause unless
+  told" is wrong on nearly nothing.
+- delete the ambient regex entirely (the original list AND the four words added this session).
+- `generate.spec.js` "ambient stone never boomerangs; a singular signature projectile still
+  returns": the lantern-skull case sets `projectile_supply: 'single'` on the answer — that is the
+  contract now; the slab case sets nothing and must drop. Add one case: `projectile_supply`
+  absent, projectile "its barbed anchor" → no clause (the default is the conservative one).
+- trace the drop as "the call did not say this projectile is a single object the creature must
+  recover" so a GM reading the trace sees why the javelin stays on the ground.
+
 **Still open — the melee half (the critic's 7/7).** Harl's *Shortsword* carries "a handaxe returns
 to Harl's grasp". All four donor rows that carry the clause are Ranged or Melee-or-Ranged, so the
 clause starts on the right row: the defect is the RENAME, which gave the thrown row the melee name
@@ -767,6 +787,221 @@ at the clause.
 **Verify when the melee half lands:** replay #37 Meshrin (Javelin keeps no clause), #39 Harl (the
 clause rides the Handaxe row), #22 Clockwork Spider (the web loses it), #39 Skarn's Coin Toss. Print
 no-op: the four print rows keep theirs. Then one forty: 0 returning clauses on ambient ammunition.
+
+### 19 + 20 — CALIBRATION: the ruler, the to-hit stat, the spell list (owner's read on the review page, 2026-11-09)
+
+**The owner:** "these blocks are way too cold, mostly on the defensive CR… I want GMs to go 'haha
+that'll scare them'… Is our math wrong on the conversion between donor templates? That's where I'd
+look first. I don't like too many fixes at the end." And: "I've been nervous about appropriate
+spells and number a day for casters by CR."
+
+**Measured against print, three passes (the third corrected the first two — see the note at the
+end). What survives:**
+
+1. **The defensive read is a wrong ruler.** The checker takes the 2014 DMG table's HP column
+   literally. Print itself sits at 71% of it and reads below it on 94% of blocks; ours 74% / 93%.
+   The DMG method AVERAGES defence and offence — print's idiom is lighter HP with damage at band,
+   and its NET read is −0.4 (near centre). The review page shows the defensive component as if it
+   were the verdict. **No block is cold on HP: ours sit at 95% of print's median HP at the same CR,
+   and each donor family tracks its own print family within 10% (brute, skirmisher, caster; lurker
+   samples too small to say).**
+2. **The to-hit modifier runs 1–2 under print from CR 5 up, in every family.** PB is right; the
+   ability SCORE is low. DC = 8 + PB + mod, so every save DC is dragged down with it. "It keeps
+   missing" is the coldness a GM feels.
+
+   ```
+    CR        |  5 |  7 |  9 | 11 | 13 | 15 | 17 | 20
+   print mod  | +4 | +4 | +6 | +6 | +6 | +7 | +8 | +8
+   donor mod  | +3 | +4 | +4 | +5 | +5 | +6 | +6 | +8
+   ```
+   Per family the skirmisher is worst (+3/+4 vs print +4/+5/+6 at CR 1–10).
+3. **Offense in aggregate is print's**: our OFF read median 0.0 / 9% under / 24% over vs print's
+   0.0 / 10% / 23%; DPR 104% of print's median. One hot pocket: caster and lurker donors at CR 14+
+   carry an at-will area row inside the Multiattack (caster-15 reads 165 at CR 15 vs Archmage 108,
+   Lich 126) — now priced by item 13, which is why it shows.
+4. **Casters are priced like print** — attack row × N; spells are texture and nova, not the round,
+   in both. **But the spell list does not grow with CR and print's does:**
+
+   ```
+                    at-will | daily | damage spells
+   Priest   CR 2       2    |   1   | none
+   Mage     CR 6       5    |   4   | Fireball 2/day, Cone of Cold 1/day
+   Archmage CR 12      8    |   6   | Lightning Bolt, Cone of Cold
+   Lich     CR 21      8    |   7   | … Power Word Kill
+   ```
+   Ours (18 casters, two fortys): every MENU-built caster carries 2 at-will + 1–2 daily at any CR
+   (the prompt asks "exactly 2 … exactly 2 MORE"); class NPCs on the Priest carry the CR 2 list up
+   to CR 9 (Maudra CR 7, Mother Ash CR 9 → 2/1). 3 of 11 casters at CR 8+ have two at-will spells;
+   print's has eight. No low-CR over-casting found (0 of 3 under CR 4 cast 3rd level) — the
+   one-sided gate from item 9 holds on that side.
+
+**BUILD, in this order. No owner decision is needed for any of it — all four are measured.**
+
+| # | item | do | verify |
+|---|---|---|---|
+| **19a** | **the ruler** (`checker.mjs` def read; `scripts/review-html.js` Numbers panel) | calibrate the defensive HP reference so print's NET read centres at 0 (today −0.4) — the DMG method's own adjustments (effective HP for resistances/immunities/LR, AC steps) stay; the HP column is scaled to print's actual HP-by-CR. On the review page show `def` and `off` in grey as components and the NET read as the number. | print: net median 0.0 ± 0.2, def cold ≤ −1.5 under 15% (today 33%). Our three fortys re-read: DEF cold falls accordingly; hot/under gates re-measured, expected FAILs unchanged ±1. |
+| **19b** | **the to-hit stat** (`donors.mjs` ability scores / `scale.mjs`) | the donor's primary ability score tracks print's median best-attack modifier by family and tier: brute/skirmisher/lurker/caster +3 at CR 1–4, +4 at 5–7, +6 at 8–13, +7 at 14–16, +8 at 17+ (the skirmisher's own line is +4/+5/+6 at CR 1–2/5–7/8–10). Lifts to-hit AND DC together — do not touch DC separately. | `scaleDonor` at each tier: `atkBest − pb` equals the table; DC = 8 + PB + mod follows. DPR as % of print median rises from 104% with no dice change (hit chance is not in the raw read, so expect the raw number unchanged and the DPR-at-AC on the review page up ~5–10%). |
+| **19c** | **the CR 14+ area-swap pocket** (caster-15, caster-21, lurker-13, lurker-17 donor rows) | item 13's engine rule already gates a NEW area swap; these donors ship one BY CONSTRUCTION. Give the donor row its Recharge 5-6 in the table (print's shape), or bound its damage to the attack it replaces. | caster-15 at CR 15 sustained ≈ 66–110, not 165; hot ≥ +1.5 at CR 11+ falls from 23%. |
+| **20** | **spell list size by CR** (`generate.mjs` SPELL_MENU prompt; the print-list paste at the `rulesRows` Spellcasting branch) | a CR → list-size table from print's four points — at-will 2/5/8/8 and daily 1/4/6/7 at CR 2/6/12/21, interpolated — applied twice: the menu prompt asks for THAT many ("exactly N at will, M daily") instead of the fixed 2+2; and a print list pasted onto a sheet more than ~3 CR above the print body's is TOPPED UP from the menu to the table's count, never swapped. Damage-spell ceiling from the same table: 3rd level at CR 5–6, one 5th-level nova at CR 6+, 6th+ at CR 12+. | a CR 9 menu caster reads ~6 at-will / 5 daily; Maudra (CR 7 on the Priest) reads ≥ 4 at-will; print bodies at their own CR byte-identical; 0 casters under CR 5 with a 3rd-level spell. Confirm with the engine's own spell table, not the probe's name parse (it returned nothing on levels). |
+
+**20 — OWNER'S RULING ON SPELL DAMAGE (2026-11-09): "a CR 2 spellcaster should have access to
+some damage within band. It just needs to do the same amount of damage as a main attack, or as much
+as a gated nova if the number per day is limited."** The print Priest (CR 2, no damage spell) is an
+edge case, not the shape — the Druid at the same CR carries Thunderwave, the Mage carries Fireball
+2/day. So the list-size table above carries a DAMAGE RULE with it:
+
+- **every caster's list includes at least one damage spell**, chosen from `SPELL_DAMAGE_AVG`
+  (exists in `generate.mjs`) by the sheet's CR band;
+- **priced two ways, like print prices everything else:** an at-will damage spell (a cantrip, or a
+  spell the Multiattack can swap an attack for) deals ≈ ONE ATTACK's damage for the band; a
+  limited damage spell (N/day) deals ≈ the band's NOVA — roughly the band's whole round, the way a
+  Recharge breath is priced (Mage CR 6: Arcane Burst 16 ×3 = 48 a round; Fireball 28 at 2/day,
+  Cone of Cold 36 at 1/day). At CR 2 (band 15–20) that is Shatter 13 or Scorching Ray 21 at 1/day;
+  at CR 6 Fireball; at CR 12 Cone of Cold / Lightning Bolt ×2; the ceiling-by-CR line above bounds
+  the level.
+- **the checker must SEE it** (`checker.mjs` `read.nova`): today a nova is a Recharge/X-Day ROW,
+  and a daily damage spell inside the Spellcasting list is invisible — so a caster whose burst is
+  Fireball reads as having no nova. Price the strongest N/Day damage spell as the nova via the
+  same `SPELL_DAMAGE_AVG`, moved to one shared owner. Verify on print: the Mage's nova reads 28–36;
+  the Lich's reads Power Word Kill / Finger of Death's figure; blocks with no damage spell are
+  unchanged.
+- when item 9's one-sided gate withholds a too-strong print list from a low-CR sheet, the sheet
+  still gets a damage spell from the table at ITS CR — the gate must not leave a caster with
+  nothing to throw.
+
+**Not built — the damage-band knob.** Aiming DPR at the band midpoint instead of its floor was
+proposed as the "scare them" lever. 19b lifts hit rate by 5–10% on its own; re-measure after 19–20
+and raise the knob only if the owner still wants more. Root first.
+
+**Baseline for the before/after:** `smoke-out/typed40-2026-11-09T21-04-40` — the fifth GM forty,
+run on commit `1cc043e` before any of 19–20. Same inputs after 19–20 is the comparison; the owner
+reads THAT one on the review page.
+
+**Measurement note for whoever measures next (three wrong denominators in one afternoon):**
+(i) "brute-13 is under-diced" compared the brute with ALL print at CR 13, where casters and
+lurkers pull the median up — against brute-print it tracks within 10%; (ii) "caster HP is low"
+used "has a Spellcasting row" as the caster proxy and pooled hags, devils and mind flayers —
+against print's humanoid casters (Priest/Mage/Archmage) the donor is within 10%; (iii) print's
+"OFF median −10" was five blocks with a non-numeric read, not a finding. Compare a family with its
+own family, name the proxy, and print what the probe skipped.
+
+### 7.9d — the critic's fifth GM forty (`21-04-40`): Keeper 8 · Runs 15 · Tweak 12 · Fix 5 — triage (Fable, 2026-11-09)
+
+Floor stable: Fix 10 → 6 → 5 on the same inputs. The critic's per-block table is signal as usual;
+their §3 headline is refuted on its premise and the two defects under it are real with a different
+cause. Sorted: **build now** (21–27, below), **folded into 19–20**, **refuted with the number**, **noise**.
+
+**REFUTED — "a call field that fires wrong" (#33 legendary, #34 slow).** Neither field exists.
+`ASK_OFTEN` has no `legendary` (item 16 is post-release by the owner's ruling, unbuilt); "slow" was
+filed by the extraction as `has (descriptive)` — flavour, not a header clause — so no field fired.
+The advice "before any more fields go in, replay these two" does not apply. The two defects are
+real and have their own causes, items 21 and 22. Also: Thornback's "Legendary Nature" is an
+AUTHORED trait (the seat wrote it for the clause "legendary"), not engine machinery.
+
+**REFUTED — #14 "the short-name slot took the attack's name."** `inline` is "Cinder" on the JSON
+(the call's own answer, traced). The 2014 RENDERING wrote "Dart makes two attacks" — so the 2014
+conversion re-derives a short name instead of using the declared one. 0 of 200 sheets across five
+GM fortys have an attack name as `inline`; this is the 2014 printing path, one roll. Item 25.
+
+**FOLDED INTO 19–20:** Misty Step listed At Will (#15) — the 3/Day bonus action became an unlimited
+teleport when it moved into the spell list. Print's at-will spells are cantrips and 1st level at
+CR ≤ 6 (the Mage), and reach 2nd only at CR 12 (the Archmage's Invisibility, Detect Thoughts).
+Item 20's CR table gets an **at-will level ceiling** (≤1st to CR 11, ≤2nd from CR 12) and the rule
+that a spell print places as N/Day never migrates to at-will. The Beholder at −4 to −7 (#18, 3/3) is
+also a 19a/20 consequence in part — but see item 26 for the half that is not.
+
+**NOISE (per the owner's variety ruling):** the bio sheets landing a different three-of-four each
+roll (Orrin, Ysolde, the Cardinal, Grizzelda, Pip, Shadowfang); the compound nouns routing to twist
+1 of 3 (vampire pirate, owlbear zombie — both Keepers when they do); Zarnak's two-of-five. The
+critic's own read: "not a regression, the coin-flip band on a bad roll." Their product note stands
+and is the owner's: Regenerate should be cheap.
+
+**BUILD NOW — pre-release, each deterministic or one-roll-verifiable:**
+
+| # | item | the evidence | do | verify |
+|---|---|---|---|---|
+| **21** | **an authored row with a dice expression where a COUNT belongs, or that promises options it does not list** (#33) | "Legendary Nature. Thornback can take 14 (4d6) Legendary Actions after another creature's turn, choosing from the options below." — no options, a damage die as a count. Item 7a refuses a described number; it does not refuse a count written as dice, nor a row whose "options below" / "listed below" has nothing below it. | two arms on the authoring refusal chain: (i) a usage count (`N/Day`, "can take N", "N times") must be an integer 1–5; dice in that slot refuse the row; (ii) a row that refers to options/a list/"below" refuses unless the sheet carries that section. Trace both. | replay #33's saved call: refused; three rolls of #33: no row with dice in a count slot. |
+| **22** | **"slow" / "fast" / "fly" are HEADER clauses, not description** (#34, 2 of 3 inverted; "fast" landed on #09 this roll by luck) | the extraction filed `"slow" -> has (descriptive)`. The schema's HEADER kind exists and lists speed; the prompt's examples never show a speed adjective. (Item 16's note said this; it is now measured at 2/3.) | one prompt example on the extraction call: `"slow" -> header [speed: 20]`, `"fast" -> header [speed: 40+]`, `"flies" -> header [speed: fly]`. The engine already applies a header speed clause. No word rule — the example teaches the kind. | three rolls of #34: Speed ≤ 20, 3/3; #09 "fast": Speed ≥ 40, 3/3. |
+| **23** | **the item-12 guard's exception excludes the concept-as-clause, and a Reaction with no Trigger loses the collision regardless** (#27) | the guard kept the authored "Protective Magic (3/Day) … in response to the spell's trigger" — no Trigger clause — because its `clause` was "swamp witch npc", the whole concept. Measured earlier: all 3 firings this run had `clause === concept`. | `gmOwns` is false when `same.clause` equals the concept text (the seat wrote it FOR the concept, not for an ask); and when the engine row is a Reaction without a `Trigger:` sentence, print's row wins whatever the stamp. Same discriminator applies to item 15's flaw-row check (`row.clause === concept` is not "authored for the lack"). | replay #27: Protective Magic is print's text with a Trigger; #05 Vexmoor unchanged. |
+| **24** | **a weapon the GM names takes the weapon table's die and range when a print row is renamed to it** (#32, 0 of 3) | "goblin boss with a heavy crossbow" → twist on the Goblin Boss → print's Shortbow renamed "Crossbow" at **1d8, 80/320** (the light crossbow). The table has `heavy crossbow: die 10, range 100/400, heavy`. `weaponsIn` read "heavy crossbow" (measured). The rename kept print's numbers. | at the rename/weapon-apply site: when the GM's named weapon is in the table and a row is renamed to it, the row's die and range become the table's (print's attack bonus and count stay). | replay #32: Crossbow 1d10, 100/400; the Scimitar untouched. |
+| **25** | **the 2014 rendering uses the declared `inline`, never re-derives it** (#14) | JSON `inline: "Cinder"`; the 2014 text says "Dart makes two attacks … Once on each of Dart's turns" while the bonus action says "Cinder". Two names on one sheet. | find where the 2014 conversion substitutes the short name and make it read `m.inline`; if it must derive, derive from `name`, never from a row name. | replay #14 on the 2014 path: one name. Scan the saved 2014 sheets: 0 with a row name used as the subject. |
+| **26** | **a PI alias's defining mechanic is its own clause** (#20 displacer beast, 0 Displacement this roll; #18 Beholder — label follows body) | the alias text "a six-legged panther with two tentacles whose image appears a few feet from where it stands" is ONE clause, and the Tentacles row got stamped with the whole of it (measured on the saved JSON), so "whose image appears…" was answered by an attack. Beholder: the alias names the creature and the chassis is a lurker; 3/3 at −4 or colder. | `PI_ALIASES` entries carry `clauses: [...]` — the body and the signature as separate strings ("a six-legged panther with two tentacles" · "its image appears a few feet from where it stands, so attacks against it miss unless the attacker can see past the displacement") — so the signature is owed its own row. For the Beholder, the cheap half: when a PI alias chose the CR and the body reads ≥ 3 under it, the label follows the body and the trace says so. | three rolls of "displacer beast": a Displacement-shaped row 3/3. #18: label = body read ± 1. |
+| **27** | **the deterministic kit misses, one roll each** — the critic's 3/3 list | Gladiator skills (Performance +5) on war chiefs, captains, blacksmiths (#01, #03, #23 — 3 of 3); the Mage ability array (INT 18 / WIS 16, saves INT/WIS) on a cleric (#02, 3/3); goblin kit absent on a goblin wizard (#15, 3/3); no False Appearance on a tree (#36), no Hold Breath on an alligator (#40); Cunning Action on monks 16/16 | each is one owner: the class-NPC chassis keeps print's SKILLS and ARRAY only for the class that print body IS (Gladiator skills belong to a gladiator, the Mage array to a mage) and otherwise takes the class's own; species kits (goblin, kobold) land on class_npc as on homebrew; Cunning Action → Step of the Wind on the monk kit. | one roll each, the critic's list. |
+
+**STATUS 2026-11-09 (Opus) — 19a LANDED · 19b WITHDRAWN, NO DEFECT · a per-CR check added instead.**
+
+**19a is in, and it was the real one.** The defensive read referenced the 2014 DMG's HP column,
+which print ignores. Measured against every column at once, print is not "cool" — it is THIN AND
+ACCURATE: **HP 67% of the column, damage 93%, attack bonus +2 OVER it, DC and AC exactly on it.**
+The 2024 design trades durability for reliability. Only the defensive axis was measuring against a
+column print does not use, which is exactly the axis the owner saw as cold.
+- the read now references print's own HP-by-CR curve (healthy tiers carry their exact median, thin
+  tiers interpolate in log space between healthy neighbours) x 1.25 headroom — the DMG method adds
+  AC and trait rungs on top of an HP base and print's monsters carry those traits, so at 1.00 print
+  read +0.5 with 26% hot. Swept: 1.25 centres the net median at 0 with symmetric tails.
+- **print now reads on its own labels: net median 0.0, cold 10%, hot 8%** (was -0.4 / 15% / 9%, with
+  33% of print's own blocks cold on the defensive axis alone).
+- **our 120 saved sheets: net cold 31% -> 18%, defensive cold 56% -> 35%.**
+- `hp-curve.spec.js` (9 tests) re-derives the curve from the corpus. Two fixtures that pinned the old
+  ruler's NUMBERS were restated to pin behaviour.
+- found on the way: a thin tier was overwriting a healthy one (CR 12's two blocks pushed CR 13's real
+  median of 198 to 224); JS object key order puts '1/8' after '30'; and a body under 80% of print's
+  own floor now fails `under` on its own, because the averaged read let a glass cannon's damage carry
+  a body print would never ship.
+
+**19b IS WITHDRAWN — THERE WAS NO TO-HIT DEFECT, and the owner caught the measurement error
+("I thought our measurement showed less damage and variability on to hit").** Measured correctly —
+SHIPPED SHEETS against print's own median at the SAME CR:
+
+| | ours vs print |
+|---|---|
+| attack bonus | **+0** on every path (homebrew n=58, class_npc n=32, twist n=25) |
+| damage per round | **103%** of print's mid-range |
+| to-hit spread | 1 point |
+
+The "+4 donor vs +6 print" in the earlier draft compared RAW DONOR TEMPLATES against a print median
+pooled differently. Against the same per-CR pool the donors are 1 under at CR 5 and 9 and EXACT at
+CR 13 and 17 — and shipped sheets are at print on every path, because class NPCs stand on print
+bodies, twists carry print's attack rows, and print canon replaces the numbers. **Changing the card's
+formula would have pushed every sheet ABOVE print.** The attempt also contradicted the
+owner-designated numeric authority (the Blog of Holding card, 2026-08-17) and broke ~80 fixtures.
+Reverted whole; the card is untouched.
+
+**ADDED INSTEAD — the per-CR check (owner: "can we do a per CR check? not a formula?").**
+`corpusAt` now carries print's attack-bonus and save-DC range and median at each CR, and two SOFT
+findings report a sheet under them — `print-atk` and `print-dc`. Reported, never enforced; no
+generation change, no fixture moved. **8 of 80 sheets flag**, e.g. Big Bob: "attack +7 is under
+every print block at CR 9 (+8 to +12, median +10, n=8)". The review page's Numbers panel now shows
+print's own range at the sheet's CR beside the DMG column, so the gap is readable per sheet.
+
+**The one real offensive outlier: CR 17+ sheets read 150% of print's damage** (n=6) — that is 19c's
+caster/lurker donors shipping an at-will area swap by construction. Still open.
+
+**MEASUREMENT NOTE — four wrong denominators in one evening, all the same shape:** the brute "under-
+diced" against ALL print at the CR rather than brute-print; "caster HP low" from a proxy that counted
+hags and devils as casters; print's "OFF median -10" from blocks with no numeric read; and this one,
+the donor measured where the sheet was the question. **Compare the SHIPPED SHEET against print at the
+SAME CR, pooled the same way, and say which population the number is about.** The per-CR check added
+above is that instrument.
+
+**THREE CHUNKS, THREE TWELVES (owner, 2026-11-09: "pop some twelves in there just so we know we
+aren't veering off course — mini regression gates").** Each twelve is built for ITS chunk: inputs
+that exercise the change, plus controls that must not move. Run after the chunk lands and before
+the next starts; a control that moves stops the line. `SMOKE_TIMEOUT_MS=300000 node
+scripts/smoke-statblock.mjs <batch>` then `check-run.mjs` and `review-html.mjs` on the run dir.
+
+| chunk | lands | twelve | pass line |
+|---|---|---|---|
+| **A — calibration** | 19a, 19b, 19c | `gate-calibration` — brute/skirmisher/lurker/caster at low/mid/high CR, the two 19c donors, three CONTROLS (exact Owlbear, exact Adult Red Dragon, a mage) | `atkBest − pb` = print's mod at each tier; net read within ±1 on ≥ 9 of 12; caster-15 and lurker-15 sustained inside band; **the three controls byte-identical to their previous roll's print rows** |
+| **B — spells** | 20 (+ the at-will ceiling, the nova read, the Priest top-up) | `gate-spells` — menu casters at CR 2/5/9/13, Maudra and Mother Ash on the Priest, the CR 3 wizard (item 9 must still hold), Nib's Misty Step, an Archmage list pasted above its body, two print CONTROLS (Mage, Lich), a battle-mage for the nova read | at-will/daily counts within 1 of the table at every CR; every caster carries a damage spell; no at-will spell above 1st level below CR 12; Misty Step never at-will; CR 3 wizard has no Fireball; **Mage and Lich byte-identical**; Mage's nova reads 28–36 |
+| **C — the critic's seven** | 23, 22, 21, 24, 26, 25, 27 | `gate-critic5` — one input per item, straight from the critic's table (Grizzelda, slow, fast, Thornback, heavy crossbow, displacer beast, Beholder, fire monk on 2014, war chief, cleric, goblin wizard, alligator) | each canary's own line, written in the batch file; the critic's 3/3 misses read 0/1 |
+
+Then 14b and 18's melee half (no twelve — one replay each), suite, build, `sweep` + `typed40`, the
+review page, the owner reads the typed forty, the critic.
+
+**Order for Opus, revised:** **A** (19a → 19b → 19c) → `gate-calibration` → **B** (20) → `gate-spells`
+→ **C** (23 → 22 → 21 → 24 → 26 → 25 → 27) → `gate-critic5` → 14b → 18 melee half → suite → build →
+`sweep` + `typed40` → the owner reads the typed forty on the review page → the critic.
 
 **Same-day if there is the hour (deterministic, 3 of 3 on every spot check, not blockers):** Cunning
 Action on monks → Step of the Wind (14/14; SRD 5.2 monk); the returning-weapon clause attaches to the
@@ -809,7 +1044,7 @@ via a sibling clause, so post-release. **Test-set finding:** `typed40` carries o
 in 40 ("lost a hand", "it does not brawl"); when inputs are next revised (after the frozen window),
 nerfs should be a quarter of the GM forty.
 
-**Order for Opus:** **15** → 13 → 14 → 12 → 16 → 17 → same-day list → `npx jest … --silent` →
+**Order for Opus (2026-11-09 evening, superseded by 7.9d below):** 19a → 19b → 19c → 20 → 23 → 22 → 21 → 24 → 26 → 25 → 27 → 14b → 18 melee half → `npx jest … --silent` →
 `npm run build` → `sweep` → `typed40` → both to the critic with this section's table.
 
 **The critic's "GM lexicon" — NOT built as written, and here is why.** They propose a

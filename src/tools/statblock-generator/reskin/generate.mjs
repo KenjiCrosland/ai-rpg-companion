@@ -4614,16 +4614,22 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           //
           // Whether a creature has an endless supply of the thing it throws is a judgement about
           // the fiction, so it is a CALL FIELD (CLAUDE.md): the same call that names the
-          // projectile says whether that projectile is one object or ambient ammunition. The word
-          // list survives only as the fallback for an unanswered field — a failed call never
-          // costs a sheet.
+          // projectile says whether it is one object the creature must recover or ammunition it
+          // has endlessly.
+          //
+          // AND THE LIST IS GONE, NOT WIDENED (owner's ruling, 2026-11-09: "why are we relying on
+          // a word list for 18. I don't like that. can we make it a hard rule not to expand bad
+          // decisions?"). A first cut here kept the ambient regex as the fallback and added the
+          // four words it had missed — which is how a word list becomes the rule again. The honest
+          // fallback for an EXCEPTION is that the exception does not happen: the clause rides only
+          // on a positive `single`, and an unanswered, empty or off-enum field drops it. Print
+          // writes a returning weapon 4 times in 1291 rows, so defaulting to no clause is wrong on
+          // nearly nothing, while a list is wrong wherever its author's imagination stopped.
           const supply = String(p.projectile_supply ?? '').trim().toLowerCase();
-          const ambient = supply === 'ambient' || (!['single', 'ambient'].includes(supply)
-            && /\b(?:slab|stone|rock|boulder|rubble|debris|chunk|shard|brick|ic(?:e|icle)|clod|coin|web|dart|bolt|arrow|spine|quill|mud|tar|sand|ash|ember|dung|refuse|scrap)s?\b/i.test(proj));
-          if (ambient) {
+          if (supply !== 'single') {
             const before = e.text;
             e.text = e.text.replace(/\s*\*?Hit or Miss:\*?\s*Immediately after the attack, [^.]*returns to [^.]*\.\s*/, ' ').replace(/\s+$/, '');
-            if (e.text !== before) trace('returning clause dropped:', `"${e.name}" throws ${proj} — ${supply === 'ambient' ? 'the call says the supply is ambient' : `no answer from the call, and the words read as ambient ammunition`}; print writes a returning weapon 4 times in 1291 rows and never for ammunition the creature has endlessly`);
+            if (e.text !== before) trace('returning clause dropped:', `"${e.name}" throws ${proj} — the call did not say this projectile is a single object the creature must recover (projectile_supply: ${supply || '(unanswered)'}), so it stays where it lands; print writes a returning weapon 4 times in 1291 rows`);
           }
         }
       }
@@ -8466,7 +8472,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // (Measured correction to the handoff: print's Goblin Boss has NO Redirect Attack —
             // Multiattack, Scimitar, Shortbow, Nimble Escape is the whole block — so nothing was
             // shed there; that claim was a 2014 feature remembered into 5.2.)
-            const printWins = same && nearHere && !same.print && !same.library;
+            // THE GM'S WORDS SURVIVE PRINT'S NAME (Fable's audit, 2026-11-09). This guard knew
+            // only `print` and `library`, so print's same-named row would overwrite a row the GM
+            // ASKED for — a seat row carrying the clause it answers, or a GM quote. Measured over
+            // 440 sheets / 11 fortys: 16 of these collisions, 0 on a GM-stamped row, so the
+            // exposure was zero and the hole was real. Print governs where the GM said nothing.
+            const gmOwns = !!(same && (same.clause || same.gmQuote || same.authoredSeat));
+            if (same && nearHere && gmOwns) trace('print canon row withheld:', `${r.section}/"${r.name}" — the sheet's row of that name answers the GM ("${String(same.clause ?? same.gmQuote ?? 'authored seat').slice(0, 46)}"), and the GM's words outrank print's name`);
+            const printWins = same && nearHere && !same.print && !same.library && !gmOwns;
             if (printWins && !/ \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(r.name)) {
               const pbU = Number.isFinite(pc.pb) ? scaled.pb - pc.pb : 0;
               const txU = asInline(r.text).replace(/\bDC (\d+)\b/g, (m0, d) => `DC ${Number(d) + pbU}`);

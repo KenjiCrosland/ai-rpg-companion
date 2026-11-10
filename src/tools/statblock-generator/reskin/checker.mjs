@@ -601,12 +601,110 @@ export function effectiveHp(m, cr) {
   else if (wide(def)) mult = cr <= 4 ? 2 : cr <= 10 ? 1.5 : cr <= 16 ? 1.25 : 1;
   return Math.round(Number(m.hp) * mult * defensivePostureMult(m));
 }
+// Print's median HP at each CR (SRD 5.2, every CR the DMG table keys). A tier with four or more
+// print blocks carries ITS OWN MEDIAN, untouched. A thinner tier (CR 12, 14, 19, 20) is interpolated
+// in log space between the nearest healthy tiers either side, so one odd block cannot bend the curve
+// and a thin tier can never overwrite a healthy one — the first cut forced monotonicity across the
+// whole curve and pushed CR 13's real median of 198 up to 224 on the strength of CR 12's two blocks.
+// The curve dips once, at CR 12 (198 after 199): that is print, and it is left alone.
+// `hp-curve.spec.js` re-derives all of this from `srd52-monsters.json` and fails if the corpus moves.
+export const PRINT_HP_BY_CR = {
+  '0': 3,
+  '1/8': 9,
+  '1/4': 13,
+  '1/2': 21,
+  '1': 26,
+  '2': 45,
+  '3': 65,
+  '4': 76,
+  '5': 104,
+  '6': 123,
+  '7': 127,
+  '8': 136,
+  '9': 162,
+  '10': 178,
+  '11': 199,
+  '12': 198,
+  '13': 198,
+  '14': 204,
+  '15': 210,
+  '16': 220,
+  '17': 250,
+  '19': 294,
+  '20': 317,
+  '21': 341,
+  '22': 423,
+  '23': 481,
+  '24': 527,
+  '30': 697,
+};
+// keyed exactly as `challengeRatings.json` keys its rows ('1/8', '1/4', '1/2', then integers), because
+// the AC step two lines below reads `TABLE[defBase]` — a CR this returns that the DMG table does not
+// carry threw on the first cut (`TABLE['0.125'].armor_class` of undefined, caught by the donor-HP
+// spec). Every key here must exist there; the spec asserts it.
+// SORTED BY CR, NOT BY OBJECT KEY ORDER. JS puts integer-like keys first in ascending order and
+// string keys ('1/8', '1/4', '1/2') after them, so `Object.keys` here reads 0,1,…,30,1/8,1/4,1/2 —
+// which made the curve's own spec compare CR 30 against CR 1/8 and fail. The lookup below is a
+// nearest-match over every key so order never changed a result, but a reference curve that is not
+// in CR order is a trap for the next reader.
+const CR_OF_KEY = (k) => (k.includes('/') ? Number(k.split('/')[0]) / Number(k.split('/')[1]) : Number(k));
+const PRINT_HP_CRS = Object.keys(PRINT_HP_BY_CR).filter((k) => TABLE[k]).sort((a, b) => CR_OF_KEY(a) - CR_OF_KEY(b));
+
+// the CR whose print-median HP this effective HP sits closest to, in log space so a 20% miss costs
+// the same at CR 2 as at CR 20 (the curve is multiplicative, not additive)
+// THE REFERENCE IS PRINT'S MEDIAN x 1.25, AND THE 1.25 IS NOT A FUDGE. The DMG's method derives a
+// base CR from effective HP and then ADDS rungs for AC and for defensive traits (Magic Resistance,
+// Legendary Resistance, Regeneration, a Hide bonus action). Print's own monsters carry those traits,
+// so a reference set at print's exact median hands every print block its label from HP alone and
+// then pushes it a rung higher: measured at k=1.00, print read net +0.5 with 26% of blocks HOT.
+// The reference therefore sits where print's HP lands AFTER its own traits are counted — about its
+// 65th percentile. Swept against all 209 scorable print blocks:
+//   k=1.00  net +0.5  cold  6%  hot 26%        k=1.25  net 0.0  cold 10%  hot  8%   <- centred
+//   k=1.10  net +0.5  cold  7%  hot 16%        k=1.30  net 0.0  cold 12%  hot  6%
+//   k=1.20  net +0.5  cold  9%  hot 12%        k=1.40  net 0.0  cold 13%  hot  4%
+// 1.25 is the value where the net median reaches 0 AND the tails are closest to symmetric, which is
+// what "calibrated" means here: print, read by this instrument, sits on its own labels.
+export const PRINT_HP_TRAIT_HEADROOM = 1.25;
+
+function crByPrintHp(effHp) {
+  const hp = Math.max(1, Number(effHp) || 1);
+  let best = PRINT_HP_CRS[0], bestD = Infinity;
+  for (const cr of PRINT_HP_CRS) {
+    // log distance: a 20% miss costs the same at CR 2 as at CR 20, because the curve is
+    // multiplicative (26 HP at CR 1 to 612 at CR 30), not additive
+    const d = Math.abs(Math.log(hp / (PRINT_HP_BY_CR[cr] * PRINT_HP_TRAIT_HEADROOM)));
+    if (d < bestD) { bestD = d; best = cr; }
+  }
+  return best;
+}
+
 export function dmgRead(m) {
   const s = sustainedOf(m);
   const atkBest = Math.max(0, ...attackRowsOf(m).map((r) => r.atk).filter(Number.isFinite));
   const dcBest = Math.max(0, ...[...JSON.stringify(m.sections ?? {}).matchAll(/DC (\d+)/g)].map((x) => Number(x[1])));
   const effHp = effectiveHp(m, Number(m.cr ?? crNum(m.cr_str ?? '0')));
-  const defBase = crByBand(effHp, 'min_hit_points', 'max_hit_points');
+  // THE DEFENSIVE READ USES PRINT'S OWN HP-BY-CR, NOT THE DMG TABLE'S COLUMN (owner's read on the
+  // review page, 2026-11-09: "these blocks are way too cold, mostly on the defensive CR").
+  //
+  // The 2014 DMG's HP column was reverse-engineered from the 2014 Monster Manual, and no monster in
+  // the 2024 SRD is built to it: print's own median HP sits at **71% of the column's band minimum
+  // and reads below it on 94% of 223 blocks**. So this read branded print's own Owlbear (59 HP
+  // against a band of 101-115) cold, and every sheet we build beside it — the owner was reading our
+  // instrument, not our monsters. Measured the same day: our sheets carry 95% of print's median HP
+  // at their CR, and each donor family tracks its own print family within 10%. There was no body
+  // defect to find.
+  //
+  // The ratio is not a constant to divide out — it climbs with CR (0.37 at CR 1, 0.79 at CR 5, 0.85
+  // at CR 9, 0.95 at CR 20), because the column rises faster than print's monsters do. So the
+  // reference is print's curve itself: median HP per CR over all 223 blocks, the thin tiers (n < 4)
+  // averaged with their neighbours and the result forced monotonic. A closed fact about print, the
+  // way the print attack list and print's own rates already are (CLAUDE.md), re-derived by
+  // `hp-curve.spec.js` so it cannot drift from the corpus.
+  //
+  // Everything else about the DMG's method stays: effective HP still multiplies for resistances,
+  // immunities and defensive posture; AC still steps two points at a time; the trait rungs below are
+  // unchanged. Only the column this looks up against is print's instead of 2014's.
+  const defBase = crByPrintHp(effHp);
   // DEFENSIVE TRAITS ARE HALF THE EQUATION (owner, 2026-10-16). The defensive
   // half priced HP, AC and wide resistances only, so a trait that makes a
   // creature harder to put down was free. Measured over the 329-block frozen
@@ -667,9 +765,16 @@ export function corpusAt(cr, edition = null) {
   let pool = list.filter((x) => Math.abs(Number(x.cr) - cr) <= 1);
   if (edition === '2014') { const exact = list.filter((x) => Number(x.cr) === cr); if (exact.length >= 5) pool = exact; } // the SRD 5.1 is dense: five or more at the CR is the band (pooling CR 0 critters into CR 1 put the floor at 1 HP)
   for (const w of [2, 3]) if (pool.length < 3) pool = list.filter((x) => Math.abs(Number(x.cr) - cr) <= w);
-  const rows = pool.map((x) => { const r = dmgRead(x); return { name: x.name, hp: r.effHp, ac: Number(x.ac), dpr: r.dmg, read: r.read }; });
+  const rows = pool.map((x) => { const r = dmgRead(x); return { name: x.name, hp: r.effHp, ac: Number(x.ac), dpr: r.dmg, read: r.read, atk: r.atkBest, dc: r.dcBest }; });
   const span = (k) => { const v = rows.map((r) => r[k]).filter((v2) => Number.isFinite(v2) && v2 > 0).sort((a, b) => a - b); return v.length ? [v[0], v[v.length - 1]] : null; };
-  const out = { n: rows.length, hp: span('hp'), ac: span('ac'), dpr: span('dpr'), read: span('read') };
+  // PER CR, NOT A FORMULA (owner, 2026-11-09). The card's `4 + CR/2` attack bonus and `11 + CR/2`
+  // save DC are formulas, and they drift from print from CR 5 up: print swings +10 at CR 9 where the
+  // formula says +8, and writes DC 17 where it says 15. Rather than replace the card's formula —
+  // which is an owner-designated authority and changes the power of every sheet — this carries
+  // print's OWN attack bonus and DC at this CR, so a sheet can be compared with what print actually
+  // prints and the gap can be read rather than inferred. Measurement, not generation.
+  const mid = (k) => { const v = rows.map((r) => r[k]).filter((v2) => Number.isFinite(v2) && v2 > 0).sort((a, b) => a - b); return v.length ? v[Math.floor(v.length / 2)] : null; };
+  const out = { n: rows.length, hp: span('hp'), ac: span('ac'), dpr: span('dpr'), read: span('read'), atk: span('atk'), dc: span('dc'), atkMid: mid('atk'), dcMid: mid('dc') };
   corpusCache.set(key, out); return out;
 }
 
@@ -862,7 +967,33 @@ function gateBands(m, ctx, F) {
     // ~45 a round by print's own Multiattack and sits under the CR 13 band — print overrules the
     // band for a print body at print's CR, so the finding is a note there, never a FAIL
     const printOwn = !!(ctx?.print && (ctx.print.exact || ctx.print.borrowOnly) && Number.isFinite(Number(ctx.print.cr)) && Math.abs(cr - Number(ctx.print.cr)) <= 1);
-    const axisSev = r.read < cr - 1 && !printOwn ? 'fail' : 'soft'; const carried = `${r.read < cr - 1 ? `; reads CR ${r.read}` : `; the read holds at ${r.read}, within print's own ±1`}${printOwn ? ` — print's own ${ctx.print.name} at its CR, a note` : ''}`;
+    // A BODY WELL UNDER PRINT'S OWN FLOOR FAILS ON ITS OWN, not only when the AVERAGED read drops
+    // (2026-11-09, found when the defensive ruler was recalibrated). The read is the mean of the two
+    // axes, so a glass cannon's damage can carry a body print would never print: 40 HP at CR 5 —
+    // 53% of print's own floor of 75 — read CR 4 because its claws hit for 40 a round, and this rule
+    // called it soft. The DMG's averaging is right for the VERDICT and wrong for "is this a body
+    // print would ship". `c.hp`/`c.dpr` are print's own spread at this CR, so print passes by
+    // construction at any threshold at or below its floor; 80% of the floor is the margin, matching
+    // the 0.95 just-under test below it.
+    const wayUnder = (c.hp && r.effHp < c.hp[0] * 0.8) || (c.dpr && r.dmg < c.dpr[0] * 0.8);
+    const axisSev = (r.read < cr - 1 || wayUnder) && !printOwn ? 'fail' : 'soft'; const carried = `${r.read < cr - 1 ? `; reads CR ${r.read}` : `; the read holds at ${r.read}, within print's own ±1`}${printOwn ? ` — print's own ${ctx.print.name} at its CR, a note` : ''}`;
+    // PER-CR ATTACK AND DC, AGAINST PRINT'S OWN (owner, 2026-11-09: "can we do a per CR check? not a
+    // formula?"). The card hands out `4 + CR/2` to hit and `11 + CR/2` for saves; print's monsters at
+    // the same CR run 1-2 higher from CR 5 up (at CR 9 print's median is +9 and DC 16, the card says
+    // +8 and DC 15). The formula sits INSIDE print's range, so this is not a defect to fail — it is
+    // the gap the owner could feel as "it keeps missing" and could not name. Reported, not enforced:
+    // below print's whole range is soft, and the distance to print's median rides in the message so
+    // it can be read per sheet on the review page.
+    if (Number.isFinite(c.atkMid) && r.atkBest > 0) {
+      const gap = c.atkMid - r.atkBest;
+      if (c.atk && r.atkBest < c.atk[0]) F('print-atk', 'soft', `attack +${r.atkBest} is under every print block at CR ${cr} (+${c.atk[0]} to +${c.atk[1]}, median +${c.atkMid}, n=${c.n})`, r.atkBest);
+      else if (gap >= 2) F('print-atk', 'soft', `attack +${r.atkBest} sits ${gap} under print's median at CR ${cr} (+${c.atkMid}; print runs +${c.atk[0]} to +${c.atk[1]}, n=${c.n}) — the card's formula is +${4 + Math.floor(cr / 2)}`, r.atkBest);
+    }
+    if (Number.isFinite(c.dcMid) && r.dcBest > 0) {
+      const gapD = c.dcMid - r.dcBest;
+      if (c.dc && r.dcBest < c.dc[0]) F('print-dc', 'soft', `save DC ${r.dcBest} is under every print block at CR ${cr} (${c.dc[0]} to ${c.dc[1]}, median ${c.dcMid}, n=${c.n})`, r.dcBest);
+      else if (gapD >= 2) F('print-dc', 'soft', `save DC ${r.dcBest} sits ${gapD} under print's median at CR ${cr} (${c.dcMid}; print runs ${c.dc[0]} to ${c.dc[1]}, n=${c.n})`, r.dcBest);
+    }
     if (c.dpr && r.dmg < c.dpr[0] * 0.95) F('under', axisSev, `damage ${r.dmg.toFixed(0)} a round sits under print at CR ${cr} (${c.dpr.map(Math.round).join('–')}, n=${c.n})${carried}`, r.dmg);
     else if (c.hp && r.effHp < c.hp[0] * 0.95) F('under', axisSev, `effective HP ${r.effHp}${r.effHp !== Number(m.hp) ? ` (${m.hp} with its resistances)` : ''} sits under print at CR ${cr} (${c.hp.join('–')}, n=${c.n})${carried}`, m.hp);
     else if (c.read && over < -1 && r.read < c.read[0]) F('under', 'fail', `reads CR ${r.read} by the DMG method, under print's own reads at ${cr} (${c.read.join('–')}, n=${c.n})`, r.read);
