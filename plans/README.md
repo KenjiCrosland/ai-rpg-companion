@@ -2,6 +2,7 @@
 
 Forward-dated implementation notes for work that isn't being done now but will need to be done when a specific feature lands. Each file describes:
 
+- **[`HANDOVER-2026-11-10.md`](HANDOVER-2026-11-10.md)** — START HERE for the reskin sprint: tree state, the owner's rules from this session, what landed/withdrawn with numbers, the open items with the trace line to start from, and the run plan.
 - **[`human-spot-check-2026-11-09.md`](human-spot-check-2026-11-09.md)** — the human review page per run (`scripts/review-html.mjs`): clean block, provenance tags, DPR calculator, receipts, trace, Keeper/Runs/Tweak/Fix with export. Trigger: owner wants to read a forty; build before the next run.
 - The trigger — the feature or change that makes the plan relevant.
 - The problem the plan exists to solve.

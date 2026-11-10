@@ -3539,8 +3539,38 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (!raw || raw.split(/\s+/).length > 4) throw new Error(`unrenamed entry: "${e.name}" — failing loudly per spec`);
       const fresh = titleCase(raw);
       renamed.set(e.name, fresh);
+      // A WEAPON THE GM NAMED BRINGS ITS OWN DIE AND RANGE (the critic's fifth GM forty, 0 of 3
+      // rolls: "goblin boss with a heavy crossbow" shipped light-crossbow stats, 1d8 at 80/320).
+      //
+      // TRACED TO HERE, after a first fix went to the wrong pass. The crossbow does not arrive by
+      // print-canon rename — the sheet says `named parts: Crossbow (slot, ranged)`, so the PARTS
+      // pass wrote `p.renames[<chassis ranged key>] = "Crossbow"` and this block applies it with
+      // `text: e.text`: the chassis's dice, unchanged, under the GM's name. Fixing the rename site
+      // left the sheet exactly as it was.
+      //
+      // Print's attack BONUS and attack COUNT are the CR math and stay. The die and the range are
+      // what the weapon IS, so they follow the GM's own words — read from the concept, never from
+      // the renamed label, which resolves "Crossbow" to the generic entry and loses "heavy".
+      const gmW = (() => {
+        const named = weaponsIn(readPhrases(String(options.userConcept ?? concept ?? '')));
+        const head = fresh.toLowerCase();
+        const pick = named.find((w) => w !== head && head.includes(w.split(' ').pop()) && WEAPONS[w]);
+        const prop = pick ? WEAPONS[pick] : null;
+        const have = WEAPONS[weaponFor(fresh) ?? ''] ?? null;
+        return prop && prop.die && have && prop.die !== have.die ? { pick, prop } : null;
+      })();
+      let outText = e.text;
+      if (gmW && /Attack Roll/.test(String(e.text ?? ''))) {
+        outText = String(e.text)
+          .replace(/(\d+) \((\d+)d(\d+)((?: [+-] \d+)?)\)/, (m0, avg, n, d, mod) => {
+            const bonus = Number(String(mod || '').replace(/[^\d-]/g, '') || 0);
+            return `${Math.floor((Number(n) * (gmW.prop.die + 1)) / 2) + bonus} (${n}d${gmW.prop.die}${mod})`;
+          })
+          .replace(/range \d+\/\d+ ft\./, gmW.prop.range ? `range ${gmW.prop.range} ft.` : '$&');
+        if (outText !== e.text) trace('gm weapon dice:', `"${fresh}" takes the ${gmW.pick}'s die and range (d${gmW.prop.die}${gmW.prop.range ? `, ${gmW.prop.range}` : ''}) — the GM named it and the chassis row carried its own; the attack bonus and the attack count stand`);
+      }
       const { wildcard_slot: _ws2, ...rest2 } = e;
-      return { ...rest2, name: e.wildcard_slot ? fresh : fresh + (e.gate ? ` (${e.gate})` : ''), text: e.text, text_noRider: e.text_noRider, was: e.name, wildcard: !!e.wildcard_slot, gate: e.gate }; // the orb's bite keeps its print mark through the rename (checker 2026-10-02)
+      return { ...rest2, name: e.wildcard_slot ? fresh : fresh + (e.gate ? ` (${e.gate})` : ''), text: outText, text_noRider: e.text_noRider, was: e.name, wildcard: !!e.wildcard_slot, gate: e.gate }; // the orb's bite keeps its print mark through the rename (checker 2026-10-02)
     });
   }
   // cross-references + creature name + damage types + wildcard body
