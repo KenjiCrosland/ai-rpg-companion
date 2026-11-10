@@ -154,18 +154,39 @@ export function crFromPrompt(text) {
 // and the print corpus hold no such name, so lookup returns nothing and the block
 // is built from the library as homebrew. An output guard keeps the token and its
 // lore vocabulary off the finished block.
+// AN ALIAS'S SIGNATURE IS ITS OWN CLAUSE (the critic's fifth GM forty, 2026-11-09: "a displacer
+// beast without Displacement is a tentacle cat").
+//
+// These texts replace the Product Identity name in the concept, and the extraction reads the
+// result into clauses. Written as ONE sentence — "a six-legged panther with two tentacles whose
+// image appears a few feet from where it stands" — it is filed as ONE clause, and the Tentacles
+// row answered the whole of it: the displacement, the thing the creature IS FOR, was consumed by
+// an attack row and never became a row of its own. Measured on the sheet: Tentacles carried the
+// entire alias text as its clause.
+//
+// TWO EARLIER CUTS FAILED, AND BOTH FAILURES SHAPED THIS ONE. Splitting the TEXT into sentences
+// broke substitution — these phrases are dropped INSIDE the GM's own sentence, so "a mind flayer
+// that lost its tentacles" became "...devours its brain that lost its tentacles". SHORTENING the
+// text to a bare body broke ROUTING, which matches on the mechanic's own words ("each fire a
+// different ray"): the beholder fell through to a brute.
+//
+// So `text` is unchanged from what it always was, and `signature` is PURELY ADDITIVE — the same
+// mechanic restated as a standalone sentence, appended to the concept after the GM's words. The
+// extraction then has a sentence it can file as its own clause, and a clause the engine owes a
+// row. It says the thing twice on purpose: once where substitution and routing need it inline,
+// once where the clause reader needs it standing alone.
 export const PI_ALIASES = [
-  { keys: ['beholder', 'eye tyrant'], noun: 'orb', text: 'a floating orb with one great central eye and a crown of eyestalks that each fire a different ray' },
-  { keys: ['gauth'], noun: 'orb', text: 'a smaller floating orb with one central eye and a ring of eyestalks that fire rays' },
-  { keys: ['mind flayer', 'mindflayer', 'illithid'], noun: 'aberration', text: 'a tentacle-faced psychic aberration that stuns minds and eats brains' },
-  { keys: ['displacer beast'], noun: 'panther', text: 'a six-legged panther with two tentacles whose image appears a few feet from where it stands' },
-  { keys: ['umber hulk'], noun: 'brute', text: 'a burrowing insectile brute with mandibles whose gaze scrambles thought' },
-  { keys: ['carrion crawler'], noun: 'worm', text: 'a many-legged worm whose tentacles paralyze what they touch' },
+  { keys: ['beholder', 'eye tyrant'], noun: 'orb', text: 'a floating orb with one great central eye and a crown of eyestalks that each fire a different ray', signature: 'Each eyestalk fires a different magical ray, and its central eye projects a cone that suppresses magic' },
+  { keys: ['gauth'], noun: 'orb', text: 'a smaller floating orb with one central eye and a ring of eyestalks that fire rays', signature: 'The eyestalks fire magical rays' },
+  { keys: ['mind flayer', 'mindflayer', 'illithid'], noun: 'aberration', text: 'a tentacle-faced psychic aberration that stuns minds and eats brains', signature: 'It blasts minds with a cone of psychic force that stuns, and devours the brain of a victim it holds' },
+  { keys: ['displacer beast'], noun: 'panther', text: 'a six-legged panther with two tentacles whose image appears a few feet from where it stands', signature: 'Its body always appears a few feet from where it really is, so an attack that hits it may strike only the illusion' },
+  { keys: ['umber hulk'], noun: 'brute', text: 'a burrowing insectile brute with mandibles whose gaze scrambles thought', signature: 'Its gaze scrambles the thoughts of anyone who looks at it' },
+  { keys: ['carrion crawler'], noun: 'worm', text: 'a many-legged worm whose tentacles paralyze what they touch', signature: 'Its tentacles paralyze what they touch' },
   { keys: ['yuan-ti abomination', 'yuan ti abomination'], noun: 'humanoid', text: 'a giant serpent-bodied humanoid with arms and a snake\'s head' },
   { keys: ['yuan-ti', 'yuan ti', 'yuanti'], noun: 'humanoid', text: 'a serpent-blooded humanoid who sheds human form for scales and fangs' },
   { keys: ['githyanki'], noun: 'warrior', text: 'a gaunt psychic warrior who steps between planes' },
   { keys: ['githzerai'], noun: 'monk', text: 'a gaunt psychic monk who steps between planes' },
-  { keys: ['slaad', 'slaadi', 'red slaad', 'blue slaad', 'green slaad', 'gray slaad', 'grey slaad', 'death slaad'], noun: 'beast', text: 'a toad-headed chaos beast from the outer planes whose claws spread infection' },
+  { keys: ['slaad', 'slaadi', 'red slaad', 'blue slaad', 'green slaad', 'gray slaad', 'grey slaad', 'death slaad'], noun: 'beast', text: 'a toad-headed chaos beast from the outer planes whose claws spread infection', signature: 'Its claws spread a chaotic infection' },
   { keys: ['kuo-toa', 'kuo toa', 'kuotoa'], noun: 'cultist', text: 'a fish-headed humanoid cultist of the deep who fights with net and spear' },
 ];
 // longest key first, so "yuan-ti abomination" wins over "yuan-ti" and "death slaad" over "slaad"
@@ -177,7 +198,7 @@ export function rewritePI(text) {
   for (const { key, entry } of PI_KEYS) {
     const re = piRegex(key);
     if (!re.test(out)) continue;
-    out = out.replace(re, (m) => { hits.push({ key, matched: m, text: entry.text }); const lead = /^[A-Z]/.test(m) ? entry.text.charAt(0).toUpperCase() + entry.text.slice(1) : entry.text; return lead; });
+    out = out.replace(re, (m) => { hits.push({ key, matched: m, text: entry.text, signature: entry.signature ?? null }); const lead = /^[A-Z]/.test(m) ? entry.text.charAt(0).toUpperCase() + entry.text.slice(1) : entry.text; return lead; });
   }
   // an article before the description doubles up ("a a floating orb") — fold it
   out = out.replace(/\b(a|an|the) (a|an|the) /gi, '$2 ');

@@ -7,7 +7,11 @@ describe('the Product Identity alias layer (spec 2026-10-01)', () => {
   test('rewrite(): the rewritten text and an alias record per key; a no-op on non-PI input; the longest match wins; plurals, possessives, case and synonyms', () => {
     const r = rewritePI('a mind flayer that lost its tentacles and fights with a sword');
     expect(r.text).toBe('a tentacle-faced psychic aberration that stuns minds and eats brains that lost its tentacles and fights with a sword');
-    expect(r.hits).toEqual([{ key: 'mind flayer', matched: 'mind flayer', text: PI_ALIASES[2].text }]);
+    // `signature` joined the hit on 2026-11-09: an alias's defining mechanic is appended to the
+    // concept as its own sentence so the extraction files it as its own clause (a displacer beast
+    // whose Displacement was eaten by the Tentacles row). `text` is unchanged — it still has to
+    // substitute inside the GM's sentence and still has to carry the words routing matches on.
+    expect(r.hits).toEqual([{ key: 'mind flayer', matched: 'mind flayer', text: PI_ALIASES[2].text, signature: PI_ALIASES[2].signature ?? null }]);
     expect(rewritePI('a wolf that hunts the moon')).toEqual({ text: 'a wolf that hunts the moon', hits: [] });
     expect(rewritePI('a yuan-ti abomination').hits[0].key).toBe('yuan-ti abomination'); // not "yuan-ti"
     expect(rewritePI('a death slaad').hits[0].key).toBe('death slaad');

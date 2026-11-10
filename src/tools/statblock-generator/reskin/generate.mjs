@@ -1843,7 +1843,15 @@ export function groundedClauses(list, userText, trace = () => {}, lacksAnswer = 
     }
   });
   const cleaned = phrases.map((p) => p.trim().replace(/^(?:and|or|then|which|who|that)\s+/i, '').replace(/[.!?,;]$/, '').trim()).filter((p) => p && (clauseWords(p).length || /\d/.test(p))); // a bare "CR 5" or "AC 22" is a phrase too
-  const model = (Array.isArray(list) ? list : []).filter((c) => c && typeof c.text === 'string' && c.text.trim()).map((c) => ({ text: c.text.trim(), kind: /^(?:header|descriptive|mechanical)$/.test(c.kind) ? c.kind : null, polarity: /^(?:has|lacks)$/.test(c.polarity) ? c.polarity : null, when: ASK_WHEN.test(c.when) ? c.when : null, when_quote: String(c.when_quote ?? '').trim(), how_often: ASK_OFTEN.test(c.how_often) ? c.how_often : null, how_often_quote: String(c.how_often_quote ?? '').trim(), shape: ASK_SHAPE.test(c.shape) ? c.shape : null, mechanic: ASKED_MECHANICS.includes(String(c.mechanic)) ? String(c.mechanic) : null, mechanic_quote: String(c.mechanic_quote ?? '').trim() }));
+  const model = (Array.isArray(list) ? list : []).filter((c) => c && typeof c.text === 'string' && c.text.trim()).map((c) => ({ text: c.text.trim(), // A SPEED THE CALL NAMED MAKES THE CLAUSE A HEADER, WHATEVER KIND IT ALSO SAID (2026-11-09,
+      // second cut). The first put the example in the prompt and stopped there — but this
+      // normaliser whitelists the fields it copies, so `header_speed` was dropped before the engine
+      // could ever read it, and the fix changed nothing on a live roll ("slow" still filed
+      // descriptive, Speed still the chassis's). Answering a walking Speed in feet IS filing it as
+      // a header, so the more specific answer wins over the coarser one.
+      kind: Number.isFinite(Number(c.header_speed)) && Number(c.header_speed) > 0 ? 'header'
+        : (/^(?:header|descriptive|mechanical)$/.test(c.kind) ? c.kind : null),
+      header_speed: Number.isFinite(Number(c.header_speed)) && Number(c.header_speed) > 0 ? Number(c.header_speed) : null, polarity: /^(?:has|lacks)$/.test(c.polarity) ? c.polarity : null, when: ASK_WHEN.test(c.when) ? c.when : null, when_quote: String(c.when_quote ?? '').trim(), how_often: ASK_OFTEN.test(c.how_often) ? c.how_often : null, how_often_quote: String(c.how_often_quote ?? '').trim(), shape: ASK_SHAPE.test(c.shape) ? c.shape : null, mechanic: ASKED_MECHANICS.includes(String(c.mechanic)) ? String(c.mechanic) : null, mechanic_quote: String(c.mechanic_quote ?? '').trim() }));
   // THE CALL JUDGES WHETHER THE GM IS TAKING SOMETHING AWAY (audit, 2026-10-15).
   // NEG_CUE reads the GRAMMAR of negation, and English says "lacks" with
   // adjectives and verbs far more often than with "no" or "cannot": of seventeen
@@ -2369,6 +2377,22 @@ export async function generateReskin(options, callLLM) {
   // here, once; the raw words never reach routing, lookup, naming or flavor again
   const piHits = piAliasesIn(`${options.userConcept ?? ''} ${concept0}`);
   for (const h of piHits) trace('pi alias:', `"${h.matched}" → "${h.text}"`);
+  // AN ALIAS'S SIGNATURE IS OWED ITS OWN CLAUSE (the critic's fifth GM forty, 2026-11-09: "a
+  // displacer beast without Displacement is a tentacle cat"). The alias text replaces the Product
+  // Identity name INSIDE the GM's sentence, so it has to stay one noun phrase — and written that
+  // way the creature's defining mechanic rides along as a subordinate clause ("...whose image
+  // appears a few feet from where it stands"), which the extraction files as part of the body and
+  // an attack row then answers whole. Measured on #20: the Tentacles row carried the entire alias
+  // text as its clause, and nothing on the sheet displaced anything.
+  //
+  // The signature is therefore appended as a SEPARATE SENTENCE after the concept, where the
+  // extraction owes it a clause of its own and the engine owes that clause a row. The GM's own
+  // words still come first and still govern.
+  const piSignatures = [...new Set(piHits.map((h) => h.signature).filter(Boolean))];
+  if (piSignatures.length) {
+    options = { ...options, concept: `${options.concept ?? concept0}. ${piSignatures.join('. ')}` };
+    trace('pi signature:', `${piSignatures.length} alias signature(s) appended as their own clauses so the creature's defining mechanic is owed a row: "${piSignatures.join('" · "')}"`);
+  }
   const concept = readPhrases(concept0);
   options = { ...options, concept, userConcept: options.userConcept != null ? readPhrases(options.userConcept) : options.userConcept, signatureElements: (options.signatureElements ?? []).map((x) => (typeof x === 'string' ? readPhrases(x) : x && typeof x.text === 'string' ? { ...x, text: readPhrases(x.text) } : x)) };
   const removed = removalClauses(options.userConcept ?? concept);
@@ -5851,6 +5875,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               const stateS = (dangS || slotS || actS) ? null : undefinedStateIn(row.text);
               const contraS = (dangS || slotS || actS || stateS) ? null
                 : contradictsSelfHeal(row.text, [...Object.values(sections).flat(), ...(row ? [row] : [])].map((r2) => ({ sec: 'Traits', r: r2 })));
+              // THE FALLBACK FOR A CALL THAT DID NOT HEED IT (CLAUDE.md allows code as a fallback
+              // when the call fails, never as a tiebreaker against it). The authoring prompt now
+              // states that {dmg} is damage and never a count, and that a promised list must be
+              // written in the same row — see author.mjs. These two arms catch the sheet when it is
+              // not. The verbs below are the ones the forms' own examples use; they judge SYNTAX
+              // (dice standing where an integer belongs), not what the row means, and a sweep of
+              // print's 1291 rows refuses none of them.
+              //
               // A COUNT IS AN INTEGER, AND "THE OPTIONS BELOW" MUST BE BELOW (the critic's fifth GM
               // forty, 2026-11-09, scored Fix with a double-dagger): Thornback shipped "Legendary
               // Nature. Thornback can take 14 (4d6) Legendary Actions after another creature's
@@ -5864,7 +5896,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               // "choosing from the options below" / "one of the following" with nothing to choose from
               const promisesList = /\b(?:from the options below|one of the following|listed below|from the list below|choose from the options)\b/i.test(row.text ?? '');
               const listS = (dangS || slotS || actS || stateS || contraS || countS) ? null
-                : (promisesList && !/[.:]\s*\n|\n\s*[-*\d]|\b\d\s*—\s*/.test(row.text ?? '') ? 'the options it says to choose from' : null);
+                // print writes its list INLINE as often as on its own lines — the Half-Dragon's
+                // "one of the following damage types (DM's choice): Acid, Cold, Fire, Lightning, or
+                // Poison" is a complete row, and a narrower test refused it. A list is a list
+                // wherever it sits; what Thornback has is a promise with nothing after it at all.
+                : (promisesList && !/[.:]\s*\n|\n\s*[-*\d]|\b\d\s*—\s*|:\s*[^.\n]*,[^.\n]*(?:,|\bor\b)/.test(row.text ?? '') ? 'the options it says to choose from' : null);
               const needS = (dangS || slotS || actS || stateS || contraS || countS || listS) ? null : (form.f.requiresConditionNamed ?? null);
               const appliesS = needS ? new Set([...Object.values(sections).flat().flatMap((e2) => imposedConditions(e2)), ...(row.imposes ? [String(row.imposes)] : [])]) : null;
               const unmetS = needS && !appliesS.has(String(needS)) ? needS : null;
@@ -8615,9 +8651,22 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // reasoning that already excludes `library`). And a trigger-shaped row that never says
             // what triggers it loses to print's regardless of any stamp — print is the thing with
             // the Trigger.
-            const triggerShaped = (txt) => /\bin response to\b|^Trigger:|\*Trigger:\*/i.test(String(txt ?? ''));
-            const missingTrigger = !!(same && triggerShaped(same.text) && !/Trigger:/i.test(String(same.text ?? '')) && /Trigger:/i.test(String(r.text ?? '')));
-            const gmOwns = !!(same && !same.kit && !missingTrigger && (same.clause || same.gmQuote || same.authoredSeat));
+            // ONE CONDITION, NOT TWO — AND THE CRITIC'S SECOND ONE WAS WRONG ABOUT PRINT. They
+            // asked that "a row with no Trigger clause lose to print's regardless", because
+            // Grizzelda's kept Protective Magic reads "casts Counterspell or Shield in response to
+            // the spell's trigger" with no Trigger: line. But print's OWN Mage reaction is written
+            // exactly that way — prose, no Trigger: line — so the shape they faulted is print's
+            // shape, and a rule against it would refuse print. Two earlier cuts of this guard tried
+            // to encode it anyway: one matched the phrase "in response to", which is a word list
+            // judging what a row IS (CLAUDE.md forbids it), and one compared Trigger: lines that
+            // print does not write. Both dropped.
+            //
+            // What was actually wrong needs no prose read at all: a row the KIT placed is the
+            // kit's, not the GM's. All four firings on the forty were the mage kit's row stamped
+            // with the concept's leading fragment ("swamp witch npc", "necromancer") — provenance,
+            // not an ask — and that stamp is what let a kit row outrank print's. The same reasoning
+            // already excludes `library`.
+            const gmOwns = !!(same && !same.kit && (same.clause || same.gmQuote || same.authoredSeat));
             if (same && nearHere && gmOwns) trace('print canon row withheld:', `${r.section}/"${r.name}" — the sheet's row of that name answers the GM ("${String(same.clause ?? same.gmQuote ?? 'authored seat').slice(0, 46)}"), and the GM's words outrank print's name`);
             const printWins = same && nearHere && !same.print && !same.library && !gmOwns;
             if (printWins && !/ \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(r.name)) {
