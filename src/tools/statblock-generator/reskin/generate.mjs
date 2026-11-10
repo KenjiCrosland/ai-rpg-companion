@@ -223,7 +223,8 @@ export const CASTER_SPELL_MENU = ['Detect Magic', 'Mage Hand', 'Minor Illusion',
 // per-cast averages (base slot level, 2024 text) — the tier engine's
 // numbers for the at-will-vs-daily call; zone spells also sit in
 // NEVER_AT_WILL regardless (the Web law: print never at-wills the zone)
-export const SPELL_DAMAGE_AVG = { Fireball: 28, 'Lightning Bolt': 28, 'Scorching Ray': 21, Shatter: 13, 'Magic Missile': 10, 'Guiding Bolt': 14, 'Mind Spike': 13, 'Acid Arrow': 15, 'Ice Knife': 12, 'Cone of Cold': 36, Blight: 36, 'Vampiric Touch': 10, 'Ray of Sickness': 9, Thunderwave: 9, 'Burning Hands': 10, 'Ice Storm': 23, 'Wall of Fire': 22, Cloudkill: 22 };
+export 
+const SPELL_DAMAGE_AVG = { Fireball: 28, 'Lightning Bolt': 28, 'Scorching Ray': 21, Shatter: 13, 'Magic Missile': 10, 'Guiding Bolt': 14, 'Mind Spike': 13, 'Acid Arrow': 15, 'Ice Knife': 12, 'Cone of Cold': 36, Blight: 36, 'Vampiric Touch': 10, 'Ray of Sickness': 9, Thunderwave: 9, 'Burning Hands': 10, 'Ice Storm': 23, 'Wall of Fire': 22, Cloudkill: 22 };
 // THE UPCAST LAW (owner: "wouldn't a CR 12 have a higher fireball?" —
 // measured 2026-09-02, 33 print notations): at-will list spells stay
 // BASE level always (Adult Brass at-will Scorching Ray unnoted at CR 13,
@@ -276,6 +277,18 @@ export const SPELL_ATTACK_SPELLS = new Set(['Scorching Ray', 'Guiding Bolt', 'Ic
 export const CONTROL_SPELL_LEVEL = { 'Charm Person': 1, Sleep: 1, Command: 1, 'Hold Person': 2, Web: 2, 'Blindness/Deafness': 2, Suggestion: 2, Silence: 2, Slow: 3, Fear: 3, 'Bestow Curse': 3, 'Hypnotic Pattern': 3, Confusion: 4, Banishment: 4, 'Hold Monster': 5, 'Dominate Person': 5, Geas: 5 };
 export const CONTROL_AT_WILL_CR = 13;
 export const NEVER_AT_WILL = new Set(['Scrying', 'Stoneskin', 'Death Ward', 'Fire Shield', 'Freedom of Movement', 'Mirror Image', 'Blur', 'False Life', 'Barkskin', 'Shield of Faith', 'Protection from Evil and Good', 'Heroism', 'Magic Weapon', 'Divine Favor', 'Enhance Ability', 'Enlarge/Reduce', 'Web', 'Wall of Fire', 'Cloudkill', 'Sleep', 'Hypnotic Pattern', 'Vampiric Touch',
+  // THE ESCAPE CLAUSE (the critic's fifth GM forty, 2026-11-09: "Misty Step is listed At Will —
+  // the 3/Day bonus action became an unlimited action-economy teleport when it moved into the
+  // spell list"). A spell whose whole cost IS its limit has no cost at will: Nib Wickwhistle
+  // shipped at-will Misty Step at CR 3. Measured over print's 48 casters, counting their
+  // Spellcasting lists AND their gated rows (the Mage's own "Misty Step (3/Day)" bonus action),
+  // print writes these behind a limit every time and at will never:
+  //   Misty Step 2x   Fly 4x   Counterspell 2x
+  // This is not "utility is gated" as a rule — print at-wills Invisibility 5 times and Dispel
+  // Magic 3 — it is the three this set was missing. Hold Person (2x gated) and Charm Person (2x)
+  // are ALSO never at-will in print, but they are control spells and `CONTROL_AT_WILL_CR` already
+  // rules that question deliberately from CR 13; two print blocks is not enough to overturn it.
+  'Misty Step', 'Fly', 'Counterspell',
   // THE HEALING CLAUSE (Looming Mercy, 2026-09-09: "At Will: Cure
   // Wounds, Bless, Aid, Beacon of Hope" — an infinite healing battery
   // that deletes the attrition game between fights). Print tiers
@@ -8448,7 +8461,43 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           if (sameRules && /^Spellcasting$/i.test(r.name)) { // print's spell list is print's identity: on the caster chassis the Lich carried Ray of Sickness and Blight, not Finger of Death and Power Word Kill (critic's regressions brief 2026-10-04)
             const named0 = /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability/.exec(r.text)?.[1]; const K0 = { Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON', Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' };
             const dc0 = named0 && scaled.stats ? 8 + scaled.pb + Math.floor(((scaled.stats[K0[named0]] ?? 10) - 10) / 2) : scaled.dc;
+            // A PRINT CASTER'S LIST IS WRITTEN FOR ITS OWN CR, AND A SHEET WELL ABOVE IT NEEDS MORE
+            // (the critic's fifth GM forty, 2026-11-09: Sister Maudra at CR 7 and Mother Ash at CR 9
+            // both stand on the CR 2 Priest and ship its two at-will spells and one daily).
+            //
+            // The mirror of the withholding above: print's list is too STRONG for a sheet well below
+            // its CR and too THIN for one well above it. This is the only place a list should grow —
+            // measured over print's 48 casters, list size does NOT track CR in general (at CR 11+ the
+            // median is 3 at-will and 3 daily, the same as below it; the Ancient Red Dragon at CR 24
+            // carries 3 and 2). It grows along ONE line, the dedicated casters:
+            //   Priest CR 2: 2+1 · Mage CR 6: 5+4 · Archmage CR 12: 8+6 · Lich CR 21: 8+7
+            // So a sheet standing on one of those bodies is topped up to the line's size AT ITS OWN
+            // CR, from the chassis's own picks — which were chosen for this sheet's CR and theme.
+            // Print's own spells are never removed or replaced; the list only gains.
+            const LINE = [{ cr: 2, aw: 2, dl: 1 }, { cr: 6, aw: 5, dl: 4 }, { cr: 12, aw: 8, dl: 6 }, { cr: 21, aw: 8, dl: 7 }];
+            // print writes SEVERAL daily lines — the Mage has "2/Day Each: Fireball, Invisibility"
+            // AND "1/Day Each: Cone of Cold, Fly". Reading only the first halves the count and makes
+            // this pass top up a list that is already full.
+            const spellNames = (txt, which) => String(txt).replace(/\*\*/g, '').split('\n')
+              .filter((l) => (which === 'aw' ? /At Will:/i.test(l) : /\d\/Day/i.test(l)))
+              .flatMap((l) => [...l.matchAll(/\*([A-Z][^*]*?)\*/g)].map((x) => x[1].trim()));
+            const chassisAw = spellNames(sameRules.text, 'aw'); const chassisDl = spellNames(sameRules.text, 'dl');
             const tx0 = asInline(r.text).replace(/\bDC \d+\b/g, `DC ${dc0}`); sameRules.text = tx0.charAt(0).toUpperCase() + tx0.slice(1); sameRules.print = true; sameRules.rules = true;
+            const want = [...LINE].reverse().find((t) => Number(cr) >= t.cr);
+            const haveAw = spellNames(sameRules.text, 'aw'), haveDl = spellNames(sameRules.text, 'dl');
+            if (want && Number(cr) - Number(pc.cr) >= 3 && (haveAw.length < want.aw || haveDl.length < want.dl)) {
+              const seen = new Set([...haveAw, ...haveDl]);
+              // print never writes these at will, so a top-up must not either (NEVER_AT_WILL)
+              const addAw = chassisAw.filter((x) => !seen.has(x) && !NEVER_AT_WILL.has(x)).slice(0, Math.max(0, want.aw - haveAw.length));
+              const addDl = chassisDl.filter((x) => !seen.has(x) && !addAw.includes(x)).slice(0, Math.max(0, want.dl - haveDl.length));
+              if (addAw.length || addDl.length) {
+                if (addAw.length) sameRules.text = sameRules.text.replace(/(At Will:\*?\*?\s*)([^\n]*)/i, (m0, lead, list) => `${lead}${list}, ${addAw.map((x) => `*${x}*`).join(', ')}`);
+                if (addDl.length) sameRules.text = /\d\/Day/i.test(sameRules.text)
+                  ? sameRules.text.replace(/(1\/Day Each:\*?\*?\s*)([^\n]*)/i, (m0, lead, list) => `${lead}${list}, ${addDl.map((x) => `*${x}*`).join(', ')}`)
+                  : `${sameRules.text}\n- **1/Day Each:** ${addDl.map((x) => `*${x}*`).join(', ')}`;
+                trace('print canon: spell list topped up —', `the ${pc.name}'s list is written for CR ${pc.cr} and this sheet is CR ${cr}; print's own spells stand and the chassis's add ${[...addAw, ...addDl].join(', ')} to reach print's dedicated-caster size at this CR (${want.aw} at will, ${want.dl} daily)`);
+              }
+            }
             trace('print canon row:', `Actions/Spellcasting — print's own list replaces the chassis's`); continue;
           }
           // A SAME-NAMED CHASSIS NOVA TAKES PRINT'S TEXT AT PRINT'S CR (critic A5, 2026-10-18).

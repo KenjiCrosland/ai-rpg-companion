@@ -984,24 +984,33 @@ the donor measured where the sheet was the question. **Compare the SHIPPED SHEET
 SAME CR, pooled the same way, and say which population the number is about.** The per-CR check added
 above is that instrument.
 
-**THREE CHUNKS, THREE TWELVES (owner, 2026-11-09: "pop some twelves in there just so we know we
-aren't veering off course — mini regression gates").** Each twelve is built for ITS chunk: inputs
-that exercise the change, plus controls that must not move. Run after the chunk lands and before
-the next starts; a control that moves stops the line. `SMOKE_TIMEOUT_MS=300000 node
-scripts/smoke-statblock.mjs <batch>` then `check-run.mjs` and `review-html.mjs` on the run dir.
+**THE LIST, CUT TO WHAT SURVIVED (Fable, 2026-11-09 evening, after the calibration pass).** Chunk A
+found one real defect (the ruler, 19a — landed) and refuted four premises against print; chunk B's
+premise ("lists grow with CR") was refuted too. What remains is twelve small items, none bigger than a
+prompt line or one arm on an existing chain. `gate-calibration` is RETIRED (its chunk dissolved);
+`gate-spells` is reshaped below.
 
-| chunk | lands | twelve | pass line |
+| chunk | item | do | verify |
 |---|---|---|---|
-| **A — calibration** | 19a, 19b, 19c | `gate-calibration` — brute/skirmisher/lurker/caster at low/mid/high CR, the two 19c donors, three CONTROLS (exact Owlbear, exact Adult Red Dragon, a mage) | `atkBest − pb` = print's mod at each tier; net read within ±1 on ≥ 9 of 12; caster-15 and lurker-15 sustained inside band; **the three controls byte-identical to their previous roll's print rows** |
-| **B — spells** | 20 (+ the at-will ceiling, the nova read, the Priest top-up) | `gate-spells` — menu casters at CR 2/5/9/13, Maudra and Mother Ash on the Priest, the CR 3 wizard (item 9 must still hold), Nib's Misty Step, an Archmage list pasted above its body, two print CONTROLS (Mage, Lich), a battle-mage for the nova read | at-will/daily counts within 1 of the table at every CR; every caster carries a damage spell; no at-will spell above 1st level below CR 12; Misty Step never at-will; CR 3 wizard has no Fireball; **Mage and Lich byte-identical**; Mage's nova reads 28–36 |
-| **C — the critic's seven** | 23, 22, 21, 24, 26, 25, 27 | `gate-critic5` — one input per item, straight from the critic's table (Grizzelda, slow, fast, Thornback, heavy crossbow, displacer beast, Beholder, fire monk on 2014, war chief, cleric, goblin wizard, alligator) | each canary's own line, written in the batch file; the critic's 3/3 misses read 0/1 |
+| **B1** | **a class NPC standing on a print CASTER body carries that body's list size** | Maudra (CR 7) and Mother Ash (CR 9) stand on the CR 2 Priest and ship its 2 at-will + 1 daily. Print's dedicated-caster line is the ONE place lists grow (Priest 2+1 → Mage 5+4 → Archmage 8+6 → Lich 8+7); everywhere else print's median is 3+3 at every CR, and our 2+2 is one spell light, not wrong. So: when the body is a print caster and the sheet's CR is ≥ 3 above the body's, top the list up from the menu toward the next body in the line (the Mage's 5+4 at CR 6+, the Archmage's at 12+). Never swap the print list out. | replay Maudra: ≥ 4 at-will; a CR 3 wizard still has no Fireball (item 9 holds); print Mage/Lich at their own CR byte-identical |
+| **B2** | **a spell print places as N/Day never migrates to at-will** | #15 Nib: Misty Step — print's 3/Day bonus action — listed "At Will" after it moved into the spell list. | replay #15: Misty Step at 3/Day or absent, never at-will; scan all saved casters: 0 at-will spells above 1st level below CR 12 |
+| **B3** | **the owner's damage ruling** — every caster carries a damage spell, priced as one attack (at-will) or as the band's nova (N/Day), from `SPELL_DAMAGE_AVG`; the checker's nova read sees a daily damage spell; item 9's gate never leaves a caster empty-handed | see item 20's ruling block above (unchanged) | a CR 2 caster reads a damage spell; the Mage's nova reads 28–36 |
+| **C** | **23 → 22 → 21 → 24 → 26 → 25 → 27** (7.9d, unchanged) — 23 leads, it made Grizzelda worse | | `gate-critic5` |
+| carry | **14b** precondition lint (3rd sheet: Mother Ash's trait fires on Restrained/Grappled with no row imposing either); **18 melee half** (the rename gave the thrown row the melee name) | | one replay each |
 
-Then 14b and 18's melee half (no twelve — one replay each), suite, build, `sweep` + `typed40`, the
-review page, the owner reads the typed forty, the critic.
+**Twelves:** `gate-spells` reshaped to B — Maudra, Mother Ash, Nib, a CR 2 menu caster, a CR 3 wizard
+(item 9), print Mage and Lich as controls, a battle-mage for the nova read (drop the four growth-by-CR
+canaries). `gate-critic5` as written.
 
-**Order for Opus, revised:** **A** (19a → 19b → 19c) → `gate-calibration` → **B** (20) → `gate-spells`
-→ **C** (23 → 22 → 21 → 24 → 26 → 25 → 27) → `gate-critic5` → 14b → 18 melee half → suite → build →
-`sweep` + `typed40` → the owner reads the typed forty on the review page → the critic.
+**Order for Opus:** B1 → B2 → B3 → `gate-spells` → C (23 → 22 → 21 → 24 → 26 → 25 → 27) → `gate-critic5`
+→ 14b → 18 melee half → suite → build → `sweep` + `typed40` **(the first runs on the new ruler — they
+set the baseline whatever else lands)** → review page → the owner reads the typed forty → the critic
+gets both. **If that run reads clean on the new ruler and the review page, it is the release candidate.**
+
+**Dropped from pre-release:** `gate-calibration`; 19b and 19c (no defect); item 16 (post-release by the
+owner's ruling); the damage-band knob (offense is at print — 103% of its median — so there is nothing
+to lift).
+
 
 **Same-day if there is the hour (deterministic, 3 of 3 on every spot check, not blockers):** Cunning
 Action on monks → Step of the Wind (14/14; SRD 5.2 monk); the returning-weapon clause attaches to the

@@ -1167,7 +1167,14 @@ describe('spellcasting organ + ordering + metering completion (2026-08-25)', () 
     const sc = (m.sections.Actions ?? []).find((e) => e.name === 'Spellcasting');
     expect(sc).toBeTruthy();
     expect(sc.text).toMatch(/\*Darkness\*, \*Faerie Fire\*/);
-    expect(sc.text).toMatch(/At Will:.*\*Misty Step\*/); // at-will lists grow (2026-09-04) — leveled utility sits at-will, print's Glabrezu shape
+    // MISTY STEP IS NOT AT-WILL, AND THE GLABREZU NEVER SAID IT WAS (the critic's fifth GM forty,
+    // 2026-11-09). This pin cited "print's Glabrezu shape" for at-will leveled utility; the Glabrezu
+    // has no Misty Step at all (At Will: Darkness, Detect Magic, Dispel Magic). The only two print
+    // casters that carry it — the Mage and the Archmage — each give it its OWN "Misty Step (3/Day)"
+    // row. Nib Wickwhistle shipped it at-will at CR 3, which turns a 3/Day escape into an unlimited
+    // action-economy teleport. It is in NEVER_AT_WILL now, so it may appear in the daily list or as
+    // its own gated row, never at will.
+    expect(sc.text).not.toMatch(/At Will:[^\n]*\*Misty Step\*/);
     // the casting stat RISES to derive the card's DC, up to print's ceiling for the CR (owner's
     // ruling 2026-10-19 on the CR 10 pumpkin king at DC 13): at CR 8 the card's 15 derives off WIS 18
     expect(sc.text).toMatch(/spell save DC 15/);
@@ -2480,7 +2487,11 @@ describe('the tier inversion fix (batch four, 2026-09-04): cantrips never ration
   });
 
   test('an all-eligible list ships with no 1/Day line at all', async () => {
-    const m = await roll2(21, null, { at_will: ['Fireball', 'Light'], daily: ['Misty Step', 'Dispel Magic'] });
+    // Misty Step left this fixture on 2026-11-09: it is in NEVER_AT_WILL now (print gives it its own
+    // 3/Day row on the Mage and the Archmage and never writes it at will), so a list containing it
+    // is no longer "all-eligible" and the 1/Day line this test says should be absent appeared for
+    // it. Invisibility takes its place — print at-wills that one 5 times, including on the Archmage.
+    const m = await roll2(21, null, { at_will: ['Fireball', 'Light'], daily: ['Invisibility', 'Dispel Magic'] });
     const sc = Object.values(m.sections).flat().find((e) => e.name === 'Spellcasting');
     expect(sc.text).toMatch(/At Will:\*\*[^\n]*\*Fireball\*/); // the Lich shape, level 3 at parity
     expect(sc.text).not.toMatch(/1\/Day Each/);
