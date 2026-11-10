@@ -542,7 +542,28 @@ export function sustainedOf(m) {
     const times = once ? 1 : Math.max(1, Math.floor(legUses / cost));
     return { name: bare(e.name), avg: per * times, per, times };
   }).sort((a, b) => b.avg - a.avg)[0] ?? null;
-  const nova = novasOf(m).sort((a, b) => b.avg - a.avg)[0] ?? null;
+  // A CASTER'S BURST IS A SPELL NAME, NOT A SAVE WITH DICE (owner's ruling, 2026-11-09: a limited
+  // damage spell "deals as much as a gated nova"). `novasOf` reads a ROW with a gate, a save and
+  // dice — and a Spellcasting row's "1/Day Each: *Fireball*" has none of those, only a name. So
+  // print's own Mage, Archmage and Lich all read as having NO nova: the Mage's Fireball 2/Day and
+  // Cone of Cold 1/Day are invisible to the offense read, and so is every caster we build. The
+  // prices are already in this file (SPELL_DAMAGE_AVG, imported above and until now unused here),
+  // so the fix is to read the list's limited damage spells and take the strongest.
+  const spellNova = (() => {
+    const row = allRows(m).find(({ e }) => /^Spellcasting/i.test(e.name ?? ''));
+    if (!row) return null;
+    const limited = String(row.e.text ?? '').replace(/\*\*/g, '').split('\n').filter((l) => /\d\/Day/i.test(l));
+    let best = null;
+    for (const line of limited) {
+      const per = Number(/(\d)\/Day/i.exec(line)?.[1]) || 1;
+      for (const sp of [...line.matchAll(/\*([A-Z][^*]*?)\*/g)].map((x) => x[1].trim())) {
+        const avg = SPELL_DAMAGE_AVG[sp];
+        if (avg && (!best || avg > best.avg)) best = { sec: row.sec, e: row.e, name: sp, gate: `${per}/Day`, avg, area: /Fireball|Cone of Cold|Lightning Bolt|Shatter|Ice Storm|Cloudkill|Thunderwave|Burning Hands|Wall of Fire/.test(sp) };
+      }
+    }
+    return best;
+  })();
+  const nova = [...novasOf(m), ...(spellNova ? [spellNova] : [])].sort((a, b) => b.avg - a.avg)[0] ?? null;
   const uses = nova ? ({ 'Recharge 4-6': 2, 'Recharge 5-6': 1, '1/Day': 1, '2/Day': 2, '3/Day': 3 }[nova.gate] ?? 1) : 0;
   const withLegendary = sustained + (legendary?.avg ?? 0);
   const dmg = (withLegendary * 3 + uses * Math.max(0, (nova ? nova.avg * (nova.area ? 2 : 1) : 0) - withLegendary)) / 3;

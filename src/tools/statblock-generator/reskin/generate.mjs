@@ -224,7 +224,12 @@ export const CASTER_SPELL_MENU = ['Detect Magic', 'Mage Hand', 'Minor Illusion',
 // numbers for the at-will-vs-daily call; zone spells also sit in
 // NEVER_AT_WILL regardless (the Web law: print never at-wills the zone)
 export 
-const SPELL_DAMAGE_AVG = { Fireball: 28, 'Lightning Bolt': 28, 'Scorching Ray': 21, Shatter: 13, 'Magic Missile': 10, 'Guiding Bolt': 14, 'Mind Spike': 13, 'Acid Arrow': 15, 'Ice Knife': 12, 'Cone of Cold': 36, Blight: 36, 'Vampiric Touch': 10, 'Ray of Sickness': 9, Thunderwave: 9, 'Burning Hands': 10, 'Ice Storm': 23, 'Wall of Fire': 22, Cloudkill: 22 };
+// 'Chain Lightning' and 'Finger of Death' are HIGH-CR PRINT SPELLS, priced here so the checker can
+// read a Lich's burst: its 1/Day line is Chain Lightning, Finger of Death and Power Word Kill, and
+// with none of them priced the CR 21 Lich read as having no nova at all. Neither is on any spell
+// menu, so pricing them changes no pick — only what the offense read can SEE. Power Word Kill stays
+// unpriced: it deals no damage, it ends a creature already at 100 Hit Points or fewer.
+const SPELL_DAMAGE_AVG = { 'Chain Lightning': 45, 'Finger of Death': 61, Fireball: 28, 'Lightning Bolt': 28, 'Scorching Ray': 21, Shatter: 13, 'Magic Missile': 10, 'Guiding Bolt': 14, 'Mind Spike': 13, 'Acid Arrow': 15, 'Ice Knife': 12, 'Cone of Cold': 36, Blight: 36, 'Vampiric Touch': 10, 'Ray of Sickness': 9, Thunderwave: 9, 'Burning Hands': 10, 'Ice Storm': 23, 'Wall of Fire': 22, Cloudkill: 22 };
 // THE UPCAST LAW (owner: "wouldn't a CR 12 have a higher fireball?" —
 // measured 2026-09-02, 33 print notations): at-will list spells stay
 // BASE level always (Adult Brass at-will Scorching Ray unnoted at CR 13,
@@ -615,7 +620,7 @@ ${needsSpells ? ` "spells": { "at_will": ["<exactly 2 spells this concept would 
  "lacks": [<EVERY thing the user said the creature does NOT have, each as {"quote": "<the user's OWN WORDS, a SHORT PHRASE of one to five words — never a sentence you build yourself>", "takes": "<what the words take away: grapple | regeneration | spellcasting | flight | ranged | melee | sight | speech | hearing | part | other. A LOST SENSE IS THAT SENSE, NOT A PART: \"blind in one eye\", \"one eye gone\", \"a milky eye\" all take sight; \"deaf in one ear\" takes hearing. Answer part ONLY for a limb or appendage it fights with — a lost arm, a severed tail, a broken wing>", "costs": "<WHICH ROLL THE WOUND SPOILS, when the absence takes no whole ability away but still ought to cost the creature something. Exactly one of: sight (it cannot see well on one side) | hearing (it cannot hear well) | one_limb_attacks (a limb it fights with is gone or ruined) | all_attacks (its whole frame is impaired) | none (the absence removes an ability outright, so nothing extra is owed). A ruined EYE costs sight, never one_limb_attacks>"}. "never holds it" takes grapple; "instead of regrowing" takes regeneration; "no magic at all" takes spellcasting; "eyeless" takes sight. A PARTIAL loss keeps the sense — "blind in one eye", "half-deaf", "limps", "missing a hand" take part, never sight, hearing or flight. EVERY entry must contain a word that takes something away: "no", "not", "cannot", "never", "without", "lost", "stripped", or a word that means the absence itself — "eyeless", "mute", "blind", "deaf", "wingless", "sightless". Examples of entries: "no magic at all", "eyeless", "lost its wings", "born mute", "carries no weapons", "never holds" (so it never grapples), "instead of regrowing" (so it does not regrow or regenerate) — "never X" and "instead of X" take X away. A lack is of ANY kind: a body part, a sense, a voice, a spell list, a weapon, armour. If a phrase has none of those words it is something the creature HAS, so leave it out. Use [] when the user took nothing away>],
  "implied_class": "<the ONE class this creature trains as, if the user's words imply one: rogue|fighter|monk|paladin|cleric|mage|bard|barbarian|none. A ninja trains as a rogue, a kung fu master as a monk, a samurai or a gladiator as a fighter. Answer none for a beast, a construct, an ooze, or a person whose words name no training at all — none is the right answer more often than not>",
  "implied_class_quote": "<the user's OWN WORDS that imply it, quoted verbatim from the THE USER TYPED line above, or \"\" if you answered none>",
- "clauses": [<EVERY distinct thing the USER typed — quote from THE USER TYPED line here: "${String(userTyped ?? concept ?? '').replace(/"/g, "'")}" — never from the description above it — one object each — {"text": "<the user's words for it>", "kind": "<header|descriptive|mechanical. MECHANICAL means the clause should become a ROW on the stat block — a body part it strikes with, anything it does TO creatures, a substance it exudes or sheds, a companion or mount it fights alongside, something it carries or has swallowed that a player could act on. DESCRIPTIVE is appearance or history with NO consequence in a fight: its colour, its mood, where it was born, what it is carved to look like. HEADER is a stat on the card: size, type, speed, AC, HP, CR, senses, languages. WHEN IN DOUBT ANSWER MECHANICAL — the GM typed this clause because they expect to SEE it on the card, and a clause filed descriptive produces no row at all. 'a spitting maw' is mechanical (it spits at range); 'a shell that sheds acid' is mechanical (acid on touch); 'riding a worg' is mechanical (a mount fights too); 'carved as a weeping saint' is descriptive>", "when": "<for a mechanical clause ONLY, the trigger the USER's words name: start_of_turn|on_being_hit|on_hit|when_bloodied|on_death|at_will|unsaid>", "when_quote": "<the user's own words that name that trigger, copied verbatim — leave empty when you answered unsaid>", "how_often": "<for a mechanical clause ONLY, the limit the USER's words name: at_will|once_per_turn|once_per_fight|per_day|recharge|unsaid>. \"once per day\" and \"twice a day\" are per_day; \"once per fight/battle/encounter\" is once_per_fight>", "how_often_quote": "<the user's own words that name that limit, copied verbatim — leave empty when you answered unsaid>", "shape": "<for a mechanical clause ONLY, what the user's words make it DO: attack|save_area|save_single|condition|heal|buff_self|buff_ally|movement|resist|unsaid>", "mechanic": "<for a mechanical clause ONLY, WHICH MECHANIC this clause asks a row to be, one of these words (the word, then what it means):\n${ASKED_MECHANICS.map((m) => `  ${m} — ${MECHANIC_GLOSS[m]}`).join('\n')}\n  or unsaid. This is not the same question as \"shape\": a hammer that hits harder against a frightened target has the shape of an attack and the mechanic of an escalate. Answer unsaid unless the user's words name it>", "mechanic_quote": "<the user's own words that name that mechanic, copied verbatim — leave empty when you answered unsaid>"}. Answer "unsaid" for any of the three the user did not name — guessing is worse than silence, because the engine checks the landed row against these; header = size, speed, type, a number the user set; descriptive = looks, lore, voice, name; mechanical = anything that acts in combat (a weapon, a body part that attacks, a style, a curse, an aura, a resource). Purely descriptive words are still listed, as descriptive. This list is the record of what the user asked for>],
+ "clauses": [<EVERY distinct thing the USER typed — quote from THE USER TYPED line here: "${String(userTyped ?? concept ?? '').replace(/"/g, "'")}" — never from the description above it — one object each — {"text": "<the user's words for it>", "kind": "<header|descriptive|mechanical. MECHANICAL means the clause should become a ROW on the stat block — a body part it strikes with, anything it does TO creatures, a substance it exudes or sheds, a companion or mount it fights alongside, something it carries or has swallowed that a player could act on. DESCRIPTIVE is appearance or history with NO consequence in a fight: its colour, its mood, where it was born, what it is carved to look like. HEADER is a stat on the card: size, type, speed, AC, HP, CR, senses, languages. WHEN IN DOUBT ANSWER MECHANICAL — the GM typed this clause because they expect to SEE it on the card, and a clause filed descriptive produces no row at all. 'a spitting maw' is mechanical (it spits at range); 'a shell that sheds acid' is mechanical (acid on touch); 'riding a worg' is mechanical (a mount fights too); 'carved as a weeping saint' is descriptive. A WORD ABOUT HOW FAST IT MOVES IS A HEADER, NOT A MOOD: 'slow' is header (Speed 20), 'fast' and 'quick' are header (Speed 40 or more), 'lumbering' is header (Speed 20), 'it flies' is header (a Fly Speed) — the GM who types 'slow' is setting the Speed line, and filed descriptive it produces nothing and the creature keeps the chassis's 30 or 40>", "header_speed": "<ONLY for a header clause about how fast it moves — the walking Speed in feet the user's word means, as a number: 'slow' or 'lumbering' is 20, 'fast' or 'quick' is 40, 'very fast' is 50. Omit for every other clause>", "when": "<for a mechanical clause ONLY, the trigger the USER's words name: start_of_turn|on_being_hit|on_hit|when_bloodied|on_death|at_will|unsaid>", "when_quote": "<the user's own words that name that trigger, copied verbatim — leave empty when you answered unsaid>", "how_often": "<for a mechanical clause ONLY, the limit the USER's words name: at_will|once_per_turn|once_per_fight|per_day|recharge|unsaid>. \"once per day\" and \"twice a day\" are per_day; \"once per fight/battle/encounter\" is once_per_fight>", "how_often_quote": "<the user's own words that name that limit, copied verbatim — leave empty when you answered unsaid>", "shape": "<for a mechanical clause ONLY, what the user's words make it DO: attack|save_area|save_single|condition|heal|buff_self|buff_ally|movement|resist|unsaid>", "mechanic": "<for a mechanical clause ONLY, WHICH MECHANIC this clause asks a row to be, one of these words (the word, then what it means):\n${ASKED_MECHANICS.map((m) => `  ${m} — ${MECHANIC_GLOSS[m]}`).join('\n')}\n  or unsaid. This is not the same question as \"shape\": a hammer that hits harder against a frightened target has the shape of an attack and the mechanic of an escalate. Answer unsaid unless the user's words name it>", "mechanic_quote": "<the user's own words that name that mechanic, copied verbatim — leave empty when you answered unsaid>"}. Answer "unsaid" for any of the three the user did not name — guessing is worse than silence, because the engine checks the landed row against these; header = size, speed, type, a number the user set; descriptive = looks, lore, voice, name; mechanical = anything that acts in combat (a weapon, a body part that attacks, a style, a curse, an aura, a resource). Purely descriptive words are still listed, as descriptive. This list is the record of what the user asked for>],
  "slot_save": "<the Saving Throw stat the Signature Slot should use — the stat the concept threatens: Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma>",
  "melee_rider": "<the ENERGY type the melee attack deals as a rider — or \"none\" if this creature's damage is purely physical (a fifth of printed monsters are)>",
  "speed_shape": "<\"climber\" keeps the Climb speed; \"runner\" trades it for +10 ft. walk (a charger, a rider, a sprinter has no business on walls)>",
@@ -5846,16 +5851,32 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               const stateS = (dangS || slotS || actS) ? null : undefinedStateIn(row.text);
               const contraS = (dangS || slotS || actS || stateS) ? null
                 : contradictsSelfHeal(row.text, [...Object.values(sections).flat(), ...(row ? [row] : [])].map((r2) => ({ sec: 'Traits', r: r2 })));
-              const needS = (dangS || slotS || actS || stateS || contraS) ? null : (form.f.requiresConditionNamed ?? null);
+              // A COUNT IS AN INTEGER, AND "THE OPTIONS BELOW" MUST BE BELOW (the critic's fifth GM
+              // forty, 2026-11-09, scored Fix with a double-dagger): Thornback shipped "Legendary
+              // Nature. Thornback can take 14 (4d6) Legendary Actions after another creature's
+              // turn, choosing from the options below." — a damage expression where a NUMBER OF
+              // USES belongs, and no options anywhere on the sheet. 7a already refuses a described
+              // number, a dangling citation and an unfilled slot; neither of these shapes was in it.
+              // A GM cannot run either: "4d6 legendary actions" is unreadable, and a row that
+              // promises a list and gives none is a dead row.
+              const countS = (dangS || slotS || actS || stateS || contraS) ? null
+                : (/\b(?:can take|makes|uses|has)\s+\d+\s*\(\s*\d+d\d+[^)]*\)\s*(?:Legendary Actions?|uses?|times?|attacks?)/i.exec(row.text ?? '') ?? [null])[0];
+              // "choosing from the options below" / "one of the following" with nothing to choose from
+              const promisesList = /\b(?:from the options below|one of the following|listed below|from the list below|choose from the options)\b/i.test(row.text ?? '');
+              const listS = (dangS || slotS || actS || stateS || contraS || countS) ? null
+                : (promisesList && !/[.:]\s*\n|\n\s*[-*\d]|\b\d\s*—\s*/.test(row.text ?? '') ? 'the options it says to choose from' : null);
+              const needS = (dangS || slotS || actS || stateS || contraS || countS || listS) ? null : (form.f.requiresConditionNamed ?? null);
               const appliesS = needS ? new Set([...Object.values(sections).flat().flatMap((e2) => imposedConditions(e2)), ...(row.imposes ? [String(row.imposes)] : [])]) : null;
               const unmetS = needS && !appliesS.has(String(needS)) ? needS : null;
-              if (dangS) trace('seat authoring refused:', `${seat} — the authored row cites "${dangS}", which is not on this sheet (the checker would fail it as a dangling reference); the nearest template stands in`);
+              if (countS) trace('seat authoring refused:', `${seat} — the authored row writes dice where a COUNT belongs ("${String(countS).trim()}"); a number of uses is an integer, and a GM cannot take 4d6 legendary actions; the nearest template stands in`);
+              else if (listS) trace('seat authoring refused:', `${seat} — the authored row promises ${listS} and the sheet carries none, so it is a dead row a GM cannot run; the nearest template stands in`);
+              else if (dangS) trace('seat authoring refused:', `${seat} — the authored row cites "${dangS}", which is not on this sheet (the checker would fail it as a dangling reference); the nearest template stands in`);
               else if (slotS) trace('seat authoring refused:', `${seat} — the authored row still carries ${slotS[0]}, a slot this engine never substitutes (the forms ask only for {dc} and {dmg}); shipping it would fail the generation outright, so the nearest template stands in`);
               else if (unmetS) trace('seat authoring refused:', `${seat} — the authored row needs its target to have ${unmetS} and no row on this sheet imposes it, so its trigger could never fire (the Chalk-Hound's Daubing Cling, forty #2); the nearest template stands in`);
               else if (stateS) trace('seat authoring refused:', `${seat} — the authored row keys on "${stateS}" and never says what it means; a GM has no threshold to read (print writes Bloodied or 0 Hit Points, or defines the state in the row). The nearest template stands in`);
               else if (contraS) trace('seat authoring refused:', `${seat} — the authored row heals the creature, and "${contraS.name}" on this sheet says "${String(contraS.sentence).slice(0, 60)}"; the two cannot both be true. The nearest template stands in`);
               else if (actS) trace('seat authoring refused:', `${seat} — the authored row makes "${actS}" act, and no row on this sheet is that thing; a table cannot run it (the Spore-Mother's puppets, forty #3); the nearest template stands in`);
-              else if (!slotS && !unmetS && !actS && !stateS && !contraS) {
+              else if (!slotS && !unmetS && !actS && !stateS && !contraS && !countS && !listS) {
                 // THE GM'S ASK IS NOT A FREE ROW (owner's ruling, 2026-11-08). The free-row
                 // budget exists for pleasant surprises; a row written to answer something the
                 // GM typed is not a surprise, so it does not compete for that one slot. The
@@ -7735,6 +7756,32 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           if (from === to || meleeRows.some((o) => o !== e && String(o.name ?? '').replace(/ \(.*\)$/, '') === to)) return;
           const re = new RegExp(`(?<![A-Z][a-z]+ )\\b${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b(?! [A-Z][\\w'-]+)`, 'g'); // nor as the HEAD of a two-word name: "Scepter" -> "Eldritch Burst" turned the hybrid "Scepter Blast" into "Eldritch Burst Blast" (sweep 2026-10-04) // not inside a two-word ranged name: "Hurled Knife" is the ranged row's to rename (the Bandit's Multiattack read "Hurled Scimitar", day-one 2026-09-30)
           e.name = to; e.printNamed = true; e.weapon = weaponFor(to) ?? null; // print's name, print's numbers from here: the final price pass leaves it (the Green Dragon's Rend ran 15 → 24, step 7 defect 4) — and print's weapon: the stamp follows the rename, or a "Rusted Blade" renamed Shortsword still carried longsword (printplus 2026-10-18)
+
+          // THE GM'S WEAPON IS THE GM'S, DICE AND ALL (the critic's fifth GM forty, 2026-11-09,
+          // 0 of 3 rolls): "goblin boss with a heavy crossbow" stands on print's Goblin Boss, whose
+          // Shortbow is renamed "Crossbow" — and print's 1d8 at 80/320 rides along, which is a
+          // LIGHT crossbow. `weaponFor` reads the renamed LABEL ("Crossbow" -> the generic entry),
+          // never the GM's own words, so "heavy" is lost at the rename. The weapon table already
+          // holds the answer (heavy crossbow: d10, 100/400); what was missing is reading the GM's
+          // phrase instead of the label the rename produced.
+          //
+          // Print's attack BONUS and attack COUNT stay print's — those are the CR math. Only the
+          // damage die and the range follow the weapon, because those are what the weapon IS.
+          {
+            const namedW = weaponsIn(readPhrases(String(options.userConcept ?? concept ?? '')));
+            const headW = String(to).toLowerCase();
+            const pickW = namedW.find((w) => w !== headW && headW.includes(w.split(' ').pop()) && WEAPONS[w]);
+            const propW = pickW ? WEAPONS[pickW] : null;
+            if (propW && propW.die && e.weapon && WEAPONS[e.weapon] && propW.die !== WEAPONS[e.weapon].die) {
+              const before = e.text;
+              e.text = e.text.replace(/(\d+) \((\d+)d(\d+)((?: [+-] \d+)?)\)/, (m0, avg, n, d, mod) => {
+                const bonus = Number(String(mod || '').replace(/[^\d-]/g, '') || 0);
+                return `${Math.floor((Number(n) * (propW.die + 1)) / 2) + bonus} (${n}d${propW.die}${mod})`;
+              });
+              if (propW.range) e.text = e.text.replace(/range \d+\/\d+ ft\./, `range ${propW.range} ft.`);
+              if (e.text !== before) { e.weapon = pickW; trace('gm weapon on a print row:', `"${to}" takes the ${pickW}'s die and range (d${propW.die}, ${propW.range ?? 'melee'}) — the GM named it and print's row carries a different one; print's attack bonus and count stand`); }
+            }
+          }
           // THE ROW'S OWN TEXT COUNTS, AND /g + .test() WAS LOSING MATCHES
           // (2026-10-30). Two faults on one line:
           //
@@ -7874,6 +7921,32 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           if (to !== from && Object.values(monster.sections).flat().some((e3) => e3 !== e && String(e3.name ?? '').replace(/ \(.*\)$/, '').toLowerCase() === String(to).toLowerCase())) { trace('print canon attack kept:', `"${from}" stays — "${to}" is already a row on this sheet`); return; }
           const re = new RegExp(`\\b${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
           e.name = to; e.printNamed = true; e.weapon = weaponFor(to) ?? null; // the stamp follows the rename (a hurled greataxe row renamed Javelin kept greataxe, printplus 2026-10-18)
+
+          // THE GM'S WEAPON IS THE GM'S, DICE AND ALL (the critic's fifth GM forty, 2026-11-09,
+          // 0 of 3 rolls): "goblin boss with a heavy crossbow" stands on print's Goblin Boss, whose
+          // Shortbow is renamed "Crossbow" — and print's 1d8 at 80/320 rides along, which is a
+          // LIGHT crossbow. `weaponFor` reads the renamed LABEL ("Crossbow" -> the generic entry),
+          // never the GM's own words, so "heavy" is lost at the rename. The weapon table already
+          // holds the answer (heavy crossbow: d10, 100/400); what was missing is reading the GM's
+          // phrase instead of the label the rename produced.
+          //
+          // Print's attack BONUS and attack COUNT stay print's — those are the CR math. Only the
+          // damage die and the range follow the weapon, because those are what the weapon IS.
+          {
+            const namedW = weaponsIn(readPhrases(String(options.userConcept ?? concept ?? '')));
+            const headW = String(to).toLowerCase();
+            const pickW = namedW.find((w) => w !== headW && headW.includes(w.split(' ').pop()) && WEAPONS[w]);
+            const propW = pickW ? WEAPONS[pickW] : null;
+            if (propW && propW.die && e.weapon && WEAPONS[e.weapon] && propW.die !== WEAPONS[e.weapon].die) {
+              const before = e.text;
+              e.text = e.text.replace(/(\d+) \((\d+)d(\d+)((?: [+-] \d+)?)\)/, (m0, avg, n, d, mod) => {
+                const bonus = Number(String(mod || '').replace(/[^\d-]/g, '') || 0);
+                return `${Math.floor((Number(n) * (propW.die + 1)) / 2) + bonus} (${n}d${propW.die}${mod})`;
+              });
+              if (propW.range) e.text = e.text.replace(/range \d+\/\d+ ft\./, `range ${propW.range} ft.`);
+              if (e.text !== before) { e.weapon = pickW; trace('gm weapon on a print row:', `"${to}" takes the ${pickW}'s die and range (d${propW.die}, ${propW.range ?? 'melee'}) — the GM named it and print's row carries a different one; print's attack bonus and count stand`); }
+            }
+          }
           for (const es3 of Object.values(monster.sections)) for (const e3 of es3) if (e3 !== e && re.test(e3.text ?? '')) e3.text = e3.text.replace(re, to);
           trace('print canon attack:', `"${from}" -> "${to}" — the ${pc.name}'s own ranged row`);
         });
@@ -8526,7 +8599,25 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // ASKED for — a seat row carrying the clause it answers, or a GM quote. Measured over
             // 440 sheets / 11 fortys: 16 of these collisions, 0 on a GM-stamped row, so the
             // exposure was zero and the hole was real. Print governs where the GM said nothing.
-            const gmOwns = !!(same && (same.clause || same.gmQuote || same.authoredSeat));
+            // A KIT ROW IS NOT A GM-ASKED ROW, AND A ROW WITHOUT ITS TRIGGER LOSES ANYWAY (the
+            // critic's fifth GM forty, 2026-11-09: "the exception misfired on Grizzelda — a fix that
+            // made one sheet worse").
+            //
+            // This guard was added so print's same-named row could not overwrite something the GM
+            // asked for. It read `row.clause` as proof of an ask — but a clause stamp is PROVENANCE,
+            // recording which clause a row was hung from, not a request for that row's mechanic. All
+            // four firings on the forty were the mage kit's "Protective Magic (3/Day)" stamped with
+            // the concept's leading fragment: "swamp witch npc", "necromancer". Neither GM asked for
+            // a Shield reaction, and on Grizzelda the kept row had NO Trigger clause at all while
+            // print's has one — so the guard protected the broken copy and discarded the good one.
+            //
+            // Two conditions instead. A row the KIT placed is the kit's, not the GM's (the same
+            // reasoning that already excludes `library`). And a trigger-shaped row that never says
+            // what triggers it loses to print's regardless of any stamp — print is the thing with
+            // the Trigger.
+            const triggerShaped = (txt) => /\bin response to\b|^Trigger:|\*Trigger:\*/i.test(String(txt ?? ''));
+            const missingTrigger = !!(same && triggerShaped(same.text) && !/Trigger:/i.test(String(same.text ?? '')) && /Trigger:/i.test(String(r.text ?? '')));
+            const gmOwns = !!(same && !same.kit && !missingTrigger && (same.clause || same.gmQuote || same.authoredSeat));
             if (same && nearHere && gmOwns) trace('print canon row withheld:', `${r.section}/"${r.name}" — the sheet's row of that name answers the GM ("${String(same.clause ?? same.gmQuote ?? 'authored seat').slice(0, 46)}"), and the GM's words outrank print's name`);
             const printWins = same && nearHere && !same.print && !same.library && !gmOwns;
             if (printWins && !/ \((?:Recharge [\d–-]+|\d\/Day)\)$/.test(r.name)) {
@@ -10364,6 +10455,25 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     const rec = Array.isArray(monster.generation?.clauses) ? monster.generation.clauses : [];
     const sp = rec.map((c) => /(\d+)\s*(?:feet|ft)\b(?:\s*(?:of )?(?:movement|speed|walk(?:ing)?))?/i.exec(c.text)).find((x) => x && !/fly|swim|climb|burrow|reach|range|within|radius/i.test(x.input));
     if (sp && typeof monster.speed === 'string' && !new RegExp(`^${sp[1]} ft`).test(monster.speed)) { const was = monster.speed; monster.speed = monster.speed.replace(/^\d+ ft\./, `${sp[1]} ft.`); trace('header clause:', `speed ${was} -> ${monster.speed} — the user typed ${sp[1]} feet`); }
+    // A SPEED WORD IS A HEADER AND THE CALL SAYS WHAT NUMBER IT MEANS (the critic's fifth GM forty,
+    // 2026-11-09: "slow -> Speed 40", inverted on 2 of 3 rolls and never once 20). The extraction
+    // filed "slow" as DESCRIPTIVE — flavour — so it produced nothing and the creature kept the
+    // chassis's 40. The schema's own HEADER kind already lists speed; what was missing was an
+    // example teaching it, and a number to apply. "How slow is slow" is a judgement, so the call
+    // answers it as `header_speed` (CLAUDE.md: meaning is a call field, never a word list) and this
+    // only applies what it said. Bounded to print's own range so a bad answer cannot make a
+    // creature that does not move or one that outruns a dragon.
+    {
+      const sc = rec.find((c) => c.kind === 'header' && Number.isFinite(Number(c.header_speed)) && Number(c.header_speed) > 0);
+      if (sc) {
+        const want = Math.max(5, Math.min(60, Math.round(Number(sc.header_speed) / 5) * 5));
+        const was = String(scaled.speed ?? '');
+        if (/^\d+ ft\./.test(was) && Number(/^(\d+)/.exec(was)[1]) !== want) {
+          scaled.speed = was.replace(/^\d+ ft\./, `${want} ft.`);
+          trace('header speed:', `"${sc.text}" — the call reads it as ${want} ft.; the walking Speed was ${/^(\d+)/.exec(was)[1]} ft. (other movement modes keep theirs)`);
+        }
+      }
+    }
     const sz = rec.map((c) => (c.kind === 'header' && SIZE_HEADER.test(c.text) ? /\b(Tiny|Small|Medium|Large|Huge|Gargantuan)\b/i.exec(c.text) : null)).find(Boolean); // "large teeth" is not the size
     if (sz && String(monster.size ?? '').toLowerCase() !== sz[1].toLowerCase()) { trace('header clause:', `size ${monster.size} -> ${sz[1]} — the user typed it`); monster.size = sz[1].charAt(0).toUpperCase() + sz[1].slice(1).toLowerCase(); }
     // HEADER-VALUE CLAUSES ARE DIRECTIVES (the brief's §3; critic's step-5 read: the hag's "takes extra damage from fire" had no Vulnerabilities line)
