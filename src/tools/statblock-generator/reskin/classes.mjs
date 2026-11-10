@@ -180,6 +180,25 @@ export const classStats = (key) => { const c = CLASSES.find((x) => x.key === key
 export const classWeapon = (key) => CLASSES.find((x) => x.key === key)?.weapon ?? null;
 
 /**
+ * WHICH CLASS OWNS A ROW NAME, when exactly one of them claims it as an SRD lift.
+ *
+ * A lift is a class's IDENTITY row — Cunning Action is the rogue's, Bloodied Frenzy the
+ * barbarian's. A `template` row is a FUNCTION row (riposte, shield-bash) that several classes may
+ * reach for, so it has no owner and this returns null for it.
+ *
+ * The class-NPC path stands a class on a print donor chosen by function, and several classes share
+ * a donor: the Spy is the body for rogue, monk AND bard (see `bodies`). Print's own row then rode
+ * onto the sheet as canon, so both monks in the 11-09 forty shipped Cunning Action. The caller
+ * withholds a lift whose owner is not the sheet's declared class; the catalog is the authority.
+ */
+export function classLiftOwner(rowName) {
+  const bare = String(rowName ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase();
+  if (!bare) return null;
+  const owners = CLASSES.filter((c) => (c.rows ?? []).some((r) => Array.isArray(r.srd) && String(r.srd[1] ?? '').trim().toLowerCase() === bare)).map((c) => c.key);
+  return owners.length === 1 ? owners[0] : null; // two claimants is no owner — the row is not one class's identity
+}
+
+/**
  * 4a, ARMOUR LEGALITY (critic, 2026-10-20). 2024 prints no armour label, so the
  * 2014 converter invented one by trying kits heaviest-first until the number
  * matched — with no idea what the creature could actually wear. Live results:

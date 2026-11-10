@@ -1784,7 +1784,11 @@ const PRINT_DUAL_RANGES = new Set(['20/60', '30/120', '60/240', '80/320', '100/4
 // the three questions this gate asks a row name, all answered by the one table:
 // what print's range for that weapon is, whether it is shot rather than thrown,
 // and whether it is a weapon print never gives a range at all
-const rangeOf = (n) => weaponProp(n)?.range ?? null;
+// THE ROW'S OWN DECLARED WEAPON FIRST, the name as fallback — the same precedence the attack-stat
+// test above uses, and for the same reason: the call answered "which weapon is this" and the engine
+// stamped it. A GM who types "heavy crossbow" gets a row NAMED "Crossbow", whose name alone reads
+// the light one, so reading the name flagged the engine's own correct 100/400 as a print-range FAIL.
+const rangeOf = (n, declared = null) => (WEAPONS[declared ?? ''] ?? weaponProp(n))?.range ?? null;
 const isLauncher = (n) => !!weaponProp(n)?.launcher;
 const neverRanged = (n) => { const w = weaponProp(n); return !!(w && w.reach && !w.thrown && !w.launcher); };
 const TYPE_NAME_WORD = /(?:^|\s)(Acid|Cold|Fire|Force|Lightning|Necrotic|Poison|Psychic|Radiant|Thunder|Bludgeoning|Piercing|Slashing)(?=\s|$)/i;
@@ -1813,7 +1817,7 @@ function gateReader(raw, m, ctx, F) {
   for (const { sec, e } of rows) {
     const t = String(e.text ?? ''); const n = bare(e.name);
     for (const rm of t.matchAll(/range (\d+\/\d+) ft\./g)) {
-      const want = rangeOf(n); const ok = want ? rm[1] === want : (PRINT_DUAL_RANGES.has(rm[1]) || (/\b(?:pistol|musket|rifle|firearm|gun)\b/i.test(n) && /^(?:30\/90|40\/120)$/.test(rm[1])));
+      const want = rangeOf(n, e.weapon); const ok = want ? rm[1] === want : (PRINT_DUAL_RANGES.has(rm[1]) || (/\b(?:pistol|musket|rifle|firearm|gun)\b/i.test(n) && /^(?:30\/90|40\/120)$/.test(rm[1])));
       if (!ok) F('print-range', 'fail', `${sec}/${n}: range ${rm[1]} is not ${want ? `the ${n}'s ${want}` : 'a print range'}`, rm[1]);
     }
     if (isLauncher(n) && /reach \d+ ft\. or range/.test(t)) F('print-range', 'fail', `${sec}/${n}: a launcher is ranged-only, never "reach … or range"`, n);

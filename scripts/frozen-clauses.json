@@ -9280,5 +9280,190 @@
     "askShape": "attack"
    }
   ]
+ },
+ "896011930452": {
+  "concept": "a cave troll that guards a bridge",
+  "clauses": [
+   {
+    "id": "cl_by2chp",
+    "text": "a cave troll",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_ivzvkq",
+    "text": "guards a bridge",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "0b1032628be4": {
+  "concept": "an ancient wyrm of the deep roads",
+  "clauses": [
+   {
+    "id": "cl_yf6yz3",
+    "text": "an ancient wyrm of the deep roads",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "d386c15fa228": {
+  "concept": "goblin boss",
+  "clauses": [
+   {
+    "id": "cl_1o8vkly",
+    "text": "goblin boss",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "goblin boss",
+    "askShape": "condition",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "goblin boss",
+    "head": true
+   }
+  ]
+ },
+ "50b9ac532612": {
+  "concept": "a burrowing insectile brute with mandibles whose gaze scrambles thought",
+  "clauses": [
+   {
+    "id": "cl_1kr9l2n",
+    "text": "a burrowing insectile brute with mandibles whose gaze scrambles thought",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "gaze",
+    "askMechanicWhy": "whose gaze scrambles thought"
+   }
+  ]
+ },
+ "3c41d0d0c914": {
+  "concept": "a goblin scout sniper with a hand crossbow",
+  "clauses": [
+   {
+    "id": "cl_rlx3ev",
+    "text": "a goblin scout sniper with a hand crossbow",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "a goblin scout sniper with a hand crossbow",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "bb8a9634b3a8": {
+  "concept": "hobgoblin captain",
+  "clauses": [
+   {
+    "id": "cl_35t9zq",
+    "text": "hobgoblin captain",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "770851e65cc8": {
+  "concept": "a dire wolf but undead",
+  "clauses": [
+   {
+    "id": "cl_1eppwqj",
+    "text": "a dire wolf",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1l4l5dp",
+    "text": "undead",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "d65680a5e683": {
+  "concept": "Cinder Ashen — an ascetic monk who fights with open palms, strikes pressure points",
+  "clauses": [
+   {
+    "id": "cl_19qu3hw",
+    "text": "Cinder Ashen — an ascetic monk",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1xj0avc",
+    "text": "fights with open palms",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_fqv9j3",
+    "text": "strikes pressure points",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "dazzle",
+    "askMechanicWhy": "strikes pressure points"
+   }
+  ]
+ },
+ "a11f4b51fd7d": {
+  "concept": "Vaskis Sshar — a lizardfolk monk of a swamp monastery",
+  "clauses": [
+   {
+    "id": "cl_bjrx1u",
+    "text": "Vaskis Sshar — a lizardfolk monk of a swamp monastery",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "88e793f712e3": {
+  "concept": "Thessaly Nightbloom — a rogue assassin who hunts from cover",
+  "clauses": [
+   {
+    "id": "cl_1ookk6g",
+    "text": "Thessaly Nightbloom — a rogue assassin",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_48dx29",
+    "text": "hunts from cover",
+    "kind": "mechanical",
+    "askMechanic": "track",
+    "askMechanicWhy": "hunts from cover"
+   }
+  ]
+ },
+ "eadd1ca58061": {
+  "concept": "Sister Maudra — a village cleric who tends the shrine",
+  "clauses": [
+   {
+    "id": "cl_clni01",
+    "text": "Sister Maudra — a village cleric",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_ip9h3a",
+    "text": "tends the shrine",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "e05a7d0684fa": {
+  "concept": "Grask Ironjaw — an orc war chief who leads from the front",
+  "clauses": [
+   {
+    "id": "cl_9dkokg",
+    "text": "Grask Ironjaw — an orc war chief",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_qy63xp",
+    "text": "leads from the front",
+    "kind": "mechanical",
+    "askShape": "save_single",
+    "askMechanic": "command",
+    "askMechanicWhy": "leads from the front"
+   }
+  ]
  }
 }

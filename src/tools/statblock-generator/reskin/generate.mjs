@@ -50,7 +50,7 @@ import { capsFix2024, applyCorrections as applyTextFixes, DETERMINISTIC_TEXT_RUL
 import { tailNamesKind } from './print-names.mjs';
 import { anatomyIn } from './header.mjs';
 import { mechanicUnkept, honestNouns, claimWordIn } from './name-claims.mjs';
-import { classFor, classRows, CLASSES, classEligible, classWeapon } from './classes.mjs';
+import { classFor, classRows, CLASSES, classEligible, classWeapon, classLiftOwner } from './classes.mjs';
 import { renderForm, resolutionOf } from './forms.mjs';
 
 
@@ -3539,38 +3539,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       if (!raw || raw.split(/\s+/).length > 4) throw new Error(`unrenamed entry: "${e.name}" — failing loudly per spec`);
       const fresh = titleCase(raw);
       renamed.set(e.name, fresh);
-      // A WEAPON THE GM NAMED BRINGS ITS OWN DIE AND RANGE (the critic's fifth GM forty, 0 of 3
-      // rolls: "goblin boss with a heavy crossbow" shipped light-crossbow stats, 1d8 at 80/320).
-      //
-      // TRACED TO HERE, after a first fix went to the wrong pass. The crossbow does not arrive by
-      // print-canon rename — the sheet says `named parts: Crossbow (slot, ranged)`, so the PARTS
-      // pass wrote `p.renames[<chassis ranged key>] = "Crossbow"` and this block applies it with
-      // `text: e.text`: the chassis's dice, unchanged, under the GM's name. Fixing the rename site
-      // left the sheet exactly as it was.
-      //
-      // Print's attack BONUS and attack COUNT are the CR math and stay. The die and the range are
-      // what the weapon IS, so they follow the GM's own words — read from the concept, never from
-      // the renamed label, which resolves "Crossbow" to the generic entry and loses "heavy".
-      const gmW = (() => {
-        const named = weaponsIn(readPhrases(String(options.userConcept ?? concept ?? '')));
-        const head = fresh.toLowerCase();
-        const pick = named.find((w) => w !== head && head.includes(w.split(' ').pop()) && WEAPONS[w]);
-        const prop = pick ? WEAPONS[pick] : null;
-        const have = WEAPONS[weaponFor(fresh) ?? ''] ?? null;
-        return prop && prop.die && have && prop.die !== have.die ? { pick, prop } : null;
-      })();
-      let outText = e.text;
-      if (gmW && /Attack Roll/.test(String(e.text ?? ''))) {
-        outText = String(e.text)
-          .replace(/(\d+) \((\d+)d(\d+)((?: [+-] \d+)?)\)/, (m0, avg, n, d, mod) => {
-            const bonus = Number(String(mod || '').replace(/[^\d-]/g, '') || 0);
-            return `${Math.floor((Number(n) * (gmW.prop.die + 1)) / 2) + bonus} (${n}d${gmW.prop.die}${mod})`;
-          })
-          .replace(/range \d+\/\d+ ft\./, gmW.prop.range ? `range ${gmW.prop.range} ft.` : '$&');
-        if (outText !== e.text) trace('gm weapon dice:', `"${fresh}" takes the ${gmW.pick}'s die and range (d${gmW.prop.die}${gmW.prop.range ? `, ${gmW.prop.range}` : ''}) — the GM named it and the chassis row carried its own; the attack bonus and the attack count stand`);
-      }
+      // A weapon the GM named brings its own die and range — RESOLVED AT THE WEAPON SITE, not here.
+      // Two earlier aims patched this row's text (first at the print-canon rename, then here); both
+      // traced green and shipped 1d8 at 80/320 anyway, because the weapon pass downstream re-derives
+      // the row's die from its NAME and "Crossbow" reads the light crossbow. See `gmVariant` there.
       const { wildcard_slot: _ws2, ...rest2 } = e;
-      return { ...rest2, name: e.wildcard_slot ? fresh : fresh + (e.gate ? ` (${e.gate})` : ''), text: outText, text_noRider: e.text_noRider, was: e.name, wildcard: !!e.wildcard_slot, gate: e.gate }; // the orb's bite keeps its print mark through the rename (checker 2026-10-02)
+      return { ...rest2, name: e.wildcard_slot ? fresh : fresh + (e.gate ? ` (${e.gate})` : ''), text: e.text, text_noRider: e.text_noRider, was: e.name, wildcard: !!e.wildcard_slot, gate: e.gate }; // the orb's bite keeps its print mark through the rename (checker 2026-10-02)
     });
   }
   // cross-references + creature name + damage types + wildcard body
@@ -7265,7 +7239,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const gmTyped = !!(read && weaponsIn(readPhrases(String(options.userConcept ?? concept ?? ''))).includes(read));
         if (saidNone && read && !gmTyped) trace('weapon declined:', `"${bareW}" reads ${read} from its name, but the call answered none — the row carries no weapon`);
         if (saidNone && read && gmTyped) trace('weapon kept:', `"${bareW}": the call answered none, but the GM typed ${read} — the weapon is the ask`);
-        const resolved = saidNone && !gmTyped ? null : (declared ?? read);
+        // THE GM'S OWN WORDS NAME THE VARIANT (item 24, third aim, 2026-11-10). The parts pass
+        // renames this row to "Crossbow", so `p.weapons` — which the call answered correctly, under
+        // "Heavy Crossbow" — misses on the key, and the name alone reads the LIGHT crossbow: the
+        // sheet shipped 1d8 at 80/320 where the GM typed a heavy crossbow, 0 of 4 rolls. The call
+        // was never wrong; the lookup could not find its answer. Fixed here because the comment
+        // above is right that this is the ONE site that resolves a row's weapon, and every
+        // consumer below reads what it decides.
+        //
+        // `weaponsIn` returns the GM's phrases most-specific-first, and a variant is a weapon whose
+        // name ENDS in the one the row's name reads (heavy crossbow -> crossbow). The weapon table
+        // decides what exists, so this adds no list of its own.
+        const gmVariant = read ? (weaponsIn(readPhrases(String(options.userConcept ?? concept ?? ''))).find((w) => w !== read && WEAPONS[w] && w.endsWith(read)) ?? null) : null;
+        if (gmVariant && !declared) trace('gm weapon variant:', `"${bareW}" reads ${read} from its name, but the GM typed ${gmVariant} — the row takes the ${gmVariant}'s die and range; print's attack bonus and count stand`);
+        const resolved = saidNone && !gmTyped ? null : (declared ?? gmVariant ?? read);
         // THE ENGINE VALIDATES: a launcher cannot be the weapon on a row with no
         // range at all. "Crossbow Butt" is a melee row whose NAME reads crossbow
         // (branch-weapons 03, 2026-10-15) — taking that would hand it a bow's
@@ -7290,6 +7277,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             if (alt) { trace('weapon refitted to the array:', `"${bareW}" read ${resolved}, but the row's +${bonus} is DEX ${dexMod} + PB ${pb} — a ${alt} is the finesse ${props.type.toLowerCase()} weapon`); fit = alt; }
           }
         }
+        // A GM-NAMED WEAPON IS DECLARED, NOT FITTED — the range pass below reads this stamp to tell
+        // the two apart (a part row keeps its own `e.weapon`, so the flag rides separately).
+        // The stamp is the row's answer to "which weapon is this", and every consumer reads it —
+        // the checker's own attack-stat test says so. A part row keeps its fitted stamp by the rule
+        // below, which left `weapon: 'crossbow'` on a row the GM armed with a heavy one: the range
+        // read 100/400 beside a stamp that said 80/320, and the checker flagged print-range.
+        if (gmVariant && fit === gmVariant) { e.weaponGm = gmVariant; e.weapon = gmVariant; }
         // THE ROW OBEYS THE WEAPON IT CARRIES (2026-10-30). Stamping `e.weapon`
         // recorded the weapon and changed nothing on the row, so a greataxe
         // rolled d8 and a greatsword rolled d8 at reach 10 — the dice came from
@@ -7379,7 +7373,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // chassis's thrown range fitted a javelin and the javelin then outvoted
         // the word a GM actually reads. weaponFor returns null for an invented
         // name, so the fitted weapon still covers every row it was there for.
-        const props = WEAPONS[weaponFor(bare) ?? e.weapon ?? ''] ?? null;
+        // A WEAPON THE GM DECLARED OUTRANKS THE NAME (item 24, 2026-11-10): the name-wins rule above
+        // is for a weapon FITTED from the row's numbers, and "Crossbow" would re-table the GM's
+        // heavy crossbow back to 80/320. A fitted weapon still loses to the name, as before.
+        const props = WEAPONS[(e.weaponGm ?? null) ?? weaponFor(bare) ?? e.weapon ?? ''] ?? null;
         const w = props && (props.range || props.launcher) ? [null, props.range, !!props.thrown] : null;
         if (!w && /range (?:30\/90|60\/180|90\/240) ft\./.test(e.text ?? '')) { const to = /30\/90/.test(e.text) ? '20/60' : '60/240'; const was = (/range [\d/]+ ft\./.exec(e.text) ?? [''])[0]; e.text = e.text.replace(/range (?:30\/90|60\/180|90\/240) ft\./, `range ${to} ft.`); if (e.text_noRider) e.text_noRider = e.text_noRider.replace(/range (?:30\/90|60\/180|90\/240) ft\./, `range ${to} ft.`); trace('weapon table:', `"${bare}" — ${was} is not a print range; an unlisted thrown thing is 20/60, a hurled mass 60/240 (the critic's third species read)`); continue; }
         if (!w || !/range \d+(?:\/\d+)? ft\./.test(e.text ?? '')) continue; /* a single-range chassis row ("range 60 ft.") takes the table too */
@@ -7566,7 +7563,17 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // the print BODY brings its size and base speed (a Medium Wight came out Large at 40 ft., critic 2026-09-30)
         if (printBody) {
           if (pc.size && /^(?:Tiny|Small|Medium|Large|Huge|Gargantuan)$/.test(pc.size) && !/^Humanoid\b/i.test(pc.type ?? '') && !/swarm/i.test(monster.size ?? '') && String(monster.size ?? '') !== pc.size) { /* a single print size, and never for a print Humanoid: the scrape clipped "Small or Medium" to "Small" on every NPC block (the Mage, 2026-10-01) */ trace('print canon size:', `${monster.size} -> ${pc.size} — the ${pc.name}'s`); monster.size = pc.size; { const conM = Math.floor(((monster.stats?.CON ?? 10) - 10) / 2); const fromHp = Number(scaled.hp ?? monster.hp); /* the intended HP — rebuilding from an already-rounded formula compounded two roundings (127 → 123 → 119, the brass gate-golem) */ monster.hp_formula = scaled.print_hp_formula ?? hpFormulaForSize(fromHp, pc.size, conM); /* print's own dice stand where print's HP does — the clipped Small re-rolled the Mummy's 9d8 + 18 into 11d6 + 22 (2026-10-18) */ const dmS = /(\d+)d(\d+)(?:\s*([+-])\s*(\d+))?/.exec(monster.hp_formula ?? ''); if (dmS) monster.hp = Math.floor(Number(dmS[1]) * (Number(dmS[2]) + 1) / 2) + (dmS[3] === '-' ? -1 : 1) * Number(dmS[4] ?? 0); } /* the hit die follows the size (15d20 on a Huge Treant, checker 2026-10-02) */ }
-          const userType = options.typeSource === 'user' ? String(options.resolvedType ?? '').toLowerCase() || undefined : undefined; // the type the GM named, by the identity call's `type_source` — the regex it replaces is retired (owner, 2026-10-18)
+          // THE CALL'S CLAIM IS VALIDATED, NOT TRUSTED (2026-11-10). "goblin boss" shipped
+          // Humanoid on 4 of 5 rolls: the identity call answers `type_source: user` where the GM
+          // named no type at all, and a GM-named type rightly outranks print — so print's own Fey
+          // never landed and the checker read exact-body-identity FAIL. The guard was right and
+          // its input was wrong. CLAUDE.md: code may VALIDATE a call's answer by checking the
+          // quote exists, and the species-kit branch below already applies this same test to the
+          // same question ("the words name no other"). An unquoted claim is no claim: print's type
+          // stands, which is the conservative default for a print body.
+          const claimedType = options.typeSource === 'user' ? String(options.resolvedType ?? '').toLowerCase() || undefined : undefined; // the type the GM named, by the identity call's `type_source` — the regex it replaces is retired (owner, 2026-10-18)
+          const userType = claimedType && new RegExp(`\\b${claimedType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(String(options.userConcept ?? concept ?? '')) ? claimedType : undefined;
+          if (claimedType && !userType) trace('print canon type:', `the call answered type_source=user for ${claimedType}, but the GM's words do not name it — the ${pc.name}'s own type stands`);
           const reclass2024 = options.edition === '2014' && /^Fey$/i.test(pc.type) && /^Humanoid/i.test(String(monster.type ?? '')); // goblins went Fey in 2024 alone; a 2014 sheet keeps the Humanoid
           if (reclass2024) trace('print canon type:', `${monster.type} stays — the ${pc.name} is Fey in 2024 only; this is a 2014 sheet (form-ten 2026-10-01)`);
           // print's alignment heads with print's name, exact or borrowed, unless the GM named one
@@ -8720,6 +8727,22 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             }
           }
           if (hasRow(new RegExp(r.name.replace(/ \(.*\)$/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'))) continue;
+          // A CLASS LIFT BELONGS TO ITS CLASS (item 27, 2026-11-10). The monk is DESIGNED to stand
+          // on the Spy (classes.mjs: monk.bodies = ['Scout', 'Spy']), and the Spy's own Cunning
+          // Action then rode along as print's — both monks in the 11-09 forty shipped it, and the
+          // catalog itself gives Cunning Action to the ROGUE. On this path the donor body is a
+          // functional borrow, not the creature's identity, so its class-signature row is not this
+          // sheet's. The authority is the existing CLASSES table, not a new list: only an SRD lift
+          // that exactly one class claims is withheld, so a shared FUNCTION row (riposte,
+          // shield-bash) still rides, and a lift the sheet's own class owns — the mage's Misty Step
+          // and Protective Magic, the cleric's Divine Aid — lands exactly as before.
+          if (pathD?.path === 'class_npc' && pathD.class) {
+            const liftOwner = classLiftOwner(r.name);
+            if (liftOwner && liftOwner !== pathD.class) {
+              trace('print canon row withheld:', `${r.section}/${r.name} — the ${pc.name}'s own, but the catalog gives it to the ${liftOwner} and this sheet is a ${pathD.class}`);
+              continue;
+            }
+          }
           const STAT_KEY = { Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON', Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' };
           const named = /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability/.exec(r.text)?.[1];
           const rowDc = named && scaled.stats ? 8 + scaled.pb + Math.floor(((scaled.stats[STAT_KEY[named]] ?? 10) - 10) / 2) : scaled.dc; // a row that names its stat derives from it (Read Thoughts at DC 14 on Cha 8, critic 2026-09-29)

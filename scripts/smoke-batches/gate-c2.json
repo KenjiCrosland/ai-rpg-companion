@@ -1,0 +1,14 @@
+[
+  { "canary": "24 — heavy crossbow 2014: 1d10 at 100/400 (was 1d8 at 80/320, 0 of 4)", "description": "goblin boss with a heavy crossbow", "cr": "1", "rules": "2014" },
+  { "canary": "24 — heavy crossbow 2024: same weapon, other printing", "description": "goblin boss with a heavy crossbow", "cr": "1", "rules": "2024" },
+  { "canary": "24 — a second variant: hand crossbow is d6 at 30/120, not the generic d8", "description": "a goblin scout sniper with a hand crossbow", "cr": "2", "rules": "2024" },
+  { "canary": "24 control + type — plain goblin boss 2024: print's Scimitar/Shortbow untouched AND type Fey (was Humanoid 4 of 5)", "description": "goblin boss", "cr": "1", "rules": "2024" },
+  { "canary": "type — hobgoblin 2024 is Fey; the call must not claim the GM named Humanoid", "description": "hobgoblin captain", "cr": "3", "rules": "2024" },
+  { "canary": "type control — the GM DOES name a type: Undead stands over print's Beast", "description": "a dire wolf but undead", "cr": "1", "rules": "2024" },
+  { "canary": "27 — monk on the Spy: NO Cunning Action (both monks shipped it)", "name": "Cinder Ashen", "description": "an ascetic monk who fights with open palms, strikes pressure points", "cr": "5", "rules": "2024" },
+  { "canary": "27 — lizardfolk monk on the Spy: NO Cunning Action, keeps Hold Breath", "name": "Vaskis Sshar", "description": "a lizardfolk monk of a swamp monastery", "cr": "7", "rules": "2024" },
+  { "canary": "27 control — a rogue KEEPS Cunning Action (its own class's lift)", "name": "Thessaly Nightbloom", "description": "a rogue assassin who hunts from cover", "cr": "4", "rules": "2024" },
+  { "canary": "27 control — a mage KEEPS Misty Step and Protective Magic", "name": "Lord Vexmoor", "description": "necromancer BBEG, raises the party's fallen allies", "cr": "12", "rules": "2024" },
+  { "canary": "27 control — a cleric KEEPS the Priest's Mace, Spellcasting and Divine Aid", "name": "Sister Maudra", "description": "a village cleric who tends the shrine", "cr": "2", "rules": "2024" },
+  { "canary": "27 control — a fighter on the Gladiator KEEPS Shield Bash (a template, not a lift)", "name": "Grask Ironjaw", "description": "an orc war chief who leads from the front", "cr": "5", "rules": "2024" }
+]
