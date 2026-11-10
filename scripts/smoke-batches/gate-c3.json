@@ -1,0 +1,14 @@
+[
+  { "canary": "lift — bard on the Spy: Cunning Action WITHHELD (the bard does not own it; untested path)", "name": "Pell Quillory", "description": "a traveling minstrel who spies for the crown, charms and slips away", "cr": "3", "rules": "2024" },
+  { "canary": "lift — paladin on the Gladiator: Shield Bash KEPT (a template), paladin owns Aura of Authority", "name": "Ser Oathe", "description": "an oathsworn champion who fights in the arena for his god", "cr": "5", "rules": "2024" },
+  { "canary": "lift — barbarian on the Gladiator: Bloodied Frenzy KEPT (its own lift), Shield Bash KEPT", "name": "Hrok the Pit", "description": "a pit-fighting berserker who rages when wounded", "cr": "5", "rules": "2024" },
+  { "canary": "lift control — rogue on the Scout: nothing withheld (the Scout carries no class lift)", "name": "Wren Sixfingers", "description": "a forest scout and thief who robs caravans", "cr": "2", "rules": "2024" },
+  { "canary": "lift control — cleric on the Cultist Fanatic: Spiritual Weapon KEPT (the cleric's own lift)", "name": "Brother Vantre", "description": "a fanatic cult priest who calls down spectral weapons", "cr": "3", "rules": "2024" },
+  { "canary": "lift control — bard on the Pirate Captain: Captain's Charm KEPT (the bard's own lift)", "name": "Rhosyn Gale", "description": "a pirate captain who sings her crew into a fury", "cr": "6", "rules": "2024" },
+  { "canary": "weapon — a GM-named weapon on a PRINT row (the separate 7848 pass my stamp change touches)", "description": "an ogre with a greatsword", "cr": "2", "rules": "2024" },
+  { "canary": "weapon — a MELEE variant: greatsword vs sword, the endsWith relation off a crossbow", "description": "a knight with a greatsword", "cr": "3", "rules": "2024" },
+  { "canary": "weapon — a THROWN weapon: print-range on 20/60, now read off the stamp", "description": "a tribal hunter who throws javelins", "cr": "1", "rules": "2024" },
+  { "canary": "weapon control — a launcher, nothing named: the longbow's 150/600 unchanged", "description": "a scout", "cr": "1", "rules": "2024" },
+  { "canary": "type — an unusual print type, none named: the Unicorn stays Celestial (print says Celestial, not Fey)", "description": "unicorn", "cr": "5", "rules": "2024" },
+  { "canary": "type — the GM DOES name one: Undead stands over print's Giant", "description": "an undead ogre", "cr": "2", "rules": "2024" }
+]

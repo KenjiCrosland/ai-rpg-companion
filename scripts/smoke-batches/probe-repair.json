@@ -1,0 +1,6 @@
+[
+  { "canary": "18 — Harl: the Shortsword rider cites a returning handaxe (repair declines 7/7)", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "8", "rules": "2014" },
+  { "canary": "14b — Mother Ash: a trait requiring Restrained/Grappled no row imposes", "name": "Mother Ash", "description": "a hag of thorn and needle-claw who binds victims in black wax and grave-ash, drinking their cries", "cr": "9", "rules": "2024" },
+  { "canary": "18 again — a second roll of the same sellsword", "description": "a sellsword who hurls a handaxe and closes with a shortsword", "cr": "8", "rules": "2014" },
+  { "canary": "14b again — a second roll of the hag", "name": "Mother Ash", "description": "a hag of thorn and needle-claw who binds victims in black wax and grave-ash, drinking their cries", "cr": "9", "rules": "2024" }
+]

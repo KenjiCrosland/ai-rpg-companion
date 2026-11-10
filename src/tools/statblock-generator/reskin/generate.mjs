@@ -10123,6 +10123,21 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           if (seen) { seen.problems.push(f.message); continue; }
           freeFlagged.push({ sec, row, problems: [f.message] });
         }
+        // AN ATTACK ROW HAS NO FORM TO BE REPAIRED INTO, so it is not sent (2026-11-10). This
+        // path calls formsSpec with attackCap 0 — deliberately, because the engine prices every
+        // attack — so the only forms on offer are save, trait and reaction. Accepting one of
+        // those for an attack row would overwrite its text and MOVE it out of Actions: Harl's
+        // flagged "Shortsword" would have become a trait named Shortsword and the sellsword
+        // would have lost its weapon. Until the repair can answer in kind, the faulty rider
+        // ships and is named in the trace rather than silently traded for a worse sheet.
+        // The attack-row test is scale.mjs's own stamp, re-run here because it is idempotent and
+        // otherwise lands after this block — one owner for the definition, no second copy of it.
+        stampAttacksPerRound(monster.sections);
+        for (let i = freeFlagged.length - 1; i >= 0; i -= 1) {
+          if (freeFlagged[i].row?.attacksPerRound == null) continue;
+          trace('row repair not offered:', `${freeFlagged[i].sec}/"${freeFlagged[i].row.name}" is an attack row, and this path carries no attack form — the audit's fault stands on the sheet (${freeFlagged[i].problems.map((x) => String(x).slice(0, 60)).join(' | ')})`);
+          freeFlagged.splice(i, 1);
+        }
         const toFix = freeFlagged.slice(0, 2);
         if (toFix.length) {
           const kindOf = (sec) => (sec === 'Traits' ? 'a trait' : sec === 'Reactions' ? 'a reaction' : 'an action');

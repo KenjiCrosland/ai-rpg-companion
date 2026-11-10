@@ -9465,5 +9465,266 @@
     "askMechanicWhy": "leads from the front"
    }
   ]
+ },
+ "c355bdc20236": {
+  "concept": "Pell Quillory — a traveling minstrel who spies for the crown, charms and slips away",
+  "clauses": [
+   {
+    "id": "cl_21fa4t",
+    "text": "Pell Quillory — a traveling minstrel",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1iawg2z",
+    "text": "spies for the crown",
+    "kind": "descriptive"
+   },
+   {
+    "id": "cl_1nozxzc",
+    "text": "charms and slips away",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "charms and slips away",
+    "askShape": "movement",
+    "askMechanic": "teleport",
+    "askMechanicWhy": "slips away"
+   }
+  ]
+ },
+ "e24c8c8d6ec6": {
+  "concept": "Ser Oathe — an oathsworn champion who fights in the arena for his god",
+  "clauses": [
+   {
+    "id": "cl_v8rve6",
+    "text": "Ser Oathe — an oathsworn champion",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_kii8vl",
+    "text": "fights in the arena for his god",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "e60015981e16": {
+  "concept": "Hrok the Pit — a pit-fighting berserker who rages when wounded",
+  "clauses": [
+   {
+    "id": "cl_1nvaxc4",
+    "text": "Hrok the Pit — a pit-fighting berserker",
+    "kind": "mechanical",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_5glgkm",
+    "text": "rages when wounded",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "when wounded",
+    "askShape": "buff_self",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "rages when wounded"
+   }
+  ]
+ },
+ "402ef2b95d91": {
+  "concept": "Wren Sixfingers — a forest scout and thief who robs caravans",
+  "clauses": [
+   {
+    "id": "cl_14kxle7",
+    "text": "Wren Sixfingers — a forest scout and thief",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1lycssv",
+    "text": "robs caravans",
+    "kind": "descriptive"
+   }
+  ]
+ },
+ "d82a97cd18c4": {
+  "concept": "Brother Vantre — a fanatic cult priest who calls down spectral weapons",
+  "clauses": [
+   {
+    "id": "cl_jpdtby",
+    "text": "Brother Vantre — a fanatic cult priest",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1hzdmmm",
+    "text": "calls down spectral weapons",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "calls down",
+    "askShape": "attack",
+    "askMechanic": "burst",
+    "askMechanicWhy": "spectral weapons"
+   }
+  ]
+ },
+ "b575d733f1d4": {
+  "concept": "Rhosyn Gale — a pirate captain who sings her crew into a fury",
+  "clauses": [
+   {
+    "id": "cl_wrfax0",
+    "text": "Rhosyn Gale — a pirate captain",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1ihurwd",
+    "text": "sings her crew into a fury",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "sings",
+    "askShape": "buff_ally",
+    "askMechanic": "command",
+    "askMechanicWhy": "sings her crew into a fury"
+   }
+  ]
+ },
+ "be1c2eec692e": {
+  "concept": "an ogre with a greatsword",
+  "clauses": [
+   {
+    "id": "cl_1pzinuv",
+    "text": "an ogre with a greatsword",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "e8596fcd2093": {
+  "concept": "a knight with a greatsword",
+  "clauses": [
+   {
+    "id": "cl_10dl6mt",
+    "text": "a knight with a greatsword",
+    "kind": "mechanical",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "8f267f55e4aa": {
+  "concept": "a tribal hunter who throws javelins",
+  "clauses": [
+   {
+    "id": "cl_1dyoztr",
+    "text": "a tribal hunter",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "a tribal hunter",
+    "askOften": "at_will",
+    "askOftenWhy": "a tribal hunter",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_qgc0wr",
+    "text": "throws javelins",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "throws javelins",
+    "askOften": "at_will",
+    "askOftenWhy": "throws javelins",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "4a711f2b2848": {
+  "concept": "a scout",
+  "clauses": [
+   {
+    "id": "cl_k2q9vj",
+    "text": "a scout",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "84de6753b298": {
+  "concept": "unicorn",
+  "clauses": [
+   {
+    "id": "cl_1ua8b6g",
+    "text": "unicorn",
+    "kind": "mechanical",
+    "head": true
+   }
+  ]
+ },
+ "a4e1a7d973e2": {
+  "concept": "an undead ogre",
+  "clauses": [
+   {
+    "id": "cl_1b6fza3",
+    "text": "an undead ogre",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "1f980ced594d": {
+  "concept": "Mother Ash — a hag of thorn and needle-claw who binds victims in black wax and grave-ash, drinking their cries",
+  "clauses": [
+   {
+    "id": "cl_1on2ts6",
+    "text": "Mother Ash — a hag of thorn and needle-claw",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "Mother Ash — a hag of thorn and needle-claw",
+    "askShape": "save_single",
+    "askMechanic": "snare",
+    "askMechanicWhy": "binds victims"
+   },
+   {
+    "id": "cl_4jjbp2",
+    "text": "binds victims in black wax and grave-ash",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "binds victims in black wax and grave-ash",
+    "askShape": "save_single",
+    "askMechanic": "snare",
+    "askMechanicWhy": "binds victims"
+   },
+   {
+    "id": "cl_4wwess",
+    "text": "drinking their cries",
+    "kind": "mechanical",
+    "askShape": "heal",
+    "askMechanic": "drain",
+    "askMechanicWhy": "drinking their cries"
+   }
+  ]
+ },
+ "81e3d752bbaa": {
+  "concept": "a chalk-hound that clings to what it marks, leaving a daubing print that will not wash off",
+  "clauses": [
+   {
+    "id": "cl_166bg2b",
+    "text": "a chalk-hound",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_9he3se",
+    "text": "clings to what it marks",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "clings to what it marks"
+   },
+   {
+    "id": "cl_ib405y",
+    "text": "leaving a daubing print that will not wash off",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "curse",
+    "askMechanicWhy": "will not wash off"
+   }
+  ]
  }
 }

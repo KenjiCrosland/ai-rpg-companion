@@ -135,6 +135,17 @@ IF THE SHEET ALREADY ANSWERS A CLAUSE, SAY SO INSTEAD OF WRITING A ROW. Read THE
  * it already works — nine sheets on the 2026-11-05 sweep took an audit rename.
  */
 export function buildFreeRowFixPrompt({ name, inline, cr, sheet, row, problems = [], kind = 'an action', taken = [], lacks = [] }) {
+  // THE ARRAY IS NAMED, NOT THE PROSE KIND (2026-11-10). Probed in-pipeline: 5 of 6 repair
+  // answers came back in a shape the parser cannot read, and the sheets shipped the faulty row —
+  // 122 of 140 repairs declined across 480 sheets, 120 of them "the answer held no row of any
+  // kind". Two shapes, one cause: `IT IS ${kind}` names "a trait" and "a reaction", which happen
+  // to match envelope keys, but "an action" matches none, so the call answered {"action":[...]}
+  // and {"actions":[...]}; and the singular framing ("that ONE row", its text quoted above) got a
+  // bare row object with no wrapper at all. The sibling `buildSeatPrompt` restates the envelope
+  // after formsSpec and does not have this problem. So: name the array, restate the envelope, and
+  // say what an empty answer costs.
+  const ARRAY_FOR = { 'a trait': 'traits', 'a reaction': 'reactions', 'an action': 'saves' };
+  const arr = ARRAY_FOR[kind] ?? 'saves';
   return `You are REPAIRING one ability of a D&D monster. The sheet below is finished, and one row on it does not work at a table. Rewrite that ONE row into the closed forms below, keeping what makes it interesting. You never write a number: no attack bonus, no damage dice, no DC — the engine prices every row.
 
 THE CREATURE: ${name} (${inline}), CR ${cr}.
@@ -154,9 +165,14 @@ THREE TESTS YOUR REPAIR MUST PASS:
 2. THE ACTION ECONOMY. The row costs something real. A trait that hands out a free attack whenever a condition is met, with no action and no limit, is the defect this test exists to catch — if an effect should fire often, gate it (a recharge, once per turn, or the creature's action).
 3. NOT A DEAD ROW. It must be worth choosing on the creature's turn, or worth having as a passive. A row a GM would never pick is as bad as one they cannot run.
 
-IT IS ${kind}. Write exactly one row, of that kind, and leave the other arrays empty.${taken.length ? `\n\nNAMES ALREADY ON THE SHEET — the repaired row keeps "${row.name}" and must not take any other: ${taken.map((n) => `"${n}"`).join(', ')}.` : ''}${lacks.length ? `\n\nTHE CREATOR SAID IT DOES NOT HAVE: ${lacks.map((l) => `"${l}"`).join(', ')}. The repaired row may not grant any of these in any wording.` : ''}
+IT IS ${kind}, so the repaired row goes in the "${arr}" array. Write exactly one row there and leave every other array empty. If the row's SHAPE is itself the defect — a trait that reads like a reaction, an action that should be a passive — answer in the array that shape belongs to instead, and the engine moves the row to where that form lives.${taken.length ? `\n\nNAMES ALREADY ON THE SHEET — the repaired row keeps "${row.name}" and must not take any other: ${taken.map((n) => `"${n}"`).join(', ')}.` : ''}${lacks.length ? `\n\nTHE CREATOR SAID IT DOES NOT HAVE: ${lacks.map((l) => `"${l}"`).join(', ')}. The repaired row may not grant any of these in any wording.` : ''}
 
-${formsSpec({ name, inline, attackCap: 0 })}`;
+${formsSpec({ name, inline, attackCap: 0 })}
+
+Answer with ONE JSON object in exactly this shape — the row INSIDE its array. Never a bare row object, and never a key that is not one of these four: "action", "actions", "row" and "ability" are not keys here.
+{ "attacks": [], "saves": [ ... ], "traits": [ ... ], "reactions": [ ... ], "crossRef": null, "unplaced": [] }
+
+An answer with every array empty leaves the faulty row on the sheet word for word, which is the worst outcome available here — there is no ready-made row to fall back on. Repair it into one of these forms.`;
 }
 
 export function buildSeatPrompt({ name, inline, cr, sheet, idea, missing = '', kind = 'an action', taken = [], lacks = [], clause = '' }) {
