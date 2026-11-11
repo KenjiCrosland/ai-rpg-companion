@@ -1,4 +1,4 @@
-import { parseAuthorResponse, validateAuthorResponse } from '../author.mjs';
+import { parseAuthorResponse, validateAuthorResponse, buildSeatPrompt, buildRepairPrompt, buildFreeRowFixPrompt } from '../author.mjs';
 
 describe('authoring into forms (fidelity pipeline step 5): the model never writes a number, the vocabularies are closed, the slots are enforced', () => {
   const keys = ['Melee Attack', 'Hybrid Attack'];
@@ -124,5 +124,41 @@ describe('condition_relation gates the imposes record', () => {
     const { parseAuthorResponse } = require('../author.mjs');
     const refused = parseAuthorResponse(one('Bewildered', 'inflicts')).refused;
     expect(refused[0].why).toMatch(/not a condition in this game/);
+  });
+});
+
+// THE SKELETON IS THE ANSWER (2026-11-11). The seat prompt spends a paragraph asking the model to
+// put an already-carried clause in "answered" and write no row — and the JSON skeleton beneath it
+// listed every key BUT that one. `seat stands down:` fired 0 times across 249 sheets; 39 of the 55
+// pull-at-range rows on the last 784 came from a seat writing a second row for a clause the
+// creature's own Bite already carried. The parser and the credit helper were correct all along.
+describe('the authoring envelope asks for every key the prompt talks about', () => {
+  const seat = () => buildSeatPrompt({ name: 'Mire Hound', inline: 'Medium Beast', cr: 1, sheet: 'Bite. ...', idea: 'it hauls a swimmer down', clause: 'drags fishermen under', kind: 'an action' });
+
+  test('the seat may answer "answered" — the key its own prose demands', () => {
+    const p = seat();
+    expect(p).toMatch(/put that clause and that row's exact name in "answered"/);
+    expect(p).toMatch(/"answered": \[ \{ "clause": "\.\.\.", "row": "\.\.\." \} \]/);
+  });
+
+  test('a clause the seat credits parses back out of the answer', () => {
+    const p = parseAuthorResponse(JSON.stringify({ attacks: [], saves: [], traits: [], reactions: [], answered: [{ clause: 'drags fishermen under', row: 'Bite' }], unplaced: [] }), { attackKeys: [] });
+    expect(p.answered).toEqual([{ clause: 'drags fishermen under', row: 'Bite' }]);
+  });
+
+  test('the repair keeps its own envelope byte for byte', () => {
+    expect(buildRepairPrompt({ name: 'X', inline: 'Medium Beast', clauses: [{ text: 'c' }], cr: 3, sheet: 'S' }))
+      .toContain('{ "attacks": [ ... ], "saves": [ ... ], "traits": [ ... ], "reactions": [ ... ], "crossRef": null, "answered": [ { "clause": "...", "row": "..." } ], "unplaced": [ { "clause": "...", "where": "languages"|"description", "text": "one line in the creator\'s register" } ] }');
+  });
+
+  // a repair is handed ONE faulty row and told an empty answer is the worst outcome available;
+  // "answered" there would be a door out of the job
+  test('the free-row repair is offered no way to answer instead of repairing', () => {
+    expect(buildFreeRowFixPrompt({ name: 'X', inline: 'Medium Beast', cr: 3, sheet: 'S', row: { name: 'R', text: 't' } })).not.toContain('"answered"');
+  });
+
+  // the seat prices no attack: it has no weapon row of its own to clone
+  test('the seat is offered no attack array to fill', () => {
+    expect(seat()).toContain('{ "attacks": [], "saves": [ ... ]');
   });
 });

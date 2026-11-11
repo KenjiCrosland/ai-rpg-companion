@@ -1473,6 +1473,7 @@ export const TEMPLATES = [
     // NEEDS_BODY and FAMILY key lands on its template, so this cannot recur.
     mechanic: MECHANIC_OF[seed.key] ?? MECHANIC_OF[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? null,
     duration_default: seed.duration_default ?? null, // a seed declares its own default too, or the frame path's choice never reaches it
+    hold_shape: seed.hold_shape ?? null, // ...and so does a seed's hold shape: the SHAPES branch read it from line 1453 and this branch dropped it (the `needs_body` disease above, sixth sighting)
     needs_body: NEEDS_BODY[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? NEEDS_BODY[seed.key] ?? null,
     family: FAMILY[SHAPES.some((sh) => sh.id === seed.key) ? `${seed.key}-seed` : seed.key] ?? FAMILY[seed.key] ?? null,
     // A SEED MAY DECLARE ITS OWN CELL (owner's ruling, 2026-11-05, option b).

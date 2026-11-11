@@ -43,6 +43,13 @@ export const LIBRARY_SEEDS = [
   },
   {
     key: 'obstacle-pull', keys: ['pull', 'yank', 'reel', 'beckon'],
+    // A PULL AT RANGE IS A REACHING HOLD (2026-11-11). Its own text reaches 60 feet and
+    // hauls the target in, which is the same body question `hook-drag` and `reel` answer
+    // with `hold_shape: 'reach'` — and this seed carried no shape, so the gate the owner
+    // approved for those two let it onto a grip creature's menu: the cove bull eel (grip,
+    // "pulls sailors beneath the waves") shipped Thrashing Surge, a 15-foot cone pull,
+    // through `closest accepted`. Not a new class, the same one, declared.
+    hold_shape: 'reach',
     section: 'Actions', archetypes: ['caster', 'defender', 'lurker'],
     name: 'Beckoning Pull', // Polite Beckon, generified
     text: "*Strength Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target is pulled up to 15 feet straight toward the creature, and its Speed is 0 until the start of the creature's next turn.",

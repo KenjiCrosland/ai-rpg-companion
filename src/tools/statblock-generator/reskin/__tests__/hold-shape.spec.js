@@ -69,3 +69,31 @@ describe('the menu offers a hold only to a creature of that shape', () => {
     expect(pool).toContain('swallow');
   });
 });
+
+// A SEED IS A TEMPLATE TOO (2026-11-11). `obstacle-pull` is a library seed, not a shape, and the
+// catalog is built from two branches: the SHAPES branch read `hold_shape` and the SEEDS branch
+// dropped it — the same disease `needs_body` had in 2026-10-22's comment, sixth sighting. So this
+// 60-foot pull-and-haul was legal on a grip creature while `hook-drag` was withheld, and it landed
+// on the cove bull eel through `closest accepted`. Its own ctx, because the shared one above is a
+// brute/grappler and the seed's roles are caster/defender/lurker: that ctx would withhold it for
+// the wrong reason and the test would pass with the bug in place.
+describe('a seed carries its declared hold shape as a shape does', () => {
+  const seedIds = (over) => templatesFor(ctx({ archetype: 'lurker', style: null, ...over })).map((t) => t.id);
+
+  test('obstacle-pull — a pull at 60 feet — declares reach', () => {
+    const t = TEMPLATES.find((x) => x.id === 'obstacle-pull');
+    expect(t.kind).toBe('seed');          // the branch that was dropping declarations
+    expect(t.hold_shape).toBe('reach');
+  });
+
+  test('a reaching creature may pull; a gripping, containing or medium one may not', () => {
+    expect(seedIds({ holdShape: 'reach' })).toContain('obstacle-pull');
+    for (const shape of ['grip', 'contain', 'medium', null]) {
+      expect(seedIds({ holdShape: shape })).not.toContain('obstacle-pull');
+    }
+  });
+
+  test('absent falls through as before — a legacy sheet re-rolling loses nothing', () => {
+    expect(seedIds({})).toContain('obstacle-pull');
+  });
+});

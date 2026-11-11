@@ -665,3 +665,33 @@ describe('shedding a rider leaves a readable sentence', () => {
     expect(/[,;]$|\b(?:and|or|while|until|then)$/i.test('has the Grappled condition (escape DC 22).')).toBe(false);
   });
 });
+
+// DECLARED RELATION BEFORE PROSE (2026-11-11). `grapple-no-escape` reads the sentence, which is
+// right for print and for anything unstamped. But the cove bull eel's repaired Pearlescent Slime
+// ("While the bull eel is Grappled, ... it can take a Bonus Action to end the Grapple on itself")
+// is a row about its OWN hide, and it FAILed for an escape DC it should never carry: the free-row
+// repair copied `imposes` and dropped the relation the call had judged, so the record-completion
+// reader read the prose and stamped the opposite meaning.
+describe('a row that declares it does not INFLICT Grappled is not asked for an escape DC', () => {
+  const slime = (over) => withRow('Traits', {
+    name: 'Pearlescent Slime',
+    text: 'While the stalker is Grappled, checks made to sustain a Grapple on the stalker have Disadvantage, and the stalker can take a Bonus Action to end the Grapple on itself.',
+    ...over,
+  });
+
+  test('undeclared, the prose still rules — the gate is unchanged', () => {
+    expect(has(checkBlock(slime({ imposes: 'Grappled' })), 'adjudicability', 'grapple-no-escape', 'fail')).toBe(true);
+  });
+
+  test('a relation of self or requires clears it', () => {
+    for (const row of [{ conditionRelation: 'self' }, { conditionRelation: 'requires' }, { requiresCondition: 'Grappled' }]) {
+      expect(has(checkBlock(slime(row)), 'adjudicability', 'grapple-no-escape')).toBe(false);
+    }
+  });
+
+  test('a row that really hands Grappled out still fails, declared or not', () => {
+    const bare = { name: 'Coat Lash', text: '*Strength Saving Throw*: DC 13, each creature within 5 feet. *Failure:* The target has the Grappled condition until the end of its next turn.' };
+    expect(has(checkBlock(withRow('Actions', { ...bare, imposes: 'Grappled', conditionRelation: 'inflicts' })), 'adjudicability', 'grapple-no-escape', 'fail')).toBe(true);
+    expect(has(checkBlock(withRow('Actions', bare)), 'adjudicability', 'grapple-no-escape', 'fail')).toBe(true);
+  });
+});

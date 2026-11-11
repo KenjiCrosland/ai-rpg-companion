@@ -3800,12 +3800,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const t = f;
       const dmgTok = (eff) => String(eff).replace(/\s*\{dmg\}(?:\s+damage)?/g, (tok, off, whole) => (/\b(?:takes?|deals?|dealing|taking|extra|additional|plus|regains?|suffers?|an extra)\s*$/i.test(whole.slice(0, off)) ? tok : '')).replace(/\s{2,}/g, ' '); // "immune to anything {dmg}" — the token only stands where damage is dealt or taken (the Vault Bull, step 6 baseline)
       const text = renderForm({ kind: 'trait', trigger: t.trigger, effect: token(dmgTok(t.effect)) }, '2024', { properNouns: ownNouns() });
-      return { name: t.name, text, authored: true, clause: t.clause, ...(t.heals ? { heals: true } : {}), ...(t.imposes ? { imposes: t.imposes } : {}), ...(t.requiresConditionNamed ? { requiresCondition: t.requiresConditionNamed } : {}), ...(t.flavor ? { flavor: t.flavor } : {}) };
+      return { name: t.name, text, authored: true, clause: t.clause, ...(t.heals ? { heals: true } : {}), ...(t.imposes ? { imposes: t.imposes } : {}), ...(t.requiresConditionNamed ? { requiresCondition: t.requiresConditionNamed } : {}), ...(t.condition_relation ? { conditionRelation: t.condition_relation } : {}), ...(t.flavor ? { flavor: t.flavor } : {}) };
     }
     if (kind === 'reaction') {
       const r = f;
       const text = renderForm({ kind: 'reaction', trigger: r.trigger, response: token(r.response) }, '2024', { properNouns: ownNouns() });
-      return { name: r.name, text, authored: true, clause: r.clause, ...(r.heals ? { heals: true } : {}), ...(r.imposes ? { imposes: r.imposes } : {}), ...(r.requiresConditionNamed ? { requiresCondition: r.requiresConditionNamed } : {}) };
+      return { name: r.name, text, authored: true, clause: r.clause, ...(r.heals ? { heals: true } : {}), ...(r.imposes ? { imposes: r.imposes } : {}), ...(r.requiresConditionNamed ? { requiresCondition: r.requiresConditionNamed } : {}), ...(r.condition_relation ? { conditionRelation: r.condition_relation } : {}) };
     }
     return null;
   };
@@ -5041,6 +5041,57 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     if (!energy0) return t;
     return String(t).replace(/\b(Acid|Cold|Fire|Force|Lightning|Necrotic|Poison|Psychic|Radiant|Thunder)(?= damage)/g, (m0, ty) => (ty === energy0 ? ty : energy0));
   };
+  // A CLAUSE THE CHASSIS ALREADY ANSWERS IS NOT AN ASK (owner's ruling, 2026-11-11:
+  // "if it's already answered by the chassis then the request for a row should be
+  // dropped in the pipeline — this should never hit the repair").
+  //
+  // Whether a grab or a swallow is already served is a FACT the engine holds from
+  // DECLARED data long before any writer is asked: the donor's attack row ships
+  // `imposes: ['Grappled', 'Restrained']` and its Swallow ships `engulf_engine: true`
+  // (donors.mjs), both present from the moment the chassis is built. Measured over the
+  // 11-10/11-11 runs: of 187 mechanical asks, **92 were already carried by a chassis
+  // row by declared fields alone, and 47 of those still got an action row written for
+  // them** — every cone pull beside a bite that already grapples, every second swallow.
+  // Asking an LLM about it at the seat caught 3 of 92; asking again at the repair is
+  // deciding an upstream fact at the end of the line.
+  //
+  // THIS IS NOT THE GATE REVERTED ON 2026-11-10. That one read the same two facts and
+  // CLOSED the clause — no row, no credit, no receipt — and the owner's objection was
+  // the darkness ("drag under is a clause that NEEDS representation"), not the upstream
+  // decision. Here the credit IS the mechanism: `creditAnsweredClauses` stamps
+  // `row.clause` / `row.answersAlso` on the carrier, and because `unansweredClauses`
+  // and the repair's `claimedWords` both read `e.clause`, the ask leaves the idea call's
+  // list, the seats' anchors, the repair's unclaimed set and the checker's coverage at
+  // once — with a receipt on the Bite saying which row serves the GM's words.
+  //
+  // The table is enum -> DECLARED FIELD, approved row by row (owner, 2026-11-11). Only
+  // these two: a bite's Restrained is not a web (`snare` wants a Web row), and a rider
+  // imposing Frightened is rarely the whole of a `fear` ask. A third pair is one more
+  // row here, approved the same way. Nothing reads text.
+  const CHASSIS_ANSWERS = {
+    grapple: ['imposes', (e) => [].concat(e.imposes ?? []).includes('Grappled')],
+    swallow: ['engulf_engine', (e) => e.engulf_engine === true],
+  };
+  {
+    // THE BODY'S OWN ROWS ONLY. A row a writer added — authored, template, seed, library,
+    // free — must never retroactively "answer" the clause it duplicated; that would credit
+    // the cone pull for the drag it was wrongly written for. Print's rows DO count: on a
+    // twist body print's Tentacle is the body.
+    const chassisRows = Object.values(sections).flat()
+      .filter((e) => e && e !== pendingWildcard && !e.authored && !e.template && !e.seed && !e.library && !e.freeRow);
+    const already = (c) => Object.values(sections).flat().some((e) => e?.clause === c.text || (e?.answersAlso ?? []).includes(c.text));
+    for (const c of (clauseRecord ?? [])) {
+      if (c.kind !== 'mechanical' || c.head || c.polarity || !c.askMechanic) continue;
+      const pair = CHASSIS_ANSWERS[c.askMechanic];
+      if (!pair || already(c)) continue;
+      const [field, serves] = pair;
+      const carrier = chassisRows.find(serves);
+      if (!carrier) continue;
+      creditAnsweredClauses([{ clause: c.text, row: carrier.name }], Object.values(sections).flat(), [c], {
+        onCredit: (cl, row) => trace('answered by the chassis:', `"${cl.text}" asks ${c.askMechanic} and "${String(row.name).replace(/ \(.*\)$/, '')}" already carries it (declared ${field}) — no row is requested for it, and the row now carries the GM's words`),
+      });
+    }
+  }
   // THE INFORMED WILDCARD (owner design 2026-09-15: "we pass the near
   // completed statblock to the wildcard prompt and we're good"): the
   // signature action is written AGAINST the assembled sheet — renamed
@@ -10323,6 +10374,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             const was = String(t.row.text ?? '');
             t.row.text = built;
             if (cand.imposes) t.row.imposes = cand.imposes;
+            // THE REPAIR'S DECLARED RELATION SURVIVES IT TOO (2026-11-11). This copied
+            // `imposes` and nothing else of what the call judged, so a repaired row that
+            // REQUIRES a condition — or carries one on ITSELF — reached the sheet with no
+            // record of either, and the record-completion reader then read the prose and
+            // stamped the opposite meaning: the cove bull eel's Pearlescent Slime ("While
+            // the bull eel is Grappled, … it can take a Bonus Action to end the Grapple on
+            // itself") shipped as a row that APPLIES Grappled, and FAILed `grapple-no-escape`
+            // for an escape DC a row about its own hide should never carry. Both of that
+            // twelve's FAILs were on repair-written text; this is one of them.
+            if (cand.requiresCondition) t.row.requiresCondition = cand.requiresCondition;
+            if (cand.conditionRelation) t.row.conditionRelation = cand.conditionRelation;
+            // A relation that is not `inflicts` also RETIRES a stale `imposes` the faulty
+            // text left behind — the repair is the later answer about the same row.
+            if (cand.conditionRelation && cand.conditionRelation !== 'inflicts' && !cand.imposes) delete t.row.imposes;
             t.row.freeRowRepaired = true;
             if (form.section !== t.sec) {
               const from = monster.sections?.[t.sec] ?? [];
@@ -10618,7 +10683,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // means the call looked and said this row REQUIRES its condition rather than
     // inflicting it; re-reading the prose here would overwrite that answer with
     // its opposite. Declared data wins over any reading of the text.
-    if (e.imposes || e.print || e.requiresCondition) continue;
+    // A relation the call judged as anything but `inflicts` is that same answer: the row
+    // carries the condition on itself, requires it, or is immune. Reading the prose here
+    // would overwrite the answer with its opposite (the eel's own hide, 2026-11-11).
+    if (e.imposes || e.print || e.requiresCondition || (e.conditionRelation && e.conditionRelation !== 'inflicts')) continue;
     const fromText = imposedConditions({ name: e.name, text: e.text });
     if (!fromText.length) continue;
     e.imposes = fromText.length === 1 ? fromText[0] : fromText;

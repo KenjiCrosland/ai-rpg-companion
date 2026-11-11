@@ -1508,7 +1508,14 @@ function gateAdjudicability(m, ctx, F) {
     const dealsOrTargets = /\d+ \(\d+d\d+/.test(t) || /\bhas the [A-Z]\w+ condition\b|\bis (?:knocked|pushed|pulled|grappled|restrained|frightened|charmed|paralyzed|stunned|blinded|poisoned|prone)\b/i.test(t);
     // an ACTION resolves by being taken; a TRAIT or REACTION that deals damage or imposes a condition needs a stated trigger or a save
     // a row that APPLIES Grappled states the escape DC (print: 0 of 2 corpora without it; "that has the Grappled condition" and "While Grappled" are prerequisites, not applications)
-    if (/(?<!\b(?:that|which|who|already|while|if the target|if it|unless it|while the target|target that|creature that)\s)has the Grappled condition(?!\s*\(escape DC)/.test(t) || /\bis grappled\b(?!\s*\(escape DC)(?!\s+by\b)/i.test(t)) F('grapple-no-escape', 'fail', `${sec}/${bare(e.name)}: applies the Grappled condition with no escape DC`, bare(e.name));
+    // DECLARED RELATION BEFORE PROSE (2026-11-11). The patterns below read the sentence,
+    // which is the right fallback for print and for anything unstamped — but a row whose
+    // writer already ANSWERED that it requires the condition, carries it on itself, or is
+    // immune to it is not applying it, whatever the sentence looks like from here. 33 rows
+    // on the recent runs declare `requiresCondition: Grappled`; the relation answer is the
+    // same call's, one value wider. Nothing in the patterns changed.
+    const appliesGrappled = e.requiresCondition !== 'Grappled' && !(e.conditionRelation && e.conditionRelation !== 'inflicts');
+    if (appliesGrappled && (/(?<!\b(?:that|which|who|already|while|if the target|if it|unless it|while the target|target that|creature that)\s)has the Grappled condition(?!\s*\(escape DC)/.test(t) || /\bis grappled\b(?!\s*\(escape DC)(?!\s+by\b)/i.test(t))) F('grapple-no-escape', 'fail', `${sec}/${bare(e.name)}: applies the Grappled condition with no escape DC`, bare(e.name));
     if (sec === 'Traits' && !/\d|\{dc\}|\{dmg\}|\b(?:Advantage|Disadvantage|Resistan\w*|Immun\w*|Vulnerab\w*|condition|saving throw|attack roll|Hit Points?|Temporary|Speed|reach|range|can't|cannot|can |ignores?|regains?|moves?|takes? (?:no|half|extra|double|additional)|deals? (?:extra|double|additional)|Blinded|Charmed|Deafened|Frightened|Grappled|Paralyzed|Poisoned|Prone|Restrained|Stunned|Incapacitated|Invisible|Difficult Terrain|breathe|climb|swim|fly|burrow|speak|understand|see|hear|sense|detect|doesn't|does not|isn't|is not|must|dies|die|succeeds|automatically|unless|only|indistinguishable|motionless|while|when|whenever|if|rather than|counts as|determined|damage types?)\b/i.test(t)) F('adjudicable-mechanic', 'fail', `${sec}/${bare(e.name)}: a trait with no rule in it — flavor on a rules row`, bare(e.name)); // the archlich's "Bound Dead of the Kingdom" (check-in 2026-10-11)
     // A CONDITION THAT DOES NOT SELF-END STATES WHEN IT ENDS (critic, 2026-10-21:
     // Ossuar's Paralyzing Touch read "or be paralyzed" with no bound at all, and

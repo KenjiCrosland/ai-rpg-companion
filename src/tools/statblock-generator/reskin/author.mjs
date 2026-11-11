@@ -66,6 +66,21 @@ export function formsSpec({ name, inline, attackCap = 2 }) {
 }
 
 /** THE REPAIR PASS (step 6): the sheet exists; these clauses have no row. Same forms, same rules, new rows only. */
+/**
+ * ONE ENVELOPE FOR THE THREE AUTHORING CALLS (2026-11-11). The seat's copy was missing
+ * `"answered"` — the key its own prose spends a paragraph asking for ("write NO row — put that
+ * clause and that row's exact name in answered") — so the model answered the skeleton it was
+ * SHOWN and wrote a row every time: `seat stands down:` fired 0 times across 249 sheets, and 39
+ * of the 55 pull-at-range rows on the last 784 came from a seat answering a clause the creature's
+ * own Bite already carried. The parser (`parseAuthorResponse`), the credit helper
+ * (`creditAnsweredClauses`) and the stand-down arm were all correct, waiting on a key that never
+ * arrived. A skeleton teaches the answer, and two copies of one skeleton is how one goes stale —
+ * so there is ONE, parameterised only where the calls really differ: a seat prices no attack, and
+ * only the clause-answering calls may answer `answered` (the free-row repair must never "answer"
+ * its way out of repairing the row it was handed).
+ */
+const ENVELOPE = ({ attacks = '[ ... ]', answered = false, unplaced = '[ ... ]' } = {}) => `{ "attacks": ${attacks}, "saves": [ ... ], "traits": [ ... ], "reactions": [ ... ], "crossRef": null, ${answered ? '"answered": [ { "clause": "...", "row": "..." } ], ' : ''}"unplaced": ${unplaced} }`;
+
 export function buildRepairPrompt({ name, inline, clauses, cr, sheet, attackCap = 2, lacks = [], taken = [] }) {
   return `You are repairing the ABILITIES of a D&D monster: the sheet below is finished except that some of what its creator typed has no row yet. Write ONE row per listed clause, into closed forms, in the creator's own register. You never write a number: no attack bonus, no damage dice, no DC — the engine prices every row.
 
@@ -79,7 +94,7 @@ ${clauses.map((c, i) => `${i + 1}. ${c.text}`).join('\n')}${taken.length ? `\n\n
 ${formsSpec({ name, inline, attackCap })}
 
 Answer with ONE JSON object:
-{ "attacks": [ ... ], "saves": [ ... ], "traits": [ ... ], "reactions": [ ... ], "crossRef": null, "answered": [ { "clause": "...", "row": "..." } ], "unplaced": [ { "clause": "...", "where": "languages"|"description", "text": "one line in the creator's register" } ] }
+${ENVELOPE({ answered: true, unplaced: '[ { "clause": "...", "where": "languages"|"description", "text": "one line in the creator\'s register" } ]' })}
 
 IF THE SHEET ALREADY ANSWERS A CLAUSE, SAY SO INSTEAD OF WRITING A ROW. Read THE SHEET SO FAR above. Where one of the clauses listed below is already carried by a row that is on it — the same mechanic in different words — put it in "answered" with that row's EXACT name, and write no new row for it. The words need not match: a row reading "cannot be moved against its will" answers "holds its ground", and one reading "its wounds close over" answers "knits itself back together". Answering twice is the defect this prevents. Use [] when every clause still needs a row, and never name a row that is not on the sheet.`;
 }
@@ -183,7 +198,7 @@ ${formsSpec({ name, inline, attackCap: 0 })}
 ${SAVE_STAT_RULES}
 
 Answer with ONE JSON object in exactly this shape — the row INSIDE its array. Never a bare row object, and never a key that is not one of these four: "action", "actions", "row" and "ability" are not keys here.
-{ "attacks": [], "saves": [ ... ], "traits": [ ... ], "reactions": [ ... ], "crossRef": null, "unplaced": [] }
+${ENVELOPE({ attacks: '[]', unplaced: '[]' })}
 
 An answer with every array empty leaves the faulty row on the sheet word for word, which is the worst outcome available here — there is no ready-made row to fall back on. Repair it into one of these forms.`;
 }
@@ -207,9 +222,11 @@ ${formsSpec({ name, inline, attackCap: 0 })}
 ${SAVE_STAT_RULES}
 
 Answer with ONE JSON object, the row in the one array its form belongs to:
-{ "attacks": [], "saves": [ ... ], "traits": [ ... ], "reactions": [ ... ], "crossRef": null, "unplaced": [] }
+${ENVELOPE({ attacks: '[]', answered: true, unplaced: '[]' })}
 
-IF THE ABILITY CANNOT BE WRITTEN AS ONE OF THESE FORMS — it is speech, or lore, or it needs a second row beside it to make sense — answer with every array empty and say where it belongs in "unplaced". That is a real answer and costs nothing: the sheet has a ready-made ability to fall back on, and a row that does not work at a table is worse than one that is merely close.`;
+IF THE ABILITY CANNOT BE WRITTEN AS ONE OF THESE FORMS — it is speech, or lore, or it needs a second row beside it to make sense — answer with every array empty and say where it belongs in "unplaced". That is a real answer and costs nothing: the sheet has a ready-made ability to fall back on, and a row that does not work at a table is worse than one that is merely close.${clause ? `
+
+BEFORE YOU ANSWER, ONE LAST LOOK AT THE SHEET. Which row on it already does "${clause}"? If there is one — a bite that grapples and holds, a swallow, a tongue that reels — name it in "answered" with every form array empty, and write nothing. The sheet is not missing an ability in that case, and a second row for the same mechanic is the defect this question exists to catch.` : ''}`;
 }
 
 const CONDITION_RELATIONS = ['inflicts', 'requires', 'immune', 'self', 'none'];
