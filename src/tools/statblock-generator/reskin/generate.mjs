@@ -3815,6 +3815,33 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
     return null;
   };
+  /**
+   * A REPAIR ANSWERS TO THE GATES ITS ROW ALREADY ANSWERED TO (owner's ruling 2026-11-11, item H8:
+   * the end of the line polishes, and "I don't want to lose brand new rows if they are good" — so
+   * the writer is kept and its output is checked).
+   *
+   * Measured over the 318 sheets since the repair call started landing: a repaired free row sits on
+   * a FAILing row 5.1% of the time (3 of 59) against 1.9% for every other non-print row, and all
+   * three broke a DIFFERENT gate from the one that sent them for repair — `name-mechanic`,
+   * `save-fit`, `grapple-no-escape`. The row it replaced had to satisfy the save table, the
+   * name-claim check and the relation record; its replacement satisfied none of them, because this
+   * path validated exactly three things (not empty, no raw token, no dangling reference).
+   *
+   * No new rules: `saveStatsFor` is the table the checker's own `save-fit` gate enforces, read with
+   * the same three inputs it uses, and `mechanicUnkept` is the name-claim reader. A repair that
+   * would introduce one of these is not a repair — the path already knows how to decline, and the
+   * standing text keeps its place.
+   */
+  const repairWouldBreak = (row) => {
+    const sv = /\*?([A-Z][a-z]+) Saving Throw/.exec(row?.text ?? '');
+    if (sv) {
+      const want = saveStatsFor({ imposes: imposedConditions(row)[0] ?? null, damageDominant: damageIsThePoint(row), movement: !!row.imposesMovement });
+      if (want.length && !want.includes(sv[1])) return `roll a ${sv[1]} save for an effect that calls for ${[...new Set(want)].join(' or ')}`;
+    }
+    const unkept = mechanicUnkept(String(row?.name ?? '').replace(/ \(.*\)$/, ''), row?.text ?? '');
+    if (unkept) return `leave the name promising ${unkept} the text lacks`;
+    return null;
+  };
   const landAuthored = (authored, { repair = false } = {}) => {
     // A REPAIR ROW MAY NOT TAKE A NAME ALREADY ON THE SHEET (forty 2026-10-19: the repair named its trait
     // "Unbroken Wall" beside the seat's "Unbroken Wall"). The call is told the taken names; this is the validator.
@@ -7206,6 +7233,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     }
   }
   labelFeatureRows(sections, trace);
+  let repairedAnyRow = false; // a repaired row is text no lint has read (the repair runs 600 lines after the lint pass)
   const owedUnanswered = []; // 1e: owed clauses the repair could not answer — the checker fails on these
   const repairProse = []; // 1e: clauses the repair call judged flavour, not rules — they reach the description instead of a row
   const repairCredited = []; // 1e: clauses the repair call credited to a row already on the sheet — recorded so a credit to a generic print row stays auditable
@@ -7282,7 +7310,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           trace('clause answered in prose:', `"${cl.text}" — the call read the sheet and judged it ${u.where}, not a row; the words reach the ${u.where === 'languages' ? 'languages line' : 'description'} instead`);
         }
         const stillOwed = unclaimed.filter((c) => !alreadyAnswered.has(c.text));
-        if (rep && (rep.attacks.length + rep.saves.length + rep.traits.length + rep.reactions.length)) { rep.placed = rep.attacks.map((a) => ({ ...a, key: null })); rep.unplaced = rep.unplaced ?? []; landAuthored(rep, { repair: true }); if (authored) authored.unplaced = [...(authored.unplaced ?? []), ...rep.unplaced]; else authored = { attacks: [], saves: [], traits: [], reactions: [], crossRef: null, unplaced: rep.unplaced, placed: [], repairOnly: true }; }
+        if (rep && (rep.attacks.length + rep.saves.length + rep.traits.length + rep.reactions.length)) { rep.placed = rep.attacks.map((a) => ({ ...a, key: null })); rep.unplaced = rep.unplaced ?? []; const beforeR = new Set(Object.values(sections).flat()); landAuthored(rep, { repair: true });
+          // THE END OF THE LINE SIGNS ITS WORK (owner, 2026-11-11). The clause repair may still write a
+          // row — it is kept because its rows are good (12 written since the repair fix, 0 FAILs) — but a
+          // row written AFTER the seats is a row the seats missed, and the owner's read should be able to
+          // tell it from one they chose. Nothing downstream reads this; the review page does.
+          for (const eR of Object.values(sections).flat()) if (!beforeR.has(eR)) eR.repairWrote = true;
+          if (authored) authored.unplaced = [...(authored.unplaced ?? []), ...rep.unplaced]; else authored = { attacks: [], saves: [], traits: [], reactions: [], crossRef: null, unplaced: rep.unplaced, placed: [], repairOnly: true }; }
         else if (closedPath && stillOwed.length) { owedUnanswered.push(...stillOwed.map((c) => c.text)); trace('repair:', `the answer held no rows for ${stillOwed.length} owed clause(s) — ${stillOwed.map((c) => `"${c.text}"`).join(', ')}: a print body plus a clause the sheet never answers is the stock monster (1e)`); }
         else trace('repair:', `the answer held no rows — the clauses stay unplaced${closedPath && stillOwed.length ? ' AND they were owed: a print body plus a clause the sheet never answers is the stock monster (1e)' : ''}`);
       } catch (eR) { trace('repair call failed —', `${eR?.message ?? eR}; the clauses stay unplaced`); if (closedPath) owedUnanswered.push(...unclaimed.map((c) => c.text)); }
@@ -10392,13 +10426,22 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           freeFlagged.splice(i, 1);
         }
         const toFix = freeFlagged.slice(0, 2);
+        // set when a repair actually lands, so the post-repair lint below costs nothing on a sheet that had none
         if (toFix.length) {
           const kindOf = (sec) => (sec === 'Traits' ? 'a trait' : sec === 'Reactions' ? 'a reaction' : 'an action');
           const sheetText = Object.entries(monster.sections ?? {}).flatMap(([sec, es]) => (es ?? []).filter(Boolean).map((e) => `${sec} / ${e.name}: ${e.text}`)).join('\n');
           const takenNow = Object.values(monster.sections ?? {}).flat().filter(Boolean).map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean);
           const lacksNow = clauseRecord.filter((c) => c.polarity === 'lacks').map((c) => c.text);
           for (const t of toFix) {
-            trace('row repair:', `"${t.row.name}" [${t.row.freeRow ? 'free row' : 'authored'}] — the audit faults it (${t.problems.map((x) => String(x).slice(0, 70)).join(' | ')}); re-authored through the forms rather than evicted (the owner's ruling: a flagged row is repaired)`);
+            trace('row repair:', `"${t.row.name}" [${t.row.freeRow ? 'free row' : 'authored'}] — the audit faults it (${t.problems.map((x) => {
+              // THE SPAN SURVIVES THE TRACE (2026-11-11, found by the repair-chain probe). Every audit
+              // finding quotes a VERBATIM span — `… (about: "…")` — and that span is the only thing
+              // that makes "did the repair fix what it was sent for" measurable afterwards. Truncating
+              // the message at 70 characters threw it away on all 71 landed repairs in the saved runs.
+              // The issue is still clipped; the quote rides along whole.
+              const str = String(x); const about = /\(about: "[^"]*"\)\s*$/.exec(str);
+              return about ? `${str.slice(0, 70)}${str.length > 70 ? '…' : ''} ${about[0]}` : str.slice(0, 70);
+            }).join(' | ')}); re-authored through the forms rather than evicted (the owner's ruling: a flagged row is repaired)`);
             const rawF = await callLLM(buildFreeRowFixPrompt({
               bodyFacts: declaredBodyFacts({ sections: monster.sections ?? {}, holdShape: options.hold_shape ?? null }),
               name: p.name, inline: inlineGuessRef(), cr, sheet: sheetText, row: { name: String(t.row.name), text: String(t.row.text ?? '') },
@@ -10453,6 +10496,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             if (!built) { trace('free row repair declined:', `"${t.row.name}" — the repaired row came back empty`); continue; }
             if (slot) { trace('free row repair declined:', `"${t.row.name}" — the repair still carries ${slot[0]}, a token this engine never substitutes; the standing text keeps its place`); continue; }
             if (dang) { trace('free row repair declined:', `"${t.row.name}" — the repair cites "${dang}", which is no row on this sheet; the standing text keeps its place`); continue; }
+            const breaks = repairWouldBreak({ ...cand, text: built });
+            if (breaks) { trace('free row repair declined:', `"${t.row.name}" — the repair would ${breaks}, which the engine refuses of any row; a flagged row beats a differently-flagged one, so the standing text keeps its place`); continue; }
             const was = String(t.row.text ?? '');
             t.row.text = built;
             if (cand.imposes) t.row.imposes = cand.imposes;
@@ -10481,6 +10526,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               }
             }
             trace('free row repaired:', `"${t.row.name}": "${was.slice(0, 70)}" -> "${built.slice(0, 90)}"`);
+            repairedAnyRow = true;
           }
         }
       }
@@ -10488,6 +10534,23 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       trace('audit skipped —', e2?.message ?? e2);
     }
   }
+    // THE REPAIR'S TEXT IS LINTED TOO (2026-11-11, found by the repair-chain probe).
+    // The lint's deterministic surgery runs at ~9882 and the audit's repair runs HERE, 600 lines
+    // later — so every word a repair wrote reached the checker unlinted. Of 71 landed repairs across
+    // the saved runs, 7 shipped a row the checker fails, and THREE of those seven are lint rules the
+    // pass above would have fixed by string surgery: `lint:condition-caps`, `lint:term-caps`,
+    // `lint:phrasing-surprised`. Same two lines, run again on what the repair wrote — the pass is
+    // deterministic and idempotent, so a sheet with no repair pays one lint call and changes nothing.
+    if (repairedAnyRow) {
+      const post = lintStatblock(monster, { edition: '2024' });
+      const textRules2 = new Set(DETERMINISTIC_TEXT_RULES());
+      const f2 = post.findings.filter((f) => textRules2.has(f.rule));
+      if (f2.length) {
+        const fixed2 = applyTextFixes(monster, f2, {});
+        for (const [secF, esF] of Object.entries(fixed2.sections ?? {})) (monster.sections[secF] ?? []).forEach((e, i) => { if (esF[i] && esF[i].text !== e.text) e.text = esF[i].text; });
+        trace('lint fixed the repair:', `${[...new Set(f2.map((f) => f.rule))].join(', ')} — a repaired row is text no lint had read, because the repair runs after the lint pass`);
+      }
+    }
   { // PRINT'S OWN CONVENTION IS THE DC (critic, 2026-10-14: Vareth's Spellcasting
     // printed none, so its Spirit Guardians could not be run). 45 of print's 48
     // Spellcasting rows carry "(spell save DC N)"; the Priest's three are the

@@ -92,6 +92,10 @@ function tagsOf(r) {
   if (r.clause || r.gmQuote) t.push(['GM-asked', `answers: "${String(r.clause ?? r.gmQuote)}"`]);
   else if (r.freeRow || r.wildcard) t.push(['free row', 'not asked for — the engine added it']);
   if (r.part) t.push(['part', 'a body part or weapon the concept named']);
+  // the end of the line signs its work (2026-11-11): a row written AFTER the seats is one the seats
+  // missed, and a repaired row is text no gate read before it shipped — both are worth a second look
+  if (r.repairWrote) t.push(['written at the end', 'the seats missed this clause; the repair call wrote it after the sheet was assembled']);
+  if (r.freeRowRepaired) t.push(['repaired', 'the audit faulted this row and it was re-written — read it closely']);
   if (r.imposes) t.push([`imposes ${r.imposes}`, 'the condition this row applies']);
   if (r.rules) t.push(['rules', 'a rules row, not an attack']);
   const gate = /\(((?:Recharge [^)]+|\d\/Day))\)/.exec(r.name ?? '');

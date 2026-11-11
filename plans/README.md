@@ -2,8 +2,9 @@
 
 Forward-dated implementation notes for work that isn't being done now but will need to be done when a specific feature lands. Each file describes:
 
-- **[`opus-plan-2026-11-10.md`](opus-plan-2026-11-10.md)** — Fable's plan for Opus: item A refused with its number (1 of 47; the paste moves sheets toward print), item B's narrow body-only engulf gate with the inert-gate lesson and the four-shape taxonomy (print: 48/4/11/0), item C's dead `energy` wire (print says immunity, 6 of 6), each with its trace line, the premise to measure first, and the fix shape; then the typed forty on the new ruler. Trigger: the next implementation session.
-- **[`HANDOVER-2026-11-10.md`](HANDOVER-2026-11-10.md)** — START HERE for the reskin sprint: tree state, the owner's rules from this session, what landed/withdrawn with numbers, the open items with the trace line to start from, and the run plan.
+- **[`HANDOVER-2026-11-11.md`](HANDOVER-2026-11-11.md)** — **START HERE** for the reskin sprint: tree at `ca9d9a6`, the owner's five rules of 2026-11-11, the thirteen items that closed the lurker set, and THE AUDIT FUNNEL measured (540 findings → 164 dropped by the gate → 74 routed → nothing re-audited) with Item R reframed as the next feature.
+- [`opus-plan-2026-11-10.md`](opus-plan-2026-11-10.md) — the 2026-11-10/11 LOG (superseded as a plan by the handover above): per-item history, traces and anchors for H2–H13, the owner's rulings in sequence.
+- [`HANDOVER-2026-11-10.md`](HANDOVER-2026-11-10.md) — (superseded by `HANDOVER-2026-11-11.md`) the previous day's state.
 - **[`human-spot-check-2026-11-09.md`](human-spot-check-2026-11-09.md)** — the human review page per run (`scripts/review-html.mjs`): clean block, provenance tags, DPR calculator, receipts, trace, Keeper/Runs/Tweak/Fix with export. Trigger: owner wants to read a forty; build before the next run.
 - The trigger — the feature or change that makes the plan relevant.
 - The problem the plan exists to solve.
