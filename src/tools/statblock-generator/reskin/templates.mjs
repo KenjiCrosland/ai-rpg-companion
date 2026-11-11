@@ -454,7 +454,7 @@ const SHAPE_TAGS = {
   'condition-payoff': ['save', 'damage'], rampage: ['once_per_fight', 'damage'], blink: ['always', 'movement'],
   zone: ['once_per_fight', 'condition'], execute: ['save', 'damage'], 'death-burst': ['always', 'damage'],
   'life-drain': ['on_hit', 'condition'], // print's HP-maximum reduction: a rider on the hit, the effect lasting past the turn
-  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], contagion: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], spew: ['save', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'hook-rider': ['on_hit', 'movement'], riposte: ['on_being_hit', 'damage'], 'snap-shot': ['on_being_hit', 'damage'], 'ground-burst': ['save', 'damage'], 'volley-order': ['always', 'resource'], 'random-ray': ['save', 'condition'], 'blurred-form': ['always', 'defense'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'stunning-strike': ['on_hit', 'condition'], 'patient-defense': ['always', 'defense'], 'lay-on-hands': ['always', 'resource'], 'second-wind': ['always', 'resource'], 'shield-bash': ['save', 'condition'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
+  'burrow-ambush': ['save', 'damage'], affliction: ['on_hit', 'condition'], contagion: ['on_hit', 'condition'], charge: ['on_hit', 'damage'], spew: ['save', 'damage'], 'bolt-restrain': ['on_hit', 'condition'], 'bolt-drag': ['on_hit', 'movement'], 'bolt-mark': ['on_hit', 'condition'], 'hook-rider': ['on_hit', 'movement'], riposte: ['on_being_hit', 'damage'], 'answering-strike': ['on_being_hit', 'damage'], 'snap-shot': ['on_being_hit', 'damage'], 'ground-burst': ['save', 'damage'], 'volley-order': ['always', 'resource'], 'random-ray': ['save', 'condition'], 'blurred-form': ['always', 'defense'], 'weapon-lodge': ['on_being_hit', 'resource'], interpose: ['on_being_hit', 'defense'], pounce: ['on_hit', 'condition'], isolation: ['on_hit', 'damage'], snatch: ['on_hit', 'condition'], 'ward-retaliation': ['on_being_hit', 'damage'], assassinate: ['always', 'damage'], 'active-toll': ['save', 'damage'], 'pull-through': ['save', 'movement'], lure: ['save', 'condition'], 'hook-drag': ['save', 'movement'], 'heated-body': ['on_being_hit', 'damage'], 'false-appearance': ['always', 'defense'], 'bloodied-burst': ['on_being_hit', 'damage'], 'shell-withdraw': ['always', 'defense'], 'stunning-strike': ['on_hit', 'condition'], 'patient-defense': ['always', 'defense'], 'lay-on-hands': ['always', 'resource'], 'second-wind': ['always', 'resource'], 'shield-bash': ['save', 'condition'], 'resonant-body': ['on_being_hit', 'damage'], 'throw-retrieve': ['always', 'damage'], seal: ['save', 'condition'], adhesive: ['always', 'condition'], absorption: ['on_being_hit', 'defense'],
   'spider-climb': ['always', 'movement'], phobia: ['always', 'condition'], 'terrain-walk': ['always', 'movement'], 'aberrant-ground': ['always', 'movement'], 'faultless-tracker': ['always', 'condition'], 'web-walker': ['always', 'movement'],
   'energy-aura': ['start_of_turn', 'damage'], 'noxious-aura': ['start_of_turn', 'condition'], 'bloodied-fury': ['always', 'defense'], 'blood-frenzy': ['always', 'damage'], 'death-restoration': ['always', 'defense'], 'pack-tactics': ['always', 'damage'] /* EFFECTS has no 'buff_self': an advantage aura is this catalog's 'defense'. `ally-aura` was authored here on 2026-10-27 and REVERTED the same day — it drew 0 of 10 because three `leader` donors already carry Aura of Authority as a `rules` row and the hobgoblin kit grants it too. An EIGHTH way to ship inert, not in the plan's list of seven: a donor already carries the row. */, 'uncanny-sense': ['always', 'defense'], 'earth-glide': ['always', 'movement'], tunneler: ['always', 'movement'], berserk: ['always', 'condition'], 'shielded-mind': ['always', 'defense'], evasion: ['always', 'defense'],
   'relentless-pursuit': ['always', 'movement'], bound: ['always', 'movement'], 'marking-light': ['always', 'condition'], 'sealed-body': ['always', 'defense'], 'warded-mending': ['start_of_turn', 'resource'], 'guarded-stance': ['always', 'defense'], 'undead-fortitude': ['always', 'defense'], mimicry: ['always', 'defense'], wail: ['once_per_fight', 'damage'], 'truth-aura': ['start_of_turn', 'condition'], 'gaze-aura': ['start_of_turn', 'condition'], 'fear-aura': ['start_of_turn', 'condition'], 'charge-push': ['on_hit', 'movement'],
@@ -839,12 +839,20 @@ export function composedCandidates(idea, { can = [] } = {}) {
 
 export const FAMILY = {
   // retaliation — the critic's Vashka case: thunder from lacquered plate beside her own Riposte
-  'own-turn-punisher': 'punisher',
+  // ('own-turn-punisher' left this family when the seed was retired, 2026-11-11)
   'ward-retaliation': 'punisher',
   riposte: 'punisher',
+  'answering-strike': 'punisher', // the body's answer to a hit; never offered beside Riposte, which answers a miss
   // light-mark — the critic's named duplicate pair
   'marking-light': 'light-mark',
   reveal: 'light-mark',
+  // contact damage — DECLARED 2026-11-11, so the cap and the writer both read it as a fact instead
+  // of matching the prose. These two rows ARE the contact-damage family: print's Remorhaz, Azer,
+  // Fire Elemental and Black Pudding all say "a creature that touches it… takes" and nothing else
+  // on a sheet should say it twice. (The cinder brute took Searing Hide and then AUTHORED a magma
+  // reaction that did the same thing — the writer could not see what the sheet already was.)
+  'heated-body': 'contact-damage',
+  'resonant-body': 'contact-damage',
   // grapple — Scree-Pit's third grapple row
   snatch: 'containment',
   'hook-rider': 'containment',
@@ -862,7 +870,10 @@ const EXCLUDE_ON = {
   // off rows the sheet already carries, so a second row of the same family is
   // never OFFERED — the critic's "no duplicate family including
   // own-turn-punisher, grapple and light-mark".
-  'own-turn-punisher': ['punisher', 'contact-damage'],
+  // the cap the retired `own-turn-punisher` carried, moved to the shape that replaces it: one row
+  // that answers a blow per sheet, and never beside a hide that already answers blows by itself
+  // (Heated Body IS this fiction as a trait — print's own version)
+  'answering-strike': ['punisher', 'contact-damage'],
   'marking-light': ['light-mark'], reveal: ['light-mark'],
   snatch: ['containment'],
 };
@@ -874,6 +885,14 @@ export function sheetEngines(sections = {}) {
     // order, 2026-10-22). A row built from a template carries its family; the
     // text rules below exist for PRINT rows and anything unstamped.
     if (e.family) out.add(e.family);
+    // ...AND THROUGH THE ROW'S TEMPLATE ID, which is the same declaration one indirection away.
+    // A class kit welds `{ template: 'riposte', name: 'Riposte' }` without going near
+    // `renderTemplate`, so the stamp above never reaches it and the cap went blind on exactly the
+    // sheets most likely to collide: Vess Ardaine shipped the fighter kit's Riposte AND an
+    // Answering Strike, two answers to a blow (2026-11-11). Reading `FAMILY[e.template]` is the
+    // declared fact through a declared id — no prose, and it covers every path that stamps a
+    // template id, including the 912 rows already in the saved runs.
+    else if (e.template && FAMILY[e.template]) out.add(FAMILY[e.template]);
     // containment = the ENGULF engine or a Reel row — a plain grapple-on-hit rider
     // is not (the phantom's touch grapples, and that excluded the pull the
     // keeper's own concept names: goldens 2026-09-21)
@@ -899,6 +918,51 @@ export function sheetEngines(sections = {}) {
  * must not build it again (the bull re-described its own charge 5/5). Plain
  * attack rows are not mechanics; their names are fiction.
  */
+/**
+ * WHAT THE WRITER CANNOT SEE (owner, 2026-11-11: "please make the fix").
+ *
+ * The catalog gates on declared facts — `hold_shape` withholds `hook-drag`, `reel` and
+ * `obstacle-pull` from a body that grips; `EXCLUDE_ON` withholds a second row of a family the
+ * sheet already carries. The AUTHORING call is gated by neither, because it picks from no menu:
+ * it writes whatever it likes, and three sheets in one day shipped exactly the row the catalog
+ * would have refused — a 15-foot cone pull on a crocodile that grips, a cone pull on a maw that
+ * swallows, and a magma reaction beside the Searing Hide that already answers a melee hit.
+ *
+ * So the same declared facts go to the writer as sentences. Nothing here reads prose or decides
+ * meaning: the hold shape is the route call's own enum, and the families come from each row's
+ * declared `family` (or its template's, one indirection away, the way `sheetEngines` reads it).
+ *
+ * `grip` only, deliberately (owner's ruling pending on the rest): a body that commands mud or
+ * water SHOULD pull at range — that is what `medium` means — and whether a thing that swallows the
+ * road may open a sinkhole is a design question, not a defect.
+ */
+export const FAMILY_ON_SHEET = {
+  punisher: 'answers a creature that hits or misses it',
+  containment: 'takes hold of a creature and keeps hold of it',
+  'light-mark': 'marks one foe so it can be found or struck',
+  'contact-damage': 'damages whoever touches it or hits it in melee',
+  adhesive: 'sticks to whatever touches it',
+  aura: 'affects every creature in a radius around it, every round',
+  regeneration: 'heals itself every round',
+  disguise: 'passes for something harmless until it moves',
+};
+export function declaredBodyFacts({ sections = {}, holdShape = null } = {}) {
+  const out = [];
+  if (holdShape === 'grip') {
+    out.push('THIS BODY HOLDS BY GRIP — it seizes what its jaws or claws already reach. A row that pulls, hauls or drags a creature toward it from beyond that reach is not something this body can do.');
+  }
+  const seen = new Map();
+  for (const e of Object.values(sections).flat()) {
+    const fam = e?.family || (e?.template ? FAMILY[e.template] : null);
+    const gloss = fam ? FAMILY_ON_SHEET[fam] : null;
+    if (gloss && !seen.has(fam)) seen.set(fam, String(e.name ?? '').replace(/ \(.*\)$/, ''));
+  }
+  for (const [fam, row] of seen) {
+    out.push(`THIS SHEET ALREADY ${FAMILY_ON_SHEET[fam].toUpperCase()} — that is "${row}". Do not write a second row that does the same thing in different words.`);
+  }
+  return out;
+}
+
 export function coveredBySheet(sections = {}) {
   const rows = Object.values(sections).flat().filter((e) => e.gate || e.rules || e.engine || e.engulf_engine || /\(Recharge [\d–-]+\)|\(\d\/Day\)/.test(e.name ?? '') || /Saving Throw\*?:/.test(e.text ?? ''));
   const stems = new Set();
@@ -979,6 +1043,8 @@ export const VERB_KEYS = {
   'volley-order': ['volley', 'orders a volley', 'looses at will', 'looses arrows', 'loose', 'on my mark', 'archers', 'crossbowmen', 'shoot on'],
   'ground-burst': ['erupt', 'eruption', 'erupts', 'burst', 'shockwave', 'stomp', 'stomps', 'quake', 'tremor', 'around it', 'in all directions', 'wave of', 'pulse', 'detonate', 'slams the ground', 'stamps'],
   'snap-shot': ['snap shot', 'snaps off', 'covering fire', 'as they close', 'closes to melee', 'before it can strike', 'on approach', 'anyone who approaches', 'draws near', 'comes within'],
+  // the words a GM uses for a body that answers a blow, as every template in this table carries its own
+  'answering-strike': ['strikes back', 'strike back', 'retaliate', 'retaliates', 'answers', 'punishes', 'lashes back', 'snaps back', 'bites back', 'whoever hits it', 'anyone who hits it'],
   riposte: ['riposte', 'parry', 'parries', 'parried', 'counterattack', 'counter', 'off-hand', 'dagger', 'rapier', 'saber', 'sabre', 'duelist', 'fencer', 'opening', 'when they miss', 'second blade', 'two blades', 'twin blades'],
   'bolt-mark': ['bolt', 'marks', 'brands', 'brand', 'singles out', 'hunts', 'tracks', 'isolated', 'lone', 'straggler', 'from afar', 'a mile away', 'find them again', 'finds them', 'in the dark', 'lantern beam', 'beam'],
   'weapon-lodge': ['lodge', 'lodged', 'stuck in', 'knits shut around', 'swallows blades', 'keeps the weapon', 'embedded', 'axes', 'blades in its', 'grows around'],
@@ -1013,7 +1079,6 @@ export const VERB_KEYS = {
   drain: ['drain', 'leech', 'feed', 'siphon', 'suck', 'drink', 'sap', 'wither', 'devour', 'life', 'vampire', 'hunger'],
   'delayed-brand': ['brand', 'ember', 'fuse', 'venom', 'poison', 'infect', 'rot', 'fester', 'curse', 'mark', 'smolder', 'seed'],
   'curse-debt': ['curse', 'debt', 'rebuke', 'price', 'hex', 'oath', 'bargain', 'owe', 'judgment', 'tithe', 'toll', 'sin'],
-  'own-turn-punisher': ['punish', 'sting', 'answer', 'reprisal', 'retaliate', 'strike back', 'avenge', 'counter', 'spite', 'lash'],
   'zone-seed': ['fog', 'murk', 'cloud', 'field', 'mist', 'smoke', 'haze', 'spores', 'steam', 'darkness', 'shroud'],
   reveal: ['reveal', 'light', 'outline', 'expose', 'illuminate', 'lamp', 'lantern', 'faerie fire', 'glow', 'mark', 'shine'],
   rally: ['rally', 'bolster', 'ward', 'blessing', 'bless', 'shield', 'protect', 'inspire', 'hymn', 'prayer', 'heal', 'mend', 'flock', 'command', 'orders', 'troops', 'battle cry', 'war cry', 'frenzy', 'bellows'], // a leader's command IS the rally shape (print: bonus-action Leadership / the commander's THP) — three leaders' commands seated as 2/Day standalones and floored (critic, new lines 2026-09-28)
@@ -1307,7 +1372,7 @@ export const MECHANIC = {
   burst: ['thrown-burst', 'thrown-burst-seed', 'ground-burst', 'death-burst', 'bloodied-burst', 'active-toll', 'throw-retrieve'],
   drain: ['drain', 'life-drain'],
   curse: ['curse-debt', 'delayed-brand', 'affliction', 'contagion', 'seal'],
-  retaliate: ['heated-body', 'resonant-body', 'ward-retaliation', 'riposte', 'own-turn-punisher', 'weapon-lodge', 'coating', 'interpose', 'snap-shot'],
+  retaliate: ['heated-body', 'resonant-body', 'ward-retaliation', 'riposte', 'answering-strike', 'weapon-lodge', 'coating', 'interpose', 'snap-shot'],
   climb: ['spider-climb', 'web-walker', 'terrain-walk', 'earth-glide', 'tunneler'],
   teleport: ['blink', 'phase-slip', 'self-invisibility'],
   zone: ['zone', 'zone-seed', 'blighted-ground', 'aberrant-ground', 'energy-aura'],
@@ -1878,7 +1943,7 @@ export const BLIND_ROLES = {
   'condition-payoff': ALL, execute: ALL, 'gaze-single': ALL, rampage: ALL, 'burrow-ambush': ALL, charge: ALL, 'thrown-burst': ALL,
   affliction: ALL, contagion: ALL, pounce: ALL, isolation: ALL, snatch: ALL, 'bolt-restrain': ALL, 'bolt-drag': ALL, 'bolt-mark': ALL, 'ward-retaliation': ALL, interpose: ALL, riposte: ALL, 'snap-shot': ALL, 'ground-burst': ALL,
   seal: ['controller', 'artillery'],
-  'escalating-dread': ALL, 'terror-pulse': ALL, 'sensory-strike': ALL, disarm: ALL, 'push-prone': ALL, herd: ALL, 'own-turn-punisher': ALL, exploiter: ALL,
+  'escalating-dread': ALL, 'terror-pulse': ALL, 'sensory-strike': ALL, disarm: ALL, 'push-prone': ALL, herd: ALL, exploiter: ALL,
   'aggro-curse': ['caster'], pacify: ['caster'], 'snare-bolt': ['caster'], 'slow-bolt': ['caster'], drain: ['caster', 'lurker'], 'delayed-brand': ['caster'], 'curse-debt': ['caster'], 'blighted-ground': ['caster'],
 };
 export const blindDealable = (t, archetype) => { const b = BLIND_ROLES[t.id]; return b === ALL || (Array.isArray(b) && b.some((r) => rolesFor(archetype).includes(r))); };
@@ -2321,7 +2386,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
     // not carry is lost, so a consumer would have to scrape the sentence to get
     // it back. `drawLibraryRow` stamps the type its own fill spent (2026-10-27).
     const seedType = drawn.row.damageType ?? null;
-    return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(seedType ? { damageType: seedType } : {}), ...(boundByS ? { duration: boundByS } : {}), ...(seedImposes ? { imposes: seedImposes } : {}) };
+    return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(FAMILY[t.id] ? { family: FAMILY[t.id] } : {}), ...(seedType ? { damageType: seedType } : {}), ...(boundByS ? { duration: boundByS } : {}), ...(seedImposes ? { imposes: seedImposes } : {}) };
   }
   // A THROWN NAMED WEAPON KEEPS ITS OWN TYPE AND RANGE (the critic's second
   // species read: a spear hurled for Bludgeoning at 30/120). One table.
@@ -2648,7 +2713,7 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // the damage) removes a segment THIS writer declared instead of pattern-matching
   // the finished sentence. Read back off the final text so every fill is in it.
   const minorClauseText = minorKeep ? splitMinorClause(text).clause : null;
-  return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(minorClauseText ? { minorClause: minorClauseText } : {}), ...(augmented ? { augmented } : {}), ...(chosenArea != null ? { area: chosenArea } : {}), ...(boundBy ? { duration: boundBy } : {}), ...(dtype ? { damageType: dtype } : {}), ...(pickedCondition ? { imposes: pickedCondition } : {}), ...(consumedPick ? { consumes: consumedPick } : {}), ...(saveOverride ? { saveOverride } : {}) };
+  return { name: t.name, text, section: SECTION_OF[t.section], gate: t.gate, ...(FAMILY[t.id] ? { family: FAMILY[t.id] } : {}), ...(minorClauseText ? { minorClause: minorClauseText } : {}), ...(augmented ? { augmented } : {}), ...(chosenArea != null ? { area: chosenArea } : {}), ...(boundBy ? { duration: boundBy } : {}), ...(dtype ? { damageType: dtype } : {}), ...(pickedCondition ? { imposes: pickedCondition } : {}), ...(consumedPick ? { consumes: consumedPick } : {}), ...(saveOverride ? { saveOverride } : {}) };
 }
 
 // SEAT DEFAULTS (critic run four): some seats OWE a trait by print — the 2024

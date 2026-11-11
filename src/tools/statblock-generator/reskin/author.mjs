@@ -81,7 +81,7 @@ export function formsSpec({ name, inline, attackCap = 2 }) {
  */
 const ENVELOPE = ({ attacks = '[ ... ]', answered = false, unplaced = '[ ... ]' } = {}) => `{ "attacks": ${attacks}, "saves": [ ... ], "traits": [ ... ], "reactions": [ ... ], "crossRef": null, ${answered ? '"answered": [ { "clause": "...", "row": "..." } ], ' : ''}"unplaced": ${unplaced} }`;
 
-export function buildRepairPrompt({ name, inline, clauses, cr, sheet, attackCap = 2, lacks = [], taken = [] }) {
+export function buildRepairPrompt({ name, inline, clauses, cr, sheet, attackCap = 2, lacks = [], taken = [], bodyFacts = [] }) {
   return `You are repairing the ABILITIES of a D&D monster: the sheet below is finished except that some of what its creator typed has no row yet. Write ONE row per listed clause, into closed forms, in the creator's own register. You never write a number: no attack bonus, no damage dice, no DC — the engine prices every row.
 
 THE CREATURE: ${name} (${inline}), CR ${cr}.
@@ -91,7 +91,7 @@ ${sheet}
 THE CREATOR'S CLAUSES WITH NO ROW:
 ${clauses.map((c, i) => `${i + 1}. ${c.text}`).join('\n')}${taken.length ? `\n\nNAMES ALREADY ON THE SHEET — never reuse one, every new row needs its own name: ${taken.map((n) => `"${n}"`).join(', ')}.` : ''}${lacks.length ? `\n\nTHE CREATOR SAID IT DOES NOT HAVE: ${lacks.map((l) => `"${l}"`).join(', ')}. No row you write may grant any of these in any wording — a creature that "never holds" gets no Grappled condition, one with "no magic at all" casts nothing.` : ''}
 
-${formsSpec({ name, inline, attackCap })}
+${formsSpec({ name, inline, attackCap })}${bodyFacts.length ? `\n\nWHAT THIS BODY IS — these are facts about the creature, not preferences:\n${bodyFacts.map((f) => `- ${f}`).join('\n')}` : ''}
 
 Answer with ONE JSON object:
 ${ENVELOPE({ answered: true, unplaced: '[ { "clause": "...", "where": "languages"|"description", "text": "one line in the creator\'s register" } ]' })}
@@ -160,7 +160,7 @@ const SAVE_STAT_RULES = `THE SAVE'S STAT. Published monsters pair a save with th
 - the row applies a condition and deals no damage — Strength for Prone, Grappled or Restrained; Constitution for Poisoned, Blinded, Deafened, Stunned or Paralyzed; Wisdom for Frightened or Charmed.
 - the row does none of those — whichever stat its own fiction asks for.`;
 
-export function buildFreeRowFixPrompt({ name, inline, cr, sheet, row, problems = [], kind = 'an action', taken = [], lacks = [] }) {
+export function buildFreeRowFixPrompt({ name, inline, cr, sheet, row, problems = [], kind = 'an action', taken = [], lacks = [], bodyFacts = [] }) {
   // THE ARRAY IS NAMED, NOT THE PROSE KIND (2026-11-10). Probed in-pipeline: 5 of 6 repair
   // answers came back in a shape the parser cannot read, and the sheets shipped the faulty row —
   // 122 of 140 repairs declined across 480 sheets, 120 of them "the answer held no row of any
@@ -193,7 +193,7 @@ THREE TESTS YOUR REPAIR MUST PASS:
 
 IT IS ${kind}, so the repaired row goes in the "${arr}" array. Write exactly one row there and leave every other array empty. If the row's SHAPE is itself the defect — a trait that reads like a reaction, an action that should be a passive — answer in the array that shape belongs to instead, and the engine moves the row to where that form lives.${taken.length ? `\n\nNAMES ALREADY ON THE SHEET — the repaired row keeps "${row.name}" and must not take any other: ${taken.map((n) => `"${n}"`).join(', ')}.` : ''}${lacks.length ? `\n\nTHE CREATOR SAID IT DOES NOT HAVE: ${lacks.map((l) => `"${l}"`).join(', ')}. The repaired row may not grant any of these in any wording.` : ''}
 
-${formsSpec({ name, inline, attackCap: 0 })}
+${formsSpec({ name, inline, attackCap: 0 })}${bodyFacts.length ? `\n\nWHAT THIS BODY IS — these are facts about the creature, not preferences:\n${bodyFacts.map((f) => `- ${f}`).join('\n')}` : ''}
 
 ${SAVE_STAT_RULES}
 
@@ -203,7 +203,7 @@ ${ENVELOPE({ attacks: '[]', unplaced: '[]' })}
 An answer with every array empty leaves the faulty row on the sheet word for word, which is the worst outcome available here — there is no ready-made row to fall back on. Repair it into one of these forms.`;
 }
 
-export function buildSeatPrompt({ name, inline, cr, sheet, idea, missing = '', kind = 'an action', taken = [], lacks = [], clause = '' }) {
+export function buildSeatPrompt({ name, inline, cr, sheet, idea, missing = '', kind = 'an action', taken = [], lacks = [], clause = '', bodyFacts = [] }) {
   return `You are writing ONE ability for a D&D monster — the one ability it is still missing. Write it into the closed forms below, in the creature's own register. You never write a number: no attack bonus, no damage dice, no DC — the engine prices the row.
 
 THE CREATURE: ${name} (${inline}), CR ${cr}.
@@ -217,7 +217,7 @@ THE CLAUSE THIS ROW MUST ANSWER — the creator typed these words: **"${clause}"
 
 IT IS ${kind}. Write exactly one row, of that kind, and leave the other arrays empty.${taken.length ? `\n\nNAMES ALREADY ON THE SHEET — never reuse one, the new row needs a name of its own: ${taken.map((n) => `"${n}"`).join(', ')}.` : ''}${lacks.length ? `\n\nTHE CREATOR SAID IT DOES NOT HAVE: ${lacks.map((l) => `"${l}"`).join(', ')}. The row may not grant any of these in any wording — a creature that "never holds" gets no Grappled condition, one with "no magic at all" casts nothing.` : ''}
 
-${formsSpec({ name, inline, attackCap: 0 })}
+${formsSpec({ name, inline, attackCap: 0 })}${bodyFacts.length ? `\n\nWHAT THIS BODY IS — these are facts about the creature, not preferences:\n${bodyFacts.map((f) => `- ${f}`).join('\n')}` : ''}
 
 ${SAVE_STAT_RULES}
 

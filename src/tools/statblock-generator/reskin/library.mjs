@@ -192,7 +192,21 @@ export const LIBRARY_SEEDS = [
     text: '*Charisma Saving Throw:* DC {dc}, one creature within 60 feet. *Failure:* The target is cursed until the end of the creature\'s next turn. The first time the cursed target deals damage to any creature before then, it takes {burst} {damage_type} damage.',
   },
   {
-    key: 'own-turn-punisher', keys: ['punish', 'sting', 'answer', 'reprisal'],
+    // RETIRED 2026-11-11 (owner's read of the H7 twelve: "a reaction masquerading as a bonus
+    // action", the marsh swallower and the dune maw). The TRIGGER is a reaction's — you hit me —
+    // and the COST is a bonus action on this creature's own turn, so the table must carry "who hit
+    // it since its last turn" every round for a 0.4-DPR row. Print has NO such shape: 0 of 329
+    // blocks retaliate on "since its last turn" as a bonus action, and 0 as a reaction. It was an
+    // invention, and an unsound one; `riposte` is the catalog's shape for punishing a hit.
+    //
+    // It was also the single most-dealt row in the engine: 17 of the 31 library draws since
+    // 2026-11-10 (55%) were this one seed. Structural, not luck — on a brute whose action slot is
+    // already full (a Swallow, an Engulf, a template), the blind draw can only deal a BONUS ACTION,
+    // and this was the ONLY bonus-action seed on the brute shelf that BLIND_ROLES marks dealable.
+    // One card in the deck, dealt every time. Retiring it empties that slot: a brute with a full
+    // action slot now ships no bonus action at all, which is correct — no row beats an unsound row,
+    // and "a flagged row beats no row" is about REPAIRING a row that exists, not dealing one.
+    key: 'own-turn-punisher', retired: true, keys: ['punish', 'sting', 'answer', 'reprisal'],
     section: 'Bonus Actions', archetypes: ['defender', 'brute'],
     name: 'Answering Sting', dpr_frac: 0.4, // Gentle Rebuke
     text: 'One creature within 5 feet that hit the creature with an attack roll since the end of the creature\'s last turn takes {burst} {damage_type} damage.',

@@ -922,6 +922,27 @@ export const SHAPES = [
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Trigger:* A creature within 5 feet of the creature misses it with a melee attack roll. *Response:* The creature makes one {melee_name} attack against that creature.'])),
   },
   {
+    // THE BODY'S ANSWER, AS A REACTION (owner, 2026-11-11: "I like retaliation if it's in the right
+    // place… it should be a reaction, not a bonus action"). The retired `own-turn-punisher` put this
+    // fiction on a BONUS ACTION with a deferred trigger — "whoever hit me since my last turn" — which
+    // the table had to remember. A reaction fires at the moment of the hit and costs the creature its
+    // reaction for the round: nothing to track, and a real choice.
+    //
+    // It is riposte's sibling, deliberately: riposte answers a MISS with a blade (a duelist's
+    // opening, roles skirmisher/defender/lurker), and this answers a HIT with the creature's own
+    // melee row — the thing a crocodile, an ooze or a troll does. That is why `brute` is on this one
+    // and not on riposte. Both are FAMILY `punisher`, so a sheet is never offered the pair.
+    //
+    // NOT in BLIND_ROLES, and that is the whole lesson of the row it replaces: the retired seed was
+    // the only bonus-action card a brute could be DEALT, so it landed on 17 of 31 library draws
+    // without anyone choosing it. This one can only be PICKED — by the fit call, on a concept that
+    // asks for it.
+    id: 'answering-strike', name: 'Answering Strike', invented: true, // kin: riposte (this shelf) + Remorhaz/Heated Body, print's trait-shaped version of the same fiction
+    host: 'melee', // a reaction that strikes back needs something to strike with (riposte's precedent)
+    roles: ['brute', 'defender', 'lurker', 'skirmisher'], styles: [], cr_range: [1, 30], replaces: 'reaction',
+    frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Trigger:* A creature within 5 feet of the creature hits it with a melee attack roll. *Response:* The creature makes one {melee_name} attack against that creature.'])),
+  },
+  {
     id: 'interpose', name: 'Interpose', cite: 'Shield Guardian/Shield (CR 7)',
     roles: ['defender', 'controller', 'artillery', 'lurker', 'skirmisher'], styles: [], cr_range: [1, 30], replaces: 'reaction', requires_style: 'warden',
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Trigger:* A creature within 5 feet of the creature that it guards is hit by an attack roll. *Response:* The attack hits the creature instead, and the creature has Resistance to the attack\'s damage.'])),

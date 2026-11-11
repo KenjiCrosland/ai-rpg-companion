@@ -243,10 +243,25 @@ describe('the declared family keeps a second row of it off the menu', () => {
     bodyVerdicts: { 'own-turn-punisher': true, 'marking-light': true, reveal: true, snatch: true },
   }).map((t) => t.id));
 
-  it('retaliation: no own-turn-punisher beside a contact-damage row', () => {
-    const contact = { Traits: [{ name: 'Searing Hide', text: 'A creature that hits it with a melee attack while within 5 feet of it takes 7 (2d6) Fire damage.' }] };
-    expect(ids(contact, 'bonus_action').has('own-turn-punisher')).toBe(false);
-    expect(ids({}, 'bonus_action').has('own-turn-punisher')).toBe(true); // a gate, not a wall
+  // Was written on `own-turn-punisher`, the third member of this family, which was RETIRED
+  // 2026-11-11 (a reaction's trigger at a bonus action's price; print has no such row). The rule it
+  // guards is the family's, not that seed's, so it moves to a surviving member: a sheet that
+  // already punishes a hit is offered no second way to do it.
+  it('retaliation: no riposte beside a row that already punishes a hit', () => {
+    // THE MELEE ROW IS ALWAYS PRESENT. A reaction that strikes back needs something to strike with,
+    // so a sheet with no melee row is offered none of these for a reason that has nothing to do with
+    // the family — the first cut of this test proved the HOST rule and called it the family cap.
+    const bite = { name: 'Bite', text: '*Melee Attack Roll:* +6, reach 5 ft. 12 (2d8 + 3) Piercing damage.' };
+    const punisher = { name: 'Lacquered Answer', family: 'punisher', text: 'When a creature within 5 feet hits the thing with a melee attack, it makes one attack against that creature.' };
+    const searing = { name: 'Searing Hide', text: 'A creature that touches the creature or hits it with a melee attack while within 5 feet of it takes 7 (2d6) Fire damage.' };
+    const live = (sections) => new Set(templatesFor({
+      archetype: 'brute', cr: 6, movement: '30 ft.', type: 'Monstrosity', size: 'Large',
+      sections: { Actions: [bite], ...sections }, section: 'reaction', trigger: null,
+      concept: 'a thing that strikes back at whoever hits it',
+    }).map((t) => t.id));
+    expect(live({})).toContain('answering-strike');                        // a gate, not a wall
+    expect(live({ Reactions: [punisher] })).not.toContain('answering-strike'); // one answer to a blow per sheet
+    expect(live({ Traits: [searing] })).not.toContain('answering-strike');  // …and never beside the trait that IS this fiction
   });
 
   it('light-mark: no reveal beside a marking-light row', () => {
@@ -258,7 +273,12 @@ describe('the declared family keeps a second row of it off the menu', () => {
   });
 
   it('reuses the engine vocabulary donor rows already carry, so one name means one thing', () => {
-    expect(new Set(Object.values(FAMILY))).toEqual(new Set(['punisher', 'light-mark', 'containment']));
+    // `contact-damage` joined 2026-11-11: heated-body and resonant-body ARE that family, and it was
+    // being detected from their prose instead of declared — so neither the cap nor the authoring
+    // call could read it as a fact (the cinder brute took Searing Hide and then authored a magma
+    // reaction that did the same thing). It is an engine name `sheetEngines` already emits, which
+    // is the invariant this test exists for.
+    expect(new Set(Object.values(FAMILY))).toEqual(new Set(['punisher', 'light-mark', 'containment', 'contact-damage']));
   });
 
   it('reads the DECLARED family off the row before any text rule', () => {

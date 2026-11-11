@@ -10021,5 +10021,123 @@
     "askMechanicWhy": "grasping tentacles"
    }
   ]
+ },
+ "7a8c6df2e90b": {
+  "concept": "a hulking bog troll that lashes back at anyone who strikes it",
+  "clauses": [
+   {
+    "id": "cl_14p0mte",
+    "text": "a hulking bog troll",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1mvg99y",
+    "text": "lashes back at anyone",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "strikes it",
+    "askShape": "attack",
+    "askMechanic": "retaliate",
+    "askMechanicWhy": "lashes back"
+   },
+   {
+    "id": "cl_17ktc4q",
+    "text": "strikes it",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "strikes it",
+    "askShape": "attack",
+    "askMechanic": "retaliate",
+    "askMechanicWhy": "lashes back"
+   }
+  ]
+ },
+ "cff2b18e8894": {
+  "concept": "a marsh swallower, a giant frog that swallows prey whole and snaps at whoever hits it",
+  "clauses": [
+   {
+    "id": "cl_1x726p2",
+    "text": "a marsh swallower",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_qalkfc",
+    "text": "a giant frog that swallows prey whole",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "swallows prey whole",
+    "askShape": "attack",
+    "askMechanic": "swallow",
+    "askMechanicWhy": "swallows prey whole"
+   },
+   {
+    "id": "cl_1j1lxf5",
+    "text": "snaps at whoever hits it",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "whoever hits it",
+    "askOften": "at_will",
+    "askOftenWhy": "snaps at whoever hits it",
+    "askShape": "attack",
+    "askMechanic": "retaliate",
+    "askMechanicWhy": "snaps at whoever hits it"
+   }
+  ]
+ },
+ "2602b67c574d": {
+  "concept": "Vess Ardaine — a rapier duelist who punishes anyone who misses her",
+  "clauses": [
+   {
+    "id": "cl_rc53rl",
+    "text": "Vess Ardaine — a rapier duelist",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "Vess Ardaine — a rapier duelist",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_1hi21rr",
+    "text": "punishes anyone",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "who misses her",
+    "askShape": "condition",
+    "askMechanic": "retaliate",
+    "askMechanicWhy": "punishes anyone who misses her"
+   },
+   {
+    "id": "cl_1vlu6cf",
+    "text": "misses her",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "who misses her",
+    "askShape": "condition",
+    "askMechanic": "retaliate",
+    "askMechanicWhy": "punishes anyone who misses her"
+   }
+  ]
+ },
+ "6d56a767e7f4": {
+  "concept": "a magma-crusted brute whose searing hide burns anyone who touches it",
+  "clauses": [
+   {
+    "id": "cl_1hw566y",
+    "text": "a magma-crusted brute whose searing hide burns anyone",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_18pi7zy",
+    "text": "touches it",
+    "kind": "mechanical",
+    "askWhen": "on_being_hit",
+    "askWhenWhy": "touches it",
+    "askShape": "attack",
+    "askMechanic": "retaliate",
+    "askMechanicWhy": "burns anyone who touches it"
+   }
+  ]
  }
 }

@@ -1047,7 +1047,13 @@ function gateStructure(m, ctx, F) {
     // Glacier's Heart failed the forty of 2026-10-27 for citing a row that was
     // right there on its sheet. Print names rows this way too (Hold Breath,
     // Breath of the Dragon), so the old read was wrong for print as well.
-    const named = names.filter((nm) => nm && nm.length > 3 && new RegExp(`\\b${nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(String(multi.text ?? '')));
+    // THREE LETTERS IS A PRINT ROW NAME: print names 8 rows that short — Ram x7 (the Rhinoceros,
+    // the Triceratops, the Bulette…) and the Giant Spider's Web — so a floor of 4 made every
+    // Multiattack that cites one FAIL for citing a row that is right there on the sheet (the Marsh
+    // Swallower's Maw and the Ram Golem's Ram, 2 of the 4 multiattack-row findings in the recent
+    // runs). The floor exists so a one-letter or two-letter fragment cannot match noise; 3 keeps
+    // that and stops failing print's own naming.
+    const named = names.filter((nm) => nm && nm.length >= 3 && new RegExp(`\\b${nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(String(multi.text ?? '')));
     if (count && /makes \w+ ([A-Z][\w' -]+?) attacks\b/.test(multi.text) && !named.length) F('multiattack-row', 'fail', `Multiattack names a row that does not exist: "${multi.text}"`, multi.text);
     // EVERY name in the "using A or B in any combination" list must be a row: "Slam or Mirror Slam" passed because "Slam"
     // exists and the nested "Mirror Slam" was never checked (critic's blockers audit 2026-10-03)

@@ -11,7 +11,7 @@ import { pickDonor, scaleDonor, stampAttacksPerRound } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName} from './templates.mjs';
+import { declaredBodyFacts, conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock, EMPTY_SAVE_OUTCOME } from '../format-2024/lint.mjs';
@@ -1816,7 +1816,13 @@ const unimposeOn = (row) => { if (row) delete row.imposes; return row; };
 // on guessing from prose. Fills only what the site has not already decided:
 // `imposes` at the library site is chosen there, because a minor condition from
 // the fill overrules the template's own.
-const DECLARED_BY_WRITER = ['imposes', 'requiresCondition', 'duration', 'minorClause']; // `minorClause` is the rider segment the writer printed, so a later drop removes what it declared instead of pattern-matching prose (roadmap R3) — and it is carried HERE because four fields before it were declared and never carried
+// `family` joins them 2026-11-11: `sheetEngines` has read THE DECLARED FAMILY FIRST since
+// 2026-10-22 and the field never reached a row — 912 template-built rows across the recent runs,
+// 0 carrying it — so the one-row-per-family cap has been running on its prose fallback alone for
+// its whole life. Found when `answering-strike` made the punisher family reachable often enough
+// to collide: Vess Ardaine shipped the fighter kit's Riposte AND an Answering Strike, two
+// answers to a blow on one sheet. The declared-then-not-carried disease, seventh sighting.
+const DECLARED_BY_WRITER = ['imposes', 'requiresCondition', 'duration', 'minorClause', 'family']; // `minorClause` is the rider segment the writer printed, so a later drop removes what it declared instead of pattern-matching prose (roadmap R3) — and it is carried HERE because four fields before it were declared and never carried
 // `area` is a RECORD ({shape, size}), so it cannot ride the String() loop above —
 // the same reason `augmented` is carried by hand below. It was declared by the
 // render and dropped here, which is why 0 of 11 area rows on the last forty
@@ -5473,6 +5479,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // branch-collisions 2026-10-16 — "rally" declined, then drawn as
     // "Bolstering Cry"; "rampage" declined, then drawn as "Rampage").
     const declinedT = new Set();
+    // THE SHEET ALREADY DOES THIS — SO NOTHING STANDS IN (owner's ruling, 2026-11-11: "we don't add
+    // new parts"). `already_answered` is the fit call reading the finished sheet and saying the
+    // mechanic is already on it. The nearest template is correctly blocked below, and then the
+    // fallback dealt a BLIND seed anyway: 5 of the recent library draws followed exactly this
+    // answer (3 of them the retired punisher). A refusal that says "already done" is the seat
+    // standing down — the same shape as the seat's own `answered` credit — so the fallback honours
+    // it the way it already honours the twist path's stand-down.
+    let alreadyAnsweredT = false;
     // THE GM'S ASK, CHECKED AGAINST WHAT THE GM TYPED (critic's hold 1 door 5,
     // 2026-10-16). The call quotes the user's own words that ask for its pick;
     // a quote is only a receipt if it is really in those words, so one
@@ -5862,6 +5876,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // A missing/unparsed reason keeps the old behaviour: a fallback acts when
         // the call FAILS, never against an answer it actually gave.
         const nearBlocked = ['collision', 'already_answered'].includes(fit.declined_because);
+        if (!fit.template && fit.declined_because === 'already_answered' && seat === 'action') alreadyAnsweredT = true;
         if (!fit.template && fit.closest && nearBlocked) {
           trace('closest refused:', `${seat} — "${fit.closest}" was named nearest, but the call declined it for ${fit.declined_because} ("${fit.declined_raw || fit.declined_because}") — ${fit.declined_because === 'collision' ? 'the word suggests this mechanic and the row does not carry it' : 'the sheet already answers this'}; the seat stays empty rather than ship a row the call said does not mean it (what it wanted: ${String(fit.missing ?? 'unstated').slice(0, 70)})`);
         }
@@ -5915,7 +5930,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           if (freeAllowance === 0) trace('seat authoring skipped:', `${seat} — the call refused every template for no_fit, but print closes this sheet's row set, so there is nothing to author into`);
           else {
             const takenS = Object.values(sections).flat().map((e2) => String(e2.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean);
-            const rawS = await callLLM(buildSeatPrompt({ name: p.name, inline: inlineGuessRef(), cr, sheet: sheetSoFarT, idea: String(idea.idea ?? ''), clause: String(idea.clause ?? ''), missing: String(fit.missing ?? ''), kind: seatKind, taken: takenS, lacks: (clauseRecord ?? []).filter((c) => c.polarity === 'lacks').map((c) => c.text) }), validateAuthorResponse);
+            const rawS = await callLLM(buildSeatPrompt({ bodyFacts: declaredBodyFacts({ sections, holdShape: ctxT.holdShape ?? null }), name: p.name, inline: inlineGuessRef(), cr, sheet: sheetSoFarT, idea: String(idea.idea ?? ''), clause: String(idea.clause ?? ''), missing: String(fit.missing ?? ''), kind: seatKind, taken: takenS, lacks: (clauseRecord ?? []).filter((c) => c.polarity === 'lacks').map((c) => c.text) }), validateAuthorResponse);
             const wrote = parseAuthorResponse(rawS, { attackCap: 0, traitSlots: 1 });
             // THE SEAT READS `answered` TOO (2026-11-11). The envelope has always asked the call to
             // say when a row already on the sheet carries the clause, and `parseAuthorResponse`
@@ -6825,8 +6840,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // straight from TEMPLATES, so an emptied shelf drew nothing, `!drawn` held,
       // and the hash shipped a seed anyway: "fallback stands down" was followed by
       // "library seed drawn" on the two skeletons, the ogre and the champion.
-      const standDownT = closedPath || !!(pcPlain && userAsks === 0); // the TWIST path has no fallback shelf at all (the brief's pipeline 2): print, plus exactly what the GM asked for
-      if (closedPath) { trace('fallback stands down:', `the ${pathD.path} path has no shelf — the ${pcPlain?.name ?? 'print body'}'s rows plus the receipted seat are the composition`); shelfT.length = 0; }
+      const standDownT = closedPath || alreadyAnsweredT || !!(pcPlain && userAsks === 0); // the TWIST path has no fallback shelf at all (the brief's pipeline 2): print, plus exactly what the GM asked for
+      // ONE CHAIN: `standDownT` has three causes and only two of them have a print head to name.
+      // Written as a separate `if`, the already_answered cause fell through to the `pcPlain.name`
+      // branch below and threw on a homebrew sheet (caught by pipelines.spec.js's own gap test).
+      if (alreadyAnsweredT) { trace('fallback stands down:', 'the fit call read the finished sheet and declined for already_answered — the mechanic is on this sheet already, so nothing stands in for it'); shelfT.length = 0; }
+      else if (closedPath) { trace('fallback stands down:', `the ${pathD.path} path has no shelf — the ${pcPlain?.name ?? 'print body'}'s rows plus the receipted seat are the composition`); shelfT.length = 0; }
       else if (standDownT) { trace('fallback stands down:', `"${options.userConcept ?? concept}" heads on the ${pcPlain.name} and asks for nothing — print's rows, nothing invented (the big ogre, critic-ten 2026-10-01)`); shelfT.length = 0; }
       // a STYLE's default seed heads the fallback the way a seat's default trait
       // heads the trait shelf: a leader's command is the rally shape, and two of
@@ -7219,7 +7238,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // authored Squeeze grappled (escape DC 14) past a recorded lack. The call
         // judges synonyms; the sweep only reads words. So the author hears the lacks.
         const lacksForAuthor = clauseRecord.filter((c) => c.polarity === 'lacks').map((c) => c.text);
-        const rawR = await callLLM(buildRepairPrompt({ name: p.name, inline: inlineGuessRef(), clauses: unclaimed, cr, sheet: sheetText, attackCap: unclaimed.length, lacks: lacksForAuthor, taken: Object.values(sections).flat().map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean) }), validateAuthorResponse);
+        const rawR = await callLLM(buildRepairPrompt({ bodyFacts: declaredBodyFacts({ sections, holdShape: options.hold_shape ?? null }), name: p.name, inline: inlineGuessRef(), clauses: unclaimed, cr, sheet: sheetText, attackCap: unclaimed.length, lacks: lacksForAuthor, taken: Object.values(sections).flat().map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean) }), validateAuthorResponse);
         const rep = parseAuthorResponse(rawR, { attackKeys: [], attackCap: 1, traitSlots: 1 });
         for (const r of (rep?.refused ?? [])) trace('authored trait refused:', `"${r.name}" — ${r.why}; the clause folds to description`);
         trace('repair answer:', `attacks ${rep?.attacks.length ?? 0}, saves ${rep?.saves.length ?? 0}, traits ${rep?.traits.length ?? 0}, reactions ${rep?.reactions.length ?? 0}, answered ${JSON.stringify(rep?.answered ?? [])}, unplaced ${JSON.stringify((rep?.unplaced ?? []).map((u) => `${u.where}:${u.clause}`))}${rep ? '' : ' — THE ANSWER DID NOT PARSE'}`);
@@ -10319,6 +10338,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           for (const t of toFix) {
             trace('row repair:', `"${t.row.name}" [${t.row.freeRow ? 'free row' : 'authored'}] — the audit faults it (${t.problems.map((x) => String(x).slice(0, 70)).join(' | ')}); re-authored through the forms rather than evicted (the owner's ruling: a flagged row is repaired)`);
             const rawF = await callLLM(buildFreeRowFixPrompt({
+              bodyFacts: declaredBodyFacts({ sections: monster.sections ?? {}, holdShape: options.hold_shape ?? null }),
               name: p.name, inline: inlineGuessRef(), cr, sheet: sheetText, row: { name: String(t.row.name), text: String(t.row.text ?? '') },
               problems: t.problems, kind: kindOf(t.sec), taken: takenNow.filter((n) => n !== String(t.row.name).replace(/ \(.*\)$/, '')), lacks: lacksNow,
             }), validateAuthorResponse);
