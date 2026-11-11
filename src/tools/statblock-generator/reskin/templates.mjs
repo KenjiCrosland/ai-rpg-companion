@@ -740,7 +740,7 @@ export function composedTemplate(pick) {
     section: g.section, trigger: g.trigger_tag, effect: g.effect[choice],
     roles: ['skirmisher', 'brute', 'artillery', 'controller', 'lurker', 'defender'], styles: [], cr_range: [0, 30], gate: null, nova: false, // every role: the call already judged this body when it chose the trigger
     requires_movement: null, requires_style: null, supersedes: null, deny_types: null,
-    requires_row: null, requires_claim: null, requires_size: null, needs_body: null, owns_weapon: false, augments: null,
+    requires_row: null, requires_claim: null, requires_size: null, needs_body: null, hold_shape: null, owns_weapon: false, augments: null,
     family: null, mechanic: null, targets: [], target_sizes: null, duration_default: null,
     host: null, keys: [], flavor: [],
     // a COPIED frame keeps its own {condition_minor} and {save_stat} slots, so
@@ -1450,7 +1450,7 @@ export const TEMPLATES = [
   ...SHAPES.filter((s) => SECTION_BY_REPLACES[s.replaces] && SHAPE_TAGS[s.id]).map((s) => ({
     id: s.id, name: s.name, kind: 'shape', cite: s.cite,
     section: SECTION_BY_REPLACES[s.replaces], replaces: s.replaces, roles: s.roles, styles: s.styles, cr_range: s.cr_range, /* `replaces` names the SLOT the template claims — the slot-yield rule reads it (fidelity pipeline step 2) */
-    gate: s.gate ?? null, nova: s.replaces === 'nova', owns_weapon: s.owns_weapon ?? false, augments: s.augments ?? null, requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null, requires_row: s.requires_row ?? null, requires_claim: s.requires_claim ?? null, requires_size: s.requires_size ?? null, needs_body: NEEDS_BODY[s.id] ?? null, frame_save: Object.fromEntries(Object.entries(s.frames ?? {}).map(([b, t]) => [b, /Saving Throw/.test(String(t))])), frame_area: Object.fromEntries(Object.entries(s.frames ?? {}).map(([b, t]) => [b, areaOfFrame(t)]).filter(([, g]) => g)), family: FAMILY[s.id] ?? null, mechanic: MECHANIC_OF[s.id] ?? null, targets: s.targets ?? null, target_sizes: s.target_sizes ?? null, duration_default: s.duration_default ?? null,
+    gate: s.gate ?? null, nova: s.replaces === 'nova', owns_weapon: s.owns_weapon ?? false, augments: s.augments ?? null, hold_shape: s.hold_shape ?? null, requires_movement: s.requires_movement ?? null, requires_style: s.requires_style ?? null, supersedes: s.supersedes ?? null, deny_types: s.deny_types ?? null, requires_row: s.requires_row ?? null, requires_claim: s.requires_claim ?? null, requires_size: s.requires_size ?? null, needs_body: NEEDS_BODY[s.id] ?? null, frame_save: Object.fromEntries(Object.entries(s.frames ?? {}).map(([b, t]) => [b, /Saving Throw/.test(String(t))])), frame_area: Object.fromEntries(Object.entries(s.frames ?? {}).map(([b, t]) => [b, areaOfFrame(t)]).filter(([, g]) => g)), family: FAMILY[s.id] ?? null, mechanic: MECHANIC_OF[s.id] ?? null, targets: s.targets ?? null, target_sizes: s.target_sizes ?? null, duration_default: s.duration_default ?? null,
     host: s.host ?? HOST_BY_REPLACES[s.replaces] ?? null, // a reaction that fires a ranged row needs one on the sheet (snap-shot)
     trigger: SHAPE_TAGS[s.id][0], effect: SHAPE_TAGS[s.id][1],
     keys: [...new Set([...(VERB_KEYS[s.id] ?? []), ...(SHAPE_KEYS[s.id] ?? [])])],
@@ -1616,7 +1616,7 @@ export function conditionsImposedTwice(rows) {
   );
 }
 
-export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '', concept = '', size = '', holds = null, bodyVerdicts = null, shapes = null, shapeCap = SHAPE_MENU_CAP, diagnose = null, gmAsked = false } = {}) {
+export function templatesFor({ archetype, style = null, cr, movement = '', sections = {}, section = null, trigger = null, text = null, imposed = null, type = '', concept = '', size = '', holds = null, bodyVerdicts = null, shapes = null, shapeCap = SHAPE_MENU_CAP, diagnose = null, gmAsked = false, holdShape = undefined } = {}) {
   const band = bandFor(cr);
   const rows = Object.values(sections).flat();
   // A FEATURE ALREADY ON A ROW IS OWNED (critic, 2026-10-14: Rruzhk's Open Hand
@@ -1700,6 +1700,16 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     ],
     ['deny-type', (t) => !(t.deny_types && type && t.deny_types.some((ty) => new RegExp(`^${ty}\\b`, 'i').test(String(type))))
     ],
+    // HOW THIS CREATURE HOLDS, decided ONCE at the route call (2026-11-11). A template that declares
+    // a `hold_shape` IS a hold of that shape, and is offered only to a creature of that shape: the
+    // reach rows (`hook-drag`, `reel`) to a roper, the containing row (`swallow`) to a gullet. This
+    // replaces three per-template body questions that asked the same thing in three places and got it
+    // CONSISTENTLY wrong on hounds, which is what retired them. UNANSWERED (`null`) withholds, per the
+    // owner's option-3 ruling: an unanswered exception does not happen. `undefined` means the caller
+    // passes no shape at all (older call sites; a re-roll of a sheet made before this field) and is
+    // the one case that does not withhold — it falls through to the other filters exactly as before.
+    ['hold-shape', (t) => !t.hold_shape || holdShape === undefined || holdShape === t.hold_shape
+    ],
     ['condition-three-ways', (t) => !wouldBeThird(t) // print has no block imposing one condition three ways (0 of 329)
     // A BODY-MASS REQUIREMENT, read off the DECLARED size — never off the text.
     // Fails OPEN when size is unknown, like `type` and `movement` above, so the
@@ -1747,11 +1757,25 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
     ['body-verdict', (t) => !(t.needs_body && (() => {
       const v = bodyVerdicts ? bodyVerdicts[t.id] : undefined;
       if (typeof v === 'boolean') return !v;
-      // UNANSWERED. A failed call must not silently strip 41 templates, so the
-      // fallback keeps this file's convention that the unknown does not exclude:
-      // a concept too thin to judge gates nothing, exactly as `engineKeyOk` lets
-      // a three-word concept through. Otherwise the template's own `keys` decide
-      // — the only job `keys` has here, and never a tiebreaker against a verdict.
+      // UNANSWERED — and the two cases are NOT the same (owner, 2026-11-10, correcting what this
+      // comment used to claim).
+      //
+      // A failed call must not strip the SHELF: a concept too thin to judge gates nothing, which is
+      // the `significantWords <= 3` line below, exactly as `engineKeyOk` lets a three-word concept
+      // through. That is what "the unknown does not exclude" was written about.
+      //
+      // A SINGLE gated exception is the other case, and there the unknown DOES exclude. The
+      // template's own `keys` decide — their only job here, and never a tiebreaker against a
+      // verdict — and a template that declares NO keys is withheld, because a reach grab or a relic
+      // is an exception granted on a body claim and an unsupported claim is no claim. That is the
+      // owner's standing ruling (2026-11-09): the fallback for an unanswered exception is that the
+      // exception does not happen. It costs the sheet nothing — the seat picks another template and
+      // still lands a row. `relic-object` and `kill-denial` have behaved this way since they were
+      // written. (`hook-drag` and `reel` briefly joined them in 2026-11-10; they are gated by
+      // `hold_shape` now — decided once at the route call — and carry no body requirement at all.)
+      //
+      // Do NOT "fix" this by admitting keyless templates, and do not give them keys to dodge it:
+      // both were considered and declined as the less conservative of two safe choices.
       if (significantWords(concept).length <= 3) return false;
       // A ROW ALREADY ON THE SHEET IS A CLAIM TOO — the retired `requires_claim`
       // checked both the words and the rows ("Bony Carapace: its shell is thick"

@@ -354,11 +354,17 @@ WHAT ELSE DO THE WORDS NAME? Three more, each with the user's own words quoted i
 - "shoots": true only when this creature's own attack is a BOW, CROSSBOW, SLING or a thrown shot at range — a sniper, an archer. False for one that merely watches from a distance, and false when its ranged power is magic or a breath.
 - "is_a_swarm": true only when the creature IS a mass of many small things acting as one body. False for a creature that COMMANDS or is accompanied by animals, and false for one that merely resembles a crowd.
 - "swarm_of": ONLY when is_a_swarm is true — the plural noun for the many small things, as a GM would read it on the card: "funeral bells", "rats", "stinging flies". Print names every swarm "Swarm of <this>". Omit it otherwise.
-- "holds": true only when it HOLDS, seizes, swallows, entombs or folds shut around prey — a containment engine that keeps hold of a creature. Crushing someone against stones is impact, not holding; a creature that withdraws into its own shell holds nobody.
+- "hold_shape": HOW this creature takes hold of a creature, if it does. One of five words.
+  "grip" — jaws, claws, a grab that needs it right beside its target: a hound, a crocodile, a bear, an ogre. Print writes 48 of these. A hound that "drags fishermen under" is GRIP: the drag IS its bite, and it has nothing to pull a creature in with from twenty feet away.
+  "reach" — a part that goes OUT and hauls the target back: a tentacle, a tongue, a lash, a chain, a harpoon line, a web it reels in. Print writes four — the Roper (60 feet), the Kraken (30), the Aboleth and the Tarrasque (15).
+  "contain" — the target ends up INSIDE it, or under a mass it is MADE of: a gullet that swallows whole, an ooze, a body of water. Print writes eleven, and the smallest is the Giant Frog, a Medium beast — so this is not about being huge.
+  "medium" — it commands mud, water, vines or sand it is NOT made of, and that closes over the target. Print has none of these.
+  "none" — it does not take hold of creatures at all.
+  Judge the CREATURE, not its mood or its job. "because" quotes the GM's own words for any answer but "none".
 
 DOES THIS CREATURE WORK MAGIC? ("casts") True when the words name magic outright ("casts", "spells", "hexes") and ALSO when the KIND implies it: a cleric, a crusader who smites, a chaplain who blesses, a druid, a warlock. False for a plain warrior however armoured, false for a title alone, and false for a creature whose uncanny power is its BODY rather than a worked art — a fey piper's music, a gaze, a breath weapon. Quote the user's words that settle it in "because"; set "implied_by_kind" when nothing in the words says magic but the kind does.
 
-Return ONLY JSON, no markdown: {"shoots": {"yes": false, "because": ""}, "is_a_swarm": {"yes": false, "because": ""}, "swarm_of": "<the plural noun, only when is_a_swarm is true>", "holds": {"yes": false, "because": ""}, "casts": {"yes": true, "because": "<the user's own words>", "implied_by_kind": false}, "bane": {"what": "<a damage type or a weapon material, or omit>", "because": "<the user's own words that say so>", "stated": false}, "cue_verdicts": [{"key": "<a key word listed above, copied exactly>", "means": true, "because": "<the words that settle it>"}], "picks": [{"line": "<id from the shelf>", "because": "<phrase copied from the concept>"}], "cr": "<the Challenge Rating this creature reads as, 0 to 30 (e.g. 5, or 1/2) — the published statblock's own CR for a published creature; otherwise the tier a table meets it at — village and folklore threats read 1 to 8, only world-enders read 17 or more>", "creature_type": "<one of: ${TYPES.join(', ')}>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan — the body these words describe>", "asked_mechanic": {"mechanic": "<one from the list, or \"\">", "because": "<the user's own words>"}, "extras": [{"mechanic": "<one of the list>", "because": "<phrase copied from the concept>"}]}`;
+Return ONLY JSON, no markdown: {"shoots": {"yes": false, "because": ""}, "is_a_swarm": {"yes": false, "because": ""}, "swarm_of": "<the plural noun, only when is_a_swarm is true>", "hold_shape": {"shape": "none", "because": ""}, "casts": {"yes": true, "because": "<the user's own words>", "implied_by_kind": false}, "bane": {"what": "<a damage type or a weapon material, or omit>", "because": "<the user's own words that say so>", "stated": false}, "cue_verdicts": [{"key": "<a key word listed above, copied exactly>", "means": true, "because": "<the words that settle it>"}], "picks": [{"line": "<id from the shelf>", "because": "<phrase copied from the concept>"}], "cr": "<the Challenge Rating this creature reads as, 0 to 30 (e.g. 5, or 1/2) — the published statblock's own CR for a published creature; otherwise the tier a table meets it at — village and folklore threats read 1 to 8, only world-enders read 17 or more>", "creature_type": "<one of: ${TYPES.join(', ')}>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan — the body these words describe>", "asked_mechanic": {"mechanic": "<one from the list, or \"\">", "because": "<the user's own words>"}, "extras": [{"mechanic": "<one of the list>", "because": "<phrase copied from the concept>"}]}`;
 }
 
 function tryParse(raw) {
@@ -431,7 +437,31 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
     notes.push(`${k} refused: the call answered yes but ${why ? `quoted "${why.slice(0, 30)}", which is not in the GM's words` : 'offered no quote'} — the word table decides`);
     return null;
   };
-  const shootsA = vet('shoots'); const swarmA = vet('is_a_swarm'); const holdsA = vet('holds');
+  // HOW IT HOLDS, NOT WHETHER (owner, 2026-11-11: "might as well close the loop"). `holds` was one
+  // bit — containment engine or not — and the same question was then re-asked per TEMPLATE as a body
+  // requirement, where it was a CONSISTENT mistake: asked twice about a hound, it answered "this body
+  // reaches" twice, on a question naming the hound as its counter-example. Decided once here instead,
+  // where the whole creature is in view, and every door reads the answer.
+  //
+  // Same contract as `vet`: an answer needs the GM's own words as a receipt, and anything unquoted or
+  // outside the enum is `null` — which every reader treats as WITHHELD, not as "the word table
+  // decides" (the owner's option-3 ruling, 2026-11-10). `none` needs no quote: it claims nothing.
+  const HOLD_SHAPES = ['grip', 'reach', 'contain', 'medium', 'none'];
+  const vetShape = () => {
+    const a = parsed?.hold_shape;
+    const shape = String(a?.shape ?? '').trim().toLowerCase();
+    if (!HOLD_SHAPES.includes(shape)) { if (a) notes.push(`hold_shape refused: "${shape || '(empty)'}" is not one of ${HOLD_SHAPES.join('/')}`); return null; }
+    if (shape === 'none') { notes.push('hold_shape: none — the call reads no hold in these words'); return 'none'; }
+    const why = String(a?.because ?? '').trim();
+    if (why && evidenceIn(why, rawText ?? text)) { notes.push(`hold_shape: ${shape} on the GM's own words "${why.slice(0, 40)}"`); return shape; }
+    notes.push(`hold_shape refused: the call answered ${shape} but ${why ? `quoted "${why.slice(0, 30)}", which is not in the GM's words` : 'offered no quote'}`);
+    return null;
+  };
+  const holdShapeA = vetShape();
+  // the one-bit view, for the two readers that only ever asked "does it hold at all"
+  const holdsA = holdShapeA == null ? null : holdShapeA !== 'none';
+
+  const shootsA = vet('shoots'); const swarmA = vet('is_a_swarm');
   // A word table is the FALLBACK for what the GM meant, so it reads what the GM
   // WROTE — `rawText` — and not `text`, which on a thin concept is the expansion
   // written for the call to read. Both arms have to agree on whose words count:
@@ -706,7 +736,8 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
   return {
     askedMechanic, // what the GM asked a row to DO, for selection by declared agreement
     bane,
-    holds: holdsA, // the call's read of whether this creature keeps hold of a creature — the checker asks the same question (2026-10-17)
+    holds: holdsA, // derived from hold_shape; kept for one release so saved-sheet readers keep working
+    hold_shape: holdShapeA, // grip | reach | contain | medium | none | null(unanswered → every door withholds)
     line: chosen?.id ?? null,
     cr: /^\d{1,2}(?:\/[248])?$/.test(String(parsed?.cr ?? '').trim()) ? String(parsed.cr).trim() : null, // the route's CR read, used only when the user set none (form-ten 2026-10-01: a placeholder Horseman rolled CR 24)
     archetype: chosen?.family ?? null,

@@ -15,9 +15,11 @@
  * call picks something else, and the sheet keeps a full row instead of losing
  * one late.
  */
+// `holdShape: 'reach'` below: hook-drag is a REACH row (2026-11-11), and this fixture's burrowing
+// worm that seizes its prey is a reaching creature, so the spec tests only the third-imposition rule.
 import { templatesFor } from '@/tools/statblock-generator/reskin/templates.mjs';
 
-const ctx = (sections) => ({ archetype: 'brute', cr: 13, movement: '30 ft.', type: 'Monstrosity', section: 'action', trigger: null, concept: 'a burrowing worm that seizes and swallows what it bites', sections });
+const ctx = (sections) => ({ holdShape: 'reach', archetype: 'brute', cr: 13, movement: '30 ft.', type: 'Monstrosity', section: 'action', trigger: null, concept: 'a burrowing worm that seizes and swallows what it bites', sections });
 const row = (name, imposes) => ({ name, text: `*Melee Attack Roll:* +14, reach 10 ft. 22 (3d8 + 9) Piercing damage, and the target has the ${Array.isArray(imposes) ? imposes[0] : imposes} condition.`, imposes });
 
 describe('a template that would impose a third time leaves the menu', () => {

@@ -993,6 +993,38 @@ export function markFreeRow(seat, { decoration = false } = {}) {
  * (27 of 27 print attack rows carry one), and an ATTACK row carries the size gate in its
  * own sentence where a save row does not (print: 24 of 28 against 1 of 10).
  */
+/**
+ * A CLAUSE THE SHEET ALREADY CARRIES, credited to the row that carries it.
+ *
+ * The forms envelope every author call uses asks for this (`author.mjs`: "IF THE SHEET ALREADY
+ * ANSWERS A CLAUSE, SAY SO INSTEAD OF WRITING A ROW"), `parseAuthorResponse` returns it in
+ * `answered`, and until 2026-11-11 only the REPAIR path read it — so the SEAT, which is asked
+ * first, discarded the answer and wrote a second row for a clause the chassis already served.
+ * That is how "drags fishermen under" kept becoming a 15-foot cone pull beside a bite that already
+ * grapples (13 saved sheets: never once credited to the bite).
+ *
+ * The engine's half is this validation: the row the call names must EXIST on the sheet, and the
+ * clause must be one actually open. Nothing here reads meaning — the call decides whether the Bite
+ * carries "drags under"; this only checks it pointed at something real.
+ *
+ * @returns {Array<{clause: string, row: object}>} the credited pairs (the caller traces them)
+ */
+export function creditAnsweredClauses(answered, rows, openClauses, { onCredit = () => {}, onMiss = () => {} } = {}) {
+  const bare = (n) => String(n ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase();
+  const out = [];
+  for (const a of answered ?? []) {
+    const row = rows.find((e) => bare(e.name) === bare(a.row));
+    const cl = openClauses.find((c) => c.text === a.clause)
+      ?? openClauses.find((c) => clauseWords(c.text).some((w) => clauseWords(a.clause).includes(w)));
+    if (!row || !cl) { onMiss(a); continue; }
+    if (!row.clause) row.clause = cl.text;
+    row.answersAlso = [...new Set([...(row.answersAlso ?? []), cl.text])];
+    out.push({ clause: cl.text, row });
+    onCredit(cl, row);
+  }
+  return out;
+}
+
 export const escapeDCFor = (scaled) => 8 + scaled.pb + (Number(scaled?.stats?.STR) >= 0 ? Math.floor((Number(scaled.stats.STR) - 10) / 2) : 0);
 export const conditionClauseFor = (c, scaled) => (c === 'Grappled' ? `the target has the Grappled condition (escape DC ${escapeDCFor(scaled)})`
   : c === 'Prone' ? 'the target has the Prone condition'
@@ -2477,6 +2509,7 @@ export async function generateReskin(options, callLLM) {
   // would have found a name (a golem of lashed timber is not the Clay Golem). The matcher stands
   // in only when the call failed (never-fail generation, owner's standing rule), and says so.
   const pathD = options.path && !options.path.failed && options.path.path ? options.path : null;
+  let monsterVerdicts = null; // the idea call's body verdicts, recorded on the sheet so a re-roll reuses this creature's own judgement
   // a class NPC with no body named stands on its class's print NPC block, nearest CR (pipeline 3)
   const classBody = pathD?.path === 'class_npc' && !pathD.print_body
     ? (pathD.class ? bodyForClass(pathD.class, cr) : bodyForPerson(cr)) // a title with no class is still a person (critic B, 2026-10-19)
@@ -4150,6 +4183,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const meleeK = Object.values(sections).flat().find((e2) => /Melee(?: or Ranged)? Attack Roll/.test(e2.text ?? ''));
       const ctxK = {
         holds: (typeof options.holds === 'boolean' ? options.holds : null), // the route call's read of a containment engine — one definition, every templatesFor reader (2026-10-17)
+        holdShape: options.hold_shape ?? null, // HOW it holds (grip|reach|contain|medium|none|null) — the route call decides once; null is UNANSWERED and every door withholds (2026-11-11)
         scaled, sections, archetype, style: scaled.style ?? null, cr, concept: srcText, name: p.name,
         type: options.resolvedType ?? '', movement: (options.movement ?? []).join(' '),
         energy: options.energy ?? null, mix: options.mix ?? null, imposed: [], mechanics: options.mechanics ?? null,
@@ -4978,7 +5012,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // rules produced the kind form correctly.)
     inline_kind: String(p.inline_kind ?? '').trim().toLowerCase() || null,
     ...(declaredOk ? {} : { inline_overridden: /^the /i.test(String(inline ?? '')) ? 'kind' : 'person' }),
-    generation: { path: 'reskin', ...(isDegradedMode() ? { degraded: true } : {}), pipeline: pathD ? { path: pathD.path, print_body: pathBody ?? null, relation: pathD.relation ?? null, class: pathD.class ?? null, species: pathD.species ?? null, by: pathD.by } : null, donor: donor.id, archetype, ...(scaled.classKit ? { class_kit: scaled.classKit } : {}), ...(typeof options.holds === 'boolean' ? { holds: options.holds } : {}), creatureOnly: String(options.userConcept ?? concept ?? '').toLowerCase().split(/[^a-z']+/).filter((w) => w.length > 2 && !/^(?:the|a|an|and|or|but|with|who|that|which|its|his|her|their|into|onto|from|for|out|off|over|under|this|than|then|them|they|was|were|has|have|had|are|is|be|been|being|it|in|on|at|to|of|by|up|as|so|if|no|not|one|two|too|very|own|new|old)$/.test(w)).length <= 3, /* a creature-only prompt gives nothing to read: the catalog composes the sheet and the reader gate's engine-needs-key stands down (the critic's third species read) */ unplaced: authored?.unplaced ?? [], userConcept: String(options.userConcept ?? concept ?? '').slice(0, 600), clauses: groundedClauses(p.clauses, options.userConcept ?? concept, trace, p.lacks), /* the extraction (fidelity pipeline step 4): the record of what the user asked for, the coverage denominator */ ...(body ? { body } : {}), ...(options.menuRole ? { menu_role: options.menuRole } : {}), ...(donor.invented ? { invented: true } : donor.cite ? { cite: donor.cite } : {}) },
+    generation: { path: 'reskin', ...(monsterVerdicts ? { body_verdicts: monsterVerdicts } : {}), ...(options.hold_shape ? { hold_shape: options.hold_shape } : {}), ...(isDegradedMode() ? { degraded: true } : {}), pipeline: pathD ? { path: pathD.path, print_body: pathBody ?? null, relation: pathD.relation ?? null, class: pathD.class ?? null, species: pathD.species ?? null, by: pathD.by } : null, donor: donor.id, archetype, ...(scaled.classKit ? { class_kit: scaled.classKit } : {}), ...(typeof options.holds === 'boolean' ? { holds: options.holds } : {}), creatureOnly: String(options.userConcept ?? concept ?? '').toLowerCase().split(/[^a-z']+/).filter((w) => w.length > 2 && !/^(?:the|a|an|and|or|but|with|who|that|which|its|his|her|their|into|onto|from|for|out|off|over|under|this|than|then|them|they|was|were|has|have|had|are|is|be|been|being|it|in|on|at|to|of|by|up|as|so|if|no|not|one|two|too|very|own|new|old)$/.test(w)).length <= 3, /* a creature-only prompt gives nothing to read: the catalog composes the sheet and the reader gate's engine-needs-key stands down (the critic's third species read) */ unplaced: authored?.unplaced ?? [], userConcept: String(options.userConcept ?? concept ?? '').slice(0, 600), clauses: groundedClauses(p.clauses, options.userConcept ?? concept, trace, p.lacks), /* the extraction (fidelity pipeline step 4): the record of what the user asked for, the coverage denominator */ ...(body ? { body } : {}), ...(options.menuRole ? { menu_role: options.menuRole } : {}), ...(donor.invented ? { invented: true } : donor.cite ? { cite: donor.cite } : {}) },
     archetype: options.menuRole ?? archetype, archetype_source: 'user',
   };
   // Cunning Action is HUMANOID-coded (owner, 2026-08-26: "too assassin
@@ -5073,6 +5107,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     };
     const ctxT = {
       holds: (typeof options.holds === 'boolean' ? options.holds : null), // the route call's read of a containment engine — one definition, every templatesFor reader (2026-10-17)
+      holdShape: options.hold_shape ?? null, // HOW it holds (grip|reach|contain|medium|none|null) — the route call decides once; null is UNANSWERED and every door withholds (2026-11-11)
       scaled, sections, archetype, style: scaled.style ?? null, cr, movement: (options.movement ?? []).join(' '),
       size: String(monster.size ?? ''), // the DECLARED size, for requires_size (trample, leap). monster.size is set at its construction above; print-canon may revise it later, which is after the menu reads it — 2026-10-22
       energy: options.energy ?? null, mix: options.mix ?? null, meleeName: meleeRowT?.name?.replace(/ \(.*\)$/, '') ?? 'Slam',
@@ -5296,8 +5331,41 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const verdicts = readBodyVerdicts(rawIdea);
         if (verdicts) {
           ctxT.bodyVerdicts = verdicts;
+          // THE JUDGEMENT SURVIVES ONTO THE SHEET (2026-11-10). It lived only in `ctxT`, so a
+          // RE-ROLL of a saved row — which builds its own context, format-2024/generate.mjs
+          // `rerollCatalog` — had no verdicts at all and fell to each template's `keys`. A gated
+          // template that declares none was therefore unreachable on that path forever: the
+          // reef-warden with a kelp LASH could not re-roll into `reel`, the very shape its concept
+          // describes. Recorded here so the re-roll reuses what this creature was already judged
+          // to be. A verdict answered once stands for that creature; this grants nothing new.
+          monsterVerdicts = verdicts;
           const refused = Object.entries(verdicts).filter(([, v]) => !v).map(([k]) => k);
           trace('body verdicts:', `${Object.keys(verdicts).length} of ${bodyReqsT.length} answered; not true of this body: ${refused.join(', ') || 'none'}`);
+          // A BODY THAT CANNOT HOLD A CREATURE INSIDE IT SHEDS THE DONOR'S ENGULF ROW (2026-11-10).
+          // The engine rides on the donor, and the asked mechanic is what CHOSE that donor: "drags
+          // fishermen under" routed a hound to brute-5-grappler, whose shelf carries a Swallow. The
+          // grapple the concept also asked for stays; only the containing half leaves, and the
+          // Multiattack's citation of it goes with it. An unanswered verdict KEEPS the row — this
+          // mechanism's standing convention (the 'body-verdict' filter: the unknown excludes nothing,
+          // so a failed call can never strip a sheet).
+          if (ctxT.holdShape !== 'contain') {
+            for (const [secE, esE] of Object.entries(monster.sections ?? {})) {
+              for (let iE = esE.length - 1; iE >= 0; iE -= 1) {
+                const rowE = esE[iE]; if (!rowE?.engulf_engine) continue;
+                const bareE = String(rowE.name ?? '').replace(/ \(.*\)$/, '');
+                esE.splice(iE, 1);
+                const reE = new RegExp(`\\b${bareE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+                for (const esO of Object.values(monster.sections ?? {})) {
+                  for (let iO = esO.length - 1; iO >= 0; iO -= 1) {
+                    if (!reE.test(String(esO[iO]?.text ?? ''))) continue;
+                    const leftE = stripSentencesWith(esO[iO].text, bareE);
+                    if (leftE) esO[iO].text = leftE; else esO.splice(iO, 1);
+                  }
+                }
+                trace('engulf engine withheld:', `${secE}/"${rowE.name}" leaves — the route call read this creature's hold as ${ctxT.holdShape ?? 'unanswered'}, not contain; the grapple stands and citations of the row are swept`);
+              }
+            }
+          }
         } else if (bodyReqsT.length) {
           trace('body verdicts:', `none returned for ${bodyReqsT.length} requirements — falling back to each template's own keys`);
         }
@@ -5798,6 +5866,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             const takenS = Object.values(sections).flat().map((e2) => String(e2.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean);
             const rawS = await callLLM(buildSeatPrompt({ name: p.name, inline: inlineGuessRef(), cr, sheet: sheetSoFarT, idea: String(idea.idea ?? ''), clause: String(idea.clause ?? ''), missing: String(fit.missing ?? ''), kind: seatKind, taken: takenS, lacks: (clauseRecord ?? []).filter((c) => c.polarity === 'lacks').map((c) => c.text) }), validateAuthorResponse);
             const wrote = parseAuthorResponse(rawS, { attackCap: 0, traitSlots: 1 });
+            // THE SEAT READS `answered` TOO (2026-11-11). The envelope has always asked the call to
+            // say when a row already on the sheet carries the clause, and `parseAuthorResponse`
+            // has always returned it — but only the REPAIR path read it, and the repair runs last.
+            // The seat is asked FIRST, so a clause the chassis already served got a second row
+            // written for it before anything could notice: "drags fishermen under" became a 15-foot
+            // cone pull beside a Bite that already grapples, on 13 of 13 saved sheets. Same helper,
+            // same validation the repair uses — the call decides, the engine checks the row exists.
+            const seatAnswered = creditAnsweredClauses(wrote?.answered, Object.values(sections).flat(), clauseRecord ?? [], {
+              onCredit: (cl, row) => trace('clause already answered:', `"${cl.text}" is carried by "${String(row.name).replace(/ \(.*\)$/, '')}" — the seat read the sheet and declined to write a second row for it`),
+              onMiss: (a) => trace('seat answered, but:', `the call said "${a.clause}" is carried by "${a.row}", and no such row is on this sheet — the clause stays open`),
+            });
+            // the seat's OWN clause among them means it has nothing left to write (handled as the
+            // first arm of the refusal chain below — this site is an `else` block, not a loop)
+            const stoodDown = seatAnswered.some((x) => x.clause === idea?.clause);
             // the form the SEAT asked for is the only one it takes: a save in the trait
             // seat would skip `valueCheck` (the consumer runs it on everything but
             // Traits and Rider), and a trait in the action seat is a different seat's row
@@ -5821,11 +5903,34 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // cannot see because it prices damage, not tempo. Both halves are DECLARED: the
             // condition is a validated enum on the call's own save form, and the section is
             // the seat's own placement. Print: 0 of 329. The nearest template stands in.
+            // A SIGNATURE ROW DOES NOT RE-IMPOSE THE ATTACK'S OWN CONDITION (owner's read of
+            // gate-b-engulf, 2026-11-10: "Drowning drag isn't necessary if there's a bite. We don't
+            // need to answer with a row"). Closing the GM's grapple clause upstream removed the
+            // seat's ANCHOR but not its slot: the larder crocodile rolled unanchored and wrote
+            // "Jaws Lock", a Strength save that pulls 5 feet and applies Grappled, beside a Bite
+            // that already grapples and restrains. The condition count stays inside print (11
+            // blocks impose one condition on two rows), so `thirdCond` below cannot see it — the
+            // defect is that the FICTION is the attack's own, told twice.
+            //
+            // Scoped to exactly that: a signature row whose condition an ATTACK row already
+            // imposes. Both halves declared — the call's validated enum on its own form, and the
+            // rows' `imposes` through the shared `imposedConditions` reader. A save row that
+            // grapples, or a second condition the attack does not carry, is untouched, so the
+            // free-row budget is not narrowed in general. The nearest template stands in.
+            const dupOfAttack = form && (() => {
+              const cond = String((form.kind === 'save' ? form.f.condition : form.f.imposes) ?? '');
+              if (!cond) return null;
+              return Object.values(sections).flat().some((e) => /Attack Roll/.test(String(e.text ?? '')) && imposedConditions(e).includes(cond)) ? cond : null;
+            })();
             const denies = form && form.section === 'Bonus Actions' && TURN_DENIAL.includes(String(form.kind === 'save' ? form.f.condition : form.f.imposes));
-            if (denies) {
+            if (stoodDown) {
+              trace('seat stands down:', `${seat} — "${String(idea?.clause ?? '').slice(0, 60)}" is already carried by a row on this sheet; no second row is written for it`);
+            } else if (denies) {
               trace('seat authoring refused:', `${seat} — the authored row imposes ${form.kind === 'save' ? form.f.condition : form.f.imposes} as a bonus action, and no printed block denies a turn from a Bonus Action (0 of 329); the nearest template stands in`);
             } else if (thirdCond && conditionsImposedTwice(Object.values(sections).flat()).has(String(thirdCond))) {
               trace('seat authoring refused:', `${seat} — the authored row imposes ${thirdCond}, which two rows on this sheet already impose, and no printed block imposes one condition three ways (0 of 329); the nearest template stands in`);
+            } else if (dupOfAttack) {
+              trace('seat authoring refused:', `${seat} — the authored row re-imposes ${dupOfAttack}, which this sheet's own attack row already applies; that fiction belongs in the attack's rider and the nearest template stands in`);
             } else if (!form) {
               trace('seat authored nothing:', `${seat} — the call was asked to write ${seatKind} for "${String(idea.idea ?? '').slice(0, 70)}" and ${wrote ? `wrote no row of that kind${(wrote.refused ?? []).length ? ` (refused: ${wrote.refused.map((r2) => `"${r2.name}" — ${r2.why}`).join('; ')})` : ''}${(wrote.unplaced ?? []).length ? ` (it belongs in the ${wrote.unplaced[0].where})` : ''}` : 'answered nothing parseable'}; the nearest template stands in`);
             } else {
@@ -7080,16 +7185,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         const rowsNow = Object.values(sections).flat();
         const bare2 = (n) => String(n ?? '').replace(/ \(.*\)$/, '').trim().toLowerCase();
         const alreadyAnswered = new Set();
-        for (const a of rep?.answered ?? []) {
-          const row = rowsNow.find((e) => bare2(e.name) === bare2(a.row));
-          const cl = unclaimed.find((c) => c.text === a.clause) ?? unclaimed.find((c) => clauseWords(c.text).some((w) => clauseWords(a.clause).includes(w)));
-          if (!row || !cl) { trace('repair:', `the call said "${a.clause}" is already answered by "${a.row}", but no such row is on the sheet — the clause stays owed`); continue; }
-          alreadyAnswered.add(cl.text);
-          if (!row.clause) row.clause = cl.text;
-          row.answersAlso = [...new Set([...(row.answersAlso ?? []), cl.text])];
-          repairCredited.push(`${cl.text} -> ${String(row.name).replace(/ \(.*\)$/, '')}`);
-          trace('clause already answered:', `"${cl.text}" is carried by "${String(row.name).replace(/ \(.*\)$/, '')}" in different words — the call read the sheet and declined to answer it twice`);
-        }
+        creditAnsweredClauses(rep?.answered, rowsNow, unclaimed, {
+          onCredit: (cl, row) => {
+            alreadyAnswered.add(cl.text);
+            repairCredited.push(`${cl.text} -> ${String(row.name).replace(/ \(.*\)$/, '')}`);
+            trace('clause already answered:', `"${cl.text}" is carried by "${String(row.name).replace(/ \(.*\)$/, '')}" in different words — the call read the sheet and declined to answer it twice`);
+          },
+          onMiss: (a) => trace('repair:', `the call said "${a.clause}" is already answered by "${a.row}", but no such row is on the sheet — the clause stays owed`),
+        });
         // "THIS IS NOT A ROW" IS AN ANSWER (2026-10-21). Vashka the Red failed
         // `owed-clause` for "never breaks ranks" while the repair call had answered
         // `unplaced: ["description:never breaks ranks"]` — it read the whole sheet
@@ -10551,12 +10654,6 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // and the library's Blink Step, both "teleports up to 120 feet" — the audit renamed the second instead of dropping it,
   // sweep 2026-10-04). The later non-print row leaves; a print row never does.
   { const seen = new Map(); for (const [secD, esD] of Object.entries(monster.sections ?? {})) for (let i = esD.length - 1; i >= 0; i -= 1) { const e = esD[i]; const key = String(e.text ?? '').replace(/\s+/g, ' ').trim().toLowerCase(); if (!key) continue; if (!seen.has(key)) { seen.set(key, e); continue; } const other = seen.get(key); if (e.authored && other.authored) continue; /* two body parts the user named with the same numbers are two rows (Greatsword and Claw, the Meshrin pin) */ const owned = (r) => !!(r.print || r.part || r.kit || r.feature); /* print's rows and the GM's own — a part, a species row, a feature — never leave; the chassis copy does (the orc's Greataxe left for a Hand Axe narrowed into its twin — the critic's second species read, rerun) */ const goner = owned(e) ? (owned(other) ? null : other) : owned(other) ? e : e.authored && !other.authored ? e : other.authored && !e.authored ? other : e; if (!goner) continue; sweepDeadName(monster.sections, goner.name, goner === e ? other : e, trace); for (const [secG, esG] of Object.entries(monster.sections)) { const ix = esG.indexOf(goner); if (ix !== -1) { esG.splice(ix, 1); trace('identical row leaves:', `${secG}/"${goner.name}" reads word for word as ${secD}/"${(goner === e ? other : e).name}" — one ability, one name`); } } if (goner === other) seen.set(key, e); } }
-  // EVERY ESCAPE DC IS STR's (8 + PB + STR mod): rows that join after the final derivations — the slot
-  // row's fitted template, the user's wildcard written by the model ("escape DC 11" copied from its
-  // own save DC on the Peat Hound, sweep 2026-10-02) — are re-derived here, in the one place every row passes
-  { const strModE = Math.floor(((monster.stats?.STR ?? scaled.stats.STR) - 10) / 2); const escDC = Math.max(8 + scaled.pb + strModE, strModE < 0 ? scaled.dc : 0); const fixed = [];
-    for (const es of Object.values(monster.sections ?? {})) for (const e of es) if (/escape DC \d+/.test(e.text ?? '') && !e.text.includes(`escape DC ${escDC}`)) { fixed.push(e.name); e.text = e.text.replace(/escape DC \d+/g, `escape DC ${escDC}`); }
-    if (fixed.length) trace('escape dc:', `${fixed.join(', ')} → DC ${escDC} (8 + PB + STR; a late row wore another number)`); }
   // OUTPUT GUARD (PI alias spec 2026-10-01): the finished block carries no Product
   // Identity token or lore word in its name, row names or text — scrubbed to the
   // alias's plain noun, never rendered
@@ -10807,6 +10904,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         }
       }
     }
+    // ...AND THE ESCAPE DC FOLLOWS STR TOO (owner's read of gate-b-engulf, 2026-11-10). This restamp
+    // used to sit ~230 lines earlier, BEFORE the size floor above raised STR — so every Huge or
+    // Gargantuan body whose STR was under the floor shipped an escape DC derived from the old
+    // number. Measured: 6 FAILs across 4 engulf runs, always on a Bite, in exactly two shapes — the
+    // drowned-lure eel wrote 13 where Huge's STR 18 derives 14, and the dunegorge sandmaw wrote 16
+    // where Gargantuan's STR 25 derives 19. The floor block already carries the save, Athletics and
+    // the STR-keyed attack rows down this path for the same reason; the escape DC was the one
+    // derived number left behind. Moved rather than copied — a second restamp is a second formula.
+  // EVERY ESCAPE DC IS STR's (8 + PB + STR mod): rows that join after the final derivations — the slot
+  // row's fitted template, the user's wildcard written by the model ("escape DC 11" copied from its
+  // own save DC on the Peat Hound, sweep 2026-10-02) — are re-derived here, in the one place every row passes
+  { const strModE = Math.floor(((monster.stats?.STR ?? scaled.stats.STR) - 10) / 2); const escDC = Math.max(8 + Number(monster.pb ?? scaled.pb) + strModE, strModE < 0 ? scaled.dc : 0); const fixed = [];
+    for (const es of Object.values(monster.sections ?? {})) for (const e of es) if (/escape DC \d+/.test(e.text ?? '') && !e.text.includes(`escape DC ${escDC}`)) { fixed.push(e.name); e.text = e.text.replace(/escape DC \d+/g, `escape DC ${escDC}`); }
+    if (fixed.length) trace('escape dc:', `${fixed.join(', ')} → DC ${escDC} (8 + PB + STR; a late row wore another number)`); }
     { // THE GM's FEAR OUTRANKS PRINT's IMMUNITY (the critic's fourth read): "deathly afraid of chickens" beside "Immune to … Frightened" is a contradiction a GM reads in the header; the fear clause strips it, as a vulnerability strips a resistance
       const fears = /\b(?:afraid of|deathly afraid|terrified of|fears?|dreads?|phobia|frightened of|scared of|panics?)\b/i.test(readPhrases(String(options.userConcept ?? concept ?? '')));
       if (fears && /\bFrightened\b/.test(String(monster.immunities ?? ''))) {

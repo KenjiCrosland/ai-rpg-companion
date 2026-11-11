@@ -11,7 +11,10 @@ const warden = () => ({
   alignment: 'Neutral', ac: 16, hp: 97, challenge_rating: '5', cr: 5, pb: 3, archetype: 'controller',
   speed: '30 ft., Swim 30 ft.', senses: 'Darkvision 60 ft.; Passive Perception 13', languages: 'Common, Primordial',
   stats: { STR: 14, DEX: 14, CON: 16, INT: 12, WIS: 16, CHA: 12 },
-  generation: { userConcept: 'a triton reef-warden who drags raiders under the water with a lash of kelp', archetype: 'controller' },
+  // the hold shape a generated sheet records (2026-11-11): `reel` and `hook-drag` are REACH rows,
+  // and a reef-warden whose concept names a LASH of kelp is a reaching creature. A sheet made before
+  // this field records none, and the re-roll then falls through as it always did.
+  generation: { userConcept: 'a triton reef-warden who drags raiders under the water with a lash of kelp', archetype: 'controller', hold_shape: 'reach' },
   sections: {
     Traits: [{ name: 'Amphibious', text: 'The reef-warden can breathe air and water.', kit: 'triton', clause: 'a triton' }],
     Actions: [

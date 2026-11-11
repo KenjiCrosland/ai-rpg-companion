@@ -1,0 +1,74 @@
+[
+ {
+  "canary": "CONTAIN — exact Gelatinous Cube: hold_shape=contain, print's Engulf stays",
+  "description": "gelatinous cube",
+  "cr": "2",
+  "rules": "2024"
+ },
+ {
+  "canary": "CONTAIN — an ooze: hold_shape=contain, engulf legal",
+  "description": "a black ooze that swallows adventurers whole",
+  "cr": "3",
+  "rules": "2024"
+ },
+ {
+  "canary": "CONTAIN — a frog swallows whole: hold_shape=contain at MEDIUM (print's Giant Frog)",
+  "description": "a giant frog that swallows prey whole",
+  "cr": "1",
+  "rules": "2024"
+ },
+ {
+  "canary": "GRIP — bog hound (2014): hold_shape=grip, NO pull-at-range row, the Bite is the hold (the consistent-miss case)",
+  "description": "a mud-caked bog hound that drags fishermen under",
+  "cr": "1",
+  "rules": "2014"
+ },
+ {
+  "canary": "GRIP — crocodile: hold_shape=grip, no pull row",
+  "description": "a crocodile that drags swimmers under",
+  "cr": "2",
+  "rules": "2024"
+ },
+ {
+  "canary": "GRIP — eel: hold_shape=grip, no pull row",
+  "description": "a giant eel that pulls sailors beneath the waves",
+  "cr": "3",
+  "rules": "2024"
+ },
+ {
+  "canary": "GRIP — marsh troll: hold_shape=grip, no pull row",
+  "description": "a marsh troll that holds victims under the muck",
+  "cr": "5",
+  "rules": "2024"
+ },
+ {
+  "canary": "MEDIUM — bog-witch who raises the mire: hold_shape=medium; refused contain AND reach; a plain grapple or trait (no medium row exists yet)",
+  "description": "a bog-witch who raises the mire to close over her victims",
+  "cr": "6",
+  "rules": "2024"
+ },
+ {
+  "canary": "CONTAIN — gargantuan sand-maw: hold_shape=contain, Swallow legal",
+  "description": "a gargantuan sand-maw that swallows caravans whole",
+  "cr": "9",
+  "rules": "2024"
+ },
+ {
+  "canary": "REACH — a roper reels prey in on its tendrils: hold_shape=reach, hook-drag/reel LEGAL, a pull row may ship",
+  "description": "a cave roper that reels prey in on its tendrils",
+  "cr": "5",
+  "rules": "2024"
+ },
+ {
+  "canary": "REACH — an ettercap hauls a webbed victim to its fangs: hold_shape=reach",
+  "description": "an ettercap that hauls a webbed victim to its fangs",
+  "cr": "2",
+  "rules": "2024"
+ },
+ {
+  "canary": "REACH — kraken-spawn with grasping tentacles: hold_shape=reach",
+  "description": "a kraken-spawn with long grasping tentacles",
+  "cr": "6",
+  "rules": "2024"
+ }
+]

@@ -132,8 +132,15 @@ describe('the critic\'s audit, engine side (2026-10-02)', () => {
     for (const e of Object.values(m.sections).flat()) expect(e.text).not.toMatch(/[.!?]\s+the \w/);
   });
 
+  // THE BODY REACHES, so the pull-at-range wildcard is legal here (2026-11-10). `hook-drag` and
+  // `reel` carry REACH_BODY_REQUIREMENT now, and the old fixture was a peat HOUND — jaws at reach
+  // 5 — whose 20-foot pull is exactly the row that gate exists to refuse, so the sheet came back
+  // with no escape DC to normalise. The creature is a tendril horror and its idea call answers the
+  // hold shape as `reach`, which is honest: a bog-tendril horror hauls prey in on its tendrils. The
+  // invariant under test is untouched — a wildcard may not carry its own number.
   test('the user\'s wildcard cannot carry its own escape DC: every escape DC is 8 + PB + STR (the Peat Hound\'s Silt Drag, sweep 2026-10-02)', async () => {
-    const m = await generateReskin({ archetype: 'brute', style: 'grappler', concept: 'a peat hound that drags prey into the bog', userConcept: 'a peat hound that drags prey into the bog', cr: 1 }, async () => json('Peat Hound', 'Monstrosity', 1, 'grappler', 'brute', { extra: { wildcard: '*Strength Saving Throw:* DC 11, one creature within 20 feet. *Failure:* The target is pulled up to 15 feet straight toward the peat hound and has the Grappled condition (escape DC 11).' } }));
+    const c = 'a bog-tendril horror that drags prey into the bog';
+    const m = await generateReskin({ archetype: 'brute', style: 'grappler', concept: c, userConcept: c, cr: 1, hold_shape: 'reach' }, async () => json('Bog-Tendril Horror', 'Monstrosity', 1, 'grappler', 'brute', { extra: { wildcard: '*Strength Saving Throw:* DC 11, one creature within 20 feet. *Failure:* The target is pulled up to 15 feet straight toward the horror and has the Grappled condition (escape DC 11).' } }));
     const escDC = 8 + m.pb + Math.floor((m.stats.STR - 10) / 2);
     const dcs = [...JSON.stringify(m.sections).matchAll(/escape DC (\d+)/g)].map((x) => Number(x[1]));
     expect(dcs.length).toBeGreaterThan(0); expect(new Set(dcs)).toEqual(new Set([escDC]));

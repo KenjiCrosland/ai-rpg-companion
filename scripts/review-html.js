@@ -35,7 +35,15 @@
       .forEach(function (p) { if (p[1]) w.appendChild(el('div', 'line', '<b>' + p[0] + '</b> ' + esc(p[1]))); });
     w.appendChild(el('div', 'line', '<b>CR</b> ' + esc(h.cr) + (h.xp ? ' (XP ' + esc(h.xp) : '') + (h.pb ? '; PB ' + sgn(h.pb) + ')' : h.xp ? ')' : '')));
     Object.keys(s.sections).forEach(function (secName) {
-      var sec = el('div', 'sec'); sec.appendChild(el('h3', null, esc(secName)));
+      var sec = el('div', 'sec');
+      // 2014 PRINTS NO "TRAITS" HEADING (owner, 2026-11-10): the trait list sits unlabelled under the
+      // Challenge line and the first heading is Actions. 'Traits' is the engine's internal section key,
+      // shared by both editions — printing it here showed a 2014 card a heading it never carries, and
+      // a bonus action written in the trait list as 2014 does was read as "in the wrong section".
+      // Bonus Actions is a 2024 heading too; 2014 folds those into the trait list as prose.
+      var unlabelled2014 = s.format === '2014' && (secName === 'Traits' || secName === 'Bonus Actions');
+      if (unlabelled2014) sec.appendChild(el('div', 'sec-note', '(' + esc(secName.toLowerCase()) + ' — printed with no heading in 2014)'));
+      else sec.appendChild(el('h3', null, esc(secName)));
       s.sections[secName].forEach(function (r, ri) {
         var id = secName + '/' + r.name, flagged = st(s.idx).flags[id];
         var row = el('div', 'row' + (flagged ? ' flagged' : ''));
@@ -63,7 +71,7 @@
 
   /* ---- numbers + DPR ---- */
   function renderNumbers(s) {
-    var d = el('div'), rd = s.read, b = s.band;
+    var d = el('div'), rd = s.read, b = s.card;
     if (!rd) { d.appendChild(el('div', 'warn', 'the checker could not read this sheet' + (s.error ? ': ' + esc(s.error) : ''))); return d; }
     var cls = function (v, lo, hi) { return v == null || lo == null ? '' : (v < lo || v > hi) ? ' class="bad"' : ' class="good"'; };
     var kv = el('dl', 'kv');
@@ -71,19 +79,19 @@
     kv.innerHTML =
       '<dt>label CR</dt><dd>' + esc(s.header.cr) + '</dd>'
       + '<dt>reads as</dt><dd' + (Math.abs(read - lab) >= 1.5 ? ' class="bad"' : '') + '>CR ' + rd.read + '  <span style="color:var(--dim)">(def ' + rd.def + ' / off ' + rd.off + ')</span></dd>'
-      + (b ? '<dt>AC</dt><dd' + (Math.abs(Number(s.header.ac) - b.armor_class) >= 3 ? ' class="softc"' : '') + '>' + esc(s.header.ac) + ' <span style="color:var(--dim)">(DMG ' + b.armor_class + ')</span></dd>'
-        + '<dt>HP</dt><dd' + cls(Number(s.header.hp), b.min_hit_points * 0.6, b.max_hit_points * 1.4).replace('class', 'class') + '>' + esc(s.header.hp) + ' <span style="color:var(--dim)">(DMG ' + b.min_hit_points + '–' + b.max_hit_points + ')</span></dd>'
-        + '<dt>round</dt><dd' + cls(rd.sustained, b.min_damage_per_round, b.max_damage_per_round) + '>' + rd.sustained + ' <span style="color:var(--dim)">(DMG ' + b.min_damage_per_round + '–' + b.max_damage_per_round + ')</span></dd>'
-        + '<dt>attack</dt><dd>' + sgn(rd.atkBest) + ' <span style="color:var(--dim)">(DMG ' + b.attack_bonus + (s.printAt && s.printAt.atkMid ? '; print at CR ' + esc(s.header.cr) + ' runs ' + sgn(s.printAt.atk[0]) + ' to ' + sgn(s.printAt.atk[1]) + ', median ' + sgn(s.printAt.atkMid) : '') + ')</span></dd>'
-        + '<dt>best DC</dt><dd>' + rd.dcBest + ' <span style="color:var(--dim)">(DMG ' + b.save_dc + (s.printAt && s.printAt.dcMid ? '; print ' + s.printAt.dc[0] + '–' + s.printAt.dc[1] + ', median ' + s.printAt.dcMid : '') + ')</span></dd>' : '')
-      + (rd.nova ? '<dt>nova</dt><dd>' + rd.nova + '</dd>' : '')
+      + (b ? '<dt>AC</dt><dd' + (Math.abs(Number(s.header.ac) - b.ac) >= 3 ? ' class="softc"' : '') + '>' + esc(s.header.ac) + ' <span style="color:var(--dim)">(card ' + b.ac + ')</span></dd>'
+        + '<dt>HP</dt><dd' + cls(Number(s.header.hp), b.hpLo, b.hpHi) + '>' + esc(s.header.hp) + ' <span style="color:var(--dim)">(card ' + b.hp + ', path ' + b.hpLo + '–' + b.hpHi + ')</span></dd>'
+        + '<dt>round</dt><dd' + cls(rd.sustained, b.dprLo, b.dprHi) + '>' + rd.sustained + ' <span style="color:var(--dim)">(card ' + b.dpr + ', path ' + b.dprLo + '–' + b.dprHi + (b.legendary ? ', legendary +25%' : '') + ')</span></dd>'
+        + '<dt>attack</dt><dd>' + sgn(rd.atkBest) + ' <span style="color:var(--dim)">(card ' + sgn(b.atk) + (s.printAt && s.printAt.atkMid ? '; print at CR ' + esc(s.header.cr) + ' runs ' + sgn(s.printAt.atk[0]) + ' to ' + sgn(s.printAt.atk[1]) + ', median ' + sgn(s.printAt.atkMid) : '') + ')</span></dd>'
+        + '<dt>best DC</dt><dd>' + rd.dcBest + ' <span style="color:var(--dim)">(card ' + b.dc + (s.printAt && s.printAt.dcMid ? '; print ' + s.printAt.dc[0] + '–' + s.printAt.dc[1] + ', median ' + s.printAt.dcMid : '') + ')</span></dd>' : '')
+      + (rd.nova ? '<dt>nova</dt><dd>' + esc(rd.nova.name || '?') + (rd.nova.gate ? ' <span style="color:var(--dim)">' + esc(rd.nova.gate) + (rd.nova.area ? ' · area' : '') + '</span>' : '') + (rd.nova.avg != null ? ' ' + rd.nova.avg : '') + '</dd>' : '')
       + '<dt>attacks</dt><dd>' + rd.attacks + ' × ' + esc(rd.used && rd.used.name) + ' (' + (rd.used && rd.used.avg) + ')</dd>';
     d.appendChild(kv);
 
     /* the DPR calculator. Our own gate priced an at-will area swap at zero, which is how three
        hot sheets read in band — so the swap is selectable here and the round re-prices live. */
     var calc = el('div', 'dpr');
-    var defAC = b ? b.armor_class : 15;
+    var defAC = b ? b.ac : 15;
     calc.innerHTML = '<label style="font-size:12px;color:var(--dim)">target AC <b class="acv">' + defAC + '</b></label>';
     var slider = el('input'); slider.type = 'range'; slider.min = 10; slider.max = 22; slider.value = defAC;
     calc.appendChild(slider);
@@ -139,16 +147,23 @@
         total += e2;
         rows += '<tr><td>' + esc(swapR.name) + (area ? ' <span style="color:var(--bad)">· area ×' + targets + '</span>' : '') + '</td><td>save</td><td>' + sv + '</td><td>' + e2.toFixed(1) + '</td></tr>';
       }
-      var three = total * 3 + (rd.nova ? Number(rd.nova) : 0);
+      var three = total * 3 + (rd.nova && rd.nova.avg != null ? Number(rd.nova.avg) * (rd.nova.area ? 2 : 1) : 0);
       /* TWO DIFFERENT NUMBERS, BOTH RIGHT, so they are labelled: the checker's `sustained` above
-         is RAW damage (what the DMG bands are built from — print prices a round as if it hits),
+         is RAW damage (what the CARD is built from — its fight model prices a round as if every
+         attack hits and every save fails),
          while this total applies hit chance at the chosen AC. Gormak reads 106 raw and 76
          expected at AC 17; the comparison that matters is 42 -> 76 when the area swap is taken. */
       tbl.innerHTML = '<tr><th>row</th><th>hit</th><th>avg</th><th>expected</th></tr>' + rows
         + '<tr class="tot"><td>round at AC ' + ac + ' <span style="font-weight:400;color:var(--dim)">(expected)</span></td><td></td><td></td><td>' + total.toFixed(1) + '</td></tr>'
         + '<tr><td style="color:var(--dim)">checker\'s raw round</td><td></td><td></td><td>' + rd.sustained + '</td></tr>'
         + '<tr><td style="color:var(--dim)">three rounds' + (rd.nova ? ' + nova once' : '') + '</td><td></td><td></td><td>' + three.toFixed(0) + '</td></tr>'
-        + (b ? '<tr><td style="color:var(--dim)">DMG band for CR ' + esc(s.header.cr) + '</td><td></td><td></td><td>' + b.min_damage_per_round + '–' + b.max_damage_per_round + '</td></tr>' : '');
+        /* THE CARD IS THE AUTHORITY (owner, 2026-11-10). Was the 2014 DMG band, which runs hot
+           against the 2024 MM and read every sheet cold. Blog of Holding v2: CR 1-20 is 7.5/CR
+           damage rounded up to 5 and 15 + 15/CR hit points, +25% damage for a legendary. The
+           orange path is the design target; outside it is an outlier, not a defect. */
+        + (b ? '<tr><td style="color:var(--dim)">card dpr at CR ' + esc(s.header.cr) + (b.legendary ? ' (legendary +25%)' : '') + '</td><td></td><td></td><td><b>' + b.dpr + '</b> <span style="color:var(--dim)">path ' + b.dprLo + '–' + b.dprHi + '</span></td></tr>'
+             + '<tr><td style="color:var(--dim)">card hp at CR ' + esc(s.header.cr) + '</td><td></td><td></td><td><b>' + b.hp + '</b> <span style="color:var(--dim)">path ' + b.hpLo + '–' + b.hpHi + '</span>' + (s.header.hp ? '  ·  sheet ' + esc(s.header.hp) : '') + '</td></tr>'
+             + '<tr><td style="color:var(--dim)">card ac / atk / dc</td><td></td><td></td><td>' + b.ac + ' / +' + b.atk + ' / ' + b.dc + '</td></tr>' : '');
     }
     slider.oninput = draw; if (swapSel) swapSel.onchange = draw; draw();
     d.appendChild(calc);
@@ -249,16 +264,17 @@
     RUN.sheets.forEach(function (s) {
       var S = state[s.idx] || {};
       var nf = s.findings.filter(function (x) { return x.severity === 'fail'; }).length;
-      var a = el('a', null, '<b>' + s.idx + '</b> ' + esc(s.name) + '<br><span class="chips">' + esc(s.pathKind)
+      var ed = '<span class="ed ed-' + esc(s.format) + '">' + esc(s.format) + '</span>';
+      var a = el('a', null, '<b>' + s.idx + '</b> ' + esc(s.name) + ' ' + ed + '<br><span class="chips">' + esc(s.pathKind)
         + (nf ? ' · <span class="bad">FAIL ' + nf + '</span>' : '') + (S.verdict ? ' · ' + S.verdict : '') + '</span>');
       a.href = '#s' + s.idx; nav.appendChild(a);
     });
     shown.forEach(function (s) {
       var S = st(s.idx);
-      var card = el('section', 'sheet' + (S.verdict ? ' done' : '')); card.id = 's' + s.idx;
+      var card = el('section', 'sheet' + (S.verdict ? ' done' : '') + (s.format === '2014' ? ' ed2014' : '')); card.id = 's' + s.idx;
       var hd = el('div', 'hd');
-      hd.innerHTML = '<h2>' + s.idx + '. ' + esc(s.name) + '</h2><span class="typed">' + esc(s.input || '(no input line)') + '</span>'
-        + '<span style="color:var(--dim);font-size:12px">' + esc(s.pathLine || s.pathKind) + ' · ' + esc(s.donor) + ' · ' + esc(s.format) + '</span>';
+      hd.innerHTML = '<h2>' + s.idx + '. ' + esc(s.name) + ' <span class="ed ed-' + esc(s.format) + '">' + esc(s.format) + '</span></h2><span class="typed">' + esc(s.input || '(no input line)') + '</span>'
+        + '<span style="color:var(--dim);font-size:12px">' + esc(s.pathLine || s.pathKind) + ' · ' + esc(s.donor) + '</span>';
       card.appendChild(hd);
       if (!s.rowCount) card.appendChild(el('div', 'warn', 'this sheet read ZERO rows — the reader missed its printing'));
       var cols = el('div', 'cols');

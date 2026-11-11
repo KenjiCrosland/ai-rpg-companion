@@ -2766,8 +2766,15 @@ function rerollCatalog(monster, { section, cr, chassis, numbers, stats, pb, excl
   };
   // a saved sheet with no recorded role draws from every role's shelf: the
   // engine does not guess a role it was never told (pre-engine monsters)
+  // the creature's OWN body verdicts, answered once at generation and recorded on the sheet. Without
+  // them every gated template falls to its `keys` here, and one that declares none is unreachable.
+  const verdicts = monster?.generation?.body_verdicts ?? null;
+  // and HOW it holds, if the sheet recorded it. A sheet made before 2026-11-11 has no `hold_shape`,
+  // and passing nothing leaves `holdShape` undefined, which the menu filter treats as "no shape was
+  // asked" and falls through — a legacy sheet re-rolls exactly as it did before.
+  const holdShape = monster?.generation?.hold_shape ?? undefined;
   const shelf = (archetype ? [archetype] : ALL_ROLES)
-    .flatMap((a) => templatesFor({ ...ctx, archetype: a, section: key, trigger: null, text: concept }));
+    .flatMap((a) => templatesFor({ ...ctx, archetype: a, section: key, trigger: null, text: concept, ...(verdicts ? { bodyVerdicts: verdicts } : {}), ...(holdShape ? { holdShape } : {}) }));
   // THE ROW BEING REPLACED TAKES ITS TEMPLATE WITH IT (live block, 2026-10-14:
   // re-rolling Assassinate returned assassinate again under a new name — the
   // same-name check catches a repeated NAME, never a repeated mechanic)

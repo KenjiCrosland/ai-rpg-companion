@@ -85,7 +85,7 @@ export const SHAPES = [
     // Same principle `heated-body` already records: a contact tick is a print
     // CONSTANT by band, never a budget fraction.
     swallow_tick: { '0-2': 0, '3-5': 7, '6-9': 14, '10-12': 21, '13-20': 21, '21+': 28 },
-    id: 'swallow', name: 'Swallow', cite: 'Kraken/Swallow (CR 23); Behir/Swallow (CR 11); Giant Toad/Swallow (CR 1)', // a swallow for a body with no engulf engine (the glacier wyrm, step 8)
+    id: 'swallow', hold_shape: 'contain', name: 'Swallow', cite: 'Kraken/Swallow (CR 23); Behir/Swallow (CR 11); Giant Toad/Swallow (CR 1)', // a swallow for a body with no engulf engine (the glacier wyrm, step 8)
     roles: ['brute', 'lurker', 'defender', 'skirmisher'], styles: [], cr_range: [1, 30], replaces: 'signature', deny_types: ['Humanoid', 'Ooze'], // the Giant Toad swallows at CR 1
     frames: {
       '0-2': '*Dexterity Saving Throw*: DC {dc}, one Small or smaller creature within 5 feet that the creature hit with a melee attack this turn. *Failure:* The target is swallowed. A swallowed creature has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the creature. If the creature takes 10 damage or more on a single turn from a creature inside it, it must succeed on a DC {dc} Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which falls in a space within 5 feet of the creature and has the Prone condition. If the creature dies, a swallowed creature is no longer Restrained and can escape from the corpse using 5 feet of movement, exiting with the Prone condition.',
@@ -161,7 +161,7 @@ export const SHAPES = [
     },
   },
   {
-    id: 'reel', name: 'Reel', cite: 'Merrow/Harpoon (CR 2); Ettercap/Reel (CR 2); Shambling Mound/Charged Tendril (CR 5)',
+    id: 'reel', hold_shape: 'reach', name: 'Reel', cite: 'Merrow/Harpoon (CR 2); Ettercap/Reel (CR 2); Shambling Mound/Charged Tendril (CR 5)',
     roles: ['skirmisher', 'controller'], styles: ['hurler', 'skulker'], cr_range: [2, 19], replaces: 'signature',
     frames: {
       '0-2': '*Strength Saving Throw*: DC {dc}, one Medium or smaller creature within 30 feet. *Failure:* The target is pulled up to 15 feet straight toward the creature.',
@@ -752,7 +752,7 @@ export const SHAPES = [
     },
   },
   {
-    id: 'hook-drag', name: 'Hooked Lash', cite: 'Roper/Tendril + Reel (CR 5); Chain Devil class',
+    id: 'hook-drag', hold_shape: 'reach', name: 'Hooked Lash', cite: 'Roper/Tendril + Reel (CR 5); Chain Devil class',
     roles: ['brute', 'lurker', 'defender'], styles: [], cr_range: [0, 30], replaces: 'signature',
     frames: {
       '0-2': '*Strength Saving Throw:* DC {dc}, one creature within 20 feet. *Failure:* The target is pulled up to 15 feet straight toward the creature by {hook} and has the Grappled condition (escape DC {dc}).',

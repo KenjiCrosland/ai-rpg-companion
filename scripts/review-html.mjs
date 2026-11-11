@@ -16,7 +16,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { checkBlock, corpusAt } from '@/tools/statblock-generator/reskin/checker.mjs';
-import TABLE from '@/data/challengeRatings.json';
+import { cardBudget } from '@/tools/statblock-generator/reskin/card-budgets.mjs';
 
 const runDir = process.argv[2];
 if (!runDir || !fs.existsSync(runDir)) { console.error('usage: review-html.mjs <run-dir> [--out <path>]'); process.exit(1); }
@@ -24,7 +24,7 @@ const outArg = process.argv.indexOf('--out');
 const outPath = outArg > 0 ? process.argv[outArg + 1] : path.join(runDir, 'review.html');
 
 // THE TWO PRINTINGS DIFFER EVERYWHERE, and this reader was bitten three times building one page:
-// the DMG band (2014 has `challenge_rating: "7 (2,900 XP)"` and no numeric `cr`), the attack idiom
+// the card aim (2014 has `challenge_rating: "7 (2,900 XP)"` and no numeric `cr`), the attack idiom
 // ("Melee Weapon Attack: +10 to hit" vs "*Melee Attack Roll:* +10"), and the header block — 2014
 // writes AC as `armor_class`, HP as `hit_points`, the six abilities as ONE PROSE STRING in
 // `attributes` ("STR 16 (+3), DEX 10 (+0), …"), saves as prose in `saving_throws`, and size/type/
@@ -110,8 +110,29 @@ for (const f of fs.readdirSync(runDir).filter((x) => /^\d\d-.*\.json$/.test(x)).
   const header = headerOf(sh, raw);
   const secs = sectionsOf(sh);
   const rowCount = Object.values(secs).flat().length;
-  const band = TABLE[header.cr] ?? TABLE[String(Number(header.cr))] ?? null;
-  if (!band) bandMisses.push(`${f.slice(0, 2)} cr=${JSON.stringify(header.cr)}`);
+  // THE CARD, NOT THE 2014 DMG TABLE (owner, 2026-11-10: "we can't use dmg numbers. everything is
+  // way too cold against that metric. let's use blog of holding since it's closer to monster manual
+  // numbers"). The page was reading `challengeRatings.json` — the 2014 DMG's own band — while the
+  // ENGINE has priced against the Blog of Holding 2024 card since 2026-08-17 (`card-budgets.mjs`,
+  // owner-designated). So a sheet built to the card was being shown beside the metric the card
+  // exists to replace, and read cold by construction. Same authority on both sides now.
+  //
+  // `legendary` and `edition` are derived exactly as checker.mjs:973 derives them, so the page and
+  // the checker cannot disagree about which aim a sheet is held to.
+  const crN = (() => {
+    const t = String(header.cr).trim();
+    const fr = /^(\d+)\s*\/\s*(\d+)$/.exec(t);
+    return fr ? Number(fr[1]) / Number(fr[2]) : Number(t);
+  })();
+  const legendary = !!(secs['Legendary Actions'] ?? []).length;
+  const card = (() => {
+    if (!Number.isFinite(crN)) return null;
+    const a = cardBudget(crN, { legendary, edition: sh.format === '2014' ? '2014' : null });
+    // the card's "orange path" — the 25th-to-75th percentile band the post names as the design
+    // target — approximated as the aim +/-25%, which is what `withinBudget` uses for the same job
+    return { ...a, legendary, dprLo: Math.round(a.dpr * 0.75), dprHi: Math.round(a.dpr * 1.25), hpLo: Math.round(a.hp * 0.75), hpHi: Math.round(a.hp * 1.25) };
+  })();
+  if (!card) bandMisses.push(`${f.slice(0, 2)} cr=${JSON.stringify(header.cr)}`);
   if (!header.ac || !header.hp || ABIL.some((a) => !Number.isFinite(Number(header.stats[a])))) headerMisses.push(`${f.slice(0, 2)} ${sh.name ?? ''}`);
   let check = null;
   try { check = checkBlock(raw); } catch (err) { check = { error: String(err?.message ?? err) }; }
@@ -123,7 +144,7 @@ for (const f of fs.readdirSync(runDir).filter((x) => /^\d\d-.*\.json$/.test(x)).
     pathLine: (/\[path\] decides: ([^\n]*)/.exec(md) ?? [, ''])[1],
     pathKind: (/\[path\] decides: (\w+)/.exec(md) ?? [, '?'])[1],
     format: sh.format ?? raw.format ?? (sh.sections ? '2024' : '2014'),
-    header, band, rowCount,
+    header, card, rowCount,
     printAt: (() => { try { return corpusAt(Number(header.cr), sh.format === '2014' ? '2014' : null); } catch { return null; } })(),
     sections: Object.fromEntries(Object.entries(secs).map(([k, rows]) => [k, rows.map((r) => ({ name: r.name, text: prose(r), tags: tagsOf(r) }))])),
     read: check?.read ?? null,
@@ -135,7 +156,7 @@ for (const f of fs.readdirSync(runDir).filter((x) => /^\d\d-.*\.json$/.test(x)).
 }
 // A LOOKUP THAT SILENTLY MISSES IS WORSE THAN ONE THAT ERRORS: say so, loudly.
 if (headerMisses.length) console.error(`WARNING: ${headerMisses.length} sheet(s) have a blank AC/HP or a non-numeric ability — the header reader missed a printing: ${headerMisses.join(', ')}`);
-if (bandMisses.length) console.error(`WARNING: ${bandMisses.length} sheet(s) found no DMG band — their Numbers panel has no comparison: ${bandMisses.join(', ')}`);
+if (bandMisses.length) console.error(`WARNING: ${bandMisses.length} sheet(s) have an unreadable CR, so no card aim — their Numbers panel has no comparison: ${bandMisses.join(', ')}`);
 const thin = sheets.filter((s) => s.rowCount === 0);
 if (thin.length) console.error(`WARNING: ${thin.length} sheet(s) read zero rows: ${thin.map((s) => s.idx).join(', ')}`);
 

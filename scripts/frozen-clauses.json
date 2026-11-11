@@ -9763,5 +9763,263 @@
     "head": true
    }
   ]
+ },
+ "425d3d886204": {
+  "concept": "gelatinous cube",
+  "clauses": [
+   {
+    "id": "cl_bt73ta",
+    "text": "gelatinous cube",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "ed5c0a56196b": {
+  "concept": "a black ooze that swallows adventurers whole",
+  "clauses": [
+   {
+    "id": "cl_9djanf",
+    "text": "a black ooze",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "swallows",
+    "askShape": "save_single",
+    "askMechanic": "swallow",
+    "askMechanicWhy": "swallows adventurers whole"
+   },
+   {
+    "id": "cl_1cdvk1i",
+    "text": "swallows adventurers whole",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "swallows",
+    "askShape": "save_single",
+    "askMechanic": "swallow",
+    "askMechanicWhy": "swallows adventurers whole"
+   }
+  ]
+ },
+ "7b47dc6eaedb": {
+  "concept": "a giant frog that swallows prey whole",
+  "clauses": [
+   {
+    "id": "cl_zf5e7y",
+    "text": "a giant frog",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_s9rl6n",
+    "text": "swallows prey whole",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "swallows",
+    "askShape": "condition",
+    "askMechanic": "swallow",
+    "askMechanicWhy": "swallows prey whole"
+   }
+  ]
+ },
+ "6add6e9a9f7b": {
+  "concept": "a crocodile that drags swimmers under",
+  "clauses": [
+   {
+    "id": "cl_c3tde3",
+    "text": "a crocodile",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_fpwr8a",
+    "text": "drags swimmers under",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "drags",
+    "askOften": "at_will",
+    "askOftenWhy": "drags swimmers under",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "drags"
+   }
+  ]
+ },
+ "bae48d0aa2a2": {
+  "concept": "a giant eel that pulls sailors beneath the waves",
+  "clauses": [
+   {
+    "id": "cl_154sfm",
+    "text": "a giant eel",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_3spamr",
+    "text": "pulls sailors beneath the waves",
+    "kind": "mechanical",
+    "askShape": "movement"
+   }
+  ]
+ },
+ "05b10eaa6dbc": {
+  "concept": "a marsh troll that holds victims under the muck",
+  "clauses": [
+   {
+    "id": "cl_1em2zr9",
+    "text": "a marsh troll",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_5bzdl4",
+    "text": "holds victims under the muck",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "holds victims under the muck"
+   }
+  ]
+ },
+ "b5dcdecaf33f": {
+  "concept": "a kelpie that lures riders into the lake and drowns them",
+  "clauses": [
+   {
+    "id": "cl_1ecenix",
+    "text": "a kelpie",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_2ydb7c",
+    "text": "lures riders into the lake and drowns them",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "lures riders",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "lures riders"
+   }
+  ]
+ },
+ "86a16a16671a": {
+  "concept": "a bog-witch who raises the mire to close over her victims",
+  "clauses": [
+   {
+    "id": "cl_pra1h1",
+    "text": "a bog-witch",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1n3erlk",
+    "text": "raises the mire to close over her victims",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "raises the mire to close over her victims",
+    "askShape": "save_single",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "close over her victims"
+   }
+  ]
+ },
+ "d8deb13190c4": {
+  "concept": "a shambling mass of strangling vines that wraps prey inside itself",
+  "clauses": [
+   {
+    "id": "cl_187qglp",
+    "text": "a shambling mass of strangling vines",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "a shambling mass of strangling vines",
+    "askOften": "at_will",
+    "askOftenWhy": "a shambling mass of strangling vines",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "strangling vines"
+   },
+   {
+    "id": "cl_zhjuq0",
+    "text": "wraps prey inside itself",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "wraps prey inside itself",
+    "askOften": "at_will",
+    "askOftenWhy": "wraps prey inside itself",
+    "askMechanic": "swallow",
+    "askMechanicWhy": "wraps prey inside itself"
+   }
+  ]
+ },
+ "42e0df0173b7": {
+  "concept": "a gargantuan sand-maw that swallows caravans whole",
+  "clauses": [
+   {
+    "id": "cl_1e5y98x",
+    "text": "a gargantuan sand-maw",
+    "kind": "header"
+   },
+   {
+    "id": "cl_rszqva",
+    "text": "swallows caravans whole",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "swallow",
+    "askMechanicWhy": "swallows caravans whole"
+   }
+  ]
+ },
+ "5ff27b2d7f19": {
+  "concept": "a cave roper that reels prey in on its tendrils",
+  "clauses": [
+   {
+    "id": "cl_bwwux8",
+    "text": "a cave roper",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_7jlcti",
+    "text": "reels prey in on its tendrils",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "reels prey in",
+    "askOften": "at_will",
+    "askOftenWhy": "reels prey in on its tendrils",
+    "askShape": "save_single",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "reels prey in"
+   }
+  ]
+ },
+ "335e9e8f0589": {
+  "concept": "an ettercap that hauls a webbed victim to its fangs",
+  "clauses": [
+   {
+    "id": "cl_1bci2ab",
+    "text": "an ettercap",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_txzdvn",
+    "text": "hauls a webbed victim to its fangs",
+    "kind": "mechanical",
+    "askShape": "condition",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "hauls a webbed victim"
+   }
+  ]
+ },
+ "ea0dd5f64376": {
+  "concept": "a kraken-spawn with long grasping tentacles",
+  "clauses": [
+   {
+    "id": "cl_19h1pw3",
+    "text": "a kraken-spawn with long grasping tentacles",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "grapple",
+    "askMechanicWhy": "grasping tentacles"
+   }
+  ]
  }
 }

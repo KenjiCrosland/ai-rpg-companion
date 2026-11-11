@@ -19,6 +19,16 @@ nav.index .chips{color:var(--dim);font-size:11px}
 main{padding:1rem;min-width:0}
 .sheet{background:var(--card);border:1px solid var(--rule);border-radius:6px;margin-bottom:1.2rem;overflow:hidden}
 .sheet.done{opacity:.72}
+/* THE EDITION IS THE FIRST THING A REVIEWER NEEDS (owner, 2026-11-10): a 2014 block puts its bonus
+   actions in the trait list as prose and writes "Melee Weapon Attack: +3 to hit", and both were read
+   as format errors when the edition sat at the end of a dim grey line. A badge beside the name and a
+   stripe down the card, so the convention is set before the first row is read. */
+.ed{font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:600;padding:.05rem .4rem;border-radius:3px;letter-spacing:.02em;vertical-align:middle}
+.ed-2014{background:#efe3c8;color:#5b4310;border:1px solid #d9c48f}
+.ed-2024{background:#e3ecf7;color:#1d3a6b;border:1px solid #b9cbe6}
+.sheet.ed2014{border-left:4px solid #c9a95b}
+.sheet.ed2014>.hd{background:#fbf7ee}
+.sec-note{color:var(--dim);font-size:11px;font-style:italic;margin:.6rem 0 .1rem}
 .sheet>.hd{padding:.6rem .9rem;border-bottom:1px solid var(--rule);display:flex;gap:.8rem;align-items:baseline;flex-wrap:wrap}
 .sheet>.hd h2{font-size:15px;margin:0}
 .typed{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--tag);padding:.1rem .4rem;border-radius:3px}
