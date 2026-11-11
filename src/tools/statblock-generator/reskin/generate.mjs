@@ -7810,7 +7810,28 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               // then honestly renamed it "Slam", which made it word-for-word
               // identical to the Greatclub beside it, so the Greatclub was
               // deleted as a duplicate and the Multiattack pointed at nothing.
-              let cloneText = (pr.reach ? base.text.replace(/reach \d+ ft\./, `reach ${pr.reach} ft.`) : base.text)
+              // PRINT'S ROW WITH NO DAMAGE IS NOT A DAMAGE ROW WEARING ITS NAME (2026-11-11).
+              // This path clones the chassis's melee row and appends print's rider, which is right
+              // when print's row is "damage, and then a condition". The Roper's Tentacle has NO
+              // damage at all — its whole text is "The target has the Grappled condition (escape DC
+              // 14) from one of six tentacles, and the target has the Poisoned condition until the
+              // grapple ends" — so there was no rider to append and the clone shipped the chassis's
+              // bare damage. Every roper today carried a Tentacle that does not grapple, and once
+              // print's own Reel landed beside it (H12) the card read "pulls each creature Grappled
+              // by it" with nothing on the sheet that grapples. 4 of the 15 print attack rows we
+              // paste with a rider lose it, all four this row.
+              //
+              // So when print's row carries no damage expression, print's own TEXT is the row,
+              // stamped with this sheet's attack bonus (read off the chassis row beside it, which
+              // the engine already priced), its escape DC and its save DC. The clone's mutations
+              // below are all about damage and riders, so they are skipped for it.
+              const printOwnText = !pr.dmg && /Attack Roll/.test(pr.text ?? '');
+              let cloneText = printOwnText
+                ? asInline(pr.text)
+                  .replace(/(Attack Roll:\*? )\+\d+/, `$1${/Attack Roll:\*? (\+\d+)/.exec(base.text ?? '')?.[1] ?? `+${scaled.atk}`}`)
+                  .replace(/escape DC \d+/g, `escape DC ${escapeDCFor(scaled)}`)
+                  .replace(/(Saving Throw:?\*?|saving throw) DC \d+/gi, `$1 DC ${scaled.dc}`)
+                : (pr.reach ? base.text.replace(/reach \d+ ft\./, `reach ${pr.reach} ft.`) : base.text)
                 .replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\)) ([A-Z][a-z]+) damage/, `$1 ${pr.type ?? '$2'} damage`)
                 .replace(/( plus \d+ \(\d+d\d+\) \w+ damage)/, '');
               if (pr.hybrid && pr.range && !/Melee or Ranged/.test(cloneText)) {
@@ -7818,15 +7839,23 @@ Return ONLY JSON with EXACTLY these corrected pieces:
                 trace('print canon row frame:', `"${pr.name}" keeps print's thrown frame — reach ${pr.reach ?? 5} ft. or range ${pr.range} ft.`);
               }
               const clone = { ...base, name: pr.name, text: cloneText, print: true, weapon: weaponFor(pr.name) ?? null }; // print's row carries print's weapon, not the base row's stamp (the Ogre's Javelin read [greataxe], printplus 2026-10-18)
-              if ((pc.exact || pc.borrowOnly) && nearPrintCr(cr, pc.cr) && pr.dmg) clone.text = clone.text.replace(/\d+ \(\d+d\d+(?: [+-] \d+)?\)/, printExprWithSheetMod(pr.dmg, clone.text, scaled.pb)); // an exact body at print's CR: the added row deals print's own dice, not the chassis's (the Pit Fiend's Devilish Claw read 21 or 26 by the donor's roll — sprint run 2026-10-12)
-              if (pr.rider && /^plus \d+ \(/.test(pr.rider)) clone.text = clone.text.replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\) (?:[A-Z][a-z]+) damage)/, `$1 ${pr.rider.replace(/\.$/, '')}`); // print's own split pays the name (Radiant Horn: Piercing plus Radiant; the Pit Fiend's Fiery Mace: Force plus Fire)
-              // the clone is print's row: the chassis's condition clause leaves before print's rider is applied (the Lich's Paralyzing Touch knocked Prone on the caster chassis — critic's regressions brief 2026-10-04)
-              { const declaredC = typeof clone.minorClause === 'string' ? clone.minorClause : null;
-                if (declaredC && clone.text.includes(declaredC)) clone.text = clone.text.split(declaredC).join('');
-                else { const mc = splitMinorClause(clone.text); if (mc.clause) clone.text = mc.body.split('{minor_clause}').join(''); }
-                delete clone.minorClause; }
-              clone.text = clone.text.replace(/\s*If the target [^.]*has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '').replace(/\.\.$/, '.').replace(/\s+$/, '');
-              if (pr.rider && !/^plus \d+ \(/.test(pr.rider)) clone.text = `${clone.text.trim().replace(/[.,]$/, '')}${/^(?:and|or|plus)\b/i.test(pr.rider) ? ',' : '.'} ${asInline(pr.rider)}`;
+              if (!printOwnText) {
+                if ((pc.exact || pc.borrowOnly) && nearPrintCr(cr, pc.cr) && pr.dmg) clone.text = clone.text.replace(/\d+ \(\d+d\d+(?: [+-] \d+)?\)/, printExprWithSheetMod(pr.dmg, clone.text, scaled.pb)); // an exact body at print's CR: the added row deals print's own dice, not the chassis's (the Pit Fiend's Devilish Claw read 21 or 26 by the donor's roll — sprint run 2026-10-12)
+                if (pr.rider && /^plus \d+ \(/.test(pr.rider)) clone.text = clone.text.replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\) (?:[A-Z][a-z]+) damage)/, `$1 ${pr.rider.replace(/\.$/, '')}`); // print's own split pays the name (Radiant Horn: Piercing plus Radiant; the Pit Fiend's Fiery Mace: Force plus Fire)
+                // the clone is print's row: the chassis's condition clause leaves before print's rider is applied (the Lich's Paralyzing Touch knocked Prone on the caster chassis — critic's regressions brief 2026-10-04)
+                { const declaredC = typeof clone.minorClause === 'string' ? clone.minorClause : null;
+                  if (declaredC && clone.text.includes(declaredC)) clone.text = clone.text.split(declaredC).join('');
+                  else { const mc = splitMinorClause(clone.text); if (mc.clause) clone.text = mc.body.split('{minor_clause}').join(''); }
+                  delete clone.minorClause; }
+                clone.text = clone.text.replace(/\s*If the target [^.]*has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '').replace(/\.\.$/, '.').replace(/\s+$/, '');
+                if (pr.rider && !/^plus \d+ \(/.test(pr.rider)) clone.text = `${clone.text.trim().replace(/[.,]$/, '')}${/^(?:and|or|plus)\b/i.test(pr.rider) ? ',' : '.'} ${asInline(pr.rider)}`;
+              }
+              if (printOwnText) {
+                const impP = imposedConditions({ name: pr.name, text: clone.text });
+                if (impP.length) clone.imposes = impP.length === 1 ? impP[0] : impP;
+                delete clone.minorClause; delete clone.rider; delete clone.boundKeys; delete clone.clause;
+                trace('print canon row frame:', `"${pr.name}" ships print's own text, not a clone of the chassis row — print gives it no damage${impP.length ? `, only ${impP.join(' and ')}` : ''}, and a damage row wearing its name loses the whole point of it`);
+              }
               const sec = Object.entries(monster.sections).find(([, es]) => es.includes(base))?.[0] ?? 'Actions';
               monster.sections[sec].splice(monster.sections[sec].indexOf(base) + 1, 0, clone);
               const ma = Object.values(monster.sections).flat().find((o) => o.name === 'Multiattack');
