@@ -11,7 +11,7 @@ import { pickDonor, scaleDonor, stampAttacksPerRound } from './scale.mjs';
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
-import { declaredBodyFacts, conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName} from './templates.mjs';
+import { declaredBodyFacts, templateExcludedBy, sheetEngines, conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
 import { lintStatblock, EMPTY_SAVE_OUTCOME } from '../format-2024/lint.mjs';
@@ -8917,7 +8917,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               continue;
             }
           }
-          if (hasRow(new RegExp(r.name.replace(/ \(.*\)$/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'))) continue;
+          // A WHOLE NAME, NOT A SUBSTRING (2026-11-11). This regex was unanchored, so print's own
+          // `Reel` matched the seat's `Reeling Tendril` and was silently skipped — while print's
+          // Multiattack, "makes two Tentacle attacks, USES REEL, and makes two Bite attacks", was
+          // pasted anyway. That is the cave roper's dangling reference, the owner's parked 11-08
+          // item and the one FAIL of the H7 twelve. `hasRow`'s own comment says "NAMES only"; it
+          // meant whole names.
+          if (hasRow(new RegExp(`^${r.name.replace(/ \(.*\)$/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'))) continue;
           // A CLASS LIFT BELONGS TO ITS CLASS (item 27, 2026-11-10). The monk is DESIGNED to stand
           // on the Spy (classes.mjs: monk.bodies = ['Scout', 'Spy']), and the Spy's own Cunning
           // Action then rode along as print's — both monks in the 11-09 forty shipped it, and the
@@ -8968,6 +8974,33 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           }
           // print's dice stand at print's CR, exact or borrowed (critic A5)
           if (!printNumbersHere && /\d+ \(\d+d\d+/.test(rowP.text)) { const vcP = valueCheck(rowP, { scaled, sections, cr, section: r.section }); if (vcP.steps.some((st) => /dice \d+ → \d+/.test(st))) { rowP.text = vcP.text; trace('print canon row priced:', `${r.name} — ${vcP.steps.filter((st) => /dice/.test(st)).join('; ')}`); } } // print's dice stand on an exact body at print's CR
+          // PRINT'S ROW TAKES THE SLOT FROM A SEAT ROW OF THE SAME MECHANIC (owner's ruling
+          // 2026-11-08, "print's attack list is locked on a print body"). Anchoring the name check
+          // above lets print's `Reel` land — and the roper would then carry Reel AND the seat's
+          // `Reeling Tendril`, which is `hook-drag`: both declare the `containment` family, two
+          // reel rows on one card. A same-NAME collision already yields to print a few lines above;
+          // this is the same ruling read off the DECLARED family instead of the name. Print's row
+          // inherits the clause the seat's row was answering, so the GM's words keep a receipt.
+          // The rule is already written: `EXCLUDE_ON` says which templates may not sit beside
+          // which ENGINES, and `sheetEngines` is the one reader that names a row's engine (its
+          // declared family first, print's own prose as the fallback — print's Reel reads
+          // `containment` by its "pulls each creature Grappled by it"). The MENU applies that
+          // table; the print paste runs long after the menu, so a seat row the menu would have
+          // withheld sits there when print's row finally arrives. Here it yields, and hands over
+          // the GM's clause so the words keep a receipt.
+          const enginesP = sheetEngines({ [r.section]: [rowP] });
+          if (enginesP.size) {
+            for (const rowsY of Object.values(sections)) {
+              for (let yi = (rowsY ?? []).length - 1; yi >= 0; yi -= 1) {
+                const y = rowsY[yi];
+                if (!y || y === rowP || y.print || !y.template) continue;
+                if (!templateExcludedBy(y.template, enginesP)) continue;
+                if (y.clause && !rowP.clause) rowP.clause = y.clause;
+                rowsY.splice(yi, 1);
+                trace('print canon row takes the slot:', `the ${pc.name}'s own ${r.name} is ${[...enginesP].join('/')}, and "${y.name}" (${y.template}) is a row the menu withholds beside that — it yields${y.clause ? `, handing over the GM's "${String(y.clause).slice(0, 40)}"` : ''}`);
+              }
+            }
+          }
           (sections[r.section] = sections[r.section] ?? []).push(rowP);
           trace('print canon row:', `${r.section}/${r.name} — the ${pc.name}'s own`);
           if (r.section === 'Bonus Actions') for (let bi = sections['Bonus Actions'].length - 1; bi >= 0; bi -= 1) { // the seat's generic bonus action yields to print's (Fleet Agility beside Nimble Escape, critic form-ten 2026-10-01)

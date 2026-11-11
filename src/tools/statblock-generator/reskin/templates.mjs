@@ -858,6 +858,20 @@ export const FAMILY = {
   'hook-rider': 'containment',
 };
 
+/**
+ * IS THIS TEMPLATE ONE THE MENU WITHHOLDS BESIDE THESE ENGINES? (2026-11-11)
+ *
+ * `EXCLUDE_ON` is applied at the menu, and the print-canon paste runs long after it — so a seat row
+ * the menu would never have offered is already on the sheet when print's own row arrives. The cave
+ * roper shipped the seat's `Reeling Tendril` (hook-drag) and then print's `Reel`: two reel rows,
+ * because the table had no reader at the later moment. One definition, two callers.
+ */
+export function templateExcludedBy(templateId, engines) {
+  const on = EXCLUDE_ON[templateId] ?? [];
+  const has = engines instanceof Set ? (f) => engines.has(f) : (f) => (engines ?? []).includes(f);
+  return on.some(has);
+}
+
 const EXCLUDE_ON = {
   charge: ['charge-rider'], 'throw-retrieve': ['thrown-weapon'], pounce: ['charge-rider'],
   'hook-drag': ['containment'], 'hook-rider': ['containment'], 'obstacle-pull': ['containment'], reel: ['containment'], snare: ['containment'],
@@ -1713,7 +1727,18 @@ export function templatesFor({ archetype, style = null, cr, movement = '', secti
   const imposedTwice = conditionsImposedTwice(rows);
   const wouldBeThird = (t) => {
     if (!imposedTwice.size) return false;
-    const d = IMPOSES_BY_TEMPLATE[t.id];
+    // THE TEMPLATE'S OWN RECORD FIRST, the side table only where it has none
+    // (2026-11-11). `IMPOSES_BY_TEMPLATE` is hand-kept, and SIX seeds that declare
+    // `imposes` on themselves were never added to it — pacify, escalating-dread,
+    // terror-pulse, snare-bolt, sensory-strike, push-prone — so this reader, the one
+    // that decides "would this be a third", could not see what the seed itself says.
+    // The Pit-Born Ooze shipped Restrained on its Slam, its Swallow AND a Tar Glob
+    // (`snare-bolt`) because of it: `conditionsImposedTwice` had counted the two
+    // correctly and the menu offered the third anyway. The declared-then-not-carried
+    // disease, eighth sighting. The table stays for the shapes whose condition is
+    // band-dependent and lives nowhere else (`swallow`'s entry is three conditions
+    // and its template carries none).
+    const d = t.imposes ?? IMPOSES_BY_TEMPLATE[t.id];
     const all = d == null ? [] : typeof d === 'string' ? [d] : Array.isArray(d) ? d : Object.values(d).flat();
     return [...new Set(all.filter(Boolean))].some((c) => imposedTwice.has(String(c)));
   };
