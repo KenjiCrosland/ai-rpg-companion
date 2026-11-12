@@ -10155,5 +10155,126 @@
     "kind": "descriptive"
    }
   ]
+ },
+ "f093ac814f81": {
+  "concept": "winter wolf",
+  "clauses": [
+   {
+    "id": "cl_1mlrop9",
+    "text": "winter wolf",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "9e5d14ad20a9": {
+  "concept": "a red dragon with a brass-plated hide",
+  "clauses": [
+   {
+    "id": "cl_1cr3zy6",
+    "text": "a red dragon with a brass-plated hide",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "92e0f9e83e98": {
+  "concept": "a fire-eating carnival strongman",
+  "clauses": [
+   {
+    "id": "cl_1njvor7",
+    "text": "a fire-eating carnival strongman",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "a fire-eating carnival strongman",
+    "askShape": "save_area",
+    "askMechanic": "breath",
+    "askMechanicWhy": "fire eating"
+   }
+  ]
+ },
+ "39b2064eb0f4": {
+  "concept": "a hell-boar wreathed in flame",
+  "clauses": [
+   {
+    "id": "cl_gdebnh",
+    "text": "a hell-boar wreathed in flame",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "e3859d2c0973": {
+  "concept": "a storm-maned lion crackling with lightning",
+  "clauses": [
+   {
+    "id": "cl_1k814t6",
+    "text": "a storm-maned lion crackling with lightning",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "27f050b73d60": {
+  "concept": "an ash-choked bear that breathes embers",
+  "clauses": [
+   {
+    "id": "cl_bzlg2y",
+    "text": "an ash-choked bear",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_cee4se",
+    "text": "breathes embers",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "breath",
+    "askMechanicWhy": "breathes embers"
+   }
+  ]
+ },
+ "5fdfd1f32b86": {
+  "concept": "a frost spider whose webs are ice",
+  "clauses": [
+   {
+    "id": "cl_140t0we",
+    "text": "a frost spider whose webs are ice",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "58a6aec041e5": {
+  "concept": "a brine-soaked ghoul that drips acid",
+  "clauses": [
+   {
+    "id": "cl_hb5ccm",
+    "text": "a brine-soaked ghoul",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1x7fpof",
+    "text": "drips acid",
+    "kind": "mechanical",
+    "askOften": "at_will",
+    "askOftenWhy": "drips",
+    "askShape": "save_single",
+    "askMechanic": "escalate",
+    "askMechanicWhy": "acid"
+   }
+  ]
+ },
+ "dbc52a267ad4": {
+  "concept": "a venomous cave scorpion the size of a horse",
+  "clauses": [
+   {
+    "id": "cl_l8eab6",
+    "text": "a venomous cave scorpion the size of a horse",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
  }
 }

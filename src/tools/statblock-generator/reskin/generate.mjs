@@ -8538,8 +8538,33 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // deals Fire is vulnerable to Fire, never immune (the header printed both,
     // critic fresh four 2026-09-28 — second sighting after the scarecrow)
     const materialWeak = materialVulnerability(options.userConcept ?? concept, options.material ?? null)?.vulnerability ?? null;
-    const elementImmunity = ['dragon', 'ooze'].includes(options.bodyType) && options.energy && options.energy !== materialWeak ? options.energy : null;
-    if (['dragon', 'ooze'].includes(options.bodyType) && options.energy && options.energy === materialWeak) trace('element immunity withheld:', `${options.energy} — the body's material is vulnerable to it`);
+    // A BODY OF ITS ELEMENT IS IMMUNE TO IT (item C, owner's forty read 2026-11-12: "I want to see
+    // cold damage and cold resistance" on a dire wolf with a frost-rimed hide). The route call reads
+    // `energy=Cold` on that sheet and nothing consumed it — the pipe ran for dragons and oozes only,
+    // so a Beast with a declared element reached the card with no Resistances or Immunities line at
+    // all. 288 of 2,038 saved sheets carry a declared elemental energy on a body this pipe skipped.
+    //
+    // PRINT SAYS IMMUNITY, NOT RESISTANCE, and it says it on exactly this shape — a normal animal
+    // that is also an element: Winter Wolf (Monstrosity, Cold immune), Hell Hound (Fire), Remorhaz
+    // (Cold and Fire), Ice and Magma Mephit, Frost and Fire Giant — 8 of 8 immunity, 0 resistance,
+    // and **every one keeps a physical melee row**. So the owner's "at least resistance" is below
+    // print; the calibrated answer is immunity, and the Bite is never retyped.
+    //
+    // FOUR ELEMENTS ONLY, measured over the corpus by whether a themed non-Humanoid body carries the
+    // immunity: Fire 21 immune / 2 resist, Cold 10 / 0, Lightning 9 / 0, Acid 9 / 0 + 1 neither.
+    // The rest are mixed or absent and stay out — Poison 6 immune / 3 not (and its immunities come
+    // from Undead and Construct TYPES, not from theme), Thunder 2 / 2, Necrotic 3 immune / 2 resist,
+    // Radiant 1 / 1, Psychic 0 / 2, Force 0 / 2. Necrotic is also the most-declared energy in our
+    // runs (327 sheets), so including it would be the widest change on the weakest evidence.
+    //
+    // The Humanoid guard at ~2446 still runs first (an energy with no warrant in the GM's words
+    // never reaches the header), and a material weakness still outranks the element below.
+    const ELEMENTAL_IMMUNITY = ['Fire', 'Cold', 'Lightning', 'Acid'];
+    const elementBody = ['dragon', 'ooze'].includes(options.bodyType)
+      || (ELEMENTAL_IMMUNITY.includes(String(options.energy ?? '')) && !/^Humanoid\b/i.test(String(options.resolvedType ?? '')));
+    const elementImmunity = elementBody && options.energy && options.energy !== materialWeak ? options.energy : null;
+    if (elementImmunity && !['dragon', 'ooze'].includes(options.bodyType)) trace('element immunity:', `${options.energy} — the call read this creature's energy as ${options.energy} and print gives a body of its element immunity to it (Winter Wolf, Hell Hound, Remorhaz: 8 of 8 immune, 0 resistant); its melee rows stay physical`);
+    if (elementBody && options.energy && options.energy === materialWeak) trace('element immunity withheld:', `${options.energy} — the body's material is vulnerable to it`);
     // the breath save stat keys by ELEMENT (print: White Cold = Con,
     // Red Fire = Dex, Green Poison = Con; critic 2026-09-11 — nothing
     // mental uses Dex)
