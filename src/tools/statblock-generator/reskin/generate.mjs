@@ -8076,6 +8076,37 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             if (declared && e.text.includes(declared)) e.text = e.text.split(declared).join('');
             else { const mc = splitMinorClause(e.text); if (mc.clause) e.text = mc.body.split('{minor_clause}').join(''); }
             delete e.minorClause; }
+          // PRINT'S ROW IMPOSES WHAT PRINT'S ROW IMPOSES — AND NOTHING ELSE (2026-11-11, item H14).
+          // The strip above knows one form, print's own "If the target is a … it has the X condition",
+          // and the grappler chassis writes its hold in TWO sentences: that one plus a standalone
+          // "While Grappled, the target has the Restrained condition." The second survived, so a row
+          // renamed to print's own kept a rider print does not have — the Troll's Rend on 13 of 13
+          // trolls and the Giant Frog's Bite on 2, 16 of 517 pasted print attack rows. On the closing
+          // twelve that shipped a card promising a Restrained nothing could impose, and once print's
+          // Reel landed beside it (H12) a Reel with nothing to reel.
+          //
+          // So: when PRINT's row imposes no condition at all, neither does ours. `imposedConditions`
+          // is the shared reader (passed name+text so it reads print's prose, not a stamped field),
+          // and only a standalone condition sentence goes — the attack line, its damage and print's
+          // own rider (applied below) are untouched.
+          // PER CONDITION, not all-or-nothing: print's Giant Frog Bite DOES grapple, and ours added
+          // Restrained on top of it, so a guard of "print imposes nothing" would have missed 2 of the
+          // 16. A standalone sentence goes when print's row imposes NONE of what that sentence imposes.
+          if (printBody) {
+            const printImposes = new Set(imposedConditions({ name: pr.name, text: pr.text }));
+            const beforeC = e.text; const dropped = [];
+            e.text = e.text.split(/(?<=\.)\s+/).filter((sent) => {
+              if (/Attack Roll/.test(sent)) return true;                       // the attack line and its damage stay
+              const mine = imposedConditions({ name: '', text: sent });
+              if (!mine.length || mine.some((c) => printImposes.has(c))) return true;
+              dropped.push(mine.join('/')); return false;
+            }).join(' ').replace(/\s+$/, '');
+            if (dropped.length) {
+              const kept = imposedConditions({ name: '', text: e.text });
+              if (kept.length) e.imposes = kept.length === 1 ? kept[0] : kept; else delete e.imposes; // the record follows the clause
+              trace('print canon rider leaves:', `"${from}" -> "${to}": the ${pc.name}'s own row imposes ${printImposes.size ? [...printImposes].join(' and ') : 'no condition'}, so the chassis's ${dropped.join(' and ')} clause leaves with the name`);
+            }
+          }
           e.text = e.text.replace(/\s*If the target [^.]*has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '').replace(/\.\.$/, '.').replace(/\s+$/, ''); // TODO R3 next site: the PRECONDITION half is a payoff's `consumes`, a field the row already declares
           if (pr.rider && /^plus \d+ \(/.test(pr.rider) && !/ plus \d+ \(/.test(e.text)) e.text = e.text.replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\) (?:Bludgeoning|Piercing|Slashing) damage)/, `$1 ${pr.rider.replace(/\.$/, '')}`); // a "plus N (XdY) T damage" clause is the damage line's own, no period before it (the Wight's Necrotic Sword)
           else if (pr.rider) e.text = `${e.text.trim().replace(/[.,]$/, '')}${/^(?:and|or|plus)\b/i.test(pr.rider) ? ',' : '.'} ${asInline(pr.rider)}`;
