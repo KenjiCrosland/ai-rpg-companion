@@ -103,9 +103,18 @@ describe('the exceptions that predate the split', () => {
   });
 
   it('the three converged on 2026-10-27 stay converged despite invented names', () => {
-    for (const id of ['condition-payoff', 'exploiter', 'riposte']) {
+    for (const id of ['condition-payoff', 'exploiter']) {
       expect(isPrint(id)).toBe(false);
       expect(run([row('Silvered Flourish', id)])[0].name).toBe(nameOf(id));
     }
+  });
+
+  // `riposte` was the third of those three, held up as an INVENTED name. It is not one any more:
+  // the corpus had lost its Reactions sections (the parse gap found 2026-11-12), and print's own
+  // Pirate Captain has a row called Riposte — six more have Parry. The convergence still holds; what
+  // changed is that it now converges on a PRINT name, which is the stronger case for the rule.
+  it('riposte converges too, and its name is now print\'s own', () => {
+    expect(isPrint('riposte')).toBe(true);
+    expect(run([row('Silvered Flourish', 'riposte')])[0].name).toBe(nameOf('riposte'));
   });
 });

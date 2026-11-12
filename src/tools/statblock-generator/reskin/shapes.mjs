@@ -913,7 +913,7 @@ export const SHAPES = [
     frames: Object.fromEntries(['0-2', '3-5', '6-9', '10-12', '13-20', '21+'].map((b) => [b, '*Trigger:* A creature the creature can see moves to within 5 feet of it. *Response:* The creature makes one {ranged_name} attack against that creature.'])),
   },
   {
-    id: 'riposte', name: 'Riposte', invented: true, // kin: Bandit Captain/Parry (2024 MM) + Riposte maneuver (PHB); neither is in this corpus
+    id: 'riposte', name: 'Riposte', cite: 'Pirate Captain/Riposte (CR 1); Knight, Bandit Captain, Gladiator, Noble, Erinyes, Marilith/Parry', // was `invented: true` with "neither is in this corpus" — both are: the corpus had lost its Reactions sections until 2026-11-12
     // a reaction that strikes BACK needs something to strike with — snap-shot's
     // precedent (host: 'ranged'). 'melee' is already the weld default, so this
     // only turns the row requirement ON (2026-10-22).

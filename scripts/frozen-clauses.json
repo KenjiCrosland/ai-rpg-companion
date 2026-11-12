@@ -10139,5 +10139,21 @@
     "askMechanicWhy": "burns anyone who touches it"
    }
   ]
+ },
+ "cdfea3046794": {
+  "concept": "Knight — a knight who swore an oath to a dead queen",
+  "clauses": [
+   {
+    "id": "cl_1k58aob",
+    "text": "Knight — a knight",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1repw2x",
+    "text": "swore an oath to a dead queen",
+    "kind": "descriptive"
+   }
+  ]
  }
 }
