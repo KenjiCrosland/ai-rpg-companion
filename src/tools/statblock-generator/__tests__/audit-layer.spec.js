@@ -244,6 +244,10 @@ describe('verifyAuditFindings guardrails', () => {
     const [f] = run(finding());
     expect(f).toEqual({
       rule: 'mechanical-audit', severity: 'audit',
+      // the PRINCIPLE and the CONFIDENCE ride along from 2026-11-12 (item R(a)): the principle IS
+      // the finding's class, and the fix call is told it so a two-in-one is split rather than
+      // reworded; the confidence orders the findings that compete for the two fix slots
+      principle: 2, confidence: 'high',
       message: expect.stringContaining('No end clause.'),
       loc: { section: 'Traits', entry: 'Umbral Veil' },
     });

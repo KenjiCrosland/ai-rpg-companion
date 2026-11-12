@@ -40,7 +40,7 @@ import { buildFreeRowFixPrompt, buildRepairPrompt, buildSeatPrompt, parseAuthorR
 import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
 import { WEAPONS, weaponFor, weaponNamed, namesWeapon, weaponsIn, finesseLike } from './weapons.mjs';
-import { effectOnly, danglingRefIn, repairMultiattackAttackList, repairReplaceClause, rowNamesOf } from './checker.mjs';
+import { effectOnly, danglingRefIn, repairMultiattackAttackList, repairReplaceClause, rowNamesOf, checkBlock } from './checker.mjs';
 import { lintSheet, sheetCanCast, undefinedStateIn, contradictsSelfHeal } from './sheet-lints.mjs'; // the sheet lints, reachable from the pipeline since 2026-11-08 (the critic's §2a)
 import { capSingleTargetSave, ceilingFor, isSingleTargetSave } from './card-budgets.mjs';
 import { matcherPath, bodyForClass, bodyForPerson, hagFor, PRINT_ALIAS, printAliasFor } from './path.mjs';
@@ -3816,31 +3816,31 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     return null;
   };
   /**
-   * A REPAIR ANSWERS TO THE GATES ITS ROW ALREADY ANSWERED TO (owner's ruling 2026-11-11, item H8:
-   * the end of the line polishes, and "I don't want to lose brand new rows if they are good" — so
-   * the writer is kept and its output is checked).
+   * DID THIS REPAIR MAKE THE SHEET WORSE? (owner's ruling 2026-11-11 item H8, generalised 2026-11-12.)
    *
-   * Measured over the 318 sheets since the repair call started landing: a repaired free row sits on
-   * a FAILing row 5.1% of the time (3 of 59) against 1.9% for every other non-print row, and all
-   * three broke a DIFFERENT gate from the one that sent them for repair — `name-mechanic`,
-   * `save-fit`, `grapple-no-escape`. The row it replaced had to satisfy the save table, the
-   * name-claim check and the relation record; its replacement satisfied none of them, because this
-   * path validated exactly three things (not empty, no raw token, no dangling reference).
+   * The first cut enumerated two gates — the save-stat table and the name-claim reader — because
+   * those were the two a repair had been measured breaking. It was whack-a-mole, and the mole moved:
+   * a repaired row on the drowned coil eel broke `ko-ungated` instead, a third gate nobody had
+   * thought to ask about. So the question is not "does it break one of the rules I listed" but the
+   * one the engine can already answer about any rule: **does the sheet FAIL something it did not
+   * fail before?** `checkBlock` is 7ms, a repair happens at most twice a sheet, and it covers every
+   * gate including the ones not yet written.
    *
-   * No new rules: `saveStatsFor` is the table the checker's own `save-fit` gate enforces, read with
-   * the same three inputs it uses, and `mechanicUnkept` is the name-claim reader. A repair that
-   * would introduce one of these is not a repair — the path already knows how to decline, and the
-   * standing text keeps its place.
+   * Measured over the saved runs: 6 of 72 landed repairs shipped a row the checker fails, each on a
+   * DIFFERENT gate than the one that sent it for repair (`name-mechanic`, `save-fit`,
+   * `grapple-no-escape`, `ko-ungated`, and two lint rules the post-repair lint pass now fixes).
    */
-  const repairWouldBreak = (row) => {
-    const sv = /\*?([A-Z][a-z]+) Saving Throw/.exec(row?.text ?? '');
-    if (sv) {
-      const want = saveStatsFor({ imposes: imposedConditions(row)[0] ?? null, damageDominant: damageIsThePoint(row), movement: !!row.imposesMovement });
-      if (want.length && !want.includes(sv[1])) return `roll a ${sv[1]} save for an effect that calls for ${[...new Set(want)].join(' or ')}`;
-    }
-    const unkept = mechanicUnkept(String(row?.name ?? '').replace(/ \(.*\)$/, ''), row?.text ?? '');
-    if (unkept) return `leave the name promising ${unkept} the text lacks`;
-    return null;
+  const repairMakesItWorse = (row, newText) => {
+    try {
+      const was = new Set(Object.values(checkBlock(monster).gates).flatMap((g) => g.findings ?? []).filter((f) => f.severity === 'fail').map((f) => f.rule));
+      const probe = JSON.parse(JSON.stringify(monster)); // plain JSON (it round-trips to localStorage); `structuredClone` is absent in the jsdom test env
+      const target = Object.values(probe.sections ?? {}).flat().find((e) => e && String(e.name ?? '') === String(row.name ?? ''));
+      if (!target) return null;                       // cannot ask the question: let the other refusals rule
+      target.text = newText;
+      const now = Object.values(checkBlock(probe).gates).flatMap((g) => g.findings ?? []).filter((f) => f.severity === 'fail');
+      const gained = [...new Set(now.map((f) => f.rule))].filter((r) => !was.has(r));
+      return gained.length ? gained.join(', ') : null;
+    } catch { return null; }                          // a checker error never costs a repair
   };
   const landAuthored = (authored, { repair = false } = {}) => {
     // A REPAIR ROW MAY NOT TAKE A NAME ALREADY ON THE SHEET (forty 2026-10-19: the repair named its trait
@@ -5113,6 +5113,24 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     const chassisRows = Object.values(sections).flat()
       .filter((e) => e && e !== pendingWildcard && !e.authored && !e.template && !e.seed && !e.library && !e.freeRow);
     const already = (c) => Object.values(sections).flat().some((e) => e?.clause === c.text || (e?.answersAlso ?? []).includes(c.text));
+    // ON A PRINT BODY THE CARRIER MUST SURVIVE PRINT'S OWN RENAME (owner, 2026-11-12: "donors or
+    // templates have a choice of conditions"). The donor's attack row declares
+    // `imposes: ['Grappled','Restrained']` and is the right carrier on a homebrew sheet — but on a
+    // print body that row is about to BECOME print's row, name, dice and rider, and print may impose
+    // nothing (the Troll's Rend). Credit it anyway and the clause keeps a receipt on a row that no
+    // longer does the thing: "holds victims under the muck" credited to Claw, which ships as Rend
+    // with no hold. Measured over the saved runs: 28 of 31 chassis credits are on sheets with no
+    // print body and their carriers survive; all 3 that do not are this case.
+    //
+    // So the ask only drops when PRINT ITSELF serves it. When print does not, the ask stays open and
+    // the seats answer it — which is the owner's standing ruling that print is a resource, not a
+    // veto: use print's row if it has one, invent one beside it if it does not.
+    const printServes = (mech) => {
+      if (!printBody || !pcPlain) return true; // no print body: the chassis IS the body, nothing will overwrite it
+      const rowsP = [...(pcPlain.meleeRows ?? []), ...(pcPlain.rangedRows ?? []), ...(pcPlain.rulesRows ?? []), ...(pcPlain.traits ?? [])];
+      if (mech === 'swallow') return rowsP.some((r) => /^(?:Swallow|Engulf|Whelm|Smother)/i.test(String(r?.name ?? '')));
+      return rowsP.some((r) => imposedConditions({ name: '', text: String(r?.text ?? '') }).includes('Grappled'));
+    };
     for (const c of (clauseRecord ?? [])) {
       if (c.kind !== 'mechanical' || c.head || c.polarity || !c.askMechanic) continue;
       const pair = CHASSIS_ANSWERS[c.askMechanic];
@@ -5120,6 +5138,10 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const [field, serves] = pair;
       const carrier = chassisRows.find(serves);
       if (!carrier) continue;
+      if (!printServes(c.askMechanic)) {
+        trace('chassis answer withheld:', `"${c.text}" asks ${c.askMechanic} and the chassis's "${carrier.name}" carries it — but this sheet heads on the ${pcPlain.name}, whose own rows do not, and that row ships as print's. The ask stays open for the seats`);
+        continue;
+      }
       creditAnsweredClauses([{ clause: c.text, row: carrier.name }], Object.values(sections).flat(), [c], {
         onCredit: (cl, row) => trace('answered by the chassis:', `"${cl.text}" asks ${c.askMechanic} and "${String(row.name).replace(/ \(.*\)$/, '')}" already carries it (declared ${field}) — no row is requested for it, and the row now carries the GM's words`),
       });
@@ -8105,6 +8127,20 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               const kept = imposedConditions({ name: '', text: e.text });
               if (kept.length) e.imposes = kept.length === 1 ? kept[0] : kept; else delete e.imposes; // the record follows the clause
               trace('print canon rider leaves:', `"${from}" -> "${to}": the ${pc.name}'s own row imposes ${printImposes.size ? [...printImposes].join(' and ') : 'no condition'}, so the chassis's ${dropped.join(' and ')} clause leaves with the name`);
+              // AND THE GM'S ASK BECOMES VISIBLY OWED (owner's H8 ruling: an unanswered owed clause
+              // stays a FAIL — it is the seats' defect to fix upstream, not a repair's to paper over).
+              // The clause repair runs BEFORE this rename and saw the chassis's own words in the row's
+              // TEXT, so it counted the ask as claimed; the rename then takes those words away. Without
+              // this the GM's "holds victims under the muck" goes dark on a Troll that never holds —
+              // silently, which is the one outcome the owner has ruled out twice.
+              const goneC = new Set(dropped.flatMap((d2) => d2.split('/')));
+              for (const c2 of (clauseRecord ?? [])) {
+                if (!c2.askMechanic || c2.head || c2.polarity) continue;
+                const wantC = c2.askMechanic === 'grapple' ? 'Grappled' : c2.askMechanic === 'snare' ? 'Restrained' : null;
+                if (!wantC || !goneC.has(wantC)) continue;
+                if (Object.values(monster.sections ?? {}).flat().some((o) => o && imposedConditions(o).includes(wantC))) continue; // something else still does it
+                if (!owedUnanswered.includes(c2.text)) { owedUnanswered.push(c2.text); trace('owed by the rename:', `"${c2.text}" asked ${c2.askMechanic}, the chassis's row carried it, and print's own ${to} does not — nothing on this sheet imposes ${wantC} now, so the clause is owed and the checker fails it`); }
+              }
             }
           }
           e.text = e.text.replace(/\s*If the target [^.]*has the \{?[A-Za-z_]+\}? condition[^.]*\.?/, '').replace(/\.\.$/, '.').replace(/\s+$/, ''); // TODO R3 next site: the PRECONDITION half is a payoff's `consumes`, a field the row already declares
@@ -10435,11 +10471,25 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // the selection, rather than rework the authoring refusal to demand an economy.
           // Every existing refusal still stands (print, template, library, kit, chassis),
           // and the cap of 2 rows a sheet is unchanged.
-          if (!row || !(row.freeRow || row.authored)) continue;
-          if (row.print || row.printNamed) continue; // print's own row is a closed fact
+          // A FINDING THE FIX CANNOT REACH IS CLASSIFIED, NOT DROPPED (item R0's routing half).
+          // Only a free/authored row can be repaired on this sheet, so a finding on print's row or on
+          // the body's is skipped here — and it used to be skipped SILENTLY, which is why the funnel
+          // measured 164 drops with nothing to say about them. Each kind is now named, and the next
+          // twelve can count them: print findings are either the audit arguing with WotC or OUR paste
+          // breaking print's row (the valuable kind); the body's rows are a catalog queue, fixed once
+          // for every creature on that body, never per sheet.
+          if (!row) continue;
+          if (row.print || row.printNamed) {
+            trace('audit finding on print:', `${sec}/"${String(row.name).replace(/ \(.*\)$/, '')}" — ${String(f.message ?? '').slice(0, 90)}. print's row is the standard, so this is either the audit arguing with published text or OUR paste having broken it; no sheet-level fix runs`);
+            continue;
+          }
+          if (!(row.freeRow || row.authored)) {
+            trace('audit finding on the body:', `${sec}/"${String(row.name).replace(/ \(.*\)$/, '')}" [${row.template ?? row.library ?? row.seed ?? 'chassis'}] — ${String(f.message ?? '').slice(0, 90)}. a catalog row: the fix belongs in ${row.template || row.library || row.seed ? 'the template' : 'the donor'}, once, for every creature on this body`);
+            continue;
+          }
           const seen = freeFlagged.find((x) => x.row === row);
-          if (seen) { seen.problems.push(f.message); continue; }
-          freeFlagged.push({ sec, row, problems: [f.message] });
+          if (seen) { seen.problems.push(f.message); if (f.principle) seen.principles.push(f.principle); continue; }
+          freeFlagged.push({ sec, row, problems: [f.message], principles: f.principle ? [f.principle] : [] });
         }
         // AN ATTACK ROW HAS NO FORM TO BE REPAIRED INTO, so it is not sent (2026-11-10). This
         // path calls formsSpec with attackCap 0 — deliberately, because the engine prices every
@@ -10476,7 +10526,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             const rawF = await callLLM(buildFreeRowFixPrompt({
               bodyFacts: declaredBodyFacts({ sections: monster.sections ?? {}, holdShape: options.hold_shape ?? null }),
               name: p.name, inline: inlineGuessRef(), cr, sheet: sheetText, row: { name: String(t.row.name), text: String(t.row.text ?? '') },
-              problems: t.problems, kind: kindOf(t.sec), taken: takenNow.filter((n) => n !== String(t.row.name).replace(/ \(.*\)$/, '')), lacks: lacksNow,
+              problems: t.problems, principles: t.principles ?? [], kind: kindOf(t.sec), taken: takenNow.filter((n) => n !== String(t.row.name).replace(/ \(.*\)$/, '')), lacks: lacksNow,
             }), validateAuthorResponse);
             const wrote = parseAuthorResponse(rawF, { attackKeys: [], attackCap: 0, traitSlots: 1 });
             // THE ENGINE BUILDS AND PRICES THE SENTENCE, as it does for the seat: the
@@ -10527,8 +10577,8 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             if (!built) { trace('free row repair declined:', `"${t.row.name}" — the repaired row came back empty`); continue; }
             if (slot) { trace('free row repair declined:', `"${t.row.name}" — the repair still carries ${slot[0]}, a token this engine never substitutes; the standing text keeps its place`); continue; }
             if (dang) { trace('free row repair declined:', `"${t.row.name}" — the repair cites "${dang}", which is no row on this sheet; the standing text keeps its place`); continue; }
-            const breaks = repairWouldBreak({ ...cand, text: built });
-            if (breaks) { trace('free row repair declined:', `"${t.row.name}" — the repair would ${breaks}, which the engine refuses of any row; a flagged row beats a differently-flagged one, so the standing text keeps its place`); continue; }
+            const worse = repairMakesItWorse(t.row, built);
+            if (worse) { trace('free row repair declined:', `"${t.row.name}" — the repair would make this sheet fail ${worse}, which it does not fail now; a flagged row beats a differently-flagged one, so the standing text keeps its place`); continue; }
             const was = String(t.row.text ?? '');
             t.row.text = built;
             if (cand.imposes) t.row.imposes = cand.imposes;

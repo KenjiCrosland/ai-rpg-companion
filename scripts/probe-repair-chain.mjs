@@ -55,7 +55,10 @@ for (const d of runDirs) {
     if (!sheet?.sections) continue;
     const t = fs.readFileSync(md, 'utf8');
     const faults = new Map();
-    for (const m of t.matchAll(/\[reskin\] row repair: "([^"]+)" \[[^\]]+\] — the audit faults it \(([^)]{0,400})/g)) faults.set(m[1], m[2]);
+    // the span rides at the END of the message (it survives the trace since 2026-11-12), so the
+    // capture has to reach the whole line — a 400-character window cut it off and set A measured
+    // "spans recoverable: 0" on runs that had them
+    for (const m of t.matchAll(/\[reskin\] row repair: "([^"]+)" \[[^\]]+\] — the audit faults it \(([\s\S]*?)\); re-authored/g)) faults.set(m[1], m[2]);
     for (const m of t.matchAll(/\[reskin\] free row repaired: "([^"]+)": "([^"]*)" -> "([^"]*)"/g)) {
       cases.A.push({ run: d, file: f, sheet, name: m[1], was: m[2], now: m[3], fault: faults.get(m[1]) ?? null });
     }
@@ -88,7 +91,7 @@ const wouldBreak = (row) => {
   return null;
 };
 // the audit quotes a VERBATIM span in its message: "(about: "…")". That is what "fixed" means.
-const spanOf = (fault) => /\(about: "([^"]{3,})"/.exec(fault ?? '')?.[1] ?? null;
+const spansOf = (fault) => [...String(fault ?? '').matchAll(/\(about: "([^"]{3,})"/g)].map((m) => m[1]);
 const norm = (s) => String(s ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
 const failsNaming = (sheet, name) => {
   try {
@@ -110,8 +113,11 @@ if (SETS.includes('A')) {
     const row = Object.values(c.sheet.sections).flat().find((e) => String(e.name ?? '').replace(/ \(.*\)$/, '') === c.name.replace(/ \(.*\)$/, ''));
     const text = row?.text ?? c.now;
     if (norm(text) !== norm(c.was)) changed += 1;
-    const span = spanOf(c.fault);
-    if (span) { spanKnown += 1; if (!norm(text).includes(norm(span))) spanGone += 1; else bad.push([c, `the span it was sent to fix is still there: "${span.slice(0, 60)}"`]); }
+    for (const span of spansOf(c.fault)) {
+      spanKnown += 1;
+      if (!norm(text).includes(norm(span))) spanGone += 1;
+      else bad.push([c, `the span it was sent to fix is still there: "${span.slice(0, 60)}"`]);
+    }
     const fails = failsNaming(c.sheet, c.name.replace(/ \(.*\)$/, ''));
     if (fails.length) { broke += 1; bad.push([c, `the repaired row FAILs ${fails.join(', ')}`]); }
     const wb = row ? wouldBreak(row) : null;

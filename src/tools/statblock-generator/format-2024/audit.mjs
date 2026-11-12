@@ -42,6 +42,54 @@ export function auditEligible() {
   return true;
 }
 
+/**
+ * WHERE EACH ROW CAME FROM (item R0, owner 2026-11-11: "the audit call needs to know the origin").
+ *
+ * The audit reads the whole block — it must, because its one irreplaceable job is cross-row
+ * consistency ("Rend requires Grappled and nothing applies it" is only visible with print's Rend on
+ * the page). But it was told nothing about provenance, so it judged WotC's text and the donor
+ * catalog's text as if we had written them: of 461 findings measured over the saved runs, 23% landed
+ * on a print row and 28% on a chassis row — half its attention on rows no per-sheet fix can touch,
+ * and a quarter of it arguing with print (the Crocodile's own "While Grappled, the target has the
+ * Restrained condition", eleven times).
+ *
+ * The engine already knows every row's origin as declared fields. This renders it as a brief, not a
+ * filter: print is the standard, the body's rows are shared by every creature on that body, and the
+ * rows written for this creature are where a fix can act.
+ */
+const originOf = (e) => (e?.print ? 'print' : (e?.freeRow || e?.authoredSeat || e?.authored) ? 'written for this creature' : (e?.template || e?.library || e?.seed) ? "the body's catalog row" : "the body's own row");
+function originLines(monster) {
+  const rows = Object.entries(monster?.sections ?? {}).flatMap(([sec, es]) => (es ?? []).filter(Boolean).map((e) => [sec, e]));
+  if (!rows.length) return '';
+  const byOrigin = new Map();
+  for (const [sec, e] of rows) { const o = originOf(e); byOrigin.set(o, [...(byOrigin.get(o) ?? []), `${sec}/${String(e.name ?? '').replace(/ \(.*\)$/, '')}`]); }
+  // THE LABEL SAYS WHAT IT MEANS (owner, 2026-11-12: "is it because of the term 'print'?"). "PRINT"
+  // is this engine's own shorthand for "verbatim from the published Monster Manual", used in the
+  // brief before it was ever defined — and a model reading it cold can take it for a formatting term.
+  // Engine shorthand does not belong in a prompt any more than it belongs in a report to the owner.
+  const LABEL = { print: 'OFFICIAL — copied word for word from the published Monster Manual', "the body's own row": "THE BODY'S OWN ROW — ours, from the donor catalog", "the body's catalog row": "THE BODY'S CATALOG ROW — ours, from the template catalog", 'written for this creature': 'WRITTEN FOR THIS CREATURE — ours, authored for this sheet' };
+  const line = (o) => (byOrigin.has(o) ? `\n- ${LABEL[o]}: ${byOrigin.get(o).join(', ')}` : '');
+  return `
+
+WHERE THESE ROWS CAME FROM — this changes what a finding on each is worth:${line('print')}${line("the body's own row")}${line("the body's catalog row")}${line('written for this creature')}
+
+- The OFFICIAL rows are Wizards of the Coast's own text, copied word for word from the published
+  Monster Manual with only this sheet's numbers filled in. They are the STANDARD you judge the other
+  rows against, and they are NOT under review. Do not flag their wording, their phrasing, their
+  RULES, their counterplay, a missing escape DC or duration or limit, how long they take to resolve,
+  or whether they are fun. If a published row seems to lack an exit or a cap, that is how the game is
+  written — you are not auditing the Monster Manual, and a published row is what a good row looks
+  like.
+  The ONE thing worth reporting on an official row is a reference to something THIS block does not
+  have: its own grapple, or a row it names that no entry here carries. That means OUR assembly broke
+  a published row, and it is the most valuable finding you can make.
+- THE BODY'S rows are ours, shared with every creature built on this body.
+  Judge their soundness as you would any row — but a defect there is fixed once in the catalog, not
+  on this sheet, so report it plainly and do not suggest sheet-specific prose for it.
+- The rows WRITTEN FOR THIS CREATURE are where a fix will act. Judge them hardest, against all seven
+  principles.`;
+}
+
 export function buildAuditPrompt(monster, edition = '2024', { reskin = false, elementClaims = [] } = {}) {
   const is2014 = edition === '2014';
   return `You are auditing a D&D ${is2014 ? '5th edition (2014 rules)' : '2024-format'} monster statblock for MECHANICAL defects.
@@ -50,12 +98,15 @@ already run — do NOT re-check arithmetic, CR calibration, or damage budgets.
 Your job is the judgment layer: defects of adjudicability, counterplay, and
 internal consistency that pattern-matching cannot catch.
 
-A defect is MECHANICAL if a GM running this monster at a table would be unable
-to adjudicate an effect, or a player would be subjected to an effect with no
-rules-legal response. Flavor problems (odd names, theme mismatches, redundant
-design) are NOT defects — ignore them entirely.
+A defect is anything that would cost a GM or a player at the table: an effect
+that cannot be adjudicated, a state with no rules-legal response — and equally a
+row that is not worth its action, cannot be run in the time a turn allows, or does
+not make practical sense for the creature it is on. A row can be perfectly correct
+and still be a defect, because a GM who cannot use it got nothing.
 
-Audit against these principles:
+${originLines(monster)}
+Audit against these principles. 1-4 are correctness; 5-7 are whether the block
+is any good at a table, and the owner's bar is both:
 
 1. COUNTERPLAY. Every imposed state has a rules-legal path out, written in the
    entry: an escape DC, a repeat save, a fixed duration, a breakable object, or
@@ -115,7 +166,26 @@ Audit against these principles:
    no way to track. Length alone is not the test — a long but linear entry is
    fine; a short entry with three branching conditions is not.
 
+6. WORTH THE ACTION. A row has to be worth choosing on its turn, or worth having
+   as a passive. Flag a dead payload — a row named for an element that deals no
+   damage of it, a "molten" reaction that deals nothing, a save that imposes a
+   condition the target already has. Flag an effect not worth its cost: Prone for
+   the movement it costs to stand, a nuisance where the row's own fiction promises
+   a threat. Say what it LACKS — the payload, the duration, the teeth — never a
+   number and never a comparison to its CR.
+
+7. PRACTICAL SENSE. A row has to be something this creature could plausibly do,
+   as written. Flag a mechanic the body cannot perform — tar that pulls a creature
+   15 feet, a lunge rendered as a cone, a hoof rider on a creature with claws.
+   Flag an effect on terrain or a state that is already so: difficult terrain
+   created where the ground is already difficult, a Speed reduction on a target
+   that is Restrained and already at Speed 0. Flag a name and a text that describe
+   two different abilities.
+
 CALIBRATION — these are NOT defects. Do not flag:
+- A pull or push written "straight toward" or "straight away from" the creature in
+  a Cone, Line or Emanation. That is the published books' own wording for forced
+  movement in an area; the direction is the line between the creature and each target.
 - A trait imposing a recurring save WITH timing and area stated (the Stench
   pattern) or triggered on death (Death Burst pattern).
 - An attack absent from the Multiattack line — a creature may always use a
@@ -179,6 +249,12 @@ with...") is discarded unapplied.
 A rewrite fixes prose, not rules. Findings from other principles never
 carry a rewrite.
 
+THE SPAN IS A HANDLE, NOT A CITATION. Quote the PART of the entry that is wrong — the clause, the
+phrase, the missing-trigger sentence — because the span is what tells a repair where to work. A span
+that is the entry's whole text says only "something here", and a fix handed that returns the same row
+reworded. If what is wrong is the entry entire, say so in the issue and quote the one clause that
+shows it best.
+
 An entry's NAME can also be the defect. Flag it under principle 3 and
 provide a "rename" when the name and the mechanics disagree:
 - the name promises a mechanic the text never delivers ("Choir Silence"
@@ -187,7 +263,7 @@ provide a "rename" when the name and the mechanics disagree:
   that deafens, a "Breath" that is a thrown rock)
 - the name's ADJECTIVE promises an energy the entry never deals (a
   "Burning Claw" dealing only Slashing burns nothing — it is a "Claw"; a
-  "Freezing Coil" with no Cold anywhere is a "Coil"). Print never does
+  "Freezing Coil" with no Cold anywhere is a "Coil"). The published books never do
   this: every energy-adjective name in the corpus deals the implied type,
   imposes its condition, or casts a spell that carries it — spell echoes
   are the one exemption
@@ -203,7 +279,7 @@ OUTPUT: JSON only, no markdown fences. Report at most 6 findings.
 { "name_grade": "A-F",
   "type_correction": null,
   "element_claims": [],
-  "findings": [ { "principle": <1-5>, "section": "<section name>",
+  "findings": [ { "principle": <1-7>, "section": "<section name>",
   "entry": "<entry name>", "span": "<exact quoted text, verbatim>",
   "issue": "<one sentence>", "suggestion": "<one sentence, direction not prose>",
   "rewrite": "<optional, principle 4 only: the repaired span>",
@@ -335,11 +411,6 @@ export function verifyAuditFindings(monster, raw) {
     // drops — one sloppy finding costs itself, never its siblings.
     const principle = Number(f.principle);
     const confidence = String(f.confidence ?? 'low').trim().toLowerCase();
-    const minConfidence = principle === 5 ? ['high'] : ['high', 'medium'];
-    if (!minConfidence.includes(confidence)) {
-      logger.log('audit finding below confidence gate:', f.entry, f.issue);
-      continue;
-    }
     // Locate the entry: the claimed section first, then any section (the
     // judge sometimes mislabels the section but not the entry).
     let section = null;
@@ -393,6 +464,26 @@ export function verifyAuditFindings(monster, raw) {
     }
     // Span verifies against name + text: an EMPTY entry has only its name
     // to quote (live: the Psionic Lullaby finding had no text to cite).
+    // (this gate runs AFTER the entry is resolved: whether a finding is kept depends on whether a
+    // fix can reach the row it names, which is a fact about the row, not about the answer)
+    // THE GATE, AS THE OWNER'S HAND-SCORE SETTLED IT (2026-11-11, item R). He scored 33 findings
+    // this gate had dropped on rows a fix can reach: **ACT 22 / IGNORE 10 / WRONG 1 — 67% he would
+    // have acted on, 3% actually wrong.** A filter discarding good work two to one is not a quality
+    // gate, so on a row a fix CAN reach a spanned finding is kept whatever its confidence label.
+    // The label still orders them (R's point system: two-in-one and name-promise first, then
+    // adjudicability, then counterplay), and it still gates the rows a fix cannot reach — an
+    // official or catalog row, where a low-confidence finding is noise nobody can act on.
+    //
+    // An ABSENT confidence is no longer read as `low`: the coercion above defaults it there, and the
+    // field is simply missing on some DeepSeek answers (the note at the top of this file). A finding
+    // with a verbatim span and no label is a finding.
+    const fixable = !!(entry && (entry.freeRow || entry.authored) && !entry.print);
+    const labelled = typeof f.confidence === 'string' && f.confidence.trim();
+    const minConfidence = fixable ? ['high', 'medium', 'low'] : principle >= 5 ? ['high'] : ['high', 'medium'];
+    if (!(minConfidence.includes(confidence) || (fixable && !labelled))) {
+      logger.log('audit finding below confidence gate:', f.entry, f.issue);
+      continue;
+    }
     if (!norm(`${entry.name}. ${entry.text}`).includes(norm(f.span))) {
       logger.log('audit span not verbatim, dropped:', f.entry, f.span);
       continue;
@@ -456,6 +547,14 @@ export function verifyAuditFindings(monster, raw) {
     out.push({
       rule: 'mechanical-audit',
       severity: 'audit',
+      // THE PRINCIPLE IS THE CLASS (item R(a)). The owner's hand-score sorted the findings a fix can
+      // reach into five kinds — a name promising what the text lacks, two mechanics in one row, a
+      // missing trigger/direction/check, a dead row, a counterplay gap — and the audit already
+      // answers which principle it is judging under. So the fix can be told what KIND of defect it
+      // is repairing instead of being handed prose and left to reword: a two-in-one is SPLIT, a dead
+      // row GAINS ITS PAYLOAD. Carried as a number; `author.mjs` owns what each means for a repair.
+      principle,
+      confidence,
       message: `${f.issue}${f.suggestion ? ` — ${f.suggestion}` : ''} (about: "${f.span}")`,
       loc: { section, entry: entry.name },
       ...(rewrite != null ? { span: f.span, rewrite } : {}),
