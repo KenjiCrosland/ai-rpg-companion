@@ -10276,5 +10276,114 @@
     "head": true
    }
   ]
+ },
+ "ea7cb04871db": {
+  "concept": "Old Marta — ballista crew sergeant, fires a siege crossbow",
+  "clauses": [
+   {
+    "id": "cl_9dw448",
+    "text": "Old Marta — ballista crew sergeant",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1jl345b",
+    "text": "fires a siege crossbow",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "fires a siege crossbow",
+    "askOften": "at_will",
+    "askOftenWhy": "fires a siege crossbow",
+    "askShape": "attack"
+   }
+  ]
+ },
+ "3fe479888dad": {
+  "concept": "catapult ogre that lobs burning pitch",
+  "clauses": [
+   {
+    "id": "cl_187hqtv",
+    "text": "catapult ogre",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_1t2adtz",
+    "text": "lobs burning pitch",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "lobs burning pitch",
+    "askShape": "save_area",
+    "askMechanic": "burst",
+    "askMechanicWhy": "lobs burning pitch"
+   }
+  ]
+ },
+ "6d16c9e3bf33": {
+  "concept": "net-and-trident arena fighter who pins people",
+  "clauses": [
+   {
+    "id": "cl_g3x7kg",
+    "text": "net-and-trident arena fighter",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "net-and-trident arena fighter",
+    "askShape": "attack"
+   },
+   {
+    "id": "cl_6hq0s1",
+    "text": "pins people",
+    "kind": "mechanical",
+    "askWhen": "on_hit",
+    "askWhenWhy": "pins",
+    "askShape": "condition",
+    "askMechanic": "snare",
+    "askMechanicWhy": "pins"
+   }
+  ]
+ },
+ "a94d4b781810": {
+  "concept": "giant spider that webs up the whole room",
+  "clauses": [
+   {
+    "id": "cl_1smjvs0",
+    "text": "giant spider",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_193kh3r",
+    "text": "webs up the whole room",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "webs up the whole room",
+    "askShape": "save_area",
+    "askMechanic": "zone",
+    "askMechanicWhy": "webs up the whole room"
+   }
+  ]
+ },
+ "b162fb6dbb78": {
+  "concept": "storm sorcerer who rains lightning",
+  "clauses": [
+   {
+    "id": "cl_7q4aym",
+    "text": "storm sorcerer",
+    "kind": "descriptive",
+    "head": true
+   },
+   {
+    "id": "cl_m3ldmx",
+    "text": "rains lightning",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "rains lightning",
+    "askOften": "at_will",
+    "askOftenWhy": "rains lightning",
+    "askShape": "attack",
+    "askMechanic": "burst",
+    "askMechanicWhy": "rains lightning"
+   }
+  ]
  }
 }
