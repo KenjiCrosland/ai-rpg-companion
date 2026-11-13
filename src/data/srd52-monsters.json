@@ -4240,7 +4240,7 @@
       "Reactions": [
         {
           "name": "Unnerving Gaze",
-          "text": "*Trigger:* A creature the devil can see starts its turn within 30 feet of the devil and can see the devil. *Response--Wisdom Saving Throw:* DC 15, the triggering creature. *Failure:* The target has the Frightened condition until the end of its turn. *Success:* The target is immune to this devil's Unnerving Gaze for 24 hours."
+          "text": "*Trigger:* A creature the devil can see starts its turn within 30 feet of the devil and can see the devil. *Response—Wisdom Saving Throw:* DC 15, the triggering creature. *Failure:* The target has the Frightened condition until the end of its turn. *Success:* The target is immune to this devil's Unnerving Gaze for 24 hours."
         }
       ]
     },
@@ -14596,7 +14596,7 @@
       "Reactions": [
         {
           "name": "Deflect Missile (Recharge 5-6)",
-          "text": "*Trigger:* The giant is hit by a ranged attack roll and takes Bludgeoning, Piercing, or Slashing damage from it. *Response:* The giant reduces the damage it takes from the attack by 11 (1d10 + 6), and if that damage is reduced to 0, the giant can redirect some of the attack's force. DC 17, one creature the giant can see within 60 feet. 11 (1d10 + 6) Force damage."
+          "text": "*Trigger:* The giant is hit by a ranged attack roll and takes Bludgeoning, Piercing, or Slashing damage from it. *Response:* The giant reduces the damage it takes from the attack by 11 (1d10 + 6), and if that damage is reduced to 0, the giant can redirect some of the attack's force. *Dexterity Saving Throw*: DC 17, one creature the giant can see within 60 feet. *Failure:* 11 (1d10 + 6) Force damage."
         }
       ]
     },

@@ -35,7 +35,11 @@ const ask = async (prompt) => {
   const r = await fetch(`${BASE}/api/ai/deepseek`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: MODEL, messages: [{ role: 'user', content: prompt }], temperature: 0.2 }),
+    // NO TEMPERATURE — production sends none, so the provider default applies
+    // (`ai-client.mjs` sets no temperature anywhere). A probe at 0.2 runs COLDER
+    // than the thing it is measuring and overstates agreement between rolls
+    // (Fable 5.2's review of item 1, 2026-11-13).
+    body: JSON.stringify({ model: MODEL, messages: [{ role: 'user', content: prompt }] }),
   });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   const j = await r.json();

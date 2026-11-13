@@ -1541,6 +1541,18 @@ async function generateStatblockEngine(edition) {
         {
           archetype: isCasterRole ? 'caster' : archetypeName,
           menuRole,
+          // THE LABEL THE USER PICKED IS NOT THE FAMILY THE ENGINE ROUTED ON
+          // (2026-11-13). One field was doing both jobs, and they only agreed by
+          // accident: every role used to resolve to its own family, so recording the
+          // routed family happened to echo the pick. Once artillery and controller
+          // could reach a non-magical line, a user who picked Artillery for a
+          // boulder-throwing giant saved a sheet that reads Skirmisher — and the
+          // dropdown is repopulated from the saved sheet, so reopening it shows a
+          // role they never chose. `archetypeSource` is already computed correctly
+          // here (`givenArchetype ? 'user' : 'auto'`) and the reskin path was
+          // hardcoding 'user', which also hid the card's own "auto" hint.
+          userArchetype: givenArchetype,
+          archetypeSource,
           stylePrior: menuRole === 'controller' ? 'binder' : null,
           concept, cr, onProgress: onGenerationProgress,
           fixedName: conceptProvidedName,

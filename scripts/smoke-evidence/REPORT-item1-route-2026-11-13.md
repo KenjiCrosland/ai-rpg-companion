@@ -49,8 +49,42 @@ Your done-when: five non-casters off the caster family 5 of 5, three controls ho
 GREEN: five non-casters off the caster family 5/5 · three controls hold 3/3
 ```
 
-**Zero variance** — five identical rolls on all eight. Your "revisit when: a control changes family"
-did not fire.
+### CORRECTED — rerun at production temperature, 10 cases
+
+You were right to ask. The first run sent `temperature: 0.2`; production sends none
+(`ai-client.mjs` sets it nowhere), so the probe ran **colder than the thing it measures** and the
+"zero variance" claim was an artifact of my harness. The temperature line is gone and the file says
+why. Rerun, with your two bare-name cases added:
+
+```
+✓ #1  [artillery ] big bob                      skirmisher-hurler ×5
+✓ #2  [artillery ] Old Marta                    skirmisher-archer ×5
+✓ #3  [artillery ] catapult ogre                skirmisher-hurler ×5
+✓ #4  [controller] net-and-trident fighter      skirmisher-hurler ×5
+✓ #5  [controller] giant spider                 brute-grappler ×4  skirmisher-hurler ×1
+✓ #6  [controller] Sister Maudra                caster-warpriest ×5          CONTROL
+✓ #7  [artillery ] storm sorcerer               caster ×5                    CONTROL
+✓ #8  [lurker    ] Bramblejack                  lurker-trap ×5               CONTROL
+✓ #9  [artillery ] Vhalgrin (bare name)         skirmisher-hurler ×4  skirmisher-archer ×1
+✗ #10 [controller] Orsolya (bare name)          brute-grappler ×3  caster-binder ×2
+```
+
+**The core result holds: the five original non-casters are off the caster family 5 of 5, and all
+three controls hold 5 of 5.** #5 flips its line between two non-caster lines; the family never
+moves. So your done-when is met — but "zero variance" was wrong and is withdrawn.
+
+### Your question 4, answered
+
+**A name-only artillery pick now gets a thrower, never a mage** — Vhalgrin is skirmisher 5 of 5
+(hurler 4, archer 1). **A name-only controller is not stable**: Orsolya lands `brute-grappler` 3 of
+5 and `caster-binder` **2 of 5**. The gate is behaving as designed — it defers to the call's own
+`casts` answer, and on a bare name the call simply guesses, differently between rolls.
+
+**Caveat that limits both cases:** production **expands a thin concept before routing**
+(`expandFirst`, StatblockGenerator ~1361) — a bare name reaches the route call as a sentence, not a
+name. So this probe exercises a path a real bare-name user does not take. It is a fair test of the
+fallback you were asking about and **not** a measurement of what ships. Bramblejack is the one case
+with both readings: bare name, and the probe and the block run agree on `lurker-trap`.
 
 The picks are right, not merely non-caster: a boulder giant and a pitch-lobbing ogre reach the
 hurler (whose printed exemplar is the Hill Giant with rocks), a ballista sergeant reaches the

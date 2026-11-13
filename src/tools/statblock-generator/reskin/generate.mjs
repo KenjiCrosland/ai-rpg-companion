@@ -5046,7 +5046,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     inline_kind: String(p.inline_kind ?? '').trim().toLowerCase() || null,
     ...(declaredOk ? {} : { inline_overridden: /^the /i.test(String(inline ?? '')) ? 'kind' : 'person' }),
     generation: { path: 'reskin', ...(monsterVerdicts ? { body_verdicts: monsterVerdicts } : {}), ...(options.hold_shape ? { hold_shape: options.hold_shape } : {}), ...(isDegradedMode() ? { degraded: true } : {}), pipeline: pathD ? { path: pathD.path, print_body: pathBody ?? null, relation: pathD.relation ?? null, class: pathD.class ?? null, species: pathD.species ?? null, by: pathD.by } : null, donor: donor.id, archetype, ...(scaled.classKit ? { class_kit: scaled.classKit } : {}), ...(typeof options.holds === 'boolean' ? { holds: options.holds } : {}), creatureOnly: String(options.userConcept ?? concept ?? '').toLowerCase().split(/[^a-z']+/).filter((w) => w.length > 2 && !/^(?:the|a|an|and|or|but|with|who|that|which|its|his|her|their|into|onto|from|for|out|off|over|under|this|than|then|them|they|was|were|has|have|had|are|is|be|been|being|it|in|on|at|to|of|by|up|as|so|if|no|not|one|two|too|very|own|new|old)$/.test(w)).length <= 3, /* a creature-only prompt gives nothing to read: the catalog composes the sheet and the reader gate's engine-needs-key stands down (the critic's third species read) */ unplaced: authored?.unplaced ?? [], userConcept: String(options.userConcept ?? concept ?? '').slice(0, 600), clauses: groundedClauses(p.clauses, options.userConcept ?? concept, trace, p.lacks), /* the extraction (fidelity pipeline step 4): the record of what the user asked for, the coverage denominator */ ...(body ? { body } : {}), ...(options.menuRole ? { menu_role: options.menuRole } : {}), ...(donor.invented ? { invented: true } : donor.cite ? { cite: donor.cite } : {}) },
-    archetype: options.menuRole ?? archetype, archetype_source: 'user',
+    // The user's own pick when they made one, the routed family when they did not —
+    // and the source says which, honestly. `archetype_source` was hardcoded 'user'
+    // here, so an auto-archetype sheet claimed the user chose its role and the card's
+    // "auto" hint never showed. `menuRole` is the ROUTING label and is null once a job
+    // role routes off the caster family, which is how Artillery came to save as
+    // Skirmisher (2026-11-13).
+    archetype: options.userArchetype ?? options.menuRole ?? archetype,
+    archetype_source: options.archetypeSource ?? (options.userArchetype ? 'user' : 'auto'),
   };
   // Cunning Action is HUMANOID-coded (owner, 2026-08-26: "too assassin
   // coded" — and print agrees exactly: Cunning Action appears only on

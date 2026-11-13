@@ -1,4 +1,4 @@
-import { LINES, buildRoutePrompt, validateRouteResponse, chooseLine, evidenceIn, familyFor, shelfCoverage, lineIdOf, verbLines, verbHits, keyClass } from '../route.mjs';
+import { LINES, buildRoutePrompt, validateRouteResponse, chooseLine, evidenceIn, familyFor, shelfFor, shelfCoverage, lineIdOf, verbLines, verbHits, keyClass } from '../route.mjs';
 import { pickDonor } from '../scale.mjs';
 import { readPhrases as readPhrasesFor } from '../lexicon.mjs';
 
@@ -130,9 +130,13 @@ describe('chooseLine', () => {
     // off the caster family must stop re-applying a caster filter on the second pass.
     expect(art.archetype).toBe('skirmisher');
 
-    // the shelf the model is shown carries those lines for both job roles
+    // THE SHELF IS A PURE FUNCTION — assert on it, not on the prompt string.
+    expect([...shelfFor('artillery')]).toEqual(expect.arrayContaining(['skirmisher-hurler', 'skirmisher-archer', 'caster', 'caster-binder', 'caster-warpriest']));
+    expect([...shelfFor('controller')]).toEqual(expect.arrayContaining(['brute-grappler', 'skirmisher-hurler', 'caster', 'caster-binder', 'caster-warpriest']));
+    expect(shelfFor('artillery').has('brute')).toBe(false);
+    expect(shelfFor(null)).toBeNull(); // no role picked: the whole shelf
+    // one assertion on the rendered prompt, to prove it is wired to shelfFor at all
     expect(buildRoutePrompt(bob, { menuRole: 'artillery' })).toContain('- skirmisher-hurler —');
-    expect(buildRoutePrompt('pins people with a net', { menuRole: 'controller' })).toContain('- brute-grappler —');
 
     // CONTROL (typed40 #2, Sister Maudra): a job role whose call answers `casts: yes`
     // is still a caster. The gate reads the call's own answer, never a word list.
@@ -146,10 +150,11 @@ describe('chooseLine', () => {
     // CONTROL: a role that names a FAMILY keeps today's filter, unchanged.
     const none = chooseLine({ picks: [{ line: 'brute-charger', because: 'charges down anyone' }] }, { text: bull, menuRole: 'lurker' });
     expect(none).toMatchObject({ line: 'lurker', archetype: 'lurker' });
-    const bruteShelf = buildRoutePrompt(bull, { cr: 5, menuRole: 'brute' });
-    expect(bruteShelf).toContain('- brute-charger —');
-    expect(bruteShelf).not.toContain('- caster —');
-    expect(bruteShelf).not.toContain('- skirmisher-hurler —');
+    // a family role's shelf is EXACTLY its family — the four untouched roles
+    for (const [role, want] of [
+      ['brute', ['brute', 'brute-charger', 'brute-grappler', 'brute-juggernaut', 'brute-regenerator']],
+      ['lurker', ['lurker', 'lurker-phantom', 'lurker-trap']],
+    ]) expect([...shelfFor(role)].sort()).toEqual(want.sort());
   });
   test('body lines carry the body and no role; dragon implies breath', () => {
     const r = chooseLine({ picks: [{ line: 'swarm', because: 'a swarm of grave beetles' }] }, { text: 'a swarm of grave beetles that strips a body to bone' });

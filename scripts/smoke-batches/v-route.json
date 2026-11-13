@@ -70,5 +70,23 @@
     "rules": "2024",
     "role": "lurker",
     "green": "CONTROL: stays on the lurker family"
+  },
+  {
+    "canary": "fallback probe (Fable 5.2's review, 11-13): a bare name with artillery — before this change a name-only artillery pick got a mage",
+    "name": "Vhalgrin",
+    "description": "",
+    "cr": "6",
+    "rules": "2024",
+    "role": "artillery",
+    "green": "whatever it lands on must be stable across rolls and must not be a caster line while the call reads no magic"
+  },
+  {
+    "canary": "fallback probe (Fable 5.2's review, 11-13): a bare name with controller",
+    "name": "Orsolya",
+    "description": "",
+    "cr": "6",
+    "rules": "2014",
+    "role": "controller",
+    "green": "whatever it lands on must be stable across rolls and must not be a caster line while the call reads no magic"
   }
 ]

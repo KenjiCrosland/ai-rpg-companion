@@ -10385,5 +10385,27 @@
     "askMechanicWhy": "rains lightning"
    }
   ]
+ },
+ "a943aa3e1363": {
+  "concept": "Vhalgrin",
+  "clauses": [
+   {
+    "id": "cl_446gy5",
+    "text": "Vhalgrin",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "385ea422237c": {
+  "concept": "Orsolya",
+  "clauses": [
+   {
+    "id": "cl_7stxth",
+    "text": "Orsolya",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
  }
 }
