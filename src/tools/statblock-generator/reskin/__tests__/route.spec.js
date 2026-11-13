@@ -109,13 +109,47 @@ describe('chooseLine', () => {
     expect(chooseLine({ picks: [{ line: 'ninja', because: 'x' }] }, { text: bull }).line).toBeNull();
     expect(chooseLine(null, { text: bull }).line).toBeNull();
   });
-  test('a user-fixed role keeps picks inside its family; artillery and controller are the caster family with their menu role recorded', () => {
-    const r = chooseLine({ picks: [{ line: 'brute-charger', because: 'charges down anyone' }, { line: 'caster-binder', because: 'anyone who enters its pen' }] }, { text: bull, menuRole: 'controller' });
-    expect(r).toMatchObject({ line: 'caster-binder', archetype: 'caster', role: 'controller', style: 'binder' });
-    const a = chooseLine({ picks: [{ line: 'caster', because: 'brass bull' }] }, { text: bull, menuRole: 'artillery' });
-    expect(a).toMatchObject({ archetype: 'caster', role: 'artillery', style: null });
+  // ARTILLERY AND CONTROLLER NAME A JOB, NOT A KIND OF BODY (owner's ruling 2026-11-13).
+  // Until then both mapped to the caster family and the shelf filter hid every
+  // non-magical line that does the same job. The known-bad sheet is typed40 #12,
+  // "giant who throws boulders" with role=artillery: it could not reach
+  // skirmisher-hurler, landed on caster-6, and shipped Spellcasting, a Shield
+  // reaction and boulders rolled as SPELL attacks dealing Thunder — while the route
+  // call had answered `casts: no worked magic here` in the same breath.
+  test('a JOB role reaches the non-magical lines that do the job, and the caster gate applies with a role picked', () => {
+    const bob = 'giant who throws boulders';
+    const art = chooseLine({
+      picks: [{ line: 'caster', because: 'throws boulders' }, { line: 'skirmisher-hurler', because: 'throws boulders' }],
+      casts: { yes: false, because: '' },
+    }, { text: bob, menuRole: 'artillery' });
+    expect(art.archetype).not.toBe('caster'); // the whole point: the call said no magic
+    expect(art.line).toBe('skirmisher-hurler');
+    expect(art.notes.join(' | ')).toMatch(/the artillery role does not make it one/);
+    // The label follows the ROUTED LINE, not the menu — and that is load-bearing:
+    // StatblockGenerator feeds `archetype` back into `isCasterRole`, so a sheet routed
+    // off the caster family must stop re-applying a caster filter on the second pass.
+    expect(art.archetype).toBe('skirmisher');
+
+    // the shelf the model is shown carries those lines for both job roles
+    expect(buildRoutePrompt(bob, { menuRole: 'artillery' })).toContain('- skirmisher-hurler —');
+    expect(buildRoutePrompt('pins people with a net', { menuRole: 'controller' })).toContain('- brute-grappler —');
+
+    // CONTROL (typed40 #2, Sister Maudra): a job role whose call answers `casts: yes`
+    // is still a caster. The gate reads the call's own answer, never a word list.
+    const maudra = chooseLine({
+      picks: [{ line: 'caster-warpriest', because: 'cleric of the drowned god' }],
+      casts: { yes: true, implied_by_kind: true, because: 'cleric of the drowned god' },
+    }, { text: 'cleric of the drowned god', menuRole: 'controller' });
+    expect(maudra).toMatchObject({ archetype: 'caster', line: 'caster-warpriest' });
+    expect(maudra.notes.join(' | ')).toMatch(/casts: implied by the kind/);
+
+    // CONTROL: a role that names a FAMILY keeps today's filter, unchanged.
     const none = chooseLine({ picks: [{ line: 'brute-charger', because: 'charges down anyone' }] }, { text: bull, menuRole: 'lurker' });
     expect(none).toMatchObject({ line: 'lurker', archetype: 'lurker' });
+    const bruteShelf = buildRoutePrompt(bull, { cr: 5, menuRole: 'brute' });
+    expect(bruteShelf).toContain('- brute-charger —');
+    expect(bruteShelf).not.toContain('- caster —');
+    expect(bruteShelf).not.toContain('- skirmisher-hurler —');
   });
   test('body lines carry the body and no role; dragon implies breath', () => {
     const r = chooseLine({ picks: [{ line: 'swarm', because: 'a swarm of grave beetles' }] }, { text: 'a swarm of grave beetles that strips a body to bone' });

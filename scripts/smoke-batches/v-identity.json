@@ -1,0 +1,98 @@
+[
+  {
+    "canary": "typed40 #16 (known case)",
+    "name": "",
+    "description": "vampire pirate",
+    "cr": "10",
+    "rules": "2014",
+    "green": "INT and CHA at least 14; a bite or blood drain; regeneration or sunlight weakness; no Adhesive"
+  },
+  {
+    "canary": "typed40 #19 (known case)",
+    "name": "Mind Flayer",
+    "description": "",
+    "cr": "7",
+    "rules": "2014",
+    "green": "INT at least 16; telepathy; a mind blast on an Intelligence save; a brain-extraction or equivalent finisher"
+  },
+  {
+    "canary": "typed40 #28 (known case)",
+    "name": "Shadowfang",
+    "description": "the druid's wolf companion, bigger than a normal wolf, has a scar over one eye and shadows seem to follow it. Should be tougher than a dire wolf.",
+    "cr": "3",
+    "rules": "2024",
+    "green": "DEX at least 14; Speed 40+; Pack Tactics or a knockdown bite; no party-blinding aura"
+  },
+  {
+    "canary": "typed40 #8 (known case)",
+    "name": "Mother Ash",
+    "description": "hag midwife",
+    "cr": "9",
+    "rules": "2024",
+    "green": "claws or hag magic, not a mace and Radiant Flame; no Bless or Healing Word"
+  },
+  {
+    "canary": "typed40 #21 (known case)",
+    "name": "",
+    "description": "haunted suit of armor",
+    "cr": "4",
+    "rules": "2014",
+    "green": "AC at least 16; something haunted (possession, a dead knight inside, or fear)"
+  },
+  {
+    "canary": "fresh sibling (not tuned on)",
+    "name": "",
+    "description": "werewolf smuggler",
+    "rules": "2014",
+    "cr": "6",
+    "green": "shapechange or hybrid form; a bite; a silver or weapon-resistance hook; sapient INT"
+  },
+  {
+    "canary": "fresh sibling (not tuned on)",
+    "name": "Mistress Quill",
+    "description": "ghost librarian",
+    "rules": "2024",
+    "cr": "5",
+    "green": "incorporeal movement; Undead; INT at least 14; no physical weapon as the main attack"
+  },
+  {
+    "canary": "fresh sibling (not tuned on)",
+    "name": "",
+    "description": "medusa fence, sells stolen statues",
+    "rules": "2024",
+    "cr": "6",
+    "green": "a petrifying gaze; snake hair; CHA or INT at least 14"
+  },
+  {
+    "canary": "fresh sibling (not tuned on)",
+    "name": "",
+    "description": "dire bear that guards a shrine",
+    "rules": "2014",
+    "cr": "5",
+    "green": "Beast; STR and CON high, INT 3 or lower; bite and claws; no speech"
+  },
+  {
+    "canary": "typed40 #29 (control)",
+    "name": "",
+    "description": "CR 8 brute, two attacks, grapples",
+    "cr": "8",
+    "rules": "2024",
+    "green": "CONTROL: verdict unchanged from 11-13 (CR 8, two attacks, grapple)"
+  },
+  {
+    "canary": "typed40 #7 (control, exact print)",
+    "name": "Krug",
+    "description": "ogre",
+    "cr": "2",
+    "rules": "2014",
+    "green": "CONTROL: print Ogre array and rows unchanged"
+  },
+  {
+    "canary": "typed40 #30 (control, print body)",
+    "name": "",
+    "description": "owlbear but CR 8",
+    "cr": "8",
+    "rules": "2014",
+    "green": "CONTROL: print Owlbear array unchanged, numbers at CR 8"
+  }
+]

@@ -1,0 +1,99 @@
+[
+  {
+    "canary": "typed40 #38 (known case)",
+    "name": "",
+    "description": "the thing that's been killing my players' horses",
+    "cr": "3",
+    "rules": "2014",
+    "green": "SLOW: a row that reduces Speed or stops horses running"
+  },
+  {
+    "canary": "fresh sibling (not tuned on)",
+    "name": "",
+    "description": "ice toad whose tongue numbs your legs",
+    "rules": "2024",
+    "cr": "3",
+    "green": "SLOW: the tongue row reduces Speed, not only damage"
+  },
+  {
+    "canary": "typed40 #33 (known case)",
+    "name": "Thornback",
+    "description": "an ankheg but legendary, boss fight for level 5",
+    "cr": "8",
+    "rules": "2024",
+    "green": "LEGENDARY: legendary actions and legendary resistance present at CR 8"
+  },
+  {
+    "canary": "fresh sibling (not tuned on)",
+    "name": "",
+    "description": "giant crab but make it a legendary solo boss for level 4",
+    "rules": "2014",
+    "cr": "6",
+    "green": "LEGENDARY: legendary actions present, built from its own rows"
+  },
+  {
+    "canary": "typed40 #5 (known case)",
+    "name": "Lord Vexmoor",
+    "description": "necromancer BBEG, raises the party's fallen allies",
+    "cr": "12",
+    "rules": "2024",
+    "green": "SUMMON: a row that raises a dead creature under his control, with what it uses for stats"
+  },
+  {
+    "canary": "typed40 #27 (known case)",
+    "name": "Grizzelda",
+    "description": "swamp witch npc, sells potions, secretly a hag. if the pcs attack her she reveals her true form. claws, curses, can turn invisible. has a cauldron that she can summon things from 1/day",
+    "cr": "5",
+    "rules": "2014",
+    "green": "SUMMON + REVEAL: a 1/day cauldron summon; a true-form change; no Fireball or Cone of Cold"
+  },
+  {
+    "canary": "typed40 #25 (known case)",
+    "name": "Pip",
+    "description": "A kobold who was raised by a green dragon and thinks he IS a dragon. Wears homemade wings. Breathes a little poison gas (he practices). Extremely confident. The party's first recurring villain. He should be funny but actually a little dangerous in a group.",
+    "cr": "1",
+    "rules": "2024",
+    "green": "ALLY BONUS: Pack Tactics or equivalent; wings do not grant a hover speed"
+  },
+  {
+    "canary": "typed40 #11 (known case)",
+    "name": "Zarnak",
+    "description": "basically a xenomorph",
+    "cr": "7",
+    "rules": "2024",
+    "green": "RETALIATION: acid blood damages a creature that hits it in melee"
+  },
+  {
+    "canary": "fresh sibling (not tuned on)",
+    "name": "",
+    "description": "magma slug, burns anyone who hits it up close",
+    "rules": "2014",
+    "cr": "4",
+    "green": "RETALIATION: fire damage to a melee attacker that hits it"
+  },
+  {
+    "canary": "typed40 #26 (known case)",
+    "name": "The Hollow Cardinal",
+    "description": "Leader of the Church of the Empty Throne. A human priest whose faith was hollowed out and filled by an Aberration from beyond the stars. Looks normal until his face splits open. Casts divine spells but they come out wrong - healing that hurts, light that blinds. Has a retinue of brainwashed acolytes. Wants to open the throne room door at the bottom of the cathedral.",
+    "cr": "14",
+    "rules": "2024",
+    "role": "controller",
+    "green": "HEALING DENIAL: healing that hurts or is prevented; not Healing Word and Bless"
+  },
+  {
+    "canary": "typed40 #29 (control)",
+    "name": "",
+    "description": "CR 8 brute, two attacks, grapples",
+    "cr": "8",
+    "rules": "2024",
+    "green": "CONTROL: none of the new effects appear"
+  },
+  {
+    "canary": "typed40 #40 (control)",
+    "name": "",
+    "description": "sewer alligator",
+    "cr": "auto",
+    "rules": "2014",
+    "green": "CONTROL: none of the new effects appear"
+  }
+]

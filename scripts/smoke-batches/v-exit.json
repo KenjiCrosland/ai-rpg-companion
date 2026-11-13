@@ -1,0 +1,34 @@
+[
+  {
+    "canary": "fresh (ask with no effect)",
+    "name": "",
+    "description": "clockwork golem that rewinds time by one round when it is destroyed",
+    "rules": "2024",
+    "cr": "7",
+    "green": "EXIT: a one-line GM note names the rewind as not statted; no damage row is named for it"
+  },
+  {
+    "canary": "fresh (ask with no effect)",
+    "name": "The Pale Reflection",
+    "description": "mirror spirit that swaps places with its reflection in another room",
+    "rules": "2014",
+    "cr": "5",
+    "green": "EXIT: a GM note names the swap; no damage row is named for it"
+  },
+  {
+    "canary": "fresh (ask with no effect)",
+    "name": "",
+    "description": "bard whose song makes the whole party forget the last hour",
+    "rules": "2024",
+    "cr": "6",
+    "green": "EXIT: a GM note names the memory loss; no damage row is named for it"
+  },
+  {
+    "canary": "typed40 #29 (control)",
+    "name": "",
+    "description": "CR 8 brute, two attacks, grapples",
+    "cr": "8",
+    "rules": "2024",
+    "green": "CONTROL: every ask has an effect, so no GM note appears"
+  }
+]

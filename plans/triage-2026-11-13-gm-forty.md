@@ -56,30 +56,46 @@ though the confirmed cases make them likely. Check before citing.
 | `Restrained … until the end of its next turn` | 8 sheets | **9** (#03 #10 #11 #18 #23 #26 #31 #36 #37) |
 | `24 (7d6)` | 7 sheets | **7** (#05 #08 #09 #17 #21 #23 #32) |
 
-Template names leaking into card text also confirmed: **"the mage" on #05, #15, #27**; **"the
-ankheg" on #33**; **"toward Troll" on #31**.
+Template names leaking — **CORRECTED 2026-11-13 (second time I counted a trace line as a card
+fact; see the 31-of-40 correction below).** The first version of this line said *"the mage" on #05,
+#15, #27*. On **#15 and #27 that string is only in the engine's own narration** — `[path] class
+body: the mage stands on the Mage` — and their cards are clean. Read against the card text alone
+(everything before the first trace line), the leaks are:
 
-### 3. "Nothing checks the signature ask" — CONFIRMED, and this is the largest cause
+| sheet | on the card |
+|---|---|
+| #05 Lord Vexmoor | `The mage` |
+| #33 Thornback | `Grappled by the ankheg` |
+| #31 Rimebound Troll | `pulled … straight toward Troll` (the repair's output; its own `the troll` is a fair short form and not a defect) |
 
-The engine *has* a coverage ledger. It is not binding.
+Three sheets, three instances. Fable 5.2's reading of #05 was right.
 
-- **31 of 40 sheets** carry `the clause stays open` — the seat reported that a named row carries the
-  GM's ask, and **no such row is on the sheet.**
+### 3. "Nothing checks the signature ask" — CONFIRMED, but my first number was wrong
+
+**CORRECTION (2026-11-13, after Fable 5.2's code read).** The first version of this section said
+"31 of 40 sheets carry `the clause stays open`" and read that as 31 dropped asks. It is not. That
+trace fires at generate.mjs:5993, inside the `answered` check, which runs *before* the seat appends
+the row it is about to author (6168) — on Grask the order is "stays open" ×2, then "seat authored
+the row: Jaw-Lock". 27 of the 29 sheets with the line also have an authored row: the same event,
+counted twice. The 31 was the authored-row count wearing a different label.
+
+The real numbers:
+
+- **The checker's own count: 24 of 87 GM clauses dropped (72% coverage).**
 - **14 of 40** carry a `[gap]` — a signature idea the catalog had no shape for.
-- Against that, the positive confirmation `ask vs row ok` appears **5 times across the entire
-  forty.**
+- And the deeper point, which is Fable 5.2's and correct: the 63 "covered" clauses are credited by
+  **stamp** — a row carries the clause's id — not by what the row does. Vexmoor's *raises the
+  party's fallen allies* is 2/2 covered with a 7d6 necrotic row. The effect vocabulary (damage, ten
+  conditions, push/pull) cannot say *raise*, *legendary*, *slow* or *summon*, so the ask gets its
+  name on a generic row. That is the memory `the-receipt-is-not-the-expression`, re-found.
 
-That ratio — 5 confirmed answers against 31 open clauses — is why *raises the dead* (#05), *the
-cauldron* (#27), *the bow* (#04), *the hook* (#03), *the cold aura* (#24), *legendary* (#33),
-*hamstring* (#38), *Pack Tactics* (#25), *acid blood* (#11) and *mind control* (#19) all shipped
-missing. It is the single thread through the owner's Fixes and roughly half the new critic's
-rejects.
+So the cause is real and large; it is **two** things — 24 asks with no row, and an unknown share of
+the 63 "covered" whose row does not do the thing — and it is not fixed by "binding" alone. Binding
+without a wider vocabulary produces more named damage rows.
 
-**Do not take his proposed redesign at face value.** He proposes "templates supply only the math
-budget, and the input is parsed into a short list of must-have signatures the output is checked
-against." The engine **already has both halves** — donors are math budgets by design, and the
-clause ledger *is* the must-have list. Nothing needs inventing. Two existing systems are failing to
-bind. That is a far cheaper problem than the rewrite he's describing, and the saved traces say so.
+**My "nothing needs inventing" was also wrong.** Donors are not math budgets by design: 93 of 93
+carry an ability array, 93 a speed, 85 skills, and 19 of 21 brute donors have INT ≤ 6. The budget
+and the body are one object. See `reply-to-fable52-2026-11-13.md` for the reconciled order.
 
 ## Where the three reads agree, block by block
 
@@ -105,14 +121,13 @@ is visible to a careful reader.
 Tier 1 and 2 are causes; tier 3 is cheap and already ruled; do not let tier 3's cheapness pull it
 to the front of a release decision.
 
-### Tier 1 — make the ask bind (largest cause: 31 of 40)
+### Tier 1 — SUPERSEDED, see `reply-to-fable52-2026-11-13.md`
 
-1. **An open clause must not ship silently.** The seat already records that a GM-named mechanic has
-   no row (`the clause stays open`, `[gap]`). Today that is a trace line and the sheet ships anyway.
-   **This needs a plan before a patch** — the question is where it binds (at the seat, where a row
-   can still be written) and what happens when it cannot be answered. It is explicitly *not* an
-   audit-stage addition: the owner's standing ruling is that the end of the line polishes and never
-   adds parts.
+The order below was written before Fable 5.2's code read and before the 31-of-40 correction above.
+The reconciled order lives in the reply document: route filter first (Big Bob), the small ruled
+items in parallel, then the instrument, then the ability profile on the existing concept call, then
+the effect vocabulary, then the honest exit, then repair forms. Tiers 2–5 below are still correct as
+*findings*; their ranking is in the reply.
 
 ### Tier 2 — the donor stops supplying identity
 

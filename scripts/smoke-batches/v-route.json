@@ -1,0 +1,74 @@
+[
+  {
+    "canary": "typed40 #12 (known case)",
+    "name": "big bob",
+    "description": "giant who throws boulders",
+    "cr": "9",
+    "rules": "2014",
+    "role": "artillery",
+    "green": "not on the caster family; no Spellcasting row; boulders are weapon attacks"
+  },
+  {
+    "canary": "fresh sibling (not tuned on)",
+    "name": "Old Marta",
+    "description": "ballista crew sergeant, fires a siege crossbow",
+    "rules": "2024",
+    "cr": "5",
+    "role": "artillery",
+    "green": "not on the caster family; a ranged weapon row"
+  },
+  {
+    "canary": "fresh sibling (not tuned on)",
+    "name": "",
+    "description": "catapult ogre that lobs burning pitch",
+    "rules": "2014",
+    "cr": "6",
+    "role": "artillery",
+    "green": "not on the caster family; INT stays low because it is an ogre"
+  },
+  {
+    "canary": "fresh sibling (not tuned on)",
+    "name": "",
+    "description": "net-and-trident arena fighter who pins people",
+    "rules": "2024",
+    "cr": "4",
+    "role": "controller",
+    "green": "not on the caster family; control comes from the net"
+  },
+  {
+    "canary": "fresh sibling (not tuned on)",
+    "name": "",
+    "description": "giant spider that webs up the whole room",
+    "rules": "2014",
+    "cr": "5",
+    "role": "controller",
+    "green": "not on the caster family; a web row"
+  },
+  {
+    "canary": "typed40 #2 (control)",
+    "name": "Sister Maudra",
+    "description": "cleric of the drowned god",
+    "cr": "7",
+    "rules": "2014",
+    "role": "controller",
+    "green": "CONTROL: stays a caster (she is a cleric)"
+  },
+  {
+    "canary": "fresh control",
+    "name": "",
+    "description": "storm sorcerer who rains lightning",
+    "rules": "2024",
+    "cr": "8",
+    "role": "artillery",
+    "green": "CONTROL: stays a caster"
+  },
+  {
+    "canary": "typed40 #6 (control)",
+    "name": "Bramblejack",
+    "description": "",
+    "cr": "3",
+    "rules": "2024",
+    "role": "lurker",
+    "green": "CONTROL: stays on the lurker family"
+  }
+]

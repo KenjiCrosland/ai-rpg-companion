@@ -291,6 +291,33 @@ export function familyFor(menuRole) {
   return menuRole === 'artillery' || menuRole === 'controller' ? 'caster' : menuRole;
 }
 
+// ARTILLERY AND CONTROLLER NAME A JOB, NOT A KIND OF BODY (owner's ruling 2026-11-13,
+// on Fable 5.2's audit). Both map to the caster family above, and the shelf filter then
+// hid every non-magical line that does the same job: "giant who throws boulders" with
+// role=artillery could not reach `skirmisher-hurler`, landed on caster-6, and shipped
+// Spellcasting, a Shield reaction and boulders rolled as SPELL attacks dealing Thunder.
+// The route call had answered `casts: no worked magic here` in the same breath.
+//
+// The other four roles (brute, skirmisher, lurker, defender) name a family and keep
+// today's filter exactly. For these two the shelf spans families — the lines that do
+// the job without magic are added, and the caster gate below (which the menu used to
+// switch off) now decides between them on the call's own `casts` answer.
+const ROLE_ALSO = { artillery: ['skirmisher-hurler', 'skirmisher-archer'], controller: ['brute-grappler', 'skirmisher-hurler'] };
+
+/**
+ * The line ids a user-picked menu role may choose among — the shelf, as a set.
+ * `null` when no role is picked (the whole shelf). For a role that names a family this
+ * is exactly that family, so nothing changes; for artillery and controller it is that
+ * family plus `ROLE_ALSO`. One routed line still decides the donor and the ability
+ * menu — widening the shelf never lets a body draw another family's abilities.
+ */
+export function shelfFor(menuRole) {
+  const family = familyFor(menuRole);
+  if (!family) return null;
+  const also = ROLE_ALSO[menuRole] ?? [];
+  return new Set(LINES.filter((l) => l.family === family || also.includes(l.id)).map((l) => l.id));
+}
+
 const STOP = new Set(['the', 'and', 'that', 'its', 'with', 'from', 'into', 'onto', 'who', 'whom', 'which', 'when', 'until', 'then', 'than', 'this', 'their', 'them', 'they', 'for', 'off', 'out', 'over', 'under', 'his', 'her', 'has', 'have', 'are', 'was', 'not', 'but', 'any', 'all', 'one', 'own']);
 const words = (s) => String(s ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').split(' ').filter((w) => w.length >= 3 && !STOP.has(w));
 
@@ -317,12 +344,13 @@ export function evidenceIn(because, text) {
 const WEAKNESS_FRAME = /\b(?:unless|except|only)\b/i;
 export function buildRoutePrompt(text, { cr = null, menuRole = null } = {}) {
   const family = familyFor(menuRole);
-  const shelf = LINES.filter((l) => !family || l.family === family)
+  const allowed = shelfFor(menuRole);
+  const shelf = LINES.filter((l) => !allowed || allowed.has(l.id))
     .map((l) => `- ${l.id} — ${l.blurb} (${l.exemplars})`).join('\n');
   return `Route this D&D monster concept onto ONE chassis from the shelf below. Choose by ANALOGY: which printed monsters does this concept play most like at the table? Every chassis is a hand-built template and the numbers are handled elsewhere — you are choosing the SHAPE of the fight, nothing else.
 
 Concept: ${text}
-${cr != null ? `Challenge Rating: ${cr}\n` : ''}${family ? `The combat role is FIXED by the user (${menuRole}) — the shelf below is already limited to it; choose among these only.\n` : ''}
+${cr != null ? `Challenge Rating: ${cr}\n` : ''}${family ? `The combat role is FIXED by the user (${menuRole}) — the shelf below is already limited to it; choose among these only.${ROLE_ALSO[menuRole] ? ` "${menuRole}" names a JOB, not a kind of body, so the shelf holds both the magical and the non-magical lines that do that job. Pick the one whose MECHANIC the words actually describe: a creature that throws rocks or fires a bow does the artillery job without magic, and is not a spellcaster.` : ''}\n` : ''}
 THE SHELF (id — what it plays like — printed exemplars):
 ${shelf}${WEAKNESS_FRAME.test(readPhrases(String(text ?? ''))) ? `
 
@@ -386,6 +414,7 @@ export function validateRouteResponse(jsonString) {
 export function chooseLine(parsed, { text, menuRole = null, rawText = null, path = null } = {}) {
   const notes = [];
   const family = familyFor(menuRole);
+  const allowed = shelfFor(menuRole); // the role's shelf: its family, plus the non-magic lines that do an artillery/controller job
   const resolvedType = TYPES.includes(parsed?.creature_type) ? parsed.creature_type : null;
   const resolvedSize = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'].find((z) => z.toLowerCase() === String(parsed?.size ?? '').trim().toLowerCase()) ?? null;
   const noPhantom = () => (resolvedType && NOT_PHANTOM_TYPES.includes(resolvedType)) || (resolvedSize && NOT_PHANTOM_SIZES.includes(resolvedSize));
@@ -498,7 +527,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
     if (!line) { notes.push(`${String(k?.line ?? '?').slice(0, 30)}: not on the shelf`); continue; }
     if (line.id === 'swarm' && noMass()) { notes.push(`${id}: a swarm is a mass of many — ${swarmA === null ? 'no mass in the words' : 'the call reads one creature, not a mass'}`); bodyVetoed = true; continue; } // before the family seed: a vetoed swarm must not seed itself
     firstKnown = firstKnown ?? line;
-    if (family && line.family !== family) { notes.push(`${id}: outside the user's ${menuRole} role`); continue; }
+    if (allowed && !allowed.has(line.id)) { notes.push(`${id}: outside the user's ${menuRole} role`); continue; }
     if (!evidenceIn(k?.because, text)) { notes.push(`${id}: quote not found in the input ("${String(k?.because ?? '').slice(0, 40)}")`); continue; }
     if (line.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} is not a made thing`); continue; }
     if (line.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)) { notes.push(`${id}: a ${resolvedType} is not a made or risen guardian`); continue; }
@@ -507,7 +536,10 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
     if (line.id === 'skirmisher-shifter' && !vettedHits(text).some((h) => h.id === 'skirmisher-shifter')) { notes.push(`${id}: a shifter is named by its words (shape-shifts, turns into, a were-) — ${verbHits(text).some((h) => h.id === 'skirmisher-shifter') ? 'the call read the one here as a shape it WEARS, not a form it changes into' : 'none here'}`); continue; } // a mind flayer with a sword drew a Beast Bite (critic-ten 2026-10-01); a staircase "wearing a shape" drew the werewolf kit until the verdict was honoured (2026-11-05)
     if (line.id === 'skirmisher-archer' && noBow()) { notes.push(`${id}: ${shootsA === null ? 'no bow, arrow or shot in the words' : 'the call reads no shot of its own'}`); continue; }
     // CASTING IS A MECHANIC ENGINE (the critic's fourth read): a caster line needs a magic word in the GM's own words. "Knight" and "duelist" carried none and drifted to the warpriest on two prompts in five.
-    if (!family && line.family === 'caster' && noMagic(text)) { notes.push(`${id}: ${castsAnswer === null ? 'a caster line needs a magic word in the words — none here' : 'the call reads no worked magic in these words'}`); continue; }
+    // AND THE MENU NO LONGER SWITCHES IT OFF (owner's ruling 2026-11-13). This gate was
+    // `!family && …`, so picking artillery or controller disabled the one guard that
+    // keeps a non-magical creature off a caster line — Big Bob's exact path.
+    if (line.family === 'caster' && noMagic(text)) { notes.push(`${id}: ${castsAnswer === null ? 'a caster line needs a magic word in the words — none here' : 'the call reads no worked magic in these words'}${family ? ` (the ${menuRole} role does not make it one)` : ''}`); continue; }
     chosen = line; quotedPick = true; // the call's pick, with its quote found in the GM's words — 4b step 3 reads this
     notes.push(`${id}: ✓ ("${String(k.because).slice(0, 40)}")`);
     break;
@@ -518,7 +550,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
     // known pick that passes the HARD vetoes stands, its quote unverified
     for (const k of picks) {
       const line = BY_ID.get(lineIdOf(k?.line) ?? '');
-      if (!line || (family && line.family !== family)) continue;
+      if (!line || (allowed && !allowed.has(line.id))) continue;
       if (line.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType)) continue;
       if (line.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType)) continue;
       if (line.id === 'lurker-trap' && resolvedType && NOT_TRAP_TYPES.includes(resolvedType)) continue;
@@ -526,7 +558,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
       if (line.id === 'swarm' && noMass()) continue;
       if (line.id === 'skirmisher-shifter' && !vettedHits(text).some((h) => h.id === 'skirmisher-shifter')) continue; // the rank fallback honours the call's verdict too, or the line walks back in the door the guard above just shut
       if (line.id === 'skirmisher-archer' && noBow()) continue;
-      if (!family && line.family === 'caster' && noMagic(text)) continue; // casting is a mechanic engine: it never comes back on rank either (the critic's fourth read)
+      if (line.family === 'caster' && noMagic(text)) continue; // casting is a mechanic engine: it never comes back on rank either (the critic's fourth read), and the menu does not switch it off (owner, 2026-11-13)
       chosen = line; notes.push(`${line.id}: taken on rank — its quote was not found, no hard veto`); break;
     }
   }
@@ -537,13 +569,20 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
     // "caster-binder: a caster line needs a magic word — none here … fell to
     // caster's plain line", and a satyr piper came out a wizard with Shield and
     // Misty Step at will). A refusal for want of a magic word falls OUT of the
-    // caster family, not into its own default. The menu's own role still rules.
-    if (fam === 'caster' && !family && noMagic(text)) {
-      notes.push('caster: the family itself needs a magic word in the words — the fallback leaves it');
+    // caster family, not into its own default.
+    // AND THE MENU'S OWN ROLE NO LONGER RULES HERE (owner, 2026-11-13). This read
+    // `!family`, so an artillery or controller pick fell back INTO the caster family
+    // the gate had just refused — the back door this comment says it closed. A role
+    // that names a JOB falls to its own non-magical line (hurler for artillery,
+    // grappler for controller): that is the line on its shelf that does the job the
+    // user asked for, where a plain line by type would answer a question nobody asked.
+    if (fam === 'caster' && noMagic(text)) {
+      notes.push(`caster: the family itself needs a magic word in the words — the fallback leaves it${family ? ` (the ${menuRole} role does not make it one)` : ''}`);
       // out of the family, never into nothing: the plain line by type, which is
       // what a body veto already falls to (print's Humanoid NPCs are skirmishers)
-      fam = firstKnown && firstKnown.family !== 'caster' ? firstKnown.family
-        : (/^(?:Humanoid|Fey)\b/i.test(String(resolvedType ?? '')) ? 'skirmisher' : 'brute');
+      fam = (ROLE_ALSO[menuRole] ?? []).find((id) => BY_ID.has(id))
+        ?? (firstKnown && firstKnown.family !== 'caster' ? firstKnown.family
+          : (/^(?:Humanoid|Fey)\b/i.test(String(resolvedType ?? '')) ? 'skirmisher' : 'brute'));
     }
     if (fam) {
       chosen = BY_ID.get(fam) ?? null;
@@ -557,7 +596,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
   // the verb outranks the noun: if the user's words name a line's VERB and the
   // chosen line was not one of those, the verb line stands (hard vetoes kept)
   {
-    const hits = verbHits(text).map((h) => ({ ...h, line: BY_ID.get(h.id) })).filter(({ line: l }) => l && (!family || l.family === family)
+    const hits = verbHits(text).map((h) => ({ ...h, line: BY_ID.get(h.id) })).filter(({ line: l }) => l && (!allowed || allowed.has(l.id))
       && !(l.id === 'brute-juggernaut' && resolvedType && !MADE_TYPES.includes(resolvedType))
       && !(l.id === 'defender-warden' && resolvedType && !WARDEN_TYPES.includes(resolvedType))
       && !(l.id === 'lurker-phantom' && noPhantom()) // the override obeys the body vetoes too (the kuo-toa went phantom on a verb, 2026-10-01)
@@ -566,7 +605,7 @@ export function chooseLine(parsed, { text, menuRole = null, rawText = null, path
       // THE CASTER GATE HOLDS ON THE OVERRIDE TOO (critic, 2026-10-14: the gate
       // refused the warpriest line for want of a magic word, and then "smites"
       // put it back). Casting is a mechanic engine; a verb cannot conjure it.
-      && !(l.family === 'caster' && !family && noMagic(text)));
+      && !(l.family === 'caster' && noMagic(text)));
     // a JOB noun cannot win an override whose rule is that verbs outrank nouns
     // — unless the family FELL to its plain line with no pick to override: a
     // title then names the style (a SERGEANT sworn to guard the gate, warden vetoed)
