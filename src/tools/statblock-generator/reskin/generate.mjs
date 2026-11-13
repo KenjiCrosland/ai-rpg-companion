@@ -8161,6 +8161,24 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               dropped.push(mine.join('/')); return false;
             }).join(' ').replace(/\s+$/, '');
             if (keptForKit.length) trace('print canon rider stays:', `"${from}" -> "${to}": the ${keptForKit.join(' and ')} clause is the ${pathD?.class ?? 'class'} kit's, not the chassis's — on a class body the kit owns the class's rows`);
+            // THE STRIP DOES NOT GET TO BREAK A ROW (owner's ruling 2026-11-13, refined by
+            // the item 2 review). This is where the monk's save was broken: the kit's rider
+            // was COMPLETE when it was welded, and this pass then cut the Failure sentence
+            // and left the frame standing — "…the target is subjected to the following
+            // effect. Constitution Saving Throw: DC 14." So a guard at the weld, where the
+            // rider is still whole, could never have fired on it; `kitImposes` above is what
+            // saves the monks. This catches every OTHER rider that comes through here.
+            //
+            // No surgery and no new grammar: the pass already keeps the text from before it
+            // ran, so it compares the row with itself using the one shared predicate. If the
+            // row could be rolled before and cannot after, the strip does not apply to it —
+            // the whole row goes back, and the trace says why rather than leaving a GM with
+            // half a rule.
+            if (dropped.length && !saveIsUnrollable(beforeC) && saveIsUnrollable(e.text)) {
+              trace('print canon rider kept — the strip would have broken it:', `"${from}" -> "${to}": dropping the ${dropped.join(' and ')} clause leaves a save a GM cannot roll (${saveIsUnrollable(e.text)}), so the row stands as it was`);
+              e.text = beforeC;
+              dropped.length = 0; // nothing left, so nothing is owed by this rename
+            }
             if (dropped.length) {
               const kept = imposedConditions({ name: '', text: e.text });
               if (kept.length) e.imposes = kept.length === 1 ? kept[0] : kept; else delete e.imposes; // the record follows the clause

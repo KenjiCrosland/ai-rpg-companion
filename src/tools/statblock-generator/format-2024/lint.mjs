@@ -256,15 +256,26 @@ const SAVE_OUTCOME_ANY = /Failure|Success|fail(?:s|ed|ure)?\b|succe(?:ed|eds|ssf
 export function saveIsUnrollable(text) {
   const raw = String(text ?? '').replace(/\*/g, '').trim();
   if (!raw) return null;
-  let saveDCs = 0; let unnamedDC = null;
+  let labelledSaves = 0; let unnamedDC = null;
   for (const m of raw.matchAll(/DC \d+/g)) {
-    const near = `${raw.slice(Math.max(0, m.index - 70), m.index)} ${raw.slice(m.index, m.index + 70)}`;
-    if (/spell save |escape |\bcheck\b/i.test(near)) continue; // print's own: a spell save DC, an escape DC, an ability check
-    if (SAVE_STAT_NEAR.test(near)) { saveDCs += 1; continue; }
+    const before = raw.slice(Math.max(0, m.index - 70), m.index);
+    const after = raw.slice(m.index, m.index + 70);
+    if (/spell save |escape |\bcheck\b/i.test(`${before} ${after}`)) continue; // print's own: a spell save DC, an escape DC, an ability check
+    // WHICH SKELETON IS THIS? 2024 labels the save and then gives the DC
+    // ("*Dexterity Saving Throw*: DC 17, ..."); 2014 prose puts the DC first and the
+    // ability after it ("a DC 11 Dexterity saving throw to avoid ...").
+    if (SAVE_STAT_NEAR.test(before)) { labelledSaves += 1; continue; }
+    if (SAVE_STAT_NEAR.test(after)) continue; // 2014 prose: named, and its outcome is judged below
     unnamedDC ??= m[0];
   }
   if (unnamedDC) return `"${unnamedDC}" names no saving throw, so a GM cannot tell which save to roll`;
-  if (saveDCs && !SAVE_OUTCOME_ANY.test(raw)) return 'the save has no outcome - nothing says what happens on a failure or a success';
+  // THE OUTCOME ARM JUDGES THE LABELLED SKELETON ONLY. 2014 states its outcome inline
+  // and in many shapes - "to avoid the rust monster's touch", "or be knocked prone",
+  // "taking 13 damage on a failed save" - and enumerating those would be the word list
+  // this engine does not write. The labelled form has exactly one place for the
+  // outcome, so its absence there is structural. (Caught by the item 2 review: this
+  // arm flagged the Rust Monster's Antennae, whose outcome is perfectly well stated.)
+  if (labelledSaves && !SAVE_OUTCOME_ANY.test(raw)) return 'the save has no outcome - nothing says what happens on a failure or a success';
   return null;
 }
 

@@ -58,6 +58,19 @@ describe('a save a GM can roll', () => {
     expect(lintRow(text)).toHaveLength(0);
   });
 
+  // 2014 STATES ITS OUTCOME INLINE, AND IN MANY SHAPES. "to avoid the rust monster's
+  // touch", "or be knocked prone", "taking 13 damage on a failed save" — enumerating
+  // those would be the word list this engine does not write, so the outcome arm judges
+  // the LABELLED skeleton only, where there is exactly one place for the outcome.
+  // The item 2 review caught this arm flagging the Rust Monster, whose outcome is
+  // perfectly well stated.
+  test.each([
+    ["2014's infinitive outcome (Rust Monster, Antennae)", 'If the object is being worn or carried by a creature, the creature can make a DC 11 Dexterity saving throw to avoid the rust monster\'s touch.'],
+    ['2014 prose with the stat after the DC and no label at all', 'Each creature in the area must make a DC 15 Dexterity saving throw, taking 22 (4d10) fire damage on a failed save, or half as much on a successful one.'],
+  ])('does not flag %s', (_label, text) => {
+    expect(lintRow(text)).toHaveLength(0);
+  });
+
   test('ZERO findings across every print row — print overrules the rule', () => {
     const monsters = Array.isArray(srd) ? srd : (srd.monsters ?? Object.values(srd));
     const offenders = [];
