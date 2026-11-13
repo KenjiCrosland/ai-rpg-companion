@@ -14,7 +14,7 @@ import printBlocks from '@/data/srd52-monsters.json';
 import { declaredBodyFacts, templateExcludedBy, sheetEngines, conditionsImposedTwice, bandFor, composedReason, leadForSeat, composedCandidates, gateStandsDown, LINE_MOVE, orderByStamps, NOVA_CAP, liveBodyRequirements, readBodyVerdicts, templatesFor, shapesForAsked, renderTemplate, AUGMENTATION_KINDS, coveredBySheet, fallbackMenu, rankByVerb, conceptVerbs, valueCheck, SEAT_DEFAULT_TRAIT, MECHANIC_OWED_TRAIT, TEMPLATE_BY_ID, buildIdeaPrompt, validateIdeaResponse, parseIdeas, buildFitPrompt, validateFitResponse, parseFit, TEMPLATES, blindDealable, UTILITY, gateOf, saveStatsFor, conditionEarnedByDamage, splitMinorClause, isPlaceholderRowName} from './templates.mjs';
 import { drawLibraryRow, nameHash } from './library.mjs';
 import { cardBudget } from './card-budgets.mjs';
-import { lintStatblock, EMPTY_SAVE_OUTCOME } from '../format-2024/lint.mjs';
+import { lintStatblock, EMPTY_SAVE_OUTCOME, saveIsUnrollable } from '../format-2024/lint.mjs';
 import { logger } from '@/util/logger.mjs';
 import { isDegradedMode } from '@/util/ai-client.mjs';
 import challengeRatings from '@/data/challengeRatings.json';
@@ -4299,8 +4299,27 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           const host = Object.values(sections).flat().find((e2) => /Melee(?: or Ranged)? Attack Roll/.test(e2.text ?? '') && !e2.print);
           if (!host) { trace('class kit:', `${row.name} — a rider with no melee row to ride`); continue; }
           if (String(host.text).includes(row.text.trim())) { trace('class kit:', `${row.name} — "${host.name}" already carries it`); continue; }
+          // A HALF-BUILT RIDER IS NOT ATTACHED (owner's ruling, 2026-11-13). The guard
+          // sits where the row is ASSEMBLED, not on finished text: if the rider states a
+          // save a GM could not roll — a DC with no stat, or a save with no outcome — it
+          // does not go onto the host at all, and the loss is traced rather than silent.
+          // `saveIsUnrollable` is the lint's own definition, imported, so the guard and
+          // the alarm can never drift apart.
+          const unrollable = saveIsUnrollable(row.text);
+          if (unrollable) { trace('rider lost:', `${row.name} does not ride "${host.name}" — ${unrollable}; the kit's rider is owed and was not attached half-built`); continue; }
           host.text = `${String(host.text).trim()} ${row.text.trim()}`;
           host.kitRider = row.text.trim(); // the row's own rebuild must not drop it (the restore at the rider weld)
+          // THE CONDITIONS THE KIT'S RIDER OWNS, DECLARED AT THE WELD (item 2 fix 1).
+          // The print-canon rename strips any standalone sentence imposing a condition
+          // print's row does not impose — which is right for the chassis's rider and
+          // wrong for the kit's: a monk on the Spy lost Stunning Strike's outcome and
+          // shipped "…the target is subjected to the following effect. Constitution
+          // Saving Throw: DC 14." on 3 of 3 monks. The engine knows here, as DATA, which
+          // conditions the kit's rider imposes; the strip reads that rather than the
+          // prose. A text match would not survive the pass that rewrites "the creature"
+          // into the sheet's own name inside the welded clause.
+          const kitC = imposedConditions(row);
+          if (kitC.length) host.kitImposes = [...new Set([...(host.kitImposes ?? []), ...kitC])];
           host.clause = host.clause ?? ck.clause;
           host.feature = host.feature ?? row.name;
           if (row.template) host.boundKeys = [...new Set([...(host.boundKeys ?? []), ...(row.keys ?? [])])].slice(0, 6);
@@ -8123,13 +8142,25 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // 16. A standalone sentence goes when print's row imposes NONE of what that sentence imposes.
           if (printBody) {
             const printImposes = new Set(imposedConditions({ name: pr.name, text: pr.text }));
-            const beforeC = e.text; const dropped = [];
+            // AND THE CLASS KIT'S OWN RIDER IS NOT THE CHASSIS'S (item 2 fix 1, 2026-11-13).
+            // The engine's own rule already says "on a class body the kit owns the class's
+            // rows"; this strip did not know it, so renaming a monk's Claw to the Spy's
+            // Shortsword took Stunning Strike's Failure clause with it and left the frame
+            // standing — a save with no outcome on 3 of 3 monks across two forties.
+            // `kitImposes` is stamped at the weld, so this is declared data, not a reading
+            // of the welded prose (which a later pass rewrites).
+            const keepC = new Set([...printImposes, ...(e.kitImposes ?? [])]);
+            const beforeC = e.text; const dropped = []; const keptForKit = [];
             e.text = e.text.split(/(?<=\.)\s+/).filter((sent) => {
               if (/Attack Roll/.test(sent)) return true;                       // the attack line and its damage stay
               const mine = imposedConditions({ name: '', text: sent });
-              if (!mine.length || mine.some((c) => printImposes.has(c))) return true;
+              if (!mine.length || mine.some((c) => keepC.has(c))) {
+                if (mine.length && !mine.some((c) => printImposes.has(c))) keptForKit.push(mine.join('/'));
+                return true;
+              }
               dropped.push(mine.join('/')); return false;
             }).join(' ').replace(/\s+$/, '');
+            if (keptForKit.length) trace('print canon rider stays:', `"${from}" -> "${to}": the ${keptForKit.join(' and ')} clause is the ${pathD?.class ?? 'class'} kit's, not the chassis's — on a class body the kit owns the class's rows`);
             if (dropped.length) {
               const kept = imposedConditions({ name: '', text: e.text });
               if (kept.length) e.imposes = kept.length === 1 ? kept[0] : kept; else delete e.imposes; // the record follows the clause

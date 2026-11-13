@@ -3,6 +3,7 @@
 // composition. The stub harness answers every call with one fixed sheet; the trace is the witness.
 import { generateReskin, renameKeysOf } from '../generate.mjs';
 import { pickDonor, scaleDonor } from '../scale.mjs';
+import { saveIsUnrollable } from '../../format-2024/lint.mjs';
 
 const stub = (cr, style, archetype, over = {}) => {
   const scaled = scaleDonor(pickDonor(cr, style, archetype), cr, { mechanics: [] });
@@ -625,6 +626,13 @@ describe('the class-NPC path (pipeline 3)', () => {
     expect(melee.length).toBeGreaterThan(0);
     for (const e of melee) { expect(e.name).toMatch(/Unarmed Strike|Strike/); expect(e.text).not.toMatch(/Poison damage/); expect(e.weapon ?? null).toBeNull(); }
     for (const e of r.rows.filter((x) => /Ranged Attack Roll/.test(x.text ?? '') && !/Melee or Ranged/.test(x.text ?? ''))) expect(e.weapon).toBe('dart');
+    // AND THE KIT'S RIDER IS NOT LEFT HALF-BUILT (item 2 fix 1, 2026-11-13). The
+    // print-canon rename strips a standalone condition sentence the print row does not
+    // impose; on a monk that took Stunning Strike's Failure clause and left its frame,
+    // so the row ended "...subjected to the following effect. Constitution Saving
+    // Throw: DC 14." on 3 of 3 monks across two forties. `kitImposes` is stamped at the
+    // weld so the strip can tell the kit's clause from the chassis's.
+    for (const e of r.rows) expect(saveIsUnrollable(e.text)).toBeNull();
   });
   test('a cutpurse carries a shortsword and a shortbow, never the Bandit Captain\'s pistol (Vaelith)', async () => {
     const concept = 'a tabaxi cutpurse who slips through the market crowd';

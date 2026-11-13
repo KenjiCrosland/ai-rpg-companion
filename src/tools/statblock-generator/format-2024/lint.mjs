@@ -240,6 +240,34 @@ const SAVE_STAT_NEAR = /(?:Strength|Dexterity|Constitution|Intelligence|Wisdom|C
 // corpus, so this must not require one.
 const SAVE_OUTCOME_ANY = /Failure|Success|fail(?:s|ed|ure)?\b|succe(?:ed|eds|ssful)\b/i;
 
+/**
+ * Is this row's save one a GM cannot roll? Returns the reason, or null.
+ *
+ * Classify each DC once: a save DC, or not this rule's business. A row may MENTION a
+ * saving throw that lives on another row - the Gelatinous Cube's Ooze Cube says a
+ * creature entering its space "has Disadvantage on the saving throw" (that is
+ * Engulf's) and carries a Strength (Athletics) CHECK DC of its own. Asking "is there a
+ * save word and a DC somewhere in this text" flagged it; asking "is THIS DC a save DC"
+ * does not.
+ *
+ * Exported because the kit-rider weld asks the same question of a rider before
+ * attaching it. Measured at zero findings across all 329 print monsters.
+ */
+export function saveIsUnrollable(text) {
+  const raw = String(text ?? '').replace(/\*/g, '').trim();
+  if (!raw) return null;
+  let saveDCs = 0; let unnamedDC = null;
+  for (const m of raw.matchAll(/DC \d+/g)) {
+    const near = `${raw.slice(Math.max(0, m.index - 70), m.index)} ${raw.slice(m.index, m.index + 70)}`;
+    if (/spell save |escape |\bcheck\b/i.test(near)) continue; // print's own: a spell save DC, an escape DC, an ability check
+    if (SAVE_STAT_NEAR.test(near)) { saveDCs += 1; continue; }
+    unnamedDC ??= m[0];
+  }
+  if (unnamedDC) return `"${unnamedDC}" names no saving throw, so a GM cannot tell which save to roll`;
+  if (saveDCs && !SAVE_OUTCOME_ANY.test(raw)) return 'the save has no outcome - nothing says what happens on a failure or a success';
+  return null;
+}
+
 export function pluralizeCreatureType(word) {
   const base = word.trim().replace(/ies$/i, 'y').replace(/(?<!s)s$/i, '');
   const cased = base[0].toUpperCase() + base.slice(1).toLowerCase();
@@ -672,24 +700,13 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // destroying a row. Whether the dangling FRAME should then be surgically removed
     // (as `orphan-repeat-save` already does for a stray repeat-the-save sentence) is
     // the owner's call, not this rule's.
-    // Classify each DC once: a save DC, or not this rule's business. A row may
-    // MENTION a saving throw that lives on another row - the Gelatinous Cube's Ooze
-    // Cube says a creature entering its space "has Disadvantage on the saving throw"
-    // (that is Engulf's) and carries a Strength (Athletics) CHECK DC of its own.
-    // Asking "is there a save word and a DC somewhere in this text" flagged it;
-    // asking "is THIS DC a save DC" does not.
-    let saveDCs = 0; let unnamedDC = null;
-    for (const m of raw.matchAll(/DC \d+/g)) {
-      const near = `${raw.slice(Math.max(0, m.index - 70), m.index)} ${raw.slice(m.index, m.index + 70)}`;
-      if (/spell save |escape |\bcheck\b/i.test(near)) continue; // print's own: a spell save DC, an escape DC, an ability check
-      if (SAVE_STAT_NEAR.test(near)) { saveDCs += 1; continue; }
-      unnamedDC ??= m[0];
-    }
-    if (unnamedDC) {
-      push('save-unrollable', 'audit', `${section}/${entry.name}: "${unnamedDC}" names no saving throw, so a GM cannot tell which save to roll`, undefined, loc);
-    }
-    if (saveDCs && !SAVE_OUTCOME_ANY.test(raw)) {
-      push('save-unrollable', 'audit', `${section}/${entry.name}: the save has no outcome - nothing says what happens on a failure or a success`, undefined, loc);
+    // ONE DEFINITION, EVERY READER. `saveIsUnrollable` is the whole grammar, and the
+    // kit-rider weld calls the same function before it attaches a rider to a host
+    // attack - a guard where the row is BUILT, rather than surgery on finished text
+    // (owner's ruling, 2026-11-13).
+    const unrollable = saveIsUnrollable(raw);
+    if (unrollable) {
+      push('save-unrollable', 'audit', `${section}/${entry.name}: ${unrollable}`, undefined, loc);
     }
   }
 
