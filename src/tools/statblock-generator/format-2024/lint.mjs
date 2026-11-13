@@ -226,6 +226,20 @@ export const IMMUNITY_ON_SUCCESS = /immune to (?:this|the) [^.]{0,60}?for (?:the
 
 export const EMPTY_SAVE_OUTCOME = /\b(Failure|Success):\s*(?:$|(?:Failure|Success):)/;
 
+// A SAVE A GM CANNOT ROLL (owner's ruling, 2026-11-13). Both halves are grammar, not
+// meaning: one asks whether an ability is named beside a DC, the other whether any
+// outcome clause follows a save at all.
+//
+// An ability is "named" either before the DC, as 2024 writes it
+// ("*Dexterity Saving Throw*: DC 17, …"), or after it, as 2014 prose does
+// ("must succeed on a DC 15 Dexterity saving throw"). Print uses both.
+const SAVE_STAT_NEAR = /(?:Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)\s+[Ss]aving\s+[Tt]hrow|[Ss]aving\s+[Tt]hrow[^.]{0,30}(?:Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)/;
+
+// Any form print uses to say what the save does. `First Failure` / `Second Failure`
+// (the two-stage petrification and paralysis rows) appear WITHOUT their colons in the
+// corpus, so this must not require one.
+const SAVE_OUTCOME_ANY = /Failure|Success|fail(?:s|ed|ure)?\b|succe(?:ed|eds|ssful)\b/i;
+
 export function pluralizeCreatureType(word) {
   const base = word.trim().replace(/ies$/i, 'y').replace(/(?<!s)s$/i, '');
   const cased = base[0].toUpperCase() + base.slice(1).toLowerCase();
@@ -629,6 +643,53 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // archon's; the rest are the same shape of truncation.
     if (/\b(?:equal|equal to|than|toward|towards|within|from|of|to|the|an?|and|or|by|for|with|into|plus|up)\.?$/i.test(raw)) {
       push('unfinished-text', 'reject', `${section}/${entry.name}: the text ends mid-sentence on "${raw.split(/\s+/).slice(-2).join(' ')}"`, undefined, loc);
+    }
+    // A SAVE A GM CANNOT ROLL (owner's ruling, 2026-11-13). The same family: rules
+    // text that did not finish assembling. Structural only — it reads the grammar of
+    // rendered text and never what the row means. Two shapes:
+    //
+    //   (a) a DC with no ability named beside it. The corpus itself shipped this —
+    //       the Stone Giant's Deflect Missile arrived from the SRD markdown with its
+    //       save label stripped: "...redirect some of the attack's force. DC 17, one
+    //       creature the giant can see within 60 feet. 11 (1d10 + 6) Force damage."
+    //       Nothing caught it; it reached a card.
+    //   (b) a save that names a DC and then stops, with no outcome in any form —
+    //       "the target is subjected to the following effect. Constitution Saving
+    //       Throw: DC 14." and nothing after it. Three of three monks shipped that
+    //       on the GM forty, and the audit filed it as published text.
+    //
+    // Print writes four things that are NOT this, and each is excluded: a spell save
+    // DC, an escape DC, an ability-CHECK DC, and the two-stage "First Failure /
+    // Second Failure" form. Measured at 0 findings over all 329 print monsters.
+    //
+    // ITS OWN RULE NAME, DELIBERATELY. `unfinished-text` findings DELETE the row
+    // ("half a rule is worse than no row", reskin/generate.mjs). That is right when
+    // the broken save IS the row, and wrong when it rides a complete attack: the
+    // monk's Unarmed Strike carries a real Melee Attack Roll and 16 (3d8+3)
+    // Bludgeoning before the stripped rider, and deleting it leaves a monk with no
+    // melee attack at all - worse than the dangling frame. Shipped as `save-unrollable`
+    // at `audit`, so it reports on the CHECK file and the review page without
+    // destroying a row. Whether the dangling FRAME should then be surgically removed
+    // (as `orphan-repeat-save` already does for a stray repeat-the-save sentence) is
+    // the owner's call, not this rule's.
+    // Classify each DC once: a save DC, or not this rule's business. A row may
+    // MENTION a saving throw that lives on another row - the Gelatinous Cube's Ooze
+    // Cube says a creature entering its space "has Disadvantage on the saving throw"
+    // (that is Engulf's) and carries a Strength (Athletics) CHECK DC of its own.
+    // Asking "is there a save word and a DC somewhere in this text" flagged it;
+    // asking "is THIS DC a save DC" does not.
+    let saveDCs = 0; let unnamedDC = null;
+    for (const m of raw.matchAll(/DC \d+/g)) {
+      const near = `${raw.slice(Math.max(0, m.index - 70), m.index)} ${raw.slice(m.index, m.index + 70)}`;
+      if (/spell save |escape |\bcheck\b/i.test(near)) continue; // print's own: a spell save DC, an escape DC, an ability check
+      if (SAVE_STAT_NEAR.test(near)) { saveDCs += 1; continue; }
+      unnamedDC ??= m[0];
+    }
+    if (unnamedDC) {
+      push('save-unrollable', 'audit', `${section}/${entry.name}: "${unnamedDC}" names no saving throw, so a GM cannot tell which save to roll`, undefined, loc);
+    }
+    if (saveDCs && !SAVE_OUTCOME_ANY.test(raw)) {
+      push('save-unrollable', 'audit', `${section}/${entry.name}: the save has no outcome - nothing says what happens on a failure or a success`, undefined, loc);
     }
   }
 

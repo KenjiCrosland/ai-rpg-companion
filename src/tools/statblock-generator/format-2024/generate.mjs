@@ -1819,7 +1819,7 @@ Return ONLY a JSON object with the SAME sections, SAME entry order, SAME entry n
   };
 
   let ctx2;
-  try { ctx2 = buildContext(model.cr, model.archetype ?? 'balanced'); }
+  try { ctx2 = buildContext(model.cr, bodyFamilyOf(model) ?? 'balanced'); }
   catch { ctx2 = buildContext(model.cr, 'balanced'); } // saved reskin blocks carry internal family names ('caster') — never crash a conversion on vocabulary (2026-09-14)
   const { chassis, plan } = ctx2;
   // Chassis passed so chassis-gated rules in the conversion set (bps-
@@ -2740,6 +2740,29 @@ const ALL_ROLES = ['brute', 'skirmisher', 'controller', 'lurker', 'defender', 'a
  * the chassis here: its rows, its stats, its DCs. Returns null when no shelf
  * applies (a legendary action, a sheet with no ability scores).
  */
+/**
+ * THE FAMILY THE BODY STANDS ON — for any reader that picks a chassis, a band or a
+ * template shelf. Never the label the user picked.
+ *
+ * `monster.archetype` is the ROLE THE USER CHOSE (2026-11-13); `generation.archetype`
+ * is the family the route actually landed on. They used to be the same field doing
+ * both jobs, and they agreed only by accident — every menu role resolved to its own
+ * family. Once artillery could reach `skirmisher-hurler`, Big Bob saved as label
+ * "artillery" on a skirmisher body, and every engine reader of `.archetype` began
+ * comparing him to an artillery chassis: re-rolling one of his rows drew from the
+ * artillery shelf his body does not stand on, and the edit-time band hints measured
+ * him against the wrong card.
+ *
+ * Display reads the label; mechanics read this. One definition, every reader — the
+ * last time a shared rule grew private copies, widening it fixed none of them.
+ */
+export function bodyFamilyOf(monster) {
+  const routed = monster?.generation?.archetype;
+  if (routed && routed !== 'balanced') return routed;
+  const label = monster?.archetype;
+  return label && label !== 'balanced' ? label : null;
+}
+
 function rerollCatalog(monster, { section, cr, chassis, numbers, stats, pb, exclude = null, excludeTemplate = null }) {
   const key = SECTION_KEY_OF[section];
   if (!key || !stats) return null;
@@ -2748,7 +2771,7 @@ function rerollCatalog(monster, { section, cr, chassis, numbers, stats, pb, excl
   const rowsAll = Object.values(sections).flat();
   const num = (re) => { const hits = rowsAll.map((e) => Number(re.exec(String(e.text ?? ''))?.[1] ?? 0)).filter(Boolean); return hits.length ? Math.max(...hits) : 0; };
   const concept = readPhrases(conceptOf(monster));
-  const archetype = monster.archetype && monster.archetype !== 'balanced' ? monster.archetype : (monster.generation?.archetype ?? null);
+  const archetype = bodyFamilyOf(monster); // the body's family, not the user's label — a re-rolled row must come off the shelf the body stands on
   const scaled = {
     cr, pb, stats, striker_stat: attackStatFor(stats), per_hit: numbers.perAttack,
     dc: num(/DC (\d+)/) || chassis.save_dc, atk: num(/Attack Roll:\*? \+(\d+)/) || chassis.attack_bonus, sections,
@@ -2800,7 +2823,7 @@ export async function rerollEntry(monster, { kind, current, degraded = false }, 
   // First numeric token, tolerant of "CR 5 (1,800 XP)" style prefixes.
   const crToken = String(monster.challenge_rating ?? '').match(/\d+\/\d+|\d+(\.\d+)?/)?.[0];
   const cr = monster.cr ?? crNumberFor(crToken ?? '');
-  const { chassis: card, plan } = buildContext(cr, monster.archetype ?? 'balanced');
+  const { chassis: card, plan } = buildContext(cr, bodyFamilyOf(monster) ?? 'balanced');
   const numbers = damageBudgetFor(cr, card, plan); // the DAMAGE budget is the card's; the DC and the attack bonus are stat-derived, so the sheet's own stand
   const chassis = { ...card, ...sheetNumbersOf(monster, card) };
   const stats = monster.stats ?? parseLegacyAttributes(monster.attributes);
@@ -2982,7 +3005,7 @@ export async function rerollSection(monster, { kind, suggestion = '', degraded =
 
   const crToken = String(monster.challenge_rating ?? '').match(/\d+\/\d+|\d+(\.\d+)?/)?.[0];
   const cr = monster.cr ?? crNumberFor(crToken ?? '');
-  const { chassis: card, plan } = buildContext(cr, monster.archetype ?? 'balanced');
+  const { chassis: card, plan } = buildContext(cr, bodyFamilyOf(monster) ?? 'balanced');
   const numbers = damageBudgetFor(cr, card, plan);
   const chassis = { ...card, ...sheetNumbersOf({ ...monster, sections: Object.fromEntries(Object.entries(monster.sections ?? {}).filter(([k]) => k !== section)) }, card) }; // the section being replaced is not its own reference
   const stats = monster.stats ?? parseLegacyAttributes(monster.attributes);

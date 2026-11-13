@@ -24,9 +24,12 @@ with your two bare-name cases added:
 ✗ #10 Orsolya          [controller] brute-grappler ×3  caster-binder ×2
 ```
 
-**"Zero variance" is withdrawn.** #5 flips its line between two non-caster lines; its family never
-moves. The done-when still holds: the five original non-casters are off the caster family 5 of 5 by
-family, and all three controls hold 5 of 5.
+**"Zero variance" is withdrawn.** #5 flips between `brute-grappler` and `skirmisher-hurler`.
+
+**And a correction you caught in the reply: those are two different FAMILIES, not two lines in
+one.** My own probe output printed `families: brute×4 skirmisher×1` on the same line I misread.
+Neither is caster, so the done-when still holds — the five original non-casters are off the caster
+family 5 of 5, and all three controls hold 5 of 5 — but "its family never moves" was wrong.
 
 **4. Your two bare-name cases — answered, with a limit on the answer.**
 A name-only **artillery** pick now gets a thrower and never a mage: Vhalgrin is skirmisher 5 of 5.
@@ -111,9 +114,21 @@ is the same source that was missing 19 of 22 Reactions sections. Both rows arriv
 oldmanumby, which has the reactions and mangled two of their labels. We traded one gap for a much
 smaller one.
 
-**You were right that the checker cannot see it.** A save with a DC and no stat, or no outcome
-clause, is not a rule it has. Given "zero broken text" sits in the release bar, that is worth being
-a lint — raising it with the owner rather than writing it, since it is text matching.
+**You were right that the checker cannot see it, and the owner has ruled: it is a lint.** Shipped as
+`save-unrollable`, in the lint's existing "rule text that did not finish assembling" family. Two
+structural arms — a DC with no ability named beside it, and a save that names a DC and then stops
+with no outcome in any form. Zero findings across all 329 print monsters, proven in the spec itself
+so it cannot rot.
+
+**Building it turned up something worth your attention.** I first shipped it as `unfinished-text`,
+the obvious family. Those findings DELETE the row — *"half a rule is worse than no row"*. The suite
+caught it immediately: on the monk sheet the rule removed the Unarmed Strike **entirely**, attack
+roll and 16 (3d8+3) Bludgeoning with it, because the broken save rides a complete attack rather than
+being the whole row. A monk with no melee attack is worse than a monk with a dangling save. So it
+has its own rule name at `audit` severity: it reports on the CHECK file and the review page and
+destroys nothing. Whether the dangling FRAME should then be surgically removed — as
+`orphan-repeat-save` already does for a stray repeat-the-save sentence — is the owner's call, and I
+have not taken it.
 
 ## Still open from your review
 
@@ -158,3 +173,71 @@ it reached anyone: my bare-DC sweep still flags the Chain Devil, because the reg
 `Throw*:` and the row writes `Throw:*`. All corrected in place. The rule I am working to now: read
 the card, not the log; print one real input before trusting a probe; and check the official text
 before repairing data.
+
+---
+
+# Round 2 — your review of the label fix
+
+Both opens are closed, and the blocks and traces you could not see are pushed.
+
+## The label fix moved the problem to re-rolls — you were right, and it was mine
+
+Confirmed exactly as you described. `rerollCatalog` read `monster.archetype`, which now holds the
+user's label, so re-rolling a row on Big Bob drew from the **artillery** shelf his body does not
+stand on. Before the push it drew from skirmisher. Three `buildContext` calls and the band hints in
+`Statblock2024.vue` had the same read.
+
+One field was doing two jobs. They are separated now:
+
+```js
+export function bodyFamilyOf(monster) {
+  const routed = monster?.generation?.archetype;   // the family the route landed on
+  if (routed && routed !== 'balanced') return routed;
+  const label = monster?.archetype;                // the role the user picked
+  return label && label !== 'balanced' ? label : null;
+}
+```
+
+Display reads the label; mechanics read `bodyFamilyOf`. **One definition, five call sites** — the
+last time a shared rule in this engine grew private copies, widening it fixed none of them.
+
+Your data test is `the-label-is-not-the-body.spec.js`: a sheet labelled `artillery` whose
+`generation.archetype` is `skirmisher` re-rolls from the skirmisher shelf, plus the cases that have
+no routed family, a `balanced` in either field, and a hand-made sheet with neither.
+
+## The spider — the traces say what changed the body
+
+Not the route being overridden. `giant spider` matched the **print** Giant Spider, so the sheet is a
+twist on a print body, and the print-canon route deliberately stands a seat down:
+
+```
+[path]  twist — Giant Spider (is) — "giant spider" (call)
+[route] brute-grappler  type=Beast  mechanics=grapple, engulf, snare
+        hold_shape: reach on the GM's own words "webs up the whole room"
+print canon route: the Giant Spider's body outranks the grappler seat
+                   — no verb in the words names it; the plain brute line
+donor:  brute-5 -> CR 5
+```
+
+So the route call did return `brute-grappler`, and the print body then took precedence by an
+existing rule. Whether a print body should outrank a role the user explicitly picked is a real
+question — and it is the same question as Old Marta's Gladiator, so it belongs with your item 4
+rather than here.
+
+**Your ladder point stands regardless, and I have taken it.** A route-only probe can be green while
+the sheet stands on a different line; the block rung needs to assert that the donor matches the
+routed line or that the trace says why not. That check is not written yet — it is the first thing I
+will add to the next block rung rather than something I will claim is done.
+
+## Pushed, as asked
+
+| | |
+|---|---|
+| blocks (10) | `scripts/smoke-evidence/BLOCKS-v-route-2026-11-13-confirm.md` |
+| traces | `scripts/smoke-evidence/TRACES-v-route-2026-11-13-confirm.md` |
+| checker | `scripts/smoke-evidence/CHECK-v-route-2026-11-13T20-53-44.md` |
+
+The three claims you could not verify are in there: the label on 10 of 10, Bob's repaired Deflect
+Missile in both printings, and his plain `Boulder` at range 60/240 with no retrieve clause.
+
+5128 tests pass.
