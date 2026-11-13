@@ -1819,7 +1819,7 @@ Return ONLY a JSON object with the SAME sections, SAME entry order, SAME entry n
   };
 
   let ctx2;
-  try { ctx2 = buildContext(model.cr, bodyFamilyOf(model) ?? 'balanced'); }
+  try { ctx2 = buildContext(model.cr, chassisRoleOf(model) ?? 'balanced'); }
   catch { ctx2 = buildContext(model.cr, 'balanced'); } // saved reskin blocks carry internal family names ('caster') — never crash a conversion on vocabulary (2026-09-14)
   const { chassis, plan } = ctx2;
   // Chassis passed so chassis-gated rules in the conversion set (bps-
@@ -2763,6 +2763,31 @@ export function bodyFamilyOf(monster) {
   return label && label !== 'balanced' ? label : null;
 }
 
+/**
+ * The same question, asked of the CHASSIS TABLE, which knows a narrower vocabulary.
+ *
+ * The route returns eight families — brute, skirmisher, lurker, caster, defender,
+ * swarm, ooze, dragon — and `ARCHETYPE_NAMES` holds only six of them: `caster`,
+ * `ooze` and `dragon` are not cards. `applyArchetype` THROWS on an unknown name, and
+ * `rerollEntry`/`rerollSection` call `buildContext` with no catch, so handing a caster
+ * body's own family to the chassis lookup breaks re-rolling on that sheet outright
+ * (2026-11-13: it did, on every caster sheet, until this existed). The band hints sit
+ * inside a try/catch and failed silently instead, which is worse to find.
+ *
+ * So the two readers ask different questions and get different answers. The template
+ * shelf wants the FAMILY and `caster` is a real template role there — `bodyFamilyOf`.
+ * The chassis table wants a name it actually has: the routed family when it is one,
+ * the user's label when it is not, and `null` (which `buildContext` reads as
+ * "balanced") rather than a throw. That last arm also fixes `ooze` and `dragon`, which
+ * threw here before any of today's work.
+ */
+export function chassisRoleOf(monster) {
+  for (const candidate of [monster?.generation?.archetype, monster?.archetype]) {
+    if (candidate && candidate !== 'balanced' && ARCHETYPE_NAMES.includes(candidate)) return candidate;
+  }
+  return null;
+}
+
 function rerollCatalog(monster, { section, cr, chassis, numbers, stats, pb, exclude = null, excludeTemplate = null }) {
   const key = SECTION_KEY_OF[section];
   if (!key || !stats) return null;
@@ -2823,7 +2848,7 @@ export async function rerollEntry(monster, { kind, current, degraded = false }, 
   // First numeric token, tolerant of "CR 5 (1,800 XP)" style prefixes.
   const crToken = String(monster.challenge_rating ?? '').match(/\d+\/\d+|\d+(\.\d+)?/)?.[0];
   const cr = monster.cr ?? crNumberFor(crToken ?? '');
-  const { chassis: card, plan } = buildContext(cr, bodyFamilyOf(monster) ?? 'balanced');
+  const { chassis: card, plan } = buildContext(cr, chassisRoleOf(monster) ?? 'balanced');
   const numbers = damageBudgetFor(cr, card, plan); // the DAMAGE budget is the card's; the DC and the attack bonus are stat-derived, so the sheet's own stand
   const chassis = { ...card, ...sheetNumbersOf(monster, card) };
   const stats = monster.stats ?? parseLegacyAttributes(monster.attributes);
@@ -3005,7 +3030,7 @@ export async function rerollSection(monster, { kind, suggestion = '', degraded =
 
   const crToken = String(monster.challenge_rating ?? '').match(/\d+\/\d+|\d+(\.\d+)?/)?.[0];
   const cr = monster.cr ?? crNumberFor(crToken ?? '');
-  const { chassis: card, plan } = buildContext(cr, bodyFamilyOf(monster) ?? 'balanced');
+  const { chassis: card, plan } = buildContext(cr, chassisRoleOf(monster) ?? 'balanced');
   const numbers = damageBudgetFor(cr, card, plan);
   const chassis = { ...card, ...sheetNumbersOf({ ...monster, sections: Object.fromEntries(Object.entries(monster.sections ?? {}).filter(([k]) => k !== section)) }, card) }; // the section being replaced is not its own reference
   const stats = monster.stats ?? parseLegacyAttributes(monster.attributes);

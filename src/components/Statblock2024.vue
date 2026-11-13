@@ -204,7 +204,7 @@ import Statblock2024Skeleton from './skeletons/Statblock2024Skeleton.vue';
 import { logger } from '@/util/logger.mjs';
 import { labelsFor } from './statblock-labels.mjs';
 import { generateGptResponse, isDegradedMode } from '@/util/ai-client.mjs';
-import { rerollEntry, rerollSection, buildContext, bodyFamilyOf } from '@/tools/statblock-generator/format-2024/generate.mjs';
+import { rerollEntry, rerollSection, buildContext, chassisRoleOf } from '@/tools/statblock-generator/format-2024/generate.mjs';
 import { lintStatblock } from '@/tools/statblock-generator/format-2024/lint.mjs';
 
 // A ROW NAME THAT ENDS IN ITS OWN PUNCTUATION TAKES NO FULL STOP (forty #4, #33).
@@ -365,7 +365,7 @@ const bandHints = computed(() => {
   try {
     // the band hints compare the sheet to its BODY's card, not to the role label
     // the user picked (2026-11-13)
-    const { chassis } = buildContext(m.cr, bodyFamilyOf(m) ?? 'balanced');
+    const { chassis } = buildContext(m.cr, chassisRoleOf(m) ?? 'balanced');
     return lintStatblock(m, { chassis, edition: '2024' })
       .findings.filter((f) => f.severity === 'correctable').map((f) => f.message);
   } catch {

@@ -241,3 +241,98 @@ The three claims you could not verify are in there: the label on 10 of 10, Bob's
 Missile in both printings, and his plain `Boulder` at range 60/240 with no retrieve clause.
 
 5128 tests pass.
+
+---
+
+# Round 3 — the caster re-roll regression
+
+You were right, it was mine, and it was worse than one family.
+
+## The break
+
+`bodyFamilyOf` returns the ROUTED family. The route returns eight —
+`brute, skirmisher, lurker, caster, defender, swarm, ooze, dragon` — and
+`ARCHETYPE_NAMES` holds six. `caster`, `ooze` and `dragon` are not cards, and
+`applyArchetype` throws on an unknown name:
+
+```
+  ok     brute        ok     skirmisher    ok     lurker      ok   defender
+  ok     artillery    ok     controller    ok     swarm       ok   support
+  THROWS caster       THROWS ooze          THROWS dragon
+```
+
+`rerollEntry` and `rerollSection` call `buildContext` with no catch, so every caster sheet broke on
+re-roll. The band hints sit inside a try/catch and failed silently, which is the worse half.
+
+## The fix, in your direction
+
+The two readers ask different questions, so they get different answers:
+
+```js
+bodyFamilyOf(m)   // the routed family. The TEMPLATE SHELF wants this; `caster` is a real role there.
+chassisRoleOf(m)  // the routed family IF the chassis table has it, else the user's label, else null.
+```
+
+`rerollCatalog` keeps `bodyFamilyOf`. The three `buildContext` sites and the band hints take
+`chassisRoleOf`. It reads `ARCHETYPE_NAMES` rather than a second hand-written list, so a new card
+name needs no edit here.
+
+**Your ooze call was right too, and I confirmed it the way you asked — on a real saved sheet, not a
+hand-built one.** `sweep-2026-11-12/30-reliquary-vault-ooze.json` carries `archetype: "ooze"` and
+`generation.archetype: "ooze"`, so both candidates were unknown names and the lookup threw. It now
+resolves to `null` → balanced and survives. Broken before today, fixed as a side effect.
+
+## The test you asked for
+
+`reroll-survives-every-routed-family.spec.js` walks `LINES` rather than a list of families someone
+remembered, so a new shelf line is asked about automatically. It covers:
+
+- every routed family × four labels, through `buildContext`
+- **`rerollEntry` itself**, the entry point you tested, with a stub that throws a sentinel — it
+  reaches `buildContext` before it ever calls the model, so "sentinel" means the lookup survived and
+  "Unknown archetype" means it did not
+- a caster body falling back to the label; a body family with no label falling to balanced; a known
+  family still outranking the label
+- an assertion that the shelf really does return families the chassis table lacks, so if that ever
+  stops being true the test says so instead of quietly passing
+
+Sensitivity: with `chassisRoleOf` reduced to `bodyFamilyOf`, 8 of its 20 tests fail. 5148 tests pass
+overall.
+
+## The saved field you could not verify
+
+Fair — the blocks render the card, not the JSON. Here it is from the run:
+
+| sheet | picked | archetype (label) | source | generation.archetype (body) | donor |
+|---|---|---|---|---|---|
+| Big Bob | artillery | artillery | user | skirmisher | skirmisher-8-hurler |
+| Old Marta | artillery | artillery | user | skirmisher | skirmisher-3 |
+| Pitchcatapult Ogre | artillery | artillery | user | skirmisher | skirmisher-8-hurler |
+| Ashpit Retiarius | controller | controller | user | skirmisher | skirmisher-8-hurler |
+| Rafter Broodmother | controller | controller | user | brute | brute-5 |
+| Sister Maudra | controller | controller | user | caster | caster-6 |
+| Skyburner | artillery | artillery | user | caster | caster-6 |
+| Bramblejack | lurker | lurker | user | lurker | lurker-2 |
+| Vhalgrin | artillery | artillery | user | skirmisher | skirmisher-8-hurler |
+| Orsolya | controller | controller | user | caster | caster-6 |
+
+Label 10 of 10, and the two fields visibly disagree on 9 of them — which is the whole point, and
+also exactly why pointing the chassis lookup at the wrong one broke so much.
+
+## Vhalgrin's row — confirmed, and it is a repeat
+
+> *Cracked-Core Strike.* …*Failure:* 16 (3d10) Radiant damage. **If the target already has the Prone
+> condition, it also has the Prone condition.**
+
+The same row shape as #14 Thawless Heart on the GM forty — both open "strikes where the target
+cannot guard", both fill a payoff with its own precondition. Two instances, two readers, one fill
+site. On the small-items list as "refuse payoff === precondition", with both sheets as its
+known-bad replay.
+
+## Your strip-or-report recommendation
+
+Noted in full and passed to the owner, whose call it is — including your scoping, which is the part
+I would not have got right alone: strip only when the dangling frame is the TAIL of a row that
+already has a complete attack, take the lead-in sentence with it, and say in the trace and the CHECK
+file that a rider was lost so the kit-rider fix stays visibly owed. Nothing is stripped until he
+rules.
