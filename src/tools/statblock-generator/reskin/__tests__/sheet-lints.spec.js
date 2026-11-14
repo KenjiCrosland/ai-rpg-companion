@@ -12,6 +12,7 @@
  * committed data until R3 landed would mask every new regression — the opposite
  * of this item's purpose.
  */
+import { buildFitPrompt, TEMPLATE_BY_ID } from '@/tools/statblock-generator/reskin/templates.mjs';
 import fs from 'node:fs';
 import { citesGenericAttacks, multiattackAttackClauses, multiattackCitations, multiattackSpells, repairMultiattackAttackList, repairReplaceClause, replaceClauseRowOf } from '../checker.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
@@ -978,22 +979,38 @@ describe('a payoff escalates in one of four shapes', () => {
 // templates.mjs carries a comment warning about precisely this, from an earlier shape
 // that went dead the same way this sprint. This test is the guard that was missing.
 describe('the escalation choice reaches the prompt', () => {
-  const src = fs.readFileSync(path.join(__dirname, '..', 'templates.mjs'), 'utf8');
+  // THESE THREE USED TO READ templates.mjs AS TEXT — `expect(src).toMatch(/if
+  // \(t\.rewardsCondition\) vocab\.push\(/)`. They passed for weeks while the behaviour
+  // was absent, because the catalog builder drops `rewardsCondition` and the flag is
+  // `undefined` at runtime (see a-shape-field-reaches-its-template.spec.js). A guard that
+  // greps its own source cannot tell a live code path from a dead one. These call the
+  // prompt builder instead (item 5a step 3, 2026-11-14).
+  const idea = { idea: 'it finishes a target already reeling', section: 'action', trigger: 'save', effect: 'condition', family: 'payoff' };
+  const menuLine = (tpl, cr = 12) => buildFitPrompt({ name: 'X', idea, menu: [tpl], cr, concept: '' })
+    .split('\n').find((l) => l.startsWith('- condition-payoff')) ?? '';
+  const payoff = { ...TEMPLATE_BY_ID.get('condition-payoff'), rewardsCondition: true };
 
-  it('is pushed into the template menu for a payoff', () => {
-    expect(src).toMatch(/if \(t\.rewardsCondition\) vocab\.push\(/);
+  it('is offered to the model when a template rewards a condition', () => {
+    expect(menuLine(payoff)).toMatch(/"escalation" ∈/);
   });
 
   it('and names every shape the band allows, so the model can pick one', () => {
-    const line = (src.split('\n').find((l) => /t\.rewardsCondition\) vocab\.push/.test(l)) ?? '');
-    expect(line).toMatch(/escalationShapesFor\(cr\)/);   // the band gates exhaustion, not a literal list
+    const line = menuLine(payoff);
+    expect(line).toMatch(/condition\/exhaustion\/damage\/mark/);
     expect(line).toMatch(/Exhaustion/);
     expect(line).toMatch(/Advantage/);
   });
 
   it('and the engine still owns the numbers, which the menu says out loud', () => {
-    const line = (src.split('\n').find((l) => /t\.rewardsCondition\) vocab\.push/.test(l)) ?? '');
-    expect(line).toMatch(/engine writes every number/i);
+    expect(menuLine(payoff)).toMatch(/engine writes every number/i);
+  });
+
+  // AND THE CATALOG ENTRY DOES NOT CARRY THE FLAG YET, so none of the above reaches a
+  // real sheet. Step 4 carries it; this assertion then flips and the three above start
+  // guarding live behaviour rather than a mechanism.
+  it('— but the shipped catalog entry is still dark, so the model is never asked', () => {
+    expect(TEMPLATE_BY_ID.get('condition-payoff').rewardsCondition).toBeUndefined();
+    expect(menuLine(TEMPLATE_BY_ID.get('condition-payoff'))).not.toMatch(/"escalation" ∈/);
   });
 });
 
