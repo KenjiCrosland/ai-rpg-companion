@@ -33,7 +33,21 @@ const GEN_TIMEOUT_MS = Number(process.env.SMOKE_TIMEOUT_MS ?? 240_000);
 
 const args = process.argv.slice(2);
 const headed = args.includes('--headed');
-const onlyIdx = args.includes('--only') ? Number(args[args.indexOf('--only') + 1]) : null;
+// `--only` TAKES ONE INDEX, AND SAYS SO WHEN IT DOES NOT (2026-11-14). `--only 4,11,12`
+// used to become NaN and silently run the whole batch — a reviewer lost a run to it,
+// having asked for three blocks and been handed twelve. A flag that quietly does the
+// opposite of what it was given is worse than one that refuses.
+const onlyIdx = (() => {
+  if (!args.includes('--only')) return null;
+  const raw = args[args.indexOf('--only') + 1];
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 1) {
+    console.error(`--only takes ONE 1-based index; got "${raw ?? '(nothing)'}".`);
+    if (String(raw ?? '').includes(',')) console.error('A comma list is not supported — run the batch once, or pass a single index per run.');
+    process.exit(2);
+  }
+  return n;
+})();
 const batchName = args.find((a) => !a.startsWith('--') && a !== String(onlyIdx)) ?? 'batch';
 let goldenFailures = 0;
 

@@ -6191,6 +6191,19 @@ Return ONLY JSON with EXACTLY these corrected pieces:
                 const answersGM = !!idea?.clause;
                 if (!answersGM) freeRowsUsed += 1;
                 row.authoredSeat = true; // the sameness metric and the gap ship-check count it as the seat's own row, not a template's
+                // TWO KEYS FOR A RIDER (the fix 2 review, 2026-11-14). Key one is the idea
+                // call: it labelled this a condition on a hit, which is why the idea was
+                // re-seated onto the rider path at all. Key two is the FIT call, and it has
+                // just refused every rider form — so the engine has one key, not two, and the
+                // row falls back to the trait it was authored as.
+                //
+                // That fallback is correct far more often than it is wrong: on the Grask block
+                // of 2026-11-14 the idea call labelled a passive stance ("scores a Critical Hit
+                // on a roll of 19 or 20, and he cannot be Frightened") `payoff` + `condition`,
+                // and honouring the section would have welded that onto the Longsword as a
+                // rider it is not. The stamp below is what lets the ship check tell the two
+                // apart without trusting either call on its own.
+                if (idea?.reseated) row.riderRefused = idea.reseated;
                 if (answersGM) row.clause = row.clause ?? idea.clause;
                 const authoredSeatShape = { row, templateName: null, section: form.section, template: null, host: 'melee', supersedes: null, asked: vetAsked(fit.asked, rawConceptText), askedRaw: String(fit.asked ?? '').trim(), expresses: fit.expresses ?? null, accepted_closest: false, elementsOffered: sigElements, authoredSeat: true, because: `${String(idea.idea ?? '').slice(0, 160)} [authored: the catalog held no shape for it]` };
                 if (answersGM) trace('authored row answers the GM:', `${seat} — "${row.name}" was written for "${String(idea.clause).slice(0, 70)}", so it is NOT a free row and never competes for the free-row slot; the card ceiling still governs it`);
@@ -10805,6 +10818,40 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           trace('guarded stance withdrawn:', `${sec}/"${e.name}" leaves the finished sheet — ${guardedStanceWhy(acNow)}; the menu filter had checked an AC that print canon changed afterwards`);
         }
       }
+    }
+  }
+  // A CONDITION ON A HIT DOES NOT SHIP AS A TRAIT (owner's ruling 2026-11-13; the
+  // two-key design from the fix 2 review, 2026-11-14).
+  //
+  // The second key. The idea call said "a condition on a hit", so the idea was re-seated
+  // onto the rider path; the fit call then refused every rider form and the seat authored
+  // a trait instead (`riderRefused`). One key, not two — so the trait stands, UNLESS it
+  // actually imposes a condition, in which case it is the very row the ruling forbids:
+  // Grask's Locking Grip grappled on every Longsword hit, three times a round, with no
+  // save and no escape DC, and failed `grapple-no-escape` for it.
+  //
+  // SCOPED TO ROWS THIS FIX MOVED, which is narrower than "any trait that imposes a
+  // condition" — that would refuse a fear aura, a noxious aura and every zone trait,
+  // which impose conditions legitimately and are nobody's rider. `riderRefused` is only
+  // on a row whose own idea was re-seated, so the reach is exactly the rows fix 2 touched.
+  //
+  // The two cases the review tabled, both reproduced by this scoping:
+  //   a mislabelled stance ("crit on 19-20, cannot be Frightened") imposes NO condition
+  //     -> it keeps its trait, which is what it always was
+  //   Grask's grapple-on-a-hit imposes Grappled
+  //     -> refused as a trait, and the GM's ask becomes visibly owed rather than silently
+  //        answered by a row that should not exist
+  for (const [sec, es] of Object.entries(monster.sections ?? {})) {
+    if (sec !== 'Traits') continue;
+    for (let i = (es ?? []).length - 1; i >= 0; i -= 1) {
+      const e = es[i];
+      if (!e?.riderRefused) continue;
+      const imposed = imposedConditions(e);
+      if (!imposed.length) { trace('re-seated idea keeps its trait:', `${sec}/"${bareName(e)}" imposes no condition, so the idea call's "condition on a hit" label was wrong and the trait stands (re-seated ${e.riderRefused})`); delete e.riderRefused; continue; }
+      es.splice(i, 1);
+      sweepDeadName(monster.sections, e.name, null, trace);
+      trace('condition on a hit refused as a trait:', `${sec}/"${bareName(e)}" imposes ${imposed.join(' and ')} on a hit and no attack row carries it — the fit call refused every rider form, so the row does not ship (owner's ruling); the ask is owed`);
+      if (e.clause && !owedUnanswered.includes(e.clause)) owedUnanswered.push(e.clause);
     }
   }
   if (repairProse.length && monster.generation) monster.generation.answered_in_prose = repairProse.map((u) => u.clause);
