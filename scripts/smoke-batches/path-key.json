@@ -1,0 +1,705 @@
+{
+ "what": "Hand answer key for the path decision (path.mjs dispatch). Written by Fable 5.2 on 2026-11-14 under the owner's rulings of that date. Not a smoke batch: it is read by the path probe, one call per roll.",
+ "how_to_score": "A roll is RIGHT when its path is in okPaths AND its body passes. Body rule: needBody true = the decision must carry one of okBodies with relation \"is\". needBody false with okBodies listed = a body is optional, but if one is carried with relation \"is\" it must be in okBodies. okBodies null = no body may be carried with relation \"is\". Only entries with counts true go toward the bar; the rest are reported, not scored.",
+ "prompts": [
+  {
+   "id": "typed40-1",
+   "name": "Grask Ironjaw",
+   "concept": "orc war chief",
+   "cr": "5",
+   "edition": "2024",
+   "okPaths": [
+    "class_npc"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "a named person with a rank; orc is a species kit, not a print block"
+  },
+  {
+   "id": "typed40-2",
+   "name": "Sister Maudra",
+   "concept": "cleric of the drowned god",
+   "cr": "7",
+   "edition": "2014",
+   "role": "controller",
+   "okPaths": [
+    "class_npc"
+   ],
+   "okBodies": [
+    "Priest"
+   ],
+   "needBody": false,
+   "counts": true,
+   "why": "a cleric by name; a Priest body is fine, no body is fine"
+  },
+  {
+   "id": "typed40-3",
+   "name": "Captain Vell",
+   "concept": "pirate captain, lost a hand to a shark, hates the sea",
+   "cr": "6",
+   "edition": "2024",
+   "okPaths": [
+    "class_npc"
+   ],
+   "okBodies": [
+    "Pirate Captain"
+   ],
+   "needBody": false,
+   "counts": true,
+   "why": "a person with a title; a Pirate Captain body is fine"
+  },
+  {
+   "id": "typed40-4",
+   "name": "Thessaly Nightbloom",
+   "concept": "elf ranger, twin shortswords",
+   "cr": "4",
+   "edition": "2014",
+   "okPaths": [
+    "class_npc"
+   ],
+   "okBodies": [
+    "Scout"
+   ],
+   "needBody": false,
+   "counts": true,
+   "why": "a person with a class word"
+  },
+  {
+   "id": "typed40-5",
+   "name": "Lord Vexmoor",
+   "concept": "necromancer BBEG, raises the party's fallen allies",
+   "cr": "12",
+   "edition": "2024",
+   "okPaths": [
+    "class_npc"
+   ],
+   "okBodies": [
+    "Mage",
+    "Archmage"
+   ],
+   "needBody": false,
+   "counts": true,
+   "why": "a person; necromancer is a mage"
+  },
+  {
+   "id": "typed40-6",
+   "name": "Bramblejack",
+   "concept": "",
+   "cr": "3",
+   "edition": "2024",
+   "role": "lurker",
+   "okPaths": [
+    "class_npc",
+    "homebrew"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": false,
+   "why": "a bare invented name with a role; a person or a creature are both fair readings"
+  },
+  {
+   "id": "typed40-7",
+   "name": "Krug",
+   "concept": "ogre",
+   "cr": "2",
+   "edition": "2014",
+   "okPaths": [
+    "twist",
+    "exact"
+   ],
+   "okBodies": [
+    "Ogre"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "the description is a whole print name; Krug is his personal name"
+  },
+  {
+   "id": "typed40-8",
+   "name": "Mother Ash",
+   "concept": "hag midwife",
+   "cr": "9",
+   "edition": "2024",
+   "okPaths": [
+    "twist",
+    "class_npc"
+   ],
+   "okBodies": [
+    "Green Hag",
+    "Sea Hag",
+    "Night Hag"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "BODY IS THE POINT: she is a hag. Either path is fine if a printed hag is the body; homebrew loses her"
+  },
+  {
+   "id": "typed40-9",
+   "name": "Dervish Kal",
+   "concept": "fast, two scimitars, hit and run",
+   "cr": "5",
+   "edition": "2014",
+   "role": "skirmisher",
+   "okPaths": [
+    "class_npc"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": false,
+   "why": "a described person with no class word; wanted on a person body, but today only reachable if the call infers a class"
+  },
+  {
+   "id": "typed40-10",
+   "name": "The Pale Warden",
+   "concept": "guardian of the crypt door",
+   "cr": "8",
+   "edition": "2024",
+   "role": "defender",
+   "okPaths": [
+    "homebrew",
+    "class_npc"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": false,
+   "why": "a guardian of unknown kind"
+  },
+  {
+   "id": "typed40-11",
+   "name": "Zarnak",
+   "concept": "basically a xenomorph",
+   "cr": "7",
+   "edition": "2024",
+   "okPaths": [
+    "homebrew"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "an invented creature; nothing in print is named"
+  },
+  {
+   "id": "typed40-12",
+   "name": "big bob",
+   "concept": "giant who throws boulders",
+   "cr": "9",
+   "edition": "2014",
+   "role": "artillery",
+   "okPaths": [
+    "homebrew",
+    "twist"
+   ],
+   "okBodies": [
+    "Hill Giant",
+    "Stone Giant",
+    "Frost Giant",
+    "Fire Giant",
+    "Cloud Giant",
+    "Storm Giant"
+   ],
+   "needBody": false,
+   "counts": false,
+   "why": "\"giant\" is not a whole print name; a twist on a printed giant or a homebrew are both fair"
+  },
+  {
+   "id": "typed40-13",
+   "name": "",
+   "concept": "lizard folk shadow monk",
+   "cr": "6",
+   "edition": "2024",
+   "okPaths": [
+    "class_npc"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "lizardfolk is a species kit, monk a class. MUST NOT take the Shadow or the Lizard as a body"
+  },
+  {
+   "id": "typed40-14",
+   "name": "",
+   "concept": "fire monk",
+   "cr": "5",
+   "edition": "2014",
+   "okPaths": [
+    "class_npc"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "a class word with a flavour word"
+  },
+  {
+   "id": "typed40-15",
+   "name": "",
+   "concept": "goblin wizard",
+   "cr": "3",
+   "edition": "2024",
+   "okPaths": [
+    "class_npc"
+   ],
+   "okBodies": [
+    "Goblin Warrior"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "RULING 3: a mage who is visibly a goblin, on the Goblin Warrior body. A class with no body loses the goblin"
+  },
+  {
+   "id": "typed40-16",
+   "name": "",
+   "concept": "vampire pirate",
+   "cr": "10",
+   "edition": "2014",
+   "okPaths": [
+    "twist"
+   ],
+   "okBodies": [
+    "Vampire"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "fix 6: a monster named as itself, with a job word"
+  },
+  {
+   "id": "typed40-17",
+   "name": "",
+   "concept": "owlbear zombie",
+   "cr": "4",
+   "edition": "2024",
+   "okPaths": [
+    "twist"
+   ],
+   "okBodies": [
+    "Owlbear"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "an owlbear raised as a zombie: the owlbear is the body. A Zombie body is a defensible second; homebrew is wrong"
+  },
+  {
+   "id": "typed40-18",
+   "name": "Beholder",
+   "concept": "",
+   "cr": "13",
+   "edition": "2024",
+   "okPaths": [
+    "homebrew"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "not in the SRD; no body to stand on"
+  },
+  {
+   "id": "typed40-19",
+   "name": "Mind Flayer",
+   "concept": "",
+   "cr": "7",
+   "edition": "2014",
+   "okPaths": [
+    "homebrew"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "not in the SRD; no body to stand on"
+  },
+  {
+   "id": "typed40-20",
+   "name": "",
+   "concept": "displacer beast",
+   "cr": "3",
+   "edition": "2024",
+   "okPaths": [
+    "homebrew"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "not in the SRD; no body to stand on"
+  },
+  {
+   "id": "typed40-21",
+   "name": "",
+   "concept": "haunted suit of armor",
+   "cr": "4",
+   "edition": "2014",
+   "okPaths": [
+    "twist",
+    "homebrew"
+   ],
+   "okBodies": [
+    "Animated Armor"
+   ],
+   "needBody": false,
+   "counts": false,
+   "why": "close enough to the Animated Armor that either reading is fair"
+  },
+  {
+   "id": "typed40-22",
+   "name": "",
+   "concept": "clockwork spider",
+   "cr": "2",
+   "edition": "2024",
+   "okPaths": [
+    "homebrew"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "a construct that resembles a spider; must not be welded onto a printed spider"
+  },
+  {
+   "id": "typed40-23",
+   "name": "Orrin Blackwell",
+   "concept": "Orrin was the village's blacksmith until the war took his sons. He made a pact with something under the forge and now his hammer glows when he's angry. He protects the village but the villagers are afraid of him. He fights with the hammer and can heat metal armor with a touch. Loyal to the party if they help the village.",
+   "cr": "6",
+   "edition": "2024",
+   "okPaths": [
+    "class_npc"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "a named person with a trade and a story"
+  },
+  {
+   "id": "typed40-24",
+   "name": "Queen Ysolde the Unburied",
+   "concept": "Ancient queen of the barrow kings, dead 400 years, woke when the players took the crown. She commands the wights in the barrow. Cold aura, regenerates unless hit with fire, speaks only the old tongue. AC 17, about 150 hp. She wants the crown back and will bargain.",
+   "cr": "11",
+   "edition": "2014",
+   "okPaths": [
+    "homebrew",
+    "twist"
+   ],
+   "okBodies": [
+    "Wight"
+   ],
+   "needBody": false,
+   "counts": false,
+   "why": "she commands wights; the words do not say she is one"
+  },
+  {
+   "id": "typed40-25",
+   "name": "Pip",
+   "concept": "A kobold who was raised by a green dragon and thinks he IS a dragon. Wears homemade wings. Breathes a little poison gas (he practices). Extremely confident. The party's first recurring villain. He should be funny but actually a little dangerous in a group.",
+   "cr": "1",
+   "edition": "2024",
+   "okPaths": [
+    "twist"
+   ],
+   "okBodies": [
+    "Kobold Warrior"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "the words say he IS a kobold; \"resembles\" is wrong here"
+  },
+  {
+   "id": "typed40-26",
+   "name": "The Hollow Cardinal",
+   "concept": "Leader of the Church of the Empty Throne. A human priest whose faith was hollowed out and filled by an Aberration from beyond the stars. Looks normal until his face splits open. Casts divine spells but they come out wrong - healing that hurts, light that blinds. Has a retinue of brainwashed acolytes. Wants to open the throne room door at the bottom of the cathedral.",
+   "cr": "14",
+   "edition": "2024",
+   "role": "controller",
+   "okPaths": [
+    "class_npc"
+   ],
+   "okBodies": [
+    "Priest"
+   ],
+   "needBody": false,
+   "counts": true,
+   "why": "a human priest by the words"
+  },
+  {
+   "id": "typed40-27",
+   "name": "Grizzelda",
+   "concept": "swamp witch npc, sells potions, secretly a hag. if the pcs attack her she reveals her true form. claws, curses, can turn invisible. has a cauldron that she can summon things from 1/day",
+   "cr": "5",
+   "edition": "2014",
+   "okPaths": [
+    "twist",
+    "class_npc"
+   ],
+   "okBodies": [
+    "Green Hag",
+    "Sea Hag",
+    "Night Hag"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "BODY IS THE POINT: secretly a hag. Either path if a printed hag is the body"
+  },
+  {
+   "id": "typed40-28",
+   "name": "Shadowfang",
+   "concept": "the druid's wolf companion, bigger than a normal wolf, has a scar over one eye and shadows seem to follow it. Should be tougher than a dire wolf.",
+   "cr": "3",
+   "edition": "2024",
+   "okPaths": [
+    "twist"
+   ],
+   "okBodies": [
+    "Wolf",
+    "Dire Wolf"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "a wolf by the words, compared to a dire wolf"
+  },
+  {
+   "id": "typed40-29",
+   "name": "",
+   "concept": "CR 8 brute, two attacks, grapples",
+   "cr": "8",
+   "edition": "2024",
+   "okPaths": [
+    "homebrew"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "numbers only, no creature named"
+  },
+  {
+   "id": "typed40-30",
+   "name": "",
+   "concept": "owlbear but CR 8",
+   "cr": "8",
+   "edition": "2014",
+   "okPaths": [
+    "twist",
+    "exact"
+   ],
+   "okBodies": [
+    "Owlbear"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "a whole print name with a CR change"
+  },
+  {
+   "id": "typed40-31",
+   "name": "",
+   "concept": "a troll but weak to cold instead of fire",
+   "cr": "5",
+   "edition": "2024",
+   "okPaths": [
+    "twist"
+   ],
+   "okBodies": [
+    "Troll"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "a print name with one swap"
+  },
+  {
+   "id": "typed40-32",
+   "name": "",
+   "concept": "goblin boss with a heavy crossbow",
+   "cr": "1",
+   "edition": "2014",
+   "okPaths": [
+    "twist"
+   ],
+   "okBodies": [
+    "Goblin Boss"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "Goblin Boss is a whole print name in the words. The Goblin Warrior is the wrong body"
+  },
+  {
+   "id": "typed40-33",
+   "name": "Thornback",
+   "concept": "an ankheg but legendary, boss fight for level 5",
+   "cr": "8",
+   "edition": "2024",
+   "okPaths": [
+    "twist"
+   ],
+   "okBodies": [
+    "Ankheg"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "a print name made legendary"
+  },
+  {
+   "id": "typed40-34",
+   "name": "",
+   "concept": "AC 18 HP 200 hits hard, slow",
+   "cr": "10",
+   "edition": "2024",
+   "role": "brute",
+   "okPaths": [
+    "homebrew"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "numbers only, no creature named"
+  },
+  {
+   "id": "typed40-35",
+   "name": "",
+   "concept": "a drgon",
+   "cr": "10",
+   "edition": "2024",
+   "okPaths": [
+    "homebrew",
+    "twist"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": false,
+   "why": "a typo for dragon; no specific printed dragon is named"
+  },
+  {
+   "id": "typed40-36",
+   "name": "",
+   "concept": "big scary tree thing",
+   "cr": "6",
+   "edition": "2014",
+   "okPaths": [
+    "homebrew",
+    "twist"
+   ],
+   "okBodies": [
+    "Treant",
+    "Awakened Tree"
+   ],
+   "needBody": false,
+   "counts": false,
+   "why": "resembles a treant; either reading is fair"
+  },
+  {
+   "id": "typed40-37",
+   "name": "",
+   "concept": "what would a CR 4 swamp monster look like",
+   "cr": "4",
+   "edition": "2024",
+   "okPaths": [
+    "homebrew"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "a question, no creature named"
+  },
+  {
+   "id": "typed40-38",
+   "name": "",
+   "concept": "the thing that's been killing my players' horses",
+   "cr": "3",
+   "edition": "2014",
+   "okPaths": [
+    "homebrew"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "a mystery, no creature named"
+  },
+  {
+   "id": "typed40-39",
+   "name": "Skarn the Tollkeeper",
+   "concept": "",
+   "cr": "auto",
+   "edition": "2024",
+   "okPaths": [
+    "class_npc",
+    "homebrew"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": false,
+   "why": "a name with an epithet and no description"
+  },
+  {
+   "id": "typed40-40",
+   "name": "",
+   "concept": "sewer alligator",
+   "cr": "auto",
+   "edition": "2014",
+   "okPaths": [
+    "homebrew",
+    "twist"
+   ],
+   "okBodies": [
+    "Crocodile",
+    "Giant Crocodile"
+   ],
+   "needBody": false,
+   "counts": false,
+   "why": "an alligator resembles the Crocodile; either reading is fair"
+  },
+  {
+   "id": "fix6-ogre-blacksmith",
+   "name": "",
+   "concept": "ogre blacksmith",
+   "cr": "3",
+   "edition": "2024",
+   "okPaths": [
+    "twist"
+   ],
+   "okBodies": [
+    "Ogre"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "fix 6: a monster named as itself, with a trade"
+  },
+  {
+   "id": "fix6-vampire-pirate-2024",
+   "name": "",
+   "concept": "vampire pirate",
+   "cr": "8",
+   "edition": "2024",
+   "okPaths": [
+    "twist"
+   ],
+   "okBodies": [
+    "Vampire"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "fix 6: the same words as typed40-16 on the 2024 shelf"
+  },
+  {
+   "id": "fix6-ooze-control",
+   "name": "",
+   "concept": "cathedral-vault ooze",
+   "cr": "5",
+   "edition": "2024",
+   "okPaths": [
+    "homebrew"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "CONTROL: \"ooze\" is not a whole print name; must not be welded onto a printed ooze"
+  },
+  {
+   "id": "ruling3-goblin-assassin",
+   "name": "",
+   "concept": "goblin assassin",
+   "cr": "3",
+   "edition": "2024",
+   "okPaths": [
+    "class_npc"
+   ],
+   "okBodies": [
+    "Goblin Warrior"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "RULING 3: a rogue who is visibly a goblin, on the Goblin Warrior body"
+  }
+ ]
+}

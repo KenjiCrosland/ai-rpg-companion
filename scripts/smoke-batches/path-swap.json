@@ -1,0 +1,58 @@
+[
+ {
+  "id": "swap-ogre-blacksmith",
+  "name": "",
+  "concept": "ogre blacksmith",
+  "cr": "5",
+  "edition": "2024",
+  "predict": "LOW: class filled, body empty"
+ },
+ {
+  "id": "swap-ogre-pirate",
+  "name": "",
+  "concept": "ogre pirate",
+  "cr": "5",
+  "edition": "2024",
+  "predict": "LOW if the head drives it, HIGH if the trade word drives it"
+ },
+ {
+  "id": "swap-vampire-blacksmith",
+  "name": "",
+  "concept": "vampire blacksmith",
+  "cr": "5",
+  "edition": "2024",
+  "predict": "HIGH if the head drives it, LOW if the trade word drives it"
+ },
+ {
+  "id": "swap-vampire-pirate",
+  "name": "",
+  "concept": "vampire pirate",
+  "cr": "5",
+  "edition": "2024",
+  "predict": "HIGH: the prompt carries a near twin as an example"
+ },
+ {
+  "id": "swap-troll-blacksmith",
+  "name": "",
+  "concept": "troll blacksmith",
+  "cr": "5",
+  "edition": "2024",
+  "predict": "HIGH if \"reads as a people\" is the cause: a troll does not read as one"
+ },
+ {
+  "id": "swap-ghoul-gravedigger",
+  "name": "",
+  "concept": "ghoul gravedigger",
+  "cr": "5",
+  "edition": "2024",
+  "predict": "HIGH, same reason, with a different trade word"
+ },
+ {
+  "id": "swap-orc-blacksmith",
+  "name": "",
+  "concept": "orc blacksmith",
+  "cr": "5",
+  "edition": "2024",
+  "predict": "class_npc with species orc and NO body: a listed people with a kit and no print block"
+ }
+]
