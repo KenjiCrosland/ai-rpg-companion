@@ -1496,7 +1496,19 @@ function gateDonor(raw, m, ctx, F) {
     if (Number.isFinite(pc.ac) && pc.ac > 0 && Number(m.ac) !== pc.ac) F('print-ac', 'fail', `AC ${m.ac}, the ${pc.name}'s is ${pc.ac}`, m.ac);
   }
 }
+// A SAVE A GM CANNOT ROLL FAILS THE RUN (owner's ruling, 2026-11-13). The lint keeps
+// `save-unrollable` at `audit` so it deletes nothing — deleting the row takes a monk's
+// whole Unarmed Strike with it — but the check run counts it as a FAIL, because "zero
+// broken text" sits in the release bar and nothing else guards it.
+//
+// WHICH EDITION IT JUDGES: the checker lints every sheet in its 2024 form
+// (`lintStatblock(..., { edition: '2024' })`, below), which is what this rule needs.
+// Its "no outcome" half reads the LABELLED skeleton only — 2014 states an outcome
+// inline and in too many shapes to test without a word list — so a 2014 sheet is
+// judged on its 2024 printing, where the skeleton exists.
+const LINT_FAILS_THE_RUN = /^save-unrollable$/;
 const LINT_GATE = [
+  [LINT_FAILS_THE_RUN, 'adjudicability'],
   [/^(multiattack|dangling-use-ref|undefined-attack-ref|unknown-action-ref|duplicate-|diceless-damage|damage-dice|legendary|swarm-|counts|section-|slot-missing|empty-entry|hp-formula)/, 'structure'],
   [/^(restrain-gate|cc-aoe|spell-tiers|trait-recharge|trait-imposes-save|buff-behind-save)/, 'gates'],
   [/^(phrasing-|vocab-|bloodied-in-2014|emanation-in-2014|condition-.*-in-2014|area-caps-in-2014|half-as-much|term-caps|condition-caps|damage-type-caps|area-term-caps)/, 'edition'],
@@ -2303,8 +2315,19 @@ export function checkBlock(raw, ctx = {}) {
     const { findings } = servedVerbatim ? { findings: [] } : lintStatblock(JSON.parse(JSON.stringify(m)), { edition: '2024' });
     for (const f of findings) {
       const gate = LINT_GATE.find(([re]) => re.test(f.rule))?.[1]; if (!gate) continue;
-      if (f.loc?.entry && allRows(m).some(({ e }) => e.print && bare(e.name) === bare(f.loc.entry))) continue; // print's row is print
-      F(gate)(`lint:${f.rule}`, f.severity === 'reject' ? 'fail' : 'soft', f.message, f.expected ?? null);
+      // print's row is print — EXCEPT for a defect print demonstrably never ships.
+      // The monk's Unarmed Strike is stamped `print: true` (it is the Spy's row, renamed
+      // by the class-weapon pass) and then carries a rider the strip half-removed. The
+      // stamp let BOTH guards dismiss it: the audit filed it as "a finding on print, no
+      // sheet-level fix runs", and this line dropped it before it could fail anything.
+      // Print never writes an unrollable save — measured at 0 over 329 monsters of
+      // srd52 and 970 rows of the 2014 corpus, both asserted in
+      // a-save-a-gm-can-roll.spec.js — so on such a row the text is ours whatever the
+      // stamp says.
+      if (f.loc?.entry && !LINT_FAILS_THE_RUN.test(f.rule)
+        && allRows(m).some(({ e }) => e.print && bare(e.name) === bare(f.loc.entry))) continue;
+      const sev = (f.severity === 'reject' || LINT_FAILS_THE_RUN.test(f.rule)) ? 'fail' : 'soft';
+      F(gate)(`lint:${f.rule}`, sev, f.message, f.expected ?? null);
     }
   } catch (e) { F('structure')('lint-error', 'soft', `the lint threw: ${e?.message ?? e}`, String(e)); }
   const fid = fidelityOf(m, raw, context);

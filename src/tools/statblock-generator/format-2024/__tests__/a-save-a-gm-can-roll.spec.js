@@ -24,8 +24,9 @@
  * Strike outright — attack roll, damage and all — which `pipelines.spec` caught. A
  * monk with no melee attack is worse than a monk with a dangling save.
  */
-import { lintStatblock } from '@/tools/statblock-generator/format-2024/lint.mjs';
+import { lintStatblock, saveIsUnrollable } from '@/tools/statblock-generator/format-2024/lint.mjs';
 import srd from '@/data/srd52-monsters.json';
+import srd2014 from '@/data/srd-monsters.json';
 
 const lintRow = (text) => lintStatblock(
   { name: 'Test', cr: 5, sections: { Actions: [{ name: 'Row', text }] } },
@@ -81,5 +82,28 @@ describe('a save a GM can roll', () => {
     }
     expect(offenders).toEqual([]);
     expect(monsters.length).toBeGreaterThan(300); // the sweep actually ran
+  });
+
+  // AND THE 2014 CORPUS, which the rule also reaches: its rows are pasted verbatim onto
+  // any sheet that borrows a 2014 body. It flagged two before the item 2 review — the
+  // Rust Monster (the rule's bug, now fixed: 2014 states its outcome inline) and the
+  // Water Elemental's Whelm, which was a true positive pointing at a missing noun in
+  // the data, repaired by scripts/repair-srd2014-whelm.py.
+  test('ZERO findings across every 2014 print row', () => {
+    const monsters = Array.isArray(srd2014) ? srd2014 : (srd2014.monsters ?? Object.values(srd2014));
+    const offenders = [];
+    let rows = 0;
+    for (const m of monsters) {
+      const buckets = [m.actions, m.special_abilities, m.reactions, m.legendary_actions, ...Object.values(m.sections ?? {})];
+      for (const b of buckets) {
+        for (const r of (Array.isArray(b) ? b : [])) {
+          rows += 1;
+          const why = saveIsUnrollable(r?.description ?? r?.text ?? r?.desc ?? '');
+          if (why) offenders.push(`${m.name} / ${r?.name}: ${why}`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+    expect(rows).toBeGreaterThan(900); // the sweep actually ran
   });
 });
