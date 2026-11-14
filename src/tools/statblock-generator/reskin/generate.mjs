@@ -3503,7 +3503,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // failure, not a code one.
   const gapRecords = []; // the [gap] lines, emitted once the sheet is final so the outcome is the SHIPPED one
   let freeRowsUsed = 0;  // signature rows quoting none of the GM's words — the path sets the allowance (owner's ruling 2026-10-21)
-  let authored = null; let inlineGuessUsed = null; // the short form the kit and feature rows were stamped with, before the rows' form is settled
+  let authored = null; let inlineGuessUsed = null; let inlineResolved = null; // the short form the kit and feature rows were stamped with, before the rows' form is settled
   const priceTheRound = (when) => {
     const rowsP = Object.entries(sections).flatMap(([sec, es]) => es.map((e) => ({ sec, e })));
     const printCrNear = !!pcPlain && nearPrintCr(cr, pcPlain.cr);
@@ -4307,8 +4307,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // the alarm can never drift apart.
           const unrollable = saveIsUnrollable(row.text);
           if (unrollable) { trace('rider lost:', `${row.name} does not ride "${host.name}" — ${unrollable}; the kit's rider is owed and was not attached half-built`); continue; }
-          host.text = `${String(host.text).trim()} ${row.text.trim()}`;
-          host.kitRider = row.text.trim(); // the row's own rebuild must not drop it (the restore at the rider weld)
+          const riderText = row.text.trim();
+          host.text = `${String(host.text).trim()} ${riderText}`;
+          host.kitRider = riderText; // the row's own rebuild must not drop it (the restore at the rider weld) if (r.srd?.[0]) host.kitSrc = r.srd[0];
           // THE CONDITIONS THE KIT'S RIDER OWNS, DECLARED AT THE WELD (item 2 fix 1).
           // The print-canon rename strips any standalone sentence imposing a condition
           // print's row does not impose — which is right for the chassis's rider and
@@ -4354,7 +4355,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // the clause that fired THIS row, falling back to the one that named the
         // class — `ck.clause` alone credited "a paladin" and left "smites the
         // unclean" reading as dropped (critic's hold 3)
-        const entry = { name: full, text: row.text, kit: ck.cls.key, clause: row.clause ?? ck.clause, free: true, ...(row.energy ? { energy: row.energy } : {}), ...(row.template ? { template: row.template } : {}) };
+        // A KIT ROW CARRIES ITS OWN BLOCK'S NOUN (fix 4, 2026-11-14). The 13 print-canon
+        // paste sites run `asInline`; a kit row did not, so Lord Vexmoor
+        // shipped "The mage casts Misty Step". `inline` does not exist yet here, so the kit's
+        // declared source is STAMPED and the sweep below applies it once `inline` is known.
+        const entry = { name: full, text: row.text, kit: ck.cls.key, ...(r.srd?.[0] ? { kitSrc: r.srd[0] } : {}), clause: row.clause ?? ck.clause, free: true, ...(row.energy ? { energy: row.energy } : {}), ...(row.template ? { template: row.template } : {}) };
         if (row.section === 'Traits') sec.unshift(entry); else sec.push(entry);
         landed.push(`${full} (${row.why})`);
       }
@@ -4402,6 +4407,15 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       }
     }
   }
+  // THE SETTLED NAME, FOR EVERY CALL THAT RUNS AFTER IT IS SETTLED (fix 4, 2026-11-14).
+  // `inlineGuessRef` exists for the rows written BEFORE the name's form is decided. The
+  // seat call and the repair call are not those: both run long after, and both were
+  // handed the guess as the creature's name — so the model wrote rows with it. The
+  // Rimebound Troll shipped "pulled 10 feet straight toward Troll" because the seat call
+  // was told the creature is called Troll, and the repair that the audit ordered was told
+  // the same thing and wrote it again. `inline` is settled hundreds of lines above both.
+  function settledInline() { return inlineResolved ?? inlineGuessRef(); }
+
   function inlineGuessRef() { const g = String(options.fixedName ?? '').trim() && !printCanonFor(String(options.fixedName).trim(), cr) ? properInline(String(options.fixedName).trim()) : (personalName(p.name) ?? declaredInline ?? `the ${shortForm(p.name)}`); inlineGuessUsed = g; return g; } // the same chain the rows use, the model's declaration included ("the grestle vane" beside "Grestle" — the critic's species read) // the same short form the rows will use ("Dame Oriel", "the marauder"), not the Name's first word
   // THE NAME FIELD IS A PROPER NOUN unless it is a print creature or the user's own words give it an article ("a meshrin")
   // — "Meshrin" is a name, and the rows say Meshrin, never "the meshrin" (fidelity pipeline step 4; the user's complaint)
@@ -4458,17 +4472,56 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   let inline = body === 'swarm' ? 'the swarm' : (declaredOk ?? byRule);
   if (declaredOk) trace('inline declared:', `"${declaredOk}" — the call's own answer (${String(p.inline_kind).toLowerCase()}), built from the name${declaredOk !== byRule ? `; the rules would have said "${byRule}"` : ''}`);
   else if (String(p.inline ?? '').trim()) trace('inline by rule:', `"${byRule}" — the call answered "${String(p.inline).trim()}"${p.inline_kind ? ` (${String(p.inline_kind).toLowerCase()})` : ''}, which the name does not support`);
-  if (inlineGuessUsed && inlineGuessUsed !== inline) { // the kit and feature rows were stamped before the rows' form was settled: re-stamp them to it
-    const reG = new RegExp(`\\b${inlineGuessUsed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:'s)?\\b`, 'gi');
-    for (const esG of Object.values(sections)) for (const eG of esG) if ((eG.kit || eG.feature) && eG.text) eG.text = eG.text.replace(reG, (m0) => (m0.endsWith("'s") ? `${inline}'s` : inline)).replace(/(^|[.!?*]\s+)the /g, '$1The ').replace(/^the /, 'The ');
-    trace('inline on kit rows:', `"${inlineGuessUsed}" -> "${inline}"`);
+  // EVERY ROW STAMPED WITH THE GUESS, NOT JUST THE KIT'S (fix 4, 2026-11-14). This
+  // re-stamp was scoped to `kit || feature`, but the save forms take the guess too
+  // (`anchor: inlineGuessRef()`), so the Rimebound Troll shipped "pulled 10 feet straight
+  // toward Troll" while its settled inline was "the troll". `personalName` had read
+  // "Rimebound Troll" as an epithet plus a GIVEN name, the Ashvowed-Brannor rule — and
+  // "Troll" is a kind, not a person. Fixing that rule means widening a word list
+  // (`ROLE_NOUN`), which is not ours to do; re-stamping to the settled answer is, and it
+  // is the repair this pass already existed to make.
+  //
+  // Every row present here was written by the engine moments ago with the guess in hand,
+  // so this replaces an engine string with the engine's own settled value. Print's rows
+  // arrive thousands of lines later and are never in reach of it.
+  //
+  // THE NAME IS MASKED FIRST: the guess is usually a WORD OF the name, so a bare
+  // replacement would turn "Rimebound Troll" into "Rimebound the troll" wherever a row
+  // spells the creature out in full.
+  if (inlineGuessUsed && inlineGuessUsed !== inline) {
+    const esc = (x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const reG = new RegExp(`\\b${esc(inlineGuessUsed)}(?:'s)?\\b`, 'gi');
+    // ...but ONLY when the guess is a word INSIDE the name ("Troll" in "Rimebound Troll").
+    // When the name sits inside the GUESS instead — name "Cinderbent", guess "the
+    // cinderbent" — masking the name blocks the very replacement this pass exists to make.
+    const nm = String(p.name ?? '').trim();
+    const maskName = !!nm && nm.toLowerCase() !== inlineGuessUsed.toLowerCase() && nm.toLowerCase().includes(inlineGuessUsed.toLowerCase());
+    const reFull = new RegExp(`\\b${esc(nm)}\\b`, 'gi');
+    const MASK = '\u0000NAME\u0000';
+    let n = 0;
+    for (const esG of Object.values(sections)) for (const eG of esG) {
+      if (!eG?.text) continue;
+      const was = eG.text;
+      const masked = maskName ? was.split(reFull).join(MASK) : was;
+      eG.text = masked.replace(reG, (m0) => (m0.endsWith("'s") ? `${inline}'s` : inline))
+        .split(MASK).join(nm)
+        .replace(/(^|[.!?*]\s+)the /g, '$1The ').replace(/^the /, 'The ');
+      if (eG.text !== was) n += 1;
+    }
+    trace('inline on stamped rows:', `"${inlineGuessUsed}" -> "${inline}" on ${n} row${n === 1 ? '' : 's'} — they were written before the name's form was settled`);
   } // the rules (rank, epithet, coined surname) are exact; the model's declaration fills the rest ("the bramblewrack ironmother" was declared, critic 2026-09-29)
   // PRINT'S SELF-REFERENCE becomes this sheet's inline in ONE pass: the old chain ("the X's" then "the X" then a bare
   // "X's") re-entered its own output and minted "the vampire lord lord's" and "this pit the pit fiend general's aura"
   // (critic's blockers audit 2026-10-03). print's whole name wins over its last word, and a match without "the" keeps
   // the determiner it already has ("this pit fiend's aura" -> "this pit fiend general's aura").
   const escRx = (x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const asInline = (txt) => {
+  // `alsoFrom` is a SECOND print block whose noun this text may carry. A class kit's rows
+  // are lifted from their own SRD block, which is not always the body the sheet stands on:
+  // the mage kit's rows come from the Mage while the class body is the Archmage, so
+  // substituting the body's noun alone left "The mage casts Misty Step" on Lord Vexmoor
+  // (typed40 #5). The kit knows its own source - `{ srd: ['Mage', 'Misty Step'] }` in
+  // classes.mjs - so it hands it over rather than this guessing (2026-11-14, fix 4).
+  const asInline = (txt, alsoFrom = null) => {
     // ONE DEFINITION, EVERY BODY (2026-10-20). This already knew that print names
     // itself by one word of its name — the Guard Captain's rows say "the guard" —
     // but it returned early with no print RECORD, and the class-NPC path has none:
@@ -4478,19 +4531,35 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // Widening the one definition is the fix; a late text sweep was the wrong
     // shape and is reverted (owner: "regex layers must be avoided").
     const bodyName = pcPlain?.name ?? classBody ?? null;
-    if (!bodyName) return String(txt ?? '');
+    const sources = [...new Set([bodyName, alsoFrom].filter(Boolean))];
+    if (!sources.length) return String(txt ?? '');
     const bareIn = inline.replace(/^the\s+/i, '');
-    const full = String(bodyName).toLowerCase();
+    const full = String(sources[0]).toLowerCase();
     // PRINT NAMES ITSELF BY ONE WORD OF ITS NAME (critic B, 2026-10-19): the Hobgoblin Warrior's
     // Pack Tactics says "The hobgoblin", the Guard Captain's rows "the guard", the Priest Acolyte's
     // "the priest" — the FIRST word, not the last. Only the last was substituted, so print's own
     // noun leaked onto sheets that are not that creature ("The hobgoblin has Advantage…").
     const firstWord = full.split(/\s+/)[0] ?? '';
     const lastWord = full.split(/\s+/).pop() ?? '';
-    const alts = [...new Set([full, pcPlain?.last ?? (lastWord.length >= 4 ? lastWord : null), firstWord.length >= 4 ? firstWord : null])].filter(Boolean).sort((a, b) => b.length - a.length).map(escRx).join('|');
+    const nounsOf = (n) => { const w = String(n).toLowerCase().split(/\s+/); return [String(n).toLowerCase(), (w[0] ?? '').length >= 4 ? w[0] : null, (w.at(-1) ?? '').length >= 4 ? w.at(-1) : null]; };
+    const alts = [...new Set([...sources.flatMap(nounsOf), pcPlain?.last ?? null])].filter(Boolean).sort((x, y) => y.length - x.length).map(escRx).join('|');
     void bareIn; // the determiner phrase only: a bare "vampire" is print's common noun ("rises as a Vampire Spawn", "its vampire form" — critic's regressions brief 2026-10-04); "this pit fiend's aura" stays print's
     return String(txt ?? '').replace(new RegExp(`\\bthe\\s+(?:${alts})('s)?\\b`, 'gi'), (m0, poss) => `${inline}${poss ?? ''}`);
   };
+  // A KIT ROW'S OWN BLOCK NOUN, SUBSTITUTED ONCE `inline` EXISTS (fix 4, 2026-11-14).
+  // The kit welds its rows long before the creature's rules-text name is resolved, so it
+  // stamps `kitSrc` (its declared SRD block) and this does the work. Lord Vexmoor shipped
+  // "The mage casts Misty Step" because a kit row never passed through `asInline` at all,
+  // and the body's own noun would not have caught it: the mage kit's rows come from the
+  // Mage while the class body is the Archmage.
+  for (const esK of Object.values(sections)) for (const eK of esK) {
+    if (!eK?.kitSrc) continue;
+    const sub = asInline(eK.text, eK.kitSrc);
+    if (sub !== eK.text) { trace('kit row takes the creature\'s name:', `${eK.name} — "${eK.kitSrc}" is the kit's own block, not this creature`); eK.text = sub; }
+    if (eK.kitRider) eK.kitRider = asInline(eK.kitRider, eK.kitSrc);
+    delete eK.kitSrc;
+  }
+  inlineResolved = inline; // from here on every call is told the name the card will carry
   if (declaredInline) trace('inline form:', `"${declaredInline}" — the model's own reading of the name`);
   let pendingWildcard = null;
   // THE SLOT-YIELD RULE (fidelity pipeline step 2): a fitted template that lands in a slot evicts the chassis's row in that
@@ -6009,7 +6078,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           if (freeAllowance === 0) trace('seat authoring skipped:', `${seat} — the call refused every template for no_fit, but print closes this sheet's row set, so there is nothing to author into`);
           else {
             const takenS = Object.values(sections).flat().map((e2) => String(e2.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean);
-            const rawS = await callLLM(buildSeatPrompt({ bodyFacts: declaredBodyFacts({ sections, holdShape: ctxT.holdShape ?? null }), name: p.name, inline: inlineGuessRef(), cr, sheet: sheetSoFarT, idea: String(idea.idea ?? ''), clause: String(idea.clause ?? ''), missing: String(fit.missing ?? ''), kind: seatKind, taken: takenS, lacks: (clauseRecord ?? []).filter((c) => c.polarity === 'lacks').map((c) => c.text) }), validateAuthorResponse);
+            const rawS = await callLLM(buildSeatPrompt({ bodyFacts: declaredBodyFacts({ sections, holdShape: ctxT.holdShape ?? null }), name: p.name, inline: settledInline(), cr, sheet: sheetSoFarT, idea: String(idea.idea ?? ''), clause: String(idea.clause ?? ''), missing: String(fit.missing ?? ''), kind: seatKind, taken: takenS, lacks: (clauseRecord ?? []).filter((c) => c.polarity === 'lacks').map((c) => c.text) }), validateAuthorResponse);
             const wrote = parseAuthorResponse(rawS, { attackCap: 0, traitSlots: 1 });
             // THE SEAT READS `answered` TOO (2026-11-11). The envelope has always asked the call to
             // say when a row already on the sheet carries the clause, and `parseAuthorResponse`
@@ -7334,7 +7403,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // authored Squeeze grappled (escape DC 14) past a recorded lack. The call
         // judges synonyms; the sweep only reads words. So the author hears the lacks.
         const lacksForAuthor = clauseRecord.filter((c) => c.polarity === 'lacks').map((c) => c.text);
-        const rawR = await callLLM(buildRepairPrompt({ bodyFacts: declaredBodyFacts({ sections, holdShape: options.hold_shape ?? null }), name: p.name, inline: inlineGuessRef(), clauses: unclaimed, cr, sheet: sheetText, attackCap: unclaimed.length, lacks: lacksForAuthor, taken: Object.values(sections).flat().map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean) }), validateAuthorResponse);
+        const rawR = await callLLM(buildRepairPrompt({ bodyFacts: declaredBodyFacts({ sections, holdShape: options.hold_shape ?? null }), name: p.name, inline: settledInline(), clauses: unclaimed, cr, sheet: sheetText, attackCap: unclaimed.length, lacks: lacksForAuthor, taken: Object.values(sections).flat().map((e) => String(e.name ?? '').replace(/ \(.*\)$/, '')).filter(Boolean) }), validateAuthorResponse);
         const rep = parseAuthorResponse(rawR, { attackKeys: [], attackCap: 1, traitSlots: 1 });
         for (const r of (rep?.refused ?? [])) trace('authored trait refused:', `"${r.name}" — ${r.why}; the clause folds to description`);
         trace('repair answer:', `attacks ${rep?.attacks.length ?? 0}, saves ${rep?.saves.length ?? 0}, traits ${rep?.traits.length ?? 0}, reactions ${rep?.reactions.length ?? 0}, answered ${JSON.stringify(rep?.answered ?? [])}, unplaced ${JSON.stringify((rep?.unplaced ?? []).map((u) => `${u.where}:${u.clause}`))}${rep ? '' : ' — THE ANSWER DID NOT PARSE'}`);
@@ -8096,7 +8165,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           if (pr.type) e.text = e.text.replace(/(\d+ \(\d+d\d+(?: \+ \d+)?\)) ([A-Z][a-z]+) damage/, `$1 ${pr.type} damage`);
           if ((pc.exact || pc.borrowOnly) && nearPrintCr(cr, pc.cr) && pr.dmg) e.text = e.text.replace(/\d+ \(\d+d\d+(?: [+-] \d+)?\)/, printExprWithSheetMod(pr.dmg, e.text, scaled.pb)); // an exact print body AT PRINT'S CR deals print's own dice — above it the chassis's solved dice stand (a CR 5 wolf kept the Wolf's 1d6, 12 a round against 40 — canaries 2026-10-12); the flat bonus is the sheet's (the 2014 goblin fits DEX to +1 where print carries +2 — the derivation gate reads the sheet) // print's own physical type, whatever the seat dealt (the Wight's sword is Slashing plus Necrotic)
           if (pr.hybrid && pr.range && !/Melee or Ranged/.test(e.text)) { e.text = e.text.replace(/\*?Melee Attack Roll:\*? (\+\d+(?: \([^)]*\))?), reach (\d+) ft\./, `*Melee or Ranged Attack Roll:* $1, reach $2 ft. or range ${pr.range} ft.`); trace('print canon attack:', `"${to}" keeps print's hybrid frame — reach ${pr.reach ?? 5} ft. or range ${pr.range} ft. (the ${pc.name}'s weapon is thrown)`); } // print's own thrown weapon is a hybrid row (the critic's third species read)
-          if (pr.note && !e.text.includes(pr.note)) e.text = e.text.replace(/(Melee Attack Roll:\*? \+\d+)/, `$1 ${pr.note}`);
+          // PRINT'S ROLL-LINE PARENTHETICAL IS PRINT'S TEXT, SO IT TAKES THIS CREATURE'S
+          // NAME (fix 4, 2026-11-14). Every other print-text paste runs `asInline`; this one
+          // pasted `pr.note` raw, and print writes its own noun inside it — the Ankheg's Bite
+          // reads "(with Advantage if the target is Grappled by the ankheg)". Thornback shipped
+          // that verbatim. The audit SAW it ("the Bite rider refers to a different creature")
+          // and the print stamp waved it through as published text; it was ours.
+          if (pr.note && !e.text.includes(pr.note)) e.text = e.text.replace(/(Melee Attack Roll:\*? \+\d+)/, `$1 ${asInline(pr.note)}`);
           else if (!pr.note && printBody) e.text = e.text.replace(/(Attack Roll:\*? \+\d+) \([^)]*\)/, '$1'); // print's row carries print's roll line: the lurker chassis's "(with Advantage during the first round…)" rode on the Ghost's Withering Touch (twist-ten, 2026-10-19) // print's roll parenthetical rides along (the Doppelganger's first-round Advantage)
           if (printBody && pr.reach && !new RegExp(`reach ${pr.reach} ft`).test(e.text)) e.text = e.text.replace(/reach \d+ ft\./, `reach ${pr.reach} ft.`); // print's reach on a print body (the Wight's sword at reach 10)
           // THE RIDER'S HALF IS NOT A GIFT (canaries + printnames, 2026-10-15).
