@@ -136,6 +136,30 @@ export function readPath(raw, { concept = '', edition = '2024' } = {}) {
     else if (!(p.species_receipt && isSpan(p.species_receipt, concept))) refused.push(`species "${s}" offered no receipt from the GM's words`);
     else { out.species = s; out.receipts.species = String(p.species_receipt).trim(); }
   }
+  // A PEOPLE WITH A PRINTED BLOCK KEEPS ITS BODY (owner's ruling 3, 2026-11-14): "a goblin
+  // assassin" is an assassin who is visibly a goblin — a class NPC standing on the Goblin
+  // Warrior's printed body, not a rogue with nothing goblin about it.
+  //
+  // Goblin, hobgoblin and kobold sit on the path prompt's list of PEOPLES but have no species
+  // kit, so the species above is refused ("has no kit") and nothing else carries them. When the
+  // call also names a class and no body, the sheet shipped with the people erased.
+  //
+  // This is a closed-fact lookup — the corpus and the alias table this file already owns — not
+  // a new word list and not a new matching rule. It fills `print_body` for the dispatcher to
+  // judge; it decides no path itself. The species receipt rule is unchanged: a claim about the
+  // GM's words still carries a quote found in them.
+  const speciesNoKit = refused.some((r) => /^species ".*" has no kit$/.test(r));
+  if (speciesNoKit && !out.print_body && p.class != null && String(p.class).trim() && !/^null$/i.test(String(p.class))) {
+    const word = String(p.species).toLowerCase().trim();
+    const rec = p.species_receipt ? String(p.species_receipt).trim() : '';
+    const block = corpusEntry(printAliasFor(word, concept) ?? word, { edition });
+    if (block && rec && isSpan(rec, concept)) {
+      out.print_body = block.name;
+      out.relation = 'is';
+      out.receipts.print_body = rec;
+      refused.push(`species "${word}" has no kit, but print carries it as ${block.name} — the body stands so the people is not erased`);
+    }
+  }
   if (p.class != null && !/^null$/i.test(String(p.class)) && String(p.class).trim()) {
     const c = String(p.class).toLowerCase().trim();
     const rc = p.class_receipt ? String(p.class_receipt).trim() : '';

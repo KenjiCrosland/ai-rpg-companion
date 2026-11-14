@@ -38,27 +38,12 @@ describe('a compound with a print head', () => {
     expect(withClass).toMatchObject({ path: 'twist', print_body: 'Ogre', class: 'fighter' });
   });
 
-  // A PEOPLE PLUS A ROLE IS class_npc, AND THE PROMPT CONTRADICTS ITSELF ABOUT IT.
-  // One sentence of the path prompt reads `"a goblin assassin" a twist on the Goblin, because
-  // a MONSTER named as itself outranks a class word`; a later one reads `TWO WORDS, A PEOPLE
-  // AND A ROLE, IS ALWAYS class_npc with that role as the class and that people as the
-  // species: "lizardfolk monk" is class_npc`. A goblin is on the prompt's own list of
-  // peoples, so both sentences claim it.
-  //
-  // `dispatch` implements the SECOND, through `isPersonBody` — the Goblin Warrior is a
-  // Humanoid, so the class keeps the sheet. This test pins that, because it is the behaviour,
-  // not because the contradiction is settled. Raised for the owner in the fix 6 handoff.
-  test('a people plus a role is class_npc — the Goblin Warrior is a person block', () => {
-    expect(isPersonBody('Goblin Warrior')).toBe(true);
-    const d = dispatch({ name: '', concept: 'goblin assassin' }, answer({ assembly: 'class_npc', print_body: 'Goblin Warrior', relation: 'is', class: 'rogue', species: 'goblin', receipts: { class: 'assassin' } }));
-    expect(d).toMatchObject({ path: 'class_npc', class: 'rogue', species: 'goblin' });
-  });
-
-  test('a PERSON block keeps the class path — the class word does not yield to an NPC body', () => {
-    expect(isPersonBody('Priest')).toBe(true);
-    const d = dispatch({ name: '', concept: 'a temple priest who duels' }, answer({ assembly: 'class_npc', print_body: 'Priest', relation: 'is', class: 'cleric', receipts: { class: 'priest' } }));
-    expect(d.path).toBe('class_npc');
-  });
+  // THE PEOPLE-PLUS-ROLE CASE MOVED, and the test that was here was pinning a state
+  // production cannot reach: it handed `dispatch` an answer carrying `species: 'goblin'`,
+  // which `readPath` never produces (goblin has no kit, so the species is always refused).
+  // The owner ruled on 2026-11-14 that a goblin assassin is a class NPC standing on the
+  // Goblin Warrior's printed body, and the tests for it start from a raw answer and go
+  // through `readPath` — see `a-people-with-a-print-block.spec.js`.
 });
 
 describe('the controls that must not become twists', () => {
