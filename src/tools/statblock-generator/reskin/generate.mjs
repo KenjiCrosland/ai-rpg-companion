@@ -6155,18 +6155,35 @@ Return ONLY JSON with EXACTLY these corrected pieces:
                 // Poison" is a complete row, and a narrower test refused it. A list is a list
                 // wherever it sits; what Thornback has is a promise with nothing after it at all.
                 : (promisesList && !/[.:]\s*\n|\n\s*[-*\d]|\b\d\s*—\s*|:\s*[^.\n]*,[^.\n]*(?:,|\bor\b)/.test(row.text ?? '') ? 'the options it says to choose from' : null);
-              const needS = (dangS || slotS || actS || stateS || contraS || countS || listS) ? null : (form.f.requiresConditionNamed ?? null);
+              // A CONDITION ON A HIT IS NOT WRITTEN AS A TRAIT (owner's ruling 2026-11-13).
+              // MOVED HERE from the pipeline's final pass by the item 2 review, 2026-11-14, and the
+              // review was right: at the end nothing can fill the seat, so the sheet shipped a
+              // signature row short. Here the seat's own "nearest template stands in" path runs,
+              // exactly as it does for every refusal beside this one.
+              //
+              // It reads the call's own validated enum on its own form - `imposes` on a trait form,
+              // `condition` on a save form - never the rendered prose, and only on an idea the
+              // re-seat already moved to the rider path. So: the idea call said "a condition on a
+              // hit", the fit call refused every rider form, and the author has now written that
+              // condition as a TRAIT. That is the row the ruling forbids - Grask's Locking Grip
+              // grappled on every Longsword hit, three times a round, no save and no escape DC.
+              const riderS = (dangS || slotS || actS || stateS || contraS || countS || listS) ? null
+                : (idea?.reseated && form?.section === 'trait'
+                  ? ((form.kind === 'save' ? form.f?.condition : form.f?.imposes) || null)
+                  : null);
+              const needS = (dangS || slotS || actS || stateS || contraS || countS || listS || riderS) ? null : (form.f.requiresConditionNamed ?? null);
               const appliesS = needS ? new Set([...Object.values(sections).flat().flatMap((e2) => imposedConditions(e2)), ...(row.imposes ? [String(row.imposes)] : [])]) : null;
               const unmetS = needS && !appliesS.has(String(needS)) ? needS : null;
               if (countS) trace('seat authoring refused:', `${seat} — the authored row writes dice where a COUNT belongs ("${String(countS).trim()}"); a number of uses is an integer, and a GM cannot take 4d6 legendary actions; the nearest template stands in`);
               else if (listS) trace('seat authoring refused:', `${seat} — the authored row promises ${listS} and the sheet carries none, so it is a dead row a GM cannot run; the nearest template stands in`);
               else if (dangS) trace('seat authoring refused:', `${seat} — the authored row cites "${dangS}", which is not on this sheet (the checker would fail it as a dangling reference); the nearest template stands in`);
               else if (slotS) trace('seat authoring refused:', `${seat} — the authored row still carries ${slotS[0]}, a slot this engine never substitutes (the forms ask only for {dc} and {dmg}); shipping it would fail the generation outright, so the nearest template stands in`);
+              else if (riderS) trace('seat authoring refused:', `${seat} - the idea is a condition on a hit (re-seated ${idea.reseated}) and the authored row imposes ${riderS} as a TRAIT; a condition imposed on a hit rides the attack row with its escape DC, never a trait (owner's ruling) - the nearest template stands in`);
               else if (unmetS) trace('seat authoring refused:', `${seat} — the authored row needs its target to have ${unmetS} and no row on this sheet imposes it, so its trigger could never fire (the Chalk-Hound's Daubing Cling, forty #2); the nearest template stands in`);
               else if (stateS) trace('seat authoring refused:', `${seat} — the authored row keys on "${stateS}" and never says what it means; a GM has no threshold to read (print writes Bloodied or 0 Hit Points, or defines the state in the row). The nearest template stands in`);
               else if (contraS) trace('seat authoring refused:', `${seat} — the authored row heals the creature, and "${contraS.name}" on this sheet says "${String(contraS.sentence).slice(0, 60)}"; the two cannot both be true. The nearest template stands in`);
               else if (actS) trace('seat authoring refused:', `${seat} — the authored row makes "${actS}" act, and no row on this sheet is that thing; a table cannot run it (the Spore-Mother's puppets, forty #3); the nearest template stands in`);
-              else if (!slotS && !unmetS && !actS && !stateS && !contraS && !countS && !listS) {
+              else if (!slotS && !unmetS && !actS && !stateS && !contraS && !countS && !listS && !riderS) {
                 // THE GM'S ASK IS NOT A FREE ROW (owner's ruling, 2026-11-08). The free-row
                 // budget exists for pleasant surprises; a row written to answer something the
                 // GM typed is not a surprise, so it does not compete for that one slot. The
@@ -6191,19 +6208,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
                 const answersGM = !!idea?.clause;
                 if (!answersGM) freeRowsUsed += 1;
                 row.authoredSeat = true; // the sameness metric and the gap ship-check count it as the seat's own row, not a template's
-                // TWO KEYS FOR A RIDER (the fix 2 review, 2026-11-14). Key one is the idea
-                // call: it labelled this a condition on a hit, which is why the idea was
-                // re-seated onto the rider path at all. Key two is the FIT call, and it has
-                // just refused every rider form — so the engine has one key, not two, and the
-                // row falls back to the trait it was authored as.
-                //
-                // That fallback is correct far more often than it is wrong: on the Grask block
-                // of 2026-11-14 the idea call labelled a passive stance ("scores a Critical Hit
-                // on a roll of 19 or 20, and he cannot be Frightened") `payoff` + `condition`,
-                // and honouring the section would have welded that onto the Longsword as a
-                // rider it is not. The stamp below is what lets the ship check tell the two
-                // apart without trusting either call on its own.
-                if (idea?.reseated) row.riderRefused = idea.reseated;
+
                 if (answersGM) row.clause = row.clause ?? idea.clause;
                 const authoredSeatShape = { row, templateName: null, section: form.section, template: null, host: 'melee', supersedes: null, asked: vetAsked(fit.asked, rawConceptText), askedRaw: String(fit.asked ?? '').trim(), expresses: fit.expresses ?? null, accepted_closest: false, elementsOffered: sigElements, authoredSeat: true, because: `${String(idea.idea ?? '').slice(0, 160)} [authored: the catalog held no shape for it]` };
                 if (answersGM) trace('authored row answers the GM:', `${seat} — "${row.name}" was written for "${String(idea.clause).slice(0, 70)}", so it is NOT a free row and never competes for the free-row slot; the card ceiling still governs it`);
@@ -10820,40 +10825,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       }
     }
   }
-  // A CONDITION ON A HIT DOES NOT SHIP AS A TRAIT (owner's ruling 2026-11-13; the
-  // two-key design from the fix 2 review, 2026-11-14).
-  //
-  // The second key. The idea call said "a condition on a hit", so the idea was re-seated
-  // onto the rider path; the fit call then refused every rider form and the seat authored
-  // a trait instead (`riderRefused`). One key, not two — so the trait stands, UNLESS it
-  // actually imposes a condition, in which case it is the very row the ruling forbids:
-  // Grask's Locking Grip grappled on every Longsword hit, three times a round, with no
-  // save and no escape DC, and failed `grapple-no-escape` for it.
-  //
-  // SCOPED TO ROWS THIS FIX MOVED, which is narrower than "any trait that imposes a
-  // condition" — that would refuse a fear aura, a noxious aura and every zone trait,
-  // which impose conditions legitimately and are nobody's rider. `riderRefused` is only
-  // on a row whose own idea was re-seated, so the reach is exactly the rows fix 2 touched.
-  //
-  // The two cases the review tabled, both reproduced by this scoping:
-  //   a mislabelled stance ("crit on 19-20, cannot be Frightened") imposes NO condition
-  //     -> it keeps its trait, which is what it always was
-  //   Grask's grapple-on-a-hit imposes Grappled
-  //     -> refused as a trait, and the GM's ask becomes visibly owed rather than silently
-  //        answered by a row that should not exist
-  for (const [sec, es] of Object.entries(monster.sections ?? {})) {
-    if (sec !== 'Traits') continue;
-    for (let i = (es ?? []).length - 1; i >= 0; i -= 1) {
-      const e = es[i];
-      if (!e?.riderRefused) continue;
-      const imposed = imposedConditions(e);
-      if (!imposed.length) { trace('re-seated idea keeps its trait:', `${sec}/"${bareName(e)}" imposes no condition, so the idea call's "condition on a hit" label was wrong and the trait stands (re-seated ${e.riderRefused})`); delete e.riderRefused; continue; }
-      es.splice(i, 1);
-      sweepDeadName(monster.sections, e.name, null, trace);
-      trace('condition on a hit refused as a trait:', `${sec}/"${bareName(e)}" imposes ${imposed.join(' and ')} on a hit and no attack row carries it — the fit call refused every rider form, so the row does not ship (owner's ruling); the ask is owed`);
-      if (e.clause && !owedUnanswered.includes(e.clause)) owedUnanswered.push(e.clause);
-    }
-  }
+  // The two-key refusal used to sit HERE, in the final pass, and the item 2 review showed
+  // why that was wrong: by this point nothing can fill the seat, so a refused row left the
+  // sheet one signature short. It moved to the authoring site (`riderS`), where the seat's
+  // own stand-in path runs. Nothing replaces it here on purpose — a row refused upstream
+  // never reaches this pass, and a second copy of the rule is how a shared guard rots.
   if (repairProse.length && monster.generation) monster.generation.answered_in_prose = repairProse.map((u) => u.clause);
   if (repairCredited.length && monster.generation) monster.generation.answered_by_existing = repairCredited;
   if (owedUnanswered.length) {
