@@ -2307,6 +2307,19 @@ export function renderTemplate(t, ctx, fills = {}, { blind = false } = {}) {
   // reaches it, by a second failure rather than a first. A trigger print never upgrades
   // (Prone, Frightened, Blinded, Deafened) gets NO condition reward and the frame falls
   // back to its damage step, which is better than inventing a weak pair.
+  // THE REQUIRED CONDITION IS RESOLVED ONCE, BEFORE ANYTHING READS IT. A blind render
+  // passes no fills, and this slot's default (the first condition the sheet imposes)
+  // used to be filled only by the VOCAB loop at the very end - after the ladder below
+  // and the vestigial strip had both read `fills.consumed_condition`, found nothing and
+  // stood down. So the path that ships most payoffs chose its reward without knowing
+  // its trigger, and on a sheet that imposes Prone it printed "already has the Prone
+  // condition, it also has the Prone condition" (Vhalgrin; Ashen Kal). Scoped to a
+  // frame that actually carries the token: a template with no such slot (noxious-aura)
+  // must not acquire a requirement it never had.
+  if (!String(fills.consumed_condition ?? '').trim()
+    && Object.values(t?.frames ?? {}).some((f) => String(f).includes('{consumed_condition}'))) {
+    fills = { ...fills, consumed_condition: ctx.imposed?.[0] ?? 'Frightened' };
+  }
   if (t?.rewardsCondition && fills.consumed_condition) {
     // THE POOL IS PER-TEMPLATE, NOT GLOBAL. `MINOR` stays mild for the four other
     // templates that use this slot and for the 14 donor frames; a payoff draws from the
