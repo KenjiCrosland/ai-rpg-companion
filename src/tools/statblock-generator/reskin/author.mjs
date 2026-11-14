@@ -477,6 +477,35 @@ export function parseAuthorResponse(raw, { attackKeys = [], attackCap = 3, rider
   let riders = 0; for (const a of attacksKept) if (a.rider) { riders += 1; if (riders > riderSlots) { a.flavor = [a.flavor, `(${a.rider})`].filter(Boolean).join(' '); a.rider = null; } }
   return { attacks: attacksKept, saves: saves.slice(0, 1), refused, traits, reactions, crossRef: crossRef && crossRef.payoffRow !== crossRef.riderRow ? crossRef : null, answered, unplaced }; // a payoff on its own rider row is pointless (the bog hound's bite, check-in 2026-10-11)
 }
+/**
+ * A CONDITION ON A HIT, WRITTEN AS A TRAIT — the second key (owner's ruling 2026-11-13).
+ *
+ * Returns the condition an authored TRAIT inflicts when the idea had already been
+ * re-seated onto the rider path, or null. Both keys are the calls' own declared answers:
+ *
+ *   key one  `idea.reseated` — the idea call labelled this a condition on a hit, which is
+ *            why `parseIdeas` moved it to the rider section in the first place
+ *   key two  the fit call then refused every rider form, which is why we are in the
+ *            authoring branch at all
+ *
+ * and this reads the AUTHOR call's `imposes`, which `imposesFromRelation` has already
+ * narrowed to `inflicts`. A trait that REQUIRES a condition (`requiresConditionNamed`) or
+ * grants an immunity is not a rider and keeps its trait — that is what saves the
+ * mislabelled stance whose own text says "cannot be Frightened".
+ *
+ * EXTRACTED FOR A TEST at the item 2 review's request, 2026-11-14, and the extraction
+ * immediately earned itself: inline, the condition read `form.section === 'trait'`, but a
+ * trait form's section is `'Traits'`. The guard was dead code from the moment it was
+ * written, and no block run could have told us — it simply never fired. `kind` is the
+ * field that names the form.
+ */
+export function traitWritesARider(idea, form) {
+  if (!idea?.reseated) return null;                 // key one: never re-seated, never a rider
+  if (!form || form.kind !== 'trait') return null;  // the ruling is about a trait
+  const inflicts = form.f?.imposes;
+  return inflicts || null;                          // already narrowed to `inflicts` upstream
+}
+
 export function validateAuthorResponse(raw) { return !!parseAuthorResponse(raw); } // a well-formed answer with nothing to add is valid: "no row for this clause" is an answer, not a failure to retry (Meshrin's repair call, step 7 twelve)
 
 /**

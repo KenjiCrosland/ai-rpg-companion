@@ -36,7 +36,7 @@ import { areaDamage, damageIsThePoint, AFFLICTIONS, imposedConditions, TURN_DENI
 import { CONDITIONS as CONDITIONS_CLOSED } from './author.mjs'; // 4a/A2: the validated condition list the authoring call answers against
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditTypeCorrection, readElementClaims } from '../format-2024/audit.mjs';
 import { KNOWN_SPELLS } from '../skeleton/flavor-prompt.mjs';
-import { buildFreeRowFixPrompt, buildRepairPrompt, buildSeatPrompt, parseAuthorResponse, validateAuthorResponse } from './author.mjs';
+import { buildFreeRowFixPrompt, buildRepairPrompt, buildSeatPrompt, parseAuthorResponse, validateAuthorResponse, traitWritesARider } from './author.mjs';
 import { featureRows } from './features.mjs';
 import { speciesFor, speciesRows, speciesFlavorRow, rowCap, SPECIES } from './species.mjs';
 import { WEAPONS, weaponFor, weaponNamed, namesWeapon, weaponsIn, finesseLike } from './weapons.mjs';
@@ -6168,9 +6168,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
               // condition as a TRAIT. That is the row the ruling forbids - Grask's Locking Grip
               // grappled on every Longsword hit, three times a round, no save and no escape DC.
               const riderS = (dangS || slotS || actS || stateS || contraS || countS || listS) ? null
-                : (idea?.reseated && form?.section === 'trait'
-                  ? ((form.kind === 'save' ? form.f?.condition : form.f?.imposes) || null)
-                  : null);
+                : traitWritesARider(idea, form);
               const needS = (dangS || slotS || actS || stateS || contraS || countS || listS || riderS) ? null : (form.f.requiresConditionNamed ?? null);
               const appliesS = needS ? new Set([...Object.values(sections).flat().flatMap((e2) => imposedConditions(e2)), ...(row.imposes ? [String(row.imposes)] : [])]) : null;
               const unmetS = needS && !appliesS.has(String(needS)) ? needS : null;
