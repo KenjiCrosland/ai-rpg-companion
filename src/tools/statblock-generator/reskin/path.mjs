@@ -59,6 +59,59 @@ export const PRINT_ALIAS = { /* hag, hags, crone resolve by context through hagF
 /** the print block a bare job/folk word names, resolving a hag by context; null when the word is nobody's */
 export const printAliasFor = (word, text = '') => (/^(?:hag|hags|crone)$/i.test(String(word ?? '').trim()) ? hagFor(text) : (PRINT_ALIAS[String(word ?? '').trim().toLowerCase()] ?? null));
 
+/**
+ * EVERY PRINTED NAME THE GM'S WORDS CARRY (the names arm, 2026-11-14).
+ *
+ * The swap test showed the path call often fails to RECOGNISE a printed creature the prompt
+ * does not use as an example — the Troll is named five times in the prompt and scores 10/10,
+ * the Ogre and Ghoul are named nowhere and score 3-6/10. Recall, not judgement. So code finds
+ * the names and the call chooses among them: a selection problem instead of a recall problem.
+ *
+ * CLOSED FACTS ONLY. Whole corpus names matched as whole words, plus the alias table this file
+ * already owns. No new word list and no new matching rule.
+ *
+ * THE LONGEST NAME WINS. "Dire Wolf" over "Wolf"; "Goblin Boss" also drops the "goblin" alias,
+ * which would otherwise offer the Goblin Warrior beside it.
+ *
+ * THE FINDER DECIDES NOTHING, AND TODAY NOTHING IN PRODUCTION READS IT. The arm that offered
+ * these names to the call was measured against `path-key.json` on 2026-11-14 and MISSED ITS
+ * BAR — offering a name made the call accept it, so "clockwork spider" fell from 10/10 to
+ * 6/10 and "goblin assassin" from 8/10 to 6/10, and the more-than-one-path count rose from 6
+ * to 10. It did fix recall: "ogre blacksmith" went 5/10 to 10/10. The numbers are in
+ * `scripts/smoke-evidence/HANDOFF-names-arm-2026-11-14.md` and routing went back to the owner.
+ *
+ * This is kept because `scripts/probe-path-key.mjs` reads it to reproduce that measurement,
+ * and whatever replaces the arm will need the same closed-fact finder. It is not wired into
+ * `buildPathPrompt` or `readPath`.
+ */
+export function namesInTheWords(text, { edition = '2024' } = {}) {
+  const t = ` ${norm(text)} `;
+  if (!t.trim()) return [];
+  const hits = new Map(); // printed name -> the span of the GM's words that found it
+  for (const b of (edition === '2014' ? [...CORPUS_2014, ...CORPUS] : CORPUS)) {
+    const n = norm(b.name);
+    if (n && t.includes(` ${n} `)) hits.set(b.name, b.name);
+  }
+  // AN ALIAS YIELDS TO A WHOLE NAME THAT ALREADY CARRIES ITS WORD. "Goblin Boss" matched
+  // outright, and the "goblin" alias would otherwise offer the Goblin Warrior beside it — two
+  // candidates for one noun in the GM's words.
+  const direct = [...hits.keys()].map(norm);
+  for (const w of norm(text).split(' ')) {
+    const a = printAliasFor(w, text);
+    if (!a) continue;
+    const e = corpusEntry(a, { edition });
+    if (!e || hits.has(e.name)) continue;
+    if (direct.some((d) => ` ${d} `.includes(` ${w} `))) continue;
+    hits.set(e.name, w);
+  }
+  // a name wholly contained in another offered name yields to it
+  const names = [...hits.keys()];
+  return names
+    .filter((n) => !names.some((m) => m !== n && ` ${norm(m)} `.includes(` ${norm(n)} `)))
+    .sort((a, b) => norm(b).length - norm(a).length)
+    .map((n) => ({ name: n, quote: hits.get(n) }));
+}
+
 export function corpusEntry(name, { edition = '2024' } = {}) {
   const n = stripArticle(name); if (!n) return null;
   const exact = CORPUS.find((b) => norm(b.name) === n); if (exact) return exact;
@@ -130,9 +183,12 @@ export function readPath(raw, { concept = '', edition = '2024' } = {}) {
   const rel = String(p.relation ?? '').toLowerCase();
   if (out.print_body && (rel === 'is' || rel === 'resembles')) out.relation = rel;
   else if (out.print_body) refused.push(`relation "${p.relation}" is neither is nor resembles — read as resembles`), out.relation = 'resembles';
+  // set where the refusal is pushed and read below, rather than matching the refusal's own
+  // text — a message is for a human, not a control signal (owner, 2026-11-14)
+  let noKit = false;
   if (p.species != null && !/^null$/i.test(String(p.species)) && String(p.species).trim()) {
     const s = String(p.species).toLowerCase().trim();
-    if (!SPECIES_KEYS.includes(s)) refused.push(`species "${p.species}" has no kit`);
+    if (!SPECIES_KEYS.includes(s)) { noKit = true; refused.push(`species "${p.species}" has no kit`); }
     else if (!(p.species_receipt && isSpan(p.species_receipt, concept))) refused.push(`species "${s}" offered no receipt from the GM's words`);
     else { out.species = s; out.receipts.species = String(p.species_receipt).trim(); }
   }
@@ -148,8 +204,7 @@ export function readPath(raw, { concept = '', edition = '2024' } = {}) {
   // a new word list and not a new matching rule. It fills `print_body` for the dispatcher to
   // judge; it decides no path itself. The species receipt rule is unchanged: a claim about the
   // GM's words still carries a quote found in them.
-  const speciesNoKit = refused.some((r) => /^species ".*" has no kit$/.test(r));
-  if (speciesNoKit && !out.print_body && p.class != null && String(p.class).trim() && !/^null$/i.test(String(p.class))) {
+  if (noKit && !out.print_body && p.class != null && String(p.class).trim() && !/^null$/i.test(String(p.class))) {
     const word = String(p.species).toLowerCase().trim();
     const rec = p.species_receipt ? String(p.species_receipt).trim() : '';
     const block = corpusEntry(printAliasFor(word, concept) ?? word, { edition });

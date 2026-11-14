@@ -1,6 +1,6 @@
 {
  "what": "Hand answer key for the path decision (path.mjs dispatch). Written by Fable 5.2 on 2026-11-14 under the owner's rulings of that date. Not a smoke batch: it is read by the path probe, one call per roll.",
- "how_to_score": "A roll is RIGHT when its path is in okPaths AND its body passes. Body rule: needBody true = the decision must carry one of okBodies with relation \"is\". needBody false with okBodies listed = a body is optional, but if one is carried with relation \"is\" it must be in okBodies. okBodies null = no body may be carried with relation \"is\". Only entries with counts true go toward the bar; the rest are reported, not scored.",
+ "how_to_score": "Score what dispatch() returns, because that is what the generator consumes. A roll is RIGHT when its path is in okPaths AND its body passes. The body rule applies to dispatch()'s print_body when the path is twist, exact or class_npc: needBody true = print_body must be one of okBodies; needBody false with okBodies listed = print_body is null or one of okBodies; okBodies null = print_body must be null. On a homebrew path the body is not scored: dispatch() may carry a 'resembles' body there and the generator does not stand on it. The relation is NOT scored separately. dispatch() returns a twist only when the relation is 'is', and on class_npc the generator stands on a person body whatever the relation (generate.mjs, pathBody). Validate receipts against Name + Description, as StatblockGenerator.vue does. Only entries with counts true go toward the bar; the rest are reported, not scored.",
  "prompts": [
   {
    "id": "typed40-1",
@@ -701,5 +701,6 @@
    "counts": true,
    "why": "RULING 3: a rogue who is visibly a goblin, on the Goblin Warrior body"
   }
- ]
+ ],
+ "revised": "2026-11-14, second version: the body rule now follows dispatch() and the generator. The first version required relation 'is' on every body, which is stricter than production for a class NPC on a person body."
 }

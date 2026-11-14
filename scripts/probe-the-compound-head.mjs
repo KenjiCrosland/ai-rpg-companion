@@ -61,7 +61,10 @@ const decide = async (c) => {
   if (!codeOnly.failed) return { ...codeOnly, calls: 0 }; // code decided; no call is made in production either
   const raw = await ask(buildPathPrompt({ name: c.name, concept: c.concept, cr: c.cr, role: c.role ?? null, edition: ed }));
   if (!validatePathResponse(raw)) return { path: 'INVALID', receipt: raw.slice(0, 60), calls: 1 };
-  const read = readPath(raw, { concept: c.concept, edition: ed });
+  // RECEIPTS ARE VALIDATED AGAINST NAME + DESCRIPTION, as production does
+  // (StatblockGenerator.vue). Passing the Description alone refuses a receipt quoted from the
+  // Name field, which 22 of the 44 key prompts carry — the probe would reject what ships.
+  const read = readPath(raw, { concept: `${c.name ?? ''} ${c.concept}`.trim(), edition: ed });
   return { ...dispatch({ name: c.name, concept: c.concept, role: c.role ?? null, edition: ed }, read), calls: 1, read };
 };
 
