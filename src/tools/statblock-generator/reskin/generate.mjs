@@ -10623,6 +10623,12 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       // cap), so a repaired row's citations and save damage are re-checked downstream.
       {
         const freeFlagged = [];
+        // A DISMISSED FINDING IS RECORDED, NOT JUST TRACED (owner's ruling, 2026-11-14). The
+        // exemption below is unchanged — a finding on print's row still raises nothing and fixes
+        // nothing — but it used to exist only as a line of trace narration, so nobody could count
+        // it. Both of fix 4's leaks were CAUGHT here and waved through as published text, and on
+        // Thornback it was our own paste that had broken print's row. The checker lists these.
+        const auditDismissedOnPrint = [];
         for (const f of findings) {
           // THE OTHER TWO ACTUATORS OWN THEIR FINDINGS. A finding carrying a `rewrite`
           // was spliced above (or refused there); one carrying a `rename` was answered by
@@ -10656,6 +10662,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
           // for every creature on that body, never per sheet.
           if (!row) continue;
           if (row.print || row.printNamed) {
+            auditDismissedOnPrint.push({ section: sec, row: String(row.name ?? ''), message: String(f.message ?? ''), ...(f.principle ? { principle: f.principle } : {}) });
             trace('audit finding on print:', `${sec}/"${String(row.name).replace(/ \(.*\)$/, '')}" — ${String(f.message ?? '').slice(0, 90)}. print's row is the standard, so this is either the audit arguing with published text or OUR paste having broken it; no sheet-level fix runs`);
             continue;
           }
@@ -10677,6 +10684,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // The attack-row test is scale.mjs's own stamp, re-run here because it is idempotent and
         // otherwise lands after this block — one owner for the definition, no second copy of it.
         stampAttacksPerRound(monster.sections);
+        // stamped whether or not anything was dismissed: an ABSENT field means a sheet generated
+        // before this landed, which is not the same fact as a sheet that dismissed nothing.
+        if (monster.generation) monster.generation.audit_dismissed_on_print = auditDismissedOnPrint;
         for (let i = freeFlagged.length - 1; i >= 0; i -= 1) {
           if (freeFlagged[i].row?.attacksPerRound == null) continue;
           trace('row repair not offered:', `${freeFlagged[i].sec}/"${freeFlagged[i].row.name}" is an attack row, and this path carries no attack form — the audit's fault stands on the sheet (${freeFlagged[i].problems.map((x) => String(x).slice(0, 60)).join(' | ')})`);

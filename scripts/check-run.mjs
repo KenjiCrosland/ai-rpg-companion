@@ -171,10 +171,40 @@ const batchReport = () => {
   return lines.join('\n');
 };
 
+// AUDIT FINDINGS DISMISSED ON PRINT ROWS (owner's ruling, 2026-11-14).
+//
+// The audit reads every sheet and the engine repairs only free and authored rows, so a
+// finding on a row carrying print's stamp is dropped. That is often right — the audit
+// arguing with published text — and sometimes it is OUR paste having broken print's row,
+// which is the valuable kind. Fix 4 found two of those: Thornback's Bite named the ankheg
+// and Lord Vexmoor's Misty Step named the mage, both CAUGHT here and waved through.
+//
+// This REPORTS. It raises no FAIL, changes no sheet, and the exemption is untouched. The
+// owner reads the list after the next forty and decides whether narrowing it is worth
+// changing what the audit call returns.
+const dismissed = [];
+let sheetsWithRecord = 0;
+const dismissedScan = (block, file) => {
+  const rec = block?.generation?.audit_dismissed_on_print;
+  if (!Array.isArray(rec)) return; // a sheet generated before this landed says nothing either way
+  sheetsWithRecord += 1;
+  for (const d of rec) dismissed.push({ file, name: block?.name ?? file, ...d });
+};
+const dismissedReport = () => {
+  const lines = ['', '## Audit findings dismissed on print rows', ''];
+  if (!sheetsWithRecord) return [...lines, '- no sheet in this run carries the record (generated before 2026-11-14)', ''].join('\n');
+  lines.push(`**${dismissed.length}** finding(s) dismissed across ${sheetsWithRecord} sheet(s) that carry the record.`, '');
+  if (!dismissed.length) return [...lines, '- none', ''].join('\n');
+  for (const d of dismissed) lines.push(`- ${d.name} · ${d.section}/"${String(d.row).replace(/ \(.*\)$/, '')}" — ${d.message}`);
+  lines.push('', 'Reporting only: none of these raised a FAIL or changed a sheet.', '');
+  return lines.join('\n');
+};
+
 const results = [];
 for (const f of fs.readdirSync(dir).filter((x) => /^\d+-.*\.json$/.test(x)).sort()) {
   const raw = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); const block = raw.monster ?? raw;
   batchScan(block, f);
+  dismissedScan(block, f);
   try { results.push({ file: f, ...checkBlock(block, { frozenClauses: freezeFor(block) ?? undefined }) }); } catch (e) { results.push({ file: f, name: f, cr: '?', edition: '?', donor: null, gates: Object.fromEntries(GATES.map((g) => [g, { status: 'soft', findings: [] }])), fails: [], softs: [], error: String(e?.message ?? e) }); }
 }
 let md = `# Mechanics check — ${path.basename(dir)}\n\n${checkTable(results, { title: 'Gate table' })}\n`;
@@ -184,8 +214,9 @@ for (const r of results) {
   md += `\n## ${r.name} (CR ${r.cr}${r.edition === '2014' ? ', 2014' : ''})\n${r.error ? `- checker error: ${r.error}\n` : ''}${lines.join('\n') || '- clean'}\n${floats.length ? `${floats.join('\n')}\n` : ''}`;
   if (r.read) md += `- read: def ${r.read.def} / off ${r.read.off} → ${r.read.read}; sustained ${r.read.sustained} (${r.read.attacks} × ${r.read.used?.name ?? '?'}${r.read.legendary?.avg ? ` + legendary ${r.read.legendary.name}` : ''}); nova ${r.read.nova ? `${r.read.nova.name} ${r.read.nova.avg}` : 'none'}; dmg ${r.read.dmg.toFixed(0)}\n`;
 }
-fs.mkdirSync(path.dirname(out), { recursive: true }); fs.writeFileSync(out, `${md}\n${batchReport()}\n`); console.log(`wrote ${out}`);
+fs.mkdirSync(path.dirname(out), { recursive: true }); fs.writeFileSync(out, `${md}\n${dismissedReport()}\n${batchReport()}\n`); console.log(`wrote ${out}`);
 console.log(`${results.filter((r) => r.fails.length).length} block(s) with a FAIL of ${results.length}`);
+console.log(`${dismissed.length} audit finding(s) dismissed on print rows across ${sheetsWithRecord} sheet(s) carrying the record`);
 // persist any newly frozen concepts, and SAY SO when a run's extraction drifted
 // from the frozen list — the denominator stays put, the drift is visible
 fs.writeFileSync(FREEZE, `${JSON.stringify(frozen, null, 1)}\n`);
