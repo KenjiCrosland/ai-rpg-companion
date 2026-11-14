@@ -1,0 +1,131 @@
+{
+  "name": "Swarm of Hollow Peals",
+  "inline": "the swarm",
+  "format": "2024",
+  "cr": 13,
+  "cr_str": "13",
+  "xp": 10000,
+  "challenge_rating": "13 (XP 10,000; PB +5)",
+  "type": "Swarm of Tiny Constructs",
+  "size": "Medium",
+  "alignment": "Unaligned",
+  "ac": 15,
+  "hp": 178,
+  "hp_formula": "21d8 + 84",
+  "pb": 5,
+  "speed": "40 ft., Fly 30 ft. (hover)",
+  "stats": {
+    "STR": 8,
+    "DEX": 20,
+    "CON": 18,
+    "INT": 4,
+    "WIS": 10,
+    "CHA": 2
+  },
+  "saves": {
+    "STR": -1,
+    "DEX": 5,
+    "CON": 4,
+    "INT": -3,
+    "WIS": 0,
+    "CHA": -4
+  },
+  "skills": "",
+  "senses": "darkvision 60 ft.; Passive Perception 10",
+  "languages": "Understands the languages of its creator but can't speak",
+  "initiative_bonus": 5,
+  "initiative_score": 15,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Swarm",
+        "rules": true,
+        "text": "The swarm can occupy another creature's space and vice versa, and the swarm can move through any opening large enough for a Tiny creature. The swarm can't regain Hit Points or gain Temporary Hit Points."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Bell",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 32 (6d8 + 5) Bludgeoning damage plus 21 (6d6) Necrotic damage, or 16 (3d10) Bludgeoning damage plus 10 (3d6) Necrotic damage if the swarm is Bloodied.",
+        "weapon": null,
+        "attacksPerRound": 1
+      },
+      {
+        "name": "Sorrowing Toll",
+        "text": "*Constitution Saving Throw*: DC 17, one creature within 5 feet. *Failure:* 56 (16d6) Necrotic damage. *Success:* Half damage only.",
+        "authored": true,
+        "clause": "ring themselves over the dying",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "the death-toll that saps the dying and marks them for the swarm",
+        "boundKeys": [],
+        "decoration": true,
+        "nameClaimRevoked": [
+          "toll"
+        ],
+        "clauseId": "cl_1qi383g"
+      }
+    ]
+  },
+  "lore": "Forged in a churchyard foundry where the dead were rung over, this swarm of bells broke from its ropes one winter and now drifts from battlefield to sickbed, tolling for the dying it can reach.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "swarm-9",
+    "archetype": "swarm",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a swarm of funeral bells that ring themselves over the dying",
+    "clauses": [
+      {
+        "id": "cl_1p80gjp",
+        "text": "a swarm of funeral bells",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1qi383g",
+        "text": "ring themselves over the dying",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "ring themselves over the dying",
+        "askShape": "save_single",
+        "askMechanic": "drain",
+        "askMechanicWhy": "ring themselves"
+      }
+    ],
+    "body": "swarm",
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the call named no template for the pick",
+    "signature": "library"
+  },
+  "archetype": "swarm",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Frightened, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned",
+  "resistances": "Bludgeoning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "a swarm of funeral bells that ring themselves over the dying",
+  "selectedChallengeRating": "13",
+  "monsterName": "Swarm of Hollow Peals",
+  "caster": false
+}

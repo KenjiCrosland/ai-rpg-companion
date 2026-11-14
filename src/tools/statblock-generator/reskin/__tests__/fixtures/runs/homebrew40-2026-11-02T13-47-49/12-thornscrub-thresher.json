@@ -1,0 +1,176 @@
+{
+  "name": "Thornscrub Thresher",
+  "inline": "the thresher",
+  "format": "2024",
+  "cr": 8,
+  "cr_str": "8",
+  "xp": 3900,
+  "challenge_rating": "8 (XP 3,900; PB +3)",
+  "type": "Beast",
+  "size": "Large",
+  "alignment": "Unaligned",
+  "ac": 15,
+  "hp": 153,
+  "hp_formula": "18d10 + 54",
+  "pb": 3,
+  "speed": "40 ft.",
+  "stats": {
+    "STR": 20,
+    "DEX": 10,
+    "CON": 16,
+    "INT": 4,
+    "WIS": 12,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 8,
+    "DEX": 0,
+    "CON": 6,
+    "INT": -3,
+    "WIS": 1,
+    "CHA": -3
+  },
+  "skills": "Athletics +8, Perception +4",
+  "senses": "darkvision 60 ft.; Passive Perception 14",
+  "languages": "None",
+  "initiative_bonus": 0,
+  "initiative_score": 10,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The thresher makes two Tusk attacks. It can replace one attack with a use of Opportunist's Lash."
+      },
+      {
+        "name": "Tusk",
+        "imposes": "Prone",
+        "text": "*Melee Attack Roll:* +8, reach 5 ft. 19 (4d6 + 5) Piercing damage. If the target is a Large or smaller creature and the thresher moved 20+ feet straight toward it immediately before the hit, the target takes an extra 9 (2d8) Piercing damage and has the Prone condition.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Opportunist's Lash",
+        "text": "*Strength Saving Throw:* DC 16, one creature within 30 feet that is Prone. *Failure:* 35 (10d6) Piercing damage. *Success:* Half damage.",
+        "library": true,
+        "template": "exploiter",
+        "boundKeys": [],
+        "accepted_closest": true,
+        "gmQuote": "charges in a straight line knocks everything flat and keeps going"
+      },
+      {
+        "name": "Ground-Shaking Bellow (Recharge 5-6)",
+        "text": "*Strength Saving Throw*: DC 16, each creature in a 15-foot Emanation. *Failure:* The target has the Prone condition.",
+        "authored": true,
+        "clause": "knocks everything flat",
+        "gate": "Recharge 5-6",
+        "imposes": "Prone",
+        "clauseId": "cl_183uwud"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Trample",
+        "rules": true,
+        "text": "*Dexterity Saving Throw*: DC 16, one creature within 5 feet that has the Prone condition. *Failure:* 13 (3d8) Bludgeoning damage. *Success:* Half damage."
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Relentless Momentum",
+        "text": "When the thresher is subjected to an effect that would reduce its Speed or knock it Prone, The thresher can choose to ignore the effect; if it does, it instead presses forward and can move up to its Speed without provoking Opportunity Attacks.",
+        "authored": true,
+        "clause": "keeps going",
+        "clauseId": "cl_13e7a3s"
+      },
+      {
+        "name": "Sure Footing",
+        "text": "Difficult Terrain composed of thorn, bramble, rubble, and standing water doesn't cost the thresher extra movement, and the thresher can move across thorn, bramble, rubble, and standing water without needing to make an ability check.",
+        "library": true,
+        "template": "terrain-walk",
+        "boundKeys": [
+          "rubble",
+          "brambles"
+        ],
+        "gmQuote": "charges in a straight line",
+        "expresses": "straight-line charge that knocks everything prone",
+        "bound": false,
+        "clause": "keeps going",
+        "answersAlso": [
+          "keeps going"
+        ],
+        "clauseId": "cl_13e7a3s"
+      }
+    ]
+  },
+  "lore": "Born in the thornscrub flats where game trails run long and straight, the thresher-beast has learned that anything it can line up is on its account, and it wants a clear path wherever it walks.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-charger",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a thresher-beast that charges in a straight line, knocks everything flat, and keeps going",
+    "clauses": [
+      {
+        "id": "cl_1v849ay",
+        "text": "a thresher-beast",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1ugpb35",
+        "text": "charges in a straight line",
+        "kind": "mechanical",
+        "askShape": "movement",
+        "askMechanic": "charge",
+        "askMechanicWhy": "charges in a straight line"
+      },
+      {
+        "id": "cl_183uwud",
+        "text": "knocks everything flat",
+        "kind": "mechanical",
+        "askShape": "condition",
+        "askMechanic": "shove",
+        "askMechanicWhy": "knocks everything flat"
+      },
+      {
+        "id": "cl_13e7a3s",
+        "text": "keeps going",
+        "kind": "mechanical",
+        "askShape": "movement",
+        "askMechanic": "charge",
+        "askMechanicWhy": "keeps going"
+      }
+    ],
+    "cite": "composition after Gorgon (CR 5) — charge plus a breath-shaped nova",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "answered_by_existing": [
+      "keeps going -> Sure Footing"
+    ],
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a thresher-beast that charges in a straight line, knocks everything flat, and keeps going",
+  "selectedChallengeRating": "8",
+  "monsterName": "Thornscrub Thresher",
+  "caster": false
+}

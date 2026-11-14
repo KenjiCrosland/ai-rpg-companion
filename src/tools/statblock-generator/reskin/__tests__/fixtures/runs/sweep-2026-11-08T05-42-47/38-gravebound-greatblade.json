@@ -1,0 +1,134 @@
+{
+  "name": "Gravebound Greatblade",
+  "inline": "the greatblade",
+  "format": "2024",
+  "cr": 6,
+  "cr_str": "6",
+  "xp": 2300,
+  "challenge_rating": "6 (XP 2,300; PB +3)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Lawful Evil",
+  "ac": 14,
+  "hp": 117,
+  "hp_formula": "18d8 + 36",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 16,
+    "CON": 15,
+    "INT": 6,
+    "WIS": 8,
+    "CHA": 5
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": 3,
+    "CON": 5,
+    "INT": -2,
+    "WIS": -1,
+    "CHA": -3
+  },
+  "skills": "Athletics +7, Perception +2",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "Understands Common plus one other language but can't speak",
+  "initiative_bonus": 3,
+  "initiative_score": 13,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The greatblade makes two attacks, using Greatsword or Hurl Greatsword in any combination. It can replace one attack with a use of Gravebound Cleave."
+      },
+      {
+        "name": "Greatsword",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 21 (5d6 + 4) Slashing damage.",
+        "part": true,
+        "weapon": "greatsword",
+        "authored": true,
+        "clause": "a skeleton with a greatsword",
+        "clauseId": "cl_oklec5",
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Hurl Greatsword",
+        "text": "*Ranged Attack Roll:* +7, range 60/240 ft. 18 (4d6 + 4) Slashing damage.",
+        "weapon": "greatsword",
+        "gmArmed": true,
+        "print": true,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Gravebound Cleave",
+        "text": "*Dexterity Saving Throw*: DC 14, each creature in a 10-foot Emanation. *Failure:* 28 (8d6) Slashing damage. *Success:* Half damage only.",
+        "authored": true,
+        "clause": "When the greatblade makes a Greatsword attack, it can put both hands to the hilt and let the blade ride through the swin",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "relentless two-handed cleaving that never retreats",
+        "boundKeys": [],
+        "expressedQuote": "each creature in a 10-foot Emanation"
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Great Weapon Master",
+        "text": "When the greatblade hits a creature with its Greatsword, the attack deals an extra 3 damage.",
+        "feature": "Great Weapon Master",
+        "clause": "a skeleton with a greatsword",
+        "clauseId": "cl_oklec5"
+      }
+    ]
+  },
+  "lore": "Raised from a battlefield's bleaching dead to stand eternal guard, it still grips the greatsword it fell with, long after the necromancer who bound it has crumbled to dust.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Skeleton",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "a skeleton with a greatsword",
+    "clauses": [
+      {
+        "id": "cl_oklec5",
+        "text": "a skeleton with a greatsword",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "a skeleton with a greatsword",
+        "askOften": "at_will",
+        "askOftenWhy": "a skeleton with a greatsword",
+        "askShape": "attack"
+      }
+    ],
+    "cite": "composition after Hill Giant (CR 5) — two of the same swing, thrown rock",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Poison; Exhaustion, Poisoned, Frightened",
+  "vulnerabilities": "Bludgeoning",
+  "lint_findings": [],
+  "monsterDescription": "a skeleton with a greatsword",
+  "selectedChallengeRating": "6",
+  "monsterName": "Gravebound Greatblade",
+  "caster": false
+}

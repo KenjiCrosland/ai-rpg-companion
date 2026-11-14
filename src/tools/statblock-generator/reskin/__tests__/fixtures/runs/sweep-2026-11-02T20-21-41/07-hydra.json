@@ -1,0 +1,215 @@
+{
+  "name": "Hydra",
+  "inline": "the hydra",
+  "type_and_alignment": "Huge monstrosity, unaligned",
+  "armor_class": "15 (natural armor)",
+  "hit_points": "184 (16d12 + 80)",
+  "speed": "40 ft., swim 40 ft.",
+  "attributes": "STR 20 (+5), DEX 12 (+1), CON 20 (+5), INT 2 (-4), WIS 10 (+0), CHA 7 (-2)",
+  "saving_throws": "STR +8, CON +8",
+  "skills": "Perception +6",
+  "senses": "darkvision 60 ft., passive Perception 16",
+  "languages": "None",
+  "challenge_rating": "8 (3,900 XP)",
+  "proficiency_bonus": "+3",
+  "abilities": [
+    {
+      "name": "Hold Breath",
+      "description": "The hydra can hold its breath for 1 hour."
+    },
+    {
+      "name": "Multiple Heads",
+      "description": "The hydra has five heads. Whenever the hydra takes 25 damage or more on a single turn, one of its heads dies. The hydra dies if all its heads are dead."
+    },
+    {
+      "name": "Reactive Heads",
+      "description": "For each head the hydra has beyond one, it gets an extra Reaction that can be used only for Opportunity Attacks."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The hydra makes as many Bite attacks as it has heads."
+    },
+    {
+      "name": "Bite",
+      "description": "Melee Weapon Attack: +8 to hit, reach 10 ft., one target. Hit: 10 (1d10 + 5) piercing damage."
+    }
+  ],
+  "format": "2014",
+  "archetype": "brute",
+  "archetype_source": "user",
+  "condition_immunities": "blinded, charmed, deafened, frightened, stunned, unconscious",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Hydra",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "code"
+    },
+    "donor": "brute-5",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "Hydra — whose stumps smoke instead of regrowing",
+    "clauses": [
+      {
+        "id": "cl_1atlsmk",
+        "text": "Hydra — whose stumps smoke instead of regrowing",
+        "kind": "mechanical",
+        "askOften": "at_will",
+        "askOftenWhy": "Hydra — whose stumps smoke instead of regrowing",
+        "askShape": "save_area",
+        "askMechanic": "zone",
+        "askMechanicWhy": "stumps smoke",
+        "polarity": "lacks",
+        "takes": "regeneration",
+        "lackQuote": "instead of regrowing"
+      }
+    ],
+    "cite": "composition after Hill Giant (CR 5) — two of the same swing, thrown rock",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the call named no template for the pick",
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Hydra",
+    "inline": "the hydra",
+    "format": "2024",
+    "cr": 8,
+    "cr_str": "8",
+    "xp": 3900,
+    "challenge_rating": "8 (XP 3,900; PB +3)",
+    "type": "Monstrosity",
+    "size": "Huge",
+    "alignment": "Unaligned",
+    "ac": 15,
+    "hp": 184,
+    "hp_formula": "16d12 + 80",
+    "pb": 3,
+    "speed": "40 ft., Swim 40 ft.",
+    "stats": {
+      "STR": 20,
+      "DEX": 12,
+      "CON": 20,
+      "INT": 2,
+      "WIS": 10,
+      "CHA": 7
+    },
+    "saves": {
+      "STR": 8,
+      "DEX": 1,
+      "CON": 8,
+      "INT": -4,
+      "WIS": 0,
+      "CHA": -2
+    },
+    "skills": "Perception +6",
+    "senses": "darkvision 60 ft.; Passive Perception 16",
+    "languages": "None",
+    "initiative_bonus": 1,
+    "initiative_score": 11,
+    "sections": {
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The hydra makes as many Bite attacks as it has heads."
+        },
+        {
+          "name": "Bite",
+          "text": "*Melee Attack Roll:* +8, reach 10 ft. 10 (1d10 + 5) Piercing damage.",
+          "weapon": null,
+          "weldedRiders": [],
+          "print": true,
+          "attacksPerRound": 1
+        }
+      ],
+      "Reactions": [],
+      "Traits": [
+        {
+          "name": "Hold Breath",
+          "text": "The hydra can hold its breath for 1 hour.",
+          "rules": true,
+          "print": true
+        },
+        {
+          "name": "Multiple Heads",
+          "text": "The hydra has five heads. Whenever the hydra takes 25 damage or more on a single turn, one of its heads dies. The hydra dies if all its heads are dead.",
+          "rules": true,
+          "print": true
+        },
+        {
+          "name": "Reactive Heads",
+          "text": "For each head the hydra has beyond one, it gets an extra Reaction that can be used only for Opportunity Attacks.",
+          "rules": true,
+          "print": true
+        }
+      ]
+    },
+    "lore": "Born in alchemically poisoned marshlands, smoke-stumped hydras cauterize what they cannot regrow and hoard their soaked territory with a stubborn, smoldering rage.",
+    "inline_kind": "kind",
+    "inline_overridden": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "twist",
+        "print_body": "Hydra",
+        "relation": "is",
+        "class": null,
+        "species": null,
+        "by": "code"
+      },
+      "donor": "brute-5",
+      "archetype": "brute",
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "Hydra — whose stumps smoke instead of regrowing",
+      "clauses": [
+        {
+          "id": "cl_1atlsmk",
+          "text": "Hydra — whose stumps smoke instead of regrowing",
+          "kind": "mechanical",
+          "askOften": "at_will",
+          "askOftenWhy": "Hydra — whose stumps smoke instead of regrowing",
+          "askShape": "save_area",
+          "askMechanic": "zone",
+          "askMechanicWhy": "stumps smoke",
+          "polarity": "lacks",
+          "takes": "regeneration",
+          "lackQuote": "instead of regrowing"
+        }
+      ],
+      "cite": "composition after Hill Giant (CR 5) — two of the same swing, thrown rock",
+      "free_rows": 0,
+      "free_row_templates": [],
+      "decoration_rows": 0,
+      "expressed_rows": 0,
+      "signature_rows": 0,
+      "seed_rows": 0,
+      "gap_vetoed": "1 of 1",
+      "gap_missing_unstated": 0,
+      "gap_death_sites": "1x the call named no template for the pick",
+      "signature": "library"
+    },
+    "archetype": "brute",
+    "archetype_source": "user",
+    "immunities": "Blinded, Charmed, Deafened, Frightened, Stunned, Unconscious",
+    "lint_findings": []
+  },
+  "monsterDescription": "whose stumps smoke instead of regrowing",
+  "selectedChallengeRating": "8",
+  "monsterName": "Hydra",
+  "caster": false
+}

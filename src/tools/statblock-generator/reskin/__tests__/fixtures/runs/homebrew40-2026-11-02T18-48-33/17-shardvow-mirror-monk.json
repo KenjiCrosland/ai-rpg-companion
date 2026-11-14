@@ -1,0 +1,164 @@
+{
+  "name": "Shardvow Mirror-Monk",
+  "inline": "the mirror-monk",
+  "format": "2024",
+  "cr": 10,
+  "cr_str": "10",
+  "xp": 5900,
+  "challenge_rating": "10 (XP 5,900; PB +4)",
+  "type": "Humanoid",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 20,
+  "hp": 144,
+  "hp_formula": "32d8",
+  "pb": 4,
+  "speed": "30 ft., Climb 30 ft.",
+  "stats": {
+    "STR": 20,
+    "DEX": 15,
+    "CON": 10,
+    "INT": 12,
+    "WIS": 14,
+    "CHA": 16
+  },
+  "saves": {
+    "STR": 9,
+    "DEX": 2,
+    "CON": 4,
+    "INT": 1,
+    "WIS": 2,
+    "CHA": 3
+  },
+  "skills": "Athletics +9, Perception +6",
+  "senses": "Passive Perception 16",
+  "languages": "Common plus one other language",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Ringing Retort",
+        "text": "Once per turn, when the mirror-monk is hit by an attack, the blow's force is caught in its glass and held until the start of its next turn, while that force is held, the mirror-monk can move up to 10 feet to intercept a creature that enters its reach, and the striker takes 17 (5d6) damage of the same type as the triggering attack or Thunder instead.",
+        "authored": true,
+        "clause": "The mirror-monk's glass body takes every strike as a sounding board — whenever it is hit, the blow's ringing force is ca",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "reflecting blows back on the attacker",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "the striker takes 17 (5d6) damage of the same type as the triggering attack or Thunder instead."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The mirror-monk makes two attacks, using Unarmed Strike or Dart in any combination."
+      },
+      {
+        "name": "Unarmed Strike",
+        "text": "*Melee Attack Roll:* +9, reach 5 ft. 27 (5d8 + 5) Bludgeoning damage. Once on each of the mirror-monk's turns when it hits with this attack, the target is subjected to the following effect. *Constitution Saving Throw*: DC 17. *Failure:* The target has the Stunned condition until the end of the mirror-monk's next turn.",
+        "clause": "monk",
+        "feature": "Stunning Strike",
+        "boundKeys": [],
+        "weapon": null,
+        "weldedRiders": [],
+        "print": true,
+        "printNamed": true,
+        "classArmed": true,
+        "clauseId": "cl_invj8i",
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Dart",
+        "text": "*Ranged Attack Roll:* +6, range 20/60 ft. 29 (6d8 + 2) Piercing damage.",
+        "weapon": "dart",
+        "print": true,
+        "printNamed": true,
+        "classArmed": true,
+        "attacksPerRound": 2
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Patient Defense",
+        "text": "The mirror-monk takes the Dodge action.",
+        "kit": "monk",
+        "clause": "monk",
+        "free": true,
+        "template": "patient-defense",
+        "clauseId": "cl_invj8i"
+      },
+      {
+        "name": "Cunning Action",
+        "text": "The mirror-monk takes the Dash, Disengage, or Hide action.",
+        "rules": true,
+        "print": true
+      }
+    ],
+    "Reactions": []
+  },
+  "lore": "Fused from the shattered mirror-shields of a monastery's last defenders, the mirror-monk keeps a vault it no longer remembers, returning every intruder's violence as its own.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "class_npc",
+      "print_body": "Spy",
+      "relation": null,
+      "class": "monk",
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-5",
+    "archetype": "defender",
+    "class_kit": {
+      "key": "monk",
+      "clause": "monk",
+      "landed": 2,
+      "yielded": 0,
+      "stood_down": null
+    },
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a glass monk who turns every blow back on whoever struck it",
+    "clauses": [
+      {
+        "id": "cl_invj8i",
+        "text": "a glass monk",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_pmv3v8",
+        "text": "turns every blow back on whoever struck it",
+        "kind": "mechanical",
+        "askWhen": "on_being_hit",
+        "askWhenWhy": "blow back",
+        "askOften": "once_per_turn",
+        "askOftenWhy": "every blow",
+        "askShape": "attack",
+        "askMechanic": "retaliate",
+        "askMechanicWhy": "turns every blow back"
+      }
+    ],
+    "cite": "composition after Guard Captain (CR 4) — the hybrid javelin twin, scaled into the band",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a glass monk who turns every blow back on whoever struck it",
+  "selectedChallengeRating": "10",
+  "monsterName": "Shardvow Mirror-Monk",
+  "caster": false
+}

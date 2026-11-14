@@ -1,0 +1,149 @@
+{
+  "name": "Last Click",
+  "inline": "the last click",
+  "format": "2024",
+  "cr": 6,
+  "cr_str": "6",
+  "xp": 2300,
+  "challenge_rating": "6 (XP 2,300; PB +3)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 13,
+  "hp": 82,
+  "hp_formula": "11d8 + 33",
+  "pb": 3,
+  "speed": "5 ft., Fly 60 ft. (hover)",
+  "stats": {
+    "STR": 6,
+    "DEX": 18,
+    "CON": 16,
+    "INT": 12,
+    "WIS": 14,
+    "CHA": 15
+  },
+  "saves": {
+    "STR": -2,
+    "DEX": 7,
+    "CON": 3,
+    "INT": 1,
+    "WIS": 2,
+    "CHA": 2
+  },
+  "skills": "Stealth +7",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "Common plus the languages it knew in life",
+  "initiative_bonus": 4,
+  "initiative_score": 14,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Fear Aura",
+        "text": "The last click emanates an aura in a 20-foot Emanation while it doesn't have the Incapacitated condition. *Wisdom Saving Throw*: DC 14, any enemy that starts its turn in the aura. *Failure:* The target has the Frightened condition until the start of its next turn. *Success:* The target is immune to this creature's aura for 24 hours.",
+        "library": true,
+        "template": "fear-aura",
+        "imposes": "Frightened",
+        "boundKeys": [
+          "frightens",
+          "frightening"
+        ],
+        "accepted_closest": true,
+        "gmQuote": "the sound of a door closing in an empty house",
+        "duration": "target_start",
+        "area": {
+          "shape": "Emanation",
+          "size": 20
+        },
+        "expresses": "the report of a door slamming shut in an empty room",
+        "bound": false
+      },
+      {
+        "name": "Incorporeal Movement",
+        "rules": true,
+        "text": "The last click can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object."
+      },
+      {
+        "name": "Sunlight Sensitivity",
+        "rules": true,
+        "text": "While in sunlight, the last click has Disadvantage on ability checks and attack rolls."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The last click makes two Slap attacks."
+      },
+      {
+        "name": "Slap",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Bludgeoning damage plus 7 (2d6) Thunder damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Thunderclap (Recharge 5-6)",
+        "gate": "Recharge 5-6",
+        "text": "*Constitution Saving Throw*: DC 14, each creature in a 20-foot Emanation originating from the last click. *Failure:* 35 (10d6) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.",
+        "library": true,
+        "template": "active-toll",
+        "imposes": "Deafened",
+        "boundKeys": [
+          "thunder"
+        ],
+        "gmQuote": "the sound of a door closing in an empty house",
+        "minorClause": ", and the target has the Deafened condition until the end of its next turn",
+        "area": {
+          "shape": "Emanation",
+          "size": 20
+        }
+      }
+    ]
+  },
+  "lore": "Born from the final, unremarked click of a door in a house where no one remained to hear it, the Last Click replays that soft shut forever, drifting through empty rooms in search of the listener it was never given.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5-phantom",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "the sound of a door closing in an empty house",
+    "clauses": [
+      {
+        "id": "cl_1w71bmo",
+        "text": "the sound of a door closing in an empty house",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "dazzle",
+        "askMechanicWhy": "door closing"
+      }
+    ],
+    "cite": "composition after Wraith (CR 5) — Life Drain under the sunlight bane",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained",
+  "resistances": "Bludgeoning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "the sound of a door closing in an empty house",
+  "selectedChallengeRating": "6",
+  "monsterName": "Last Click",
+  "caster": false
+}

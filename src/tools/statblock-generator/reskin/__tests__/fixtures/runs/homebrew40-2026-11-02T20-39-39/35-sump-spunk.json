@@ -1,0 +1,158 @@
+{
+  "name": "Sump-Spunk",
+  "inline": "the sump-spunk",
+  "format": "2024",
+  "cr": 7,
+  "cr_str": "7",
+  "xp": 2900,
+  "challenge_rating": "7 (XP 2,900; PB +3)",
+  "type": "Monstrosity",
+  "size": "Large",
+  "alignment": "Neutral",
+  "ac": 14,
+  "hp": 136,
+  "hp_formula": "16d10 + 48",
+  "pb": 3,
+  "speed": "40 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 8,
+    "CON": 16,
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 6
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": -1,
+    "CON": 6,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -2
+  },
+  "skills": "Athletics +7, Perception +3",
+  "senses": "darkvision 60 ft.; Passive Perception 13",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The sump-spunk makes two Slam attacks."
+      },
+      {
+        "name": "Slam",
+        "text": "*Melee Attack Roll:* +7, reach 10 ft. 13 (2d8 + 4) Bludgeoning damage plus 10 (3d6) Poison damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Caustic Spasm",
+        "text": "One creature within 5 feet that hit the sump-spunk with an attack roll since the end of the sump-spunk's last turn takes 10 (3d6) Poison damage.",
+        "library": true,
+        "template": "own-turn-punisher",
+        "boundKeys": [
+          "lash"
+        ],
+        "gmQuote": "a creature that poisons everything it touches including itself"
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Shared Caustic Bloom",
+        "text": "When the sump-spunk is touched by or struck with a melee attack from any creature within 5 feet of it, including itself, the caustic film seeps onto the attacker; the sump-spunk's own caustic film cannot harm the sump-spunk itself.",
+        "authored": true,
+        "clause": "including itself",
+        "clauseId": "cl_1lt6v4i"
+      },
+      {
+        "name": "Caustic Film",
+        "text": "A creature that touches the sump-spunk or hits it with a melee attack while within 5 feet of it has the Poisoned condition until the end of its next turn.",
+        "library": true,
+        "template": "composed:body-reaction:condition:t1:poisoned",
+        "imposes": "Poisoned",
+        "boundKeys": [],
+        "gmQuote": "a creature that poisons everything it touches",
+        "expresses": "caustic touch that poisons whatever it contacts, itself included",
+        "bound": false,
+        "clause": "including itself",
+        "answersAlso": [
+          "including itself"
+        ],
+        "clauseId": "cl_1lt6v4i"
+      }
+    ]
+  },
+  "lore": "Woken from a ruptured alchemical sump where dumped venoms pooled together, it lumbers the drainage tunnels trying to touch something, anything, and smear itself whole again.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a creature that poisons everything it touches, including itself",
+    "clauses": [
+      {
+        "id": "cl_10vdr1a",
+        "text": "a creature",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1iaoz4g",
+        "text": "poisons everything it touches",
+        "kind": "mechanical",
+        "askWhen": "on_hit",
+        "askWhenWhy": "poisons everything it touches",
+        "askOften": "at_will",
+        "askOftenWhy": "poisons everything it touches",
+        "askShape": "attack",
+        "askMechanic": "curse",
+        "askMechanicWhy": "poisons"
+      },
+      {
+        "id": "cl_1lt6v4i",
+        "text": "including itself",
+        "kind": "mechanical",
+        "askWhen": "on_hit",
+        "askWhenWhy": "including itself",
+        "askOften": "at_will",
+        "askOftenWhy": "including itself",
+        "askShape": "attack",
+        "askMechanic": "retaliate",
+        "askMechanicWhy": "including itself"
+      }
+    ],
+    "cite": "composition after Hill Giant (CR 5) — two of the same swing, thrown rock",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "answered_by_existing": [
+      "including itself -> Caustic Film"
+    ],
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a creature that poisons everything it touches, including itself",
+  "selectedChallengeRating": "7",
+  "monsterName": "Sump-Spunk",
+  "caster": false
+}

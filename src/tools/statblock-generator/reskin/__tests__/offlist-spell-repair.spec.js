@@ -18,7 +18,7 @@ import { repairReplaceClause } from '../checker.mjs';
 import { sheetCanCast, spellListTextOf, lintSheet } from '../sheet-lints.mjs';
 import { readFileSync, readdirSync } from 'fs';
 
-const RUN = 'smoke-out/sweep-2026-11-08T05-42-47';
+const RUN = 'src/tools/statblock-generator/reskin/__tests__/fixtures/runs/sweep-2026-11-08T05-42-47';
 const FLAT = ['abilities', 'actions', 'bonus_actions', 'reactions', 'legendary_actions'];
 const rowsOf = (o) => [...Object.values(o?.sections ?? {}).flat(), ...FLAT.flatMap((k) => o?.[k] ?? [])].filter(Boolean);
 const sheet = (n) => {

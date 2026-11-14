@@ -1,0 +1,139 @@
+{
+  "name": "Last Door",
+  "inline": "the last door",
+  "format": "2024",
+  "cr": 6,
+  "cr_str": "6",
+  "xp": 2300,
+  "challenge_rating": "6 (XP 2,300; PB +3)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 13,
+  "hp": 82,
+  "hp_formula": "11d8 + 33",
+  "pb": 3,
+  "speed": "5 ft., Fly 60 ft. (hover)",
+  "stats": {
+    "STR": 6,
+    "DEX": 18,
+    "CON": 16,
+    "INT": 12,
+    "WIS": 14,
+    "CHA": 15
+  },
+  "saves": {
+    "STR": -2,
+    "DEX": 7,
+    "CON": 3,
+    "INT": 1,
+    "WIS": 2,
+    "CHA": 2
+  },
+  "skills": "Stealth +7",
+  "senses": "blindsight 60 ft. (blind beyond this radius); Passive Perception 12",
+  "languages": "Common plus the languages it knew in life",
+  "initiative_bonus": 4,
+  "initiative_score": 14,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Uncanny Sense",
+        "text": "The last door can pinpoint the location of living creatures that have made a sound within 60 feet of itself.",
+        "library": true,
+        "template": "uncanny-sense",
+        "boundKeys": [],
+        "accepted_closest": true,
+        "gmQuote": "the sound of a door closing in an empty house",
+        "expresses": "an empty house's listening silence",
+        "bound": false
+      },
+      {
+        "name": "Incorporeal Movement",
+        "rules": true,
+        "text": "The last door can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object."
+      },
+      {
+        "name": "Sunlight Sensitivity",
+        "rules": true,
+        "text": "While in sunlight, the last door has Disadvantage on ability checks and attack rolls."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The last door makes two Slam Echo Strike attacks. It can replace one attack with a use of Hollowing Gaze."
+      },
+      {
+        "name": "Slam Echo Strike",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 22 (4d8 + 4) Thunder damage.",
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Hollowing Gaze",
+        "text": "*Constitution Saving Throw:* DC 14, each creature in a 30-foot Cone. *Failure:* The target has the Blinded condition until the end of its next turn.",
+        "library": true,
+        "template": "sensory-strike",
+        "imposes": "Blinded",
+        "boundKeys": [
+          "blind",
+          "ring"
+        ],
+        "duration": "target_end",
+        "widened": true
+      }
+    ]
+  },
+  "lore": "It is what remains of a house's last moment of abandonment, a wandering spirit that drifts through walls to drain the warmth from the living until it hears a final click over living ears.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5-phantom",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "the sound of a door closing in an empty house",
+    "clauses": [
+      {
+        "id": "cl_1w71bmo",
+        "text": "the sound of a door closing in an empty house",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "the sound of a door closing in an empty house",
+        "askOften": "at_will",
+        "askOftenWhy": "the sound of a door closing in an empty house",
+        "askShape": "save_area",
+        "askMechanic": "dazzle",
+        "askMechanicWhy": "the sound of a door closing in an empty house"
+      }
+    ],
+    "cite": "composition after Wraith (CR 5) — Life Drain under the sunlight bane",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained",
+  "resistances": "Bludgeoning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "the sound of a door closing in an empty house",
+  "selectedChallengeRating": "6",
+  "monsterName": "Last Door",
+  "caster": false
+}

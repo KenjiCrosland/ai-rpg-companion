@@ -1,0 +1,147 @@
+{
+  "name": "Kiln-Priest",
+  "inline": "the kiln-priest",
+  "format": "2024",
+  "cr": 11,
+  "cr_str": "11",
+  "xp": 7200,
+  "challenge_rating": "11 (XP 7,200; PB +4)",
+  "type": "Humanoid",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 16,
+  "hp": 154,
+  "hp_formula": "28d8 + 28",
+  "pb": 4,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 16,
+    "DEX": 10,
+    "CON": 12,
+    "INT": 18,
+    "WIS": 20,
+    "CHA": 13
+  },
+  "saves": {
+    "STR": 3,
+    "DEX": 0,
+    "CON": 1,
+    "INT": 8,
+    "WIS": 9,
+    "CHA": 1
+  },
+  "skills": "Arcana +8, Perception +9",
+  "senses": "Passive Perception 19",
+  "languages": "Common plus one other language",
+  "initiative_bonus": 0,
+  "initiative_score": 10,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The kiln-priest makes three attacks, using Radiant Flame or Mace in any combination. It can replace one attack with a use of Spellcasting to cast *Scorching Ray*."
+      },
+      {
+        "name": "Radiant Flame",
+        "text": "*Ranged Attack Roll:* +9, range 120 ft. 27 (5d8 + 5) Radiant damage.",
+        "weapon": null,
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Spellcasting",
+        "rules": true,
+        "text": "The kiln-priest casts one of the following spells, using Wisdom as the spellcasting ability (spell save DC 17):\n\n- **At Will:** *Light*, *Thaumaturgy*\n- **1/Day Each:** *Spirit Guardians*",
+        "print": true
+      },
+      {
+        "name": "Mace",
+        "text": "*Melee Attack Roll:* +9, reach 5 ft. 6 (1d6 + 3) Bludgeoning damage plus 5 (2d4) Radiant damage.",
+        "print": true,
+        "weapon": "mace",
+        "attacksPerRound": 3
+      }
+    ],
+    "Reactions": [],
+    "Bonus Actions": [
+      {
+        "name": "Divine Aid (3/Day)",
+        "text": "The kiln-priest casts *Bless*, *Dispel Magic*, *Healing Word*, or *Lesser Restoration*, using the same spellcasting ability as Spellcasting.",
+        "kit": "cleric",
+        "clause": "priest",
+        "free": true,
+        "clauseId": "cl_1ludxqu"
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Blood Frenzy",
+        "text": "The kiln-priest has Advantage on attack rolls against any creature that doesn't have all its Hit Points.",
+        "library": true,
+        "template": "blood-frenzy",
+        "boundKeys": [],
+        "freeRow": true,
+        "decoration": true,
+        "accepted_closest": true,
+        "expresses": null,
+        "bound": false
+      }
+    ]
+  },
+  "lore": "Kiln-priests are the fire-keepers of a buried forge-temple, their throats ritually scorched so that every prayer they speak leaves their lips as living flame.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "class_npc",
+      "print_body": "Priest",
+      "relation": null,
+      "class": "cleric",
+      "species": null,
+      "by": "call"
+    },
+    "donor": "caster-6",
+    "archetype": "caster",
+    "class_kit": {
+      "key": "cleric",
+      "clause": "priest",
+      "landed": 1,
+      "yielded": 0,
+      "stood_down": null
+    },
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a kiln-priest whose prayers are spoken in fire",
+    "clauses": [
+      {
+        "id": "cl_1ludxqu",
+        "text": "a kiln-priest whose prayers are spoken in fire",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "menu_role": "artillery",
+    "cite": "composition after Mage (CR 6) — three Arcane Bursts and the utility list",
+    "free_rows": 1,
+    "free_row_templates": [
+      "blood-frenzy"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "signature": "dropped"
+  },
+  "archetype": "artillery",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a kiln-priest whose prayers are spoken in fire",
+  "selectedChallengeRating": "11",
+  "monsterName": "Kiln-Priest",
+  "caster": false
+}

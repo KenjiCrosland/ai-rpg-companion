@@ -1,0 +1,124 @@
+{
+  "name": "Grief",
+  "inline": "the grief",
+  "format": "2024",
+  "cr": 11,
+  "cr_str": "11",
+  "xp": 7200,
+  "challenge_rating": "11 (XP 7,200; PB +4)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 14,
+  "hp": 150,
+  "hp_formula": "20d8 + 60",
+  "pb": 4,
+  "speed": "5 ft., Fly 60 ft. (hover)",
+  "stats": {
+    "STR": 6,
+    "DEX": 20,
+    "CON": 17,
+    "INT": 12,
+    "WIS": 14,
+    "CHA": 15
+  },
+  "saves": {
+    "STR": -2,
+    "DEX": 9,
+    "CON": 3,
+    "INT": 1,
+    "WIS": 2,
+    "CHA": 2
+  },
+  "skills": "Stealth +9",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "Common plus the languages it knew in life",
+  "initiative_bonus": 5,
+  "initiative_score": 15,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Incorporeal Movement",
+        "rules": true,
+        "text": "The grief can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object."
+      },
+      {
+        "name": "Sunlight Sensitivity",
+        "rules": true,
+        "text": "While in sunlight, the grief has Disadvantage on ability checks and attack rolls."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The grief makes two Shadow Limb attacks. It can replace one attack with a use of Drink the Warmth."
+      },
+      {
+        "name": "Shadow Limb",
+        "text": "*Melee Attack Roll:* +9, reach 5 ft. 23 (4d8 + 5) Bludgeoning damage plus 16 (3d10) Necrotic damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Drink the Warmth",
+        "text": "*Wisdom Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* The target has the Frightened condition until the end of its next turn.",
+        "authored": true,
+        "clause": "When the grief hits a creature with its Shadow Limb, it can drink the warmth from the wound: the target must make a Cons",
+        "imposes": "Frightened",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "draining the living of warmth and vigor to deepen their despair",
+        "widened": true,
+        "boundKeys": [],
+        "expressedQuote": "The target has the Frightened condition until the end of its next turn.",
+        "clauseId": "cl_1mptz3"
+      }
+    ]
+  },
+  "lore": "A grief is what remains when someone dies of sorrow so complete that the spirit refuses the grave, drifting through walls to find the despairing and drink them dry.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5-phantom",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "grief",
+    "clauses": [
+      {
+        "id": "cl_1mptz3",
+        "text": "grief",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "cite": "composition after Wraith (CR 5) — Life Drain under the sunlight bane",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained",
+  "resistances": "Bludgeoning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "grief",
+  "selectedChallengeRating": "11",
+  "monsterName": "Grief",
+  "caster": false
+}

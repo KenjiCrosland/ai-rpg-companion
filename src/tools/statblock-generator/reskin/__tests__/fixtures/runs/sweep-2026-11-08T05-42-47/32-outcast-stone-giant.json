@@ -1,0 +1,219 @@
+{
+  "name": "Outcast Stone Giant",
+  "inline": "the stone giant",
+  "type_and_alignment": "Huge giant, neutral",
+  "armor_class": "14 (natural armor)",
+  "hit_points": "161 (14d12 + 70)",
+  "speed": "40 ft.",
+  "attributes": "STR 23 (+6), DEX 15 (+2), CON 20 (+5), INT 10 (+0), WIS 12 (+1), CHA 9 (-1)",
+  "saving_throws": "STR +10, CON +9",
+  "skills": "Athletics +10, Perception +5",
+  "senses": "darkvision 60 ft., passive Perception 15",
+  "languages": "Giant",
+  "challenge_rating": "9 (5,000 XP)",
+  "proficiency_bonus": "+4",
+  "abilities": [],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The stone giant makes two attacks: one with its Stone Club and one with its Boulder. It can replace one attack with a use of Answer the Roar."
+    },
+    {
+      "name": "Stone Club",
+      "description": "Melee Weapon Attack: +10 to hit, reach 15 ft., one target. Hit: 30 (7d6 + 6) bludgeoning damage."
+    },
+    {
+      "name": "Boulder",
+      "description": "Ranged Weapon Attack: +10 to hit, range 60/240 ft., one target. Hit: 24 (4d8 + 6) bludgeoning damage."
+    },
+    {
+      "name": "Answer the Roar",
+      "description": "One creature within 240 feet of the stone giant must succeed on a DC 18 Wisdom saving throw or be frightened of the stone giant until the end of its next turn.",
+      "imposes": "Frightened"
+    }
+  ],
+  "format": "2014",
+  "archetype": "brute",
+  "archetype_source": "user",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Stone Giant",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-9",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a stone giant exile who speaks only Giant and understands no Common",
+    "clauses": [
+      {
+        "id": "cl_aa862i",
+        "text": "a stone giant exile",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_shd39s",
+        "text": "speaks only Giant",
+        "kind": "header"
+      },
+      {
+        "id": "cl_xn6jhb",
+        "text": "understands no Common",
+        "kind": "mechanical",
+        "polarity": "lacks",
+        "takes": "other",
+        "lackQuote": "understands no Common"
+      }
+    ],
+    "cite": "composition after Fire Giant (CR 9) — the giant ladder continues",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Outcast Stone Giant",
+    "inline": "the stone giant",
+    "format": "2024",
+    "cr": 9,
+    "cr_str": "9",
+    "xp": 5000,
+    "challenge_rating": "9 (XP 5,000; PB +4)",
+    "type": "Giant",
+    "size": "Huge",
+    "alignment": "Neutral",
+    "ac": 14,
+    "hp": 161,
+    "hp_formula": "14d12 + 70",
+    "pb": 4,
+    "speed": "40 ft.",
+    "stats": {
+      "STR": 23,
+      "DEX": 15,
+      "CON": 20,
+      "INT": 10,
+      "WIS": 12,
+      "CHA": 9
+    },
+    "saves": {
+      "STR": 10,
+      "DEX": 2,
+      "CON": 9,
+      "INT": 0,
+      "WIS": 1,
+      "CHA": -1
+    },
+    "skills": "Athletics +10, Perception +5",
+    "senses": "darkvision 60 ft.; Passive Perception 15",
+    "languages": "Giant",
+    "initiative_bonus": 2,
+    "initiative_score": 12,
+    "sections": {
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The stone giant makes two attacks, using Stone Club or Boulder in any combination. It can replace one attack with a use of Answer the Roar."
+        },
+        {
+          "name": "Stone Club",
+          "text": "*Melee Attack Roll:* +10, reach 15 ft. 30 (7d6 + 6) Bludgeoning damage.",
+          "weapon": "club",
+          "weldedRiders": [],
+          "print": true,
+          "printNamed": true,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Boulder",
+          "text": "*Ranged Attack Roll:* +10, range 60/240 ft. 24 (4d8 + 6) Bludgeoning damage.",
+          "weapon": null,
+          "print": true,
+          "printNamed": true,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Answer the Roar",
+          "text": "*Wisdom Saving Throw*: DC 18, one creature within 240 feet. *Failure:* The target has the Frightened condition until the end of its next turn.",
+          "authored": true,
+          "clause": "The stone giant roars a challenge in Giant at one creature it can see, demanding an answer in kind. The target must succ",
+          "imposes": "Frightened",
+          "authoredSeat": true,
+          "freeRow": true,
+          "expresses": "speaks only Giant, understands no Common",
+          "boundKeys": [],
+          "decoration": true
+        }
+      ],
+      "Traits": []
+    },
+    "lore": "Cast out of its highland clan for a crime no one will name, it wanders the low country seeking a fight worth dying in or a clan that will take it back.",
+    "inline_kind": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "twist",
+        "print_body": "Stone Giant",
+        "relation": "is",
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "brute-9",
+      "archetype": "brute",
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "a stone giant exile who speaks only Giant and understands no Common",
+      "clauses": [
+        {
+          "id": "cl_aa862i",
+          "text": "a stone giant exile",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_shd39s",
+          "text": "speaks only Giant",
+          "kind": "header"
+        },
+        {
+          "id": "cl_xn6jhb",
+          "text": "understands no Common",
+          "kind": "mechanical",
+          "polarity": "lacks",
+          "takes": "other",
+          "lackQuote": "understands no Common"
+        }
+      ],
+      "cite": "composition after Fire Giant (CR 9) — the giant ladder continues",
+      "free_rows": 1,
+      "free_row_templates": [
+        "unknown"
+      ],
+      "decoration_rows": 1,
+      "expressed_rows": 0,
+      "signature_rows": 0,
+      "seed_rows": 0,
+      "signature": "library"
+    },
+    "archetype": "brute",
+    "archetype_source": "user",
+    "lint_findings": []
+  },
+  "monsterDescription": "a stone giant exile who speaks only Giant and understands no Common",
+  "selectedChallengeRating": "9",
+  "monsterName": "Outcast Stone Giant",
+  "caster": false
+}

@@ -1,0 +1,210 @@
+{
+  "name": "Midway Barker",
+  "inline": "the barker",
+  "type_and_alignment": "Medium humanoid, neutral evil",
+  "armor_class": "15 (chain shirt)",
+  "hit_points": "117 (18d8 + 36)",
+  "speed": "30 ft.",
+  "attributes": "STR 16 (+3), DEX 14 (+2), CON 15 (+2), INT 12 (+1), WIS 11 (+0), CHA 15 (+2)",
+  "saving_throws": "CON +5, CHA +5",
+  "skills": "Athletics +6, Persuasion +5",
+  "senses": "passive Perception 10",
+  "languages": "Common",
+  "challenge_rating": "6 (2,300 XP)",
+  "proficiency_bonus": "+3",
+  "abilities": [
+    {
+      "name": "Aura of Authority",
+      "description": "While in a 10-foot radius originating from the barker, the barker and its allies have advantage on attack rolls and saving throws, provided the barker is not incapacitated."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The barker makes two attacks: one with its Brass-Tipped Cane and one with its Ballyhoo. It can replace one attack with a use of Crowd-Press Shove."
+    },
+    {
+      "name": "Brass-Tipped Cane",
+      "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 20 (7d4 + 3) bludgeoning damage."
+    },
+    {
+      "name": "Ballyhoo",
+      "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 21 (4d8 + 3) piercing damage."
+    },
+    {
+      "name": "Crowd-Press Shove",
+      "description": "Each creature in a 30-foot cone must make a DC 14 Strength saving throw. On a failed save, the target is pushed up to 15 feet away from the barker and is knocked prone.",
+      "imposes": "Prone"
+    }
+  ],
+  "format": "2014",
+  "archetype": "defender",
+  "archetype_source": "user",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-3-leader",
+    "archetype": "defender",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a carnival barker who talks you into standing still",
+    "clauses": [
+      {
+        "id": "cl_14ldgt0",
+        "text": "a carnival barker",
+        "kind": "mechanical",
+        "askShape": "condition",
+        "askMechanic": "snare",
+        "askMechanicWhy": "talks you into standing still"
+      },
+      {
+        "id": "cl_a9e1q2",
+        "text": "talks you into standing still",
+        "kind": "header"
+      }
+    ],
+    "cite": "composition after Hobgoblin Captain (CR 3: Aura of Authority + Greatsword/Longbow); the Bandit Captain's Parry is retired by the family sweep (2026-09-08: defenders carry no reactions)",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 1,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the free-row budget",
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Midway Barker",
+    "inline": "the barker",
+    "format": "2024",
+    "cr": 6,
+    "cr_str": "6",
+    "xp": 2300,
+    "challenge_rating": "6 (XP 2,300; PB +3)",
+    "type": "Humanoid",
+    "size": "Medium",
+    "alignment": "Neutral Evil",
+    "ac": 15,
+    "hp": 117,
+    "hp_formula": "18d8 + 36",
+    "pb": 3,
+    "speed": "30 ft.",
+    "stats": {
+      "STR": 16,
+      "DEX": 14,
+      "CON": 15,
+      "INT": 12,
+      "WIS": 11,
+      "CHA": 15
+    },
+    "saves": {
+      "STR": 3,
+      "DEX": 2,
+      "CON": 5,
+      "INT": 1,
+      "WIS": 0,
+      "CHA": 5
+    },
+    "skills": "Athletics +6, Persuasion +5",
+    "senses": "Passive Perception 10",
+    "languages": "Common",
+    "initiative_bonus": 2,
+    "initiative_score": 12,
+    "sections": {
+      "Traits": [
+        {
+          "name": "Aura of Authority",
+          "rules": true,
+          "text": "While in a 10-foot Emanation originating from the barker, the barker and its allies have Advantage on attack rolls and saving throws, provided the barker doesn't have the Incapacitated condition."
+        }
+      ],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The barker makes two attacks, using Brass-Tipped Cane or Ballyhoo in any combination. It can replace one attack with a use of Crowd-Press Shove."
+        },
+        {
+          "name": "Brass-Tipped Cane",
+          "text": "*Melee Attack Roll:* +6, reach 5 ft. 20 (7d4 + 3) Bludgeoning damage.",
+          "weapon": "club",
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Ballyhoo",
+          "text": "*Melee Attack Roll:* +6, reach 5 ft. 21 (4d8 + 3) Piercing damage.",
+          "weapon": null,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Crowd-Press Shove",
+          "text": "*Strength Saving Throw:* DC 14, each creature in a 30-foot Cone. *Failure:* The target is pushed up to 15 feet away from the barker and has the Prone condition.",
+          "library": true,
+          "imposes": "Prone",
+          "seed": "push-prone"
+        }
+      ]
+    },
+    "lore": "Once a traveling fair's pitchman, it bargained with something under the midway for a voice no soul could ignore, and now it walks from town to town gathering marks it can freeze in place.",
+    "inline_kind": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "homebrew",
+        "print_body": null,
+        "relation": null,
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "defender-3-leader",
+      "archetype": "defender",
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "a carnival barker who talks you into standing still",
+      "clauses": [
+        {
+          "id": "cl_14ldgt0",
+          "text": "a carnival barker",
+          "kind": "mechanical",
+          "askShape": "condition",
+          "askMechanic": "snare",
+          "askMechanicWhy": "talks you into standing still"
+        },
+        {
+          "id": "cl_a9e1q2",
+          "text": "talks you into standing still",
+          "kind": "header"
+        }
+      ],
+      "cite": "composition after Hobgoblin Captain (CR 3: Aura of Authority + Greatsword/Longbow); the Bandit Captain's Parry is retired by the family sweep (2026-09-08: defenders carry no reactions)",
+      "free_rows": 0,
+      "free_row_templates": [],
+      "decoration_rows": 0,
+      "expressed_rows": 0,
+      "signature_rows": 1,
+      "seed_rows": 1,
+      "gap_vetoed": "1 of 1",
+      "gap_missing_unstated": 0,
+      "gap_death_sites": "1x the free-row budget",
+      "signature": "library"
+    },
+    "archetype": "defender",
+    "archetype_source": "user",
+    "lint_findings": []
+  },
+  "monsterDescription": "a carnival barker who talks you into standing still",
+  "selectedChallengeRating": "6",
+  "monsterName": "Midway Barker",
+  "caster": false
+}

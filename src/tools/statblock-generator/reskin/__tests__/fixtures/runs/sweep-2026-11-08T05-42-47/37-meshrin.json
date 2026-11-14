@@ -1,0 +1,346 @@
+{
+  "name": "Meshrin",
+  "inline": "Meshrin",
+  "type_and_alignment": "Large humanoid, neutral",
+  "armor_class": "16 (breastplate)",
+  "hit_points": "120 (14d10 + 42)",
+  "speed": "30 ft., swim 30 ft.",
+  "attributes": "STR 18 (+4), DEX 15 (+2), CON 16 (+3), INT 10 (+0), WIS 12 (+1), CHA 15 (+2)",
+  "saving_throws": "DEX +5, WIS +4",
+  "skills": "Perception +4, Stealth +5",
+  "senses": "passive Perception 14",
+  "languages": "Common, Draconic",
+  "challenge_rating": "8 (3,900 XP)",
+  "proficiency_bonus": "+3",
+  "abilities": [
+    {
+      "name": "Wounded Frenzy",
+      "description": "While below half its hit point maximum, Meshrin has advantage on attack rolls and saving throws."
+    },
+    {
+      "name": "Hold Breath",
+      "description": "Meshrin can hold its breath for 15 minutes."
+    },
+    {
+      "name": "Great Weapon Master",
+      "description": "When Meshrin hits a creature with its Greataxe, the attack deals an extra 3 damage."
+    },
+    {
+      "name": "Marsh Stride",
+      "description": "Difficult Terrain composed of mud doesn't cost Meshrin extra movement, and Meshrin can move across mud without needing to make an ability check."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "Meshrin makes three attacks, using Greataxe or Javelin. It can replace one attack with a use of Terror Roar."
+    },
+    {
+      "name": "Greataxe",
+      "description": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 17 (2d12 + 4) slashing damage."
+    },
+    {
+      "name": "Javelin",
+      "description": "Ranged Weapon Attack: +7 to hit, range 30/120 ft., one target. Hit: 18 (4d6 + 4) piercing damage. Immediately after the attack, its javelin returns to Meshrin's grasp, and the target's Speed is reduced by 10 feet until the start of Meshrin's next turn."
+    },
+    {
+      "name": "Terror Roar",
+      "description": "Each creature of Meshrin's choice in a 30-foot radius originating from Meshrin that can see or hear it must make a DC 15 Wisdom saving throw. On a failed save, the target is frightened until the end of its next turn. On a successful save, the target is immune to this creature's terror for 24 hours.",
+      "imposes": "Frightened"
+    }
+  ],
+  "format": "2014",
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "class_npc",
+      "print_body": "Gladiator",
+      "relation": null,
+      "class": "barbarian",
+      "species": "lizardfolk",
+      "by": "call"
+    },
+    "donor": "skirmisher-8-hurler",
+    "archetype": "skirmisher",
+    "class_kit": {
+      "key": "barbarian",
+      "clause": "barbarian who rages",
+      "landed": 1,
+      "yielded": 0,
+      "stood_down": null
+    },
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "Meshrin — Large lizard folk, 30 feet of movement, Wields a greataxe two-handed and a javelin for the throw. He is a barbarian who rages. Give him a frightening roar. AC 16, 120 hit points.",
+    "clauses": [
+      {
+        "id": "cl_1q8jwjv",
+        "text": "Meshrin — Large lizard folk",
+        "kind": "header"
+      },
+      {
+        "id": "cl_1k2n2yx",
+        "text": "30 feet of movement",
+        "kind": "header"
+      },
+      {
+        "id": "cl_ar4c2f",
+        "text": "Wields a greataxe two-handed",
+        "kind": "mechanical",
+        "askShape": "attack"
+      },
+      {
+        "id": "cl_pe1acs",
+        "text": "a javelin for the throw",
+        "kind": "mechanical",
+        "askShape": "attack"
+      },
+      {
+        "id": "cl_jeugdk",
+        "text": "He is a barbarian who rages",
+        "kind": "descriptive"
+      },
+      {
+        "id": "cl_eh95vx",
+        "text": "Give him a frightening roar",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "fear",
+        "askMechanicWhy": "frightening roar"
+      },
+      {
+        "id": "cl_10y3mr",
+        "text": "AC 16",
+        "kind": "header"
+      },
+      {
+        "id": "cl_qxofc1",
+        "text": "120 hit points",
+        "kind": "header"
+      }
+    ],
+    "invented": true,
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library",
+    "declared": {
+      "ac": 16,
+      "hp": 120
+    }
+  },
+  "other_edition": {
+    "name": "Meshrin",
+    "inline": "Meshrin",
+    "format": "2024",
+    "cr": 8,
+    "cr_str": "8",
+    "xp": 3900,
+    "challenge_rating": "8 (XP 3,900; PB +3)",
+    "type": "Humanoid",
+    "size": "Large",
+    "alignment": "Neutral",
+    "ac": 16,
+    "hp": 120,
+    "hp_formula": "14d10 + 42",
+    "pb": 3,
+    "speed": "30 ft., Swim 30 ft.",
+    "stats": {
+      "STR": 18,
+      "DEX": 15,
+      "CON": 16,
+      "INT": 10,
+      "WIS": 12,
+      "CHA": 15
+    },
+    "saves": {
+      "STR": 4,
+      "DEX": 5,
+      "CON": 3,
+      "INT": 0,
+      "WIS": 4,
+      "CHA": 2
+    },
+    "skills": "Perception +4, Stealth +5",
+    "senses": "Passive Perception 14",
+    "languages": "Common, Draconic",
+    "initiative_bonus": 2,
+    "initiative_score": 12,
+    "sections": {
+      "Traits": [
+        {
+          "name": "Bloodied Frenzy",
+          "text": "While Bloodied, Meshrin has Advantage on attack rolls and saving throws.",
+          "kit": "barbarian",
+          "clause": "barbarian who rages",
+          "free": true,
+          "clauseId": "cl_jeugdk"
+        },
+        {
+          "name": "Hold Breath",
+          "text": "Meshrin can hold its breath for 15 minutes.",
+          "kit": "lizardfolk",
+          "clause": "barbarian who rages",
+          "free": true,
+          "clauseId": "cl_jeugdk"
+        },
+        {
+          "name": "Great Weapon Master",
+          "text": "When Meshrin hits a creature with its Greataxe, the attack deals an extra 3 damage.",
+          "feature": "Great Weapon Master",
+          "clause": "Wields a greataxe two-handed",
+          "clauseId": "cl_ar4c2f"
+        },
+        {
+          "name": "Marsh Stride",
+          "text": "Difficult Terrain composed of mud doesn't cost Meshrin extra movement, and Meshrin can move across mud without needing to make an ability check.",
+          "kit": "lizardfolk",
+          "clause": "barbarian who rages",
+          "free": true,
+          "shape": "terrain-walk",
+          "clauseId": "cl_jeugdk"
+        }
+      ],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "Meshrin makes three attacks, using Greataxe or Javelin in any combination. It can replace one attack with a use of Terror Roar."
+        },
+        {
+          "name": "Greataxe",
+          "text": "*Melee Attack Roll:* +7, reach 5 ft. 17 (2d12 + 4) Slashing damage.",
+          "part": true,
+          "weapon": "greataxe",
+          "authored": true,
+          "clause": "Wields a greataxe two-handed",
+          "clauseId": "cl_ar4c2f",
+          "attacksPerRound": 3
+        },
+        {
+          "name": "Javelin",
+          "text": "*Ranged Attack Roll:* +7, range 30/120 ft. 18 (4d6 + 4) Piercing damage. *Hit or Miss:* Immediately after the attack, its javelin returns to Meshrin's grasp, and the target's Speed is reduced by 10 feet until the start of Meshrin's next turn.",
+          "part": true,
+          "weapon": "javelin",
+          "authored": true,
+          "clause": "a javelin for the throw",
+          "feature": "Slow",
+          "clauseId": "cl_pe1acs",
+          "attacksPerRound": 3
+        },
+        {
+          "name": "Terror Roar",
+          "text": "*Wisdom Saving Throw:* DC 15, each creature of Meshrin's choice in a 30-foot Emanation originating from Meshrin that can see or hear it. *Failure:* The target has the Frightened condition until the end of its next turn. *Success:* The target is immune to this creature's terror for 24 hours.",
+          "library": true,
+          "template": "terror-pulse",
+          "imposes": "Frightened",
+          "boundKeys": [
+            "roar"
+          ],
+          "gmQuote": "give him a frightening roar",
+          "duration": "target_end",
+          "clause": "Give him a frightening roar",
+          "clauseId": "cl_eh95vx"
+        }
+      ],
+      "Bonus Actions": []
+    },
+    "lore": "Meshrin hails from the salt-and-scale war bands of the briny marsh, where a warrior earns his name by feeding his axe and never backing from a challenge.",
+    "inline_kind": "person",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "class_npc",
+        "print_body": "Gladiator",
+        "relation": null,
+        "class": "barbarian",
+        "species": "lizardfolk",
+        "by": "call"
+      },
+      "donor": "skirmisher-8-hurler",
+      "archetype": "skirmisher",
+      "class_kit": {
+        "key": "barbarian",
+        "clause": "barbarian who rages",
+        "landed": 1,
+        "yielded": 0,
+        "stood_down": null
+      },
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "Meshrin — Large lizard folk, 30 feet of movement, Wields a greataxe two-handed and a javelin for the throw. He is a barbarian who rages. Give him a frightening roar. AC 16, 120 hit points.",
+      "clauses": [
+        {
+          "id": "cl_1q8jwjv",
+          "text": "Meshrin — Large lizard folk",
+          "kind": "header"
+        },
+        {
+          "id": "cl_1k2n2yx",
+          "text": "30 feet of movement",
+          "kind": "header"
+        },
+        {
+          "id": "cl_ar4c2f",
+          "text": "Wields a greataxe two-handed",
+          "kind": "mechanical",
+          "askShape": "attack"
+        },
+        {
+          "id": "cl_pe1acs",
+          "text": "a javelin for the throw",
+          "kind": "mechanical",
+          "askShape": "attack"
+        },
+        {
+          "id": "cl_jeugdk",
+          "text": "He is a barbarian who rages",
+          "kind": "descriptive"
+        },
+        {
+          "id": "cl_eh95vx",
+          "text": "Give him a frightening roar",
+          "kind": "mechanical",
+          "askShape": "save_single",
+          "askMechanic": "fear",
+          "askMechanicWhy": "frightening roar"
+        },
+        {
+          "id": "cl_10y3mr",
+          "text": "AC 16",
+          "kind": "header"
+        },
+        {
+          "id": "cl_qxofc1",
+          "text": "120 hit points",
+          "kind": "header"
+        }
+      ],
+      "invented": true,
+      "free_rows": 0,
+      "free_row_templates": [],
+      "decoration_rows": 0,
+      "expressed_rows": 0,
+      "signature_rows": 1,
+      "seed_rows": 0,
+      "signature": "library",
+      "declared": {
+        "ac": 16,
+        "hp": 120
+      }
+    },
+    "archetype": "skirmisher",
+    "archetype_source": "user",
+    "lint_findings": []
+  },
+  "monsterDescription": "Large lizard folk, 30 feet of movement, Wields a greataxe two-handed and a javelin for the throw. He is a barbarian who rages. Give him a frightening roar. AC 16, 120 hit points.",
+  "selectedChallengeRating": "8",
+  "monsterName": "Meshrin",
+  "caster": false
+}

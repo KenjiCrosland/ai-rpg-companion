@@ -1,0 +1,227 @@
+{
+  "name": "Silt Reeve",
+  "inline": "the reeve",
+  "type_and_alignment": "Medium undead, neutral",
+  "armor_class": "15 (natural armor)",
+  "hit_points": "135 (18d8 + 54)",
+  "speed": "30 ft., swim 30 ft.",
+  "attributes": "STR 12 (+1), DEX 18 (+4), CON 16 (+3), INT 13 (+1), WIS 14 (+2), CHA 11 (+0)",
+  "saving_throws": "DEX +7, INT +4",
+  "skills": "Perception +5, Stealth +10",
+  "senses": "tremorsense 60 ft., passive Perception 15",
+  "languages": "Common plus the languages it knew in life",
+  "challenge_rating": "8 (3,900 XP)",
+  "proficiency_bonus": "+3",
+  "abilities": [
+    {
+      "name": "Relentless Pursuit",
+      "description": "While the reeve is moving toward a creature it has damaged within the last 24 hours, the reeve's Speed can't be reduced and Difficult Terrain doesn't cost it extra movement."
+    },
+    {
+      "name": "Umbral Step (Bonus Action)",
+      "description": "While in Dim Light or Darkness, the reeve takes the Hide action."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The reeve makes three attacks. It can replace one attack with a use of Gravewax Mark."
+    },
+    {
+      "name": "Gravewax Strike",
+      "description": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 8 (1d8 + 4) bludgeoning damage plus 7 (2d6) necrotic damage."
+    },
+    {
+      "name": "Gravewax Mark",
+      "description": "One creature within 60 feet must make a DC 15 Dexterity saving throw. On a failed save, the target is restrained until the end of its next turn.",
+      "imposes": "Restrained"
+    }
+  ],
+  "format": "2014",
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "damage_immunities": "poison",
+  "condition_immunities": "exhaustion, poisoned",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-8",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a reeve of the drowned marsh who never loses a trail",
+    "clauses": [
+      {
+        "id": "cl_1jqnjo0",
+        "text": "a reeve of the drowned marsh",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_vgjo41",
+        "text": "never loses a trail",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "never loses a trail",
+        "askOften": "at_will",
+        "askOftenWhy": "never loses a trail",
+        "askShape": "condition",
+        "askMechanic": "track",
+        "askMechanicWhy": "never loses a trail"
+      }
+    ],
+    "cite": "composition after Assassin (CR 8) — the rider-heavy burst and the expertise Stealth",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Silt Reeve",
+    "inline": "the reeve",
+    "format": "2024",
+    "cr": 8,
+    "cr_str": "8",
+    "xp": 3900,
+    "challenge_rating": "8 (XP 3,900; PB +3)",
+    "type": "Undead",
+    "size": "Medium",
+    "alignment": "Neutral",
+    "ac": 15,
+    "hp": 135,
+    "hp_formula": "18d8 + 54",
+    "pb": 3,
+    "speed": "30 ft., Swim 30 ft.",
+    "stats": {
+      "STR": 12,
+      "DEX": 18,
+      "CON": 16,
+      "INT": 13,
+      "WIS": 14,
+      "CHA": 11
+    },
+    "saves": {
+      "STR": 1,
+      "DEX": 7,
+      "CON": 3,
+      "INT": 4,
+      "WIS": 2,
+      "CHA": 0
+    },
+    "skills": "Perception +5, Stealth +10",
+    "senses": "tremorsense 60 ft.; Passive Perception 15",
+    "languages": "Common plus the languages it knew in life",
+    "initiative_bonus": 4,
+    "initiative_score": 14,
+    "sections": {
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The reeve makes three attacks. It can replace one attack with a use of Gravewax Mark."
+        },
+        {
+          "name": "Gravewax Strike",
+          "text": "*Melee Attack Roll:* +7, reach 5 ft. 8 (1d8 + 4) Bludgeoning damage plus 7 (2d6) Necrotic damage.",
+          "weapon": null,
+          "attacksPerRound": 1
+        },
+        {
+          "name": "Gravewax Mark",
+          "text": "*Dexterity Saving Throw:* DC 15, one creature within 60 feet. *Failure:* The target has the Restrained condition until the end of its next turn.",
+          "library": true,
+          "template": "snare-bolt",
+          "imposes": "Restrained",
+          "boundKeys": [
+            "restrain"
+          ],
+          "duration": "target_end"
+        }
+      ],
+      "Bonus Actions": [
+        {
+          "name": "Umbral Step",
+          "rules": true,
+          "text": "While in Dim Light or Darkness, the reeve takes the Hide action."
+        }
+      ],
+      "Traits": [
+        {
+          "name": "Relentless Pursuit",
+          "text": "While the reeve is moving toward a creature it has damaged within the last 24 hours, the reeve's Speed can't be reduced and Difficult Terrain doesn't cost it extra movement.",
+          "library": true,
+          "template": "relentless-pursuit",
+          "boundKeys": [],
+          "gmQuote": "never loses a trail",
+          "expresses": "never losing a trail",
+          "bound": false
+        }
+      ]
+    },
+    "lore": "A reeve drowned while chasing a fleeing debtor across the marsh, and the fen kept the office rather than the man; it rises wherever a trail goes cold and claims anything that strays from where it began.",
+    "inline_kind": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "homebrew",
+        "print_body": null,
+        "relation": null,
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "lurker-8",
+      "archetype": "lurker",
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "a reeve of the drowned marsh who never loses a trail",
+      "clauses": [
+        {
+          "id": "cl_1jqnjo0",
+          "text": "a reeve of the drowned marsh",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_vgjo41",
+          "text": "never loses a trail",
+          "kind": "mechanical",
+          "askWhen": "at_will",
+          "askWhenWhy": "never loses a trail",
+          "askOften": "at_will",
+          "askOftenWhy": "never loses a trail",
+          "askShape": "condition",
+          "askMechanic": "track",
+          "askMechanicWhy": "never loses a trail"
+        }
+      ],
+      "cite": "composition after Assassin (CR 8) — the rider-heavy burst and the expertise Stealth",
+      "free_rows": 0,
+      "free_row_templates": [],
+      "decoration_rows": 0,
+      "expressed_rows": 0,
+      "signature_rows": 2,
+      "seed_rows": 0,
+      "signature": "library"
+    },
+    "archetype": "lurker",
+    "archetype_source": "user",
+    "immunities": "Poison; Exhaustion, Poisoned",
+    "lint_findings": []
+  },
+  "monsterDescription": "a reeve of the drowned marsh who never loses a trail",
+  "selectedChallengeRating": "8",
+  "monsterName": "Silt Reeve",
+  "caster": false
+}

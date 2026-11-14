@@ -1,0 +1,147 @@
+{
+  "name": "Seamwight Troll",
+  "inline": "the seamwight troll",
+  "format": "2024",
+  "cr": 5,
+  "cr_str": "5",
+  "xp": 1800,
+  "challenge_rating": "5 (XP 1,800; PB +3)",
+  "type": "Giant",
+  "size": "Large",
+  "alignment": "Chaotic Evil",
+  "ac": 15,
+  "hp": 94,
+  "hp_formula": "9d10 + 45",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 13,
+    "CON": 20,
+    "INT": 7,
+    "WIS": 9,
+    "CHA": 7
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": 1,
+    "CON": 8,
+    "INT": -2,
+    "WIS": -1,
+    "CHA": -2
+  },
+  "skills": "Perception +5",
+  "senses": "darkvision 60 ft.; Passive Perception 15",
+  "languages": "Giant",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The seamwight troll makes three Rend attacks. It can replace one attack with a use of Stitch Flesh."
+      },
+      {
+        "name": "Rend",
+        "text": "*Melee Attack Roll:* +7, reach 10 ft. 11 (2d6 + 4) Slashing damage.",
+        "weapon": null,
+        "weldedRiders": [],
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Stitch Flesh",
+        "text": "*Strength Saving Throw*: DC 16, one creature within 10 feet. *Failure:* The target has the Restrained condition until the end of its next turn.",
+        "authored": true,
+        "clause": "The troll rakes its own stitched seams open with a knuckle, spilling bog-fiber over one wounded creature it can see; tha",
+        "imposes": "Restrained",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "wounds that knit shut mid-fight",
+        "boundKeys": [],
+        "decoration": true,
+        "nameClaimRevoked": [
+          "wounds"
+        ]
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Regeneration",
+        "rules": true,
+        "text": "The seamwight troll regains 15 Hit Points at the start of each of its turns. If the seamwight troll takes Acid or Fire damage, this trait doesn't function on the seamwight troll's next turn. The seamwight troll dies only if it starts its turn with 0 Hit Points and doesn't regenerate.",
+        "print": true
+      },
+      {
+        "name": "Loathsome Limbs (4/Day)",
+        "text": "If the seamwight troll ends any turn Bloodied and took 15+ Slashing damage during that turn, one of the seamwight troll's limbs is severed, falls into the seamwight troll's space, and becomes a Troll Limb. The limb acts immediately after the seamwight troll's turn. The seamwight troll has 1 Exhaustion level for each missing limb, and it grows replacement limbs the next time it regains Hit Points.",
+        "rules": true,
+        "print": true
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Charge",
+        "text": "The seamwight troll moves up to half its Speed straight toward an enemy it can see.",
+        "rules": true,
+        "print": true
+      }
+    ]
+  },
+  "lore": "Spun from bog-woven sinew and an old giant's grudge, it walks the drowned forests reknitting itself, convinced that anything that can be sewn can be made whole — itself first.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Troll",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a troll that knits its wounds shut and keeps coming",
+    "clauses": [
+      {
+        "id": "cl_k3jn1u",
+        "text": "a troll",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_17qoj2z",
+        "text": "knits its wounds shut and keeps coming",
+        "kind": "mechanical",
+        "askShape": "heal",
+        "askMechanic": "mend",
+        "askMechanicWhy": "knits its wounds shut"
+      }
+    ],
+    "cite": "composition after Hill Giant (CR 5) — two of the same swing, thrown rock",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the call named no template for the pick",
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a troll that knits its wounds shut and keeps coming",
+  "selectedChallengeRating": "5",
+  "monsterName": "Seamwight Troll",
+  "caster": false
+}

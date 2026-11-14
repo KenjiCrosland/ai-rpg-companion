@@ -1,0 +1,150 @@
+{
+  "name": "Cairn-Wight",
+  "inline": "the cairn-wight",
+  "format": "2024",
+  "cr": 6,
+  "cr_str": "6",
+  "xp": 2300,
+  "challenge_rating": "6 (XP 2,300; PB +3)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 14,
+  "hp": 112,
+  "hp_formula": "15d8 + 45",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 8,
+    "CON": 16,
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": -1,
+    "CON": 6,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -3
+  },
+  "skills": "Athletics +7, Perception +3",
+  "senses": "darkvision 60 ft.; Passive Perception 13",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Running Water's Rebuke",
+        "text": "While the cairn-wight is within reach of running water, the cairn-wight has Disadvantage on attack rolls and is Frightened unless it ends its move out of reach of the water; it cannot willingly cross running water.",
+        "authored": true,
+        "clause": "fears only running water",
+        "clauseId": "cl_uc5nun",
+        "imposes": "Frightened"
+      },
+      {
+        "name": "Tumbling Cairn",
+        "text": "When the cairn-wight moves alongside stone or earth, the ground it drags loose becomes difficult terrain for other creatures until cleared, slowing any who follow it.",
+        "authored": true,
+        "clause": "Whenever the cairn-wight moves along a Stone or earth wall, a pile of rubble, or natural rock, it can drag the stone dow",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": null,
+        "bound": false,
+        "boundKeys": []
+      },
+      {
+        "name": "Necrotic Absorption",
+        "rules": true,
+        "text": "Whenever the cairn-wight is subjected to Necrotic damage, it takes no damage and instead regains a number of Hit Points equal to the Necrotic damage dealt."
+      },
+      {
+        "name": "Magic Resistance",
+        "rules": true,
+        "text": "The cairn-wight has Advantage on saving throws against spells and other magical effects."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The cairn-wight makes two Slam attacks."
+      },
+      {
+        "name": "Slam",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 22 (4d8 + 4) Bludgeoning damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      }
+    ]
+  },
+  "lore": "A cairn-wight is a grave-marker that outlived its dead, piled stones steeped in a burial's grief until they stood up to keep watch and keep every passing traveler from disturbing what lies beneath.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-juggernaut",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a cairn-wight that cannot be harmed by steel and fears only running water",
+    "clauses": [
+      {
+        "id": "cl_16zhisc",
+        "text": "a cairn-wight",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1x23thr",
+        "text": "cannot be harmed by steel",
+        "kind": "mechanical",
+        "askShape": "resist",
+        "askMechanic": "resist",
+        "askMechanicWhy": "cannot be harmed by steel",
+        "polarity": "lacks",
+        "takes": "other",
+        "lackQuote": "cannot be harmed by steel"
+      },
+      {
+        "id": "cl_uc5nun",
+        "text": "fears only running water",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "fear",
+        "askMechanicWhy": "fears only running water"
+      }
+    ],
+    "cite": "composition after Flesh Golem (CR 5) — the made thing that cannot be unmade",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Necrotic, Poison; Exhaustion, Poisoned",
+  "lint_findings": [
+    "orphan-condition-ref: \"Frightened\" is referenced as a state but nothing on the sheet applies it"
+  ],
+  "monsterDescription": "a cairn-wight that cannot be harmed by steel and fears only running water",
+  "selectedChallengeRating": "6",
+  "monsterName": "Cairn-Wight",
+  "caster": false
+}

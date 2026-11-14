@@ -1,0 +1,120 @@
+{
+  "name": "Closing Door",
+  "inline": "the closing door",
+  "format": "2024",
+  "cr": 6,
+  "cr_str": "6",
+  "xp": 2300,
+  "challenge_rating": "6 (XP 2,300; PB +3)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 13,
+  "hp": 82,
+  "hp_formula": "11d8 + 33",
+  "pb": 3,
+  "speed": "5 ft., Fly 60 ft. (hover)",
+  "stats": {
+    "STR": 6,
+    "DEX": 18,
+    "CON": 16,
+    "INT": 12,
+    "WIS": 14,
+    "CHA": 15
+  },
+  "saves": {
+    "STR": -2,
+    "DEX": 7,
+    "CON": 3,
+    "INT": 1,
+    "WIS": 2,
+    "CHA": 2
+  },
+  "skills": "Stealth +7",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "Common plus the languages it knew in life",
+  "initiative_bonus": 4,
+  "initiative_score": 14,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Incorporeal Movement",
+        "rules": true,
+        "text": "The closing door can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object."
+      },
+      {
+        "name": "Sunlight Sensitivity",
+        "rules": true,
+        "text": "While in sunlight, the closing door has Disadvantage on ability checks and attack rolls."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The closing door makes two Threshold Slam attacks. It can replace one attack with a use of Empty House Silence."
+      },
+      {
+        "name": "Threshold Slam",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 22 (4d8 + 4) Necrotic damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Empty House Silence",
+        "text": "*Wisdom Saving Throw:* DC 14, one creature within 60 feet. *Failure:* The target has the Frightened condition until the end of its next turn. If the target was already Frightened by this ability, it also takes 21 (6d6) Necrotic damage.",
+        "library": true,
+        "template": "escalating-dread",
+        "imposes": "Frightened",
+        "boundKeys": [],
+        "gmQuote": "the sound of a door closing in an empty house",
+        "duration": "target_end"
+      }
+    ]
+  },
+  "lore": "It is the residue of the last quiet moment before a house is left forever — an echo that learned silence is a hunger, and now shuts the living inside it, room by room.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5-phantom",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "the sound of a door closing in an empty house",
+    "clauses": [
+      {
+        "id": "cl_1w71bmo",
+        "text": "the sound of a door closing in an empty house",
+        "kind": "mechanical",
+        "askShape": "condition",
+        "askMechanic": "dazzle",
+        "askMechanicWhy": "the sound of a door closing"
+      }
+    ],
+    "cite": "composition after Wraith (CR 5) — Life Drain under the sunlight bane",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained",
+  "resistances": "Bludgeoning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "the sound of a door closing in an empty house",
+  "selectedChallengeRating": "6",
+  "monsterName": "Closing Door",
+  "caster": false
+}

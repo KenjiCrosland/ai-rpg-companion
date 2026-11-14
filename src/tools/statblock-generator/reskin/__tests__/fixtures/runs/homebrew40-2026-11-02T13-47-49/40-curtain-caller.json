@@ -1,0 +1,235 @@
+{
+  "name": "Curtain-Caller",
+  "inline": "the curtain-caller",
+  "type_and_alignment": "Medium humanoid, neutral",
+  "armor_class": "17",
+  "hit_points": "84 (13d8 + 26)",
+  "speed": "30 ft.",
+  "attributes": "STR 10 (+0), DEX 18 (+4), CON 14 (+2), INT 10 (+0), WIS 14 (+2), CHA 17 (+3)",
+  "saving_throws": "DEX +7",
+  "skills": "Acrobatics +7, Perception +5",
+  "senses": "passive Perception 15",
+  "languages": "Common plus one other language",
+  "challenge_rating": "6 (2,300 XP)",
+  "proficiency_bonus": "+3",
+  "abilities": [
+    {
+      "name": "Faces in the Dark",
+      "description": "While the curtain-caller is in dim light or darkness and a creature within 30 feet of it is charmed by it, the charmed creature's speed becomes 0, and it can't willingly move farther from the curtain-caller until the start of the curtain-caller's next turn."
+    },
+    {
+      "name": "Captain's Charm (Bonus Action)",
+      "description": "One creature the curtain-caller can see within 30 feet must make a DC 14 Wisdom saving throw. On a failed save, the target is charmed until the start of the curtain-caller's next turn.",
+      "imposes": "Charmed"
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The curtain-caller makes three attacks, using Rapier or Hand Crossbow."
+    },
+    {
+      "name": "Rapier",
+      "description": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) piercing damage, and the curtain-caller has advantage on the next attack roll it makes before the end of this turn."
+    },
+    {
+      "name": "Hand Crossbow",
+      "description": "Ranged Weapon Attack: +7 to hit, range 30/120 ft., one target. Hit: 15 (2d10 + 4) piercing damage."
+    }
+  ],
+  "format": "2014",
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "class_npc",
+      "print_body": "Pirate Captain",
+      "relation": null,
+      "class": "bard",
+      "species": null,
+      "by": "call"
+    },
+    "donor": "skirmisher-3",
+    "archetype": "skirmisher",
+    "class_kit": {
+      "key": "bard",
+      "clause": "carnival barker",
+      "landed": 1,
+      "yielded": 0,
+      "stood_down": null
+    },
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a carnival barker who talks you into standing still",
+    "clauses": [
+      {
+        "id": "cl_14ldgt0",
+        "text": "a carnival barker",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_a9e1q2",
+        "text": "talks you into standing still",
+        "kind": "header"
+      }
+    ],
+    "cite": "composition after Vampire Familiar (CR 3)",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Curtain-Caller",
+    "inline": "the curtain-caller",
+    "format": "2024",
+    "cr": 6,
+    "cr_str": "6",
+    "xp": 2300,
+    "challenge_rating": "6 (XP 2,300; PB +3)",
+    "type": "Humanoid",
+    "size": "Medium",
+    "alignment": "Neutral",
+    "ac": 17,
+    "hp": 84,
+    "hp_formula": "13d8 + 26",
+    "pb": 3,
+    "speed": "30 ft.",
+    "stats": {
+      "STR": 10,
+      "DEX": 18,
+      "CON": 14,
+      "INT": 10,
+      "WIS": 14,
+      "CHA": 17
+    },
+    "saves": {
+      "STR": 0,
+      "DEX": 7,
+      "CON": 2,
+      "INT": 0,
+      "WIS": 2,
+      "CHA": 3
+    },
+    "skills": "Acrobatics +7, Perception +5",
+    "senses": "Passive Perception 15",
+    "languages": "Common plus one other language",
+    "initiative_bonus": 4,
+    "initiative_score": 14,
+    "sections": {
+      "Traits": [
+        {
+          "name": "Faces in the Dark",
+          "text": "While the curtain-caller is in Dim Light or Darkness and a creature within 30 feet of it has the Charmed condition from it, The Charmed creature's Speed becomes 0 and it cannot willingly move farther from the curtain-caller until the start of the curtain-caller's next turn.",
+          "authored": true,
+          "clause": "Faces in the Dark. While the curtain-caller is in Dim Light or Darkness, a creature it has Charmed cannot willingly move",
+          "requiresCondition": "Charmed",
+          "authoredSeat": true,
+          "freeRow": true,
+          "expresses": null,
+          "bound": false,
+          "boundKeys": []
+        }
+      ],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The curtain-caller makes three attacks, using Rapier or Hand Crossbow in any combination."
+        },
+        {
+          "name": "Rapier",
+          "text": "*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Piercing damage, and the curtain-caller has Advantage on the next attack roll it makes before the end of this turn.",
+          "weapon": "rapier",
+          "weldedRiders": [],
+          "print": true,
+          "printNamed": true,
+          "attacksPerRound": 3
+        },
+        {
+          "name": "Hand Crossbow",
+          "text": "*Ranged Attack Roll:* +7, range 30/120 ft. 15 (2d10 + 4) Piercing damage.",
+          "weapon": "hand crossbow",
+          "print": true,
+          "printNamed": true,
+          "classArmed": true,
+          "attacksPerRound": 3
+        }
+      ],
+      "Bonus Actions": [
+        {
+          "name": "Captain's Charm",
+          "text": "*Wisdom Saving Throw*: DC 14, one creature the curtain-caller can see within 30 feet. *Failure:* The target has the Charmed condition until the start of the curtain-caller's next turn.",
+          "kit": "bard",
+          "clause": "carnival barker",
+          "free": true,
+          "clauseId": "cl_14ldgt0",
+          "imposes": "Charmed"
+        }
+      ]
+    },
+    "lore": "A failed showman whose last audience never left their seats, it stalks the barker's booths of abandoned fairs, promising a once-in-a-lifetime attraction to anyone who will only stand still and wait for the curtain.",
+    "inline_kind": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "class_npc",
+        "print_body": "Pirate Captain",
+        "relation": null,
+        "class": "bard",
+        "species": null,
+        "by": "call"
+      },
+      "donor": "skirmisher-3",
+      "archetype": "skirmisher",
+      "class_kit": {
+        "key": "bard",
+        "clause": "carnival barker",
+        "landed": 1,
+        "yielded": 0,
+        "stood_down": null
+      },
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "a carnival barker who talks you into standing still",
+      "clauses": [
+        {
+          "id": "cl_14ldgt0",
+          "text": "a carnival barker",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_a9e1q2",
+          "text": "talks you into standing still",
+          "kind": "header"
+        }
+      ],
+      "cite": "composition after Vampire Familiar (CR 3)",
+      "free_rows": 1,
+      "free_row_templates": [
+        "unknown"
+      ],
+      "decoration_rows": 0,
+      "expressed_rows": 1,
+      "signature_rows": 0,
+      "seed_rows": 0,
+      "signature": "library"
+    },
+    "archetype": "skirmisher",
+    "archetype_source": "user",
+    "lint_findings": []
+  },
+  "monsterDescription": "a carnival barker who talks you into standing still",
+  "selectedChallengeRating": "6",
+  "monsterName": "Curtain-Caller",
+  "caster": false
+}

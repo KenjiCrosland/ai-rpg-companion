@@ -1,0 +1,125 @@
+{
+  "name": "Mourning Residue",
+  "inline": "the residue",
+  "format": "2024",
+  "cr": 11,
+  "cr_str": "11",
+  "xp": 7200,
+  "challenge_rating": "11 (XP 7,200; PB +4)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 14,
+  "hp": 150,
+  "hp_formula": "20d8 + 60",
+  "pb": 4,
+  "speed": "5 ft., Fly 60 ft. (hover)",
+  "stats": {
+    "STR": 6,
+    "DEX": 20,
+    "CON": 17,
+    "INT": 12,
+    "WIS": 14,
+    "CHA": 15
+  },
+  "saves": {
+    "STR": -2,
+    "DEX": 9,
+    "CON": 3,
+    "INT": 1,
+    "WIS": 2,
+    "CHA": 2
+  },
+  "skills": "Stealth +9",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "Common plus the languages it knew in life",
+  "initiative_bonus": 5,
+  "initiative_score": 15,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Incorporeal Movement",
+        "rules": true,
+        "text": "The residue can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object."
+      },
+      {
+        "name": "Sunlight Sensitivity",
+        "rules": true,
+        "text": "While in sunlight, the residue has Disadvantage on ability checks and attack rolls."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The residue makes two Caress attacks. It can replace one attack with a use of Stolen Joy."
+      },
+      {
+        "name": "Caress",
+        "text": "*Melee Attack Roll:* +9, reach 5 ft. 41 (8d8 + 5) Necrotic damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Stolen Joy",
+        "text": "*Charisma Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* The target has the Frightened condition until the end of its next turn.",
+        "authored": true,
+        "clause": "The residue reaches into the target's happiest memory, forcing a Charisma saving throw. On a failure, the target is Frig",
+        "imposes": "Frightened",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": null,
+        "widened": true,
+        "boundKeys": []
+      }
+    ]
+  },
+  "lore": "It is the residue of a mourning that refused to end, drifting the world to feed its endless ache on the warm and joyful.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5-phantom",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "grief",
+    "clauses": [
+      {
+        "id": "cl_1mptz3",
+        "text": "grief",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "cite": "composition after Wraith (CR 5) — Life Drain under the sunlight bane",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the free-row budget",
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained",
+  "resistances": "Bludgeoning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "grief",
+  "selectedChallengeRating": "11",
+  "monsterName": "Mourning Residue",
+  "caster": false
+}

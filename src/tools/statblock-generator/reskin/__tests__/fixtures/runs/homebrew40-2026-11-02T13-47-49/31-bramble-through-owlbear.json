@@ -1,0 +1,116 @@
+{
+  "name": "Bramble-Through Owlbear",
+  "inline": "the owlbear",
+  "format": "2024",
+  "cr": 4,
+  "cr_str": "4",
+  "xp": 1100,
+  "challenge_rating": "4 (XP 1,100; PB +2)",
+  "type": "Monstrosity",
+  "size": "Large",
+  "alignment": "Unaligned",
+  "ac": 13,
+  "hp": 82,
+  "hp_formula": "11d10 + 22",
+  "pb": 2,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 8,
+    "CON": 15,
+    "INT": 6,
+    "WIS": 8,
+    "CHA": 6
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": -1,
+    "CON": 2,
+    "INT": -2,
+    "WIS": -1,
+    "CHA": -2
+  },
+  "skills": "Athletics +6, Perception +1",
+  "senses": "darkvision 60 ft.; Passive Perception 11",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Claw",
+        "text": "*Melee Attack Roll:* +6, reach 5 ft. 17 (3d8 + 4) Slashing damage plus 11 (2d10) Poison damage.",
+        "weapon": null,
+        "attacksPerRound": 1
+      },
+      {
+        "name": "Briar Flail (Recharge 5-6)",
+        "text": "*Dexterity Saving Throw*: DC 14, each creature in a 15-foot Cone. *Failure:* 27 (6d8) Piercing damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.",
+        "authored": true,
+        "clause": "The owlbear tears its thorn-studded forearm free in a wide, low sweep, flinging severed briar-segments in an arc before ",
+        "gate": "Recharge 5-6",
+        "imposes": "Poisoned",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "bramble-vines grown through its hide and bone",
+        "boundKeys": [],
+        "decoration": true
+      }
+    ],
+    "Traits": []
+  },
+  "lore": "A bear-owl that wandered into a fey-haunted thicket and was claimed by it, the bramble-owlbear now drags a living hedge of thorn-vines through its own flesh, hunting the forest edge to spread its seeds wherever it bleeds.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-2",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a thing like an owlbear but grown through with brambles",
+    "clauses": [
+      {
+        "id": "cl_78i4e5",
+        "text": "a thing like an owlbear",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_kfwbim",
+        "text": "grown through with brambles",
+        "kind": "mechanical",
+        "askWhen": "on_being_hit",
+        "askWhenWhy": "grown through with brambles",
+        "askShape": "resist",
+        "askMechanic": "retaliate",
+        "askMechanicWhy": "grown through"
+      }
+    ],
+    "cite": "composition after Ogre (CR 2) — one colossal hit, no traits",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a thing like an owlbear but grown through with brambles",
+  "selectedChallengeRating": "4",
+  "monsterName": "Bramble-Through Owlbear",
+  "caster": false
+}

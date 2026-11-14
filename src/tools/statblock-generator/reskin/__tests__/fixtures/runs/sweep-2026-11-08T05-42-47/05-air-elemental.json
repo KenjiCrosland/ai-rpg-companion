@@ -1,0 +1,138 @@
+{
+  "name": "Air Elemental",
+  "inline": "the air elemental",
+  "format": "2024",
+  "cr": 5,
+  "cr_str": "5",
+  "xp": 1800,
+  "challenge_rating": "5 (XP 1,800; PB +3)",
+  "type": "Elemental",
+  "size": "Large",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 90,
+  "hp_formula": "12d10 + 24",
+  "pb": 3,
+  "speed": "10 ft., Fly 90 ft. (hover)",
+  "stats": {
+    "STR": 14,
+    "DEX": 20,
+    "CON": 14,
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 6
+  },
+  "saves": {
+    "STR": 2,
+    "DEX": 8,
+    "CON": 2,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -2
+  },
+  "skills": "Perception +3, Stealth +11",
+  "senses": "darkvision 60 ft.; Passive Perception 13",
+  "languages": "Primordial (Auran)",
+  "initiative_bonus": 5,
+  "initiative_score": 15,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The air elemental makes two Thunderous Slam attacks. It can replace one attack with a use of Last Breath Taken."
+      },
+      {
+        "name": "Thunderous Slam",
+        "text": "*Melee Attack Roll:* +8, reach 10 ft. 14 (2d8 + 5) Thunder damage.",
+        "weapon": null,
+        "weldedRiders": [],
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Last Breath Taken",
+        "text": "*Constitution Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has the Blinded condition until the end of its next turn.",
+        "authored": true,
+        "clause": "carries stolen voices",
+        "imposes": "Blinded",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "stealing and re-echoing victims' voices",
+        "boundKeys": [],
+        "decoration": true,
+        "clauseId": "cl_h2gb03"
+      },
+      {
+        "name": "Whirlwind (Recharge 4-6)",
+        "text": "*Strength Saving Throw*: DC 13, one Medium or smaller creature in the air elemental's space. *Failure:*  24 (4d10 + 2) Thunder damage, and the target is pushed up to 20 feet straight away from the air elemental and has the Prone condition. *Success:*  Half damage only.",
+        "rules": true,
+        "print": true
+      }
+    ],
+    "Bonus Actions": [],
+    "Traits": [
+      {
+        "name": "Air Form",
+        "text": "The air elemental can enter a creature's space and stop there. It can move through a space as narrow as 1 inch without expending extra movement to do so.",
+        "rules": true,
+        "print": true
+      }
+    ]
+  },
+  "lore": "Born when a storm front tore the voices from a doomed village and never let them go, it drifts the world as a travelling chorus of the drowned, stealing fresh throats' sounds because it cannot bear to be quiet — and cannot bear to be alone.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Air Elemental",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "code"
+    },
+    "donor": "lurker-5",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "Air Elemental — that carries stolen voices",
+    "clauses": [
+      {
+        "id": "cl_cfuoud",
+        "text": "Air Elemental —",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_h2gb03",
+        "text": "carries stolen voices",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "dazzle",
+        "askMechanicWhy": "stolen voices"
+      }
+    ],
+    "cite": "composition after Phase Spider (CR 3) — the rider-heavy bite and the phase-cycle bonus action, scaled into the band",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Poison, Thunder; Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained, Unconscious",
+  "resistances": "Bludgeoning, Lightning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "that carries stolen voices",
+  "selectedChallengeRating": "5",
+  "monsterName": "Air Elemental",
+  "caster": false
+}

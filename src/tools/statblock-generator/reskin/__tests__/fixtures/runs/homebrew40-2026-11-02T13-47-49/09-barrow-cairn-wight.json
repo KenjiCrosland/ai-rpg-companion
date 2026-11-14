@@ -1,0 +1,140 @@
+{
+  "name": "Barrow Cairn-Wight",
+  "inline": "the cairn-wight",
+  "format": "2024",
+  "cr": 6,
+  "cr_str": "6",
+  "xp": 2300,
+  "challenge_rating": "6 (XP 2,300; PB +3)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral Evil",
+  "ac": 14,
+  "hp": 112,
+  "hp_formula": "15d8 + 45",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 8,
+    "CON": 16,
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": -1,
+    "CON": 6,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -3
+  },
+  "skills": "Athletics +7, Perception +3",
+  "senses": "darkvision 60 ft.; Passive Perception 13",
+  "languages": "Common plus the languages it knew in life",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Traits": [
+      {
+        "name": "The Dread of Running Water",
+        "text": "When the cairn-wight is subjected to running water, The cairn-wight becomes Frightened of the cairn-wight or force that carried the water against it and flees from it along the swiftest line it can find until the fright ends; nothing else turns the unhurried thing so completely to flight.",
+        "authored": true,
+        "clause": "Running water sears the cairn-wight's fleshless body like acid, and its piled stones shudder apart in panic. Whenever th",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "terror of running water",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "The cairn-wight becomes Frightened of the cairn-wight or force that carried the water against it and flees from it along the swiftest line it can find until the fright ends",
+        "imposes": "Frightened"
+      },
+      {
+        "name": "Necrotic Absorption",
+        "rules": true,
+        "text": "Whenever the cairn-wight is subjected to Necrotic damage, it takes no damage and instead regains a number of Hit Points equal to the Necrotic damage dealt."
+      },
+      {
+        "name": "Magic Resistance",
+        "rules": true,
+        "text": "The cairn-wight has Advantage on saving throws against spells and other magical effects."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The cairn-wight makes two Slam attacks."
+      },
+      {
+        "name": "Slam",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 22 (4d8 + 4) Bludgeoning damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      }
+    ]
+  },
+  "lore": "Bound into its barrow by a curse spoken at burial, the cairn-wight guards its stacked grave-stones and drags the living into the pile to join it.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-juggernaut",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a cairn-wight that cannot be harmed by steel and fears only running water",
+    "clauses": [
+      {
+        "id": "cl_16zhisc",
+        "text": "a cairn-wight",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1x23thr",
+        "text": "cannot be harmed by steel",
+        "kind": "mechanical",
+        "askShape": "resist",
+        "askMechanic": "resist",
+        "askMechanicWhy": "cannot be harmed by steel",
+        "polarity": "lacks",
+        "lackQuote": "cannot be harmed by steel"
+      },
+      {
+        "id": "cl_uc5nun",
+        "text": "fears only running water",
+        "kind": "mechanical",
+        "askShape": "condition",
+        "askMechanic": "fear",
+        "askMechanicWhy": "fears only running water"
+      }
+    ],
+    "cite": "composition after Flesh Golem (CR 5) — the made thing that cannot be unmade",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Necrotic, Poison; Exhaustion, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "a cairn-wight that cannot be harmed by steel and fears only running water",
+  "selectedChallengeRating": "6",
+  "monsterName": "Barrow Cairn-Wight",
+  "caster": false
+}

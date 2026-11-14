@@ -1,0 +1,140 @@
+{
+  "name": "Abandoned Drowning",
+  "inline": "the drowning",
+  "format": "2024",
+  "cr": 5,
+  "cr_str": "5",
+  "xp": 1800,
+  "challenge_rating": "5 (XP 1,800; PB +3)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 14,
+  "hp": 97,
+  "hp_formula": "13d8 + 39",
+  "pb": 3,
+  "speed": "30 ft., Swim 30 ft., Climb 30 ft.",
+  "stats": {
+    "STR": 16,
+    "DEX": 8,
+    "CON": 16,
+    "INT": 4,
+    "WIS": 10,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": -1,
+    "CON": 3,
+    "INT": -3,
+    "WIS": 0,
+    "CHA": -3
+  },
+  "skills": "Athletics +6, Perception +3",
+  "senses": "darkvision 60 ft.; Passive Perception 13",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The drowning makes two Undertow attacks. It can replace one attack with a use of Down to the Weeds."
+      },
+      {
+        "name": "Undertow",
+        "imposes": [
+          "Grappled",
+          "Restrained"
+        ],
+        "text": "*Melee Attack Roll:* +6, reach 5 ft. 12 (2d8 + 3) Bludgeoning damage plus 7 (2d6) Necrotic damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 14). While Grappled, the target has the Restrained condition.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Down to the Weeds",
+        "text": "*Strength Saving Throw*: DC 14, each creature in a 10-foot Emanation. *Failure:* The target is pulled up to 10 feet straight toward Drowning, and the target has the Prone condition.",
+        "authored": true,
+        "clause": "Each creature the Drowning has Grappled is pulled up to 10 feet toward the Drowning. A creature pulled into deep water o",
+        "imposes": "Prone",
+        "imposesMovement": true,
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "dragging prey down into deep water",
+        "boundKeys": [],
+        "expressedQuote": "The target is pulled up to 10 feet straight toward Drowning"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Whelm",
+        "rules": true,
+        "engulf_engine": true,
+        "imposes": [
+          "Blinded",
+          "Restrained"
+        ],
+        "text": "The drowning whelms one Medium or smaller creature it is grappling. While whelmed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the drowning, and takes 7 (2d6) Necrotic damage at the start of each of the drowning's turns. The drowning can have only one creature whelmed at a time. If the drowning takes 15 damage or more in a single turn from the whelmed creature, the drowning must release the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the drowning. If the drowning dies, a whelmed creature pulls free Prone by using 5 feet of movement.",
+        "boundKeys": [
+          "whelm",
+          "swallow",
+          "swallows",
+          "engulf",
+          "engulfs",
+          "devour",
+          "devours",
+          "gulp",
+          "smother",
+          "entomb",
+          "cocoon"
+        ]
+      }
+    ],
+    "Traits": []
+  },
+  "lore": "Something fell into the village well long ago and never finished dying; drowned and forgotten, it has become the water's own appetite, and it wants only to draw another down to keep it company in the dark.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-grappler",
+    "archetype": "brute",
+    "holds": true,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "the thing in the well",
+    "clauses": [
+      {
+        "id": "cl_p6m93r",
+        "text": "the thing in the well",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "cite": "composition after Giant Crocodile (CR 5) jaws + Giant Toad (CR 1) swallow — print swallows at LOW CR",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Poison; Exhaustion, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "",
+  "selectedChallengeRating": "5",
+  "monsterName": "the thing in the well",
+  "caster": false
+}

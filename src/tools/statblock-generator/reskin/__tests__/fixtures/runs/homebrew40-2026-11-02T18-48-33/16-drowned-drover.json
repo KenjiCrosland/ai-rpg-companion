@@ -1,0 +1,157 @@
+{
+  "name": "Drowned Drover",
+  "inline": "the drover",
+  "format": "2024",
+  "cr": 9,
+  "cr_str": "9",
+  "xp": 5000,
+  "challenge_rating": "9 (XP 5,000; PB +4)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 17,
+  "hp": 150,
+  "hp_formula": "20d8 + 60",
+  "pb": 4,
+  "speed": "30 ft., Swim 30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 14,
+    "CON": 16,
+    "INT": 12,
+    "WIS": 13,
+    "CHA": 18
+  },
+  "saves": {
+    "STR": 4,
+    "DEX": 2,
+    "CON": 7,
+    "INT": 1,
+    "WIS": 1,
+    "CHA": 8
+  },
+  "skills": "Athletics +8, Persuasion +8",
+  "senses": "darkvision 60 ft.; Passive Perception 11",
+  "languages": "Common plus the languages it knew in life",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Marked as Driven Stock",
+        "text": "When the drover hits a creature with Iron-Shod Crook, the target is marked as driven stock until the end of the drover's next turn; while marked, the drover's allies have Advantage on attack rolls against it and the drover knows the direction and distance to it.",
+        "authored": true,
+        "clause": "Whenever the drover hits a creature with Iron-Shod Crook, the target is marked as driven stock until the end of the drov",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "never fighting alone — the herd takes the blows",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "the drover's allies have Advantage on attack rolls against it"
+      },
+      {
+        "name": "Aura of Authority",
+        "rules": true,
+        "text": "While in a 10-foot Emanation originating from the drover, the drover and its allies have Advantage on attack rolls and saving throws, provided the drover doesn't have the Incapacitated condition.",
+        "clause": "never fights alone",
+        "answersAlso": [
+          "never fights alone"
+        ],
+        "clauseId": "cl_1n5e7oy"
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The drover makes three attacks, using Iron-Shod Crook or Herding Blow in any combination. It can replace one attack with a use of Drive the Herd."
+      },
+      {
+        "name": "Iron-Shod Crook",
+        "text": "*Melee Attack Roll:* +8, reach 5 ft. 14 (3d6 + 4) Bludgeoning damage plus 7 (2d6) Necrotic damage.",
+        "weapon": "staff",
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Herding Blow",
+        "text": "*Melee Attack Roll:* +8, reach 5 ft. 21 (5d6 + 4) Bludgeoning damage.",
+        "weapon": "staff",
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Drive the Herd",
+        "text": "*Strength Saving Throw:* DC 15, each creature in a 30-foot Cone. *Failure:* The target is pushed up to 15 feet away from the drover and has the Prone condition.",
+        "library": true,
+        "imposes": "Prone",
+        "seed": "push-prone"
+      }
+    ]
+  },
+  "lore": "A drover who drowned with his stable in the great fen-flood, the Shepherd wades the drowned pastures, gathering drowned beasts into a herd and driving them at any living thing that crosses the water.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-8-leader",
+    "archetype": "defender",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [
+      {
+        "clause": "never fights alone",
+        "where": "description",
+        "text": "The drover has Advantage on attack rolls and saving throws, and its attacks with Iron-Shod Crook and Herding Blow deal an extra {dmg} Necrotic damage."
+      }
+    ],
+    "userConcept": "a shepherd of drowned horses who never fights alone",
+    "clauses": [
+      {
+        "id": "cl_1vfkk52",
+        "text": "a shepherd of drowned horses",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1n5e7oy",
+        "text": "never fights alone",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "command",
+        "askMechanicWhy": "never fights alone"
+      }
+    ],
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 1,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the value floor",
+    "answered_in_prose": [
+      "never fights alone"
+    ],
+    "answered_by_existing": [
+      "never fights alone -> Aura of Authority"
+    ],
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "immunities": "Poison; Exhaustion, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "a shepherd of drowned horses who never fights alone",
+  "selectedChallengeRating": "9",
+  "monsterName": "Drowned Drover",
+  "caster": false
+}

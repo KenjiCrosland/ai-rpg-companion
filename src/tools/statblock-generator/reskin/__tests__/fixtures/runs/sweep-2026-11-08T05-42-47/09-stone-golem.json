@@ -1,0 +1,154 @@
+{
+  "name": "Stone Golem",
+  "inline": "the stone golem",
+  "format": "2024",
+  "cr": 10,
+  "cr_str": "10",
+  "xp": 5900,
+  "challenge_rating": "10 (XP 5,900; PB +4)",
+  "type": "Construct",
+  "size": "Large",
+  "alignment": "Unaligned",
+  "ac": 18,
+  "hp": 220,
+  "hp_formula": "21d10 + 105",
+  "pb": 4,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 22,
+    "DEX": 9,
+    "CON": 20,
+    "INT": 3,
+    "WIS": 11,
+    "CHA": 1
+  },
+  "saves": {
+    "STR": 10,
+    "DEX": -1,
+    "CON": 9,
+    "INT": -4,
+    "WIS": 0,
+    "CHA": -5
+  },
+  "skills": "Athletics +10, Perception +4",
+  "senses": "darkvision 60 ft.; Passive Perception 14",
+  "languages": "Understands Common plus two other languages but can't speak",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The stone golem makes two attacks, using Slam or Force Bolt in any combination."
+      },
+      {
+        "name": "Slam",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 15 (2d8 + 6) Bludgeoning damage plus 9 (2d8) Force damage.",
+        "weapon": null,
+        "weldedRiders": [],
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Force Bolt",
+        "text": "*Ranged Attack Roll:* +9, range 120 ft. 22 (4d10) Force damage.",
+        "weapon": "crossbow",
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Ground Slam (1/Day)",
+        "gate": "1/Day",
+        "text": "*Dexterity Saving Throw*: DC 17, each creature in a 15-foot Emanation originating from the stone golem. *Failure:* 35 (10d6) Bludgeoning damage. *Success:* Half damage.",
+        "library": true,
+        "template": "ground-burst",
+        "boundKeys": [
+          "erupt",
+          "erupts"
+        ],
+        "area": {
+          "shape": "Emanation",
+          "size": 15
+        }
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Weeping Ground",
+        "text": "*Wisdom Saving Throw*: DC 17, any creature that starts its turn in a 10-foot Emanation originating from the stone golem. *Failure:* The target has the Frightened condition until the start of its next turn. *Success:* The target is immune to this creature's aura for 24 hours.",
+        "library": true,
+        "template": "composed:zone:condition:frightened",
+        "imposes": "Frightened",
+        "boundKeys": [],
+        "gmQuote": "carved as a weeping saint",
+        "duration": "target_start",
+        "expresses": "weeping channels of blessed force from carved eyes",
+        "bound": false
+      },
+      {
+        "name": "Immutable Form",
+        "text": "The stone golem can't shape-shift.",
+        "print": true
+      },
+      {
+        "name": "Magic Resistance",
+        "text": "The stone golem has Advantage on saving throws against spells and other magical effects.",
+        "print": true
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Slow (Recharge 5-6)",
+        "text": "The stone golem casts the *Slow* spell, requiring no spell components and using Constitution as the spellcasting ability (spell save DC 17).",
+        "rules": true,
+        "print": true
+      }
+    ]
+  },
+  "lore": "Quarried stone was carved into a kneeling saint and sealed with a martyr's vigil to guard the quarry doors; now that its reliquary shrine lies broken, the Weeping Saint walks in search of the hands that broke it.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Stone Golem",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "code"
+    },
+    "donor": "brute-9",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "Stone Golem — carved as a weeping saint",
+    "clauses": [
+      {
+        "id": "cl_2cd3hd",
+        "text": "Stone Golem — carved as a weeping saint",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "cite": "composition after Fire Giant (CR 9) — the giant ladder continues",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Poison, Psychic; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "carved as a weeping saint",
+  "selectedChallengeRating": "10",
+  "monsterName": "Stone Golem",
+  "caster": false
+}

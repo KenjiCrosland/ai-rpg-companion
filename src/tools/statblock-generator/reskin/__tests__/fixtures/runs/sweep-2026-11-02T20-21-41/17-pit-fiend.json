@@ -1,0 +1,169 @@
+{
+  "name": "Pit Fiend",
+  "inline": "the pit fiend",
+  "format": "2024",
+  "cr": 20,
+  "cr_str": "20",
+  "xp": 25000,
+  "challenge_rating": "20 (XP 25,000; PB +6)",
+  "type": "Fiend",
+  "size": "Large",
+  "alignment": "Lawful Evil",
+  "ac": 21,
+  "hp": 337,
+  "hp_formula": "27d10 + 189",
+  "pb": 6,
+  "speed": "30 ft., Fly 60 ft.",
+  "stats": {
+    "STR": 26,
+    "DEX": 14,
+    "CON": 24,
+    "INT": 22,
+    "WIS": 18,
+    "CHA": 24
+  },
+  "saves": {
+    "STR": 14,
+    "DEX": 2,
+    "CON": 13,
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 7
+  },
+  "skills": "Perception +10, Persuasion +19",
+  "senses": "darkvision 120 ft.; Passive Perception 20",
+  "languages": "Infernal; telepathy 120 ft.",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Embers of Unpaid Vows",
+        "text": "While at least one creature within the pit fiend's sight is dying or has died this fight, the pit fiend's Bite deals an extra 14 (4d6) Fire damage on a hit.",
+        "authored": true,
+        "clause": "Every oath the pit fiend has swallowed is a scar of blackened iron welding one of its plate-shards shut, and each uncoll",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "collecting the oaths of dying knights",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "While at least one creature within the pit fiend's sight is dying or has died this fight"
+      },
+      {
+        "name": "Legendary Resistance (3/Day)",
+        "text": "If the pit fiend fails a saving throw, it can choose to succeed instead.",
+        "gate": "3/Day"
+      },
+      {
+        "name": "Diabolical Restoration",
+        "text": "If the pit fiend dies outside the Nine Hells, its body disappears in sulfurous smoke, and it gains a new body instantly, reviving with all its Hit Points somewhere in the Nine Hells.",
+        "rules": true,
+        "print": true
+      },
+      {
+        "name": "Fear Aura",
+        "text": "The pit fiend emanates an aura in a 20-foot Emanation while it doesn't have the Incapacitated condition. *Wisdom Saving Throw*: DC 21, any enemy that starts its turn in the aura. *Failure:*  The target has the Frightened condition until the start of its next turn. *Success:*  The target is immune to this pit fiend's aura for 24 hours.",
+        "rules": true,
+        "print": true
+      },
+      {
+        "name": "Magic Resistance",
+        "text": "The pit fiend has Advantage on saving throws against spells and other magical effects.",
+        "rules": true,
+        "print": true
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The pit fiend makes one Bite attack, two Devilish Claw attacks, and one Fiery Mace attack."
+      },
+      {
+        "name": "Bite",
+        "text": "*Melee Attack Roll:* +14, reach 10 ft. 18 (3d6 + 8) Piercing damage. If the target is a creature, it must make the following saving throw. *Constitution Saving Throw*: DC 21. *Failure:*  The target has the Poisoned condition. While Poisoned, the target can't regain Hit Points and takes 21 (6d6) Poison damage at the start of each of its turns, and it repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically.",
+        "weapon": null,
+        "weldedRiders": [],
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 1
+      },
+      {
+        "name": "Fiery Mace",
+        "text": "*Melee Attack Roll:* +14, reach 10 ft. 22 (4d6 + 8) Force damage plus 21 (6d6) Fire damage.",
+        "weapon": "mace",
+        "print": true,
+        "attacksPerRound": 1
+      },
+      {
+        "name": "Devilish Claw",
+        "text": "*Melee Attack Roll:* +14, reach 10 ft. 26 (4d8 + 8) Necrotic damage.",
+        "weapon": null,
+        "print": true,
+        "attacksPerRound": 1
+      },
+      {
+        "name": "Hellfire Spellcasting (Recharge 4-6)",
+        "text": "The pit fiend casts *Fireball* (level 5 version) twice, requiring no Material components and using Charisma as the spellcasting ability (spell save DC 21). It can replace one *Fireball* with *Hold Monster* (level 7 version) or *Wall of Fire*.",
+        "rules": true,
+        "print": true
+      }
+    ]
+  },
+  "lore": "Forged in the oath-pits of the lower planes from the broken vows of dying knights, it stalks battlefields not for slaughter but for the final sworn words of honorable dead, which it swallows as payment.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Pit Fiend",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "code"
+    },
+    "donor": "defender-17",
+    "archetype": "defender",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "Pit Fiend — who collects the oaths of dying knights",
+    "clauses": [
+      {
+        "id": "cl_5q4z8n",
+        "text": "Pit Fiend —",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1m4bjkz",
+        "text": "collects the oaths of dying knights",
+        "kind": "mechanical",
+        "askWhen": "on_hit",
+        "askWhenWhy": "collects",
+        "askShape": "save_single",
+        "askMechanic": "curse",
+        "askMechanicWhy": "collects the oaths"
+      }
+    ],
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "immunities": "Fire, Poison; Poisoned",
+  "resistances": "Cold",
+  "lint_findings": [],
+  "monsterDescription": "who collects the oaths of dying knights",
+  "selectedChallengeRating": "20",
+  "monsterName": "Pit Fiend",
+  "caster": false
+}

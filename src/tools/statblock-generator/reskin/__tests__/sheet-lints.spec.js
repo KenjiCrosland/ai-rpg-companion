@@ -13,6 +13,7 @@
  * of this item's purpose.
  */
 import { buildFitPrompt, TEMPLATE_BY_ID } from '@/tools/statblock-generator/reskin/templates.mjs';
+import { scaleDonor, pickDonor } from '@/tools/statblock-generator/reskin/scale.mjs';
 import fs from 'node:fs';
 import { citesGenericAttacks, multiattackAttackClauses, multiattackCitations, multiattackSpells, repairMultiattackAttackList, repairReplaceClause, replaceClauseRowOf } from '../checker.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
@@ -25,7 +26,7 @@ import { capSingleTargetSave, ceilingFor, isSingleTargetSave } from '@/tools/sta
 import { renderTemplate } from '@/tools/statblock-generator/reskin/templates.mjs';
 import { drawLibraryRow } from '@/tools/statblock-generator/reskin/library.mjs';
 
-const RUN = 'smoke-out/sweep-2026-11-01T20-03-32';
+const RUN = 'src/tools/statblock-generator/reskin/__tests__/fixtures/runs/sweep-2026-11-01T20-03-32';
 const sheetFor = (ix) => {
   // the forty's files are zero-padded (02-bog-hound.json), which my first cut missed
   const pad = String(ix).padStart(2, '0');
@@ -978,39 +979,56 @@ describe('a payoff escalates in one of four shapes', () => {
 // every row degraded to the condition rung, and three of the four shapes could not ship.
 // templates.mjs carries a comment warning about precisely this, from an earlier shape
 // that went dead the same way this sprint. This test is the guard that was missing.
-describe('the escalation choice reaches the prompt', () => {
-  // THESE THREE USED TO READ templates.mjs AS TEXT — `expect(src).toMatch(/if
-  // \(t\.rewardsCondition\) vocab\.push\(/)`. They passed for weeks while the behaviour
-  // was absent, because the catalog builder drops `rewardsCondition` and the flag is
-  // `undefined` at runtime (see a-shape-field-reaches-its-template.spec.js). A guard that
-  // greps its own source cannot tell a live code path from a dead one. These call the
-  // prompt builder instead (item 5a step 3, 2026-11-14).
-  const idea = { idea: 'it finishes a target already reeling', section: 'action', trigger: 'save', effect: 'condition', family: 'payoff' };
-  const menuLine = (tpl, cr = 12) => buildFitPrompt({ name: 'X', idea, menu: [tpl], cr, concept: '' })
-    .split('\n').find((l) => l.startsWith('- condition-payoff')) ?? '';
-  const payoff = { ...TEMPLATE_BY_ID.get('condition-payoff'), rewardsCondition: true };
+describe('the escalation choice reaches the renderer', () => {
+  // THIS BLOCK HAS BEEN WRONG TWICE. It began by asserting that templates.mjs CONTAINS
+  // the line `if (t.rewardsCondition) vocab.push(` — a test that greps its own source and
+  // passes whether the code path is live or dead, which is how the 11-05 payoff ladder
+  // stayed dark for weeks. The rewrite then asserted on the PROMPT's wording, which is
+  // the same mistake wearing a different string (owner's ruling, 2026-11-14: no test
+  // asserts on prompt wording).
+  //
+  // What a payoff's escalation actually DOES is change the rendered row, so that is what
+  // these check. One prompt assertion stays, at the bottom, purely to prove the slot is
+  // offered at all — without it the renderer could be right and never asked.
+  const ctxAt = (cr) => ({
+    scaled: scaleDonor(pickDonor(cr, null, 'brute'), cr, { mechanics: [] }),
+    archetype: 'brute', cr, imposed: ['Frightened'], name: 'X', energy: 'Fire', inline: 'the brute', sections: {},
+  });
+  const payoff = TEMPLATE_BY_ID.get('condition-payoff');
+  const flagged = { ...payoff, rewardsCondition: true };
+  const render = (t, escalation, cr = 12) => String(renderTemplate(
+    t, ctxAt(cr), { consumed_condition: 'Frightened', escalation }, { blind: false },
+  )?.text ?? '');
 
-  it('is offered to the model when a template rewards a condition', () => {
-    expect(menuLine(payoff)).toMatch(/"escalation" ∈/);
+  it('a flagged template uses the shape the call chose — exhaustion', () => {
+    expect(render(flagged, 'exhaustion')).toMatch(/gains 1 Exhaustion level/);
   });
 
-  it('and names every shape the band allows, so the model can pick one', () => {
-    const line = menuLine(payoff);
-    expect(line).toMatch(/condition\/exhaustion\/damage\/mark/);
-    expect(line).toMatch(/Exhaustion/);
-    expect(line).toMatch(/Advantage/);
+  it('…and mark, which spends the reward on Advantage instead of a condition', () => {
+    const t = render(flagged, 'mark');
+    expect(t).toMatch(/Advantage on attack rolls against it/);
+    expect(t).toMatch(/only one target marked this way/);
   });
 
-  it('and the engine still owns the numbers, which the menu says out loud', () => {
-    expect(menuLine(payoff)).toMatch(/engine writes every number/i);
+  it('…and damage, which steps the amount rather than adding a second condition', () => {
+    // print's two-step amount REPLACES, never adds: "7 (1d8 + 3) — or 12 (2d8 + 3)"
+    expect(render(flagged, 'damage')).toMatch(/damage, or \d+ \(\d+d\d+\) \w+ damage if the target already has/);
   });
 
-  // AND THE CATALOG ENTRY DOES NOT CARRY THE FLAG YET, so none of the above reaches a
-  // real sheet. Step 4 carries it; this assertion then flips and the three above start
-  // guarding live behaviour rather than a mechanism.
-  it('— but the shipped catalog entry is still dark, so the model is never asked', () => {
-    expect(TEMPLATE_BY_ID.get('condition-payoff').rewardsCondition).toBeUndefined();
-    expect(menuLine(TEMPLATE_BY_ID.get('condition-payoff'))).not.toMatch(/"escalation" ∈/);
+  it('an unflagged template ignores the same choice and keeps its condition rung', () => {
+    const t = render(payoff, 'exhaustion');
+    expect(t).not.toMatch(/Exhaustion/);
+    expect(t).toMatch(/it also has the \w+ condition/);
+  });
+
+  // THE ONE WIRING ASSERTION the ruling allows: the slot has to be offered, or the
+  // renderer above is correct and never consulted.
+  it('and the slot is offered to the model for a flagged template', () => {
+    const idea = { idea: 'it finishes a target already reeling', section: 'action', trigger: 'save', effect: 'condition', family: 'payoff' };
+    const line = (tpl) => buildFitPrompt({ name: 'X', idea, menu: [tpl], cr: 12, concept: '' })
+      .split('\n').find((l) => l.startsWith('- condition-payoff')) ?? '';
+    expect(line(flagged)).toMatch(/escalation/);
+    expect(line(payoff)).not.toMatch(/escalation/); // still dark on the shipped entry; step 3 of item 5a carries it
   });
 });
 

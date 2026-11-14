@@ -1,0 +1,156 @@
+{
+  "name": "Well-Drowned Thing",
+  "inline": "the thing",
+  "format": "2024",
+  "cr": 5,
+  "cr_str": "5",
+  "xp": 1800,
+  "challenge_rating": "5 (XP 1,800; PB +3)",
+  "type": "Aberration",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 14,
+  "hp": 97,
+  "hp_formula": "13d8 + 39",
+  "pb": 3,
+  "speed": "30 ft., Swim 30 ft., Climb 30 ft.",
+  "stats": {
+    "STR": 16,
+    "DEX": 8,
+    "CON": 16,
+    "INT": 4,
+    "WIS": 10,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": -1,
+    "CON": 3,
+    "INT": -3,
+    "WIS": 0,
+    "CHA": -3
+  },
+  "skills": "Athletics +6, Perception +3",
+  "senses": "darkvision 60 ft.; Passive Perception 13",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The thing makes two Coils attacks. It can replace one attack with a use of Wracking Lash."
+      },
+      {
+        "name": "Coils",
+        "imposes": [
+          "Grappled",
+          "Restrained"
+        ],
+        "text": "*Melee Attack Roll:* +6, reach 5 ft. 12 (2d8 + 3) Bludgeoning damage plus 7 (2d6) Cold damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 14). While Grappled, the target has the Restrained condition.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Wracking Lash",
+        "text": "*Strength Saving Throw:* DC 14, one creature within 30 feet that is Grappled by the thing. *Failure:* 31 (9d6) Cold damage. *Success:* Half damage.",
+        "library": true,
+        "template": "exploiter",
+        "requiresCondition": "Grappled",
+        "boundKeys": [
+          "grappled",
+          "downed"
+        ],
+        "accepted_closest": true
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Swallow",
+        "rules": true,
+        "engulf_engine": true,
+        "imposes": [
+          "Blinded",
+          "Restrained"
+        ],
+        "text": "The thing swallows one Medium or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the thing, and takes 7 (2d6) Cold damage at the start of each of the thing's turns. The thing can have only one creature swallowed at a time. If the thing takes 15 damage or more in a single turn from the swallowed creature, the thing must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the thing. If the thing dies, a swallowed creature exits the body Prone by using 5 feet of movement.",
+        "boundKeys": [
+          "swallow",
+          "swallows",
+          "engulf",
+          "engulfs",
+          "devour",
+          "devours",
+          "gulp",
+          "smother",
+          "entomb",
+          "cocoon",
+          "whelm"
+        ]
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Still Water Veil",
+        "text": "The thing can pinpoint the location of contact with its well's water within 60 feet of itself.",
+        "library": true,
+        "template": "uncanny-sense",
+        "boundKeys": [],
+        "freeRow": true,
+        "decoration": true,
+        "accepted_closest": true,
+        "expresses": null,
+        "bound": false
+      }
+    ]
+  },
+  "lore": "Something that fell or was thrown into a deep well generations ago grew fat on the drowned and the forgotten, and now it wants nothing but the next thing that comes down to drink or draw water.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-grappler",
+    "archetype": "brute",
+    "holds": true,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "the thing in the well",
+    "clauses": [
+      {
+        "id": "cl_p6m93r",
+        "text": "the thing in the well",
+        "kind": "mechanical",
+        "askShape": "attack",
+        "askMechanic": "grapple",
+        "askMechanicWhy": "the thing in the well"
+      }
+    ],
+    "cite": "composition after Giant Crocodile (CR 5) jaws + Giant Toad (CR 1) swallow — print swallows at LOW CR",
+    "free_rows": 1,
+    "free_row_templates": [
+      "uncanny-sense"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 2",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "resistances": "Cold",
+  "lint_findings": [],
+  "monsterDescription": "",
+  "selectedChallengeRating": "5",
+  "monsterName": "the thing in the well",
+  "caster": false
+}

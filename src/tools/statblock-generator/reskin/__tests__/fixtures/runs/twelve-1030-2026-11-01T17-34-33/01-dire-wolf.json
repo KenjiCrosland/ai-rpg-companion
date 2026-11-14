@@ -1,0 +1,129 @@
+{
+  "name": "Dire Wolf",
+  "inline": "the dire wolf",
+  "format": "2024",
+  "cr": 1,
+  "cr_str": "1",
+  "xp": 200,
+  "challenge_rating": "1 (XP 200; PB +2)",
+  "type": "Beast",
+  "size": "Large",
+  "alignment": "Unaligned",
+  "ac": 14,
+  "hp": 22,
+  "hp_formula": "3d10 + 6",
+  "pb": 2,
+  "speed": "50 ft.",
+  "stats": {
+    "STR": 17,
+    "DEX": 15,
+    "CON": 15,
+    "INT": 3,
+    "WIS": 12,
+    "CHA": 7
+  },
+  "saves": {
+    "STR": 3,
+    "DEX": 4,
+    "CON": 2,
+    "INT": -4,
+    "WIS": 1,
+    "CHA": -2
+  },
+  "skills": "Perception +5, Stealth +4",
+  "senses": "darkvision 60 ft.; Passive Perception 15",
+  "languages": "None",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Frost-Rimed Bite",
+        "text": "While the dire wolf is moving toward a creature it has damaged within the last 24 hours, the dire wolf's Speed can't be reduced and Difficult Terrain doesn't cost it extra movement.",
+        "library": true,
+        "template": "relentless-pursuit",
+        "boundKeys": [],
+        "accepted_closest": true,
+        "gmQuote": "with a frost rimed hide",
+        "expresses": "frost-rimed hide that chills what it touches",
+        "bound": false
+      },
+      {
+        "name": "Pack Tactics",
+        "text": "The dire wolf has Advantage on an attack roll against a creature if at least one of the dire wolf's allies is within 5 feet of the creature and the ally doesn't have the Incapacitated condition.",
+        "rules": true,
+        "print": true
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The dire wolf makes two Bite attacks. It can replace one attack with a use of Frost-Rimed Hide."
+      },
+      {
+        "name": "Bite",
+        "text": "*Melee Attack Roll:* +5, reach 5 ft. 8 (1d10 + 3) Piercing damage. If the target is a Large or smaller creature, it has the Prone condition.",
+        "weapon": null,
+        "print": true,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Frost-Rimed Hide",
+        "text": "*Constitution Saving Throw:* DC 13, one creature within 60 feet. *Failure:* The target has the Blinded condition until the end of the dire wolf's next turn.",
+        "library": true,
+        "template": "sensory-strike",
+        "imposes": "Blinded",
+        "boundKeys": [],
+        "accepted_closest": true,
+        "gmQuote": "frost rimed hide",
+        "duration": "source_end"
+      }
+    ],
+    "Bonus Actions": []
+  },
+  "lore": "Whelped in the long winter, this dire wolf's hide never thaws, and it haunts the snowline with its pack to take whatever the cold has already weakened.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Dire Wolf",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "code"
+    },
+    "donor": "skirmisher-1",
+    "archetype": "skirmisher",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "Dire Wolf — with a frost-rimed hide",
+    "clauses": [
+      {
+        "id": "cl_d942pp",
+        "text": "Dire Wolf — with a frost-rimed hide",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "cite": "composition after Goblin Warrior / Spy (CR 1/4-1)",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 2",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "with a frost-rimed hide",
+  "selectedChallengeRating": "1",
+  "monsterName": "Dire Wolf",
+  "caster": false
+}

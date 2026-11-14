@@ -236,14 +236,14 @@ describe('(d) in the pipeline — the SEAT landing', () => {
 describe("forty #3's regressed lints, on the saved sheets", () => {
   const { lintSheet } = require('@/tools/statblock-generator/reskin/sheet-lints.mjs');
   const load = (dir, n) => {
-    const d = `smoke-out/${dir}`;
+    const d = `src/tools/statblock-generator/reskin/__tests__/fixtures/runs/${dir}`;
     const f = fs.readdirSync(d).find((x) => x.startsWith(`${n}-`) && x.endsWith('.json'));
     return f ? JSON.parse(fs.readFileSync(`${d}/${f}`, 'utf8')) : null;
   };
   const BAD = 'homebrew40-2026-11-02T13-47-49';   // forty #3: shipped both defects
   const FIXED = 'homebrew40-2026-11-02T18-48-33'; // forty #4: the run after the fixes
-  const sheets = (dir) => fs.readdirSync(`smoke-out/${dir}`).filter((x) => /^\d\d-.*\.json$/.test(x))
-    .map((x) => JSON.parse(fs.readFileSync(`smoke-out/${dir}/${x}`, 'utf8')));
+  const sheets = (dir) => fs.readdirSync(`src/tools/statblock-generator/reskin/__tests__/fixtures/runs/${dir}`).filter((x) => /^\d\d-.*\.json$/.test(x))
+    .map((x) => JSON.parse(fs.readFileSync(`src/tools/statblock-generator/reskin/__tests__/fixtures/runs/${dir}/${x}`, 'utf8')));
 
   test('the placeholder lint fires on the sheet that shipped "Composed Row" (#35)', () => {
     const sheet = load(BAD, 35);

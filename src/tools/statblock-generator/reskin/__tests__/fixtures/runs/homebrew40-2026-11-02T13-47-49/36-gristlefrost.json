@@ -1,0 +1,132 @@
+{
+  "name": "Gristlefrost",
+  "inline": "the gristlefrost",
+  "format": "2024",
+  "cr": 10,
+  "cr_str": "10",
+  "xp": 5900,
+  "challenge_rating": "10 (XP 5,900; PB +4)",
+  "type": "Elemental",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 16,
+  "hp": 142,
+  "hp_formula": "19d8 + 57",
+  "pb": 4,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 12,
+    "DEX": 20,
+    "CON": 17,
+    "INT": 13,
+    "WIS": 14,
+    "CHA": 11
+  },
+  "saves": {
+    "STR": 1,
+    "DEX": 9,
+    "CON": 3,
+    "INT": 5,
+    "WIS": 2,
+    "CHA": 0
+  },
+  "skills": "Perception +6, Stealth +13",
+  "senses": "darkvision 60 ft.; Passive Perception 16",
+  "languages": "Primordial",
+  "initiative_bonus": 5,
+  "initiative_score": 15,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The gristlefrost makes three Rimefang attacks. It can replace one attack with a use of Frostbound Gaze."
+      },
+      {
+        "name": "Rimefang",
+        "text": "*Melee Attack Roll:* +9, reach 5 ft. 14 (2d8 + 5) Piercing damage plus 9 (2d8) Cold damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Frostbound Gaze",
+        "text": "*Wisdom Saving Throw*: DC 17, one creature the gristlefrost can see within 60 feet. *Failure:* 13 (3d8) Cold damage, and the target has the Frightened condition until the end of its next turn. *Success:* Half damage only.",
+        "library": true,
+        "template": "gaze-single",
+        "imposes": "Frightened",
+        "boundKeys": [
+          "gaze"
+        ],
+        "duration": "target_end",
+        "minorClause": ", and the target has the Frightened condition until the end of its next turn"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Umbral Step",
+        "rules": true,
+        "text": "While in Dim Light or Darkness, the gristlefrost takes the Hide action."
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Vile Appearance",
+        "text": "*Wisdom Saving Throw*: DC 17, any creature that starts its turn within 30 feet of the gristlefrost and can see it. *Failure:* The target has the Frightened condition until the start of its next turn. *Success:* The target is immune to this creature's gaze for 24 hours.",
+        "library": true,
+        "template": "gaze-aura",
+        "imposes": "Frightened",
+        "boundKeys": [],
+        "freeRow": true,
+        "duration": "target_start",
+        "expresses": "cold that paralyzes with fear, rooting prey so it cannot flee",
+        "bound": false,
+        "expressedQuote": "The target has the Frightened condition until the start of its next turn."
+      }
+    ]
+  },
+  "lore": "Born where a blizzard froze a dying winter spirit into the glacier's heart, the Gristlefrost takes no food, only warmth, freezing its victims into silent companions within its killing cold.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-8",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a frost-thing whose cold makes you too frightened to run",
+    "clauses": [
+      {
+        "id": "cl_1gul3e6",
+        "text": "a frost-thing whose cold makes you too frightened to run",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "cite": "composition after Assassin (CR 8) — the rider-heavy burst and the expertise Stealth",
+    "free_rows": 1,
+    "free_row_templates": [
+      "gaze-aura"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "resistances": "Cold",
+  "immunities": "Poison; Exhaustion, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "a frost-thing whose cold makes you too frightened to run",
+  "selectedChallengeRating": "10",
+  "monsterName": "Gristlefrost",
+  "caster": false
+}

@@ -1,0 +1,167 @@
+{
+  "name": "Vashka the Red",
+  "inline": "Vashka",
+  "format": "2024",
+  "cr": 6,
+  "cr_str": "6",
+  "xp": 2300,
+  "challenge_rating": "6 (XP 2,300; PB +3)",
+  "type": "Humanoid",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 16,
+  "hp": 112,
+  "ac_gear": "studded leather, shield",
+  "hp_formula": "15d8 + 45",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 15,
+    "CON": 16,
+    "INT": 10,
+    "WIS": 12,
+    "CHA": 15
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": 2,
+    "CON": 6,
+    "INT": 0,
+    "WIS": 1,
+    "CHA": 2
+  },
+  "skills": "Athletics +10, Performance +5",
+  "senses": "Passive Perception 11",
+  "languages": "Common, Goblin",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Traits": [],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "Vashka makes three Longsword attacks. It can replace one attack with a use of Shield Bash."
+      },
+      {
+        "name": "Longsword",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 11 (2d6 + 4) Slashing damage.",
+        "weapon": "longsword",
+        "print": true,
+        "printNamed": true,
+        "classArmed": true,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Shield Bash",
+        "text": "*Strength Saving Throw*: DC 15, one creature within 5 feet that Vashka can see. *Failure:*  9 (2d4 + 4) Bludgeoning damage. If the target is a Medium or smaller creature, it has the Prone condition.",
+        "rules": true,
+        "print": true
+      }
+    ],
+    "Reactions": [
+      {
+        "name": "Riposte",
+        "text": "*Trigger:* A creature within 5 feet of Vashka misses it with a melee attack roll. *Response:* Vashka makes one Longsword attack against that creature.",
+        "kit": "fighter",
+        "clause": "warlord",
+        "free": true,
+        "template": "riposte",
+        "clauseId": "cl_zvh3r1"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Shield Wall (2/Day)",
+        "gate": "2/Day",
+        "text": "Each ally within 30 feet of Vashka gains 11 (2d10) Temporary Hit Points.",
+        "library": true,
+        "template": "rally",
+        "boundKeys": [
+          "shield",
+          "command"
+        ],
+        "accepted_closest": true,
+        "clause": "fights from a shield wall",
+        "clauseId": "cl_1k8w91l"
+      }
+    ]
+  },
+  "lore": "A legion's shield-bearer who rose to warlord by never losing a rank, Vashka the Red now hires out his locked shield wall to the highest-bidding hobgoblin host, dreaming of the day he breaks a rival warlord's line in open field with his own hands.",
+  "inline_kind": "person",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "class_npc",
+      "print_body": "Gladiator",
+      "relation": null,
+      "class": "fighter",
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-5",
+    "archetype": "defender",
+    "class_kit": {
+      "key": "fighter",
+      "clause": "warlord",
+      "landed": 1,
+      "yielded": 0,
+      "stood_down": null
+    },
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [
+      {
+        "clause": "never breaks ranks",
+        "where": "description",
+        "text": "Vashka cannot be moved against its will, and it has advantage on saving throws against being Charmed or Frightened."
+      }
+    ],
+    "userConcept": "Vashka the Red — A hobgoblin warlord in lacquered plate who fights from a shield wall and never breaks ranks.",
+    "clauses": [
+      {
+        "id": "cl_zvh3r1",
+        "text": "Vashka the Red — A hobgoblin warlord in lacquered plate",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1k8w91l",
+        "text": "fights from a shield wall",
+        "kind": "mechanical",
+        "askShape": "attack",
+        "askMechanic": "command",
+        "askMechanicWhy": "fights from a shield wall"
+      },
+      {
+        "id": "cl_nv0t8v",
+        "text": "never breaks ranks",
+        "kind": "mechanical",
+        "askShape": "buff_self",
+        "askMechanic": "harden",
+        "askMechanicWhy": "never breaks ranks"
+      }
+    ],
+    "cite": "composition after Guard Captain (CR 4) — the hybrid javelin twin, scaled into the band",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 2",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the call named no template for the pick",
+    "answered_in_prose": [
+      "never breaks ranks"
+    ],
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "A hobgoblin warlord in lacquered plate who fights from a shield wall and never breaks ranks.",
+  "selectedChallengeRating": "6",
+  "monsterName": "Vashka the Red",
+  "caster": false
+}

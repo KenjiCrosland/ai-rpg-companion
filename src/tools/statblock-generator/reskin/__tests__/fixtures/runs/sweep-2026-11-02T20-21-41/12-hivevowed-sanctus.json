@@ -1,0 +1,133 @@
+{
+  "name": "Hivevowed Sanctus",
+  "inline": "the sanctus",
+  "format": "2024",
+  "cr": 13,
+  "cr_str": "13",
+  "xp": 10000,
+  "challenge_rating": "13 (XP 10,000; PB +5)",
+  "type": "Celestial",
+  "size": "Medium",
+  "alignment": "Lawful Neutral",
+  "ac": 18,
+  "hp": 187,
+  "hp_formula": "22d8 + 88",
+  "pb": 5,
+  "speed": "30 ft., Fly 30 ft. (hover)",
+  "stats": {
+    "STR": 20,
+    "DEX": 14,
+    "CON": 18,
+    "INT": 12,
+    "WIS": 13,
+    "CHA": 18
+  },
+  "saves": {
+    "STR": 5,
+    "DEX": 2,
+    "CON": 9,
+    "INT": 1,
+    "WIS": 1,
+    "CHA": 9
+  },
+  "skills": "Athletics +10, Persuasion +9",
+  "senses": "darkvision 60 ft.; Passive Perception 11",
+  "languages": "Common",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Aura of Authority",
+        "rules": true,
+        "text": "While in a 10-foot Emanation originating from the sanctus, the sanctus and its allies have Advantage on attack rolls and saving throws, provided the sanctus doesn't have the Incapacitated condition."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The sanctus makes three attacks, using Plague Sting or Choking Slam in any combination. It can replace one attack with a use of Hive Mandate."
+      },
+      {
+        "name": "Plague Sting",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 18 (3d8 + 5) Piercing damage plus 13 (3d8) Poison damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Choking Slam",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 29 (7d6 + 5) Bludgeoning damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Hive Mandate",
+        "text": "*Constitution Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* The target has the Blinded condition until the end of its next turn.",
+        "authored": true,
+        "clause": "commands lesser swarms",
+        "imposes": "Blinded",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "commands lesser swarms of flies",
+        "widened": true,
+        "boundKeys": [],
+        "decoration": true,
+        "clauseId": "cl_1x4jef1"
+      }
+    ]
+  },
+  "lore": "A lesser servitor of the celestial order of plagues, it believes filth is a mercy, cleansing the living of their corrupt flesh by filling them with its holy flies one town at a time.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-8-leader",
+    "archetype": "defender",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a plague-bearing archon of flies that commands lesser swarms",
+    "clauses": [
+      {
+        "id": "cl_1lxu63p",
+        "text": "a plague-bearing archon of flies",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1x4jef1",
+        "text": "commands lesser swarms",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "command",
+        "askMechanicWhy": "commands lesser swarms"
+      }
+    ],
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "immunities": "Charmed",
+  "resistances": "Radiant",
+  "lint_findings": [],
+  "monsterDescription": "a plague-bearing archon of flies that commands lesser swarms",
+  "selectedChallengeRating": "13",
+  "monsterName": "Hivevowed Sanctus",
+  "caster": false
+}

@@ -25,7 +25,7 @@ const corpus = () => { if (!_corpus) { const a = JSON.parse(fs.readFileSync('src
 let _printRows = null;
 const allPrintRows = () => { if (!_printRows) _printRows = corpus().flatMap((m) => Object.values(m.sections ?? {}).flat()); return _printRows; };
 
-const FOUR = 'smoke-out/homebrew40-2026-11-02T18-48-33';
+const FOUR = 'src/tools/statblock-generator/reskin/__tests__/fixtures/runs/homebrew40-2026-11-02T18-48-33';
 const sheet = (n) => {
   const f = fs.readdirSync(FOUR).find((x) => x.startsWith(`${String(n).padStart(2, '0')}-`) && x.endsWith('.json'));
   return f ? JSON.parse(fs.readFileSync(`${FOUR}/${f}`, 'utf8')) : null;
@@ -382,7 +382,7 @@ describe('H3 — the defensive posture is priced, not removed', () => {
   test('the three sheets the critic called hot now read 1.6, and a control reads 1', () => {
     const fs2 = fs;
     const load = (dir, n) => { const f = fs2.readdirSync(dir).find((x) => x.startsWith(`${n}-`) && x.endsWith('.json')); const j = JSON.parse(fs2.readFileSync(`${dir}/${f}`, 'utf8')); return j.monster ?? j; };
-    const SW = 'smoke-out/sweep-2026-11-02T20-21-41'; const HB = 'smoke-out/homebrew40-2026-11-02T20-39-39';
+    const SW = 'src/tools/statblock-generator/reskin/__tests__/fixtures/runs/sweep-2026-11-02T20-21-41'; const HB = 'src/tools/statblock-generator/reskin/__tests__/fixtures/runs/homebrew40-2026-11-02T20-39-39';
     expect(defensivePostureMult(load(SW, '33'))).toBe(1.6); // Reedmarch Kin, 2014
     expect(defensivePostureMult(load(HB, '17'))).toBe(1.6); // Pane-Ascetic
     expect(defensivePostureMult(load(SW, '40'))).toBe(1.6); // Brother Halric, Guarded Stance

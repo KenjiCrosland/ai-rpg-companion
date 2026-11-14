@@ -1,0 +1,160 @@
+{
+  "name": "Brass Tyrant",
+  "inline": "the tyrant",
+  "format": "2024",
+  "cr": 17,
+  "cr_str": "17",
+  "xp": 18000,
+  "challenge_rating": "17 (XP 18,000; PB +6)",
+  "type": "Construct",
+  "size": "Huge",
+  "alignment": "Lawful Evil",
+  "ac": 20,
+  "hp": 241,
+  "hp_formula": "21d12 + 105",
+  "pb": 6,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 22,
+    "DEX": 14,
+    "CON": 20,
+    "INT": 14,
+    "WIS": 16,
+    "CHA": 20
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": 2,
+    "CON": 11,
+    "INT": 2,
+    "WIS": 3,
+    "CHA": 11
+  },
+  "skills": "Athletics +12, Persuasion +11",
+  "senses": "darkvision 60 ft.; Passive Perception 13",
+  "languages": "Common",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Molten Seams",
+        "text": "A creature that touches the tyrant or hits it with a melee attack while within 5 feet of it takes 10 (3d6) Fire damage.",
+        "library": true,
+        "template": "composed:body-reaction:damage:t1",
+        "boundKeys": [],
+        "freeRow": true,
+        "expresses": "a body of burning brass and molten slag",
+        "bound": false,
+        "expressedQuote": "takes 10 (3d6) Fire damage"
+      },
+      {
+        "name": "Legendary Resistance (3/Day)",
+        "text": "If the tyrant fails a saving throw, it can choose to succeed instead.",
+        "gate": "3/Day"
+      },
+      {
+        "name": "Aura of Authority",
+        "rules": true,
+        "text": "While in a 10-foot Emanation originating from the tyrant, the tyrant and its allies have Advantage on attack rolls and saving throws, provided the tyrant doesn't have the Incapacitated condition."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The tyrant makes two Slag-Fling attacks."
+      },
+      {
+        "name": "Slag-Fling",
+        "text": "*Melee Attack Roll:* +12, reach 10 ft. 15 (2d8 + 6) Bludgeoning damage plus 13 (3d8) Fire damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      }
+    ],
+    "Legendary Actions": [
+      {
+        "name": "Legendary Action Uses: 3",
+        "rules": true,
+        "text": "Immediately after another creature's turn, the tyrant can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns."
+      },
+      {
+        "name": "Hold the Line",
+        "text": "The tyrant moves up to half its Speed without provoking Opportunity Attacks, and it makes one Slag-Fling attack."
+      },
+      {
+        "name": "Rally the Forges",
+        "text": "One ally of the tyrant that can see or hear it can immediately use its Reaction to move up to half its Speed or to make one attack."
+      },
+      {
+        "name": "Quell Dismay",
+        "text": "The tyrant and each of its allies within 10 feet of it that can see or hear it end the Charmed and Frightened conditions on themselves."
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Retaliatory Slag",
+        "text": "One creature within 5 feet that hit the tyrant with an attack roll since the end of the tyrant's last turn takes 13 (3d8) Fire damage.",
+        "library": true,
+        "seed": "own-turn-punisher"
+      }
+    ]
+  },
+  "lore": "Forged from the runoff of a thousand slag-heaps, the Brass Tyrant quenched its rivals in the same crucible and now rules a foundry-city from the smelter-throne, demanding ceaseless tribute of ore and obedience.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-17-leader",
+    "archetype": "defender",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a tyrant of burning brass who rules a city of forges",
+    "clauses": [
+      {
+        "id": "cl_165yc82",
+        "text": "a tyrant of burning brass",
+        "kind": "mechanical",
+        "askWhen": "on_hit",
+        "askWhenWhy": "a tyrant of burning brass",
+        "askOften": "at_will",
+        "askOftenWhy": "a tyrant of burning brass",
+        "askShape": "attack"
+      },
+      {
+        "id": "cl_cjxi88",
+        "text": "rules a city of forges",
+        "kind": "mechanical",
+        "askShape": "buff_ally",
+        "askMechanic": "command",
+        "askMechanicWhy": "rules"
+      }
+    ],
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "composed:body-reaction:damage:t1"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 2,
+    "seed_rows": 1,
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+  "resistances": "Fire",
+  "lint_findings": [],
+  "monsterDescription": "a tyrant of burning brass who rules a city of forges",
+  "selectedChallengeRating": "17",
+  "monsterName": "Brass Tyrant",
+  "caster": false
+}

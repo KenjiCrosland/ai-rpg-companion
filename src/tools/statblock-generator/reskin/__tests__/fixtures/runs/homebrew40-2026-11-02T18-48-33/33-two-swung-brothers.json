@@ -1,0 +1,141 @@
+{
+  "name": "Two-Swung Brothers",
+  "inline": "the brothers",
+  "format": "2024",
+  "cr": 9,
+  "cr_str": "9",
+  "xp": 5000,
+  "challenge_rating": "9 (XP 5,000; PB +4)",
+  "type": "Monstrosity",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 17,
+  "hp": 150,
+  "hp_formula": "20d8 + 60",
+  "pb": 4,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 14,
+    "CON": 16,
+    "INT": 12,
+    "WIS": 13,
+    "CHA": 18
+  },
+  "saves": {
+    "STR": 4,
+    "DEX": 2,
+    "CON": 7,
+    "INT": 1,
+    "WIS": 1,
+    "CHA": 8
+  },
+  "skills": "Athletics +8, Persuasion +8",
+  "senses": "darkvision 60 ft.; Passive Perception 11",
+  "languages": "Common",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Who Swings?",
+        "text": "While the brothers is not Incapacitated, at the start of each of its turns, the brothers argues with itself over whose turn it is to swing; roll a d6. On a 1-3 it must use Committed Haymaker for its first attack this turn, and on a 4-6 it must use Mistimed Backhand for its first attack this turn, but either way it makes its Multiattack as normal.",
+        "authored": true,
+        "clause": "argue about who swings",
+        "clauseId": "cl_137bf0k"
+      },
+      {
+        "name": "Aura of Authority",
+        "rules": true,
+        "text": "While in a 10-foot Emanation originating from the brothers, the brothers and its allies have Advantage on attack rolls and saving throws, provided the brothers doesn't have the Incapacitated condition."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The brothers makes three attacks, using Mistimed Backhand or Committed Haymaker in any combination."
+      },
+      {
+        "name": "Mistimed Backhand",
+        "text": "*Melee Attack Roll:* +8, reach 5 ft. 13 (2d8 + 4) Bludgeoning damage plus 7 (2d6) Psychic damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Committed Haymaker",
+        "text": "*Melee Attack Roll:* +8, reach 5 ft. 22 (4d8 + 4) Bludgeoning damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      }
+    ]
+  },
+  "lore": "Two brothers stitched into one hide by a bargain gone wrong, they hunt for a body apiece and a surgeon monstrous enough to split them — but neither will let the other win the knife first.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-8-leader",
+    "archetype": "defender",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [
+      {
+        "clause": "share one body",
+        "where": "description",
+        "text": "share one body"
+      }
+    ],
+    "userConcept": "two brothers who share one body and argue about who swings",
+    "clauses": [
+      {
+        "id": "cl_h6h6vb",
+        "text": "two brothers",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1uz8r3x",
+        "text": "share one body",
+        "kind": "descriptive"
+      },
+      {
+        "id": "cl_137bf0k",
+        "text": "argue about who swings",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "curse",
+        "askMechanicWhy": "argue about who swings"
+      }
+    ],
+    "invented": true,
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "gap_vetoed": "2 of 2",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "2x the free-row budget",
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "lint_findings": [
+    "dangling-use-ref: Traits/Who Swings?: \"uses Committed Haymaker for its first attack this turn\" references an entry that doesn't exist — reference a real entry by its exact name",
+    "dangling-use-ref: Traits/Who Swings?: \"uses Mistimed Backhand for its first attack this turn\" references an entry that doesn't exist — reference a real entry by its exact name",
+    "undefined-attack-ref: Traits/Who Swings? references a use of \"Committed Haymaker for its first attack this turn\", which is not defined anywhere in the statblock — rewrite the reference to name a real entry",
+    "undefined-attack-ref: Traits/Who Swings? references a use of \"Mistimed Backhand for its first attack this turn\", which is not defined anywhere in the statblock — rewrite the reference to name a real entry"
+  ],
+  "monsterDescription": "two brothers who share one body and argue about who swings",
+  "selectedChallengeRating": "9",
+  "monsterName": "Two-Swung Brothers",
+  "caster": false
+}

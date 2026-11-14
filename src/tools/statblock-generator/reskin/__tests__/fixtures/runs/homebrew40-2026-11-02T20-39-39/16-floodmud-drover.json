@@ -1,0 +1,171 @@
+{
+  "name": "Floodmud Drover",
+  "inline": "the drover",
+  "format": "2024",
+  "cr": 9,
+  "cr_str": "9",
+  "xp": 5000,
+  "challenge_rating": "9 (XP 5,000; PB +4)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 165,
+  "hp_formula": "22d8 + 66",
+  "pb": 4,
+  "speed": "40 ft., Swim 40 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 8,
+    "CON": 17,
+    "INT": 4,
+    "WIS": 12,
+    "CHA": 6
+  },
+  "saves": {
+    "STR": 8,
+    "DEX": -1,
+    "CON": 7,
+    "INT": -3,
+    "WIS": 1,
+    "CHA": -2
+  },
+  "skills": "Athletics +8, Perception +5",
+  "senses": "darkvision 60 ft.; Passive Perception 15",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The drover makes two Hoof attacks. It can replace one attack with a use of Sinkhole Drag."
+      },
+      {
+        "name": "Hoof",
+        "imposes": [
+          "Grappled",
+          "Restrained"
+        ],
+        "text": "*Melee Attack Roll:* +8, reach 10 ft. 18 (4d6 + 4) Bludgeoning damage plus 13 (3d8) Necrotic damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 16). While Grappled, the target has the Restrained condition.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Sinkhole Drag",
+        "text": "*Strength Saving Throw*: DC 15, one Medium or smaller creature the drover is touching. *Failure:* 16 (3d10) Necrotic damage, and the drover drags the target up to 15 feet through a wall, floor, or other solid object it can pass through; the target emerges Prone in the nearest unoccupied space at the far side. If no such space is within 15 feet, the target is not moved. *Success:* Half damage only.",
+        "library": true,
+        "imposes": "Prone",
+        "seed": "pull-through",
+        "boundKeys": [
+          "drown"
+        ],
+        "clause": "a shepherd of drowned horses",
+        "clauseId": "cl_1vfkk52"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Smother",
+        "rules": true,
+        "engulf_engine": true,
+        "imposes": [
+          "Blinded",
+          "Restrained"
+        ],
+        "text": "The drover smothers one Medium or smaller creature it is grappling. While smothered, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the drover, and takes 10 (3d6) Necrotic damage at the start of each of the drover's turns. The drover can have only one creature smothered at a time. If the drover takes 25 damage or more on a single turn from the smothered creature, the drover must release the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the drover. If the drover dies, a smothered creature pulls free Prone by using 10 feet of movement.",
+        "boundKeys": [
+          "smother",
+          "swallow",
+          "swallows",
+          "engulf",
+          "engulfs",
+          "devour",
+          "devours",
+          "gulp",
+          "entomb",
+          "cocoon",
+          "whelm"
+        ]
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Swamp Herd",
+        "text": "While the drover has no drowned mount, at the start of each of its turns, roll DC 15; on a failure, a bloated, waterlogged horse rises in an unoccupied space the drover can see within 10 feet of it as an allied undead mount that obeys the drover until destroyed, and only one such mount can exist at a time.",
+        "authored": true,
+        "clause": "never fights alone",
+        "clauseId": "cl_1n5e7oy"
+      },
+      {
+        "name": "Drowned Mount Rising",
+        "text": "At the start of each of the drover's turns, if it has no drowned mount, a bloated, waterlogged horse rises in an unoccupied space the drover can see within 10 feet of it as an allied undead mount that obeys the drover until destroyed, and only one drowned mount can exist at a time.",
+        "authored": true,
+        "clause": "The drover begins each of its turns by hauling a drowned mount up out of its flooded footprints. A bloated, waterlogged ",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "a herd of drowned horses that fights as one",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "a bloated, waterlogged horse rises in an unoccupied space the drover can see within 10 feet of it as an allied undead mount that obeys the drover until destroyed, and only one drowned mount can exist at a time."
+      }
+    ]
+  },
+  "lore": "A drowned drover who still cannot count a head lost, it claws dead mounts up from the flood-mud and drives them forever, gathering every drowning soul into its herd.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-8-grappler",
+    "archetype": "brute",
+    "holds": true,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a shepherd of drowned horses who never fights alone",
+    "clauses": [
+      {
+        "id": "cl_1vfkk52",
+        "text": "a shepherd of drowned horses",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "command",
+        "askMechanicWhy": "a shepherd of drowned horses"
+      },
+      {
+        "id": "cl_1n5e7oy",
+        "text": "never fights alone",
+        "kind": "mechanical",
+        "askMechanic": "command",
+        "askMechanicWhy": "never fights alone"
+      }
+    ],
+    "cite": "composition after Tyrannosaurus Rex / Purple Worm — the swallow engine",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 1,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the value floor",
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Poison; Exhaustion, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "a shepherd of drowned horses who never fights alone",
+  "selectedChallengeRating": "9",
+  "monsterName": "Floodmud Drover",
+  "caster": false
+}

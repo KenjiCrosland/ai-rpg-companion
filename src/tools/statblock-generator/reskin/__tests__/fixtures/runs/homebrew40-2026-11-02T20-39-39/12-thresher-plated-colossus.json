@@ -1,0 +1,162 @@
+{
+  "name": "Thresher-Plated Colossus",
+  "inline": "the thresher-plated colossus",
+  "format": "2024",
+  "cr": 8,
+  "cr_str": "8",
+  "xp": 3900,
+  "challenge_rating": "8 (XP 3,900; PB +3)",
+  "type": "Monstrosity",
+  "size": "Huge",
+  "alignment": "Unaligned",
+  "ac": 15,
+  "hp": 152,
+  "hp_formula": "16d12 + 48",
+  "pb": 3,
+  "speed": "40 ft.",
+  "stats": {
+    "STR": 20,
+    "DEX": 10,
+    "CON": 16,
+    "INT": 4,
+    "WIS": 12,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 8,
+    "DEX": 0,
+    "CON": 6,
+    "INT": -3,
+    "WIS": 1,
+    "CHA": -3
+  },
+  "skills": "Athletics +8, Perception +4",
+  "senses": "darkvision 60 ft.; Passive Perception 14",
+  "languages": "None",
+  "initiative_bonus": 0,
+  "initiative_score": 10,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The thresher-plated colossus makes two Gore attacks. It can replace one attack with a use of Opportunist's Lash."
+      },
+      {
+        "name": "Gore",
+        "imposes": "Prone",
+        "text": "*Melee Attack Roll:* +8, reach 10 ft. 19 (4d6 + 5) Piercing damage. If the target is a Large or smaller creature and the thresher-plated colossus moved 20+ feet straight toward it immediately before the hit, the target takes an extra 9 (2d8) Piercing damage and has the Prone condition.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Plated Slam (Recharge 5-6)",
+        "text": "*Constitution Saving Throw*: DC 16, each creature in a 30-foot Cone. *Failure:* 49 (14d6) Bludgeoning damage, and the target has the Prone condition. *Success:* Half damage only.",
+        "gate": "Recharge 5-6",
+        "imposes": "Prone"
+      },
+      {
+        "name": "Opportunist's Lash",
+        "text": "*Strength Saving Throw:* DC 16, one creature within 30 feet that is Prone. *Failure:* 35 (10d6) Piercing damage. *Success:* Half damage.",
+        "library": true,
+        "template": "exploiter",
+        "boundKeys": [
+          "prone"
+        ],
+        "accepted_closest": true,
+        "gmQuote": "knocks everything flat and keeps going"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Trample",
+        "rules": true,
+        "text": "*Dexterity Saving Throw*: DC 16, one creature within 5 feet that has the Prone condition. *Failure:* 13 (3d8) Bludgeoning damage. *Success:* Half damage."
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Relentless Charge",
+        "text": "While the thresher-plated colossus is moving toward a creature it has damaged within the last 24 hours, the thresher-plated colossus's Speed can't be reduced and Difficult Terrain doesn't cost it extra movement.",
+        "library": true,
+        "template": "relentless-pursuit",
+        "boundKeys": [],
+        "freeRow": true,
+        "expresses": "unstoppable straight-line charge",
+        "bound": false,
+        "expressedQuote": "the thresher-plated colossus's Speed can't be reduced and Difficult Terrain doesn't cost it extra movement"
+      }
+    ]
+  },
+  "lore": "Grown from the shed hide-plates of a dead colossus, a thresher-beast patrols a single ancient path and exists only to flatten whatever dares stand upon it.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-charger",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a thresher-beast that charges in a straight line, knocks everything flat, and keeps going",
+    "clauses": [
+      {
+        "id": "cl_1v849ay",
+        "text": "a thresher-beast",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1ugpb35",
+        "text": "charges in a straight line",
+        "kind": "mechanical",
+        "askShape": "movement",
+        "askMechanic": "charge",
+        "askMechanicWhy": "charges in a straight line"
+      },
+      {
+        "id": "cl_183uwud",
+        "text": "knocks everything flat",
+        "kind": "mechanical",
+        "askWhen": "on_hit",
+        "askWhenWhy": "knocks everything flat",
+        "askShape": "condition",
+        "askMechanic": "shove",
+        "askMechanicWhy": "knocks everything flat"
+      },
+      {
+        "id": "cl_13e7a3s",
+        "text": "keeps going",
+        "kind": "mechanical",
+        "askShape": "movement",
+        "askMechanic": "charge",
+        "askMechanicWhy": "keeps going"
+      }
+    ],
+    "cite": "composition after Gorgon (CR 5) — charge plus a breath-shaped nova",
+    "free_rows": 1,
+    "free_row_templates": [
+      "relentless-pursuit"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a thresher-beast that charges in a straight line, knocks everything flat, and keeps going",
+  "selectedChallengeRating": "8",
+  "monsterName": "Thresher-Plated Colossus",
+  "caster": false
+}

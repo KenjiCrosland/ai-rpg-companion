@@ -21,7 +21,7 @@ import { checkBlock } from '@/tools/statblock-generator/reskin/checker.mjs';
 import { CLASSES } from '@/tools/statblock-generator/reskin/classes.mjs';
 import fs from 'node:fs';
 
-const SHEET = 'smoke-out/twelve-1030-2026-11-01T17-34-33/09-bellbound-warden.json';
+const SHEET = 'src/tools/statblock-generator/reskin/__tests__/fixtures/runs/twelve-1030-2026-11-01T17-34-33/09-bellbound-warden.json';
 const has = fs.existsSync(SHEET);
 const load = () => JSON.parse(fs.readFileSync(SHEET, 'utf8'));
 const kitFinding = (s) => Object.values(checkBlock(s, {}).gates ?? {})

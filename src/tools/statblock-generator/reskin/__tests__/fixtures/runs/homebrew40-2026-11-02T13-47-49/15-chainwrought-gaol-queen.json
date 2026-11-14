@@ -1,0 +1,130 @@
+{
+  "name": "Chainwrought Gaol-Queen",
+  "inline": "the gaol-queen",
+  "format": "2024",
+  "cr": 14,
+  "cr_str": "14",
+  "xp": 11500,
+  "challenge_rating": "14 (XP 11,500; PB +5)",
+  "type": "Humanoid",
+  "size": "Medium",
+  "alignment": "Lawful Neutral",
+  "ac": 18,
+  "hp": 221,
+  "hp_formula": "26d8 + 104",
+  "pb": 5,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 22,
+    "DEX": 14,
+    "CON": 19,
+    "INT": 12,
+    "WIS": 13,
+    "CHA": 18
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": 2,
+    "CON": 9,
+    "INT": 1,
+    "WIS": 1,
+    "CHA": 9
+  },
+  "skills": "Athletics +11, Persuasion +9",
+  "senses": "Passive Perception 11",
+  "languages": "Common",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Traits": [
+      {
+        "name": "One Sentence, Spoken Through Every Link",
+        "text": "While a creature is bound by the gaol-queen's chains, The gaol-queen perceives everything the bound creature perceives and can whisper into the minds of any creatures within 5 feet of it, regardless of language or distance.",
+        "authored": true,
+        "clause": "While a creature is bound by the gaol-queen's chains, she senses what it senses and speaks in the heads of those beside ",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": null,
+        "bound": false,
+        "boundKeys": []
+      },
+      {
+        "name": "Aura of Authority",
+        "rules": true,
+        "text": "While in a 10-foot Emanation originating from the gaol-queen, the gaol-queen and its allies have Advantage on attack rolls and saving throws, provided the gaol-queen doesn't have the Incapacitated condition."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The gaol-queen makes three attacks, using Chain Whip or Hurled Prisoner in any combination."
+      },
+      {
+        "name": "Chain Whip",
+        "text": "*Melee Attack Roll:* +11, reach 10 ft. 33 (11d4 + 6) Slashing damage.",
+        "weapon": "whip",
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Hurled Prisoner",
+        "text": "*Melee or Ranged Attack Roll:* +11, reach 5 ft. or range 30/120 ft. 33 (6d8 + 6) Bludgeoning damage. If the target is a Large or smaller creature, it has the Restrained condition until the end of the gaol-queen's next turn. This effect can be applied only once per turn.",
+        "weldedRiders": [
+          "If the target is a Large or smaller creature, it has the Restrained condition until the end of the gaol-queen's next turn. This effect can be applied only once per turn."
+        ],
+        "imposes": "Restrained",
+        "boundKeys": [
+          "locks"
+        ],
+        "riderTemplates": [
+          "bolt-restrain"
+        ],
+        "weapon": null,
+        "attacksPerRound": 3
+      }
+    ]
+  },
+  "lore": "A jailer who fed her own name to the iron cuffs she wore, she now keeps a cell wherever she stands and fills it with anyone within reach, watching from behind a living wall of those she claims.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-8-leader",
+    "archetype": "defender",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a gaol-queen whose prisoners fight for her while she watches from behind them",
+    "clauses": [
+      {
+        "id": "cl_y6uaua",
+        "text": "a gaol-queen whose prisoners fight for her while she watches from behind them",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a gaol-queen whose prisoners fight for her while she watches from behind them",
+  "selectedChallengeRating": "14",
+  "monsterName": "Chainwrought Gaol-Queen",
+  "caster": false
+}

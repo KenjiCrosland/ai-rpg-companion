@@ -1,0 +1,141 @@
+{
+  "name": "Bonesew Woundmender",
+  "inline": "the woundmender",
+  "format": "2024",
+  "cr": 5,
+  "cr_str": "5",
+  "xp": 1800,
+  "challenge_rating": "5 (XP 1,800; PB +3)",
+  "type": "Giant",
+  "size": "Large",
+  "alignment": "Chaotic Evil",
+  "ac": 15,
+  "hp": 94,
+  "hp_formula": "9d10 + 45",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 13,
+    "CON": 20,
+    "INT": 7,
+    "WIS": 9,
+    "CHA": 7
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": 1,
+    "CON": 8,
+    "INT": -2,
+    "WIS": -1,
+    "CHA": -2
+  },
+  "skills": "Perception +5",
+  "senses": "darkvision 60 ft.; Passive Perception 15",
+  "languages": "Giant",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The woundmender makes three Rend attacks."
+      },
+      {
+        "name": "Rend",
+        "text": "*Melee Attack Roll:* +7, reach 10 ft. 11 (2d6 + 4) Slashing damage.",
+        "weapon": null,
+        "weldedRiders": [],
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 3
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Gut-Thread Knot",
+        "text": "The woundmender keeps its gut-thread stitching within 30 feet of itself. That object has AC 15, HP 10, and Resistance to all damage. While it is intact, the woundmender regains 10 Hit Points at the start of each of its turns.",
+        "library": true,
+        "template": "relic-object",
+        "boundKeys": [],
+        "gmQuote": "knits its wounds shut and keeps coming",
+        "expresses": "reknitting wounds that keep it coming",
+        "bound": false
+      },
+      {
+        "name": "Regeneration",
+        "text": "The woundmender regains 15 Hit Points at the start of each of its turns. If the woundmender takes Acid or Fire damage, this trait doesn't function on the woundmender's next turn. The woundmender dies only if it starts its turn with 0 Hit Points and doesn't regenerate.",
+        "print": true
+      },
+      {
+        "name": "Loathsome Limbs (4/Day)",
+        "text": "If the woundmender ends any turn Bloodied and took 15+ Slashing damage during that turn, one of the woundmender's limbs is severed, falls into the woundmender's space, and becomes a Troll Limb. The limb acts immediately after the woundmender's turn. The woundmender has 1 Exhaustion level for each missing limb, and it grows replacement limbs the next time it regains Hit Points.",
+        "rules": true,
+        "print": true
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Charge",
+        "text": "The woundmender moves up to half its Speed straight toward an enemy it can see.",
+        "rules": true,
+        "print": true
+      }
+    ]
+  },
+  "lore": "A hide-bound giant of the old troll-kin, born of over-rich marrow and giants' stubbornness, it wanders the moors seeking wounds to sew and things to kill so its bone needle is never idle.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Troll",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a troll that knits its wounds shut and keeps coming",
+    "clauses": [
+      {
+        "id": "cl_k3jn1u",
+        "text": "a troll",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_17qoj2z",
+        "text": "knits its wounds shut and keeps coming",
+        "kind": "mechanical",
+        "askWhen": "when_bloodied",
+        "askWhenWhy": "keeps coming",
+        "askShape": "heal",
+        "askMechanic": "mend",
+        "askMechanicWhy": "knits its wounds shut"
+      }
+    ],
+    "cite": "composition after Hill Giant (CR 5) — two of the same swing, thrown rock",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the call named no template for the pick",
+    "signature": "dropped"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a troll that knits its wounds shut and keeps coming",
+  "selectedChallengeRating": "5",
+  "monsterName": "Bonesew Woundmender",
+  "caster": false
+}

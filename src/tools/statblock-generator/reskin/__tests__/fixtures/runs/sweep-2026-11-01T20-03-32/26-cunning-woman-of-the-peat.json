@@ -1,0 +1,174 @@
+{
+  "name": "Cunning-Woman of the Peat",
+  "inline": "the cunning-woman",
+  "format": "2024",
+  "cr": 7,
+  "cr_str": "7",
+  "xp": 2900,
+  "challenge_rating": "7 (XP 2,900; PB +3)",
+  "type": "Humanoid",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 81,
+  "hp_formula": "18d8",
+  "pb": 3,
+  "speed": "30 ft., Swim 30 ft.",
+  "stats": {
+    "STR": 9,
+    "DEX": 14,
+    "CON": 11,
+    "INT": 17,
+    "WIS": 12,
+    "CHA": 11
+  },
+  "saves": {
+    "STR": -1,
+    "DEX": 2,
+    "CON": 0,
+    "INT": 3,
+    "WIS": 4,
+    "CHA": 3
+  },
+  "skills": "Arcana +6, History +6, Perception +4",
+  "senses": "Passive Perception 14",
+  "languages": "Common and any three languages, Sylvan",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The cunning-woman makes three Arcane Burst attacks. It can replace one attack with a use of Trespasser's Curse."
+      },
+      {
+        "name": "Arcane Burst",
+        "text": "*Melee or Ranged Attack Roll:* +6, reach 5 ft. or range 120 ft. 16 (3d8 + 3) Force damage.",
+        "weapon": null,
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Spellcasting",
+        "rules": true,
+        "text": "The cunning-woman casts one of the following spells, using Intelligence as the spellcasting ability (spell save DC 14):\n\n- **At Will:** *Detect Magic*, *Light*, *Mage Armor*, *Mage Hand*, *Prestidigitation*\n- **2/Day Each:** *Fireball*, *Invisibility*\n- **1/Day Each:** *Cone of Cold*, *Fly*",
+        "print": true
+      },
+      {
+        "name": "Name-Binding Hex (2/Day)",
+        "gate": "2/Day",
+        "text": "*Constitution Saving Throw:* DC 14, one creature within 60 feet. *Failure:* The target has the Incapacitated condition and its Speed is 0 until the end of its next turn.",
+        "library": true,
+        "template": "pacify",
+        "imposes": "Incapacitated",
+        "boundKeys": [],
+        "accepted_closest": true,
+        "gmQuote": "a marsh witch who curses trespassers",
+        "duration": "target_end",
+        "clause": "curses trespassers",
+        "answersAlso": [
+          "curses trespassers"
+        ],
+        "clauseId": "cl_a3qo0a"
+      },
+      {
+        "name": "Trespasser's Curse",
+        "text": "*Wisdom Saving Throw*: DC 14, one creature within 60 feet. *Failure:* 19 (3d12) Necrotic damage, and the target has the Charmed condition until the end of its next turn.",
+        "authored": true,
+        "clause": "curses trespassers",
+        "imposes": "Charmed",
+        "clauseId": "cl_a3qo0a"
+      }
+    ],
+    "Reactions": [
+      {
+        "name": "Protective Magic (3/Day)",
+        "text": "The cunning-woman casts *Counterspell* or *Shield* in response to the spell's trigger, using the same spellcasting ability as Spellcasting.",
+        "kit": "mage",
+        "clause": "witch",
+        "free": true,
+        "clauseId": "cl_1enkq57"
+      }
+    ],
+    "Traits": [],
+    "Bonus Actions": [
+      {
+        "name": "Misty Step (3/Day)",
+        "text": "The cunning-woman casts *Misty Step*, using the same spellcasting ability as Spellcasting.",
+        "rules": true,
+        "print": true
+      }
+    ]
+  },
+  "lore": "A village cunning-woman who bound her own name into the marsh peat to keep the fen from drowning her, she now tolls trespassers for the debt the wetlands are owed.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "class_npc",
+      "print_body": "Mage",
+      "relation": null,
+      "class": "mage",
+      "species": null,
+      "by": "call"
+    },
+    "donor": "caster-8-binder",
+    "archetype": "caster",
+    "class_kit": {
+      "key": "mage",
+      "clause": "witch",
+      "landed": 1,
+      "yielded": 0,
+      "stood_down": null
+    },
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a marsh witch who curses trespassers, cr 7",
+    "clauses": [
+      {
+        "id": "cl_1enkq57",
+        "text": "a marsh witch",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_a3qo0a",
+        "text": "curses trespassers",
+        "kind": "mechanical",
+        "askShape": "condition",
+        "askMechanic": "curse",
+        "askMechanicWhy": "curses trespassers"
+      },
+      {
+        "id": "cl_1tl1i",
+        "text": "cr 7",
+        "kind": "header"
+      }
+    ],
+    "menu_role": "controller",
+    "cite": "composition after Spirit Naga (CR 8) — the or-form bite-and-ray with the debuff single",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 2",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the free-row budget",
+    "answered_by_existing": [
+      "curses trespassers -> Name-Binding Hex"
+    ],
+    "signature": "library"
+  },
+  "archetype": "controller",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a marsh witch who curses trespassers, cr 7",
+  "selectedChallengeRating": "7",
+  "monsterName": "Cunning-Woman of the Peat",
+  "caster": false
+}

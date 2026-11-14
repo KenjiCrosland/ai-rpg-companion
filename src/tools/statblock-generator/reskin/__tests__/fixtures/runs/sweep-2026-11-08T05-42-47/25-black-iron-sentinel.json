@@ -1,0 +1,261 @@
+{
+  "name": "Black Iron Sentinel",
+  "inline": "the sentinel",
+  "type_and_alignment": "Huge construct, lawful neutral",
+  "armor_class": "20 (natural armor)",
+  "hit_points": "168 (16d12 + 64)",
+  "speed": "20 ft.",
+  "attributes": "STR 18 (+4), DEX 8 (-1), CON 18 (+4), INT 7 (-2), WIS 10 (+0), CHA 3 (-4)",
+  "saving_throws": "CON +8",
+  "skills": "Perception +4",
+  "senses": "tremorsense 30 ft., passive Perception 14",
+  "languages": "understands the languages of its creator but can't speak",
+  "challenge_rating": "11 (7,200 XP)",
+  "proficiency_bonus": "+4",
+  "abilities": [
+    {
+      "name": "Ward Bond",
+      "description": "The sentinel is magically bound to a ward of its choosing, and it can have only one ward at a time. While the sentinel is within 60 feet of its ward, half of any damage the ward takes (round up) is transferred to the sentinel."
+    },
+    {
+      "name": "Regeneration",
+      "description": "The sentinel regains 10 hit points at the start of each of its turns if it has at least 1 Hit Point. If the sentinel takes cold damage, this trait doesn't function at the start of the sentinel's next turn."
+    },
+    {
+      "name": "Interpose (Reaction)",
+      "description": "When a creature within 5 feet of the sentinel that it guards is hit by an attack roll, the attack hits the sentinel instead, and the sentinel has Resistance to the attack's damage."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The sentinel makes two Slam attacks."
+    },
+    {
+      "name": "Slam",
+      "description": "Melee Weapon Attack: +8 to hit, reach 10 ft., one target. Hit: 22 (4d8 + 4) bludgeoning damage."
+    },
+    {
+      "name": "Ward Threshold (2/Day)",
+      "description": "The sentinel targets itself or one creature it can see within 60 feet. The target gains 24 (7d6) temporary hit points, and it gains a +2 bonus to AC until the end of the sentinel's next turn."
+    },
+    {
+      "name": "Iron Root (Recharge 5-6)",
+      "description": "Each creature in a 10-foot-radius sphere must succeed on a DC 16 Strength saving throw or be restrained until the end of its next turn.",
+      "imposes": "Restrained"
+    }
+  ],
+  "format": "2014",
+  "archetype": "defender",
+  "archetype_source": "user",
+  "damage_immunities": "poison",
+  "condition_immunities": "charmed, exhaustion, frightened, paralyzed, petrified, poisoned",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-7-warden",
+    "archetype": "defender",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a sentinel of black iron, AC 20, Huge, speed 20 feet",
+    "clauses": [
+      {
+        "id": "cl_6slhx",
+        "text": "a sentinel of black iron",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_10y3ng",
+        "text": "AC 20",
+        "kind": "header"
+      },
+      {
+        "id": "cl_1cgcr",
+        "text": "Huge",
+        "kind": "header"
+      },
+      {
+        "id": "cl_dqavef",
+        "text": "speed 20 feet",
+        "kind": "header"
+      }
+    ],
+    "cite": "composition after Shield Guardian (CR 7) — Bound transfer, Regeneration, the measured 0.65 damage discount",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library",
+    "declared": {
+      "ac": 20
+    }
+  },
+  "other_edition": {
+    "name": "Black Iron Sentinel",
+    "inline": "the sentinel",
+    "format": "2024",
+    "cr": 11,
+    "cr_str": "11",
+    "xp": 7200,
+    "challenge_rating": "11 (XP 7,200; PB +4)",
+    "type": "Construct",
+    "size": "Huge",
+    "alignment": "Lawful Neutral",
+    "ac": 20,
+    "hp": 168,
+    "hp_formula": "16d12 + 64",
+    "pb": 4,
+    "speed": "20 ft.",
+    "stats": {
+      "STR": 18,
+      "DEX": 8,
+      "CON": 18,
+      "INT": 7,
+      "WIS": 10,
+      "CHA": 3
+    },
+    "saves": {
+      "STR": 4,
+      "DEX": -1,
+      "CON": 8,
+      "INT": -2,
+      "WIS": 0,
+      "CHA": -4
+    },
+    "skills": "Perception +4",
+    "senses": "tremorsense 30 ft.; Passive Perception 14",
+    "languages": "Understands the languages of its creator but can't speak",
+    "initiative_bonus": -1,
+    "initiative_score": 9,
+    "sections": {
+      "Traits": [
+        {
+          "name": "Ward Bond",
+          "rules": true,
+          "text": "The sentinel is magically bound to a ward of its choosing, and it can have only one ward at a time. While the sentinel is within 60 feet of its ward, half of any damage the ward takes (round up) is transferred to the sentinel."
+        },
+        {
+          "name": "Regeneration",
+          "rules": true,
+          "text": "The sentinel regains 10 Hit Points at the start of each of its turns if it has at least 1 Hit Point. If the sentinel takes Cold damage, this trait doesn't function at the start of the sentinel's next turn."
+        }
+      ],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The sentinel makes two Slam attacks."
+        },
+        {
+          "name": "Slam",
+          "text": "*Melee Attack Roll:* +8, reach 10 ft. 22 (4d8 + 4) Bludgeoning damage.",
+          "weapon": null,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Ward Threshold (2/Day)",
+          "gate": "2/Day",
+          "text": "The sentinel targets itself or one creature it can see within 60 feet. The target gains 24 (7d6) Temporary Hit Points, and its AC increases by 2 until the end of the sentinel's next turn."
+        },
+        {
+          "name": "Iron Root (Recharge 5-6)",
+          "text": "*Strength Saving Throw*: DC 16, each creature in a 10-foot Emanation. *Failure:* The target has the Restrained condition until the end of its next turn.",
+          "authored": true,
+          "clause": "The sentinel plants itself and becomes a wall of iron, demanding that every creature of its choice within reach stop mov",
+          "gate": "Recharge 5-6",
+          "imposes": "Restrained",
+          "authoredSeat": true,
+          "freeRow": true,
+          "expresses": "immovable iron guardian",
+          "boundKeys": [],
+          "expressedQuote": "The target has the Restrained condition until the end of its next turn."
+        }
+      ],
+      "Reactions": [
+        {
+          "name": "Interpose",
+          "text": "*Trigger:* A creature within 5 feet of the sentinel that it guards is hit by an attack roll. *Response:* The attack hits the sentinel instead, and the sentinel has Resistance to the attack's damage.",
+          "library": true,
+          "template": "interpose",
+          "bound": true,
+          "boundKeys": []
+        }
+      ]
+    },
+    "lore": "Forged to stand watch over a tomb, vault, or threshold, the Black Iron Sentinel wants nothing more than to remain at its post until the thing it wards is no longer threatened.",
+    "inline_kind": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "homebrew",
+        "print_body": null,
+        "relation": null,
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "defender-7-warden",
+      "archetype": "defender",
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "a sentinel of black iron, AC 20, Huge, speed 20 feet",
+      "clauses": [
+        {
+          "id": "cl_6slhx",
+          "text": "a sentinel of black iron",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_10y3ng",
+          "text": "AC 20",
+          "kind": "header"
+        },
+        {
+          "id": "cl_1cgcr",
+          "text": "Huge",
+          "kind": "header"
+        },
+        {
+          "id": "cl_dqavef",
+          "text": "speed 20 feet",
+          "kind": "header"
+        }
+      ],
+      "cite": "composition after Shield Guardian (CR 7) — Bound transfer, Regeneration, the measured 0.65 damage discount",
+      "free_rows": 1,
+      "free_row_templates": [
+        "unknown"
+      ],
+      "decoration_rows": 0,
+      "expressed_rows": 1,
+      "signature_rows": 1,
+      "seed_rows": 0,
+      "signature": "library",
+      "declared": {
+        "ac": 20
+      }
+    },
+    "archetype": "defender",
+    "archetype_source": "user",
+    "immunities": "Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+    "lint_findings": []
+  },
+  "monsterDescription": "a sentinel of black iron, AC 20, Huge, speed 20 feet",
+  "selectedChallengeRating": "11",
+  "monsterName": "Black Iron Sentinel",
+  "caster": false
+}

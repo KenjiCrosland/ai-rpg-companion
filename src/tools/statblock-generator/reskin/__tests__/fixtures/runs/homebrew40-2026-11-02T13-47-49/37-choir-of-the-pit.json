@@ -1,0 +1,257 @@
+{
+  "name": "Choir of the Pit",
+  "inline": "the choir",
+  "type_and_alignment": "Medium undead, neutral evil",
+  "armor_class": "17 (natural armor)",
+  "hit_points": "209 (22d8 + 110)",
+  "speed": "30 ft.",
+  "attributes": "STR 14 (+2), DEX 12 (+1), CON 20 (+5), INT 18 (+4), WIS 19 (+4), CHA 16 (+3)",
+  "saving_throws": "INT +9, WIS +9",
+  "skills": "Perception +9, Religion +9",
+  "senses": "darkvision 60 ft., passive Perception 19",
+  "languages": "Common plus the languages it knew in life",
+  "challenge_rating": "16 (15,000 XP)",
+  "proficiency_bonus": "+5",
+  "abilities": [
+    {
+      "name": "Wounded Crescendo",
+      "description": "While the choir has half of its hit points or fewer, its Multiattack makes one additional Dirge Note attack."
+    },
+    {
+      "name": "Legendary Resistance (3/Day)",
+      "description": "If the choir fails a saving throw, it can choose to succeed instead."
+    },
+    {
+      "name": "Hymn Ward",
+      "description": "The choir has advantage on saving throws against spells and other magical effects."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The choir makes two Dirge Note attacks. It can replace one attack with a use of (A) or (B) Spellcasting to cast *Bestow Curse*."
+    },
+    {
+      "name": "Dirge Note",
+      "description": "*Melee or Ranged Spell Attack:* +9 to hit, reach 5 ft. or range 120 ft., one target. Hit: 26 (5d8 + 4) necrotic damage."
+    },
+    {
+      "name": "Spellcasting",
+      "description": "The choir casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 17): - **At will:** *Bestow Curse*, *Fear*\n**1/day each:** *Blight*, *Cloudkill* (level 6 version)"
+    }
+  ],
+  "format": "2014",
+  "archetype": "artillery",
+  "archetype_source": "user",
+  "damage_immunities": "poison",
+  "condition_immunities": "exhaustion, poisoned",
+  "legendary_actions": [
+    {
+      "name": "Versicle Strike",
+      "description": "The choir makes one Dirge Note attack."
+    },
+    {
+      "name": "Chorus Drift",
+      "description": "The choir moves up to half its speed without provoking opportunity attacks."
+    },
+    {
+      "name": "Keening Reveal",
+      "description": "One creature within 30 feet of the choir must succeed on a DC 18 Wisdom saving throw or be frightened of the choir until the end of its next turn.",
+      "imposes": "Frightened"
+    }
+  ],
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "caster-15",
+    "archetype": "caster",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a bone-choir that sings the dying into its ranks",
+    "clauses": [
+      {
+        "id": "cl_bakwmh",
+        "text": "a bone-choir",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1bvji19",
+        "text": "sings the dying into its ranks",
+        "kind": "descriptive"
+      }
+    ],
+    "menu_role": "artillery",
+    "cite": "composition after Mummy Lord (CR 15) — print's non-dragon legendary caster: the glare, the rotting fist, the dread command",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Choir of the Pit",
+    "inline": "the choir",
+    "format": "2024",
+    "cr": 16,
+    "cr_str": "16",
+    "xp": 15000,
+    "challenge_rating": "16 (XP 15,000; PB +5)",
+    "type": "Undead",
+    "size": "Medium",
+    "alignment": "Neutral Evil",
+    "ac": 17,
+    "hp": 209,
+    "hp_formula": "22d8 + 110",
+    "pb": 5,
+    "speed": "30 ft.",
+    "stats": {
+      "STR": 14,
+      "DEX": 12,
+      "CON": 20,
+      "INT": 18,
+      "WIS": 19,
+      "CHA": 16
+    },
+    "saves": {
+      "STR": 2,
+      "DEX": 1,
+      "CON": 5,
+      "INT": 9,
+      "WIS": 9,
+      "CHA": 3
+    },
+    "skills": "Perception +9, Religion +9",
+    "senses": "darkvision 60 ft.; Passive Perception 19",
+    "languages": "Common plus the languages it knew in life",
+    "initiative_bonus": 1,
+    "initiative_score": 11,
+    "sections": {
+      "Traits": [
+        {
+          "name": "Bloodied Crescendo",
+          "text": "While the choir is Bloodied, The choir's Multiattack makes one additional Dirge Note attack.",
+          "authored": true,
+          "clause": "When the choir is reduced to half its hit points or fewer, the strain of holding the chorus together slips and it splits",
+          "authoredSeat": true,
+          "freeRow": true,
+          "expresses": "singing the dying into its ranks",
+          "bound": false,
+          "boundKeys": [],
+          "decoration": true
+        },
+        {
+          "name": "Legendary Resistance (3/Day)",
+          "text": "If the choir fails a saving throw, it can choose to succeed instead.",
+          "gate": "3/Day"
+        },
+        {
+          "name": "Hymn Ward",
+          "text": "The choir has Advantage on saving throws against spells and other magical effects."
+        }
+      ],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The choir makes two Dirge Note attacks. It can replace one attack with a use of (A) or (B) Spellcasting to cast *Bestow Curse*."
+        },
+        {
+          "name": "Dirge Note",
+          "text": "*Melee or Ranged Attack Roll:* +9, reach 5 ft. or range 120 ft. 26 (5d8 + 4) Necrotic damage.",
+          "weapon": null,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Spellcasting",
+          "rules": true,
+          "text": "The choir casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save DC 17):\n\n- **At Will:** *Bestow Curse*, *Fear*\n- **1/Day Each:** *Blight*, *Cloudkill* (level 6 version)"
+        }
+      ],
+      "Legendary Actions": [
+        {
+          "name": "Legendary Action Uses: 3",
+          "rules": true,
+          "text": "Immediately after another creature's turn, the choir can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns."
+        },
+        {
+          "name": "Versicle Strike",
+          "text": "The choir makes one Dirge Note attack."
+        },
+        {
+          "name": "Chorus Drift",
+          "text": "The choir moves up to half its Speed without provoking Opportunity Attacks."
+        },
+        {
+          "name": "Keening Reveal",
+          "imposes": "Frightened",
+          "duration": "target_end",
+          "text": "*Wisdom Saving Throw*: DC 18, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn."
+        }
+      ]
+    },
+    "lore": "Born of a choir that died together in a plague-pit, the Choir of the Pit sings on, stealing the dying into its verses and swelling its ranks with every soul it reaps.",
+    "inline_kind": "kind",
+    "inline_overridden": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "homebrew",
+        "print_body": null,
+        "relation": null,
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "caster-15",
+      "archetype": "caster",
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "a bone-choir that sings the dying into its ranks",
+      "clauses": [
+        {
+          "id": "cl_bakwmh",
+          "text": "a bone-choir",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_1bvji19",
+          "text": "sings the dying into its ranks",
+          "kind": "descriptive"
+        }
+      ],
+      "menu_role": "artillery",
+      "cite": "composition after Mummy Lord (CR 15) — print's non-dragon legendary caster: the glare, the rotting fist, the dread command",
+      "free_rows": 1,
+      "free_row_templates": [
+        "unknown"
+      ],
+      "decoration_rows": 1,
+      "expressed_rows": 0,
+      "signature_rows": 0,
+      "seed_rows": 0,
+      "signature": "library"
+    },
+    "archetype": "artillery",
+    "archetype_source": "user",
+    "immunities": "Poison; Exhaustion, Poisoned",
+    "lint_findings": []
+  },
+  "monsterDescription": "a bone-choir that sings the dying into its ranks",
+  "selectedChallengeRating": "16",
+  "monsterName": "Choir of the Pit",
+  "caster": false
+}

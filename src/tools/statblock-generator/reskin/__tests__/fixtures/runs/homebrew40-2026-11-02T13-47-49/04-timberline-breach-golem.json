@@ -1,0 +1,137 @@
+{
+  "name": "Timberline Breach Golem",
+  "inline": "the breach golem",
+  "format": "2024",
+  "cr": 8,
+  "cr_str": "8",
+  "xp": 3900,
+  "challenge_rating": "8 (XP 3,900; PB +3)",
+  "type": "Construct",
+  "size": "Large",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 153,
+  "hp_formula": "18d10 + 54",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 20,
+    "DEX": 8,
+    "CON": 16,
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 8,
+    "DEX": -1,
+    "CON": 6,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -3
+  },
+  "skills": "Athletics +8, Perception +3",
+  "senses": "darkvision 60 ft.; Passive Perception 13",
+  "languages": "Understands the languages of its creator but can't speak",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Immutable Form",
+        "rules": true,
+        "text": "The breach golem can't shape-shift."
+      },
+      {
+        "name": "Magic Resistance",
+        "rules": true,
+        "text": "The breach golem has Advantage on saving throws against spells and other magical effects."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The breach golem makes two Splintering Shoulder attacks."
+      },
+      {
+        "name": "Splintering Shoulder",
+        "text": "*Melee Attack Roll:* +8, reach 5 ft. 27 (5d8 + 5) Bludgeoning damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Breaching Shove (Recharge 5-6)",
+        "text": "*Dexterity Saving Throw*: DC 16, each creature in a 60-foot-long, 5-foot-wide Line. *Failure:* 45 (13d6) Bludgeoning damage, and the target has the Prone condition. *Success:* Half damage only.",
+        "authored": true,
+        "clause": "The golem charges in a straight line through a wall, pillar, or other solid barrier, smashing a shower of debris outward",
+        "gate": "Recharge 5-6",
+        "imposes": "Prone",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "shouldering through walls in a shower of debris",
+        "boundKeys": [],
+        "decoration": true
+      }
+    ]
+  },
+  "lore": "Raised by a siege-wright from a felled forest and still obeying its last order: break every wall between it and the keep.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-juggernaut",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a siege-engine golem of lashed timber that shoulders through walls",
+    "clauses": [
+      {
+        "id": "cl_q7gx4o",
+        "text": "a siege-engine golem of lashed timber",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_vcmdz5",
+        "text": "shoulders through walls",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "shoulders through walls",
+        "askOften": "at_will",
+        "askOftenWhy": "shoulders through walls",
+        "askShape": "attack",
+        "askMechanic": "shove",
+        "askMechanicWhy": "shoulders through walls"
+      }
+    ],
+    "cite": "composition after Flesh Golem (CR 5) — the made thing that cannot be unmade",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the call named no template for the pick",
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "a siege-engine golem of lashed timber that shoulders through walls",
+  "selectedChallengeRating": "8",
+  "monsterName": "Timberline Breach Golem",
+  "caster": false
+}

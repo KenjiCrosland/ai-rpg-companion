@@ -1,0 +1,134 @@
+{
+  "name": "Sand-Shrike",
+  "inline": "the sand-shrike",
+  "format": "2024",
+  "cr": 6,
+  "cr_str": "6",
+  "xp": 2300,
+  "challenge_rating": "6 (XP 2,300; PB +3)",
+  "type": "Monstrosity",
+  "size": "Large",
+  "alignment": "Unaligned",
+  "ac": 16,
+  "hp": 105,
+  "hp_formula": "14d10 + 28",
+  "pb": 3,
+  "speed": "40 ft., Burrow 30 ft.",
+  "stats": {
+    "STR": 12,
+    "DEX": 18,
+    "CON": 15,
+    "INT": 8,
+    "WIS": 12,
+    "CHA": 8
+  },
+  "saves": {
+    "STR": 1,
+    "DEX": 7,
+    "CON": 2,
+    "INT": -1,
+    "WIS": 1,
+    "CHA": -1
+  },
+  "skills": "Perception +4, Stealth +10",
+  "senses": "tremorsense 30 ft.; Passive Perception 14",
+  "languages": "None",
+  "initiative_bonus": 4,
+  "initiative_score": 14,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Ambusher",
+        "text": "The sand-shrike ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The sand-shrike makes two Claw attacks."
+      },
+      {
+        "name": "Claw",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 22 (4d8 + 4) Slashing damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Sand Burst (Recharge 5-6)",
+        "text": "*Dexterity Saving Throw*: DC 15, each creature within 5 feet. *Failure:* 21 (6d6) Slashing damage, and the target has the Prone condition.",
+        "authored": true,
+        "clause": "is only dangerous on the turn after it goes still",
+        "gate": "Recharge 5-6",
+        "imposes": "Prone",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "bursting strike after holding still",
+        "boundKeys": [],
+        "decoration": true,
+        "clauseId": "cl_1xlmvqg"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Nimble Escape",
+        "text": "The sand-shrike takes the Disengage or Hide action.",
+        "rules": true
+      }
+    ]
+  },
+  "lore": "A buried monstrosity that hoards still air in its thorax and spends it in one killing lunge, the sand-shrike wants only a steady supply of warmth that wanders too close to the dunes.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "skirmisher-3-skulker",
+    "archetype": "skirmisher",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a sand-shrike that is only dangerous on the turn after it goes still",
+    "clauses": [
+      {
+        "id": "cl_b7rr9s",
+        "text": "a sand-shrike",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1xlmvqg",
+        "text": "is only dangerous on the turn after it goes still",
+        "kind": "mechanical",
+        "askOften": "once_per_turn",
+        "askOftenWhy": "on the turn after it goes still",
+        "askShape": "buff_self",
+        "askMechanic": "escalate",
+        "askMechanicWhy": "on the turn after it goes still"
+      }
+    ],
+    "cite": "composition after Phase Spider (CR 3) + Blink Dog; gaze after Mummy (CR 3)",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a sand-shrike that is only dangerous on the turn after it goes still",
+  "selectedChallengeRating": "6",
+  "monsterName": "Sand-Shrike",
+  "caster": false
+}

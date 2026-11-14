@@ -1,0 +1,185 @@
+{
+  "name": "Vashka the Red",
+  "inline": "Vashka",
+  "format": "2024",
+  "cr": 6,
+  "cr_str": "6",
+  "xp": 2300,
+  "challenge_rating": "6 (XP 2,300; PB +3)",
+  "type": "Fey",
+  "size": "Medium",
+  "alignment": "Lawful Evil",
+  "ac": 19,
+  "hp": 93,
+  "hp_formula": "17d8 + 17",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 12,
+    "CON": 12,
+    "INT": 10,
+    "WIS": 10,
+    "CHA": 9
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": 1,
+    "CON": 4,
+    "INT": 0,
+    "WIS": 0,
+    "CHA": -1
+  },
+  "skills": "Athletics +7, Perception +3",
+  "senses": "Passive Perception 13",
+  "languages": "Common, Goblin",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Planted Stance",
+        "text": "While Vashka has not moved since the end of his last turn, Vashka counts as wielding a shield for any ability that requires one, and the first time each round an effect would push, pull, or slide him, that movement is reduced to zero.",
+        "authored": true,
+        "clause": "Vashka's lacquered plate is drilled into his stance: while he has not moved since the end of his last turn, he counts as",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": null,
+        "bound": false,
+        "boundKeys": [],
+        "answersAlso": [
+          "never breaks ranks"
+        ]
+      },
+      {
+        "name": "Pack Tactics",
+        "text": "Vashka has Advantage on an attack roll against a creature if at least one of Vashka's allies is within 5 feet of the creature and the ally doesn't have the Incapacitated condition.",
+        "rules": true,
+        "print": true
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "Vashka makes two attacks, using Longsword or Longbow in any combination."
+      },
+      {
+        "name": "Longsword",
+        "text": "*Melee Attack Roll:* +7, reach 5 ft. 21 (5d6 + 4) Slashing damage.",
+        "weapon": "longsword",
+        "weldedRiders": [],
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Longbow",
+        "text": "*Ranged Attack Roll:* +7, range 150/600 ft. 22 (4d8 + 4) Piercing damage.",
+        "print": true,
+        "printNamed": true,
+        "weapon": "longbow",
+        "attacksPerRound": 2
+      }
+    ],
+    "Reactions": [
+      {
+        "name": "Riposte",
+        "text": "*Trigger:* A creature within 5 feet of Vashka misses it with a melee attack roll. *Response:* Vashka makes one Longsword attack against that creature.",
+        "kit": "fighter",
+        "clause": "warlord",
+        "free": true,
+        "template": "riposte",
+        "clauseId": "cl_zvh3r1"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Close The Wall (2/Day)",
+        "gate": "2/Day",
+        "text": "Each ally within 30 feet of Vashka gains 11 (2d10) Temporary Hit Points.",
+        "library": true,
+        "template": "rally",
+        "boundKeys": [
+          "shield",
+          "command"
+        ],
+        "accepted_closest": true,
+        "gmQuote": "fights from a shield wall",
+        "clause": "fights from a shield wall",
+        "clauseId": "cl_1k8w91l"
+      }
+    ]
+  },
+  "lore": "Vashka the Red earned his lacquered plate by never losing a formation, and he grinds lesser warbands into a disciplined empire of walls and drilled soldiers one battlefield at a time.",
+  "inline_kind": "person",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "class_npc",
+      "print_body": "Hobgoblin Warrior",
+      "relation": "is",
+      "class": "fighter",
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-5",
+    "archetype": "defender",
+    "class_kit": {
+      "key": "fighter",
+      "clause": "warlord",
+      "landed": 1,
+      "yielded": 0,
+      "stood_down": null
+    },
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "Vashka the Red — A hobgoblin warlord in lacquered plate who fights from a shield wall and never breaks ranks.",
+    "clauses": [
+      {
+        "id": "cl_zvh3r1",
+        "text": "Vashka the Red — A hobgoblin warlord in lacquered plate",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1k8w91l",
+        "text": "fights from a shield wall",
+        "kind": "mechanical",
+        "askShape": "attack",
+        "askMechanic": "harden",
+        "askMechanicWhy": "fights from a shield wall"
+      },
+      {
+        "id": "cl_nv0t8v",
+        "text": "never breaks ranks",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "harden",
+        "askMechanicWhy": "never breaks ranks"
+      }
+    ],
+    "cite": "composition after Guard Captain (CR 4) — the hybrid javelin twin, scaled into the band",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "answered_by_existing": [
+      "never breaks ranks -> Planted Stance"
+    ],
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "A hobgoblin warlord in lacquered plate who fights from a shield wall and never breaks ranks.",
+  "selectedChallengeRating": "6",
+  "monsterName": "Vashka the Red",
+  "caster": false
+}

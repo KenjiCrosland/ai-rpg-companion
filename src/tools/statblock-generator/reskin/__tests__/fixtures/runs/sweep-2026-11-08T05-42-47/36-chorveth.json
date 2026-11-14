@@ -1,0 +1,117 @@
+{
+  "name": "Chorveth",
+  "inline": "Chorveth",
+  "format": "2024",
+  "cr": 4,
+  "cr_str": "4",
+  "xp": 1100,
+  "challenge_rating": "4 (XP 1,100; PB +2)",
+  "type": "Plant",
+  "size": "Medium",
+  "alignment": "Neutral Evil",
+  "ac": 13,
+  "hp": 78,
+  "hp_formula": "12d8 + 24",
+  "pb": 2,
+  "speed": "30 ft., Fly 30 ft. (hover)",
+  "stats": {
+    "STR": 18,
+    "DEX": 8,
+    "CON": 15,
+    "INT": 6,
+    "WIS": 8,
+    "CHA": 6
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": -1,
+    "CON": 2,
+    "INT": -2,
+    "WIS": -1,
+    "CHA": -2
+  },
+  "skills": "Athletics +6, Perception +1",
+  "senses": "blindsight 60 ft. (blind beyond this radius); Passive Perception 11",
+  "languages": "Common",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Spore Thread",
+        "text": "*Melee Attack Roll:* +6, reach 5 ft. 17 (3d8 + 4) Piercing damage plus 11 (2d10) Necrotic damage.",
+        "weapon": null,
+        "attacksPerRound": 1
+      },
+      {
+        "name": "Sundering Shove",
+        "text": "*Strength Saving Throw:* DC 14, each creature in a 15-foot Cone. *Failure:* The target is pushed up to 15 feet away from Chorveth and has the Prone condition.",
+        "library": true,
+        "imposes": "Prone",
+        "seed": "push-prone"
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Nightmare Reek",
+        "text": "*Constitution Saving Throw*: DC 14, any creature that starts its turn in a 5-foot Emanation originating from Chorveth. *Failure:* The target has the Poisoned condition until the start of its next turn. *Success:* The target is immune to this creature's aura for 24 hours.",
+        "library": true,
+        "template": "noxious-aura",
+        "imposes": "Poisoned",
+        "boundKeys": [
+          "spores"
+        ],
+        "duration": "target_start",
+        "area": {
+          "shape": "Emanation",
+          "size": 5
+        },
+        "freeRow": true,
+        "expresses": "hollow black spore pore in chitinous underside",
+        "bound": false,
+        "decoration": true,
+        "nameClaimRevoked": [
+          "spore",
+          "pore"
+        ]
+      }
+    ]
+  },
+  "lore": "Chorveth is a scrap of a sleeping god's nightmare that took root in the damp fungal beds beneath a forgotten shrine, and it wants only to sleep again — which it can do only if other minds dream for it.",
+  "inline_kind": "person",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "blank",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "code"
+    },
+    "donor": "brute-2",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "",
+    "clauses": [],
+    "cite": "composition after Ogre (CR 2) — one colossal hit, no traits",
+    "free_rows": 1,
+    "free_row_templates": [
+      "noxious-aura"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 1,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "",
+  "selectedChallengeRating": "4",
+  "monsterName": "Chorveth",
+  "caster": false
+}

@@ -1,0 +1,148 @@
+{
+  "name": "Reefwrack Drake",
+  "inline": "the reefwrack drake",
+  "format": "2024",
+  "cr": 13,
+  "cr_str": "13",
+  "xp": 10000,
+  "challenge_rating": "13 (XP 10,000; PB +5)",
+  "type": "Dragon",
+  "size": "Huge",
+  "alignment": "Neutral Evil",
+  "ac": 19,
+  "hp": 189,
+  "hp_formula": "18d12 + 72",
+  "pb": 5,
+  "speed": "40 ft., Fly 80 ft., Swim 40 ft.",
+  "stats": {
+    "STR": 20,
+    "DEX": 12,
+    "CON": 18,
+    "INT": 14,
+    "WIS": 12,
+    "CHA": 16
+  },
+  "saves": {
+    "STR": 5,
+    "DEX": 6,
+    "CON": 4,
+    "INT": 2,
+    "WIS": 6,
+    "CHA": 3
+  },
+  "skills": "Perception +6, Stealth +6",
+  "senses": "blindsight 60 ft., darkvision 120 ft.; Passive Perception 16",
+  "languages": "Common, Draconic",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The reefwrack drake makes three Bite attacks. It can replace one attack with a use of Wrecking Surge."
+      },
+      {
+        "name": "Bite",
+        "text": "*Melee Attack Roll:* +10, reach 10 ft. 14 (2d8 + 5) Piercing damage plus 10 (3d6) Acid damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Bone-Chum Spray (Recharge 5-6)",
+        "gate": "Recharge 5-6",
+        "text": "*Dexterity Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* 67 (15d8) Acid damage. *Success:* Half damage."
+      },
+      {
+        "name": "Wrecking Surge",
+        "text": "*Strength Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* 35 (10d6) Bludgeoning damage, and the target is pushed up to 20 feet straight away from the reefwrack drake, and the target has the Prone condition.",
+        "authored": true,
+        "clause": "beaches ships",
+        "imposes": "Prone",
+        "imposesMovement": true,
+        "clauseId": "cl_vrmvxk"
+      }
+    ],
+    "Traits": []
+  },
+  "lore": "A brine-soaked dragon that claims a shallow reef as its larder, beaching vessels to feast on crews and returning the bones to the water as chum for the gulls that follow it.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "dragon-8",
+    "archetype": "dragon",
+    "holds": true,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a reef-drake that beaches ships, swallows the crew whole, spits the bones back as chum, and calls gulls to pick the water clean",
+    "clauses": [
+      {
+        "id": "cl_di7knn",
+        "text": "a reef-drake",
+        "kind": "mechanical",
+        "askShape": "save_area",
+        "askMechanic": "shove",
+        "askMechanicWhy": "beaches ships"
+      },
+      {
+        "id": "cl_vrmvxk",
+        "text": "beaches ships",
+        "kind": "mechanical",
+        "askShape": "save_area",
+        "askMechanic": "shove",
+        "askMechanicWhy": "beaches ships"
+      },
+      {
+        "id": "cl_172c5q1",
+        "text": "swallows the crew whole",
+        "kind": "mechanical",
+        "askShape": "attack",
+        "askMechanic": "swallow",
+        "askMechanicWhy": "swallows the crew whole"
+      },
+      {
+        "id": "cl_33f5bb",
+        "text": "spits the bones back as chum",
+        "kind": "mechanical",
+        "askShape": "save_area",
+        "askMechanic": "breath",
+        "askMechanicWhy": "spits the bones back as chum"
+      },
+      {
+        "id": "cl_1riq8a9",
+        "text": "calls gulls to pick the water clean",
+        "kind": "mechanical",
+        "askShape": "condition",
+        "askMechanic": "command",
+        "askMechanicWhy": "calls gulls"
+      }
+    ],
+    "body": "dragon",
+    "cite": "composition across the ten young dragons (CR 6-10)",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "dropped"
+  },
+  "archetype": "dragon",
+  "archetype_source": "user",
+  "immunities": "Acid",
+  "lint_findings": [
+    "unfinished-text: Traits/Reef-Bound: the text ends mid-sentence on \"clinging to.\""
+  ],
+  "monsterDescription": "a reef-drake that beaches ships, swallows the crew whole, spits the bones back as chum, and calls gulls to pick the water clean",
+  "selectedChallengeRating": "13",
+  "monsterName": "Reefwrack Drake",
+  "caster": false
+}

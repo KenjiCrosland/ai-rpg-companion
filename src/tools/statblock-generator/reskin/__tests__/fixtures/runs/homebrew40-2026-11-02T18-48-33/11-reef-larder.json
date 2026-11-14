@@ -1,0 +1,208 @@
+{
+  "name": "Reef Larder",
+  "inline": "the larder",
+  "format": "2024",
+  "cr": 13,
+  "cr_str": "13",
+  "xp": 10000,
+  "challenge_rating": "13 (XP 10,000; PB +5)",
+  "type": "Dragon",
+  "size": "Huge",
+  "alignment": "Neutral",
+  "ac": 19,
+  "hp": 189,
+  "hp_formula": "18d12 + 72",
+  "pb": 5,
+  "speed": "40 ft., Fly 80 ft., Swim 40 ft.",
+  "stats": {
+    "STR": 20,
+    "DEX": 12,
+    "CON": 18,
+    "INT": 14,
+    "WIS": 12,
+    "CHA": 16
+  },
+  "saves": {
+    "STR": 5,
+    "DEX": 6,
+    "CON": 4,
+    "INT": 2,
+    "WIS": 6,
+    "CHA": 3
+  },
+  "skills": "Perception +6, Stealth +6",
+  "senses": "darkvision 120 ft., blindsight 60 ft.; Passive Perception 16",
+  "languages": "Draconic",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The larder makes three attacks, using Bite or Maw Grab in any combination. It can replace one attack with a use of Keel Roll."
+      },
+      {
+        "name": "Bite",
+        "text": "*Melee Attack Roll:* +10, reach 10 ft. 14 (2d8 + 5) Piercing damage plus 10 (3d6) Acid damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Bone Chum (Recharge 5-6)",
+        "gate": "Recharge 5-6",
+        "text": "*Dexterity Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* 67 (15d8) Acid damage. *Success:* Half damage."
+      },
+      {
+        "name": "Keel Roll",
+        "text": "*Strength Saving Throw:* DC 17, one Huge or smaller creature within 60 feet. *Failure:* The target is pulled up to 30 feet straight toward the larder by the keel it has pinned and has the Grappled condition (escape DC 18). While Grappled this way, the target has the Restrained condition.",
+        "library": true,
+        "template": "hook-drag",
+        "imposes": [
+          "Grappled",
+          "Restrained"
+        ],
+        "boundKeys": [
+          "drag"
+        ],
+        "clause": "beaches ships",
+        "answersAlso": [
+          "beaches ships"
+        ],
+        "clauseId": "cl_vrmvxk"
+      },
+      {
+        "name": "Maw Grab",
+        "text": "*Melee Attack Roll:* +10, reach 10 ft. 14 (2d8 + 5) Piercing damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 18).",
+        "authored": true,
+        "imposes": "Grappled",
+        "flavor": "The larder's maw closes over a struggling creature and drags it into the hold of its gut.",
+        "clause": "swallows the crew whole",
+        "clauseId": "cl_172c5q1",
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Grounding Surge",
+        "text": "*Strength Saving Throw*: DC 17, one creature within 60 feet. *Failure:* The target is pulled up to 30 feet straight toward the larder, and the target has the Restrained condition until the end of its next turn.",
+        "authored": true,
+        "clause": "beaches ships",
+        "imposes": "Restrained",
+        "imposesMovement": true,
+        "clauseId": "cl_vrmvxk"
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Adhesive",
+        "text": "The larder adheres to anything that touches it. A Huge or smaller creature adhered to the larder is also Grappled by it (escape DC 18). Ability checks made to escape this grapple have Disadvantage.",
+        "library": true,
+        "template": "adhesive",
+        "imposes": "Grappled",
+        "boundKeys": [
+          "stick",
+          "sticky",
+          "cling",
+          "slime"
+        ],
+        "freeRow": true,
+        "expresses": "swallowing crew whole",
+        "bound": false,
+        "decoration": true,
+        "shed_blocked": [
+          "Grappled"
+        ]
+      }
+    ]
+  },
+  "lore": "An old drake grown too heavy for open water, it holds a stretch of reef as its larder and sinks any hull anchored over its territory, leaving the sea picked clean as a warning to the next captain.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "dragon-8",
+    "archetype": "brute",
+    "holds": true,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a reef-drake that beaches ships, swallows the crew whole, spits the bones back as chum, and calls gulls to pick the water clean",
+    "clauses": [
+      {
+        "id": "cl_di7knn",
+        "text": "a reef-drake",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_vrmvxk",
+        "text": "beaches ships",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "beaches ships",
+        "askShape": "attack",
+        "askMechanic": "shove",
+        "askMechanicWhy": "beaches ships"
+      },
+      {
+        "id": "cl_172c5q1",
+        "text": "swallows the crew whole",
+        "kind": "mechanical",
+        "askWhen": "on_hit",
+        "askWhenWhy": "swallows",
+        "askShape": "condition",
+        "askMechanic": "swallow",
+        "askMechanicWhy": "swallows the crew whole"
+      },
+      {
+        "id": "cl_33f5bb",
+        "text": "spits the bones back as chum",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "spits the bones back as chum",
+        "askShape": "save_area",
+        "askMechanic": "breath",
+        "askMechanicWhy": "spits the bones back as chum"
+      },
+      {
+        "id": "cl_1riq8a9",
+        "text": "calls gulls to pick the water clean",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "calls gulls to pick the water clean",
+        "askShape": "save_single",
+        "askMechanic": "dazzle",
+        "askMechanicWhy": "calls gulls"
+      }
+    ],
+    "body": "dragon",
+    "cite": "composition across the ten young dragons (CR 6-10)",
+    "free_rows": 1,
+    "free_row_templates": [
+      "adhesive"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "answered_by_existing": [
+      "beaches ships -> Keel Roll"
+    ],
+    "shed_blocked": [
+      "Adhesive:Grappled"
+    ],
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Acid",
+  "lint_findings": [],
+  "monsterDescription": "a reef-drake that beaches ships, swallows the crew whole, spits the bones back as chum, and calls gulls to pick the water clean",
+  "selectedChallengeRating": "13",
+  "monsterName": "Reef Larder",
+  "caster": false
+}

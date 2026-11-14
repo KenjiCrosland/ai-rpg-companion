@@ -1,0 +1,200 @@
+{
+  "name": "Huskpit Carver",
+  "inline": "the carver",
+  "format": "2024",
+  "cr": 9,
+  "cr_str": "9",
+  "xp": 5000,
+  "challenge_rating": "9 (XP 5,000; PB +4)",
+  "type": "Monstrosity",
+  "size": "Large",
+  "alignment": "Unaligned",
+  "ac": 15,
+  "hp": 161,
+  "hp_formula": "19d10 + 57",
+  "pb": 4,
+  "speed": "40 ft., Climb 40 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 8,
+    "CON": 17,
+    "INT": 4,
+    "WIS": 12,
+    "CHA": 6
+  },
+  "saves": {
+    "STR": 8,
+    "DEX": -1,
+    "CON": 7,
+    "INT": -3,
+    "WIS": 1,
+    "CHA": -2
+  },
+  "skills": "Athletics +8, Perception +5",
+  "senses": "darkvision 60 ft.; Passive Perception 15",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The carver makes two Spitting Maw attacks. It can replace one attack with a use of Upper Scythes."
+      },
+      {
+        "name": "Spitting Maw",
+        "imposes": "Grappled",
+        "text": "*Melee Attack Roll:* +8, reach 10 ft. 18 (4d6 + 4) Piercing damage plus 13 (3d8) Acid damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 16).",
+        "part": true,
+        "authored": true,
+        "clause": "a spitting maw",
+        "clauseId": "cl_1rmhnfc",
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Upper Scythes",
+        "text": "*Dexterity Saving Throw*: DC 15, one creature within 10 feet. *Failure:* 35 (10d6) Piercing damage.",
+        "authored": true,
+        "clause": "When the carver makes a Spitting Maw attack against a creature it is grappling, it can carve with its upper scythes inst",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "pinning prey with two arms while carving with the others",
+        "boundKeys": [],
+        "decoration": true
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Cage",
+        "rules": true,
+        "engulf_engine": true,
+        "imposes": [
+          "Blinded",
+          "Restrained"
+        ],
+        "text": "The carver cages one Medium or smaller creature it is grappling. While caged, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the carver, and takes 10 (3d6) Acid damage at the start of each of the carver's turns. The carver can have only one creature caged at a time. If the carver takes 25 damage or more on a single turn from the caged creature, the carver must release the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the carver. If the carver dies, a caged creature pulls free Prone by using 10 feet of movement.",
+        "boundKeys": [
+          "cage",
+          "swallow",
+          "swallows",
+          "engulf",
+          "engulfs",
+          "devour",
+          "devours",
+          "gulp",
+          "smother",
+          "entomb",
+          "cocoon",
+          "whelm"
+        ]
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Fear Aura",
+        "text": "The carver emanates an aura in a 20-foot Emanation while it doesn't have the Incapacitated condition. *Wisdom Saving Throw*: DC 15, any enemy that starts its turn in the aura. *Failure:* The target has the Frightened condition until the start of its next turn. *Success:* The target is immune to this creature's aura for 24 hours.",
+        "library": true,
+        "template": "fear-aura",
+        "imposes": "Frightened",
+        "boundKeys": [
+          "horror"
+        ],
+        "accepted_closest": true,
+        "duration": "target_start",
+        "area": {
+          "shape": "Emanation",
+          "size": 20
+        },
+        "expresses": "four scythe-arms",
+        "bound": true,
+        "clause": "A Large insectile horror",
+        "clauseId": "cl_1dm7bhw"
+      }
+    ]
+  },
+  "lore": "Hatched in the decaying galleries of a collapsed hive-city, it eats to fuel its own molts and hoards the half-dissolved husks of its prey as nesting material in the acid pits it calls home.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-8-grappler",
+    "archetype": "brute",
+    "holds": true,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "A Large insectile horror. It has four scythe-arms, a spitting maw, and a shell that sheds acid. It fights by pinning prey with two arms and carving with the others.",
+    "clauses": [
+      {
+        "id": "cl_1dm7bhw",
+        "text": "A Large insectile horror",
+        "kind": "header"
+      },
+      {
+        "id": "cl_1fi1wd",
+        "text": "It has four scythe-arms",
+        "kind": "mechanical",
+        "askShape": "attack"
+      },
+      {
+        "id": "cl_1rmhnfc",
+        "text": "a spitting maw",
+        "kind": "mechanical",
+        "askShape": "save_area",
+        "askMechanic": "breath",
+        "askMechanicWhy": "spitting"
+      },
+      {
+        "id": "cl_mxc6ug",
+        "text": "a shell that sheds acid",
+        "kind": "mechanical",
+        "askWhen": "on_being_hit",
+        "askWhenWhy": "sheds",
+        "askOften": "at_will",
+        "askOftenWhy": "a shell that sheds acid",
+        "askShape": "resist",
+        "askMechanic": "retaliate",
+        "askMechanicWhy": "sheds"
+      },
+      {
+        "id": "cl_486qnn",
+        "text": "It fights by pinning prey with two arms",
+        "kind": "mechanical",
+        "askShape": "condition",
+        "askMechanic": "grapple",
+        "askMechanicWhy": "pinning"
+      },
+      {
+        "id": "cl_1irx7w",
+        "text": "carving with the others",
+        "kind": "mechanical",
+        "askShape": "attack"
+      }
+    ],
+    "cite": "composition after Tyrannosaurus Rex / Purple Worm — the swallow engine",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "A Large insectile horror. It has four scythe-arms, a spitting maw, and a shell that sheds acid. It fights by pinning prey with two arms and carving with the others.",
+  "selectedChallengeRating": "9",
+  "monsterName": "Huskpit Carver",
+  "caster": false
+}

@@ -1,0 +1,160 @@
+{
+  "name": "Cracked Bell Wraith",
+  "inline": "the bell wraith",
+  "format": "2024",
+  "cr": 15,
+  "cr_str": "15",
+  "xp": 13000,
+  "challenge_rating": "15 (XP 13,000; PB +5)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 204,
+  "hp_formula": "24d8 + 96",
+  "pb": 5,
+  "speed": "5 ft., Fly 60 ft. (hover)",
+  "stats": {
+    "STR": 6,
+    "DEX": 22,
+    "CON": 19,
+    "INT": 12,
+    "WIS": 14,
+    "CHA": 15
+  },
+  "saves": {
+    "STR": -2,
+    "DEX": 11,
+    "CON": 4,
+    "INT": 1,
+    "WIS": 2,
+    "CHA": 2
+  },
+  "skills": "Stealth +11",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "Common plus the languages it knew in life",
+  "initiative_bonus": 6,
+  "initiative_score": 16,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Resonant Body",
+        "text": "A creature that hits the bell wraith with a melee attack while within 5 feet of it takes 10 (3d6) Thunder damage and has the Deafened condition until the end of its next turn.",
+        "library": true,
+        "imposes": "Deafened",
+        "template": "resonant-body",
+        "bound": true,
+        "boundKeys": [
+          "toll",
+          "bell"
+        ],
+        "clause": "tolls once for fear",
+        "clauseId": "cl_117drvi"
+      },
+      {
+        "name": "Incorporeal Movement",
+        "rules": true,
+        "text": "The bell wraith can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object."
+      },
+      {
+        "name": "Sunlight Sensitivity",
+        "rules": true,
+        "text": "While in sunlight, the bell wraith has Disadvantage on ability checks and attack rolls."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The bell wraith makes two Grave Toll attacks. It can replace one attack with a use of Cracked Toll."
+      },
+      {
+        "name": "Grave Toll",
+        "text": "*Melee Attack Roll:* +11, reach 5 ft. 30 (7d6 + 6) Bludgeoning damage plus 21 (6d6) Necrotic damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Cracked Toll",
+        "text": "*Wisdom Saving Throw:* DC 19, one creature within 60 feet. *Failure:* The target has the Frightened condition until the end of its next turn. If the target was already Frightened by this ability, it also takes 52 (15d6) Necrotic damage.",
+        "library": true,
+        "template": "escalating-dread",
+        "imposes": "Frightened",
+        "boundKeys": [
+          "fear"
+        ],
+        "gmQuote": "a bell wraith that tolls once for fear",
+        "duration": "target_end",
+        "clause": "tolls once for fear",
+        "clauseId": "cl_117drvi"
+      }
+    ]
+  },
+  "lore": "A bell-wraith is what remains of one who died mid-toll when the bell cracked and the ring never finished; it drifts the world seeking the final stroke that will let it rest.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5-phantom",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a bell-wraith that tolls once for fear, twice for sleep, and three times for the grave",
+    "clauses": [
+      {
+        "id": "cl_ehq2ma",
+        "text": "a bell-wraith",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_117drvi",
+        "text": "tolls once for fear",
+        "kind": "mechanical",
+        "askShape": "condition",
+        "askMechanic": "fear",
+        "askMechanicWhy": "for fear"
+      },
+      {
+        "id": "cl_1dx8wjs",
+        "text": "twice for sleep",
+        "kind": "mechanical",
+        "askShape": "condition",
+        "askMechanic": "dazzle",
+        "askMechanicWhy": "for sleep"
+      },
+      {
+        "id": "cl_1iftueb",
+        "text": "three times for the grave",
+        "kind": "mechanical",
+        "askShape": "attack",
+        "askMechanic": "drain",
+        "askMechanicWhy": "for the grave"
+      }
+    ],
+    "cite": "composition after Wraith (CR 5) — Life Drain under the sunlight bane",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained",
+  "resistances": "Bludgeoning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "a bell-wraith that tolls once for fear, twice for sleep, and three times for the grave",
+  "selectedChallengeRating": "15",
+  "monsterName": "Cracked Bell Wraith",
+  "caster": false
+}

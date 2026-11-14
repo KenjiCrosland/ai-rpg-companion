@@ -1,0 +1,158 @@
+{
+  "name": "Late-Thrust Duelist",
+  "inline": "the duelist",
+  "format": "2024",
+  "cr": 12,
+  "cr_str": "12",
+  "xp": 8400,
+  "challenge_rating": "12 (XP 8,400; PB +4)",
+  "type": "Humanoid",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 17,
+  "hp": 170,
+  "hp_formula": "20d8 + 80",
+  "pb": 4,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 12,
+    "DEX": 22,
+    "CON": 18,
+    "INT": 13,
+    "WIS": 14,
+    "CHA": 11
+  },
+  "saves": {
+    "STR": 1,
+    "DEX": 10,
+    "CON": 4,
+    "INT": 5,
+    "WIS": 2,
+    "CHA": 0
+  },
+  "skills": "Perception +6, Stealth +14",
+  "senses": "Passive Perception 16",
+  "languages": "Common",
+  "initiative_bonus": 6,
+  "initiative_score": 16,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The duelist makes three attacks, using Estoc or Iron Bolt in any combination."
+      },
+      {
+        "name": "Estoc",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 28 (5d8 + 6) Piercing damage.",
+        "weapon": "rapier",
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Iron Bolt",
+        "text": "*Ranged Attack Roll:* +10, range 80/320 ft. 24 (4d8 + 6) Piercing damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Umbral Step",
+        "rules": true,
+        "text": "While in Dim Light or Darkness, the duelist takes the Hide action."
+      }
+    ],
+    "Reactions": [
+      {
+        "name": "Riposte",
+        "text": "*Trigger:* A creature within 5 feet of the duelist misses it with a melee attack roll. *Response:* The duelist makes one Estoc attack against that creature.",
+        "library": true,
+        "template": "riposte",
+        "boundKeys": [
+          "duelist"
+        ],
+        "accepted_closest": true,
+        "gmQuote": "a duellist who only ever makes one attack and it always lands"
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Woven Shadow",
+        "text": "While the duelist is in Dim Light or Darkness, attack rolls against the duelist have Disadvantage, and each of the duelist's turns it makes only one attack, which automatically hits its chosen target.",
+        "authored": true,
+        "clause": "The duelist's body is woven of its own shadow; while it remains in Dim Light or Darkness, its outline dissolves into the",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "the one perfect thrust that always lands",
+        "bound": false,
+        "boundKeys": [],
+        "answersAlso": [
+          "it always lands"
+        ],
+        "expressedQuote": "each of the duelist's turns it makes only one attack, which automatically hits its chosen target"
+      }
+    ]
+  },
+  "lore": "A soul that lost one duel too many, remade by the shadow of its own blade into an unseen killer condemned to win forever the single thrust it once threw too late.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-8",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a duellist who only ever makes one attack, and it always lands",
+    "clauses": [
+      {
+        "id": "cl_12uzek5",
+        "text": "a duellist",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1p3b1vv",
+        "text": "only ever makes one attack",
+        "kind": "mechanical",
+        "askShape": "attack"
+      },
+      {
+        "id": "cl_155hqwc",
+        "text": "it always lands",
+        "kind": "mechanical",
+        "askShape": "attack",
+        "askMechanic": "escalate",
+        "askMechanicWhy": "it always lands"
+      }
+    ],
+    "cite": "composition after Assassin (CR 8) — the rider-heavy burst and the expertise Stealth",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "answered_by_existing": [
+      "it always lands -> Woven Shadow"
+    ],
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a duellist who only ever makes one attack, and it always lands",
+  "selectedChallengeRating": "12",
+  "monsterName": "Late-Thrust Duelist",
+  "caster": false
+}

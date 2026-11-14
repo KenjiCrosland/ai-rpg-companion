@@ -1,0 +1,333 @@
+{
+  "name": "Glaucous Riverwight",
+  "inline": "the riverwight",
+  "format": "2024",
+  "cr": 4,
+  "cr_str": "4",
+  "xp": 1100,
+  "challenge_rating": "4 (XP 1,100; PB +2)",
+  "type": "Monstrosity",
+  "size": "Large",
+  "alignment": "Neutral Evil",
+  "ac": 14,
+  "hp": 85,
+  "hp_formula": "10d10 + 30",
+  "pb": 2,
+  "speed": "30 ft., Swim 30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 8,
+    "CON": 16,
+    "INT": 4,
+    "WIS": 10,
+    "CHA": 4
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": -1,
+    "CON": 3,
+    "INT": -3,
+    "WIS": 0,
+    "CHA": -3
+  },
+  "skills": "Athletics +6, Perception +2",
+  "senses": "blindsight 30 ft.; Passive Perception 12",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The riverwight makes two attacks, using Slam or Flank Clap in any combination."
+      },
+      {
+        "name": "Slam",
+        "imposes": "Prone",
+        "text": "*Melee Attack Roll:* +6, reach 5 ft. 8 (1d8 + 4) Bludgeoning damage plus 6 (1d12) Force damage, and the target has the Prone condition.",
+        "part": true,
+        "authored": true,
+        "clause": "coils and lunges to slam",
+        "answersAlso": [
+          "It opens a fight by rearing"
+        ],
+        "clauseId": "cl_13jo3kv",
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Pressure Snap (Recharge 5-6)",
+        "gate": "Recharge 5-6",
+        "text": "*Dexterity Saving Throw*: DC 13, each creature in a 10-foot Emanation originating from the riverwight. *Failure:* 31 (9d6) Bludgeoning damage. *Success:* Half damage.",
+        "library": true,
+        "template": "ground-burst",
+        "saveOverride": "\"Strength\" -> Dexterity: a damage-dominant row saves by Dexterity or Constitution in print, never Wisdom",
+        "boundKeys": [],
+        "gmQuote": "it opens a fight by rearing and clapping its flanks letting a stolen trove of",
+        "area": {
+          "shape": "Emanation",
+          "size": 10
+        }
+      },
+      {
+        "name": "Flank Clap",
+        "text": "*Melee Attack Roll:* +6, reach 5 ft. 8 (1d8 + 4) Thunder damage.",
+        "authored": true,
+        "flavor": "The riverwight slaps its waterlogged flanks together with a wet, booming crack.",
+        "clause": "clapping its flanks",
+        "clauseId": "cl_fl6k6h",
+        "attacksPerRound": 2
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Whelm",
+        "rules": true,
+        "engulf_engine": true,
+        "imposes": [
+          "Blinded",
+          "Restrained"
+        ],
+        "text": "The riverwight whelms one Medium or smaller creature it is grappling. While whelmed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the riverwight, and takes 6 (1d12) Force damage at the start of each of the riverwight's turns. The riverwight can have only one creature whelmed at a time. If the riverwight takes 12 damage or more in a single turn from the whelmed creature, the riverwight must release the target at the end of that turn, and the target exits Prone in an unoccupied space within 5 feet of the riverwight. If the riverwight dies, a whelmed creature pulls free Prone by using 5 feet of movement.",
+        "boundKeys": [
+          "whelm",
+          "swallow",
+          "swallows",
+          "engulf",
+          "engulfs",
+          "devour",
+          "devours",
+          "gulp",
+          "smother",
+          "entomb",
+          "cocoon"
+        ]
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Sure Footing",
+        "text": "Difficult Terrain composed of water, mud, or rubble doesn't cost the riverwight extra movement, and the riverwight can move across water, mud, or rubble without needing to make an ability check.",
+        "library": true,
+        "template": "terrain-walk",
+        "boundKeys": [
+          "mud",
+          "rubble"
+        ],
+        "accepted_closest": true,
+        "freeRow": true,
+        "expresses": null,
+        "decoration": true,
+        "bound": false
+      }
+    ]
+  },
+  "lore": "It is the drowned Underdark given a boneless will — a living sluice of river-water and porcelain that creeps up dead shafts to feast on battlefields and bear the still-twitching down to its larder in the deep.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "blank",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "code"
+    },
+    "donor": "brute-5-grappler",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [
+      {
+        "clause": "the Pale Undertaker is a sewer-smooth eel of living porcelain that slides up drowned shafts to nose at battlefields",
+        "where": "description",
+        "text": "the Pale Undertaker is a sewer-smooth eel of living porcelain that slides up drowned shafts to nose at battlefields"
+      },
+      {
+        "clause": "lapping the dead with a scavenger's patience and a crude",
+        "where": "description",
+        "text": "lapping the dead with a scavenger's patience and a crude"
+      },
+      {
+        "clause": "nursery-rhyme cunning",
+        "where": "description",
+        "text": "nursery-rhyme cunning"
+      },
+      {
+        "clause": "it does not duel — it shrieks a bargain no one agreed to",
+        "where": "description",
+        "text": "it does not duel — it shrieks a bargain no one agreed to"
+      },
+      {
+        "clause": "hauls the wounded toward deep water to save for later",
+        "where": "description",
+        "text": "hauls the wounded toward deep water to save for later"
+      },
+      {
+        "clause": "It is crudely sapient (INT 6-8)",
+        "where": "description",
+        "text": "It is crudely sapient (INT 6-8)"
+      }
+    ],
+    "userConcept": "A mile of river-fed Underdark cave-water given one boneless will, the Pale Undertaker is a sewer-smooth eel of living porcelain that slides up drowned shafts to nose at battlefields, lapping the dead with a scavenger's patience and a crude, nursery-rhyme cunning. It opens a fight by rearing and clapping its flanks, letting a stolen trove of pressure snap outward as a bone-thud of Force that shoves prey off ledges and against stone, then coils and lunges to slam and topple anything that stands its ground. Bloodied, it does not flee and it does not duel — it shrieks a bargain no one agreed to, t",
+    "clauses": [
+      {
+        "id": "cl_17sh58a",
+        "text": "A mile of river-fed Underdark cave-water given one boneless will",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_8n287x",
+        "text": "the Pale Undertaker is a sewer-smooth eel of living porcelain that slides up drowned shafts to nose at battlefields",
+        "kind": "descriptive"
+      },
+      {
+        "id": "cl_1pj0fjx",
+        "text": "lapping the dead with a scavenger's patience and a crude",
+        "kind": "descriptive"
+      },
+      {
+        "id": "cl_5r4hc2",
+        "text": "nursery-rhyme cunning",
+        "kind": "descriptive"
+      },
+      {
+        "id": "cl_1c6wk6o",
+        "text": "It opens a fight by rearing",
+        "kind": "mechanical",
+        "askWhen": "start_of_turn",
+        "askWhenWhy": "opens a fight",
+        "askOften": "once_per_fight",
+        "askOftenWhy": "opens a fight",
+        "askShape": "save_area",
+        "askMechanic": "burst",
+        "askMechanicWhy": "clapping its flanks"
+      },
+      {
+        "id": "cl_fl6k6h",
+        "text": "clapping its flanks",
+        "kind": "mechanical",
+        "askWhen": "start_of_turn",
+        "askWhenWhy": "opens a fight",
+        "askOften": "once_per_fight",
+        "askOftenWhy": "opens a fight",
+        "askShape": "save_area",
+        "askMechanic": "burst",
+        "askMechanicWhy": "clapping its flanks"
+      },
+      {
+        "id": "cl_1j4ff69",
+        "text": "letting a stolen trove of pressure snap outward as a bone-thud of Force that shoves prey off ledges and against stone",
+        "kind": "mechanical",
+        "askWhen": "on_hit",
+        "askWhenWhy": "shoves prey",
+        "askOften": "at_will",
+        "askOftenWhy": "letting a stolen trove of pressure snap outward as a bone-thud of Force that shoves prey off ledges and against stone",
+        "askShape": "save_area",
+        "askMechanic": "shove",
+        "askMechanicWhy": "shoves prey"
+      },
+      {
+        "id": "cl_13jo3kv",
+        "text": "coils and lunges to slam",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "coils and lunges to slam",
+        "askOften": "at_will",
+        "askOftenWhy": "coils and lunges to slam",
+        "askShape": "attack"
+      },
+      {
+        "id": "cl_45kf17",
+        "text": "topple anything that stands its ground",
+        "kind": "mechanical",
+        "askWhen": "on_hit",
+        "askWhenWhy": "topple anything that stands its ground",
+        "askOften": "at_will",
+        "askOftenWhy": "topple anything that stands its ground",
+        "askShape": "condition",
+        "askMechanic": "shove",
+        "askMechanicWhy": "topple"
+      },
+      {
+        "id": "cl_1paejzi",
+        "text": "Bloodied",
+        "kind": "mechanical",
+        "askWhen": "when_bloodied",
+        "askWhenWhy": "bloodied",
+        "askOften": "once_per_fight",
+        "askOftenWhy": "Bloodied",
+        "askShape": "save_single",
+        "askMechanic": "curse",
+        "askMechanicWhy": "does not flee"
+      },
+      {
+        "id": "cl_o9cf51",
+        "text": "it does not flee",
+        "kind": "mechanical",
+        "askWhen": "when_bloodied",
+        "askWhenWhy": "bloodied",
+        "askOften": "once_per_fight",
+        "askOftenWhy": "it does not flee",
+        "askShape": "save_single",
+        "askMechanic": "curse",
+        "askMechanicWhy": "does not flee"
+      },
+      {
+        "id": "cl_1uf97rq",
+        "text": "it does not duel — it shrieks a bargain no one agreed to",
+        "kind": "descriptive"
+      },
+      {
+        "id": "cl_1iuh3h2",
+        "text": "toys with the weak",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "toys with the weak",
+        "askOften": "at_will",
+        "askOftenWhy": "toys with the weak",
+        "askShape": "attack",
+        "askMechanic": "grapple",
+        "askMechanicWhy": "toys"
+      },
+      {
+        "id": "cl_1da5s3t",
+        "text": "hauls the wounded toward deep water to save for later",
+        "kind": "descriptive"
+      },
+      {
+        "id": "cl_1yjb22g",
+        "text": "It is crudely sapient (INT 6-8)",
+        "kind": "descriptive"
+      },
+      {
+        "id": "cl_1jdy2t8",
+        "text": "it is a scavenger drawn to carrion and ruin",
+        "kind": "descriptive"
+      }
+    ],
+    "cite": "composition after Giant Crocodile (CR 5) jaws + Giant Toad (CR 1) swallow — print swallows at LOW CR",
+    "free_rows": 1,
+    "free_row_templates": [
+      "terrain-walk"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "answered_by_existing": [
+      "It opens a fight by rearing -> Slam"
+    ],
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "",
+  "selectedChallengeRating": "4",
+  "monsterName": "Glaucous Riverwight",
+  "caster": false
+}

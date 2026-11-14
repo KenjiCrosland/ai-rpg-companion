@@ -1,0 +1,119 @@
+{
+  "name": "Rotfly Swarm",
+  "inline": "the swarm",
+  "format": "2024",
+  "cr": 2,
+  "cr_str": "2",
+  "xp": 450,
+  "challenge_rating": "2 (XP 450; PB +2)",
+  "type": "Swarm of Tiny Beasts",
+  "size": "Medium",
+  "alignment": "Unaligned",
+  "ac": 12,
+  "hp": 38,
+  "hp_formula": "7d8 + 7",
+  "pb": 2,
+  "speed": "30 ft., Fly 20 ft. (hover)",
+  "stats": {
+    "STR": 6,
+    "DEX": 16,
+    "CON": 13,
+    "INT": 2,
+    "WIS": 8,
+    "CHA": 1
+  },
+  "saves": {
+    "STR": -2,
+    "DEX": 3,
+    "CON": 1,
+    "INT": -4,
+    "WIS": -1,
+    "CHA": -5
+  },
+  "skills": "",
+  "senses": "darkvision 30 ft.; Passive Perception 9",
+  "languages": "None",
+  "initiative_bonus": 3,
+  "initiative_score": 13,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Carrion Bloom",
+        "text": "When a creature dies within the swarm's space or at the end of its turn within 5 feet of it, the swarm feeds on the remains; it can't be Bloodied until it has fed again.",
+        "authored": true,
+        "clause": "The swarm's flies boil from one body to the next, and any corpse in its reach is stripped as it moves past. When a creat",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "stripping a corpse in a minute",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "the swarm feeds on the remains"
+      },
+      {
+        "name": "Swarm",
+        "rules": true,
+        "text": "The swarm can occupy another creature's space and vice versa, and the swarm can move through any opening large enough for a Tiny creature. The swarm can't regain Hit Points or gain Temporary Hit Points."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Maggot Bite",
+        "text": "*Melee Attack Roll:* +5, reach 5 ft. 7 (1d8 + 3) Piercing damage plus 6 (1d12) Poison damage, or 3 (1d6) Piercing damage plus 3 (1d6) Poison damage if the swarm is Bloodied.",
+        "weapon": null,
+        "attacksPerRound": 1
+      }
+    ]
+  },
+  "lore": "Hatched in the wet rot of battlefield slaughter-pits, the swarm exists only to feed, following the smell of dying breath and leaving nothing behind but clean-picked bone.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "swarm-1",
+    "archetype": "swarm",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a rot-fly swarm that strips a corpse in a minute",
+    "clauses": [
+      {
+        "id": "cl_qwzvdi",
+        "text": "a rot-fly swarm",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_n212lq",
+        "text": "strips a corpse in a minute",
+        "kind": "descriptive"
+      }
+    ],
+    "body": "swarm",
+    "cite": "composition across the seven print swarms (CR 1/4-3) — the Swarm trait and the Bloodied split",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "swarm",
+  "archetype_source": "user",
+  "immunities": "Charmed, Frightened, Grappled, Paralyzed, Petrified, Prone, Restrained, Stunned",
+  "resistances": "Bludgeoning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "a rot-fly swarm that strips a corpse in a minute",
+  "selectedChallengeRating": "2",
+  "monsterName": "Rotfly Swarm",
+  "caster": false
+}

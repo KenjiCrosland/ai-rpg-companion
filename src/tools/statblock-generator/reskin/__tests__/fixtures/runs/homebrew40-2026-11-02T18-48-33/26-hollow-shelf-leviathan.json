@@ -1,0 +1,156 @@
+{
+  "name": "Hollow-Shelf Leviathan",
+  "inline": "the leviathan",
+  "format": "2024",
+  "cr": 20,
+  "cr_str": "20",
+  "xp": 25000,
+  "challenge_rating": "20 (XP 25,000; PB +6)",
+  "type": "Monstrosity",
+  "size": "Gargantuan",
+  "alignment": "Neutral",
+  "ac": 19,
+  "hp": 280,
+  "hp_formula": "17d20 + 102",
+  "pb": 6,
+  "speed": "40 ft., Burrow 30 ft., Swim 40 ft.",
+  "stats": {
+    "STR": 25,
+    "DEX": 26,
+    "CON": 22,
+    "INT": 16,
+    "WIS": 18,
+    "CHA": 14
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": 14,
+    "CON": 6,
+    "INT": 9,
+    "WIS": 10,
+    "CHA": 2
+  },
+  "skills": "Perception +10, Stealth +14",
+  "senses": "tremorsense 120 ft.; Passive Perception 20",
+  "languages": "None",
+  "initiative_bonus": 8,
+  "initiative_score": 18,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Shelf Mimicry",
+        "text": "While the leviathan remains motionless, it is indistinguishable from the frozen shelf it waits beneath.",
+        "library": true,
+        "template": "false-appearance",
+        "boundKeys": [
+          "motionless"
+        ],
+        "gmQuote": "something enormous and patient under the ice",
+        "expresses": "ice-plated, spine-studded hide that mimics the lake's underside",
+        "bound": false
+      },
+      {
+        "name": "Legendary Resistance (3/Day)",
+        "text": "If the leviathan fails a saving throw, it can choose to succeed instead.",
+        "gate": "3/Day"
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The leviathan makes three Spine attacks."
+      },
+      {
+        "name": "Spine",
+        "text": "*Melee Attack Roll:* +14, reach 15 ft. 17 (2d8 + 8) Piercing damage plus 13 (3d8) Cold damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Shelf Breach (Recharge 5-6)",
+        "text": "*Dexterity Saving Throw*: DC 22, each creature in a 20-foot Emanation. *Failure:* The target has the Restrained condition until the end of its next turn.",
+        "authored": true,
+        "clause": "The leviathan erupts from directly beneath a surface it is hidden under. Each creature standing above it must make a Dex",
+        "gate": "Recharge 5-6",
+        "imposes": "Restrained",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "ambushing from directly beneath the frozen surface",
+        "boundKeys": [],
+        "decoration": true
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Shadow Hide",
+        "rules": true,
+        "text": "While in Dim Light or Darkness, the leviathan takes the Hide action."
+      }
+    ],
+    "Legendary Actions": [
+      {
+        "name": "Legendary Action Uses: 3",
+        "rules": true,
+        "text": "Immediately after another creature's turn, the leviathan can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns."
+      },
+      {
+        "name": "Ice Glide",
+        "text": "The leviathan moves up to half its Speed without provoking Opportunity Attacks, and it makes one Spine attack."
+      },
+      {
+        "name": "Sink Below",
+        "text": "While in Dim Light or Darkness, the leviathan takes the Hide action. The leviathan can't take this action again until the start of its next turn."
+      },
+      {
+        "name": "Terror Glare",
+        "imposes": "Frightened",
+        "text": "*Wisdom Saving Throw*: DC 22, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn."
+      }
+    ]
+  },
+  "lore": "An ancient glacier-beast that grew too heavy for the surface, it sank beneath the winter lake and learned to become the ice itself, keeping a hoard of frozen carcasses beneath its resting place.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-17",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "something enormous and patient under the ice",
+    "clauses": [
+      {
+        "id": "cl_1fo4xu",
+        "text": "something enormous and patient under the ice",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "resistances": "Cold",
+  "lint_findings": [],
+  "monsterDescription": "something enormous and patient under the ice",
+  "selectedChallengeRating": "20",
+  "monsterName": "Hollow-Shelf Leviathan",
+  "caster": false
+}

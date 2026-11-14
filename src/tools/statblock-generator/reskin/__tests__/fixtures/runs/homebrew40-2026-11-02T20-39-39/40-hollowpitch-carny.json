@@ -1,0 +1,221 @@
+{
+  "name": "Hollowpitch Carny",
+  "inline": "the carny",
+  "type_and_alignment": "Small humanoid, neutral evil",
+  "armor_class": "15 (chain shirt)",
+  "hit_points": "115 (21d6 + 42)",
+  "speed": "30 ft.",
+  "attributes": "STR 12 (+1), DEX 16 (+3), CON 15 (+2), INT 8 (-1), WIS 12 (+1), CHA 8 (-1)",
+  "saving_throws": "DEX +6",
+  "skills": "Perception +4, Stealth +6",
+  "senses": "passive Perception 14",
+  "languages": "Common",
+  "challenge_rating": "6 (2,300 XP)",
+  "proficiency_bonus": "+3",
+  "abilities": [
+    {
+      "name": "Slip Through the Crowd",
+      "description": "The carny ignores difficult terrain, and opportunity attacks against it are made with disadvantage."
+    },
+    {
+      "name": "Fleet Agility (Bonus Action)",
+      "description": "The carny takes the Dash or Disengage action."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The carny makes two attacks: one with its Hook Blade and one with its Carny's Call. It can replace one attack with a use of Stage Patter."
+    },
+    {
+      "name": "Hook Blade",
+      "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 20 (7d4 + 3) slashing damage."
+    },
+    {
+      "name": "Carny's Call",
+      "description": "Ranged Weapon Attack: +6 to hit, range 20/60 ft., one target. Hit: 16 (3d8 + 3) piercing damage."
+    },
+    {
+      "name": "Stage Patter",
+      "description": "One creature within 60 feet that can see or hear the carny's stage patter must make a DC 14 Wisdom saving throw. On a failed save, the target is charmed until the start of the carny's next turn, and while charmed this way, it must move toward the carny by the safest available route on its turn and can't take Reactions.",
+      "imposes": "Charmed"
+    }
+  ],
+  "format": "2014",
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "skirmisher-3",
+    "archetype": "skirmisher",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a carnival barker who talks you into standing still",
+    "clauses": [
+      {
+        "id": "cl_14ldgt0",
+        "text": "a carnival barker",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_a9e1q2",
+        "text": "talks you into standing still",
+        "kind": "header"
+      }
+    ],
+    "cite": "composition after Vampire Familiar (CR 3)",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the free-row budget",
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Hollowpitch Carny",
+    "inline": "the carny",
+    "format": "2024",
+    "cr": 6,
+    "cr_str": "6",
+    "xp": 2300,
+    "challenge_rating": "6 (XP 2,300; PB +3)",
+    "type": "Humanoid",
+    "size": "Small",
+    "alignment": "Neutral Evil",
+    "ac": 15,
+    "hp": 115,
+    "hp_formula": "21d6 + 42",
+    "pb": 3,
+    "speed": "30 ft.",
+    "stats": {
+      "STR": 12,
+      "DEX": 16,
+      "CON": 15,
+      "INT": 8,
+      "WIS": 12,
+      "CHA": 8
+    },
+    "saves": {
+      "STR": 1,
+      "DEX": 6,
+      "CON": 2,
+      "INT": -1,
+      "WIS": 1,
+      "CHA": -1
+    },
+    "skills": "Perception +4, Stealth +6",
+    "senses": "Passive Perception 14",
+    "languages": "Common",
+    "initiative_bonus": 3,
+    "initiative_score": 13,
+    "sections": {
+      "Traits": [
+        {
+          "name": "Slip Through the Crowd",
+          "text": "The carny ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage."
+        }
+      ],
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The carny makes two attacks, using Hook Blade or Carny's Call in any combination. It can replace one attack with a use of Stage Patter."
+        },
+        {
+          "name": "Hook Blade",
+          "text": "*Melee Attack Roll:* +6, reach 5 ft. 20 (7d4 + 3) Slashing damage.",
+          "weapon": "sickle",
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Carny's Call",
+          "text": "*Ranged Attack Roll:* +6, range 20/60 ft. 16 (3d8 + 3) Piercing damage.",
+          "weapon": null,
+          "attacksPerRound": 2
+        },
+        {
+          "name": "Stage Patter",
+          "text": "*Wisdom Saving Throw:* DC 14, one creature within 60 feet that can see or hear the carny's stage patter. *Failure:* The target has the Charmed condition until the start of the carny's next turn, and while Charmed this way, it must move toward the carny by the safest available route on its turn and can't take Reactions.",
+          "library": true,
+          "template": "lure",
+          "imposes": "Charmed",
+          "boundKeys": [
+            "call"
+          ],
+          "gmQuote": "a carnival barker who talks you into standing still",
+          "duration": "source_start"
+        }
+      ],
+      "Bonus Actions": [
+        {
+          "name": "Fleet Agility",
+          "text": "The carny takes the Dash or Disengage action.",
+          "rules": true
+        }
+      ]
+    },
+    "lore": "Bound to a carnival contract that promised a crowd which could never leave, this pitchman must talk strangers into standing still so the laughter can be collected and fed to whatever holds the deed.",
+    "inline_kind": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "homebrew",
+        "print_body": null,
+        "relation": null,
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "skirmisher-3",
+      "archetype": "skirmisher",
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "a carnival barker who talks you into standing still",
+      "clauses": [
+        {
+          "id": "cl_14ldgt0",
+          "text": "a carnival barker",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_a9e1q2",
+          "text": "talks you into standing still",
+          "kind": "header"
+        }
+      ],
+      "cite": "composition after Vampire Familiar (CR 3)",
+      "free_rows": 0,
+      "free_row_templates": [],
+      "decoration_rows": 0,
+      "expressed_rows": 0,
+      "signature_rows": 1,
+      "seed_rows": 0,
+      "gap_vetoed": "1 of 1",
+      "gap_missing_unstated": 0,
+      "gap_death_sites": "1x the free-row budget",
+      "signature": "library"
+    },
+    "archetype": "skirmisher",
+    "archetype_source": "user",
+    "lint_findings": []
+  },
+  "monsterDescription": "a carnival barker who talks you into standing still",
+  "selectedChallengeRating": "6",
+  "monsterName": "Hollowpitch Carny",
+  "caster": false
+}

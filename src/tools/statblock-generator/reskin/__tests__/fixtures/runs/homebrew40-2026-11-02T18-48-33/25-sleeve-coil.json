@@ -1,0 +1,123 @@
+{
+  "name": "Sleeve-Coil",
+  "inline": "the sleeve-coil",
+  "format": "2024",
+  "cr": 1,
+  "cr_str": "1",
+  "xp": 200,
+  "challenge_rating": "1 (XP 200; PB +2)",
+  "type": "Monstrosity",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 27,
+  "hp_formula": "5d8 + 5",
+  "pb": 2,
+  "speed": "30 ft., Swim 30 ft.",
+  "stats": {
+    "STR": 10,
+    "DEX": 14,
+    "CON": 12,
+    "INT": 8,
+    "WIS": 12,
+    "CHA": 8
+  },
+  "saves": {
+    "STR": 0,
+    "DEX": 4,
+    "CON": 1,
+    "INT": -1,
+    "WIS": 1,
+    "CHA": -1
+  },
+  "skills": "Perception +3, Stealth +4",
+  "senses": "darkvision 60 ft.; Passive Perception 13",
+  "languages": "None",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Split-Seam Frenzy",
+        "text": "While the sleeve-coil is Bloodied, it makes one additional Bite attack as part of Multiattack and has Advantage on attacks against creatures that have the Prone or Grappled condition.",
+        "authored": true,
+        "clause": "While Bloodied, the stitching splits and the knot loosens: the sleeve-coil gains one additional Bite attack when it take",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "a knot of eels writhing inside a man's coat",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "it makes one additional Bite attack as part of Multiattack and has Advantage on attacks against creatures that have the Prone or Grappled condition."
+      },
+      {
+        "name": "Eel-Slip",
+        "text": "The sleeve-coil ignores Difficult Terrain, and Opportunity Attacks against it are made with Disadvantage."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The sleeve-coil makes two Bite attacks."
+      },
+      {
+        "name": "Bite",
+        "text": "*Melee Attack Roll:* +4, reach 5 ft. 6 (1d8 + 2) Piercing damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Fleet Agility",
+        "text": "The sleeve-coil takes the Dash or Disengage action.",
+        "rules": true
+      }
+    ]
+  },
+  "lore": "A drowned coat left in the bog and bred through with eels has become one hungry body, seeking only to be filled and dragged back under the water.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "skirmisher-1",
+    "archetype": "skirmisher",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a knot of eels in a man's coat",
+    "clauses": [
+      {
+        "id": "cl_2zlkiy",
+        "text": "a knot of eels in a man's coat",
+        "kind": "mechanical",
+        "askShape": "attack"
+      }
+    ],
+    "cite": "composition after Goblin Warrior / Spy (CR 1/4-1)",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "skirmisher",
+  "archetype_source": "user",
+  "lint_findings": [
+    "orphan-condition-ref: \"Grappled\" is referenced as a state but nothing on the sheet applies it"
+  ],
+  "monsterDescription": "a knot of eels in a man's coat",
+  "selectedChallengeRating": "1",
+  "monsterName": "Sleeve-Coil",
+  "caster": false
+}

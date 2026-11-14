@@ -1,0 +1,136 @@
+{
+  "name": "Gaol-Queen Verathine",
+  "inline": "Verathine",
+  "format": "2024",
+  "cr": 14,
+  "cr_str": "14",
+  "xp": 11500,
+  "challenge_rating": "14 (XP 11,500; PB +5)",
+  "type": "Humanoid",
+  "size": "Medium",
+  "alignment": "Neutral Evil",
+  "ac": 18,
+  "hp": 221,
+  "hp_formula": "26d8 + 104",
+  "pb": 5,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 22,
+    "DEX": 14,
+    "CON": 19,
+    "INT": 12,
+    "WIS": 13,
+    "CHA": 18
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": 2,
+    "CON": 9,
+    "INT": 1,
+    "WIS": 1,
+    "CHA": 9
+  },
+  "skills": "Athletics +11, Persuasion +9",
+  "senses": "Passive Perception 11",
+  "languages": "Common",
+  "initiative_bonus": 2,
+  "initiative_score": 12,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Another Bleeds For Her",
+        "text": "When a creature within reach of one of Verathine's chains — one under her command or one Restrained by her — is struck by an attack, the blow lands on the bound creature instead of Verathine, and that creature takes the damage in her stead.",
+        "authored": true,
+        "clause": "Whenever a creature under Verathine's command or restrained by her chains is struck, Verathine can pull the chain taut a",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "watching from behind her wall of bodies",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "When a creature within reach of one of Verathine's chains — one under her command or one Restrained by her — is struck by an attack, the blow lands on the bound creature instead of Verathine, and that creature takes the damage in her stead."
+      },
+      {
+        "name": "Aura of Authority",
+        "rules": true,
+        "text": "While in a 10-foot Emanation originating from Verathine, Verathine and its allies have Advantage on attack rolls and saving throws, provided Verathine doesn't have the Incapacitated condition."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "Verathine makes three attacks, using Sentence-Keys or Chain Flail in any combination. It can replace one attack with a use of Barked Command."
+      },
+      {
+        "name": "Sentence-Keys",
+        "text": "*Melee Attack Roll:* +11, reach 5 ft. 33 (6d8 + 6) Slashing damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Chain Flail",
+        "text": "*Melee Attack Roll:* +11, reach 5 ft. 33 (6d8 + 6) Bludgeoning damage.",
+        "weapon": "flail",
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Barked Command",
+        "text": "*Wisdom Saving Throw*: DC 19, one creature within 60 feet. *Failure:* The target has the Charmed condition until the end of its next turn.",
+        "authored": true,
+        "clause": "Verathine barks a command at one creature it can see; the target must succeed on a Wisdom saving throw or be forced to o",
+        "imposes": "Charmed",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "commanding shackled prisoners who fight in her stead",
+        "boundKeys": [],
+        "decoration": true
+      }
+    ]
+  },
+  "lore": "A warden who sold a piece of herself to the iron of her own prison, Gaol-Queen Verathine can never leave it—so she drags others inside, hoping for one captive who will stay of their own will.",
+  "inline_kind": "person",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-8-leader",
+    "archetype": "defender",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a gaol-queen whose prisoners fight for her while she watches from behind them",
+    "clauses": [
+      {
+        "id": "cl_y6uaua",
+        "text": "a gaol-queen whose prisoners fight for her while she watches from behind them",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "invented": true,
+    "free_rows": 2,
+    "free_row_templates": [
+      "unknown",
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "lint_findings": [
+    "orphan-condition-ref: \"Restrained\" is referenced as a state but nothing on the sheet applies it"
+  ],
+  "monsterDescription": "a gaol-queen whose prisoners fight for her while she watches from behind them",
+  "selectedChallengeRating": "14",
+  "monsterName": "Gaol-Queen Verathine",
+  "caster": false
+}

@@ -1,0 +1,141 @@
+{
+  "name": "Stone Golem",
+  "inline": "the stone golem",
+  "format": "2024",
+  "cr": 10,
+  "cr_str": "10",
+  "xp": 5900,
+  "challenge_rating": "10 (XP 5,900; PB +4)",
+  "type": "Construct",
+  "size": "Large",
+  "alignment": "Unaligned",
+  "ac": 18,
+  "hp": 220,
+  "hp_formula": "21d10 + 105",
+  "pb": 4,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 22,
+    "DEX": 9,
+    "CON": 20,
+    "INT": 3,
+    "WIS": 11,
+    "CHA": 1
+  },
+  "saves": {
+    "STR": 10,
+    "DEX": -1,
+    "CON": 9,
+    "INT": -4,
+    "WIS": 0,
+    "CHA": -5
+  },
+  "skills": "Athletics +10, Perception +4",
+  "senses": "darkvision 60 ft.; Passive Perception 14",
+  "languages": "Understands Common plus two other languages but can't speak",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The stone golem makes two attacks, using Slam or Force Bolt in any combination."
+      },
+      {
+        "name": "Slam",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 15 (2d8 + 6) Bludgeoning damage plus 9 (2d8) Force damage.",
+        "weapon": null,
+        "weldedRiders": [],
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Force Bolt",
+        "text": "*Ranged Attack Roll:* +9, range 120 ft. 22 (4d10) Force damage.",
+        "weapon": "crossbow",
+        "print": true,
+        "printNamed": true,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Snare Saintly Hands",
+        "text": "*Strength Saving Throw*: DC 17, each creature in a 10-foot Sphere. *Failure:* The target has the Restrained condition until the end of its next turn.",
+        "authored": true,
+        "clause": "Each time the stone golem hits with its Stone Tear, the necrotic tear splashes the ground beneath the target. The ground",
+        "imposes": "Restrained",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "weeping stone tears that harden and grip",
+        "boundKeys": [],
+        "expressedQuote": "The target has the Restrained condition until the end of its next turn."
+      }
+    ],
+    "Traits": [
+      {
+        "name": "Immutable Form",
+        "text": "The stone golem can't shape-shift.",
+        "print": true
+      },
+      {
+        "name": "Magic Resistance",
+        "text": "The stone golem has Advantage on saving throws against spells and other magical effects.",
+        "print": true
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Slow (Recharge 5-6)",
+        "text": "The stone golem casts the *Slow* spell, requiring no spell components and using Constitution as the spellcasting ability (spell save DC 17).",
+        "rules": true,
+        "print": true
+      }
+    ]
+  },
+  "lore": "Quarried from a ruined shrine's effigy, it walks the pilgrim roads, forcing every passerby to kneel and weep with it.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "twist",
+      "print_body": "Stone Golem",
+      "relation": "is",
+      "class": null,
+      "species": null,
+      "by": "code"
+    },
+    "donor": "brute-9",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "Stone Golem — carved as a weeping saint",
+    "clauses": [
+      {
+        "id": "cl_2cd3hd",
+        "text": "Stone Golem — carved as a weeping saint",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "cite": "composition after Fire Giant (CR 9) — the giant ladder continues",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "immunities": "Poison, Psychic; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "carved as a weeping saint",
+  "selectedChallengeRating": "10",
+  "monsterName": "Stone Golem",
+  "caster": false
+}

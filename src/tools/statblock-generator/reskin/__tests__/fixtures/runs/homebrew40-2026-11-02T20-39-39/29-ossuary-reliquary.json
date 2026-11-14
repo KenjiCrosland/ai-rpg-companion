@@ -1,0 +1,159 @@
+{
+  "name": "Ossuary Reliquary",
+  "inline": "the reliquary",
+  "format": "2024",
+  "cr": 13,
+  "cr_str": "13",
+  "xp": 10000,
+  "challenge_rating": "13 (XP 10,000; PB +5)",
+  "type": "Construct",
+  "size": "Large",
+  "alignment": "Lawful Neutral",
+  "ac": 19,
+  "hp": 247,
+  "hp_formula": "26d10 + 104",
+  "pb": 5,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 20,
+    "DEX": 8,
+    "CON": 18,
+    "INT": 7,
+    "WIS": 10,
+    "CHA": 3
+  },
+  "saves": {
+    "STR": 5,
+    "DEX": -1,
+    "CON": 9,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -4
+  },
+  "skills": "Perception +5",
+  "senses": "darkvision 60 ft.; Passive Perception 15",
+  "languages": "Common",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Sanctified Mending",
+        "text": "The reliquary regains 20 Hit Points at the start of each of its turns if it has at least 1 Hit Point and its ward is within 30 feet of it.",
+        "library": true,
+        "template": "warded-mending",
+        "boundKeys": [
+          "its ward"
+        ],
+        "accepted_closest": true,
+        "gmQuote": "heals what is loyal",
+        "expresses": "healing the loyal with holy light",
+        "bound": false
+      },
+      {
+        "name": "Ward Bond",
+        "rules": true,
+        "text": "The reliquary is magically bound to a ward of its choosing, and it can have only one ward at a time. While the reliquary is within 60 feet of its ward, half of any damage the ward takes (round up) is transferred to the reliquary."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The reliquary makes two Gilt Censer attacks. It can replace one attack with a use of Withering Wisp."
+      },
+      {
+        "name": "Gilt Censer",
+        "text": "*Melee Attack Roll:* +10, reach 5 ft. 19 (4d6 + 5) Bludgeoning damage plus 13 (3d8) Necrotic damage.",
+        "weapon": "mace",
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Warden's Grace (2/Day)",
+        "gate": "2/Day",
+        "text": "The reliquary targets itself or one creature it can see within 60 feet. The target gains 33 (6d10) Temporary Hit Points, and its AC increases by 2 until the end of the reliquary's next turn."
+      },
+      {
+        "name": "Withering Wisp",
+        "text": "*Constitution Saving Throw*: DC 17, each creature in a 30-foot Cone. *Failure:* The target has the Blinded condition until the end of its next turn.",
+        "authored": true,
+        "clause": "withers what is not",
+        "imposes": "Blinded",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "withering the disloyal",
+        "widened": true,
+        "boundKeys": [],
+        "decoration": true,
+        "nameClaimRevoked": [
+          "withering"
+        ],
+        "clauseId": "cl_167fz3t"
+      }
+    ]
+  },
+  "lore": "Raised from a desecrated shrine, the reliquary drags itself from church to church, weighing every soul it meets against the martyred saint's own loyalty.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "defender-7-warden",
+    "archetype": "defender",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a saint's reliquary that heals what is loyal and withers what is not",
+    "clauses": [
+      {
+        "id": "cl_1n499vm",
+        "text": "a saint's reliquary",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1c0o5g2",
+        "text": "heals what is loyal",
+        "kind": "mechanical",
+        "askShape": "heal",
+        "askMechanic": "mend",
+        "askMechanicWhy": "heals"
+      },
+      {
+        "id": "cl_167fz3t",
+        "text": "withers what is not",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "drain",
+        "askMechanicWhy": "withers"
+      }
+    ],
+    "cite": "composition after Shield Guardian (CR 7) — Bound transfer, Regeneration, the measured 0.65 damage discount",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "gap_vetoed": "0 of 1",
+    "gap_missing_unstated": 0,
+    "signature": "library"
+  },
+  "archetype": "defender",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Frightened, Paralyzed, Petrified, Poisoned",
+  "lint_findings": [
+    "type-damage-affinity: Actions/Gilt Censer: Necrotic damage on Construct — no official Construct deals Necrotic; re-theme the damage to the creature's substance (or the type itself is wrong)"
+  ],
+  "monsterDescription": "a saint's reliquary that heals what is loyal and withers what is not",
+  "selectedChallengeRating": "13",
+  "monsterName": "Ossuary Reliquary",
+  "caster": false
+}

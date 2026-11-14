@@ -1,0 +1,112 @@
+{
+  "name": "Well Drowned Thing",
+  "inline": "the drowned thing",
+  "format": "2024",
+  "cr": 5,
+  "cr_str": "5",
+  "xp": 1800,
+  "challenge_rating": "5 (XP 1,800; PB +3)",
+  "type": "Undead",
+  "size": "Large",
+  "alignment": "Neutral",
+  "ac": 20,
+  "hp": 93,
+  "hp_formula": "11d10 + 33",
+  "pb": 3,
+  "speed": "10 ft.",
+  "stats": {
+    "STR": 16,
+    "DEX": 8,
+    "CON": 17,
+    "INT": 7,
+    "WIS": 16,
+    "CHA": 6
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": -1,
+    "CON": 3,
+    "INT": -2,
+    "WIS": 3,
+    "CHA": -2
+  },
+  "skills": "Perception +6, Stealth +5",
+  "senses": "blindsight 30 ft. (blind beyond this radius); Passive Perception 16",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The drowned thing makes two Barb attacks. It can replace one attack with a use of Drowning Crush."
+      },
+      {
+        "name": "Barb",
+        "text": "*Melee Attack Roll:* +6 (with Advantage if the target is Grappled by the drowned thing), reach 5 ft. 12 (2d8 + 3) Piercing damage plus 7 (2d6) Poison damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 14).",
+        "imposes": "Grappled",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Drowning Crush",
+        "text": "The drowned thing strikes where the target cannot guard. *Dexterity Saving Throw*: DC 14, one creature within 30 feet that has the Grappled condition. *Failure:* 36 (8d8) Bludgeoning damage. *Success:* Half damage.",
+        "library": true,
+        "seed": "condition-payoff"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Foul Masquerade",
+        "rules": true,
+        "text": "The drowned thing shape-shifts to resemble an ordinary object or fixture of the place it waits in while retaining its game statistics, or it returns to its true form. While it is motionless in its false form, it is indistinguishable from that feature."
+      }
+    ],
+    "Traits": []
+  },
+  "lore": "A patient lurker that has grown into the stone of an old well, using its own shaft as a snare to trap the curious and reel them beneath the water.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5-trap",
+    "archetype": "lurker",
+    "holds": true,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "the thing in the well",
+    "clauses": [
+      {
+        "id": "cl_p6m93r",
+        "text": "the thing in the well",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "cite": "composition after Roper (CR 5) — reach-tentacle grapples, Reel, and the armored stillness",
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 1,
+    "gap_vetoed": "2 of 2",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the weld (a rider needs the GM's own ask), 1x the free-row budget",
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "",
+  "selectedChallengeRating": "5",
+  "monsterName": "the thing in the well",
+  "caster": false
+}

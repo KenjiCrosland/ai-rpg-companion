@@ -1,0 +1,159 @@
+{
+  "name": "Chalk-Hound",
+  "inline": "the chalk-hound",
+  "format": "2024",
+  "cr": 8,
+  "cr_str": "8",
+  "xp": 3900,
+  "challenge_rating": "8 (XP 3,900; PB +3)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 14,
+  "hp": 112,
+  "hp_formula": "15d8 + 45",
+  "pb": 3,
+  "speed": "5 ft., Fly 60 ft. (hover)",
+  "stats": {
+    "STR": 6,
+    "DEX": 20,
+    "CON": 16,
+    "INT": 12,
+    "WIS": 14,
+    "CHA": 15
+  },
+  "saves": {
+    "STR": -2,
+    "DEX": 8,
+    "CON": 3,
+    "INT": 1,
+    "WIS": 2,
+    "CHA": 2
+  },
+  "skills": "Stealth +8",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "None",
+  "initiative_bonus": 5,
+  "initiative_score": 15,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Chalk Seam",
+        "text": "When the chalk-hound moves through a wall or object, the chalk-hound leaves a pale, crumbling seam in the surface. A creature that spends an action studying the seam can follow the chalk-hound's path through the intervening spaces, and the seam betrays where the chalk-hound will emerge.",
+        "authored": true,
+        "clause": "The chalk-hound leaves a pale, crumbling seam in any surface it passes through. A creature that watches a seam can track",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "dragging prey through walls",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "the chalk-hound leaves a pale, crumbling seam in the surface"
+      },
+      {
+        "name": "Incorporeal Movement",
+        "rules": true,
+        "text": "The chalk-hound can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object."
+      },
+      {
+        "name": "Sunlight Sensitivity",
+        "rules": true,
+        "text": "While in sunlight, the chalk-hound has Disadvantage on ability checks and attack rolls."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The chalk-hound makes two Bite attacks. It can replace one attack with a use of Pull Through."
+      },
+      {
+        "name": "Bite",
+        "text": "*Melee Attack Roll:* +8, reach 5 ft. 27 (5d8 + 5) Piercing damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Pull Through",
+        "text": "*Strength Saving Throw*: DC 16, one Medium or smaller creature the chalk-hound is touching. *Failure:* 14 (4d6) Necrotic damage, and the chalk-hound drags the target up to 15 feet through a wall, floor, or other solid object it can pass through; the target emerges Prone in the nearest unoccupied space at the far side. If no such space is within 15 feet, the target is not moved. *Success:* Half damage only.",
+        "library": true,
+        "template": "pull-through",
+        "imposes": "Prone",
+        "boundKeys": [
+          "through walls",
+          "through the wall"
+        ],
+        "gmQuote": "walks through walls and drags you back out through them",
+        "clause": "walks through walls",
+        "clauseId": "cl_1ebkvso"
+      }
+    ]
+  },
+  "lore": "A chalk-hound is the residue of children who died lost and pressed into old flint-and-chalk brickwork, and it hunts the living to pull one more warm body into the wall to keep them company in the dark.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5-phantom",
+    "archetype": "lurker",
+    "holds": true,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a chalk-hound that walks through walls and drags you back out through them",
+    "clauses": [
+      {
+        "id": "cl_166bg2b",
+        "text": "a chalk-hound",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_1ebkvso",
+        "text": "walks through walls",
+        "kind": "mechanical",
+        "askWhen": "at_will",
+        "askWhenWhy": "walks through walls",
+        "askOften": "at_will",
+        "askOftenWhy": "walks through walls",
+        "askShape": "movement",
+        "askMechanic": "teleport",
+        "askMechanicWhy": "walks through walls"
+      },
+      {
+        "id": "cl_qb1k9s",
+        "text": "drags you back out through them",
+        "kind": "mechanical",
+        "askWhen": "on_hit",
+        "askWhenWhy": "drags you back out through them",
+        "askShape": "attack",
+        "askMechanic": "grapple",
+        "askMechanicWhy": "drags you back out through them"
+      }
+    ],
+    "cite": "composition after Wraith (CR 5) — Life Drain under the sunlight bane",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained",
+  "resistances": "Bludgeoning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "a chalk-hound that walks through walls and drags you back out through them",
+  "selectedChallengeRating": "8",
+  "monsterName": "Chalk-Hound",
+  "caster": false
+}

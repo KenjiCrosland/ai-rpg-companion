@@ -1,0 +1,133 @@
+{
+  "name": "Mourning Lantern",
+  "inline": "the mourning lantern",
+  "format": "2024",
+  "cr": 3,
+  "cr_str": "3",
+  "xp": 700,
+  "challenge_rating": "3 (XP 700; PB +2)",
+  "type": "Undead",
+  "size": "Tiny",
+  "alignment": "Neutral",
+  "ac": 12,
+  "hp": 76,
+  "hp_formula": "17d4 + 34",
+  "pb": 2,
+  "speed": "20 ft.",
+  "stats": {
+    "STR": 17,
+    "DEX": 12,
+    "CON": 15,
+    "INT": 5,
+    "WIS": 13,
+    "CHA": 8
+  },
+  "saves": {
+    "STR": 5,
+    "DEX": 1,
+    "CON": 2,
+    "INT": -3,
+    "WIS": 1,
+    "CHA": -1
+  },
+  "skills": "Stealth +5",
+  "senses": "darkvision 60 ft.; Passive Perception 11",
+  "languages": "None",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Grief-Fed Flame",
+        "text": "Whenever a creature within reach of the mourning lantern's chain dies, the mourning lantern regains 13 (3d8) Hit Points.",
+        "authored": true,
+        "clause": "Whenever a creature within reach of the mourning lantern's chain dies, the dim lantern-flame drinks the fading life and ",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "grief-fed flame that flares from harmless to deadly",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "Whenever a creature within reach of the mourning lantern's chain dies, the mourning lantern regains 13 (3d8) Hit Points."
+      },
+      {
+        "name": "Adhesive Hide",
+        "imposes": "Grappled",
+        "rules": true,
+        "text": "The mourning lantern adheres to anything that touches it. A Huge or smaller creature adhered to the mourning lantern has the Grappled condition (escape DC 13)."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Chain Lash",
+        "text": "*Melee Attack Roll:* +5 (with Advantage if the target is Grappled by the mourning lantern), reach 5 ft. 12 (2d8 + 3) Bludgeoning damage plus 9 (2d8) Necrotic damage.",
+        "weapon": null,
+        "attacksPerRound": 1
+      },
+      {
+        "name": "Mournful Cry",
+        "text": "*Wisdom Saving Throw:* DC 12, one creature within 60 feet. *Failure:* The target has the Frightened condition until the end of its next turn. If the target was already Frightened by this ability, it also takes 24 (7d6) Necrotic damage.",
+        "library": true,
+        "template": "escalating-dread",
+        "imposes": "Frightened",
+        "boundKeys": [
+          "grief"
+        ],
+        "gmQuote": "a lantern that mourns",
+        "duration": "target_end"
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "False Form",
+        "rules": true,
+        "text": "The mourning lantern shape-shifts to resemble a Medium or Small object while retaining its game statistics, or it returns to its true form. While it is motionless in its false form, it is indistinguishable from an ordinary object."
+      }
+    ]
+  },
+  "lore": "A lantern carried by a traveler who died of grief on the road, its refused spirit now burns forever, luring the living close to share in a sorrow that scorches.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-2-trap",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": true,
+    "unplaced": [],
+    "userConcept": "a lantern that mourns",
+    "clauses": [
+      {
+        "id": "cl_1a03g5g",
+        "text": "a lantern that mourns",
+        "kind": "mechanical",
+        "askMechanic": "relic",
+        "askMechanicWhy": "a lantern"
+      }
+    ],
+    "cite": "composition after Mimic (CR 2) — disguise, adhesion, and the grappled-prey advantage",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Poison; Exhaustion, Poisoned",
+  "lint_findings": [],
+  "monsterDescription": "a lantern that mourns",
+  "selectedChallengeRating": "3",
+  "monsterName": "Mourning Lantern",
+  "caster": false
+}

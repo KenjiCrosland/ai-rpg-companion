@@ -1,0 +1,152 @@
+{
+  "name": "Drowned Seep",
+  "inline": "the drowned seep",
+  "format": "2024",
+  "cr": 7,
+  "cr_str": "7",
+  "xp": 2900,
+  "challenge_rating": "7 (XP 2,900; PB +3)",
+  "type": "Monstrosity",
+  "size": "Large",
+  "alignment": "Neutral",
+  "ac": 14,
+  "hp": 136,
+  "hp_formula": "16d10 + 48",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 12,
+    "CON": 16,
+    "INT": 6,
+    "WIS": 8,
+    "CHA": 6
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": 1,
+    "CON": 6,
+    "INT": -2,
+    "WIS": -1,
+    "CHA": -2
+  },
+  "skills": "Athletics +7, Perception +2",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "None",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Composed Row",
+        "text": "*Constitution Saving Throw*: DC 14, any creature that starts its turn in a 10-foot Emanation originating from the drowned seep. *Failure:* The target has the Poisoned condition until the end of its next turn. *Success:* The target is immune to this creature's aura for 24 hours.",
+        "library": true,
+        "template": "composed:zone:condition:poisoned",
+        "imposes": "Poisoned",
+        "boundKeys": [],
+        "gmQuote": "a creature that poisons everything it touches including itself",
+        "duration": "target_end",
+        "expresses": "poisoning everything it touches, including itself",
+        "bound": false,
+        "clause": "including itself",
+        "answersAlso": [
+          "including itself"
+        ],
+        "clauseId": "cl_1lt6v4i"
+      },
+      {
+        "name": "Regeneration",
+        "rules": true,
+        "text": "The drowned seep regains 10 Hit Points at the start of each of its turns. If the drowned seep takes Fire damage, this trait doesn't function on the drowned seep's next turn. The drowned seep dies only if it starts its turn with 0 Hit Points and doesn't regenerate."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The drowned seep makes three Slam attacks. It can replace one attack with a use of Ichor-Soaked Hide."
+      },
+      {
+        "name": "Slam",
+        "text": "*Melee Attack Roll:* +7, reach 10 ft. 8 (1d8 + 4) Bludgeoning damage plus 7 (2d6) Poison damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Ichor-Soaked Hide",
+        "text": "*Constitution Saving Throw*: DC 14, each creature in a 30-foot Cone. *Failure:* The target has the Poisoned condition until the end of its next turn.",
+        "authored": true,
+        "clause": "poisons everything it touches",
+        "imposes": "Poisoned",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "poisoning everything it touches, including itself",
+        "widened": true,
+        "boundKeys": [],
+        "decoration": true,
+        "clauseId": "cl_1iaoz4g"
+      }
+    ]
+  },
+  "lore": "Something that died in a poisoned spring did not stay dead — it swelled, split, and became a walking wound that leaks the venom it drowned in and wants only to keep touching things.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-regenerator",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a creature that poisons everything it touches, including itself",
+    "clauses": [
+      {
+        "id": "cl_10vdr1a",
+        "text": "a creature",
+        "kind": "mechanical",
+        "askWhen": "on_hit",
+        "askWhenWhy": "it touches",
+        "askShape": "attack"
+      },
+      {
+        "id": "cl_1iaoz4g",
+        "text": "poisons everything it touches",
+        "kind": "mechanical",
+        "askWhen": "on_hit",
+        "askWhenWhy": "it touches",
+        "askShape": "attack"
+      },
+      {
+        "id": "cl_1lt6v4i",
+        "text": "including itself",
+        "kind": "mechanical"
+      }
+    ],
+    "cite": "composition after Troll (CR 5) — three claws and the off-switch",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "answered_by_existing": [
+      "including itself -> Composed Row"
+    ],
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a creature that poisons everything it touches, including itself",
+  "selectedChallengeRating": "7",
+  "monsterName": "Drowned Seep",
+  "caster": false
+}

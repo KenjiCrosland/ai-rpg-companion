@@ -1,0 +1,227 @@
+{
+  "name": "Drowned Reeve",
+  "inline": "the drowned reeve",
+  "type_and_alignment": "Medium undead, lawful neutral",
+  "armor_class": "15 (natural armor)",
+  "hit_points": "135 (18d8 + 54)",
+  "speed": "30 ft., swim 30 ft.",
+  "attributes": "STR 12 (+1), DEX 18 (+4), CON 16 (+3), INT 13 (+1), WIS 14 (+2), CHA 11 (+0)",
+  "saving_throws": "DEX +7, INT +4",
+  "skills": "Perception +5, Stealth +10",
+  "senses": "darkvision 60 ft., passive Perception 15",
+  "languages": "Common plus the languages it knew in life",
+  "challenge_rating": "8 (3,900 XP)",
+  "proficiency_bonus": "+3",
+  "abilities": [
+    {
+      "name": "Relentless Pursuit",
+      "description": "While the drowned reeve is moving toward a creature it has damaged within the last 24 hours, the drowned reeve's Speed can't be reduced and Difficult Terrain doesn't cost it extra movement."
+    },
+    {
+      "name": "Umbral Step (Bonus Action)",
+      "description": "While in Dim Light or Darkness, the drowned reeve takes the Hide action."
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The drowned reeve makes three attacks. It can replace one attack with a use of Grave-Cold Bolt."
+    },
+    {
+      "name": "Strike Arm",
+      "description": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 8 (1d8 + 4) bludgeoning damage plus 7 (2d6) necrotic damage."
+    },
+    {
+      "name": "Grave-Cold Bolt",
+      "description": "One creature within 60 feet must make a DC 15 Dexterity saving throw, taking 19 (3d12) necrotic damage on a failed save."
+    }
+  ],
+  "format": "2014",
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "damage_immunities": "poison",
+  "condition_immunities": "exhaustion, poisoned",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-8",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a reeve of the drowned marsh who never loses a trail",
+    "clauses": [
+      {
+        "id": "cl_1jqnjo0",
+        "text": "a reeve of the drowned marsh",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_vgjo41",
+        "text": "never loses a trail",
+        "kind": "mechanical",
+        "askShape": "condition",
+        "askMechanic": "track",
+        "askMechanicWhy": "never loses a trail"
+      }
+    ],
+    "cite": "composition after Assassin (CR 8) — the rider-heavy burst and the expertise Stealth",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 1,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "other_edition": {
+    "name": "Drowned Reeve",
+    "inline": "the drowned reeve",
+    "format": "2024",
+    "cr": 8,
+    "cr_str": "8",
+    "xp": 3900,
+    "challenge_rating": "8 (XP 3,900; PB +3)",
+    "type": "Undead",
+    "size": "Medium",
+    "alignment": "Lawful Neutral",
+    "ac": 15,
+    "hp": 135,
+    "hp_formula": "18d8 + 54",
+    "pb": 3,
+    "speed": "30 ft., Swim 30 ft.",
+    "stats": {
+      "STR": 12,
+      "DEX": 18,
+      "CON": 16,
+      "INT": 13,
+      "WIS": 14,
+      "CHA": 11
+    },
+    "saves": {
+      "STR": 1,
+      "DEX": 7,
+      "CON": 3,
+      "INT": 4,
+      "WIS": 2,
+      "CHA": 0
+    },
+    "skills": "Perception +5, Stealth +10",
+    "senses": "darkvision 60 ft.; Passive Perception 15",
+    "languages": "Common plus the languages it knew in life",
+    "initiative_bonus": 4,
+    "initiative_score": 14,
+    "sections": {
+      "Actions": [
+        {
+          "name": "Multiattack",
+          "text": "The drowned reeve makes three attacks. It can replace one attack with a use of Grave-Cold Bolt."
+        },
+        {
+          "name": "Strike Arm",
+          "text": "*Melee Attack Roll:* +7, reach 5 ft. 8 (1d8 + 4) Bludgeoning damage plus 7 (2d6) Necrotic damage.",
+          "weapon": null,
+          "attacksPerRound": 1
+        },
+        {
+          "name": "Grave-Cold Bolt",
+          "text": "*Dexterity Saving Throw*: DC 15, one creature within 60 feet. *Failure:* 19 (3d12) Necrotic damage.",
+          "authored": true,
+          "clause": "never loses a trail",
+          "authoredSeat": true,
+          "freeRow": true,
+          "expresses": "the unbreakable trail — a grave-cold mark it sets that no distance or disguise s",
+          "boundKeys": [],
+          "decoration": true,
+          "nameClaimRevoked": [
+            "grave",
+            "cold"
+          ],
+          "clauseId": "cl_vgjo41"
+        }
+      ],
+      "Bonus Actions": [
+        {
+          "name": "Umbral Step",
+          "rules": true,
+          "text": "While in Dim Light or Darkness, the drowned reeve takes the Hide action."
+        }
+      ],
+      "Traits": [
+        {
+          "name": "Relentless Pursuit",
+          "text": "While the drowned reeve is moving toward a creature it has damaged within the last 24 hours, the drowned reeve's Speed can't be reduced and Difficult Terrain doesn't cost it extra movement.",
+          "library": true,
+          "template": "relentless-pursuit",
+          "boundKeys": [],
+          "gmQuote": "a reeve of the drowned marsh who never loses a trail",
+          "expresses": "the unbreakable trail — a grave-cold mark it sets that no distance or disguise s",
+          "bound": false
+        }
+      ]
+    },
+    "lore": "A marsh-reeve drowned while running a fugitive through the fens, and the bog kept its office: it still serves the warrant, and now the whole drowned marsh is its jurisdiction.",
+    "inline_kind": "kind",
+    "generation": {
+      "path": "reskin",
+      "pipeline": {
+        "path": "homebrew",
+        "print_body": null,
+        "relation": null,
+        "class": null,
+        "species": null,
+        "by": "call"
+      },
+      "donor": "lurker-8",
+      "archetype": "lurker",
+      "holds": false,
+      "creatureOnly": false,
+      "unplaced": [],
+      "userConcept": "a reeve of the drowned marsh who never loses a trail",
+      "clauses": [
+        {
+          "id": "cl_1jqnjo0",
+          "text": "a reeve of the drowned marsh",
+          "kind": "descriptive",
+          "head": true
+        },
+        {
+          "id": "cl_vgjo41",
+          "text": "never loses a trail",
+          "kind": "mechanical",
+          "askShape": "condition",
+          "askMechanic": "track",
+          "askMechanicWhy": "never loses a trail"
+        }
+      ],
+      "cite": "composition after Assassin (CR 8) — the rider-heavy burst and the expertise Stealth",
+      "free_rows": 1,
+      "free_row_templates": [
+        "unknown"
+      ],
+      "decoration_rows": 1,
+      "expressed_rows": 0,
+      "signature_rows": 1,
+      "seed_rows": 0,
+      "signature": "library"
+    },
+    "archetype": "lurker",
+    "archetype_source": "user",
+    "immunities": "Poison; Exhaustion, Poisoned",
+    "lint_findings": []
+  },
+  "monsterDescription": "a reeve of the drowned marsh who never loses a trail",
+  "selectedChallengeRating": "8",
+  "monsterName": "Drowned Reeve",
+  "caster": false
+}

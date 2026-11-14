@@ -1,0 +1,158 @@
+{
+  "name": "Coal-Cat",
+  "inline": "the coal-cat",
+  "format": "2024",
+  "cr": 4,
+  "cr_str": "4",
+  "xp": 1100,
+  "challenge_rating": "4 (XP 1,100; PB +2)",
+  "type": "Monstrosity",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 14,
+  "hp": 85,
+  "hp_formula": "9d8 + 45",
+  "pb": 2,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 12,
+    "CON": 20,
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 8
+  },
+  "saves": {
+    "STR": 6,
+    "DEX": 1,
+    "CON": 7,
+    "INT": -2,
+    "WIS": 0,
+    "CHA": -1
+  },
+  "skills": "Athletics +6, Perception +2",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "None",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Ember Trail",
+        "text": "When the coal-cat moves, The space it leaves burns until the start of its next turn; a creature that ends its turn there takes 4 (1d8) Fire damage.",
+        "authored": true,
+        "clause": "Where the coal-cat walks, its hide sheds live cinders that cling and smolder; the ground it crosses is left burning, and",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "wounds stoke it hotter",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "The space it leaves burns until the start of its next turn"
+      },
+      {
+        "name": "Legendary Resistance (3/Day)",
+        "text": "If the coal-cat fails a saving throw, it can choose to succeed instead.",
+        "gate": "3/Day"
+      },
+      {
+        "name": "Regeneration",
+        "rules": true,
+        "text": "The coal-cat regains 20 Hit Points at the start of each of its turns. If the coal-cat takes Cold damage, this trait doesn't function on the coal-cat's next turn. The coal-cat dies only if it starts its turn with 0 Hit Points and doesn't regenerate."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The coal-cat makes two Claw attacks."
+      },
+      {
+        "name": "Claw",
+        "text": "*Melee Attack Roll:* +6, reach 10 ft. 7 (1d6 + 4) Slashing damage plus 4 (1d8) Fire damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      }
+    ],
+    "Legendary Actions": [
+      {
+        "name": "Legendary Action Uses: 3",
+        "rules": true,
+        "text": "Immediately after another creature's turn, the coal-cat can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns."
+      },
+      {
+        "name": "Stoke the Coals",
+        "text": "The coal-cat moves up to half its Speed without provoking Opportunity Attacks, and it makes one Claw attack."
+      },
+      {
+        "name": "Cinder Stare",
+        "imposes": "Frightened",
+        "text": "*Wisdom Saving Throw*: DC 15, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn."
+      },
+      {
+        "name": "Coal Slam",
+        "imposes": "Prone",
+        "text": "*Strength Saving Throw*: DC 15, each creature within 10 feet of the coal-cat. *Failure:* The target has the Prone condition."
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Frenzied Pounce (1/Day)",
+        "gate": "1/Day",
+        "text": "Immediately after dealing damage to a creature that is already Bloodied, the coal-cat moves up to half its Speed, and it makes one Claw attack.",
+        "library": true,
+        "seed": "rampage",
+        "boundKeys": [
+          "wound"
+        ]
+      }
+    ]
+  },
+  "lore": "A stray ember from a mine-fire that never died, it prowls the dark seams and slag heaps where it was kindled, feeding on warmth and stoking itself hotter with every fight it survives.",
+  "inline_kind": "kind",
+  "inline_overridden": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-17-regenerator",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a coal-cat whose every wound makes it burn hotter",
+    "clauses": [
+      {
+        "id": "cl_fvvaz2",
+        "text": "a coal-cat whose every wound makes it burn hotter",
+        "kind": "descriptive",
+        "head": true
+      }
+    ],
+    "invented": true,
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 1,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x an UNRECORDED drop site",
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "resistances": "Fire",
+  "lint_findings": [],
+  "monsterDescription": "a coal-cat whose every wound makes it burn hotter",
+  "selectedChallengeRating": "4",
+  "monsterName": "Coal-Cat",
+  "caster": false
+}

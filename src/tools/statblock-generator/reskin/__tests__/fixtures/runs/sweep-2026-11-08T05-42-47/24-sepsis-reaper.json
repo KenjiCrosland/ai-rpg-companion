@@ -1,0 +1,190 @@
+{
+  "name": "Sepsis Reaper",
+  "inline": "the reaper",
+  "format": "2024",
+  "cr": 9,
+  "cr_str": "9",
+  "xp": 5000,
+  "challenge_rating": "9 (XP 5,000; PB +4)",
+  "type": "Monstrosity",
+  "size": "Large",
+  "alignment": "Unaligned",
+  "ac": 15,
+  "hp": 161,
+  "hp_formula": "19d10 + 57",
+  "pb": 4,
+  "speed": "40 ft., Climb 40 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 8,
+    "CON": 17,
+    "INT": 4,
+    "WIS": 12,
+    "CHA": 6
+  },
+  "saves": {
+    "STR": 8,
+    "DEX": -1,
+    "CON": 7,
+    "INT": -3,
+    "WIS": 1,
+    "CHA": -2
+  },
+  "skills": "Athletics +8, Perception +5",
+  "senses": "darkvision 60 ft.; Passive Perception 15",
+  "languages": "None",
+  "initiative_bonus": -1,
+  "initiative_score": 9,
+  "sections": {
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The reaper makes two attacks, using Spitting Maw or Four Scythe-Arms in any combination. It can replace one attack with a use of Shearing Carve."
+      },
+      {
+        "name": "Spitting Maw",
+        "imposes": "Grappled",
+        "text": "*Melee Attack Roll:* +8, reach 10 ft. 17 (3d8 + 4) Piercing damage plus 13 (3d8) Acid damage. If the target is a Large or smaller creature, it has the Grappled condition (escape DC 16).",
+        "part": true,
+        "authored": true,
+        "clause": "a spitting maw",
+        "answersAlso": [
+          "It fights by pinning prey with two arms"
+        ],
+        "clauseId": "cl_1rmhnfc",
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Shearing Carve",
+        "text": "*Constitution Saving Throw*: DC 15, one creature within 30 feet. *Failure:* 28 (8d6) Acid damage, and the target has the Poisoned condition until the end of its next turn. *Success:* Half damage only.",
+        "authored": true,
+        "clause": "carving with the others",
+        "imposes": "Poisoned",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": null,
+        "boundKeys": [],
+        "clauseId": "cl_1irx7w"
+      },
+      {
+        "name": "Four Scythe-Arms",
+        "text": "*Melee Attack Roll:* +8, reach 5 ft. 17 (3d8 + 4) Slashing damage.",
+        "authored": true,
+        "flavor": "One of the reaper's four scythe-arms sweeps down; its reach lets it strike at the length of the limb.",
+        "clause": "It has four scythe-arms",
+        "clauseId": "cl_1fi1wd",
+        "attacksPerRound": 2
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Swallow",
+        "rules": true,
+        "engulf_engine": true,
+        "imposes": [
+          "Blinded",
+          "Restrained"
+        ],
+        "text": "The reaper swallows one Medium or smaller creature it is grappling. While swallowed, the target has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the reaper, and takes 10 (3d6) Acid damage at the start of each of the reaper's turns. The reaper can have only one creature swallowed at a time. If the reaper takes 25 damage or more on a single turn from the swallowed creature, the reaper must regurgitate the target at the end of that turn, and the target exits Prone in an unoccupied space within 10 feet of the reaper. If the reaper dies, a swallowed creature exits the body Prone by using 10 feet of movement.",
+        "boundKeys": [
+          "swallow",
+          "swallows",
+          "engulf",
+          "engulfs",
+          "devour",
+          "devours",
+          "gulp",
+          "smother",
+          "entomb",
+          "cocoon",
+          "whelm"
+        ]
+      }
+    ]
+  },
+  "lore": "Hatched in the caustic sumps beneath a ruined hive-city, the Sepsis Reaper exists only to feed, leaving a trail of pitted stone and dissolving bone wherever it has hunted.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-8-grappler",
+    "archetype": "brute",
+    "holds": true,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "A Large insectile horror. It has four scythe-arms, a spitting maw, and a shell that sheds acid. It fights by pinning prey with two arms and carving with the others.",
+    "clauses": [
+      {
+        "id": "cl_1dm7bhw",
+        "text": "A Large insectile horror",
+        "kind": "header"
+      },
+      {
+        "id": "cl_1fi1wd",
+        "text": "It has four scythe-arms",
+        "kind": "mechanical",
+        "askShape": "attack"
+      },
+      {
+        "id": "cl_1rmhnfc",
+        "text": "a spitting maw",
+        "kind": "mechanical",
+        "askShape": "save_single"
+      },
+      {
+        "id": "cl_mxc6ug",
+        "text": "a shell that sheds acid",
+        "kind": "mechanical",
+        "askWhen": "on_being_hit",
+        "askWhenWhy": "sheds",
+        "askShape": "save_single",
+        "askMechanic": "retaliate",
+        "askMechanicWhy": "sheds acid"
+      },
+      {
+        "id": "cl_486qnn",
+        "text": "It fights by pinning prey with two arms",
+        "kind": "mechanical",
+        "askShape": "attack",
+        "askMechanic": "grapple",
+        "askMechanicWhy": "pinning prey with two arms"
+      },
+      {
+        "id": "cl_1irx7w",
+        "text": "carving with the others",
+        "kind": "mechanical",
+        "askShape": "attack"
+      }
+    ],
+    "cite": "composition after Tyrannosaurus Rex / Purple Worm — the swallow engine",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 0,
+    "seed_rows": 0,
+    "gap_vetoed": "1 of 1",
+    "gap_missing_unstated": 0,
+    "gap_death_sites": "1x the call named no template for the pick",
+    "answered_by_existing": [
+      "It fights by pinning prey with two arms -> Spitting Maw"
+    ],
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "A Large insectile horror. It has four scythe-arms, a spitting maw, and a shell that sheds acid. It fights by pinning prey with two arms and carving with the others.",
+  "selectedChallengeRating": "9",
+  "monsterName": "Sepsis Reaper",
+  "caster": false
+}

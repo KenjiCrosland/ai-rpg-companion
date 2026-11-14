@@ -1,0 +1,140 @@
+{
+  "name": "Debt-Bound Collector",
+  "inline": "the collector",
+  "format": "2024",
+  "cr": 7,
+  "cr_str": "7",
+  "xp": 2900,
+  "challenge_rating": "7 (XP 2,900; PB +3)",
+  "type": "Monstrosity",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 14,
+  "hp": 135,
+  "hp_formula": "18d8 + 54",
+  "pb": 3,
+  "speed": "30 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 12,
+    "CON": 16,
+    "INT": 6,
+    "WIS": 8,
+    "CHA": 6
+  },
+  "saves": {
+    "STR": 7,
+    "DEX": 1,
+    "CON": 6,
+    "INT": -2,
+    "WIS": -1,
+    "CHA": -2
+  },
+  "skills": "Athletics +7, Perception +2",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "Common",
+  "initiative_bonus": 1,
+  "initiative_score": 11,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Lit Ledger",
+        "text": "When a creature the collector can see deals damage to it, The collector regains 9 (2d8) Hit Points and unerringly tracks the debtor, knowing the shortest path to them.",
+        "authored": true,
+        "clause": "The collector's hide is seamed with coin-purses of stitched flesh and knotted memory, and it can read the debt still owe",
+        "authoredSeat": true,
+        "freeRow": true,
+        "expresses": "takes something from its attacker each time it is wounded",
+        "bound": false,
+        "boundKeys": [],
+        "expressedQuote": "The collector regains 9 (2d8) Hit Points and unerringly tracks the debtor, knowing the shortest path to them."
+      },
+      {
+        "name": "Regeneration",
+        "rules": true,
+        "text": "The collector regains 10 Hit Points at the start of each of its turns. If the collector takes Radiant damage, this trait doesn't function on the collector's next turn. The collector dies only if it starts its turn with 0 Hit Points and doesn't regenerate."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The collector makes three Claw attacks. It can replace one attack with a use of Debt of Ruin."
+      },
+      {
+        "name": "Claw",
+        "text": "*Melee Attack Roll:* +7, reach 10 ft. 17 (3d8 + 4) Slashing damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Debt of Ruin",
+        "text": "*Dexterity Saving Throw:* DC 14, one creature within 60 feet. *Failure:* The target is cursed until the end of the collector's next turn. The first time the cursed target deals damage to any creature before then, it takes 17 (5d6) Necrotic damage. *Success:* Half damage only.",
+        "library": true,
+        "seed": "curse-debt",
+        "boundKeys": [
+          "tithe"
+        ],
+        "clause": "a tithe-collector",
+        "clauseId": "cl_vc0vml"
+      }
+    ]
+  },
+  "lore": "Grown from a hundred unpaid vows pressed into one hide-bound body, the tithe-collector walks the roads of the living to wring each outstanding debt back out of anyone who still carries the ledger.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "brute-5-regenerator",
+    "archetype": "brute",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a tithe-collector that takes something every time it is wounded",
+    "clauses": [
+      {
+        "id": "cl_vc0vml",
+        "text": "a tithe-collector",
+        "kind": "mechanical",
+        "askWhen": "on_being_hit",
+        "askWhenWhy": "every time it is wounded",
+        "askShape": "condition",
+        "askMechanic": "curse",
+        "askMechanicWhy": "takes something"
+      },
+      {
+        "id": "cl_173kbfh",
+        "text": "takes something every time it is wounded",
+        "kind": "mechanical",
+        "askWhen": "on_being_hit",
+        "askWhenWhy": "every time it is wounded",
+        "askShape": "condition",
+        "askMechanic": "curse",
+        "askMechanicWhy": "takes something"
+      }
+    ],
+    "cite": "composition after Troll (CR 5) — three claws and the off-switch",
+    "free_rows": 1,
+    "free_row_templates": [
+      "unknown"
+    ],
+    "decoration_rows": 0,
+    "expressed_rows": 1,
+    "signature_rows": 1,
+    "seed_rows": 1,
+    "signature": "library"
+  },
+  "archetype": "brute",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a tithe-collector that takes something every time it is wounded",
+  "selectedChallengeRating": "7",
+  "monsterName": "Debt-Bound Collector",
+  "caster": false
+}

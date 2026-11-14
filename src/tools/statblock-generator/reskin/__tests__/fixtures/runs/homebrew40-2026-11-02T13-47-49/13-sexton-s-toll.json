@@ -1,0 +1,177 @@
+{
+  "name": "Sexton's Toll",
+  "inline": "the sexton's toll",
+  "format": "2024",
+  "cr": 15,
+  "cr_str": "15",
+  "xp": 13000,
+  "challenge_rating": "15 (XP 13,000; PB +5)",
+  "type": "Undead",
+  "size": "Medium",
+  "alignment": "Neutral",
+  "ac": 15,
+  "hp": 204,
+  "hp_formula": "24d8 + 96",
+  "pb": 5,
+  "speed": "5 ft., Fly 60 ft. (hover)",
+  "stats": {
+    "STR": 6,
+    "DEX": 22,
+    "CON": 19,
+    "INT": 12,
+    "WIS": 14,
+    "CHA": 15
+  },
+  "saves": {
+    "STR": -2,
+    "DEX": 11,
+    "CON": 4,
+    "INT": 1,
+    "WIS": 2,
+    "CHA": 2
+  },
+  "skills": "Stealth +11",
+  "senses": "darkvision 60 ft.; Passive Perception 12",
+  "languages": "Common plus the languages it knew in life",
+  "initiative_bonus": 6,
+  "initiative_score": 16,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Resonant Knell",
+        "text": "A creature that hits the sexton's toll with a melee attack while within 5 feet of it has the Deafened condition until the end of its next turn.",
+        "library": true,
+        "template": "composed:body-reaction:condition:t0:deafened",
+        "imposes": "Deafened",
+        "boundKeys": [],
+        "freeRow": true,
+        "expresses": "a spectral bell it strikes with its own shadow-stuff",
+        "bound": false,
+        "clause": "twice for sleep",
+        "answersAlso": [
+          "twice for sleep"
+        ],
+        "decoration": true,
+        "clauseId": "cl_1dx8wjs"
+      },
+      {
+        "name": "Incorporeal Movement",
+        "rules": true,
+        "text": "The sexton's toll can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object."
+      },
+      {
+        "name": "Sunlight Sensitivity",
+        "rules": true,
+        "text": "While in sunlight, the sexton's toll has Disadvantage on ability checks and attack rolls."
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The sexton's toll makes two Iron Clapper attacks. It can replace one attack with a use of Discordant Peal."
+      },
+      {
+        "name": "Iron Clapper",
+        "text": "*Melee Attack Roll:* +11, reach 5 ft. 30 (7d6 + 6) Bludgeoning damage plus 21 (6d6) Necrotic damage.",
+        "weapon": null,
+        "attacksPerRound": 2
+      },
+      {
+        "name": "Discordant Peal",
+        "text": "*Constitution Saving Throw:* DC 19, each creature in a 30-foot Cone. *Failure:* The target has the Blinded condition until the end of the sexton's toll's next turn.",
+        "library": true,
+        "imposes": "Blinded",
+        "seed": "sensory-strike",
+        "duration": "source_end",
+        "boundKeys": [
+          "toll",
+          "bell"
+        ],
+        "clause": "tolls once for fear",
+        "clauseId": "cl_117drvi"
+      }
+    ]
+  },
+  "lore": "A sexton died with a toll unfinished, and what remains of him rings his spectral iron still, counting down to the grave he was denied.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-5-phantom",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [
+      {
+        "clause": "three times for the grave",
+        "where": "description",
+        "text": "The bell's clapper strikes again, and the target must succeed on a Constitution saving throw against {dc} or take {dmg} Necrotic damage as the peal reaches down the road no one walks back."
+      }
+    ],
+    "userConcept": "a bell-wraith that tolls once for fear, twice for sleep, and three times for the grave",
+    "clauses": [
+      {
+        "id": "cl_ehq2ma",
+        "text": "a bell-wraith",
+        "kind": "descriptive",
+        "head": true
+      },
+      {
+        "id": "cl_117drvi",
+        "text": "tolls once for fear",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "fear",
+        "askMechanicWhy": "once for fear"
+      },
+      {
+        "id": "cl_1dx8wjs",
+        "text": "twice for sleep",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "charm",
+        "askMechanicWhy": "twice for sleep"
+      },
+      {
+        "id": "cl_1iftueb",
+        "text": "three times for the grave",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "drain",
+        "askMechanicWhy": "three times for the grave"
+      }
+    ],
+    "cite": "composition after Wraith (CR 5) — Life Drain under the sunlight bane",
+    "free_rows": 1,
+    "free_row_templates": [
+      "composed:body-reaction:condition:t0:deafened"
+    ],
+    "decoration_rows": 1,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 1,
+    "answered_in_prose": [
+      "three times for the grave"
+    ],
+    "answered_by_existing": [
+      "twice for sleep -> Resonant Knell"
+    ],
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "immunities": "Poison; Charmed, Exhaustion, Grappled, Paralyzed, Petrified, Poisoned, Prone, Restrained",
+  "resistances": "Bludgeoning, Piercing, Slashing",
+  "lint_findings": [],
+  "monsterDescription": "a bell-wraith that tolls once for fear, twice for sleep, and three times for the grave",
+  "selectedChallengeRating": "15",
+  "monsterName": "Sexton's Toll",
+  "caster": false
+}

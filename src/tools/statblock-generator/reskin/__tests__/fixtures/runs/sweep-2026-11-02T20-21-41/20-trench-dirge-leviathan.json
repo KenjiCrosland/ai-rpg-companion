@@ -1,0 +1,165 @@
+{
+  "name": "Trench Dirge Leviathan",
+  "inline": "the leviathan",
+  "format": "2024",
+  "cr": 24,
+  "cr_str": "24",
+  "xp": 62000,
+  "challenge_rating": "24 (XP 62,000; PB +7)",
+  "type": "Monstrosity",
+  "size": "Huge",
+  "alignment": "Neutral",
+  "ac": 20,
+  "hp": 432,
+  "hp_formula": "32d12 + 224",
+  "pb": 7,
+  "speed": "40 ft., Swim 40 ft.",
+  "stats": {
+    "STR": 18,
+    "DEX": 28,
+    "CON": 24,
+    "INT": 16,
+    "WIS": 18,
+    "CHA": 14
+  },
+  "saves": {
+    "STR": 4,
+    "DEX": 16,
+    "CON": 7,
+    "INT": 10,
+    "WIS": 11,
+    "CHA": 2
+  },
+  "skills": "Perception +11, Stealth +16",
+  "senses": "darkvision 120 ft.; Passive Perception 21",
+  "languages": "Common",
+  "initiative_bonus": 9,
+  "initiative_score": 19,
+  "sections": {
+    "Traits": [
+      {
+        "name": "Amphibious",
+        "text": "The leviathan can breathe air and water.",
+        "print": true
+      },
+      {
+        "name": "Dirge-Compression Bathysphere",
+        "text": "*Constitution Saving Throw*: DC 24, any creature that starts its turn in a 20-foot Emanation originating from the leviathan. *Failure:* The target has the Deafened condition until the start of its next turn. *Success:* The target is immune to this creature's aura for 24 hours.",
+        "library": true,
+        "template": "composed:zone:condition:deafened",
+        "imposes": "Deafened",
+        "boundKeys": [],
+        "gmQuote": "a leviathan of the trench whose song drowns fleets",
+        "duration": "target_start",
+        "expresses": "a song that drowns fleets",
+        "bound": false
+      },
+      {
+        "name": "Legendary Resistance (3/Day)",
+        "text": "If the leviathan fails a saving throw, it can choose to succeed instead.",
+        "gate": "3/Day"
+      }
+    ],
+    "Actions": [
+      {
+        "name": "Multiattack",
+        "text": "The leviathan makes three Tendril attacks."
+      },
+      {
+        "name": "Tendril",
+        "text": "*Melee Attack Roll:* +16, reach 10 ft. 22 (3d8 + 9) Bludgeoning damage plus 14 (4d6) Thunder damage.",
+        "weapon": null,
+        "attacksPerRound": 3
+      },
+      {
+        "name": "Dirge Toll (Recharge 5-6)",
+        "gate": "Recharge 5-6",
+        "text": "*Constitution Saving Throw*: DC 24, each creature in a 60-foot Emanation originating from the leviathan. *Failure:* 97 (15d12) Thunder damage, and the target has the Deafened condition until the end of its next turn. *Success:* Half damage only.",
+        "library": true,
+        "template": "active-toll",
+        "imposes": "Deafened",
+        "boundKeys": [
+          "deafen",
+          "thunder"
+        ],
+        "gmQuote": "a leviathan of the trench whose song drowns fleets",
+        "minorClause": ", and the target has the Deafened condition until the end of its next turn",
+        "area": {
+          "shape": "Emanation",
+          "size": 60
+        }
+      }
+    ],
+    "Bonus Actions": [
+      {
+        "name": "Umbral Step",
+        "rules": true,
+        "text": "While in Dim Light or Darkness, the leviathan takes the Hide action."
+      }
+    ],
+    "Legendary Actions": [
+      {
+        "name": "Legendary Action Uses: 3",
+        "rules": true,
+        "text": "Immediately after another creature's turn, the leviathan can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns."
+      },
+      {
+        "name": "Sink Beneath",
+        "text": "The leviathan moves up to half its Speed without provoking Opportunity Attacks, and it makes one Tendril attack."
+      },
+      {
+        "name": "Trench Vanishing",
+        "text": "While in Dim Light or Darkness, the leviathan takes the Hide action. The leviathan can't take this action again until the start of its next turn."
+      },
+      {
+        "name": "Hull-Shuddering Note",
+        "imposes": "Frightened",
+        "text": "*Wisdom Saving Throw*: DC 24, one creature within 30 feet. *Failure:* The target has the Frightened condition until the end of its next turn."
+      }
+    ]
+  },
+  "lore": "Born in the abyssal trenches where dead fleets settle like snow, the leviathan sings because the song is how it feeds, drawing vessels down to pave the sea floor with the drowned.",
+  "inline_kind": "kind",
+  "generation": {
+    "path": "reskin",
+    "pipeline": {
+      "path": "homebrew",
+      "print_body": null,
+      "relation": null,
+      "class": null,
+      "species": null,
+      "by": "call"
+    },
+    "donor": "lurker-17",
+    "archetype": "lurker",
+    "holds": false,
+    "creatureOnly": false,
+    "unplaced": [],
+    "userConcept": "a leviathan of the trench whose song drowns fleets",
+    "clauses": [
+      {
+        "id": "cl_1h1f3n8",
+        "text": "a leviathan of the trench whose song drowns fleets",
+        "kind": "mechanical",
+        "askShape": "save_single",
+        "askMechanic": "dazzle",
+        "askMechanicWhy": "song drowns fleets"
+      }
+    ],
+    "invented": true,
+    "free_rows": 0,
+    "free_row_templates": [],
+    "decoration_rows": 0,
+    "expressed_rows": 0,
+    "signature_rows": 2,
+    "seed_rows": 0,
+    "signature": "library"
+  },
+  "archetype": "lurker",
+  "archetype_source": "user",
+  "lint_findings": [],
+  "monsterDescription": "a leviathan of the trench whose song drowns fleets",
+  "selectedChallengeRating": "24",
+  "monsterName": "Trench Dirge Leviathan",
+  "caster": false
+}
