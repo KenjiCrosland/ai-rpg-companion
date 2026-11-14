@@ -186,13 +186,16 @@ const dismissed = [];
 let sheetsWithRecord = 0;
 const dismissedScan = (block, file) => {
   const rec = block?.generation?.audit_dismissed_on_print;
-  if (!Array.isArray(rec)) return; // a sheet generated before this landed says nothing either way
+  // ABSENT IS NOT ZERO. The field is stamped by the audit step, so its absence means the
+  // sheet is older than 2026-11-14 OR the audit never ran — and neither is the same fact as
+  // "the audit ran and dismissed nothing". It is deliberately not defaulted at creation.
+  if (!Array.isArray(rec)) return;
   sheetsWithRecord += 1;
   for (const d of rec) dismissed.push({ file, name: block?.name ?? file, ...d });
 };
 const dismissedReport = () => {
   const lines = ['', '## Audit findings dismissed on print rows', ''];
-  if (!sheetsWithRecord) return [...lines, '- no sheet in this run carries the record (generated before 2026-11-14)', ''].join('\n');
+  if (!sheetsWithRecord) return [...lines, '- no record on any sheet in this run: either older sheets, or the audit step did not run', ''].join('\n');
   lines.push(`**${dismissed.length}** finding(s) dismissed across ${sheetsWithRecord} sheet(s) that carry the record.`, '');
   if (!dismissed.length) return [...lines, '- none', ''].join('\n');
   for (const d of dismissed) lines.push(`- ${d.name} · ${d.section}/"${String(d.row).replace(/ \(.*\)$/, '')}" — ${d.message}`);

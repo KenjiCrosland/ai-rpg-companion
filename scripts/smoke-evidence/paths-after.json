@@ -1,0 +1,207 @@
+[
+ {
+  "label": "name: Grask Ironjaw | orc war chief",
+  "was": "class_npc",
+  "now": "class_npc"
+ },
+ {
+  "label": "name: Sister Maudra | cleric of the drowned go",
+  "was": "class_npc",
+  "now": "class_npc"
+ },
+ {
+  "label": "name: Captain Vell | pirate captain, lost a ha",
+  "was": "class_npc",
+  "now": "class_npc"
+ },
+ {
+  "label": "name: Thessaly Nightbloom | elf ranger, twin s",
+  "was": "class_npc",
+  "now": "class_npc"
+ },
+ {
+  "label": "name: Lord Vexmoor | necromancer BBEG, raises ",
+  "was": "class_npc",
+  "now": "class_npc"
+ },
+ {
+  "label": "name: Bramblejack |  | role: lurker",
+  "was": "homebrew",
+  "now": "homebrew"
+ },
+ {
+  "label": "name: Krug | ogre",
+  "was": "homebrew/twist",
+  "now": "homebrew"
+ },
+ {
+  "label": "name: Mother Ash | hag midwife",
+  "was": "class_npc",
+  "now": "homebrew"
+ },
+ {
+  "label": "name: Dervish Kal | fast, two scimitars, hit a",
+  "was": "class_npc/homebrew",
+  "now": "homebrew"
+ },
+ {
+  "label": "name: The Pale Warden | guardian of the crypt ",
+  "was": "homebrew",
+  "now": "homebrew"
+ },
+ {
+  "label": "name: Zarnak | basically a xenomorph",
+  "was": "homebrew",
+  "now": "homebrew"
+ },
+ {
+  "label": "name: big bob | giant who throws boulders | ro",
+  "was": "homebrew/twist",
+  "now": "homebrew"
+ },
+ {
+  "label": "lizard folk shadow monk",
+  "was": "class_npc",
+  "now": "class_npc"
+ },
+ {
+  "label": "fire monk",
+  "was": "class_npc",
+  "now": "class_npc"
+ },
+ {
+  "label": "goblin wizard",
+  "was": "class_npc/homebrew",
+  "now": "class_npc:Goblin Warrior"
+ },
+ {
+  "label": "vampire pirate",
+  "was": "homebrew/twist",
+  "now": "twist:Vampire"
+ },
+ {
+  "label": "owlbear zombie",
+  "was": "homebrew/twist",
+  "now": "twist:Owlbear"
+ },
+ {
+  "label": "name: Beholder | ",
+  "was": "homebrew/refused",
+  "now": "homebrew"
+ },
+ {
+  "label": "name: Mind Flayer | ",
+  "was": "homebrew/refused",
+  "now": "homebrew"
+ },
+ {
+  "label": "displacer beast",
+  "was": "homebrew/refused",
+  "now": "homebrew"
+ },
+ {
+  "label": "haunted suit of armor",
+  "was": "homebrew/refused",
+  "now": "homebrew:Animated Armor"
+ },
+ {
+  "label": "clockwork spider",
+  "was": "homebrew",
+  "now": "homebrew"
+ },
+ {
+  "label": "name: Orrin Blackwell | Orrin was the village'",
+  "was": "class_npc/homebrew",
+  "now": "class_npc"
+ },
+ {
+  "label": "name: Queen Ysolde the Unburied | Ancient quee",
+  "was": "homebrew",
+  "now": "homebrew"
+ },
+ {
+  "label": "name: Pip | A kobold who was raised by a green",
+  "was": "homebrew/refused/twist",
+  "now": "homebrew:Kobold Warrior"
+ },
+ {
+  "label": "name: The Hollow Cardinal | Leader of the Chur",
+  "was": "class_npc",
+  "now": "class_npc"
+ },
+ {
+  "label": "name: Grizzelda | swamp witch npc, sells potio",
+  "was": "class_npc",
+  "now": "class_npc:Green Hag"
+ },
+ {
+  "label": "name: Shadowfang | the druid's wolf companion,",
+  "was": "homebrew",
+  "now": "twist:Wolf"
+ },
+ {
+  "label": "CR 8 brute, two attacks, grapples",
+  "was": "homebrew",
+  "now": "homebrew"
+ },
+ {
+  "label": "owlbear but CR 8",
+  "was": "homebrew/twist",
+  "now": "homebrew"
+ },
+ {
+  "label": "a troll but weak to cold instead of fire",
+  "was": "twist",
+  "now": "twist:Troll"
+ },
+ {
+  "label": "goblin boss with a heavy crossbow",
+  "was": "class_npc/homebrew/twist",
+  "now": "twist:Goblin Warrior"
+ },
+ {
+  "label": "name: Thornback | an ankheg but legendary, bos",
+  "was": "twist",
+  "now": "twist:Ankheg"
+ },
+ {
+  "label": "AC 18 HP 200 hits hard, slow | role: brute",
+  "was": "homebrew",
+  "now": "homebrew"
+ },
+ {
+  "label": "a drgon",
+  "was": "homebrew",
+  "now": "homebrew"
+ },
+ {
+  "label": "big scary tree thing",
+  "was": "FAILED/homebrew",
+  "now": "homebrew"
+ },
+ {
+  "label": "what would a CR 4 swamp monster look like",
+  "was": "homebrew",
+  "now": "homebrew"
+ },
+ {
+  "label": "the thing that's been killing my players' hors",
+  "was": "homebrew",
+  "now": "homebrew"
+ },
+ {
+  "label": "name: Skarn the Tollkeeper | ",
+  "was": "homebrew",
+  "now": "homebrew"
+ },
+ {
+  "label": "sewer alligator",
+  "was": "homebrew",
+  "now": "homebrew"
+ },
+ {
+  "label": "sewer alligator",
+  "was": "homebrew",
+  "now": "homebrew"
+ }
+]

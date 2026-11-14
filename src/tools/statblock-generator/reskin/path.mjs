@@ -92,7 +92,7 @@ Answer with ONLY this JSON object, no commentary:
 {
   "assembly": "<twist | class_npc | homebrew>",
   "assembly_receipt": "<the GM's own words, a short span, that decide the assembly>",
-  "print_body": "<the published D&D monster or NPC stat block the words NAME as the creature itself, by its PRINTED name (Troll, not Cave Troll; Stone Giant, not Stone Giant Exile; Skeleton; Dire Wolf; Priest; Hobgoblin Warrior), or null>",
+  "print_body": "<the published D&D monster or NPC stat block the words NAME as the creature itself, by its PRINTED name (Troll, not Cave Troll; Stone Giant, not Stone Giant Exile; Skeleton; Dire Wolf; Priest; Hobgoblin Warrior), or null. ANSWER THIS INDEPENDENTLY OF \"class\": they are different questions and both can be filled. If a published creature noun is in the words, name it HERE even when you also answer a class, a trade or a title — the job word describes what the creature DOES, and this field is what it IS>",
   "print_body_receipt": "<the GM's words naming it, or null>",
   "relation": "<is | resembles | null — 'is' when the words say the creature IS that published creature (a troll that grows back; a stone giant exile); 'resembles' when they only evoke it (a golem of lashed timber is not the Clay Golem; an archon of flies is not a swarm)>",
   "species": "<one of ${SPECIES_KEYS.join(' | ')} if the words name that people, else null>",

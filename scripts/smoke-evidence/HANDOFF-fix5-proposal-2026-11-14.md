@@ -13,8 +13,14 @@ the pronouns on the card.
 
 ## The measurement
 
+Script: **`scripts/analysis/count-person-pronouns.mjs`**, committed so this can be re-run.
+It reads `smoke-out/`, which is gitignored, so a fresh clone prints zeros until runs exist —
+that is why these numbers could not be reproduced from the repo alone.
+
 105 named-person Humanoid sheets across the saved runs of 11-05 to 11-14; 103 carry "it" or
-"its". 361 occurrences, classified by their antecedent in the same sentence:
+"its". 361 occurrences, classified by their antecedent in the same sentence. (Re-run after
+the later runs of 11-14 it reads 365; the split below is unchanged to the percent, which is
+the point — the denominator moves with the runs and the shape does not.)
 
 | what the pronoun means | count | |
 |---|---|---|
@@ -65,8 +71,13 @@ corpus rows, which is a much larger piece of work than fix 5 was scoped as.
 2. **Catalog + calls + tag print's referents.** Consistent, and the only version that actually
    delivers "a person is never 'it'". Much larger: 1,310 rows, and it is corpus work of the
    same kind as the Archmage repair but three orders of magnitude bigger.
-3. **Don't.** Print itself writes every humanoid NPC — the Archmage, the Knight, the Priest —
-   as "it". The bar would be a change from print's own register, not a defect against it.
+3. **Don't.** Print mostly avoids the pronoun rather than choosing "it": across all 26
+   Humanoid blocks there are only about two dozen "it"/"its" (22 by Fable 5.2's count, 24 by
+   mine — the difference is which sentence-initial "It" each of us counted), about a dozen
+   meaning the creature and most
+   of those the stock Parry line ("adds 2 to its AC"). The Archmage, Priest and Mage carry
+   none at all — print repeats the noun instead. So the bar would be a change from print's
+   own register (repeat the name), not a defect against it.
 
 My own read is (3) for now and (2) if the owner wants it properly, because (1) ships a card
 that is half-corrected and looks like a bug. But the question "should a named person read as
