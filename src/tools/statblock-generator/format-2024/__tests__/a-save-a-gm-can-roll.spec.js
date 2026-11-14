@@ -41,6 +41,19 @@ describe('a save a GM can roll', () => {
     expect(f[0].severity).toBe('audit');
   });
 
+  // THE SAME VERDICT NEEDS THE HONEST REASON. Grizzelda's Peddler's Seeming writes
+  // "(DC 14 Wisdom save negates)" — a GM can tell exactly what to roll, so reporting it
+  // as "names no saving throw" misleads whoever reads the run (caught by the item 2
+  // review). It is still malformed: print writes the aside nowhere, 0 across both
+  // corpora. Same FAIL, accurate message.
+  test('a save written as a parenthetical aside is reported as an aside, not as unnamed', () => {
+    const f = lintRow('When Grizzelda ends her turn invisible, creatures that see through this seeming are frightened of her until the end of their next turn (DC 14 Wisdom save negates).');
+    expect(f).toHaveLength(1);
+    expect(f[0].message).toMatch(/is an aside/);
+    expect(f[0].message).toMatch(/DC 14 Wisdom save negates/);
+    expect(f[0].message).not.toMatch(/names no saving throw/);
+  });
+
   test('a save that names a DC and then stops is broken text (the monk rider, 3 of 3 monks)', () => {
     const f = lintRow('Melee Attack Roll: +6, reach 5 ft. 16 (3d8 + 3) Bludgeoning damage. Once on each of its turns when it hits with this attack, the target is subjected to the following effect. *Constitution Saving Throw*: DC 14.');
     expect(f).toHaveLength(1);

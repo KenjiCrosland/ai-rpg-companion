@@ -2908,7 +2908,31 @@ export function parseIdeas(raw, openClauses = []) {
     const clause = asIndex !== null
       ? (asIndex >= 1 && asIndex <= openClauses.length ? openClauses[asIndex - 1] : null)
       : (openClauses.includes(clauseRaw) ? clauseRaw : null);
-    return { idea: o.idea.trim().slice(0, 400), section, trigger, effect: EFFECTS.includes(o.effect) ? o.effect : 'damage', family, clause, ...(clause ? {} : { clauseRaw: clauseRaw || null }) };
+    const effect = EFFECTS.includes(o.effect) ? o.effect : 'damage';
+    // A CONDITION RIDER RIDES THE ATTACK, ALWAYS (owner's ruling, 2026-11-13).
+    //
+    // `normaliseTag` above already says that what an idea IS beats what the seat asked
+    // for — an action idea triggered `on_hit` becomes a rider, because "when it hits" IS
+    // a rider. It could not reach this case: the TRAIT seat forces `section: 'trait'`,
+    // and `trait/always` is legal, so the tag returns untouched and the family is never
+    // consulted.
+    //
+    // The family is what knows. `GRAMMARS.payoff.section` is 'rider' — the payoff family
+    // composes a rider on the creature's own attack, by design — so a payoff idea sitting
+    // at the trait seat is a rider that was asked the wrong question. The composer says
+    // as much and then declines ("the payoff family composes a rider and this is the
+    // trait seat"), the fit call is offered nothing, and the seat writes free prose: Grask
+    // Ironjaw shipped a TRAIT that grappled on a hit with no escape DC, which is also why
+    // it failed `grapple-no-escape`. A condition imposed on a hit belongs on the attack,
+    // where `riderTextFor` gives it print's escape DC for free.
+    //
+    // Declared data only: the family, its grammar's own section, and the effect. Measured
+    // over three saved forties: 8 sheets carry `trait` + `payoff` + `condition`. Scoped to
+    // `condition` because that is the ruling — the ~10 sheets with a `damage` payoff at a
+    // trait seat are left alone until the owner rules on them.
+    const ridesTheAttack = effect === 'condition' && section !== 'rider' && GRAMMARS[family]?.section === 'rider';
+    const seated = ridesTheAttack ? { section: 'rider', trigger: 'on_hit' } : { section, trigger };
+    return { idea: o.idea.trim().slice(0, 400), ...seated, effect, family, clause, ...(ridesTheAttack ? { reseated: `${section}/${trigger} -> rider/on_hit` } : {}), ...(clause ? {} : { clauseRaw: clauseRaw || null }) };
   };
   return { action: norm(p?.action, null), trait: norm(p?.trait, 'trait') };
 }

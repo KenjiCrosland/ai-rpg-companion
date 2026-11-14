@@ -240,6 +240,10 @@ const SAVE_STAT_NEAR = /(?:Strength|Dexterity|Constitution|Intelligence|Wisdom|C
 // corpus, so this must not require one.
 const SAVE_OUTCOME_ANY = /Failure|Success|fail(?:s|ed|ure)?\b|succe(?:ed|eds|ssful)\b/i;
 
+// The pre-2024 aside: "(DC 14 Wisdom save negates)". The ability IS named, so the DC is
+// not anonymous — it is simply not written as the skeleton. Print uses this nowhere.
+const SAVE_SHORTHAND = /DC \d+ (?:Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) save\b/;
+
 /**
  * Is this row's save one a GM cannot roll? Returns the reason, or null.
  *
@@ -267,6 +271,15 @@ export function saveIsUnrollable(text) {
     if (SAVE_STAT_NEAR.test(before)) { labelledSaves += 1; continue; }
     if (SAVE_STAT_NEAR.test(after)) continue; // 2014 prose: named, and its outcome is judged below
     unnamedDC ??= m[0];
+  }
+  // A SAVE NAMED IN SHORTHAND IS STILL MALFORMED, FOR A DIFFERENT REASON. "(DC 14
+  // Wisdom save negates)" tells a GM exactly what to roll, so reporting it as "names no
+  // saving throw" misleads whoever reads the run — caught on Grizzelda's Peddler's
+  // Seeming by the item 2 review. What is actually wrong is that the save is a
+  // parenthetical aside rather than the skeleton every other row uses, and print never
+  // writes one: 0 occurrences across both corpora. Same verdict, honest reason.
+  if (unnamedDC && SAVE_SHORTHAND.test(raw)) {
+    return `the save is an aside ("${(/\(?DC \d+ (?:Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) save[^).]*\)?/.exec(raw) ?? [unnamedDC])[0]}") instead of the "*<Ability> Saving Throw*: DC n, <target>. *Failure:* …" skeleton`;
   }
   if (unnamedDC) return `"${unnamedDC}" names no saving throw, so a GM cannot tell which save to roll`;
   // THE OUTCOME ARM JUDGES THE LABELLED SKELETON ONLY. 2014 states its outcome inline

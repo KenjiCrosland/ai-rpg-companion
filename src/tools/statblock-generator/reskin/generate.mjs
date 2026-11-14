@@ -5701,7 +5701,11 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         }
       }
       if (pruned.length) trace('menu pruned:', `${seat} — ${[...new Set(pruned)].join(', ')} (the sheet cannot render them)`);
-      trace(`signature idea (${seat}):`, `"${idea.idea}" ${tagOf(idea)}${idea.family ? ` [family: ${idea.family}]` : ''} — menu: ${menu.map((t) => t.id).join(', ') || 'EMPTY'}${pool.length > menu.length ? ` (+ shelf: ${pool.filter((t) => !menu.includes(t)).map((t) => t.id).join(', ')})` : ''}`);
+      // A RE-SEAT SAYS SO. The idea's own tag changes under the reader's feet otherwise:
+    // Grask's reads `[rider/on_hit/condition]` where the call answered `trait/always`,
+    // and nothing would explain why (owner's ruling, 2026-11-13).
+    if (idea.reseated) trace('condition rider rides the attack:', `${seat} — the ${idea.family} family composes a rider, so the idea is re-seated ${idea.reseated}; a condition imposed on a hit belongs on the attack row, with print's escape DC`);
+    trace(`signature idea (${seat}):`, `"${idea.idea}" ${tagOf(idea)}${idea.family ? ` [family: ${idea.family}]` : ''} — menu: ${menu.map((t) => t.id).join(', ') || 'EMPTY'}${pool.length > menu.length ? ` (+ shelf: ${pool.filter((t) => !menu.includes(t)).map((t) => t.id).join(', ')})` : ''}`);
       if (!pool.length && idea.section === 'reaction') {
         // print's answer for "when something hits me, this happens" on a line
         // with no reaction seat is a TRAIT (Heated Body, Death Burst): re-seat
