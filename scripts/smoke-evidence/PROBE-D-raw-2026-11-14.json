@@ -1,0 +1,3396 @@
+{
+ "a0": {
+  "rank-clockwork-spider": [
+   {
+    "type": "Construct",
+    "size": "Medium",
+    "move": "climb",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Construct",
+    "size": "Medium",
+    "move": "climb",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Construct",
+    "size": "Small",
+    "move": "climb",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Construct",
+    "size": "Small",
+    "move": "climb",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Construct",
+    "size": "Small",
+    "move": "climb",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   }
+  ],
+  "rank-medusa-sculptor": [
+   {
+    "type": "Monstrosity",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Monstrosity",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Monstrosity",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Monstrosity",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Monstrosity",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   }
+  ],
+  "rank-vampire-pirate": [
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "swim/climb",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "swim/climb",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "swim",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "swim",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "swim",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   }
+  ],
+  "rank-mother-ash": [
+   {
+    "type": "Fiend",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Fey",
+    "size": "Medium",
+    "move": "climb",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Fey",
+    "size": "Medium",
+    "move": "climb",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   }
+  ],
+  "rank-mummy-librarian": [
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   }
+  ],
+  "rank-ghoul-gravedigger": [
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "burrow",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "burrow",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "burrow",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "burrow",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "burrow",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   }
+  ],
+  "rank-bellringer-ghost": [
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "fly",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "fly",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "fly",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "fly",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   }
+  ],
+  "rank-ogre-blacksmith-control": [
+   {
+    "type": "Giant",
+    "size": "Large",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Giant",
+    "size": "Large",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Giant",
+    "size": "Large",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": null,
+    "size": null,
+    "move": null,
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Giant",
+    "size": "Large",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   }
+  ],
+  "rank-carnival-barker": [
+   {
+    "type": "Fey",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Fey",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Fey",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "err": "Unexpected non-whitespace character after JSON at position 6"
+   },
+   {
+    "type": "Fey",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   }
+  ],
+  "rank-sellsword": [
+   {
+    "type": "Humanoid",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Humanoid",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Humanoid",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Humanoid",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Humanoid",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   }
+  ],
+  "rank-eels-in-a-coat": [
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "climb",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Aberration",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Monstrosity",
+    "size": "Medium",
+    "move": "swim/climb",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Monstrosity",
+    "size": "Medium",
+    "move": "swim",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Monstrosity",
+    "size": "Medium",
+    "move": "swim",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   }
+  ],
+  "rank-thing-in-the-well": [
+   {
+    "type": "Aberration",
+    "size": "Large",
+    "move": "swim/climb",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Aberration",
+    "size": "Large",
+    "move": "",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Aberration",
+    "size": "Medium",
+    "move": "swim/climb",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Aberration",
+    "size": "Large",
+    "move": "swim/climb",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   },
+   {
+    "type": "Aberration",
+    "size": "Large",
+    "move": "climb",
+    "shape": {
+     "STR": null,
+     "DEX": null,
+     "CON": null,
+     "INT": null,
+     "WIS": null,
+     "CHA": null
+    },
+    "on": null,
+    "wroteNumber": null
+   }
+  ]
+ },
+ "a1": {
+  "rank-clockwork-spider": {
+   "brute-juggernaut": [
+    {
+     "type": "Construct",
+     "size": "Medium",
+     "move": "climb",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "ordinary",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "climb",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "climb",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "climb",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "mindless",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "climb",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    }
+   ],
+   "lurker-phantom": [
+    {
+     "type": "Construct",
+     "size": "Small",
+     "move": "climb",
+     "shape": {
+      "STR": "capable",
+      "DEX": "formidable",
+      "CON": "capable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Small",
+     "move": "climb",
+     "shape": {
+      "STR": "capable",
+      "DEX": "formidable",
+      "CON": "capable",
+      "INT": "mindless",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Small",
+     "move": "climb",
+     "shape": {
+      "STR": "ordinary",
+      "DEX": "capable",
+      "CON": "capable",
+      "INT": "mindless",
+      "WIS": "feeble",
+      "CHA": "feeble"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Small",
+     "move": "climb",
+     "shape": {
+      "STR": "ordinary",
+      "DEX": "capable",
+      "CON": "ordinary",
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Small",
+     "move": "climb",
+     "shape": {
+      "STR": "capable",
+      "DEX": "formidable",
+      "CON": "capable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    }
+   ]
+  },
+  "rank-medusa-sculptor": {
+   "brute-juggernaut": [
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "capable"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "capable"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    }
+   ],
+   "lurker-phantom": [
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "ordinary",
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "ordinary"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "formidable",
+      "CON": "ordinary",
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "ordinary",
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "capable"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "feeble",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "on": "CHA",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "ordinary",
+      "INT": "ordinary",
+      "WIS": "formidable",
+      "CHA": "capable"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    }
+   ]
+  },
+  "rank-vampire-pirate": {
+   "brute-juggernaut": [
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "swim",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "swim",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "capable"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "swim",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "swim",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "ordinary",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "capable"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "swim",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "capable"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    }
+   ],
+   "lurker-phantom": [
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "swim",
+     "shape": {
+      "STR": "capable",
+      "DEX": "formidable",
+      "CON": "capable",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "swim/fly",
+     "shape": {
+      "STR": "capable",
+      "DEX": "formidable",
+      "CON": "ordinary",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "capable",
+      "DEX": "formidable",
+      "CON": "ordinary",
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "swim",
+     "shape": {
+      "STR": "capable",
+      "DEX": "formidable",
+      "CON": "ordinary",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "swim",
+     "shape": {
+      "STR": "capable",
+      "DEX": "formidable",
+      "CON": "ordinary",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    }
+   ]
+  },
+  "rank-mother-ash": {
+   "brute-juggernaut": [
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "capable"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "capable"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "ordinary",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    }
+   ],
+   "lurker-phantom": [
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "ordinary",
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "on": "CHA",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "ordinary",
+      "DEX": "capable",
+      "CON": "ordinary",
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "capable"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "ordinary",
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "on": "CHA",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "feeble",
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "on": "CHA",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "formidable",
+      "CON": "ordinary",
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "capable"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    }
+   ]
+  },
+  "rank-mummy-librarian": {
+   "brute-juggernaut": [
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "climb",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    }
+   ],
+   "lurker-phantom": [
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "ordinary",
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "ordinary",
+      "DEX": "capable",
+      "CON": "ordinary",
+      "INT": "formidable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "INT",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "ordinary",
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "ordinary"
+     },
+     "on": "WIS",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "ordinary",
+      "INT": "formidable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "INT",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "ordinary",
+      "DEX": "feeble",
+      "CON": "capable",
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "ordinary"
+     },
+     "on": "WIS",
+     "wroteNumber": null
+    }
+   ]
+  },
+  "rank-ghoul-gravedigger": {
+   "brute-juggernaut": [
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "burrow",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "burrow",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "burrow",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "burrow",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "burrow",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    }
+   ],
+   "lurker-phantom": [
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "burrow",
+     "shape": {
+      "STR": "capable",
+      "DEX": "capable",
+      "CON": "ordinary",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "burrow",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "burrow",
+     "shape": {
+      "STR": "capable",
+      "DEX": "ordinary",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "CON",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "burrow",
+     "shape": {
+      "STR": "capable",
+      "DEX": "ordinary",
+      "CON": "ordinary",
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "burrow",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "capable",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    }
+   ]
+  },
+  "rank-bellringer-ghost": {
+   "brute-juggernaut": [
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "capable"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "capable"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "capable"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "capable"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    }
+   ],
+   "lurker-phantom": [
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "feeble",
+      "INT": "ordinary",
+      "WIS": "formidable",
+      "CHA": "capable"
+     },
+     "on": "WIS",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "feeble",
+      "INT": "ordinary",
+      "WIS": "formidable",
+      "CHA": "capable"
+     },
+     "on": "WIS",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "ordinary",
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "ordinary"
+     },
+     "on": "WIS",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "feeble",
+      "INT": "ordinary",
+      "WIS": "formidable",
+      "CHA": "capable"
+     },
+     "on": "WIS",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "feeble",
+      "INT": "ordinary",
+      "WIS": "formidable",
+      "CHA": "capable"
+     },
+     "on": "WIS",
+     "wroteNumber": null
+    }
+   ]
+  },
+  "rank-ogre-blacksmith-control": {
+   "brute-juggernaut": [
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "ordinary",
+      "WIS": "ordinary",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Giant",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Giant",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Giant",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    }
+   ],
+   "lurker-phantom": [
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "capable",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "climb",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "capable",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "capable",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "fly",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "capable",
+      "INT": "ordinary",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    }
+   ]
+  },
+  "rank-carnival-barker": {
+   "brute-juggernaut": [
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "capable"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "capable"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "on": "CHA",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "capable",
+      "INT": "capable",
+      "WIS": "feeble",
+      "CHA": "formidable"
+     },
+     "on": "CHA",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "on": "CHA",
+     "wroteNumber": null
+    }
+   ],
+   "lurker-phantom": [
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "feeble",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "on": "CHA",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "feeble",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "on": "CHA",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "feeble",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "on": "CHA",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "ordinary",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "on": "CHA",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "feeble",
+      "INT": "formidable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "on": "CHA",
+     "wroteNumber": null
+    }
+   ]
+  },
+  "rank-sellsword": {
+   "brute-juggernaut": [
+    {
+     "type": "Construct",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "capable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "ordinary",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "ordinary",
+      "WIS": "ordinary",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "ordinary",
+      "WIS": "ordinary",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    }
+   ],
+   "lurker-phantom": [
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "capable",
+      "DEX": "formidable",
+      "CON": "capable",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "capable",
+      "DEX": "formidable",
+      "CON": "feeble",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "capable"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "capable",
+      "DEX": "formidable",
+      "CON": "capable",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "capable",
+      "DEX": "formidable",
+      "CON": "feeble",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "capable",
+      "DEX": "formidable",
+      "CON": "ordinary",
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "ordinary"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    }
+   ]
+  },
+  "rank-eels-in-a-coat": {
+   "brute-juggernaut": [
+    {
+     "type": "Monstrosity",
+     "size": "Medium",
+     "move": "swim",
+     "shape": {
+      "STR": "capable",
+      "DEX": "ordinary",
+      "CON": "capable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Monstrosity",
+     "size": "Medium",
+     "move": "swim/climb",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "capable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Monstrosity",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "ordinary",
+      "CON": "capable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Medium",
+     "move": "swim",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    }
+   ],
+   "lurker-phantom": [
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "ordinary",
+      "DEX": "formidable",
+      "CON": "feeble",
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "capable"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "fly",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "capable",
+      "CON": "ordinary",
+      "INT": "bestial",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "formidable",
+      "CON": "capable",
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "formidable",
+      "CON": "ordinary",
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "",
+     "shape": {
+      "STR": "feeble",
+      "DEX": "formidable",
+      "CON": "ordinary",
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "DEX",
+     "wroteNumber": null
+    }
+   ]
+  },
+  "rank-thing-in-the-well": {
+   "brute-juggernaut": [
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "climb",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "climb/swim",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "climb",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Construct",
+     "size": "Large",
+     "move": "climb",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    }
+   ],
+   "lurker-phantom": [
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "swim/climb",
+     "shape": {
+      "STR": "capable",
+      "DEX": "ordinary",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Large",
+     "move": "swim/burrow",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "climb",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "capable",
+      "CON": "formidable",
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "swim",
+     "shape": {
+      "STR": "capable",
+      "DEX": "feeble",
+      "CON": "formidable",
+      "INT": "bestial",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "on": "CON",
+     "wroteNumber": null
+    },
+    {
+     "type": "Undead",
+     "size": "Medium",
+     "move": "climb",
+     "shape": {
+      "STR": "formidable",
+      "DEX": "feeble",
+      "CON": "capable",
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "on": "STR",
+     "wroteNumber": null
+    }
+   ]
+  }
+ },
+ "a2": {
+  "rank-clockwork-spider": [
+   {
+    "type": "Construct",
+    "size": "Small",
+    "move": "climb",
+    "shape": {
+     "STR": "capable",
+     "DEX": "capable",
+     "CON": "ordinary",
+     "INT": "mindless",
+     "WIS": "ordinary",
+     "CHA": "feeble"
+    },
+    "on": "DEX",
+    "wroteNumber": null
+   },
+   {
+    "type": "Construct",
+    "size": "Small",
+    "move": "climb",
+    "shape": {
+     "STR": "capable",
+     "DEX": "capable",
+     "CON": "capable",
+     "INT": "feeble",
+     "WIS": "ordinary",
+     "CHA": "feeble"
+    },
+    "on": "DEX",
+    "wroteNumber": null
+   },
+   {
+    "type": "Construct",
+    "size": "Medium",
+    "move": "climb",
+    "shape": {
+     "STR": "capable",
+     "DEX": "capable",
+     "CON": "ordinary",
+     "INT": "feeble",
+     "WIS": "ordinary",
+     "CHA": "feeble"
+    },
+    "on": "DEX",
+    "wroteNumber": null
+   },
+   {
+    "type": "Construct",
+    "size": "Medium",
+    "move": "climb",
+    "shape": {
+     "STR": "capable",
+     "DEX": "capable",
+     "CON": "ordinary",
+     "INT": "feeble",
+     "WIS": "ordinary",
+     "CHA": "feeble"
+    },
+    "on": "DEX",
+    "wroteNumber": null
+   },
+   {
+    "type": "Construct",
+    "size": "Medium",
+    "move": "climb",
+    "shape": {
+     "STR": "feeble",
+     "DEX": "formidable",
+     "CON": "capable",
+     "INT": "mindless",
+     "WIS": "ordinary",
+     "CHA": "feeble"
+    },
+    "on": "DEX",
+    "wroteNumber": null
+   }
+  ],
+  "rank-medusa-sculptor": [
+   {
+    "type": "Monstrosity",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": "ordinary",
+     "DEX": "capable",
+     "CON": "capable",
+     "INT": "capable",
+     "WIS": "formidable",
+     "CHA": "formidable"
+    },
+    "on": "DEX",
+    "wroteNumber": null
+   },
+   {
+    "type": "Monstrosity",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": "ordinary",
+     "DEX": "capable",
+     "CON": "capable",
+     "INT": "capable",
+     "WIS": "formidable",
+     "CHA": "capable"
+    },
+    "on": "DEX",
+    "wroteNumber": null
+   },
+   {
+    "type": "Monstrosity",
+    "size": "Medium",
+    "move": "climb",
+    "shape": {
+     "STR": "ordinary",
+     "DEX": "formidable",
+     "CON": "capable",
+     "INT": "capable",
+     "WIS": "capable",
+     "CHA": "capable"
+    },
+    "on": "DEX",
+    "wroteNumber": null
+   },
+   {
+    "type": "Monstrosity",
+    "size": "Medium",
+    "move": "climb",
+    "shape": {
+     "STR": "ordinary",
+     "DEX": "capable",
+     "CON": "capable",
+     "INT": "capable",
+     "WIS": "ordinary",
+     "CHA": "formidable"
+    },
+    "on": "CHA",
+    "wroteNumber": null
+   },
+   {
+    "type": "Monstrosity",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": "ordinary",
+     "DEX": "capable",
+     "CON": "capable",
+     "INT": "formidable",
+     "WIS": "capable",
+     "CHA": "formidable"
+    },
+    "on": "DEX",
+    "wroteNumber": null
+   }
+  ],
+  "rank-vampire-pirate": [
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "swim/climb",
+    "shape": {
+     "STR": "capable",
+     "DEX": "formidable",
+     "CON": "capable",
+     "INT": "capable",
+     "WIS": "ordinary",
+     "CHA": "formidable"
+    },
+    "on": "DEX",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "swim/climb",
+    "shape": {
+     "STR": "capable",
+     "DEX": "formidable",
+     "CON": "formidable",
+     "INT": "capable",
+     "WIS": "ordinary",
+     "CHA": "formidable"
+    },
+    "on": "DEX",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "swim",
+    "shape": {
+     "STR": "capable",
+     "DEX": "formidable",
+     "CON": "capable",
+     "INT": "capable",
+     "WIS": "ordinary",
+     "CHA": "formidable"
+    },
+    "on": "DEX",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "swim/climb",
+    "shape": {
+     "STR": "capable",
+     "DEX": "formidable",
+     "CON": "capable",
+     "INT": "capable",
+     "WIS": "ordinary",
+     "CHA": "formidable"
+    },
+    "on": "DEX",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "swim/climb",
+    "shape": {
+     "STR": "formidable",
+     "DEX": "capable",
+     "CON": "formidable",
+     "INT": "capable",
+     "WIS": "capable",
+     "CHA": "formidable"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   }
+  ],
+  "rank-mother-ash": [
+   {
+    "type": "Fey",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": "capable",
+     "DEX": "ordinary",
+     "CON": "capable",
+     "INT": "capable",
+     "WIS": "formidable",
+     "CHA": "formidable"
+    },
+    "on": "CHA",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": "capable",
+     "DEX": "ordinary",
+     "CON": "formidable",
+     "INT": "capable",
+     "WIS": "formidable",
+     "CHA": "capable"
+    },
+    "on": "WIS",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "climb",
+    "shape": {
+     "STR": "formidable",
+     "DEX": "ordinary",
+     "CON": "capable",
+     "INT": "capable",
+     "WIS": "formidable",
+     "CHA": "capable"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   },
+   {
+    "type": "Fiend",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": "capable",
+     "DEX": "ordinary",
+     "CON": "formidable",
+     "INT": "capable",
+     "WIS": "capable",
+     "CHA": "formidable"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   },
+   {
+    "err": "Unexpected token 'L', \"Looking at\"... is not valid JSON"
+   }
+  ],
+  "rank-mummy-librarian": [
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": "capable",
+     "DEX": "feeble",
+     "CON": "capable",
+     "INT": "ordinary",
+     "WIS": "formidable",
+     "CHA": "ordinary"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": "capable",
+     "DEX": "feeble",
+     "CON": "formidable",
+     "INT": "capable",
+     "WIS": "capable",
+     "CHA": "ordinary"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": "capable",
+     "DEX": "feeble",
+     "CON": "capable",
+     "INT": "ordinary",
+     "WIS": "formidable",
+     "CHA": "ordinary"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": "capable",
+     "DEX": "feeble",
+     "CON": "capable",
+     "INT": "capable",
+     "WIS": "formidable",
+     "CHA": "ordinary"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": "capable",
+     "DEX": "feeble",
+     "CON": "formidable",
+     "INT": "capable",
+     "WIS": "formidable",
+     "CHA": "ordinary"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   }
+  ],
+  "rank-ghoul-gravedigger": [
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "burrow",
+    "shape": {
+     "STR": "formidable",
+     "DEX": "capable",
+     "CON": "formidable",
+     "INT": "feeble",
+     "WIS": "ordinary",
+     "CHA": "feeble"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "burrow",
+    "shape": {
+     "STR": "capable",
+     "DEX": "capable",
+     "CON": "formidable",
+     "INT": "feeble",
+     "WIS": "ordinary",
+     "CHA": "feeble"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "burrow/climb",
+    "shape": {
+     "STR": "capable",
+     "DEX": "ordinary",
+     "CON": "capable",
+     "INT": "feeble",
+     "WIS": "ordinary",
+     "CHA": "feeble"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "burrow",
+    "shape": {
+     "STR": "capable",
+     "DEX": "ordinary",
+     "CON": "capable",
+     "INT": "feeble",
+     "WIS": "ordinary",
+     "CHA": "feeble"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "burrow/climb",
+    "shape": {
+     "STR": "capable",
+     "DEX": "ordinary",
+     "CON": "capable",
+     "INT": "ordinary",
+     "WIS": "capable",
+     "CHA": "feeble"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   }
+  ],
+  "rank-bellringer-ghost": [
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": "feeble",
+     "DEX": "ordinary",
+     "CON": "ordinary",
+     "INT": "ordinary",
+     "WIS": "capable",
+     "CHA": "formidable"
+    },
+    "on": "CHA",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "fly",
+    "shape": {
+     "STR": "feeble",
+     "DEX": "capable",
+     "CON": "feeble",
+     "INT": "ordinary",
+     "WIS": "capable",
+     "CHA": "formidable"
+    },
+    "on": "CHA",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "fly",
+    "shape": {
+     "STR": "feeble",
+     "DEX": "capable",
+     "CON": "feeble",
+     "INT": "ordinary",
+     "WIS": "capable",
+     "CHA": "formidable"
+    },
+    "on": "CHA",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "",
+    "shape": {
+     "STR": "feeble",
+     "DEX": "ordinary",
+     "CON": "feeble",
+     "INT": "ordinary",
+     "WIS": "capable",
+     "CHA": "formidable"
+    },
+    "on": "CHA",
+    "wroteNumber": null
+   },
+   {
+    "type": "Undead",
+    "size": "Medium",
+    "move": "fly",
+    "shape": {
+     "STR": "feeble",
+     "DEX": "capable",
+     "CON": "feeble",
+     "INT": "ordinary",
+     "WIS": "capable",
+     "CHA": "formidable"
+    },
+    "on": "CHA",
+    "wroteNumber": null
+   }
+  ],
+  "rank-ogre-blacksmith-control": [
+   {
+    "type": "Giant",
+    "size": "Large",
+    "move": "",
+    "shape": {
+     "STR": "formidable",
+     "DEX": "feeble",
+     "CON": "formidable",
+     "INT": "feeble",
+     "WIS": "ordinary",
+     "CHA": "feeble"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   },
+   {
+    "type": "Giant",
+    "size": "Large",
+    "move": "",
+    "shape": {
+     "STR": "formidable",
+     "DEX": "feeble",
+     "CON": "formidable",
+     "INT": "feeble",
+     "WIS": "ordinary",
+     "CHA": "feeble"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   },
+   {
+    "type": "Giant",
+    "size": "Large",
+    "move": "",
+    "shape": {
+     "STR": "formidable",
+     "DEX": "feeble",
+     "CON": "formidable",
+     "INT": "feeble",
+     "WIS": "capable",
+     "CHA": "feeble"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   },
+   {
+    "type": "Giant",
+    "size": "Large",
+    "move": "",
+    "shape": {
+     "STR": "formidable",
+     "DEX": "feeble",
+     "CON": "formidable",
+     "INT": "feeble",
+     "WIS": "feeble",
+     "CHA": "feeble"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   },
+   {
+    "type": "Giant",
+    "size": "Large",
+    "move": "",
+    "shape": {
+     "STR": "formidable",
+     "DEX": "feeble",
+     "CON": "formidable",
+     "INT": "feeble",
+     "WIS": "ordinary",
+     "CHA": "feeble"
+    },
+    "on": "STR",
+    "wroteNumber": null
+   }
+  ]
+ }
+}
