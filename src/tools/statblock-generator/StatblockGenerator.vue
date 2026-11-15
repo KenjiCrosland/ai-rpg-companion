@@ -1080,6 +1080,7 @@ async function generateStatblockEngine(edition) {
   // The synthesis's own proper name — a naming CANDIDATE, never an override.
   let conceptProposedName = null;
   let conceptMind = null;
+  let conceptMindTiers = null;
   let conceptSize = null;
   let conceptMovement = null;
   let conceptAttackMode = null;
@@ -1147,6 +1148,12 @@ async function generateStatblockEngine(edition) {
   // resembling creature takes its body from. Read from localStorage like the edition, the
   // legacy flag, `statblock-pin-path` and `statblock-inject-elements`; nothing in the product
   // sets it, and a run that uses it says so in its trace.
+  // ITEM 4's WITHHOLD (evidence only, 2026-11-15) — generates the same prompt with the mind
+  // tiers held back, so a pair on one donor card measures the tiers and not the card.
+  const withholdMindTiers = () => {
+    try { const v = localStorage.getItem('statblock-withhold-mind-tiers'); if (!v || !v.trim() || v === '0') return false; logger.warn('[probe] MIND TIERS WITHHELD by statblock-withhold-mind-tiers — evidence run, not product behaviour'); return true; } catch { return false; }
+  };
+
   // PROBE C's donor pin (evidence only, 2026-11-14) — holds the card still across a pair.
   const donorPin = () => {
     try { const v = localStorage.getItem('statblock-donor-pin'); if (!v || !v.trim()) return null; logger.warn('[probe] DONOR PIN set by statblock-donor-pin — evidence run, not product behaviour:', v.trim()); return v.trim(); } catch (e) { return null; }
@@ -1190,6 +1197,16 @@ async function generateStatblockEngine(edition) {
     if (typeof parsed?.name === 'string' && parsed.name.trim() && parsed.name.trim().split(/\s+/).length <= 4) conceptProposedName = parsed.name.trim();
     if (typeof parsed?.material === 'string' && parsed.material.trim()) conceptHouse = parsed.material.trim().toLowerCase();
     if (['sapient', 'bestial', 'mindless'].includes(parsed?.mind)) conceptMind = parsed.mind;
+    // THE MIND TIERS (item 4, 2026-11-15) travel exactly as `mind` does. A missing, malformed
+    // or numeric answer becomes null for that score, and a null answer means today's sheet.
+    if (parsed?.mind_tiers && typeof parsed.mind_tiers === 'object') {
+      const t = {};
+      for (const k of ['INT', 'WIS', 'CHA']) {
+        const v = String(parsed.mind_tiers[k] ?? '').toLowerCase().trim();
+        if (['feeble', 'ordinary', 'capable', 'formidable'].includes(v)) t[k] = v;
+      }
+      if (Object.keys(t).length) conceptMindTiers = t;
+    }
     if (typeof parsed?.size === 'string') conceptSize = parsed.size;
     if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
     if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
@@ -1610,6 +1627,8 @@ async function generateStatblockEngine(edition) {
           ...(frameModel() ? { frameModel: frameModel() } : {}),
           ...(donorPin() ? { donorPin: donorPin() } : {}),
           mind: conceptMind,
+          ...(conceptMindTiers ? { mindTiers: conceptMindTiers } : {}),
+          ...(withholdMindTiers() ? { withholdMindTiers: true } : {}),
           movement: conceptMovement ?? [],
           edition, // the form's edition: print's 2024-only reclasses (goblins to Fey) are not 2014's (form-ten 2026-10-01)
           // the resolve's creature_type rides along — without it the
@@ -1718,6 +1737,8 @@ async function generateStatblockEngine(edition) {
         damageMix: userConcept ? conceptMix : rolledMix,
         naming: rolledNaming,
         mind: conceptMind,
+        ...(conceptMindTiers ? { mindTiers: conceptMindTiers } : {}),
+        ...(withholdMindTiers() ? { withholdMindTiers: true } : {}),
         conceptSize,
         movement: conceptMovement,
         attackMode: conceptAttackMode,

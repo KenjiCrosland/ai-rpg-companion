@@ -1034,6 +1034,60 @@ export const riderTextFor = (c, scaled, cr) => (c === 'Grappled'
   ? `. If the target is a ${cr >= 5 ? 'Large' : 'Medium'} or smaller creature, it has the Grappled condition (escape DC ${escapeDCFor(scaled)}).`
   : `, and ${conditionClauseFor(c, scaled)}.`);
 
+/**
+ * THE MIND FROM THE CALL (item 4, owner's ruling 2026-11-15: "usually right sounds better?").
+ *
+ * On a homebrew sheet the donor card supplies INT, WIS and CHA, and the card is picked by
+ * combat role — so a vampire captain shipped INT 4 with no language and a carnival barker CHA 8.
+ * Measured on the saved sheets: the mentals differ from the card on 0 of 95 homebrew sheets,
+ * so nothing else moves them and this stamp is unopposed. Measured on mind probe 2 across 18
+ * prompts: the card is wrong on 9 of the 31 scores the GM's words speak to, and the call was
+ * wrong on 4 of 310 rolls.
+ *
+ * THE FIVE RULES, first that applies wins — the handoff's, with one addition explained below.
+ *   1. no usable tier for this score            -> the card's score stays
+ *   2. the score is the ATTACKING score          -> the card's score stays
+ *   2b. the score is the NAMED CASTING ability   -> the card's score stays  (see below)
+ *   3. the score is INT and `mind` is not sapient-> the card's score stays
+ *   4. the card's score is already in the band   -> the card's score stays
+ *   5. otherwise                                 -> the tier's number for this CR
+ *
+ * RULE 2b IS THE DC INVARIANT, MADE STRUCTURAL RATHER THAN ARITHMETIC. The final derivation
+ * pass reads the ability named in a Spellcasting row: where that stat derives a HIGHER DC than
+ * the card's, it rewrites the row's DC upward (the `dcWanted < dcNow` branch), and where a
+ * moved stat's modifier plus PB happens to equal any attack bonus on the sheet
+ * (`keyMakesAttacks`) it can pull a DC down instead. Capping the stamped score arithmetically
+ * would leave that coincidence live. Holding the casting ability means no mental score reaches
+ * the DC maths at all, so the DC cannot move for any tier, on any card, by any coincidence.
+ * The cost is that a caster's casting score stays the card's; that is reported.
+ */
+export const MIND_TIER_BANDS = { feeble: [1, 7], ordinary: [8, 11], capable: [12, 15], formidable: [16, 30] };
+const MIND_TIER_SCORE = { feeble: [6, 6, 6], ordinary: [10, 10, 10], capable: [13, 14, 14], formidable: [16, 18, 20] };
+const crColumn = (cr) => (Number(cr) <= 8 ? 0 : Number(cr) <= 16 ? 1 : 2);
+/** the ability a Spellcasting row names, read off the rows the donor already carries */
+export const castingAbilityOf = (sections) => ({ Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON', Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' })[
+  /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability/.exec(JSON.stringify(sections ?? {}))?.[1]] ?? null;
+
+export function applyMindTiers({ tiers, stats, cr, strikerStat = null, mind = null, sections = null, hasPrintRecord = false }) {
+  const out = { ...stats }; const moves = []; const held = [];
+  if (hasPrintRecord || !tiers || typeof tiers !== 'object') return { stats: out, moves, held, ran: false };
+  const casting = castingAbilityOf(sections);
+  const col = crColumn(cr);
+  for (const k of ['INT', 'WIS', 'CHA']) {
+    const tier = String(tiers[k] ?? '').toLowerCase().trim();
+    const card = Number(stats?.[k]);
+    if (!MIND_TIER_BANDS[tier]) { held.push({ k, why: 'the call gave no usable tier' }); continue; }
+    if (k === strikerStat) { held.push({ k, tier, why: `${k} is the attacking score` }); continue; }
+    if (k === casting) { held.push({ k, tier, why: `${k} is the named casting ability — the card's save DC derives from it` }); continue; }
+    if (k === 'INT' && mind && mind !== 'sapient') { held.push({ k, tier, why: `the call read this creature as ${mind}` }); continue; }
+    const [lo, hi] = MIND_TIER_BANDS[tier];
+    if (Number.isFinite(card) && card >= lo && card <= hi) { held.push({ k, tier, why: `the card's ${card} is already ${tier}` }); continue; }
+    const to = MIND_TIER_SCORE[tier][col];
+    out[k] = to; moves.push({ k, tier, from: card, to });
+  }
+  return { stats: out, moves, held, ran: true };
+}
+
 export function settleSheetBudgets({ sections, printExact = false, scaled = null, cr = null, generation = null, noteDrop = () => {}, trace: traceFn = () => {} }) {
   const trace = traceFn;
   // LEGENDARY MACHINERY STARTS AT CR 10 (R10 · H3, 2026-11-03). Measured over the
@@ -2776,6 +2830,7 @@ export async function generateReskin(options, callLLM) {
     const cap = NOVA_CAP(cr);
     if (Number(m[1]) > cap) { const d = engineDiceFor(cap); e.text = e.text.replace(m[0], `${d.avg} (${d.dice})`); if (e.text_noRider) e.text_noRider = e.text_noRider.replace(m[0], `${d.avg} (${d.dice})`); trace('nova capped:', `"${e.name}" ${m[1]} → ${d.avg} (the chassis nova obeys the cap: ${cap} at CR ${cr})`); }
   }
+  let mindTierRecord = null; // item 4: what the tiers did, recorded on the sheet
   let arrayIsPrint = false; // set when print's array lands at print's CR — a later coherence pass must not move it
   // a print block's ARRAY rides with its rows (the Last Face read thoughts on a
   // Charisma of 8 — the skirmisher's array under the Doppelganger's rows, critic
@@ -2850,6 +2905,24 @@ export async function generateReskin(options, callLLM) {
     scaled.skills = String(scaled.skills ?? '').split(',').map((t) => t.trim().replace(/^([A-Za-z][A-Za-z' ]*?)\s*\+(\d+)$/, (m0, name, n) => { const st = SKILL_STAT2[name.trim()]; if (!st) return m0; const surplus = Number(n) - modWas(st); return `${name.trim()} +${modNow(st) + surplus}`; })).filter(Boolean).join(', ');
     const escDC2 = 8 + modNow('STR') + scaled.pb;
     for (const es of Object.values(scaled.sections)) for (const e of es) { if (/escape DC \d+/.test(e.text ?? '')) e.text = e.text.replace(/escape DC \d+/g, `escape DC ${escDC2}`); if (e.text_noRider && /escape DC \d+/.test(e.text_noRider)) e.text_noRider = e.text_noRider.replace(/escape DC \d+/g, `escape DC ${escDC2}`); }
+  }
+  // THE MIND FROM THE CALL (item 4, 2026-11-15). Homebrew only: `pcRoute` is null on the
+  // homebrew path, including "resembles". An evidence-only flag withholds it so a pair of
+  // sheets can be generated on one card with and without the tiers.
+  {
+    const withheld = (() => { try { return !!options.withholdMindTiers; } catch { return false; } })();
+    if (withheld) trace('[probe] mind tiers withheld:', 'statblock-withhold-mind-tiers — evidence run, not product behaviour');
+    const mt = applyMindTiers({
+      tiers: withheld ? null : (options.mindTiers ?? null), stats: scaled.stats, cr,
+      strikerStat: scaled.striker_stat ?? null, mind: options.mind ?? null,
+      sections: scaled.sections, hasPrintRecord: !!pcRoute,
+    });
+    if (mt.ran) {
+      scaled.stats = mt.stats;
+      for (const h of mt.held) trace('mind tier held:', `${h.k} stays ${scaled.stats[h.k]}${h.tier ? ` against "${h.tier}"` : ''} — ${h.why}`);
+      for (const v of mt.moves) trace('mind tier:', `${v.k} ${v.from} -> ${v.to} — the call read this creature as ${v.tier} at CR ${cr}`);
+      mindTierRecord = { tiers: { ...(options.mindTiers ?? {}) }, moved: Object.fromEntries(mt.moves.map((v) => [v.k, v.to])), held: mt.held.map((h) => `${h.k}: ${h.why}`) };
+    }
   }
   // PROBE C STEP 1 — THE MODEL'S ARRAY ON A RESEMBLING BODY (evidence only, 2026-11-14).
   //
@@ -5180,7 +5253,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // rules produced the kind form correctly.)
     inline_kind: String(p.inline_kind ?? '').trim().toLowerCase() || null,
     ...(declaredOk ? {} : { inline_overridden: /^the /i.test(String(inline ?? '')) ? 'kind' : 'person' }),
-    generation: { path: 'reskin', ...(monsterVerdicts ? { body_verdicts: monsterVerdicts } : {}), ...(options.hold_shape ? { hold_shape: options.hold_shape } : {}), ...(isDegradedMode() ? { degraded: true } : {}), pipeline: pathD ? { path: pathD.path, print_body: pathBody ?? null, relation: pathD.relation ?? null, class: pathD.class ?? null, species: pathD.species ?? null, by: pathD.by } : null, donor: donor.id, archetype, ...(scaled.classKit ? { class_kit: scaled.classKit } : {}), ...(typeof options.holds === 'boolean' ? { holds: options.holds } : {}), creatureOnly: String(options.userConcept ?? concept ?? '').toLowerCase().split(/[^a-z']+/).filter((w) => w.length > 2 && !/^(?:the|a|an|and|or|but|with|who|that|which|its|his|her|their|into|onto|from|for|out|off|over|under|this|than|then|them|they|was|were|has|have|had|are|is|be|been|being|it|in|on|at|to|of|by|up|as|so|if|no|not|one|two|too|very|own|new|old)$/.test(w)).length <= 3, /* a creature-only prompt gives nothing to read: the catalog composes the sheet and the reader gate's engine-needs-key stands down (the critic's third species read) */ unplaced: authored?.unplaced ?? [], userConcept: String(options.userConcept ?? concept ?? '').slice(0, 600), clauses: groundedClauses(p.clauses, options.userConcept ?? concept, trace, p.lacks), /* the extraction (fidelity pipeline step 4): the record of what the user asked for, the coverage denominator */ ...(body ? { body } : {}), ...(options.menuRole ? { menu_role: options.menuRole } : {}), ...(donor.invented ? { invented: true } : donor.cite ? { cite: donor.cite } : {}) },
+    generation: { path: 'reskin', ...(mindTierRecord ? { mind_tiers: mindTierRecord } : {}), ...(monsterVerdicts ? { body_verdicts: monsterVerdicts } : {}), ...(options.hold_shape ? { hold_shape: options.hold_shape } : {}), ...(isDegradedMode() ? { degraded: true } : {}), pipeline: pathD ? { path: pathD.path, print_body: pathBody ?? null, relation: pathD.relation ?? null, class: pathD.class ?? null, species: pathD.species ?? null, by: pathD.by } : null, donor: donor.id, archetype, ...(scaled.classKit ? { class_kit: scaled.classKit } : {}), ...(typeof options.holds === 'boolean' ? { holds: options.holds } : {}), creatureOnly: String(options.userConcept ?? concept ?? '').toLowerCase().split(/[^a-z']+/).filter((w) => w.length > 2 && !/^(?:the|a|an|and|or|but|with|who|that|which|its|his|her|their|into|onto|from|for|out|off|over|under|this|than|then|them|they|was|were|has|have|had|are|is|be|been|being|it|in|on|at|to|of|by|up|as|so|if|no|not|one|two|too|very|own|new|old)$/.test(w)).length <= 3, /* a creature-only prompt gives nothing to read: the catalog composes the sheet and the reader gate's engine-needs-key stands down (the critic's third species read) */ unplaced: authored?.unplaced ?? [], userConcept: String(options.userConcept ?? concept ?? '').slice(0, 600), clauses: groundedClauses(p.clauses, options.userConcept ?? concept, trace, p.lacks), /* the extraction (fidelity pipeline step 4): the record of what the user asked for, the coverage denominator */ ...(body ? { body } : {}), ...(options.menuRole ? { menu_role: options.menuRole } : {}), ...(donor.invented ? { invented: true } : donor.cite ? { cite: donor.cite } : {}) },
     // The user's own pick when they made one, the routed family when they did not —
     // and the source says which, honestly. `archetype_source` was hardcoded 'user'
     // here, so an auto-archetype sheet claimed the user chose its role and the card's

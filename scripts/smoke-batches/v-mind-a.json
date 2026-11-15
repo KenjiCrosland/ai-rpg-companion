@@ -1,0 +1,218 @@
+[
+ {
+  "canary": "ITEM 4 \u2014 rank-clockwork-spider, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "clockwork spider",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 rank-medusa-sculptor, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "medusa sculptor",
+  "cr": "6",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 rank-vampire-pirate, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "vampire pirate",
+  "cr": "8",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 rank-mother-ash, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "hag midwife",
+  "cr": "9",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 rank-mummy-librarian, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "mummy librarian",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 rank-ghoul-gravedigger, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "ghoul gravedigger",
+  "cr": "5",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 rank-bellringer-ghost, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "a chapel bell-ringer's ghost that tolls for the dying",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 rank-ogre-blacksmith-control, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "ogre blacksmith",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 rank-carnival-barker, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "a carnival barker who talks you into standing still",
+  "cr": "6",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 rank-sellsword, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "a sellsword who hurls a handaxe and closes with a shortsword",
+  "cr": "5",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 rank-eels-in-a-coat, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "a knot of eels in a man's coat",
+  "cr": "1",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 rank-thing-in-the-well, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "the thing in the well",
+  "cr": "5",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 mind-silver-toad, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "a silver-tongued toad the size of a pony",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 mind-drowned-scholar, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "a drowned scholar who still corrects your grammar",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 mind-swamp-giant, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "a brute of a swamp giant, slow-witted and easily led",
+  "cr": "6",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 mind-pale-rider, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "a pale rider on the marsh road",
+  "cr": "6",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 mind-under-the-ice, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "something large moving under the ice",
+  "cr": "8",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ },
+ {
+  "canary": "ITEM 4 \u2014 mind-toll-collector, as it would ship (the call's mind tiers applied).",
+  "name": "",
+  "description": "a toll collector with too many hands",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": ""
+  },
+  "green": "INT, WIS and CHA read right for the creature; attack bonuses and save DCs unchanged from the pair"
+ }
+]
