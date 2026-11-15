@@ -1,0 +1,145 @@
+[
+ {
+  "canary": "ITEM 4 PAIR \u2014 rank-clockwork-spider with the mind tiers WITHHELD, pinned to brute-5-juggernaut (the card its partner drew) and to the homebrew path, so the pair differs only in the tiers.",
+  "name": "",
+  "description": "clockwork spider",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "1",
+   "statblock-donor-pin": "brute-5-juggernaut",
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for item 4's pair\"}"
+  },
+  "green": "identical to its partner but for INT, WIS, CHA and what derives from them"
+ },
+ {
+  "canary": "ITEM 4 PAIR \u2014 rank-mummy-librarian with the mind tiers WITHHELD, pinned to caster-8-binder (the card its partner drew) and to the homebrew path, so the pair differs only in the tiers.",
+  "name": "",
+  "description": "mummy librarian",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "1",
+   "statblock-donor-pin": "caster-8-binder",
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for item 4's pair\"}"
+  },
+  "green": "identical to its partner but for INT, WIS, CHA and what derives from them"
+ },
+ {
+  "canary": "ITEM 4 PAIR \u2014 rank-ghoul-gravedigger with the mind tiers WITHHELD, pinned to lurker-5 (the card its partner drew) and to the homebrew path, so the pair differs only in the tiers.",
+  "name": "",
+  "description": "ghoul gravedigger",
+  "cr": "5",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "1",
+   "statblock-donor-pin": "lurker-5",
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for item 4's pair\"}"
+  },
+  "green": "identical to its partner but for INT, WIS, CHA and what derives from them"
+ },
+ {
+  "canary": "ITEM 4 PAIR \u2014 rank-eels-in-a-coat with the mind tiers WITHHELD, pinned to skirmisher-1 (the card its partner drew) and to the homebrew path, so the pair differs only in the tiers.",
+  "name": "",
+  "description": "a knot of eels in a man's coat",
+  "cr": "1",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "1",
+   "statblock-donor-pin": "skirmisher-1",
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for item 4's pair\"}"
+  },
+  "green": "identical to its partner but for INT, WIS, CHA and what derives from them"
+ },
+ {
+  "canary": "ITEM 4 PAIR \u2014 rank-thing-in-the-well with the mind tiers WITHHELD, pinned to brute-5-grappler (the card its partner drew) and to the homebrew path, so the pair differs only in the tiers.",
+  "name": "",
+  "description": "the thing in the well",
+  "cr": "5",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "1",
+   "statblock-donor-pin": "brute-5-grappler",
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for item 4's pair\"}"
+  },
+  "green": "identical to its partner but for INT, WIS, CHA and what derives from them"
+ },
+ {
+  "canary": "ITEM 4 PAIR \u2014 mind-silver-toad with the mind tiers WITHHELD, pinned to brute-5-grappler (the card its partner drew) and to the homebrew path, so the pair differs only in the tiers.",
+  "name": "",
+  "description": "a silver-tongued toad the size of a pony",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "1",
+   "statblock-donor-pin": "brute-5-grappler",
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for item 4's pair\"}"
+  },
+  "green": "identical to its partner but for INT, WIS, CHA and what derives from them"
+ },
+ {
+  "canary": "ITEM 4 PAIR \u2014 mind-drowned-scholar with the mind tiers WITHHELD, pinned to lurker-1-phantom (the card its partner drew) and to the homebrew path, so the pair differs only in the tiers.",
+  "name": "",
+  "description": "a drowned scholar who still corrects your grammar",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "1",
+   "statblock-donor-pin": "lurker-1-phantom",
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for item 4's pair\"}"
+  },
+  "green": "identical to its partner but for INT, WIS, CHA and what derives from them"
+ },
+ {
+  "canary": "ITEM 4 PAIR \u2014 mind-swamp-giant with the mind tiers WITHHELD, pinned to brute-5 (the card its partner drew) and to the homebrew path, so the pair differs only in the tiers.",
+  "name": "",
+  "description": "a brute of a swamp giant, slow-witted and easily led",
+  "cr": "6",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "1",
+   "statblock-donor-pin": "brute-5",
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for item 4's pair\"}"
+  },
+  "green": "identical to its partner but for INT, WIS, CHA and what derives from them"
+ },
+ {
+  "canary": "ITEM 4 PAIR \u2014 mind-pale-rider with the mind tiers WITHHELD, pinned to skirmisher-3-mounted (the card its partner drew) and to the homebrew path, so the pair differs only in the tiers.",
+  "name": "",
+  "description": "a pale rider on the marsh road",
+  "cr": "6",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "1",
+   "statblock-donor-pin": "skirmisher-3-mounted",
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for item 4's pair\"}"
+  },
+  "green": "identical to its partner but for INT, WIS, CHA and what derives from them"
+ },
+ {
+  "canary": "ITEM 4 PAIR \u2014 mind-under-the-ice with the mind tiers WITHHELD, pinned to brute-5 (the card its partner drew) and to the homebrew path, so the pair differs only in the tiers.",
+  "name": "",
+  "description": "something large moving under the ice",
+  "cr": "8",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "1",
+   "statblock-donor-pin": "brute-5",
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for item 4's pair\"}"
+  },
+  "green": "identical to its partner but for INT, WIS, CHA and what derives from them"
+ },
+ {
+  "canary": "ITEM 4 PAIR \u2014 mind-toll-collector with the mind tiers WITHHELD, pinned to brute-5-grappler (the card its partner drew) and to the homebrew path, so the pair differs only in the tiers.",
+  "name": "",
+  "description": "a toll collector with too many hands",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "1",
+   "statblock-donor-pin": "brute-5-grappler",
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for item 4's pair\"}"
+  },
+  "green": "identical to its partner but for INT, WIS, CHA and what derives from them"
+ }
+]
