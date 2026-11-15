@@ -1052,14 +1052,28 @@ export const riderTextFor = (c, scaled, cr) => (c === 'Grappled'
  *   4. the card's score is already in the band   -> the card's score stays
  *   5. otherwise                                 -> the tier's number for this CR
  *
- * RULE 2b IS THE DC INVARIANT, MADE STRUCTURAL RATHER THAN ARITHMETIC. The final derivation
- * pass reads the ability named in a Spellcasting row: where that stat derives a HIGHER DC than
- * the card's, it rewrites the row's DC upward (the `dcWanted < dcNow` branch), and where a
- * moved stat's modifier plus PB happens to equal any attack bonus on the sheet
- * (`keyMakesAttacks`) it can pull a DC down instead. Capping the stamped score arithmetically
- * would leave that coincidence live. Holding the casting ability means no mental score reaches
- * the DC maths at all, so the DC cannot move for any tier, on any card, by any coincidence.
- * The cost is that a caster's casting score stays the card's; that is reported.
+ * WHAT THE DC RULE IS, AND WHAT IT IS NOT (corrected 2026-11-15). An earlier comment here
+ * claimed the DC "cannot move for any tier, on any card, by any coincidence". That was wrong:
+ * a sweep of every donor card found 63 of 928 pairs with a save DC that moved. The rule the
+ * code holds is the owner's narrower one:
+ *
+ *   with the tiers, NO SAVE DC SITS FURTHER ABOVE THE CARD'S DC than the same sheet's DC
+ *   without them. Moving onto the card's DC, or down, is the better outcome and is welcome.
+ *   Attack bonus, Hit Points and Armor Class stay identical.
+ *
+ * Three holds keep it, and the sweep reads 0 rows further above with all three in place:
+ *
+ *   2b  the ability a Spellcasting row NAMES. That pass rewrites the row's DC upward when the
+ *       stat derives a higher one, and a moved stat whose modifier plus PB happens to equal an
+ *       attack bonus (`keyMakesAttacks`) can pull a DC down instead.
+ *   2c  a mental score the CARD'S DC derives from, where no physical score reaches the same DC.
+ *       The "save dc derived" pass rewrites any DC no score on the sheet derives, so moving the
+ *       one score that reaches it pushes the row a point above.
+ *   and, in that pass itself, a score the tiers RAISED is not counted as the sheet's best,
+ *       unless it derives the card's DC exactly.
+ *
+ * The cost is that a caster's casting score stays the card's, and so does any mental the card's
+ * DC already rests on.
  */
 export const MIND_TIER_BANDS = { feeble: [1, 7], ordinary: [8, 11], capable: [12, 15], formidable: [16, 30] };
 const MIND_TIER_SCORE = { feeble: [6, 6, 6], ordinary: [10, 10, 10], capable: [13, 14, 14], formidable: [16, 18, 20] };
@@ -1068,7 +1082,7 @@ const crColumn = (cr) => (Number(cr) <= 8 ? 0 : Number(cr) <= 16 ? 1 : 2);
 export const castingAbilityOf = (sections) => ({ Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON', Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' })[
   /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability/.exec(JSON.stringify(sections ?? {}))?.[1]] ?? null;
 
-export function applyMindTiers({ tiers, stats, cr, strikerStat = null, mind = null, sections = null, hasPrintRecord = false }) {
+export function applyMindTiers({ tiers, stats, cr, strikerStat = null, mind = null, sections = null, hasPrintRecord = false, cardDc = null, pb = null }) {
   const out = { ...stats }; const moves = []; const held = [];
   if (hasPrintRecord || !tiers || typeof tiers !== 'object') return { stats: out, moves, held, ran: false };
   const casting = castingAbilityOf(sections);
@@ -1079,6 +1093,21 @@ export function applyMindTiers({ tiers, stats, cr, strikerStat = null, mind = nu
     if (!MIND_TIER_BANDS[tier]) { held.push({ k, why: 'the call gave no usable tier' }); continue; }
     if (k === strikerStat) { held.push({ k, tier, why: `${k} is the attacking score` }); continue; }
     if (k === casting) { held.push({ k, tier, why: `${k} is the named casting ability — the card's save DC derives from it` }); continue; }
+    // RULE 2c — A MENTAL SCORE THE CARD'S DC DERIVES FROM IS HELD (2026-11-15). Rule 2b's
+    // reasoning, applied where there is no Spellcasting row to name the ability. The
+    // "save dc derived" pass below rewrites any DC no score on the sheet derives, so moving
+    // the one score that reaches the card's DC pushes the row a point above it —
+    // lurker-5-phantom at CR 5 carries DC 13 off a mental, and feeble, ordinary and
+    // formidable all made it 14. Held only when NO physical score reaches the same DC, since
+    // the pass is satisfied by any of them.
+    if (Number.isFinite(cardDc) && Number.isFinite(pb)) {
+      const modOf = (x) => Math.floor((Number(x) - 10) / 2);
+      const reaches = (x) => 8 + pb + modOf(x) === cardDc;
+      if (reaches(card) && !['STR', 'DEX', 'CON'].some((q) => reaches(stats?.[q]))) {
+        held.push({ k, tier, why: `the card's save DC ${cardDc} derives from ${k} ${card} and from no physical score` });
+        continue;
+      }
+    }
     if (k === 'INT' && mind && mind !== 'sapient') { held.push({ k, tier, why: `the call read this creature as ${mind}` }); continue; }
     const [lo, hi] = MIND_TIER_BANDS[tier];
     if (Number.isFinite(card) && card >= lo && card <= hi) { held.push({ k, tier, why: `the card's ${card} is already ${tier}` }); continue; }
@@ -2831,6 +2860,7 @@ export async function generateReskin(options, callLLM) {
     if (Number(m[1]) > cap) { const d = engineDiceFor(cap); e.text = e.text.replace(m[0], `${d.avg} (${d.dice})`); if (e.text_noRider) e.text_noRider = e.text_noRider.replace(m[0], `${d.avg} (${d.dice})`); trace('nova capped:', `"${e.name}" ${m[1]} → ${d.avg} (the chassis nova obeys the cap: ${cap} at CR ${cr})`); }
   }
   let mindTierRecord = null; // item 4: what the tiers did, recorded on the sheet
+  const mindRaised = new Set(); // the scores the tiers RAISED — read by the save-dc-derived pass
   let arrayIsPrint = false; // set when print's array lands at print's CR — a later coherence pass must not move it
   // a print block's ARRAY rides with its rows (the Last Face read thoughts on a
   // Charisma of 8 — the skirmisher's array under the Doppelganger's rows, critic
@@ -2916,11 +2946,13 @@ export async function generateReskin(options, callLLM) {
       tiers: withheld ? null : (options.mindTiers ?? null), stats: scaled.stats, cr,
       strikerStat: scaled.striker_stat ?? null, mind: options.mind ?? null,
       sections: scaled.sections, hasPrintRecord: !!pcRoute,
+      cardDc: Number(scaled.dc), pb: Number(scaled.pb),
     });
     if (mt.ran) {
       scaled.stats = mt.stats;
       for (const h of mt.held) trace('mind tier held:', `${h.k} stays ${scaled.stats[h.k]}${h.tier ? ` against "${h.tier}"` : ''} — ${h.why}`);
       for (const v of mt.moves) trace('mind tier:', `${v.k} ${v.from} -> ${v.to} — the call read this creature as ${v.tier} at CR ${cr}`);
+      for (const v of mt.moves) if (Number(v.to) > Number(v.from)) mindRaised.add(v.k);
       mindTierRecord = { tiers: { ...(options.mindTiers ?? {}) }, moved: Object.fromEntries(mt.moves.map((v) => [v.k, v.to])), held: mt.held.map((h) => `${h.k}: ${h.why}`) };
     }
   }
@@ -5118,7 +5150,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const derives = (dc) => Object.values(mods).some((v) => 8 + scaled.pb + v === dc);
       const named = /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability/.exec(JSON.stringify(sections))?.[1];
       const KEYS = { Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON', Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' };
-      const want = 8 + scaled.pb + (named ? mods[KEYS[named]] : Math.max(...Object.values(mods)));
+      // A SCORE THE MIND TIERS RAISED IS NOT THE SHEET'S "BEST" HERE (item 4, 2026-11-15).
+      // Otherwise a lifted mental drags a DC UP: brute-2 at CR 1 has a card DC of 11 that
+      // already ships as 12, and an all-formidable 16 on the sheet made the row 13. A raised
+      // score that derives the card's DC exactly still counts, because that is the outcome
+      // worth having. With no tiers `mindRaised` is empty and this is today's behaviour.
+      const bestKeys = Object.keys(mods).filter((k) => !mindRaised.has(k) || 8 + scaled.pb + mods[k] === Number(scaled.dc));
+      const want = 8 + scaled.pb + (named ? mods[KEYS[named]] : Math.max(...(bestKeys.length ? bestKeys : Object.keys(mods)).map((k) => mods[k])));
       const stale = [...new Set([...JSON.stringify(sections).matchAll(/DC (\d+)/g)].map((x) => Number(x[1])))].filter((dc) => !derives(dc) && Math.abs(dc - want) <= 4);
       for (const dc of stale) { for (const es of Object.values(sections)) for (const e of es) if (e.text) e.text = e.text.replace(new RegExp(`\\bDC ${dc}\\b`, 'g'), `DC ${want}`); }
       if (stale.length) { trace('save dc derived:', `DC ${stale.join(', ')} -> ${want} (8 + PB ${scaled.pb} + ${named ? `${named}'s` : 'the sheet\'s best'} ${want - 8 - scaled.pb}) — no stat on the sheet reached it`); if (stale.includes(scaled.dc)) scaled.dc = want; }

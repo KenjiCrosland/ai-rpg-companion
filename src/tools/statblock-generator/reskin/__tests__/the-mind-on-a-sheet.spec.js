@@ -13,6 +13,7 @@
  */
 import { generateReskin, renameKeysOf } from '../generate.mjs';
 import { pickDonor, scaleDonor } from '../scale.mjs';
+import { DONORS } from '../donors.mjs';
 
 const mk = (cr, style, arch) => { const scaled = scaleDonor(pickDonor(cr, style, arch), cr, { mechanics: [] }); const renames = { Teleport: 'Blink Step', 'Ranged Attack': 'Hurl', 'Hybrid Attack': 'Hybrid Strike' }; renameKeysOf(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; }); const typed = [...Object.values(scaled.sections).flat().filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name), 'Hurl', 'Hybrid Strike']; return { scaled, renames, typed }; };
 const json = (name, type, cr, style, arch, over = {}) => { const { scaled, renames, typed } = mk(cr, style, arch); return JSON.stringify({ name, type, size: 'Medium', alignment: 'Neutral', senses: 'darkvision 60 ft.', languages: 'Common', renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Bludgeoning'])), conditions: { condition_minor: 'Prone' }, melee_rider: 'none', wildcard: `*Strength Saving Throw*: DC ${scaled.dc}, one creature within 10 feet. *Failure:* The target has the Prone condition.`, ...(over.extra ?? {}) }); };
@@ -75,7 +76,47 @@ describe('the path decision (category 3)', () => {
   });
 });
 
-describe('the maths invariant (category 4)', () => {
+describe('the maths invariant (category 4) — every donor card', () => {
+  // THE SWEEP, not four hand-picked cases. Four formidable pairs passed while 35 rows across
+  // the cards sat a point or two further above the card's DC than they do without the tiers
+  // (measured 2026-11-15). `scripts/reference-mind-dc-sweep.mjs` is the same check at three
+  // CRs per card; this runs each card at its own CR to stay inside a suite's time.
+  //
+  // THE RULE: with the tiers, no save DC sits further above the card's DC than the same
+  // sheet's DC without them. Onto the card's DC, or down, is the better outcome. Attack
+  // bonus, Hit Points and Armor Class are identical.
+  const CONCEPT = 'a clattering heap of fused scrap'; // matches no print block, so homebrew
+  const TIERS = ['feeble', 'ordinary', 'capable', 'formidable'];
+  const dcs = (m) => Object.values(m.sections).flat().flatMap((e) => [...String(e.text ?? '').matchAll(/DC (\d+)/g)].map((x) => Number(x[1])));
+
+  test('no row sits further above the card\'s DC, and AC, HP and attack bonuses are equal', async () => {
+    const above = []; const other = []; let pairs = 0; let onto = 0;
+    for (const d of DONORS) {
+      const arch = (d.archetypes ?? [])[0]; if (!arch) continue;
+      const base = { archetype: arch, style: d.style ?? null, concept: CONCEPT, userConcept: CONCEPT, cr: d.cr, donorPin: d.id };
+      let answer; let plain;
+      try { answer = json('Scrapheap', 'Aberration', d.cr, d.style ?? null, arch); plain = await gen(base, answer); } catch { continue; }
+      if (plain.generation?.donor !== d.id) continue;
+      const card = scaleDonor(d, d.cr, { mechanics: [] }).dc;
+      const a = numbersOf(plain); const aDc = dcs(plain);
+      for (const t of TIERS) {
+        let tiered; try { tiered = await gen({ ...base, mindTiers: { INT: t, WIS: t, CHA: t }, mind: 'sapient' }, answer); } catch { continue; }
+        pairs += 1;
+        const b = numbersOf(tiered); const bDc = dcs(tiered);
+        if (a.ac !== b.ac || a.hp !== b.hp || a.atk !== b.atk) other.push(`${d.id} all ${t}`);
+        aDc.forEach((x, i2) => {
+          const y = bDc[i2]; if (y === x || y === undefined) return;
+          if (y - card > Math.max(0, x - card)) above.push(`${d.id} at CR ${d.cr}, all ${t}: card DC ${card}, without ${x}, with ${y}`);
+          else onto += 1;
+        });
+      }
+    }
+    expect(pairs).toBeGreaterThan(200); // the sweep actually ran
+    expect(other).toEqual([]);
+    expect(above).toEqual([]);
+    expect(onto).toBeGreaterThan(0); // and rows still move ONTO the card's DC, which is the gain
+  }, 600000);
+
   const CASES = [
     ['a brute on the homebrew path', { archetype: 'brute', concept: 'a clattering heap of fused scrap', userConcept: 'a clattering heap of fused scrap', cr: 3 }, ['Scrapheap', 'Construct', 3, null, 'brute']],
     ['a CASTER, whose DC derives from a mental', { archetype: 'caster', concept: 'a hedge witch who binds with briars', userConcept: 'a hedge witch who binds with briars', cr: 8 }, ['Mother Briar', 'Fey', 8, null, 'caster']],
