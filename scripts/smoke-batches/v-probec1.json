@@ -1,0 +1,142 @@
+[
+ {
+  "canary": "PROBE C STEP 1 \u2014 the Giant Spider's ability array on a resembling body. FLAG ON, donor brute-5-juggernaut. Nothing injected; the creature keeps its own elements.",
+  "name": "",
+  "description": "clockwork spider",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": \"Giant Spider\", \"relation\": \"resembles\", \"class\": null, \"species\": null, \"receipt\": \"pinned for probe C\"}",
+   "statblock-frame-model": "Giant Spider",
+   "statblock-donor-pin": "brute-5-juggernaut",
+   "statblock-inject-elements": ""
+  },
+  "green": "the pair differs only in the six scores and what the engine derives from them"
+ },
+ {
+  "canary": "PROBE C STEP 1 \u2014 the Giant Spider's ability array on a resembling body. BASELINE, donor brute-5-juggernaut. Nothing injected; the creature keeps its own elements.",
+  "name": "",
+  "description": "clockwork spider",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": \"Giant Spider\", \"relation\": \"resembles\", \"class\": null, \"species\": null, \"receipt\": \"pinned for probe C\"}",
+   "statblock-frame-model": "",
+   "statblock-donor-pin": "brute-5-juggernaut",
+   "statblock-inject-elements": ""
+  },
+  "green": "the pair differs only in the six scores and what the engine derives from them"
+ },
+ {
+  "canary": "PROBE C STEP 1 \u2014 the Medusa's ability array on a resembling body. FLAG ON, donor skirmisher-8-hurler. Nothing injected; the creature keeps its own elements.",
+  "name": "",
+  "description": "medusa sculptor",
+  "cr": "6",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": \"Medusa\", \"relation\": \"resembles\", \"class\": null, \"species\": null, \"receipt\": \"pinned for probe C\"}",
+   "statblock-frame-model": "Medusa",
+   "statblock-donor-pin": "skirmisher-8-hurler",
+   "statblock-inject-elements": ""
+  },
+  "green": "the pair differs only in the six scores and what the engine derives from them"
+ },
+ {
+  "canary": "PROBE C STEP 1 \u2014 the Medusa's ability array on a resembling body. BASELINE, donor skirmisher-8-hurler. Nothing injected; the creature keeps its own elements.",
+  "name": "",
+  "description": "medusa sculptor",
+  "cr": "6",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": \"Medusa\", \"relation\": \"resembles\", \"class\": null, \"species\": null, \"receipt\": \"pinned for probe C\"}",
+   "statblock-frame-model": "",
+   "statblock-donor-pin": "skirmisher-8-hurler",
+   "statblock-inject-elements": ""
+  },
+  "green": "the pair differs only in the six scores and what the engine derives from them"
+ },
+ {
+  "canary": "PROBE C STEP 1 \u2014 the Vampire's ability array on a resembling body. FLAG ON, donor skirmisher-8-hurler. Nothing injected; the creature keeps its own elements.",
+  "name": "",
+  "description": "vampire pirate",
+  "cr": "8",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": \"Vampire\", \"relation\": \"resembles\", \"class\": null, \"species\": null, \"receipt\": \"pinned for probe C\"}",
+   "statblock-frame-model": "Vampire",
+   "statblock-donor-pin": "skirmisher-8-hurler",
+   "statblock-inject-elements": ""
+  },
+  "green": "the pair differs only in the six scores and what the engine derives from them"
+ },
+ {
+  "canary": "PROBE C STEP 1 \u2014 the Vampire's ability array on a resembling body. BASELINE, donor skirmisher-8-hurler. Nothing injected; the creature keeps its own elements.",
+  "name": "",
+  "description": "vampire pirate",
+  "cr": "8",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": \"Vampire\", \"relation\": \"resembles\", \"class\": null, \"species\": null, \"receipt\": \"pinned for probe C\"}",
+   "statblock-frame-model": "",
+   "statblock-donor-pin": "skirmisher-8-hurler",
+   "statblock-inject-elements": ""
+  },
+  "green": "the pair differs only in the six scores and what the engine derives from them"
+ },
+ {
+  "canary": "PROBE C STEP 1 \u2014 the Green Hag's ability array on a resembling body. FLAG ON, donor (whatever it draws). Nothing injected; the creature keeps its own elements.",
+  "name": "Mother Ash",
+  "description": "hag midwife",
+  "cr": "9",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": \"Green Hag\", \"relation\": \"resembles\", \"class\": null, \"species\": null, \"receipt\": \"pinned for probe C\"}",
+   "statblock-frame-model": "Green Hag",
+   "statblock-donor-pin": "",
+   "statblock-inject-elements": ""
+  },
+  "green": "the pair differs only in the six scores and what the engine derives from them"
+ },
+ {
+  "canary": "PROBE C STEP 1 \u2014 the Mummy's ability array on a resembling body. FLAG ON, donor caster-8-binder. Nothing injected; the creature keeps its own elements.",
+  "name": "",
+  "description": "mummy librarian",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": \"Mummy\", \"relation\": \"resembles\", \"class\": null, \"species\": null, \"receipt\": \"pinned for probe C\"}",
+   "statblock-frame-model": "Mummy",
+   "statblock-donor-pin": "caster-8-binder",
+   "statblock-inject-elements": ""
+  },
+  "green": "the pair differs only in the six scores and what the engine derives from them"
+ },
+ {
+  "canary": "PROBE C STEP 1 \u2014 the Mummy's ability array on a resembling body. BASELINE, donor caster-8-binder. Nothing injected; the creature keeps its own elements.",
+  "name": "",
+  "description": "mummy librarian",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": \"Mummy\", \"relation\": \"resembles\", \"class\": null, \"species\": null, \"receipt\": \"pinned for probe C\"}",
+   "statblock-frame-model": "",
+   "statblock-donor-pin": "caster-8-binder",
+   "statblock-inject-elements": ""
+  },
+  "green": "the pair differs only in the six scores and what the engine derives from them"
+ },
+ {
+  "canary": "PROBE C STEP 1 \u2014 the Ghost's ability array on a resembling body. FLAG ON, donor (whatever it draws). Nothing injected; the creature keeps its own elements.",
+  "name": "",
+  "description": "a chapel bell-ringer's ghost that tolls for the dying",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": \"Ghost\", \"relation\": \"resembles\", \"class\": null, \"species\": null, \"receipt\": \"pinned for probe C\"}",
+   "statblock-frame-model": "Ghost",
+   "statblock-donor-pin": "",
+   "statblock-inject-elements": ""
+  },
+  "green": "the pair differs only in the six scores and what the engine derives from them"
+ }
+]

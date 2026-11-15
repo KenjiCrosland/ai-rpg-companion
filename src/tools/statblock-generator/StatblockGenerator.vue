@@ -1143,6 +1143,24 @@ async function generateStatblockEngine(edition) {
   // without the identity call, so the same prompt can be run with and without it. Read
   // from localStorage like the edition, the legacy flag and `statblock-pin-path`;
   // nothing in the product sets it, and a run that uses it says so in its trace.
+  // PROBE C STEP 1, THE MODEL CREATURE (evidence only, 2026-11-14). The printed monster a
+  // resembling creature takes its body from. Read from localStorage like the edition, the
+  // legacy flag, `statblock-pin-path` and `statblock-inject-elements`; nothing in the product
+  // sets it, and a run that uses it says so in its trace.
+  // PROBE C's donor pin (evidence only, 2026-11-14) — holds the card still across a pair.
+  const donorPin = () => {
+    try { const v = localStorage.getItem('statblock-donor-pin'); if (!v || !v.trim()) return null; logger.warn('[probe] DONOR PIN set by statblock-donor-pin — evidence run, not product behaviour:', v.trim()); return v.trim(); } catch (e) { return null; }
+  };
+
+  const frameModel = () => {
+    try {
+      const v = localStorage.getItem('statblock-frame-model');
+      if (!v || !v.trim()) return null;
+      logger.warn('[probe] FRAME MODEL set by statblock-frame-model — this is an evidence run, not product behaviour:', v.trim());
+      return v.trim();
+    } catch (e) { logger.warn('[probe] frame model ignored:', e?.message ?? e); return null; }
+  };
+
   const injectedElements = () => {
     try {
       const raw = localStorage.getItem('statblock-inject-elements');
@@ -1589,6 +1607,8 @@ async function generateStatblockEngine(edition) {
           path: conceptPath, // shadow: the engine traces agreement with its matcher and reads nothing else from it (step 2)
           style: conceptStyle,
           signatureElements: injectedElements() ?? conceptElements ?? [],
+          ...(frameModel() ? { frameModel: frameModel() } : {}),
+          ...(donorPin() ? { donorPin: donorPin() } : {}),
           mind: conceptMind,
           movement: conceptMovement ?? [],
           edition, // the form's edition: print's 2024-only reclasses (goblins to Fey) are not 2014's (form-ten 2026-10-01)

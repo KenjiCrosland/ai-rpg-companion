@@ -8,6 +8,7 @@
 import { ASKED_MECHANICS, MECHANIC_GLOSS, verbHits, verbLines } from './route.mjs';
 import { readPhrases, headNoun, piAliasesIn, piGuard, removalClauses } from './lexicon.mjs';
 import { pickDonor, scaleDonor, stampAttacksPerRound } from './scale.mjs';
+import { DONORS } from './donors.mjs'; // probe C's donor pin only
 import { honestSpeed, honestLanguages, honestAttackNames, honestFireDefenses, materialVulnerability, ANATOMY } from './header.mjs';
 import { renderStatblock2024 } from '../format-2024/render.mjs';
 import printBlocks from '@/data/srd52-monsters.json';
@@ -2696,7 +2697,14 @@ export async function generateReskin(options, callLLM) {
       archetype = plain;
     }
   }
-  const donor = pickDonor(cr, body ? null : (shootsABow && style === 'hurler' ? null : style), body ?? archetype);
+  // A PINNED DONOR CARD, FOR EVIDENCE RUNS ONLY (probe C, 2026-11-14). A flagged sheet and its
+  // baseline must sit on the SAME card, or the pair measures the card and not the flag — probe
+  // B's four prompts drew five cards across eight runs. Read from `options.donorPin`, which a
+  // localStorage flag sets and nothing in the product writes.
+  const donorPinned = options.donorPin ? DONORS.find((d) => d.id === String(options.donorPin)) : null;
+  if (options.donorPin && !donorPinned) trace('[probe] donor pin declined:', `"${options.donorPin}" is not a donor id — the role's own pick stands`);
+  const donor = donorPinned ?? pickDonor(cr, body ? null : (shootsABow && style === 'hurler' ? null : style), body ?? archetype);
+  if (donorPinned) trace('[probe] donor pinned:', `${donorPinned.id} — EVIDENCE RUN: statblock-donor-pin, not product behaviour`);
   const statsAtScale = {}; // captured right after scaling — the final derivation pass measures skill surplus against it
   // ONE ATTACK IS A LOW-CR FACT, AND ONE DEFINITION SERVES EVERY READER (owner's ruling,
   // 2026-11-08). All seven of print's swarms are CR 0.25-3, so "a swarm makes one attack"
@@ -2842,6 +2850,33 @@ export async function generateReskin(options, callLLM) {
     scaled.skills = String(scaled.skills ?? '').split(',').map((t) => t.trim().replace(/^([A-Za-z][A-Za-z' ]*?)\s*\+(\d+)$/, (m0, name, n) => { const st = SKILL_STAT2[name.trim()]; if (!st) return m0; const surplus = Number(n) - modWas(st); return `${name.trim()} +${modNow(st) + surplus}`; })).filter(Boolean).join(', ');
     const escDC2 = 8 + modNow('STR') + scaled.pb;
     for (const es of Object.values(scaled.sections)) for (const e of es) { if (/escape DC \d+/.test(e.text ?? '')) e.text = e.text.replace(/escape DC \d+/g, `escape DC ${escDC2}`); if (e.text_noRider && /escape DC \d+/.test(e.text_noRider)) e.text_noRider = e.text_noRider.replace(/escape DC \d+/g, `escape DC ${escDC2}`); }
+  }
+  // PROBE C STEP 1 — THE MODEL'S ARRAY ON A RESEMBLING BODY (evidence only, 2026-11-14).
+  //
+  // The question: can a creature that RESEMBLES a printed monster take its body from that
+  // monster instead of from the donor card picked by combat role? Probe B's eight sheets said
+  // the body is the weak half — the vampire pirate's INT 4 and the mummy librarian's brute
+  // array are the donor's, and four prompts drew five different cards across eight runs.
+  //
+  // Step 1 fires ONE stamp: the model's six scores as printed. It deliberately does NOT take
+  // the `atPrintCr` branch above, which also stamps print's HP, AC, armour and attack bonus —
+  // those are print's numbers, not what the scores imply. Leaving `arrayIsPrint` false lets
+  // the engine's own coherence passes recompute the attack bonus, save DC and HP formula from
+  // the new array, which is what the handoff asked for: "whatever the engine derives from the
+  // scores recomputes as it does on a twist".
+  //
+  // EVIDENCE ONLY. `options.frameModel` is set from a localStorage flag that nothing in the
+  // product writes, and a run that uses it says so in its trace.
+  if (!arrayIsPrint && options.frameModel) {
+    const fm = printCanonFor(String(options.frameModel), cr);
+    const keys = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+    if (fm?.stats && keys.every((k) => Number.isFinite(Number(fm.stats[k])))) {
+      const was = keys.map((k) => `${k} ${scaled.stats[k]}`).join(', ');
+      scaled.stats = Object.fromEntries(keys.map((k) => [k, Number(fm.stats[k])]));
+      trace('[probe] frame array:', `${keys.map((k) => `${k} ${scaled.stats[k]}`).join(', ')} — the ${fm.name}'s as printed (CR ${fm.cr}), replacing the ${donor.id} card's ${was}. EVIDENCE RUN: statblock-frame-model, not product behaviour`);
+    } else {
+      trace('[probe] frame array declined:', `"${options.frameModel}" is not a print block with a full array — the donor's scores stand`);
+    }
   }
   // the caster family's Spellcasting row is CHASSIS — it ships template-
   // fed with its own menu whether or not the checkbox is set, and the
