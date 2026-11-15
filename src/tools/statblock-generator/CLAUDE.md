@@ -6,6 +6,47 @@ Tool-specific documentation for the D&D 5e Monster Statblock Generator.
 
 The Statblock Generator creates complete D&D 5e monster statblocks using a two-part AI generation process. It supports both free and premium versions, with the premium version offering additional customization options.
 
+## Evidence: commit every round's sheets, and keep only the latest
+
+A standing order from the owner (2026-11-15). The reviewer can only read what is pushed.
+
+**Commit every sheet a round generates, in one blocks file in `scripts/smoke-evidence/`.**
+All of them — the ones that failed, the odd ones, the ones that turned out not to be
+evidence. Mark each as it is: green, flagged, no evidence, or threw with its error. Never
+hold sheets back waiting for a review.
+
+**`scripts/smoke-evidence/` holds only five kinds of file:**
+
+1. the latest round's blocks file
+2. milestones
+3. reference data and tool outputs (everything that is not markdown)
+4. handoff reports
+5. anything a file outside the folder names
+
+**When a new blocks file lands, delete the previous round's** unless it is a milestone. Git
+history keeps it.
+
+**A milestone is named, never assumed.** The owner or the reviewer names it in a handoff — a
+release forty run as a gate, a sheet the owner judged good, sheets a parked item still rests
+on.
+
+**Deletions go in their own commit**, separate from code, so a code review is not buried
+under them.
+
+**Before deleting a file, check nothing names it:**
+
+```bash
+git grep <filename> -- ':!scripts/smoke-evidence'
+```
+
+Check the **stem without its extension** too. A plan that writes
+`critic-files.mjs … REVIEW-sweep-2026-10-21T22-17-49` names a file an extension-matching grep
+misses — that exact case was caught on the 2026-11-15 cleanup by a second pass on stems. If
+anything names it, keep it or change what names it.
+
+**`reskin/__tests__/fixtures/runs/` is not evidence and is never part of a cleanup.** Tests
+read it, and seven of its eight run folders are named in spec files.
+
 ## Architecture
 
 **The current engine is the reskin pipeline.** Read [docs/reskin-architecture.md](/docs/reskin-architecture.md) first (as of 2026-10-01); the July handoff linked below is history.
