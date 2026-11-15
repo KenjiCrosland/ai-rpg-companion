@@ -32,6 +32,7 @@
  *   model's fields.
  */
 import { pbFor } from '../chassis/chassis.mjs';
+import { imposedConditions } from '../reskin/author.mjs';
 import srdMonsters from '@/data/srd52-monsters.json';
 
 const HP_BAND = [0.75, 1.35];
@@ -731,6 +732,25 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     const unrollable = saveIsUnrollable(raw);
     if (unrollable) {
       push('save-unrollable', 'audit', `${section}/${entry.name}: ${unrollable}`, undefined, loc);
+    }
+    // A ROW THAT WAITS ON A HOLD THE SHEET NEVER MAKES (owner's ruling, 2026-11-14). Probe B's
+    // clockwork spider shipped "while it is not grappling or restraining a creature" on a sheet
+    // whose only restraining row had been evicted by the free-row budget. The tie-break in
+    // `settleSheetBudgets` removes that case; the CLASS remains — any row conditioned on the
+    // creature holding something when nothing on the card holds anything.
+    //
+    // REPORTS, NEVER REWRITES, exactly as the owner ruled for a dangling save: at `audit` it
+    // reaches the CHECK file and the review page and destroys no row.
+    //
+    // The sheet half is DECLARED — `imposedConditions` is the same reader the weld and
+    // `advantageReachable` use. The row half reads the row's own sentence, which the owner
+    // asked for here by name; it is the narrowest pattern that covers the shipped case.
+    if (/\b(?:while|if|when|unless)\b[^.]*\bit is (?:not )?(?:grappling|restraining)\b/i.test(raw)
+      || /\b(?:a|the|its|this) (?:creature|target) (?:it is )?(?:currently )?(?:grappling|restraining)\b/i.test(raw)) {
+      const holds = new Set(Object.values(monster.sections ?? {}).flat().filter(Boolean).flatMap((o) => imposedConditions(o)));
+      if (!holds.has('Grappled') && !holds.has('Restrained')) {
+        push('holds-nothing', 'audit', `${section}/${entry.name}: the row turns on this creature grappling or restraining, and nothing on the sheet imposes Grappled or Restrained`, undefined, loc);
+      }
     }
   }
 

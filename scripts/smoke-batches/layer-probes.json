@@ -15,7 +15,13 @@
     "B",
     "C"
    ],
-   "note": "The word resolves to the CR 0 Spider, whose own rows are Spider Climb, Web Walker and Bite. The web action is on the Giant Spider. Report what the call does with the weaker block."
+   "note": "The word resolves to the CR 0 Spider, whose own rows are Spider Climb, Web Walker and Bite. The web action is on the Giant Spider. Report what the call does with the weaker block.",
+   "probeC": {
+    "model": "Giant Spider",
+    "holdDonor": "brute-5-juggernaut",
+    "baseline": "BLOCKS-probeB-2026-11-14.md #02 (Escaped Watchmaker's Hunter)",
+    "why": "Model changed from the Spider: the CR 0 Spider has no web and a STR of 2; the Giant Spider is the nearest in CR and carries the Web"
+   }
   },
   {
    "id": "layer-medusa-sculptor",
@@ -31,7 +37,13 @@
     "B",
     "C"
    ],
-   "note": ""
+   "note": "",
+   "probeC": {
+    "model": "Medusa",
+    "holdDonor": "skirmisher-8-hurler",
+    "baseline": "BLOCKS-probeB-2026-11-14.md #04 (Vessaline the Gallery)",
+    "why": ""
+   }
   },
   {
    "id": "layer-vampire-pirate",
@@ -47,7 +59,13 @@
     "B",
     "C"
    ],
-   "note": "No entry in the identity list of nine mechanics fits a drain; it can only arrive as a signature element."
+   "note": "No entry in the identity list of nine mechanics fits a drain; it can only arrive as a signature element.",
+   "probeC": {
+    "model": "Vampire",
+    "holdDonor": "skirmisher-8-hurler",
+    "baseline": "BLOCKS-probeB-2026-11-14.md #06 (Brinebound Corsair)",
+    "why": "The Vampire is CR 13 against an asked CR 8: the far-above case"
+   }
   },
   {
    "id": "layer-mother-ash",
@@ -62,7 +80,13 @@
     "A",
     "C"
    ],
-   "note": "A pinned twist on the Green Hag already exists in BLOCKS-bothways-2026-11-14.md to compare against."
+   "note": "A pinned twist on the Green Hag already exists in BLOCKS-bothways-2026-11-14.md to compare against.",
+   "probeC": {
+    "model": "Green Hag",
+    "holdDonor": null,
+    "baseline": "run once without the flag on whatever donor the flagged run drew",
+    "why": "Compare also with the pinned twist in BLOCKS-bothways-2026-11-14.md #05"
+   }
   },
   {
    "id": "layer-mummy-librarian",
@@ -78,7 +102,13 @@
     "B",
     "C"
    ],
-   "note": "Healing denial is on the brief's list of missing effects (item 5). A [gap] here is a finding, not a failure of the probe."
+   "note": "Healing denial is on the brief's list of missing effects (item 5). A [gap] here is a finding, not a failure of the probe.",
+   "probeC": {
+    "model": "Mummy",
+    "holdDonor": "caster-8-binder",
+    "baseline": "BLOCKS-probeB-2026-11-14.md #08 (Callix the Stacks)",
+    "why": ""
+   }
   },
   {
    "id": "layer-ghoul-gravedigger",
@@ -107,7 +137,13 @@
     "A",
     "C"
    ],
-   "note": ""
+   "note": "",
+   "probeC": {
+    "model": "Ghost",
+    "holdDonor": null,
+    "baseline": "run once without the flag on whatever donor the flagged run drew",
+    "why": "The frame matters most here: it flies and is incorporeal"
+   }
   },
   {
    "id": "layer-ogre-blacksmith-control",
@@ -123,5 +159,6 @@
    ],
    "note": "CONTROL: the Ogre has no hallmark beyond its numbers. The model line must not make the call invent one."
   }
- ]
+ ],
+ "revised": "2026-11-14, second version: a probeC block per prompt (model creature, donor to hold, baseline sheet). Probe C injects nothing."
 }

@@ -1222,9 +1222,21 @@ export function settleSheetBudgets({ sections, printExact = false, scaled = null
   // because we borrow a stock row from the chassis" — and `accepted_closest` is
   // exactly that row, stamped where the nearest lands.
   const receiptRank = (e) => ((e.gmQuote || e.clause) ? 0 : e.expresses ? 1 : e.accepted_closest ? 3 : 2);
-  const ranked = [...freeRows].sort((a, b) => receiptRank(a.e) - receiptRank(b.e));
+  // WITHIN ONE RANK, A TEMPLATED ROW BEATS AN UNTEMPLATED ONE (2026-11-14). The sort is stable,
+  // so a tie fell to sheet order — and Traits come before Actions. On probe B's clockwork
+  // spider one package seat wrote two rows for the same element: the action "Caught Line
+  // (Recharge 5-6)" on the snare template, priced and accepted by the value check, and the trait
+  // "Mainspring Rewind" with no template. Both ranked `element`, the budget was 0, and the trait
+  // won the single held slot on position alone. The audit then faulted the survivor twice, and
+  // the sheet shipped "while it is not grappling or restraining a creature" with nothing left on
+  // it that restrains.
+  //
+  // This is a TIE-BREAK INSIDE the owner's 10-29 ruling (GM quote, then element, then
+  // decoration), not a change to it: `receiptRank` still decides first and always.
+  const onTemplate = (e) => (e.template ? 0 : 1);
+  const ranked = [...freeRows].sort((a, b) => receiptRank(a.e) - receiptRank(b.e) || onTemplate(a.e) - onTemplate(b.e));
   if (freeRows.length > 1 && ranked.some(({ e }, i) => e !== freeRows[i].e)) {
-    trace('free-row order:', `${ranked.map(({ e }) => `"${bareName(e)}" [${['clause', 'element', 'decoration', 'borrowed'][receiptRank(e)]}]`).join(' > ')} — a receipt row is never displaced by one without`);
+    trace('free-row order:', `${ranked.map(({ e }) => `"${bareName(e)}" [${['clause', 'element', 'decoration', 'borrowed'][receiptRank(e)]}${e.template ? `, ${e.template}` : ', no template'}]`).join(' > ')} — a receipt row is never displaced by one without, and within a rank a templated row is never displaced by one without`);
   }
   for (const { sec, e } of ranked) {
     const cell = cellOf(e);

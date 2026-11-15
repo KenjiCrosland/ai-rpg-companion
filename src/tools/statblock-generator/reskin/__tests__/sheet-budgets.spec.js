@@ -423,7 +423,7 @@ describe('the free-row budget keeps the best receipt, not the earliest row', () 
 
   it('traces the order it chose, so a cut row can be accounted for', () => {
     const out = settle({ Traits: [row('Deco', { decoration: true }), row('Elem', { expresses: 'e' })] });
-    expect(out.trace).toMatch(/free-row order: "Elem" \[element\] > "Deco" \[decoration\]/);
+    expect(out.trace).toMatch(/free-row order: "Elem" \[element, no template\] > "Deco" \[decoration, no template\]/);
     expect(out.trace).toMatch(/free row over budget: Traits\/"Deco"/);
   });
 
@@ -720,6 +720,6 @@ describe("a row that answers the GM's clause does not compete for the free-row s
     const lines = [];
     settleSheetBudgets({ sections, scaled: scaled(), cr: 2, generation: {}, trace: (a, b) => lines.push(`${a} ${b}`) });
     expect(sections.Traits.map((e) => e.name)).toEqual(['Asked For']);
-    expect(lines.join(' | ')).toMatch(/free-row order: "Asked For" \[clause\] > "Element" \[element\]/);
+    expect(lines.join(' | ')).toMatch(/free-row order: "Asked For" \[clause, \S+\] > "Element" \[element, \S+\]/);
   });
 });

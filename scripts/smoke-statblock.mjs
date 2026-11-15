@@ -58,6 +58,9 @@ if (!fs.existsSync(batchPath)) {
 }
 let entries = JSON.parse(fs.readFileSync(batchPath, 'utf8'));
 if (onlyIdx) entries = [entries[onlyIdx - 1]];
+// the union of every flag key this batch sets, cleared before each entry (see below). Read
+// from the WHOLE file, not the --only slice, so a single-entry run starts just as clean.
+const flagKeys = new Set(JSON.parse(fs.readFileSync(batchPath, 'utf8')).flatMap((e) => Object.keys(e?.flags ?? {})));
 
 const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 const outDir = path.resolve('smoke-out', `${batchName}-${stamp}`);
@@ -137,8 +140,14 @@ const run = async () => {
     // arbitrary localStorage flags — lets a batch exercise the KILL SWITCHES
     // (statblock-reskin-{pilot,brute,caster,lurker,defender,bodies,2014}='0'),
     // which are the production rollback plan and were never smoked
-    if (entry.flags) {
-      await page.evaluate((f) => { for (const [k, v] of Object.entries(f)) localStorage.setItem(k, v); }, entry.flags);
+    // EVERY FLAG THE BATCH USES IS CLEARED BEFORE EACH ENTRY (2026-11-14). This used to SET
+    // only, so a flag carried over into every later entry: probe B's first run had all eight
+    // sheets injected because each baseline inherited the previous entry's element, and the
+    // run was void. Clearing the union of every entry's flag keys makes that impossible
+    // rather than something a batch author has to remember.
+    if (flagKeys.size) {
+      await page.evaluate((keys) => { for (const k of keys) localStorage.removeItem(k); }, [...flagKeys]);
+      if (entry.flags) await page.evaluate((f) => { for (const [k, v] of Object.entries(f)) localStorage.setItem(k, v); }, entry.flags);
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.waitForSelector('#monsterName', { timeout: 30_000 });
     }

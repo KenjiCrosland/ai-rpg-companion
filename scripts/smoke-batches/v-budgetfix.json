@@ -1,0 +1,14 @@
+[
+ {
+  "canary": "THE BUDGET FIX \u2014 probe B #01 re-run with the same injected element. Before the tie-break the budget kept an untemplated trait and dropped the templated, priced snare row. Caught Line (or its sibling) must reach the sheet.",
+  "name": "",
+  "description": "clockwork spider",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for the budget fix\"}",
+   "statblock-inject-elements": "[\"fires a line of tar that binds prey like a web\"]"
+  },
+  "green": "a restraining row answering the tar line ships; no trait waits on a hold the sheet does not make"
+ }
+]
