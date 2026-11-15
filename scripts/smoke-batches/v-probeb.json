@@ -1,0 +1,98 @@
+[
+ {
+  "canary": "PROBE B \u2014 does the seat write a good version of an injected hallmark? Pinned homebrew. WITH the element: fires a line of tar that binds prey like a web",
+  "name": "",
+  "description": "clockwork spider",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for probe B\"}",
+   "statblock-inject-elements": "[\"fires a line of tar that binds prey like a web\"]"
+  },
+  "green": "the row does the thing mechanically, is named for this creature, and sits inside the budget"
+ },
+ {
+  "canary": "PROBE B \u2014 does the seat write a good version of an injected hallmark? Pinned homebrew. WITHOUT (flag explicitly cleared) the element: (none)",
+  "name": "",
+  "description": "clockwork spider",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for probe B\"}",
+   "statblock-inject-elements": ""
+  },
+  "green": "baseline: what the same prompt writes with no element"
+ },
+ {
+  "canary": "PROBE B \u2014 does the seat write a good version of an injected hallmark? Pinned homebrew. WITH the element: a gaze that turns the living to stone",
+  "name": "",
+  "description": "medusa sculptor",
+  "cr": "6",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for probe B\"}",
+   "statblock-inject-elements": "[\"a gaze that turns the living to stone\"]"
+  },
+  "green": "the row does the thing mechanically, is named for this creature, and sits inside the budget"
+ },
+ {
+  "canary": "PROBE B \u2014 does the seat write a good version of an injected hallmark? Pinned homebrew. WITHOUT (flag explicitly cleared) the element: (none)",
+  "name": "",
+  "description": "medusa sculptor",
+  "cr": "6",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for probe B\"}",
+   "statblock-inject-elements": ""
+  },
+  "green": "baseline: what the same prompt writes with no element"
+ },
+ {
+  "canary": "PROBE B \u2014 does the seat write a good version of an injected hallmark? Pinned homebrew. WITH the element: drinks blood and is mended by it",
+  "name": "",
+  "description": "vampire pirate",
+  "cr": "8",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for probe B\"}",
+   "statblock-inject-elements": "[\"drinks blood and is mended by it\"]"
+  },
+  "green": "the row does the thing mechanically, is named for this creature, and sits inside the budget"
+ },
+ {
+  "canary": "PROBE B \u2014 does the seat write a good version of an injected hallmark? Pinned homebrew. WITHOUT (flag explicitly cleared) the element: (none)",
+  "name": "",
+  "description": "vampire pirate",
+  "cr": "8",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for probe B\"}",
+   "statblock-inject-elements": ""
+  },
+  "green": "baseline: what the same prompt writes with no element"
+ },
+ {
+  "canary": "PROBE B \u2014 does the seat write a good version of an injected hallmark? Pinned homebrew. WITH the element: a rotting touch that will not heal",
+  "name": "",
+  "description": "mummy librarian",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for probe B\"}",
+   "statblock-inject-elements": "[\"a rotting touch that will not heal\"]"
+  },
+  "green": "the row does the thing mechanically, is named for this creature, and sits inside the budget"
+ },
+ {
+  "canary": "PROBE B \u2014 does the seat write a good version of an injected hallmark? Pinned homebrew. WITHOUT (flag explicitly cleared) the element: (none)",
+  "name": "",
+  "description": "mummy librarian",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for probe B\"}",
+   "statblock-inject-elements": ""
+  },
+  "green": "baseline: what the same prompt writes with no element"
+ }
+]

@@ -1,0 +1,127 @@
+{
+ "what": "Reference prompts for the three layered-design probes (Fable 5.2, 2026-11-14). Evidence runs only. \"model\" is the printed creature the prompt resembles; \"hallmark\" is a hand answer key for probe A, judged by reading; \"inject\" is the signature element for probe B and probe C.",
+ "prompts": [
+  {
+   "id": "layer-clockwork-spider",
+   "name": "",
+   "concept": "clockwork spider",
+   "cr": "2",
+   "edition": "2024",
+   "model": "Spider",
+   "hallmark": "a web: a ranged restrain, the strand can be destroyed (the identity list calls this \"snare\")",
+   "inject": "fires a line of tar that binds prey like a web",
+   "probes": [
+    "A",
+    "B",
+    "C"
+   ],
+   "note": "The word resolves to the CR 0 Spider, whose own rows are Spider Climb, Web Walker and Bite. The web action is on the Giant Spider. Report what the call does with the weaker block."
+  },
+  {
+   "id": "layer-medusa-sculptor",
+   "name": "",
+   "concept": "medusa sculptor",
+   "cr": "6",
+   "edition": "2024",
+   "model": "Medusa",
+   "hallmark": "a gaze that petrifies (\"gaze\")",
+   "inject": "a gaze that turns the living to stone",
+   "probes": [
+    "A",
+    "B",
+    "C"
+   ],
+   "note": ""
+  },
+  {
+   "id": "layer-vampire-pirate",
+   "name": "",
+   "concept": "vampire pirate",
+   "cr": "8",
+   "edition": "2024",
+   "model": "Vampire",
+   "hallmark": "drinks blood: a bite that drains and mends it",
+   "inject": "drinks blood and is mended by it",
+   "probes": [
+    "A",
+    "B",
+    "C"
+   ],
+   "note": "No entry in the identity list of nine mechanics fits a drain; it can only arrive as a signature element."
+  },
+  {
+   "id": "layer-mother-ash",
+   "name": "Mother Ash",
+   "concept": "hag midwife",
+   "cr": "9",
+   "edition": "2024",
+   "model": "Green Hag",
+   "hallmark": "deception: disguise, invisibility, a mimicked voice",
+   "inject": null,
+   "probes": [
+    "A",
+    "C"
+   ],
+   "note": "A pinned twist on the Green Hag already exists in BLOCKS-bothways-2026-11-14.md to compare against."
+  },
+  {
+   "id": "layer-mummy-librarian",
+   "name": "",
+   "concept": "mummy librarian",
+   "cr": "3",
+   "edition": "2024",
+   "model": "Mummy",
+   "hallmark": "a rotting curse on its touch, or a glare that frightens",
+   "inject": "a rotting touch that will not heal",
+   "probes": [
+    "A",
+    "B",
+    "C"
+   ],
+   "note": "Healing denial is on the brief's list of missing effects (item 5). A [gap] here is a finding, not a failure of the probe."
+  },
+  {
+   "id": "layer-ghoul-gravedigger",
+   "name": "",
+   "concept": "ghoul gravedigger",
+   "cr": "5",
+   "edition": "2024",
+   "model": "Ghoul",
+   "hallmark": "claws that paralyse",
+   "inject": null,
+   "probes": [
+    "A"
+   ],
+   "note": ""
+  },
+  {
+   "id": "layer-bellringer-ghost",
+   "name": "",
+   "concept": "a chapel bell-ringer's ghost that tolls for the dying",
+   "cr": "3",
+   "edition": "2024",
+   "model": "Ghost",
+   "hallmark": "possession, or a visage that frightens; the frame matters as much: it flies and is incorporeal",
+   "inject": null,
+   "probes": [
+    "A",
+    "C"
+   ],
+   "note": ""
+  },
+  {
+   "id": "layer-ogre-blacksmith-control",
+   "name": "",
+   "concept": "ogre blacksmith",
+   "cr": "3",
+   "edition": "2024",
+   "model": "Ogre",
+   "hallmark": null,
+   "inject": null,
+   "probes": [
+    "A"
+   ],
+   "note": "CONTROL: the Ogre has no hallmark beyond its numbers. The model line must not make the call invent one."
+  }
+ ]
+}

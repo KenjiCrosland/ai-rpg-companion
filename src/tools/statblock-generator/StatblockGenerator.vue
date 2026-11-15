@@ -1136,6 +1136,26 @@ async function generateStatblockEngine(edition) {
   const hintText = `${monsterName.value} ${monsterDescription.value}`;
   const FACETS = ['bestial','armed','amorphous','grave','fiendish','celestial','fey','draconic','elemental','verdant','forged','mind','venomous','terror','beguiling','grasping','devouring','aquatic','subterranean','aerial','uncanny','arcane','voice','gaze','breath'];
   const KINDS = ['behavior', 'body', 'object', 'aura'];
+
+  // AN INJECTED SIGNATURE ELEMENT, FOR EVIDENCE RUNS ONLY (probe B, 2026-11-14).
+  // Probe B asks whether the existing idea, fit and author calls write a GOOD version
+  // of a hallmark once it is handed to them as a signature element. This supplies one
+  // without the identity call, so the same prompt can be run with and without it. Read
+  // from localStorage like the edition, the legacy flag and `statblock-pin-path`;
+  // nothing in the product sets it, and a run that uses it says so in its trace.
+  const injectedElements = () => {
+    try {
+      const raw = localStorage.getItem('statblock-inject-elements');
+      if (!raw) return null;
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr) || !arr.length) return null;
+      const els = arr.map((x) => (typeof x === 'string' ? { element: x, kind: null } : { element: String(x?.element ?? ''), kind: KINDS.includes(x?.kind) ? x.kind : null })).filter((x) => x.element.trim());
+      if (!els.length) return null;
+      logger.warn('[probe] SIGNATURE ELEMENT INJECTED by statblock-inject-elements — this is an evidence run, not product behaviour:', els.map((e) => e.element).join(' | '));
+      return els;
+    } catch (e) { logger.warn('[probe] element injection ignored:', e?.message ?? e); return null; }
+  };
+
   // one prose reader for both calls — the identity call (user path) and the
   // synthesis call (blank path) return the same fields but for the lead
   const readProse = (parsed, { blank }) => {
@@ -1297,6 +1317,7 @@ async function generateStatblockEngine(edition) {
           // [path] line and compared with the matcher inside the engine; it changes no sheet yet.
           const pathFields = { name: monsterName.value.trim(), concept: monsterDescription.value.trim(), cr: crFromUser ? cr : null, role: givenArchetype, edition };
           const pathOn = async () => {
+            // (see `injectedElements` below for the sibling evidence-only override)
             // A PINNED PATH, FOR EVIDENCE RUNS ONLY (2026-11-14). Three prompts had never been
             // seen BOTH ways, because which path they take is the model's and it flips between
             // runs. This lets a smoke batch ask for one, so the two readings of a prompt can be
@@ -1567,7 +1588,7 @@ async function generateStatblockEngine(edition) {
           fixedName: conceptProvidedName,
           path: conceptPath, // shadow: the engine traces agreement with its matcher and reads nothing else from it (step 2)
           style: conceptStyle,
-          signatureElements: conceptElements ?? [],
+          signatureElements: injectedElements() ?? conceptElements ?? [],
           mind: conceptMind,
           movement: conceptMovement ?? [],
           edition, // the form's edition: print's 2024-only reclasses (goblins to Fey) are not 2014's (form-ten 2026-10-01)

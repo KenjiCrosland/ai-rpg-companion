@@ -1,0 +1,555 @@
+
+################ ARM 0 — today's prompt ################
+
+--- layer-clockwork-spider  "clockwork spider"  CR 2  model Spider
+    HALLMARK KEY: a web: a ranged restrain, the strand can be destroyed (the identity list calls this "snare")
+    1. type=Construct (inferred) size=Small move=climb mech=snare
+         · wire-and-gear web that trips and reels in prey [behavior]
+         · brass-and-iron clockwork body with clicking fangs [body]
+         · wound-spring that powers its bite [object]
+    2. type=Construct (inferred) size=Small move=climb mech=snare
+         · geared iron legs that lock onto prey [body]
+         · corrosive drip from its spinneret [behavior]
+         · climbing ceilings and walls to ambush [behavior]
+    3. type=Construct (inferred) size=Medium move=climb mech=snare
+         · iron clockwork body of gears and plates [body]
+         · hidden snare-line that binds prey [behavior]
+         · tireless ambush from stillness [behavior]
+    4. type=Construct (inferred) size=Small move=climb mech=snare
+         · clockwork snare that pins and binds prey [behavior]
+         · brass-and-iron clockwork body [body]
+         · crackling spring-loaded mandibles [object]
+    5. type=Construct (user) size=Small move=climb mech=snare
+         · wire-and-resin web spray that pins prey [behavior]
+         · ticking clockwork brass-and-iron body [body]
+         · spring-loaded lunging bite [behavior]
+
+--- layer-medusa-sculptor  "medusa sculptor"  CR 6  model Medusa
+    HALLMARK KEY: a gaze that petrifies ("gaze")
+    1. type=Monstrosity (inferred) size=Medium move= mech=gaze
+         · petrifying gaze that freezes flesh to stone [behavior]
+         · chisels and reshapes its half-petrified victims into posed statues [behavior]
+         · a body itself veined with calcifying stone and hooked sculptor's fingers [body]
+    2. type=Monstrosity (inferred) size=Medium move= mech=gaze
+         · petrifying gaze aimed like a chisel [behavior]
+         · garden of screaming stone victims [body]
+         · serpentine hair and cold sculptor's hands [body]
+    3. type=Monstrosity (inferred) size=Medium move= mech=gaze
+         · petrifying gaze that partially freezes prey mid-fight [behavior]
+         · chisel-fingered hands that sculpt living victims into statues [body]
+         · a gallery of its own half-finished victims [aura]
+    4. type=Monstrosity (inferred) size=Medium move= mech=gaze
+         · the slow petrifying stare [behavior]
+         · serpent hair that strikes while the eyes hold [body]
+         · a gallery of half-finished victims [aura]
+    5. type=Monstrosity (inferred) size=Medium move= mech=gaze
+         · petrifying gaze that turns prey to stone [behavior]
+         · a gallery of stone victims she sculpts and keeps [body]
+         · serpent hair that strikes alongside her hands [body]
+
+--- layer-vampire-pirate  "vampire pirate"  CR 8  model Vampire
+    HALLMARK KEY: drinks blood: a bite that drains and mends it
+    1. type=Undead (user) size=Medium move=swim mech=gaze
+         · cutlass and thrown knife duel [object]
+         · blood-draining life hunt [behavior]
+         · rising from a drowned hull-crypt [behavior]
+    2. type=Undead (inferred) size=Medium move=swim mech=grapple
+         · life-draining rapier lunge [behavior]
+         · grave-mist escape and coffin-ship regeneration [behavior]
+         · salt-crusted drowned corpse-body [body]
+    3. type=Undead (inferred) size=Medium move=swim/climb mech=grapple
+         · brine-soaked undead hunger [body]
+         · grappling and dragging prey overboard [behavior]
+         · taunting with a dead crewmate's voice [behavior]
+    4. type=Undead (user) size=Medium move=swim mech=grapple
+         · the blood-draining bite [behavior]
+         · brine-soaked undead body [body]
+         · a cutlass from a sunken ship [object]
+    5. type=Undead (user) size=Medium move=swim/climb mech=gaze
+         · a drowned captain's uncured sea-wound that drinks blood [body]
+         · boarding and fighting along the deck, rigging, and waterline [behavior]
+         · the brine-mist and nerve-sapping reek of the drowned deep [aura]
+
+--- layer-mother-ash  "hag midwife"  CR 9  model Green Hag
+    HALLMARK KEY: deception: disguise, invisibility, a mimicked voice
+    1. type=Fey (inferred) size=Medium move=climb mech=snare
+         · sews shadows to an afterbirth cord to bind and birth things [behavior]
+         · long hooked bone needle, blood-caked [object]
+         · smell and presence of a birthing room gone wrong [aura]
+    2. type=Undead (inferred) size=Medium move= mech=snare
+         · swaddling and dragging prey in grave-cloth [behavior]
+         · a crooning lullaby that lulls and unnerves [behavior]
+         · hungry afterbirth attendants [body]
+    3. type=Fey (inferred) size=Medium move= mech=summon
+         · bargaining for lives and limbs mid-combat [behavior]
+         · a rusty forceps that stitched curses into wounds [object]
+         · a crawling brood of half-formed afterbirth-dears [behavior]
+    4. type=Undead (inferred) size=Medium move= mech=snare
+         · cutting a child out of the living [behavior]
+         · sewing and swaddling her chosen patient in grave-cloth [behavior]
+         · the swollen birthing apron of stitched grave-soil [body]
+    5. type=Undead (inferred) size=Medium move=swim mech=snare
+         · snaring the living in a grave-wax caul [behavior]
+         · harvesting the helpless with a boiled-bone needle [object]
+         · birthing rot from her snared victims [behavior]
+
+--- layer-mummy-librarian  "mummy librarian"  CR 3  model Mummy
+    HALLMARK KEY: a rotting curse on its touch, or a glare that frightens
+    1. type=Undead (inferred) size=Medium move= mech=aura
+         · the cataloguing punishment [behavior]
+         · ash-dry, paper-cured corpse [body]
+         · a staff and shelving of old books [object]
+    2. type=Undead (inferred) size=Medium move= mech=aura
+         · droning catalogue-whisper that saps the will [behavior]
+         · grave-wrapped parchment body [body]
+         · the stacks it refuses to abandon [aura]
+    3. type=Undead (inferred) size=Medium move= mech=snare
+         · the funerary scroll read aloud that rots flesh [behavior]
+         · bandage-wrapped natron-cured corpse [body]
+         · an archive of cursed tablets and scroll-stacks [object]
+    4. type=Undead (inferred) size=Medium move= mech=snare
+         · curse-whispered cataloguing of intruders [behavior]
+         · grave-wrapped brittle body [body]
+         · banned pages and its binding tome [object]
+    5. type=Undead (inferred) size=Medium move= mech=aura
+         · guarding its shelves and cataloguing the collection [behavior]
+         · bandage-wrapped desiccated corpse [body]
+         · cloud of tomb-dust and crumbled papyrus [aura]
+
+--- layer-ghoul-gravedigger  "ghoul gravedigger"  CR 5  model Ghoul
+    HALLMARK KEY: claws that paralyse
+    1. type=Undead (inferred) size=Medium move=burrow/climb mech=engulf
+         · dragging prey down into its grave [behavior]
+         · a body of cold packed grave-earth [body]
+         · the rusted burial spade it wields [object]
+    2. type=Undead (inferred) size=Medium move=burrow/climb mech=snare
+         · deliberate grave-digging and burial of prey [behavior]
+         · the bone-handled spade and the pit it works beside [object]
+         · body of packed grave-clay and coffin rot [body]
+    3. type=Undead (user) size=Medium move=burrow mech=snare
+         · gore-caked gravedigger's shovel [object]
+         · dragging prey into open graves [behavior]
+         · burrowing through its own tunnels [behavior]
+    4. type=Undead (user) size=Medium move=burrow mech=grapple
+         · bursting up through the grave soil to seize a victim [behavior]
+         · the grave-iron spade spilling clotted earth [object]
+         · the open pit it drags prey toward [aura]
+    5. type=Undead (inferred) size=Medium move=burrow mech=snare
+         · shovel-scoop that buries prey's legs in loose grave-soil [behavior]
+         · the hooked burial spade it wields [object]
+         · body packed from grave-earth and coffin rot [body]
+
+--- layer-bellringer-ghost  "a chapel bell-ringer's ghost that tolls for the dying"  CR 3  model Ghost
+    HALLMARK KEY: possession, or a visage that frightens; the frame matters as much: it flies and is incorporeal
+    1. type=Undead (user) size=Medium move=fly mech=aura
+         · tolling the death-knell bell [behavior]
+         · spectral chime that passes through walls [body]
+         · grave-cold dread of the dying [aura]
+    2. type=Undead (inferred) size=Medium move=fly mech=aura
+         · tolling the bell for the dying [behavior]
+         · the cracked handbell [object]
+         · grave-cold bell-song that marks the doomed [aura]
+    3. type=Undead (user) size=Medium move=fly mech=aura
+         · tolling the bell for the dying [behavior]
+         · the bond to the chapel bell [object]
+         · death-knell dirge that marks prey [aura]
+    4. type=Undead (user) size=Medium move= mech=aura
+         · tolling the spectral bell that draws the dying [behavior]
+         · a widening aura of mournful death-knell sound [aura]
+         · drifting through walls and pews like a shadow [body]
+    5. type=Undead (user) size=Medium move=fly mech=aura
+         · the tolling of a death-knell bell [object]
+         · haunting through walls to reach the dying [behavior]
+         · a chill that marks the doomed [aura]
+
+--- layer-ogre-blacksmith-control  "ogre blacksmith"  CR 3  model Ogre
+    HALLMARK KEY: (none — control)
+    1. type=Giant (inferred) size=Large move= mech=thrown-weapon
+         · hurls hammer, anvil, and glowing iron [behavior]
+         · forge-heat breath and red-hot iron [body]
+         · heavy blacksmith's hammer and tongs [object]
+    2. type=Giant (inferred) size=Huge move= mech=thrown-weapon
+         · hurling red-hot forged work [behavior]
+         · anvil-fist and smith's hammer [object]
+         · banked forge-coals and molten slag [aura]
+    3. type=Giant (user) size=Large move= mech=thrown-weapon
+         · anvil-hafted hammer [object]
+         · methodical forge-style hammering of a single target [behavior]
+         · soot-caked hide and slag-burning heat [body]
+    4. type=Giant (inferred) size=Large move= mech=thrown-weapon
+         · hurling an anvil or cart at range [behavior]
+         · a giant forge-hammer and lashing chain [object]
+         · an iron-veined, soot-scaled body [body]
+    5. type=Giant (inferred) size=Large move= mech=thrown-weapon
+         · white-hot forge-hammer [object]
+         · slag-crusted hide [body]
+         · hammering the ground to spray sparks and slag [behavior]
+
+################ ARM 1 — model + its 2024 row names ################
+
+--- layer-clockwork-spider  "clockwork spider"  CR 2  model Spider
+    HALLMARK KEY: a web: a ranged restrain, the strand can be destroyed (the identity list calls this "snare")
+    1. type=Construct (user) size=Small move=climb mech=snare
+         · adhesive clockwork silk that binds prey [behavior]
+         · brass gears and iron plating body [body]
+         · wound mainspring mandibles [object]
+    2. type=Construct (inferred) size=Small move=climb mech=snare
+         · gear-driven scuttling over walls and ceilings [behavior]
+         · shearing clockwork mandibles and acid spray [body]
+         · survives only the workshop's standing orders [behavior]
+    3. type=Construct (inferred) size=Medium move=climb mech=snare
+         · gears and clockwork ticking [body]
+         · web of gummy gear-oil [object]
+         · relentless, tireless stalking [behavior]
+    4. type=Construct (inferred) size=Small move=climb mech=snare
+         · scuttling up walls and ceilings to drop on prey [behavior]
+         · gear-jointed clockwork iron body [body]
+         · clicking mandibles that pin and bite [behavior]
+    5. type=Construct (inferred) size=Medium move=climb mech=snare
+         · clockwork clockwork-thread ambush from above [behavior]
+         · brass-and-iron gearwork body [body]
+         · silk-fine spun wire [object]
+
+--- layer-medusa-sculptor  "medusa sculptor"  CR 6  model Medusa
+    HALLMARK KEY: a gaze that petrifies ("gaze")
+    1. type=Monstrosity (inferred) size=Medium move= mech=gaze
+         · petrifying gaze that quickens stone under flesh [behavior]
+         · a gallery of half-finished living statues [aura]
+         · a sculptor's hands and chisel that harden what they touch [body]
+    2. type=Monstrosity (inferred) size=Medium move= mech=gaze
+         · petrifying gaze that poses rather than kills [behavior]
+         · a gallery of petrified victims arranged as sculptures [aura]
+         · her own serpent-crowned stone-wracked body [body]
+    3. type=Monstrosity (inferred) size=Medium move= mech=gaze
+         · petrifying gaze that cures stone into pose [behavior]
+         · chisel-tipped fingers and sculptor's maul [object]
+         · unfinished statues used as cover and munitions [object]
+    4. type=Monstrosity (inferred) size=Medium move= mech=gaze
+         · the sculpting gaze that calcifies the living [behavior]
+         · chisel and mallet for finishing touches [object]
+         · a gallery of half-finished victims arranged as her audience [aura]
+    5. type=Monstrosity (inferred) size=Medium move= mech=gaze
+         · petrifying gaze [behavior]
+         · statue gallery of victims [aura]
+         · chisel-fingered hands [body]
+
+--- layer-vampire-pirate  "vampire pirate"  CR 8  model Vampire
+    HALLMARK KEY: drinks blood: a bite that drains and mends it
+    1. ERR Expected ',' or '}' after property value in JSON at position 670 (line
+    2. type=Undead (user) size=Medium move=swim/climb mech=grapple
+         · boarding charge and cutlass work [behavior]
+         · drowned corpse body slick with brine and barnacles [body]
+         · barnacled cutlass of the sunken ship [object]
+    3. type=Undead (inferred) size=Medium move=swim/climb mech=gaze
+         · charmed crew it drags into the fight [behavior]
+         · drowned, brine-soaked corpse-body [body]
+         · barnacled cutlass [object]
+    4. type=Undead (user) size=Medium move=swim/climb mech=grapple
+         · a drowned corsair's grave-cold bite that drains the living [behavior]
+         · salt-logged undead flesh and ruined pirate garb [body]
+         · misting through hull and over the rail [behavior]
+    5. type=Undead (user) size=Medium move=swim/climb mech=grapple
+         · boarding from the water and misting onto the deck [behavior]
+         · brine-soaked undying corpse of a drowned captain [body]
+         · the salt-cutlass and the draining bite that mends him [object]
+
+--- layer-mother-ash  "hag midwife"  CR 9  model Green Hag
+    HALLMARK KEY: deception: disguise, invisibility, a mimicked voice
+    1. type=Fey (inferred) size=Medium move=climb mech=snare
+         · seizing victims in a waxy caul and hauling them to the birth-rug [behavior]
+         · stolen-voice mimicry of crying children and pleading mothers [behavior]
+         · the afterbirth caul and cord she works like an umbilical weapon [body]
+    2. type=Fey (inferred) size=Medium move= mech=snare
+         · bargains that turn poisonous at the moment of acceptance [behavior]
+         · a shadow-stuff body stitched from stolen first breaths and afterbirth-veil [body]
+         · the midwife's satchel of swaddlings, cord, and borrowed names [object]
+    3. type=Fey (inferred) size=Medium move=swim mech=snare
+         · the stolen cry that curses from her bag [object]
+         · bargain-magic that trades pain for payment [behavior]
+         · cord-and-caul snare that binds a foe for the cutting [object]
+    4. type=Fiend (inferred) size=Medium move=swim mech=snare
+         · the forced, agonizing birth she inflicts with a touch [behavior]
+         · her apron of bone needles and birthing thread [object]
+         · a womb-like, amniotic aura that reeks of the grave [aura]
+    5. type=Fey (inferred) size=Medium move= mech=snare
+         · the birthing-circle snare of grave-wax and afterbirth [behavior]
+         · stillborn brood that crawls and labors at her victims [behavior]
+         · the crooning lullaby that mimics the voices of the taken [aura]
+
+--- layer-mummy-librarian  "mummy librarian"  CR 3  model Mummy
+    HALLMARK KEY: a rotting curse on its touch, or a glare that frightens
+    1. type=Undead (inferred) size=Medium move= mech=gaze
+         · funerary-wrapped corpse body [body]
+         · recites a forbidden phrase that curses the listener [behavior]
+         · dusty archive of scrolls and shelves [aura]
+    2. type=Undead (inferred) size=Medium move= mech=gaze
+         · dreadful glare that pins intruders in place [behavior]
+         · bandage-wrapped grave-flesh body [body]
+         · cataloged shelves of forbidden tomes [object]
+    3. type=Undead (inferred) size=Medium move= mech=gaze
+         · a terrible, freezing glare that pins intruders in place [behavior]
+         · dry, paper-wrapped corpse preserved by grave dust [body]
+         · the shelves and volumes it dies guarding [object]
+    4. type=Undead (inferred) size=Medium move= mech=gaze
+         · the dreadful glare that freezes trespassers [behavior]
+         · wrappings of dry rot and grave-dust [body]
+         · the endless shelved tomb it haunts [aura]
+    5. type=Undead (inferred) size=Medium move=climb mech=snare
+         · reading curses from open tomes [behavior]
+         · swaddling wrappings of grave-dust [body]
+         · warding the shelved archive [aura]
+
+--- layer-ghoul-gravedigger  "ghoul gravedigger"  CR 5  model Ghoul
+    HALLMARK KEY: claws that paralyse
+    1. type=Undead (inferred) size=Medium move=burrow mech=snare
+         · bursting up from the earth it undermines [behavior]
+         · hooking and dragging prey into a collapsing pit [behavior]
+         · grave-loam caked through its body and spade-claws [body]
+    2. type=Undead (user) size=Medium move=burrow mech=snare
+         · digging and filling graves [behavior]
+         · body packed with grave-soil [body]
+         · the bladed gravedigger's spade [object]
+    3. type=Undead (user) size=Medium move=burrow/climb mech=snare
+         · bursting up from a false grave-pit [behavior]
+         · heaping spoil to entomb a downed foe [behavior]
+         · grave-soil caked into claw and throat [body]
+    4. type=Undead (inferred) size=Medium move=burrow mech=snare
+         · shoveling graves for the living [behavior]
+         · the grave-spade swung two-handed [object]
+         · a body of packed grave-soil and wax [body]
+    5. type=Undead (inferred) size=Medium move=burrow mech=snare
+         · the shovel it still carries [object]
+         · hurled grave-soil that snares and pulls down [behavior]
+         · bursting up from freshly turned earth [behavior]
+
+--- layer-bellringer-ghost  "a chapel bell-ringer's ghost that tolls for the dying"  CR 3  model Ghost
+    HALLMARK KEY: possession, or a visage that frightens; the frame matters as much: it flies and is incorporeal
+    1. type=Undead (user) size=Medium move=fly mech=aura
+         · tolling the death-knell that marks the dying [behavior]
+         · the spectral bell-rope it swings as a weapon [object]
+         · a grave-cold aura of dread that hangs on its chime [aura]
+    2. type=Undead (inferred) size=Medium move=fly mech=aura
+         · the cracked passing bell it rings without hands [object]
+         · a death-knell that saps the dying and the living alike [aura]
+         · drifting unseen through stone and timber [behavior]
+    3. type=Undead (user) size=Medium move=fly mech=aura
+         · the death-knell toll that marks a soul as due [behavior]
+         · a phantom bell-rope pulled again and again [object]
+         · drifting through the chapel's stone and bell-metal [body]
+    4. type=Undead (inferred) size=Medium move=fly mech=aura
+         · the death-tolling bell that marks the dying [behavior]
+         · shadow-stuff shaped like a robed ringer with arms wrenched upward [body]
+         · a soundless knell only the doomed can hear [aura]
+    5. type=Undead (inferred) size=Medium move=fly mech=aura
+         · tolling the death knell [behavior]
+         · spectral bell and shadowy form [object]
+         · aura of mourning and doom [aura]
+
+--- layer-ogre-blacksmith-control  "ogre blacksmith"  CR 3  model Ogre
+    HALLMARK KEY: (none — control)
+    1. type=Giant (inferred) size=Large move= mech=thrown-weapon
+         · hurling red-hot iron and hammers [behavior]
+         · smith's hammer and anvil [object]
+         · forge-fire heat clinging to its work [aura]
+    2. type=Giant (inferred) size=Large move= mech=thrown-weapon
+         · anvil-headed hammer [object]
+         · forge-heat furnace hands [body]
+         · apprentice to the mountain forge [behavior]
+    3. type=Giant (inferred) size=Large move= mech=thrown-weapon
+         · hurling red-hot forge-work [behavior]
+         · hammer and anvil [object]
+         · the bellows-hot forge [aura]
+    4. type=Giant (inferred) size=Large move= mech=null
+         · a smith's hammer wielded two-handed [object]
+         · red-hot tongs and sparking forge-work [object]
+         · lumbering, unyielding hammer-blow rhythm [behavior]
+    5. type=Giant (inferred) size=Large move= mech=aura
+         · hammer-and-anvil blows that stun with their clang [behavior]
+         · hulking iron-muscled ogre frame in a smith's apron [body]
+         · a wagon-sized blacksmith's hammer [object]
+
+################ ARM 2 — model + its signature sentence ################
+
+--- layer-clockwork-spider  "clockwork spider"  CR 2  model Spider
+    HALLMARK KEY: a web: a ranged restrain, the strand can be destroyed (the identity list calls this "snare")
+    1. type=Construct (inferred) size=Medium move=climb mech=snare
+         · spinneret-fire web cable [object]
+         · relentless clockwork pursuit [behavior]
+         · brass-and-iron articulated legs [body]
+    2. type=Construct (inferred) size=Small move=climb mech=snare
+         · wire-strung clockwork cable snare [behavior]
+         · brass gears and oiled metal body [body]
+         · hissing scalding gear-oil spray [behavior]
+    3. type=Construct (inferred) size=Small move=climb mech=snare
+         · gearwork anatomy [body]
+         · oil-spray webbing that snares and conducts venom [behavior]
+         · relentless mainspring pursuit [behavior]
+    4. type=Construct (inferred) size=Small move=climb mech=snare
+         · brass snare-line fired from a spring-loaded spinneret [behavior]
+         · geared clockwork body of riveted iron and brass [body]
+         · wall-and-ceiling ambush lurk [behavior]
+    5. type=Construct (inferred) size=Small move=climb mech=snare
+         · steel-cable web spun from its own spool [behavior]
+         · brass-and-iron spider body with clockwork legs [body]
+         · venom injector fangs [object]
+
+--- layer-medusa-sculptor  "medusa sculptor"  CR 6  model Medusa
+    HALLMARK KEY: a gaze that petrifies ("gaze")
+    1. type=Monstrosity (inferred) size=Medium move= mech=gaze
+         · petrifying gaze she weaponizes against averted eyes [behavior]
+         · a gallery of living statues she curates mid-hunt [aura]
+         · a brazen bow kept for those who look away [object]
+    2. type=Monstrosity (inferred) size=Medium move= mech=gaze
+         · the petrifying gaze [behavior]
+         · arrows loosed from a perch [object]
+         · living statues of the fallen [aura]
+    3. type=Fey (inferred) size=Medium move= mech=gaze
+         · petrifying gaze that turns onlookers to stone [behavior]
+         · arrows loosed at those averting their eyes [object]
+         · gallery of petrified victims used as cover [aura]
+    4. type=Monstrosity (inferred) size=Medium move= mech=gaze
+         · half-petrifying gaze that stiffens and slows rather than fully turns [behavior]
+         · living stone skin and hair of carved serpent-strands [body]
+         · chisel-tipped arbalest and mineral slurry flasks [object]
+    5. type=Aberration (inferred) size=Medium move= mech=gaze
+         · petrifying gaze that turns living flesh to stone [body]
+         · a bow and a tactician's eye for cover [object]
+         · gallery of petrified victims used as shields and statues [aura]
+
+--- layer-vampire-pirate  "vampire pirate"  CR 8  model Vampire
+    HALLMARK KEY: drinks blood: a bite that drains and mends it
+    1. type=Undead (inferred) size=Medium move=swim/climb mech=grapple
+         · charming hail and feigned parley [behavior]
+         · draining bite that heals the captain [behavior]
+         · coffin-ship and mist retreat [aura]
+    2. type=Undead (inferred) size=Medium move=swim mech=grapple
+         · draining bite that pales the living [behavior]
+         · brine-soaked drowned corpse [body]
+         · boarding cutlass and rigging ambush [object]
+    3. type=Undead (inferred) size=Medium move=swim mech=grapple
+         · brine-swollen bite that drains blood and max HP [behavior]
+         · gaff-hook that drags prey to the rail [object]
+         · drowned spawn rising from the waterline [behavior]
+    4. type=Undead (user) size=Medium move=swim/climb mech=grapple
+         · draining bite that leaves foes bloodless [behavior]
+         · cutlass and boarding hooks [object]
+         · mist-form escape and pursuit [aura]
+    5. type=Undead (inferred) size=Medium move=swim/climb mech=grapple
+         · the drowning bite that drinks warmth [behavior]
+         · salt-rimed cutlass [object]
+         · fog-and-brine reformation of the drowned [aura]
+
+--- layer-mother-ash  "hag midwife"  CR 9  model Green Hag
+    HALLMARK KEY: deception: disguise, invisibility, a mimicked voice
+    1. type=Fey (inferred) size=Medium move=fly mech=snare
+         · borrowing the face of a trusted caretaker [behavior]
+         · attending a birth to claim a promised child [behavior]
+         · a birthing-cord of stolen warmth and cold [object]
+    2. type=Fey (inferred) size=Medium move=climb mech=grapple
+         · the crooning lullaby that stupefies [behavior]
+         · the birth-cradle sack she grapples prey into [object]
+         · shadow-stuff body that flickers at the edge of sight [body]
+    3. type=Fey (inferred) size=Medium move=climb mech=snare
+         · the false newborn that bites [behavior]
+         · cutting the cord to bind and drag prey [behavior]
+         · a nursery of stolen children and bargains [aura]
+    4. type=Fiend (inferred) size=Medium move=climb mech=grapple
+         · the mock-birth touch that swells flesh with rot [behavior]
+         · lullaby mimicry and womb-dark illusions [behavior]
+         · birthing hagspawn from her own bloated body [body]
+    5. type=Fey (inferred) size=Medium move= mech=summon
+         · cursed midwifery bargains [behavior]
+         · a crooned nurse's hex that heals her and harms her enemy [behavior]
+         · brine-slicked, milk-veined hag flesh [body]
+
+--- layer-mummy-librarian  "mummy librarian"  CR 3  model Mummy
+    HALLMARK KEY: a rotting curse on its touch, or a glare that frightens
+    1. type=Undead (inferred) size=Medium move= mech=gaze
+         · the reverent shush — dread and paralysis from a throttled half-whisper [behavior]
+         · funeral wrappings and shelf-dust fused to a preserved corpse [body]
+         · the tome in its grip, catalogued like a weapon [object]
+    2. type=Undead (user) size=Medium move= mech=gaze
+         · preserved corpse wrapped in papyrus and dust [body]
+         · Dreadful Glare that paralyzes trespassers [behavior]
+         · cursed rot that prevents wounds from healing [aura]
+    3. type=Undead (inferred) size=Medium move= mech=gaze
+         · the Dreadful Glare over the reading desk [behavior]
+         · grave-dust wrappings that seal wounds shut [body]
+         · the archive it will not leave [aura]
+    4. type=Undead (inferred) size=Medium move= mech=gaze
+         · the paralyzing cataloguing glare [behavior]
+         · a body of shelf-dust and rotting bindings [body]
+         · cursed tomes and loose leaves hurled as weapons [object]
+    5. type=Undead (inferred) size=Medium move= mech=gaze
+         · the hushing silence that roots intruders [behavior]
+         · desiccating, book-dust fist that prevents healing [behavior]
+         · swaddled in brittle, catalogued wrappings [body]
+
+--- layer-ghoul-gravedigger  "ghoul gravedigger"  CR 5  model Ghoul
+    HALLMARK KEY: claws that paralyse
+    1. type=Undead (inferred) size=Medium move=burrow mech=snare
+         · grave-wax snare flung from the burial apron [behavior]
+         · spade and paralytic claw [object]
+         · body of packed grave-clay that can burrow into its own spoil [body]
+    2. type=Undead (inferred) size=Medium move=burrow mech=snare
+         · packing grave-clay into wounds to pin prey down [behavior]
+         · the barrow-cart of loose burial earth [object]
+         · paralytic claws of a thing that will not rest [body]
+    3. type=Undead (user) size=Medium move=burrow/climb mech=grapple
+         · dragging paralyzed prey beneath the earth [behavior]
+         · a grave-digger's barrow and shovel [object]
+         · corpse-earth body slick with grave-clay [body]
+    4. type=Undead (user) size=Medium move=burrow mech=snare
+         · throws a snaring spadeful of grave earth [behavior]
+         · paralyzing digging claws [behavior]
+         · worn iron spade [object]
+    5. type=Undead (inferred) size=Medium move=burrow mech=snare
+         · grave-clay paralysis claw [behavior]
+         · half-dug lure pit the victim is dragged into [object]
+         · body of wet grave-soil and spoil [body]
+
+--- layer-bellringer-ghost  "a chapel bell-ringer's ghost that tolls for the dying"  CR 3  model Ghost
+    HALLMARK KEY: possession, or a visage that frightens; the frame matters as much: it flies and is incorporeal
+    1. type=Undead (user) size=Medium move=fly mech=aura
+         · the phantom bell tolling for the dying [behavior]
+         · necrotic knell that follows a chosen victim [aura]
+         · an incorporeal spirit of shadow drifting through the chapel [body]
+    2. type=Undead (user) size=Medium move= mech=aura
+         · spectral bell tolling for the dying [object]
+         · death-marking knell that saps vitality [behavior]
+         · mournful wail that shakes the living [behavior]
+    3. type=Undead (inferred) size=Medium move=fly mech=aura
+         · the tolling bell that marks the dying [object]
+         · drifting through chapel stone unhindered [behavior]
+         · a mournful knell that weighs on the living [aura]
+    4. type=Undead (inferred) size=Medium move=fly mech=aura
+         · tolling the death-knell for the living [behavior]
+         · a spectral chapel bell it rings with shadowed hands [object]
+         · an aura of funeral silence around the marked [aura]
+    5. type=Undead (inferred) size=Medium move=fly mech=aura
+         · the tolling bell that marks the dying [object]
+         · the swing of the great bronze bell on its chain [behavior]
+         · death knell aura around the near-dead [aura]
+
+--- layer-ogre-blacksmith-control  "ogre blacksmith"  CR 3  model Ogre
+    HALLMARK KEY: (none — control)
+    1. type=Giant (inferred) size=Large move= mech=thrown-weapon
+         · crushing hammer blows [behavior]
+         · flung burning embers [behavior]
+         · huge smith's hammer [object]
+    2. type=Giant (inferred) size=Large move= mech=thrown-weapon
+         · hurling glowing hot iron at range [behavior]
+         · forge hammer and smith's anvil [object]
+         · heat-scarred hide and soot-caked arms [body]
+    3. type=Giant (inferred) size=Large move= mech=thrown-weapon
+         · forge-fire hammer blows [object]
+         · hurling red-hot iron [behavior]
+         · slag-crusted hide [body]
+    4. type=Giant (user) size=Large move= mech=thrown-weapon
+         · giant hammer blows [object]
+         · red-hot iron flung from the forge [object]
+         · furious bellowing charge [behavior]
+    5. type=Giant (inferred) size=Large move= mech=thrown-weapon
+         · anvil-heavy maul blows [object]
+         · hurled hammers and anvils [object]
+         · forge-fire and burning fuel [aura]
