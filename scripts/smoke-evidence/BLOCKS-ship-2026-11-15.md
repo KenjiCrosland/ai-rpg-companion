@@ -1,5 +1,9 @@
 # Blocks — the ship gate for the enhancement release
 
+> **Read after this:** this gate ran BEFORE the three class-on-a-people fixes of 2026-11-15, so
+> sheets 04 (goblin wizard CR 3) and 05 (kobold sorcerer CR 2) of the eight are superseded by
+> `BLOCKS-people-class-2026-11-15.md`. The other 46 sheets stand.
+
 **Frozen commit: `0e44391`.** 48 sheets, generated once each as they would ship: the regression
 forty (`sweep.json`) and the eight added (`ship-eight.json`). **Every sheet is here, marked as
 it is. None threw.** This file is a milestone: it is the record of what shipped.

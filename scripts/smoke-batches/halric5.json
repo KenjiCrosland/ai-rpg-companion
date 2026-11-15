@@ -1,0 +1,77 @@
+[
+ {
+  "canary": "ruling A/B regression \u2014 a person's Name alone; roll 1 of 5: report the type line",
+  "name": "Brother Halric",
+  "description": "",
+  "cr": "3",
+  "rules": "2014",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "typed Humanoid, not Construct; no poison immunity"
+ },
+ {
+  "canary": "ruling A/B regression \u2014 a person's Name alone; roll 2 of 5: report the type line",
+  "name": "Brother Halric",
+  "description": "",
+  "cr": "3",
+  "rules": "2014",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "typed Humanoid, not Construct; no poison immunity"
+ },
+ {
+  "canary": "ruling A/B regression \u2014 a person's Name alone; roll 3 of 5: report the type line",
+  "name": "Brother Halric",
+  "description": "",
+  "cr": "3",
+  "rules": "2014",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "typed Humanoid, not Construct; no poison immunity"
+ },
+ {
+  "canary": "ruling A/B regression \u2014 a person's Name alone; roll 4 of 5: report the type line",
+  "name": "Brother Halric",
+  "description": "",
+  "cr": "3",
+  "rules": "2014",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "typed Humanoid, not Construct; no poison immunity"
+ },
+ {
+  "canary": "ruling A/B regression \u2014 a person's Name alone; roll 5 of 5: report the type line",
+  "name": "Brother Halric",
+  "description": "",
+  "cr": "3",
+  "rules": "2014",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "typed Humanoid, not Construct; no poison immunity"
+ }
+]

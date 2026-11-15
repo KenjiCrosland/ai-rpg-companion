@@ -10482,5 +10482,38 @@
     "head": true
    }
   ]
+ },
+ "b397582e84ad": {
+  "concept": "goblin assassin",
+  "clauses": [
+   {
+    "id": "cl_8lm46m",
+    "text": "goblin assassin",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "5a7f7910605d": {
+  "concept": "hobgoblin priest",
+  "clauses": [
+   {
+    "id": "cl_hywqrx",
+    "text": "hobgoblin priest",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "0e47bf5e2ef9": {
+  "concept": "kobold warrior",
+  "clauses": [
+   {
+    "id": "cl_1304dmz",
+    "text": "kobold warrior",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
  }
 }
