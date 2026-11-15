@@ -10407,5 +10407,80 @@
     "head": true
    }
   ]
+ },
+ "73778957850c": {
+  "concept": "Headless Horseman",
+  "clauses": [
+   {
+    "id": "cl_1ehfndw",
+    "text": "Headless Horseman",
+    "kind": "mechanical",
+    "askShape": "attack",
+    "askMechanic": "burst",
+    "askMechanicWhy": "Headless Horseman",
+    "polarity": "lacks",
+    "takes": "part",
+    "lackQuote": "Headless"
+   }
+  ]
+ },
+ "5b3e6fd93d8a": {
+  "concept": "Knife Ball",
+  "clauses": [
+   {
+    "id": "cl_19klivu",
+    "text": "Knife Ball",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "63228874b51d": {
+  "concept": "kobold sorcerer",
+  "clauses": [
+   {
+    "id": "cl_kihf9a",
+    "text": "kobold sorcerer",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "4b6bc658ce09": {
+  "concept": "mummy librarian",
+  "clauses": [
+   {
+    "id": "cl_to4iy1",
+    "text": "mummy librarian",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
+ },
+ "517154d4684e": {
+  "concept": "a silver-tongued toad the size of a pony",
+  "clauses": [
+   {
+    "id": "cl_61zvoj",
+    "text": "a silver-tongued toad the size of a pony",
+    "kind": "mechanical",
+    "askWhen": "at_will",
+    "askWhenWhy": "a silver-tongued toad the size of a pony",
+    "askShape": "save_single",
+    "askMechanic": "charm",
+    "askMechanicWhy": "silver tongued"
+   }
+  ]
+ },
+ "ae10b856b0ab": {
+  "concept": "a giant river pike",
+  "clauses": [
+   {
+    "id": "cl_wlryrl",
+    "text": "a giant river pike",
+    "kind": "descriptive",
+    "head": true
+   }
+  ]
  }
 }
