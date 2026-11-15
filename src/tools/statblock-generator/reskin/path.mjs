@@ -311,6 +311,39 @@ export function readPath(raw, { concept = '', edition = '2024' } = {}) {
       refused.push(`the head clause names the ${inHead[0].name}, a people — a ${String(p.class).trim()} who is visibly one stands on its printed body (owner's ruling, 2026-11-15)`);
     }
   }
+  // THE MIRROR OF RULING C: THE BODY IS NAMED AND THE CLASS IS MISSED (owner's fix 3,
+  // 2026-11-15). "Kobold sorcerer" shipped as a plain kobold with a Dagger and nothing
+  // answering "sorcerer": the call named the body and dropped the class, which the path probe
+  // put at about one roll in six. Ruling C's fill covers the opposite miss and cannot help here.
+  //
+  // So when the call names a declared people as the body with relation "is" and names NO class,
+  // and the head clause holds exactly one class word, that class is filled. The class words are
+  // the closed table `classes.mjs` already owns — "sorcerer" is one of the mage's — and no new
+  // list is written. A class the call did name is never overridden, and two classes fill nothing.
+  // The whole printed name still wins first: "kobold warrior" is the exact block by code before
+  // any of this runs, and "warrior" is one of the fighter's keys.
+  if (out.print_body && out.relation === 'is' && !out.class) {
+    const declared = new Set([...FEY_PEOPLES, ...OFF_TYPE_PEOPLES].map((n) => n.toLowerCase()));
+    if (declared.has(String(out.print_body).toLowerCase())) {
+      // the whole printed name is code's own closed case and wins before any of this — filling a
+      // class for it would be noise, since "kobold warrior" carries the fighter's "warrior"
+      const whole = printNameOf(concept, { edition });
+      const classesIn = (t) => { const n = norm(t); return CLASSES.filter((c) => (c.keys ?? []).some((k) => new RegExp(`\\b${String(k).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}s?\\b`, 'i').test(n))); };
+      // the positive find is the head clause; the ambiguity check is the whole words, because
+      // `headClause` cuts at " and " and would read "kobold sorcerer and bard" as one class
+      const hit = whole ? [] : classesIn(headClause(concept));
+      const hitAll = whole ? [] : classesIn(concept);
+      if (hitAll.length > 1) {
+        refused.push(`the words name ${hitAll.length} classes (${hitAll.map((c) => c.key).join(', ')}) — none is filled, since they do not say which the creature is`);
+      } else if (hit.length === 1) {
+        out.class = hit[0].key;
+        const headN = norm(headClause(concept));
+        out.receipts.class = (hit[0].keys ?? []).find((k) => new RegExp(`\\b${String(k).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}s?\\b`, 'i').test(headN)) ?? hit[0].key;
+        refused.push(`the head clause names the ${out.class}'s "${out.receipts.class}" and the call named no class — a ${out.print_body} who is one stands on its own body with the class on top (owner's ruling, 2026-11-15)`);
+      }
+    }
+  }
+
   if (p.class != null && !/^null$/i.test(String(p.class)) && String(p.class).trim()) {
     const c = String(p.class).toLowerCase().trim();
     const rc = p.class_receipt ? String(p.class_receipt).trim() : '';

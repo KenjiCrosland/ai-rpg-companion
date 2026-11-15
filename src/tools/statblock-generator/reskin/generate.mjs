@@ -9707,8 +9707,26 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         if (gmNamedW.has(have)) continue; // the GM typed this weapon — it stays (one rule with gmArmed)
         const props = WEAPONS[want] ?? null; const from = String(e.name ?? '').replace(/ \(.*\)$/, '');
         // the body's rider folds into the base: print's Assassin pays 5d6 Poison for its shortsword, a monk does not
-        let folded = 0; let text = t.replace(/ plus (\d+) \(\d+d\d+(?: \+ \d+)?\) [A-Z][a-z]+ damage/g, (m0, avg) => { folded += Number(avg); return ''; });
+        // A RIDER KEEPS BOTH HALVES OR LOSES BOTH (owner's fix 2, 2026-11-15). This regex took
+        // the rider's DAMAGE and stopped, so a CONDITIONAL rider left its condition hanging on
+        // the base: every class NPC on the Goblin Warrior read "6 (1d8 + 2) Bludgeoning damage
+        // if the attack roll had Advantage", print's Scimitar being "...Slashing damage, plus
+        // 2 (1d4) Slashing damage if the attack roll had Advantage". 24 rows, four classes, six
+        // CRs. It also folded that conditional damage into UNCONDITIONAL damage, which is wrong
+        // on its own terms: print's +2 only applied on Advantage.
+        //
+        // A CONDITIONAL RIDER IS DROPPED WHOLE AND FOLDS NOTHING. This pass swaps the BODY's
+        // weapon for the CLASS's, and the body's rider belongs to the weapon that just left —
+        // which is this pass's own reasoning ("print's Assassin pays 5d6 Poison for its
+        // shortsword, a monk does not"). An unconditional rider still folds, as before: that is
+        // the Assassin's poison, damage the class's weapon can carry at any time.
+        let folded = 0;
+        let text = t.replace(/,? plus (\d+) \(\d+d\d+(?: \+ \d+)?\) [A-Z][a-z]+ damage(\s+if [^.]*?)?(?=[.,]|$)/g, (m0, avg, cond) => { if (!cond) folded += Number(avg); return ''; });
         text = text.replace(/ (?:If the target is a creature, it must make the following saving throw\.|Plus) [^]*$/i, '');
+        // THE ROW ENDS AS A SENTENCE. Dropping a rider from the end leaves the base damage with
+        // no full stop, and a dangling comma where print had one before its rider.
+        text = text.replace(/\s{2,}/g, ' ').replace(/\s+([.,])/g, '$1').replace(/,\s*$/, '').trim();
+        if (text && !/[.!?]$/.test(text)) text += '.';
         // THE DICE FOLLOW THE AVERAGE (roadmap item 3c, 2026-11-01). This added the
         // folded damage to the STATED average and left the dice untouched, so a
         // monk's Unarmed Strike shipped "23 (3d8 + 3)" — which rolls 16.5 — and the

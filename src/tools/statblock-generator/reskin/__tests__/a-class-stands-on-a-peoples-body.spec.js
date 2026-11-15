@@ -73,3 +73,46 @@ describe('the declared peoples, and nothing else', () => {
     expect(namesInTheWords('goblin wizard', { peoples: true }).some((h) => /Goblin/.test(h.name))).toBe(true);
   });
 });
+
+describe('the mirror: the body is named and the class is missed (fix 3, 2026-11-15)', () => {
+  // "Kobold sorcerer" shipped as a plain kobold with a Dagger and nothing answering "sorcerer":
+  // the call named the body and dropped the class, about one roll in six. Ruling C's fill covers
+  // the opposite miss. The class words are the closed table `classes.mjs` already owns.
+  const body = (b) => ({ assembly: 'twist', print_body: b, print_body_receipt: b.split(' ')[0].toLowerCase(), relation: 'is' });
+
+  test.each([['kobold sorcerer', 'Kobold Warrior', 'mage'], ['goblin priest', 'Goblin Warrior', 'cleric']])(
+    '"%s" fills the class and lands class_npc on the people', (concept, block, cls) => {
+      const { read, d } = decide(concept, body(block));
+      expect(read.class).toBe(cls);
+      expect(d).toMatchObject({ path: 'class_npc', print_body: block, class: cls });
+    },
+  );
+
+  test('no class word in the head clause fills nothing', () => {
+    const { read, d } = decide("a kobold who guards a wizard's tower", body('Kobold Warrior'));
+    expect(read.class).toBeNull();
+    expect(d.path).toBe('twist');
+  });
+
+  test('two class words fill nothing', () => {
+    expect(decide('kobold sorcerer and bard', body('Kobold Warrior')).read.class).toBeNull();
+  });
+
+  test('a class the call DID name is never overridden', () => {
+    const { read } = decide('kobold sorcerer', { ...body('Kobold Warrior'), class: 'rogue', class_receipt: 'sorcerer' });
+    expect(read.class).toBe('rogue');
+  });
+
+  // THE WHOLE PRINTED NAME WINS FIRST. "kobold warrior" is the exact block by code, and
+  // "warrior" is one of the fighter's keys — so the fill must not reach for it.
+  test('"kobold warrior" stays the exact printed block with no class', () => {
+    const { read, d } = decide('kobold warrior', body('Kobold Warrior'));
+    expect(read.class).toBeNull();
+    expect(d).toMatchObject({ path: 'exact', print_body: 'Kobold Warrior' });
+  });
+
+  test('a body that is not a declared people fills nothing', () => {
+    const { read } = decide('ogre sorcerer', { assembly: 'twist', print_body: 'Ogre', print_body_receipt: 'ogre', relation: 'is' });
+    expect(read.class).toBeNull();
+  });
+});

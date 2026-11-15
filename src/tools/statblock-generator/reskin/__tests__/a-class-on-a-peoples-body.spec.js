@@ -89,3 +89,66 @@ describe('the lent row is this sheet\'s own', () => {
     120000,
   );
 });
+
+/**
+ * The two defects the ship gate's own sheets carried, ported from
+ * `scripts/reference-lend-checks.mjs`. One grid: mage and cleric (and rogue and fighter for the
+ * rider) on every declared people, at CR 1, 2, 3, 4, 6 and 8.
+ */
+const CRS = [1, 2, 3, 4, 6, 8];
+const spellsOf = (m) => { const sp = spellRow(m); return sp ? [...String(sp.text).matchAll(/\*([A-Z][A-Za-z' ]+)\*/g)].map((x) => x[1]) : null; };
+const atWillOf = (m) => { const sp = spellRow(m); const line = sp ? (/At Will:\*\*([^\n]*)/.exec(String(sp.text)) ?? [])[1] ?? '' : ''; return [...line.matchAll(/\*([A-Z][A-Za-z' ]+)\*/g)].map((x) => x[1]); };
+const onOwnBody = (cls, cr) => generateReskin({ mechanics: [], archetype: 'caster', concept: `a ${cls}`, userConcept: `a ${cls}`, cr, path: { path: 'class_npc', print_body: null, relation: null, class: cls } }, stub());
+
+describe("a lent spell list fits the sheet's CR (fix 1, 2026-11-15)", () => {
+  // A mage on a people's body carried print's whole CR 6 Mage list at every CR — Fireball twice
+  // a day and Cone of Cold on a CR 1 goblin wizard. The lend now applies item 7's own judgement.
+  // ONE ALLOWANCE, the owner's: the lending block's At Will line stands as print's.
+  test('no caster carries a spell its class would not have at that CR', async () => {
+    const own = {}; const atWill = {};
+    for (const cls of ['mage', 'cleric']) {
+      for (const cr of CRS) own[`${cls}@${cr}`] = spellsOf(await onOwnBody(cls, cr)) ?? [];
+      atWill[cls] = atWillOf(await onOwnBody(cls, 8));
+    }
+    const bad = [];
+    for (const [body, cr0] of BODIES) {
+      for (const cls of ['mage', 'cleric']) {
+        for (const cr of CRS) {
+          let m; try { m = await build(body, cls, cr); } catch { continue; }
+          const got = spellsOf(m);
+          if (got === null) { bad.push(`${body} ${cls} CR ${cr}: no Spellcasting row`); continue; }
+          const extra = got.filter((x) => !own[`${cls}@${cr}`].includes(x) && !atWill[cls].includes(x));
+          if (extra.length) bad.push(`${body} ${cls} CR ${cr}: ${extra.join(', ')}`);
+        }
+      }
+      void cr0;
+    }
+    expect(bad).toEqual([]);
+  }, 900000);
+});
+
+describe('a rider keeps both halves or loses both (fix 2, 2026-11-15)', () => {
+  // Print's Goblin Warrior Scimitar reads "...Slashing damage, plus 2 (1d4) Slashing damage if
+  // the attack roll had Advantage". The class-weapon pass took the rider's damage and left its
+  // condition on the base, so every class NPC on that body read "6 (1d8 + 2) Bludgeoning damage
+  // if the attack roll had Advantage" — 24 rows.
+  test('no attack row carries a rider condition without the rider damage, and each ends as a sentence', async () => {
+    const fused = []; const unfinished = [];
+    for (const [body, cr0] of BODIES) {
+      for (const cls of ['mage', 'cleric', 'rogue', 'fighter']) {
+        for (const cr of CRS) {
+          let m; try { m = await build(body, cls, cr); } catch { continue; }
+          for (const e of Object.values(m.sections).flat()) {
+            const t = String(e.text ?? '');
+            if (!/Attack Roll/.test(t)) continue;
+            if (/\)\s+\w+ damage if the attack roll had Advantage/.test(t) && !/plus \d+ \([^)]*\) \w+ damage if the attack roll had Advantage/.test(t)) fused.push(`${body} ${cls} CR ${cr}: ${e.name}`);
+            if (!/[.!?]$/.test(t.trim())) unfinished.push(`${body} ${cls} CR ${cr}: ${e.name}: ${t.slice(-40)}`);
+          }
+        }
+      }
+      void cr0;
+    }
+    expect(fused).toEqual([]);
+    expect(unfinished).toEqual([]);
+  }, 900000);
+});
