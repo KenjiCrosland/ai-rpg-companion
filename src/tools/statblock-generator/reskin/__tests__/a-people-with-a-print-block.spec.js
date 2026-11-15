@@ -59,9 +59,15 @@ describe('what this must not change', () => {
     expect(d).toMatchObject({ path: 'class_npc', print_body: null });
   });
 
+  // THE RECEIPT RULE STILL GOVERNS THE SPECIES-DRIVEN FILL. Tested on words whose head clause
+  // names no people, because ruling C (2026-11-15) fills from the head clause regardless of the
+  // species answer — "goblin assassin" now gets the Goblin Warrior either way, which is the
+  // ruling, and is covered in `a-class-stands-on-a-peoples-body.spec.js`.
   test('the receipt rule holds: a species with no quote from the GM yields no body', () => {
-    const { read } = decide('goblin assassin', { species: 'goblin', class: 'rogue', class_receipt: 'assassin' });
+    const { read } = decide('an assassin of the drowned court', { species: 'goblin', class: 'rogue', class_receipt: 'assassin' });
     expect(read.print_body).toBeNull();
+    const withReceipt = decide('a goblin of the drowned court', { species: 'goblin', species_receipt: 'goblin', class: 'rogue', class_receipt: 'assassin' });
+    expect(withReceipt.read.print_body).toBe('Goblin Warrior');
   });
 
   test('a species with no CLASS answered is untouched — this fires only where the people would be erased', () => {

@@ -84,7 +84,7 @@ export const printAliasFor = (word, text = '') => (/^(?:hag|hags|crone)$/i.test(
  * and whatever replaces the arm will need the same closed-fact finder. It is not wired into
  * `buildPathPrompt` or `readPath`.
  */
-export function namesInTheWords(text, { edition = '2024' } = {}) {
+export function namesInTheWords(text, { edition = '2024', peoples = false } = {}) {
   const t = ` ${norm(text)} `;
   if (!t.trim()) return [];
   const hits = [];
@@ -121,7 +121,10 @@ export function namesInTheWords(text, { edition = '2024' } = {}) {
   const covered = (h) => uniq.some((o) => o !== h && o.len > h.len && o.at <= h.at && o.at + o.len >= h.at + h.len);
   return uniq
     .filter((h) => !covered(h))
-    .filter((h) => !isPersonBody(h.name)) // MONSTERS ONLY: a job block or a people's block is never offered
+    // MONSTERS ONLY by default: a job block or a people's block is never OFFERED to the path
+    // call. `peoples: true` lifts that for ruling C's fill (2026-11-15), which needs the
+    // opposite — the declared peoples and nothing else. One finder, one definition.
+    .filter((h) => peoples || !isPersonBody(h.name))
     .sort((a, b) => b.len - a.len || a.at - b.at);
 }
 
@@ -274,6 +277,38 @@ export function readPath(raw, { concept = '', edition = '2024' } = {}) {
       out.relation = 'is';
       out.receipts.print_body = rec;
       refused.push(`species "${word}" has no kit, but print carries it as ${block.name} — the body stands so the people is not erased`);
+    }
+  }
+  // A KOBOLD IS A KOBOLD FIRST, WITH MAGE FEATURES (owner's ruling C, 2026-11-15). The fill
+  // above needs the call to NAME the people as a species with a receipt. On "kobold sorcerer"
+  // and "goblin wizard" the call named a class and no species at all, so nothing carried the
+  // people and both shipped as the Mage: Small Humanoid, the Mage's own scores, no darkvision,
+  // nothing of the people but a language and a flavour trait. Measured earlier, "goblin wizard"
+  // kept its body on 7 of 10, 5 of 10 and 0 of 5 rolls — it depended on an answer the call was
+  // not reliably giving.
+  //
+  // So the fill stops depending on the species answer. When the call names a class and no body
+  // and the HEAD CLAUSE names exactly one declared people, that people's block is the body.
+  //
+  // THE DECLARED PEOPLES ONLY, found by the closed-fact finder this file already owns. Not every
+  // Humanoid block: "goblin assassin" names the Goblin Warrior AND the printed Assassin, and
+  // only the first is a people — the second is a job. The head clause, so "a wizard who hunts
+  // goblins" names none. Two peoples fill nothing. A body the call did name is never overridden.
+  if (!out.print_body && p.class != null && String(p.class).trim() && !/^null$/i.test(String(p.class))) {
+    const declared = new Set([...FEY_PEOPLES, ...OFF_TYPE_PEOPLES].map((n) => n.toLowerCase()));
+    const peoplesIn = (t) => namesInTheWords(t, { edition, peoples: true }).filter((h) => declared.has(h.name.toLowerCase()));
+    // the POSITIVE find is the head clause, so "a wizard who hunts goblins" names none; the
+    // AMBIGUITY check is the whole words, because `headClause` cuts at " and " and would read
+    // "a goblin and a hobgoblin, both clerics" as naming only the goblin
+    const inHead = peoplesIn(headClause(concept));
+    const inAll = peoplesIn(concept);
+    if (inAll.length > 1) {
+      refused.push(`the words name ${inAll.length} peoples (${inAll.map((h) => h.name).join(', ')}) — none is filled, since they do not say which the creature is`);
+    } else if (inHead.length === 1) {
+      out.print_body = inHead[0].name;
+      out.relation = 'is';
+      out.receipts.print_body = inHead[0].quote;
+      refused.push(`the head clause names the ${inHead[0].name}, a people — a ${String(p.class).trim()} who is visibly one stands on its printed body (owner's ruling, 2026-11-15)`);
     }
   }
   if (p.class != null && !/^null$/i.test(String(p.class)) && String(p.class).trim()) {

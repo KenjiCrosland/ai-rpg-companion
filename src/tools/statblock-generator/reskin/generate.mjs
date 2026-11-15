@@ -1081,6 +1081,9 @@ export const riderTextFor = (c, scaled, cr) => (c === 'Grappled'
 export const MIND_TIER_BANDS = { feeble: [1, 7], ordinary: [8, 13], capable: [14, 17], formidable: [18, 30] };
 const MIND_TIER_SCORE = { feeble: [6, 6], ordinary: [10, 10], capable: [15, 15], formidable: [18, 20] };
 const crColumn = (cr) => (Number(cr) <= 8 ? 0 : 1);
+// what `feeble` means for a creature the call reads as bestial or mindless: print's animals
+// sit at 1 to 3, and the language gate withholds speech at 5 or lower on those types
+const BESTIAL_INT = 3;
 /** the ability a Spellcasting row names, read off the rows the donor already carries */
 export const castingAbilityOf = (sections) => ({ Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON', Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' })[
   /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability/.exec(JSON.stringify(sections ?? {}))?.[1]] ?? null;
@@ -1135,7 +1138,24 @@ export function applyMindTiers({ tiers, stats, cr, strikerStat = null, mind = nu
         continue;
       }
     }
-    if (k === 'INT' && mind && mind !== 'sapient') { held.push({ k, tier, why: `the call read this creature as ${mind}` }); continue; }
+    // RULE 3 — AN ANIMAL'S INT CAN ONLY GO DOWN (owner's ruling B, 2026-11-15). This used to
+    // ignore the call's INT in BOTH directions whenever `mind` was not sapient, which was my
+    // rule and too blunt: "a giant river pike" read bestial, answered INT feeble, and shipped
+    // the card's INT 11. A fish with INT 11 is the wince.
+    //
+    // So a non-sapient creature takes `feeble` as 3 — print's animals sit at 1 to 3, and the
+    // language gate withholds speech at INT 5 or lower on these types, so 3 keeps the sheet
+    // coherent where feeble's own 6 would not. Any other tier is still ignored: "bestial" with
+    // "INT capable" is the call contradicting itself, and `mind` was the steadier answer in the
+    // probes. A card already at 7 or lower is left alone by rule 4 below.
+    if (k === 'INT' && mind && mind !== 'sapient') {
+      if (tier === 'feeble' && Number.isFinite(card) && card >= 8) {
+        out[k] = BESTIAL_INT; moves.push({ k, tier, from: card, to: BESTIAL_INT });
+        continue;
+      }
+      held.push({ k, tier, why: `the call read this creature as ${mind}${tier === 'feeble' ? `, and the card's ${card} is already that dim` : `, so only "feeble" could lower its INT`}` });
+      continue;
+    }
     const [lo, hi] = MIND_TIER_BANDS[tier];
     if (Number.isFinite(card) && card >= lo && card <= hi) { held.push({ k, tier, why: `the card's ${card} is already ${tier}` }); continue; }
     const to = MIND_TIER_SCORE[tier][col];
@@ -5275,6 +5295,17 @@ Return ONLY JSON with EXACTLY these corrected pieces:
         // are Unaligned, and above INT 8 the question stands. So a bestial mind
         // holds Unaligned inside that norm and takes Neutral above it.
         || (options.mind === 'bestial' && Number(scaled.stats?.INT ?? 10) <= 8);
+      // AN UNTHINKING CREATURE IS ALWAYS UNALIGNED (owner's ruling A, 2026-11-15) — the mirror
+      // of ruling 2. `noEthics` was read one way only: it stopped an Unaligned answer being
+      // lifted to Neutral, and nothing took an alignment AWAY when the call wrote one for a
+      // creature that does not think. "A knot of eels in a man's coat" read bestial at INT 2
+      // and shipped Chaotic Neutral. The definition of unthinking is `noEthics` itself,
+      // unchanged. A printed body keeps print's alignment — that override runs later — and so
+      // does an alignment the GM's own words state.
+      if (noEthics && am && !/unaligned/i.test(am[0])) {
+        trace('alignment by mind:', `"${String(p.alignment).trim()}" -> Unaligned — a ${settledType ?? p.type ?? 'creature'} the call reads as ${options.mind ?? 'unthinking'} at INT ${scaled.stats?.INT ?? '?'} holds no ethics (owner's ruling, 2026-11-15)`);
+        return 'Unaligned';
+      }
       if (am && /unaligned/i.test(am[0]) && !noEthics && Number(scaled.stats?.INT ?? 10) >= 6) { trace('alignment by mind:', `Unaligned -> Neutral — a ${p.type ?? 'creature'} with INT ${scaled.stats?.INT ?? '?'} can hold an ethic (print: 0 of 329 Unaligned blocks speak)`); return 'Neutral'; }
       const cap = (s) => s[0].toUpperCase() + s.slice(1).toLowerCase();
       if (!am) return 'Unaligned';

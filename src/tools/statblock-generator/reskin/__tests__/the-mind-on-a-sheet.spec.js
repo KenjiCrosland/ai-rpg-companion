@@ -100,8 +100,14 @@ describe('the maths invariant (category 4) — every donor card', () => {
       if (plain.generation?.donor !== d.id) continue;
       const card = scaleDonor(d, d.cr, { mechanics: [] }).dc;
       const a = numbersOf(plain); const aDc = dcs(plain);
-      for (const t of TIERS) {
-        let tiered; try { tiered = await gen({ ...base, mindTiers: { INT: t, WIS: t, CHA: t }, mind: 'sapient' }, answer); } catch { continue; }
+      // RULING B's PATH TOO (2026-11-15). This only ever ran with mind: 'sapient', so it never
+      // reached the rule that lowers an animal's INT to 3 — and that is a score the save-DC
+      // passes read. The non-sapient feeble pass is the fifth case on every card.
+      const PASSES = [...TIERS.map((t) => ({ tiers: { INT: t, WIS: t, CHA: t }, mind: 'sapient' })),
+        { tiers: { INT: 'feeble', WIS: 'feeble', CHA: 'feeble' }, mind: 'bestial' }];
+      for (const pass of PASSES) {
+        const t = `${pass.mind}/${pass.tiers.INT}`;
+        let tiered; try { tiered = await gen({ ...base, mindTiers: pass.tiers, mind: pass.mind }, answer); } catch { continue; }
         pairs += 1;
         const b = numbersOf(tiered); const bDc = dcs(tiered);
         if (a.ac !== b.ac || a.hp !== b.hp || a.atk !== b.atk) other.push(`${d.id} all ${t}`);
@@ -185,5 +191,47 @@ describe('a sapient homebrew sheet is no Beast (ruling 2, whole sheet)', () => {
     const b = await gen({ ...base, mind: 'sapient', mindTiers: { INT: 'capable', WIS: 'capable', CHA: 'capable' } }, answer);
     expect(b.type).toBe(a.type);
     expect(b.type).toMatch(/Beast/);
+  });
+});
+
+describe('an unthinking creature is always Unaligned (ruling A, 2026-11-15)', () => {
+  // The mirror of ruling 2. `noEthics` was read one way only — it stopped an Unaligned answer
+  // being lifted to Neutral — so nothing took an alignment AWAY when the call wrote one for a
+  // creature that does not think. "A knot of eels in a man's coat" read bestial at INT 2 and
+  // shipped Chaotic Neutral.
+  const sheet = async (concept, { type, mind, alignment, cr = 2, tiers = null, path = null }) => {
+    const answer = json('Thing', type, cr, null, 'brute', { extra: { alignment } });
+    return gen({ archetype: 'brute', concept, userConcept: concept, cr, mind, ...(tiers ? { mindTiers: tiers } : {}), ...(path ? { path } : {}) }, answer);
+  };
+
+  test.each([
+    ['a bestial Beast at a low INT', { type: 'Beast', mind: 'bestial', alignment: 'Chaotic Neutral', tiers: { INT: 'feeble' } }],
+    ['a mindless creature', { type: 'Ooze', mind: 'mindless', alignment: 'Lawful Evil' }],
+    ['an unthinking Construct', { type: 'Construct', mind: 'bestial', alignment: 'Neutral Good', tiers: { INT: 'feeble' } }],
+    ['an unthinking Plant', { type: 'Plant', mind: 'mindless', alignment: 'Chaotic Evil' }],
+  ])('%s ships Unaligned whatever the call wrote', async (_label, o) => {
+    const m = await sheet('a thing of the deep marsh', o);
+    expect(String(m.alignment ?? '')).toMatch(/unaligned/i);
+  });
+
+  test('a sapient creature keeps the call\'s alignment', async () => {
+    const m = await sheet('a scheming thing of the deep marsh', { type: 'Monstrosity', mind: 'sapient', alignment: 'Lawful Evil' });
+    expect(String(m.alignment ?? '')).toMatch(/lawful evil/i);
+  });
+
+  test('a bestial creature ABOVE INT 8 behaves as before — the 2026-10-18 ruling stands', async () => {
+    // pinned to a card that carries INT 14, since ruling B only ever LOWERS an animal's INT and
+    // a brute card would leave it at 6. No feeble tier, so the card's score stands.
+    const c = 'a cunning hunting thing';
+    const answer = json('Thing', 'Monstrosity', 8, 'binder', 'caster', { extra: { alignment: 'Neutral Evil' } });
+    const m = await gen({ archetype: 'caster', style: 'binder', concept: c, userConcept: c, cr: 8, mind: 'bestial', donorPin: 'caster-8-binder', mindTiers: { INT: 'capable' } }, answer);
+    expect(Number(m.stats.INT)).toBeGreaterThan(8);
+    expect(String(m.alignment ?? '')).not.toMatch(/unaligned/i);
+  });
+
+  test("an exact printed creature keeps print's alignment", async () => {
+    // print's Winter Wolf is Neutral Evil at INT 7 — its own exception, and it stands
+    const m = await sheet('Winter Wolf', { type: 'Monstrosity', mind: 'bestial', alignment: 'Unaligned', cr: 3, path: { path: 'exact', print_body: 'Winter Wolf', relation: 'is' } });
+    expect(String(m.alignment ?? '')).toMatch(/neutral evil/i);
   });
 });

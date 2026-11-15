@@ -43,9 +43,35 @@ describe('the five rules, first that applies', () => {
     expect(r.stats.INT).toBe(15); // the other two still move
   });
 
+  // RULING B (2026-11-15): the call can LOWER an animal's INT, never raise it. "A giant river
+  // pike" read bestial, answered INT feeble, and shipped the card's INT 11.
+  test.each([
+    ['feeble', 11, 3, 'a card of 8 or more drops to 3'],
+    ['feeble', 8, 3, 'the band edge drops too'],
+    ['feeble', 7, 7, 'a card already that dim is left alone by rule 4'],
+    ['ordinary', 11, 11, 'any other tier is still ignored'],
+    ['capable', 11, 11, 'bestial with capable is the call contradicting itself'],
+    ['formidable', 6, 6, 'and it can never raise'],
+  ])('bestial, INT "%s" on a card of %i -> %i (%s)', (tier, card, want) => {
+    for (const mind of ['bestial', 'mindless']) {
+      const r = applyMindTiers({ tiers: { INT: tier }, stats: { ...CARD, INT: card }, cr: 3, mind });
+      expect(r.stats.INT).toBe(want);
+    }
+  });
+
+  test('a HELD score still wins over ruling B — rule 2 and 2c come first', () => {
+    const striker = applyMindTiers({ tiers: { INT: 'feeble' }, stats: { ...CARD, INT: 11 }, cr: 3, mind: 'bestial', strikerStat: 'INT' });
+    expect(striker.stats.INT).toBe(11);
+    // 2c holds a mental the CARD'S DC derives from, when no physical reaches the same DC:
+    // 8 + PB 2 + INT 16's mod 3 = 13, and the physicals here all derive 10
+    const dcBearing = applyMindTiers({ tiers: { INT: 'feeble' }, stats: { STR: 10, DEX: 10, CON: 10, INT: 16, WIS: 10, CHA: 10 }, cr: 3, mind: 'bestial', cardDc: 13, pb: 2 });
+    expect(dcBearing.stats.INT).toBe(16);
+    expect(dcBearing.held.find((h) => h.k === 'INT').why).toMatch(/save DC 13 derives/);
+  });
+
   test('3: INT stays when the call did not read the creature as sapient', () => {
     for (const mind of ['bestial', 'mindless']) {
-      const r = run({ mind });
+      const r = run({ mind }); // the tiers here are all `capable`, which can never lower an INT
       expect(r.stats.INT).toBe(6);
       expect(r.stats.WIS).toBe(15); // only INT is held by this rule
     }

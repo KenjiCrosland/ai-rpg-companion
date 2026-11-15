@@ -1,0 +1,182 @@
+[
+ {
+  "canary": "RULINGS A, B and C \u2014 reading for: Beast, Unaligned, INT 3 or a card score of 7 or lower",
+  "name": "",
+  "description": "a giant river pike",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "Beast, Unaligned, INT 3 or a card score of 7 or lower"
+ },
+ {
+  "canary": "RULINGS A, B and C \u2014 reading for: Unaligned",
+  "name": "",
+  "description": "a knot of eels in a man's coat",
+  "cr": "1",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "Unaligned"
+ },
+ {
+  "canary": "RULINGS A, B and C \u2014 reading for: mind, INT, alignment and languages agree, whichever way the call reads it",
+  "name": "",
+  "description": "something large moving under the ice",
+  "cr": "8",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "mind, INT, alignment and languages agree, whichever way the call reads it"
+ },
+ {
+  "canary": "RULINGS A, B and C \u2014 reading for: Unaligned, no language",
+  "name": "",
+  "description": "a pack of starving wolves",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "Unaligned, no language"
+ },
+ {
+  "canary": "RULINGS A, B and C \u2014 reading for: Unaligned",
+  "name": "",
+  "description": "clockwork spider",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "Unaligned"
+ },
+ {
+  "canary": "RULINGS A, B and C \u2014 reading for: mind, INT, alignment and languages agree",
+  "name": "",
+  "description": "a hound of smoke that hunts oathbreakers",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "mind, INT, alignment and languages agree"
+ },
+ {
+  "canary": "RULINGS A, B and C \u2014 reading for: CONTROL: still a Monstrosity with an alignment",
+  "name": "",
+  "description": "a wise old bear who guards the mountain pass",
+  "cr": "5",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "CONTROL: still a Monstrosity with an alignment"
+ },
+ {
+  "canary": "RULINGS A, B and C \u2014 reading for: CONTROL: the printed block, print's alignment",
+  "name": "",
+  "description": "winter wolf",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "CONTROL: the printed block, print's alignment"
+ },
+ {
+  "canary": "RULINGS A, B and C \u2014 reading for: the kobold's own type, senses and traits, with the mage's rows on top",
+  "name": "",
+  "description": "kobold sorcerer",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "the kobold's own type, senses and traits, with the mage's rows on top"
+ },
+ {
+  "canary": "RULINGS A, B and C \u2014 reading for: the goblin's own body, with a Spellcasting DC from this sheet's casting score",
+  "name": "",
+  "description": "goblin wizard",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "the goblin's own body, with a Spellcasting DC from this sheet's casting score"
+ },
+ {
+  "canary": "RULINGS A, B and C \u2014 reading for: the bugbear's own body, with the monk's rows on top",
+  "name": "",
+  "description": "bugbear monk",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "the bugbear's own body, with the monk's rows on top"
+ },
+ {
+  "canary": "RULINGS A, B and C \u2014 reading for: CONTROL: no people's body \u2014 the goblins are hunted, not the creature",
+  "name": "",
+  "description": "a wizard who hunts goblins",
+  "cr": "5",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": "",
+   "statblock-inject-elements": "",
+   "statblock-frame-model": ""
+  },
+  "green": "CONTROL: no people's body \u2014 the goblins are hunted, not the creature"
+ }
+]
