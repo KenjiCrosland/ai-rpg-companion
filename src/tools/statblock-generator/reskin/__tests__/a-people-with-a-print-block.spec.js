@@ -36,13 +36,12 @@ describe('a people with a print block and no kit keeps its body', () => {
     expect(read.refused.filter((r) => /the body stands/.test(r))).toEqual([]);
   });
 
-  // THE KOBOLD IS RECORDED, NOT SETTLED (the handoff's instruction). The same change keeps the
-  // kobold, but the Kobold Warrior is type Dragon, so `isPersonBody` is false and `dispatch`
-  // returns a twist where the goblin gets class_npc. `isPersonBody` is deliberately untouched.
-  test('"kobold priest" keeps the Kobold Warrior, and lands a twist because print types it Dragon', () => {
+  // RULED 2026-11-15: a kobold is a people, so a class decides its body exactly as a goblin's
+  // does. This read `twist` before, because print types the Kobold Warrior Dragon and
+  // `isPersonBody` saw only Humanoid and the Fey list.
+  test('"kobold priest" is a cleric on the Kobold Warrior\'s body', () => {
     const { d } = decide('kobold priest', { species: 'kobold', species_receipt: 'kobold', class: 'cleric', class_receipt: 'priest' });
-    expect(d.print_body).toBe('Kobold Warrior');
-    expect(d.path).toBe('twist'); // the open label question, recorded as it behaves today
+    expect(d).toMatchObject({ path: 'class_npc', print_body: 'Kobold Warrior', class: 'cleric' });
   });
 });
 

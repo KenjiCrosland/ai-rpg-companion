@@ -48,10 +48,11 @@ describe('the list is a fact about the blocks, and a complete one', () => {
     for (const b of BLOCKS.filter((x) => /^Humanoid\b/i.test(String(x?.type ?? '')))) expect(isPersonBody(b.name)).toBe(true);
   });
 
-  // NOT RULED, pinned so a later change to either is deliberate rather than incidental.
-  test('the Satyr and the Kobold Warrior are deliberately unchanged', () => {
-    expect(isPersonBody('Satyr')).toBe(true); // Fey, on the list, a person today and left one
-    expect(isPersonBody('Kobold Warrior')).toBe(false); // print types it Dragon
+  // RULED 2026-11-15: both are people — either can take any job, so a class decides the body.
+  test('the Satyr and the Kobold Warrior are people', () => {
+    expect(isPersonBody('Satyr')).toBe(true); // Fey, on FEY_PEOPLES
+    expect(isPersonBody('Kobold Warrior')).toBe(true); // print types it Dragon, so it has its own entry
+    expect(isPersonBody('Adult Red Dragon')).toBe(false); // a name carrying "dragon" is still refused
   });
 });
 

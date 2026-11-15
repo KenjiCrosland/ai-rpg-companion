@@ -164,21 +164,32 @@ export function corpusEntry(name, { edition = '2024' } = {}) {
  * a monster, the Kobold Warrior as a person, and the Werewolf, Gnoll Warrior and Sahuagin
  * Warrior as people, none of which the ruling wants.
  *
- * NOT RULED, AND DELIBERATELY UNCHANGED: the Satyr stays a person (Fey, on the list below) and
- * the Kobold Warrior stays a monster (print types it Dragon). Both are the owner's to settle.
+ * RULED 2026-11-15: the Satyr and the Kobold Warrior are both PEOPLE — either can take any
+ * job, so a class decides the body. The Satyr was already on the Fey list; the Kobold Warrior
+ * is typed Dragon by print and needs its own declared entry, `OFF_TYPE_PEOPLES`.
  */
 export const FEY_PEOPLES = [
   'Goblin Warrior', 'Goblin Boss', 'Goblin Minion',
   'Hobgoblin Warrior', 'Hobgoblin Captain',
   'Bugbear Warrior', 'Bugbear Stalker',
   'Centaur Trooper', // ruled: print gives it a martial block, but it could be a warlock
-  'Satyr', // not ruled; a person today and left one
+  'Satyr', // RULED a person, 2026-11-15: it can take any job, so a class decides the body
 ];
+/**
+ * PEOPLES PRINT DOES NOT TYPE Fey OR Humanoid (owner's ruling 3, 2026-11-15). The Kobold
+ * Warrior is typed Dragon, so neither the Humanoid test nor the Fey list reaches it — and a
+ * kobold can take any job, so a class decides its body exactly as a goblin's does. Its own
+ * declared list, because the type cannot carry the ruling. `isPersonBody` rejects any name
+ * containing "dragon"; the Kobold Warrior's own name does not.
+ */
+export const OFF_TYPE_PEOPLES = ['Kobold Warrior'];
+const OFF_TYPE_SET = new Set(OFF_TYPE_PEOPLES.map((n) => n.toLowerCase()));
 const FEY_PEOPLE_SET = new Set(FEY_PEOPLES.map((n) => n.toLowerCase()));
 export const isPersonBody = (name) => {
   const e = corpusEntry(name);
   if (!e || /dragon/i.test(e.name)) return false;
   if (/^Humanoid\b/i.test(e.type)) return true;
+  if (OFF_TYPE_SET.has(e.name.toLowerCase())) return true;
   return /^Fey\b/i.test(e.type) && FEY_PEOPLE_SET.has(e.name.toLowerCase());
 };
 

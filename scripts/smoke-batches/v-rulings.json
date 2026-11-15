@@ -1,0 +1,132 @@
+[
+ {
+  "canary": "THREE RULINGS \u2014 reading for: Monstrosity with an alignment; CHA 18",
+  "name": "",
+  "description": "a silver-tongued toad the size of a pony",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": ""
+  },
+  "green": "Monstrosity with an alignment; CHA 18"
+ },
+ {
+  "canary": "THREE RULINGS \u2014 reading for: Monstrosity with an alignment",
+  "name": "",
+  "description": "a talking raven that sells secrets",
+  "cr": "1",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": ""
+  },
+  "green": "Monstrosity with an alignment"
+ },
+ {
+  "canary": "THREE RULINGS \u2014 reading for: type and alignment agree with the mind, whichever way it reads",
+  "name": "",
+  "description": "a wise old bear who guards the mountain pass",
+  "cr": "5",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": ""
+  },
+  "green": "type and alignment agree with the mind, whichever way it reads"
+ },
+ {
+  "canary": "THREE RULINGS \u2014 reading for: stays Beast, Unaligned",
+  "name": "",
+  "description": "a giant river pike",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": ""
+  },
+  "green": "stays Beast, Unaligned"
+ },
+ {
+  "canary": "THREE RULINGS \u2014 reading for: bestial stays as it was",
+  "name": "",
+  "description": "a knot of eels in a man's coat",
+  "cr": "1",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": ""
+  },
+  "green": "bestial stays as it was"
+ },
+ {
+  "canary": "THREE RULINGS \u2014 reading for: INT 15",
+  "name": "",
+  "description": "a drowned scholar who still corrects your grammar",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": ""
+  },
+  "green": "INT 15"
+ },
+ {
+  "canary": "THREE RULINGS \u2014 reading for: INT, whichever path it takes",
+  "name": "",
+  "description": "mummy librarian",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": ""
+  },
+  "green": "INT, whichever path it takes"
+ },
+ {
+  "canary": "THREE RULINGS \u2014 reading for: class NPC on a kobold body",
+  "name": "",
+  "description": "kobold sorcerer",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": ""
+  },
+  "green": "class NPC on a kobold body"
+ },
+ {
+  "canary": "THREE RULINGS \u2014 reading for: class NPC on a satyr body",
+  "name": "",
+  "description": "satyr bard",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": ""
+  },
+  "green": "class NPC on a satyr body"
+ },
+ {
+  "canary": "THREE RULINGS \u2014 reading for: still the exact printed block",
+  "name": "",
+  "description": "kobold warrior",
+  "cr": "1",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": ""
+  },
+  "green": "still the exact printed block"
+ }
+]

@@ -1075,12 +1075,39 @@ export const riderTextFor = (c, scaled, cr) => (c === 'Grappled'
  * The cost is that a caster's casting score stays the card's, and so does any mental the card's
  * DC already rests on.
  */
-export const MIND_TIER_BANDS = { feeble: [1, 7], ordinary: [8, 11], capable: [12, 15], formidable: [16, 30] };
-const MIND_TIER_SCORE = { feeble: [6, 6, 6], ordinary: [10, 10, 10], capable: [13, 14, 14], formidable: [16, 18, 20] };
-const crColumn = (cr) => (Number(cr) <= 8 ? 0 : Number(cr) <= 16 ? 1 : 2);
+// THE BANDS AND NUMBERS (owner's ruling 1, 2026-11-15: "capable" must read as 15 or better).
+// Two CR columns now, not three. The owner accepts the cost: the commonest flip, ordinary
+// against capable, is 10 against 15.
+export const MIND_TIER_BANDS = { feeble: [1, 7], ordinary: [8, 13], capable: [14, 17], formidable: [18, 30] };
+const MIND_TIER_SCORE = { feeble: [6, 6], ordinary: [10, 10], capable: [15, 15], formidable: [18, 20] };
+const crColumn = (cr) => (Number(cr) <= 8 ? 0 : 1);
 /** the ability a Spellcasting row names, read off the rows the donor already carries */
 export const castingAbilityOf = (sections) => ({ Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON', Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' })[
   /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability/.exec(JSON.stringify(sections ?? {}))?.[1]] ?? null;
+
+/**
+ * A CREATURE THAT THINKS AND TALKS IS NEVER A BEAST (owner's ruling 2, 2026-11-15:
+ * "nope, I think monstrosity plus alignment").
+ *
+ * Item 4's evidence sheet 13, "a silver-tongued toad the size of a pony", shipped as
+ * `Medium Beast, Unaligned` with INT 13, CHA 16 and Languages Common. The alignment gate sets
+ * `noEthics` for any Beast whatever the mind, and its own comment records that none of print's
+ * 329 Unaligned blocks speaks a language — so the TYPE, not the gate, is the fault.
+ *
+ * Applied where the type is SETTLED, on the `monster` object's own `type` field, so everything
+ * downstream reads one answer: the alignment gate, the language gate, the material line and
+ * the checker. A type the GM's own words state is left alone, by the same quote test the
+ * print-canon type guard uses — an unquoted claim is no claim. A Beast the call reads as
+ * bestial or mindless keeps its type and its Unaligned, and a print body is untouched.
+ */
+export function sapientNotABeast(type, { mind = null, userWords = '', hasPrintRecord = false, trace = () => {} } = {}) {
+  const t = String(type ?? '');
+  if (hasPrintRecord || mind !== 'sapient' || !/^Beast\b/i.test(t)) return t;
+  if (/\bbeasts?\b/i.test(String(userWords ?? ''))) { trace('type stands:', `the GM's own words say beast, so ${t} stands on a sapient creature — the alignment follows the call instead`); return t; }
+  const out = t.replace(/^Beast/i, 'Monstrosity');
+  trace('sapient is no Beast:', `${t} -> ${out} — the call reads this creature as sapient, and print's Beasts are Unaligned and speechless (owner's ruling, 2026-11-15)`);
+  return out;
+}
 
 export function applyMindTiers({ tiers, stats, cr, strikerStat = null, mind = null, sections = null, hasPrintRecord = false, cardDc = null, pb = null }) {
   const out = { ...stats }; const moves = []; const held = [];
@@ -5195,6 +5222,14 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // leading by its own clause — so the script was reading one seat's answer and
   // reporting it as the sheet's. Parse by field name, never by position.
   trace("the sheet's declared ask:", options.askedMechanic ? `${options.askedMechanic} — the route call's one answer for the whole concept` : 'none — the route call named no mechanic');
+  // THE SETTLED TYPE, COMPUTED ONCE (ruling 2, 2026-11-15). The alignment gate below read the
+  // CALL's raw `p.type`, so changing only the `type:` field left it still seeing Beast and
+  // still writing Unaligned — the exact pairing the ruling forbids. One value, both readers.
+  const settledType = sapientNotABeast(
+    (scaled.species?.type && !/\b(?:aberration|beast|celestial|construct|dragon|elemental|fey|fiend|giant|humanoid|monstrosity|ooze|plant|undead)\b/i.test(readPhrases(String(options.userConcept ?? concept ?? '')))
+      ? scaled.species.type : (p.type ?? 'Monstrosity')),
+    { mind: options.mind ?? null, userWords: String(options.userConcept ?? concept ?? ''), hasPrintRecord: !!pcRoute, trace },
+  );
   const monster = {
     name: p.name, inline, /* the short form the rows use ("the marshal") — the classic card's legendary header reads it (critic's release audit 2026-10-03) */  format: '2024', cr, cr_str: ({ 0.125: '1/8', 0.25: '1/4', 0.5: '1/2' })[cr] ?? String(cr),
     xp: challengeRatings[crKey(cr)]?.XP ?? 0,
@@ -5204,8 +5239,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
     // the floors, the speed and the Nimble-Escape-versus-Cunning-Action split in
     // between all read Fiend — a tiefling immune to Poison). The kit knows the
     // type at 1925; the GM's own type word still outranks it.
-    type: (scaled.species?.type && !/\b(?:aberration|beast|celestial|construct|dragon|elemental|fey|fiend|giant|humanoid|monstrosity|ooze|plant|undead)\b/i.test(readPhrases(String(options.userConcept ?? concept ?? '')))
-      ? scaled.species.type : (p.type ?? 'Monstrosity')), size: p.size ?? 'Medium',
+    type: settledType, size: p.size ?? 'Medium',
     // alignment is a CLOSED vocabulary (the Gaoler shipped "Unaligned
     // (Feral, Driven By Its Prison'S Grief)" — lore welded into the field,
     // and the old title-caser minted the 'S). Extract the alignment,
@@ -5214,7 +5248,7 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const am = /\b(?:(Lawful|Neutral|Chaotic)[\s-]+(Good|Neutral|Evil)|Neutral|Unaligned|Any Alignment)\b/i.exec(String(p.alignment ?? ''));
       // UNALIGNED is for a creature with no capacity for ethics: a beast, a mindless construct, an ooze, a plant (print: 0 of 329 Unaligned blocks speak a language). A
       // dragon with INT 18 who speaks and casts is not Unaligned (Voraglace — the critic's fourth read).
-      const noEthics = /^(?:Beast|Ooze|Plant)\b/i.test(String(p.type ?? options.resolvedType ?? '')) || (/^Construct\b/i.test(String(p.type ?? options.resolvedType ?? '')) && options.mind !== 'sapient') || options.mind === 'mindless'
+      const noEthics = /^(?:Beast|Ooze|Plant)\b/i.test(String(settledType ?? p.type ?? options.resolvedType ?? '')) || (/^Construct\b/i.test(String(p.type ?? options.resolvedType ?? '')) && options.mind !== 'sapient') || options.mind === 'mindless'
         // A BESTIAL MIND IS NOT A LICENCE AT ANY INT (owner's ruling, 2026-10-18:
         // "neutral"). The eyeless scent-hunter read mind=bestial and shipped
         // Unaligned at INT 12, which the alignment gate fails on print's own

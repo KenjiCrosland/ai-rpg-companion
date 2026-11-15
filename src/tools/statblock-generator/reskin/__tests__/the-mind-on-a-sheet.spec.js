@@ -14,6 +14,7 @@
 import { generateReskin, renameKeysOf } from '../generate.mjs';
 import { pickDonor, scaleDonor } from '../scale.mjs';
 import { DONORS } from '../donors.mjs';
+import { sapientNotABeast } from '../generate.mjs';
 
 const mk = (cr, style, arch) => { const scaled = scaleDonor(pickDonor(cr, style, arch), cr, { mechanics: [] }); const renames = { Teleport: 'Blink Step', 'Ranged Attack': 'Hurl', 'Hybrid Attack': 'Hybrid Strike' }; renameKeysOf(scaled).forEach((k, i) => { renames[k] = `Named Row${i}`; }); const typed = [...Object.values(scaled.sections).flat().filter((e) => e.text.includes('{damage_type}') && !e.rules).map((e) => renames[e.name] ?? e.name), 'Hurl', 'Hybrid Strike']; return { scaled, renames, typed }; };
 const json = (name, type, cr, style, arch, over = {}) => { const { scaled, renames, typed } = mk(cr, style, arch); return JSON.stringify({ name, type, size: 'Medium', alignment: 'Neutral', senses: 'darkvision 60 ft.', languages: 'Common', renames, damage_types: Object.fromEntries(typed.map((n) => [n, 'Bludgeoning'])), conditions: { condition_minor: 'Prone' }, melee_rider: 'none', wildcard: `*Strength Saving Throw*: DC ${scaled.dc}, one creature within 10 feet. *Failure:* The target has the Prone condition.`, ...(over.extra ?? {}) }); };
@@ -117,24 +118,10 @@ describe('the maths invariant (category 4) — every donor card', () => {
     expect(onto).toBeGreaterThan(0); // and rows still move ONTO the card's DC, which is the gain
   }, 600000);
 
-  const CASES = [
-    ['a brute on the homebrew path', { archetype: 'brute', concept: 'a clattering heap of fused scrap', userConcept: 'a clattering heap of fused scrap', cr: 3 }, ['Scrapheap', 'Construct', 3, null, 'brute']],
-    ['a CASTER, whose DC derives from a mental', { archetype: 'caster', concept: 'a hedge witch who binds with briars', userConcept: 'a hedge witch who binds with briars', cr: 8 }, ['Mother Briar', 'Fey', 8, null, 'caster']],
-    ['a lurker at CR 12, past the first CR column', { archetype: 'lurker', concept: 'a thing that waits in the dark', userConcept: 'a thing that waits in the dark', cr: 12 }, ['The Waiting', 'Aberration', 12, null, 'lurker']],
-  ];
-  test.each(CASES)('%s: every attack bonus, save DC, HP and AC is equal', async (_label, base, j) => {
-    const answer = json(...j);
-    const [a, b] = await pair(base, answer);
-    expect(numbersOf(b)).toEqual(numbersOf(a));
-  });
-
-  test('a sheet whose ATTACKING score is mental keeps its attack bonus', async () => {
-    const answer = json('Mind Eater', 'Aberration', 8, null, 'caster');
-    const base = { archetype: 'caster', concept: 'a mind eater that strikes with thought alone', userConcept: 'a mind eater that strikes with thought alone', cr: 8 };
-    const [a, b] = await pair(base, answer);
-    expect(numbersOf(b).atk).toEqual(numbersOf(a).atk);
-    expect(numbersOf(b).dc).toEqual(numbersOf(a).dc);
-  });
+  // The four hand-picked equality cases that stood here are REPLACED by the sweep above.
+  // They asserted every save DC equal with and without the tiers, which ruling 1's bigger
+  // numbers rightly break: a DC that moves ONTO the card's is the better outcome, and the
+  // sweep is what holds the rule that none sits further above it.
 
   test('every saving throw and skill modifier follows from its final score', async () => {
     const answer = json('Scrapheap', 'Construct', 3, null, 'brute');
@@ -146,5 +133,46 @@ describe('the maths invariant (category 4) — every donor card', () => {
       // mod + PB, or more where proficiency is doubled; never less than the bare modifier
       expect(n).toBeGreaterThanOrEqual(mod(st));
     }
+  });
+});
+
+describe('a creature that thinks and talks is never a Beast (ruling 2, 2026-11-15)', () => {
+  const T = (type, o) => sapientNotABeast(type, o);
+  test('a sapient Beast becomes a Monstrosity', () => {
+    expect(T('Beast', { mind: 'sapient' })).toBe('Monstrosity');
+    expect(T('Beast', { mind: 'sapient', userWords: 'a silver-tongued toad the size of a pony' })).toBe('Monstrosity');
+  });
+
+  test('a bestial or mindless Beast keeps its type', () => {
+    for (const mind of ['bestial', 'mindless', null]) expect(T('Beast', { mind })).toBe('Beast');
+  });
+
+  test("a type the GM's own words state stands, sapient or not", () => {
+    expect(T('Beast', { mind: 'sapient', userWords: 'a talking beast of the deep wood' })).toBe('Beast');
+    expect(T('Beast', { mind: 'sapient', userWords: 'a pack of beasts that speak' })).toBe('Beast');
+  });
+
+  test('a print body is untouched, and no other type is', () => {
+    expect(T('Beast', { mind: 'sapient', hasPrintRecord: true })).toBe('Beast');
+    for (const t of ['Monstrosity', 'Fey', 'Undead', 'Aberration', 'Humanoid']) expect(T(t, { mind: 'sapient' })).toBe(t);
+  });
+});
+
+describe('a sapient homebrew sheet is no Beast (ruling 2, whole sheet)', () => {
+  test('it ships as a Monstrosity with an alignment that is not Unaligned', async () => {
+    const c = 'a silver-tongued toad the size of a pony';
+    const answer = json('Silvertongue', 'Beast', 2, null, 'brute', { extra: { alignment: 'Unaligned' } });
+    const m = await gen({ archetype: 'brute', concept: c, userConcept: c, cr: 2, mind: 'sapient', mindTiers: { INT: 'capable', WIS: 'ordinary', CHA: 'formidable' } }, answer);
+    expect(m.type).toBe('Monstrosity');
+    expect(String(m.alignment ?? '')).not.toMatch(/unaligned/i);
+  });
+
+  test('the same stub on an exact printed Beast is unchanged', async () => {
+    const answer = json('Dire Wolf', 'Beast', 1, null, 'brute');
+    const base = { archetype: 'brute', concept: 'Dire Wolf', userConcept: 'Dire Wolf', cr: 1, path: { path: 'exact', print_body: 'Dire Wolf', relation: 'is' } };
+    const a = await gen(base, answer);
+    const b = await gen({ ...base, mind: 'sapient', mindTiers: { INT: 'capable', WIS: 'capable', CHA: 'capable' } }, answer);
+    expect(b.type).toBe(a.type);
+    expect(b.type).toMatch(/Beast/);
   });
 });

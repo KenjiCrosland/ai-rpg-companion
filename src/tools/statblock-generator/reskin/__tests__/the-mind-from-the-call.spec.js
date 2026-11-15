@@ -17,7 +17,7 @@ describe('the five rules, first that applies', () => {
   test('5: otherwise the tier becomes a score', () => {
     const r = run({ mind: 'sapient' });
     expect(r.ran).toBe(true);
-    expect([r.stats.INT, r.stats.WIS, r.stats.CHA]).toEqual([13, 13, 13]);
+    expect([r.stats.INT, r.stats.WIS, r.stats.CHA]).toEqual([15, 15, 15]);
     expect(r.stats.STR).toBe(16); // the body is untouched
   });
 
@@ -40,17 +40,17 @@ describe('the five rules, first that applies', () => {
     const r = run({ mind: 'sapient', sections });
     expect(r.stats.CHA).toBe(4);
     expect(r.held.find((h) => h.k === 'CHA').why).toMatch(/casting ability/);
-    expect(r.stats.INT).toBe(13); // the other two still move
+    expect(r.stats.INT).toBe(15); // the other two still move
   });
 
   test('3: INT stays when the call did not read the creature as sapient', () => {
     for (const mind of ['bestial', 'mindless']) {
       const r = run({ mind });
       expect(r.stats.INT).toBe(6);
-      expect(r.stats.WIS).toBe(13); // only INT is held by this rule
+      expect(r.stats.WIS).toBe(15); // only INT is held by this rule
     }
-    expect(run({ mind: 'sapient' }).stats.INT).toBe(13);
-    expect(run({ mind: null }).stats.INT).toBe(13); // no answer is not a refusal
+    expect(run({ mind: 'sapient' }).stats.INT).toBe(15);
+    expect(run({ mind: null }).stats.INT).toBe(15); // no answer is not a refusal
   });
 
   test("4: a card already inside the band stays, so a right score is never moved", () => {
@@ -63,12 +63,29 @@ describe('the five rules, first that applies', () => {
 });
 
 describe('the number table, by CR column', () => {
-  test.each([[3, 13, 16], [8, 13, 16], [9, 14, 18], [16, 14, 18], [17, 14, 20], [24, 14, 20]])(
+  // THE BANDS AND NUMBERS, owner's ruling 1 of 2026-11-15: capable must read as 15 or better.
+  // Two CR columns, and a row on each band edge — 13 against 14, and 17 against 18.
+  test.each([[3, 15, 18], [8, 15, 18], [9, 15, 20], [16, 15, 20], [24, 15, 20]])(
     'CR %i: capable %i, formidable %i', (cr, cap, form) => {
-      const r = applyMindTiers({ tiers: { INT: 'capable', WIS: 'formidable', CHA: 'feeble' }, stats: { ...CARD, CHA: 12 }, cr, mind: 'sapient' });
+      const r = applyMindTiers({ tiers: { INT: 'capable', WIS: 'formidable', CHA: 'feeble' }, stats: { ...CARD, CHA: 14 }, cr, mind: 'sapient' });
       expect(r.stats.INT).toBe(cap);
       expect(r.stats.WIS).toBe(form);
       expect(r.stats.CHA).toBe(6); // feeble is 6 at every CR
+    },
+  );
+
+  test.each([[13, 'ordinary'], [14, 'capable'], [17, 'capable'], [18, 'formidable']])(
+    'a card score of %i is already %s, so it is held', (card, tier) => {
+      const r = applyMindTiers({ tiers: { INT: tier }, stats: { ...CARD, INT: card }, cr: 5, mind: 'sapient' });
+      expect(r.stats.INT).toBe(card);
+      expect(r.moves).toEqual([]);
+    },
+  );
+
+  test.each([[13, 'capable', 15], [14, 'ordinary', 10], [17, 'formidable', 18], [18, 'capable', 15]])(
+    'a card score of %i against "%s" moves to %i', (card, tier, to) => {
+      const r = applyMindTiers({ tiers: { INT: tier }, stats: { ...CARD, INT: card }, cr: 5, mind: 'sapient' });
+      expect(r.stats.INT).toBe(to);
     },
   );
 
