@@ -1297,6 +1297,15 @@ async function generateStatblockEngine(edition) {
           // [path] line and compared with the matcher inside the engine; it changes no sheet yet.
           const pathFields = { name: monsterName.value.trim(), concept: monsterDescription.value.trim(), cr: crFromUser ? cr : null, role: givenArchetype, edition };
           const pathOn = async () => {
+            // A PINNED PATH, FOR EVIDENCE RUNS ONLY (2026-11-14). Three prompts had never been
+            // seen BOTH ways, because which path they take is the model's and it flips between
+            // runs. This lets a smoke batch ask for one, so the two readings of a prompt can be
+            // put side by side. It is read from localStorage, like the edition and the legacy
+            // flag, and nothing in the product sets it.
+            try {
+              const pinned = localStorage.getItem('statblock-pin-path');
+              if (pinned) { const d = JSON.parse(pinned); logger.warn('[path] PINNED by statblock-pin-path — this is an evidence run, not product behaviour'); return d; }
+            } catch (e) { logger.warn('[path] pin ignored:', e?.message ?? e); }
             const byCode = dispatchPath(pathFields, null);
             if (byCode.path && byCode.by === 'code') return byCode;
             try {

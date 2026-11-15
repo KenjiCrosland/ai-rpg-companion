@@ -1,0 +1,68 @@
+[
+ {
+  "canary": "SIX SHEETS FOR THE 11-14 SHEET READ \u2014 the same prompt both ways, so a prompt nobody has seen routed two ways can be compared. PINNED path: twist on the Ogre.",
+  "name": "",
+  "description": "ogre blacksmith",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"twist\", \"by\": \"pinned\", \"print_body\": \"Ogre\", \"relation\": \"is\", \"class\": null, \"species\": null, \"receipt\": \"pinned for evidence\"}"
+  },
+  "green": "the [path] line reads twist on the Ogre, and the sheet stands on it"
+ },
+ {
+  "canary": "SIX SHEETS FOR THE 11-14 SHEET READ \u2014 the same prompt both ways, so a prompt nobody has seen routed two ways can be compared. PINNED path: homebrew.",
+  "name": "",
+  "description": "ogre blacksmith",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for evidence\"}"
+  },
+  "green": "the [path] line reads homebrew, and the sheet stands on it"
+ },
+ {
+  "canary": "SIX SHEETS FOR THE 11-14 SHEET READ \u2014 the same prompt both ways, so a prompt nobody has seen routed two ways can be compared. PINNED path: twist on the Spider.",
+  "name": "",
+  "description": "clockwork spider",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"twist\", \"by\": \"pinned\", \"print_body\": \"Spider\", \"relation\": \"is\", \"class\": null, \"species\": null, \"receipt\": \"pinned for evidence\"}"
+  },
+  "green": "the [path] line reads twist on the Spider, and the sheet stands on it"
+ },
+ {
+  "canary": "SIX SHEETS FOR THE 11-14 SHEET READ \u2014 the same prompt both ways, so a prompt nobody has seen routed two ways can be compared. PINNED path: homebrew.",
+  "name": "",
+  "description": "clockwork spider",
+  "cr": "2",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"homebrew\", \"by\": \"pinned\", \"print_body\": null, \"relation\": null, \"class\": null, \"species\": null, \"receipt\": \"pinned for evidence\"}"
+  },
+  "green": "the [path] line reads homebrew, and the sheet stands on it"
+ },
+ {
+  "canary": "SIX SHEETS FOR THE 11-14 SHEET READ \u2014 the same prompt both ways, so a prompt nobody has seen routed two ways can be compared. PINNED path: twist on the Green Hag.",
+  "name": "Mother Ash",
+  "description": "hag midwife",
+  "cr": "9",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"twist\", \"by\": \"pinned\", \"print_body\": \"Green Hag\", \"relation\": \"is\", \"class\": null, \"species\": null, \"receipt\": \"pinned for evidence\"}"
+  },
+  "green": "the [path] line reads twist on the Green Hag, and the sheet stands on it"
+ },
+ {
+  "canary": "SIX SHEETS FOR THE 11-14 SHEET READ \u2014 the same prompt both ways, so a prompt nobody has seen routed two ways can be compared. PINNED path: class_npc on the Priest.",
+  "name": "Mother Ash",
+  "description": "hag midwife",
+  "cr": "9",
+  "rules": "2024",
+  "flags": {
+   "statblock-pin-path": "{\"path\": \"class_npc\", \"by\": \"pinned\", \"print_body\": \"Priest\", \"relation\": \"is\", \"class\": \"cleric\", \"species\": null, \"receipt\": \"pinned for evidence\"}"
+  },
+  "green": "the [path] line reads class_npc on the Priest, and the sheet stands on it"
+ }
+]

@@ -6,13 +6,18 @@
  * the Ogre and Ghoul are named nowhere and score 3-6/10. That is recall, not judgement. So
  * code offers the names and the call chooses among them — a selection problem.
  *
- * THE ARM THAT OFFERED THESE NAMES TO THE CALL MISSED ITS BAR and did not ship (measured
- * 2026-11-14 against path-key.json: "clockwork spider" 10/10 -> 6/10, "goblin assassin" 8/10
- * -> 6/10, more-than-one-path 6 -> 10; "ogre blacksmith" 5/10 -> 10/10). The finder itself is
- * kept and tested: `scripts/probe-path-key.mjs` reads it to reproduce that measurement, and
- * whatever replaces the arm needs the same closed-fact lookup.
+ * THE FIRST ARM MISSED ITS BAR and was reverted: it offered job and people blocks too, and
+ * "clockwork spider" fell 10/10 to 6/10 while "goblin assassin" fell 8/10 to 6/10 when the
+ * call took the Assassin as the body. It did fix recall — "ogre blacksmith" 5/10 to 10/10.
  *
- * These test the FINDER's return value only. No test asserts on the prompt's wording.
+ * THE NARROWED ARM (monsters only, the GM's own word, one mention) ALSO MISSED ITS BAR and is
+ * also reverted: the monster group rose 89/160 to 118/160 against a bar of 144, because the
+ * call answers "resembles" for a medusa sculptor or a mummy librarian even when asked outright.
+ * Recall was the fixable half; judgement is not.
+ *
+ * The FINDER is kept and tested — `scripts/probe-path-key.mjs` reads it, and whatever replaces
+ * the arm needs the same closed-fact lookup. These test its return value only. No test asserts
+ * on the prompt's wording.
  */
 import { namesInTheWords, buildPathPrompt } from '../path.mjs';
 
@@ -25,14 +30,38 @@ describe('the finder: closed facts only', () => {
     expect(names('ghoul gravedigger')).toEqual(['Ghoul']);
   });
 
-  test('the longest name wins', () => {
-    // "Dire Wolf" over "Wolf"; and an alias yields to a whole name already carrying its word
-    expect(names('a dire wolf')).toEqual(['Dire Wolf']);
-    expect(names('goblin boss with a heavy crossbow')).toEqual(['Goblin Boss']);
+  test('the longest name wins WITHIN ONE MENTION', () => {
+    expect(names('a dire wolf')).toEqual(['Dire Wolf']); // the "wolf" inside it yields
+    // two creatures in two PLACES both stand — the first arm offered only the Dire Wolf, and
+    // the call's "resembles" was the right answer to the wrong offer
+    expect(names("the druid's wolf companion, bigger than a dire wolf").sort()).toEqual(['Dire Wolf', 'Wolf']);
+  });
+
+  test('MONSTERS ONLY — a job block or a people\'s block is never offered', () => {
+    // where "goblin assassin" regressed: the Assassin was on offer and the call took it
+    expect(names('goblin assassin')).toEqual([]);
+    expect(names('goblin wizard')).toEqual([]);
+    expect(names('goblin boss with a heavy crossbow')).toEqual([]);
+    expect(names('vampire pirate')).toEqual(['Vampire']); // the Pirate is a job block
+  });
+
+  test("the GM's own word is what the call is asked about", () => {
+    // the first arm asked whether the creature is a "Green Hag"; the GM wrote "hag", and
+    // "not" was a fair answer to the wrong question. Code still picks WHICH hag.
+    const hag = namesInTheWords('hag midwife')[0];
+    expect(hag).toMatchObject({ name: 'Green Hag', ask: 'hag' });
+    // a DIRECT hit already is the GM's word, so it is asked under print's spelling
+    expect(namesInTheWords('ogre blacksmith')[0]).toMatchObject({ name: 'Ogre', ask: 'Ogre' });
+  });
+
+  test('a 2014 sheet searches both books without a name cancelling itself', () => {
+    // both corpora carry the Ogre, so it hit twice on one span and the two hits each
+    // "covered" the other — every 2014 monster prompt silently offered nothing
+    expect(names('ogre', '2014')).toEqual(['Ogre']);
+    expect(names('owlbear but CR 8', '2014')).toEqual(['Owlbear']);
   });
 
   test('an alias word resolves through the table this file already owns', () => {
-    expect(names('goblin wizard')).toEqual(expect.arrayContaining(['Goblin Warrior', 'Mage']));
     expect(names('an archlich enthroned on a sun of bone')).toEqual(['Lich']);
     expect(names('hag midwife')).toEqual(['Green Hag']); // hagFor picks by context
   });
@@ -43,11 +72,10 @@ describe('the finder: closed facts only', () => {
     expect(names('Mind Flayer')).toEqual([]); // Product Identity, in neither corpus
   });
 
-  test('the edition rule: a name is found in the book the sheet is on', () => {
-    // 5.1 names it "Goblin", 5.2 "Goblin Warrior" — the alias covers both, and each edition
-    // resolves to a block that edition actually carries
-    expect(names('goblin wizard', '2014').some((n) => /^Goblin/.test(n))).toBe(true);
-    expect(names('goblin wizard', '2024').some((n) => /^Goblin/.test(n))).toBe(true);
+  test('the edition rule: a name only the 2014 book carries is found only on a 2014 sheet', () => {
+    // the Banshee is in 5.1 and not in 5.2
+    expect(names('a banshee that wails for the drowned', '2014')).toContain('Banshee');
+    expect(names('a banshee that wails for the drowned', '2024')).toEqual([]);
   });
 
   test('every name comes with the span of the GM\'s words that found it', () => {
@@ -57,7 +85,7 @@ describe('the finder: closed facts only', () => {
     }
   });
 
-  test('the finder is not wired into the prompt — the arm did not ship', () => {
+  test('the finder is not wired into the prompt — neither arm shipped', () => {
     expect(buildPathPrompt({ name: '', concept: 'ogre blacksmith', cr: 5 })).not.toMatch(/offered_verdicts/);
   });
 });

@@ -1,6 +1,6 @@
 {
  "what": "Hand answer key for the path decision (path.mjs dispatch). Written by Fable 5.2 on 2026-11-14 under the owner's rulings of that date. Not a smoke batch: it is read by the path probe, one call per roll.",
- "how_to_score": "Score what dispatch() returns, because that is what the generator consumes. A roll is RIGHT when its path is in okPaths AND its body passes. The body rule applies to dispatch()'s print_body when the path is twist, exact or class_npc: needBody true = print_body must be one of okBodies; needBody false with okBodies listed = print_body is null or one of okBodies; okBodies null = print_body must be null. On a homebrew path the body is not scored: dispatch() may carry a 'resembles' body there and the generator does not stand on it. The relation is NOT scored separately. dispatch() returns a twist only when the relation is 'is', and on class_npc the generator stands on a person body whatever the relation (generate.mjs, pathBody). Validate receipts against Name + Description, as StatblockGenerator.vue does. Only entries with counts true go toward the bar; the rest are reported, not scored.",
+ "how_to_score": "Score what dispatch() returns, because that is what the generator consumes. A roll is RIGHT when its path is in okPaths AND its body passes. The body rule applies to dispatch()'s print_body when the path is twist, exact or class_npc: needBody true = print_body must be one of okBodies; needBody false with okBodies listed = print_body is null or one of okBodies; okBodies null = print_body must be null. Where notBodies is listed it replaces the okBodies-null rule: any print_body passes except the ones listed. On a homebrew path the body is not scored: dispatch() may carry a 'resembles' body there and the generator does not stand on it. The relation is NOT scored separately. dispatch() returns a twist only when the relation is 'is', and on class_npc the generator stands on a person body whatever the relation (generate.mjs, pathBody). Validate receipts against Name + Description, as StatblockGenerator.vue does. Only entries with counts true go toward the bar; the rest are reported, not scored. GROUPS (third version): monster = a printed monster named in the words must be the body, 10 rolls; control = a name is on offer or in the words and must not become the body, 10 rolls; watched = 10 rolls, reported, not scored; other = 5 rolls.",
  "prompts": [
   {
    "id": "typed40-1",
@@ -14,7 +14,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": true,
-   "why": "a named person with a rank; orc is a species kit, not a print block"
+   "why": "a named person with a rank; orc is a species kit, not a print block",
+   "group": "other"
   },
   {
    "id": "typed40-2",
@@ -31,7 +32,8 @@
    ],
    "needBody": false,
    "counts": true,
-   "why": "a cleric by name; a Priest body is fine, no body is fine"
+   "why": "a cleric by name; a Priest body is fine, no body is fine",
+   "group": "other"
   },
   {
    "id": "typed40-3",
@@ -47,7 +49,8 @@
    ],
    "needBody": false,
    "counts": true,
-   "why": "a person with a title; a Pirate Captain body is fine"
+   "why": "a person with a title; a Pirate Captain body is fine",
+   "group": "other"
   },
   {
    "id": "typed40-4",
@@ -63,7 +66,8 @@
    ],
    "needBody": false,
    "counts": true,
-   "why": "a person with a class word"
+   "why": "a person with a class word",
+   "group": "other"
   },
   {
    "id": "typed40-5",
@@ -80,7 +84,8 @@
    ],
    "needBody": false,
    "counts": true,
-   "why": "a person; necromancer is a mage"
+   "why": "a person; necromancer is a mage",
+   "group": "other"
   },
   {
    "id": "typed40-6",
@@ -96,7 +101,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": false,
-   "why": "a bare invented name with a role; a person or a creature are both fair readings"
+   "why": "a bare invented name with a role; a person or a creature are both fair readings",
+   "group": "other"
   },
   {
    "id": "typed40-7",
@@ -113,7 +119,8 @@
    ],
    "needBody": true,
    "counts": true,
-   "why": "the description is a whole print name; Krug is his personal name"
+   "why": "the description is a whole print name; Krug is his personal name",
+   "group": "monster"
   },
   {
    "id": "typed40-8",
@@ -132,7 +139,8 @@
    ],
    "needBody": true,
    "counts": true,
-   "why": "BODY IS THE POINT: she is a hag. Either path is fine if a printed hag is the body; homebrew loses her"
+   "why": "BODY IS THE POINT: she is a hag. Either path is fine if a printed hag is the body; homebrew loses her RULING 2026-11-14: a hag is a monster, so with a class word present the expected path is a twist on the hag",
+   "group": "monster"
   },
   {
    "id": "typed40-9",
@@ -147,7 +155,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": false,
-   "why": "a described person with no class word; wanted on a person body, but today only reachable if the call infers a class"
+   "why": "a described person with no class word; wanted on a person body, but today only reachable if the call infers a class",
+   "group": "other"
   },
   {
    "id": "typed40-10",
@@ -163,7 +172,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": false,
-   "why": "a guardian of unknown kind"
+   "why": "a guardian of unknown kind",
+   "group": "other"
   },
   {
    "id": "typed40-11",
@@ -177,7 +187,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": true,
-   "why": "an invented creature; nothing in print is named"
+   "why": "an invented creature; nothing in print is named",
+   "group": "other"
   },
   {
    "id": "typed40-12",
@@ -200,7 +211,8 @@
    ],
    "needBody": false,
    "counts": false,
-   "why": "\"giant\" is not a whole print name; a twist on a printed giant or a homebrew are both fair"
+   "why": "\"giant\" is not a whole print name; a twist on a printed giant or a homebrew are both fair",
+   "group": "other"
   },
   {
    "id": "typed40-13",
@@ -214,7 +226,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": true,
-   "why": "lizardfolk is a species kit, monk a class. MUST NOT take the Shadow or the Lizard as a body"
+   "why": "lizardfolk is a species kit, monk a class. MUST NOT take the Shadow or the Lizard as a body",
+   "group": "control"
   },
   {
    "id": "typed40-14",
@@ -228,7 +241,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": true,
-   "why": "a class word with a flavour word"
+   "why": "a class word with a flavour word",
+   "group": "other"
   },
   {
    "id": "typed40-15",
@@ -244,7 +258,8 @@
    ],
    "needBody": true,
    "counts": true,
-   "why": "RULING 3: a mage who is visibly a goblin, on the Goblin Warrior body. A class with no body loses the goblin"
+   "why": "RULING 3: a mage who is visibly a goblin, on the Goblin Warrior body. A class with no body loses the goblin",
+   "group": "other"
   },
   {
    "id": "typed40-16",
@@ -260,7 +275,8 @@
    ],
    "needBody": true,
    "counts": true,
-   "why": "fix 6: a monster named as itself, with a job word"
+   "why": "fix 6: a monster named as itself, with a job word",
+   "group": "monster"
   },
   {
    "id": "typed40-17",
@@ -276,7 +292,8 @@
    ],
    "needBody": true,
    "counts": true,
-   "why": "an owlbear raised as a zombie: the owlbear is the body. A Zombie body is a defensible second; homebrew is wrong"
+   "why": "an owlbear raised as a zombie: the owlbear is the body. A Zombie body is a defensible second; homebrew is wrong",
+   "group": "monster"
   },
   {
    "id": "typed40-18",
@@ -290,7 +307,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": true,
-   "why": "not in the SRD; no body to stand on"
+   "why": "not in the SRD; no body to stand on",
+   "group": "control"
   },
   {
    "id": "typed40-19",
@@ -304,7 +322,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": true,
-   "why": "not in the SRD; no body to stand on"
+   "why": "not in the SRD; no body to stand on",
+   "group": "control"
   },
   {
    "id": "typed40-20",
@@ -318,7 +337,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": true,
-   "why": "not in the SRD; no body to stand on"
+   "why": "not in the SRD; no body to stand on",
+   "group": "control"
   },
   {
    "id": "typed40-21",
@@ -335,7 +355,8 @@
    ],
    "needBody": false,
    "counts": false,
-   "why": "close enough to the Animated Armor that either reading is fair"
+   "why": "close enough to the Animated Armor that either reading is fair",
+   "group": "other"
   },
   {
    "id": "typed40-22",
@@ -348,8 +369,9 @@
    ],
    "okBodies": null,
    "needBody": false,
-   "counts": true,
-   "why": "a construct that resembles a spider; must not be welded onto a printed spider"
+   "counts": false,
+   "why": "WATCHED, NOT SCORED (third version): the saved homebrew sheet reads fine, and a sheet welded onto the Spider is being generated for the owner to read before this is keyed either way",
+   "group": "watched"
   },
   {
    "id": "typed40-23",
@@ -363,7 +385,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": true,
-   "why": "a named person with a trade and a story"
+   "why": "a named person with a trade and a story",
+   "group": "other"
   },
   {
    "id": "typed40-24",
@@ -380,7 +403,8 @@
    ],
    "needBody": false,
    "counts": false,
-   "why": "she commands wights; the words do not say she is one"
+   "why": "she commands wights; the words do not say she is one",
+   "group": "other"
   },
   {
    "id": "typed40-25",
@@ -396,7 +420,8 @@
    ],
    "needBody": true,
    "counts": true,
-   "why": "the words say he IS a kobold; \"resembles\" is wrong here"
+   "why": "the words say he IS a kobold; \"resembles\" is wrong here",
+   "group": "monster"
   },
   {
    "id": "typed40-26",
@@ -413,7 +438,8 @@
    ],
    "needBody": false,
    "counts": true,
-   "why": "a human priest by the words"
+   "why": "a human priest by the words",
+   "group": "other"
   },
   {
    "id": "typed40-27",
@@ -432,7 +458,8 @@
    ],
    "needBody": true,
    "counts": true,
-   "why": "BODY IS THE POINT: secretly a hag. Either path if a printed hag is the body"
+   "why": "BODY IS THE POINT: secretly a hag. Either path if a printed hag is the body RULING 2026-11-14: a hag is a monster, so with a class word present the expected path is a twist on the hag",
+   "group": "monster"
   },
   {
    "id": "typed40-28",
@@ -449,7 +476,8 @@
    ],
    "needBody": true,
    "counts": true,
-   "why": "a wolf by the words, compared to a dire wolf"
+   "why": "a wolf by the words, compared to a dire wolf",
+   "group": "monster"
   },
   {
    "id": "typed40-29",
@@ -463,7 +491,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": true,
-   "why": "numbers only, no creature named"
+   "why": "numbers only, no creature named",
+   "group": "other"
   },
   {
    "id": "typed40-30",
@@ -480,7 +509,8 @@
    ],
    "needBody": true,
    "counts": true,
-   "why": "a whole print name with a CR change"
+   "why": "a whole print name with a CR change",
+   "group": "monster"
   },
   {
    "id": "typed40-31",
@@ -496,7 +526,8 @@
    ],
    "needBody": true,
    "counts": true,
-   "why": "a print name with one swap"
+   "why": "a print name with one swap",
+   "group": "monster"
   },
   {
    "id": "typed40-32",
@@ -512,7 +543,8 @@
    ],
    "needBody": true,
    "counts": true,
-   "why": "Goblin Boss is a whole print name in the words. The Goblin Warrior is the wrong body"
+   "why": "Goblin Boss is a whole print name in the words. The Goblin Warrior is the wrong body",
+   "group": "other"
   },
   {
    "id": "typed40-33",
@@ -528,7 +560,8 @@
    ],
    "needBody": true,
    "counts": true,
-   "why": "a print name made legendary"
+   "why": "a print name made legendary",
+   "group": "monster"
   },
   {
    "id": "typed40-34",
@@ -543,7 +576,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": true,
-   "why": "numbers only, no creature named"
+   "why": "numbers only, no creature named",
+   "group": "other"
   },
   {
    "id": "typed40-35",
@@ -558,7 +592,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": false,
-   "why": "a typo for dragon; no specific printed dragon is named"
+   "why": "a typo for dragon; no specific printed dragon is named",
+   "group": "other"
   },
   {
    "id": "typed40-36",
@@ -576,7 +611,8 @@
    ],
    "needBody": false,
    "counts": false,
-   "why": "resembles a treant; either reading is fair"
+   "why": "resembles a treant; either reading is fair",
+   "group": "other"
   },
   {
    "id": "typed40-37",
@@ -590,7 +626,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": true,
-   "why": "a question, no creature named"
+   "why": "a question, no creature named",
+   "group": "other"
   },
   {
    "id": "typed40-38",
@@ -604,7 +641,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": true,
-   "why": "a mystery, no creature named"
+   "why": "a mystery, no creature named",
+   "group": "other"
   },
   {
    "id": "typed40-39",
@@ -619,7 +657,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": false,
-   "why": "a name with an epithet and no description"
+   "why": "a name with an epithet and no description",
+   "group": "other"
   },
   {
    "id": "typed40-40",
@@ -637,7 +676,8 @@
    ],
    "needBody": false,
    "counts": false,
-   "why": "an alligator resembles the Crocodile; either reading is fair"
+   "why": "an alligator resembles the Crocodile; either reading is fair",
+   "group": "other"
   },
   {
    "id": "fix6-ogre-blacksmith",
@@ -653,7 +693,8 @@
    ],
    "needBody": true,
    "counts": true,
-   "why": "fix 6: a monster named as itself, with a trade"
+   "why": "fix 6: a monster named as itself, with a trade",
+   "group": "monster"
   },
   {
    "id": "fix6-vampire-pirate-2024",
@@ -669,7 +710,8 @@
    ],
    "needBody": true,
    "counts": true,
-   "why": "fix 6: the same words as typed40-16 on the 2024 shelf"
+   "why": "fix 6: the same words as typed40-16 on the 2024 shelf",
+   "group": "monster"
   },
   {
    "id": "fix6-ooze-control",
@@ -683,7 +725,8 @@
    "okBodies": null,
    "needBody": false,
    "counts": true,
-   "why": "CONTROL: \"ooze\" is not a whole print name; must not be welded onto a printed ooze"
+   "why": "CONTROL: \"ooze\" is not a whole print name; must not be welded onto a printed ooze",
+   "group": "control"
   },
   {
    "id": "ruling3-goblin-assassin",
@@ -699,8 +742,136 @@
    ],
    "needBody": true,
    "counts": true,
-   "why": "RULING 3: a rogue who is visibly a goblin, on the Goblin Warrior body"
+   "why": "RULING 3: a rogue who is visibly a goblin, on the Goblin Warrior body",
+   "group": "other"
+  },
+  {
+   "id": "monster-ghoul-gravedigger",
+   "name": "",
+   "concept": "ghoul gravedigger",
+   "cr": "5",
+   "edition": "2024",
+   "okPaths": [
+    "twist"
+   ],
+   "okBodies": [
+    "Ghoul"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "a printed monster with a trade; 3 of 10 on the swap test",
+   "group": "monster"
+  },
+  {
+   "id": "monster-bellringer-ghost",
+   "name": "",
+   "concept": "a chapel bell-ringer's ghost that tolls for the dying",
+   "cr": "3",
+   "edition": "2024",
+   "okPaths": [
+    "twist"
+   ],
+   "okBodies": [
+    "Ghost"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "from the saved sweep: routed as a Priest it shipped a walking, mace-swinging ghost that casts Healing Word",
+   "group": "monster"
+  },
+  {
+   "id": "monster-medusa-sculptor",
+   "name": "",
+   "concept": "medusa sculptor",
+   "cr": "6",
+   "edition": "2024",
+   "okPaths": [
+    "twist"
+   ],
+   "okBodies": [
+    "Medusa"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "NEW, unseen by any earlier run: a printed monster the prompt does not exemplify, with a trade",
+   "group": "monster"
+  },
+  {
+   "id": "monster-mummy-librarian",
+   "name": "",
+   "concept": "mummy librarian",
+   "cr": "3",
+   "edition": "2024",
+   "okPaths": [
+    "twist"
+   ],
+   "okBodies": [
+    "Mummy"
+   ],
+   "needBody": true,
+   "counts": true,
+   "why": "NEW, unseen by any earlier run: a printed monster the prompt does not exemplify, with a trade",
+   "group": "monster"
+  },
+  {
+   "id": "control-wolf-pelt",
+   "name": "",
+   "concept": "a hunter in a wolf pelt",
+   "cr": "3",
+   "edition": "2024",
+   "okPaths": [
+    "class_npc",
+    "homebrew"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "CONTROL: the finder offers the Wolf; the creature is a hunter. Any body but the Wolf passes",
+   "group": "control",
+   "notBodies": [
+    "Wolf",
+    "Dire Wolf"
+   ]
+  },
+  {
+   "id": "control-silk-merchant",
+   "name": "",
+   "concept": "spider silk merchant",
+   "cr": "1",
+   "edition": "2024",
+   "okPaths": [
+    "class_npc",
+    "homebrew"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "CONTROL: the finder offers the Spider; the creature is a merchant. Any body but a spider passes",
+   "group": "control",
+   "notBodies": [
+    "Spider",
+    "Giant Spider"
+   ]
+  },
+  {
+   "id": "control-troll-hunter",
+   "name": "",
+   "concept": "troll hunter",
+   "cr": "4",
+   "edition": "2024",
+   "okPaths": [
+    "class_npc",
+    "homebrew"
+   ],
+   "okBodies": null,
+   "needBody": false,
+   "counts": true,
+   "why": "CONTROL: the finder offers the Troll; the creature hunts trolls. Any body but the Troll passes",
+   "group": "control",
+   "notBodies": [
+    "Troll"
+   ]
   }
  ],
- "revised": "2026-11-14, second version: the body rule now follows dispatch() and the generator. The first version required relation 'is' on every body, which is stricter than production for a class NPC on a person body."
+ "revised": "2026-11-14, third version: 7 prompts added (4 monster, 3 control), every prompt given a group, typed40-22 moved to watched, notBodies added for the new controls. Second version: the body rule follows dispatch() and the generator."
 }

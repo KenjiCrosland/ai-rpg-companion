@@ -87,29 +87,42 @@ export const printAliasFor = (word, text = '') => (/^(?:hag|hags|crone)$/i.test(
 export function namesInTheWords(text, { edition = '2024' } = {}) {
   const t = ` ${norm(text)} `;
   if (!t.trim()) return [];
-  const hits = new Map(); // printed name -> the span of the GM's words that found it
+  const hits = [];
   for (const b of (edition === '2014' ? [...CORPUS_2014, ...CORPUS] : CORPUS)) {
     const n = norm(b.name);
-    if (n && t.includes(` ${n} `)) hits.set(b.name, b.name);
+    if (!n) continue;
+    const at = t.indexOf(` ${n} `);
+    if (at >= 0) hits.push({ name: b.name, ask: b.name, quote: b.name, at, len: n.length, alias: false });
   }
-  // AN ALIAS YIELDS TO A WHOLE NAME THAT ALREADY CARRIES ITS WORD. "Goblin Boss" matched
-  // outright, and the "goblin" alias would otherwise offer the Goblin Warrior beside it — two
-  // candidates for one noun in the GM's words.
-  const direct = [...hits.keys()].map(norm);
-  for (const w of norm(text).split(' ')) {
+  // THE GM'S OWN WORD, WHEN THE ALIAS TABLE FOUND IT (2026-11-14). The first arm asked whether
+  // the creature is a "Green Hag" and "not" was a fair answer to that — the GM wrote "hag".
+  // The call is asked about the word it can see; code still picks WHICH hag, through the same
+  // alias lookup, once the call says "is".
+  for (const w of new Set(norm(text).split(' '))) {
     const a = printAliasFor(w, text);
     if (!a) continue;
     const e = corpusEntry(a, { edition });
-    if (!e || hits.has(e.name)) continue;
-    if (direct.some((d) => ` ${d} `.includes(` ${w} `))) continue;
-    hits.set(e.name, w);
+    if (!e || hits.some((h) => h.name === e.name)) continue;
+    const at = t.indexOf(` ${w} `);
+    if (at >= 0) hits.push({ name: e.name, ask: w, quote: w, at, len: w.length, alias: true });
   }
-  // a name wholly contained in another offered name yields to it
-  const names = [...hits.keys()];
-  return names
-    .filter((n) => !names.some((m) => m !== n && ` ${norm(m)} `.includes(` ${norm(n)} `)))
-    .sort((a, b) => norm(b).length - norm(a).length)
-    .map((n) => ({ name: n, quote: hits.get(n) }));
+  // THE LONGEST NAME WINS WITHIN ONE MENTION ONLY (2026-11-14). "Dire Wolf" covers the "wolf"
+  // inside it and the Wolf yields. But "the druid's wolf companion … tougher than a dire wolf"
+  // names two creatures in two PLACES, so both stand — the first arm offered only the Dire Wolf
+  // and the call's "resembles" was the right answer to the wrong offer.
+  // A 2014 SHEET SEARCHES BOTH BOOKS, so a name both carry hits twice on the same span. Dedupe
+  // by name first: two identical spans would otherwise each "cover" the other and both would
+  // be dropped, which silently emptied the offer on every 2014 monster prompt.
+  const byName = new Map();
+  for (const h of hits) if (!byName.has(h.name)) byName.set(h.name, h);
+  const uniq = [...byName.values()];
+  // containment is STRICT: a longer name covering this one's span wins ("Dire Wolf" over the
+  // "wolf" inside it); an equal span is the same mention, not a cover.
+  const covered = (h) => uniq.some((o) => o !== h && o.len > h.len && o.at <= h.at && o.at + o.len >= h.at + h.len);
+  return uniq
+    .filter((h) => !covered(h))
+    .filter((h) => !isPersonBody(h.name)) // MONSTERS ONLY: a job block or a people's block is never offered
+    .sort((a, b) => b.len - a.len || a.at - b.at);
 }
 
 export function corpusEntry(name, { edition = '2024' } = {}) {
@@ -130,7 +143,44 @@ export function corpusEntry(name, { edition = '2024' } = {}) {
   return null;
 }
 /** a print body whose block is a person — an NPC stat block or a folk; a class word outranks it (the brief's precedence) */
-export const isPersonBody = (name) => { const e = corpusEntry(name); return !!e && /^(?:Humanoid|Fey)\b/i.test(e.type) && !/dragon/i.test(e.name); };
+/**
+ * WHO IS A PERSON (owner's ruling, 2026-11-14). In the owner's words: a creature is not a
+ * person if its identity is inseparable from its abilities. Goblins can do all sorts of
+ * things; hags are limited. So a goblin is a people and takes a class; a hag is a monster and
+ * a job word rides on her.
+ *
+ * For a PERSON the class decides the body. For a MONSTER the body stands and a class, if there
+ * is one, sits on top. The split is not "has a class or not" — a fiend is a monster that can
+ * carry a class, and a centaur is a person even though print gives it a martial block.
+ *
+ * WHY A DECLARED LIST, AND WHY IT CANNOT GROW. The 2024 book files the goblinoids and the hags
+ * under one type, Fey, so the type alone cannot carry the ruling: reading `Fey` as a person
+ * made Mother Ash rank below a class word, and that is half of why she shipped as a Priest.
+ * The Fey type is exactly 15 blocks and the ruling names 14 of them, so the list below is
+ * COMPLETE rather than a sample — and `the-person-rule.spec.js` asserts it partitions the type
+ * exactly, so a Fey block added to the corpus fails that test instead of silently defaulting.
+ *
+ * The 2014 book's type was the other candidate and it was refused: it would read the Satyr as
+ * a monster, the Kobold Warrior as a person, and the Werewolf, Gnoll Warrior and Sahuagin
+ * Warrior as people, none of which the ruling wants.
+ *
+ * NOT RULED, AND DELIBERATELY UNCHANGED: the Satyr stays a person (Fey, on the list below) and
+ * the Kobold Warrior stays a monster (print types it Dragon). Both are the owner's to settle.
+ */
+export const FEY_PEOPLES = [
+  'Goblin Warrior', 'Goblin Boss', 'Goblin Minion',
+  'Hobgoblin Warrior', 'Hobgoblin Captain',
+  'Bugbear Warrior', 'Bugbear Stalker',
+  'Centaur Trooper', // ruled: print gives it a martial block, but it could be a warlock
+  'Satyr', // not ruled; a person today and left one
+];
+const FEY_PEOPLE_SET = new Set(FEY_PEOPLES.map((n) => n.toLowerCase()));
+export const isPersonBody = (name) => {
+  const e = corpusEntry(name);
+  if (!e || /dragon/i.test(e.name)) return false;
+  if (/^Humanoid\b/i.test(e.type)) return true;
+  return /^Fey\b/i.test(e.type) && FEY_PEOPLE_SET.has(e.name.toLowerCase());
+};
 
 /** The head clause: the GM's words up to the first relative or conjunction boundary. */
 export const headClause = (concept) => String(concept ?? '').split(/,|;|:|—|–| - | who | whose | that | which | with | and | but | while | when /i)[0].trim();

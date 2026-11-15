@@ -20,8 +20,8 @@ const LIMIT = Number(process.env.PROBE_CONCURRENCY ?? 6);
 const KEY = JSON.parse(fs.readFileSync('scripts/smoke-batches/path-key.json', 'utf8'));
 const ONLY = (() => { const i = process.argv.indexOf('--only'); return i > 0 ? process.argv[i + 1] : null; })();
 
-// the 8 watched prompts get 10 rolls, the rest 5
-const WATCHED = new Set(['fix6-ogre-blacksmith', 'typed40-16', 'fix6-vampire-pirate-2024', 'ruling3-goblin-assassin', 'typed40-8', 'fix6-ooze-control', 'typed40-13', 'typed40-22']);
+// THE KEY'S GROUPS drive the roll count and which bar a prompt answers to (key v3, 2026-11-14).
+const ROLLS = { monster: 10, control: 10, watched: 10, other: 5 };
 
 const ask = async (prompt) => {
   const r = await fetch(`${BASE}/api/ai/deepseek`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -38,16 +38,19 @@ const gated = async (fn) => { while (live.size >= LIMIT) await Promise.race(live
 const stripArm = (prompt, k) => {
   const off = namesInTheWords(k.concept, { edition: k.edition ?? '2024' });
   if (!off.length) return prompt;
-  let out = prompt.replace(/\n\nPrinted stat blocks whose names appear in the Description:[^\n]*\n/, '\n');
+  let out = prompt.replace(/\n\nPublished monsters whose names appear in the Description:[^\n]*\n/, '\n');
   out = out.replace(/ {2}"offered_verdicts": \[[\s\S]*?\],\n {2}/, '  ');
+  if (/offered_verdicts|Published monsters whose/.test(out)) throw new Error(`stripArm failed on ${k.id} — the probe is out of date with buildPathPrompt`);
   return out;
 };
 
 /** the key's rule, applied to what dispatch returns */
 const scoreRoll = (k, d) => {
+  const body = d.print_body ?? null;
+  // a control's notBodies is a veto on ANY path: the forbidden block must not become the body
+  if (k.notBodies && body && k.notBodies.includes(body) && d.path !== 'homebrew') return false;
   if (!k.okPaths.includes(d.path)) return false;
   if (d.path === 'homebrew') return true; // the body is not scored there
-  const body = d.print_body ?? null;
   if (k.needBody) return !!body && (k.okBodies ?? []).includes(body);
   if (k.okBodies) return body === null || k.okBodies.includes(body);
   return body === null;
@@ -69,7 +72,9 @@ const oneRoll = async (k, { arm }) => {
       rawBody: p.print_body ?? null, rawRel: p.relation ?? null, cls: p.class ?? null, sp: p.species ?? null,
       emptyRel: !!p.print_body && !['is', 'resembles'].includes(String(p.relation ?? '').toLowerCase()),
       bodyWasOffered: !!p.print_body && offeredNames.some((n) => n.toLowerCase() === String(p.print_body).toLowerCase()),
-      verdicts: Array.isArray(p.offered_verdicts) ? p.offered_verdicts.map((v) => `${v?.name}=${v?.verdict}`).join(',') : null,
+      // the call answers `word`; printing `name` showed every verdict as "undefined=..." in the
+      // 2026-11-14 run. readPath reads `word ?? name`, so only the DISPLAY was wrong.
+      verdicts: Array.isArray(p.offered_verdicts) ? p.offered_verdicts.map((v) => `${v?.word ?? v?.name}=${v?.verdict}`).join(',') : null,
     };
   } catch (e) { return { path: 'ERR', raw: String(e.message).slice(0, 60) }; }
 };
@@ -78,7 +83,7 @@ const runArm = async (arm) => {
   const prompts = KEY.prompts.filter((k) => !ONLY || k.id === ONLY);
   const out = [];
   await Promise.all(prompts.map(async (k) => {
-    const n = WATCHED.has(k.id) ? 10 : 5;
+    const n = ROLLS[k.group ?? 'other'] ?? 5;
     const rolls = await Promise.all(Array.from({ length: n }, () => gated(() => oneRoll(k, { arm }))));
     out.push({ k, rolls, n });
   }));
@@ -86,42 +91,43 @@ const runArm = async (arm) => {
 };
 
 const report = (label, res) => {
-  const counted = res.filter((r) => r.k.counts);
-  const perfect = counted.filter((r) => r.rolls.every((x) => x.ok));
-  const lost = counted.filter((r) => r.rolls.some((x) => !x.ok));
+  const g = (name) => res.filter((r) => (r.k.group ?? 'other') === name);
+  const rollsOf = (rows) => rows.flatMap((r) => r.rolls);
+  const rightOf = (rows) => rollsOf(rows).filter((x) => x.ok).length;
+  const monster = g('monster'); const control = g('control'); const other = g('other'); const watched = g('watched');
   const multi = res.filter((r) => new Set(r.rolls.map((x) => x.path)).size > 1);
-  const allRolls = res.flatMap((r) => r.rolls);
-  const empty = allRolls.filter((x) => x.emptyRel);
   console.log(`\n########## ${label} ##########`);
-  console.log(`  counted prompts right on EVERY roll: ${perfect.length} of ${counted.length}`);
-  console.log(`  counted prompts losing any roll    : ${lost.length}`);
-  console.log(`  prompts showing MORE THAN ONE path : ${multi.length} of ${res.length}`);
-  console.log(`  rolls with a body named and NO relation: ${empty.length} of ${allRolls.length}  (offered ${empty.filter((x) => x.bodyWasOffered).length}, unprompted ${empty.filter((x) => !x.bodyWasOffered).length})`);
-  console.log(`\n  --- the 8 watched ---`);
-  for (const r of res.filter((x) => WATCHED.has(x.k.id))) {
-    const ok = r.rolls.filter((x) => x.ok).length;
-    console.log(`  ${ok === r.n ? '✓' : ok >= 9 ? '~' : '✗'} ${r.k.id.padEnd(26)} ${ok}/${r.n}  ${Object.entries(r.rolls.reduce((m, x) => ({ ...m, [`${x.path}${x.body ? `:${x.body}` : ''}`]: (m[`${x.path}${x.body ? `:${x.body}` : ''}`] ?? 0) + 1 }), {})).sort((a, b) => b[1] - a[1]).map(([a, b]) => `${a} x${b}`).join('  ')}`);
-    for (const x of r.rolls.filter((y) => !y.ok).slice(0, 3)) console.log(`       miss raw: body=${x.rawBody} rel=${x.rawRel} class=${x.cls} species=${x.sp} verdicts=[${x.verdicts ?? '-'}]`);
-  }
-  if (lost.length) {
-    console.log(`\n  --- every counted prompt that lost a roll ---`);
+  console.log(`  MONSTER  ${rightOf(monster)}/${rollsOf(monster).length} right   (${monster.length} prompts, worst ${Math.min(...monster.map((r) => r.rolls.filter((x) => x.ok).length))}/10)`);
+  console.log(`  CONTROL  ${rollsOf(control).length - rightOf(control)}/${rollsOf(control).length} WRONG   (${control.length} prompts)`);
+  console.log(`  OTHER    ${rightOf(other)}/${rollsOf(other).length} right   (${other.length} prompts)`);
+  console.log(`  WATCHED  ${watched.map((r) => `${r.k.id} ${r.rolls.filter((x) => x.ok).length}/${r.rolls.length} (reported, not scored)`).join('; ')}`);
+  console.log(`  more than one path: ${multi.length} of ${res.length}`);
+  const emptyRel = rollsOf(res).filter((x) => x.emptyRel);
+  console.log(`  body named with NO relation: ${emptyRel.length} of ${rollsOf(res).length}`);
+  for (const grp of [['MONSTER', monster], ['CONTROL', control]]) {
+    const lost = grp[1].filter((r) => r.rolls.some((x) => !x.ok));
+    if (!lost.length) continue;
+    console.log(`\n  --- every ${grp[0]} prompt that lost a roll ---`);
     for (const r of lost) {
       const bad = r.rolls.filter((x) => !x.ok);
-      console.log(`  ${r.k.id.padEnd(26)} lost ${bad.length}/${r.n}  "${String(r.k.concept).slice(0, 40)}"  want ${r.k.okPaths.join('|')}${r.k.okBodies ? ` on ${r.k.okBodies.join('|')}` : ' with no body'}`);
-      for (const x of bad.slice(0, 3)) console.log(`       got ${x.path}${x.body ? `:${x.body}` : ''} | raw body=${x.rawBody} rel=${x.rawRel} class=${x.cls} species=${x.sp} verdicts=[${x.verdicts ?? '-'}]`);
+      console.log(`  ${r.k.id.padEnd(26)} lost ${bad.length}/${r.rolls.length}  "${String(r.k.concept).slice(0, 38)}"  want ${r.k.okPaths.join('|')}${r.k.okBodies ? ` on ${r.k.okBodies.join('|')}` : ''}${r.k.notBodies ? ` NOT ${r.k.notBodies.join('|')}` : ''}`);
+      for (const x of bad.slice(0, 4)) console.log(`       got ${x.path}${x.body ? `:${x.body}` : ''} | raw body=${x.rawBody} rel=${x.rawRel} class=${x.cls} species=${x.sp} verdicts=[${x.verdicts ?? '-'}]`);
     }
   }
-  return { perfect: perfect.length, counted: counted.length, lost, multi: multi.length, empty };
+  return { monsterRight: rightOf(monster), monsterRolls: rollsOf(monster).length, monsterWorst: Math.min(...monster.map((r) => r.rolls.filter((x) => x.ok).length)), controlWrong: rollsOf(control).length - rightOf(control), otherRight: rightOf(other), multi: multi.length };
 };
 
-console.log(`prompts: ${KEY.prompts.filter((k) => !ONLY || k.id === ONLY).length}; 10 rolls for the 8 watched, 5 for the rest`);
-const without = report('WITHOUT the names arm (today\'s prompt)', await runArm(false));
-const withArm = report('WITH the names arm', await runArm(true));
+console.log(`prompts: ${KEY.prompts.filter((k) => !ONLY || k.id === ONLY).length}; rolls by group ${JSON.stringify(ROLLS)}`);
+const without = report("WITHOUT the arm (today's prompt)", await runArm(false));
+const withArm = report('WITH the narrowed names arm', await runArm(true));
 
 console.log(`\n########## THE BARS ##########`);
-const w = (id) => withArm;
-const named = ['fix6-ogre-blacksmith', 'typed40-16', 'fix6-vampire-pirate-2024', 'ruling3-goblin-assassin', 'typed40-8', 'typed40-13', 'typed40-22'];
-console.log(`  bar 2 — more counted prompts right on every roll: ${withArm.perfect} vs ${without.perfect}  ->  ${withArm.perfect > without.perfect ? 'PASS' : 'FAIL'}`);
-const over = withArm.lost.filter((r) => r.rolls.filter((x) => !x.ok).length >= (r.n === 10 ? 3 : 2));
-console.log(`  bar 2 — none loses 2+ of 5 or 3+ of 10: ${over.length === 0 ? 'PASS' : `FAIL (${over.map((r) => r.k.id).join(', ')})`}`);
-console.log(`  more-than-one-path count: ${withArm.multi} with the arm, ${without.multi} without`);
+const b1 = withArm.monsterRight >= 144 && withArm.monsterWorst >= 7;
+console.log(`  1 MONSTERS  >=144/160 right and no prompt below 7/10 : ${withArm.monsterRight}/160, worst ${withArm.monsterWorst}/10  ->  ${b1 ? 'PASS' : 'FAIL'}`);
+const b2 = withArm.controlWrong <= 2;
+console.log(`  2 CONTROLS  at most 2 of 80 wrong                   : ${withArm.controlWrong}/80 wrong  ->  ${b2 ? 'PASS' : 'FAIL'}`);
+const b3 = withArm.otherRight >= without.otherRight - 6;
+console.log(`  3 OTHERS    no more than 6 below the current prompt  : ${withArm.otherRight} vs ${without.otherRight} (of 130)  ->  ${b3 ? 'PASS' : 'FAIL'}`);
+console.log(`\n  monster group WITHOUT the arm: ${without.monsterRight}/${without.monsterRolls}`);
+console.log(`  more-than-one-path: ${withArm.multi} with, ${without.multi} without`);
+console.log(`\n  ${b1 && b2 && b3 ? 'ALL THREE BARS PASS — the arm ships' : 'A BAR IS MISSED — the arm does not ship'}`);
