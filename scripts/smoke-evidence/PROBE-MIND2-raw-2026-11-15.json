@@ -1,0 +1,2416 @@
+{
+ "what": "mind probe 2: arm t is probe 1's question rerun, arm u adds \"unsaid\". The routed line and the card pickDonor returns for it.",
+ "wording": {
+  "t": "THE CREATURE'S MIND. Rank its Intelligence, Wisdom and Charisma for THIS creature as the GM's\nwords imply — how clever it is, how perceptive and wilful, how forceful or magnetic. Write one\nof the four words for each and never a number: the engine sets every score itself and will not\nread one from you. Rank the creature, not the chassis; the chassis is how it fights, not what\nit is. A tier is relative to other creatures of this challenge rating.",
+  "u": "THE CREATURE'S MIND. Rank its Intelligence, Wisdom and Charisma for THIS creature as the GM's\nwords imply — how clever it is, how perceptive and wilful, how forceful or magnetic. Write one\nof the five words for each and never a number: the engine sets every score itself and will not\nread one from you. Rank the creature, not the chassis; the chassis is how it fights, not what\nit is. A tier is relative to other creatures of this challenge rating.\nAnswer unsaid when neither the GM's words nor the creature they name tells you anything about\nthat score. The chassis already carries a score for it that may well be right, and a tier from\nyou replaces it; unsaid keeps it."
+ },
+ "out": {
+  "rank-clockwork-spider": {
+   "line": "brute-juggernaut",
+   "card": {
+    "id": "brute-5-juggernaut",
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 4
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Construct",
+     "size": "Medium",
+     "move": [
+      "climb"
+     ],
+     "mind": "mindless"
+    },
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Construct",
+     "size": "Large",
+     "move": [
+      "climb"
+     ],
+     "mind": "mindless"
+    },
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Construct",
+     "size": "Large",
+     "move": [
+      "climb"
+     ],
+     "mind": "mindless"
+    },
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Construct",
+     "size": "Large",
+     "move": [
+      "climb"
+     ],
+     "mind": "mindless"
+    },
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Construct",
+     "size": "Tiny",
+     "move": [
+      "climb"
+     ],
+     "mind": "mindless"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "unsaid"
+     },
+     "type": "Construct",
+     "size": "Medium",
+     "move": [
+      "climb"
+     ],
+     "mind": "mindless"
+    },
+    {
+     "tiers": {
+      "INT": "unsaid",
+      "WIS": "ordinary",
+      "CHA": "unsaid"
+     },
+     "type": "Construct",
+     "size": "Medium",
+     "move": [
+      "climb"
+     ],
+     "mind": "mindless"
+    },
+    {
+     "tiers": {
+      "INT": "unsaid",
+      "WIS": "capable",
+      "CHA": "unsaid"
+     },
+     "type": "Construct",
+     "size": "Medium",
+     "move": [
+      "climb"
+     ],
+     "mind": "mindless"
+    },
+    {
+     "tiers": {
+      "INT": "unsaid",
+      "WIS": "capable",
+      "CHA": "unsaid"
+     },
+     "type": "Construct",
+     "size": "Large",
+     "move": [
+      "climb"
+     ],
+     "mind": "mindless"
+    },
+    {
+     "tiers": {
+      "INT": "unsaid",
+      "WIS": "ordinary",
+      "CHA": "unsaid"
+     },
+     "type": "Construct",
+     "size": "Medium",
+     "move": [
+      "climb"
+     ],
+     "mind": "mindless"
+    }
+   ]
+  },
+  "rank-medusa-sculptor": {
+   "line": "brute",
+   "card": {
+    "id": "brute-5",
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 6
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Monstrosity",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "ordinary"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "capable"
+     },
+     "type": "Monstrosity",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "type": "Monstrosity",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Monstrosity",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    }
+   ]
+  },
+  "rank-vampire-pirate": {
+   "line": "skirmisher-skulker",
+   "card": {
+    "id": "skirmisher-8-skulker",
+    "INT": 10,
+    "WIS": 14,
+    "CHA": 10
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "climb",
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "climb",
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "climb",
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    }
+   ]
+  },
+  "rank-mother-ash": {
+   "line": "caster-binder",
+   "card": {
+    "id": "caster-8-binder",
+    "INT": 14,
+    "WIS": 15,
+    "CHA": 18
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "type": "Fey",
+     "size": "Medium",
+     "move": [
+      "climb"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "type": "Fey",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "type": "Fey",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "type": "Fey",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "type": "Fey",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "type": "Fey",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "type": "Fey",
+     "size": "Medium",
+     "move": [
+      "climb"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "type": "Fey",
+     "size": "Medium",
+     "move": [
+      "climb"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "type": "Fey",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    }
+   ]
+  },
+  "rank-mummy-librarian": {
+   "line": "defender-warden",
+   "card": {
+    "id": "defender-3-warden",
+    "INT": 6,
+    "WIS": 12,
+    "CHA": 5
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "ordinary"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "ordinary"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "ordinary"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "feeble"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "ordinary"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "feeble"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    }
+   ]
+  },
+  "rank-ghoul-gravedigger": {
+   "line": "skirmisher-skulker",
+   "card": {
+    "id": "skirmisher-3-skulker",
+    "INT": 8,
+    "WIS": 12,
+    "CHA": 8
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "burrow",
+      "climb"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "burrow"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "burrow"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "burrow",
+      "climb"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "burrow",
+      "climb"
+     ],
+     "mind": "sapient"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "burrow"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "burrow",
+      "climb"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "burrow",
+      "climb"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "burrow",
+      "climb"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "burrow"
+     ],
+     "mind": "sapient"
+    }
+   ]
+  },
+  "rank-bellringer-ghost": {
+   "line": "lurker-phantom",
+   "card": {
+    "id": "lurker-1-phantom",
+    "INT": 10,
+    "WIS": 10,
+    "CHA": 11
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "ordinary"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "fly"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "capable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "fly"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "fly"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "fly"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "ordinary"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "fly"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "fly"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "fly"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "capable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    }
+   ]
+  },
+  "rank-ogre-blacksmith-control": {
+   "line": "brute",
+   "card": {
+    "id": "brute-2",
+    "INT": 6,
+    "WIS": 8,
+    "CHA": 6
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "ordinary",
+      "CHA": "ordinary"
+     },
+     "type": "Giant",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Giant",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    }
+   ]
+  },
+  "rank-carnival-barker": {
+   "line": "skirmisher-skulker",
+   "card": {
+    "id": "skirmisher-3-skulker",
+    "INT": 8,
+    "WIS": 12,
+    "CHA": 8
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Humanoid",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Fiend",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Fey",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Fey",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "type": "Fey",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Humanoid",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Fey",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Fey",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Fiend",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    }
+   ]
+  },
+  "rank-sellsword": {
+   "line": "skirmisher-hurler",
+   "card": {
+    "id": "skirmisher-8-hurler",
+    "INT": 10,
+    "WIS": 14,
+    "CHA": 10
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Humanoid",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Humanoid",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Humanoid",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Humanoid",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Humanoid",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "ordinary"
+     },
+     "type": "Humanoid",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Humanoid",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Humanoid",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "unsaid"
+     },
+     "type": "Humanoid",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Humanoid",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    }
+   ]
+  },
+  "rank-eels-in-a-coat": {
+   "line": "swarm",
+   "card": {
+    "id": "swarm-1",
+    "INT": 2,
+    "WIS": 8,
+    "CHA": 1
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "bestial",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Monstrosity",
+     "size": "Medium",
+     "move": [
+      "swim"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "bestial",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Aberration",
+     "size": "Medium",
+     "move": [],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "ordinary"
+     },
+     "type": "Beast",
+     "size": "Medium",
+     "move": [
+      "swim"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Monstrosity",
+     "size": "Medium",
+     "move": [],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "bestial",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Beast",
+     "size": "Medium",
+     "move": [
+      "climb",
+      "swim"
+     ],
+     "mind": "bestial"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "bestial",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Monstrosity",
+     "size": "Medium",
+     "move": [],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "bestial",
+      "WIS": "capable",
+      "CHA": "unsaid"
+     },
+     "type": "Ooze",
+     "size": "Medium",
+     "move": [],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "bestial",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Monstrosity",
+     "size": "Medium",
+     "move": [],
+     "mind": "mindless"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "unsaid"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "bestial",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Aberration",
+     "size": "Medium",
+     "move": [],
+     "mind": "bestial"
+    }
+   ]
+  },
+  "rank-thing-in-the-well": {
+   "line": "lurker-trap",
+   "card": {
+    "id": "lurker-5-trap",
+    "INT": 7,
+    "WIS": 16,
+    "CHA": 6
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [
+      "climb"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "feeble"
+     },
+     "type": "Aberration",
+     "size": "Large",
+     "move": [
+      "climb"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "feeble"
+     },
+     "type": "Aberration",
+     "size": "Large",
+     "move": [
+      "climb",
+      "swim"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "bestial",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [
+      "climb",
+      "swim"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Aberration",
+     "size": "Large",
+     "move": [
+      "climb",
+      "swim"
+     ],
+     "mind": "sapient"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "unsaid"
+     },
+     "type": "Aberration",
+     "size": "Medium",
+     "move": [
+      "climb",
+      "swim"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "ordinary"
+     },
+     "type": "Aberration",
+     "size": "Large",
+     "move": [
+      "climb"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "unsaid"
+     },
+     "type": "Aberration",
+     "size": "Large",
+     "move": [
+      "climb"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "feeble"
+     },
+     "type": "Aberration",
+     "size": "Large",
+     "move": [
+      "climb",
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "unsaid",
+      "WIS": "capable",
+      "CHA": "unsaid"
+     },
+     "type": "Aberration",
+     "size": "Large",
+     "move": [
+      "climb",
+      "swim"
+     ],
+     "mind": "bestial"
+    }
+   ]
+  },
+  "mind-silver-toad": {
+   "line": "brute",
+   "card": {
+    "id": "brute-2",
+    "INT": 6,
+    "WIS": 8,
+    "CHA": 6
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "type": "Beast",
+     "size": "Large",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "type": "Beast",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "type": "Beast",
+     "size": "Large",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Fey",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "capable"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "formidable"
+     },
+     "type": "Beast",
+     "size": "Large",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    }
+   ]
+  },
+  "mind-drowned-scholar": {
+   "line": "lurker-phantom",
+   "card": {
+    "id": "lurker-1-phantom",
+    "INT": 10,
+    "WIS": 10,
+    "CHA": 11
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "fly"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "fly"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "capable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "fly"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "fly"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "formidable",
+      "WIS": "ordinary",
+      "CHA": "capable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "climb",
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "capable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "capable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "formidable",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    }
+   ]
+  },
+  "mind-swamp-giant": {
+   "line": "brute",
+   "card": {
+    "id": "brute-5",
+    "INT": 6,
+    "WIS": 10,
+    "CHA": 6
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Huge",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Huge",
+     "move": [
+      "swim"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "ordinary"
+     },
+     "type": "Giant",
+     "size": "Huge",
+     "move": [
+      "swim"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Huge",
+     "move": [
+      "swim"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Huge",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Huge",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Huge",
+     "move": [
+      "swim"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Huge",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Huge",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "ordinary",
+      "CHA": "feeble"
+     },
+     "type": "Giant",
+     "size": "Huge",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    }
+   ]
+  },
+  "mind-pale-rider": {
+   "line": "skirmisher-mounted",
+   "card": {
+    "id": "skirmisher-3-mounted",
+    "INT": 8,
+    "WIS": 12,
+    "CHA": 8
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "capable"
+     },
+     "type": "Undead",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Undead",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Large",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "capable"
+     },
+     "type": "Undead",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    }
+   ]
+  },
+  "mind-under-the-ice": {
+   "line": "lurker",
+   "card": {
+    "id": "lurker-8",
+    "INT": 13,
+    "WIS": 14,
+    "CHA": 11
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Monstrosity",
+     "size": "Huge",
+     "move": [
+      "burrow",
+      "swim"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "formidable",
+      "CHA": "feeble"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [
+      "swim"
+     ],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "bestial",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Monstrosity",
+     "size": "Huge",
+     "move": [
+      "swim"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Elemental",
+     "size": "Huge",
+     "move": [
+      "burrow",
+      "swim"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "feeble",
+      "WIS": "capable",
+      "CHA": "ordinary"
+     },
+     "type": "Elemental",
+     "size": "Huge",
+     "move": [
+      "swim"
+     ],
+     "mind": "bestial"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "bestial",
+      "WIS": "capable",
+      "CHA": "unsaid"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [
+      "burrow",
+      "swim"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "unsaid"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [
+      "burrow",
+      "swim"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Monstrosity",
+     "size": "Large",
+     "move": [
+      "swim"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "bestial",
+      "WIS": "capable",
+      "CHA": "feeble"
+     },
+     "type": "Monstrosity",
+     "size": "Huge",
+     "move": [
+      "swim"
+     ],
+     "mind": "bestial"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "unsaid"
+     },
+     "type": "Monstrosity",
+     "size": "Huge",
+     "move": [
+      "swim"
+     ],
+     "mind": "bestial"
+    }
+   ]
+  },
+  "mind-toll-collector": {
+   "line": "brute-grappler",
+   "card": {
+    "id": "brute-5-grappler",
+    "INT": 4,
+    "WIS": 10,
+    "CHA": 4
+   },
+   "t": [
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "capable"
+     },
+     "type": "Construct",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "capable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "ordinary",
+      "CHA": "capable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Undead",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Fiend",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    }
+   ],
+   "u": [
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Monstrosity",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "capable"
+     },
+     "type": "Monstrosity",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "capable",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Fiend",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "formidable"
+     },
+     "type": "Construct",
+     "size": "Large",
+     "move": [],
+     "mind": "sapient"
+    },
+    {
+     "tiers": {
+      "INT": "ordinary",
+      "WIS": "capable",
+      "CHA": "capable"
+     },
+     "type": "Monstrosity",
+     "size": "Medium",
+     "move": [],
+     "mind": "sapient"
+    }
+   ]
+  }
+ }
+}
