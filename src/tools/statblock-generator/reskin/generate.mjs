@@ -4466,7 +4466,27 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             // So the text is left alone here and stamped with the LENDING block as `kitSrc`;
             // the sweep that fix 4 built runs `asInline(text, kitSrc)` once `inline` exists.
             // The re-DC stays here, because it reads this sheet's own casting score.
-            const txL = String(lend.text).replace(/\bDC \d+\b/g, `DC ${dcL}`);
+            // THE LENT LIST IS THE SHEET'S CR, NOT THE LENDER'S (owner's fix 1, 2026-11-15).
+            // The lend pasted the lending block's Spellcasting row whole, so a CR 1 goblin wizard
+            // standing on the Goblin Warrior carried the CR 6 Mage's Fireball twice a day and
+            // Cone of Cold — 24 of 72 caster sheets. The comment here said item 7 "still governs
+            // its content"; it does not, because the lent row never passes through it.
+            //
+            // ITEM 7's OWN JUDGEMENT, reused and not rewritten: a list is too strong when the
+            // lending block's CR is more than one above the sheet's. Item 7 answers that by
+            // keeping the chassis's own list, and a lent row has none to keep — so the gated
+            // lines go and the At Will line stays, which is exactly what the class carries at
+            // those CRs on its own body (print's Mage At Will is Detect Magic, Mage Hand, Minor
+            // Illusion, Prestidigitation). A shorter list is fine.
+            let lendText = String(lend.text);
+            if (Number.isFinite(Number(ownPc?.cr)) && Number.isFinite(Number(cr)) && Number(ownPc.cr) - Number(cr) > 1) {
+              const trimmed = lendText.replace(/\n+\s*-\s*\*\*(?!At Will)[^\n]*/g, '').replace(/\n{3,}/g, '\n\n').trimEnd();
+              if (trimmed !== lendText) {
+                trace('class kit: lent list trimmed —', `the ${ownBlock}'s list is written for CR ${ownPc.cr} and this sheet is CR ${cr} — the gated spells go and the At Will line stays (item 7's rule, reused)`);
+                lendText = trimmed;
+              }
+            }
+            const txL = lendText.replace(/\bDC \d+\b/g, `DC ${dcL}`);
             (sections.Actions = sections.Actions ?? []).push({ name: String(lend.name).replace(/ \(.*\)$/, ''), text: txL.charAt(0).toUpperCase() + txL.slice(1), kit: ck.cls.key, ...(ownBlock ? { kitSrc: ownBlock } : {}), clause: ck.clause, rules: true, print: true });
             trace('class kit:', `${String(lend.name)} lent by the ${ownBlock} — this sheet stands on the ${pathD.print_body}, a body that carries no ${String(lend.name).toLowerCase()}, and a ${ck.cls.key} without it is not a ${ck.cls.key}`);
           }
