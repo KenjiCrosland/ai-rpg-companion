@@ -128,5 +128,31 @@
    "statblock-pin-path": ""
   },
   "green": "still the exact printed block"
+ },
+ {
+  "canary": "THREE RULINGS + the lend fix \u2014 reading for: class NPC on the Goblin Warrior with a lent Spellcasting row that names this creature",
+  "name": "",
+  "description": "goblin wizard",
+  "cr": "3",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": ""
+  },
+  "green": "class_npc on the Goblin Warrior; Spellcasting names the creature, not the mage"
+ },
+ {
+  "canary": "THREE RULINGS + the lend fix \u2014 reading for: class NPC on the Hobgoblin Warrior with a lent Spellcasting row",
+  "name": "",
+  "description": "hobgoblin priest",
+  "cr": "4",
+  "rules": "2024",
+  "flags": {
+   "statblock-withhold-mind-tiers": "",
+   "statblock-donor-pin": "",
+   "statblock-pin-path": ""
+  },
+  "green": "class_npc on the Hobgoblin Warrior; Spellcasting names the creature, not the priest"
  }
 ]

@@ -4435,8 +4435,19 @@ Return ONLY JSON with EXACTLY these corrected pieces:
             const named = /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability/.exec(lend.text)?.[1];
             const K = { Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON', Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' };
             const dcL = named && scaled.stats ? 8 + scaled.pb + Math.floor(((scaled.stats[K[named]] ?? 10) - 10) / 2) : scaled.dc;
-            const txL = asInline(lend.text).replace(/\bDC \d+\b/g, `DC ${dcL}`);
-            (sections.Actions = sections.Actions ?? []).push({ name: String(lend.name).replace(/ \(.*\)$/, ''), text: txL.charAt(0).toUpperCase() + txL.slice(1), kit: ck.cls.key, clause: ck.clause, rules: true, print: true });
+            // THE LENT ROW TAKES THE KIT ROUTE, NOT asInline HERE (2026-11-15). This called
+            // `asInline` directly, and `asInline` is a const ~260 lines below that needs the
+            // creature's rules-text name — so every mage and every cleric on a people's own
+            // printed body threw `Cannot access 'asInline' before initialization` and the sheet
+            // was lost: 24 of 24 bodies x caster classes. The lend has never landed a row since
+            // it was added on 2026-11-08. It went unseen because it needs the routing step to
+            // name the people's body, and no saved sheet or test built that combination.
+            //
+            // So the text is left alone here and stamped with the LENDING block as `kitSrc`;
+            // the sweep that fix 4 built runs `asInline(text, kitSrc)` once `inline` exists.
+            // The re-DC stays here, because it reads this sheet's own casting score.
+            const txL = String(lend.text).replace(/\bDC \d+\b/g, `DC ${dcL}`);
+            (sections.Actions = sections.Actions ?? []).push({ name: String(lend.name).replace(/ \(.*\)$/, ''), text: txL.charAt(0).toUpperCase() + txL.slice(1), kit: ck.cls.key, ...(ownBlock ? { kitSrc: ownBlock } : {}), clause: ck.clause, rules: true, print: true });
             trace('class kit:', `${String(lend.name)} lent by the ${ownBlock} — this sheet stands on the ${pathD.print_body}, a body that carries no ${String(lend.name).toLowerCase()}, and a ${ck.cls.key} without it is not a ${ck.cls.key}`);
           }
         }
@@ -4733,7 +4744,9 @@ Return ONLY JSON with EXACTLY these corrected pieces:
   // Mage while the class body is the Archmage.
   for (const esK of Object.values(sections)) for (const eK of esK) {
     if (!eK?.kitSrc) continue;
-    const sub = asInline(eK.text, eK.kitSrc);
+    // the row was capitalised where it was welded, BEFORE the name went in, so a "the goblin"
+    // inline leaves a lowercase sentence opening behind it — re-capitalise after substituting
+    const sub = asInline(eK.text, eK.kitSrc).replace(/(^|[.!?]\s+)([a-z])/g, (m0, pre, ch) => `${pre}${ch.toUpperCase()}`);
     if (sub !== eK.text) { trace('kit row takes the creature\'s name:', `${eK.name} — "${eK.kitSrc}" is the kit's own block, not this creature`); eK.text = sub; }
     if (eK.kitRider) eK.kitRider = asInline(eK.kitRider, eK.kitSrc);
     delete eK.kitSrc;
@@ -5248,7 +5261,13 @@ Return ONLY JSON with EXACTLY these corrected pieces:
       const am = /\b(?:(Lawful|Neutral|Chaotic)[\s-]+(Good|Neutral|Evil)|Neutral|Unaligned|Any Alignment)\b/i.exec(String(p.alignment ?? ''));
       // UNALIGNED is for a creature with no capacity for ethics: a beast, a mindless construct, an ooze, a plant (print: 0 of 329 Unaligned blocks speak a language). A
       // dragon with INT 18 who speaks and casts is not Unaligned (Voraglace — the critic's fourth read).
-      const noEthics = /^(?:Beast|Ooze|Plant)\b/i.test(String(settledType ?? p.type ?? options.resolvedType ?? '')) || (/^Construct\b/i.test(String(p.type ?? options.resolvedType ?? '')) && options.mind !== 'sapient') || options.mind === 'mindless'
+      // A SAPIENT CREATURE HAS AN ALIGNMENT WHATEVER ITS TYPE (ruling 2's remaining half,
+      // 2026-11-15). `sapientNotABeast` leaves the type alone when the GM's OWN words say
+      // beast, and traced that "the alignment follows the call instead" — which was only true
+      // when the call gave one. With `Unaligned` this arm still read Beast and the sheet
+      // shipped Unaligned, the exact pairing the ruling forbids. The Construct arm already
+      // carried this test; the Beast/Ooze/Plant arm now matches it.
+      const noEthics = (/^(?:Beast|Ooze|Plant)\b/i.test(String(settledType ?? p.type ?? options.resolvedType ?? '')) && options.mind !== 'sapient') || (/^Construct\b/i.test(String(p.type ?? options.resolvedType ?? '')) && options.mind !== 'sapient') || options.mind === 'mindless'
         // A BESTIAL MIND IS NOT A LICENCE AT ANY INT (owner's ruling, 2026-10-18:
         // "neutral"). The eyeless scent-hunter read mind=bestial and shipped
         // Unaligned at INT 12, which the alignment gate fails on print's own

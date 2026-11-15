@@ -152,6 +152,17 @@ describe('a creature that thinks and talks is never a Beast (ruling 2, 2026-11-1
     expect(T('Beast', { mind: 'sapient', userWords: 'a pack of beasts that speak' })).toBe('Beast');
   });
 
+  // RULING 2's REMAINING HALF (2026-11-15). The type stays Beast where the GM said so, and the
+  // trace claimed "the alignment follows the call instead" — true only when the call gave one.
+  // With Unaligned the gate still read Beast and shipped Unaligned, which the ruling forbids.
+  test("a GM-stated Beast the call reads as sapient still gets an alignment", async () => {
+    const c = 'a talking beast of the deep wood';
+    const answer = json('Wordsworth', 'Beast', 3, null, 'brute', { extra: { alignment: 'Unaligned' } });
+    const m = await gen({ archetype: 'brute', concept: c, userConcept: c, cr: 3, mind: 'sapient' }, answer);
+    expect(m.type).toMatch(/Beast/); // the GM's word stands
+    expect(String(m.alignment ?? '')).not.toMatch(/unaligned/i);
+  });
+
   test('a print body is untouched, and no other type is', () => {
     expect(T('Beast', { mind: 'sapient', hasPrintRecord: true })).toBe('Beast');
     for (const t of ['Monstrosity', 'Fey', 'Undead', 'Aberration', 'Humanoid']) expect(T(t, { mind: 'sapient' })).toBe(t);
